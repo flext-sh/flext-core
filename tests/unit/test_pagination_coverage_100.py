@@ -321,7 +321,11 @@ class TestFlextUtilitiesPaginationExtractPageParams:
             assert page_size == scenario.expected_page_size
         else:
             assert result.is_failure
-            assert result.error is not None and scenario.expected_error is not None and scenario.expected_error in result.error
+            assert (
+                result.error is not None
+                and scenario.expected_error is not None
+                and scenario.expected_error in result.error
+            )
 
 
 class TestFlextUtilitiesPaginationValidatePaginationParams:
@@ -348,7 +352,11 @@ class TestFlextUtilitiesPaginationValidatePaginationParams:
             assert params["page_size"] == scenario.expected_page_size
         else:
             assert result.is_failure
-            assert result.error is not None and scenario.expected_error is not None and scenario.expected_error in result.error
+            assert (
+                result.error is not None
+                and scenario.expected_error is not None
+                and scenario.expected_error in result.error
+            )
 
 
 class TestFlextUtilitiesPaginationPreparePaginationData:
@@ -390,7 +398,11 @@ class TestFlextUtilitiesPaginationPreparePaginationData:
                 assert pagination["has_prev"] == (scenario.page > 1)
         else:
             assert result.is_failure
-            assert result.error is not None and scenario.expected_error is not None and scenario.expected_error in result.error
+            assert (
+                result.error is not None
+                and scenario.expected_error is not None
+                and scenario.expected_error in result.error
+            )
 
 
 class TestFlextUtilitiesPaginationBuildPaginationResponse:
@@ -450,7 +462,10 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
         result = FlextUtilities.Pagination.build_pagination_response(pagination_data)
 
         assert result.is_failure
-        assert result.error is not None and "Invalid pagination data structure" in result.error
+        assert (
+            result.error is not None
+            and "Invalid pagination data structure" in result.error
+        )
 
     def test_build_pagination_response_missing_pagination(self) -> None:
         """Test build_pagination_response with missing pagination."""
@@ -459,7 +474,10 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
         result = FlextUtilities.Pagination.build_pagination_response(pagination_data)
 
         assert result.is_failure
-        assert result.error is not None and "Invalid pagination data structure" in result.error
+        assert (
+            result.error is not None
+            and "Invalid pagination data structure" in result.error
+        )
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
         """Test build_pagination_response with non-sequence data."""

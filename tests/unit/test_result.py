@@ -151,8 +151,12 @@ class TestFlextResult:
                 error_on_none="Value cannot be None",
             )
             # Cast object to GeneralValueType for type compatibility
-            value_typed: FlextTypes.GeneralValueType = cast("FlextTypes.GeneralValueType", value)
-            FlextTestsUtilities.ResultHelpers.assert_success_with_value(result, value_typed)
+            value_typed: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType", value
+            )
+            FlextTestsUtilities.ResultHelpers.assert_success_with_value(
+                result, value_typed
+            )
 
         elif op_type == ResultOperationType.CREATION_FAILURE:
             result = FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
@@ -162,9 +166,13 @@ class TestFlextResult:
             )
 
         elif op_type == ResultOperationType.UNWRAP_OR:
-            value_typed_unwrap: FlextTypes.GeneralValueType = cast("FlextTypes.GeneralValueType", value)
+            value_typed_unwrap: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType", value
+            )
             result = (
-                FlextTestsUtilities.ResultHelpers.create_success_result(value_typed_unwrap)
+                FlextTestsUtilities.ResultHelpers.create_success_result(
+                    value_typed_unwrap
+                )
                 if is_success
                 else FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
             )
@@ -187,7 +195,9 @@ class TestFlextResult:
             )
 
         elif op_type == ResultOperationType.ALT:
-            value_typed_alt: FlextTypes.GeneralValueType = cast("FlextTypes.GeneralValueType", value)
+            value_typed_alt: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType", value
+            )
             result = (
                 FlextTestsUtilities.ResultHelpers.create_success_result(value_typed_alt)
                 if is_success
@@ -222,7 +232,9 @@ class TestFlextResult:
                 assert lash_result.is_success and lash_result.value == expected
 
         elif op_type == ResultOperationType.OR_OPERATOR:
-            value_typed_or: FlextTypes.GeneralValueType = cast("FlextTypes.GeneralValueType", value)
+            value_typed_or: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType", value
+            )
             result = (
                 FlextTestsUtilities.ResultHelpers.create_success_result(value_typed_or)
                 if is_success
@@ -425,9 +437,11 @@ class TestFlextResult:
         assert result1.value == "default_value"
 
         # Test with None and error
-        result2: FlextResult[str | None] = FlextTestsUtilities.GenericHelpers.create_result_from_value(
-            None,
-            error_on_none="Value is None",
+        result2: FlextResult[str | None] = (
+            FlextTestsUtilities.GenericHelpers.create_result_from_value(
+                None,
+                error_on_none="Value is None",
+            )
         )
         assert result2.is_failure
         assert result2.error == "Value is None"

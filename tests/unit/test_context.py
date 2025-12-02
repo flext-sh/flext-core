@@ -152,7 +152,8 @@ class TestFlextContext:  # noqa: PLR0904
         context = ContextTestHelpers.create_test_context()
         # Type narrowing: value must be GeneralValueType compatible
         converted_value: FlextTypes.GeneralValueType = (
-            value if isinstance(value, (str, int, float, bool, type(None), list, dict))
+            value
+            if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
         )
         set_result = context.set(key, converted_value)
@@ -414,7 +415,9 @@ class TestFlextContext:  # noqa: PLR0904
         if global_data is not None and isinstance(global_data, dict):
             # Convert dict[str, object] to dict[str, GeneralValueType]
             converted_global: dict[str, FlextTypes.GeneralValueType] = {
-                str(k): v if isinstance(v, (str, int, float, bool, type(None), list, dict)) else str(v)
+                str(k): v
+                if isinstance(v, (str, int, float, bool, type(None), list, dict))
+                else str(v)
                 for k, v in global_data.items()
             }
             assert "key1" in converted_global
@@ -456,7 +459,10 @@ class TestFlextContext:  # noqa: PLR0904
         context = ContextTestHelpers.create_test_context()
         # Type narrowing: special_value must be GeneralValueType compatible
         converted_value: FlextTypes.GeneralValueType = (
-            special_value if isinstance(special_value, (str, int, float, bool, type(None), list, dict))
+            special_value
+            if isinstance(
+                special_value, (str, int, float, bool, type(None), list, dict)
+            )
             else str(special_value)
         )
         context.set(f"{value_name}_key", converted_value).unwrap()
@@ -798,7 +804,10 @@ class TestFlextContext:  # noqa: PLR0904
         """Test importing data into context."""
         context = ContextTestHelpers.create_test_context()
         # Type narrowing: convert dict[str, object] to dict[str, GeneralValueType]
-        data_to_import: dict[str, FlextTypes.GeneralValueType] = {"key1": "value1", "key2": "value2"}
+        data_to_import: dict[str, FlextTypes.GeneralValueType] = {
+            "key1": "value1",
+            "key2": "value2",
+        }
         context._import_data(data_to_import)
         ContextTestHelpers.assert_context_get_success(context, "key1", "value1")
         ContextTestHelpers.assert_context_get_success(context, "key2", "value2")

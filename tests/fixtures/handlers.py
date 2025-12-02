@@ -125,7 +125,9 @@ def create_test_handler(
         >>> handler = create_test_handler("test_handler")
 
         >>> # Custom processing
-        >>> def double_value(msg: FlextTypes.GeneralValueType) -> FlextResult[FlextTypes.GeneralValueType]:
+        >>> def double_value(
+        ...     msg: FlextTypes.GeneralValueType,
+        ... ) -> FlextResult[FlextTypes.GeneralValueType]:
         ...     return FlextResult[FlextTypes.GeneralValueType].ok(int(msg) * 2)
         >>> handler = create_test_handler("doubler", process_fn=double_value)
 

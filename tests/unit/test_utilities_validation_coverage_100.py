@@ -132,7 +132,10 @@ class TestFlextUtilitiesValidation:  # noqa: PLR0904
 
         result = FlextUtilitiesValidation.validate_pipeline("test", [validator])
         assert result.is_failure
-        assert result.error is not None and "must return FlextResult[bool].ok(True)" in result.error
+        assert (
+            result.error is not None
+            and "must return FlextResult[bool].ok(True)" in result.error
+        )
 
     def test_normalize_component_string(self) -> None:
         """Test normalize_component with string."""
@@ -239,7 +242,9 @@ class TestFlextUtilitiesValidation:  # noqa: PLR0904
         model_dict: FlextTypes.GeneralValueType = model.model_dump()
         # command_type accepts custom types at runtime but pyright expects specific types
         # pyright: ignore[reportArgumentType] - PydanticModelForTest is compatible at runtime
-        key = FlextUtilitiesValidation.generate_cache_key(model_dict, PydanticModelForTest)  # type: ignore[arg-type]
+        key = FlextUtilitiesValidation.generate_cache_key(
+            model_dict, PydanticModelForTest
+        )  # type: ignore[arg-type]
         assert isinstance(key, str)
         assert "PydanticModelForTest" in key
 

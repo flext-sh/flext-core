@@ -87,7 +87,9 @@ class FlextResult[T_co]:  # noqa: PLR0904
                 if isinstance(io_result, IOSuccess):
                     # Use FlextRuntime to normalize value directly - no manual type checking needed
                     unwrapped_value = io_result.unwrap()
-                    normalized_value = FlextRuntime.normalize_to_general_value(unwrapped_value)
+                    normalized_value = FlextRuntime.normalize_to_general_value(
+                        unwrapped_value
+                    )
                     return FlextResult.ok(normalized_value)
                 if isinstance(io_result, IOFailure):
                     error = io_result.failure()

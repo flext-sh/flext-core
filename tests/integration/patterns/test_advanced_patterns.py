@@ -139,6 +139,7 @@ class GivenWhenThenBuilder:
             MockScenario: Built mock scenario.
 
         """
+
         # Convert dict values to match MockScenarioData type requirements
         # MockScenarioData expects dict[str, str | int | bool] for given/when/then
         def convert_dict_value(value: object) -> str | int | bool:

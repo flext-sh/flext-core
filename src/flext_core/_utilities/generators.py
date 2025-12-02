@@ -464,7 +464,8 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: Mapping[str, FlextTypes.GeneralValueType] | dict[str, FlextTypes.GeneralValueType],
+        attributes: Mapping[str, FlextTypes.GeneralValueType]
+        | dict[str, FlextTypes.GeneralValueType],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 

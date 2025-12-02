@@ -100,7 +100,9 @@ class ContainerTestHelpers:
         return container
 
     @staticmethod
-    def create_factory(return_value: object) -> Callable[[], FlextTypes.GeneralValueType]:
+    def create_factory(
+        return_value: object,
+    ) -> Callable[[], FlextTypes.GeneralValueType]:
         """Create a simple factory function."""
         # Cast return_value to GeneralValueType for type compatibility
         return lambda: cast("FlextTypes.GeneralValueType", return_value)
@@ -262,7 +264,9 @@ class TestFlextContainer:  # noqa: PLR0904
         factory_result = {"created": "by_factory"}
         factory = ContainerTestHelpers.create_factory(factory_result)
         container.register_factory("factory_service", factory)
-        result: FlextResult[FlextTypes.GeneralValueType] = container.get("factory_service")
+        result: FlextResult[FlextTypes.GeneralValueType] = container.get(
+            "factory_service"
+        )
         FlextTestsUtilities.ResultHelpers.assert_success_with_value(
             result,
             factory_result,
@@ -273,10 +277,14 @@ class TestFlextContainer:  # noqa: PLR0904
         container = ContainerTestHelpers.create_clean_container()
         factory, call_count = ContainerTestHelpers.create_counting_factory()
         container.register_factory("factory_service", factory)
-        result1: FlextResult[FlextTypes.GeneralValueType] = container.get("factory_service")
+        result1: FlextResult[FlextTypes.GeneralValueType] = container.get(
+            "factory_service"
+        )
         assert result1.is_success
         assert call_count[0] == 1
-        result2: FlextResult[FlextTypes.GeneralValueType] = container.get("factory_service")
+        result2: FlextResult[FlextTypes.GeneralValueType] = container.get(
+            "factory_service"
+        )
         assert result2.is_success
         assert call_count[0] == 2
 
