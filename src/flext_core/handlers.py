@@ -24,6 +24,43 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
+def _handler_type_to_literal(
+    handler_type: FlextConstants.Cqrs.HandlerType,
+) -> FlextConstants.Cqrs.HandlerTypeLiteral:
+    """Convert HandlerType StrEnum to HandlerTypeLiteral.
+
+    Business Rule: HandlerType StrEnum members are runtime-compatible with
+    HandlerTypeLiteral (which is Literal[HandlerType.COMMAND, ...]). After
+    validation that handler_type is one of the valid HandlerType values,
+    the type checker understands the compatibility, so cast is not needed.
+
+    Args:
+        handler_type: HandlerType StrEnum member (validated to be one of
+            HandlerType.COMMAND, HandlerType.QUERY, HandlerType.EVENT,
+            HandlerType.OPERATION, HandlerType.SAGA).
+
+    Returns:
+        HandlerTypeLiteral compatible value.
+
+    """
+    # Runtime: HandlerType members are directly assignable to HandlerTypeLiteral
+    # Use match to ensure type narrowing for both mypy and pyright
+    match handler_type:
+        case FlextConstants.Cqrs.HandlerType.COMMAND:
+            return FlextConstants.Cqrs.HandlerType.COMMAND
+        case FlextConstants.Cqrs.HandlerType.QUERY:
+            return FlextConstants.Cqrs.HandlerType.QUERY
+        case FlextConstants.Cqrs.HandlerType.EVENT:
+            return FlextConstants.Cqrs.HandlerType.EVENT
+        case FlextConstants.Cqrs.HandlerType.OPERATION:
+            return FlextConstants.Cqrs.HandlerType.OPERATION
+        case FlextConstants.Cqrs.HandlerType.SAGA:
+            return FlextConstants.Cqrs.HandlerType.SAGA
+        case _:
+            # Should never reach here as all HandlerType values are covered
+            return FlextConstants.Cqrs.HandlerType.OPERATION
+
+
 class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
     """Abstract CQRS handler with validation and railway-style execution.
 
@@ -120,10 +157,11 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
         if handler_type not in valid_handler_types:
             error_msg = f"Invalid handler mode: {handler_type}"
             raise FlextExceptions.ValidationError(error_msg)
-        # Cast HandlerType to HandlerTypeLiteral after validation
-        handler_mode_literal: FlextConstants.Cqrs.HandlerTypeLiteral = cast(
-            "FlextConstants.Cqrs.HandlerTypeLiteral", handler_type
-        )
+        # handler_type is validated - HandlerType StrEnum values are compatible with HandlerTypeLiteral
+        # After validation, we know handler_type is one of the valid HandlerType values
+        # Business Rule: HandlerType StrEnum members are runtime-compatible with HandlerTypeLiteral
+        # Use helper function for type-safe conversion
+        handler_mode_literal = _handler_type_to_literal(handler_type)
         self._execution_context = (
             FlextModelsHandler.ExecutionContext.create_for_handler(
                 handler_name=self._config_model.handler_name,
@@ -219,10 +257,10 @@ class FlextHandlers[MessageT_contra, ResultT](FlextMixins, ABC):
                         "FlextTypes.GeneralValueType", message
                     )
                     result = self._handler_fn(message_value)
-                    # If result is already FlextResult, return it
+                    # If result is already FlextResult, return it directly
+                    # Type checker understands result is FlextResult[GeneralValueType] from handler_fn signature
                     if isinstance(result, FlextResult):
-                        # Return result directly - cast to GeneralValueType for return type
-                        return cast("FlextResult[FlextTypes.GeneralValueType]", result)
+                        return result
                     # Otherwise wrap it in FlextResult
                     return FlextResult[FlextTypes.GeneralValueType].ok(result)
                 except Exception as exc:

@@ -136,13 +136,13 @@ class CollectionScenarios:
         ),
         CoerceListValidatorScenario(
             name="valid_set_strings",
-            value=list({"active", "pending"}),  # type: ignore[arg-type]  # list[str] is compatible with Sequence[ScalarValue]
+            value=list({"active", "pending"}),
             expected_success=True,
             expected_error=None,
         ),
         CoerceListValidatorScenario(
             name="valid_frozenset_strings",
-            value=list(frozenset({"active", "pending"})),  # type: ignore[arg-type]  # list[str] is compatible with Sequence[ScalarValue]
+            value=list(frozenset({"active", "pending"})),
             expected_success=True,
             expected_error=None,
         ),
@@ -254,10 +254,14 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
             assert isinstance(result, list)
             assert all(isinstance(item, Status) for item in result)
         else:
-            with pytest.raises((TypeError, ValueError)) as exc_info:
+            # Business Rule: pytest.raises accepts Exception types or tuple of Exception types
+            # TypeError and ValueError are both Exception subclasses
+            with pytest.raises(Exception) as exc_info:
                 validator(scenario.value)
             expected_error = scenario.expected_error
             assert expected_error is not None
+            # Check that the exception is one of the expected types
+            assert isinstance(exc_info.value, (TypeError, ValueError))
             assert expected_error in str(exc_info.value)
 
 

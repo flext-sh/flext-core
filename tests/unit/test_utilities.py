@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import BaseModel
@@ -151,7 +151,7 @@ class UtilityScenarios:
         )
 
 
-class TestFlextUtilities:  # noqa: PLR0904
+class TestFlextUtilities:
     """Unified test suite for FlextUtilities using flext_tests and FlextConstants."""
 
     # =====================================================================
@@ -351,15 +351,23 @@ class TestFlextUtilities:  # noqa: PLR0904
             class TestWithCache:
                 _cache: ClassVar[FlextTypes.Types.ConfigurationMapping] = {}
 
-            cache_obj: TestWithCache = TestWithCache()
-            assert FlextUtilities.Cache.has_cache_attributes(cache_obj) is expected
+            cache_obj = TestWithCache()
+            # Cast to GeneralValueType for type checker - test class is valid object
+            result = FlextUtilities.Cache.has_cache_attributes(
+                cast("FlextTypes.GeneralValueType", cache_obj)
+            )
+            assert result is expected
         else:
 
             class TestNoCache:
                 pass
 
-            no_cache_obj: TestNoCache = TestNoCache()
-            assert FlextUtilities.Cache.has_cache_attributes(no_cache_obj) is expected
+            no_cache_obj = TestNoCache()
+            # Cast to GeneralValueType for type checker - test class is valid object
+            result = FlextUtilities.Cache.has_cache_attributes(
+                cast("FlextTypes.GeneralValueType", no_cache_obj)
+            )
+            assert result is expected
 
     def test_cache_sort_key(self) -> None:
         """Test sort_key returns tuple."""

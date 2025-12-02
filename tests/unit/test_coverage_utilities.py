@@ -233,7 +233,7 @@ class UtilityScenarios:
 # =========================================================================
 
 
-class TestFlextUtilities:  # noqa: PLR0904
+class TestFlextUtilities:
     """Unified test suite for FlextUtilities - ALL REAL FUNCTIONALITY."""
 
     # =====================================================================

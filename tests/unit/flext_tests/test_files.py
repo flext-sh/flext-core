@@ -48,7 +48,7 @@ class TestFileInfo:
         assert info.first_line == "first line"
 
 
-class TestFlextTestsFileManager:  # noqa: PLR0904
+class TestFlextTestsFileManager:
     """Test suite for FlextTestsFileManager class."""
 
     def test_init_without_base_dir(self) -> None:

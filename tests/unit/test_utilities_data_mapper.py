@@ -402,7 +402,7 @@ class TestFlextUtilitiesDataMapper:
     def test_transform_values(self, test_case: DataMapperTestCase) -> None:
         """Test transform_values with various scenarios."""
         result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
-        assert result == test_case.expected_result
+        assert result.unwrap() == test_case.expected_result
 
     @pytest.mark.parametrize(
         "test_case",
@@ -412,7 +412,7 @@ class TestFlextUtilitiesDataMapper:
     def test_filter_dict(self, test_case: DataMapperTestCase) -> None:
         """Test filter_dict with various scenarios."""
         result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
-        assert result == test_case.expected_result
+        assert result.unwrap() == test_case.expected_result
 
     @pytest.mark.parametrize(
         "test_case",
@@ -422,4 +422,4 @@ class TestFlextUtilitiesDataMapper:
     def test_invert_dict(self, test_case: DataMapperTestCase) -> None:
         """Test invert_dict with various scenarios."""
         result = DataMapperTestHelpers.execute_data_mapper_test(test_case)
-        assert result == test_case.expected_result
+        assert result.unwrap() == test_case.expected_result

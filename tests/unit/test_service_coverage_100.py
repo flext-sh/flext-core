@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextResult, FlextService
+from flext_core.typings import FlextTypes
 from flext_tests.domains import FlextTestsDomains
 
 # ==================== REAL SERVICE CLASSES ====================
@@ -23,11 +24,13 @@ class TestService(FlextService[TestDomainResult]):
 
     __test__ = False  # Not a test class, just a helper class
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: FlextTypes.GeneralValueType) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
+    def execute(
+        self, **_kwargs: FlextTypes.GeneralValueType
+    ) -> FlextResult[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("success"))
 
@@ -37,11 +40,13 @@ class TestServiceWithValidation(FlextService[TestDomainResult]):
 
     __test__ = False  # Not a test class, just a helper class
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: FlextTypes.GeneralValueType) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(self, **_kwargs: object) -> FlextResult[TestDomainResult]:
+    def execute(
+        self, **_kwargs: FlextTypes.GeneralValueType
+    ) -> FlextResult[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("validated"))
 

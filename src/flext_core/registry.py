@@ -902,16 +902,19 @@ class FlextRegistry(FlextMixins):
         # Normalize metadata to dict for internal use
         validated_metadata: FlextTypes.GeneralValueType | None = None
         if metadata is not None:
-            if FlextRuntime.is_dict_like(metadata):
-                validated_metadata = (
-                    dict(metadata) if not isinstance(metadata, dict) else metadata
-                )
-            elif isinstance(metadata, FlextModelsBase.Metadata):
+            # Handle Metadata model first
+            if isinstance(metadata, FlextModelsBase.Metadata):
                 validated_metadata = metadata.attributes
             else:
-                return FlextResult[bool].fail(
-                    f"metadata must be dict or FlextModelsBase.Metadata, got {type(metadata).__name__}",
-                )
+                # Cast to GeneralValueType for is_dict_like check
+                metadata_as_general = cast("FlextTypes.GeneralValueType", metadata)
+                if FlextRuntime.is_dict_like(metadata_as_general):
+                    # Type guard ensures metadata_as_general is Mapping[str, GeneralValueType]
+                    validated_metadata = dict(metadata_as_general.items())
+                else:
+                    return FlextResult[bool].fail(
+                        f"metadata must be dict or FlextModelsBase.Metadata, got {type(metadata).__name__}",
+                    )
 
         # Store metadata if provided (for future use)
         if validated_metadata and FlextRuntime.is_dict_like(validated_metadata):

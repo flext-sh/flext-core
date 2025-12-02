@@ -197,4 +197,4 @@ class TestResultTransformations:
         assert r2.is_failure
 
 
-__all__ = ["TestCoverage76Lines"]
+__all__ = ["TestResultBasics", "TestResultTransformations"]

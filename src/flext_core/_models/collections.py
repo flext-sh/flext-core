@@ -150,7 +150,10 @@ class FlextModelsCollections:
             for key, value_list in self.categories.items():
                 # Normalize each item in the list to GeneralValueType
                 normalized_list: list[FlextTypes.GeneralValueType] = [
-                    FlextRuntime.normalize_to_general_value(item) for item in value_list
+                    FlextRuntime.normalize_to_general_value(
+                        cast("FlextTypes.GeneralValueType", item)
+                    )
+                    for item in value_list
                 ]
                 result[key] = normalized_list
             return result

@@ -24,8 +24,7 @@ import pytest
 from hypothesis import given, settings, strategies as st
 
 from flext_core.typings import FlextTypes
-
-from ...fixtures.typing import (
+from tests.fixtures.typing import (
     FixtureCaseDict,
     FixtureDataDict,
     FixtureFixturesDict,
@@ -714,7 +713,10 @@ class TestComprehensiveIntegration:
         assert suite["suite_name"] == "comprehensive_operation_tests"
         assert suite["scenario_count"] == 2
         assert "integration" in suite["tags"]
-        assert suite["setup_data"]["environment"] == "test"
+        setup_data = suite["setup_data"]
+        if isinstance(setup_data, dict) and "environment" in setup_data:
+            env_value: object = setup_data["environment"]
+            assert env_value == "test"
 
 
 # ============================================================================
@@ -853,5 +855,6 @@ class TestRealWorldScenarios:
             .build()
         )
 
-        assert scenario.given["config"] == config
+        given_config: object = scenario.given["config"]
+        assert given_config == config
         assert "configuration" in scenario.tags

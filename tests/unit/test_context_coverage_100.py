@@ -27,7 +27,7 @@ from flext_core.typings import FlextTypes
 # ==================== COVERAGE TESTS ====================
 
 
-class TestContext100Coverage:  # noqa: PLR0904
+class TestContext100Coverage:
     """Real tests to achieve 100% context coverage."""
 
     def test_remove_success(self) -> None:
@@ -556,7 +556,7 @@ class TestContext100Coverage:  # noqa: PLR0904
         # Cast to FlextResult to access unwrap_or (ResultProtocol doesn't have it)
         # pyright: ignore[reportAttributeAccessIssue] - unwrap_or exists on FlextResult
         result_typed = cast("FlextResult[FlextTypes.GeneralValueType]", result)
-        value = result_typed.unwrap_or("default_value")  # type: ignore[attr-defined]
+        value = result_typed.unwrap_or("default_value")
         assert value == "default_value"
 
     def test_export_import_round_trip(self) -> None:

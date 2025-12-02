@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.helpers.constants import TestConstants
-from tests.helpers.data_mapper_helpers import (
+from .constants import TestConstants
+from .data_mapper_helpers import (
     BadDict,
     BadDictGet,
     BadList,
@@ -18,7 +18,7 @@ from tests.helpers.data_mapper_helpers import (
     DataMapperTestHelpers,
     DataMapperTestType,
 )
-from tests.helpers.domain_helpers import (
+from .domain_helpers import (
     BadConfig,
     BadConfigTypeError,
     BadModelDump,
@@ -36,15 +36,15 @@ from tests.helpers.domain_helpers import (
     NoSetattr,
     SimpleValue,
 )
-from tests.helpers.models import TestModels
-from tests.helpers.protocols import TestProtocols
-from tests.helpers.result_helpers import (
+from .models import TestModels
+from .protocols import TestProtocols
+from .result_helpers import (
     ResultCreationCase,
     ResultOperation,
     ResultTestCase,
     ResultTestHelpers,
 )
-from tests.helpers.typings import TestTypings
+from .typings import TestTypings
 
 __all__ = [
     # Helper classes

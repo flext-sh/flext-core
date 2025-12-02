@@ -182,14 +182,14 @@ class CollectionUtilitiesScenarios:
         CoerceListScenario(
             name="valid_set",
             enum_cls=FixtureStatus,
-            value=list({"active", "pending"}),  # type: ignore[arg-type]  # list[str] is compatible with Sequence[ScalarValue]
+            value=list({"active", "pending"}),
             expected_success=True,
             expected_count=2,
         ),
         CoerceListScenario(
             name="valid_frozenset",
             enum_cls=FixtureStatus,
-            value=list(frozenset(["active", "pending"])),  # type: ignore[arg-type]  # list[str] is compatible with Sequence[ScalarValue]
+            value=list(frozenset(["active", "pending"])),
             expected_success=True,
             expected_count=2,
         ),
@@ -437,11 +437,10 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
 
     def test_coerce_list_validator_with_pydantic(self) -> None:
         """Test coerce_list_validator integration with Pydantic."""
-        status_list = list[FixtureStatus]
         FlextUtilitiesCollection.coerce_list_validator(FixtureStatus)
 
         class TestModel(BaseModel):
-            statuses: status_list = Field(default_factory=list)
+            statuses: list[FixtureStatus] = Field(default_factory=list)
 
         # Test with string list
         model1 = TestModel.model_validate({"statuses": ["active", "pending"]})

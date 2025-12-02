@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from flext_core import (
     FlextConfig,
@@ -129,7 +129,15 @@ class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
 
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        container.register("logger", logger)
+        # Business Rule: Container accepts any object type including FlextLogger
+        # Cast to container.register() compatible type for type checker
+        logger_typed: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+            | object
+        ) = logger
+        container.register("logger", logger_typed)
 
         logger_result: FlextResult[FlextLogger] = container.get("logger")
         if logger_result.is_success:

@@ -96,31 +96,31 @@ class TestFlextUtilitiesDomain:
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
                 description="same_id",
-                input_data={"entity1": alice_entity, "entity2": alice_entity},  # type: ignore[dict-item]  # type: ignore[dict-item]
+                input_data={"entity1": alice_entity, "entity2": alice_entity},
                 expected_result=True,
             ),
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
                 description="different_id",
-                input_data={"entity1": alice_entity, "entity2": bob_entity},  # type: ignore[dict-item]  # type: ignore[dict-item]
+                input_data={"entity1": alice_entity, "entity2": bob_entity},
                 expected_result=False,
             ),
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
                 description="different_type",
-                input_data={"entity1": alice_entity, "entity2": value_obj},  # type: ignore[dict-item]  # type: ignore[dict-item]
+                input_data={"entity1": alice_entity, "entity2": value_obj},
                 expected_result=False,
             ),
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
                 description="no_id",
-                input_data={"entity1": alice_no_id, "entity2": bob_entity},  # type: ignore[dict-item]  # type: ignore[dict-item]
+                input_data={"entity1": alice_no_id, "entity2": bob_entity},
                 expected_result=False,
             ),
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
                 description="custom_id_attr",
-                input_data={"entity1": custom1, "entity2": custom2},  # type: ignore[dict-item]  # type: ignore[dict-item]
+                input_data={"entity1": custom1, "entity2": custom2},
                 expected_result=True,
                 id_attr="custom_id",
             ),
@@ -146,19 +146,19 @@ class TestFlextUtilitiesDomain:
             DomainTestCase(
                 test_type=DomainTestType.HASH_ENTITY_BY_ID,
                 description="with_id",
-                input_data={"entity": alice_entity},  # type: ignore[dict-item]
+                input_data={"entity": alice_entity},
                 expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
             DomainTestCase(
                 test_type=DomainTestType.HASH_ENTITY_BY_ID,
                 description="no_id",
-                input_data={"entity": alice_no_id},  # type: ignore[dict-item]
+                input_data={"entity": alice_no_id},
                 expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
             DomainTestCase(
                 test_type=DomainTestType.HASH_ENTITY_BY_ID,
                 description="custom_id_attr",
-                input_data={"entity": custom},  # type: ignore[dict-item]
+                input_data={"entity": custom},
                 expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
                 id_attr="custom_id",
             ),
@@ -190,25 +190,25 @@ class TestFlextUtilitiesDomain:
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
                 description="same_values",
-                input_data={"obj1": value1, "obj2": value1},  # type: ignore[dict-item]
+                input_data={"obj1": value1, "obj2": value1},
                 expected_result=True,
             ),
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
                 description="different_values",
-                input_data={"obj1": value1, "obj2": value2},  # type: ignore[dict-item]
+                input_data={"obj1": value1, "obj2": value2},
                 expected_result=False,
             ),
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
                 description="different_type",
-                input_data={"obj1": value1, "obj2": alice_entity},  # type: ignore[dict-item]
+                input_data={"obj1": value1, "obj2": alice_entity},
                 expected_result=False,
             ),
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
                 description="no_model_dump",
-                input_data={"obj1": simple1, "obj2": simple2},  # type: ignore[dict-item]
+                input_data={"obj1": simple1, "obj2": simple2},
                 expected_result=True,
             ),
             DomainTestCase(
@@ -293,19 +293,19 @@ class TestFlextUtilitiesDomain:
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_ENTITY_HAS_ID,
                 description="has_id",
-                input_data={"entity": alice_entity},  # type: ignore[dict-item]
+                input_data={"entity": alice_entity},
                 expected_result=True,
             ),
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_ENTITY_HAS_ID,
                 description="no_id",
-                input_data={"entity": alice_no_id},  # type: ignore[dict-item]
+                input_data={"entity": alice_no_id},
                 expected_result=False,
             ),
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_ENTITY_HAS_ID,
                 description="custom_attr",
-                input_data={"entity": custom},  # type: ignore[dict-item]
+                input_data={"entity": custom},
                 expected_result=True,
                 id_attr="custom_id",
             ),
@@ -375,7 +375,12 @@ class TestFlextUtilitiesDomain:
     def test_compare_entities_by_id(self, test_case: DomainTestCase) -> None:
         """Test compare_entities_by_id with various scenarios."""
         result = DomainTestHelpers.execute_domain_test(test_case)
-        if test_case.expected_result is bool:
+        # Business Rule: Check if expected_result is the bool type (not an instance)
+        # Use isinstance check for type comparison
+        if (
+            isinstance(test_case.expected_result, type)
+            and test_case.expected_result is bool
+        ):
             assert isinstance(result, bool)
         else:
             assert result == test_case.expected_result
@@ -400,7 +405,12 @@ class TestFlextUtilitiesDomain:
     def test_compare_value_objects_by_value(self, test_case: DomainTestCase) -> None:
         """Test compare_value_objects_by_value with various scenarios."""
         result = DomainTestHelpers.execute_domain_test(test_case)
-        if test_case.expected_result is bool:
+        # Business Rule: Check if expected_result is the bool type (not an instance)
+        # Use isinstance check for type comparison
+        if (
+            isinstance(test_case.expected_result, type)
+            and test_case.expected_result is bool
+        ):
             assert isinstance(result, bool)
         else:
             assert result == test_case.expected_result
@@ -435,7 +445,12 @@ class TestFlextUtilitiesDomain:
     def test_validate_value_object_immutable(self, test_case: DomainTestCase) -> None:
         """Test validate_value_object_immutable with various scenarios."""
         result = DomainTestHelpers.execute_domain_test(test_case)
-        if test_case.expected_result is bool:
+        # Business Rule: Check if expected_result is the bool type (not an instance)
+        # Use isinstance check for type comparison
+        if (
+            isinstance(test_case.expected_result, type)
+            and test_case.expected_result is bool
+        ):
             assert isinstance(result, bool)
         else:
             assert result == test_case.expected_result

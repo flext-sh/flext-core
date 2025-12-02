@@ -354,9 +354,14 @@ class FlextModelsContext:
             """
             if v is None:
                 return FlextModelsBase.Metadata(attributes={})
-            if FlextRuntime.is_dict_like(v):
+            if isinstance(v, FlextModelsBase.Metadata):
+                return v
+            # Cast to GeneralValueType for is_dict_like check
+            v_as_general = cast("FlextTypes.GeneralValueType", v)
+            if FlextRuntime.is_dict_like(v_as_general):
+                # Type guard ensures v_as_general is Mapping[str, GeneralValueType]
                 # Normalize to MetadataAttributeValue (more restrictive than FlextTypes.GeneralValueType)
-                dict_v = dict(v.items()) if hasattr(v, "items") else dict(v)
+                dict_v = dict(v_as_general.items())
                 normalized: dict[str, FlextTypes.MetadataAttributeValue] = {}
                 for key, val in dict_v.items():
                     normalized[key] = FlextRuntime.normalize_to_metadata_value(val)
@@ -472,9 +477,14 @@ class FlextModelsContext:
             """
             if v is None:
                 return FlextModelsBase.Metadata(attributes={})
-            if FlextRuntime.is_dict_like(v):
+            if isinstance(v, FlextModelsBase.Metadata):
+                return v
+            # Cast to GeneralValueType for is_dict_like check
+            v_as_general = cast("FlextTypes.GeneralValueType", v)
+            if FlextRuntime.is_dict_like(v_as_general):
+                # Type guard ensures v_as_general is Mapping[str, GeneralValueType]
                 # Normalize to MetadataAttributeValue (more restrictive than FlextTypes.GeneralValueType)
-                dict_v = dict(v.items()) if hasattr(v, "items") else dict(v)
+                dict_v = dict(v_as_general.items())
                 normalized: dict[str, FlextTypes.MetadataAttributeValue] = {}
                 for key, val in dict_v.items():
                     normalized[key] = FlextRuntime.normalize_to_metadata_value(val)

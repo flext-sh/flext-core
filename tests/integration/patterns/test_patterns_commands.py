@@ -15,8 +15,8 @@ from flext_core import (
     FlextModels,
     FlextResult,
 )
-
-from ...fixtures.typing import (
+from flext_core._models.base import FlextModelsBase
+from tests.fixtures.typing import (
     CommandPayloadDict,
     UpdatePayloadDict,
     UserPayloadDict,
@@ -36,7 +36,7 @@ FlextCommandHandler = FlextHandlers
 # =============================================================================
 
 
-class CreateUserCommand(FlextModels.TimestampedModel):
+class CreateUserCommand(FlextModelsBase.TimestampedModel):
     """Test command for creating users."""
 
     username: str
@@ -63,7 +63,7 @@ class CreateUserCommand(FlextModels.TimestampedModel):
         return FlextResult[bool].ok(True)
 
 
-class UpdateUserCommand(FlextModels.TimestampedModel):
+class UpdateUserCommand(FlextModelsBase.TimestampedModel):
     """Test command for updating users."""
 
     target_user_id: str
@@ -88,7 +88,7 @@ class UpdateUserCommand(FlextModels.TimestampedModel):
         return FlextResult[bool].ok(True)
 
 
-class FailingCommand(FlextModels.TimestampedModel):
+class FailingCommand(FlextModelsBase.TimestampedModel):
     """Test command that always fails validation."""
 
     def get_payload(self) -> CommandPayloadDict:

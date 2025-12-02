@@ -38,8 +38,10 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
+        # Business Rule: BadDictLike instances are compatible with GeneralValueType at runtime
         obj = BadDictLike()
-        result = FlextRuntime.is_dict_like(obj)
+        obj_typed = cast("FlextTypes.GeneralValueType", obj)
+        result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
     def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
@@ -57,8 +59,10 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
+        # Business Rule: BadDictLike instances are compatible with GeneralValueType at runtime
         obj = BadDictLike()
-        result = FlextRuntime.is_dict_like(obj)
+        obj_typed = cast("FlextTypes.GeneralValueType", obj)
+        result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
     def test_is_dict_like_with_userdict(self) -> None:
@@ -73,8 +77,10 @@ class TestRuntimeDictLike:
         class NotDictLike:
             pass
 
+        # Business Rule: NotDictLike instances are compatible with GeneralValueType at runtime
         obj = NotDictLike()
-        result = FlextRuntime.is_dict_like(obj)
+        obj_typed = cast("FlextTypes.GeneralValueType", obj)
+        result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
     def test_is_dict_like_with_missing_keys(self) -> None:
@@ -87,8 +93,10 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
+        # Business Rule: NotDictLike instances are compatible with GeneralValueType at runtime
         obj = NotDictLike()
-        result = FlextRuntime.is_dict_like(obj)
+        obj_typed = cast("FlextTypes.GeneralValueType", obj)
+        result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
     def test_is_dict_like_with_missing_items(self) -> None:
@@ -101,8 +109,10 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
+        # Business Rule: NotDictLike instances are compatible with GeneralValueType at runtime
         obj = NotDictLike()
-        result = FlextRuntime.is_dict_like(obj)
+        obj_typed = cast("FlextTypes.GeneralValueType", obj)
+        result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
     def test_is_dict_like_with_missing_get(self) -> None:
@@ -115,8 +125,10 @@ class TestRuntimeDictLike:
             def items(self) -> list[tuple[object, object]]:
                 return []
 
+        # Business Rule: NotDictLike instances are compatible with GeneralValueType at runtime
         obj = NotDictLike()
-        result = FlextRuntime.is_dict_like(obj)
+        obj_typed = cast("FlextTypes.GeneralValueType", obj)
+        result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
 

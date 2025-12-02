@@ -18,12 +18,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_core import FlextExceptions, FlextResult
-from tests.fixtures.factories import (
+
+from .fixtures.factories import (
     FailingService,
     GetUserService,
     ServiceTestCase,
@@ -60,7 +59,7 @@ class TestServiceResultProperty:
         """V2: .result returns unwrapped domain result directly."""
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
-        user = cast("User", service.result)
+        user = service.result
 
         assert isinstance(user, User)
         assert user.user_id == case.input_value
@@ -105,7 +104,7 @@ class TestServiceResultProperty:
         """V2: Type checkers infer correct type."""
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
-        user: User = cast("User", service.result)
+        user: User = service.result
 
         assert isinstance(user, User)
         assert user.user_id == case.input_value
@@ -117,7 +116,7 @@ class TestServiceResultProperty:
         assert isinstance(service, GetUserService)
         assert hasattr(service, "result")
 
-        user = cast("User", service.result)
+        user = service.result
         assert isinstance(user, User)
         assert user.user_id == case.input_value
 
@@ -172,7 +171,7 @@ class TestServiceResultProperty:
         assert isinstance(service1, GetUserService)
         assert isinstance(service2, GetUserService)
 
-        user_v2 = cast("User", service1.result)
+        user_v2 = service1.result
         user_v1 = service2.execute().unwrap()
 
         assert user_v2.user_id == user_v1.user_id
@@ -208,7 +207,7 @@ class TestServiceResultProperty:
         assert isinstance(service, GetUserService)
         assert hasattr(service, "result")
 
-        user = cast("User", service.result)
+        user = service.result
         assert isinstance(user, User)
         assert user.user_id == case.input_value
 
@@ -220,7 +219,7 @@ class TestServiceResultProperty:
         dump = service.model_dump()
         assert "user_id" in dump
 
-        user = cast("User", service.result)
+        user = service.result
         assert isinstance(user, User)
         assert user.user_id == case.input_value
 

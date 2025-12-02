@@ -91,7 +91,7 @@ class EventAggregate(FlextModelsEntity.AggregateRoot):
         _ = self.add_domain_event("test_event", {"data": "test"})
 
 
-class TestFlextModels:  # noqa: PLR0904
+class TestFlextModels:
     """Test suite for FlextModels using FlextTestsUtilities and FlextConstants."""
 
     def test_models_initialization(self) -> None:
@@ -455,7 +455,7 @@ class TestFlextModels:  # noqa: PLR0904
         value_set = set(value_list)
         assert len(value_set) == 2
         with pytest.raises(ValidationError):
-            value1.value = 100
+            value1.value = 100  # pyrefly: ignore[read-only] - Testing immutability, this should raise
 
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
@@ -483,7 +483,7 @@ class TestFlextModels:  # noqa: PLR0904
         assert event.event_type == "user_created"
         assert event.aggregate_id == "user-123"
         assert event.data == {"name": "test"}
-        assert event.message_type == "event"
+        assert event.message_type == FlextConstants.Cqrs.HandlerType.EVENT
 
     def test_query_creation(self) -> None:
         """Test Query creation."""
@@ -495,7 +495,7 @@ class TestFlextModels:  # noqa: PLR0904
         assert query.query_id is not None
         assert query.query_type == "find_users"
         assert query.filters == {"active": "true"}
-        assert query.message_type == "query"
+        assert query.message_type == FlextConstants.Cqrs.HandlerType.QUERY
 
     def test_aggregate_root_mark_events_as_committed(self) -> None:
         """Test mark_events_as_committed method."""
@@ -555,7 +555,8 @@ class TestFlextModels:  # noqa: PLR0904
         result = aggregate.add_domain_events_bulk([])
         assert result.is_success
         invalid_input: object = "not a list"
-        result = aggregate.add_domain_events_bulk(invalid_input)  # pyright: ignore[reportArgumentType]  # Testing invalid input type
+        # Testing invalid input type - intentionally passing wrong type
+        result = aggregate.add_domain_events_bulk(invalid_input)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
         assert result.is_failure
         assert result.error is not None and "Events must be a list" in result.error
         invalid_empty_name: Sequence[
@@ -629,7 +630,7 @@ class TestFlextModels:  # noqa: PLR0904
         assert event.data == {"key": "value"}
         assert event.unique_id is not None
         assert event.created_at is not None
-        assert event.message_type == "event"
+        assert event.message_type == FlextConstants.Cqrs.HandlerType.EVENT
         json_data = event.model_dump_json()
         assert '"event_type":"test_event"' in json_data
 
@@ -641,7 +642,7 @@ class TestFlextModels:  # noqa: PLR0904
         )
         assert command.command_type == "CreateOrder"
         assert command.issuer_id == "issuer-123"
-        assert command.message_type == "command"
+        assert command.message_type == FlextConstants.Cqrs.HandlerType.COMMAND
         assert command.unique_id is not None
         assert command.created_at is not None
 

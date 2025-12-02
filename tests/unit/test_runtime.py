@@ -85,7 +85,9 @@ class RuntimeTestCase:
 
     name: str
     operation: RuntimeOperationType
-    test_input: FlextTypes.GeneralValueType | type[object] | None = None  # type: ignore[assignment]  # Supports both values and types for testing
+    # Business Rule: test_input supports both values and types for comprehensive testing
+    # GeneralValueType | type[object] | None allows testing runtime type checking with various inputs
+    test_input: FlextTypes.GeneralValueType | type[object] | None = None
     expected_result: bool | tuple[object, ...] | object = None
     should_reset_config: bool = False
 
@@ -596,9 +598,11 @@ class TestFlextRuntime:
         ids=lambda tc: tc.name,
     )
     def test_phone_validation(self, test_case: RuntimeTestCase) -> None:
-        """Test phone number validation."""
-        if test_case.test_input is None:
-            pytest.skip("test_input is None")
+        """Test phone number validation.
+
+        Business Rule: None is a valid test input - validates that is_valid_phone
+        correctly returns False for None values.
+        """
         result = FlextRuntime.is_valid_phone(
             cast("FlextTypes.GeneralValueType", test_case.test_input)
         )
@@ -610,8 +614,16 @@ class TestFlextRuntime:
         ids=lambda tc: tc.name,
     )
     def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
-        """Test dict-like object validation."""
-        result = FlextRuntime.is_dict_like(test_case.test_input)
+        """Test dict-like object validation.
+
+        Business Rule: is_dict_like accepts GeneralValueType compatible objects.
+        test_case.test_input may be None or various types, so we cast to GeneralValueType
+        for type compatibility while preserving runtime behavior.
+        """
+        # Business Rule: Cast to GeneralValueType for type compatibility
+        # None and various types are compatible with GeneralValueType at runtime
+        test_input_typed = cast("FlextTypes.GeneralValueType", test_case.test_input)
+        result = FlextRuntime.is_dict_like(test_input_typed)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -620,8 +632,16 @@ class TestFlextRuntime:
         ids=lambda tc: tc.name,
     )
     def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
-        """Test list-like object validation."""
-        result = FlextRuntime.is_list_like(test_case.test_input)
+        """Test list-like object validation.
+
+        Business Rule: is_list_like accepts GeneralValueType compatible objects.
+        test_case.test_input may be None or various types, so we cast to GeneralValueType
+        for type compatibility while preserving runtime behavior.
+        """
+        # Business Rule: Cast to GeneralValueType for type compatibility
+        # None and various types are compatible with GeneralValueType at runtime
+        test_input_typed = cast("FlextTypes.GeneralValueType", test_case.test_input)
+        result = FlextRuntime.is_list_like(test_input_typed)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -630,9 +650,11 @@ class TestFlextRuntime:
         ids=lambda tc: tc.name,
     )
     def test_json_validation(self, test_case: RuntimeTestCase) -> None:
-        """Test JSON string validation."""
-        if test_case.test_input is None:
-            pytest.skip("test_input is None")
+        """Test JSON string validation.
+
+        Business Rule: None is a valid test input - validates that is_valid_json
+        correctly returns False for None values.
+        """
         result = FlextRuntime.is_valid_json(
             cast("FlextTypes.GeneralValueType", test_case.test_input)
         )
@@ -644,9 +666,11 @@ class TestFlextRuntime:
         ids=lambda tc: tc.name,
     )
     def test_identifier_validation(self, test_case: RuntimeTestCase) -> None:
-        """Test Python identifier validation."""
-        if test_case.test_input is None:
-            pytest.skip("test_input is None")
+        """Test Python identifier validation.
+
+        Business Rule: None is a valid test input - validates that is_valid_identifier
+        correctly returns False for None values.
+        """
         result = FlextRuntime.is_valid_identifier(
             cast("FlextTypes.GeneralValueType", test_case.test_input)
         )
@@ -690,7 +714,11 @@ class TestFlextRuntime:
             class TestObjNoDefault:
                 pass
 
-            test_obj_no_default: FlextTypes.GeneralValueType = TestObjNoDefault()  # type: ignore[assignment,no-redef]  # TestObjNoDefault is compatible with GeneralValueType
+            # Business Rule: TestObjNoDefault instances are compatible with GeneralValueType at runtime
+            # Cast to GeneralValueType for type compatibility
+            test_obj_no_default = cast(
+                "FlextTypes.GeneralValueType", TestObjNoDefault()
+            )
             result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
             assert result is None
 
@@ -700,8 +728,18 @@ class TestFlextRuntime:
         ids=lambda tc: tc.name,
     )
     def test_extract_generic_args(self, test_case: RuntimeTestCase) -> None:
-        """Test extraction of generic type arguments."""
-        args = FlextRuntime.extract_generic_args(test_case.test_input)
+        """Test extraction of generic type arguments.
+
+        Business Rule: extract_generic_args accepts TypeHintSpecifier compatible objects.
+        test_case.test_input may be None or various types, so we cast to TypeHintSpecifier
+        for type compatibility while preserving runtime behavior.
+        """
+        # Business Rule: Cast to TypeHintSpecifier for type compatibility
+        # None and various types are compatible with TypeHintSpecifier at runtime
+        test_input_typed = cast(
+            "FlextTypes.Utility.TypeHintSpecifier", test_case.test_input
+        )
+        args = FlextRuntime.extract_generic_args(test_input_typed)
         assert args == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -710,8 +748,18 @@ class TestFlextRuntime:
         ids=lambda tc: tc.name,
     )
     def test_sequence_type_detection(self, test_case: RuntimeTestCase) -> None:
-        """Test sequence type detection."""
-        result = FlextRuntime.is_sequence_type(test_case.test_input)
+        """Test sequence type detection.
+
+        Business Rule: is_sequence_type accepts TypeHintSpecifier compatible objects.
+        test_case.test_input may be None or various types, so we cast to TypeHintSpecifier
+        for type compatibility while preserving runtime behavior.
+        """
+        # Business Rule: Cast to TypeHintSpecifier for type compatibility
+        # None and various types are compatible with TypeHintSpecifier at runtime
+        test_input_typed = cast(
+            "FlextTypes.Utility.TypeHintSpecifier", test_case.test_input
+        )
+        result = FlextRuntime.is_sequence_type(test_input_typed)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -772,9 +820,10 @@ class TestFlextRuntime:
                 event_dict["custom"] = True
                 return event_dict
 
-            # Convert Callable to match expected type
-            processor_typed: FlextTypes.GeneralValueType = (
-                cast("FlextTypes.GeneralValueType", custom_processor)  # type: ignore[arg-type]  # Callable is compatible with GeneralValueType at runtime
+            # Business Rule: Callable processors are compatible with GeneralValueType at runtime
+            # structlog accepts callable processors for custom processing
+            processor_typed: FlextTypes.GeneralValueType = cast(
+                "FlextTypes.GeneralValueType", custom_processor
             )
             FlextRuntime.configure_structlog(
                 additional_processors=[processor_typed]  # type: ignore[list-item]  # GeneralValueType is compatible with processor type at runtime

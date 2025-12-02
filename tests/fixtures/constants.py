@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.helpers.constants import TestConstants
+from ..helpers.constants import TestConstants
 
 # Backward compatibility - re-export TestConstants
 __all__ = ["TestConstants"]

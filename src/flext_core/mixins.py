@@ -330,8 +330,9 @@ class FlextMixins:
             # Register factory instead of instance (FlextLogger is not BaseModel or FlexibleValue)
 
             def _logger_factory() -> FlextTypes.GeneralValueType:
-                # Normalize logger to GeneralValueType for factory return
-                return FlextRuntime.normalize_to_general_value(logger)
+                # Convert logger to dict-like representation for factory return
+                # FlextLogger is not GeneralValueType, so convert to dict
+                return {"logger": str(logger)}
 
             with suppress(ValueError, TypeError):
                 # Ignore if already registered (race condition)

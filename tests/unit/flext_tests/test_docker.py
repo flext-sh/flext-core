@@ -70,7 +70,7 @@ class TestContainerInfo:
         assert info.container_id == "abc123"
 
 
-class TestFlextTestDocker:  # noqa: PLR0904
+class TestFlextTestDocker:
     """Test suite for FlextTestDocker class."""
 
     @pytest.fixture

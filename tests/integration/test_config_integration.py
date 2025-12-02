@@ -189,7 +189,9 @@ class TestFlextConfigSingletonIntegration:
             "config"
         )
         if config_result.is_success:
-            assert config_result.unwrap() is global_config
+            # Identity check - cast to Any for type compatibility
+            retrieved_config: object = config_result.unwrap()
+            assert retrieved_config is global_config
 
     def test_environment_variable_override(self) -> None:
         """Test that environment variables override default config."""

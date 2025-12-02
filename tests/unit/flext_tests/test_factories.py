@@ -102,7 +102,7 @@ class TestService:
         assert service.status == "inactive"
 
 
-class TestFlextTestsFactories:  # noqa: PLR0904
+class TestFlextTestsFactories:
     """Test suite for FlextTestsFactories class."""
 
     def test_create_user_default(self) -> None:

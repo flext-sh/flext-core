@@ -264,6 +264,17 @@ class FlextConstants:
     def __getitem__(self, key: str) -> FlextTypes.ConstantValue:
         """Dynamic access: FlextConstants['Errors.VALIDATION_ERROR'].
 
+        Business Rule: Provides dynamic constant access via dot-separated paths.
+        Traverses nested classes and attributes to resolve constant values at runtime.
+        All constants are immutable (Final), ensuring thread-safe access and preventing
+        accidental mutation. Used for configuration-driven constant resolution and
+        dynamic error code lookup.
+
+        Audit Implication: Dynamic constant access enables audit trail completeness
+        by allowing runtime resolution of constant paths. All resolved values are
+        validated to ensure they conform to FlextTypes.ConstantValue type constraints.
+        Used by configuration loaders and dynamic error handling systems.
+
         Args:
             key: Dot-separated path (e.g., 'Errors.VALIDATION_ERROR')
 
@@ -297,17 +308,35 @@ class FlextConstants:
     def _is_constant_value(
         value: FlextConstants | type | FlextTypes.ConstantValue,
     ) -> TypeGuard[FlextTypes.ConstantValue]:
-        """Type guard to verify value is a valid FlextTypes.ConstantValue type."""
+        """Type guard to verify value is a valid FlextTypes.ConstantValue type.
+
+        Business Rule: Type guard for runtime validation of constant value types.
+        Excludes FlextConstants instances and type classes, then checks for valid
+        constant types (StrEnum, primitives, collections). Used by __getitem__ to
+        ensure type safety before returning constant values.
+
+        Audit Implication: Type guard ensures only valid constant types are returned,
+        preventing type errors in audit logging and configuration systems. All constant
+        values are validated before being used in audit trails.
+
+        Args:
+            value: Value to check (can be FlextConstants instance, type, or constant value)
+
+        Returns:
+            True if value is a valid FlextTypes.ConstantValue, False otherwise
+
+        """
         # Exclude FlextConstants and type classes first
         if isinstance(value, (FlextConstants, type)):
             return False
+        # Check for StrEnum first (before basic types to avoid conflicts)
+        if isinstance(value, StrEnum):
+            return True
         # Check for basic types
         if isinstance(value, (str, int, float, bool, frozenset, tuple, Mapping)):
             return True
-        # Check for StrEnum (subclass check)
-        if isinstance(value, StrEnum):
-            return True
         # Check for Pattern (re.Pattern is a type alias, check via hasattr)
+        # Note: Pattern check must come after StrEnum to avoid mypy unreachable error
         if hasattr(value, "pattern") and hasattr(value, "match"):
             return True
         # Check for ConfigDict (TypedDict, check via type) or dict
@@ -642,7 +671,16 @@ class FlextConstants:
 
             @classmethod
             def validate(cls, value: str) -> bool:
-                """Validate state value.
+                """Validate circuit breaker state value.
+
+                Business Rule: Validates circuit breaker state strings against
+                CircuitBreakerState StrEnum members. Uses __members__ access with
+                getattr for runtime safety. Returns True if value matches any enum
+                member value, False otherwise.
+
+                Audit Implication: State validation ensures only valid circuit breaker
+                states are accepted, preventing invalid state transitions in audit trails.
+                Used by reliability systems to validate state changes before applying them.
 
                 Args:
                     value: State value to validate.
@@ -651,7 +689,10 @@ class FlextConstants:
                     True if value is a valid state, False otherwise.
 
                 """
-                return value in cls.__members__.values()
+                # Type hint: cls is StrEnum class, so __members__ exists
+                # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+                members_dict: dict[str, StrEnum] = getattr(cls, "__members__", {})
+                return value in members_dict.values()
 
     class Security:
         """Security constants."""
@@ -1227,8 +1268,13 @@ class FlextConstants:
         DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
 
         # Valid handler modes derived from HandlerType StrEnum (single source of truth)
+        # Type hint: HandlerType is StrEnum class, so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+        _handler_type_members: dict[str, HandlerType] = getattr(
+            HandlerType, "__members__", {}
+        )
         VALID_HANDLER_MODES: Final[AbstractSet[str]] = frozenset(
-            member.value for member in HandlerType.__members__.values()
+            member.value for member in _handler_type_members.values()
         )
 
         class ProcessingMode(StrEnum):
@@ -1637,9 +1683,15 @@ class FlextConstants:
     ) -> str | None:
         """Validate enum value using advanced patterns.
 
-        Generic validation method that works with any ValidationMappings pattern.
-        Uses frozenset for O(1) membership testing and collections.abc.Mapping
-        for immutable validation data. Python 3.13+ best practice for validation.
+        Business Rule: Validates enum values against a set of valid values and
+        returns normalized value from mapping. Uses frozenset for O(1) membership
+        testing and collections.abc.Mapping for immutable validation data. Pattern
+        follows Python 3.13+ best practices for validation with type safety.
+
+        Audit Implication: Validation ensures only valid enum values are accepted,
+        preventing invalid state transitions in audit trails. Normalized values ensure
+        consistent representation across systems. Used by Pydantic 2 validators and
+        configuration loaders for type-safe enum validation.
 
         Args:
             value: Value string to validate
@@ -1658,15 +1710,20 @@ class FlextConstants:
     def get_valid_enum_values(cls, validation_set: AbstractSet[str]) -> Sequence[str]:
         """Get immutable sequence of valid enum values.
 
-        Generic method to get sorted sequence from validation set.
-        Returns collections.abc.Sequence for read-only iteration.
-        Python 3.13+ best practice for exposing validation options.
+        Business Rule: Returns sorted immutable sequence of valid enum values from
+        validation set. Uses collections.abc.Sequence for read-only iteration, following
+        Python 3.13+ best practices for exposing validation options. Sorting ensures
+        deterministic ordering for UI display and documentation generation.
+
+        Audit Implication: Immutable sequence prevents accidental mutation of valid
+        values, ensuring audit trail consistency. Used by configuration UIs and
+        documentation generators to display available enum options.
 
         Args:
             validation_set: Set of valid values
 
         Returns:
-            Immutable sequence of valid value strings
+            Immutable sequence of valid value strings (sorted)
 
         """
         return tuple(sorted(validation_set))
@@ -1688,17 +1745,41 @@ class FlextConstants:
             Immutable mapping of enum values to enum classes
 
         """
-        # Mutable dict needed for construction, then wrapped in MappingProxyType
+        # Business Rule: Create discriminated union mapping from StrEnum classes
+        # Used for Pydantic 2 discriminated union validation patterns.
+        # Pattern: Construct mutable dict, then wrap in MappingProxyType for immutability.
+        # This ensures type safety while allowing runtime construction.
+        #
+        # Audit Implication: Returned mapping is immutable after construction,
+        # safe for concurrent access and prevents mutation. Used by Pydantic
+        # validators for discriminated union validation in Python 3.13+.
+        #
+        # Note: dict[str, type[StrEnum]] is necessary here for construction.
+        # The dict is immediately wrapped in MappingProxyType, making it immutable.
+        # This is the correct pattern for creating immutable mappings from runtime data.
         union_map: dict[str, type[StrEnum]] = {}
         for enum_class in enum_classes:
-            for member in enum_class.__members__.values():
+            # Type hint: enum_class is type[StrEnum], so __members__ exists
+            # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+            members_dict: dict[str, StrEnum] = getattr(enum_class, "__members__", {})
+            for member in members_dict.values():
                 union_map[member.value] = enum_class
-        return MappingProxyType(union_map)  # Return immutable Mapping
+        # Return immutable Mapping - safe for concurrent access and prevents mutation
+        return MappingProxyType(union_map)
 
     # Domain-specific convenience methods using StrEnum directly
     @classmethod
     def validate_log_level(cls, value: str) -> str | None:
         """Validate log level string against Settings.LogLevel StrEnum.
+
+        Business Rule: Validates log level strings against Settings.LogLevel StrEnum
+        using _value2member_map_ for O(1) lookup. Ensures only valid log levels are
+        accepted for configuration and logging systems. Returns normalized log level
+        string if valid, None otherwise.
+
+        Audit Implication: Log level validation ensures audit trail completeness by
+        preventing invalid log levels from being used. All log levels are validated
+        before being used in logging configuration and audit systems.
 
         Args:
             value: Log level string to validate
@@ -1715,6 +1796,15 @@ class FlextConstants:
     def validate_environment(cls, value: str) -> str | None:
         """Validate environment string against Settings.Environment StrEnum.
 
+        Business Rule: Validates environment strings against Settings.Environment StrEnum
+        using _value2member_map_ for O(1) lookup. Ensures only valid environment values
+        are accepted for configuration and deployment systems. Returns normalized
+        environment string if valid, None otherwise.
+
+        Audit Implication: Environment validation ensures audit trail completeness by
+        preventing invalid environment values from being used. All environments are
+        validated before being used in configuration and deployment systems.
+
         Args:
             value: Environment string to validate
 
@@ -1730,11 +1820,24 @@ class FlextConstants:
     def get_valid_log_levels(cls) -> Sequence[str]:
         """Get immutable sequence of valid log levels from Settings.LogLevel StrEnum.
 
+        Business Rule: Returns immutable sequence of all valid log levels from
+        Settings.LogLevel StrEnum. Uses __members__ access with getattr for runtime
+        safety. Returns tuple for immutability and deterministic ordering.
+
+        Audit Implication: Immutable sequence prevents accidental mutation of valid
+        log levels, ensuring audit trail consistency. Used by configuration UIs and
+        documentation generators to display available log level options.
+
         Returns:
             Immutable sequence of valid log level strings
 
         """
-        return tuple(m.value for m in cls.Settings.LogLevel.__members__.values())
+        # Type hint: LogLevel is StrEnum class, so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+        log_level_members: dict[str, StrEnum] = getattr(
+            cls.Settings.LogLevel, "__members__", {}
+        )
+        return tuple(m.value for m in log_level_members.values())
 
     @classmethod
     def get_valid_environments(cls) -> Sequence[str]:
@@ -1744,7 +1847,12 @@ class FlextConstants:
             Immutable sequence of valid environment strings
 
         """
-        return tuple(m.value for m in cls.Settings.Environment.__members__.values())
+        # Type hint: Environment is StrEnum class, so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+        env_members: dict[str, StrEnum] = getattr(
+            cls.Settings.Environment, "__members__", {}
+        )
+        return tuple(m.value for m in env_members.values())
 
     @classmethod
     def create_enum_literal_mapping(
@@ -1763,9 +1871,10 @@ class FlextConstants:
             Immutable mapping of enum values to themselves
 
         """
-        return {
-            member.value: member.value for member in enum_class.__members__.values()
-        }
+        # Type hint: enum_class is type[StrEnum], so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+        members_dict: dict[str, StrEnum] = getattr(enum_class, "__members__", {})
+        return {member.value: member.value for member in members_dict.values()}
 
     # =============================================================================
     # ENUM HELPERS - Extract values from StrEnum for Literal types
@@ -1793,8 +1902,11 @@ class FlextConstants:
             >>> # type LogLevelLiteral = Literal[values[0], values[1], ...]
 
         """
+        # Type hint: enum_class is type[StrEnum], so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
         # Iterate over enum members using __members__ for proper type checking
-        return tuple(member.value for member in enum_class.__members__.values())
+        members_dict: dict[str, StrEnum] = getattr(enum_class, "__members__", {})
+        return tuple(member.value for member in members_dict.values())
 
     # =============================================================================
     # SHARED DOMAIN CONSTANTS - Cross-cutting domain enums for ecosystem consistency
@@ -1830,12 +1942,21 @@ class FlextConstants:
             OPENLDAP = "openldap"  # OpenLDAP implementation
 
         # Pre-computed validation sets for performance
+        # Type hint: LdifFormatType is StrEnum class, so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+        _ldif_format_members: dict[str, LdifFormatType] = getattr(
+            LdifFormatType, "__members__", {}
+        )
         _LDIF_FORMAT_VALIDATION_SET: Final[AbstractSet[str]] = frozenset(
-            member.value for member in LdifFormatType.__members__.values()
+            member.value for member in _ldif_format_members.values()
         )
 
+        # Type hint: ServerType is StrEnum class, so __members__ exists
+        _server_type_members: dict[str, ServerType] = getattr(
+            ServerType, "__members__", {}
+        )
         _SERVER_TYPE_VALIDATION_SET: Final[AbstractSet[str]] = frozenset(
-            member.value for member in ServerType.__members__.values()
+            member.value for member in _server_type_members.values()
         )
 
         @classmethod
@@ -1872,9 +1993,12 @@ class FlextConstants:
                 Sequence of valid LDIF format strings
 
             """
-            return tuple(
-                member.value for member in cls.LdifFormatType.__members__.values()
+            # Type hint: LdifFormatType is StrEnum class, so __members__ exists
+            # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+            ldif_format_members: dict[str, StrEnum] = getattr(
+                cls.LdifFormatType, "__members__", {}
             )
+            return tuple(member.value for member in ldif_format_members.values())
 
         @classmethod
         def get_valid_server_types(cls) -> Sequence[str]:
@@ -1884,7 +2008,12 @@ class FlextConstants:
                 Sequence of valid server type strings
 
             """
-            return tuple(member.value for member in cls.ServerType.__members__.values())
+            # Type hint: ServerType is StrEnum class, so __members__ exists
+            # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+            server_type_members: dict[str, StrEnum] = getattr(
+                cls.ServerType, "__members__", {}
+            )
+            return tuple(member.value for member in server_type_members.values())
 
     class Example:
         """Example constants for demonstrating FLEXT features.
@@ -1954,8 +2083,11 @@ class FlextConstants:
         })
 
         # Validation sets for performance
+        # Type hint: LogLevel is StrEnum class, so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+        _log_level_members: dict[str, LogLevel] = getattr(LogLevel, "__members__", {})
         VALID_LOG_LEVELS: Final[AbstractSet[str]] = frozenset(
-            member.value for member in LogLevel.__members__.values()
+            member.value for member in _log_level_members.values()
         )
 
         # StrEnum for demonstration patterns

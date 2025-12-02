@@ -930,9 +930,12 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if handler_mode is None:
             return self.ok(True)
 
-        valid_modes: list[str] = [
-            m.value for m in FlextConstants.Cqrs.HandlerType.__members__.values()
-        ]
+        # Type hint: HandlerType is StrEnum class, so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+        handler_type_members: dict[str, FlextConstants.Cqrs.HandlerType] = getattr(
+            FlextConstants.Cqrs.HandlerType, "__members__", {}
+        )
+        valid_modes: list[str] = [m.value for m in handler_type_members.values()]
         if str(handler_mode) not in valid_modes:
             return self.fail(
                 f"Invalid handler_mode: {handler_mode}. Must be one of {valid_modes}",
@@ -2071,11 +2074,18 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             "mode": "explicit",
         })
 
-    def register_handler_with_request(  # noqa: PLR0911, PLR0914
+    def register_handler_with_request(
         self,
         request: FlextTypes.GeneralValueType,
     ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
         """Register handler using structured request model.
+
+        Business Rule: Handler registration supports two modes:
+        1. Auto-discovery: handlers with can_handle() method are queried at dispatch time
+        2. Explicit: handlers registered for specific message_type
+
+        This dual-mode architecture enables both dynamic routing (handlers decide
+        what they can handle) and static routing (pre-registered type mappings).
 
         Args:
             request: Dict or Pydantic model containing registration details
@@ -2084,17 +2094,17 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             FlextResult with registration details or error
 
         """
-        # Normalize request to dict
+        # Normalize and validate request
         request_dict_result = FlextDispatcher._normalize_request_to_dict(request)
         if request_dict_result.is_failure:
             return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                request_dict_result.error or "Failed to normalize request",
+                request_dict_result.error or "Failed to normalize request"
             )
         request_dict = request_dict_result.unwrap()
 
         # Validate handler mode
         handler_mode_raw = request_dict.get("handler_mode")
-        handler_mode: str | None = (
+        handler_mode = (
             handler_mode_raw
             if isinstance(handler_mode_raw, (str, type(None)))
             else None
@@ -2102,99 +2112,41 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         mode_validation = self._validate_handler_mode(handler_mode)
         if mode_validation.is_failure:
             return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                mode_validation.error or "Invalid handler mode",
+                mode_validation.error or "Invalid handler mode"
             )
 
-        # Validate handler implementation
-        handler_raw = request_dict.get("handler")
-        if not handler_raw:
+        # Validate and extract handler
+        handler_result = self._validate_and_extract_handler(request_dict)
+        if handler_result.is_failure:
             return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                "Handler validation failed: handler is required",
+                handler_result.error or "Handler validation failed"
             )
+        handler_general, handler_name = handler_result.unwrap()
+        # Cast GeneralValueType to HandlerType for storage in typed collections
+        handler = cast("FlextTypes.HandlerAliases.HandlerType", handler_general)
 
-        # Type check and convert handler to HandlerType
-        # HandlerType includes Callable, Mapping, BaseModel, and objects with handle method
-        # We need to check if it's one of these types
-        is_callable = callable(handler_raw)
-        is_mapping = isinstance(handler_raw, Mapping)
-        is_base_model = isinstance(handler_raw, BaseModel)
-        has_handle_method = hasattr(handler_raw, "handle") and callable(
-            getattr(handler_raw, "handle", None)
-        )
-
-        # Debug logging removed - use logger.debug() if needed
-
-        if not (is_callable or is_mapping or is_base_model or has_handle_method):
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                "Handler must be a callable, BaseModel, Mapping, or have a handle method",
-            )
-
-        # Type narrowing: handler_raw is confirmed to be one of HandlerType components
-        # HandlerType includes Callable, BaseModel, and Mapping[str, GeneralValueType]
-        handler = cast("FlextTypes.HandlerAliases.HandlerType", handler_raw)
-
-        # Validate handler has required interface
-        validation_result = self._validate_handler_registry_interface(
-            handler,
-            handler_context="registered handler",
-        )
-        if validation_result.is_failure:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                validation_result.error or "Handler validation failed",
-            )
-
-        # Extract handler_name for tracking
-        # Cast handler to GeneralValueType for _extract_handler_name
-        handler_for_extraction: FlextTypes.GeneralValueType = cast(
-            "FlextTypes.GeneralValueType",
-            handler,
-        )
-        handler_name = self._extract_handler_name(handler_for_extraction, request_dict)
-        if not handler_name:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                "handler_name is required",
-            )
-
-        # ARCHITECTURE: Two registration modes
-        # 1. Auto-discovery: handlers with can_handle() method
-        # 2. Explicit: handlers registered for specific message type
-
-        # Check if handler supports auto-discovery
-        can_handle_attr = (
-            getattr(handler, "can_handle", None)
-            if hasattr(handler, "can_handle")
-            else None
-        )
-        has_can_handle = callable(can_handle_attr)
-
-        if has_can_handle:
-            # Mode 1: Auto-discovery via can_handle()
-            # Add to _auto_handlers list for routing via can_handle()
+        # Determine registration mode and register
+        can_handle_attr = getattr(handler, "can_handle", None)
+        if callable(can_handle_attr):
+            # Auto-discovery mode
             if handler not in self._auto_handlers:
                 self._auto_handlers.append(handler)
-
             return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
                 "handler_name": handler_name,
                 "status": "registered",
                 "mode": "auto_discovery",
             })
 
-        # Mode 2: Explicit registration for specific message type
+        # Explicit registration requires message_type
         message_type = request_dict.get("message_type")
         if not message_type:
             return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
-                "Handler without can_handle() requires message_type",
+                "Handler without can_handle() requires message_type"
             )
 
-        # Get message type name for indexing
-        name_attr = (
-            getattr(message_type, "__name__", None)
-            if hasattr(message_type, "__name__")
-            else None
-        )
+        # Get message type name and store handler
+        name_attr = getattr(message_type, "__name__", None)
         message_type_name = name_attr if name_attr is not None else str(message_type)
-
-        # Store handler indexed by message type name
         self._handlers[message_type_name] = handler
 
         return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
@@ -3570,7 +3522,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                 raise TypeError(msg) from e
 
             # Fast fail: dumped must be dict (Pydantic guarantees this)
-            if not FlextRuntime.is_dict_like(dumped):
+            # Cast to GeneralValueType for is_dict_like check
+            dumped_as_general = cast("FlextTypes.GeneralValueType", dumped)
+            if not FlextRuntime.is_dict_like(dumped_as_general):
                 # Type checker may think this is unreachable, but it's reachable at runtime
                 msg = (
                     f"metadata.model_dump() returned {type(dumped).__name__}, "
@@ -3578,7 +3532,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                 )
                 raise TypeError(msg)
             # Safe cast: model_dump() returns dict[str, Any], which is compatible with GeneralValueType
-            return dumped
+            return dumped_as_general
 
         return None
 

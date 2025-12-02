@@ -19,8 +19,7 @@ from typing import Any, cast
 import pytest
 
 from flext_core import FlextResult
-
-from ...fixtures.typing import (
+from tests.fixtures.typing import (
     FixtureCaseDict,
     FixtureDataDict,
     MockScenarioData,
@@ -653,11 +652,13 @@ class TestAdvancedPatterns:
         # nested_data is dict[str, NestedDataDict] according to FixtureDataDict
         nested_dict = nested_data.get("id") if isinstance(nested_data, dict) else None
         assert nested_dict is not None or "id" in nested_data
-        # Access nested_data safely
+        # Access nested_data safely - cast to object for runtime comparison
         if isinstance(nested_data, dict) and "id" in nested_data:
-            assert nested_data["id"] == "nested-456"
+            id_value: object = nested_data["id"]
+            assert id_value == "nested-456"
         if isinstance(nested_data, dict) and "name" in nested_data:
-            assert nested_data["name"] == "Jane"
+            name_value: object = nested_data["name"]
+            assert name_value == "Jane"
 
     def test_fluent_interface_pattern(self) -> None:
         """Test fluent interface pattern."""

@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import cast
+from typing import Any, cast
 
 import pytest
 
@@ -94,7 +94,7 @@ class TestFlextTestsUtilities:
                 """Implement HasModelDump protocol."""
                 return {"attribute": self.attribute}
 
-        obj: FlextProtocols.HasModelDump = TestObject()
+        obj: Any = TestObject()
 
         with FlextTestsUtilities.test_context(obj, "attribute", "modified"):
             assert obj.attribute == "modified"
@@ -132,7 +132,7 @@ class TestFlextTestsUtilities:
                 """Implement HasModelDump protocol."""
                 return {"temp_attr": self.temp_attr}
 
-        obj: FlextProtocols.HasModelDump = TestObject()
+        obj: Any = TestObject()
 
         with FlextTestsUtilities.test_context(
             obj,
@@ -157,7 +157,7 @@ class TestFlextTestsUtilities:
                 """Implement HasModelDump protocol."""
                 return {"attribute": self.attribute}
 
-        obj: FlextProtocols.HasModelDump = TestObject()
+        obj: Any = TestObject()
 
         with FlextTestsUtilities.test_context(obj, "attribute", "modified"):
             assert obj.attribute == "modified"

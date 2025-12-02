@@ -27,9 +27,9 @@ from typing import Any
 import pytest
 from pydantic import ValidationError, field_validator
 
-from flext_core import FlextModels
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.cqrs import FlextModelsCqrs
+from flext_core._models.entity import FlextModelsEntity
 
 
 class ModelScenarios:
@@ -42,7 +42,7 @@ class TestValueObjects:
     def test_value_object_creation(self) -> None:
         """Test creating a value object."""
 
-        class Money(FlextModels.Value):
+        class Money(FlextModelsEntity.Value):
             """Money value object."""
 
             amount: float
@@ -55,7 +55,7 @@ class TestValueObjects:
     def test_value_object_immutability(self) -> None:
         """Test value object is immutable."""
 
-        class Point(FlextModels.Value):
+        class Point(FlextModelsEntity.Value):
             """Point value object."""
 
             x: float
@@ -63,12 +63,12 @@ class TestValueObjects:
 
         point = Point(x=1.0, y=2.0)
         with pytest.raises(ValidationError):
-            point.x = 3.0
+            point.x = 3.0  # pyrefly: ignore[read-only] - Testing immutability, this should raise
 
     def test_value_object_equality_by_value(self) -> None:
         """Test value objects compared by value."""
 
-        class Color(FlextModels.Value):
+        class Color(FlextModelsEntity.Value):
             """Color value object."""
 
             red: int
@@ -82,7 +82,7 @@ class TestValueObjects:
     def test_value_object_validation(self) -> None:
         """Test value object validation."""
 
-        class Email(FlextModels.Value):
+        class Email(FlextModelsEntity.Value):
             """Email value object with validation."""
 
             address: str
@@ -103,7 +103,7 @@ class TestValueObjects:
     def test_value_object_hashable(self) -> None:
         """Test value objects are hashable."""
 
-        class ISBN(FlextModels.Value):
+        class ISBN(FlextModelsEntity.Value):
             """ISBN value object."""
 
             code: str
@@ -130,7 +130,7 @@ class TestEntities:
     def test_entity_creation(self) -> None:
         """Test creating an entity."""
 
-        class Person(FlextModels.Entity):
+        class Person(FlextModelsEntity.Core):
             """Person entity."""
 
             name: str
@@ -145,7 +145,7 @@ class TestEntities:
     def test_entity_identity_tracking(self) -> None:
         """Test entities are compared by identity."""
 
-        class Account(FlextModels.Entity):
+        class Account(FlextModelsEntity.Core):
             """Account entity."""
 
             name: str
@@ -159,7 +159,7 @@ class TestEntities:
     def test_entity_lifecycle_tracking(self) -> None:
         """Test entity creation and update timestamps."""
 
-        class Document(FlextModels.Entity):
+        class Document(FlextModelsEntity.Core):
             """Document entity."""
 
             title: str
@@ -172,7 +172,7 @@ class TestEntities:
     def test_entity_validation(self) -> None:
         """Test entity field validation."""
 
-        class User(FlextModels.Entity):
+        class User(FlextModelsEntity.Core):
             """User entity with validation."""
 
             email: str
@@ -194,7 +194,7 @@ class TestEntities:
     def test_entity_model_dump_serialization(self) -> None:
         """Test entity serialization using Pydantic model_dump."""
 
-        class Product(FlextModels.Entity):
+        class Product(FlextModelsEntity.Core):
             """Product entity."""
 
             name: str
@@ -216,7 +216,7 @@ class TestAggregateRoots:
     def test_aggregate_root_creation(self) -> None:
         """Test creating an aggregate root."""
 
-        class Order(FlextModels.AggregateRoot):
+        class Order(FlextModelsEntity.AggregateRoot):
             """Order aggregate root."""
 
             order_number: str
@@ -229,7 +229,7 @@ class TestAggregateRoots:
     def test_aggregate_root_invariants(self) -> None:
         """Test aggregate root enforces invariants."""
 
-        class Account(FlextModels.AggregateRoot):
+        class Account(FlextModelsEntity.AggregateRoot):
             """Account with business rules."""
 
             balance: float
@@ -241,7 +241,7 @@ class TestAggregateRoots:
     def test_aggregate_root_lifecycle(self) -> None:
         """Test aggregate root lifecycle."""
 
-        class Project(FlextModels.AggregateRoot):
+        class Project(FlextModelsEntity.AggregateRoot):
             """Project aggregate root."""
 
             name: str
@@ -258,7 +258,7 @@ class TestCommands:
     def test_command_creation(self) -> None:
         """Test creating a command."""
 
-        class CreateUserCommand(FlextModels.Cqrs.Command):
+        class CreateUserCommand(FlextModelsCqrs.Command):
             """Command to create a user."""
 
             email: str
@@ -271,7 +271,7 @@ class TestCommands:
     def test_command_mutation_behavior(self) -> None:
         """Test command mutation behavior with validate_assignment."""
 
-        class UpdateProfileCommand(FlextModels.Cqrs.Command):
+        class UpdateProfileCommand(FlextModelsCqrs.Command):
             """Command to update profile."""
 
             name: str
@@ -286,7 +286,7 @@ class TestCommands:
     def test_command_validation(self) -> None:
         """Test command validation."""
 
-        class DepositCommand(FlextModels.Cqrs.Command):
+        class DepositCommand(FlextModelsCqrs.Command):
             """Command with validation."""
 
             account_id: str
@@ -362,7 +362,7 @@ class TestDomainEvents:
 
     def test_domain_event_creation(self) -> None:
         """Test creating a domain event with data payload."""
-        event = FlextModels.DomainEvent(
+        event = FlextModelsEntity.DomainEvent(
             event_type="UserCreated",
             aggregate_id="USER-001",
             data={"user_id": "USER-001", "email": "user@example.com"},
@@ -376,12 +376,12 @@ class TestDomainEvents:
 
     def test_domain_event_equality(self) -> None:
         """Test domain events can be compared and tracked."""
-        event1 = FlextModels.DomainEvent(
+        event1 = FlextModelsEntity.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
             data={"tracking_number": "TRACK-123"},
         )
-        event2 = FlextModels.DomainEvent(
+        event2 = FlextModelsEntity.DomainEvent(
             event_type="OrderShipped",
             aggregate_id="ORD-001",
             data={"tracking_number": "TRACK-123"},
@@ -393,7 +393,7 @@ class TestDomainEvents:
     def test_domain_event_timestamp(self) -> None:
         """Test domain events have timestamps."""
 
-        class AccountUpdatedEvent(FlextModels.DomainEvent):
+        class AccountUpdatedEvent(FlextModelsEntity.DomainEvent):
             """Event: account was updated."""
 
         event = AccountUpdatedEvent(
@@ -407,7 +407,7 @@ class TestDomainEvents:
     def test_domain_event_causality(self) -> None:
         """Test domain events track causality via id and timestamps."""
 
-        class PaymentProcessedEvent(FlextModels.DomainEvent):
+        class PaymentProcessedEvent(FlextModelsEntity.DomainEvent):
             """Event: payment was processed."""
 
         event = PaymentProcessedEvent(
@@ -449,7 +449,7 @@ class TestModelValidation:
     def test_model_validation_error_handling(self) -> None:
         """Test model validation error handling."""
 
-        class ValidatedEntity(FlextModels.Entity):
+        class ValidatedEntity(FlextModelsEntity.Core):
             """Entity with validation."""
 
             email: str
@@ -471,7 +471,7 @@ class TestModelValidation:
     def test_multiple_field_validation(self) -> None:
         """Test multiple field validators."""
 
-        class Profile(FlextModels.Entity):
+        class Profile(FlextModelsEntity.Core):
             """Profile with multiple validators."""
 
             username: str
@@ -504,7 +504,7 @@ class TestModelSerialization:
     def test_entity_model_dump(self) -> None:
         """Test model_dump serialization."""
 
-        class Task(FlextModels.Entity):
+        class Task(FlextModelsEntity.Core):
             """Task entity."""
 
             title: str
@@ -519,7 +519,7 @@ class TestModelSerialization:
     def test_command_serialization(self) -> None:
         """Test command serialization."""
 
-        class SendEmailCommand(FlextModels.Cqrs.Command):
+        class SendEmailCommand(FlextModelsCqrs.Command):
             """Command to send email."""
 
             recipient: str
@@ -538,7 +538,7 @@ class TestModelSerialization:
     def test_aggregate_root_serialization(self) -> None:
         """Test aggregate root serialization."""
 
-        class ShoppingCart(FlextModels.AggregateRoot):
+        class ShoppingCart(FlextModelsEntity.AggregateRoot):
             """Shopping cart aggregate."""
 
             items: list[dict[str, Any]]
@@ -562,7 +562,7 @@ class TestModelIntegration:
     def test_entity_model_validation(self) -> None:
         """Test entity model validation via model_validate."""
 
-        class Customer(FlextModels.Entity):
+        class Customer(FlextModelsEntity.Core):
             """Customer entity."""
 
             name: str
@@ -580,7 +580,7 @@ class TestModelIntegration:
     def test_command_factory_pattern(self) -> None:
         """Test command creation as factories."""
 
-        class RegisterUserCommand(FlextModels.Cqrs.Command):
+        class RegisterUserCommand(FlextModelsCqrs.Command):
             """User registration command."""
 
             email: str

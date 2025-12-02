@@ -44,6 +44,14 @@ class FlextConfig(BaseSettings):
     """
 
     # Singleton pattern
+    # Business Rule: Use dict for mutable ClassVar storage (singleton registry)
+    # ClassVar dict is mutable storage needed for singleton pattern - this is correct.
+    # Type annotation uses dict (not Mapping) because it's mutable storage that needs
+    # to be modified at runtime (adding/removing instances).
+    #
+    # Audit Implication: This registry tracks all configuration instances for
+    # singleton pattern. Thread-safe access via _lock ensures no race conditions.
+    # Used for configuration instance management across the FLEXT ecosystem.
     _instances: ClassVar[dict[type[BaseSettings], BaseSettings]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
@@ -270,6 +278,17 @@ class FlextConfig(BaseSettings):
     ) -> FlextConstants.Settings.LogLevel:
         """Validate and normalize log level against allowed values.
 
+        Business Rule: Validates log level strings against Settings.LogLevel StrEnum.
+        Accepts string or LogLevel StrEnum, normalizes to uppercase string.
+        Returns LogLevel StrEnum member which is compatible with LogLevelLiteral.
+        Uses __members__ access with getattr for runtime safety. Raises ValueError
+        if log level is invalid, preventing invalid log level configurations.
+
+        Audit Implication: Log level validation ensures audit trail completeness by
+        preventing invalid log levels from being used. All log levels are validated
+        before being used in logging configuration and audit systems. Used by Pydantic
+        v2 field_validator for type-safe log level validation.
+
         Accepts string or LogLevel StrEnum, normalizes to uppercase string.
         Returns LogLevel StrEnum member which is compatible with LogLevelLiteral.
         """
@@ -286,15 +305,36 @@ class FlextConfig(BaseSettings):
             return FlextConstants.Settings.LogLevel(normalized)
         except ValueError:
             log_level_enum = FlextConstants.Settings.LogLevel
-            allowed_values = [
-                level.value for level in log_level_enum.__members__.values()
-            ]
+            # Type hint: log_level_enum is StrEnum class, so __members__ exists
+            # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+            members_dict: dict[str, FlextConstants.Settings.LogLevel] = getattr(
+                log_level_enum, "__members__", {}
+            )
+            allowed_values = [level.value for level in members_dict.values()]
             msg = f"Invalid log level: {v}. Must be one of {allowed_values}"
             raise ValueError(msg) from None
 
     @model_validator(mode="after")
     def validate_configuration(self) -> Self:
-        """Validate configuration."""
+        """Validate configuration.
+
+        Business Rule: Validates configuration consistency after model initialization.
+        Checks database URL scheme validity and ensures trace mode requires debug mode.
+        Raises ValueError if configuration is invalid, preventing invalid configurations
+        from being used in production systems.
+
+        Audit Implication: Configuration validation ensures audit trail completeness by
+        preventing invalid configurations from being used. All configurations are validated
+        before being used in production systems. Used by Pydantic v2 model_validator for
+        cross-field validation.
+
+        Returns:
+            Self: Validated configuration instance
+
+        Raises:
+            ValueError: If configuration is invalid
+
+        """
         # Check database URL scheme if provided
         if self.database_url and not self.database_url.startswith((
             "postgresql://",
@@ -372,6 +412,14 @@ class FlextConfig(BaseSettings):
             return self.config_class()
 
     # Registry for namespaced configurations
+    # Business Rule: Use dict for mutable ClassVar storage (namespace registry)
+    # ClassVar dict is mutable storage needed for namespace registration - this is correct.
+    # Type annotation uses dict (not Mapping) because it's mutable storage that needs
+    # to be modified at runtime (registering namespace config classes).
+    #
+    # Audit Implication: This registry tracks namespace configuration classes for
+    # auto-registration pattern. Used by @auto_register decorator to map namespace
+    # strings to configuration classes.
     _namespace_registry: ClassVar[dict[str, type[BaseSettings]]] = {}
 
     @staticmethod
@@ -380,8 +428,15 @@ class FlextConfig(BaseSettings):
     ) -> Callable[[type[T_Settings]], type[T_Settings]]:
         """Decorator for auto-registering configuration classes.
 
-        Uses TypeVar to preserve the original class type through the decorator,
-        ensuring type checkers (pyright/mypy) see the specific class type, not BaseSettings.
+        Business Rule: Decorator pattern for auto-registering configuration classes
+        in namespace registry. Uses TypeVar to preserve the original class type through
+        the decorator, ensuring type checkers (pyright/mypy) see the specific class type,
+        not BaseSettings. Registers class in _namespace_registry for dynamic namespace
+        resolution.
+
+        Audit Implication: Auto-registration enables dynamic namespace configuration
+        resolution, ensuring audit trail completeness for namespace-based configurations.
+        All namespace configurations are registered before being used in production systems.
 
         Args:
             namespace: Namespace identifier for the configuration
@@ -433,6 +488,15 @@ class FlextConfig(BaseSettings):
         config_type: type[T_Namespace],
     ) -> T_Namespace:
         """Get configuration instance for a namespace.
+
+        Business Rule: Resolves namespace configuration class from registry and
+        instantiates it. Validates namespace exists and config class is subclass of
+        expected type. Raises ValueError if namespace not found, TypeError if type
+        mismatch. Used for dynamic namespace configuration resolution.
+
+        Audit Implication: Namespace resolution ensures audit trail completeness by
+        validating namespace configurations before use. All namespace configurations
+        are validated before being used in production systems.
 
         Args:
             namespace: Namespace identifier

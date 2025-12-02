@@ -158,7 +158,12 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         # Subset validation - using string value for type guard
         active_states = frozenset({StatusEnum.ACTIVE, StatusEnum.PENDING})
         test_status_str: str = "active"
-        if FlextUtilities.Enum.is_subset(StatusEnum, active_states, test_status_str):  # type: ignore[arg-type]  # StatusEnum is a type, not an instance
+        # Business Rule: is_subset accepts enum class (type[E]), frozenset of enum members, and value to check
+        # StatusEnum is the enum class type. Use type() to ensure we pass the class, not an instance.
+        # This pattern ensures type checker understands it's a class type for proper type inference.
+        if FlextUtilities.Enum.is_subset(
+            type(StatusEnum.ACTIVE), active_states, test_status_str
+        ):
             print("✅ Subset validation: 'active' is in active states")
 
     @staticmethod

@@ -18,18 +18,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core._models.entity import FlextModelsEntity
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
 from flext_core.exceptions import FlextExceptions
 from flext_core.typings import FlextTypes
-from tests.helpers import TestModels
 
 
-# Test models using TestModels base
+# Test models using FlextModelsEntity base
 class ConfigModelForTest(BaseModel):
     """Test configuration model (mutable for set_parameter tests)."""
 
@@ -43,7 +43,7 @@ class ConfigModelForTest(BaseModel):
     enabled: bool = True
 
 
-class OptionsModelForTest(TestModels.Value):
+class OptionsModelForTest(FlextModelsEntity.Value):
     """Test options model for build_options_from_kwargs."""
 
     format: str = "json"
@@ -102,7 +102,7 @@ class SingletonWithoutGetGlobalForTest:
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 
 
-class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
+class TestFlextUtilitiesConfiguration:
     """Comprehensive tests for FlextUtilitiesConfiguration."""
 
     def test_get_parameter_from_dict(self) -> None:
@@ -187,8 +187,10 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
         """Test get_parameter raises NotFoundError for missing attribute."""
         config = DataclassConfigForTest(name="test")
 
+        # Cast dataclass to Any for type checker - method handles dataclasses at runtime
+        config_any: Any = config
         with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
-            FlextUtilitiesConfiguration.get_parameter(config, "missing")
+            FlextUtilitiesConfiguration.get_parameter(config_any, "missing")
         assert "Parameter 'missing' is not defined" in str(exc_info.value)
 
     def test_set_parameter_on_pydantic_model_success(self) -> None:
@@ -231,7 +233,9 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
         """Test set_parameter on non-Pydantic object."""
         config = DataclassConfigForTest(name="test", value=42)
 
-        result = FlextUtilitiesConfiguration.set_parameter(config, "value", 100)
+        # Cast dataclass to Any for type checker - method handles dataclasses at runtime
+        config_any: Any = config
+        result = FlextUtilitiesConfiguration.set_parameter(config_any, "value", 100)
         assert result is True
         assert config.value == 100
 
@@ -292,6 +296,7 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
             "new_value",
         )
         assert result.is_failure
+        assert result.error is not None
         assert "does not have get_global_instance method" in result.error
 
     def test_set_singleton_not_callable(self) -> None:
@@ -308,6 +313,7 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
             "test",
         )
         assert result.is_failure
+        assert result.error is not None
         assert "is not callable" in result.error
 
     def test_set_singleton_no_has_model_dump(self) -> None:
@@ -331,6 +337,7 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
             "test",
         )
         assert result.is_failure
+        assert result.error is not None
         assert "does not implement HasModelDump protocol" in result.error
 
     def test_set_singleton_parameter_set_failure(self) -> None:
@@ -344,6 +351,7 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
             "value",
         )
         assert result.is_failure
+        assert result.error is not None
         assert "Failed to set parameter 'missing'" in result.error
 
     def test_validate_config_class_success(self) -> None:
@@ -505,7 +513,7 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
     def test_build_options_from_kwargs_validation_error(self) -> None:
         """Test build_options_from_kwargs handles Pydantic validation errors."""
 
-        class StrictOptionsForTest(TestModels.Value):
+        class StrictOptionsForTest(FlextModelsEntity.Value):
             """Strict options with validation."""
 
             value: int = Field(ge=0, le=100)
@@ -518,12 +526,13 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
         )
 
         assert result.is_failure
+        assert result.error is not None
         assert "Failed to build StrictOptionsForTest" in result.error
 
     def test_build_options_from_kwargs_unexpected_error(self) -> None:
         """Test build_options_from_kwargs handles unexpected errors."""
 
-        class FailingOptionsForTest(TestModels.Value):
+        class FailingOptionsForTest(FlextModelsEntity.Value):
             """Options that fail on model_dump."""
 
             value: str = "test"
@@ -541,6 +550,7 @@ class TestFlextUtilitiesConfiguration:  # noqa: PLR0904
         )
 
         assert result.is_failure
+        assert result.error is not None
         assert "Unexpected error building FailingOptionsForTest" in result.error
 
     def test_get_parameter_boundary_values(self) -> None:

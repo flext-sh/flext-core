@@ -26,21 +26,6 @@ from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 
-# FlextLogger will be imported lazily in functions that need it
-FlextLogger = None  # Placeholder to avoid NameError
-# Import fixtures - disabled due to flext_tests dependency issues
-# from .fixtures import (
-#     get_benchmark_data,
-#     get_error_context,
-#     get_performance_threshold,
-#     get_sample_data,
-#     get_test_constants,
-#     get_test_contexts,
-#     get_test_error_scenarios,
-#     get_test_payloads,
-#     get_test_user_data,
-# )
-
 # Suppress pkg_resources deprecation warning from fs package
 warnings.filterwarnings(
     "ignore",
@@ -49,15 +34,11 @@ warnings.filterwarnings(
 )
 
 
-# Docker Test Infrastructure - Disabled due to missing dependency
-# @pytest.fixture(scope="session", autouse=True)
-# def test_docker_containers() -> Generator[FlextTestDocker | None]:
-#     """Session-scoped fixture for Docker test containers.
-#     Disabled due to missing python_on_whales dependency.
-#     """
+# =============================================================================
+# CORE FIXTURES - Singleton and State Management
+# =============================================================================
 
 
-# Core Fixtures
 @pytest.fixture(autouse=True)
 def reset_container_singleton() -> Generator[None]:
     """Reset FlextContainer, FlextConfig, and FlextRuntime between tests.
@@ -69,31 +50,36 @@ def reset_container_singleton() -> Generator[None]:
     Note: FlextLogger state is managed through FlextRuntime and context cleanup.
     """
     # Clear singletons before test
-    FlextContainer._global_instance = None  # type: ignore[assignment,misc]
+    # Business Rule: Use public testing methods instead of direct private access
+    # This ensures proper thread-safety and maintains architectural boundaries
+    FlextContainer.reset_singleton_for_testing()
     FlextConfig.reset_global_instance()
 
     # Reset FlextRuntime structlog configuration state
-    FlextRuntime._structlog_configured = False  # type: ignore[assignment,misc]
+    # Business Rule: Use public testing method for proper state reset
+    FlextRuntime.reset_structlog_state_for_testing()
 
     yield
 
     # Clear singletons after test
-    FlextContainer._global_instance = None  # type: ignore[assignment,misc]
+    # Business Rule: Cleanup uses same public testing methods for consistency
+    FlextContainer.reset_singleton_for_testing()
     FlextConfig.reset_global_instance()
 
     # Reset FlextRuntime state after test
-    FlextRuntime._structlog_configured = False  # type: ignore[assignment,misc]
+    FlextRuntime.reset_structlog_state_for_testing()
 
 
-@pytest.fixture
-def test_scenario() -> dict[str, str]:
-    """Basic test scenario fixture.
+@pytest.fixture(autouse=True)
+def setup_test_environment() -> None:
+    """Automatically set up test environment for all tests."""
+    # Global test setup - currently no-op but placeholder for future needs
+    return
 
-    Returns:
-        dict[str, str]: Test scenario data with status and environment.
 
-    """
-    return {"status": "test", "environment": "test"}
+# =============================================================================
+# CONTAINER FIXTURES - Dependency Injection Testing
+# =============================================================================
 
 
 @pytest.fixture
@@ -104,50 +90,17 @@ def clean_container() -> Generator[FlextContainer]:
     Each test receives a fresh container with no service registrations.
 
     Yields:
-      FlextContainer instance with proper cleanup
+        FlextContainer instance with proper cleanup
 
     """
     # Clear any existing singleton state before test
-    # Reset singleton for clean test state
-    FlextContainer._global_instance = None  # type: ignore[assignment,misc]
+    FlextContainer.reset_singleton_for_testing()
     container = FlextContainer()
     container.clear_all()  # Ensure it starts clean
     yield container
     # Cleanup: Clear the container and reset singleton after test
     container.clear_all()
-    FlextContainer._global_instance = None  # type: ignore[assignment,misc]
-
-
-@pytest.fixture
-def sample_data() -> Mapping[str, FlextTypes.GeneralValueType]:
-    """Provide deterministic sample data for tests."""
-    # Basic sample data since fixtures are disabled
-    return {"id": 1, "name": "test", "string": "sample_value", "value": "sample"}
-
-
-@pytest.fixture
-def test_user_data() -> Mapping[str, FlextTypes.GeneralValueType] | list[str] | None:
-    """Provide consistent user data for domain testing."""
-    # Basic user data since fixtures are disabled
-    return {"user_id": 1, "username": "testuser", "email": "test@example.com"}
-
-
-@pytest.fixture
-def temp_directory() -> Generator[Path]:
-    """Provide temporary directory for file-based testing.
-
-    Temporary directory fixture for testing file operations,
-    configuration loading, and data persistence patterns.
-
-    Yields:
-      Path to temporary directory with automatic cleanup
-
-    """
-    temp_dir = Path(tempfile.mkdtemp(prefix="flext_test_"))
-    yield temp_dir
-    # Cleanup
-    if temp_dir.exists():
-        shutil.rmtree(temp_dir)
+    FlextContainer.reset_singleton_for_testing()
 
 
 class FunctionalExternalService:
@@ -236,11 +189,11 @@ def configured_container(
     service integration patterns and dependency resolution.
 
     Args:
-      clean_container: Fresh container instance
-      mock_external_service: External service for functional testing
+        clean_container: Fresh container instance
+        mock_external_service: External service for functional testing
 
     Returns:
-      FlextContainer with standard test services registered
+        FlextContainer with standard test services registered
 
     """
     _ = clean_container.with_service(
@@ -252,13 +205,40 @@ def configured_container(
     return clean_container
 
 
+# =============================================================================
+# DATA FIXTURES - Test Data and Payloads
+# =============================================================================
+
+
+@pytest.fixture
+def test_scenario() -> dict[str, str]:
+    """Basic test scenario fixture.
+
+    Returns:
+        dict[str, str]: Test scenario data with status and environment.
+
+    """
+    return {"status": "test", "environment": "test"}
+
+
+@pytest.fixture
+def sample_data() -> Mapping[str, FlextTypes.GeneralValueType]:
+    """Provide deterministic sample data for tests."""
+    return {"id": 1, "name": "test", "string": "sample_value", "value": "sample"}
+
+
+@pytest.fixture
+def test_user_data() -> Mapping[str, FlextTypes.GeneralValueType] | list[str] | None:
+    """Provide consistent user data for domain testing."""
+    return {"user_id": 1, "username": "testuser", "email": "test@example.com"}
+
+
 @pytest.fixture
 def error_context() -> dict[str, str | None]:
     """Provide structured error context for testing."""
     return {"error_type": "test_error", "message": "Test error occurred"}
 
 
-# Test Data Constants - Centralized test data and constants
 @pytest.fixture
 def test_constants() -> Mapping[str, FlextTypes.GeneralValueType]:
     """Provide centralized test constants for all tests."""
@@ -295,68 +275,32 @@ def benchmark_data() -> FlextTypes.GeneralValueType:
     return {"iterations": 1000, "data_size": 1024}
 
 
-# Factory Fixtures - COMMENTED OUT: Use FlextTestsMatchers directly instead of aliases
-# @pytest.fixture
-# def user_factory() -> type:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers
-#
-# @pytest.fixture
-# def advanced_user_factory() -> type:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers
-#
-# @pytest.fixture
-# def config_factory() -> type:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers
+# =============================================================================
+# FILE SYSTEM FIXTURES
+# =============================================================================
 
 
-# COMMENTED OUT: Use FlextTestsMatchers directly instead of aliases
-# @pytest.fixture
-# def advanced_config_factory() -> type:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers
-#
-# @pytest.fixture
-# def result_factory() -> type:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers
-#
-# @pytest.fixture
-# def service_factory() -> type:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers
-#
-# @pytest.fixture
-# def payload_factory() -> type:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers
+@pytest.fixture
+def temp_directory() -> Generator[Path]:
+    """Provide temporary directory for file-based testing.
+
+    Temporary directory fixture for testing file operations,
+    configuration loading, and data persistence patterns.
+
+    Yields:
+        Path to temporary directory with automatic cleanup
+
+    """
+    temp_dir = Path(tempfile.mkdtemp(prefix="flext_test_"))
+    yield temp_dir
+    # Cleanup
+    if temp_dir.exists():
+        shutil.rmtree(temp_dir)
 
 
-# -----------------------------------------------------------------------------
-# Test isolation for flext-core singleton state
-# -----------------------------------------------------------------------------
-
-
-# Temporarily disabled - causing test hangs, needs investigation
-# @pytest.fixture(autouse=True)
-# def _isolate_flext_core_state() -> None:
-#     """Clear core specialized configs before each test.
-#
-#     Prevents cross-test leakage of database/security/logging configs that could
-#     make property-default tests flaky or order-dependent.
-#     """
-#     try:
-#         # Individual components isolation - Flext facade was removed
-#         # Reset container singleton state if needed
-#         manager = FlextContainer.get_global().clear()()
-#         container = manager.get_or_create()
-#         container.clear()
-#     except Exception:
-#         # If container isolation fails, continue with test
-#         # This prevents test hangs while still attempting isolation
-#         pass
+# =============================================================================
+# LOGGING FIXTURES
+# =============================================================================
 
 
 @pytest.fixture
@@ -390,93 +334,11 @@ def logging_test_env() -> Generator[None]:
             del os.environ["FLEXT_LOG_LEVEL"]
 
 
-# Performance Testing Fixtures
-# COMMENTED OUT: Use FlextTestsMatchers directly
-# @pytest.fixture
-# COMMENTED OUT: # def benchmark_utils() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
+# =============================================================================
+# PYTEST CONFIGURATION
+# =============================================================================
 
 
-# COMMENTED OUT: Use FlextTestsMatchers directly
-# @pytest.fixture
-# COMMENTED OUT: # def memory_profiler() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-#
-# @pytest.fixture
-# COMMENTED OUT: # def performance_profiler() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-
-
-# HTTP Testing Fixtures
-# COMMENTED OUT: Use FlextTestsMatchers directly
-# @pytest.fixture
-# COMMENTED OUT: # def http_test_utils() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-#
-# @pytest.fixture
-# COMMENTED OUT: # def api_test_client() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-#
-
-
-#
-# @pytest.fixture
-# COMMENTED OUT: # def test_builders() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-#
-# @pytest.fixture
-# COMMENTED OUT: # def flext_matchers() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-
-
-# Shared test configuration
-@pytest.fixture(autouse=True)
-def setup_test_environment() -> None:
-    """Automatically set up test environment for all tests."""
-    # Global test setup can go here
-    return
-    # Global test teardown can go here
-
-
-# COMMENTED OUT: Use FlextTestsMatchers directly
-# @pytest.fixture
-# COMMENTED OUT: # def user_repository() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-
-
-# COMMENTED OUT: Use FlextTestsMatchers directly
-# @pytest.fixture
-# def email_service() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-#
-# @pytest.fixture
-# def audit_service() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-#
-# @pytest.fixture
-# def failing_repository() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-
-
-# COMMENTED OUT: Use FlextTestsMatchers directly
-# @pytest.fixture
-# def real_services() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
-
-
-# Mark configuration
 def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest marks."""
     config.addinivalue_line("markers", "unit: Unit tests")
