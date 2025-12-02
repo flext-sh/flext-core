@@ -1,10 +1,9 @@
-"""Dependency injection container for dispatcher-driven applications.
+"""Dependency injection utilities for the dispatcher-first CQRS stack.
 
-FlextContainer centralizes service discovery for CQRS handlers, domain services,
-and infrastructure utilities. It keeps configuration isolated from the
-dispatcher pipeline while providing predictable singleton semantics so
-handlers, decorators, and utilities resolve collaborators without manual
-wire-up.
+The module wraps Dependency Injector behind a result-bearing API so handlers and
+decorators can register and resolve dependencies without importing the
+underlying infrastructure. Configuration stays isolated from dispatcher code, and
+singleton semantics remain predictable across runtime usage and tests.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,15 +26,14 @@ from flext_core.typings import FlextTypes, T
 
 
 class FlextContainer:
-    """Singleton DI container aligned with the dispatcher-first CQRS flow.
+    """Singleton container that exposes DI registration and resolution helpers.
 
-    Services and factories are registered once and resolved by handlers,
-    decorators, and utilities without leaking infrastructure concerns into the
-    domain layer. Resolution returns ``FlextResult`` to keep failure handling
-    explicit and composable.
-
-    Implements FlextProtocols.Configurable and FlextProtocols.ContainerProtocol
-    through structural typing (duck typing).
+    Services and factories remain local to the container, keeping dispatcher and
+    domain code free from infrastructure imports. All operations surface
+    ``FlextResult`` so failures are explicit. Thread-safe initialization
+    guarantees one global instance for runtime usage while allowing scoped
+    containers in tests. The class satisfies ``FlextProtocols.Configurable`` and
+    ``FlextProtocols.ContainerProtocol`` through structural typing only.
     """
 
     _global_instance: Self | None = None
@@ -51,7 +49,12 @@ class FlextContainer:
         _user_overrides: dict[str, FlextTypes.FlexibleValue] | None = None,
         _container_config: FlextModelsContainer.ContainerConfig | None = None,
     ) -> Self:
-        """Create or return the global singleton instance."""
+        """Create or return the global singleton instance.
+
+        Optional keyword arguments support deterministic construction in tests
+        while preserving singleton semantics for runtime callers. Double-checked
+        locking protects against duplicate initialization under concurrency.
+        """
         # Double-checked locking pattern for thread-safe singleton
         if cls._global_instance is None:
             with cls._global_lock:
@@ -74,7 +77,12 @@ class FlextContainer:
         _user_overrides: dict[str, FlextTypes.FlexibleValue] | None = None,
         _container_config: FlextModelsContainer.ContainerConfig | None = None,
     ) -> None:
-        """Initialize container."""
+        """Wire the Dependency Injector container and supporting registries.
+
+        The initializer is idempotent: repeated construction returns early to
+        keep the singleton stable. Parameters allow deterministic construction
+        during testing or for scoped containers created via :meth:`scoped`.
+        """
         super().__init__()
         if hasattr(self, "_di_container"):
             return
@@ -101,19 +109,23 @@ class FlextContainer:
 
     @property
     def config(self) -> FlextProtocols.ConfigProtocol:
-        """Get configuration bound to this container."""
+        """Return configuration bound to this container."""
         return cast("FlextProtocols.ConfigProtocol", self._config)
 
     @property
     def context(self) -> FlextProtocols.ContextProtocol:
-        """Get execution context bound to this container."""
+        """Return the execution context bound to this container.
+
+        A lazily created context is materialized on first access when callers
+        do not provide one during construction.
+        """
         if self._context is None:
             self._context = FlextRuntime.create_context()
         return self._context
 
     @staticmethod
     def _create_container_config() -> FlextModelsContainer.ContainerConfig:
-        """Create container configuration."""
+        """Create default configuration values for container behavior."""
         return FlextModelsContainer.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=True,
@@ -122,19 +134,27 @@ class FlextContainer:
         )
 
     def _sync_config_to_di(self) -> None:
-        """Sync FlextConfig to internal DI container."""
-        # DynamicContainer doesn't have a config attribute
-        # Configuration is managed through FlextConfig directly
+        """Sync configuration values onto the dependency-injector container.
+
+        Dependency Injector's dynamic container does not expose a first-class
+        configuration API. Configuration is mirrored on this instance and
+        consumed whenever providers are built in ``register`` or
+        ``register_factory``. The method remains a single responsibility hook for
+        future provider-based configuration.
+        """
 
     def configure(
         self,
         config: Mapping[str, FlextTypes.GeneralValueType],
     ) -> None:
-        """Configure container settings."""
-        # FlexibleValue is a subset of GeneralValueType - update directly
-        # Runtime validation ensures compatibility
-        # Convert ItemsView to dict explicitly for type compatibility
-        # Cast values to FlexibleValue - runtime validation ensures compatibility
+        """Apply user-provided overrides to container configuration.
+
+        Args:
+            config: Mapping of configuration keys to values accepted by
+                ``FlextTypes.FlexibleValue``.
+        """
+        # FlexibleValue is a subset of GeneralValueType; runtime validation
+        # ensures compatibility.
         for k, v in config.items():
             self._user_overrides[k] = cast("FlextTypes.FlexibleValue", v)
         self._sync_config_to_di()
@@ -142,7 +162,7 @@ class FlextContainer:
     def get_config(
         self,
     ) -> FlextTypes.Types.ConfigurationMapping:
-        """Get current configuration."""
+        """Return the merged configuration exposed by this container."""
         # model_dump() returns dict[str, Any] which is compatible with ConfigurationMapping
         return self._global_config.model_dump()
 
@@ -150,7 +170,7 @@ class FlextContainer:
         self,
         config: FlextTypes.Types.ConfigurationMapping,
     ) -> Self:
-        """Fluent interface for configuration."""
+        """Fluently apply configuration values and return this instance."""
         self.configure(config)
         return self
 
@@ -163,10 +183,11 @@ class FlextContainer:
             | Callable[..., FlextTypes.GeneralValueType]
         ),
     ) -> Self:
-        """Fluent interface for service registration.
+        """Register a service and return the container for fluent chaining.
 
-        Accepts GeneralValueType (primitives, sequences, mappings), BaseModel instances,
-        or callables for service registration.
+        Accepts primitives, Pydantic models, or callables; values are wrapped
+        in a ``ServiceRegistration`` with configuration derived from
+        ``FlextConfig`` and user overrides.
         """
         _ = self.register(name, service)
         return self
@@ -176,7 +197,7 @@ class FlextContainer:
         name: str,
         factory: Callable[[], FlextTypes.GeneralValueType],
     ) -> Self:
-        """Fluent interface for factory registration."""
+        """Register a factory and return the container for fluent chaining."""
         _ = self.register_factory(name, factory)
         return self
 
@@ -189,10 +210,16 @@ class FlextContainer:
             | Callable[..., FlextTypes.GeneralValueType]
         ),
     ) -> FlextResult[bool]:
-        """Register a service instance.
+        """Register a service instance for dependency resolution.
 
-        Accepts any service instance for registration in the container.
-        Service type is tracked via ServiceRegistration for type safety.
+        Args:
+            name: Unique key for the registration.
+            service: Concrete instance or callable that produces the service.
+
+        Returns:
+            ``FlextResult`` indicating whether the registration succeeded. A
+            failed result is returned when the name is already registered or
+            when construction fails.
         """
         try:
             if name in self._services:
@@ -212,7 +239,13 @@ class FlextContainer:
         name: str,
         factory: Callable[[], FlextTypes.GeneralValueType],
     ) -> FlextResult[bool]:
-        """Register a service factory."""
+        """Register a factory used to build services on demand.
+
+        Returns:
+            ``FlextResult`` signaling whether the factory was stored. Failure
+            occurs when the name already exists or the factory raises during
+            registration.
+        """
         try:
             if name in self._factories:
                 return FlextResult[bool].fail(f"Factory '{name}' already registered")
@@ -239,7 +272,12 @@ class FlextContainer:
             return FlextResult[bool].fail(str(e))
 
     def get[T](self, name: str) -> FlextResult[T]:
-        """Get service by name."""
+        """Resolve a registered service or factory by name.
+
+        Resolution prefers concrete services, then factories. A ``FlextResult``
+        is returned so handler code can propagate failures without raising
+        exceptions.
+        """
         # Try service first
         if name in self._services:
             service = self._services[name].service
@@ -259,7 +297,11 @@ class FlextContainer:
         return result
 
     def get_typed(self, name: str, type_cls: type[T]) -> FlextResult[T]:
-        """Get service with type safety."""
+        """Resolve a service by name and validate its runtime type.
+
+        The returned ``FlextResult`` contains type-safe access to the service or
+        the reason validation failed.
+        """
         result: FlextResult[T] = self.get(name)
         if result.is_failure:
             return FlextResult[T].fail(result.error or "Unknown error")
@@ -269,15 +311,15 @@ class FlextContainer:
         return FlextResult[T].ok(result.value)
 
     def has_service(self, name: str) -> bool:
-        """Check if service is registered."""
+        """Return whether a service or factory is registered for ``name``."""
         return name in self._services or name in self._factories
 
     def list_services(self) -> Sequence[str]:
-        """List all registered services."""
+        """List the names of registered services and factories."""
         return list(self._services.keys()) + list(self._factories.keys())
 
     def unregister(self, name: str) -> FlextResult[bool]:
-        """Unregister a service."""
+        """Remove a service or factory registration by name."""
         if name in self._services:
             del self._services[name]
             return FlextResult[bool].ok(True)
@@ -287,7 +329,7 @@ class FlextContainer:
         return FlextResult[bool].fail(f"Service '{name}' not found")
 
     def clear_all(self) -> None:
-        """Clear all services and factories."""
+        """Clear all service and factory registrations."""
         self._services.clear()
         self._factories.clear()
 
@@ -354,7 +396,23 @@ class FlextContainer:
         ]
         | None = None,
     ) -> FlextProtocols.ContainerProtocol:
-        """Create an isolated container scope with optional overrides."""
+        """Create an isolated container scope with optional overrides.
+
+        Args:
+            config: Optional settings overriding the global container's
+                configuration.
+            context: Optional execution context to seed the scoped container.
+            subproject: Optional suffix appended to ``app_name`` for nested
+                service identification.
+            services: Additional service registrations merged into the scoped
+                instance.
+            factories: Additional factory registrations merged into the scoped
+                instance.
+
+        Returns:
+            A container implementing ``FlextProtocols.ContainerProtocol`` with
+            isolated state that inherits the global configuration by default.
+        """
         base_config = (
             config if config is not None else self.config.model_copy(deep=True)
         )
