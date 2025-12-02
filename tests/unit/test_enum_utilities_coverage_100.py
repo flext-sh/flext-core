@@ -227,7 +227,9 @@ class TestFlextUtilitiesEnumIsMember:
         """Test is_member with various scenarios."""
         # Convert object to GeneralValueType for type compatibility
         value_typed: FlextTypes.GeneralValueType = (
-            scenario.value if isinstance(scenario.value, (str, int, float, bool, type(None))) else str(scenario.value)
+            scenario.value
+            if isinstance(scenario.value, (str, int, float, bool, type(None)))
+            else str(scenario.value)
         )
         result = FlextUtilities.Enum.is_member(Status, value_typed)
         assert result == scenario.expected
@@ -241,7 +243,9 @@ class TestFlextUtilitiesEnumIsSubset:
         """Test is_subset with various scenarios."""
         # Convert object to GeneralValueType for type compatibility
         value_typed: FlextTypes.GeneralValueType = (
-            scenario.value if isinstance(scenario.value, (str, int, float, bool, type(None))) else str(scenario.value)
+            scenario.value
+            if isinstance(scenario.value, (str, int, float, bool, type(None)))
+            else str(scenario.value)
         )
         result = FlextUtilities.Enum.is_subset(
             Status,
@@ -266,7 +270,11 @@ class TestFlextUtilitiesEnumParse:
             assert result.value == scenario.expected_status
         else:
             assert result.is_failure
-            assert result.error is not None and scenario.expected_error is not None and scenario.expected_error in result.error
+            assert (
+                result.error is not None
+                and scenario.expected_error is not None
+                and scenario.expected_error in result.error
+            )
 
 
 class TestFlextUtilitiesEnumParseOrDefault:
@@ -306,7 +314,10 @@ class TestFlextUtilitiesEnumCoerceValidator:
             with pytest.raises(ValueError) as exc_info:
                 validator(scenario.value)
             error_str = str(exc_info.value) if exc_info.value else ""
-            assert scenario.expected_error is not None and scenario.expected_error in error_str
+            assert (
+                scenario.expected_error is not None
+                and scenario.expected_error in error_str
+            )
 
 
 class TestFlextUtilitiesEnumCoerceByNameValidator:

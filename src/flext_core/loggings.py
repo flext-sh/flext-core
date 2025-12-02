@@ -700,7 +700,9 @@ class FlextLogger:
             # Use StrEnum directly - structlog accepts StrEnum values
             # Convert to lowercase string for method name lookup
             level_str = (
-                _level.value if isinstance(_level, FlextConstants.Settings.LogLevel) else str(_level)
+                _level.value
+                if isinstance(_level, FlextConstants.Settings.LogLevel)
+                else str(_level)
             ).lower()
 
             # Dynamic method call using getattr mapping

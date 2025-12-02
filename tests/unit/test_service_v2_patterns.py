@@ -654,7 +654,9 @@ class TestFlextServiceV2Patterns:
             assert list_value[0] == "x"
 
         elif test_case.operation == ServiceOperationType.V2_PROPERTY_WITH_MODEL_RETURN:
-            user_service: FlextService[FlextModels.Entity] = UserService(user_id="123", user_name="Test User")  # type: ignore[assignment,valid-type]  # FlextModels.Entity is assignment alias
+            user_service: FlextService[FlextModels.Entity] = UserService(
+                user_id="123", user_name="Test User"
+            )  # type: ignore[assignment,valid-type]  # FlextModels.Entity is assignment alias
             user = user_service.result
             assert isinstance(user, FlextModels.Entity)
             # Type narrowing: user is FlextModels.Entity, access unique_id via getattr for type safety

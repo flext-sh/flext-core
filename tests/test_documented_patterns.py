@@ -103,15 +103,23 @@ class RailwayTestCase:
         # Apply operations if specified
         for op in self.operations:
             if op == "get_email":
-                result = result.map(lambda user: user.email if isinstance(user, User) else str(user))
+                result = result.map(
+                    lambda user: user.email if isinstance(user, User) else str(user)
+                )
             elif op == "send_email":
                 # flat_map returns EmailResponse, cast to maintain union type for return signature
                 email_result = result.flat_map(
-                    lambda email: SendEmailService(to=str(email), subject="Test").execute(),
+                    lambda email: SendEmailService(
+                        to=str(email), subject="Test"
+                    ).execute(),
                 )
                 result = cast("FlextResult[User | str | EmailResponse]", email_result)
             elif op == "get_status":
-                result = result.map(lambda response: response.status if isinstance(response, EmailResponse) else str(response))
+                result = result.map(
+                    lambda response: response.status
+                    if isinstance(response, EmailResponse)
+                    else str(response)
+                )
 
         return result
 
@@ -123,7 +131,9 @@ class RailwayTestCase:
 
         # Start with first user
         user_result = GetUserService(user_id=self.user_ids[0]).result
-        user: User | str = user_result if isinstance(user_result, (User, str)) else str(user_result)
+        user: User | str = (
+            user_result if isinstance(user_result, (User, str)) else str(user_result)
+        )
 
         # Apply operations if specified
         for op in self.operations:

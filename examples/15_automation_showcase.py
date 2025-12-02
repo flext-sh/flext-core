@@ -215,9 +215,7 @@ class AutomationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
 
     def execute(  # noqa: PLR6301  # Required by FlextService abstract method
         self, **_kwargs: FlextTypes.GeneralValueType
-    ) -> FlextResult[
-        FlextTypes.Types.ServiceMetadataMapping
-    ]:
+    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
         """Required abstract method implementation."""
         return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok({
             "status": "automation_ready"

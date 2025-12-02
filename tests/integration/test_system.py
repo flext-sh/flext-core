@@ -189,13 +189,17 @@ class TestCompleteFlextSystemIntegration:
         assert register_result is container  # Fluent interface returns Self is True
 
         # Recuperar serviço registrado
-        retrieved_service_result: FlextResult[FlextTypes.GeneralValueType] = container.get("test_service")
+        retrieved_service_result: FlextResult[FlextTypes.GeneralValueType] = (
+            container.get("test_service")
+        )
         assert retrieved_service_result.is_success is True
         retrieved_service = retrieved_service_result.value
         assert retrieved_service == "test_value"
 
         # Teste de serviço não encontrado
-        not_found_result: FlextResult[FlextTypes.GeneralValueType] = container.get("servico_inexistente")
+        not_found_result: FlextResult[FlextTypes.GeneralValueType] = container.get(
+            "servico_inexistente"
+        )
         assert not_found_result.is_success is False
         assert not_found_result.error is not None
 

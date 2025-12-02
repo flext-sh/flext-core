@@ -96,7 +96,9 @@ class TestLibraryIntegration:
         assert register_result is clean_container
 
         # Act - Test service retrieval
-        service_result: FlextResult[FlextTypes.GeneralValueType] = clean_container.get("test_service")
+        service_result: FlextResult[FlextTypes.GeneralValueType] = clean_container.get(
+            "test_service"
+        )
 
         # Assert - Service retrieval success
         assert service_result.is_success is True
@@ -147,7 +149,9 @@ class TestLibraryIntegration:
         assert register_result is clean_container
 
         # Act - Get factory result from container
-        factory_result: FlextResult[FlextTypes.GeneralValueType] = clean_container.get("result_factory")
+        factory_result: FlextResult[FlextTypes.GeneralValueType] = clean_container.get(
+            "result_factory"
+        )
 
         # Assert - Factory retrieval success
         assert factory_result.is_success is True

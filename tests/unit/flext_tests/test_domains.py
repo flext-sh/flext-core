@@ -109,8 +109,10 @@ class TestFlextTestsDomains:
 
     def test_api_response_data_error(self) -> None:
         """Test api_response_data with error status."""
-        response: dict[str, FlextTypes.GeneralValueType] = FlextTestsDomains.api_response_data(
-            status="error",
+        response: dict[str, FlextTypes.GeneralValueType] = (
+            FlextTestsDomains.api_response_data(
+                status="error",
+            )
         )
 
         assert response["status"] == "error"

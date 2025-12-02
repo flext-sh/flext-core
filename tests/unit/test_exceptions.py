@@ -90,7 +90,9 @@ class ExceptionTestHelpers:
     """Generalized helpers for exception testing."""
 
     @staticmethod
-    def create_metadata_object(attributes: dict[str, object] | None = None) -> FlextModelsBase.Metadata:
+    def create_metadata_object(
+        attributes: dict[str, object] | None = None,
+    ) -> FlextModelsBase.Metadata:
         """Create Metadata object from attributes dict."""
         if not attributes:
             return FlextModelsBase.Metadata(attributes={})
