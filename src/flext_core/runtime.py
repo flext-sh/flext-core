@@ -169,6 +169,16 @@ class FlextRuntime:  # noqa: PLR0904
     ) -> TypeGuard[str]:
         """Type guard to check if value is a valid phone number string.
 
+        Business Rule: Validates phone numbers using international format pattern
+        from FlextConstants.Platform.PATTERN_PHONE_NUMBER. Uses regex compilation
+        for O(1) pattern matching. Returns TypeGuard[str] for type narrowing in
+        conditional blocks. Pattern supports international formats with optional
+        country codes and separators.
+
+        Audit Implication: Phone number validation ensures audit trail completeness
+        by validating contact information before storage. All phone numbers are
+        validated against international standards before being used in audit systems.
+
         Uses international format pattern from FlextConstants.Platform.PATTERN_PHONE_NUMBER.
 
         Args:
@@ -187,6 +197,16 @@ class FlextRuntime:  # noqa: PLR0904
     def create_instance[T](class_type: type[T]) -> T:
         """Type-safe factory for creating instances via object.__new__.
 
+        Business Rule: Creates instances using object.__new__() for type-safe
+        instantiation without calling __init__. Validates instance type after creation
+        to ensure type safety. This pattern eliminates the need for type: ignore comments
+        when using object.__new__() directly. Used by factory patterns throughout FLEXT
+        for creating instances without side effects from __init__.
+
+        Audit Implication: Instance creation is validated at runtime, ensuring type
+        safety for audit trails. All instances are verified to be of expected type
+        before being returned. Used by dependency injection and factory patterns.
+
         This helper function properly types object.__new__() calls, eliminating
         the need for type: ignore comments. Use this instead of direct object.__new__()
         calls in factory patterns.
@@ -196,6 +216,9 @@ class FlextRuntime:  # noqa: PLR0904
 
         Returns:
             An instance of type T
+
+        Raises:
+            TypeError: If object.__new__() does not return instance of expected type
 
         Example:
             >>> instance = FlextRuntime.create_instance(MyClass)
@@ -219,6 +242,15 @@ class FlextRuntime:  # noqa: PLR0904
     def create_context() -> FlextProtocols.ContextProtocol:
         """Factory for creating context instances using protocol-based import.
 
+        Business Rule: Creates context instances using dynamic import via importlib
+        to avoid circular dependencies at module import time. Uses protocol-based
+        typing (FlextProtocols.ContextProtocol) for type safety without inheritance.
+        This is NOT a lazy import - it's a factory pattern using importlib at runtime.
+
+        Audit Implication: Context creation enables audit trail completeness by
+        providing execution context for operations. All contexts are created through
+        this factory, ensuring consistent context initialization across FLEXT.
+
         Uses dynamic import to avoid circular dependencies while maintaining
         type safety through FlextProtocols.ContextProtocol.
 
@@ -240,6 +272,15 @@ class FlextRuntime:  # noqa: PLR0904
     def create_container() -> FlextProtocols.ContainerProtocol:
         """Factory for creating container instances using protocol-based import.
 
+        Business Rule: Creates container instances using dynamic import via importlib
+        to avoid circular dependencies at module import time. Uses protocol-based
+        typing (FlextProtocols.ContainerProtocol) for type safety without inheritance.
+        This is NOT a lazy import - it's a factory pattern using importlib at runtime.
+
+        Audit Implication: Container creation enables dependency injection for audit
+        trail completeness. All containers are created through this factory, ensuring
+        consistent container initialization across FLEXT.
+
         Uses dynamic import to avoid circular dependencies while maintaining
         type safety through FlextProtocols.ContainerProtocol.
 
@@ -259,7 +300,7 @@ class FlextRuntime:  # noqa: PLR0904
 
     @staticmethod
     def is_dict_like(
-        value: object,
+        value: FlextTypes.GeneralValueType,
     ) -> TypeGuard[Mapping[str, FlextTypes.GeneralValueType]]:
         """Type guard to check if value is dict-like.
 
@@ -287,7 +328,7 @@ class FlextRuntime:  # noqa: PLR0904
 
     @staticmethod
     def is_list_like(
-        value: object,
+        value: FlextTypes.GeneralValueType,
     ) -> TypeGuard[Sequence[FlextTypes.GeneralValueType]]:
         """Type guard to check if value is list-like.
 
@@ -302,7 +343,7 @@ class FlextRuntime:  # noqa: PLR0904
 
     @staticmethod
     def normalize_to_general_value(
-        val: FlextTypes.GeneralValueType | object,
+        val: FlextTypes.GeneralValueType,
     ) -> FlextTypes.GeneralValueType:
         """Normalize any value to FlextTypes.GeneralValueType recursively.
 
@@ -328,7 +369,13 @@ class FlextRuntime:  # noqa: PLR0904
         if isinstance(val, (str, int, float, bool, type(None))):
             return val
         if FlextRuntime.is_dict_like(val):
-            # Convert to dict[str, GeneralValueType] recursively
+            # Business Rule: Convert to dict[str, GeneralValueType] recursively
+            # dict is compatible with Mapping[str, GeneralValueType] in GeneralValueType union.
+            # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
+            #
+            # Audit Implication: Normalizes nested data structures for type safety.
+            # Used throughout FLEXT for converting arbitrary data to GeneralValueType.
+            # Returns dict that is compatible with Mapping interface for read-only access.
             result: dict[str, FlextTypes.GeneralValueType] = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             for k, v in dict_v.items():
@@ -372,7 +419,13 @@ class FlextRuntime:  # noqa: PLR0904
             result_scalar: FlextTypes.MetadataAttributeValue = val
             return result_scalar
         if FlextRuntime.is_dict_like(val):
-            # Convert to flat dict[str, FlextTypes.MetadataAttributeValue]
+            # Business Rule: Convert to flat dict[str, MetadataAttributeValue]
+            # dict is compatible with Mapping[str, ScalarValue] in MetadataAttributeValue union.
+            # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
+            #
+            # Audit Implication: Normalizes nested structures to flat metadata format.
+            # Used for metadata attribute values that must be JSON-serializable.
+            # Returns dict that is compatible with Mapping interface for read-only access.
             result: dict[str, str | int | float | bool | None] = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             for k, v in dict_v.items():
@@ -404,6 +457,15 @@ class FlextRuntime:  # noqa: PLR0904
         value: FlextTypes.GeneralValueType,
     ) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
+
+        Business Rule: Validates JSON strings using json.loads() for parsing.
+        Returns TypeGuard[str] for type narrowing in conditional blocks.
+        Catches JSONDecodeError and ValueError for safe validation. Used for
+        validating JSON payloads before deserialization.
+
+        Audit Implication: JSON validation ensures audit trail completeness by
+        validating JSON payloads before storage. All JSON strings are validated
+        before being used in audit systems.
 
         Args:
             value: Value to check
@@ -449,6 +511,15 @@ class FlextRuntime:  # noqa: PLR0904
     ) -> FlextTypes.GeneralValueType:
         """Safe attribute access without raising AttributeError.
 
+        Business Rule: Accesses object attributes safely using getattr() with
+        default value. Never raises AttributeError, always returns default if
+        attribute doesn't exist. Used for safe introspection of arbitrary objects
+        without type checking.
+
+        Audit Implication: Safe attribute access ensures audit trail completeness
+        by preventing AttributeError exceptions during object introspection. All
+        attribute access is safe and logged appropriately.
+
         Args:
             obj: Object to get attribute from
             attr: Attribute name
@@ -465,6 +536,15 @@ class FlextRuntime:  # noqa: PLR0904
         type_hint: FlextTypes.Utility.TypeHintSpecifier,
     ) -> tuple[FlextTypes.Utility.GenericTypeArgument, ...]:
         """Extract generic type arguments from a type hint.
+
+        Business Rule: Extracts generic type arguments from type hints using
+        typing.get_args() for standard generics, and fallback mapping for type
+        aliases. Returns empty tuple if no arguments found or on error. Used for
+        type introspection and generic type analysis.
+
+        Audit Implication: Type argument extraction enables audit trail completeness
+        by providing type information for generic types. All type introspection is
+        safe and never raises exceptions.
 
         Args:
             type_hint: Type hint to extract args from
@@ -519,6 +599,14 @@ class FlextRuntime:  # noqa: PLR0904
     @staticmethod
     def is_sequence_type(type_hint: FlextTypes.Utility.TypeHintSpecifier) -> bool:
         """Check if type hint represents a sequence type (list, tuple, etc.).
+
+        Business Rule: Checks if type hint represents a sequence type using
+        typing.get_origin() and issubclass() checks. Supports both standard
+        generics and type aliases. Returns False on error for safe type checking.
+
+        Audit Implication: Sequence type checking enables audit trail completeness
+        by providing type information for sequence types. All type checking is
+        safe and never raises exceptions.
 
         Args:
             type_hint: Type hint to check
@@ -612,7 +700,7 @@ class FlextRuntime:  # noqa: PLR0904
         _logger: FlextProtocols.LoggerProtocol,
         method_name: str,
         event_dict: Mapping[str, FlextTypes.GeneralValueType],
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+    ) -> Mapping[str, FlextTypes.GeneralValueType]:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -658,6 +746,13 @@ class FlextRuntime:  # noqa: PLR0904
         current_level = level_hierarchy.get(method_name.lower(), 20)  # Default to INFO
 
         # Process all keys in event_dict
+        # Business Rule: Build mutable dict for construction, then return as dict
+        # dict is compatible with Mapping[str, GeneralValueType] return type.
+        # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
+        #
+        # Audit Implication: This method filters log event data based on log level.
+        # Used for conditional inclusion of verbose fields in structured logging.
+        # Returns dict that is compatible with Mapping interface for read-only access.
         filtered_dict: dict[str, FlextTypes.GeneralValueType] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
@@ -765,7 +860,8 @@ class FlextRuntime:  # noqa: PLR0904
 
         module = structlog
 
-        processors: list[object] = [
+        # structlog processors have specific signatures - use Callable with flexible args
+        processors: list[Callable[..., FlextTypes.GeneralValueType]] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -874,6 +970,24 @@ class FlextRuntime:  # noqa: PLR0904
             console_renderer=console_renderer,
             additional_processors=additional_processors,
         )
+
+    @classmethod
+    def reset_structlog_state_for_testing(cls) -> None:
+        """Reset structlog configuration state for testing purposes.
+
+        Business Rule: Testing-only method to reset structlog configuration state.
+        This allows tests to verify structlog configuration from scratch.
+        Should only be used in test fixtures.
+
+        Implications for Audit:
+        - Modifies private ClassVar _structlog_configured
+        - Resets structlog module defaults
+        - Breaks configured state temporarily
+        - Must be called before testing structlog configuration
+
+        """
+        structlog.reset_defaults()
+        cls._structlog_configured = False
 
     # =========================================================================
     # =========================================================================

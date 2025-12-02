@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import FlextDispatcher, FlextResult
 from flext_core.protocols import FlextProtocols
@@ -36,8 +37,17 @@ class DoubleProcessor:
     """Simple processor that doubles a number."""
 
     def process(
-        self, data: FlextTypes.GeneralValueType
-    ) -> FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]:
+        self,
+        data: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ),
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
         """Double the input number."""
         if not isinstance(data, int):
             return FlextResult[FlextTypes.GeneralValueType].fail(
@@ -50,8 +60,17 @@ class SquareProcessor:
     """Processor that squares a number."""
 
     def process(
-        self, data: FlextTypes.GeneralValueType
-    ) -> FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]:
+        self,
+        data: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ),
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
         """Square the input number."""
         if not isinstance(data, int):
             return FlextResult[FlextTypes.GeneralValueType].fail(
@@ -64,8 +83,17 @@ class FailingProcessor:
     """Processor that always fails."""
 
     def process(
-        self, data: FlextTypes.GeneralValueType
-    ) -> FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]:
+        self,
+        data: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ),
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
         """Always return failure."""
         return FlextResult[FlextTypes.GeneralValueType].fail(
             "Processor intentionally failed"
@@ -80,20 +108,43 @@ class SlowProcessor:
         self.delay_seconds = delay_seconds
 
     def process(
-        self, data: FlextTypes.GeneralValueType
-    ) -> FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]:
+        self,
+        data: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+        ),
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
         """Sleep then return result."""
         time.sleep(self.delay_seconds)
-        return FlextResult[FlextTypes.GeneralValueType].ok(data)
+        # Cast data to GeneralValueType for FlextResult.ok()
+        # The actual data may be any of the union types, but we wrap it in result
+        return FlextResult[FlextTypes.GeneralValueType].ok(
+            cast("FlextTypes.GeneralValueType", data)
+        )
 
 
 class CallableProcessor:
-    """Processor as callable function."""
+    """Processor as callable function.
 
-    def __call__(
-        self, data: FlextTypes.GeneralValueType
-    ) -> FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]:
-        """Process as callable."""
+    Implements Processor protocol by providing process() method.
+    """
+
+    def process(
+        self,
+        data: FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType],
+    ) -> (
+        FlextTypes.GeneralValueType
+        | BaseModel
+        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
+    ):
+        """Process data and return result."""
         if isinstance(data, int):
             return FlextResult[FlextTypes.GeneralValueType].ok(data + 10)
         return FlextResult[FlextTypes.GeneralValueType].fail("Expected int")
@@ -141,10 +192,10 @@ class DispatcherTestHelpers:
     def create_test_dispatcher() -> FlextDispatcher:
         """Create test dispatcher with common processors."""
         dispatcher = FlextDispatcher()
-        dispatcher.register_processor("double", DoubleProcessor())  # type: ignore[arg-type]  # Processor classes are compatible at runtime
-        dispatcher.register_processor("square", SquareProcessor())  # type: ignore[arg-type]  # Processor classes are compatible at runtime
-        dispatcher.register_processor("failing", FailingProcessor())  # type: ignore[arg-type]  # Processor classes are compatible at runtime
-        dispatcher.register_processor("callable", CallableProcessor())  # type: ignore[arg-type]  # Processor classes are compatible at runtime
+        dispatcher.register_processor("double", DoubleProcessor())
+        dispatcher.register_processor("square", SquareProcessor())
+        dispatcher.register_processor("failing", FailingProcessor())
+        dispatcher.register_processor("callable", CallableProcessor())
         return dispatcher
 
     @staticmethod
@@ -166,7 +217,7 @@ class TestLayer3MessageProcessing:
         """Test successful processor registration."""
         dispatcher = FlextDispatcher()
         processor = DoubleProcessor()
-        result = dispatcher.register_processor("double", processor)  # type: ignore[arg-type]  # Processor implements ResultProtocol
+        result = dispatcher.register_processor("double", processor)
         assert result.is_success
         assert dispatcher.processor_metrics["double"]["executions"] == 0
 
@@ -179,14 +230,14 @@ class TestLayer3MessageProcessing:
             "timeout": 5.0,
             "retries": 3,
         }
-        result = dispatcher.register_processor("double", processor, config)  # type: ignore[arg-type]  # Processor classes are compatible at runtime
+        result = dispatcher.register_processor("double", processor, config)
         assert result.is_success
 
     def test_register_callable_processor(self) -> None:
         """Test registering callable as processor."""
         dispatcher = FlextDispatcher()
         processor = CallableProcessor()
-        result = dispatcher.register_processor("callable", processor)  # type: ignore[arg-type]  # Processor classes are compatible at runtime
+        result = dispatcher.register_processor("callable", processor)
         assert result.is_success
 
     @pytest.mark.parametrize(
@@ -197,12 +248,7 @@ class TestLayer3MessageProcessing:
     def test_process_registered_processor(self, scenario: ProcessorScenario) -> None:
         """Test processing through registered processor."""
         dispatcher = DispatcherTestHelpers.create_test_dispatcher()
-        # Convert object to GeneralValueType for type compatibility
-
-        input_typed: FlextTypes.GeneralValueType = cast(
-            "FlextTypes.GeneralValueType", scenario.input_data
-        )
-        result = dispatcher.process(scenario.processor_name, input_typed)
+        result = dispatcher.process(scenario.processor_name, scenario.input_data)
         DispatcherTestHelpers.assert_processor_result(
             result,
             scenario.expected_success,
@@ -278,7 +324,7 @@ class TestLayer3ParallelProcessing:
         """Test parallel processing is faster for slow operations."""
         dispatcher = FlextDispatcher()
         slow_processor = SlowProcessor(0.05)
-        dispatcher.register_processor("slow", slow_processor)  # type: ignore[arg-type]  # Processor implements ResultProtocol
+        dispatcher.register_processor("slow", slow_processor)
         start = time.time()
         result = dispatcher.process_parallel("slow", [1, 2, 3, 4])
         parallel_time = time.time() - start
@@ -332,7 +378,7 @@ class TestLayer3TimeoutEnforcement:
         """Test timeout when execution exceeds time limit."""
         dispatcher = FlextDispatcher()
         slow_processor = SlowProcessor(0.5)
-        dispatcher.register_processor("slow", slow_processor)  # type: ignore[arg-type]  # Processor implements ResultProtocol
+        dispatcher.register_processor("slow", slow_processor)
         result = dispatcher.execute_with_timeout("slow", 5, timeout=0.1)
         assert result.is_failure
         assert result.error is not None
@@ -342,7 +388,7 @@ class TestLayer3TimeoutEnforcement:
         """Test timeout with reasonable time limit."""
         dispatcher = FlextDispatcher()
         slow_processor = SlowProcessor(0.05)
-        dispatcher.register_processor("slow", slow_processor)  # type: ignore[arg-type]  # Processor implements ResultProtocol
+        dispatcher.register_processor("slow", slow_processor)
         result = dispatcher.execute_with_timeout("slow", 5, timeout=1.0)
         assert result.is_success
 

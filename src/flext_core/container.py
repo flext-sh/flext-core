@@ -152,6 +152,7 @@ class FlextContainer:
         Args:
             config: Mapping of configuration keys to values accepted by
                 ``FlextTypes.FlexibleValue``.
+
         """
         # FlexibleValue is a subset of GeneralValueType; runtime validation
         # ensures compatibility.
@@ -208,18 +209,27 @@ class FlextContainer:
             FlextTypes.GeneralValueType
             | BaseModel
             | Callable[..., FlextTypes.GeneralValueType]
+            | object
         ),
     ) -> FlextResult[bool]:
         """Register a service instance for dependency resolution.
 
+        Business Rule: The container accepts any object type for registration,
+        including primitives, BaseModel instances, callables, and arbitrary
+        objects. This allows dependency injection of any service type including
+        loggers, adapters, and domain services.
+
         Args:
             name: Unique key for the registration.
             service: Concrete instance or callable that produces the service.
+                Can be any object type (primitives, BaseModel, callable, or
+                arbitrary objects like FlextLogger).
 
         Returns:
             ``FlextResult`` indicating whether the registration succeeded. A
             failed result is returned when the name is already registered or
             when construction fails.
+
         """
         try:
             if name in self._services:
@@ -245,6 +255,7 @@ class FlextContainer:
             ``FlextResult`` signaling whether the factory was stored. Failure
             occurs when the name already exists or the factory raises during
             registration.
+
         """
         try:
             if name in self._factories:
@@ -274,9 +285,23 @@ class FlextContainer:
     def get[T](self, name: str) -> FlextResult[T]:
         """Resolve a registered service or factory by name.
 
+        Business Rule: Type-safe resolution using generic type parameter T.
+        The TypeVar T appears only once but is essential for type inference
+        at call sites (e.g., container.get[FlextLogger]("logger")). Runtime
+        type safety is guaranteed by container registration, and the cast
+        preserves static type checking.
+
         Resolution prefers concrete services, then factories. A ``FlextResult``
         is returned so handler code can propagate failures without raising
         exceptions.
+
+        Args:
+            name: Service identifier to resolve.
+
+        Returns:
+            FlextResult[T]: Success with resolved service of type T, or failure
+                if service not found or factory raises exception.
+
         """
         # Try service first
         if name in self._services:
@@ -329,9 +354,33 @@ class FlextContainer:
         return FlextResult[bool].fail(f"Service '{name}' not found")
 
     def clear_all(self) -> None:
-        """Clear all service and factory registrations."""
+        """Clear all service and factory registrations.
+
+        Business Rule: Clears all registrations but preserves singleton instance.
+        Used for test cleanup and container reset scenarios. Does not reset
+        singleton pattern - use reset_singleton_for_testing() for that.
+
+        """
         self._services.clear()
         self._factories.clear()
+
+    @classmethod
+    def reset_singleton_for_testing(cls) -> None:
+        """Reset singleton instance for testing purposes.
+
+        Business Rule: Testing-only method to reset singleton state.
+        This allows tests to create fresh container instances without
+        singleton interference. Should only be used in test fixtures.
+
+        Implications for Audit:
+        - Modifies private ClassVar _global_instance
+        - Breaks singleton pattern temporarily
+        - Must be called before creating new container instances in tests
+        - Thread-safe via _global_lock
+
+        """
+        with cls._global_lock:
+            cls._global_instance = None
 
     @classmethod
     def _create_scoped_instance(  # noqa: PLR0913 - Factory needs all initialization params
@@ -412,6 +461,7 @@ class FlextContainer:
         Returns:
             A container implementing ``FlextProtocols.ContainerProtocol`` with
             isolated state that inherits the global configuration by default.
+
         """
         base_config = (
             config if config is not None else self.config.model_copy(deep=True)

@@ -213,7 +213,7 @@ class TestFlextModelsCollectionsStatistics:
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
         assert isinstance(result, dict)
-        result_dict: dict[str, FlextTypes.GeneralValueType] = result  # type: ignore[assignment]
+        result_dict: dict[str, FlextTypes.GeneralValueType] = result
         assert result_dict.get("count") == 30
 
     def test_statistics_aggregate_lists(self) -> None:
@@ -227,7 +227,7 @@ class TestFlextModelsCollectionsStatistics:
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
         assert isinstance(result, dict)
-        result_dict: dict[str, FlextTypes.GeneralValueType] = result  # type: ignore[assignment]
+        result_dict: dict[str, FlextTypes.GeneralValueType] = result
         assert result_dict.get("items") == ["a", "b", "c"]
 
     def test_statistics_aggregate_mixed(self) -> None:
@@ -243,7 +243,7 @@ class TestFlextModelsCollectionsStatistics:
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
         assert isinstance(result, dict)
-        result_dict: dict[str, FlextTypes.GeneralValueType] = result  # type: ignore[assignment]
+        result_dict: dict[str, FlextTypes.GeneralValueType] = result
         assert result_dict.get("count") == 30
         assert result_dict.get("items") == ["a", "b"]
         assert result_dict.get("name") == "second"
@@ -260,7 +260,7 @@ class TestFlextModelsCollectionsStatistics:
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
         assert isinstance(result, dict)
-        result_dict: dict[str, FlextTypes.GeneralValueType] = result  # type: ignore[assignment]
+        result_dict: dict[str, FlextTypes.GeneralValueType] = result
         assert result_dict.get("count") == 10
         assert result_dict.get("name") == "first"
 

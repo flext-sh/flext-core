@@ -9,14 +9,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import cast
+from typing import Union, cast
 
 from flext_core import FlextUtilities
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
+
+# Type union for domain test input data
+# Accepts GeneralValueType (primitives, dicts, lists) and HasModelDump objects (entities, value objects)
+# Also accepts any object for methods that accept object (compare_value_objects_by_value, etc.)
+# Using Union explicitly for clarity in type narrowing
+type DomainInputValue = Union[
+    FlextTypes.GeneralValueType,
+    FlextProtocols.HasModelDump,
+    object,  # For methods that accept any object (compare_value_objects_by_value, validate_entity_has_id)
+]
+
+type DomainInputMapping = Mapping[str, DomainInputValue]
 
 
 class DomainTestType(StrEnum):
@@ -36,7 +49,7 @@ class DomainTestCase:
 
     test_type: DomainTestType
     description: str
-    input_data: FlextTypes.Types.ConfigurationMapping
+    input_data: DomainInputMapping
     expected_result: FlextTypes.GeneralValueType
     expected_success: bool = True
     id_attr: str = "unique_id"
@@ -193,8 +206,8 @@ class DomainTestHelpers:
                 entity1_raw = test_case.input_data["entity1"]
                 entity2_raw = test_case.input_data["entity2"]
                 # Type narrowing: input_data contains HasModelDump objects at runtime
-                entity1 = cast("FlextProtocols.HasModelDump", entity1_raw)  # type: ignore[arg-type]  # GeneralValueType contains HasModelDump at runtime
-                entity2 = cast("FlextProtocols.HasModelDump", entity2_raw)  # type: ignore[arg-type]  # GeneralValueType contains HasModelDump at runtime
+                entity1 = cast("FlextProtocols.HasModelDump", entity1_raw)
+                entity2 = cast("FlextProtocols.HasModelDump", entity2_raw)
                 return domain.compare_entities_by_id(
                     entity1,
                     entity2,
@@ -204,7 +217,7 @@ class DomainTestHelpers:
             case DomainTestType.HASH_ENTITY_BY_ID:
                 entity_raw = test_case.input_data["entity"]
                 # Type narrowing: input_data contains HasModelDump objects at runtime
-                entity = cast("FlextProtocols.HasModelDump", entity_raw)  # type: ignore[arg-type]  # GeneralValueType contains HasModelDump at runtime
+                entity = cast("FlextProtocols.HasModelDump", entity_raw)
                 return domain.hash_entity_by_id(entity, id_attr=test_case.id_attr)
 
             case DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE:
@@ -219,7 +232,7 @@ class DomainTestHelpers:
             case DomainTestType.VALIDATE_ENTITY_HAS_ID:
                 entity_raw = test_case.input_data["entity"]
                 # Type narrowing: input_data contains HasModelDump objects at runtime
-                entity = cast("FlextProtocols.HasModelDump", entity_raw)  # type: ignore[arg-type]  # GeneralValueType contains HasModelDump at runtime
+                entity = cast("FlextProtocols.HasModelDump", entity_raw)
                 return domain.validate_entity_has_id(entity, id_attr=test_case.id_attr)
 
             case DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE:

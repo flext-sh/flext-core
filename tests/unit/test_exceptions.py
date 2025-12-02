@@ -109,7 +109,8 @@ class ExceptionTestHelpers:
     @staticmethod
     def get_exception_class_by_type(error_type: str) -> type[FlextExceptions.BaseError]:
         """Get exception class by type name."""
-        return getattr(FlextExceptions, error_type)
+        cls: type[FlextExceptions.BaseError] = getattr(FlextExceptions, error_type)
+        return cls
 
 
 class ExceptionScenarios:

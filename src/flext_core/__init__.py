@@ -12,6 +12,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# Type aliases for nested FlextConfig attributes (DEPRECATED - use FlextConfig.AutoConfig directly)
+# DEPRECATED: These aliases will be removed in next major version.
+# Use FlextConfig.AutoConfig and FlextConfig.auto_register directly.
+import warnings
+
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.__version__ import __version__, __version_info__
@@ -79,7 +84,12 @@ from flext_core.typings import (
 )
 from flext_core.utilities import FlextUtilities
 
-# Type aliases for nested FlextConfig attributes (pyrefly compatibility)
+warnings.warn(
+    "AutoConfig and auto_register aliases are deprecated. "
+    "Use FlextConfig.AutoConfig and FlextConfig.auto_register directly.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 AutoConfig = FlextConfig.AutoConfig
 auto_register = FlextConfig.auto_register
 

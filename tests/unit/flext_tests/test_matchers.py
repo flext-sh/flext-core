@@ -12,6 +12,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 from flext_tests.matchers import FlextTestsMatchers
 
 
@@ -263,7 +264,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_config_valid_passes(self) -> None:
         """Test assert_config_valid with valid config."""
-        config = {
+        config: dict[str, FlextTypes.GeneralValueType] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 30,
@@ -298,7 +299,7 @@ class TestFlextTestsMatchers:
 
     def test_assert_config_valid_zero_timeout(self) -> None:
         """Test assert_config_valid with zero timeout."""
-        config = {
+        config: dict[str, FlextTypes.GeneralValueType] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 0,  # Should be positive

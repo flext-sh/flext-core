@@ -9,7 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+
+from pydantic import BaseModel
 
 from flext_core import (
     FlextConstants,
@@ -72,7 +74,16 @@ class DecoratorsService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
         # Setup container
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        container.register("logger", logger)
+        # Business Rule: Container accepts any object type including FlextLogger
+        # Cast to container.register() compatible type for type checker
+
+        logger_typed: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+            | object
+        ) = logger
+        container.register("logger", logger_typed)
 
         @FlextDecorators.inject(logger="logger")
         def process_with_logger(message: str) -> str:
@@ -145,7 +156,16 @@ class DecoratorsService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
         # Setup container for combined decorator
         container = FlextContainer()
         logger = FlextLogger.create_module_logger(__name__)
-        container.register("logger", logger)
+        # Business Rule: Container accepts any object type including FlextLogger
+        # Cast to container.register() compatible type for type checker
+
+        logger_typed: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+            | object
+        ) = logger
+        container.register("logger", logger_typed)
 
         @FlextDecorators.combined(
             inject_deps={"logger": "logger"},

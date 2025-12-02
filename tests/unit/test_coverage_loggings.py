@@ -611,7 +611,7 @@ __all__ = [
     "TestLevelBasedContextManagement",
     "TestLoggingIntegration",
     "TestLoggingMethods",
-    "TestPerformanceTracking",
+    "TestResultAdapter",
     "TestResultIntegration",
     "TestScopedContextManagement",
 ]

@@ -93,6 +93,7 @@ class SetupDataDict(TypedDict, total=False):
     initialization_step: str
     configuration_key: str
     configuration_value: str
+    environment: str
 
 
 class FixtureSuiteDict(TypedDict):

@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import cast
 
 from flext_core import (
     FlextConstants,
@@ -140,7 +141,15 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
 
         # Batch registration
         get_handler = GetUserHandler()
-        batch_result = registry.register_handlers([get_handler])  # type: ignore[arg-type,list-item]  # Handler types are more specific than object, object
+        # Business Rule: register_handlers accepts list of handlers compatible with Handler protocol
+        # Handler types implement Handler protocol and are compatible at runtime
+        # Cast needed because GetUserHandler[GetUserQuery, ServiceMetadataMapping] is compatible
+        # with FlextHandlers[GeneralValueType, GeneralValueType] at runtime
+        handler_for_registry = cast(
+            "FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]",
+            get_handler,
+        )
+        batch_result = registry.register_handlers([handler_for_registry])
         if batch_result.is_success:
             summary = batch_result.unwrap()
             print(f"✅ Batch registration: {summary.successful_registrations} handlers")
@@ -154,12 +163,24 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers
+        # Business Rule: register_handler accepts handlers compatible with Handler protocol
+        # Handler types implement Handler protocol and are compatible at runtime
         create_handler = CreateUserHandler()
-        registry.register_handler(create_handler)  # type: ignore[arg-type]  # Handler types are more specific than object, object
+        # Cast needed because CreateUserHandler[CreateUserCommand, UserCreatedEvent] is compatible
+        # with FlextHandlers[GeneralValueType, GeneralValueType] at runtime
+        handler_for_registry = cast(
+            "FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]",
+            create_handler,
+        )
+        registry.register_handler(handler_for_registry)
 
         # Dispatch command
         command = CreateUserCommand(name="Alice", email="alice@example.com")
-        dispatch_result = dispatcher.dispatch(command)  # type: ignore[arg-type]  # Pydantic models are compatible with GeneralValueType at runtime
+        # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
+        # Pydantic models implement model_dump() and are compatible at runtime
+        # Cast needed because CreateUserCommand is compatible with GeneralValueType at runtime
+        command_for_dispatch = cast("FlextTypes.GeneralValueType", command)
+        dispatch_result = dispatcher.dispatch(command_for_dispatch)
         if dispatch_result.is_success:
             event_value = dispatch_result.unwrap()
             if isinstance(event_value, UserCreatedEvent):
@@ -179,18 +200,37 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
         create_handler = CreateUserHandler()
         get_handler = GetUserHandler()
 
-        registry.register_handler(create_handler)  # type: ignore[arg-type]  # Handler types are more specific than object, object
-        registry.register_handler(get_handler)  # type: ignore[arg-type]  # Handler types are more specific than object, object
+        # Business Rule: register_handler accepts handlers compatible with Handler protocol
+        # Handler types implement Handler protocol and are compatible at runtime
+        # Cast needed because handlers are compatible with FlextHandlers[GeneralValueType, GeneralValueType] at runtime
+        create_handler_for_registry = cast(
+            "FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]",
+            create_handler,
+        )
+        get_handler_for_registry = cast(
+            "FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]",
+            get_handler,
+        )
+        registry.register_handler(create_handler_for_registry)
+        registry.register_handler(get_handler_for_registry)
 
         # Dispatch command
         command = CreateUserCommand(name="Bob", email="bob@example.com")
-        command_result = dispatcher.dispatch(command)  # type: ignore[arg-type]  # Pydantic models are compatible with GeneralValueType at runtime
+        # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
+        # Pydantic models implement model_dump() and are compatible at runtime
+        # Cast needed because CreateUserCommand is compatible with GeneralValueType at runtime
+        command_for_dispatch = cast("FlextTypes.GeneralValueType", command)
+        command_result = dispatcher.dispatch(command_for_dispatch)
         if command_result.is_success:
             print("✅ Command dispatched successfully")
 
         # Dispatch query
         query = GetUserQuery(user_id="user-123")
-        query_result = dispatcher.dispatch(query)  # type: ignore[arg-type]  # Pydantic models are compatible with GeneralValueType at runtime
+        # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
+        # Pydantic models implement model_dump() and are compatible at runtime
+        # Cast needed because GetUserQuery is compatible with GeneralValueType at runtime
+        query_for_dispatch = cast("FlextTypes.GeneralValueType", query)
+        query_result = dispatcher.dispatch(query_for_dispatch)
         if query_result.is_success:
             user_data = query_result.unwrap()
             if isinstance(user_data, dict):

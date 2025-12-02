@@ -20,7 +20,6 @@ from returns.result import Failure, Result, Success
 
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
-from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes, T_co, U
 
 
@@ -85,12 +84,12 @@ class FlextResult[T_co]:  # noqa: PLR0904
             """Create from returns.io.IOResult."""
             try:
                 if isinstance(io_result, IOSuccess):
-                    # Use FlextRuntime to normalize value directly - no manual type checking needed
-                    unwrapped_value = io_result.unwrap()
-                    normalized_value = FlextRuntime.normalize_to_general_value(
-                        unwrapped_value
+                    # IOSuccess[GeneralValueType, str].unwrap() returns GeneralValueType
+                    # Cast needed because returns.io type stubs may not be perfect
+                    unwrapped_value = cast(
+                        "FlextTypes.GeneralValueType", io_result.unwrap()
                     )
-                    return FlextResult.ok(normalized_value)
+                    return FlextResult.ok(unwrapped_value)
                 if isinstance(io_result, IOFailure):
                     error = io_result.failure()
                     return FlextResult.fail(str(error))
@@ -123,7 +122,26 @@ class FlextResult[T_co]:  # noqa: PLR0904
     def ok(cls, value: T_co) -> FlextResult[T_co]:
         """Create successful result wrapping data.
 
+        Business Rule: Creates successful FlextResult wrapping value. Raises ValueError
+        if value is None (None values are not allowed in success results). Uses returns
+        library Success wrapper for internal representation. This is the primary factory
+        method for success results in railway-oriented programming pattern.
+
+        Audit Implication: Success result creation ensures audit trail completeness by
+        tracking successful operations. All success results are created through this
+        factory method, ensuring consistent result representation across FLEXT.
+
         Core implementation - runtime.py cannot import result.py to avoid circular dependencies.
+
+        Args:
+            value: Value to wrap in success result (must not be None)
+
+        Returns:
+            Successful FlextResult instance
+
+        Raises:
+            ValueError: If value is None
+
         """
         if value is None:
             msg = "Cannot create success result with None value"
@@ -138,6 +156,17 @@ class FlextResult[T_co]:  # noqa: PLR0904
         error_data: Mapping[str, FlextTypes.GeneralValueType] | None = None,
     ) -> FlextResult[T_co]:
         """Create failed result with error message.
+
+        Business Rule: Creates failed FlextResult with error message, optional error
+        code, and optional error metadata. Converts None error to empty string for
+        consistency. Uses returns library Failure wrapper for internal representation.
+        This is the primary factory method for failure results in railway-oriented
+        programming pattern.
+
+        Audit Implication: Failure result creation ensures audit trail completeness by
+        tracking failed operations with error codes and metadata. All failure results
+        are created through this factory method, ensuring consistent error representation
+        across FLEXT.
 
         Core implementation - runtime.py cannot import result.py to avoid circular dependencies.
 

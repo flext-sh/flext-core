@@ -518,9 +518,13 @@ class TestHierarchicalExceptionSystem:
     def test_failure_level_comparison(self) -> None:
         """Test FailureLevel enum comparison."""
         failure_level = FlextConstants.Exceptions.FailureLevel
-        assert failure_level.STRICT != failure_level.WARN
-        assert failure_level.WARN != failure_level.PERMISSIVE
-        assert failure_level.STRICT == failure_level.STRICT
+        # Test enum members are distinct - use str() to avoid Literal type overlap issues
+        strict_val: str = str(failure_level.STRICT.value)
+        warn_val: str = str(failure_level.WARN.value)
+        permissive_val: str = str(failure_level.PERMISSIVE.value)
+        assert strict_val != warn_val
+        assert warn_val != permissive_val
+        assert strict_val == str(failure_level.STRICT.value)
 
     @pytest.mark.parametrize(
         ("level_name", "expected_value"),

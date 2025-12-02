@@ -146,7 +146,33 @@ class FlextLogger:
         cls,
         **context: FlextTypes.GeneralValueType,
     ) -> FlextProtocols.ResultProtocol[bool]:
-        """Bind context globally using FlextRuntime.structlog() contextvars."""
+        """Bind context globally using FlextRuntime.structlog() contextvars.
+
+        Business Rule: Binds context variables globally using structlog contextvars,
+        ensuring all subsequent log messages include these context variables automatically.
+        Uses FlextRuntime for centralized logging management. Global context persists
+        across all loggers until explicitly cleared or unbound.
+
+        Audit Implication: Global context binding ensures audit trail completeness by
+        attaching context variables to all log messages. All context variables are bound
+        through this method, ensuring consistent context propagation across FLEXT.
+        Critical for maintaining correlation IDs, user IDs, and other audit-relevant
+        context throughout application execution.
+
+        Args:
+            **context: Context variables to bind globally
+
+        Returns:
+            FlextResult[bool]: Success with True if bound, failure with error details
+
+        Example:
+            >>> FlextLogger.bind_global_context(
+            ...     correlation_id="flext-abc123",
+            ...     user_id="admin",
+            ...     environment="production",
+            ... )
+
+        """
         return cls._context_operation(
             FlextConstants.Logging.ContextOperation.BIND,
             **context,
@@ -156,8 +182,21 @@ class FlextLogger:
     def clear_global_context(cls) -> FlextProtocols.ResultProtocol[bool]:
         """Clear all globally bound context.
 
+        Business Rule: Clears all globally bound context variables, removing them from
+        all subsequent log messages. Uses FlextRuntime for centralized logging management.
+        This operation is irreversible - all context must be rebound if needed.
+
+        Audit Implication: Clearing global context removes audit trail context from
+        log messages. Use with caution in production environments. Typically used
+        during application shutdown or context reset scenarios. All context variables
+        are cleared through this method, ensuring consistent context management.
+
         Returns:
             FlextProtocols.ResultProtocol[bool]: Success with True if cleared, failure with error details
+
+        Example:
+            >>> FlextLogger.clear_global_context()
+            >>> # All global context cleared
 
         """
         return cls._context_operation(FlextConstants.Logging.ContextOperation.CLEAR)
@@ -166,11 +205,25 @@ class FlextLogger:
     def unbind_global_context(cls, *keys: str) -> FlextProtocols.ResultProtocol[bool]:
         """Unbind specific keys from global context.
 
+        Business Rule: Unbinds specific context keys from global context, removing them
+        from all subsequent log messages. Uses FlextRuntime for centralized logging management.
+        Only specified keys are removed; other global context remains intact.
+
+        Audit Implication: Unbinding global context removes specific audit trail context
+        from log messages. Use with caution in production environments. Typically used
+        when specific context variables are no longer relevant or need to be updated.
+        All context variables are unbound through this method, ensuring consistent
+        context management.
+
         Args:
             *keys: Context keys to unbind
 
         Returns:
             FlextProtocols.ResultProtocol[bool]: Success with True if unbound, failure with error details
+
+        Example:
+            >>> FlextLogger.unbind_global_context("user_id", "session_id")
+            >>> # Only 'user_id' and 'session_id' removed from global context
 
         """
         try:
@@ -204,6 +257,17 @@ class FlextLogger:
         **context: FlextTypes.GeneralValueType,
     ) -> FlextProtocols.ResultProtocol[bool]:
         """Bind context variables to a specific scope.
+
+        Business Rule: Binds context variables to a specific scope (APPLICATION, REQUEST,
+        or OPERATION) using structlog contextvars. Updates internal scoped context tracking
+        and binds to structlog for automatic inclusion in log messages. This unified method
+        replaces separate bind_application_context, bind_request_context, and bind_operation_context
+        methods for DRY code organization.
+
+        Audit Implication: Context binding ensures audit trail completeness by attaching
+        context variables to log messages. All context variables are bound through this
+        method, ensuring consistent context propagation across FLEXT. Used throughout
+        FLEXT for structured logging with context.
 
         This unified method replaces the separate bind_application_context,
         bind_request_context, and bind_operation_context methods.
@@ -257,6 +321,16 @@ class FlextLogger:
     def clear_scope(cls, scope: str) -> FlextProtocols.ResultProtocol[bool]:
         """Clear all context variables for a specific scope.
 
+        Business Rule: Clears all context variables bound to a specific scope (APPLICATION,
+        REQUEST, or OPERATION). Unbinds context from structlog and clears internal tracking.
+        This operation is irreversible - all context must be rebound if needed.
+
+        Audit Implication: Clearing scope context removes audit trail context from
+        log messages for that scope. Use with caution in production environments.
+        Typically used during scope transitions (e.g., request completion) or context
+        reset scenarios. All context variables are cleared through this method, ensuring
+        consistent context management across FLEXT.
+
         Args:
             scope: Scope to clear (use FlextConstants.Context.SCOPE_* constants)
 
@@ -293,7 +367,34 @@ class FlextLogger:
         scope: str,
         **context: FlextTypes.GeneralValueType,
     ) -> Iterator[None]:
-        """Context manager for automatic scoped context cleanup."""
+        """Context manager for automatic scoped context cleanup.
+
+        Business Rule: Context manager that binds context variables to a specific scope
+        and automatically clears them when exiting the context. Uses bind_context for
+        binding and clear_scope for cleanup. Ensures context is always cleaned up even
+        if exceptions occur, maintaining consistent context state.
+
+        Audit Implication: Scoped context ensures audit trail completeness by attaching
+        context variables to log messages within the scope. Automatic cleanup ensures
+        context doesn't leak between scopes, maintaining audit trail integrity. All
+        context variables are bound and cleared through this method, ensuring consistent
+        context management across FLEXT.
+
+        Args:
+            scope: Scope name (use FlextConstants.Context.SCOPE_* constants)
+            **context: Context variables to bind
+
+        Yields:
+            None: Context manager yields control to caller
+
+        Example:
+            >>> with FlextLogger.scoped_context(
+            ...     FlextConstants.Context.SCOPE_OPERATION, operation="sync_users"
+            ... ):
+            ...     # Context automatically bound and cleared
+            ...     logger.info("Operation started")
+
+        """
         # Use bind_context for all scopes (handles known + generic scopes)
         result = cls.bind_context(scope, **context)
 
@@ -318,6 +419,16 @@ class FlextLogger:
         **context: FlextTypes.GeneralValueType,
     ) -> FlextProtocols.ResultProtocol[bool]:
         """Bind context variables that only appear in logs at specified level or higher.
+
+        Business Rule: Binds context variables with level prefix (`_level_{level}_`) for
+        conditional inclusion based on log level. Uses FlextRuntime for centralized logging
+        management. Context variables are filtered by FlextRuntime.level_based_context_filter()
+        processor based on log level hierarchy. Normalizes log level to standard format
+        (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+
+        Audit Implication: Level-based context binding ensures audit trail completeness by
+        including verbose context only at appropriate log levels. All level-based context
+        is filtered automatically by structlog processors, ensuring efficient log processing.
 
         Uses FlextRuntime for centralized logging management. Context variables
         are prefixed with `_level_{level}_` so they can be filtered by log level.
@@ -374,7 +485,17 @@ class FlextLogger:
     ) -> FlextProtocols.ResultProtocol[bool]:
         """Unbind context variables that were bound for a specific log level.
 
-        Uses FlextRuntime for centralized logging management.
+        Business Rule: Unbinds context variables that were bound for a specific log level,
+        removing them from logs at that level or higher. Uses FlextRuntime for centralized
+        logging management. Only specified keys are removed; other level-based context
+        remains intact. Normalizes log level to standard format (DEBUG, INFO, WARNING,
+        ERROR, CRITICAL).
+
+        Audit Implication: Unbinding level-based context removes specific audit trail
+        context from log messages at that level. Use with caution in production environments.
+        Typically used when specific context variables are no longer relevant or need to
+        be updated. All context variables are unbound through this method, ensuring
+        consistent context management across FLEXT.
 
         Args:
             level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL) - case insensitive
@@ -422,6 +543,16 @@ class FlextLogger:
     def create_module_logger(cls, name: str = "flext") -> FlextLogger:
         """Create a logger instance for a module.
 
+        Business Rule: Creates a FlextLogger instance for a specific module, using
+        the module name for logger identification. Logger inherits global and scoped
+        context automatically. Uses FlextRuntime for centralized logging management.
+        Logger name is immutable after creation, ensuring consistent logger identity.
+
+        Audit Implication: Module logger creation ensures audit trail completeness by
+        attaching module name to log messages. All loggers are created through this
+        method, ensuring consistent logger configuration across FLEXT. Module name
+        is critical for tracing log messages to their source in audit trails.
+
         Args:
             name: Module name (typically __name__). Defaults to "flext".
 
@@ -443,8 +574,16 @@ class FlextLogger:
     def get_logger(cls, name: str | None = None) -> FlextProtocols.StructlogLogger:
         """Get structlog logger instance (alias for FlextRuntime.get_logger).
 
-        This method provides compatibility with code that expects FlextLogger.get_logger()
-        instead of FlextRuntime.get_logger().
+        Business Rule: Gets a structlog logger instance, delegating to FlextRuntime
+        for centralized logging management. Logger inherits global and scoped context
+        automatically. This method provides compatibility with code that expects
+        FlextLogger.get_logger() instead of FlextRuntime.get_logger().
+
+        Audit Implication: Logger retrieval ensures audit trail completeness by
+        providing access to structured logging with context. All loggers are retrieved
+        through this method or FlextRuntime.get_logger(), ensuring consistent logger
+        configuration across FLEXT. Logger name is critical for tracing log messages
+        to their source in audit trails.
 
         Args:
             name: Logger name (module name). Defaults to __name__ of caller.
@@ -687,7 +826,20 @@ class FlextLogger:
         *args: FlextTypes.GeneralValueType,
         **context: FlextTypes.GeneralValueType | Exception,
     ) -> FlextProtocols.ResultProtocol[bool]:
-        """Internal logging method - consolidates all log level methods."""
+        """Internal logging method - consolidates all log level methods.
+
+        Business Rule: Internal method that consolidates all log level methods (debug,
+        info, warning, error, critical) into a single implementation. Formats message
+        with % arguments, auto-adds source path if not provided, and delegates to
+        structlog logger. Uses FlextRuntime for centralized logging management.
+        Returns FlextResult[bool] indicating success or failure.
+
+        Audit Implication: Internal logging ensures audit trail completeness by
+        formatting messages and adding source context. All log messages go through
+        this method, ensuring consistent log formatting and context inclusion across
+        FLEXT. Source path is critical for tracing log messages to their source in
+        audit trails.
+        """
         try:
             formatted_message = FlextLogger._format_log_message(message, *args)
 
@@ -720,6 +872,17 @@ class FlextLogger:
         _context: Mapping[str, FlextTypes.FlexibleValue] | None = None,
     ) -> None:
         """Log message with specified level - LoggerProtocol implementation.
+
+        Business Rule: Logs a message with specified level, converting level string
+        to LogLevel enum if possible. Uses _log method for actual logging. Context
+        mapping is merged with logger's bound context. Uses FlextRuntime for centralized
+        logging management.
+
+        Audit Implication: Logging ensures audit trail completeness by recording
+        messages with context. All log messages go through this method or specific
+        level methods (debug, info, warning, error, critical), ensuring consistent
+        log formatting and context inclusion across FLEXT. Log level is critical for
+        filtering and prioritizing audit trail messages.
 
         Args:
             level: Log level (debug, info, warning, error, critical)
@@ -763,7 +926,19 @@ class FlextLogger:
         return_result: bool = False,
         **context: FlextTypes.GeneralValueType,
     ) -> FlextProtocols.ResultProtocol[bool] | None:
-        """Log debug message - LoggerProtocol implementation."""
+        """Log debug message - LoggerProtocol implementation.
+
+        Business Rule: Logs a debug-level message with optional context. Uses _log
+        method for actual logging. If return_result=True, returns FlextResult[bool]
+        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
+        centralized logging management.
+
+        Audit Implication: Debug logging ensures audit trail completeness by recording
+        detailed diagnostic information. Debug messages are typically filtered in
+        production but critical for troubleshooting and audit trail reconstruction.
+        All debug messages go through this method, ensuring consistent log formatting
+        and context inclusion across FLEXT.
+        """
         result = self._log(
             FlextConstants.Settings.LogLevel.DEBUG,
             message,
@@ -797,7 +972,19 @@ class FlextLogger:
         return_result: bool = False,
         **context: FlextTypes.GeneralValueType,
     ) -> FlextProtocols.ResultProtocol[bool] | None:
-        """Log info message - LoggerProtocol implementation."""
+        """Log info message - LoggerProtocol implementation.
+
+        Business Rule: Logs an info-level message with optional context. Uses _log
+        method for actual logging. If return_result=True, returns FlextResult[bool]
+        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
+        centralized logging management.
+
+        Audit Implication: Info logging ensures audit trail completeness by recording
+        informational messages about application flow. Info messages are typically
+        included in production logs and critical for audit trail reconstruction.
+        All info messages go through this method, ensuring consistent log formatting
+        and context inclusion across FLEXT.
+        """
         result = self._log(
             FlextConstants.Settings.LogLevel.INFO,
             message,
@@ -831,7 +1018,19 @@ class FlextLogger:
         return_result: bool = False,
         **context: FlextTypes.GeneralValueType | Exception,
     ) -> FlextProtocols.ResultProtocol[bool] | None:
-        """Log warning message - LoggerProtocol implementation."""
+        """Log warning message - LoggerProtocol implementation.
+
+        Business Rule: Logs a warning-level message with optional context. Uses _log
+        method for actual logging. If return_result=True, returns FlextResult[bool]
+        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
+        centralized logging management.
+
+        Audit Implication: Warning logging ensures audit trail completeness by recording
+        warning messages about potential issues. Warning messages are typically included
+        in production logs and critical for audit trail reconstruction and issue
+        identification. All warning messages go through this method, ensuring consistent
+        log formatting and context inclusion across FLEXT.
+        """
         result = self._log(
             FlextConstants.Settings.LogLevel.WARNING,
             message,
@@ -865,7 +1064,19 @@ class FlextLogger:
         return_result: bool = False,
         **context: FlextTypes.GeneralValueType,
     ) -> FlextProtocols.ResultProtocol[bool] | None:
-        """Log error message - LoggerProtocol implementation."""
+        """Log error message - LoggerProtocol implementation.
+
+        Business Rule: Logs an error-level message with optional context. Uses _log
+        method for actual logging. If return_result=True, returns FlextResult[bool]
+        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
+        centralized logging management.
+
+        Audit Implication: Error logging ensures audit trail completeness by recording
+        error messages about failures. Error messages are always included in production
+        logs and critical for audit trail reconstruction and failure analysis. All
+        error messages go through this method, ensuring consistent log formatting and
+        context inclusion across FLEXT.
+        """
         result = self._log(
             FlextConstants.Settings.LogLevel.ERROR,
             message,
@@ -899,7 +1110,19 @@ class FlextLogger:
         return_result: bool = False,
         **context: FlextTypes.GeneralValueType,
     ) -> FlextProtocols.ResultProtocol[bool] | None:
-        """Log critical message - LoggerProtocol implementation."""
+        """Log critical message - LoggerProtocol implementation.
+
+        Business Rule: Logs a critical-level message with optional context. Uses _log
+        method for actual logging. If return_result=True, returns FlextResult[bool]
+        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
+        centralized logging management.
+
+        Audit Implication: Critical logging ensures audit trail completeness by recording
+        critical messages about severe failures. Critical messages are always included
+        in production logs and critical for audit trail reconstruction and emergency
+        response. All critical messages go through this method, ensuring consistent
+        log formatting and context inclusion across FLEXT.
+        """
         result = self._log(
             FlextConstants.Settings.LogLevel.CRITICAL,
             message,
@@ -939,7 +1162,20 @@ class FlextLogger:
         return_result: bool = False,
         **kwargs: FlextTypes.GeneralValueType,
     ) -> FlextProtocols.ResultProtocol[bool] | None:
-        """Log exception with conditional stack trace (DEBUG only)."""
+        """Log exception with conditional stack trace (DEBUG only).
+
+        Business Rule: Logs an exception with conditional stack trace inclusion based
+        on effective log level. Stack trace is included only if effective log level is
+        DEBUG. Exception details (type, message, stack trace) are added to context.
+        Uses FlextRuntime for centralized logging management.
+
+        Audit Implication: Exception logging ensures audit trail completeness by recording
+        exception details and stack traces. Stack traces are critical for troubleshooting
+        but may contain sensitive information, so they're only included at DEBUG level.
+        All exception messages go through this method, ensuring consistent log formatting
+        and context inclusion across FLEXT. Exception details are critical for audit
+        trail reconstruction and failure analysis.
+        """
         try:
             # Determine stack trace inclusion using effective_log_level
             try:

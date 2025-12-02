@@ -119,7 +119,7 @@ class ContainerTestHelpers:
         return factory, call_count
 
 
-class TestFlextContainer:  # noqa: PLR0904
+class TestFlextContainer:
     """Unified test suite for FlextContainer using FlextTestsUtilities."""
 
     def test_container_initialization(self) -> None:
@@ -219,9 +219,20 @@ class TestFlextContainer:  # noqa: PLR0904
         assert result is container
 
     def test_register_factory_non_callable(self) -> None:
-        """Test that registering non-callable is rejected."""
+        """Test that registering non-callable is rejected.
+
+        Business Rule: register_factory() must reject non-callable values.
+        This test intentionally passes a string to verify error handling.
+        Type checker warning is expected and suppressed for test purposes.
+
+        """
         container = ContainerTestHelpers.create_clean_container()
-        result = container.register_factory("invalid", "not_callable")
+        # Intentionally pass non-callable to test error handling
+        # Cast is needed because type checker rejects invalid types
+        non_callable: Callable[[], FlextTypes.GeneralValueType] = cast(
+            "Callable[[], FlextTypes.GeneralValueType]", "not_callable"
+        )
+        result = container.register_factory("invalid", non_callable)
         assert result.is_failure
         assert result.error is not None
         assert "callable" in result.error
@@ -243,13 +254,24 @@ class TestFlextContainer:  # noqa: PLR0904
         ids=lambda s: s.name,
     )
     def test_get_service(self, scenario: ServiceScenario) -> None:
-        """Test service retrieval."""
+        """Test service retrieval.
+
+        Business Rule: Container accepts object types for registration and
+        retrieval. ServiceScenario uses object type for flexibility in tests.
+        Cast to GeneralValueType for type checker compatibility.
+
+        """
         container = ContainerTestHelpers.create_clean_container()
         container.register(scenario.name, scenario.service)
         result: FlextResult[FlextTypes.GeneralValueType] = container.get(scenario.name)
+        # Cast scenario.service to GeneralValueType for type checker
+        # Runtime: object is compatible with GeneralValueType
+        expected_value: FlextTypes.GeneralValueType = cast(
+            "FlextTypes.GeneralValueType", scenario.service
+        )
         FlextTestsUtilities.ResultHelpers.assert_success_with_value(
             result,
-            scenario.service,
+            expected_value,
         )
 
     def test_get_nonexistent_service(self) -> None:
@@ -294,9 +316,23 @@ class TestFlextContainer:  # noqa: PLR0904
         ids=lambda s: s.name,
     )
     def test_get_typed_correct(self, scenario: TypedRetrievalScenario) -> None:
-        """Test typed retrieval with correct types."""
+        """Test typed retrieval with correct types.
+
+        Business Rule: get_typed() validates runtime type compatibility.
+        TypedRetrievalScenario uses object for service flexibility in tests.
+        Cast to appropriate type for type checker compatibility.
+
+        """
         container = ContainerTestHelpers.create_clean_container()
-        container.register(scenario.name, scenario.service)
+        # Cast scenario.service to container.register() compatible type
+        # Runtime: object is compatible with GeneralValueType | BaseModel | Callable | object
+        service_typed: (
+            FlextTypes.GeneralValueType
+            | BaseModel
+            | Callable[..., FlextTypes.GeneralValueType]
+            | object
+        ) = scenario.service
+        container.register(scenario.name, service_typed)
         typed_result: FlextResult[object] = container.get_typed(
             scenario.name,
             scenario.expected_type,

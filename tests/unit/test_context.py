@@ -119,7 +119,7 @@ class ContextTestHelpers:
         assert result.is_failure
 
 
-class TestFlextContext:  # noqa: PLR0904
+class TestFlextContext:
     """Test suite for FlextContext using FlextTestsUtilities and FlextConstants."""
 
     def test_context_initialization(self) -> None:
@@ -226,13 +226,13 @@ class TestFlextContext:  # noqa: PLR0904
         assert isinstance(retrieved, dict)
         # Type narrowing: retrieved is dict after isinstance check
         # pyright needs explicit type narrowing for nested dict access
-        retrieved_dict: dict[str, FlextTypes.GeneralValueType] = retrieved  # type: ignore[assignment]
+        retrieved_dict: dict[str, FlextTypes.GeneralValueType] = retrieved
         user_data = retrieved_dict.get("user")
         assert isinstance(user_data, dict)
-        user_dict: dict[str, FlextTypes.GeneralValueType] = user_data  # type: ignore[assignment]
+        user_dict: dict[str, FlextTypes.GeneralValueType] = user_data
         profile_data = user_dict.get("profile")
         assert isinstance(profile_data, dict)
-        profile_dict: dict[str, FlextTypes.GeneralValueType] = profile_data  # type: ignore[assignment]
+        profile_dict: dict[str, FlextTypes.GeneralValueType] = profile_data
         assert profile_dict.get("name") == "John Doe"
 
     def test_context_merge(self) -> None:

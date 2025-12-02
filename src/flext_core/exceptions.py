@@ -37,12 +37,11 @@ class FlextExceptions:
         _global_failure_level: ClassVar[
             FlextConstants.Exceptions.FailureLevel | None
         ] = None
-        _library_exception_levels: ClassVar[
-            FlextTypes.Types.NestedExceptionLevelMapping
-        ] = {}
-        _container_exception_levels: ClassVar[
-            FlextTypes.Types.ExceptionLevelMapping
-        ] = {}
+        # Business Rule: Mutable ClassVar dicts for runtime state - must use dict, not Mapping
+        # These are mutable storage structures for singleton pattern and registry
+        # Type annotation uses dict because they are mutable storage, not read-only Mapping
+        _library_exception_levels: ClassVar[dict[str, dict[type, str]]] = {}
+        _container_exception_levels: ClassVar[dict[str, str]] = {}
         _call_level_context: ClassVar[
             contextvars.ContextVar[FlextConstants.Exceptions.FailureLevel | None]
         ] = contextvars.ContextVar("exception_mode", default=None)
@@ -61,7 +60,9 @@ class FlextExceptions:
             if cls._global_failure_level is not None:
                 return cls._global_failure_level
             try:
-                # Lazy import to avoid circular dependency
+                # Business Rule: Access global config singleton for exception failure level
+                # Lazy import to avoid circular dependency: config.py imports exceptions.py
+                # This is a genuine circular import case - use lazy import per FLEXT standards
                 from flext_core.config import FlextConfig  # noqa: PLC0415
 
                 config = FlextConfig.get_global_instance()
@@ -144,6 +145,17 @@ class FlextExceptions:
         ) -> None:
             """Initialize base error with message and optional metadata.
 
+            Business Rule: Initializes exception with message, error code, and optional
+            metadata. Generates correlation ID automatically if auto_correlation=True.
+            Logs exception automatically if auto_log=True. Merges context, metadata,
+            and extra_kwargs into unified metadata structure. Uses FlextRuntime for
+            safe metadata normalization.
+
+            Audit Implication: Exception initialization ensures audit trail completeness
+            by capturing error context, correlation IDs, and metadata. All exceptions
+            are logged with full context for audit trail reconstruction. Used throughout
+            FLEXT for structured error handling.
+
             Args:
                 message: Error message
                 error_code: Optional error code
@@ -196,6 +208,16 @@ class FlextExceptions:
         def log_via_context(self) -> None:
             """Log this exception via FlextLogger - call this when context is available.
 
+            Business Rule: Logs exception using FlextRuntime.get_logger() with failure
+            level-based logging. Uses get_effective_level() to determine log level
+            (STRICT logs as error with exc_info, WARN logs as warning). This method
+            should be called by dispatcher/service layer when catching FlextExceptions.
+
+            Audit Implication: Exception logging ensures audit trail completeness by
+            logging all exceptions with full context. All exceptions are logged with
+            appropriate log levels based on failure level configuration. Used throughout
+            FLEXT for structured exception logging.
+
             This method should be called by the dispatcher/service layer when catching
             FlextExceptions, ensuring proper contextual logging without circular dependencies.
             """
@@ -224,6 +246,15 @@ class FlextExceptions:
         def to_dict(self) -> dict[str, FlextTypes.MetadataAttributeValue]:
             """Convert exception to dictionary representation.
 
+            Business Rule: Converts exception to dictionary with error_type, message,
+            error_code, correlation_id, timestamp, and metadata attributes. Merges
+            metadata attributes into result dictionary without overriding existing keys.
+            Used for serialization and audit trail storage.
+
+            Audit Implication: Dictionary representation ensures audit trail completeness
+            by providing structured exception data for storage and transmission. All
+            exception data is serialized consistently for audit systems.
+
             Returns:
                 Dictionary with error_type, message, error_code, and other fields.
 
@@ -251,6 +282,16 @@ class FlextExceptions:
             merged_kwargs: dict[str, FlextTypes.MetadataAttributeValue],
         ) -> FlextModelsBase.Metadata:
             """Normalize metadata from various input types to FlextModelsBase.Metadata model.
+
+            Business Rule: Normalizes metadata from various input types (Metadata model,
+            dict-like objects, GeneralValueType, or None) to FlextModelsBase.Metadata.
+            Uses FlextRuntime.normalize_to_metadata_value() for safe normalization.
+            Merges merged_kwargs into final metadata attributes. Fallback converts
+            non-dict values to string representation.
+
+            Audit Implication: Metadata normalization ensures audit trail completeness
+            by converting all metadata types to consistent Metadata model format. All
+            metadata is normalized before being stored in audit trails.
 
             Args:
                 metadata: FlextModelsBase.Metadata instance, dict-like object, or None
@@ -1406,7 +1447,8 @@ class FlextExceptions:
             context=error_context or None,
         )
 
-    _exception_counts: ClassVar[FlextTypes.Types.ExceptionMetricsMapping] = {}
+    # Mutable ClassVar dict for runtime metrics - must use dict, not Mapping
+    _exception_counts: ClassVar[dict[type, int]] = {}
 
     @classmethod
     def record_exception(cls, exception_type: type) -> None:

@@ -17,12 +17,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_core import FlextExceptions, FlextResult
-from tests.fixtures.factories import (
+
+from .fixtures.factories import (
     FailingService,
     FailingServiceAuto,
     GetUserService,
@@ -74,7 +73,7 @@ class TestServiceAutoExecute:
     def test_manual_service_result_property(self, user_id: str) -> None:
         """Manual service .result property works."""
         service = GetUserService(user_id=user_id)
-        user = cast("User", service.result)
+        user = service.result
 
         assert user.user_id == user_id
         assert user.name.startswith("User ")
@@ -177,7 +176,7 @@ class TestServiceAutoExecute:
         assert result.is_success
 
         # Can access result property
-        user = cast("User", service.result)
+        user = service.result
         assert user.user_id == "legacy"
 
         # Can use railway pattern
@@ -222,7 +221,7 @@ class TestServiceAutoExecute:
         assert auto_result.user_id == "compare"
 
         # Results are equivalent
-        manual_user = cast("User", manual.result)
+        manual_user = manual.result
         assert manual_user.user_id == auto_result.user_id
 
     def test_auto_execution_edge_cases(self) -> None:

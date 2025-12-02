@@ -12,7 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from flext_core.typings import FlextTypes
-from tests.helpers.constants import TestConstants
+
+from ..helpers.constants import TestConstants
 
 
 @dataclass(frozen=True, slots=True)

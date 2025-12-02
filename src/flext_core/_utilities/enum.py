@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from enum import StrEnum
-from functools import cache
-from typing import TypeGuard
+from typing import ClassVar, TypeGuard
 
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -27,6 +26,11 @@ class FlextUtilitiesEnum:
     - Caching for performance in frequent validations
     - Direct integration with Pydantic BeforeValidator
     """
+
+    # Cache for metadata methods (manual cache since types aren't hashable for lru_cache)
+    _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
+    _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
+    _members_cache: ClassVar[dict[type[StrEnum], frozenset[StrEnum]]] = {}
 
     # ─────────────────────────────────────────────────────────────
     # TYPEIS FACTORIES: Generate TypeGuard functions for any StrEnum
@@ -214,22 +218,69 @@ class FlextUtilitiesEnum:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    @cache
     def values[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
-        """Return frozenset of values (cached for performance)."""
-        members_dict = getattr(enum_cls, "__members__", {})
-        return frozenset(m.value for m in members_dict.values())
+        """Return frozenset of values (cached for performance).
+
+        Business Rule: Returns immutable frozenset of all enum values.
+        Cache ensures same object returned for same enum class (identity preserved).
+        Manual cache dictionary handles enum classes efficiently.
+
+        Audit Implication: Cached results ensure consistent identity across calls,
+        important for set operations and identity checks in audit trails.
+        """
+        # Check cache first
+        if enum_cls in FlextUtilitiesEnum._values_cache:
+            return FlextUtilitiesEnum._values_cache[enum_cls]
+
+        # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
+        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
+        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
+        result = frozenset(m.value for m in members_dict.values())
+
+        # Cache result
+        FlextUtilitiesEnum._values_cache[enum_cls] = result
+        return result
 
     @staticmethod
-    @cache
     def names[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
-        """Return frozenset of member names (cached)."""
-        members_dict = getattr(enum_cls, "__members__", {})
-        return frozenset(members_dict.keys())
+        """Return frozenset of member names (cached for performance).
+
+        Business Rule: Returns immutable frozenset of all enum member names.
+        Cache ensures same object returned for same enum class (identity preserved).
+        Manual cache dictionary handles enum classes efficiently.
+
+        Audit Implication: Cached results ensure consistent identity across calls.
+        """
+        # Check cache first
+        if enum_cls in FlextUtilitiesEnum._names_cache:
+            return FlextUtilitiesEnum._names_cache[enum_cls]
+
+        # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
+        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
+        result = frozenset(members_dict.keys())
+
+        # Cache result
+        FlextUtilitiesEnum._names_cache[enum_cls] = result
+        return result
 
     @staticmethod
-    @cache
     def members[E: StrEnum](enum_cls: type[E]) -> frozenset[E]:
-        """Return frozenset of members (cached)."""
-        members_dict = getattr(enum_cls, "__members__", {})
-        return frozenset(members_dict.values())
+        """Return frozenset of members (cached for performance).
+
+        Business Rule: Returns immutable frozenset of all enum members.
+        Cache ensures same object returned for same enum class (identity preserved).
+        Manual cache dictionary handles enum classes efficiently.
+
+        Audit Implication: Cached results ensure consistent identity across calls.
+        """
+        # Check cache first
+        if enum_cls in FlextUtilitiesEnum._members_cache:
+            return FlextUtilitiesEnum._members_cache[enum_cls]  # type: ignore[return-value]
+
+        # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
+        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
+        result = frozenset(members_dict.values())
+
+        # Cache result
+        FlextUtilitiesEnum._members_cache[enum_cls] = result  # type: ignore[assignment]
+        return result

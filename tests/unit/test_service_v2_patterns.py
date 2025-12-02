@@ -20,7 +20,8 @@ from typing import ClassVar
 import pytest
 from pydantic import Field
 
-from flext_core import FlextExceptions, FlextModels, FlextResult, FlextService
+from flext_core import FlextExceptions, FlextResult, FlextService
+from flext_core._models.entity import FlextModelsEntity
 from flext_core.typings import FlextTypes
 
 # ============================================================================
@@ -148,16 +149,16 @@ class DictService(FlextService[dict[str, int]]):
         return FlextResult.ok({"a": 1, "b": 2})
 
 
-class UserService(FlextService[FlextModels.Entity]):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for type parameter
+class UserService(FlextService[FlextModelsEntity.Core]):
     """Service returning User entity."""
 
     user_id: str
     user_name: str
 
-    def execute(self, **_kwargs: object) -> FlextResult[FlextModels.Entity]:  # type: ignore[valid-type]  # FlextModels.Entity is assignment alias, valid for type parameter
+    def execute(self, **_kwargs: object) -> FlextResult[FlextModelsEntity.Core]:
         """Execute and return user."""
 
-        class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
+        class User(FlextModelsEntity.Core):
             """User entity."""
 
             unique_id: str = "test_id"
@@ -487,7 +488,8 @@ class TestFlextServiceV2Patterns:
     def test_v2_auto_pattern(self, test_case: ServiceTestCase) -> None:
         """Test V2 Auto pattern with auto_execute."""
         if test_case.operation == ServiceOperationType.V2_AUTO_RETURNS_VALUE:
-            value = SimpleV2AutoService(message="test")
+            # auto_execute=True returns unwrapped result, not service instance
+            value: object = SimpleV2AutoService(message="test")
             assert value == "V2 Auto: test"
 
         elif test_case.operation == ServiceOperationType.V2_AUTO_VS_V1_SERVICE:
@@ -522,8 +524,9 @@ class TestFlextServiceV2Patterns:
                 pass
 
         elif test_case.operation == ServiceOperationType.V2_AUTO_ZERO_CEREMONY:
-            value = SimpleV2AutoService(message="simple")
-            assert value == "V2 Auto: simple"
+            # auto_execute=True returns unwrapped result, not service instance
+            result: object = SimpleV2AutoService(message="simple")
+            assert result == "V2 Auto: simple"
 
     @pytest.mark.parametrize(
         "test_case",
@@ -654,12 +657,12 @@ class TestFlextServiceV2Patterns:
             assert list_value[0] == "x"
 
         elif test_case.operation == ServiceOperationType.V2_PROPERTY_WITH_MODEL_RETURN:
-            user_service: FlextService[FlextModels.Entity] = UserService(
+            user_service: FlextService[FlextModelsEntity.Core] = UserService(
                 user_id="123", user_name="Test User"
-            )  # type: ignore[assignment,valid-type]  # FlextModels.Entity is assignment alias
+            )
             user = user_service.result
-            assert isinstance(user, FlextModels.Entity)
-            # Type narrowing: user is FlextModels.Entity, access unique_id via getattr for type safety
+            assert isinstance(user, FlextModelsEntity.Core)
+            # Type narrowing: user is FlextModelsEntity.Core, access unique_id via getattr
             user_id = getattr(user, "unique_id", None)
             assert user_id == "123"
             # User entity may not have name attribute directly, check via getattr

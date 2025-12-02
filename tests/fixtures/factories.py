@@ -1,8 +1,8 @@
-"""Factory-boy factories for test data generation.
+"""Test factories for test data generation.
 
-Provides comprehensive factories for all test models using factory-boy patterns.
-Reduces boilerplate code and enables dynamic test data generation with advanced
-Python 3.13 features like pattern matching and type annotations.
+Provides comprehensive factories for all test models using native Python patterns.
+Replaces factory-boy with pure Python implementations for full type checker compliance.
+Uses dataclasses and factory functions with Python 3.13 features.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,27 +12,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import ClassVar, TypeVar
+from itertools import count
+from typing import ClassVar
 
-import factory
-from factory import Faker
+from flext_core import FlextResult, FlextService
+from flext_core._models.entity import FlextModelsEntity
 
-from flext_core import FlextModels, FlextResult, FlextService
-from tests.helpers.constants import TestConstants
-
-# =========================================================================
-# Type Variables for Generic Factories
-# =========================================================================
-
-T = TypeVar("T")
-ServiceT = TypeVar("ServiceT", bound=FlextService)
+from ..helpers.constants import TestConstants
 
 # =========================================================================
 # Test Models
 # =========================================================================
 
 
-class User(FlextModels.Entity):
+class User(FlextModelsEntity.Core):
     """Test user entity."""
 
     user_id: str
@@ -127,119 +120,305 @@ class FailingServiceAuto(FailingService):
 
 
 # =========================================================================
-# Factory-Boy Factories
+# Native Python Factories (No External Dependencies)
 # =========================================================================
 
 
-class UserFactory(factory.Factory):
-    """Factory for User entities."""
+class UserFactory:
+    """Factory for User entities using native Python patterns."""
 
-    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Meta configuration for UserFactory."""
+    _counter: ClassVar[count[int]] = count(1)
+    _names: ClassVar[list[str]] = [
+        "Alice Johnson",
+        "Bob Smith",
+        "Carol Williams",
+        "David Brown",
+        "Eve Davis",
+    ]
+    _name_index: ClassVar[int] = 0
 
-        model = User
+    @classmethod
+    def _next_name(cls) -> str:
+        """Get next name from rotation."""
+        name = cls._names[cls._name_index % len(cls._names)]
+        cls._name_index += 1
+        return name
 
-    user_id = factory.Sequence(lambda n: f"user_{n:03d}")
-    name = Faker("name")
-    email = factory.LazyAttribute(lambda obj: f"{obj.user_id}@example.com")
-    is_active = True
+    @classmethod
+    def build(
+        cls,
+        *,
+        user_id: str | None = None,
+        name: str | None = None,
+        email: str | None = None,
+        is_active: bool = True,
+    ) -> User:
+        """Build a User instance with optional overrides."""
+        n = next(cls._counter)
+        actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
+        actual_name = name if name is not None else cls._next_name()
+        actual_email = email if email is not None else f"{actual_user_id}@example.com"
+        return User(
+            user_id=actual_user_id,
+            name=actual_name,
+            email=actual_email,
+            is_active=is_active,
+        )
+
+    @classmethod
+    def build_batch(cls, size: int) -> list[User]:
+        """Build multiple User instances with auto-generated values."""
+        return [cls.build() for _ in range(size)]
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset factory state for test isolation."""
+        cls._counter = count(1)
+        cls._name_index = 0
 
 
-class GetUserServiceFactory(factory.Factory):
+class GetUserServiceFactory:
     """Factory for GetUserService."""
 
-    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Meta configuration for GetUserServiceFactory."""
+    _counter: ClassVar[count[int]] = count(1)
 
-        model = GetUserService
+    @classmethod
+    def build(cls, *, user_id: str | None = None) -> GetUserService:
+        """Build a GetUserService instance."""
+        n = next(cls._counter)
+        actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
+        return GetUserService(user_id=actual_user_id)
 
-    user_id = factory.Sequence(lambda n: f"user_{n:03d}")
+    @classmethod
+    def build_batch(cls, size: int) -> list[GetUserService]:
+        """Build multiple GetUserService instances with auto-generated values."""
+        return [cls.build() for _ in range(size)]
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset factory state."""
+        cls._counter = count(1)
 
 
-class ValidatingServiceFactory(factory.Factory):
+class ValidatingServiceFactory:
     """Factory for ValidatingService."""
 
-    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Meta configuration for ValidatingServiceFactory."""
+    _words: ClassVar[list[str]] = [
+        "alpha",
+        "bravo",
+        "charlie",
+        "delta",
+        "echo",
+    ]
+    _word_index: ClassVar[int] = 0
 
-        model = ValidatingService
+    @classmethod
+    def _next_word(cls) -> str:
+        """Get next word from rotation."""
+        word = cls._words[cls._word_index % len(cls._words)]
+        cls._word_index += 1
+        return word
 
-    value_input = Faker("word")
-    min_length = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
+    @classmethod
+    def build(
+        cls,
+        *,
+        value_input: str | None = None,
+        min_length: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT,
+    ) -> ValidatingService:
+        """Build a ValidatingService instance."""
+        actual_value = value_input if value_input is not None else cls._next_word()
+        return ValidatingService(value_input=actual_value, min_length=min_length)
+
+    @classmethod
+    def build_batch(cls, size: int) -> list[ValidatingService]:
+        """Build multiple ValidatingService instances with auto-generated values."""
+        return [cls.build() for _ in range(size)]
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset factory state."""
+        cls._word_index = 0
 
 
-class FailingServiceFactory(factory.Factory):
+class FailingServiceFactory:
     """Factory for FailingService."""
 
-    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Meta configuration for FailingServiceFactory."""
+    @classmethod
+    def build(
+        cls,
+        *,
+        error_message: str = TestConstants.Services.DEFAULT_ERROR_MESSAGE,
+    ) -> FailingService:
+        """Build a FailingService instance."""
+        return FailingService(error_message=error_message)
 
-        model = FailingService
+    @classmethod
+    def build_batch(cls, size: int) -> list[FailingService]:
+        """Build multiple FailingService instances with default error message."""
+        return [cls.build() for _ in range(size)]
 
-    error_message = TestConstants.Services.DEFAULT_ERROR_MESSAGE
 
-
-class GetUserServiceAutoFactory(factory.Factory):
+class GetUserServiceAutoFactory:
     """Factory for GetUserServiceAuto."""
 
-    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Meta configuration for GetUserServiceAutoFactory."""
+    _counter: ClassVar[count[int]] = count(1)
 
-        model = GetUserServiceAuto
+    @classmethod
+    def build(cls, *, user_id: str | None = None) -> GetUserServiceAuto:
+        """Build a GetUserServiceAuto instance."""
+        n = next(cls._counter)
+        actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
+        return GetUserServiceAuto(user_id=actual_user_id)
 
-    user_id = factory.Sequence(lambda n: f"user_{n:03d}")
+    @classmethod
+    def build_batch(cls, size: int) -> list[GetUserServiceAuto]:
+        """Build multiple GetUserServiceAuto instances with auto-generated values."""
+        return [cls.build() for _ in range(size)]
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset factory state."""
+        cls._counter = count(1)
 
 
-class ValidatingServiceAutoFactory(factory.Factory):
+class ValidatingServiceAutoFactory:
     """Factory for ValidatingServiceAuto."""
 
-    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Meta configuration for ValidatingServiceAutoFactory."""
+    _words: ClassVar[list[str]] = [
+        "alpha",
+        "bravo",
+        "charlie",
+        "delta",
+        "echo",
+    ]
+    _word_index: ClassVar[int] = 0
 
-        model = ValidatingServiceAuto
+    @classmethod
+    def _next_word(cls) -> str:
+        """Get next word from rotation."""
+        word = cls._words[cls._word_index % len(cls._words)]
+        cls._word_index += 1
+        return word
 
-    value_input = Faker("word")
-    min_length = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
+    @classmethod
+    def build(
+        cls,
+        *,
+        value_input: str | None = None,
+        min_length: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT,
+    ) -> ValidatingServiceAuto:
+        """Build a ValidatingServiceAuto instance."""
+        actual_value = value_input if value_input is not None else cls._next_word()
+        return ValidatingServiceAuto(value_input=actual_value, min_length=min_length)
+
+    @classmethod
+    def build_batch(cls, size: int) -> list[ValidatingServiceAuto]:
+        """Build multiple ValidatingServiceAuto instances with auto-generated values."""
+        return [cls.build() for _ in range(size)]
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset factory state."""
+        cls._word_index = 0
 
 
-class FailingServiceAutoFactory(factory.Factory):
+class FailingServiceAutoFactory:
     """Factory for FailingServiceAuto."""
 
-    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Meta configuration for FailingServiceAutoFactory."""
+    @classmethod
+    def build(
+        cls,
+        *,
+        error_message: str = TestConstants.Services.DEFAULT_ERROR_MESSAGE,
+    ) -> FailingServiceAuto:
+        """Build a FailingServiceAuto instance."""
+        return FailingServiceAuto(error_message=error_message)
 
-        model = FailingServiceAuto
+    @classmethod
+    def build_batch(cls, size: int) -> list[FailingServiceAuto]:
+        """Build multiple FailingServiceAuto instances with default error message."""
+        return [cls.build() for _ in range(size)]
 
-    error_message = TestConstants.Services.DEFAULT_ERROR_MESSAGE
 
-
-class ServiceTestCaseFactory(factory.Factory):
+class ServiceTestCaseFactory:
     """Factory for ServiceTestCase."""
 
-    class Meta:  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Meta configuration for ServiceTestCaseFactory."""
+    _service_types: ClassVar[list[ServiceTestType]] = [ServiceTestType.GET_USER, ServiceTestType.VALIDATE, ServiceTestType.FAIL]
+    _type_index: ClassVar[int] = 0
+    _words: ClassVar[list[str]] = ["test", "sample", "example", "demo", "data"]
+    _word_index: ClassVar[int] = 0
 
-        model = ServiceTestCase
+    @classmethod
+    def _next_type(cls) -> ServiceTestType:
+        """Get next service type from rotation."""
+        service_type = cls._service_types[cls._type_index % len(cls._service_types)]
+        cls._type_index += 1
+        return service_type
 
-    service_type = factory.Iterator(list(ServiceTestType.__members__.values()))
-    input_value = Faker("word")
-    expected_success = True
-    expected_error = None
-    extra_param = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
-    description = factory.LazyAttribute(
-        lambda obj: f"Test case for {obj.service_type} with {obj.input_value}",
-    )
+    @classmethod
+    def _next_word(cls) -> str:
+        """Get next word from rotation."""
+        word = cls._words[cls._word_index % len(cls._words)]
+        cls._word_index += 1
+        return word
+
+    @classmethod
+    def build(
+        cls,
+        *,
+        service_type: ServiceTestType | None = None,
+        input_value: str | None = None,
+        expected_success: bool = True,
+        expected_error: str | None = None,
+        extra_param: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT,
+        description: str | None = None,
+    ) -> ServiceTestCase:
+        """Build a ServiceTestCase instance."""
+        actual_type = service_type if service_type is not None else cls._next_type()
+        actual_input = input_value if input_value is not None else cls._next_word()
+        actual_description = (
+            description
+            if description is not None
+            else f"Test case for {actual_type} with {actual_input}"
+        )
+        return ServiceTestCase(
+            service_type=actual_type,
+            input_value=actual_input,
+            expected_success=expected_success,
+            expected_error=expected_error,
+            extra_param=extra_param,
+            description=actual_description,
+        )
+
+    @classmethod
+    def build_batch(cls, size: int) -> list[ServiceTestCase]:
+        """Build multiple ServiceTestCase instances with auto-generated values."""
+        return [cls.build() for _ in range(size)]
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset factory state."""
+        cls._type_index = 0
+        cls._word_index = 0
 
 
 # =========================================================================
-# Advanced Factory Patterns with Python 3.13
+# Service Factory Registry with Pattern Matching
 # =========================================================================
 
 
-class ServiceFactoryRegistry[ServiceT]:
+class ServiceFactoryRegistry:
     """Registry for service factories using pattern matching."""
 
-    _factories: ClassVar[dict[ServiceTestType, type[factory.Factory]]] = {
+    _factories: ClassVar[
+        dict[
+            ServiceTestType,
+            type[
+                GetUserServiceFactory | ValidatingServiceFactory | FailingServiceFactory
+            ],
+        ]
+    ] = {
         ServiceTestType.GET_USER: GetUserServiceFactory,
         ServiceTestType.VALIDATE: ValidatingServiceFactory,
         ServiceTestType.FAIL: FailingServiceFactory,
@@ -251,27 +430,21 @@ class ServiceFactoryRegistry[ServiceT]:
         case: ServiceTestCase,
     ) -> FlextService[User] | FlextService[str]:
         """Create appropriate service based on case type using pattern matching."""
-        factory_class = cls._factories.get(case.service_type)
-        if not factory_class:
-            msg = f"No factory for service type: {case.service_type}"
-            raise ValueError(msg)
-
-        # Create service instance using factory
         service: FlextService[User] | FlextService[str]
 
         match case.service_type:
             case ServiceTestType.GET_USER:
-                service = factory_class.build(user_id=case.input_value)
+                service = GetUserServiceFactory.build(user_id=case.input_value)
             case ServiceTestType.VALIDATE:
-                service = factory_class.build(
+                service = ValidatingServiceFactory.build(
                     value_input=case.input_value,
                     min_length=case.extra_param,
                 )
             case ServiceTestType.FAIL:
-                service = factory_class.build(error_message=case.input_value)
-            case _ as unreachable:
-                msg = f"Unreachable case: {unreachable}"
-                raise RuntimeError(msg)
+                service = FailingServiceFactory.build(error_message=case.input_value)
+            case _:
+                msg = f"Unknown service type: {case.service_type}"
+                raise ValueError(msg)
 
         return service
 
@@ -285,7 +458,7 @@ class TestDataGenerators:
     """Advanced test data generators using comprehensions and patterns."""
 
     @staticmethod
-    def generate_user_success_cases(count: int = 3) -> list[ServiceTestCase]:
+    def generate_user_success_cases(num_cases: int = 3) -> list[ServiceTestCase]:
         """Generate successful user service test cases."""
         return [
             ServiceTestCase(
@@ -293,11 +466,11 @@ class TestDataGenerators:
                 input_value=str(i * 100 + 1),  # "1", "101", "201" etc.
                 description=f"Valid user ID {i}",
             )
-            for i in range(1, count + 1)
+            for i in range(1, num_cases + 1)
         ]
 
     @staticmethod
-    def generate_validation_success_cases(count: int = 2) -> list[ServiceTestCase]:
+    def generate_validation_success_cases(num_cases: int = 2) -> list[ServiceTestCase]:
         """Generate successful validation test cases."""
         return [
             ServiceTestCase(
@@ -305,7 +478,7 @@ class TestDataGenerators:
                 input_value=f"value_{i}",
                 description=f"Valid input {i}",
             )
-            for i in range(1, count + 1)
+            for i in range(1, num_cases + 1)
         ] + [
             ServiceTestCase(
                 service_type=ServiceTestType.VALIDATE,
@@ -366,3 +539,18 @@ class ServiceTestCases:
     ) -> FlextService[User] | FlextService[str]:
         """Create appropriate service based on case type."""
         return ServiceFactoryRegistry.create_service(case)
+
+
+# =========================================================================
+# Factory Reset Utility
+# =========================================================================
+
+
+def reset_all_factories() -> None:
+    """Reset all factory states for test isolation."""
+    UserFactory.reset()
+    GetUserServiceFactory.reset()
+    ValidatingServiceFactory.reset()
+    GetUserServiceAutoFactory.reset()
+    ValidatingServiceAutoFactory.reset()
+    ServiceTestCaseFactory.reset()

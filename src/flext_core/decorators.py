@@ -364,7 +364,9 @@ class FlextDecorators:
                     )
                     raise result_or_exception
                 # Success - return the result (type narrowed to R)
-                return result_or_exception
+                # Business Rule: After isinstance check, result_or_exception is object (not Exception)
+                # Cast to R to match return type
+                return cast("R", result_or_exception)
 
             return wrapper
 
@@ -459,10 +461,10 @@ class FlextDecorators:
         )
 
     @staticmethod
-    def _execute_retry_loop[R](
+    def _execute_retry_loop(
         logger: FlextLogger,
         config: FlextModelsConfig.RetryLoopConfig,
-    ) -> R | Exception:
+    ) -> object | Exception:
         """Execute retry loop, returning result on success or Exception on failure."""
         # Extract config values (retry_config takes priority over individual params)
         if config.retry_config is not None:
@@ -504,12 +506,10 @@ class FlextDecorators:
                         if isinstance(kwargs_mapping, dict)
                         else dict(kwargs_mapping.items())
                     )
-                    result = config.func(*args_tuple, **kwargs_dict)
-                    # Cast to R | Exception to match return type
-                    return cast("R | Exception", result)
-                result = config.func(*args_tuple)
-                # Cast to R | Exception to match return type
-                return cast("R | Exception", result)
+                    # Business Rule: func returns object, which is compatible with object | Exception
+                    return config.func(*args_tuple, **kwargs_dict)
+                # Business Rule: func returns object, which is compatible with object | Exception
+                return config.func(*args_tuple)
 
             except (
                 AttributeError,
@@ -781,10 +781,19 @@ class FlextDecorators:
                     railway_decorated = FlextDecorators.inject(**inject_deps)(
                         railway_decorated,
                     )
-                return FlextDecorators.log_operation(
+                # log_operation preserves return type, so it works with ResultProtocol[R]
+                # Type: log_operation accepts Callable[P, R] but preserves return type
+                # Since railway_decorated returns ResultProtocol[R], log_operation will preserve it
+                # Use cast to satisfy type checker - runtime behavior is correct
+                decorated_with_logging = FlextDecorators.log_operation(
                     operation_name=operation_name,
                     track_perf=track_perf,
-                )(railway_decorated)
+                )(cast("Callable[P, R]", railway_decorated))
+                # Cast back to ResultProtocol[R] since log_operation preserves return type
+                return cast(
+                    "Callable[P, FlextProtocols.ResultProtocol[R]]",
+                    decorated_with_logging,
+                )
 
             # Start with the base function - non-railway path returns Callable[P, R]
             decorated: Callable[P, R] = func
@@ -795,10 +804,15 @@ class FlextDecorators:
 
             # Apply unified log_operation with optional performance tracking
             # Return type is Callable[P, R] for non-railway path
-            return FlextDecorators.log_operation(
+            result = FlextDecorators.log_operation(
                 operation_name=operation_name,
                 track_perf=track_perf,
             )(decorated)
+            # Cast to union type to satisfy type checker (runtime behavior is correct)
+            return cast(
+                "Callable[P, R] | Callable[P, FlextProtocols.ResultProtocol[R]]",
+                result,
+            )
 
         return decorator
 

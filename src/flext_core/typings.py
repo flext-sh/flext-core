@@ -162,7 +162,7 @@ class FlextTypes:
     # Reuses FlextTypes.GeneralValueType (forward reference managed by __future__ annotations)
     type ObjectList = Sequence[FlextTypes.GeneralValueType]
 
-    # Sortable object type - types that can be sorted (str, int, float, dict)
+    # Sortable object type - types that can be sorted (str, int, float, Mapping)
     # Note: Uses FlextTypes.ScalarValue but excludes bool/None for sorting compatibility
     type SortableObjectType = (
         str | int | float | Mapping[str, FlextTypes.SortableObjectType]
@@ -225,7 +225,8 @@ class FlextTypes:
 
         # Type hint specifier - used for type introspection
         # Can be any type hint: type, type alias, generic, or string
-        type TypeHintSpecifier = type | str | object
+        # Note: For runtime type introspection, we accept type, str, or callable types
+        type TypeHintSpecifier = type | str | Callable[..., FlextTypes.GeneralValueType]
 
         # Generic type argument - used for extracting generic type arguments
         # Can be a string type name or a type class representing FlextTypes.GeneralValueType
@@ -238,9 +239,13 @@ class FlextTypes:
         type MessageTypeSpecifier = str | type[FlextTypes.GeneralValueType]
 
         # Type origin specifier - used for generic type origin checking
-        # Can be a string type name, type class, or object with __origin__ attribute
+        # Can be a string type name, type class, or callable with __origin__ attribute
         # Reuses FlextTypes.GeneralValueType from parent FlextTypes class (forward reference)
-        type TypeOriginSpecifier = str | type[FlextTypes.GeneralValueType] | object
+        type TypeOriginSpecifier = (
+            str
+            | type[FlextTypes.GeneralValueType]
+            | Callable[..., FlextTypes.GeneralValueType]
+        )
 
     class Validation:
         """Domain validation types using Pydantic Field annotations."""
@@ -267,7 +272,28 @@ class FlextTypes:
 
         @staticmethod
         def _validate_hostname(value: str) -> str:
-            """Validate hostname by attempting DNS resolution."""
+            """Validate hostname by attempting DNS resolution.
+
+            Business Rule: Validates hostname strings by attempting DNS resolution
+            using socket.gethostbyname(). Ensures hostnames are resolvable before
+            being used in network configurations. Raises ValueError if hostname cannot
+            be resolved, preventing invalid network configurations.
+
+            Audit Implication: Hostname validation ensures network configurations
+            are valid before being used in production systems. Failed validations
+            are logged with error messages for audit trail completeness. Used by
+            Pydantic 2 AfterValidator for type-safe hostname validation.
+
+            Args:
+                value: Hostname string to validate
+
+            Returns:
+                Validated hostname string (same as input if valid)
+
+            Raises:
+                ValueError: If hostname cannot be resolved via DNS
+
+            """
             try:
                 _ = socket.gethostbyname(value)
                 return value
@@ -353,6 +379,16 @@ class FlextTypes:
 
         class RetryConfig(BaseModel):
             """Configuration for retry operations with exponential backoff.
+
+            Business Rule: Defines retry behavior for operations that may fail and
+            need automatic retry with configurable backoff strategies. Uses Pydantic 2
+            BaseModel with frozen=True for immutability. All fields are validated at
+            model instantiation, ensuring valid retry configurations.
+
+            Audit Implication: Retry configuration is immutable after creation, ensuring
+            consistent retry behavior throughout operation lifecycle. All retry attempts
+            are logged with configuration details for audit trail completeness. Used by
+            reliability systems for configurable retry patterns.
 
             Defines retry behavior for operations that may fail and need
             automatic retry with configurable backoff strategies.
@@ -492,7 +528,16 @@ class FlextTypes:
 
         # ContainerConfigDict must be defined before SharedContainersMapping
         class ContainerConfigDict(TypedDict, total=True):
-            """Container configuration for Docker services."""
+            """Container configuration for Docker services.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            All fields required (total=True) for complete container configuration.
+
+            Audit Implication: Used for Docker container configuration in deployment
+            systems. Complete configuration ensures proper container lifecycle management
+            and audit trail completeness for container operations.
+            """
 
             compose_file: str
             service: str
@@ -541,33 +586,33 @@ class FlextTypes:
         ]
         """Mapping for event validators (event types to validator functions)."""
 
-        type NestedExceptionLevelMapping = dict[str, dict[type, str]]
-        """Nested dict for exception levels (library → exception_type → level)."""
+        type NestedExceptionLevelMapping = Mapping[str, Mapping[type, str]]
+        """Nested mapping for exception levels (library → exception_type → level)."""
 
-        type ExceptionLevelMapping = dict[str, str]
-        """Mutable dict for exception levels (container names to levels)."""
+        type ExceptionLevelMapping = Mapping[str, str]
+        """Mapping for exception levels (container names to levels)."""
 
-        type ErrorTypeMapping = dict[
+        type ErrorTypeMapping = Mapping[
             str,
             str
             | int
             | float
-            | dict[
+            | Mapping[
                 str,
                 str
                 | int
                 | float
                 | bool
-                | list[str | int | float | bool | None]
-                | dict[str, str | int | float | bool | None]
+                | Sequence[str | int | float | bool | None]
+                | Mapping[str, str | int | float | bool | None]
                 | None,
             ]
             | None,
         ]
-        """Dict for error type data with details, metadata, correlation IDs, timestamps."""
+        """Mapping for error type data with details, metadata, correlation IDs, timestamps."""
 
-        type ExceptionMetricsMapping = dict[type, int]
-        """Mutable dict for exception metrics (exception types to occurrence counts)."""
+        type ExceptionMetricsMapping = Mapping[type, int]
+        """Mapping for exception metrics (exception types to occurrence counts)."""
 
         type ExceptionKwargsType = (
             FlextTypes.ScalarValue
@@ -589,6 +634,15 @@ class FlextTypes:
 
             Used for tracking service registration details including
             handler type, registration status, and metadata.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            This is correct - TypedDict fields must use dict, not Mapping.
+            When used as function parameters/returns, prefer Mapping for read-only
+            interface, but TypedDict itself correctly uses dict.
+
+            Audit Implication: This metadata is used for service registration tracking.
+            All fields are required (total=True), ensuring complete registration info.
             """
 
             handler_type: str
@@ -598,12 +652,24 @@ class FlextTypes:
             """Status of registration (active, inactive, error)."""
 
             metadata: dict[str, FlextTypes.GeneralValueType]
-            """Additional service metadata (JSON-serializable)."""
+            """Additional service metadata (JSON-serializable).
+
+            Business Rule: dict[str, GeneralValueType] is correct here because
+            TypedDict fields must specify dict structure. This is not a type annotation
+            for a function parameter/return, but a field definition within TypedDict.
+            """
 
         class FactoryRegistrationMetadata(TypedDict, total=True):
             """Metadata for factory registration in the container.
 
             Used for tracking factory registration details.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            This is correct - TypedDict fields must use dict, not Mapping.
+
+            Audit Implication: This metadata tracks factory registration state.
+            All fields are required (total=True) for complete factory tracking.
             """
 
             factory_type: str
@@ -613,12 +679,23 @@ class FlextTypes:
             """Status of registration (active, inactive, error)."""
 
             metadata: dict[str, FlextTypes.GeneralValueType]
-            """Additional factory metadata (JSON-serializable)."""
+            """Additional factory metadata (JSON-serializable).
+
+            Business Rule: dict[str, GeneralValueType] is correct here because
+            TypedDict fields must specify dict structure.
+            """
 
         class ValidationContextDict(TypedDict, total=False):
             """Context dictionary for validation operations.
 
             Used for passing validation context data between validators.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            Fields are optional (total=False) to allow partial context passing.
+
+            Audit Implication: Used for cross-field validation context.
+            Optional fields allow flexible validation scenarios.
             """
 
             field_name: str
@@ -628,27 +705,53 @@ class FlextTypes:
             """Value of the field being validated."""
 
             parent_data: dict[str, FlextTypes.GeneralValueType]
-            """Parent data context for cross-field validation."""
+            """Parent data context for cross-field validation.
+
+            Business Rule: dict[str, GeneralValueType] is correct here because
+            TypedDict fields must specify dict structure.
+            """
 
         class EventDataDict(TypedDict, total=True):
             """Data dictionary for event objects.
 
             Used for structured event data in domain events.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            All fields required (total=True) for complete event representation.
+
+            Audit Implication: Used for domain event serialization and storage.
+            Complete event structure ensures audit trail completeness.
             """
 
             event_type: str
             """Type of event."""
 
             event_data: dict[str, FlextTypes.GeneralValueType]
-            """Event payload data."""
+            """Event payload data.
+
+            Business Rule: dict[str, GeneralValueType] is correct here because
+            TypedDict fields must specify dict structure.
+            """
 
             metadata: dict[str, FlextTypes.GeneralValueType]
-            """Event metadata (timestamp, correlation ID, etc.)."""
+            """Event metadata (timestamp, correlation ID, etc.).
+
+            Business Rule: dict[str, GeneralValueType] is correct here because
+            TypedDict fields must specify dict structure.
+            """
 
         class EntityDataDict(TypedDict, total=False):
             """Data dictionary for entity objects.
 
             Used for structured entity data representation.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            Fields are optional (total=False) for flexible entity representation.
+
+            Audit Implication: Used for entity serialization and persistence.
+            Optional fields allow partial entity updates.
             """
 
             entity_id: str
@@ -658,10 +761,22 @@ class FlextTypes:
             """Type classification of the entity."""
 
             data: dict[str, FlextTypes.GeneralValueType]
-            """Entity data payload."""
+            """Entity data payload.
+
+            Business Rule: dict[str, GeneralValueType] is correct here because
+            TypedDict fields must specify dict structure.
+            """
 
         class CategoryGroupDict(TypedDict, total=True):
             """Data dictionary for category groups.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            All fields required (total=True) for complete category representation.
+
+            Audit Implication: Used for categorized data grouping in audit trails.
+            Complete category structure ensures audit trail completeness for grouped
+            data operations.
 
             Used for categorized data grouping.
             """
@@ -676,6 +791,13 @@ class FlextTypes:
             """Configuration dictionary for dependency injection containers.
 
             Used for dependency injection container configuration.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            All fields required (total=True) for complete container configuration.
+
+            Audit Implication: Used for DI container service registration.
+            Complete configuration ensures proper service lifecycle management.
             """
 
             service_name: str
@@ -685,9 +807,71 @@ class FlextTypes:
             """Type of service."""
 
             config: dict[str, FlextTypes.GeneralValueType]
-            """Service configuration data."""
+            """Service configuration data.
+
+            Business Rule: dict[str, GeneralValueType] is correct here because
+            TypedDict fields must specify dict structure.
+            """
 
             # DockerServiceConfigDict uses ContainerConfigDict directly - no aliases
+
+        class _BatchResultDictBase(TypedDict, total=True):
+            """Base TypedDict for batch processing operations.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            All fields required (total=True) for complete batch result representation.
+            Note: TypedDict doesn't support generics directly, so results field uses
+            list[GeneralValueType] for type flexibility. Type narrowing can be done
+            at usage site based on operation return type.
+
+            Audit Implication: Used for batch operation result tracking and auditing.
+            Complete result structure ensures audit trail completeness for batch operations.
+            """
+
+            results: list[FlextTypes.GeneralValueType]
+            """List of successful processing results.
+
+            Business Rule: TypedDict fields must specify dict structure.
+            Contains successfully processed items in order.
+            Type is GeneralValueType for flexibility; actual type depends on operation.
+            """
+
+            errors: list[tuple[int, str]]
+            """List of error tuples (index, error_message).
+
+            Business Rule: TypedDict fields must specify dict structure.
+            Contains (index, error_message) tuples for failed items.
+            """
+
+            total: int
+            """Total number of items processed.
+
+            Business Rule: TypedDict fields must specify dict structure.
+            Total count includes both successful and failed items.
+            """
+
+            success_count: int
+            """Number of successfully processed items.
+
+            Business Rule: TypedDict fields must specify dict structure.
+            Count of items in results list.
+            """
+
+            error_count: int
+            """Number of failed items.
+
+            Business Rule: TypedDict fields must specify dict structure.
+            Count of items in errors list.
+            """
+
+        # Public type alias for batch result (avoids SLF001 violation)
+        # Use PEP 695 type alias for proper type checking support
+        type BatchResultDict = _BatchResultDictBase
+
+        # Note: TypedDict cannot be generic, so BatchResultDict is used directly
+        # Type narrowing for results: list[T] is done at usage site based on operation return type
+        # Users should use FlextTypes.Types.BatchResultDict directly
 
     class Example:
         """Example-specific types for demonstrating FLEXT features.

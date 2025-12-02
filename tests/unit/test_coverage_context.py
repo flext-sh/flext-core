@@ -528,8 +528,10 @@ class TestContextDataModel:
         if isinstance(metadata, dict):
             assert metadata.get("created_at") == "2025-01-01"
         elif hasattr(metadata, "attributes"):
-            # Type narrowing: metadata is FlextModelsBase.Metadata
-            assert metadata.attributes.get("created_at") == "2025-01-01"
+            # Type narrowing: metadata has attributes - use getattr for dynamic access
+            attributes = getattr(metadata, "attributes", None)
+            assert attributes is not None
+            assert attributes.get("created_at") == "2025-01-01"
         else:
             # Fallback for other types
             pytest.fail(f"Unexpected metadata type: {type(metadata)}")

@@ -36,7 +36,7 @@ from flext_core.typings import FlextTypes
 # =========================================================================
 
 
-class TestFlextResultCoverage:  # noqa: PLR0904
+class TestFlextResultCoverage:
     """Comprehensive test suite for FlextResult - ALL REAL FUNCTIONALITY ONLY."""
 
     # =====================================================================
