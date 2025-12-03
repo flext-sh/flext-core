@@ -15,7 +15,7 @@ from typing import Annotated, Protocol, get_args, get_origin, get_type_hints
 
 from pydantic import ConfigDict, validate_call
 
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.typings import P, R, t
 
 
@@ -79,21 +79,21 @@ class FlextArgs:
 
     @staticmethod
     def validated_with_result(
-        func: Callable[P, FlextResult[R]],
-    ) -> Callable[P, FlextResult[R]]:
-        """Decorator that converts ValidationError to FlextResult.fail().
+        func: Callable[P, r[R]],
+    ) -> Callable[P, r[R]]:
+        """Decorator that converts ValidationError to r.fail().
 
         USE WHEN:
-        - Method returns FlextResult
-        - Want validation errors to become FlextResult.fail()
+        - Method returns r
+        - Want validation errors to become r.fail()
         - Don't want exceptions leaking
 
         Example:
              @uArgs.validated_with_result
-             def process(self, status: Status) -> FlextResult[bool]:
-                 # If status invalid → returns FlextResult.fail()
+             def process(self, status: Status) -> r[bool]:
+                 # If status invalid → returns r.fail()
                  # If status valid → executes normally
-                 return FlextResult.ok(True)
+                 return r.ok(True)
 
         """
         validated_func = validate_call(
@@ -105,11 +105,11 @@ class FlextArgs:
         )(func)
 
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> FlextResult[R]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[R]:
             try:
                 return validated_func(*args, **kwargs)
             except Exception as e:
-                return FlextResult.fail(str(e))
+                return r.fail(str(e))
 
         return wrapper
 
@@ -121,7 +121,7 @@ class FlextArgs:
     def parse_kwargs[E: StrEnum](
         kwargs: Mapping[str, t.FlexibleValue],
         enum_fields: Mapping[str, type[E]],
-    ) -> FlextResult[dict[str, t.FlexibleValue]]:
+    ) -> r[dict[str, t.FlexibleValue]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
@@ -150,8 +150,8 @@ class FlextArgs:
                         errors.append(f"{field}: '{value}' not in [{valid}]")
 
         if errors:
-            return FlextResult.fail(f"Invalid values: {'; '.join(errors)}")
-        return FlextResult.ok(parsed)
+            return r.fail(f"Invalid values: {'; '.join(errors)}")
+        return r.ok(parsed)
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 3: Signature introspection for auto-parsing

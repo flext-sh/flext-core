@@ -17,7 +17,7 @@ import time
 import uuid
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import cast
+from typing import cast, overload
 
 from pydantic import BaseModel
 
@@ -43,12 +43,12 @@ from flext_core._utilities.validators import (
     ValidatorDSL,
     ValidatorSpec,
 )
-from flext_core.result import FlextResult, r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
-class FlextUtilities:
+class FlextUtilities:  # noqa: PLR0904
     """Stable utility surface for dispatcher-friendly helpers.
 
     Provides enterprise-grade utility functions for common operations
@@ -119,7 +119,7 @@ class FlextUtilities:
     Validator = ValidatorBuilder
 
     # ═══════════════════════════════════════════════════════════════════
-    # POWER METHODS: Direct utility operations with FlextResult
+    # POWER METHODS: Direct utility operations with r
     # ═══════════════════════════════════════════════════════════════════
 
     @staticmethod
@@ -205,7 +205,10 @@ class FlextUtilities:
             descriptions = list(
                 u.map(validators, lambda v: getattr(v, "description", "validator"))
             )
-            error_msg = f"{field_prefix}None of the validators passed: {', '.join(descriptions)}"
+            error_msg = (
+                f"{field_prefix}None of the validators passed: "
+                f"{', '.join(descriptions)}"
+            )
             return r[T].fail(error_msg)
 
         # Default: "all" mode (AND)
@@ -262,15 +265,22 @@ class FlextUtilities:
         # Cast to type[StrEnum] to help type checker understand __members__ attribute
         enum_type: type[StrEnum] = cast("type[StrEnum]", target)
         if case_insensitive:
-            # Business Rule: StrEnum classes expose __members__ dict with all enum members
-            # Iterate through enum members for case-insensitive matching
-            # After validation, member is guaranteed to be T (the enum type)
+            # Business Rule: StrEnum classes expose __members__ dict with all enum
+            # Use u.find() for unified finding with predicate
             members_dict = getattr(enum_type, "__members__", {})
-            for member in members_dict.values():
-                if u.normalize(member.value, value) or u.normalize(member.name, value):
-                    # Business Rule: member is an instance of target (type[T]), so it's T
-                    # Type narrowing: after issubclass check, member is StrEnum which is T
-                    return r[T].ok(cast("T", member))
+            members_list = list(members_dict.values())
+            found = u.find(
+                members_list,
+                lambda m: u.normalize(m.value, value) or u.normalize(m.name, value),  # type: ignore[arg-type]
+            )
+            # Use u.when() for conditional return (DSL pattern)
+            found_result = u.when(
+                condition=found is not None,
+                then_value=r[T].ok(cast("T", found)),
+                else_value=None,
+            )
+            if found_result is not None:
+                return found_result
         result = FlextEnum.parse(target, value)
         if result.is_success:
             return r[T].ok(result.value)
@@ -350,11 +360,14 @@ class FlextUtilities:
 
     @staticmethod
     def _coerce_to_bool_from_str(value: str) -> r[bool] | None:
-        """Helper: Coerce string to bool."""
+        """Helper: Coerce string to bool using u.normalize() and u.find()."""
         normalized_val = cast("str", u.normalize(value, case="lower"))
-        if normalized_val in {"true", "1", "yes", "on"}:
+        # Use u.find() for unified finding
+        true_values = {"true", "1", "yes", "on"}
+        false_values = {"false", "0", "no", "off"}
+        if u.find(true_values, lambda v: v == normalized_val):  # type: ignore[arg-type]
             return r[bool].ok(True)
-        if normalized_val in {"false", "0", "no", "off"}:
+        if u.find(false_values, lambda v: v == normalized_val):  # type: ignore[arg-type]
             return r[bool].ok(False)
         return None
 
@@ -544,10 +557,16 @@ class FlextUtilities:
         """
         field_prefix = f"{field_name}: " if field_name else ""
 
-        # Handle None value
+        # Handle None value using u.when() for DSL pattern
         if value is None:
-            return FlextUtilities._parse_handle_none(
-                default, default_factory, field_prefix
+            return u.when(
+                condition=default is not None,
+                then_value=r[T].ok(default),
+                else_value=u.when(
+                    condition=default_factory is not None,
+                    then_value=r[T].ok(default_factory()),
+                    else_value=r[T].fail(field_prefix or "Value is None"),
+                ),
             )
 
         # Already the target type
@@ -736,7 +755,7 @@ class FlextUtilities:
     ) -> r[object]:
         """Functional pipeline with railway-oriented error handling.
 
-        Business Rule: Chains operations sequentially, unwrapping FlextResult
+        Business Rule: Chains operations sequentially, unwrapping r
         values automatically. Error handling modes: "stop" (fail fast) or
         "skip" (continue with previous value). Railway pattern ensures errors
         propagate correctly through the pipeline.
@@ -747,7 +766,7 @@ class FlextUtilities:
             on_error: Error handling ("stop" or "skip")
 
         Returns:
-            FlextResult containing final value or error
+            r containing final value or error
 
         Example:
             result = u.pipe(
@@ -767,8 +786,8 @@ class FlextUtilities:
             try:
                 result = op(current)
 
-                # Unwrap FlextResult if returned
-                if isinstance(result, FlextResult):
+                # Unwrap r if returned
+                if isinstance(result, r):
                     if result.is_failure:
                         if on_error == "stop":
                             return r[object].fail(
@@ -852,7 +871,7 @@ class FlextUtilities:
             filter_empty: Skip empty strings/lists/dicts
 
         Returns:
-            FlextResult containing merged dictionary
+            r containing merged dictionary
 
         Example:
             result = u.merge(
@@ -1006,7 +1025,7 @@ class FlextUtilities:
             separator: Path separator (default: ".")
 
         Returns:
-            FlextResult containing extracted value or default
+            r containing extracted value or default
 
         Example:
             config = {"database": {"host": "localhost", "port": 5432}}
@@ -1199,18 +1218,24 @@ class FlextUtilities:
         *,
         flatten: bool,
     ) -> list[t.GeneralValueType]:
-        """Helper: Flatten nested lists if requested."""
+        """Helper: Flatten nested lists if requested using u.flat()."""
         if not flatten:
             return validated_results
-        flattened: list[t.GeneralValueType] = []
-        for result_item in validated_results:
-            if isinstance(result_item, (list, tuple)):
-                flattened.extend(
-                    cast("t.GeneralValueType", item) for item in result_item
-                )
-            else:
-                flattened.append(cast("t.GeneralValueType", result_item))
-        return flattened
+        # Filter to get only list/tuple items, then use u.flat()
+        nested = cast(
+            "list[list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]]",
+            u.filter(validated_results, lambda x: isinstance(x, (list, tuple))),  # type: ignore[arg-type]
+        )
+        if not nested:
+            return validated_results
+        # Use u.flat() for unified flattening
+        flattened = u.flat(nested)  # type: ignore[arg-type]
+        # Add non-list items
+        non_list = cast(
+            "list[t.GeneralValueType]",
+            u.filter(validated_results, lambda x: not isinstance(x, (list, tuple))),  # type: ignore[arg-type]
+        )
+        return flattened + non_list
 
     @staticmethod
     def batch[T, R](  # noqa: PLR0913
@@ -1238,7 +1263,7 @@ class FlextUtilities:
 
         Args:
             items: Items to process
-            operation: Function to apply to each item (can return FlextResult or direct value)
+            operation: Function to apply to each item (can return r or direct value)
             _size: Reserved for future chunking support (not yet implemented)
             on_error: Error handling mode ("skip", "fail", "collect")
             _parallel: Reserved for future async/parallel support (not yet implemented)
@@ -1281,7 +1306,9 @@ class FlextUtilities:
         else:
             filtered_items = items
 
-        # Process items directly to collect errors properly
+        # Process items directly to collect errors properly for batch format
+        # Note: Cannot use u.process() here because batch needs per-item error tracking
+        # with index information for BatchResultDict format
         errors: list[tuple[int, str]] = []
         processed_results: list[R] = []
 
@@ -1291,7 +1318,7 @@ class FlextUtilities:
             )
             if process_result is None:
                 continue  # Item skipped
-            if isinstance(process_result, FlextResult):
+            if isinstance(process_result, r):
                 return process_result  # Fail mode returned error
             processed_results.append(process_result)
 
@@ -1304,10 +1331,11 @@ class FlextUtilities:
         if not isinstance(validated_results_raw, list):
             validated_results_raw = list(validated_results_raw)
 
-        # Convert to GeneralValueType for flattening
-        validated_results: list[t.GeneralValueType] = [
-            cast("t.GeneralValueType", r) for r in validated_results_raw
-        ]
+        # Convert to GeneralValueType for flattening using u.map
+        validated_results = cast(
+            "list[t.GeneralValueType]",
+            u.map(validated_results_raw, lambda r: cast("t.GeneralValueType", r)),  # type: ignore[arg-type]
+        )
 
         # Flatten nested lists if requested
         flattened_results = FlextUtilities._batch_flatten_results(
@@ -1355,7 +1383,7 @@ class FlextUtilities:
             retry_on: Exception types to retry on
 
         Returns:
-            FlextResult with operation result or error
+            r with operation result or error
 
         Example:
             result = u.retry(
@@ -1471,6 +1499,36 @@ class FlextUtilities:
         return r[T].ok(value)
 
     @staticmethod
+    @overload
+    def get(
+        data: Mapping[str, object] | object,
+        key: str,
+        *,
+        default: str = "",
+    ) -> str:
+        """Get string value (generalized from get_str)."""
+
+    @staticmethod
+    @overload
+    def get[T](
+        data: Mapping[str, object] | object,
+        key: str,
+        *,
+        default: list[T] | None = None,
+    ) -> list[T]:
+        """Get list value (generalized from get_list)."""
+
+    @staticmethod
+    @overload
+    def get[T](
+        data: Mapping[str, object] | object,
+        key: str,
+        *,
+        default: T | None = None,
+    ) -> T | None:
+        """Get value with default."""
+
+    @staticmethod
     def get[T](
         data: Mapping[str, object] | object,
         key: str,
@@ -1479,23 +1537,59 @@ class FlextUtilities:
     ) -> T | None:
         """Unified get function for dict/object access with default.
 
-        Generic replacement for: get_or_default()
+        Generic replacement for: get_or_default(), get_str(), get_list()
 
         Automatically detects if data is dict or object and extracts value.
+        Uses DSL conversion when default type indicates desired return type.
 
         Args:
             data: Source data (dict or object)
             key: Key/attribute name
-            default: Default value if not found (None if not specified)
+            default: Default value if not found
+                - str (e.g., "") -> returns str (generalized from get_str)
+                - list[T] (e.g., []) -> returns list[T] (generalized from get_list)
+                - Other -> returns T | None
 
         Returns:
-            Extracted value or default
+            Extracted value or default (type inferred from default)
 
         Example:
-            name = u.get(data, "name", default="unknown")
+            # String (generalized from get_str)
+            name = u.get(data, "name", default="")
+
+            # List (generalized from get_list)
+            models = u.get(data, "models", default=[])
+
+            # Generic
             port = u.get(config, "port", default=8080)
 
         """
+        # Handle string default (generalized from get_str)
+        # Check if default is empty string (type hint for string return)
+        if default == "":
+            value = FlextUtilities._get_raw(data, key, default=default)
+            return cast(
+                "str", u.build(value, ops={"ensure": "str", "ensure_default": default})
+            )  # type: ignore[arg-type, return-value]
+
+        # Handle list default (generalized from get_list)
+        # Check if default is empty list (type hint for list return)
+        if isinstance(default, list) and len(default) == 0:
+            value = FlextUtilities._get_raw(data, key, default=default)
+            result = u.build(value, ops={"ensure": "list", "ensure_default": default})  # type: ignore[arg-type]
+            return cast("list[T]", result if isinstance(result, list) else default)
+
+        # Generic get (original behavior)
+        return FlextUtilities._get_raw(data, key, default=default)
+
+    @staticmethod
+    def _get_raw[T](
+        data: Mapping[str, object] | object,
+        key: str,
+        *,
+        default: T | None = None,
+    ) -> T | None:
+        """Internal helper for raw get without DSL conversion."""
         match data:
             case dict() | Mapping():
                 if hasattr(data, "get"):
@@ -1566,14 +1660,16 @@ class FlextUtilities:
         predicate: Callable[[T], bool] | Callable[[R], bool],
         mapper: Callable[[T], R] | None = None,
     ) -> list[T] | list[R]:
-        """Filter a list with optional mapping."""
+        """Filter a list with optional mapping (uses u.map + u.filter internally)."""
         if mapper is not None:
-            # Use u.map() for unified mapping, then filter directly (no recursion)
+            # Use u.map() for unified mapping, then u.filter() for unified filtering
             mapped = cast("list[R]", u.map(items_list, mapper))
             mapped_predicate = cast("Callable[[R], bool]", predicate)
-            return [item for item in mapped if mapped_predicate(item)]
+            # Use u.filter internally (no recursion - different signature)
+            return cast("list[R]", u.filter(mapped, mapped_predicate))
         list_predicate = cast("Callable[[T], bool]", predicate)
-        return [item for item in items_list if list_predicate(item)]
+        # Use u.filter internally (no recursion - different signature)
+        return cast("list[T]", u.filter(items_list, list_predicate))
 
     @staticmethod
     def _filter_dict[T, R](
@@ -1581,14 +1677,16 @@ class FlextUtilities:
         predicate: Callable[[str, T], bool] | Callable[[str, R], bool],
         mapper: Callable[[str, T], R] | None = None,
     ) -> dict[str, T] | dict[str, R]:
-        """Filter a dict with optional mapping."""
+        """Filter a dict with optional mapping (uses u.map + u.filter internally)."""
         if mapper is not None:
-            # Use u.map() for unified mapping, then filter directly (no recursion)
+            # Use u.map() for unified mapping, then u.filter() for unified filtering
             mapped_dict = cast("dict[str, R]", u.map(items_dict, mapper))
             mapped_dict_predicate = cast("Callable[[str, R], bool]", predicate)
-            return {k: v for k, v in mapped_dict.items() if mapped_dict_predicate(k, v)}
+            # Use u.filter internally (no recursion - different signature)
+            return cast("dict[str, R]", u.filter(mapped_dict, mapped_dict_predicate))
         dict_predicate = cast("Callable[[str, T], bool]", predicate)
-        return {k: v for k, v in items_dict.items() if dict_predicate(k, v)}
+        # Use u.filter internally (no recursion - different signature)
+        return cast("dict[str, T]", u.filter(items_dict, dict_predicate))
 
     @staticmethod
     def _filter_single[T, R](
@@ -1800,7 +1898,8 @@ class FlextUtilities:
     ) -> r[T] | T | None:
         """Helper: Handle guard failure with return_value and default logic."""
         if return_value:
-            return default if default is not None else None
+            # Use u.or_() for default fallback (DSL pattern)
+            return u.or_(default, None)
         if default is not None:
             return r[T].ok(default)
         return r[T].fail(error_message)
@@ -1896,10 +1995,11 @@ class FlextUtilities:
         value: t.GeneralValueType,
         default: list[str] | None = None,
     ) -> list[str]:
-        """Ensure value is a list of strings, converting if needed.
+        """Ensure value is a list of strings (DEPRECATED: use u.ensure() instead).
 
         **DEPRECATED**: Use u.ensure(value, target_type="str_list") instead.
-        Kept for backward compatibility.
+        This function is deprecated. Use u.ensure() which automatically detects
+        the target type from the default value or explicit target_type parameter.
 
         Args:
             value: Value to convert (list, tuple, set, or single value)
@@ -1910,7 +2010,7 @@ class FlextUtilities:
 
         Example:
             # Convert attribute values to string list
-            str_list = u.ensure_str_list(attr_values)
+            str_list = u.ensure(attr_values, target_type="str_list")
             # Prefer: str_list = u.ensure(attr_values, target_type="str_list")
 
         """
@@ -2004,8 +2104,13 @@ class FlextUtilities:
 
         # String comparison/match/contains
         if isinstance(other, str) and isinstance(value, str):
-            value_lower = value.lower()
-            other_lower = other.lower()
+            # Use _normalize_case_only helper (internal - avoid recursion)
+            value_lower = cast(
+                "str", FlextUtilities._normalize_case_only(value, "lower")
+            )
+            other_lower = cast(
+                "str", FlextUtilities._normalize_case_only(other, "lower")
+            )
             return value_lower == other_lower or other_lower in value_lower
 
         # Collection membership check
@@ -2020,7 +2125,7 @@ class FlextUtilities:
         value: str | list[str] | tuple[str, ...] | set[str] | frozenset[str],
         case: str,
     ) -> str | list[str] | set[str]:
-        """Helper: Normalize case only."""
+        """Helper: Normalize case only (internal - don't call u.normalize to avoid recursion)."""
         if isinstance(value, str):
             return value.lower() if case == "lower" else value.upper()
         # Use u.map() for unified mapping - now supports sets/frozensets
@@ -2037,16 +2142,26 @@ class FlextUtilities:
         other: list[str] | tuple[str, ...] | set[str] | frozenset[str],
     ) -> bool:
         """Helper: Check membership in collection."""
-        item_lower = value.lower()
+        # Use _normalize_case_only helper (internal - avoid recursion)
+        item_lower = cast("str", FlextUtilities._normalize_case_only(value, "lower"))
 
         def normalize_func(x: str) -> str:
             """Normalize string to lowercase."""
-            return x.lower() if isinstance(x, str) else str(x).lower()
+            # Use _normalize_case_only helper (internal - avoid recursion)
+            return cast(
+                "str",
+                FlextUtilities._normalize_case_only(
+                    x if isinstance(x, str) else str(x), "lower"
+                ),
+            )
 
         # Use u.map() for unified mapping
         normalized = u.map(other, normalize_func)  # type: ignore[arg-type]
-        normalized_collection = (
-            set(normalized) if isinstance(other, (set, frozenset)) else normalized
+        # Use u.when() for conditional collection type (DSL pattern)
+        normalized_collection = u.when(
+            condition=isinstance(other, (set, frozenset)),
+            then_value=set(normalized),
+            else_value=normalized,
         )
         return item_lower in normalized_collection
 
@@ -2057,7 +2172,8 @@ class FlextUtilities:
     ) -> list[T]:
         """Helper: Convert value to list."""
         if value is None:
-            return default if default is not None else []
+            # Use u.or_() for default fallback (DSL pattern)
+            return u.or_(default, [])
         match value:
             case list():
                 return value
@@ -2073,7 +2189,8 @@ class FlextUtilities:
     ) -> dict[str, T]:
         """Helper: Convert value to dict."""
         if value is None:
-            return default if default is not None else {}
+            # Use u.or_() for default fallback (DSL pattern)
+            return u.or_(default, {})
         match value:
             case dict():
                 return value  # type: ignore[return-value]
@@ -2130,19 +2247,33 @@ class FlextUtilities:
             str_default = cast("str", default) if default is not None else ""
             return cast("T", FlextDataMapper.ensure_str(value, default=str_default))
         if target_type == "str_list":
-            list_default = (
-                cast("list[str]", default) if isinstance(default, list) else None
+            # Use u.when() for conditional cast (DSL pattern)
+            list_default = u.when(
+                condition=isinstance(default, list),
+                then_value=cast("list[str]", default),
+                else_value=None,
             )
+            # Use FlextDataMapper directly for str_list (internal implementation)
             return cast(
                 "list[T]", FlextDataMapper.ensure_str_list(value, default=list_default)
             )
         if target_type == "dict":
-            dict_default = default if isinstance(default, dict) else None
+            # Use u.when() for conditional assignment (DSL pattern)
+            dict_default = u.when(
+                condition=isinstance(default, dict),
+                then_value=default,
+                else_value=None,
+            )
             return FlextUtilities._ensure_to_dict(value, dict_default)  # type: ignore[arg-type, return-value]
         if target_type == "auto" and isinstance(value, dict):
             return value  # type: ignore[return-value]
         # Handle list or fallback
-        list_default = default if isinstance(default, list) else None
+        # Use u.when() for conditional assignment (DSL pattern)
+        list_default = u.when(
+            condition=isinstance(default, list),
+            then_value=default,
+            else_value=None,
+        )
         return FlextUtilities._ensure_to_list(value, list_default)  # type: ignore[arg-type, return-value]
 
     @staticmethod
@@ -2207,6 +2338,8 @@ class FlextUtilities:
                 "dict[str, T]",
                 u.filter(items_dict, dict_predicate),
             )
+        # Cannot use u.process here to avoid circular recursion
+        # u.process calls _process_dict_items, which would call u.process again
         dict_result: dict[str, R] = {}
         dict_errors: list[str] = []
         dict_processor = processor
@@ -2259,7 +2392,7 @@ class FlextUtilities:
             exclude_keys: Optional set of keys to skip (dict only)
 
         Returns:
-            FlextResult containing processed results (list or dict based on input)
+            r containing processed results (list or dict based on input)
 
         Example:
             # Process list
@@ -2324,6 +2457,17 @@ class FlextUtilities:
         )
 
     @staticmethod
+    @overload
+    def map[T, R](
+        items: r[T],
+        mapper: Callable[[T], R],
+        *,
+        default_error: str = "Operation failed",
+    ) -> r[R]:
+        """Map result or return failure (generalized from map_or)."""
+
+    @staticmethod
+    @overload
     def map[T, R](
         items: T
         | list[T]
@@ -2333,19 +2477,37 @@ class FlextUtilities:
         | dict[str, T]
         | Mapping[str, T],
         mapper: Callable[[T], R] | Callable[[str, T], R],
-    ) -> list[R] | set[R] | frozenset[R] | dict[str, R]:  # type: ignore[misc]
+    ) -> list[R] | set[R] | frozenset[R] | dict[str, R]:
+        """Map collection items."""
+
+    @staticmethod
+    def map[T, R](
+        items: T
+        | list[T]
+        | tuple[T, ...]
+        | set[T]
+        | frozenset[T]
+        | dict[str, T]
+        | Mapping[str, T]
+        | r[T],
+        mapper: Callable[[T], R] | Callable[[str, T], R],
+        *,
+        default_error: str = "Operation failed",
+    ) -> list[R] | set[R] | frozenset[R] | dict[str, R] | r[R]:
         """Unified map function that auto-detects input type.
 
-        Generic replacement for: List/dict comprehensions, manual loops
+        Generic replacement for: List/dict comprehensions, manual loops, map_or
 
         Args:
-            items: Input items (list, tuple, or dict)
+            items: Input items (list, tuple, dict, set, or r[T] result)
             mapper: Function to transform items
                 - For lists: mapper(item) -> result
                 - For dicts: mapper(key, value) -> result
+                - For results: mapper(value) -> result
+            default_error: Default error if mapping result fails (only for r[T])
 
         Returns:
-            Mapped results (list or dict, preserving input type)
+            Mapped results (list, dict, set, or r[R] based on input type)
 
         Example:
             # Map list
@@ -2354,9 +2516,21 @@ class FlextUtilities:
             # Map dict values
             mapped = u.map({"a": 1, "b": 2}, lambda k, v: v * 2)
 
+            # Map result (generalized from map_or)
+            result = u.map(parse_result, lambda data: process(data))
+
         """
+        # Handle r[T] case (generalized from map_or)
+        if isinstance(items, r):
+            if items.is_success:
+                return r[R].ok(mapper(items.value))  # type: ignore[arg-type]
+            return r[R].fail(u.err(items, default=default_error))
+
+        # Handle collections (original map behavior)
         if isinstance(items, (list, tuple)):
             list_mapper = cast("Callable[[T], R]", mapper)
+            # Cannot use u.map() here - would cause recursion (u.map calls itself for lists)
+            # Use list comprehension directly for mapping
             return [list_mapper(item) for item in items]  # type: ignore[arg-type, list-item]
 
         if isinstance(items, (set, frozenset)):
@@ -2415,11 +2589,13 @@ class FlextUtilities:
 
     @staticmethod
     def _convert_to_bool(value: t.GeneralValueType, *, default: bool) -> bool:
-        """Internal helper for bool conversion."""
+        """Internal helper for bool conversion using u.normalize()."""
         if isinstance(value, bool):
             return value
         if isinstance(value, str):
-            return value.lower() in {"true", "1", "yes", "on"}
+            # Use u.normalize() for unified normalization
+            normalized = cast("str", u.normalize(value, case="lower"))
+            return normalized in {"true", "1", "yes", "on"}
         if isinstance(value, (int, float)):
             return bool(value)
         return default
@@ -2489,6 +2665,1810 @@ class FlextUtilities:
             return cast("T", converted)
         except (ValueError, TypeError):
             return default
+
+    @staticmethod
+    def _build_apply_ensure(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply ensure operation."""
+        if "ensure" not in ops:
+            return current
+        ensure_type = cast("str", ops["ensure"])
+        ensure_default_val = ops.get("ensure_default")
+        # Use dict lookup for cleaner default value selection
+        default_map: dict[str, object] = {
+            "str_list": [],
+            "dict": {},
+            "list": [],
+            "str": "",
+        }
+        # Use u.when() for conditional default selection
+        default_val = u.when(
+            condition=ensure_default_val is not None,
+            then_value=ensure_default_val,
+            else_value=default_map.get(ensure_type, ""),
+        )
+        return u.ensure(current, target_type=ensure_type, default=default_val)  # type: ignore[arg-type, return-value]
+
+    @staticmethod
+    def _build_apply_filter(
+        current: object, ops: dict[str, object], default: object
+    ) -> object:
+        """Helper: Apply filter operation."""
+        if "filter" not in ops:
+            return current
+        filter_pred = cast("Callable[[object], bool]", ops["filter"])
+        if isinstance(current, (list, tuple, set, frozenset)):
+            return u.filter(current, predicate=filter_pred)  # type: ignore[arg-type, return-value]
+        if isinstance(current, dict):
+            return u.filter(current, predicate=lambda _k, v: filter_pred(v))  # type: ignore[arg-type, return-value]
+        return default if not filter_pred(current) else current  # type: ignore[arg-type]
+
+    @staticmethod
+    def _build_apply_map(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply map operation."""
+        if "map" not in ops:
+            return current
+        map_func = cast("Callable[[object], object]", ops["map"])
+        if isinstance(current, (list, tuple, set, frozenset, dict)):
+            return u.map(current, mapper=map_func)  # type: ignore[arg-type, return-value]
+        return map_func(current)  # type: ignore[arg-type, return-value]
+
+    @staticmethod
+    def _build_apply_normalize(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply normalize operation."""
+        if "normalize" not in ops or not isinstance(
+            current, (str, list, tuple, set, frozenset)
+        ):
+            return current
+        normalize_case = cast("str", ops["normalize"])
+        return u.normalize(current, case=normalize_case)  # type: ignore[arg-type, return-value]
+
+    @staticmethod
+    def _build_apply_convert(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply convert operation."""
+        if "convert" not in ops:
+            return current
+        convert_type = cast("type[object]", ops["convert"])
+        convert_default = ops.get("convert_default", convert_type())
+        return u.convert(current, convert_type, convert_default)  # type: ignore[arg-type, return-value]
+
+    @staticmethod
+    def _build_apply_transform(
+        current: object, ops: dict[str, object], default: object, on_error: str
+    ) -> object:
+        """Helper: Apply transform operation."""
+        if "transform" not in ops or not isinstance(current, (dict, Mapping)):
+            return current
+        transform_opts = cast("dict[str, object]", ops["transform"])
+        transform_result = u.transform(current, **transform_opts)  # type: ignore[arg-type]
+        if transform_result.is_success:
+            return transform_result.value
+        return default if on_error == "stop" else current
+
+    @staticmethod
+    def _build_apply_process(
+        current: object, ops: dict[str, object], default: object, on_error: str
+    ) -> object:
+        """Helper: Apply process operation using u.process()."""
+        if "process" not in ops:
+            return current
+        process_func = cast("Callable[[object], object]", ops["process"])
+        # Use u.process() for unified processing
+        if isinstance(current, (list, tuple, dict, Mapping)):
+            process_result = u.process(
+                current, processor=process_func, on_error=on_error
+            )  # type: ignore[arg-type]
+            if process_result.is_success:
+                return process_result.value
+            return default if on_error == "stop" else current
+        # Single value processing with error handling
+        try:
+            return process_func(current)  # type: ignore[arg-type, return-value]
+        except Exception:
+            return default if on_error == "stop" else current
+
+    @staticmethod
+    def build[T](
+        value: T,
+        *,
+        ops: dict[str, object] | None = None,
+        on_error: str = "stop",
+    ) -> T | object:
+        """Builder pattern for fluent operation composition using DSL.
+
+        Generic replacement for: Chained u.ensure(), u.map(), u.filter(), u.normalize(),
+        u.convert(), u.transform(), u.process() operations
+
+        Uses DSL dict to compose operations: {"ensure": "str", "map": lambda x: x*2, ...}
+        Operations are applied in order: ensure → filter → map → normalize → convert → transform → process
+
+        Args:
+            value: Initial value to process
+            ops: Dict with operation keys:
+                - "ensure": str target type ("str", "str_list", "list", "dict", "auto")
+                - "ensure_default": default value for ensure
+                - "filter": predicate function
+                - "map": mapper function
+                - "normalize": case ("lower" or "upper")
+                - "convert": target type class
+                - "convert_default": default for convert
+                - "transform": dict with transform options
+                - "process": processor function
+            on_error: Error handling ("stop", "skip", "collect")
+
+        Returns:
+            Processed value (type depends on operations applied)
+
+        Example:
+            # Ensure string, normalize, filter
+            result = u.build(
+                value,
+                ops={"ensure": "str", "ensure_default": "", "normalize": "lower", "filter": lambda v: len(v) > 0},
+            )
+
+            # Map, filter, convert
+            result = u.build(
+                items,
+                ops={"map": lambda x: x * 2, "filter": lambda x: x > 10, "convert": int, "convert_default": 0},
+            )
+
+            # Transform dict
+            result = u.build(
+                data,
+                ops={"transform": {"normalize": True, "strip_none": True, "filter_keys": {"name", "email"}}},
+            )
+
+        """
+        if ops is None:
+            return value
+
+        ensure_default_val: object = ops.get("ensure_default")
+        current: object = value
+
+        # Apply operations in sequence
+        current = FlextUtilities._build_apply_ensure(current, ops)
+        current = FlextUtilities._build_apply_filter(
+            current, ops, ensure_default_val or current
+        )
+        current = FlextUtilities._build_apply_map(current, ops)
+        current = FlextUtilities._build_apply_normalize(current, ops)
+        current = FlextUtilities._build_apply_convert(current, ops)
+        current = FlextUtilities._build_apply_transform(
+            current, ops, ensure_default_val or current, on_error
+        )
+        return FlextUtilities._build_apply_process(
+            current, ops, ensure_default_val or current, on_error
+        )  # type: ignore[return-value]
+
+    @staticmethod
+    def agg[T](
+        items: list[T] | tuple[T, ...],
+        field: str | Callable[[T], object],
+        *,
+        fn: Callable[[list[object]], object] | None = None,
+    ) -> object:
+        """Aggregate field values from objects (mnemonic: agg = aggregate).
+
+        Generic replacement for: sum(getattr(...)), max(getattr(...)), manual aggregation loops
+
+        Args:
+            items: List/tuple of objects
+            field: Field name (str) or extractor function (callable)
+            fn: Aggregation function (default: sum)
+
+        Returns:
+            Aggregated value
+
+        Example:
+            # Sum field values
+            total = u.agg(items, "synced")
+            # → 15
+
+            # Max with custom extractor
+            max_val = u.agg(items, lambda r: r.total_entries, fn=max)
+            # → 30
+
+        """
+        if callable(field):
+            extracted = cast("list[object]", u.map(items, field))  # type: ignore[arg-type]
+        else:
+            # Use u.get for unified extraction (works for dicts and objects)
+            extracted = cast(
+                "list[object]", u.map(items, lambda item: u.get(item, field))
+            )  # type: ignore[arg-type]
+        # Filter None values before aggregation
+        filtered = cast("list[object]", u.filter(extracted, lambda x: x is not None))  # type: ignore[arg-type]
+        agg_fn = fn if fn is not None else sum
+        return agg_fn(filtered)  # type: ignore[arg-type, return-value]
+
+    @staticmethod
+    @overload
+    def fields[T](
+        source: Mapping[str, object] | object,
+        name: str,
+        *,
+        default: T | None = None,
+        required: bool = False,
+        ops: dict[str, object] | None = None,
+    ) -> T | None:
+        """Extract single field (overload for single field)."""
+
+    @staticmethod
+    @overload
+    def fields[T](
+        source: Mapping[str, object] | object,
+        spec: dict[str, dict[str, object] | T | None],
+        *,
+        on_error: str = "stop",
+    ) -> dict[str, T | None] | r[dict[str, T]]:
+        """Extract multiple fields (overload for multiple fields)."""
+
+    @staticmethod
+    def fields[T](
+        source: Mapping[str, object] | object,
+        name_or_spec: str | dict[str, dict[str, object] | T | None],
+        *,
+        default: T | None = None,
+        required: bool = False,
+        ops: dict[str, object] | None = None,
+        on_error: str = "stop",
+    ) -> T | None | dict[str, T | None] | r[dict[str, T]]:
+        """Extract and process field(s) using DSL mnemonic pattern (generalized from field).
+
+        Generic replacement for: Repeated u.get() + u.guard() + u.build() chains
+
+        Extracts field(s) from source (dict/object), applies optional DSL operations,
+        and validates required fields. Uses mnemonic field names for clarity.
+
+        Args:
+            source: Source data (dict or object)
+            name_or_spec: Field name (single) or spec dict (multiple)
+            default: Default value if field not found (single field only)
+            required: If True, returns None on missing (single field only)
+            ops: Optional DSL operations dict (single field only)
+            on_error: Error handling for multiple fields ("stop", "skip", "collect")
+
+        Returns:
+            Extracted value(s) or default/None/dict/r[dict]
+
+        Example:
+            # Single field extraction
+            name = u.fields(payload, "name", default="")
+
+            # Single field with DSL operations
+            port = u.fields(
+                config,
+                "port",
+                default=8080,
+                ops={"convert": int},
+            )
+
+            # Required single field
+            api_key = u.fields(env, "API_KEY", required=True)
+            if api_key is None:
+                return r.fail("API_KEY is required")
+
+            # Multiple fields
+            data = u.fields(
+                payload,
+                {"name": "", "age": 0, "email": ""},
+            )
+
+        """
+        # Handle multiple fields case
+        if isinstance(name_or_spec, dict):
+            return FlextUtilities._fields_multi(source, name_or_spec, on_error=on_error)
+
+        # Handle single field case
+        name = cast("str", name_or_spec)
+        value = u.get(source, name, default=default)
+        if value is None and required:
+            return None
+        if ops is not None:
+            return cast("T | None", u.build(value, ops=ops, on_error="stop"))
+        return cast("T | None", value)
+
+    @staticmethod
+    def _fields_multi[T](
+        source: Mapping[str, object] | object,
+        spec: dict[str, dict[str, object] | T | None],
+        *,
+        on_error: str = "stop",
+    ) -> dict[str, T | None] | r[dict[str, T]]:
+        """Extract multiple fields using DSL mnemonic specification.
+
+        Generic replacement for: Multiple u.extract() calls, manual dict construction
+
+        Extracts multiple fields from source using mnemonic spec format:
+        {"field_name": default_value} or {"field_name": {"default": value, "ops": {...}}}
+
+        Args:
+            source: Source data (dict or object)
+            spec: Field specification dict:
+                - Simple: {"name": "default"} → extracts with default
+                - DSL: {"port": {"default": 8080, "ops": {"convert": int}}} → extracts with ops
+                - Required: {"api_key": None} → required field (None means required)
+            on_error: Error handling ("stop", "skip", "collect")
+
+        Returns:
+            dict[str, T | None] with extracted values, or r[dict[str, T]] if on_error="stop" and required field missing
+
+        Example:
+            # Simple extraction
+            data = u.fields(
+                payload,
+                {"name": "", "age": 0, "email": ""},
+            )
+
+            # With DSL operations
+            config = u.fields(
+                raw_config,
+                {
+                    "port": {"default": 8080, "ops": {"convert": int}},
+                    "host": {"default": "localhost", "ops": {"ensure": "str"}},
+                    "timeout": {"default": 300, "ops": {"convert": int}},
+                },
+            )
+
+            # Required fields
+            result = u.fields(
+                env,
+                {"API_KEY": None, "API_SECRET": None},
+                on_error="stop",
+            )
+            if isinstance(result, r) and result.is_failure:
+                return result
+
+        """
+        result: dict[str, T | None] = {}
+        errors: list[str] = []
+
+        for field_name, field_spec in spec.items():
+            # Determine if field is required and get spec
+            if isinstance(field_spec, dict):
+                field_default = field_spec.get("default")
+                field_ops = field_spec.get("ops")
+                field_required = field_default is None and "default" not in field_spec
+            else:
+                field_default = field_spec
+                field_ops = None
+                field_required = field_spec is None
+
+            # Extract field using single field extraction (avoid recursion)
+            value = u.get(source, field_name, default=field_default)
+            if value is None and field_required:
+                extracted = None
+            elif field_ops is not None:
+                extracted = cast(
+                    "T | None", u.build(value, ops=field_ops, on_error="stop")
+                )
+            else:
+                extracted = cast("T | None", value)
+
+            if extracted is None and field_required:
+                error_msg = f"Required field '{field_name}' is missing"
+                if on_error == "stop":
+                    return r[dict[str, T]].fail(error_msg)
+                if on_error == "collect":
+                    errors.append(error_msg)
+                    continue
+                # on_error == "skip": continue without adding field
+                continue
+
+            result[field_name] = extracted
+
+        if errors and on_error == "collect":
+            return r[dict[str, T]].fail(f"Field extraction errors: {', '.join(errors)}")
+
+        # Always return dict when no errors (on_error="stop" or "skip" with no errors)
+        return result
+
+    @staticmethod
+    def construct[T](
+        spec: dict[str, object | dict[str, object]],
+        source: Mapping[str, object] | object | None = None,
+        *,
+        on_error: str = "stop",
+    ) -> dict[str, object]:
+        """Construct object using mnemonic specification pattern.
+
+        Generic replacement for: Manual dict construction with u.get(), u.guard(), u.build()
+
+        Builds object from mnemonic spec that maps target keys to source fields or DSL operations.
+        Supports field mapping, default values, and DSL operations.
+
+        Args:
+            spec: Construction specification:
+                - Direct: {"target_key": "source_field"} → maps source_field to target_key
+                - Default: {"target_key": {"field": "source_field", "default": value}} → with default
+                - DSL: {"target_key": {"field": "source_field", "ops": {...}}} → with DSL ops
+                - Literal: {"target_key": {"value": literal}} → uses literal value
+            source: Optional source data (if None, uses literal values from spec)
+            on_error: Error handling ("stop", "skip", "collect")
+
+        Returns:
+            Constructed dict with target keys
+
+        Example:
+            # Simple mapping
+            plugin_info = u.construct(
+                {
+                    "name": "plugin_name",
+                    "type": "plugin_type",
+                    "variant": "default_variant",
+                },
+                source=plugin_data,
+            )
+
+            # With defaults and DSL
+            config = u.construct(
+                {
+                    "port": {"field": "port", "default": 8080, "ops": {"convert": int}},
+                    "host": {"field": "host", "default": "localhost", "ops": {"ensure": "str"}},
+                    "timeout": {"value": 300},  # Literal value
+                },
+                source=raw_config,
+            )
+
+        """
+        constructed: dict[str, object] = {}
+
+        for target_key, target_spec in spec.items():
+            try:
+                # Literal value
+                if isinstance(target_spec, dict) and "value" in target_spec:
+                    constructed[target_key] = target_spec["value"]
+                    continue
+
+                # Field mapping
+                if isinstance(target_spec, str):
+                    # Simple field name mapping
+                    source_field = target_spec
+                    field_default = None
+                    field_ops = None
+                elif isinstance(target_spec, dict):
+                    source_field = cast("str", target_spec.get("field", target_key))
+                    field_default = target_spec.get("default")
+                    field_ops = target_spec.get("ops")
+                else:
+                    # Direct value
+                    constructed[target_key] = target_spec
+                    continue
+
+                # Extract from source using u.when() for conditional extraction (DSL pattern)
+                if source is None:
+                    constructed[target_key] = u.when(
+                        condition=field_default is not None,
+                        then_value=field_default,
+                        else_value=None,
+                    )
+                    continue
+
+                extracted = u.extract(
+                    source,
+                    source_field,
+                    default=field_default,
+                    required=False,
+                    ops=cast("dict[str, object] | None", field_ops),
+                )
+                # Use u.when() for conditional assignment (DSL pattern)
+                constructed[target_key] = u.when(
+                    condition=extracted is not None,
+                    then_value=extracted,
+                    else_value=field_default,
+                )
+
+            except Exception as e:
+                error_msg = f"Failed to construct '{target_key}': {e}"
+                if on_error == "stop":
+                    raise ValueError(error_msg) from e
+                if on_error == "skip":
+                    continue
+                # on_error == "collect": continue but could log
+
+        return constructed
+
+    @staticmethod
+    @overload
+    def take[T](
+        data: Mapping[str, object] | object,
+        key: str,
+        *,
+        as_type: type[T] | None = None,
+        default: T | None = None,
+        guard: bool = True,
+    ) -> T | None:
+        """Extract value with type guard (overload for dict/object extraction)."""
+
+    @staticmethod
+    @overload
+    def take[T](
+        items: dict[str, T],
+        n: int,
+        *,
+        from_start: bool = True,
+    ) -> dict[str, T]:
+        """Take first N items from dict (overload)."""
+
+    @staticmethod
+    @overload
+    def take[T](
+        items: list[T] | tuple[T, ...],
+        n: int,
+        *,
+        from_start: bool = True,
+    ) -> list[T]:
+        """Take first N items from list/tuple (overload)."""
+
+    @staticmethod
+    def take[T](
+        data_or_items: Mapping[str, object] | object | dict[str, T] | list[T] | tuple[T, ...],
+        key_or_n: str | int,
+        *,
+        as_type: type[T] | None = None,
+        default: T | None = None,
+        guard: bool = True,
+        from_start: bool = True,
+    ) -> T | None | dict[str, T] | list[T]:
+        """Unified take function (generalized from take_n).
+
+        Generic replacement for: u.get() + isinstance() + cast() patterns, list slicing
+
+        Automatically detects operation based on second argument type:
+        - If key_or_n is str: extracts value from dict/object with type guard
+        - If key_or_n is int: takes first N items from list/dict
+
+        Args:
+            data_or_items: Source data (dict/object) or items (list/dict)
+            key_or_n: Key name (str) or number of items (int)
+            as_type: Optional type to guard against (for extraction mode)
+            default: Default value if not found or type mismatch (for extraction mode)
+            guard: If True, validate type; if False, return as-is (for extraction mode)
+            from_start: If True, take from start; if False, take from end (for slice mode)
+
+        Returns:
+            Extracted value with type guard or sliced items
+
+        Example:
+            # Extract value (original take behavior)
+            port = u.take(config, "port", as_type=int, default=8080)
+            name = u.take(obj, "name", as_type=str, default="unknown")
+
+            # Take N items (generalized from take_n)
+            keys = u.take(plugins_dict, 10)
+            items = u.take(items_list, 5)
+
+        """
+        # Detect operation mode based on key_or_n type
+        if isinstance(key_or_n, str):
+            # Extraction mode: extract value from dict/object
+            data = cast("Mapping[str, object] | object", data_or_items)
+            key = key_or_n
+            value = u.get(data, key, default=default)
+            if value is None:
+                return default
+            if as_type and guard:
+                guarded = u.guard(value, as_type, return_value=True, default=default)
+                return cast("T | None", guarded)
+            return cast("T | None", value)
+
+        # Slice mode: take N items from list/dict
+        items = cast("dict[str, T] | list[T] | tuple[T, ...]", data_or_items)
+        n = key_or_n
+        if isinstance(items, dict):
+            # Use u.keys() for unified key extraction
+            keys = u.keys(items)
+            selected_keys = keys[:n] if from_start else keys[-n:]
+            # Cannot use u.map() here - would cause recursion (u.map calls itself for lists)
+            # Use dict comprehension directly
+            return {k: items[k] for k in selected_keys}
+        items_list = list(items)
+        return items_list[:n] if from_start else items_list[-n:]
+
+    @staticmethod
+    def pick[T](
+        data: Mapping[str, object] | object,
+        *keys: str,
+        as_dict: bool = True,
+    ) -> dict[str, object] | list[object]:
+        """Pick multiple fields at once (mnemonic: pick = select fields).
+
+        Generic replacement for: Multiple u.get() calls
+
+        Args:
+            data: Source data (dict or object)
+            *keys: Field names to pick
+            as_dict: If True, return dict; if False, return list
+
+        Returns:
+            Dict with picked fields or list of values
+
+        Example:
+            fields = u.pick(data, "name", "email", "age")
+            values = u.pick(data, "x", "y", "z", as_dict=False)
+
+        """
+        # Cannot use u.map() here - keys is tuple[str, ...] which u.map treats as list
+        # and would cause recursion (u.map calls itself for lists)
+        # Use list comprehension directly for efficiency
+        if as_dict:
+            return {k: u.get(data, k) for k in keys}
+        # Use list comprehension for values
+        return [u.get(data, k) for k in keys]
+
+    @staticmethod
+    def as_[T](
+        value: object,
+        target: type[T],
+        *,
+        default: T | None = None,
+        strict: bool = False,
+    ) -> T | None:
+        """Type conversion with guard (mnemonic: as_ = convert to type).
+
+        Generic replacement for: isinstance() + cast() patterns
+
+        Args:
+            value: Value to convert
+            target: Target type
+            default: Default if conversion fails
+            strict: If True, only exact type; if False, allow coercion
+
+        Returns:
+            Converted value or default
+
+        Example:
+            port = u.as_(config.get("port"), int, default=8080)
+            name = u.as_(value, str, default="")
+
+        """
+        if isinstance(value, target):
+            return cast("T", value)
+        if strict:
+            return default
+        # Try coercion using u.convert()
+        try:
+            converted = (
+                u.convert(value, target, default)
+                if default is not None
+                else u.convert(value, target, cast("T", None))
+            )
+            return converted if converted is not None else default
+        except (ValueError, TypeError):
+            return default
+
+    @staticmethod
+    def or_[T](
+        *values: T | None,
+        default: T | None = None,
+    ) -> T | None:
+        """Return first non-None value (mnemonic: or_ = fallback chain).
+
+        Generic replacement for: value1 or value2 or default patterns
+
+        Args:
+            *values: Values to try in order
+            default: Default if all are None
+
+        Returns:
+            First non-None value or default
+
+        Example:
+            port = u.or_(config.get("port"), env.get("PORT"), default=8080)
+            name = u.or_(user.name, user.username, default="anonymous")
+
+        """
+        for value in values:
+            if value is not None:
+                return value
+        return default
+
+    @staticmethod
+    def when[T](
+        *,
+        condition: bool = False,
+        then_value: T | None = None,
+        else_value: T | None = None,
+    ) -> T | None:
+        """Conditional value (mnemonic: when = if-then-else, same as if_).
+
+        Generic replacement for: value if condition else default patterns
+
+        Args:
+            condition: Boolean condition
+            then_value: Value if condition is True
+            else_value: Value if condition is False (None if not provided)
+
+        Returns:
+            then_value or else_value
+
+        Example:
+            port = u.when(condition=debug, then_value=8080, else_value=80)
+            name = u.when(condition=user.is_active, then_value=user.name)
+
+        """
+        return then_value if condition else else_value
+
+    @staticmethod
+    def try_[T](
+        func: Callable[[], T],
+        *,
+        default: T | None = None,
+        catch: type[Exception] | tuple[type[Exception], ...] = Exception,
+    ) -> T | None:
+        """Try operation with fallback (mnemonic: try_ = safe execution).
+
+        Generic replacement for: try/except blocks with default
+
+        Args:
+            func: Function to execute
+            default: Default if exception occurs
+            catch: Exception types to catch (default: Exception)
+
+        Returns:
+            Function result or default
+
+        Example:
+            port = u.try_(lambda: int(config["port"]), default=8080)
+            data = u.try_(lambda: json.loads(raw), default={})
+
+        """
+        try:
+            return func()
+        except catch:
+            return default
+
+    @staticmethod
+    def chain[T](
+        value: T,
+        *funcs: Callable[[object], object],
+    ) -> object:
+        """Chain operations (mnemonic: chain = pipeline).
+
+        Generic replacement for: func3(func2(func1(value))) patterns
+
+        Args:
+            value: Initial value
+            *funcs: Functions to apply in sequence
+
+        Returns:
+            Final result after all operations
+
+        Example:
+            result = u.chain(
+                data,
+                lambda x: u.get(x, "items"),
+                lambda x: u.filter(x, lambda i: i > 0),
+                lambda x: u.map(x, lambda i: i * 2),
+            )
+
+        """
+        current: object = value
+        for func in funcs:
+            current = func(current)
+        return current
+
+    @staticmethod
+    def flow(
+        value: object,
+        *ops: dict[str, object] | Callable[[object], object],
+    ) -> object:
+        """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
+
+        Generic replacement for: u.build() + u.chain() combinations
+
+        Args:
+            value: Initial value
+            *ops: Operations (dict DSL or callable functions)
+
+        Returns:
+            Final result
+
+        Example:
+            result = u.flow(
+                data,
+                {"ensure": "dict"},
+                {"get": "items", "default": []},
+                lambda x: u.filter(x, lambda i: i > 0),
+                {"map": lambda i: i * 2},
+            )
+
+        """
+        current: object = value
+        for op in ops:
+            if isinstance(op, dict):
+                current = u.build(current, ops=op)
+            elif callable(op):
+                current = op(current)
+        return current
+
+    @staticmethod
+    def from_[T](
+        source: Mapping[str, object] | object | None,
+        key: str,
+        *,
+        as_type: type[T] | None = None,
+        default: T,
+    ) -> T:
+        """Extract from source with type guard (mnemonic: from_ = extract from source).
+
+        Generic replacement for: u.take() + u.when() patterns for optional sources
+
+        Args:
+            source: Source data (dict/object/None)
+            key: Key/attribute name
+            as_type: Optional type to guard against
+            default: Default value if source is None or field missing
+
+        Returns:
+            Extracted value with type guard or default (always returns T, never None)
+
+        Example:
+            port = u.from_(config_obj, "port", as_type=int, default=300)
+            name = u.from_(obj, "name", as_type=str, default="")
+
+        """
+        if source is None:
+            return default
+        if as_type:
+            taken = u.take(source, key, as_type=as_type, default=default)
+            return cast("T", taken) if taken is not None else default
+        gotten = u.get(source, key, default=default)
+        return cast("T", gotten) if gotten is not None else default
+
+    @staticmethod
+    def all_(*values: object) -> bool:
+        """Check if all values are truthy (mnemonic: all_ = all truthy).
+
+        Generic replacement for: all([v1, v2, v3]) or if v1 and v2 and v3
+
+        Args:
+            *values: Values to check
+
+        Returns:
+            True if all values are truthy
+
+        Example:
+            if u.all_(name, email, age):
+                process_user()
+
+        """
+        # Cannot use u.map() here - values is a tuple from *values, would cause recursion
+        # Use list comprehension directly (simpler and avoids recursion)
+        return all(bool(v) for v in values)
+
+    @staticmethod
+    def any_(*values: object) -> bool:
+        """Check if any value is truthy (mnemonic: any_ = any truthy).
+
+        Generic replacement for: any([v1, v2, v3]) or if v1 or v2 or v3
+
+        Args:
+            *values: Values to check
+
+        Returns:
+            True if any value is truthy
+
+        Example:
+            if u.any_(config, env, default):
+                use_value()
+
+        """
+        # Cannot use u.map() here - values is a tuple from *values, would cause recursion
+        # Use list comprehension directly (simpler and avoids recursion)
+        return any(bool(v) for v in values)
+
+    @staticmethod
+    def none_(*values: object) -> bool:
+        """Check if all values are falsy (mnemonic: none_ = none truthy).
+
+        Generic replacement for: not any([v1, v2, v3]) or if not (v1 or v2 or v3)
+
+        Args:
+            *values: Values to check
+
+        Returns:
+            True if all values are falsy
+
+        Example:
+            if u.none_(name, email):
+                return r.fail("Missing required fields")
+
+        """
+        return not any(bool(v) for v in values)
+
+    @staticmethod
+    def join(
+        items: list[str] | dict[str, str] | Mapping[str, str],
+        *,
+        sep: str = ",",
+        key_sep: str | None = None,
+    ) -> str:
+        """Join items into string (mnemonic: join = string join).
+
+        Generic replacement for: ",".join(items) or manual string building
+
+        Args:
+            items: Items to join (list of strings or dict)
+            sep: Separator for list items (default: ",")
+            key_sep: Separator for dict key-value pairs (e.g., "=")
+
+        Returns:
+            Joined string
+
+        Example:
+            result = u.join(["a", "b", "c"], sep=",")
+            result = u.join({"a": "1", "b": "2"}, sep=",", key_sep="=")
+
+        """
+        if isinstance(items, (dict, Mapping)):
+            if key_sep:
+                # Use u.map for unified mapping - convert items() to list first
+                items_list = list(items.items())
+                mapped = cast(
+                    "list[str]",
+                    u.map(items_list, lambda kv: f"{kv[0]}{key_sep}{kv[1]}"),
+                )  # type: ignore[arg-type]
+                return sep.join(mapped)
+            # Use u.vals() for unified value extraction, then u.map for mapping
+            values_list = u.vals(items)
+            mapped = cast("list[str]", u.map(values_list, str))  # type: ignore[arg-type]
+            return sep.join(mapped)
+        # Use u.map for unified mapping
+        mapped = cast("list[str]", u.map(items, str))  # type: ignore[arg-type]
+        return sep.join(mapped)
+
+    @staticmethod
+    def has(
+        obj: object,
+        *attrs: str,
+    ) -> bool:
+        """Check if object has all attributes (mnemonic: has = hasattr).
+
+        Generic replacement for: hasattr(obj, "attr") and hasattr(obj, "attr2")
+
+        Args:
+            obj: Object to check
+            *attrs: Attribute names to check
+
+        Returns:
+            True if object has all attributes
+
+        Example:
+            if u.has(config, "port", "host", "timeout"):
+                use_config()
+
+        """
+        return all(hasattr(obj, attr) for attr in attrs)
+
+    @staticmethod
+    def group[T, K](
+        items: list[T] | tuple[T, ...],
+        key: str | Callable[[T], K],
+    ) -> dict[K, list[T]]:
+        """Group items by key (mnemonic: group = group by).
+
+        Generic replacement for: Manual defaultdict loops, itertools.groupby setup
+
+        Args:
+            items: Items to group
+            key: Field name (str) or key function (callable)
+
+        Returns:
+            dict[key, list[items]]
+
+        Example:
+            # Group by field
+            by_type = u.group(users, "role")
+            # → {"admin": [user1, user2], "user": [user3]}
+
+            # Group by function
+            by_len = u.group(words, lambda w: len(w))
+            # → {3: ["cat", "dog"], 5: ["house"]}
+
+        """
+        result: dict[K, list[T]] = {}
+        # Use u.map for unified mapping to extract keys
+        if callable(key):
+            keys = cast("list[K]", u.map(items, key))  # type: ignore[arg-type]
+        else:
+            # Use u.get for unified extraction (works for dicts and objects)
+            keys = cast("list[K]", u.map(items, lambda item: u.get(item, key)))  # type: ignore[arg-type]
+        # Group items by keys using zip_ for unified zip
+        pairs = cast("list[tuple[T, K]]", u.zip_(items, keys))
+        for item, k in pairs:
+            result.setdefault(k, []).append(item)
+        return result
+
+    @staticmethod
+    def chunk[T](
+        items: list[T] | tuple[T, ...],
+        size: int,
+    ) -> list[list[T]]:
+        """Split items into chunks (mnemonic: chunk = batch).
+
+        Generic replacement for: Manual chunking loops, list slicing patterns
+
+        Args:
+            items: Items to chunk
+            size: Chunk size
+
+        Returns:
+            list[list[T]] of chunks
+
+        Example:
+            batches = u.chunk(entries, size=100)
+            # → [[entry1...entry100], [entry101...entry200]]
+
+        """
+        # Cannot use u.map() here - would cause recursion (u.map calls itself for lists)
+        # Use list comprehension directly for chunking
+        return [list(items[i : i + size]) for i in range(0, len(items), size)]
+
+    @staticmethod
+    def zip_(*items: list[object] | tuple[object, ...]) -> list[tuple[object, ...]]:
+        """Zip multiple lists (mnemonic: zip_ = zip).
+
+        Generic replacement for: zip(list1, list2, list3) patterns
+
+        Args:
+            *items: Lists/tuples to zip
+
+        Returns:
+            list[tuple] of zipped items
+
+        Example:
+            pairs = u.zip_([1, 2], ["a", "b"])
+            # → [(1, "a"), (2, "b")]
+
+        """
+        if not items:
+            return []
+        return list(zip(*items, strict=False))
+
+    @staticmethod
+    def count[T](
+        items: list[T] | tuple[T, ...],
+        predicate: Callable[[T], bool] | None = None,
+    ) -> int:
+        """Count items matching predicate (mnemonic: count = count).
+
+        Generic replacement for: sum(1 for x in items if pred(x)) or len([x for x in items if pred(x)])
+        Uses u.filter() for unified filtering.
+
+        Args:
+            items: Items to count
+            predicate: Optional filter function (counts all if None)
+
+        Returns:
+            Count of matching items
+
+        Example:
+            total = u.count(items)
+            active = u.count(users, lambda u: u.is_active)
+
+        """
+        if predicate is None:
+            return len(items)
+        # Use u.filter() for unified filtering, then count
+        filtered = u.filter(items, predicate)  # type: ignore[arg-type]
+        return (
+            len(filtered)
+            if isinstance(filtered, (list, tuple, set, frozenset))
+            else 1
+            if filtered
+            else 0
+        )
+
+    @staticmethod
+    def err(
+        result: r[object],
+        *,
+        default: str = "Unknown error",
+    ) -> str:
+        """Extract error message from r (mnemonic: err = error).
+
+        Generic replacement for: str(result.error) if result.error else "Unknown error"
+
+        Args:
+            result: FlextResult to extract error from
+            default: Default error message if error is None/empty
+
+        Returns:
+            Error message string
+
+        Example:
+            error_msg = u.err(result, default="Operation failed")
+            # → "Connection timeout" or "Operation failed"
+
+        """
+        # Use u.when() for conditional return (DSL pattern)
+        return u.when(
+            condition=result.is_failure,
+            then_value=cast(
+                "str", u.ensure(result.error, target_type="str", default=default)
+            ),
+            else_value=default,
+        )
+
+    @staticmethod
+    def val[T](
+        result: r[T],
+        *,
+        default: T | None = None,
+    ) -> T | None:
+        """Extract value from r (mnemonic: val = value).
+
+        Generic replacement for: result.value if result.is_success else default
+
+        Args:
+            result: r to extract value from
+            default: Default value if result is failure
+
+        Returns:
+            Value or default
+
+        Example:
+            data = u.val(result, default={})
+            # → result.value or {}
+
+        """
+        # Use u.when() for conditional return (DSL pattern)
+        return u.when(
+            condition=result.is_success,
+            then_value=result.value,
+            else_value=default,
+        )
+
+    @staticmethod
+    def unwrap[T](
+        value: T | r[T],
+        *,
+        default: T | None = None,
+    ) -> T:
+        """Unwrap r or return value (mnemonic: unwrap = extract value).
+
+        Generic replacement for: result.value if isinstance(result, r) else result
+
+        Args:
+            value: Value or r
+            default: Default if result is failure
+
+        Returns:
+            Unwrapped value or default
+
+        Example:
+            data = u.unwrap(fields_result)
+            value = u.unwrap(result, default=[])
+
+        """
+        if isinstance(value, r):
+            if value.is_failure:
+                return cast("T", default) if default is not None else cast("T", None)
+            return value.value
+        return value
+
+    @staticmethod
+    def req[T](
+        value: T | None,
+        *,
+        name: str = "value",
+    ) -> r[T]:
+        """Require non-None value (mnemonic: req = required).
+
+        Generic replacement for: if not value: return r.fail()
+
+        Args:
+            value: Value to check
+            name: Field name for error message
+
+        Returns:
+            r[T]: Ok(value) or Fail with error
+
+        Example:
+            result = u.req(tap_name, name="tap_name")
+            if result.is_failure:
+                return result
+
+        """
+        if value is None or (isinstance(value, str) and not value):
+            return r[T].fail(f"{name} is required")
+        return r[T].ok(value)
+
+    @staticmethod
+    def vals[T](
+        items: dict[str, T] | r[dict[str, T]],
+        *,
+        default: list[T] | None = None,
+    ) -> list[T]:
+        """Extract values from dict or result (mnemonic: vals = values).
+
+        Generic replacement for: list(result.value.values()) or list(dict.values())
+
+        Args:
+            items: Dict or r containing dict
+            default: Default if items is failure or None
+
+        Returns:
+            List of values
+
+        Example:
+            plugins = u.vals(plugins_result)
+            values = u.vals(data_dict)
+
+        """
+        if isinstance(items, r):
+            if items.is_failure:
+                return default or []
+            items_dict = items.value
+        else:
+            items_dict = items
+        return list(items_dict.values()) if items_dict else (default or [])
+
+    @staticmethod
+    def keys[T](
+        items: dict[str, T] | r[dict[str, T]],
+        *,
+        default: list[str] | None = None,
+    ) -> list[str]:
+        """Extract keys from dict or result (mnemonic: keys = dict keys).
+
+        Generic replacement for: list(result.value.keys()) or list(dict.keys())
+
+        Args:
+            items: Dict or r containing dict
+            default: Default if items is failure or None
+
+        Returns:
+            List of keys
+
+        Example:
+            plugin_names = u.keys(plugins_result)
+            field_names = u.keys(data_dict)
+
+        """
+        if isinstance(items, r):
+            if items.is_failure:
+                return default or []
+            items_dict = items.value
+        else:
+            items_dict = items
+        return list(items_dict.keys()) if items_dict else (default or [])
+
+    @staticmethod
+    def mul[T: (int, float)](
+        value: T,
+        factor: T,
+    ) -> T:
+        """Multiply value by factor (mnemonic: mul = multiply).
+
+        Generic replacement for: value * factor patterns
+
+        Args:
+            value: Value to multiply
+            factor: Multiplication factor
+
+        Returns:
+            Multiplied value
+
+        Example:
+            total = u.mul(count, 3)
+            price = u.mul(quantity, unit_price)
+
+        """
+        return cast("T", value * factor)
+
+    @staticmethod
+    def sum[T: (int, float)](
+        items: list[T] | tuple[T, ...] | dict[str, T] | r[list[T] | dict[str, T]],
+        *,
+        mapper: Callable[[T], int | float]
+        | Callable[[str, T], int | float]
+        | None = None,
+        default: T | None = None,
+    ) -> T:
+        """Sum numeric values from collection (mnemonic: sum = sum).
+
+        Generic replacement for: sum(items), sum(dict.values()), sum(map(...))
+
+        Args:
+            items: Items to sum (list, tuple, dict, or result)
+            mapper: Optional function to extract numeric value
+                - For lists: mapper(item) -> number
+                - For dicts: mapper(key, value) -> number
+            default: Default value if empty (default: 0)
+
+        Returns:
+            Sum of numeric values
+
+        Example:
+            total = u.sum([1, 2, 3])
+            # → 6
+
+            total = u.sum({"a": 1, "b": 2}, mapper=lambda k, v: v)
+            # → 3
+
+            total = u.sum(u.map(items, lambda x: x.count))
+            # → Sum of counts
+
+        """
+        # Use u.val() for result unwrapping with default
+        if isinstance(items, r):
+            items = u.val(items, default=[])
+            if u.empty(items):
+                # Use u.or_() for default fallback (DSL pattern)
+                return cast("T", u.or_(default, 0))
+
+        # Use u.agg() for unified aggregation when mapper provided
+        if mapper is not None:
+            # Use u.agg() with mapper for unified aggregation
+            return cast("T", u.agg(items, mapper, fn=sum))  # type: ignore[arg-type, return-value]
+
+        # Direct sum - cannot use u.agg() with lambda x: x (causes recursion)
+        # Use direct sum() on values
+        if isinstance(items, dict):
+            values = list(items.values())
+            return (
+                cast("T", sum(cast("list[int | float]", values)))
+                if values
+                else cast("T", u.or_(default, 0))
+            )
+        if isinstance(items, (list, tuple)):
+            return (
+                cast("T", sum(cast("list[int | float]", items)))
+                if items
+                else cast("T", u.or_(default, 0))
+            )
+        # Use u.or_() for default fallback (DSL pattern)
+        return cast("T", u.or_(default, 0))
+
+    @staticmethod
+    def first[T](
+        items: list[T] | tuple[T, ...] | dict[str, T],
+        *,
+        default: T | None = None,
+    ) -> T | None:
+        """Get first item (mnemonic: first = first element).
+
+        Generic replacement for: items[0] if items else None
+
+        Args:
+            items: Items to get first from
+            default: Default if empty
+
+        Returns:
+            First item or default
+
+        Example:
+            first_user = u.first(users)
+            first_key = u.first(data_dict)
+
+        """
+        # Use u.empty() for unified empty check
+        if u.empty(items):
+            return default
+        # Use u.keys() for unified key extraction, then access first
+        if isinstance(items, dict):
+            keys = u.keys(items)
+            return items[keys[0]] if keys else default
+        return items[0] if items else default
+
+    @staticmethod
+    def last[T](
+        items: list[T] | tuple[T, ...] | dict[str, T],
+        *,
+        default: T | None = None,
+    ) -> T | None:
+        """Get last item (mnemonic: last = last element).
+
+        Generic replacement for: items[-1] if items else None
+
+        Args:
+            items: Items to get last from
+            default: Default if empty
+
+        Returns:
+            Last item or default
+
+        Example:
+            last_user = u.last(users)
+            last_value = u.last(data_dict)
+
+        """
+        # Use u.empty() for unified empty check
+        if u.empty(items):
+            return default
+        # Use negative index for unified access
+        if isinstance(items, dict):
+            keys = list(items.keys())
+            return items[keys[-1]] if keys else default
+        return items[-1] if items else default
+
+    @staticmethod
+    def at[T](
+        items: list[T] | tuple[T, ...] | dict[str, T],
+        index: int | str,
+        *,
+        default: T | None = None,
+    ) -> T | None:
+        """Get item at index/key (mnemonic: at = get at position).
+
+        Generic replacement for: items[index] with safe access
+
+        Args:
+            items: Items to access
+            index: Index (int) or key (str)
+            default: Default if not found
+
+        Returns:
+            Item at index/key or default
+
+        Example:
+            user = u.at(users, 0)
+            value = u.at(data_dict, "key")
+
+        """
+        try:
+            if isinstance(items, dict):
+                return (
+                    items.get(cast("str", index), default)
+                    if isinstance(index, str)
+                    else default
+                )
+            return (
+                items[cast("int", index)]
+                if 0 <= cast("int", index) < len(items)
+                else default
+            )
+        except (IndexError, KeyError, TypeError):
+            return default
+
+    @staticmethod
+    def flat[T](
+        items: list[list[T]] | list[tuple[T, ...]] | tuple[list[T], ...],
+    ) -> list[T]:
+        """Flatten nested lists (mnemonic: flat = flatten).
+
+        Generic replacement for: [item for sublist in items for item in sublist]
+
+        Args:
+            items: Nested list/tuple structure
+
+        Returns:
+            Flattened list
+
+        Example:
+            flat_list = u.flat([[1, 2], [3, 4]])
+            # → [1, 2, 3, 4]
+
+        """
+        # Use u.map for unified mapping - convert each sublist to list
+        # Process each sublist to extract items
+        processed = cast(
+            "list[list[T]]",
+            u.map(items, list),  # type: ignore[arg-type]
+        )
+        # Flatten using list comprehension for cleaner functional style
+        return [item for sublist in processed for item in sublist]
+
+    @staticmethod
+    def ok[T](
+        value: T,
+    ) -> r[T]:
+        """Create success result (mnemonic: ok = success).
+
+        Generic replacement for: r[T].ok(value)
+
+        Args:
+            value: Value to wrap
+
+        Returns:
+            r[T] with success
+
+        Example:
+            result = u.ok(data)
+            # → r.ok(data)
+
+        """
+        return r[T].ok(value)
+
+    @staticmethod
+    def fail[T](
+        error: str,
+    ) -> r[T]:
+        """Create failure result (mnemonic: fail = failure).
+
+        Generic replacement for: r[T].fail(error)
+
+        Args:
+            error: Error message
+
+        Returns:
+            r[T] with failure
+
+        Example:
+            result = u.fail("Operation failed")
+            # → r.fail("Operation failed")
+
+        """
+        return r[T].fail(error)
+
+    @staticmethod
+    def then[T, R](
+        result: r[T],
+        func: Callable[[T], r[R]],
+    ) -> r[R]:
+        """Chain operations (mnemonic: then = flat_map).
+
+        Generic replacement for: result.flat_map(func)
+
+        Args:
+            result: Initial result
+            func: Function to apply if success
+
+        Returns:
+            Chained result
+
+        Example:
+            result = u.then(parse_result, lambda data: u.ok(process(data)))
+
+        """
+        return result.flat_map(func)
+
+    @staticmethod
+    def if_[T](
+        *,
+        condition: bool = False,
+        then_value: T | None = None,
+        else_value: T | None = None,
+    ) -> T | None:
+        """Conditional value (mnemonic: if_ = if-then-else, alias for when).
+
+        Generic replacement for: value1 if condition else value2
+
+        Args:
+            condition: Boolean condition
+            then_value: Value if condition is True
+            else_value: Value if condition is False
+
+        Returns:
+            then_value or else_value
+
+        Example:
+            port = u.if_(condition=debug, then_value=8080, else_value=80)
+            mode = u.if_(condition=is_prod, then_value="production", else_value="development")
+
+        """
+        return then_value if condition else else_value
+
+    @staticmethod
+    def not_(
+        *,
+        value: bool = False,
+    ) -> bool:
+        """Negate boolean (mnemonic: not_ = not).
+
+        Generic replacement for: not value
+
+        Args:
+            value: Boolean to negate
+
+        Returns:
+            Negated boolean
+
+        Example:
+            is_empty = u.not_(value=u.all_(items))
+            is_invalid = u.not_(value=is_valid)
+
+        """
+        return not value
+
+    @staticmethod
+    def empty(
+        items: list[object] | tuple[object, ...] | dict[str, object] | str | None,
+    ) -> bool:
+        """Check if collection/string is empty (mnemonic: empty = is empty).
+
+        Generic replacement for: len(items) == 0 or not items
+
+        Args:
+            items: Collection or string to check
+
+        Returns:
+            True if empty
+
+        Example:
+            if u.empty(items):
+                return u.fail("Items required")
+
+        """
+        if items is None:
+            return True
+        if isinstance(items, str):
+            return not items
+        return len(items) == 0
+
+    @staticmethod
+    @overload
+    def ends(
+        value: str,
+        suffix: str,
+    ) -> bool:
+        """Check if string ends with suffix (overload for single suffix)."""
+
+    @staticmethod
+    @overload
+    def ends(
+        value: str,
+        *suffixes: str,
+    ) -> bool:
+        """Check if string ends with any suffix (overload for multiple suffixes)."""
+
+    @staticmethod
+    def ends(
+        value: str,
+        *suffixes: str,
+    ) -> bool:
+        """Check if string ends with suffix(es) (generalized from ends_any).
+
+        Generic replacement for: value.endswith(suffix) or any(value.endswith(s) for s in suffixes)
+
+        Args:
+            value: String to check
+            *suffixes: One or more suffixes to check
+
+        Returns:
+            True if ends with any suffix
+
+        Example:
+            # Single suffix
+            if u.ends(filename, ".json"):
+                process_json()
+
+            # Multiple suffixes
+            if u.ends(filename, ".json", ".yaml", ".yml"):
+                process_config()
+
+        """
+        if not suffixes:
+            return False
+        # Use u.any_() with u.map() for unified checking
+
+        def check_suffix(suffix: str) -> bool:
+            """Check if value ends with suffix."""
+            return value.endswith(suffix)
+
+        mapped = cast("list[bool]", u.map(suffixes, check_suffix))  # type: ignore[arg-type]
+        return u.any_(*mapped)
+
+    @staticmethod
+    def in_(
+        value: object,
+        items: list[object] | tuple[object, ...] | set[object] | dict[str, object],
+    ) -> bool:
+        """Check if value is in items (mnemonic: in_ = membership).
+
+        Generic replacement for: value in items
+
+        Args:
+            value: Value to check
+            items: Collection to check membership
+
+        Returns:
+            True if value is in items
+
+        Example:
+            if u.in_(role, ["admin", "user"]):
+                process_user()
+
+        """
+        return value in items
+
+    @staticmethod
+    @overload
+    def starts(
+        value: str,
+        prefix: str,
+    ) -> bool:
+        """Check if string starts with prefix (overload for single prefix)."""
+
+    @staticmethod
+    @overload
+    def starts(
+        value: str,
+        *prefixes: str,
+    ) -> bool:
+        """Check if string starts with any prefix (overload for multiple prefixes)."""
+
+    @staticmethod
+    def starts(
+        value: str,
+        *prefixes: str,
+    ) -> bool:
+        """Check if string starts with prefix(es) (generalized from starts_any).
+
+        Generic replacement for: any(value.startswith(p) for p in prefixes)
+
+        Args:
+            value: String to check
+            *prefixes: Prefixes to check
+
+        Returns:
+            True if starts with any prefix
+
+        Example:
+            if u.starts(name, "tap-", "target-", "dbt-"):
+                process_plugin()
+
+        """
+
+        # Use u.any_() with u.map() for unified checking
+        # Use partial for cleaner function composition (DSL pattern)
+        def check_prefix(prefix: str) -> bool:
+            """Check if value starts with prefix."""
+            return value.startswith(prefix)
+
+        mapped = cast("list[bool]", u.map(prefixes, check_prefix))  # type: ignore[arg-type]
+        return u.any_(*mapped)
+
+    @staticmethod
+    @overload
+    def cast[T, R](
+        result: r[T],
+        *,
+        default_error: str = "Operation failed",
+    ) -> r[R]:
+        """Cast result type (generalized from cast_r)."""
+
+    @staticmethod
+    @overload
+    def cast[T, R](
+        value: T,
+    ) -> R:
+        """Cast value type."""
+
+    @staticmethod
+    def cast[T, R](
+        value_or_result: T | r[T],
+        *,
+        default_error: str = "Operation failed",
+    ) -> R | r[R]:
+        """Cast value or result type (generalized from cast_r).
+
+        Generic replacement for: cast(R, value), cast_r(result)
+
+        Generic replacement for: if result.is_success: return r.ok(cast(R, result.value)) else return r.fail(result.error)
+
+        Args:
+            result: Result to cast
+            default_error: Default error if result.error is None
+
+        Returns:
+            Casted result or failure
+
+        Example:
+            # Cast result (generalized from cast_r)
+            result = u.cast[int](str_result)
+            # → r[int] with casted value or failure
+
+            # Cast value
+            value = u.cast[int]("123")
+            # → 123
+
+        """
+        # Handle r[T] case (generalized from cast_r)
+        if isinstance(value_or_result, r):
+            if value_or_result.is_success:
+                return r[R].ok(cast("R", value_or_result.value))
+            return r[R].fail(u.err(value_or_result, default=default_error))
+        # Handle direct value case
+        return cast("R", value_or_result)
+
+    # Backward compatibility aliases (DEPRECATED - use generalized functions)
+    ends_any = ends  # DEPRECATED: Use u.ends() instead
+    starts_any = starts  # DEPRECATED: Use u.starts() instead
+    take_n = take  # DEPRECATED: Use u.take() instead
+    field = fields  # DEPRECATED: Use u.fields() instead (single field extraction)
+    # get_str, get_list, map_or, map_r, cast_r, ensure_str_list are deprecated - use u.get(), u.map(), u.cast(), u.ensure() instead
 
 
 # Alias for convenience
