@@ -13,7 +13,7 @@ from decimal import Decimal
 
 from flext_core import FlextModels
 from flext_core._models.cqrs import FlextModelsCqrs
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 # Define Query and Command classes at module level to avoid Pydantic model_rebuild() requirement
@@ -279,7 +279,7 @@ class TestFlextModelsEdgeCases:
 
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
-        large_data: FlextTypes.Types.EventDataMapping = {
+        large_data: t.Types.EventDataMapping = {
             f"field_{i}": f"value_{i}" for i in range(100)
         }
         event = FlextModels.DomainEvent(

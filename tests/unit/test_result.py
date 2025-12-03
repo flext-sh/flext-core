@@ -1,9 +1,9 @@
-"""Tests for FlextResult - Core railway pattern implementation.
+"""Tests for r - Core railway pattern implementation.
 
 Module: flext_core.result
-Scope: FlextResult - railway-oriented programming core implementation
+Scope: r - railway-oriented programming core implementation
 
-Tests FlextResult functionality including:
+Tests r functionality including:
 - Result creation (ok/fail)
 - Value extraction (unwrap, unwrap_or)
 - Railway transformations (map, flat_map, filter)
@@ -11,7 +11,7 @@ Tests FlextResult functionality including:
 - Operators (|) and boolean conversion
 - Railway composition patterns
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, FlextTestsUtilities, c,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -27,9 +27,7 @@ from typing import ClassVar, Never, cast
 
 import pytest
 
-from flext_core import FlextResult
-from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core import c, r, t
 from flext_tests.utilities import FlextTestsUtilities
 
 
@@ -52,17 +50,17 @@ class ResultOperationType(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class ResultScenario:
-    """Generic result scenario for FlextResult tests."""
+    """Generic result scenario for r tests."""
 
     name: str
     operation_type: ResultOperationType
-    value: FlextTypes.GeneralValueType
+    value: t.GeneralValueType
     is_success_expected: bool = True
-    expected_result: FlextTypes.GeneralValueType = None
+    expected_result: t.GeneralValueType = None
 
 
 class ResultScenarios:
-    """Centralized result test scenarios using FlextConstants."""
+    """Centralized result test scenarios using c."""
 
     STRING_SCENARIOS: ClassVar[list[ResultScenario]] = [
         ResultScenario(
@@ -130,8 +128,8 @@ class ResultScenarios:
     ]
 
 
-class TestFlextResult:
-    """Comprehensive test suite for FlextResult using FlextTestsUtilities."""
+class Testr:
+    """Comprehensive test suite for r using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -139,14 +137,14 @@ class TestFlextResult:
         ids=lambda s: s.name,
     )
     def test_result_string_operations(self, scenario: ResultScenario) -> None:
-        """Test FlextResult with string values across all scenarios."""
+        """Test r with string values across all scenarios."""
         op_type = scenario.operation_type
         value = scenario.value
         is_success = scenario.is_success_expected
 
         if op_type == ResultOperationType.CREATION_SUCCESS:
             # Use generic helper to replace 10+ lines of result creation code
-            creation_result: FlextResult[FlextTypes.GeneralValueType] = (
+            creation_result: r[t.GeneralValueType] = (
                 FlextTestsUtilities.GenericHelpers.create_result_from_value(
                     value,
                     error_on_none="Value cannot be None",
@@ -158,7 +156,7 @@ class TestFlextResult:
             )
 
         elif op_type == ResultOperationType.CREATION_FAILURE:
-            failure_result: FlextResult[FlextTypes.GeneralValueType] = (
+            failure_result: r[t.GeneralValueType] = (
                 FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
             )
             FlextTestsUtilities.ResultHelpers.assert_failure_with_error(
@@ -168,7 +166,7 @@ class TestFlextResult:
 
         elif op_type == ResultOperationType.UNWRAP_OR:
             # value is already GeneralValueType from ResultScenario
-            unwrap_result: FlextResult[FlextTypes.GeneralValueType] = (
+            unwrap_result: r[t.GeneralValueType] = (
                 FlextTestsUtilities.ResultHelpers.create_success_result(value)
                 if is_success
                 else FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
@@ -179,16 +177,16 @@ class TestFlextResult:
             )
 
         elif op_type == ResultOperationType.MAP:
-            map_result: FlextResult[str] = FlextResult[str].fail(str(value))
+            map_result: r[str] = r[str].fail(str(value))
             mapped = map_result.map(lambda x: str(x) * 2)
             assert mapped.is_failure and mapped.error == str(value)
 
         elif op_type == ResultOperationType.FLAT_MAP:
-            flat_map_result: FlextResult[FlextTypes.GeneralValueType] = (
+            flat_map_result: r[t.GeneralValueType] = (
                 FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
             )
             flat_mapped = flat_map_result.flat_map(
-                lambda x: FlextResult[str].ok(f"value_{x}"),
+                lambda x: r[str].ok(f"value_{x}"),
             )
             FlextTestsUtilities.ResultHelpers.assert_failure_with_error(
                 flat_mapped,
@@ -197,7 +195,7 @@ class TestFlextResult:
 
         elif op_type == ResultOperationType.ALT:
             # value is already GeneralValueType from ResultScenario
-            result_alt: FlextResult[FlextTypes.GeneralValueType] = (
+            result_alt: r[t.GeneralValueType] = (
                 FlextTestsUtilities.ResultHelpers.create_success_result(value)
                 if is_success
                 else FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
@@ -216,13 +214,11 @@ class TestFlextResult:
                 )
 
         elif op_type == ResultOperationType.LASH:
-            lash_result_base: FlextResult[str] = (
-                FlextResult[str].ok(str(value))
-                if is_success
-                else FlextResult[str].fail(str(value))
+            lash_result_base: r[str] = (
+                r[str].ok(str(value)) if is_success else r[str].fail(str(value))
             )
             lash_result = lash_result_base.lash(
-                lambda e: FlextResult[str].ok(f"recovered_{e}"),
+                lambda e: r[str].ok(f"recovered_{e}"),
             )
             if is_success:
                 assert lash_result.is_success and lash_result.value == str(value)
@@ -232,7 +228,7 @@ class TestFlextResult:
 
         elif op_type == ResultOperationType.OR_OPERATOR:
             # value is already GeneralValueType from ResultScenario
-            result_or: FlextResult[FlextTypes.GeneralValueType] = (
+            result_or: r[t.GeneralValueType] = (
                 FlextTestsUtilities.ResultHelpers.create_success_result(value)
                 if is_success
                 else FlextTestsUtilities.ResultHelpers.create_failure_result(str(value))
@@ -246,34 +242,34 @@ class TestFlextResult:
         ids=lambda s: s.name,
     )
     def test_result_int_operations(self, scenario: ResultScenario) -> None:
-        """Test FlextResult with integer values across all scenarios."""
+        """Test r with integer values across all scenarios."""
         op_type = scenario.operation_type
         value = scenario.value
         is_success = scenario.is_success_expected
 
         if op_type == ResultOperationType.UNWRAP:
             assert isinstance(value, int)
-            result = FlextResult[int].ok(value)
+            result = r[int].ok(value)
             assert result.unwrap() == value
 
         elif op_type == ResultOperationType.MAP:
             assert isinstance(value, int)
-            result = FlextResult[int].ok(value)
+            result = r[int].ok(value)
             mapped = result.map(lambda x: x * 2)
             assert mapped.is_success and mapped.value == value * 2
 
         elif op_type == ResultOperationType.FLAT_MAP:
             assert isinstance(value, int)
-            result = FlextResult[int].ok(value)
+            result = r[int].ok(value)
             flat_mapped = result.flat_map(
-                lambda x: FlextResult[object].ok(f"value_{x}"),
+                lambda x: r[object].ok(f"value_{x}"),
             )
             expected = f"value_{value}"
             assert flat_mapped.is_success and flat_mapped.value == expected
 
         elif op_type == ResultOperationType.FILTER:
             assert isinstance(value, int)
-            result = FlextResult[int].ok(value)
+            result = r[int].ok(value)
             filtered = result.filter(lambda x: x > 5)
             if is_success:
                 assert filtered.is_success and filtered.value == value
@@ -284,14 +280,14 @@ class TestFlextResult:
             assert isinstance(value, int)
             # Use generic helper to test result chain - replaces 10+ lines
             # Each result typed independently for type safety
-            res1 = FlextResult[int].ok(value)
+            res1 = r[int].ok(value)
             res2 = res1.map(lambda v: v * 2)
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
             # Use generic helper for chain validation with explicit sequence cast
-            # Cast required as FlextResult types vary (int → int → str)
+            # Cast required as r types vary (int → int → str)
             FlextTestsUtilities.GenericHelpers.assert_result_chain(
-                cast("Sequence[FlextResult[Never]]", [res1, res2, res3]),
+                cast("Sequence[r[Never]]", [res1, res2, res3]),
                 expected_success_count=3,
                 expected_failure_count=0,
                 first_failure_index=None,
@@ -304,13 +300,13 @@ class TestFlextResult:
         ids=lambda s: s.name,
     )
     def test_result_bool_operations(self, scenario: ResultScenario) -> None:
-        """Test FlextResult with boolean values across all scenarios."""
+        """Test r with boolean values across all scenarios."""
         if scenario.operation_type == ResultOperationType.BOOL_CONVERSION:
             result = (
                 FlextTestsUtilities.ResultHelpers.create_success_result("value")
                 if scenario.value
                 else FlextTestsUtilities.ResultHelpers.create_failure_result(
-                    FlextConstants.Errors.GENERIC_ERROR,
+                    c.Errors.GENERIC_ERROR,
                 )
             )
             assert bool(result) is scenario.value
@@ -321,7 +317,7 @@ class TestFlextResult:
         Tests actual chain operations and validates using generic helpers.
         """
         # Create a real chain of operations
-        results: list[FlextResult[int]] = []
+        results: list[r[int]] = []
         initial_value = 5
 
         # Step 1: Initial value
@@ -353,10 +349,10 @@ class TestFlextResult:
 
     def test_result_chain_failure_behavior(self) -> None:
         """Test result chain with failure - real behavior and limits."""
-        results: list[FlextResult[int]] = []
+        results: list[r[int]] = []
 
         # Success
-        res1 = FlextResult[int].ok(10)
+        res1 = r[int].ok(10)
         results.append(res1)
 
         # Success
@@ -365,9 +361,7 @@ class TestFlextResult:
 
         # Failure - division by zero limit case
         res3 = res2.flat_map(
-            lambda x: FlextResult[int].fail("Division by zero")
-            if x == 0
-            else FlextResult[int].ok(x // 2),
+            lambda x: r[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2),
         )
         results.append(res3)
 
@@ -377,9 +371,7 @@ class TestFlextResult:
 
         # Now test actual failure case
         res4 = res3.flat_map(
-            lambda x: FlextResult[int].fail("Cannot process zero")
-            if x == 0
-            else FlextResult[int].ok(x),
+            lambda x: r[int].fail("Cannot process zero") if x == 0 else r[int].ok(x),
         )
         results.append(res4)
 
@@ -428,17 +420,15 @@ class TestFlextResult:
         # Test with None and default
         # Business Rule: create_result_from_value infers type from default_on_none
         # When value is None and default_on_none is provided, type is inferred from default
-        result1: FlextResult[str] = (
-            FlextTestsUtilities.GenericHelpers.create_result_from_value(
-                None,
-                default_on_none="default_value",
-            )
+        result1: r[str] = FlextTestsUtilities.GenericHelpers.create_result_from_value(
+            None,
+            default_on_none="default_value",
         )
         assert result1.is_success
         assert result1.value == "default_value"
 
         # Test with None and error
-        result2: FlextResult[str | None] = (
+        result2: r[str | None] = (
             FlextTestsUtilities.GenericHelpers.create_result_from_value(
                 None,
                 error_on_none="Value is None",
@@ -455,4 +445,4 @@ class TestFlextResult:
         assert result3.value == "actual_value"
 
 
-__all__ = ["TestFlextResult"]
+__all__ = ["Testr"]

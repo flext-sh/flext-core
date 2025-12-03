@@ -1,4 +1,4 @@
-"""Domain-specific test helpers for FlextUtilities.Domain testing.
+"""Domain-specific test helpers for u.Domain testing.
 
 Provides reusable classes and methods for testing domain utilities,
 reducing code duplication and improving maintainability.
@@ -14,18 +14,18 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Union, cast
 
-from flext_core import FlextUtilities
+from flext_core import u
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core.protocols import p
+from flext_core.typings import t
 
 # Type union for domain test input data
 # Accepts GeneralValueType (primitives, dicts, lists) and HasModelDump objects (entities, value objects)
 # Also accepts any object for methods that accept object (compare_value_objects_by_value, etc.)
 # Using Union explicitly for clarity in type narrowing
 type DomainInputValue = Union[
-    FlextTypes.GeneralValueType,
-    FlextProtocols.HasModelDump,
+    t.GeneralValueType,
+    p.HasModelDump,
     object,  # For methods that accept any object (compare_value_objects_by_value, validate_entity_has_id)
 ]
 
@@ -50,7 +50,7 @@ class DomainTestCase:
     test_type: DomainTestType
     description: str
     input_data: DomainInputMapping
-    expected_result: FlextTypes.GeneralValueType
+    expected_result: t.GeneralValueType
     expected_success: bool = True
     id_attr: str = "unique_id"
 
@@ -88,7 +88,7 @@ class SimpleValue:
 class BadModelDump:
     """Value object that raises exception in model_dump."""
 
-    def model_dump(self) -> FlextTypes.Types.ConfigurationMapping:
+    def model_dump(self) -> t.Types.ConfigurationMapping:
         msg = "model_dump failed"
         raise AttributeError(msg)
 
@@ -145,7 +145,7 @@ class BadConfig:
     """Object with problematic model_config."""
 
     @property
-    def model_config(self) -> FlextTypes.Types.ConfigurationMapping:
+    def model_config(self) -> t.Types.ConfigurationMapping:
         msg = "Config access failed"
         raise AttributeError(msg)
 
@@ -154,7 +154,7 @@ class BadConfigTypeError:
     """Object with model_config that raises TypeError."""
 
     @property
-    def model_config(self) -> FlextTypes.Types.ConfigurationMapping:
+    def model_config(self) -> t.Types.ConfigurationMapping:
         msg = "Config type error"
         raise TypeError(msg)
 
@@ -197,17 +197,17 @@ class DomainTestHelpers:
     @staticmethod
     def execute_domain_test(
         test_case: DomainTestCase,
-    ) -> FlextTypes.GeneralValueType:
+    ) -> t.GeneralValueType:
         """Execute a domain test case and return result."""
-        domain = FlextUtilities.Domain
+        domain = u.Domain
 
         match test_case.test_type:
             case DomainTestType.COMPARE_ENTITIES_BY_ID:
                 entity1_raw = test_case.input_data["entity1"]
                 entity2_raw = test_case.input_data["entity2"]
                 # Type narrowing: input_data contains HasModelDump objects at runtime
-                entity1 = cast("FlextProtocols.HasModelDump", entity1_raw)
-                entity2 = cast("FlextProtocols.HasModelDump", entity2_raw)
+                entity1 = cast("p.HasModelDump", entity1_raw)
+                entity2 = cast("p.HasModelDump", entity2_raw)
                 return domain.compare_entities_by_id(
                     entity1,
                     entity2,
@@ -217,7 +217,7 @@ class DomainTestHelpers:
             case DomainTestType.HASH_ENTITY_BY_ID:
                 entity_raw = test_case.input_data["entity"]
                 # Type narrowing: input_data contains HasModelDump objects at runtime
-                entity = cast("FlextProtocols.HasModelDump", entity_raw)
+                entity = cast("p.HasModelDump", entity_raw)
                 return domain.hash_entity_by_id(entity, id_attr=test_case.id_attr)
 
             case DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE:
@@ -232,12 +232,22 @@ class DomainTestHelpers:
             case DomainTestType.VALIDATE_ENTITY_HAS_ID:
                 entity_raw = test_case.input_data["entity"]
                 # Type narrowing: input_data contains HasModelDump objects at runtime
-                entity = cast("FlextProtocols.HasModelDump", entity_raw)
+                entity = cast("p.HasModelDump", entity_raw)
                 return domain.validate_entity_has_id(entity, id_attr=test_case.id_attr)
 
             case DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE:
                 obj = test_case.input_data["obj"]
-                return domain.validate_value_object_immutable(obj)
+                # Type narrowing: validate_value_object_immutable accepts GeneralValueType
+                # Cast obj to GeneralValueType if it's not already
+                if isinstance(obj, (str, int, float, bool, type(None))):
+                    obj_value: t.GeneralValueType = obj
+                elif isinstance(obj, (dict, list)):
+                    obj_value = cast("t.GeneralValueType", obj)
+                else:
+                    # For objects, convert to dict-like structure for validation
+                    # This is a test helper, so we accept the type narrowing here
+                    obj_value = cast("t.GeneralValueType", obj)
+                return domain.validate_value_object_immutable(obj_value)
 
         msg = f"Unknown test type: {test_case.test_type}"
         raise ValueError(msg)

@@ -60,17 +60,17 @@ from flext_core.context import FlextContext
 from flext_core.decorators import FlextDecorators
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import h
 from flext_core.loggings import FlextLogger
-from flext_core.mixins import FlextMixins
+from flext_core.mixins import x
 from flext_core.models import FlextModels
-from flext_core.protocols import FlextProtocols
+from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
-from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import t
+from flext_core.utilities import u
 
 # Create dispatcher/registry (registry optional for simple flows)
 dispatcher = FlextDispatcher()
@@ -162,7 +162,7 @@ result = dispatcher.dispatch(CreateUserCommand(email="user@example.com"))
 
 The framework is designed for extension through:
 
-- **Custom handlers** inheriting from `FlextHandlers`
+- **Custom handlers** inheriting from `h`
 - **Protocol implementations** for interface contracts
 - **Dispatcher middleware** for reliability, logging, or validation
 - **Mixin composition** for reusable behaviors

@@ -14,11 +14,11 @@ from typing import Annotated
 from pydantic import Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.validation import FlextUtilitiesValidation
-from flext_core.constants import FlextConstants
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core._utilities.generators import FlextGenerators
+from flext_core._utilities.validation import FlextValidation
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextModelsService:
@@ -33,12 +33,12 @@ class FlextModelsService:
 
         service_name: str = Field(min_length=1, description="Service name")
         method_name: str = Field(min_length=1, description="Method to execute")
-        parameters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
-        context: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        parameters: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        context: dict[str, t.GeneralValueType] = Field(default_factory=dict)
         timeout_seconds: float = Field(
-            default=FlextConstants.Defaults.TIMEOUT,
+            default=c.Defaults.TIMEOUT,
             gt=0,
-            le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
+            le=c.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig (Config has priority over Constants)",
         )
         execution: bool = False
@@ -46,20 +46,20 @@ class FlextModelsService:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: FlextTypes.GeneralValueType) -> dict[str, str]:
-            """Ensure context has required fields (using FlextUtilitiesGenerators).
+        def validate_context(cls, v: t.GeneralValueType) -> dict[str, str]:
+            """Ensure context has required fields (using uGenerators).
 
             Returns dict[str, str] because ensure_trace_context generates string trace IDs.
-            This is compatible with the field type dict[str, FlextTypes.GeneralValueType] since str is a subtype.
+            This is compatible with the field type dict[str, t.GeneralValueType] since str is a subtype.
             """
-            return FlextUtilitiesGenerators.ensure_trace_context(v)
+            return FlextGenerators.ensure_trace_context(v)
 
         @field_validator("timeout_seconds", mode="after")
         @classmethod
         def validate_timeout(cls, v: int) -> int:
-            """Validate timeout is reasonable (using FlextUtilitiesValidation)."""
-            max_timeout_seconds = FlextConstants.Performance.MAX_TIMEOUT_SECONDS
-            result = FlextUtilitiesValidation.validate_timeout(v, max_timeout_seconds)
+            """Validate timeout is reasonable (using uValidation)."""
+            max_timeout_seconds = c.Performance.MAX_TIMEOUT_SECONDS
+            result = FlextValidation.validate_timeout(v, max_timeout_seconds)
             if result.is_failure:
                 base_msg = "Timeout validation failed"
                 error_msg = (
@@ -74,19 +74,19 @@ class FlextModelsService:
         """Domain service batch request."""
 
         service_name: str
-        operations: list[dict[str, FlextTypes.GeneralValueType]] = Field(
+        operations: list[dict[str, t.GeneralValueType]] = Field(
             default_factory=list,
             min_length=1,
-            max_length=FlextConstants.Performance.MAX_BATCH_OPERATIONS,
+            max_length=c.Performance.MAX_BATCH_OPERATIONS,
         )
         parallel_execution: bool = False
         stop_on_error: bool = True
         batch_size: int = Field(
-            default=FlextConstants.Performance.MAX_BATCH_SIZE,
+            default=c.Performance.MAX_BATCH_SIZE,
             description="Batch size from FlextConfig (Config has priority over Constants)",
         )
         timeout_per_operation: float = Field(
-            default=FlextConstants.Defaults.TIMEOUT,
+            default=c.Defaults.TIMEOUT,
             description="Timeout per operation from FlextConfig (Config has priority over Constants)",
         )
 
@@ -95,7 +95,7 @@ class FlextModelsService:
 
         service_name: str
         metric_types: Annotated[
-            list[FlextConstants.Cqrs.ServiceMetricTypeLiteral],
+            list[c.Cqrs.ServiceMetricTypeLiteral],
             Field(
                 default_factory=lambda: [
                     "performance",
@@ -105,12 +105,12 @@ class FlextModelsService:
                 description="Types of metrics to collect",
             ),
         ]
-        time_range_seconds: int = FlextConstants.Performance.DEFAULT_TIME_RANGE_SECONDS
+        time_range_seconds: int = c.Performance.DEFAULT_TIME_RANGE_SECONDS
         aggregation: str = Field(
-            default_factory=lambda: FlextConstants.Cqrs.Aggregation.AVG,
+            default_factory=lambda: c.Cqrs.Aggregation.AVG,
         )
         group_by: list[str] = Field(default_factory=list)
-        filters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        filters: dict[str, t.GeneralValueType] = Field(default_factory=dict)
 
     class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service resource request."""
@@ -122,9 +122,9 @@ class FlextModelsService:
         )
         resource_id: str | None = None
         resource_limit: int = Field(1000, gt=0)
-        action: str = Field(default_factory=lambda: FlextConstants.Cqrs.Action.GET)
-        data: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
-        filters: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
+        action: str = Field(default_factory=lambda: c.Cqrs.Action.GET)
+        data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        filters: dict[str, t.GeneralValueType] = Field(default_factory=dict)
 
     class AclResponse(FlextModelsBase.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
@@ -141,7 +141,7 @@ class FlextModelsService:
             default_factory=list,
             description="Denied permissions",
         )
-        context: dict[str, FlextTypes.GeneralValueType] = Field(
+        context: dict[str, t.GeneralValueType] = Field(
             default_factory=dict,
             description="Additional context",
         )
@@ -150,24 +150,22 @@ class FlextModelsService:
         """Operation execution request."""
 
         operation_name: str = Field(
-            max_length=FlextConstants.Performance.MAX_OPERATION_NAME_LENGTH,
+            max_length=c.Performance.MAX_OPERATION_NAME_LENGTH,
             min_length=1,
             description="Operation name",
         )
-        operation_callable: FlextProtocols.VariadicCallable[
-            FlextProtocols.ResultLike[FlextTypes.GeneralValueType]
-        ]
-        arguments: dict[str, FlextTypes.GeneralValueType] = Field(default_factory=dict)
-        keyword_arguments: dict[str, FlextTypes.GeneralValueType] = Field(
+        operation_callable: p.VariadicCallable[p.ResultLike[t.GeneralValueType]]
+        arguments: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        keyword_arguments: dict[str, t.GeneralValueType] = Field(
             default_factory=dict,
         )
         timeout_seconds: float = Field(
-            default=FlextConstants.Defaults.TIMEOUT,
+            default=c.Defaults.TIMEOUT,
             gt=0,
-            le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
+            le=c.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextConfig (Config has priority over Constants)",
         )
-        retry_config: dict[str, FlextTypes.GeneralValueType] = Field(
+        retry_config: dict[str, t.GeneralValueType] = Field(
             default_factory=dict,
         )
 
@@ -175,12 +173,8 @@ class FlextModelsService:
         @classmethod
         def validate_operation_callable(
             cls,
-            v: FlextProtocols.VariadicCallable[
-                FlextProtocols.ResultLike[FlextTypes.GeneralValueType]
-            ],
-        ) -> FlextProtocols.VariadicCallable[
-            FlextProtocols.ResultLike[FlextTypes.GeneralValueType]
-        ]:
+            v: p.VariadicCallable[p.ResultLike[t.GeneralValueType]],
+        ) -> p.VariadicCallable[p.ResultLike[t.GeneralValueType]]:
             """Validate operation is callable.
 
             With mode="after", Pydantic has already validated v as VariadicCallable type.

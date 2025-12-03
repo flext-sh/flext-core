@@ -1,4 +1,4 @@
-"""Utilities module - FlextUtilitiesArgs.
+"""Utilities module - FlextArgs.
 
 Extracted from flext_core.utilities for better modularity.
 
@@ -16,10 +16,10 @@ from typing import Annotated, Protocol, get_args, get_origin, get_type_hints
 from pydantic import ConfigDict, validate_call
 
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes, P, R
+from flext_core.typings import P, R, t
 
 
-class FlextUtilitiesArgs:
+class FlextArgs:
     """Utilities for automatic args/kwargs parsing.
 
     PHILOSOPHY:
@@ -59,7 +59,7 @@ class FlextUtilitiesArgs:
                  ...
 
         AFTER:
-             @FlextUtilitiesArgs.validated
+             @uArgs.validated
              def process(self, status: Status) -> bool:
                  # status is already Status, validated automatically!
                  ...
@@ -89,7 +89,7 @@ class FlextUtilitiesArgs:
         - Don't want exceptions leaking
 
         Example:
-             @FlextUtilitiesArgs.validated_with_result
+             @uArgs.validated_with_result
              def process(self, status: Status) -> FlextResult[bool]:
                  # If status invalid → returns FlextResult.fail()
                  # If status valid → executes normally
@@ -119,13 +119,13 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, FlextTypes.FlexibleValue],
+        kwargs: Mapping[str, t.FlexibleValue],
         enum_fields: Mapping[str, type[E]],
-    ) -> FlextResult[dict[str, FlextTypes.FlexibleValue]]:
+    ) -> FlextResult[dict[str, t.FlexibleValue]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
-             result = FlextUtilitiesArgs.parse_kwargs(
+             result = uArgs.parse_kwargs(
                  kwargs={"status": "active", "name": "John"},
                  enum_fields={"status": Status},
              )
@@ -134,7 +134,7 @@ class FlextUtilitiesArgs:
 
         """
         # Convert Mapping to dict for mutability
-        parsed: dict[str, FlextTypes.FlexibleValue] = dict(kwargs)
+        parsed: dict[str, t.FlexibleValue] = dict(kwargs)
         errors: list[str] = []
 
         for field, enum_cls in enum_fields.items():
@@ -171,7 +171,7 @@ class FlextUtilitiesArgs:
         Example:
              def process(self, status: Status, name: str) -> bool: ...
 
-             params = FlextUtilitiesArgs.get_enum_params(process)
+             params = uArgs.get_enum_params(process)
              # params = {"status": Status}
 
         """
@@ -205,3 +205,11 @@ class FlextUtilitiesArgs:
                         break
 
         return enum_params
+
+
+uArgs = FlextArgs  # noqa: N816
+
+__all__ = [
+    "FlextArgs",
+    "uArgs",
+]

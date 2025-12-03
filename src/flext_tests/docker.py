@@ -30,7 +30,7 @@ from docker.errors import DockerException, NotFound
 from python_on_whales import DockerClient as PowDockerClient, docker as pow_docker
 
 from flext_core import FlextLogger, FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 from flext_tests.constants import FlextTestConstants
 from flext_tests.models import FlextTestModels
 
@@ -50,7 +50,7 @@ class FlextTestDocker:
     ContainerStatus = FlextTestConstants.Docker.ContainerStatus
     ContainerInfo = FlextTestModels.Docker.ContainerInfo
 
-    SHARED_CONTAINERS: ClassVar[Mapping[str, FlextTypes.Types.ContainerConfigDict]] = (
+    SHARED_CONTAINERS: ClassVar[Mapping[str, t.Types.ContainerConfigDict]] = (
         FlextTestConstants.Docker.SHARED_CONTAINERS
     )
 
@@ -74,7 +74,7 @@ class FlextTestDocker:
     @property
     def shared_containers(
         self,
-    ) -> Mapping[str, FlextTypes.Types.ContainerConfigDict]:
+    ) -> Mapping[str, t.Types.ContainerConfigDict]:
         """Get shared container configurations."""
         return FlextTestConstants.Docker.SHARED_CONTAINERS
 

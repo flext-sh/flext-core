@@ -1,9 +1,9 @@
-"""Tests for FlextUtilities.Domain - Domain entity and value object operations.
+"""Tests for u.Domain - Domain entity and value object operations.
 
 Module: flext_core._utilities.domain
-Scope: FlextUtilities.Domain - entity/value object comparison, hashing, validation
+Scope: u.Domain - entity/value object comparison, hashing, validation
 
-Tests FlextUtilities.Domain functionality including:
+Tests u.Domain functionality including:
 - Entity comparison by ID (compare_entities_by_id)
 - Entity hashing by ID (hash_entity_by_id)
 - Value object comparison by value (compare_value_objects_by_value)
@@ -24,7 +24,7 @@ from enum import StrEnum
 
 import pytest
 
-from flext_core import FlextUtilities
+from flext_core import u
 from tests.fixtures.constants import TestConstants
 from tests.helpers import (
     BadConfig,
@@ -58,8 +58,8 @@ class DomainTestFunctionType(StrEnum):
     VALIDATE_IMMUTABLE = "validate_value_object_immutable"
 
 
-class TestFlextUtilitiesDomain:
-    """Comprehensive tests for FlextUtilities.Domain using advanced patterns."""
+class TestuDomain:
+    """Comprehensive tests for u.Domain using advanced patterns."""
 
     # ============================================================================
     # Factory Methods for Test Cases
@@ -214,13 +214,13 @@ class TestFlextUtilitiesDomain:
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
                 description="model_dump_exception",
-                input_data={"obj1": bad1, "obj2": bad2},  # type: ignore[dict-item]
+                input_data={"obj1": bad1, "obj2": bad2},
                 expected_result=bool,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
             DomainTestCase(
                 test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
                 description="no_dict",
-                input_data={"obj1": no_dict1, "obj2": no_dict2},  # type: ignore[dict-item]
+                input_data={"obj1": no_dict1, "obj2": no_dict2},
                 expected_result=True,
             ),
         ]
@@ -244,31 +244,31 @@ class TestFlextUtilitiesDomain:
             DomainTestCase(
                 test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
                 description="with_model_dump",
-                input_data={"obj": value_obj},  # type: ignore[dict-item]
+                input_data={"obj": value_obj},
                 expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
             DomainTestCase(
                 test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
                 description="no_model_dump",
-                input_data={"obj": simple_obj},  # type: ignore[dict-item]
+                input_data={"obj": simple_obj},
                 expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
             DomainTestCase(
                 test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
                 description="model_dump_exception",
-                input_data={"obj": bad_obj},  # type: ignore[dict-item]
+                input_data={"obj": bad_obj},
                 expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
             DomainTestCase(
                 test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
                 description="non_hashable_values",
-                input_data={"obj": complex_obj},  # type: ignore[dict-item]
+                input_data={"obj": complex_obj},
                 expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
             DomainTestCase(
                 test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
                 description="no_dict",
-                input_data={"obj": no_dict_obj},  # type: ignore[dict-item]
+                input_data={"obj": no_dict_obj},
                 expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
         ]
@@ -328,37 +328,37 @@ class TestFlextUtilitiesDomain:
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
                 description="frozen",
-                input_data={"obj": value_obj},  # type: ignore[dict-item]
+                input_data={"obj": value_obj},
                 expected_result=True,
             ),
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
                 description="mutable",
-                input_data={"obj": mutable_obj},  # type: ignore[dict-item]
+                input_data={"obj": mutable_obj},
                 expected_result=False,
             ),
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
                 description="custom_setattr",
-                input_data={"obj": immutable_obj},  # type: ignore[dict-item]
+                input_data={"obj": immutable_obj},
                 expected_result=True,
             ),
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
                 description="config_exception",
-                input_data={"obj": bad_config_obj},  # type: ignore[dict-item]
+                input_data={"obj": bad_config_obj},
                 expected_result=bool,  # type: ignore[arg-type]  # isinstance check - type used for validation
             ),
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
                 description="no_config_no_setattr",
-                input_data={"obj": no_config_obj},  # type: ignore[dict-item]
+                input_data={"obj": no_config_obj},
                 expected_result=False,
             ),
             DomainTestCase(
                 test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
                 description="no_setattr",
-                input_data={"obj": no_setattr_obj},  # type: ignore[dict-item]
+                input_data={"obj": no_setattr_obj},
                 expected_result=False,
             ),
         ]
@@ -465,7 +465,7 @@ class TestFlextUtilitiesDomain:
         try:
             # BadConfigTypeError is compatible at runtime but not statically
             # pyright: ignore[reportArgumentType] - obj is compatible at runtime
-            result = FlextUtilities.Domain.validate_value_object_immutable(obj)  # type: ignore[arg-type]
+            result = u.Domain.validate_value_object_immutable(obj)  # type: ignore[arg-type]
             assert isinstance(result, bool)
         except TypeError:
             # Exception propagation is also acceptable for coverage

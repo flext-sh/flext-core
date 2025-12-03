@@ -2,7 +2,7 @@
 
 FlextService[T] supplies validation, dependency injection, and railway-style
 result handling for domain services that participate in CQRS flows. It relies
-on structural typing to satisfy ``FlextProtocols.Service`` and aligns with the
+on structural typing to satisfy ``p.Service`` and aligns with the
 dispatcher-centric architecture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -24,18 +24,19 @@ from flext_core.config import FlextConfig
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
-from flext_core.mixins import FlextMixins
-from flext_core.models import FlextModels
-from flext_core.protocols import FlextProtocols
+from flext_core.mixins import x
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextService[TDomainResult](
     FlextModelsBase.ArbitraryTypesModel,
-    FlextMixins,
+    x,
     ABC,
 ):
     """Base class for domain services used in CQRS flows.
@@ -56,7 +57,7 @@ class FlextService[TDomainResult](
 
     def __new__(
         cls,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: t.GeneralValueType,
     ) -> Self:
         """Create service instance.
 
@@ -98,7 +99,7 @@ class FlextService[TDomainResult](
                 raise TypeError(msg)
             # Type narrowing: execute_method is callable and returns FlextResult[TDomainResult]
             result_raw = execute_method()
-            if not isinstance(result_raw, FlextResult):
+            if u.guard(result_raw, FlextResult).is_failure:
                 msg = f"execute() must return FlextResult, got {type(result_raw).__name__}"
                 raise TypeError(msg)
             result: FlextResult[TDomainResult] = result_raw
@@ -130,7 +131,7 @@ class FlextService[TDomainResult](
 
     def __init__(
         self,
-        **data: FlextTypes.GeneralValueType,
+        **data: t.GeneralValueType,
     ) -> None:
         """Initialize service with configuration data.
 
@@ -159,7 +160,7 @@ class FlextService[TDomainResult](
     _context: FlextContext | None = PrivateAttr(default=None)
     _config: FlextConfig | None = PrivateAttr(default=None)
     _container: FlextContainer | None = PrivateAttr(default=None)
-    _runtime: FlextModels.ServiceRuntime | None = PrivateAttr(default=None)
+    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _auto_result: TDomainResult | None = PrivateAttr(default=None)
 
     @classmethod
@@ -176,7 +177,7 @@ class FlextService[TDomainResult](
         return FlextConfig
 
     @classmethod
-    def _create_initial_runtime(cls) -> FlextModels.ServiceRuntime:
+    def _create_initial_runtime(cls) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
         base_context = FlextContext()
         # Get the service-specific config type
@@ -195,7 +196,7 @@ class FlextService[TDomainResult](
                 """Lightweight clone to bypass FlextConfig singleton semantics."""
 
                 def __new__(
-                    cls, **_data: FlextTypes.GeneralValueType
+                    cls, **_data: t.GeneralValueType
                 ) -> Self:  # pragma: no cover - construction hook
                     # Create raw instance using type-safe factory helper
                     return FlextRuntime.create_instance(cls)
@@ -208,7 +209,7 @@ class FlextService[TDomainResult](
             context=base_context,
         )
 
-        return FlextModels.ServiceRuntime.model_construct(
+        return m.ServiceRuntime.model_construct(
             config=base_config,
             context=base_context,
             container=base_container,
@@ -217,13 +218,12 @@ class FlextService[TDomainResult](
     def _clone_runtime(
         self,
         *,
-        config_overrides: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        context: FlextProtocols.ContextProtocol | None = None,
+        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        context: p.ContextProtocol | None = None,
         subproject: str | None = None,
-        container_services: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        container_factories: Mapping[str, Callable[[], FlextTypes.FlexibleValue]]
-        | None = None,
-    ) -> FlextModels.ServiceRuntime:
+        container_services: Mapping[str, t.FlexibleValue] | None = None,
+        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
+    ) -> m.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
         # Access private attributes directly to avoid computed_field type issues
         if self._config is None:
@@ -252,7 +252,7 @@ class FlextService[TDomainResult](
             factories=container_factories,
         )
 
-        return FlextModels.ServiceRuntime.model_construct(
+        return m.ServiceRuntime.model_construct(
             config=cloned_config,
             context=runtime_context,
             container=scoped_container,
@@ -261,7 +261,7 @@ class FlextService[TDomainResult](
     @computed_field
     def runtime(
         self,
-    ) -> FlextModels.ServiceRuntime:  # pragma: no cover - trivial access
+    ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
         """View of the runtime triple for this service instance."""
         if self._runtime is None:
             msg = "Runtime not initialized"
@@ -269,7 +269,7 @@ class FlextService[TDomainResult](
         return self._runtime
 
     @property
-    def context(self) -> FlextProtocols.ContextProtocol:
+    def context(self) -> p.ContextProtocol:
         """Service-scoped execution context."""
         if self._context is None:
             msg = "Context not initialized"
@@ -283,7 +283,7 @@ class FlextService[TDomainResult](
         if self._config is None:
             msg = "Config not initialized"
             raise RuntimeError(msg)
-        # Return concrete type for compatibility with FlextMixins.config
+        # Return concrete type for compatibility with x.config
         return self._config
 
     @property
@@ -365,7 +365,7 @@ class FlextService[TDomainResult](
             # Validation failed due to exception - consider invalid
             return False
 
-    def get_service_info(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+    def get_service_info(self) -> Mapping[str, t.FlexibleValue]:
         """Get service metadata and configuration information.
 
         Returns comprehensive metadata about the service instance including
@@ -373,7 +373,7 @@ class FlextService[TDomainResult](
         Used by monitoring, logging, and debugging infrastructure.
 
         Returns:
-            Mapping[str, FlextTypes.FlexibleValue]: Service metadata dictionary containing:
+            Mapping[str, t.FlexibleValue]: Service metadata dictionary containing:
                 - service_type: Class name of the service
                 - Additional metadata can be added by subclasses
 
@@ -408,7 +408,7 @@ class FlextService[TDomainResult](
         """
         # Direct access - GeneralValueType covers all domain results
         # Use cast to allow any FlextService[TDomainResult] to be treated as FlextService[GeneralValueType]
-        return _ServiceAccess(cast("FlextService[FlextTypes.GeneralValueType]", self))
+        return _ServiceAccess(cast("FlextService[t.GeneralValueType]", self))
 
 
 class _ServiceExecutionScope(FlextModelsBase.ArbitraryTypesModel):
@@ -416,13 +416,13 @@ class _ServiceExecutionScope(FlextModelsBase.ArbitraryTypesModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
 
-    cqrs: type[FlextModels.Cqrs]
+    cqrs: type[m.Cqrs]
     registry: FlextRegistry
-    config: FlextProtocols.ConfigProtocol
+    config: p.ConfigProtocol
     result: type
-    context: FlextProtocols.ContextProtocol
-    runtime: FlextModels.ServiceRuntime
-    service_data: Mapping[str, FlextTypes.GeneralValueType]
+    context: p.ContextProtocol
+    runtime: m.ServiceRuntime
+    service_data: Mapping[str, t.GeneralValueType]
 
 
 class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
@@ -437,21 +437,21 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
 
     _registry: FlextRegistry | None = PrivateAttr(default=None)
-    _service: FlextService[FlextTypes.GeneralValueType] = PrivateAttr()
+    _service: FlextService[t.GeneralValueType] = PrivateAttr()
 
-    def __init__(self, service: FlextService[FlextTypes.GeneralValueType]) -> None:
+    def __init__(self, service: FlextService[t.GeneralValueType]) -> None:
         super().__init__()
         # Accept any FlextService instance - GeneralValueType covers all domain results
         object.__setattr__(self, "_service", service)
 
     @computed_field
-    def cqrs(self) -> type[FlextModels.Cqrs]:  # noqa: PLR6301  # pragma: no cover - trivial access
-        """CQRS facade from FlextModels.
+    def cqrs(self) -> type[m.Cqrs]:  # noqa: PLR6301  # pragma: no cover - trivial access
+        """CQRS facade from m.
 
         Note: Cannot be @staticmethod because @computed_field requires instance method
         signature for Pydantic field computation, even if self is not used.
         """
-        return FlextModels.Cqrs
+        return m.Cqrs
 
     @computed_field
     def registry(self) -> FlextRegistry:
@@ -483,7 +483,7 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
     @computed_field
     def runtime(
         self,
-    ) -> FlextModels.ServiceRuntime:  # pragma: no cover - trivial access
+    ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
         """Protocol-backed runtime triple for the bound service."""
         # Access private attribute directly to avoid computed_field type issues
         if self._service._runtime is None:  # noqa: SLF001
@@ -524,12 +524,12 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
     def container_scope(
         self,
         *,
-        config_overrides: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        context: FlextProtocols.ContextProtocol | None = None,
+        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        context: p.ContextProtocol | None = None,
         subproject: str | None = None,
-        services: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        factories: Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None = None,
-    ) -> FlextProtocols.ContainerProtocol:
+        services: Mapping[str, t.FlexibleValue] | None = None,
+        factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
+    ) -> p.ContainerProtocol:
         """Create a container scope with cloned config and optional overrides."""
         return self.runtime_scope(
             config_overrides=config_overrides,
@@ -542,19 +542,18 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
     def runtime_scope(  # noqa: PLR0913
         self,
         *,
-        config_overrides: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        context: FlextProtocols.ContextProtocol | None = None,
+        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        context: p.ContextProtocol | None = None,
         subproject: str | None = None,
-        services: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        factories: Mapping[str, Callable[[], FlextTypes.FlexibleValue]] | None = None,
-        container_services: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        container_factories: Mapping[str, Callable[[], FlextTypes.FlexibleValue]]
-        | None = None,
-    ) -> FlextModels.ServiceRuntime:
+        services: Mapping[str, t.FlexibleValue] | None = None,
+        factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
+        container_services: Mapping[str, t.FlexibleValue] | None = None,
+        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
+    ) -> m.ServiceRuntime:
         """Clone the service runtime triple using protocol-backed models."""
         # Access private attribute directly to avoid computed_field type issues
         # _clone_runtime accepts ContextProtocol - use directly
-        context_for_clone: FlextProtocols.ContextProtocol | None = (
+        context_for_clone: p.ContextProtocol | None = (
             context if context is not None else self._service._context  # noqa: SLF001
         )
         return self._service._clone_runtime(  # noqa: SLF001
@@ -565,9 +564,7 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
             container_factories=container_factories or factories,
         )
 
-    def clone_config(
-        self, **overrides: FlextTypes.FlexibleValue
-    ) -> FlextProtocols.ConfigProtocol:
+    def clone_config(self, **overrides: t.FlexibleValue) -> p.ConfigProtocol:
         """Create a deep copy of the service configuration with overrides.
 
         Args:
@@ -584,19 +581,18 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
         cloned = self._service._config.model_copy(update=overrides, deep=True)  # noqa: SLF001
         # Type narrowing: FlextConfig implements ConfigProtocol structurally
         # Use cast to help type checker understand structural typing
-        return cast("FlextProtocols.ConfigProtocol", cloned)
+        return cast("p.ConfigProtocol", cloned)
 
     @contextmanager
     def nested_execution(  # noqa: PLR0913
         self,
         *,
-        config_overrides: Mapping[str, FlextTypes.FlexibleValue] | None = None,
+        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
         service_name: str | None = None,
         version: str | None = None,
         correlation_id: str | None = None,
-        container_services: Mapping[str, FlextTypes.FlexibleValue] | None = None,
-        container_factories: Mapping[str, Callable[[], FlextTypes.FlexibleValue]]
-        | None = None,
+        container_services: Mapping[str, t.FlexibleValue] | None = None,
+        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> Iterator[_ServiceExecutionScope]:
         """Create a nested execution scope with cloned config and context.
 
@@ -632,7 +628,7 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
         else:
             _ = runtime_context.Utilities.ensure_correlation_id()
 
-        service_data: Mapping[str, FlextTypes.GeneralValueType] = {
+        service_data: Mapping[str, t.GeneralValueType] = {
             "service_type": self._service.__class__.__name__,
             "payload": {},
         }
@@ -657,4 +653,6 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
             base_context.Correlation.set_correlation_id(original_correlation)
 
 
-__all__ = ["FlextService"]
+s = FlextService
+
+__all__ = ["FlextService", "s"]

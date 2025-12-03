@@ -1,6 +1,6 @@
 """Protocol definitions for FLEXT tests.
 
-Provides FlextTestProtocols, extending FlextProtocols with test-specific protocol
+Provides FlextTestProtocols, extending p with test-specific protocol
 definitions for Docker operations, container management, and test infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,29 +12,29 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
-from flext_core.protocols import FlextProtocols
+from flext_core.protocols import p
 
 
 class FlextTestProtocols:
-    """Protocol definitions for FLEXT tests - extends FlextProtocols.
+    """Protocol definitions for FLEXT tests - extends p.
 
-    Architecture: Extends FlextProtocols with test-specific protocol definitions.
-    All base protocols from FlextProtocols are available through inheritance pattern.
+    Architecture: Extends p with test-specific protocol definitions.
+    All base protocols from p are available through inheritance pattern.
     Protocols cannot import models - only other protocols and types.
     """
 
-    # Re-export base protocols from FlextProtocols
-    ResultProtocol = FlextProtocols.ResultProtocol
-    ResultLike = FlextProtocols.ResultLike
-    ConfigProtocol = FlextProtocols.ConfigProtocol
-    ModelProtocol = FlextProtocols.ModelProtocol
-    Service = FlextProtocols.Service
-    Repository = FlextProtocols.Repository
-    Handler = FlextProtocols.Handler
-    CommandBus = FlextProtocols.CommandBus
-    Middleware = FlextProtocols.Middleware
-    LoggerProtocol = FlextProtocols.LoggerProtocol
-    Connection = FlextProtocols.Connection
+    # Re-export base protocols from p
+    ResultProtocol = p.ResultProtocol
+    ResultLike = p.ResultLike
+    ConfigProtocol = p.ConfigProtocol
+    ModelProtocol = p.ModelProtocol
+    Service = p.Service
+    Repository = p.Repository
+    Handler = p.Handler
+    CommandBus = p.CommandBus
+    Middleware = p.Middleware
+    LoggerProtocol = p.LoggerProtocol
+    Connection = p.Connection
 
     class Docker:
         """Docker-specific protocol definitions."""

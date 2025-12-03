@@ -9,8 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextService
-from flext_core.typings import FlextTypes
+from flext_core import r, s, t
 from flext_tests.domains import FlextTestsDomains
 
 # ==================== REAL SERVICE CLASSES ====================
@@ -19,34 +18,30 @@ from flext_tests.domains import FlextTestsDomains
 TestDomainResult = FlextTestsDomains.TestDomainResult
 
 
-class TestService(FlextService[TestDomainResult]):
+class TestService(s[TestDomainResult]):
     """Test service for coverage tests."""
 
     __test__ = False  # Not a test class, just a helper class
 
-    def __init__(self, **data: FlextTypes.GeneralValueType) -> None:
+    def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(
-        self, **_kwargs: FlextTypes.GeneralValueType
-    ) -> FlextResult[TestDomainResult]:
+    def execute(self, **_kwargs: t.GeneralValueType) -> r[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("success"))
 
 
-class TestServiceWithValidation(FlextService[TestDomainResult]):
+class TestServiceWithValidation(s[TestDomainResult]):
     """Test service with validation."""
 
     __test__ = False  # Not a test class, just a helper class
 
-    def __init__(self, **data: FlextTypes.GeneralValueType) -> None:
+    def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
-    def execute(
-        self, **_kwargs: FlextTypes.GeneralValueType
-    ) -> FlextResult[TestDomainResult]:
+    def execute(self, **_kwargs: t.GeneralValueType) -> r[TestDomainResult]:
         """Execute service."""
         return self.ok(TestDomainResult("validated"))
 
@@ -109,7 +104,7 @@ class TestService100Coverage:
     def test_auto_execute_false(self) -> None:
         """Test auto_execute when False."""
         service = TestService()
-        # Note: auto_execute is not a default attribute in FlextService base
+        # Note: auto_execute is not a default attribute in s base
         # It's only present when explicitly defined as ClassVar in subclasses
         # Default behavior is manual execution (auto_execute=False equivalent)
         assert (
@@ -122,4 +117,4 @@ class TestService100Coverage:
         service = TestServiceWithValidation()
         result = service.validate_business_rules()
 
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)

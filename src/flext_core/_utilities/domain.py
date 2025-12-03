@@ -12,16 +12,16 @@ from __future__ import annotations
 
 from collections.abc import Hashable
 
-from flext_core.protocols import FlextProtocols
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
-class FlextUtilitiesDomain:
+class FlextDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @property
-    def logger(self) -> FlextProtocols.StructlogLogger:
+    def logger(self) -> p.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -31,8 +31,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: FlextProtocols.HasModelDump,
-        entity_b: FlextProtocols.HasModelDump,
+        entity_a: p.HasModelDump,
+        entity_b: p.HasModelDump,
         id_attr: str = "unique_id",
     ) -> bool:
         """Compare two entities by their unique ID attribute.
@@ -50,7 +50,7 @@ class FlextUtilitiesDomain:
         Example:
             >>> user1 = User(unique_id="123", name="Alice")
             >>> user2 = User(unique_id="123", name="Bob")  # Same ID
-            >>> FlextUtilitiesDomain.compare_entities_by_id(user1, user2)
+            >>> uDomain.compare_entities_by_id(user1, user2)
             True
 
         """
@@ -63,9 +63,7 @@ class FlextUtilitiesDomain:
         return id_a is not None and id_a == id_b
 
     @staticmethod
-    def hash_entity_by_id(
-        entity: FlextProtocols.HasModelDump, id_attr: str = "unique_id"
-    ) -> int:
+    def hash_entity_by_id(entity: p.HasModelDump, id_attr: str = "unique_id") -> int:
         """Generate hash for entity based on unique ID and type.
 
         Generic hashing for DDD entities - uses identity (ID + type), not value.
@@ -79,7 +77,7 @@ class FlextUtilitiesDomain:
 
         Example:
             >>> user = User(unique_id="123", name="Alice")
-            >>> hash_val = FlextUtilitiesDomain.hash_entity_by_id(user)
+            >>> hash_val = uDomain.hash_entity_by_id(user)
 
         """
         entity_id = getattr(entity, id_attr, None)
@@ -105,7 +103,7 @@ class FlextUtilitiesDomain:
         Example:
             >>> addr1 = Address(street="123 Main", city="NYC")
             >>> addr2 = Address(street="123 Main", city="NYC")
-            >>> FlextUtilitiesDomain.compare_value_objects_by_value(addr1, addr2)
+            >>> uDomain.compare_value_objects_by_value(addr1, addr2)
             True
 
         """
@@ -113,9 +111,7 @@ class FlextUtilitiesDomain:
             return False
 
         # Try Pydantic model_dump first (using protocol for type safety)
-        if isinstance(obj_a, FlextProtocols.HasModelDump) and isinstance(
-            obj_b, FlextProtocols.HasModelDump
-        ):
+        if isinstance(obj_a, p.HasModelDump) and isinstance(obj_b, p.HasModelDump):
             try:
                 dump_a = obj_a.model_dump()
                 dump_b = obj_b.model_dump()
@@ -144,11 +140,11 @@ class FlextUtilitiesDomain:
 
         Example:
             >>> addr = Address(street="123 Main", city="NYC")
-            >>> hash_val = FlextUtilitiesDomain.hash_value_object_by_value(addr)
+            >>> hash_val = uDomain.hash_value_object_by_value(addr)
 
         """
         # Try Pydantic model_dump first (using protocol for type safety)
-        if isinstance(obj, FlextProtocols.HasModelDump):
+        if isinstance(obj, p.HasModelDump):
             try:
                 data = obj.model_dump()
                 # Convert to hashable tuple of items
@@ -189,7 +185,7 @@ class FlextUtilitiesDomain:
         return bool(entity_id)
 
     @staticmethod
-    def validate_value_object_immutable(obj: FlextTypes.GeneralValueType) -> bool:
+    def validate_value_object_immutable(obj: t.GeneralValueType) -> bool:
         """Check if value object appears to be immutable (frozen).
 
         Args:
@@ -218,4 +214,9 @@ class FlextUtilitiesDomain:
         return False
 
 
-__all__ = ["FlextUtilitiesDomain"]
+uDomain = FlextDomain  # noqa: N816
+
+__all__ = [
+    "FlextDomain",
+    "uDomain",
+]

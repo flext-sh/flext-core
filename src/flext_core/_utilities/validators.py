@@ -3,7 +3,7 @@
 Provides ValidatorSpec protocol, Validator base class with operator overloads,
 ValidatorDSL (V namespace), and ValidatorBuilder for fluent API composition.
 
-This module is part of FlextUtilities power methods infrastructure.
+This module is part of u power methods infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -462,8 +462,8 @@ class ValidatorDSL:
     with operator support for declarative validation composition.
 
     Usage:
-        from flext_core import FlextUtilities
-        V = FlextUtilities.V
+        from flext_core import u
+        V = u.V
 
         # String validation
         validator = V.string.non_empty & V.string.max_length(100)
@@ -548,9 +548,9 @@ class ValidatorBuilder:  # noqa: PLR0904  # Fluent API requires many methods
             .build()
         )
 
-        # Or with FlextUtilities
+        # Or with u
         validator = (
-            FlextUtilities.Validator()
+            u.Validator()
             .string()
             .non_empty()
             .matches(r'^[a-z]+$')

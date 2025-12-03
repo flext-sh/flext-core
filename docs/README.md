@@ -3,11 +3,13 @@
 Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first foundation library built around railway-oriented programming, dependency injection, and domain-driven design. Content follows PEP 8, PEP 257, and the project documentation standards in `docs/standards/`.
 
 ## Scope and Compatibility
+
 - **Version:** 0.9.9
 - **Python:** 3.13+ (per `pyproject.toml`)
 - **Architecture:** Dispatcher-centric CQRS with `FlextResult`, `FlextContainer`, `FlextDispatcher`, and DDD primitives.
 
 ## Navigation
+
 - **Quick start:** [`QUICK_START.md`](./QUICK_START.md)
 - **Architecture:** [`architecture/overview.md`](./architecture/overview.md) and [`architecture/clean-architecture.md`](./architecture/clean-architecture.md)
 - **API reference:** [`api-reference/`](./api-reference/) grouped by layer (foundation, domain, application, infrastructure)
@@ -16,6 +18,7 @@ Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first founda
 - **Contributing:** [`development/contributing.md`](./development/contributing.md)
 
 ## Quick Start
+
 Install the package and verify imports:
 
 ```bash
@@ -27,16 +30,19 @@ PY
 ```
 
 ## Core Concepts
+
 1. **Railway-oriented programming (`FlextResult`)** — express success/failure without exceptions and chain operations with `map`/`flat_map`.
 2. **Dependency injection (`FlextContainer`)** — register and resolve shared collaborators explicitly; avoid implicit globals.
 3. **CQRS dispatcher (`FlextDispatcher`)** — route commands, queries, and domain events through handler registries with optional middleware.
 4. **Domain-driven design (`FlextModels`, `FlextService`)** — model entities/values and encapsulate domain services that return `FlextResult`.
 
 ## Style Expectations
+
 - Prefer docstrings that follow PEP 257 sentence-style summaries and keep examples PEP 8 compliant.
 - Cross-reference the `docs/standards/documentation.md` templates when adding new material.
 - Avoid duplicated sections across guides; link to existing topics instead of restating them.
 
 ## Support
+
 - **Issues and questions:** GitHub Issues/Discussions
 - **Code of conduct and contribution flow:** see [`development/contributing.md`](./development/contributing.md)

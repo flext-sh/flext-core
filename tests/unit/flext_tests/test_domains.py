@@ -7,7 +7,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.typings import FlextTypes
+import operator
+
+from flext_core import u  # Use alias for concise code
+from flext_core.typings import t
 from flext_tests.domains import FlextTestsDomains
 
 
@@ -109,10 +112,8 @@ class TestFlextTestsDomains:
 
     def test_api_response_data_error(self) -> None:
         """Test api_response_data with error status."""
-        response: dict[str, FlextTypes.GeneralValueType] = (
-            FlextTestsDomains.api_response_data(
-                status="error",
-            )
+        response: dict[str, t.GeneralValueType] = FlextTestsDomains.api_response_data(
+            status="error",
         )
 
         assert response["status"] == "error"
@@ -120,7 +121,7 @@ class TestFlextTestsDomains:
         # Type narrowing: error is GeneralValueType, check if it's a dict
         error_value = response.get("error")
         if isinstance(error_value, dict):
-            error_obj: dict[str, FlextTypes.GeneralValueType] = error_value
+            error_obj: dict[str, t.GeneralValueType] = error_value
             assert error_obj.get("code") == "TEST_ERROR"
             assert error_obj.get("message") == "Test error message"
 
@@ -139,8 +140,12 @@ class TestFlextTestsDomains:
         assert len(cases) == 7
 
         # Check some specific cases
-        valid_emails = [email for email, is_valid in cases if is_valid]
-        invalid_emails = [email for email, is_valid in cases if not is_valid]
+        valid_emails = list(
+            u.map(u.filter(cases, operator.itemgetter(1)), operator.itemgetter(0))
+        )
+        invalid_emails = list(
+            u.map(u.filter(cases, lambda item: not item[1]), operator.itemgetter(0))
+        )
 
         assert "test@example.com" in valid_emails
         assert "invalid-email" in invalid_emails

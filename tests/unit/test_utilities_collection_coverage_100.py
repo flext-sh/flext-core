@@ -1,7 +1,7 @@
 """Real tests to achieve 100% collection utilities coverage - no mocks.
 
 Module: flext_core._utilities.collection
-Scope: FlextUtilitiesCollection - parse_sequence, coerce_list_validator,
+Scope: uCollection - parse_sequence, coerce_list_validator,
 parse_mapping, coerce_dict_validator
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
@@ -23,8 +23,8 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core._utilities.collection import FlextUtilitiesCollection
-from flext_core.typings import FlextTypes
+from flext_core._utilities.collection import uCollection
+from flext_core.typings import t
 
 
 class FixtureStatus(StrEnum):
@@ -63,7 +63,7 @@ class CoerceListScenario:
 
     name: str
     enum_cls: type[StrEnum]
-    value: FlextTypes.FlexibleValue
+    value: t.FlexibleValue
     expected_success: bool
     expected_count: int | None = None
     error_type: type[Exception] | None = None
@@ -88,7 +88,7 @@ class CoerceDictScenario:
 
     name: str
     enum_cls: type[StrEnum]
-    value: FlextTypes.FlexibleValue
+    value: t.FlexibleValue
     expected_success: bool
     expected_keys: list[str] | None = None
     error_type: type[Exception] | None = None
@@ -350,8 +350,8 @@ class CollectionUtilitiesScenarios:
     ]
 
 
-class TestFlextUtilitiesCollectionParseSequence:
-    """Real tests for FlextUtilitiesCollection.parse_sequence."""
+class TestuCollectionParseSequence:
+    """Real tests for uCollection.parse_sequence."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -363,7 +363,7 @@ class TestFlextUtilitiesCollectionParseSequence:
         scenario: ParseSequenceScenario,
     ) -> None:
         """Test parse_sequence with various scenarios."""
-        result = FlextUtilitiesCollection.parse_sequence(
+        result = uCollection.parse_sequence(
             scenario.enum_cls,
             scenario.values,
         )
@@ -384,7 +384,7 @@ class TestFlextUtilitiesCollectionParseSequence:
 
     def test_parse_sequence_with_custom_enum(self) -> None:
         """Test parse_sequence with custom enum class."""
-        result = FlextUtilitiesCollection.parse_sequence(
+        result = uCollection.parse_sequence(
             FixturePriority,
             ["low", "medium", "high"],
         )
@@ -395,7 +395,7 @@ class TestFlextUtilitiesCollectionParseSequence:
 
     def test_parse_sequence_error_message_format(self) -> None:
         """Test parse_sequence error message format."""
-        result = FlextUtilitiesCollection.parse_sequence(
+        result = uCollection.parse_sequence(
             FixtureStatus,
             ["active", "invalid1", "invalid2"],
         )
@@ -405,8 +405,8 @@ class TestFlextUtilitiesCollectionParseSequence:
         assert "invalid1" in result.error or "invalid2" in result.error
 
 
-class TestFlextUtilitiesCollectionCoerceListValidator:
-    """Real tests for FlextUtilitiesCollection.coerce_list_validator."""
+class TestuCollectionCoerceListValidator:
+    """Real tests for uCollection.coerce_list_validator."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -418,7 +418,7 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
         scenario: CoerceListScenario,
     ) -> None:
         """Test coerce_list_validator with various scenarios."""
-        validator = FlextUtilitiesCollection.coerce_list_validator(scenario.enum_cls)
+        validator = uCollection.coerce_list_validator(scenario.enum_cls)
 
         if scenario.expected_success:
             result = validator(scenario.value)
@@ -437,7 +437,7 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
 
     def test_coerce_list_validator_with_pydantic(self) -> None:
         """Test coerce_list_validator integration with Pydantic."""
-        FlextUtilitiesCollection.coerce_list_validator(FixtureStatus)
+        uCollection.coerce_list_validator(FixtureStatus)
 
         class TestModel(BaseModel):
             statuses: list[FixtureStatus] = Field(default_factory=list)
@@ -455,8 +455,8 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
         assert all(isinstance(s, FixtureStatus) for s in model2.statuses)
 
 
-class TestFlextUtilitiesCollectionParseMapping:
-    """Real tests for FlextUtilitiesCollection.parse_mapping."""
+class TestuCollectionParseMapping:
+    """Real tests for uCollection.parse_mapping."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -468,7 +468,7 @@ class TestFlextUtilitiesCollectionParseMapping:
         scenario: ParseMappingScenario,
     ) -> None:
         """Test parse_mapping with various scenarios."""
-        result = FlextUtilitiesCollection.parse_mapping(
+        result = uCollection.parse_mapping(
             scenario.enum_cls,
             scenario.mapping,
         )
@@ -489,7 +489,7 @@ class TestFlextUtilitiesCollectionParseMapping:
 
     def test_parse_mapping_with_custom_enum(self) -> None:
         """Test parse_mapping with custom enum class."""
-        result = FlextUtilitiesCollection.parse_mapping(
+        result = uCollection.parse_mapping(
             FixturePriority,
             {"task1": "low", "task2": "medium", "task3": "high"},
         )
@@ -500,7 +500,7 @@ class TestFlextUtilitiesCollectionParseMapping:
 
     def test_parse_mapping_error_message_format(self) -> None:
         """Test parse_mapping error message format."""
-        result = FlextUtilitiesCollection.parse_mapping(
+        result = uCollection.parse_mapping(
             FixtureStatus,
             {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
         )
@@ -510,8 +510,8 @@ class TestFlextUtilitiesCollectionParseMapping:
         assert "invalid1" in result.error or "invalid2" in result.error
 
 
-class TestFlextUtilitiesCollectionCoerceDictValidator:
-    """Real tests for FlextUtilitiesCollection.coerce_dict_validator."""
+class TestuCollectionCoerceDictValidator:
+    """Real tests for uCollection.coerce_dict_validator."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -523,7 +523,7 @@ class TestFlextUtilitiesCollectionCoerceDictValidator:
         scenario: CoerceDictScenario,
     ) -> None:
         """Test coerce_dict_validator with various scenarios."""
-        validator = FlextUtilitiesCollection.coerce_dict_validator(scenario.enum_cls)
+        validator = uCollection.coerce_dict_validator(scenario.enum_cls)
 
         if scenario.expected_success:
             result = validator(scenario.value)
@@ -542,7 +542,7 @@ class TestFlextUtilitiesCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_with_pydantic(self) -> None:
         """Test coerce_dict_validator integration with Pydantic."""
-        FlextUtilitiesCollection.coerce_dict_validator(FixtureStatus)
+        uCollection.coerce_dict_validator(FixtureStatus)
 
         class TestModel(BaseModel):
             user_statuses: dict[str, FixtureStatus] = Field(default_factory=dict)
@@ -568,8 +568,8 @@ class TestFlextUtilitiesCollectionCoerceDictValidator:
 
 
 __all__ = [
-    "TestFlextUtilitiesCollectionCoerceDictValidator",
-    "TestFlextUtilitiesCollectionCoerceListValidator",
-    "TestFlextUtilitiesCollectionParseMapping",
-    "TestFlextUtilitiesCollectionParseSequence",
+    "TestuCollectionCoerceDictValidator",
+    "TestuCollectionCoerceListValidator",
+    "TestuCollectionParseMapping",
+    "TestuCollectionParseSequence",
 ]

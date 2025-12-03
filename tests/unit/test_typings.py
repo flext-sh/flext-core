@@ -24,7 +24,6 @@ import pytest
 from flext_core import (
     E,
     F,
-    FlextTypes,
     K,
     P,
     R,
@@ -54,6 +53,7 @@ from flext_core import (
     U,
     V,
     W,
+    t,
 )
 
 
@@ -185,18 +185,10 @@ class TypeScenarios:
     ]
 
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(
-            "Command", TypeVarCategory.CQRS, FlextTypes.GeneralValueType, True
-        ),
-        TypeVarTestCase(
-            "Query", TypeVarCategory.CQRS, FlextTypes.GeneralValueType, True
-        ),
-        TypeVarTestCase(
-            "Event", TypeVarCategory.CQRS, FlextTypes.GeneralValueType, True
-        ),
-        TypeVarTestCase(
-            "Message", TypeVarCategory.CQRS, FlextTypes.GeneralValueType, True
-        ),
+        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.GeneralValueType, True),
+        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.GeneralValueType, True),
+        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.GeneralValueType, True),
+        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.GeneralValueType, True),
     ]
 
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
@@ -210,7 +202,7 @@ class TypeScenarios:
 
 
 class TestFlextTypings:
-    """Unified test suite for FlextTypes and type system using FlextTestsUtilities."""
+    """Unified test suite for t and type system using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
         "test_case",
@@ -267,10 +259,10 @@ class TestFlextTypings:
             assert isinstance(test_case.type_var, ParamSpec)
 
     def test_flexttypes_accessible(self) -> None:
-        """Test FlextTypes namespace is accessible."""
-        assert FlextTypes is not None
+        """Test t namespace is accessible."""
+        assert t is not None
         assert all(
-            hasattr(FlextTypes, attr)
+            hasattr(t, attr)
             for attr in [
                 "Validation",
                 "Json",
@@ -290,15 +282,15 @@ class TestFlextTypings:
         assert True
 
     def test_module_structure(self) -> None:
-        """Test that FlextTypes has expected structure."""
+        """Test that t has expected structure."""
         assert all(tv is not None for tv in [T, U, P, R])
         assert all(
             alias is not None
             for alias in [
-                FlextTypes.GeneralValueType,  # Command
-                FlextTypes.GeneralValueType,  # Event
-                FlextTypes.GeneralValueType,  # Query
-                FlextTypes.GeneralValueType,  # Message
+                t.GeneralValueType,  # Command
+                t.GeneralValueType,  # Event
+                t.GeneralValueType,  # Query
+                t.GeneralValueType,  # Message
             ]
         )
 

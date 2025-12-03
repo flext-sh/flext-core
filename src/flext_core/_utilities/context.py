@@ -13,10 +13,10 @@ from __future__ import annotations
 from datetime import datetime
 
 from flext_core._models.context import FlextModelsContext
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
-class FlextUtilitiesContext:
+class FlextContext:
     """Context utility helpers for creating and managing context variables."""
 
     @staticmethod
@@ -37,7 +37,7 @@ class FlextUtilitiesContext:
             StructlogProxyContextVar[str] instance
 
         Example:
-            >>> var = FlextUtilitiesContext.create_str_proxy("correlation_id")
+            >>> var = uContext.create_str_proxy("correlation_id")
             >>> var.set("abc-123")
             >>> var.get()  # Returns "abc-123"
 
@@ -63,7 +63,7 @@ class FlextUtilitiesContext:
 
         Example:
             >>> from datetime import datetime
-            >>> var = FlextUtilitiesContext.create_datetime_proxy("start_time")
+            >>> var = uContext.create_datetime_proxy("start_time")
             >>> var.set(datetime.now())
             >>> var.get()  # Returns datetime instance
 
@@ -76,10 +76,8 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: dict[str, FlextTypes.GeneralValueType] | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[
-        dict[str, FlextTypes.GeneralValueType]
-    ]:
+        default: dict[str, t.GeneralValueType] | None = None,
+    ) -> FlextModelsContext.StructlogProxyContextVar[dict[str, t.GeneralValueType]]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -90,20 +88,25 @@ class FlextUtilitiesContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[dict[str, FlextTypes.GeneralValueType]] instance
+            StructlogProxyContextVar[dict[str, t.GeneralValueType]] instance
 
         Example:
-            >>> var = FlextUtilitiesContext.create_dict_proxy("metadata")
+            >>> var = uContext.create_dict_proxy("metadata")
             >>> var.set({"key": "value"})
             >>> var.get()  # Returns dict
 
         """
         return FlextModelsContext.StructlogProxyContextVar[
-            dict[str, FlextTypes.GeneralValueType]
+            dict[str, t.GeneralValueType]
         ](
             key,
             default=default,
         )
 
 
-__all__ = ["FlextUtilitiesContext"]
+uContext = FlextContext  # noqa: N816
+
+__all__ = [
+    "FlextContext",
+    "uContext",
+]

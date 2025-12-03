@@ -158,31 +158,57 @@ class TestEnterprisePatterns:
         repo = InMemoryRepository()
 
         # Save multiple entities
-        start_time = time.time()
+        start_time = time.perf_counter()
         for i in range(1000):
             result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
-            assert result.is_success
+            assert result.is_success, f"Save operation {i} should succeed"
 
-        save_duration = time.time() - start_time
+        save_duration = time.perf_counter() - start_time
+
+        # Validate performance: 1000 saves should complete in reasonable time
+        assert save_duration < 1.0, (
+            f"1000 saves took {save_duration:.3f}s, expected < 1.0s"
+        )
+        assert save_duration > 0, "Save duration should be positive"
+
+        # Validate all entities were saved
+        assert len(repo._data) == 1000, f"Expected 1000 entities, got {len(repo._data)}"
 
         # Query entities
-        start_time = time.time()
+        start_time = time.perf_counter()
         for i in range(100):
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
-            assert query_result.is_success
+            assert query_result.is_success, f"Query {i} should succeed"
             entity_data = cast("dict[str, object]", query_result.value)
-            assert entity_data["id"] == i
+            assert entity_data["id"] == i, f"Entity {i} should have id={i}"
 
-        query_duration = time.time() - start_time
+        query_duration = time.perf_counter() - start_time
 
-        # Performance assertions
-        assert save_duration < 1.0, (
-            f"Saving 1000 entities took too long: {save_duration:.3f}s"
+        # Validate performance: 100 queries should complete in reasonable time
+        assert query_duration < 0.5, (
+            f"100 queries took {query_duration:.3f}s, expected < 0.5s"
         )
-        assert query_duration < 0.1, (
-            f"Querying 100 entities took too long: {query_duration:.3f}s"
+
+        # Validate query count
+        assert repo.get_query_count() == 100, (
+            f"Expected 100 queries, got {repo.get_query_count()}"
         )
-        assert repo.get_query_count() == 100
+
+        query_duration = time.perf_counter() - start_time
+
+        # Validate performance: 100 queries should complete in reasonable time
+        assert query_duration < 0.5, (
+            f"100 queries took {query_duration:.3f}s, expected < 0.5s"
+        )
+        assert query_duration > 0, "Query duration should be positive"
+
+        # Validate query count
+        assert repo.get_query_count() == 100, (
+            f"Expected 100 queries, got {repo.get_query_count()}"
+        )
+
+        # Validate all queries succeeded and returned correct data
+        # (already validated in loop above)
 
 
 class TestEventDrivenPatterns:

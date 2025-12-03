@@ -1,7 +1,7 @@
 """Real tests to achieve 100% collection utilities coverage - no mocks.
 
 Module: flext_core._utilities.collection
-Scope: FlextUtilitiesCollection - all methods and edge cases
+Scope: uCollection - all methods and edge cases
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
 to cover all remaining lines in _utilities/collection.py.
@@ -21,8 +21,8 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import FlextUtilities
-from flext_core.typings import FlextTypes
+from flext_core import u
+from flext_core.typings import t
 
 
 class Status(StrEnum):
@@ -57,7 +57,7 @@ class CoerceListValidatorScenario:
     """Coerce list validator test scenario."""
 
     name: str
-    value: FlextTypes.FlexibleValue
+    value: t.FlexibleValue
     expected_success: bool
     expected_error: str | None
 
@@ -211,8 +211,8 @@ class CollectionScenarios:
     ]
 
 
-class TestFlextUtilitiesCollectionParseSequence:
-    """Test FlextUtilitiesCollection.parse_sequence."""
+class TestuCollectionParseSequence:
+    """Test uCollection.parse_sequence."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -221,7 +221,7 @@ class TestFlextUtilitiesCollectionParseSequence:
     )
     def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
         """Test parse_sequence with various scenarios."""
-        result = FlextUtilities.Collection.parse_sequence(Status, scenario.values)
+        result = u.Collection.parse_sequence(Status, scenario.values)
 
         assert result.is_success == scenario.expected_success
 
@@ -237,8 +237,8 @@ class TestFlextUtilitiesCollectionParseSequence:
             assert scenario.expected_error in error_msg
 
 
-class TestFlextUtilitiesCollectionCoerceListValidator:
-    """Test FlextUtilitiesCollection.coerce_list_validator."""
+class TestuCollectionCoerceListValidator:
+    """Test uCollection.coerce_list_validator."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -247,7 +247,7 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
     )
     def test_coerce_list_validator(self, scenario: CoerceListValidatorScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
-        validator = FlextUtilities.Collection.coerce_list_validator(Status)
+        validator = u.Collection.coerce_list_validator(Status)
 
         if scenario.expected_success:
             result = validator(scenario.value)
@@ -265,8 +265,8 @@ class TestFlextUtilitiesCollectionCoerceListValidator:
             assert expected_error in str(exc_info.value)
 
 
-class TestFlextUtilitiesCollectionParseMapping:
-    """Test FlextUtilitiesCollection.parse_mapping."""
+class TestuCollectionParseMapping:
+    """Test uCollection.parse_mapping."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -275,7 +275,7 @@ class TestFlextUtilitiesCollectionParseMapping:
     )
     def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
         """Test parse_mapping with various scenarios."""
-        result = FlextUtilities.Collection.parse_mapping(Status, scenario.mapping)
+        result = u.Collection.parse_mapping(Status, scenario.mapping)
 
         assert result.is_success == scenario.expected_success
 
@@ -292,12 +292,12 @@ class TestFlextUtilitiesCollectionParseMapping:
             assert scenario.expected_error in error_msg
 
 
-class TestFlextUtilitiesCollectionCoerceDictValidator:
-    """Test FlextUtilitiesCollection.coerce_dict_validator."""
+class TestuCollectionCoerceDictValidator:
+    """Test uCollection.coerce_dict_validator."""
 
     def test_coerce_dict_validator_valid_strings(self) -> None:
         """Test coerce_dict_validator with valid string values."""
-        validator = FlextUtilities.Collection.coerce_dict_validator(Status)
+        validator = u.Collection.coerce_dict_validator(Status)
         result = validator({"user1": "active", "user2": "pending"})
 
         assert isinstance(result, dict)
@@ -306,7 +306,7 @@ class TestFlextUtilitiesCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_valid_enums(self) -> None:
         """Test coerce_dict_validator with valid enum values."""
-        validator = FlextUtilities.Collection.coerce_dict_validator(Status)
+        validator = u.Collection.coerce_dict_validator(Status)
         result = validator({"user1": Status.ACTIVE, "user2": Status.PENDING})
 
         assert isinstance(result, dict)
@@ -315,7 +315,7 @@ class TestFlextUtilitiesCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_invalid_not_dict(self) -> None:
         """Test coerce_dict_validator with non-dict value."""
-        validator = FlextUtilities.Collection.coerce_dict_validator(Status)
+        validator = u.Collection.coerce_dict_validator(Status)
 
         with pytest.raises(TypeError) as exc_info:
             validator("not a dict")
@@ -323,7 +323,7 @@ class TestFlextUtilitiesCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_invalid_string(self) -> None:
         """Test coerce_dict_validator with invalid string value."""
-        validator = FlextUtilities.Collection.coerce_dict_validator(Status)
+        validator = u.Collection.coerce_dict_validator(Status)
 
         with pytest.raises(ValueError) as exc_info:
             validator({"user1": "invalid"})
@@ -331,7 +331,7 @@ class TestFlextUtilitiesCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_invalid_type(self) -> None:
         """Test coerce_dict_validator with invalid type value."""
-        validator = FlextUtilities.Collection.coerce_dict_validator(Status)
+        validator = u.Collection.coerce_dict_validator(Status)
 
         with pytest.raises(TypeError) as exc_info:
             validator({"user1": 123})

@@ -17,12 +17,12 @@ from typing import cast
 import structlog
 
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core._utilities.model import FlextModel
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
-class FlextUtilitiesStringParser:
+class FlextStringParser:
     r"""Parse delimited and structured strings with predictable results.
 
     The parser consolidates delimiter handling, escape-aware splits, and
@@ -30,7 +30,7 @@ class FlextUtilitiesStringParser:
     parsing logic in dispatcher pipelines without manual error handling.
 
     Examples:
-        >>> parser = FlextUtilitiesStringParser()
+        >>> parser = uStringParser()
         >>> parser.parse_delimited("a, b, c", ",").unwrap()
         ['a', 'b', 'c']
         >>> parser.split_on_char_with_escape("cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\").unwrap()
@@ -50,7 +50,7 @@ class FlextUtilitiesStringParser:
         self.logger = structlog.get_logger(__name__)
 
     @staticmethod
-    def _safe_text_length(text: FlextTypes.GeneralValueType) -> str | int:
+    def _safe_text_length(text: t.GeneralValueType) -> str | int:
         """Safely get text length for logging."""
         try:
             if isinstance(text, (str, bytes)):
@@ -82,6 +82,7 @@ class FlextUtilitiesStringParser:
                 operation="parse_delimited",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
+            # NOTE: Cannot use u.filter() here due to circular import
             components = [c for c in components if c.strip()]
 
         if validator:
@@ -137,7 +138,7 @@ class FlextUtilitiesStringParser:
             >>> opts = FlextModelsCollections.ParseOptions(
             ...     strip=True, remove_empty=True
             ... )
-            >>> parser = FlextUtilitiesStringParser()
+            >>> parser = uStringParser()
             >>> result = parser.parse_delimited(
             ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com", ",", options=opts
             ... )
@@ -406,7 +407,7 @@ class FlextUtilitiesStringParser:
 
         Example:
             >>> # Parse DN with escaped commas
-            >>> parser = FlextUtilitiesStringParser()
+            >>> parser = uStringParser()
             >>> result = parser.split_on_char_with_escape(
             ...     "cn=REDACTED_LDAP_BIND_PASSWORD\\,user,ou=users", ","
             ... )
@@ -451,7 +452,7 @@ class FlextUtilitiesStringParser:
             FlextResult with normalized text or error
 
         Example:
-            >>> parser = FlextUtilitiesStringParser()
+            >>> parser = uStringParser()
             >>> result = parser.normalize_whitespace("hello    world\\t\\nfoo")
             >>> normalized = result.unwrap()  # "hello world foo"
 
@@ -543,7 +544,7 @@ class FlextUtilitiesStringParser:
             ...     (r",\\s+", ","),  # Remove spaces after ,
             ...     (r"\\s+", " "),  # Normalize whitespace
             ... ]
-            >>> parser = FlextUtilitiesStringParser()
+            >>> parser = uStringParser()
             >>> result = parser.apply_regex_pipeline(
             ...     "cn = REDACTED_LDAP_BIND_PASSWORD , ou = users", patterns
             ... )
@@ -625,7 +626,7 @@ class FlextUtilitiesStringParser:
 
     @staticmethod
     def _extract_key_from_mapping(
-        obj: Mapping[str, FlextTypes.GeneralValueType],
+        obj: Mapping[str, t.GeneralValueType],
     ) -> str | None:
         """Extract key from mapping object (Strategy 2).
 
@@ -645,7 +646,7 @@ class FlextUtilitiesStringParser:
 
     @staticmethod
     def _extract_key_from_attributes(
-        obj: FlextTypes.GeneralValueType,
+        obj: t.GeneralValueType,
     ) -> str | None:
         """Extract key from object attributes (Strategy 3).
 
@@ -664,7 +665,7 @@ class FlextUtilitiesStringParser:
 
     @staticmethod
     def _extract_key_from_str_conversion(
-        obj: FlextTypes.GeneralValueType,
+        obj: t.GeneralValueType,
     ) -> str | None:
         """Extract key from string conversion (Strategy 5).
 
@@ -683,7 +684,7 @@ class FlextUtilitiesStringParser:
             pass
         return None
 
-    def get_object_key(self, obj: FlextTypes.GeneralValueType) -> str:
+    def get_object_key(self, obj: t.GeneralValueType) -> str:
         """Get comparable string key from object (generic helper).
 
         This generic helper consolidates object-to-key conversion logic from
@@ -705,8 +706,8 @@ class FlextUtilitiesStringParser:
             String key for object (comparable, hashable)
 
         Example:
-            >>> from flext_core.utilities import FlextUtilities
-            >>> parser = FlextUtilities.StringParser()
+            >>> from flext_core.utilities import u
+            >>> parser = u.StringParser()
             >>> # Class/Type
             >>> parser.get_object_key(int)
             'int'
@@ -940,8 +941,8 @@ class FlextUtilitiesStringParser:
 
             pattern, replacement, flags = pattern_result.unwrap()
 
-            # Apply the pattern using FlextUtilitiesModel
-            params_result = FlextUtilitiesModel.from_kwargs(
+            # Apply the pattern using uModel
+            params_result = FlextModel.from_kwargs(
                 FlextModelsCollections.PatternApplicationParams,
                 text=result_text,
                 pattern=pattern,
@@ -967,4 +968,9 @@ class FlextUtilitiesStringParser:
         return FlextResult[tuple[str, int]].ok((result_text, applied_patterns))
 
 
-__all__ = ["FlextUtilitiesStringParser"]
+uStringParser = FlextStringParser  # noqa: N816
+
+__all__ = [
+    "FlextStringParser",
+    "uStringParser",
+]

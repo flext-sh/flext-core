@@ -20,7 +20,6 @@ from __future__ import annotations
 import fnmatch
 import threading
 import time
-import uuid
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -30,9 +29,9 @@ from typing import Protocol, TypedDict, TypeVar, overload, runtime_checkable
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
 
-from flext_core import FlextResult
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core import FlextResult, u
+from flext_core.protocols import p
+from flext_core.typings import t
 from flext_tests.domains import FlextTestsDomains
 from flext_tests.matchers import FlextTestsMatchers
 from flext_tests.protocols import FlextTestProtocols
@@ -43,9 +42,9 @@ TModel_co = TypeVar("TModel_co", covariant=True)
 TValue = TypeVar("TValue")
 
 
-# Use FlextProtocols.LoggerProtocol for type compatibility with FlextLogger
+# Use p.LoggerProtocol for type compatibility with FlextLogger
 # Local alias for convenience in test utilities
-LoggerProtocol = FlextProtocols.LoggerProtocol
+LoggerProtocol = p.LoggerProtocol
 
 
 class FlextTestsUtilities:
@@ -122,7 +121,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def validate_model_attributes(
-            instance: FlextProtocols.HasModelDump,
+            instance: p.HasModelDump,
             *,
             required_attrs: Sequence[str],
             optional_attrs: Sequence[str] | None = None,
@@ -351,11 +350,11 @@ class FlextTestsUtilities:
 
         @staticmethod
         def validate_config_structure(
-            config: Mapping[str, FlextTypes.GeneralValueType],
+            config: Mapping[str, t.GeneralValueType],
             *,
             required_keys: Sequence[str],
             optional_keys: Sequence[str] | None = None,
-            key_validators: Mapping[str, Callable[[FlextTypes.GeneralValueType], bool]]
+            key_validators: Mapping[str, Callable[[t.GeneralValueType], bool]]
             | None = None,
         ) -> FlextResult[bool]:
             """Validate configuration structure with required/optional keys and validators.
@@ -398,7 +397,7 @@ class FlextTestsUtilities:
 
     @staticmethod
     @overload
-    def create_test_result[TValue: FlextTypes.GeneralValueType](
+    def create_test_result[TValue: t.GeneralValueType](
         *,
         success: bool = True,
         data: TValue,
@@ -407,20 +406,20 @@ class FlextTestsUtilities:
 
     @staticmethod
     @overload
-    def create_test_result[TValue: FlextTypes.GeneralValueType](
+    def create_test_result[TValue: t.GeneralValueType](
         *,
         success: bool = True,
         data: None = None,
         error: str | None = None,
-    ) -> FlextResult[FlextTypes.GeneralValueType]: ...
+    ) -> FlextResult[t.GeneralValueType]: ...
 
     @staticmethod
-    def create_test_result[TValue: FlextTypes.GeneralValueType](
+    def create_test_result[TValue: t.GeneralValueType](
         *,
         success: bool = True,
         data: TValue | None = None,
         error: str | None = None,
-    ) -> FlextResult[TValue] | FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[TValue] | FlextResult[t.GeneralValueType]:
         """Create a test FlextResult.
 
         Args:
@@ -436,18 +435,18 @@ class FlextTestsUtilities:
             # Fast fail: None is not a valid success value
             if data is None:
                 # Use empty dict as default test data
-                empty_dict: FlextTypes.GeneralValueType = {}
-                return FlextResult[FlextTypes.GeneralValueType].ok(empty_dict)
+                empty_dict: t.GeneralValueType = {}
+                return FlextResult[t.GeneralValueType].ok(empty_dict)
             return FlextResult[TValue].ok(data)
         if data is None:
-            return FlextResult[FlextTypes.GeneralValueType].fail(error or "Test error")
+            return FlextResult[t.GeneralValueType].fail(error or "Test error")
         return FlextResult[TValue].fail(error or "Test error")
 
     @staticmethod
     def functional_service(
         service_type: str = "api",
         **config: str | int | bool,
-    ) -> FlextTypes.Types.ConfigurationMapping:
+    ) -> t.Types.ConfigurationMapping:
         """Create a functional service configuration for testing using domains.
 
         Args:
@@ -458,7 +457,7 @@ class FlextTestsUtilities:
             Service configuration mapping
 
         """
-        base_config: dict[str, FlextTypes.GeneralValueType] = {
+        base_config: dict[str, t.GeneralValueType] = {
             "type": service_type,
             "name": f"functional_{service_type}_service",
             "enabled": True,
@@ -474,9 +473,9 @@ class FlextTestsUtilities:
     @staticmethod
     @contextmanager
     def test_context(
-        target: FlextProtocols.HasModelDump,
+        target: p.HasModelDump,
         attribute: str,
-        new_value: FlextTypes.GeneralValueType,
+        new_value: t.GeneralValueType,
     ) -> Generator[None]:
         """Context manager for temporarily changing object attributes.
 
@@ -507,7 +506,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_result_success(
-            result: FlextResult[TResult] | FlextProtocols.ResultProtocol[TResult],
+            result: FlextResult[TResult] | p.ResultProtocol[TResult],
         ) -> None:
             """Assert that a result is successful.
 
@@ -522,7 +521,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_result_failure(
-            result: FlextResult[TResult] | FlextProtocols.ResultProtocol[TResult],
+            result: FlextResult[TResult] | p.ResultProtocol[TResult],
         ) -> None:
             """Assert that a result is a failure.
 
@@ -537,7 +536,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def create_test_service(
-            **methods: Callable[..., FlextTypes.GeneralValueType],
+            **methods: Callable[..., t.GeneralValueType],
         ) -> object:
             """Create a test service with specified methods.
 
@@ -559,7 +558,7 @@ class FlextTestsUtilities:
                 """Real test service implementation."""
 
                 def __init__(
-                    self, **method_impls: Callable[..., FlextTypes.GeneralValueType]
+                    self, **method_impls: Callable[..., t.GeneralValueType]
                 ) -> None:
                     """Initialize test service with method implementations."""
                     for method_name, implementation in method_impls.items():
@@ -578,14 +577,14 @@ class FlextTestsUtilities:
                 Unique test identifier
 
             """
-            return f"{prefix}_{uuid.uuid4().hex[:8]}"
+            return f"{prefix}_{u.generate('id', length=8)}"
 
     @staticmethod
     def create_test_data(
         size: int = 10,
         prefix: str = "test",
         data_type: str = "generic",
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+    ) -> dict[str, t.GeneralValueType]:
         """Create test data dictionary using domains.
 
         Args:
@@ -597,8 +596,8 @@ class FlextTestsUtilities:
             Test data dictionary
 
         """
-        data: dict[str, FlextTypes.GeneralValueType] = {
-            "id": str(uuid.uuid4()),
+        data: dict[str, t.GeneralValueType] = {
+            "id": u.generate("uuid"),
             "name": f"{prefix}_{data_type}",
             "size": size,
             "created_at": "2025-01-01T00:00:00Z",
@@ -626,9 +625,9 @@ class FlextTestsUtilities:
     def create_api_response(
         *,
         success: bool = True,
-        data: FlextTypes.GeneralValueType | None = None,
+        data: t.GeneralValueType | None = None,
         error_message: str | None = None,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+    ) -> dict[str, t.GeneralValueType]:
         """Create API response test data using domains.
 
         Args:
@@ -647,7 +646,7 @@ class FlextTestsUtilities:
         )
 
         # Convert to mutable dict with type-safe updates
-        response_dict: dict[str, FlextTypes.GeneralValueType] = {
+        response_dict: dict[str, t.GeneralValueType] = {
             key: value
             for key, value in base_response.items()
             if isinstance(value, (str, int, float, bool, type(None), Sequence, Mapping))
@@ -678,14 +677,14 @@ class FlextTestsUtilities:
         """Helpers for FlextResult testing."""
 
         @staticmethod
-        def create_success_result[TValue: FlextTypes.GeneralValueType](
+        def create_success_result[TValue: t.GeneralValueType](
             value: TValue,
         ) -> FlextResult[TValue]:
             """Create a successful FlextResult with given value."""
             return FlextResult[TValue].ok(value)
 
         @staticmethod
-        def create_failure_result[TValue: FlextTypes.GeneralValueType](
+        def create_failure_result[TValue: t.GeneralValueType](
             error: str,
             error_code: str | None = None,
         ) -> FlextResult[TValue]:
@@ -693,7 +692,7 @@ class FlextTestsUtilities:
             return FlextResult[TValue].fail(error, error_code=error_code)
 
         @staticmethod
-        def assert_success_with_value[TValue: FlextTypes.GeneralValueType](
+        def assert_success_with_value[TValue: t.GeneralValueType](
             result: FlextResult[TValue],
             expected_value: TValue,
         ) -> None:
@@ -702,7 +701,7 @@ class FlextTestsUtilities:
             assert result.value == expected_value
 
         @staticmethod
-        def assert_failure_with_error[TValue: FlextTypes.GeneralValueType](
+        def assert_failure_with_error[TValue: t.GeneralValueType](
             result: FlextResult[TValue],
             expected_error: str | None = None,
         ) -> None:
@@ -713,7 +712,7 @@ class FlextTestsUtilities:
                 assert expected_error in result.error
 
         @staticmethod
-        def create_test_cases[TValue: FlextTypes.GeneralValueType](
+        def create_test_cases[TValue: t.GeneralValueType](
             success_cases: list[tuple[TValue, TValue]],
             failure_cases: list[tuple[str, str | None]],
         ) -> list[tuple[FlextResult[TValue], bool, TValue | None, str | None]]:
@@ -739,9 +738,9 @@ class FlextTestsUtilities:
             return cases
 
         @staticmethod
-        def validate_composition[TValue: FlextTypes.GeneralValueType](
+        def validate_composition[TValue: t.GeneralValueType](
             results: list[FlextResult[TValue]],
-        ) -> FlextTypes.Types.ConfigurationMapping:
+        ) -> t.Types.ConfigurationMapping:
             """Validate FlextResult composition patterns.
 
             Args:
@@ -769,9 +768,9 @@ class FlextTestsUtilities:
             }
 
         @staticmethod
-        def validate_chain[TValue: FlextTypes.GeneralValueType](
+        def validate_chain[TValue: t.GeneralValueType](
             results: list[FlextResult[TValue]],
-        ) -> FlextTypes.Types.ConfigurationMapping:
+        ) -> t.Types.ConfigurationMapping:
             """Validate FlextResult chain operations.
 
             Args:
@@ -811,7 +810,7 @@ class FlextTestsUtilities:
             }
 
         @staticmethod
-        def assert_composition[TValue: FlextTypes.GeneralValueType](
+        def assert_composition[TValue: t.GeneralValueType](
             results: list[FlextResult[TValue]],
             expected_success_rate: float = 1.0,
         ) -> None:
@@ -846,7 +845,7 @@ class FlextTestsUtilities:
                 )
 
         @staticmethod
-        def assert_chain_success[TValue: FlextTypes.GeneralValueType](
+        def assert_chain_success[TValue: t.GeneralValueType](
             results: list[FlextResult[TValue]],
         ) -> None:
             """Assert all results in chain are successful.
@@ -876,8 +875,8 @@ class FlextTestsUtilities:
         @staticmethod
         def assert_model_creation_success(
             factory_method: ModelFactory[TResult],
-            expected_attrs: FlextTypes.Types.ConfigurationMapping,
-            **factory_kwargs: FlextTypes.GeneralValueType,
+            expected_attrs: t.Types.ConfigurationMapping,
+            **factory_kwargs: t.GeneralValueType,
         ) -> TResult:
             """Assert successful model creation and validate attributes.
 
@@ -908,7 +907,7 @@ class FlextTestsUtilities:
         def assert_model_validation_failure(
             factory_method: ModelFactory[TResult],
             expected_error_patterns: list[str],
-            **factory_kwargs: FlextTypes.GeneralValueType,
+            **factory_kwargs: t.GeneralValueType,
         ) -> None:
             """Assert model creation fails with expected validation errors.
 
@@ -934,8 +933,8 @@ class FlextTestsUtilities:
 
         @staticmethod
         def parametrize_model_scenarios(
-            scenarios: Mapping[str, FlextTypes.Types.ConfigurationMapping],
-        ) -> list[tuple[str, FlextTypes.Types.ConfigurationMapping]]:
+            scenarios: Mapping[str, t.Types.ConfigurationMapping],
+        ) -> list[tuple[str, t.Types.ConfigurationMapping]]:
             """Create parametrized test cases from scenario dictionaries.
 
             Args:
@@ -951,8 +950,8 @@ class FlextTestsUtilities:
         def batch_create_models(
             factory_method: ModelFactory[TResult],
             count: int,
-            base_kwargs: FlextTypes.Types.ConfigurationMapping,
-            variations: list[FlextTypes.Types.ConfigurationMapping] | None = None,
+            base_kwargs: t.Types.ConfigurationMapping,
+            variations: list[t.Types.ConfigurationMapping] | None = None,
         ) -> list[TResult]:
             """Create a batch of model instances with variations.
 
@@ -985,8 +984,8 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_attr_values(
-            instance: FlextProtocols.HasModelDump,
-            expected: FlextTypes.Types.ConfigurationMapping,
+            instance: p.HasModelDump,
+            expected: t.Types.ConfigurationMapping,
         ) -> None:
             """Assert multiple attribute values on an instance.
 
@@ -1003,7 +1002,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_has_attrs(
-            instance: FlextProtocols.HasModelDump,
+            instance: p.HasModelDump,
             attrs: list[str],
         ) -> None:
             """Assert instance has all specified attributes.
@@ -1115,9 +1114,9 @@ class FlextTestsUtilities:
         @staticmethod
         def get_container_config(
             container_name: str,
-            shared_containers: FlextTypes.Types.SharedContainersMapping,
-            registered_configs: Mapping[str, FlextTypes.Types.ContainerConfigDict],
-        ) -> FlextTypes.Types.ContainerConfigDict | None:
+            shared_containers: t.Types.SharedContainersMapping,
+            registered_configs: Mapping[str, t.Types.ContainerConfigDict],
+        ) -> t.Types.ContainerConfigDict | None:
             """Get container configuration from shared or registered configs.
 
             Args:
@@ -1469,7 +1468,7 @@ class FlextTestsUtilities:
         def extract_container_info(
             container: FlextTestProtocols.Docker.ContainerProtocol,
             container_name: str | None = None,
-        ) -> FlextTypes.Types.ConfigurationMapping:
+        ) -> t.Types.ConfigurationMapping:
             """Extract container information from Docker container object.
 
             Args:
@@ -1879,6 +1878,6 @@ class ModelFactory(Protocol[TModel_co]):
     from keyword arguments. Used by ModelTestHelpers for type-safe testing.
     """
 
-    def __call__(self, **kwargs: FlextTypes.GeneralValueType) -> TModel_co:
+    def __call__(self, **kwargs: t.GeneralValueType) -> TModel_co:
         """Create a model instance from kwargs."""
         ...

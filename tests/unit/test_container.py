@@ -31,7 +31,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextContainer, FlextResult
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 from flext_tests.utilities import FlextTestsUtilities
 
 
@@ -102,10 +102,10 @@ class ContainerTestHelpers:
     @staticmethod
     def create_factory(
         return_value: object,
-    ) -> Callable[[], FlextTypes.GeneralValueType]:
+    ) -> Callable[[], t.GeneralValueType]:
         """Create a simple factory function."""
         # Cast return_value to GeneralValueType for type compatibility
-        return lambda: cast("FlextTypes.GeneralValueType", return_value)
+        return lambda: cast("t.GeneralValueType", return_value)
 
     @staticmethod
     def create_counting_factory() -> tuple[Callable[[], dict[str, str]], list[int]]:
@@ -157,11 +157,9 @@ class TestFlextContainer:
         # Cast object to GeneralValueType | BaseModel for type compatibility
         # scenario.service is compatible at runtime but typed as object
         service_typed: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | Callable[..., FlextTypes.GeneralValueType]
+            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]
         ) = cast(
-            "FlextTypes.GeneralValueType | BaseModel | Callable[..., FlextTypes.GeneralValueType]",
+            "t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]",
             scenario.service,
         )
         result = container.with_service(scenario.name, service_typed)
@@ -229,8 +227,8 @@ class TestFlextContainer:
         container = ContainerTestHelpers.create_clean_container()
         # Intentionally pass non-callable to test error handling
         # Cast is needed because type checker rejects invalid types
-        non_callable: Callable[[], FlextTypes.GeneralValueType] = cast(
-            "Callable[[], FlextTypes.GeneralValueType]", "not_callable"
+        non_callable: Callable[[], t.GeneralValueType] = cast(
+            "Callable[[], t.GeneralValueType]", "not_callable"
         )
         result = container.register_factory("invalid", non_callable)
         assert result.is_failure
@@ -263,11 +261,11 @@ class TestFlextContainer:
         """
         container = ContainerTestHelpers.create_clean_container()
         container.register(scenario.name, scenario.service)
-        result: FlextResult[FlextTypes.GeneralValueType] = container.get(scenario.name)
+        result: FlextResult[t.GeneralValueType] = container.get(scenario.name)
         # Cast scenario.service to GeneralValueType for type checker
         # Runtime: object is compatible with GeneralValueType
-        expected_value: FlextTypes.GeneralValueType = cast(
-            "FlextTypes.GeneralValueType", scenario.service
+        expected_value: t.GeneralValueType = cast(
+            "t.GeneralValueType", scenario.service
         )
         FlextTestsUtilities.ResultHelpers.assert_success_with_value(
             result,
@@ -277,7 +275,7 @@ class TestFlextContainer:
     def test_get_nonexistent_service(self) -> None:
         """Test getting non-existent service."""
         container = ContainerTestHelpers.create_clean_container()
-        result: FlextResult[FlextTypes.GeneralValueType] = container.get("nonexistent")
+        result: FlextResult[t.GeneralValueType] = container.get("nonexistent")
         FlextTestsUtilities.ResultHelpers.assert_failure_with_error(result, "not found")
 
     def test_get_factory_service(self) -> None:
@@ -286,9 +284,7 @@ class TestFlextContainer:
         factory_result = {"created": "by_factory"}
         factory = ContainerTestHelpers.create_factory(factory_result)
         container.register_factory("factory_service", factory)
-        result: FlextResult[FlextTypes.GeneralValueType] = container.get(
-            "factory_service"
-        )
+        result: FlextResult[t.GeneralValueType] = container.get("factory_service")
         FlextTestsUtilities.ResultHelpers.assert_success_with_value(
             result,
             factory_result,
@@ -299,14 +295,10 @@ class TestFlextContainer:
         container = ContainerTestHelpers.create_clean_container()
         factory, call_count = ContainerTestHelpers.create_counting_factory()
         container.register_factory("factory_service", factory)
-        result1: FlextResult[FlextTypes.GeneralValueType] = container.get(
-            "factory_service"
-        )
+        result1: FlextResult[t.GeneralValueType] = container.get("factory_service")
         assert result1.is_success
         assert call_count[0] == 1
-        result2: FlextResult[FlextTypes.GeneralValueType] = container.get(
-            "factory_service"
-        )
+        result2: FlextResult[t.GeneralValueType] = container.get("factory_service")
         assert result2.is_success
         assert call_count[0] == 2
 
@@ -327,10 +319,7 @@ class TestFlextContainer:
         # Cast scenario.service to container.register() compatible type
         # Runtime: object is compatible with GeneralValueType | BaseModel | Callable | object
         service_typed: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | Callable[..., FlextTypes.GeneralValueType]
-            | object
+            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
         ) = scenario.service
         container.register(scenario.name, service_typed)
         typed_result: FlextResult[object] = container.get_typed(
@@ -430,8 +419,8 @@ class TestFlextContainer:
         """Test container configuration."""
         container = FlextContainer()
         # Cast dict[str, object] to Mapping[str, GeneralValueType] for type compatibility
-        config_typed: FlextTypes.Types.ConfigurationMapping = cast(
-            "FlextTypes.Types.ConfigurationMapping",
+        config_typed: t.Types.ConfigurationMapping = cast(
+            "t.Types.ConfigurationMapping",
             config,
         )
         container.configure(config_typed)
@@ -444,8 +433,8 @@ class TestFlextContainer:
             "max_workers": FlextConstants.Container.DEFAULT_WORKERS,
         }
         # Cast dict[str, object] to ConfigurationMapping for type compatibility
-        config_typed: FlextTypes.Types.ConfigurationMapping = cast(
-            "FlextTypes.Types.ConfigurationMapping",
+        config_typed: t.Types.ConfigurationMapping = cast(
+            "t.Types.ConfigurationMapping",
             config,
         )
         result = container.with_config(config_typed)
@@ -492,7 +481,7 @@ class TestFlextContainer:
             container.has_service(k) for k in ["db_connection", "cache", "logger"]
         )
         for name in ["db_connection", "cache", "logger"]:
-            result: FlextResult[FlextTypes.GeneralValueType] = container.get(name)
+            result: FlextResult[t.GeneralValueType] = container.get(name)
             assert result.is_success
         assert len(container.list_services()) == 3
         unregister_result = container.unregister("cache")
@@ -506,11 +495,11 @@ class TestFlextContainer:
         container = ContainerTestHelpers.create_clean_container()
         error_msg = "Factory failed"
 
-        def failing_factory() -> FlextTypes.GeneralValueType:
+        def failing_factory() -> t.GeneralValueType:
             raise RuntimeError(error_msg)
 
         container.register_factory("failing", failing_factory)
-        result: FlextResult[FlextTypes.GeneralValueType] = container.get("failing")
+        result: FlextResult[t.GeneralValueType] = container.get("failing")
         assert result.is_failure
 
 

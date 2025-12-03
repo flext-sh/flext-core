@@ -29,7 +29,7 @@ import pytest
 
 from flext_core import FlextExceptions, FlextRuntime
 from flext_core._models.base import FlextModelsBase
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 class ExceptionScenarioType(StrEnum):
@@ -98,10 +98,8 @@ class ExceptionTestHelpers:
             return FlextModelsBase.Metadata(attributes={})
         # Convert dict[str, object] to dict[str, MetadataAttributeValue]
         # Convert object to GeneralValueType first, then normalize
-        normalized_attrs: dict[str, FlextTypes.MetadataAttributeValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(
-                cast("FlextTypes.GeneralValueType", v)
-            )
+        normalized_attrs: dict[str, t.MetadataAttributeValue] = {
+            k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
             for k, v in attributes.items()
         }
         return FlextModelsBase.Metadata(attributes=normalized_attrs)

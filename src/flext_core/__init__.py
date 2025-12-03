@@ -15,27 +15,25 @@ from __future__ import annotations
 # Type aliases for nested FlextConfig attributes (DEPRECATED - use FlextConfig.AutoConfig directly)
 # DEPRECATED: These aliases will be removed in next major version.
 # Use FlextConfig.AutoConfig and FlextConfig.auto_register directly.
-import warnings
-
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.__version__ import __version__, __version_info__
 from flext_core.config import FlextConfig
-from flext_core.constants import FlextConstants
+from flext_core.constants import FlextConstants, c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.decorators import FlextDecorators
+from flext_core.decorators import FlextDecorators, d
 from flext_core.dispatcher import FlextDispatcher
-from flext_core.exceptions import FlextExceptions
-from flext_core.handlers import FlextHandlers
+from flext_core.exceptions import FlextExceptions, e
+from flext_core.handlers import FlextHandlers, h
 from flext_core.loggings import FlextLogger
-from flext_core.mixins import FlextMixins
-from flext_core.models import FlextModels
-from flext_core.protocols import FlextProtocols
+from flext_core.mixins import FlextMixins, x
+from flext_core.models import FlextModels, m
+from flext_core.protocols import FlextProtocols, p
 from flext_core.registry import FlextRegistry
-from flext_core.result import FlextResult
+from flext_core.result import FlextResult, r
 from flext_core.runtime import FlextRuntime
-from flext_core.service import FlextService
+from flext_core.service import FlextService, s
 from flext_core.typings import (
     CallableInputT,
     CallableOutputT,
@@ -81,15 +79,12 @@ from flext_core.typings import (
     U,
     V,
     W,
+    t,
 )
-from flext_core.utilities import FlextUtilities
+from flext_core.utilities import FlextUtilities, u
 
-warnings.warn(
-    "AutoConfig and auto_register aliases are deprecated. "
-    "Use FlextConfig.AutoConfig and FlextConfig.auto_register directly.",
-    DeprecationWarning,
-    stacklevel=2,
-)
+# DEPRECATED aliases - kept for backward compatibility, no warning on import
+# Use FlextConfig.AutoConfig and FlextConfig.auto_register directly.
 AutoConfig = FlextConfig.AutoConfig
 auto_register = FlextConfig.auto_register
 
@@ -183,6 +178,18 @@ __all__ = [
     "__version__",
     "__version_info__",
     "auto_register",
+    # Convenience aliases
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
 ]
-# NOTE: UserDataMapping and ValidationResult are in FlextTypes.Example
-# Access via: FlextTypes.Example.UserDataMapping, FlextTypes.Example.ValidationResult
+# NOTE: UserDataMapping and ValidationResult are in t.Example
+# Access via: t.Example.UserDataMapping, t.Example.ValidationResult

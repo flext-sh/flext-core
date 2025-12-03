@@ -39,7 +39,7 @@ from flext_core import (
     FlextDispatcher,
     FlextResult,
 )
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 # Skip entire module if optional dependencies not available
 psycopg2 = pytest.importorskip("psycopg2")
@@ -68,7 +68,7 @@ class PostgreSQLService:
         self.connection_attempts = 0
         self.query_count = 0
 
-    def process(self, data: object) -> FlextResult[FlextTypes.GeneralValueType]:
+    def process(self, data: object) -> FlextResult[t.GeneralValueType]:
         """Process data by executing query against PostgreSQL.
 
         This validates real database connectivity without ORM dependencies.
@@ -81,7 +81,7 @@ class PostgreSQLService:
 
         """
         if not isinstance(data, dict) or "query" not in data:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 "Data must be dict with 'query' key",
             )
 
@@ -105,9 +105,9 @@ class PostgreSQLService:
             conn.close()
 
             self.query_count += 1
-            return FlextResult[FlextTypes.GeneralValueType].ok(
+            return FlextResult[t.GeneralValueType].ok(
                 cast(
-                    "FlextTypes.GeneralValueType",
+                    "t.GeneralValueType",
                     {
                         "result": result,
                         "query": data["query"],
@@ -117,7 +117,7 @@ class PostgreSQLService:
 
         except Exception as e:
             self.connection_attempts += 1
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 f"PostgreSQL connection error: {type(e).__name__}: {e!s}",
             )
 
@@ -138,7 +138,7 @@ class NetworkLatencyProcessor:
         self.latency_seconds = latency_seconds
         self.process_count = 0
 
-    def process(self, data: object) -> FlextResult[FlextTypes.GeneralValueType]:
+    def process(self, data: object) -> FlextResult[t.GeneralValueType]:
         """Simulate network latency then return result.
 
         Args:
@@ -147,18 +147,42 @@ class NetworkLatencyProcessor:
         Returns:
             FlextResult with processed data after delay
 
+        Validates:
+        1. Latency is simulated correctly
+        2. Process count is incremented
+        3. Result contains processed data and latency info
+
         """
+        # Simulate network latency
         time.sleep(self.latency_seconds)
+
+        # Track processing
         self.process_count += 1
-        return FlextResult[FlextTypes.GeneralValueType].ok(
+
+        # Validate process count was incremented
+        assert self.process_count > 0, "Process count should be incremented"
+
+        # Return result with processed data
+        result = FlextResult[t.GeneralValueType].ok(
             cast(
-                "FlextTypes.GeneralValueType",
+                "t.GeneralValueType",
                 {
                     "processed": data,
                     "latency": self.latency_seconds,
                 },
             ),
         )
+
+        # Validate result contains expected data
+        assert result.is_success, "Processing should succeed"
+        assert result.value is not None, "Result should contain value"
+        assert "processed" in result.value, "Result should contain processed data"
+        assert "latency" in result.value, "Result should contain latency info"
+        assert result.value["latency"] == self.latency_seconds, (
+            f"Latency should be {self.latency_seconds}, got {result.value['latency']}"
+        )
+
+        return result
 
 
 class FaultInjectionProcessor:
@@ -179,7 +203,7 @@ class FaultInjectionProcessor:
         self.success_count = 0
         self.failure_count = 0
 
-    def process(self, data: object) -> FlextResult[FlextTypes.GeneralValueType]:
+    def process(self, data: object) -> FlextResult[t.GeneralValueType]:
         """Process with probabilistic failure.
 
         Args:
@@ -193,14 +217,14 @@ class FaultInjectionProcessor:
 
         if random.random() < self.failure_rate:
             self.failure_count += 1
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 f"Injected failure #{self.failure_count}",
             )
 
         self.success_count += 1
-        return FlextResult[FlextTypes.GeneralValueType].ok(
+        return FlextResult[t.GeneralValueType].ok(
             cast(
-                "FlextTypes.GeneralValueType",
+                "t.GeneralValueType",
                 {"data": data, "attempt": self.attempt_count},
             ),
         )
@@ -439,7 +463,7 @@ class TestLayer3BatchProcessing:
         start_time = time.time()
         result = dispatcher.process_batch(
             "latency",
-            cast("list[FlextTypes.GeneralValueType]", data_list),
+            cast("list[t.GeneralValueType]", data_list),
             batch_size=2,
         )
         elapsed = time.time() - start_time
@@ -488,7 +512,7 @@ class TestLayer3BatchProcessing:
         data_list = [{"value": i} for i in range(10)]
         result = dispatcher.process_batch(
             "latency",
-            cast("list[FlextTypes.GeneralValueType]", data_list),
+            cast("list[t.GeneralValueType]", data_list),
             batch_size=10,
         )
 
@@ -522,7 +546,7 @@ class TestLayer3ParallelProcessing:
         start_time = time.time()
         result = dispatcher.process_parallel(
             "latency",
-            cast("list[FlextTypes.GeneralValueType]", data_list),
+            cast("list[t.GeneralValueType]", data_list),
             max_workers=2,
         )
         elapsed = time.time() - start_time
@@ -573,7 +597,7 @@ class TestLayer3ParallelProcessing:
         data_list = [{"value": i} for i in range(50)]
         result = dispatcher.process_parallel(
             "latency",
-            cast("list[FlextTypes.GeneralValueType]", data_list),
+            cast("list[t.GeneralValueType]", data_list),
             max_workers=4,
         )
 

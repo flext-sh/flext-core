@@ -13,7 +13,7 @@ import math
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from ..helpers.constants import TestConstants
 
@@ -30,7 +30,7 @@ class TestUserData:
     created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     roles: list[str] = field(default_factory=lambda: ["user", "tester"])
 
-    def to_dict(self) -> dict[str, FlextTypes.GeneralValueType]:
+    def to_dict(self) -> dict[str, t.GeneralValueType]:
         """Convert to dictionary format for compatibility."""
         return {
             "id": self.user_id,
@@ -82,7 +82,7 @@ class SampleDataSet:
     timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     uuid_data: str = "550e8400-e29b-41d4-a716-446655440000"
 
-    def to_dict(self) -> dict[str, FlextTypes.GeneralValueType]:
+    def to_dict(self) -> dict[str, t.GeneralValueType]:
         """Convert to dictionary format for compatibility."""
         return {
             "string": self.string_data,
@@ -160,7 +160,7 @@ class SampleDataFactories:
 
 
 # Backward compatibility functions
-def get_sample_data() -> FlextTypes.Types.ConfigurationMapping:
+def get_sample_data() -> t.Types.ConfigurationMapping:
     """Provide deterministic sample data for tests (backward compatibility).
 
     Returns:
@@ -170,7 +170,7 @@ def get_sample_data() -> FlextTypes.Types.ConfigurationMapping:
     return SampleDataFactories.create_comprehensive_sample_data().to_dict()
 
 
-def get_test_user_data() -> FlextTypes.Types.ConfigurationMapping | list[str] | None:
+def get_test_user_data() -> t.Types.ConfigurationMapping | list[str] | None:
     """Provide consistent user data for domain testing (backward compatibility).
 
     Returns:

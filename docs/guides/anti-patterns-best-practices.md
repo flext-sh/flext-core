@@ -294,11 +294,11 @@ from flext_core.config import FlextConfig  # result is lower than config
 **Solution**: Respect layer hierarchy (only import downward)
 
 ```
-Layer 0: FlextConstants, FlextTypes, FlextProtocols (no imports from other layers)
+Layer 0: FlextConstants, t, p (no imports from other layers)
 Layer 0.5: FlextRuntime (imports Layer 0 only)
 Layer 1: FlextResult, FlextContainer (imports Layer 0, 0.5 only)
 Layer 2: FlextModels, FlextService (imports Layer 0-1 only)
-Layer 3: FlextHandlers, FlextDispatcher (imports Layer 0-2 only)
+Layer 3: h, FlextDispatcher (imports Layer 0-2 only)
 Layer 4: FlextConfig, FlextLogger (imports all lower layers)
 ```
 
@@ -310,7 +310,7 @@ from flext_core.constants import FlextConstants
 
 # result.py (Layer 1) - imports only from Layer 0
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 ```
 
 ### Anti-Pattern 8: Multiple Exports per Module

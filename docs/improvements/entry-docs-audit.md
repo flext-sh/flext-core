@@ -7,13 +7,14 @@
 ---
 
 ## Highlights
+
 - Navigation links are intact and point to updated architecture and API sections.
 - Layered overview is still accurate for the core modules after the bus removal.
 
 ## Issues to Address
 
 1. **Layer 3 listing**
-   - Update the Layer 3 bullet to reflect the current set: `FlextHandlers`, `FlextDispatcher`, `FlextRegistry`, and `FlextDecorators`.
+   - Update the Layer 3 bullet to reflect the current set: `h`, `FlextDispatcher`, `FlextRegistry`, and `FlextDecorators`.
    - Remove `FlextBus` and `FlextProcessors`, which no longer exist in the package surface.
 
 2. **Landing copy**
@@ -23,6 +24,7 @@
    - Ensure the quick-start examples highlight dispatcher-based CQRS alongside DI and railway patterns.
 
 ## Recommended Updates
+
 - Refresh the Layer Architecture section accordingly.
 - Do a pass over README headings and summaries to ensure terminology is dispatcher-first.
 - Keep import blocks minimal and scoped to the symbols being demonstrated.

@@ -28,7 +28,7 @@ from typing import ClassVar, cast
 import pytest
 
 from flext_core import FlextContext, FlextModels
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 @dataclass(frozen=True, slots=True)
@@ -233,7 +233,7 @@ class TestServiceDomain:
 
     def test_get_service_from_container(self) -> None:
         """Test retrieving service from container via FlextContext."""
-        test_service_obj: FlextTypes.GeneralValueType = "test_service_value"
+        test_service_obj: t.GeneralValueType = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
         assert result.is_success
@@ -275,7 +275,7 @@ class TestRequestDomain:
     def test_request_context_manager(self) -> None:
         """Test request context manager with all metadata."""
         ContextTestHelpers.clear_context()
-        metadata: dict[str, FlextTypes.GeneralValueType] = {
+        metadata: dict[str, t.GeneralValueType] = {
             "transaction_id": "txn_123",
             "amount": 99.99,
         }
@@ -334,7 +334,7 @@ class TestPerformanceDomain:
     def test_operation_metadata_getter_setter(self) -> None:
         """Test operation metadata getter and setter."""
         ContextTestHelpers.clear_context()
-        metadata: dict[str, FlextTypes.GeneralValueType] = {
+        metadata: dict[str, t.GeneralValueType] = {
             "request_size": 1024,
             "response_code": 200,
         }
@@ -353,26 +353,94 @@ class TestPerformanceDomain:
         assert metadata["key2"] == "value2"
 
     def test_timed_operation_context(self) -> None:
-        """Test timed operation context manager."""
+        """Test timed operation context manager.
+
+        Validates:
+        1. Context manager provides metadata
+        2. Start time is recorded
+        3. Duration is calculated correctly
+        4. All expected metadata fields are present
+        """
         ContextTestHelpers.clear_context()
         with FlextContext.Performance.timed_operation("database_query") as metadata:
+            # Validate initial metadata
             assert "start_time" in metadata
             assert "operation_name" in metadata
             assert metadata["operation_name"] == "database_query"
+
+            # Simulate work with sleep
             time.sleep(0.01)
+
+            # Validate start_time is a valid ISO format string
+            start_time = metadata.get("start_time")
+            assert start_time is not None
+            assert isinstance(start_time, str), (
+                f"start_time should be str, got {type(start_time)}"
+            )
+            # Validate ISO format (contains T separator and timezone info)
+            assert "T" in start_time or "+" in start_time or "Z" in start_time
+
+        # Validate final metadata after context exit
         assert "end_time" in metadata
         assert "duration_seconds" in metadata
+
+        # Validate duration calculation
         duration = cast("float", metadata["duration_seconds"])
-        assert duration >= 0
+        assert duration >= 0.01, f"Duration {duration} should be >= 0.01s"
+        assert duration < 0.1, (
+            f"Duration {duration} should be < 0.1s (reasonable overhead)"
+        )
+
+        # Validate end_time is also ISO format string
+        end_time_str = metadata.get("end_time")
+        assert isinstance(end_time_str, str), (
+            f"end_time should be str, got {type(end_time_str)}"
+        )
+        # Validate end_time is after start_time (ISO strings compare lexicographically)
+        assert end_time_str > start_time, (
+            f"end_time {end_time_str} should be > start_time {start_time}"
+        )
 
     def test_timed_operation_duration_calculation(self) -> None:
-        """Test timed operation calculates duration correctly."""
+        """Test timed operation calculates duration correctly.
+
+        Validates:
+        1. Duration is calculated accurately
+        2. Duration matches expected sleep time (within reasonable tolerance)
+        3. Metadata contains all required fields
+        """
         ContextTestHelpers.clear_context()
+        expected_sleep = 0.05
+
         with FlextContext.Performance.timed_operation("slow_operation") as metadata:
-            time.sleep(0.05)
+            # Record start for validation
+            start_time = metadata.get("start_time")
+            assert start_time is not None
+
+            # Simulate work
+            time.sleep(expected_sleep)
+
+        # Validate duration calculation
         duration = metadata.get("duration_seconds", 0)
-        assert isinstance(duration, float)
-        assert duration >= 0.04
+        assert isinstance(duration, float), (
+            f"Duration should be float, got {type(duration)}"
+        )
+
+        # Validate duration is close to expected (within 20% tolerance for overhead)
+        assert duration >= expected_sleep * 0.8, (
+            f"Duration {duration}s should be >= {expected_sleep * 0.8}s "
+            f"(80% of expected {expected_sleep}s)"
+        )
+        assert duration < expected_sleep * 2, (
+            f"Duration {duration}s should be < {expected_sleep * 2}s "
+            f"(reasonable overhead for {expected_sleep}s sleep)"
+        )
+
+        # Validate all metadata fields are present
+        assert "start_time" in metadata
+        assert "end_time" in metadata
+        assert "operation_name" in metadata
+        assert metadata["operation_name"] == "slow_operation"
 
 
 class TestSerializationDomain:

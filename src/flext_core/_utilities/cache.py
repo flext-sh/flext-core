@@ -44,14 +44,14 @@ from collections.abc import Sequence
 
 from pydantic import BaseModel
 
-from flext_core.constants import FlextConstants
-from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
-class FlextUtilitiesCache:
+class FlextCache:
     """Cache utilities for deterministic normalization and key management.
 
     Business Rules:
@@ -75,7 +75,7 @@ class FlextUtilitiesCache:
     """
 
     @property
-    def logger(self) -> FlextProtocols.StructlogLogger:
+    def logger(self) -> p.StructlogLogger:
         """Get logger instance using FlextRuntime.
 
         Business Rule: Logger access through FlextRuntime avoids circular
@@ -89,8 +89,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def normalize_component(
-        component: FlextTypes.GeneralValueType | BaseModel,
-    ) -> FlextTypes.GeneralValueType:
+        component: t.GeneralValueType | BaseModel,
+    ) -> t.GeneralValueType:
         """Normalize a component recursively for consistent representation.
 
         Business Rule: Recursive Component Normalization
@@ -119,7 +119,7 @@ class FlextUtilitiesCache:
         # Handle BaseModel first - convert to dict
         if isinstance(component, BaseModel):
             return {
-                str(k): FlextUtilitiesCache.normalize_component(v)
+                str(k): FlextCache.normalize_component(v)
                 for k, v in component.model_dump().items()
             }
         # component is already GeneralValueType (not BaseModel)
@@ -127,24 +127,21 @@ class FlextUtilitiesCache:
         if FlextRuntime.is_dict_like(component):
             # Type guard ensures component is Mapping[str, GeneralValueType]
             return {
-                str(k): FlextUtilitiesCache.normalize_component(v)
-                for k, v in component.items()
+                str(k): FlextCache.normalize_component(v) for k, v in component.items()
             }
         # Handle primitives first (str is a Sequence, so check early)
         if isinstance(component, (str, int, float, bool, type(None))):
             return component
         # Handle collections
         if isinstance(component, set):
-            return tuple(
-                FlextUtilitiesCache.normalize_component(item) for item in component
-            )
+            return tuple(FlextCache.normalize_component(item) for item in component)
         if isinstance(component, Sequence):
-            return [FlextUtilitiesCache.normalize_component(item) for item in component]
+            return [FlextCache.normalize_component(item) for item in component]
         # For other types, convert to string as fallback
         return str(component)
 
     @staticmethod
-    def sort_key(key: FlextTypes.SortableObjectType) -> tuple[int, str]:
+    def sort_key(key: t.SortableObjectType) -> tuple[int, str]:
         """Generate a sort key for deterministic ordering across types.
 
         Business Rule: Type-Aware Deterministic Sorting
@@ -181,8 +178,8 @@ class FlextUtilitiesCache:
 
     @staticmethod
     def sort_dict_keys(
-        data: FlextTypes.GeneralValueType,
-    ) -> FlextTypes.GeneralValueType:
+        data: t.GeneralValueType,
+    ) -> t.GeneralValueType:
         """Sort dictionary keys recursively for consistent representations.
 
         Business Rule: Recursive Key Sorting for Cache Consistency
@@ -214,23 +211,23 @@ class FlextUtilitiesCache:
         """
         if FlextRuntime.is_dict_like(data):
             data_dict = data
-            result: dict[str, FlextTypes.GeneralValueType] = {}
-            for k in sorted(data_dict.keys(), key=FlextUtilitiesCache.sort_key):
+            result: dict[str, t.GeneralValueType] = {}
+            for k in sorted(data_dict.keys(), key=FlextCache.sort_key):
                 value = data_dict[k]
                 # Handle None values - convert to empty dict for consistency
                 if value is None:
                     result[k] = {}
                 else:
                     # Recursively sort nested structures
-                    sorted_value = FlextUtilitiesCache.sort_dict_keys(value)
+                    sorted_value = FlextCache.sort_dict_keys(value)
                     result[k] = sorted_value
             return result
         return data
 
     @staticmethod
     def clear_object_cache(
-        obj: FlextTypes.GeneralValueType | BaseModel,
-    ) -> FlextResult[bool]:
+        obj: t.GeneralValueType | BaseModel,
+    ) -> r[bool]:
         """Clear cache-like attributes on an object.
 
         Business Rule: Safe Cache Invalidation
@@ -261,19 +258,19 @@ class FlextUtilitiesCache:
             obj: Object with potential cache attributes
 
         Returns:
-            FlextResult[bool]: ok(True) on success, fail(msg) on error
+            r[bool]: ok(True) on success, fail(msg) on error
 
         """
         try:
             # Common cache attribute names to check and clear
-            cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
+            cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
 
             cleared_count = 0
             for attr_name in cache_attributes:
                 if hasattr(obj, attr_name):
                     cache_attr = getattr(obj, attr_name, None)
                     if cache_attr is not None:
-                        # Clear dict[str, FlextTypes.GeneralValueType]-like caches
+                        # Clear dict[str, t.GeneralValueType]-like caches
                         if hasattr(cache_attr, "clear") and callable(
                             cache_attr.clear,
                         ):
@@ -284,12 +281,12 @@ class FlextUtilitiesCache:
                             setattr(obj, attr_name, None)
                             cleared_count += 1
 
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[bool].fail(f"Failed to clear caches: {e}")
+            return r[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def has_cache_attributes(obj: FlextTypes.GeneralValueType) -> bool:
+    def has_cache_attributes(obj: t.GeneralValueType) -> bool:
         """Check if an object exposes any known cache-related attributes.
 
         Business Rule: Cache Detection
@@ -304,13 +301,14 @@ class FlextUtilitiesCache:
             True if any known cache attribute exists, False otherwise
 
         """
-        cache_attributes = FlextConstants.Utilities.CACHE_ATTRIBUTE_NAMES
+        cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
+        # NOTE: Cannot use u.map() here due to circular import (utilities.py imports cache.py)
         return any(hasattr(obj, attr) for attr in cache_attributes)
 
     @staticmethod
     def generate_cache_key(
-        *args: FlextTypes.GeneralValueType,
-        **kwargs: FlextTypes.GeneralValueType,
+        *args: t.GeneralValueType,
+        **kwargs: t.GeneralValueType,
     ) -> str:
         """Generate a deterministic cache key from arguments.
 
@@ -346,4 +344,9 @@ class FlextUtilitiesCache:
         return hashlib.sha256(key_data.encode()).hexdigest()
 
 
-__all__ = ["FlextUtilitiesCache"]
+uCache = FlextCache  # noqa: N816  # noqa: N816
+
+__all__ = [
+    "FlextCache",
+    "uCache",
+]

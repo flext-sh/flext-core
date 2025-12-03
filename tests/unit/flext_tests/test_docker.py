@@ -151,17 +151,39 @@ class TestFlextTestDocker:
         finally:
             temp_file.unlink()
 
-    def test_save_dirty_state(self, docker_manager: FlextTestDocker) -> None:
-        """Test saving dirty state to file."""
+    def test_save_dirty_state(
+        self, docker_manager: FlextTestDocker, tmp_path: Path
+    ) -> None:
+        """Test saving dirty state to file.
+
+        Validates:
+        1. Dirty state is saved to file correctly
+        2. File is created in tmp_path (not permanent location)
+        3. Saved data matches expected content
+        4. File can be read back correctly
+        """
         docker_manager._dirty_containers = {"test_container"}
+
+        # Validate state file is in tmp_path (not permanent location)
+        # The fixture sets _state_file to tmp_path / "test_docker_state.json"
+        assert docker_manager._state_file.parent == tmp_path
+        assert docker_manager._state_file.name == "test_docker_state.json"
+
         docker_manager._save_dirty_state()
 
+        # Validate file was created
         assert docker_manager._state_file.exists()
 
+        # Validate file content
         with docker_manager._state_file.open("r") as f:
             data = json.load(f)
 
+        assert "dirty_containers" in data
+        assert isinstance(data["dirty_containers"], list)
         assert "test_container" in data["dirty_containers"]
+
+        # Validate data structure
+        assert len(data["dirty_containers"]) == 1
 
     def test_mark_container_dirty(self, docker_manager: FlextTestDocker) -> None:
         """Test marking container as dirty."""

@@ -18,10 +18,8 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
-from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
-
-# NOTE: Use FlextConstants.Performance constants directly - no inline constants per FLEXT standards
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelsBase:
@@ -112,20 +110,20 @@ class FlextModelsBase:
             self.updated_at = datetime.now(UTC)
 
     class VersionableMixin(BaseModel):
-        """Mixin for versioning (usa constante inline, não FlextConstants)."""
+        """Mixin for versioning (usa constante inline, não c)."""
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
         version: int = Field(
-            default=FlextConstants.Performance.DEFAULT_VERSION,
-            ge=FlextConstants.Performance.MIN_VERSION,
+            default=c.Performance.DEFAULT_VERSION,
+            ge=c.Performance.MIN_VERSION,
             description="Version number for optimistic locking",
         )
 
         @computed_field
         def is_initial_version(self) -> bool:
             """Check if this is the initial version (version 1)."""
-            return self.version == FlextConstants.Performance.DEFAULT_VERSION
+            return self.version == c.Performance.DEFAULT_VERSION
 
         def increment_version(self) -> None:
             """Increment the version number for optimistic locking."""
@@ -167,7 +165,7 @@ class FlextModelsBase:
             default_factory=list,
             description="Tags for categorization and filtering",
         )
-        attributes: dict[str, FlextTypes.MetadataAttributeValue] = Field(
+        attributes: dict[str, t.MetadataAttributeValue] = Field(
             default_factory=dict,
             description="Additional metadata attributes (JSON-serializable)",
         )

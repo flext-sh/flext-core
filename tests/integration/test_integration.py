@@ -36,9 +36,9 @@ import pytest
 from flext_core import (
     FlextContainer,
     FlextResult,
-    FlextTypes,
-    FlextUtilities,
     __version__,
+    t,
+    u,
 )
 
 # Use FunctionalExternalService from conftest.py to avoid duplication
@@ -59,7 +59,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: dict[str, FlextTypes.GeneralValueType],
+        sample_data: dict[str, t.GeneralValueType],
     ) -> None:
         """Test comprehensive integration of core library exports.
 
@@ -81,8 +81,8 @@ class TestLibraryIntegration:
         assert result.is_success is True
         assert result.value == test_value
 
-        # Act - Test entity ID type system using FlextUtilities
-        entity_id = FlextUtilities.Generators.generate_id()  # Use actual method name
+        # Act - Test entity ID type system using u
+        entity_id = u.Generators.generate_id()  # Use actual method name
 
         # Assert - Type system coherence
         assert isinstance(entity_id, str)
@@ -96,7 +96,7 @@ class TestLibraryIntegration:
         assert register_result is clean_container
 
         # Act - Test service retrieval
-        service_result: FlextResult[FlextTypes.GeneralValueType] = clean_container.get(
+        service_result: FlextResult[t.GeneralValueType] = clean_container.get(
             "test_service"
         )
 
@@ -149,7 +149,7 @@ class TestLibraryIntegration:
         assert register_result is clean_container
 
         # Act - Get factory result from container
-        factory_result: FlextResult[FlextTypes.GeneralValueType] = clean_container.get(
+        factory_result: FlextResult[t.GeneralValueType] = clean_container.get(
             "result_factory"
         )
 
@@ -169,7 +169,7 @@ class TestLibraryIntegration:
 
     def test_entity_id_in_flext_result(self) -> None:
         """Test entity ID used in FlextResult."""
-        entity_id = FlextUtilities.Generators.generate_id()  # Use actual method name
+        entity_id = u.Generators.generate_id()  # Use actual method name
         result = FlextResult[str].ok(entity_id)
 
         assert result.is_success

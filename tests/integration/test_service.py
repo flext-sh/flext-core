@@ -15,7 +15,7 @@ from pydantic import PrivateAttr
 from flext_core import FlextContainer, FlextResult, FlextService
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from ..conftest import FunctionalExternalService
 
@@ -48,7 +48,7 @@ class UserQueryService(FlextService[bool]):
 
     def __init__(
         self,
-        **data: FlextTypes.GeneralValueType,
+        **data: t.GeneralValueType,
     ) -> None:
         """Initialize user query service."""
         super().__init__(**data)
@@ -129,7 +129,7 @@ class NotificationService(FlextService[str]):
 
     def __init__(
         self,
-        **data: FlextTypes.GeneralValueType,
+        **data: t.GeneralValueType,
     ) -> None:
         """Initialize notification service."""
         super().__init__(**data)
@@ -200,7 +200,7 @@ class LifecycleService(FlextService[str]):
 
     def __init__(
         self,
-        **data: FlextTypes.GeneralValueType,
+        **data: t.GeneralValueType,
     ) -> None:
         """Initialize lifecycle service."""
         super().__init__(**data)

@@ -2,7 +2,7 @@
 
 Provides comprehensive pagination functionality for API responses,
 including parameter extraction, validation, data preparation, and
-response building with ``FlextResult``-based error handling. Keep
+response building with ``r``-based error handling. Keep
 metadata deterministic so dispatcher handlers can compose paginated
 results without side effects.
 
@@ -15,8 +15,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
-from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes, T
+from flext_core.result import r
+from flext_core.typings import T, t
 
 
 class FlextUtilitiesPagination:
@@ -24,7 +24,7 @@ class FlextUtilitiesPagination:
 
     Provides methods for extracting pagination parameters from requests,
     validating them, preparing paginated data, and building responses.
-    All methods use FlextResult for consistent error handling.
+    All methods use r for consistent error handling.
     """
 
     @staticmethod
@@ -34,7 +34,7 @@ class FlextUtilitiesPagination:
         default_page: int = 1,
         default_page_size: int = 20,
         max_page_size: int = 1000,
-    ) -> FlextResult[tuple[int, int]]:
+    ) -> r[tuple[int, int]]:
         """Extract page and page_size from query parameters.
 
         Args:
@@ -44,7 +44,7 @@ class FlextUtilitiesPagination:
             max_page_size: Maximum allowed page size
 
         Returns:
-            FlextResult with (page, page_size) tuple or error
+            r with (page, page_size) tuple or error
 
         """
         page_str = str(default_page)
@@ -64,15 +64,15 @@ class FlextUtilitiesPagination:
             page_size = int(page_size_str)
 
             if page < 1:
-                return FlextResult.fail("Page must be >= 1")
+                return r.fail("Page must be >= 1")
             if page_size < 1:
-                return FlextResult.fail("Page size must be >= 1")
+                return r.fail("Page size must be >= 1")
             if page_size > max_page_size:
-                return FlextResult.fail(f"Page size must be <= {max_page_size}")
+                return r.fail(f"Page size must be <= {max_page_size}")
 
-            return FlextResult.ok((page, page_size))
+            return r.ok((page, page_size))
         except ValueError as e:
-            return FlextResult.fail(f"Invalid page parameters: {e}")
+            return r.fail(f"Invalid page parameters: {e}")
 
     @staticmethod
     def validate_pagination_params(
@@ -80,7 +80,7 @@ class FlextUtilitiesPagination:
         page: int,
         page_size: int | None,
         max_page_size: int,
-    ) -> FlextResult[dict[str, int]]:
+    ) -> r[dict[str, int]]:
         """Validate pagination parameters.
 
         Args:
@@ -89,20 +89,20 @@ class FlextUtilitiesPagination:
             max_page_size: Maximum allowed page size
 
         Returns:
-            FlextResult with validated parameters or error
+            r with validated parameters or error
 
         """
         if page < 1:
-            return FlextResult.fail("Page must be >= 1")
+            return r.fail("Page must be >= 1")
 
         effective_page_size = page_size if page_size is not None else 20
 
         if effective_page_size < 1:
-            return FlextResult.fail("Page size must be >= 1")
+            return r.fail("Page size must be >= 1")
         if effective_page_size > max_page_size:
-            return FlextResult.fail(f"Page size must be <= {max_page_size}")
+            return r.fail(f"Page size must be <= {max_page_size}")
 
-        return FlextResult.ok({"page": page, "page_size": effective_page_size})
+        return r.ok({"page": page, "page_size": effective_page_size})
 
     @staticmethod
     def prepare_pagination_data(
@@ -111,7 +111,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Prepare pagination data structure.
 
         Args:
@@ -121,7 +121,7 @@ class FlextUtilitiesPagination:
             page_size: Page size
 
         Returns:
-            FlextResult with pagination data dictionary or error
+            r with pagination data dictionary or error
 
         """
         if data is None:
@@ -133,18 +133,18 @@ class FlextUtilitiesPagination:
 
         # Ensure page is within bounds
         if page > total_pages > 0:
-            return FlextResult.fail(f"Page {page} exceeds total pages {total_pages}")
+            return r.fail(f"Page {page} exceeds total pages {total_pages}")
 
         has_next = page < total_pages
         has_prev = page > 1
 
         # Convert Sequence[T] to GeneralValueType-compatible list
-        data_list: FlextTypes.GeneralValueType = cast(
-            "FlextTypes.GeneralValueType",
+        data_list: t.GeneralValueType = cast(
+            "t.GeneralValueType",
             list(data),
         )
 
-        return FlextResult.ok({
+        return r.ok({
             "data": data_list,
             "pagination": {
                 "page": page,
@@ -158,9 +158,9 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: dict[str, FlextTypes.GeneralValueType],
+        pagination_data: dict[str, t.GeneralValueType],
         message: str | None = None,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Build paginated response dictionary.
 
         Args:
@@ -168,20 +168,20 @@ class FlextUtilitiesPagination:
             message: Optional response message
 
         Returns:
-            FlextResult with response dictionary or error
+            r with response dictionary or error
 
         """
         data = pagination_data.get("data")
         pagination = pagination_data.get("pagination")
 
         if data is None or pagination is None:
-            return FlextResult.fail("Invalid pagination data structure")
+            return r.fail("Invalid pagination data structure")
 
         # Type narrowing: data and pagination from dict.get() are object
         # but we know they are valid GeneralValueType from prepare_pagination_data
         # Convert to proper types for response dict
-        data_typed: FlextTypes.GeneralValueType
-        pagination_typed: FlextTypes.GeneralValueType
+        data_typed: t.GeneralValueType
+        pagination_typed: t.GeneralValueType
 
         # Validate types match GeneralValueType
         if isinstance(data, (str, int, float, bool, type(None), Sequence, Mapping)):
@@ -197,7 +197,7 @@ class FlextUtilitiesPagination:
         else:
             pagination_typed = str(pagination)
 
-        response: dict[str, FlextTypes.GeneralValueType] = {
+        response: dict[str, t.GeneralValueType] = {
             "data": data_typed,
             "pagination": pagination_typed,
         }
@@ -205,11 +205,11 @@ class FlextUtilitiesPagination:
         if message is not None:
             response["message"] = message
 
-        return FlextResult.ok(response)
+        return r.ok(response)
 
     @staticmethod
     def extract_pagination_config(
-        config: FlextTypes.GeneralValueType | None,
+        config: t.GeneralValueType | None,
     ) -> dict[str, int]:
         """Extract pagination configuration values - no fallbacks.
 
@@ -246,3 +246,8 @@ class FlextUtilitiesPagination:
             "default_page_size": default_page_size,
             "max_page_size": max_page_size,
         }
+
+
+__all__ = [
+    "FlextUtilitiesPagination",
+]

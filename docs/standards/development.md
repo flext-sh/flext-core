@@ -69,17 +69,17 @@ Inner layers know NOTHING about outer layers.
 1. **Foundation Layer** (No Dependencies):
    - FlextResult[T] - Railway pattern
    - FlextContainer - Dependency injection
-   - FlextTypes - Type system
+   - t - Type system
    - FlextConstants - Centralized constants
 
 2. **Domain Layer** (Foundation Only):
    - FlextModels - DDD patterns
    - FlextService - Domain services
-   - FlextMixins - Reusable behaviors
+   - x - Reusable behaviors
 
 3. **Application Layer** (Foundation + Domain):
    - FlextDispatcher - Message routing
-   - FlextHandlers - Handler registry
+   - h - Handler registry
    - FlextRegistry - Component management
 
 4. **Infrastructure Layer** (All Layers):
@@ -96,7 +96,7 @@ src/flext_core/
 ├── __init__.py          # Public API exports ONLY
 ├── result.py           # Railway pattern (FlextResult)
 ├── container.py        # DI singleton (FlextContainer)
-├── typings.py          # Type system (FlextTypes)
+├── typings.py          # Type system (t)
 ├── constants.py        # Constants (FlextConstants)
 ├── models.py           # DDD base classes (FlextModels)
 ├── service.py          # Domain service base (FlextService)

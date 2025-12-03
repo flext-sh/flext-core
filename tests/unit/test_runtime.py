@@ -11,7 +11,7 @@ Tests all functionality of FlextRuntime including:
 - Structlog configuration
 - Integration scenarios
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, FlextTestsUtilities, c,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -29,8 +29,7 @@ import pytest
 import structlog
 from dependency_injector import containers, providers
 
-from flext_core import FlextConstants, FlextContext, FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core import FlextContext, FlextRuntime, c, t
 
 
 class RuntimeOperationType(StrEnum):
@@ -87,13 +86,13 @@ class RuntimeTestCase:
     operation: RuntimeOperationType
     # Business Rule: test_input supports both values and types for comprehensive testing
     # GeneralValueType | type[object] | None allows testing runtime type checking with various inputs
-    test_input: FlextTypes.GeneralValueType | type[object] | None = None
+    test_input: t.GeneralValueType | type[object] | None = None
     expected_result: bool | tuple[object, ...] | object = None
     should_reset_config: bool = False
 
 
 class RuntimeScenarios:
-    """Centralized runtime test scenarios using FlextConstants."""
+    """Centralized runtime test scenarios using c."""
 
     PHONE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
@@ -604,7 +603,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_phone(
-            cast("FlextTypes.GeneralValueType", test_case.test_input)
+            cast("t.GeneralValueType", test_case.test_input)
         )
         assert result == test_case.expected_result
 
@@ -622,7 +621,7 @@ class TestFlextRuntime:
         """
         # Business Rule: Cast to GeneralValueType for type compatibility
         # None and various types are compatible with GeneralValueType at runtime
-        test_input_typed = cast("FlextTypes.GeneralValueType", test_case.test_input)
+        test_input_typed = cast("t.GeneralValueType", test_case.test_input)
         result = FlextRuntime.is_dict_like(test_input_typed)
         assert result == test_case.expected_result
 
@@ -640,7 +639,7 @@ class TestFlextRuntime:
         """
         # Business Rule: Cast to GeneralValueType for type compatibility
         # None and various types are compatible with GeneralValueType at runtime
-        test_input_typed = cast("FlextTypes.GeneralValueType", test_case.test_input)
+        test_input_typed = cast("t.GeneralValueType", test_case.test_input)
         result = FlextRuntime.is_list_like(test_input_typed)
         assert result == test_case.expected_result
 
@@ -656,7 +655,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_json(
-            cast("FlextTypes.GeneralValueType", test_case.test_input)
+            cast("t.GeneralValueType", test_case.test_input)
         )
         assert result == test_case.expected_result
 
@@ -672,7 +671,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_identifier(
-            cast("FlextTypes.GeneralValueType", test_case.test_input)
+            cast("t.GeneralValueType", test_case.test_input)
         )
         assert result == test_case.expected_result
 
@@ -688,7 +687,7 @@ class TestFlextRuntime:
             class TestObj:
                 attr = "value"
 
-            test_obj: FlextTypes.GeneralValueType = TestObj()  # type: ignore[assignment]  # TestObj is compatible with GeneralValueType
+            test_obj: t.GeneralValueType = TestObj()  # type: ignore[assignment]  # TestObj is compatible with GeneralValueType
             result = FlextRuntime.safe_get_attribute(test_obj, "attr")
             assert result == "value"
         elif (
@@ -699,7 +698,7 @@ class TestFlextRuntime:
             class TestObjDefault:
                 pass
 
-            test_obj_default: FlextTypes.GeneralValueType = TestObjDefault()  # type: ignore[assignment]  # TestObjDefault is compatible with GeneralValueType
+            test_obj_default: t.GeneralValueType = TestObjDefault()  # type: ignore[assignment]  # TestObjDefault is compatible with GeneralValueType
             result = FlextRuntime.safe_get_attribute(
                 test_obj_default,
                 "missing",
@@ -716,9 +715,7 @@ class TestFlextRuntime:
 
             # Business Rule: TestObjNoDefault instances are compatible with GeneralValueType at runtime
             # Cast to GeneralValueType for type compatibility
-            test_obj_no_default = cast(
-                "FlextTypes.GeneralValueType", TestObjNoDefault()
-            )
+            test_obj_no_default = cast("t.GeneralValueType", TestObjNoDefault())
             result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
             assert result is None
 
@@ -736,9 +733,7 @@ class TestFlextRuntime:
         """
         # Business Rule: Cast to TypeHintSpecifier for type compatibility
         # None and various types are compatible with TypeHintSpecifier at runtime
-        test_input_typed = cast(
-            "FlextTypes.Utility.TypeHintSpecifier", test_case.test_input
-        )
+        test_input_typed = cast("t.Utility.TypeHintSpecifier", test_case.test_input)
         args = FlextRuntime.extract_generic_args(test_input_typed)
         assert args == test_case.expected_result
 
@@ -756,9 +751,7 @@ class TestFlextRuntime:
         """
         # Business Rule: Cast to TypeHintSpecifier for type compatibility
         # None and various types are compatible with TypeHintSpecifier at runtime
-        test_input_typed = cast(
-            "FlextTypes.Utility.TypeHintSpecifier", test_case.test_input
-        )
+        test_input_typed = cast("t.Utility.TypeHintSpecifier", test_case.test_input)
         result = FlextRuntime.is_sequence_type(test_input_typed)
         assert result == test_case.expected_result
 
@@ -822,8 +815,8 @@ class TestFlextRuntime:
 
             # Business Rule: Callable processors are compatible with GeneralValueType at runtime
             # structlog accepts callable processors for custom processing
-            processor_typed: FlextTypes.GeneralValueType = cast(
-                "FlextTypes.GeneralValueType", custom_processor
+            processor_typed: t.GeneralValueType = cast(
+                "t.GeneralValueType", custom_processor
             )
             FlextRuntime.configure_structlog(
                 additional_processors=[processor_typed]  # type: ignore[list-item]  # GeneralValueType is compatible with processor type at runtime
@@ -842,11 +835,11 @@ class TestFlextRuntime:
     def test_runtime_integration(self, test_case: RuntimeTestCase) -> None:
         """Test FlextRuntime integration scenarios."""
         if test_case.operation == RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS:
-            assert hasattr(FlextConstants.Platform, "PATTERN_PHONE_NUMBER")
+            assert hasattr(c.Platform, "PATTERN_PHONE_NUMBER")
             assert FlextRuntime.is_valid_phone("+5511987654321")
         elif test_case.operation == RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY:
-            assert FlextConstants is not None and FlextRuntime is not None
-            assert FlextConstants.Platform.PATTERN_EMAIL is not None
+            assert c is not None and FlextRuntime is not None
+            assert c.Platform.PATTERN_EMAIL is not None
         elif (
             test_case.operation == RuntimeOperationType.TRACK_SERVICE_RESOLUTION_SUCCESS
         ):

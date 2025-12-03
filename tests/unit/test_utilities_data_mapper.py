@@ -1,11 +1,11 @@
-"""Comprehensive tests for FlextUtilities.DataMapper - 100% coverage target.
+"""Comprehensive tests for u.DataMapper - 100% coverage target.
 
 Tested modules: flext_core._utilities.data_mapper
 Test scope: Data mapping utilities for dict key mapping, flags building, active keys
 collection, value transformation, dict filtering, and inversion with full edge case coverage.
 
 This module provides real tests (no mocks) for all data mapping functions
-in FlextUtilities.DataMapper to achieve 100% code coverage using advanced Python
+in u.DataMapper to achieve 100% code coverage using advanced Python
 patterns for code reduction and maintainability.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -29,8 +29,8 @@ from tests.helpers import (
 )
 
 
-class TestFlextUtilitiesDataMapper:
-    """Comprehensive tests for FlextUtilities.DataMapper using advanced patterns."""
+class TestuDataMapper:
+    """Comprehensive tests for u.DataMapper using advanced patterns."""
 
     # ============================================================================
     # Factory Methods for Test Cases

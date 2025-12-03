@@ -29,8 +29,8 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextDispatcher, FlextResult
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class DoubleProcessor:
@@ -38,22 +38,14 @@ class DoubleProcessor:
 
     def process(
         self,
-        data: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-        ),
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Double the input number."""
         if not isinstance(data, int):
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 f"Expected int, got {type(data)}"
             )
-        return FlextResult[FlextTypes.GeneralValueType].ok(data * 2)
+        return FlextResult[t.GeneralValueType].ok(data * 2)
 
 
 class SquareProcessor:
@@ -61,22 +53,14 @@ class SquareProcessor:
 
     def process(
         self,
-        data: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-        ),
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Square the input number."""
         if not isinstance(data, int):
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 f"Expected int, got {type(data)}"
             )
-        return FlextResult[FlextTypes.GeneralValueType].ok(data * data)
+        return FlextResult[t.GeneralValueType].ok(data * data)
 
 
 class FailingProcessor:
@@ -84,20 +68,10 @@ class FailingProcessor:
 
     def process(
         self,
-        data: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-        ),
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Always return failure."""
-        return FlextResult[FlextTypes.GeneralValueType].fail(
-            "Processor intentionally failed"
-        )
+        return FlextResult[t.GeneralValueType].fail("Processor intentionally failed")
 
 
 class SlowProcessor:
@@ -109,23 +83,13 @@ class SlowProcessor:
 
     def process(
         self,
-        data: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-        ),
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Sleep then return result."""
         time.sleep(self.delay_seconds)
         # Cast data to GeneralValueType for FlextResult.ok()
         # The actual data may be any of the union types, but we wrap it in result
-        return FlextResult[FlextTypes.GeneralValueType].ok(
-            cast("FlextTypes.GeneralValueType", data)
-        )
+        return FlextResult[t.GeneralValueType].ok(cast("t.GeneralValueType", data))
 
 
 class CallableProcessor:
@@ -136,18 +100,12 @@ class CallableProcessor:
 
     def process(
         self,
-        data: FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType],
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType],
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Process data and return result."""
         if isinstance(data, int):
-            return FlextResult[FlextTypes.GeneralValueType].ok(data + 10)
-        return FlextResult[FlextTypes.GeneralValueType].fail("Expected int")
+            return FlextResult[t.GeneralValueType].ok(data + 10)
+        return FlextResult[t.GeneralValueType].fail("Expected int")
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,9 +114,9 @@ class ProcessorScenario:
 
     name: str
     processor_name: str
-    input_data: FlextTypes.GeneralValueType
+    input_data: t.GeneralValueType
     expected_success: bool
-    expected_value: FlextTypes.GeneralValueType | None = None
+    expected_value: t.GeneralValueType | None = None
 
 
 class DispatcherScenarios:
@@ -172,13 +130,13 @@ class DispatcherScenarios:
         ProcessorScenario("invalid_input", "double", "not-a-number", False),
     ]
 
-    BATCH_INPUTS: ClassVar[list[list[FlextTypes.GeneralValueType]]] = [
+    BATCH_INPUTS: ClassVar[list[list[t.GeneralValueType]]] = [
         [1, 2, 3, 4, 5],
         [],
         [10, 20, 30],
     ]
 
-    PARALLEL_INPUTS: ClassVar[list[list[FlextTypes.GeneralValueType]]] = [
+    PARALLEL_INPUTS: ClassVar[list[list[t.GeneralValueType]]] = [
         [1, 2, 3, 4, 5],
         [],
         [10, 20, 30],
@@ -200,9 +158,9 @@ class DispatcherTestHelpers:
 
     @staticmethod
     def assert_processor_result(
-        result: FlextResult[FlextTypes.GeneralValueType],
+        result: FlextResult[t.GeneralValueType],
         should_succeed: bool,
-        expected_value: FlextTypes.GeneralValueType | None = None,
+        expected_value: t.GeneralValueType | None = None,
     ) -> None:
         """Assert processor result matches expectations."""
         assert result.is_success == should_succeed
@@ -226,7 +184,7 @@ class TestLayer3MessageProcessing:
         dispatcher = FlextDispatcher()
         processor = DoubleProcessor()
 
-        config: dict[str, FlextTypes.GeneralValueType] = {
+        config: dict[str, t.GeneralValueType] = {
             "timeout": 5.0,
             "retries": 3,
         }
@@ -272,7 +230,7 @@ class TestLayer3BatchProcessing:
         DispatcherScenarios.BATCH_INPUTS,
         ids=lambda x: f"items_{len(x) if isinstance(x, list) else 0}",
     )
-    def test_batch_process(self, items: list[FlextTypes.GeneralValueType]) -> None:
+    def test_batch_process(self, items: list[t.GeneralValueType]) -> None:
         """Test batch processing with various input sizes."""
         dispatcher = DispatcherTestHelpers.create_test_dispatcher()
         result = dispatcher.process_batch("double", items)
@@ -307,7 +265,7 @@ class TestLayer3ParallelProcessing:
         DispatcherScenarios.PARALLEL_INPUTS,
         ids=lambda x: f"items_{len(x) if isinstance(x, list) else 0}",
     )
-    def test_parallel_process(self, items: list[FlextTypes.GeneralValueType]) -> None:
+    def test_parallel_process(self, items: list[t.GeneralValueType]) -> None:
         """Test parallel processing with various input sizes."""
         dispatcher = DispatcherTestHelpers.create_test_dispatcher()
         result = dispatcher.process_parallel("double", items)

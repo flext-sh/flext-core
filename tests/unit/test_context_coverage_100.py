@@ -22,7 +22,7 @@ from flext_core import (
     FlextResult,
 )
 from flext_core._models.base import FlextModelsBase
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 # ==================== COVERAGE TESTS ====================
 
@@ -75,7 +75,7 @@ class TestContext100Coverage:
 
         merge_data: dict[str, object] = {"key2": "value2", "key3": "value3"}
         # Convert dict[str, object] to dict[str, GeneralValueType]
-        converted_data: dict[str, FlextTypes.GeneralValueType] = {
+        converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
             else str(v)
@@ -193,7 +193,7 @@ class TestContext100Coverage:
 
         import_data: dict[str, object] = {"key1": "value1", "key2": "value2"}
         # Convert dict[str, object] to dict[str, GeneralValueType]
-        converted_data: dict[str, FlextTypes.GeneralValueType] = {
+        converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
             else str(v)
@@ -489,7 +489,7 @@ class TestContext100Coverage:
             global_data = exported.get("global")
             if isinstance(global_data, dict):
                 # Convert dict[str, object] to dict[str, GeneralValueType]
-                converted_global: dict[str, FlextTypes.GeneralValueType] = {
+                converted_global: dict[str, t.GeneralValueType] = {
                     k: v
                     if isinstance(v, (str, int, float, bool, type(None), list, dict))
                     else str(v)
@@ -555,7 +555,7 @@ class TestContext100Coverage:
         result = context.get("nonexistent")
         # Cast to FlextResult to access unwrap_or (ResultProtocol doesn't have it)
         # pyright: ignore[reportAttributeAccessIssue] - unwrap_or exists on FlextResult
-        result_typed = cast("FlextResult[FlextTypes.GeneralValueType]", result)
+        result_typed = cast("FlextResult[t.GeneralValueType]", result)
         value = result_typed.unwrap_or("default_value")
         assert value == "default_value"
 
@@ -576,7 +576,7 @@ class TestContext100Coverage:
             global_data = exported.get("global")
             if isinstance(global_data, dict):
                 # Convert dict[str, object] to dict[str, GeneralValueType]
-                converted_global: dict[str, FlextTypes.GeneralValueType] = {
+                converted_global: dict[str, t.GeneralValueType] = {
                     k: v
                     if isinstance(v, (str, int, float, bool, type(None), list, dict))
                     else str(v)

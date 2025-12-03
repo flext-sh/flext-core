@@ -3,6 +3,7 @@
 FLEXT-Core is the dispatcher-centric foundation library for the FLEXT ecosystem. It provides railway-oriented programming primitives, an explicit dependency injection container, CQRS dispatching, and domain-driven design helpers for Python 3.13+.
 
 ## Key Capabilities
+
 - **Railway-oriented results:** `FlextResult` models success and failure without raising exceptions in business code.
 - **Dependency injection:** `FlextContainer` manages shared services with clear scopes (global or custom containers).
 - **CQRS dispatcher:** `FlextDispatcher` routes commands, queries, and domain events through registered handlers and middleware.
@@ -10,6 +11,7 @@ FLEXT-Core is the dispatcher-centric foundation library for the FLEXT ecosystem.
 - **Infrastructure helpers:** configuration loading, structured logging, and execution context propagation are bundled for consistent cross-cutting concerns.
 
 ## Architecture at a Glance
+
 ```
 src/flext_core/
 ├── config.py        # Environment-aware configuration helpers
@@ -32,6 +34,7 @@ src/flext_core/
 ```
 
 ## Quick Start
+
 Install and verify the core imports:
 
 ```bash
@@ -66,12 +69,15 @@ assert result.is_success
 ```
 
 ## Documentation
+
 Full documentation lives in [`docs/`](./docs/) and follows the standards in [`docs/standards/`](./docs/standards/). Notable entry points:
+
 - [`docs/QUICK_START.md`](./docs/QUICK_START.md) — five-minute overview
 - [`docs/architecture/overview.md`](./docs/architecture/overview.md) — layer summary
 - [`docs/api-reference/`](./docs/api-reference/) — module-level API reference by layer
 - [`examples/`](./examples/) — runnable examples demonstrating handlers, dispatcher flows, and supporting utilities
 
 ## Contributing and Support
+
 - Review [`docs/development/contributing.md`](./docs/development/contributing.md) for coding, documentation, and testing expectations (PEP 8/257 compliant).
 - Open issues or discussions on GitHub for bug reports or design questions.
