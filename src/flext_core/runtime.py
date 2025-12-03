@@ -1019,8 +1019,8 @@ class FlextRuntime:  # noqa: PLR0904
             >>> FlextRuntime.enable_runtime_checking()
             True
             >>> # Now all flext_core calls have runtime type validation
-            >>> from flext_core import FlextResult
-            >>> result = FlextResult[int].ok("not an int")  # Raises BeartypeError
+            >>> from flext_core import, r
+            >>> result = r[int].ok("not an int")  # Raises BeartypeError
 
         Notes:
             - Beartype uses O(log n) strategy for thorough validation

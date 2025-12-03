@@ -164,7 +164,7 @@ class FlextLogger:
             **context: Context variables to bind globally
 
         Returns:
-            FlextResult[bool]: Success with True if bound, failure with error details
+            r[bool]: Success with True if bound, failure with error details
 
         Example:
             >>> FlextLogger.bind_global_context(
@@ -281,7 +281,7 @@ class FlextLogger:
             **context: Context variables to bind
 
         Returns:
-            FlextResult[bool]: Success with True if bound, failure with error details
+            r[bool]: Success with True if bound, failure with error details
 
         Examples:
             >>> # Application-level context (app name, version, environment)
@@ -443,7 +443,7 @@ class FlextLogger:
             **context: Context variables to bind
 
         Returns:
-            FlextResult[bool]: Success with True if bound, failure with error details
+            r[bool]: Success with True if bound, failure with error details
 
         Example:
             >>> FlextLogger.bind_context_for_level("DEBUG", config="debug_config")
@@ -839,7 +839,7 @@ class FlextLogger:
         info, warning, error, critical) into a single implementation. Formats message
         with % arguments, auto-adds source path if not provided, and delegates to
         structlog logger. Uses FlextRuntime for centralized logging management.
-        Returns FlextResult[bool] indicating success or failure.
+        Returns r[bool] indicating success or failure.
 
         Audit Implication: Internal logging ensures audit trail completeness by
         formatting messages and adding source context. All log messages go through
@@ -932,7 +932,7 @@ class FlextLogger:
         """Log debug message - LoggerProtocol implementation.
 
         Business Rule: Logs a debug-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns FlextResult[bool]
+        method for actual logging. If return_result=True, returns r[bool]
         indicating success or failure. Otherwise returns None. Uses FlextRuntime for
         centralized logging management.
 
@@ -978,7 +978,7 @@ class FlextLogger:
         """Log info message - LoggerProtocol implementation.
 
         Business Rule: Logs an info-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns FlextResult[bool]
+        method for actual logging. If return_result=True, returns r[bool]
         indicating success or failure. Otherwise returns None. Uses FlextRuntime for
         centralized logging management.
 
@@ -1024,7 +1024,7 @@ class FlextLogger:
         """Log warning message - LoggerProtocol implementation.
 
         Business Rule: Logs a warning-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns FlextResult[bool]
+        method for actual logging. If return_result=True, returns r[bool]
         indicating success or failure. Otherwise returns None. Uses FlextRuntime for
         centralized logging management.
 
@@ -1070,7 +1070,7 @@ class FlextLogger:
         """Log error message - LoggerProtocol implementation.
 
         Business Rule: Logs an error-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns FlextResult[bool]
+        method for actual logging. If return_result=True, returns r[bool]
         indicating success or failure. Otherwise returns None. Uses FlextRuntime for
         centralized logging management.
 
@@ -1116,7 +1116,7 @@ class FlextLogger:
         """Log critical message - LoggerProtocol implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns FlextResult[bool]
+        method for actual logging. If return_result=True, returns r[bool]
         indicating success or failure. Otherwise returns None. Uses FlextRuntime for
         centralized logging management.
 

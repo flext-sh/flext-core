@@ -376,7 +376,7 @@ class FlextProtocols:
         # NOTE: Factory methods (ok, fail) and transformation methods (map, flat_map)
         # are omitted from this protocol for simplicity:
         # - ok/fail are classmethods in FlextResult (Protocols can't define classmethods)
-        # - map/flat_map are implementation-specific (FlextResult returns FlextResult[U])
+        # - map/flat_map are implementation-specific (FlextResult returns r[U])
         # Use FlextResult directly when you need factory or transformation methods.
 
         def unwrap(self) -> T:

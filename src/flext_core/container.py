@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from flext_core._models.container import FlextModelsContainer
 from flext_core.config import FlextConfig
 from flext_core.protocols import p
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T, t
 from flext_core.utilities import u
@@ -212,7 +212,7 @@ class FlextContainer:
         service: (
             t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
         ),
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Register a service instance for dependency resolution.
 
         Business Rule: The container accepts any object type for registration,
@@ -234,22 +234,22 @@ class FlextContainer:
         """
         try:
             if name in self._services:
-                return FlextResult[bool].fail(f"Service '{name}' already registered")
+                return r[bool].fail(f"Service '{name}' already registered")
             registration = FlextModelsContainer.ServiceRegistration(
                 name=name,
                 service=service,
                 service_type=type(service).__name__,
             )
             self._services[name] = registration
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         except Exception as e:
-            return FlextResult[bool].fail(str(e))
+            return r[bool].fail(str(e))
 
     def register_factory(
         self,
         name: str,
         factory: Callable[[], t.GeneralValueType],
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Register a factory used to build services on demand.
 
         Returns:
@@ -260,7 +260,7 @@ class FlextContainer:
         """
         try:
             if name in self._factories:
-                return FlextResult[bool].fail(f"Factory '{name}' already registered")
+                return r[bool].fail(f"Factory '{name}' already registered")
             # Factory returns GeneralValueType which is compatible with FactoryRegistration requirements
             # Cast factory to expected type - GeneralValueType includes ScalarValue, Sequence, Mapping
             factory_typed: Callable[
@@ -275,11 +275,11 @@ class FlextContainer:
                 factory=factory_typed,
             )
             self._factories[name] = registration
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         except Exception as e:
-            return FlextResult[bool].fail(str(e))
+            return r[bool].fail(str(e))
 
-    def get[T](self, name: str) -> FlextResult[T]:
+    def get[T](self, name: str) -> r[T]:
         """Resolve a registered service or factory by name.
 
         Business Rule: Type-safe resolution using generic type parameter T.
@@ -296,7 +296,7 @@ class FlextContainer:
             name: Service identifier to resolve.
 
         Returns:
-            FlextResult[T]: Success with resolved service of type T, or failure
+            r[T]: Success with resolved service of type T, or failure
                 if service not found or factory raises exception.
 
         """
@@ -304,35 +304,35 @@ class FlextContainer:
         if name in self._services:
             service = self._services[name].service
             # Runtime type safety guaranteed by container registration
-            return FlextResult[T].ok(cast("T", service))
+            return r[T].ok(cast("T", service))
 
         # Try factory
         if name in self._factories:
             try:
                 instance = self._factories[name].factory()
                 # Runtime type safety guaranteed by container registration
-                return FlextResult[T].ok(cast("T", instance))
+                return r[T].ok(cast("T", instance))
             except Exception as e:
-                return FlextResult[T].fail(str(e))
+                return r[T].fail(str(e))
 
-        result: FlextResult[T] = FlextResult[T].fail(f"Service '{name}' not found")
+        result: r[T] = r[T].fail(f"Service '{name}' not found")
         return result
 
-    def get_typed(self, name: str, type_cls: type[T]) -> FlextResult[T]:
+    def get_typed(self, name: str, type_cls: type[T]) -> r[T]:
         """Resolve a service by name and validate its runtime type.
 
         The returned ``FlextResult`` contains type-safe access to the service or
         the reason validation failed.
         """
-        result: FlextResult[T] = self.get(name)
+        result: r[T] = self.get(name)
         if result.is_failure:
-            return FlextResult[T].fail(result.error or "Unknown error")
+            return r[T].fail(result.error or "Unknown error")
         if not isinstance(result.value, type_cls):
             type_name = u.get(type_cls, "__name__", default=str(type_cls)) or str(
                 type_cls
             )
-            return FlextResult[T].fail(f"Service '{name}' is not of type {type_name}")
-        return FlextResult[T].ok(result.value)
+            return r[T].fail(f"Service '{name}' is not of type {type_name}")
+        return r[T].ok(result.value)
 
     def has_service(self, name: str) -> bool:
         """Return whether a service or factory is registered for ``name``."""
@@ -342,15 +342,15 @@ class FlextContainer:
         """List the names of registered services and factories."""
         return list(self._services.keys()) + list(self._factories.keys())
 
-    def unregister(self, name: str) -> FlextResult[bool]:
+    def unregister(self, name: str) -> r[bool]:
         """Remove a service or factory registration by name."""
         if name in self._services:
             del self._services[name]
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         if name in self._factories:
             del self._factories[name]
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(f"Service '{name}' not found")
+            return r[bool].ok(True)
+        return r[bool].fail(f"Service '{name}' not found")
 
     def clear_all(self) -> None:
         """Clear all service and factory registrations.
@@ -468,7 +468,7 @@ class FlextContainer:
         scoped_context = context if context is not None else self.context.clone()
         if subproject:
             # ContextProtocol.set returns None per protocol definition
-            # But FlextContext.set returns FlextResult[bool] - call directly
+            # But FlextContext.set returns r[bool] - call directly
             # Protocol allows None return, implementation can return FlextResult
             _ = scoped_context.set("subproject", subproject)
 

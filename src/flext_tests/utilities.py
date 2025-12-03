@@ -29,7 +29,7 @@ from typing import Protocol, TypedDict, TypeVar, overload, runtime_checkable
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
 
-from flext_core import FlextResult, u
+from flext_core import, r, u
 from flext_core.protocols import p
 from flext_core.typings import t
 from flext_tests.domains import FlextTestsDomains
@@ -67,7 +67,7 @@ class FlextTestsUtilities:
             *,
             default_on_none: TValue | None = None,
             error_on_none: str | None = None,
-        ) -> FlextResult[TValue]:
+        ) -> r[TValue]:
             """Create FlextResult from value with standardized None handling.
 
             Replaces 10+ lines of duplicated result creation code.
@@ -82,12 +82,12 @@ class FlextTestsUtilities:
 
             """
             if value is not None:
-                return FlextResult[TValue].ok(value)
+                return r[TValue].ok(value)
             if default_on_none is not None:
-                return FlextResult[TValue].ok(default_on_none)
+                return r[TValue].ok(default_on_none)
             if error_on_none is not None:
-                return FlextResult[TValue].fail(error_on_none)
-            return FlextResult[TValue].fail("Value is None and no default provided")
+                return r[TValue].fail(error_on_none)
+            return r[TValue].fail("Value is None and no default provided")
 
         @staticmethod
         def extract_mapping_values[TKey, TValue](
@@ -125,7 +125,7 @@ class FlextTestsUtilities:
             *,
             required_attrs: Sequence[str],
             optional_attrs: Sequence[str] | None = None,
-        ) -> FlextResult[bool]:
+        ) -> r[bool]:
             """Validate model instance has required attributes.
 
             Replaces 10+ lines of duplicated attribute validation code.
@@ -147,18 +147,18 @@ class FlextTestsUtilities:
                     missing.append(f"{attr} (None value)")
 
             if missing:
-                return FlextResult[bool].fail(
+                return r[bool].fail(
                     f"Missing required attributes: {', '.join(missing)}",
                 )
 
             if optional_attrs:
                 for attr in optional_attrs:
                     if not hasattr(instance, attr):
-                        return FlextResult[bool].fail(
+                        return r[bool].fail(
                             f"Missing optional attribute: {attr}",
                         )
 
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
         @staticmethod
         def create_parametrized_cases[TValue](
@@ -166,7 +166,7 @@ class FlextTestsUtilities:
             failure_errors: Sequence[str],
             *,
             error_codes: Sequence[str | None] | None = None,
-        ) -> list[tuple[FlextResult[TValue], bool, TValue | None, str | None]]:
+        ) -> list[tuple[r[TValue], bool, TValue | None, str | None]]:
             """Create parametrized test cases from value/error sequences.
 
             Replaces 10+ lines of duplicated test case creation code.
@@ -181,25 +181,25 @@ class FlextTestsUtilities:
 
             """
             cases: list[
-                tuple[FlextResult[TValue], bool, TValue | None, str | None]
+                tuple[r[TValue], bool, TValue | None, str | None]
             ] = []
 
             for value in success_values:
-                result = FlextResult[TValue].ok(value)
+                result = r[TValue].ok(value)
                 cases.append((result, True, value, None))
 
             error_codes_list = error_codes or [None] * len(failure_errors)
             for error, error_code in zip(
                 failure_errors, error_codes_list, strict=False
             ):
-                result = FlextResult[TValue].fail(error, error_code=error_code)
+                result = r[TValue].fail(error, error_code=error_code)
                 cases.append((result, False, None, error))
 
             return cases
 
         @staticmethod
         def assert_result_chain[TValue](
-            results: Sequence[FlextResult[TValue]],
+            results: Sequence[r[TValue]],
             *,
             expected_success_count: int | None = None,
             expected_failure_count: int | None = None,
@@ -276,13 +276,13 @@ class FlextTestsUtilities:
 
         @staticmethod
         def execute_with_retry_and_timeout[TResult](
-            operation: Callable[[], FlextResult[TResult]],
+            operation: Callable[[], r[TResult]],
             *,
             max_attempts: int = 3,
             delay_seconds: float = 1.0,
             timeout_seconds: int | None = None,
             logger: LoggerProtocol | None = None,
-        ) -> FlextResult[TResult]:
+        ) -> r[TResult]:
             """Execute operation with retry logic and optional timeout.
 
             Replaces 15+ lines of duplicated retry/timeout code across test utilities.
@@ -312,7 +312,7 @@ class FlextTestsUtilities:
                                 timeout=timeout_seconds,
                                 attempts=attempt,
                             )
-                        return FlextResult[TResult].fail(
+                        return r[TResult].fail(
                             error_msg
                             if last_error is None
                             else f"{error_msg}: {last_error}",
@@ -346,7 +346,7 @@ class FlextTestsUtilities:
             error_msg = f"Operation failed after {max_attempts} attempts"
             if last_error:
                 error_msg = f"{error_msg}: {last_error}"
-            return FlextResult[TResult].fail(error_msg)
+            return r[TResult].fail(error_msg)
 
         @staticmethod
         def validate_config_structure(
@@ -356,7 +356,7 @@ class FlextTestsUtilities:
             optional_keys: Sequence[str] | None = None,
             key_validators: Mapping[str, Callable[[t.GeneralValueType], bool]]
             | None = None,
-        ) -> FlextResult[bool]:
+        ) -> r[bool]:
             """Validate configuration structure with required/optional keys and validators.
 
             Replaces 12+ lines of duplicated config validation code.
@@ -373,14 +373,14 @@ class FlextTestsUtilities:
             """
             missing_keys = [key for key in required_keys if key not in config]
             if missing_keys:
-                return FlextResult[bool].fail(
+                return r[bool].fail(
                     f"Missing required config keys: {', '.join(missing_keys)}",
                 )
 
             if optional_keys:
                 for key in optional_keys:
                     if key not in config:
-                        return FlextResult[bool].fail(
+                        return r[bool].fail(
                             f"Missing optional config key: {key}",
                         )
 
@@ -389,11 +389,11 @@ class FlextTestsUtilities:
                     if key in config:
                         value = config[key]
                         if not validator(value):
-                            return FlextResult[bool].fail(
+                            return r[bool].fail(
                                 f"Validation failed for key '{key}': value {value}",
                             )
 
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
     @staticmethod
     @overload
@@ -402,7 +402,7 @@ class FlextTestsUtilities:
         success: bool = True,
         data: TValue,
         error: str | None = None,
-    ) -> FlextResult[TValue]: ...
+    ) -> r[TValue]: ...
 
     @staticmethod
     @overload
@@ -411,7 +411,7 @@ class FlextTestsUtilities:
         success: bool = True,
         data: None = None,
         error: str | None = None,
-    ) -> FlextResult[t.GeneralValueType]: ...
+    ) -> r[t.GeneralValueType]: ...
 
     @staticmethod
     def create_test_result[TValue: t.GeneralValueType](
@@ -419,7 +419,7 @@ class FlextTestsUtilities:
         success: bool = True,
         data: TValue | None = None,
         error: str | None = None,
-    ) -> FlextResult[TValue] | FlextResult[t.GeneralValueType]:
+    ) -> r[TValue] | r[t.GeneralValueType]:
         """Create a test FlextResult.
 
         Args:
@@ -436,11 +436,11 @@ class FlextTestsUtilities:
             if data is None:
                 # Use empty dict as default test data
                 empty_dict: t.GeneralValueType = {}
-                return FlextResult[t.GeneralValueType].ok(empty_dict)
-            return FlextResult[TValue].ok(data)
+                return r[t.GeneralValueType].ok(empty_dict)
+            return r[TValue].ok(data)
         if data is None:
-            return FlextResult[t.GeneralValueType].fail(error or "Test error")
-        return FlextResult[TValue].fail(error or "Test error")
+            return r[t.GeneralValueType].fail(error or "Test error")
+        return r[TValue].fail(error or "Test error")
 
     @staticmethod
     def functional_service(
@@ -506,7 +506,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_result_success(
-            result: FlextResult[TResult] | p.ResultProtocol[TResult],
+            result: r[TResult] | p.ResultProtocol[TResult],
         ) -> None:
             """Assert that a result is successful.
 
@@ -521,7 +521,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_result_failure(
-            result: FlextResult[TResult] | p.ResultProtocol[TResult],
+            result: r[TResult] | p.ResultProtocol[TResult],
         ) -> None:
             """Assert that a result is a failure.
 
@@ -679,21 +679,21 @@ class FlextTestsUtilities:
         @staticmethod
         def create_success_result[TValue: t.GeneralValueType](
             value: TValue,
-        ) -> FlextResult[TValue]:
+        ) -> r[TValue]:
             """Create a successful FlextResult with given value."""
-            return FlextResult[TValue].ok(value)
+            return r[TValue].ok(value)
 
         @staticmethod
         def create_failure_result[TValue: t.GeneralValueType](
             error: str,
             error_code: str | None = None,
-        ) -> FlextResult[TValue]:
+        ) -> r[TValue]:
             """Create a failed FlextResult with given error."""
-            return FlextResult[TValue].fail(error, error_code=error_code)
+            return r[TValue].fail(error, error_code=error_code)
 
         @staticmethod
         def assert_success_with_value[TValue: t.GeneralValueType](
-            result: FlextResult[TValue],
+            result: r[TValue],
             expected_value: TValue,
         ) -> None:
             """Assert result is success and has expected value."""
@@ -702,7 +702,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_failure_with_error[TValue: t.GeneralValueType](
-            result: FlextResult[TValue],
+            result: r[TValue],
             expected_error: str | None = None,
         ) -> None:
             """Assert result is failure and has expected error."""
@@ -715,7 +715,7 @@ class FlextTestsUtilities:
         def create_test_cases[TValue: t.GeneralValueType](
             success_cases: list[tuple[TValue, TValue]],
             failure_cases: list[tuple[str, str | None]],
-        ) -> list[tuple[FlextResult[TValue], bool, TValue | None, str | None]]:
+        ) -> list[tuple[r[TValue], bool, TValue | None, str | None]]:
             """Create parametrized test cases for Result testing.
 
             Args:
@@ -727,19 +727,19 @@ class FlextTestsUtilities:
 
             """
             cases: list[
-                tuple[FlextResult[TValue], bool, TValue | None, str | None]
+                tuple[r[TValue], bool, TValue | None, str | None]
             ] = []
             for value, expected in success_cases:
-                result = FlextResult[TValue].ok(value)
+                result = r[TValue].ok(value)
                 cases.append((result, True, expected, None))
             for error, error_code in failure_cases:
-                result = FlextResult[TValue].fail(error, error_code=error_code)
+                result = r[TValue].fail(error, error_code=error_code)
                 cases.append((result, False, None, error))
             return cases
 
         @staticmethod
         def validate_composition[TValue: t.GeneralValueType](
-            results: list[FlextResult[TValue]],
+            results: list[r[TValue]],
         ) -> t.Types.ConfigurationMapping:
             """Validate FlextResult composition patterns.
 
@@ -769,7 +769,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def validate_chain[TValue: t.GeneralValueType](
-            results: list[FlextResult[TValue]],
+            results: list[r[TValue]],
         ) -> t.Types.ConfigurationMapping:
             """Validate FlextResult chain operations.
 
@@ -811,7 +811,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_composition[TValue: t.GeneralValueType](
-            results: list[FlextResult[TValue]],
+            results: list[r[TValue]],
             expected_success_rate: float = 1.0,
         ) -> None:
             """Assert FlextResult composition meets expectations.
@@ -846,7 +846,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def assert_chain_success[TValue: t.GeneralValueType](
-            results: list[FlextResult[TValue]],
+            results: list[r[TValue]],
         ) -> None:
             """Assert all results in chain are successful.
 
@@ -1024,7 +1024,7 @@ class FlextTestsUtilities:
             success_value: TResult,
             operation_name: str,
             logger: LoggerProtocol | None = None,
-        ) -> FlextResult[TResult]:
+        ) -> r[TResult]:
             """Execute Docker operation with standardized error handling.
 
             Args:
@@ -1039,10 +1039,10 @@ class FlextTestsUtilities:
             """
             try:
                 _ = operation()
-                return FlextResult[TResult].ok(success_value)
+                return r[TResult].ok(success_value)
             except NotFound as e:
                 error_msg = f"{operation_name} not found: {e}"
-                return FlextResult[TResult].fail(error_msg)
+                return r[TResult].fail(error_msg)
             except DockerException as e:
                 if logger and hasattr(logger, "exception"):
                     logger.exception(
@@ -1050,7 +1050,7 @@ class FlextTestsUtilities:
                         exception=e,
                     )
                 error_msg = f"Failed to {operation_name}: {e}"
-                return FlextResult[TResult].fail(error_msg)
+                return r[TResult].fail(error_msg)
             except Exception as e:
                 if logger and hasattr(logger, "exception"):
                     logger.exception(
@@ -1058,13 +1058,13 @@ class FlextTestsUtilities:
                         exception=e,
                     )
                 error_msg = f"Unexpected error in {operation_name}: {e}"
-                return FlextResult[TResult].fail(error_msg)
+                return r[TResult].fail(error_msg)
 
         @staticmethod
         def validate_container_config(
             config: dict[str, str | int],
             required_keys: list[str],
-        ) -> FlextResult[dict[str, str | int]]:
+        ) -> r[dict[str, str | int]]:
             """Validate container configuration dictionary.
 
             Args:
@@ -1077,10 +1077,10 @@ class FlextTestsUtilities:
             """
             missing_keys = [key for key in required_keys if key not in config]
             if missing_keys:
-                return FlextResult[dict[str, str | int]].fail(
+                return r[dict[str, str | int]].fail(
                     f"Missing required config keys: {', '.join(missing_keys)}",
                 )
-            return FlextResult[dict[str, str | int]].ok(config)
+            return r[dict[str, str | int]].ok(config)
 
         @staticmethod
         def safe_execute[TResult](
@@ -1188,7 +1188,7 @@ class FlextTestsUtilities:
             *,
             filter_pattern: str | None = None,
             logger: LoggerProtocol | None = None,
-        ) -> FlextResult[dict[str, int | list[str]]]:
+        ) -> r[dict[str, int | list[str]]]:
             """Generalized Docker resource cleanup helper.
 
             Args:
@@ -1210,14 +1210,14 @@ class FlextTestsUtilities:
 
                 resources_api = getattr(client, list_attr, None)
                 if not resources_api:
-                    return FlextResult[dict[str, int | list[str]]].ok({
+                    return r[dict[str, int | list[str]]].ok({
                         "removed": 0,
                         resource_type: [],
                     })
 
                 list_method = getattr(resources_api, "list", None)
                 if not list_method:
-                    return FlextResult[dict[str, int | list[str]]].ok({
+                    return r[dict[str, int | list[str]]].ok({
                         "removed": 0,
                         resource_type: [],
                     })
@@ -1262,7 +1262,7 @@ class FlextTestsUtilities:
                                 resource_name=resource_name_str,
                             )
 
-                return FlextResult[dict[str, int | list[str]]].ok({
+                return r[dict[str, int | list[str]]].ok({
                     "removed": len(removed_items),
                     resource_type: removed_items,
                 })
@@ -1274,7 +1274,7 @@ class FlextTestsUtilities:
                         exception=e,
                         resource_type=resource_type,
                     )
-                return FlextResult[dict[str, int | list[str]]].fail(
+                return r[dict[str, int | list[str]]].fail(
                     f"{resource_type.title()} cleanup failed: {e}",
                 )
 
@@ -1305,7 +1305,7 @@ class FlextTestsUtilities:
             operation_name: str,
             compose_file: str,
             logger: LoggerProtocol | None = None,
-        ) -> FlextResult[str]:
+        ) -> r[str]:
             """Execute docker-compose operation with threading and timeout.
 
             Args:
@@ -1333,7 +1333,7 @@ class FlextTestsUtilities:
                 thread.join(timeout=timeout_seconds)
 
                 if thread.is_alive():
-                    return FlextResult[str].fail(
+                    return r[str].fail(
                         f"docker compose {operation_name} timed out after {timeout_seconds} seconds",
                     )
 
@@ -1356,7 +1356,7 @@ class FlextTestsUtilities:
                     success_msg = (
                         f"Compose {operation_name} completed for {compose_file}"
                     )
-                return FlextResult[str].ok(success_msg)
+                return r[str].ok(success_msg)
 
             except Exception as e:
                 error_msg = str(e)
@@ -1367,7 +1367,7 @@ class FlextTestsUtilities:
                         compose_file=compose_file,
                         error=error_msg,
                     )
-                return FlextResult[str].fail(
+                return r[str].fail(
                     f"docker compose {operation_name} failed: {error_msg}",
                 )
 
@@ -1418,7 +1418,7 @@ class FlextTestsUtilities:
             operation_name: str,
             success_value: TResult | None = None,
             logger: LoggerProtocol | None = None,
-        ) -> FlextResult[TResult]:
+        ) -> r[TResult]:
             """Execute Docker client operation with standardized error handling.
 
             Args:
@@ -1439,14 +1439,14 @@ class FlextTestsUtilities:
                 if result is None and success_value is not None:
                     result = success_value
                 elif result is None:
-                    return FlextResult[TResult].fail(
+                    return r[TResult].fail(
                         f"{operation_name} returned None",
                     )
 
-                return FlextResult[TResult].ok(result)
+                return r[TResult].ok(result)
             except NotFound as e:
                 error_msg = f"{operation_name} not found: {e}"
-                return FlextResult[TResult].fail(error_msg)
+                return r[TResult].fail(error_msg)
             except DockerException as e:
                 if logger and hasattr(logger, "exception"):
                     logger.exception(
@@ -1454,7 +1454,7 @@ class FlextTestsUtilities:
                         exception=e,
                     )
                 error_msg = f"Failed to {operation_name}: {e}"
-                return FlextResult[TResult].fail(error_msg)
+                return r[TResult].fail(error_msg)
             except Exception as e:
                 if logger and hasattr(logger, "exception"):
                     logger.exception(
@@ -1462,7 +1462,7 @@ class FlextTestsUtilities:
                         exception=e,
                     )
                 error_msg = f"Unexpected error in {operation_name}: {e}"
-                return FlextResult[TResult].fail(error_msg)
+                return r[TResult].fail(error_msg)
 
         @staticmethod
         def extract_container_info(
@@ -1657,7 +1657,7 @@ class FlextTestsUtilities:
             *,
             force_kill: bool = True,
             logger: LoggerProtocol | None = None,
-        ) -> FlextResult[bool]:
+        ) -> r[bool]:
             """Stop container with graceful fallback to force kill.
 
             Args:
@@ -1681,7 +1681,7 @@ class FlextTestsUtilities:
                             container_name,
                             container=container_name,
                         )
-                    return FlextResult[bool].ok(True)
+                    return r[bool].ok(True)
             except Exception as e:
                 if force_kill:
                     try:
@@ -1695,7 +1695,7 @@ class FlextTestsUtilities:
                                     container=container_name,
                                     error=str(e),
                                 )
-                            return FlextResult[bool].ok(True)
+                            return r[bool].ok(True)
                     except Exception as kill_error:
                         error_msg = f"Failed to stop/kill container {container_name}: {kill_error}"
                         if logger and hasattr(logger, "exception"):
@@ -1703,14 +1703,14 @@ class FlextTestsUtilities:
                                 error_msg,
                                 container=container_name,
                             )
-                        return FlextResult[bool].fail(error_msg)
+                        return r[bool].fail(error_msg)
 
                 error_msg = f"Failed to stop container {container_name}: {e}"
                 if logger and hasattr(logger, "exception"):
                     logger.exception(error_msg, container=container_name)
-                return FlextResult[bool].fail(error_msg)
+                return r[bool].fail(error_msg)
 
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"Container {container_name} has no stop method",
             )
 
@@ -1721,7 +1721,7 @@ class FlextTestsUtilities:
             *,
             force: bool = False,
             logger: LoggerProtocol | None = None,
-        ) -> FlextResult[bool]:
+        ) -> r[bool]:
             """Remove container with optional force flag.
 
             Args:
@@ -1748,7 +1748,7 @@ class FlextTestsUtilities:
                             container=container_name,
                             force=force,
                         )
-                    return FlextResult[bool].ok(True)
+                    return r[bool].ok(True)
             except Exception as e:
                 if not force:
                     # Try force remove as fallback
@@ -1762,7 +1762,7 @@ class FlextTestsUtilities:
                                     container_name,
                                     container=container_name,
                                 )
-                            return FlextResult[bool].ok(True)
+                            return r[bool].ok(True)
                     except Exception as force_error:
                         error_msg = f"Failed to remove container {container_name}: {force_error}"
                         if logger and hasattr(logger, "exception"):
@@ -1770,14 +1770,14 @@ class FlextTestsUtilities:
                                 error_msg,
                                 container=container_name,
                             )
-                        return FlextResult[bool].fail(error_msg)
+                        return r[bool].fail(error_msg)
 
                 error_msg = f"Failed to remove container {container_name}: {e}"
                 if logger and hasattr(logger, "exception"):
                     logger.exception(error_msg, container=container_name)
-                return FlextResult[bool].fail(error_msg)
+                return r[bool].fail(error_msg)
 
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"Container {container_name} has no remove method",
             )
 
@@ -1812,7 +1812,7 @@ class FlextTestsUtilities:
 
         @staticmethod
         def wait_with_retry[T](
-            check_fn: Callable[[], FlextResult[T]],
+            check_fn: Callable[[], r[T]],
             max_wait_seconds: int,
             check_interval_seconds: int = 5,
             success_condition: Callable[[T], bool] | None = None,
@@ -1821,7 +1821,7 @@ class FlextTestsUtilities:
             """Execute a check function repeatedly until success or timeout.
 
             Args:
-                check_fn: Function that returns FlextResult[T] to check
+                check_fn: Function that returns r[T] to check
                 max_wait_seconds: Maximum seconds to wait
                 check_interval_seconds: Seconds between checks (default 5)
                 success_condition: Optional function to determine if result is successful

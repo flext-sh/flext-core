@@ -21,7 +21,7 @@ from typing import Never
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextResult, FlextService, u
+from flext_core import, r, FlextService, u
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.typings import t
 from flext_tests.typings import FlextTestsTypings
@@ -255,19 +255,19 @@ class FlextTestsFactories:
                 super().__init__(**data)
                 self._overrides.update(overrides)
 
-            def _validate_name_not_empty(self) -> FlextResult[bool]:
+            def _validate_name_not_empty(self) -> r[bool]:
                 """Validate name is not empty."""
                 if self.name is not None and not self.name:
-                    return FlextResult[bool].fail("Name is required")
-                return FlextResult[bool].ok(True)
+                    return r[bool].fail("Name is required")
+                return r[bool].ok(True)
 
-            def _validate_amount_non_negative(self) -> FlextResult[bool]:
+            def _validate_amount_non_negative(self) -> r[bool]:
                 """Validate amount is non-negative."""
                 if self.amount is not None and self.amount < 0:
-                    return FlextResult[bool].fail("Amount must be non-negative")
-                return FlextResult[bool].ok(True)
+                    return r[bool].fail("Amount must be non-negative")
+                return r[bool].ok(True)
 
-            def _validate_disabled_without_amount(self) -> FlextResult[bool]:
+            def _validate_disabled_without_amount(self) -> r[bool]:
                 """Validate disabled service doesn't have amount."""
                 if (
                     self.enabled is not None
@@ -275,10 +275,10 @@ class FlextTestsFactories:
                     and self.amount is not None
                     and self.amount > 0
                 ):
-                    return FlextResult[bool].fail("Cannot have amount when disabled")
-                return FlextResult[bool].ok(True)
+                    return r[bool].fail("Cannot have amount when disabled")
+                return r[bool].ok(True)
 
-            def _validate_business_rules_complex(self) -> FlextResult[bool]:
+            def _validate_business_rules_complex(self) -> r[bool]:
                 """Validate business rules for complex service."""
                 name_result = self._validate_name_not_empty()
                 if name_result.is_failure:
@@ -292,11 +292,11 @@ class FlextTestsFactories:
                 if disabled_result.is_failure:
                     return disabled_result
 
-                return FlextResult[bool].ok(True)
+                return r[bool].ok(True)
 
             def execute(
                 self, **_kwargs: FlextTestsTypings.TestResultValue
-            ) -> FlextResult[FlextTestsTypings.TestResultValue]:
+            ) -> r[FlextTestsTypings.TestResultValue]:
                 """Execute test operation."""
                 if service_type == "user":
                     user_id = "default_123" if overrides.get("default") else "test_123"
@@ -306,38 +306,38 @@ class FlextTestsFactories:
                         "user_id": user_id,
                         "email": "test@example.com",
                     }
-                    return FlextResult[FlextTestsTypings.TestResultValue].ok(user_data)
+                    return r[FlextTestsTypings.TestResultValue].ok(user_data)
                 if service_type == "complex":
                     validation = self._validate_business_rules_complex()
                     if validation.is_failure:
-                        return FlextResult[FlextTestsTypings.TestResultValue].fail(
+                        return r[FlextTestsTypings.TestResultValue].fail(
                             validation.error or "Validation failed",
                         )
                     result_data: FlextTestsTypings.TestResultValue = {
                         "result": "success"
                     }
-                    return FlextResult[FlextTestsTypings.TestResultValue].ok(
+                    return r[FlextTestsTypings.TestResultValue].ok(
                         result_data
                     )
                 service_data: FlextTestsTypings.TestResultValue = {
                     "service_type": service_type
                 }
-                return FlextResult[FlextTestsTypings.TestResultValue].ok(service_data)
+                return r[FlextTestsTypings.TestResultValue].ok(service_data)
 
-            def validate_business_rules(self) -> FlextResult[bool]:
+            def validate_business_rules(self) -> r[bool]:
                 """Validate business rules for complex service."""
                 if service_type == "complex":
                     return self._validate_business_rules_complex()
                 return super().validate_business_rules()
 
-            def validate_config(self) -> FlextResult[bool]:
+            def validate_config(self) -> r[bool]:
                 """Validate config for complex service."""
                 if service_type == "complex":
                     if self.name is not None and len(self.name) > 50:
-                        return FlextResult[bool].fail("Name too long")
+                        return r[bool].fail("Name too long")
                     if self.amount is not None and self.amount > 1000:
-                        return FlextResult[bool].fail("Value too large")
-                    return FlextResult[bool].ok(True)
-                return FlextResult[bool].ok(True)
+                        return r[bool].fail("Value too large")
+                    return r[bool].ok(True)
+                return r[bool].ok(True)
 
         return TestService

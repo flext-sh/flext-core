@@ -18,7 +18,7 @@ import structlog
 
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._utilities.model import FlextModel
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.typings import t
 
 
@@ -66,7 +66,7 @@ class FlextStringParser:
         strip: bool,
         remove_empty: bool,
         validator: Callable[[str], bool] | None,
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Process components with strip, remove_empty, and validator."""
         if strip:
             self.logger.debug(
@@ -106,7 +106,7 @@ class FlextStringParser:
                     )
             components = valid_components
 
-        return FlextResult[list[str]].ok(components)
+        return r[list[str]].ok(components)
 
     def parse_delimited(
         self,
@@ -115,7 +115,7 @@ class FlextStringParser:
         *,
         options: FlextModelsCollections.ParseOptions | None = None,
         **legacy_options: bool | Callable[[str], bool] | None,
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Parse delimited string into list of components.
 
         **Generic replacement for**: DN.split(), CSV parsing, config parsing
@@ -200,17 +200,17 @@ class FlextStringParser:
                 operation="parse_delimited",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[list[str]].ok([])
+            return r[list[str]].ok([])
 
         # Validate delimiter
         if not delimiter or len(delimiter) != 1:
-            return FlextResult[list[str]].fail(
+            return r[list[str]].fail(
                 f"Delimiter must be exactly one character, got '{delimiter}'",
             )
 
         # Reject whitespace/control characters as delimiters
         if delimiter.isspace() or not delimiter.isprintable():
-            return FlextResult[list[str]].fail(
+            return r[list[str]].fail(
                 f"Delimiter cannot be a whitespace or control character: '{delimiter}'",
             )
 
@@ -250,7 +250,7 @@ class FlextStringParser:
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
-            return FlextResult[list[str]].ok(components)
+            return r[list[str]].ok(components)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # Safely get text length (may fail for non-string objects in tests)
@@ -269,13 +269,13 @@ class FlextStringParser:
                 consequence="Cannot parse delimited string - invalid input or internal error",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[list[str]].fail(f"Failed to parse delimited string: {e}")
+            return r[list[str]].fail(f"Failed to parse delimited string: {e}")
 
     @staticmethod
     def _validate_split_inputs(
         split_char: str,
         escape_char: str,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate inputs for split operation.
 
         Args:
@@ -283,18 +283,18 @@ class FlextStringParser:
             escape_char: Escape character
 
         Returns:
-            FlextResult[bool]: True if valid, failure with error message
+            r[bool]: True if valid, failure with error message
 
         """
         if not split_char:
-            return FlextResult[bool].fail("Split character cannot be empty")
+            return r[bool].fail("Split character cannot be empty")
         if not escape_char:
-            return FlextResult[bool].fail("Escape character cannot be empty")
+            return r[bool].fail("Escape character cannot be empty")
         if split_char == escape_char:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "Split character and escape character cannot be the same",
             )
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     def _get_safe_text_length(self, text: str) -> int:
         """Get text length safely, handling non-string objects in tests.
@@ -321,7 +321,7 @@ class FlextStringParser:
         text: str,
         split_char: str,
         escape_char: str,
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Execute escape-aware splitting with logging and error handling.
 
         Args:
@@ -356,7 +356,7 @@ class FlextStringParser:
             # Process the text and extract components
             split_result = self._process_escape_splitting(text, split_char, escape_char)
             if split_result.is_failure:
-                return FlextResult[list[str]].fail(
+                return r[list[str]].fail(
                     split_result.error or "Unknown error in escape splitting",
                 )
 
@@ -370,7 +370,7 @@ class FlextStringParser:
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
-            return FlextResult[list[str]].ok(components)
+            return r[list[str]].ok(components)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             text_len = self._get_safe_text_length(text)
@@ -385,14 +385,14 @@ class FlextStringParser:
                 consequence="Cannot split string with escape handling - invalid input or internal error",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[list[str]].fail(f"Failed to split with escape: {e}")
+            return r[list[str]].fail(f"Failed to split with escape: {e}")
 
     def split_on_char_with_escape(
         self,
         text: str,
         split_char: str,
         escape_char: str = "\\",
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         r"""Split string on character, respecting escape sequences.
 
         **Generic replacement for**: DN parsing with escapes, CSV with quotes
@@ -417,7 +417,7 @@ class FlextStringParser:
         """
         validation_result = self._validate_split_inputs(split_char, escape_char)
         if validation_result.is_failure:
-            return FlextResult[list[str]].fail(
+            return r[list[str]].fail(
                 validation_result.error or "Validation failed",
             )
 
@@ -428,7 +428,7 @@ class FlextStringParser:
                 operation="split_on_char_with_escape",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[list[str]].ok([""])
+            return r[list[str]].ok([""])
 
         # Execute splitting with error handling
         return self._execute_escape_splitting(text, split_char, escape_char)
@@ -438,7 +438,7 @@ class FlextStringParser:
         text: str,
         pattern: str = r"\s+",
         replacement: str = " ",
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         r"""Normalize whitespace in text using regex pattern.
 
             **Generic replacement for**: Multiple spaces to single space normalization
@@ -478,7 +478,7 @@ class FlextStringParser:
                 operation="normalize_whitespace",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[str].ok(text)
+            return r[str].ok(text)
 
         try:
             self.logger.debug(
@@ -500,7 +500,7 @@ class FlextStringParser:
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
-            return FlextResult[str].ok(normalized)
+            return r[str].ok(normalized)
 
         except (
             AttributeError,
@@ -520,13 +520,13 @@ class FlextStringParser:
                 consequence="Cannot normalize whitespace - invalid pattern or internal error",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[str].fail(f"Failed to normalize whitespace: {e}")
+            return r[str].fail(f"Failed to normalize whitespace: {e}")
 
     def apply_regex_pipeline(
         self,
         text: str | None,
         patterns: list[tuple[str, str] | tuple[str, str, int]],
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         r"""Apply sequence of regex substitutions to text.
 
         **Generic replacement for**: Multiple regex.sub() calls
@@ -572,7 +572,7 @@ class FlextStringParser:
 
         # Ensure text is not None before processing
         if text is None:
-            return FlextResult[str].fail("Text cannot be None for regex pipeline")
+            return r[str].fail("Text cannot be None for regex pipeline")
 
         try:
             self.logger.debug(
@@ -585,7 +585,7 @@ class FlextStringParser:
             # Process all patterns - text is guaranteed to be str here
             process_result = self._process_all_patterns(text, patterns)
             if process_result.is_failure:
-                return FlextResult[str].fail(
+                return r[str].fail(
                     process_result.error or "Unknown error in pattern processing",
                 )
 
@@ -603,7 +603,7 @@ class FlextStringParser:
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
-            return FlextResult[str].ok(final_result)
+            return r[str].ok(final_result)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # Safely get text length (may fail for non-string objects in tests)
@@ -622,7 +622,7 @@ class FlextStringParser:
                 consequence="Cannot apply regex transformations - invalid pattern or internal error",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[str].fail(f"Failed to apply regex pipeline: {e}")
+            return r[str].fail(f"Failed to apply regex pipeline: {e}")
 
     @staticmethod
     def _extract_key_from_mapping(
@@ -764,7 +764,7 @@ class FlextStringParser:
     def _extract_pattern_components(
         self,
         pattern_tuple: tuple[str, str] | tuple[str, str, int],
-    ) -> FlextResult[tuple[str, str, int]]:
+    ) -> r[tuple[str, str, int]]:
         """Extract pattern, replacement, and flags from tuple."""
         tuple_len = len(pattern_tuple)
 
@@ -781,16 +781,16 @@ class FlextStringParser:
             flags_value = full_tuple[2]
             flags = flags_value if isinstance(flags_value, int) else 0
         else:
-            return FlextResult[tuple[str, str, int]].fail(
+            return r[tuple[str, str, int]].fail(
                 f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
             )
 
-        return FlextResult[tuple[str, str, int]].ok((pattern, replacement, flags))
+        return r[tuple[str, str, int]].ok((pattern, replacement, flags))
 
     def _apply_single_pattern(
         self,
         params: FlextModelsCollections.PatternApplicationParams,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Apply a single regex pattern to text."""
         self.logger.debug(
             "Applying regex pattern",
@@ -812,7 +812,7 @@ class FlextStringParser:
                 flags=params.flags,
             )
         except (re.PatternError, ValueError) as e:
-            return FlextResult[str].fail(
+            return r[str].fail(
                 f"Invalid regex pattern '{params.pattern}': {e}",
             )
 
@@ -827,13 +827,13 @@ class FlextStringParser:
             source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
-        return FlextResult[str].ok(result_text)
+        return r[str].ok(result_text)
 
     def _handle_pipeline_edge_cases(
         self,
         text: str | None,
         patterns: list[tuple[str, str] | tuple[str, str, int]],
-    ) -> FlextResult[str] | None:
+    ) -> r[str] | None:
         """Handle edge cases for regex pipeline application.
 
         Returns:
@@ -846,7 +846,7 @@ class FlextStringParser:
                 operation="apply_regex_pipeline",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[str].fail("Text cannot be None")
+            return r[str].fail("Text cannot be None")
 
         if not text:
             self.logger.debug(
@@ -854,7 +854,7 @@ class FlextStringParser:
                 operation="apply_regex_pipeline",
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[str].ok(text)
+            return r[str].ok(text)
 
         if not patterns:
             self.logger.warning(
@@ -863,7 +863,7 @@ class FlextStringParser:
                 text_length=self._safe_text_length(text),
                 source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
-            return FlextResult[str].ok(text)
+            return r[str].ok(text)
 
         # No edge case, continue processing
         return None
@@ -873,7 +873,7 @@ class FlextStringParser:
         text: str,
         split_char: str,
         escape_char: str,
-    ) -> FlextResult[tuple[list[str], int]]:
+    ) -> r[tuple[list[str], int]]:
         """Process text with escape character handling and return components."""
         components: list[str] = []
         current: list[str] = []
@@ -919,13 +919,13 @@ class FlextStringParser:
         )
         components.append("".join(current))
 
-        return FlextResult[tuple[list[str], int]].ok((components, escape_count))
+        return r[tuple[list[str], int]].ok((components, escape_count))
 
     def _process_all_patterns(
         self,
         text: str,
         patterns: list[tuple[str, str] | tuple[str, str, int]],
-    ) -> FlextResult[tuple[str, int]]:
+    ) -> r[tuple[str, int]]:
         """Process all regex patterns and return final text and count."""
         result_text = text
         applied_patterns = 0
@@ -934,7 +934,7 @@ class FlextStringParser:
             # Extract pattern components from tuple
             pattern_result = self._extract_pattern_components(pattern_tuple)
             if pattern_result.is_failure:
-                return FlextResult[tuple[str, int]].fail(
+                return r[tuple[str, int]].fail(
                     pattern_result.error
                     or "Unknown error extracting pattern components",
                 )
@@ -952,20 +952,20 @@ class FlextStringParser:
                 total_patterns=len(patterns),
             )
             if params_result.is_failure:
-                return FlextResult[tuple[str, int]].fail(
+                return r[tuple[str, int]].fail(
                     params_result.error or "Unknown error creating params",
                 )
 
             apply_result = self._apply_single_pattern(params_result.unwrap())
             if apply_result.is_failure:
-                return FlextResult[tuple[str, int]].fail(
+                return r[tuple[str, int]].fail(
                     apply_result.error or "Unknown error applying pattern",
                 )
 
             result_text = apply_result.unwrap()
             applied_patterns += 1
 
-        return FlextResult[tuple[str, int]].ok((result_text, applied_patterns))
+        return r[tuple[str, int]].ok((result_text, applied_patterns))
 
 
 uStringParser = FlextStringParser  # noqa: N816

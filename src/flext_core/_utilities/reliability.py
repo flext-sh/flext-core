@@ -18,7 +18,7 @@ from collections.abc import Callable
 
 from flext_core.constants import FlextConstants
 from flext_core.protocols import p
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -37,15 +37,15 @@ class FlextReliability:
 
     @staticmethod
     def with_timeout[TTimeout](
-        operation: Callable[[], FlextResult[TTimeout]],
+        operation: Callable[[], r[TTimeout]],
         timeout_seconds: float,
-    ) -> FlextResult[TTimeout]:
+    ) -> r[TTimeout]:
         """Execute an operation with a hard timeout using railway patterns."""
         if timeout_seconds <= FlextConstants.INITIAL_TIME:
-            return FlextResult[TTimeout].fail("Timeout must be positive")
+            return r[TTimeout].fail("Timeout must be positive")
 
         # Use proper typing for containers
-        result_container: list[FlextResult[TTimeout] | None] = [None]
+        result_container: list[r[TTimeout] | None] = [None]
         exception_container: list[Exception | None] = [None]
 
         def run_operation() -> None:
@@ -69,17 +69,17 @@ class FlextReliability:
 
         if thread.is_alive():
             # Thread is still running, timeout occurred
-            return FlextResult[TTimeout].fail(
+            return r[TTimeout].fail(
                 f"Operation timed out after {timeout_seconds} seconds",
             )
 
         if exception_container[0]:
-            return FlextResult[TTimeout].fail(
+            return r[TTimeout].fail(
                 f"Operation failed with exception: {exception_container[0]}",
             )
 
         if result_container[0] is None:
-            return FlextResult[TTimeout].fail(
+            return r[TTimeout].fail(
                 "Operation completed but returned no result",
             )
 
@@ -87,11 +87,11 @@ class FlextReliability:
 
     @staticmethod
     def retry[TResult](
-        operation: Callable[[], FlextResult[TResult]],
+        operation: Callable[[], r[TResult]],
         max_attempts: int | None = None,
         delay_seconds: float | None = None,
         backoff_multiplier: float | None = None,
-    ) -> FlextResult[TResult]:
+    ) -> r[TResult]:
         """Execute an operation with retry logic using railway patterns.
 
         Fast fail: explicit default values instead of 'or' fallback.
@@ -114,7 +114,7 @@ class FlextReliability:
         )
 
         if max_attempts_value < FlextConstants.Reliability.RETRY_COUNT_MIN:
-            return FlextResult[TResult].fail(
+            return r[TResult].fail(
                 f"Max attempts must be at least {FlextConstants.Reliability.RETRY_COUNT_MIN}",
             )
 
@@ -172,7 +172,7 @@ class FlextReliability:
                 # Sleep before retry
                 time.sleep(current_delay)
 
-        return FlextResult[TResult].fail(
+        return r[TResult].fail(
             f"Operation failed after {max_attempts_value} attempts: {last_error}",
         )
 
@@ -214,11 +214,11 @@ class FlextReliability:
 
     @staticmethod
     def with_retry[TResult](
-        operation: Callable[[], FlextResult[TResult]],
+        operation: Callable[[], r[TResult]],
         max_attempts: int = 3,
         should_retry_func: Callable[[int, str | None], bool] | None = None,
         cleanup_func: Callable[[], None] | None = None,
-    ) -> FlextResult[TResult]:
+    ) -> r[TResult]:
         """Execute operation with retry logic using railway patterns.
 
         Args:
@@ -228,7 +228,7 @@ class FlextReliability:
             cleanup_func: Function to call for cleanup after each attempt
 
         Returns:
-            FlextResult[TResult]: Result of operation with retry
+            r[TResult]: Result of operation with retry
 
         """
         for attempt in range(max_attempts):
@@ -254,12 +254,12 @@ class FlextReliability:
             except Exception as e:
                 # If operation throws exception, consider it a failure
                 if attempt >= max_attempts - 1:
-                    return FlextResult[TResult].fail(f"Operation failed: {e}")
+                    return r[TResult].fail(f"Operation failed: {e}")
 
                 if cleanup_func:
                     cleanup_func()
 
-        return FlextResult[TResult].fail("Max retries exceeded")
+        return r[TResult].fail("Max retries exceeded")
 
 
 uReliability = FlextReliability  # noqa: N816

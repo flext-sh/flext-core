@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping
 from enum import StrEnum
 
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.typings import t
 
 
@@ -33,7 +33,7 @@ class FlextCollection:
     def parse_sequence[E: StrEnum](
         enum_cls: type[E],
         values: Iterable[str | E],
-    ) -> FlextResult[tuple[E, ...]]:
+    ) -> r[tuple[E, ...]]:
         """Convert sequence of strings to tuple of StrEnum.
 
         Example:
@@ -109,7 +109,7 @@ class FlextCollection:
     def parse_mapping[E: StrEnum](
         enum_cls: type[E],
         mapping: Mapping[str, str | E],
-    ) -> FlextResult[dict[str, E]]:
+    ) -> r[dict[str, E]]:
         """Convert Mapping with string values to dict with StrEnum.
 
         Example:

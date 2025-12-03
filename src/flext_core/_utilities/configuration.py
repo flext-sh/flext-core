@@ -34,7 +34,7 @@ Business Rules & Architecture:
 Validation Context:
 - Python 3.13+: Uses collections.abc.Mapping/Sequence (not typing)
 - Pydantic v2: model_dump() replaces dict(), model_fields replaces __fields__
-- FlextResult: All operations that can fail return FlextResult[T]
+- FlextResult: All operations that can fail return r[T]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -50,7 +50,7 @@ from typing import cast
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import p
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Model, t
 
@@ -368,7 +368,7 @@ class FlextConfiguration:
             The parameter value (can be None if that's the stored value)
 
         Raises:
-            FlextExceptions.NotFoundError: If parameter is not defined
+            e.NotFoundError: If parameter is not defined
 
         """
         # Strategy 1: HasModelDump protocol
@@ -401,7 +401,7 @@ class FlextConfiguration:
             return attr_val
 
         msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-        raise FlextExceptions.NotFoundError(msg)
+        raise e.NotFoundError(msg)
 
     @staticmethod
     def set_parameter(
@@ -504,8 +504,8 @@ class FlextConfiguration:
             The parameter value
 
         Raises:
-            FlextExceptions.ValidationError: If class doesn't have get_global_instance
-            FlextExceptions.NotFoundError: If parameter is not defined
+            e.ValidationError: If class doesn't have get_global_instance
+            e.NotFoundError: If parameter is not defined
 
         """
         if hasattr(singleton_class, "get_global_instance"):
@@ -523,14 +523,14 @@ class FlextConfiguration:
         msg = (
             f"Class {singleton_class.__name__} does not have get_global_instance method"
         )
-        raise FlextExceptions.ValidationError(msg)
+        raise e.ValidationError(msg)
 
     @staticmethod
     def set_singleton(
         singleton_class: type,
         parameter: str,
         value: t.GeneralValueType,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
         Business Rule: Railway-Oriented Singleton Mutation
@@ -560,23 +560,23 @@ class FlextConfiguration:
             value: The new value to set (will be validated by Pydantic)
 
         Returns:
-            FlextResult[bool] - ok(True) on success, fail(error_msg) on failure
+            r[bool] - ok(True) on success, fail(error_msg) on failure
 
         """
         if not hasattr(singleton_class, "get_global_instance"):
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"Class {singleton_class.__name__} does not have get_global_instance method",
             )
 
         get_global_instance_method = singleton_class.get_global_instance
         if not callable(get_global_instance_method):
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"get_global_instance is not callable on {singleton_class.__name__}",
             )
 
         instance = get_global_instance_method()
         if not isinstance(instance, p.HasModelDump):
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "Instance does not implement HasModelDump protocol",
             )
 
@@ -588,8 +588,8 @@ class FlextConfiguration:
             value,
         )
         if success:
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].fail(
+            return r[bool].ok(True)
+        return r[bool].fail(
             f"Failed to set parameter '{parameter}' on {singleton_class.__name__}",
         )
 
@@ -704,7 +704,7 @@ class FlextConfiguration:
         explicit_options: T_Model | None,
         default_factory: Callable[[], T_Model],
         **kwargs: t.GeneralValueType,
-    ) -> FlextResult[T_Model]:
+    ) -> r[T_Model]:
         """Build Pydantic options model from explicit options or kwargs.
 
         Business Rule: Options+Config+kwargs Pattern (FLEXT Convention)
@@ -746,7 +746,7 @@ class FlextConfiguration:
                 entries: list[Entry],
                 format_options: WriteFormatOptions | None = None,
                 **format_kwargs: t.GeneralValueType,
-            ) -> FlextResult[str]:
+            ) -> r[str]:
                 options_result = u.Configuration.build_options_from_kwargs(
                     model_class=WriteFormatOptions,
                     explicit_options=format_options,
@@ -754,7 +754,7 @@ class FlextConfiguration:
                     **format_kwargs,
                 )
                 if options_result.is_failure:
-                    return FlextResult[str].fail(options_result.error)
+                    return r[str].fail(options_result.error)
                 options = options_result.unwrap()
                 # ... use options
 
@@ -765,7 +765,7 @@ class FlextConfiguration:
             **kwargs: Individual option overrides (snake_case field names)
 
         Returns:
-            FlextResult[T_Model]: ok(validated_model) or fail(error_msg)
+            r[T_Model]: ok(validated_model) or fail(error_msg)
 
         """
         try:
@@ -777,7 +777,7 @@ class FlextConfiguration:
 
             # Step 2: If no kwargs, return base options directly
             if not kwargs:
-                return FlextResult[T_Model].ok(base_options)
+                return r[T_Model].ok(base_options)
 
             # Step 3: Get valid field names from model class
             # Access model_fields as class attribute for type safety
@@ -811,7 +811,7 @@ class FlextConfiguration:
 
             # Step 6: If no valid overrides, return base options
             if not valid_kwargs:
-                return FlextResult[T_Model].ok(base_options)
+                return r[T_Model].ok(base_options)
 
             # Step 7: Create new model with base values + kwargs overrides
             # Use model_dump to get base values, then update with kwargs
@@ -823,12 +823,12 @@ class FlextConfiguration:
             # Step 8: Validate and create new model instance
             merged_options = model_class(**base_dict)
 
-            return FlextResult[T_Model].ok(merged_options)
+            return r[T_Model].ok(merged_options)
 
         except (TypeError, ValueError) as e:
             # Pydantic validation error
             class_name = getattr(model_class, "__name__", "UnknownModel")
-            return FlextResult[T_Model].fail(
+            return r[T_Model].fail(
                 f"Failed to build {class_name}: {e}",
             )
         except Exception as e:
@@ -837,7 +837,7 @@ class FlextConfiguration:
             FlextConfiguration._get_logger().exception(
                 "Unexpected error building options model",
             )
-            return FlextResult[T_Model].fail(
+            return r[T_Model].fail(
                 f"Unexpected error building {class_name}: {e}",
             )
 
