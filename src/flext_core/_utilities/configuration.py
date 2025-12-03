@@ -48,7 +48,7 @@ from pathlib import Path
 from typing import cast
 
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
+from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime

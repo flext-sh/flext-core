@@ -32,6 +32,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Module-Level TypeVars - Core and Domain-Specific
 # ============================================================================
 # All TypeVars are defined at module level for clarity and accessibility
+# Note: ParamSpec cannot be used in type aliases within nested classes
+# For variadic callables, we use more specific types or remove them from type aliases
 
 # Core TypeVars - covariant, contravariant, and generic type variables
 T = TypeVar("T")
@@ -226,7 +228,10 @@ class FlextTypes:
         # Type hint specifier - used for type introspection
         # Can be any type hint: type, type alias, generic, or string
         # Note: For runtime type introspection, we accept type, str, or callable types
-        type TypeHintSpecifier = type | str | Callable[..., t.GeneralValueType]
+        # Note: Removed Callable[..., T] to avoid Any - use specific callable types instead
+        type TypeHintSpecifier = (
+            type | str | Callable[[t.GeneralValueType], t.GeneralValueType]
+        )
 
         # Generic type argument - used for extracting generic type arguments
         # Can be a string type name or a type class representing t.GeneralValueType
@@ -241,8 +246,11 @@ class FlextTypes:
         # Type origin specifier - used for generic type origin checking
         # Can be a string type name, type class, or callable with __origin__ attribute
         # Reuses t.GeneralValueType from parent t class (forward reference)
+        # Note: Removed Callable[..., T] to avoid Any - use specific callable types instead
         type TypeOriginSpecifier = (
-            str | type[t.GeneralValueType] | Callable[..., t.GeneralValueType]
+            str
+            | type[t.GeneralValueType]
+            | Callable[[t.GeneralValueType], t.GeneralValueType]
         )
 
     class Validation:
@@ -364,12 +372,11 @@ class FlextTypes:
         # handler instances, or configuration dicts
         # Note: Handler and VariadicCallable protocols are defined in p
         # but cannot be imported here due to circular dependency. For type checking,
-        # we use Callable as a fallback that works for most use cases.
+        # we use HandlerCallable which covers most use cases.
         # Reuses t.GeneralValueType from parent t class (no duplication)
+        # Note: Removed Callable[..., T] to avoid Any - HandlerCallable covers variadic cases
         type HandlerType = (
-            HandlerCallable
-            | Callable[..., t.GeneralValueType]  # Variadic callable fallback
-            | Mapping[str, t.GeneralValueType]  # Configuration dict
+            HandlerCallable | Mapping[str, t.GeneralValueType]  # Configuration dict
         )
 
     class Config:
@@ -447,7 +454,11 @@ class FlextTypes:
         type FactoryCallable = Callable[[], t.GeneralValueType]
 
         # Factory with arguments callable type
-        type FactoryWithArgsCallable = Callable[..., t.GeneralValueType]
+        # Note: Removed Callable[..., T] to avoid Any - use specific callable types instead
+        # For variadic factories, use FactoryCallable with explicit args or HandlerCallable
+        type FactoryWithArgsCallable = Callable[
+            [t.GeneralValueType], t.GeneralValueType
+        ]
 
         # Factory configuration type
         type FactoryConfig = Mapping[str, t.GeneralValueType]

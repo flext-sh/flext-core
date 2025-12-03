@@ -421,14 +421,19 @@ class FlextStringParser:
                 validation_result.error or "Validation failed",
             )
 
-        # Handle empty text early
-        if not text:
-            self.logger.debug(
-                "Empty text provided, returning list with empty string",
-                operation="split_on_char_with_escape",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
-            )
-            return r[list[str]].ok([""])
+        # Handle empty text early (only if it's actually a string and empty)
+        try:
+            if not text:
+                self.logger.debug(
+                    "Empty text provided, returning list with empty string",
+                    operation="split_on_char_with_escape",
+                    source="flext-core/src/flext_core/_utilities/string_parser.py",
+                )
+                return r[list[str]].ok([""])
+        except (TypeError, AttributeError):
+            # If text doesn't support truthiness check, continue to processing
+            # where exception will be caught
+            pass
 
         # Execute splitting with error handling
         return self._execute_escape_splitting(text, split_char, escape_char)

@@ -13,11 +13,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 import time
 import uuid
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Collection, Mapping
 from enum import StrEnum
-from typing import cast, overload
+from itertools import starmap
+from typing import Self, Union, cast, overload
 
 from pydantic import BaseModel
 
@@ -46,6 +48,17 @@ from flext_core._utilities.validators import (
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+# Constants for magic numbers
+TWO_ARG_COUNT = 2
+
+# Type aliases to avoid conflicts with builder method names
+_StrType = builtins.str
+_IntType = builtins.int
+_BoolType = builtins.bool
+_DictType = builtins.dict
+_ListType = builtins.list
+_SetType = builtins.set
 
 
 class FlextUtilities:  # noqa: PLR0904
@@ -123,6 +136,61 @@ class FlextUtilities:  # noqa: PLR0904
     # ═══════════════════════════════════════════════════════════════════
 
     @staticmethod
+    def _validate_get_desc(v: ValidatorSpec) -> str:
+        """Extract validator description (helper for validate)."""
+        desc = u.get(v, "description", default="validator")
+        return desc if isinstance(desc, str) else "validator"
+
+    @staticmethod
+    def _validate_check_any[T](
+        value: T, validators: tuple[ValidatorSpec, ...], field_prefix: str
+    ) -> r[T]:
+        """Check if any validator passes (helper for validate)."""
+        for validator in validators:
+            if validator(value):
+                return r[T].ok(value)
+        descriptions = u.map(validators, FlextUtilities._validate_get_desc)
+        return r[T].fail(
+            f"{field_prefix}None of the validators passed: "
+            f"{u.join(descriptions, sep=', ')}"
+        )
+
+    @staticmethod
+    def _validate_check_all[T](
+        value: T,
+        validators: tuple[ValidatorSpec, ...],
+        field_prefix: str,
+        *,
+        fail_fast: bool,
+        collect_errors: bool,
+    ) -> r[T]:
+        """Check if all validators pass (helper for validate)."""
+
+        def validator_failed(v: ValidatorSpec) -> bool:
+            """Check if validator failed."""
+            return not v(value)
+
+        failed_validators_list = u.filter(validators, validator_failed)
+        failed_validators = cast("list[ValidatorSpec]", failed_validators_list)
+        if not failed_validators:
+            return r[T].ok(value)
+
+        descriptions = u.map(failed_validators, FlextUtilities._validate_get_desc)
+        if fail_fast and not collect_errors:
+            first_desc = u.first(descriptions) if descriptions else None
+            error_msg = (
+                f"{field_prefix}Validation failed: {u.or_(first_desc, 'validator')}"
+            )
+            return r[T].fail(error_msg)
+
+        def format_error(d: str) -> str:
+            """Format validation error message."""
+            return f"{field_prefix}Validation failed: {d}"
+
+        errors = u.map(descriptions, format_error)
+        return r[T].fail(u.join(errors, sep="; "))
+
+    @staticmethod
     def validate[T](
         value: T,
         *validators: ValidatorSpec,
@@ -184,43 +252,20 @@ class FlextUtilities:  # noqa: PLR0904
             )
 
         """
-        # Value is already T, no cast needed
-
         if not validators:
-            # Business Rule: No validators means value is accepted as-is
-            # Type narrowing: value is T when no validation required
-            return r[T].ok(value)  # type: ignore[arg-type]
+            return r[T].ok(value)
 
-        errors: list[str] = []
         field_prefix = f"{field_name}: " if field_name else ""
-
         if mode == "any":
-            # OR mode: at least one must pass
-            for validator in validators:
-                if validator(value):
-                    # Business Rule: After validator passes, value conforms to T
-                    # Type narrowing: validator ensures value is T
-                    return r[T].ok(value)
-            # None passed - use u.map() + u.join() for unified string building
-            descriptions = cast("list[str]", u.map(validators, lambda v: u.get(v, "description", default="validator")))
-            return r[T].fail(f"{field_prefix}None of the validators passed: {u.join(descriptions, sep=', ')}")
+            return FlextUtilities._validate_check_any(value, validators, field_prefix)
 
-        # Default: "all" mode (AND) - use u.filter() + u.map() for unified processing
-        failed_validators = cast("list[Callable[[T], bool]]", u.filter(validators, lambda v: not v(value)))
-        if failed_validators:
-            descriptions = cast("list[str]", u.map(failed_validators, lambda v: u.get(v, "description", default="validator")))
-            if fail_fast and not collect_errors:
-                return r[T].fail(f"{field_prefix}Validation failed: {descriptions[0] if descriptions else 'validator'}")
-            errors.extend(cast("list[str]", u.map(descriptions, lambda d: f"{field_prefix}Validation failed: {d}")))
-        
-        if errors:
-            return r[T].fail(u.join(errors, sep="; "))
-
-        # Business Rule: After all validators pass, value is guaranteed to be T
-        # Validators ensure value conforms to T at runtime, so we can safely return it
-        # Type narrowing: value parameter is already typed as T in function signature
-        # Runtime guarantee: validators ensure value conforms to T's constraints
-        return r[T].ok(value)
+        return FlextUtilities._validate_check_all(
+            value,
+            validators,
+            field_prefix,
+            fail_fast=fail_fast,
+            collect_errors=collect_errors,
+        )
 
     @staticmethod
     def _parse_with_default[T](
@@ -253,31 +298,45 @@ class FlextUtilities:  # noqa: PLR0904
         """
         if not (isinstance(target, type) and issubclass(target, StrEnum)):
             return None
-        # Type narrowing: After issubclass check, target is type[StrEnum] which is type[T]
+        # Type narrowing: After issubclass check, target is type[StrEnum]
+        # which is type[T]
         # Business Rule: StrEnum classes expose __members__ dict with all enum members
         # Cast to type[StrEnum] to help type checker understand __members__ attribute
         enum_type: type[StrEnum] = cast("type[StrEnum]", target)
         if case_insensitive:
             # Business Rule: StrEnum classes expose __members__ dict with all enum
             # Use u.find() for unified finding with predicate
-            members_dict = getattr(enum_type, "__members__", {})
+            # Use u.get() for unified attribute access (DSL pattern)
+            members_dict: dict[str, object] = cast(
+                "dict[str, object]", u.get(enum_type, "__members__", default={})
+            )
             members_list = list(members_dict.values())
-            found = u.find(
-                members_list,
-                lambda m: u.normalize(m.value, value) or u.normalize(m.name, value),  # type: ignore[arg-type]
-            )
-            # Use u.when() for conditional return (DSL pattern)
-            found_result = u.when(
-                condition=found is not None,
-                then_value=r[T].ok(cast("T", found)),
-                else_value=None,
-            )
-            if found_result is not None:
-                return found_result
+
+            def match_member(member: object) -> bool:
+                """Match enum member by value or name."""
+                # Use u.has() + getattr() for unified attribute access (DSL pattern)
+                if not u.has(member, "value") or not u.has(member, "name"):
+                    return False
+                # Type narrowing: member has value and name attributes
+                # Use getattr directly since u.get() returns object | None
+                member_value = getattr(member, "value", None)
+                member_name = getattr(member, "name", None)
+                if member_value is None or member_name is None:
+                    return False
+                return bool(
+                    u.normalize(member_value, value) or u.normalize(member_name, value)
+                )
+
+            found = u.find(members_list, match_member)
+            if found is not None:
+                # Type narrowing: found is not None, cast to T
+                found_enum = cast("T", found)
+                return r[T].ok(found_enum)
         result = FlextEnum.parse(target, value)
         if result.is_success:
             return r[T].ok(result.value)
-        return r[T].fail(result.error or "Enum parse failed")
+        # Use u.err() for unified error extraction (DSL pattern)
+        return r[T].fail(u.err(result, default="Enum parse failed"))
 
     @staticmethod
     def _parse_model[T](
@@ -301,7 +360,8 @@ class FlextUtilities:  # noqa: PLR0904
         result = FlextModel.from_dict(target, dict(value), strict=strict)
         if result.is_success:
             return r[T].ok(result.value)
-        return r[T].fail(result.error or "Model parse failed")
+        # Use u.err() for unified error extraction (DSL pattern)
+        return r[T].fail(u.err(result, default="Model parse failed"))
 
     @staticmethod
     def _apply_transform_filters(
@@ -358,9 +418,18 @@ class FlextUtilities:  # noqa: PLR0904
         # Use u.find() for unified finding
         true_values = {"true", "1", "yes", "on"}
         false_values = {"false", "0", "no", "off"}
-        if u.find(true_values, lambda v: v == normalized_val):  # type: ignore[arg-type]
+
+        def match_true(val: str) -> bool:
+            """Match true value."""
+            return val == normalized_val
+
+        def match_false(val: str) -> bool:
+            """Match false value."""
+            return val == normalized_val
+
+        if u.find(true_values, match_true):
             return r[bool].ok(True)
-        if u.find(false_values, lambda v: v == normalized_val):  # type: ignore[arg-type]
+        if u.find(false_values, match_false):
             return r[bool].ok(False)
         return None
 
@@ -372,18 +441,26 @@ class FlextUtilities:  # noqa: PLR0904
         str↔int, str↔float, str↔bool. Boolean coercion recognizes common
         string representations (true/false, yes/no, on/off, 1/0).
         """
+        # Use type narrowing for proper type checking
         if target is int:
-            return FlextUtilities._coerce_to_int(value)  # type: ignore[return-value]
-        if target is float:
-            return FlextUtilities._coerce_to_float(value)  # type: ignore[return-value]
-        if target is str:
-            return FlextUtilities._coerce_to_str(value)  # type: ignore[return-value]
-        if target is bool:
+            int_result = FlextUtilities._coerce_to_int(value)
+            if int_result is not None:
+                return cast("r[T]", int_result)
+        elif target is float:
+            float_result = FlextUtilities._coerce_to_float(value)
+            if float_result is not None:
+                return cast("r[T]", float_result)
+        elif target is str:
+            str_result = FlextUtilities._coerce_to_str(value)
+            if str_result is not None:
+                return cast("r[T]", str_result)
+        elif target is bool:
             if isinstance(value, str):
                 bool_result = FlextUtilities._coerce_to_bool_from_str(value)
                 if bool_result is not None:
-                    return bool_result  # type: ignore[return-value]
-            return r[T].ok(bool(value))  # type: ignore[arg-type]
+                    return cast("r[T]", bool_result)
+            bool_value = bool(value)
+            return cast("r[T]", r[bool].ok(bool_value))
         return None
 
     @staticmethod
@@ -442,8 +519,9 @@ class FlextUtilities:  # noqa: PLR0904
             return None
         if model_result.is_success:
             return model_result
+        # Use u.err() for unified error extraction (DSL pattern)
         return FlextUtilities._parse_with_default(
-            default, default_factory, model_result.error or ""
+            default, default_factory, u.err(model_result, default="")
         )
 
     @staticmethod
@@ -460,7 +538,8 @@ class FlextUtilities:  # noqa: PLR0904
             if prim_result is not None:
                 return prim_result
         except (ValueError, TypeError) as e:
-            target_name = getattr(target, "__name__", "type")
+            # Use u.get() for unified attribute access (DSL pattern)
+            target_name = u.get(target, "__name__", default="type")
             return FlextUtilities._parse_with_default(
                 default,
                 default_factory,
@@ -479,10 +558,14 @@ class FlextUtilities:  # noqa: PLR0904
     ) -> r[T]:
         """Helper: Try direct type call."""
         try:
-            parsed = target(value)  # type: ignore[call-arg]
+            # Type narrowing: target is callable and accepts value
+            # Use cast to help type checker understand target is callable
+            target_callable = cast("Callable[[object], T]", target)
+            parsed = target_callable(value)
             return r[T].ok(parsed)
         except Exception as e:
-            target_name = getattr(target, "__name__", "type")
+            # Use u.get() for unified attribute access (DSL pattern)
+            target_name = u.get(target, "__name__", default="type")
             return FlextUtilities._parse_with_default(
                 default,
                 default_factory,
@@ -491,7 +574,7 @@ class FlextUtilities:  # noqa: PLR0904
             )
 
     @staticmethod
-    def parse[T](  # noqa: PLR0913
+    def parse[T](  # noqa: PLR0913, PLR0911
         value: object,
         target: type[T],
         *,
@@ -552,15 +635,11 @@ class FlextUtilities:  # noqa: PLR0904
 
         # Handle None value using u.when() for DSL pattern
         if value is None:
-            return u.when(
-                condition=default is not None,
-                then_value=r[T].ok(default),
-                else_value=u.when(
-                    condition=default_factory is not None,
-                    then_value=r[T].ok(default_factory()),
-                    else_value=r[T].fail(field_prefix or "Value is None"),
-                ),
-            )
+            if default is not None:
+                return r[T].ok(default)
+            if default_factory is not None:
+                return r[T].ok(default_factory())
+            return r[T].fail(field_prefix or "Value is None")
 
         # Already the target type
         if isinstance(value, target):
@@ -727,10 +806,22 @@ class FlextUtilities:  # noqa: PLR0904
 
             # Parse to model
             if to_model is not None:
-                model_result = FlextModel.from_dict(to_model, result)  # type: ignore[arg-type]
+                # Type narrowing: to_model is BaseModel subclass, result is dict
+                # Convert result to dict for from_dict compatibility
+                # (FlextModel.from_dict accepts dict)
+                result_dict = dict(result)
+                # Convert dict[str, GeneralValueType] to dict[str, FlexibleValue]
+                # for from_dict
+                result_flexible: dict[str, t.FlexibleValue] = {}
+                for key, val in result_dict.items():
+                    # GeneralValueType is compatible with FlexibleValue
+                    # (both include base types)
+                    result_flexible[key] = cast("t.FlexibleValue", val)
+                model_result = FlextModel.from_dict(to_model, result_flexible)
                 if model_result.is_failure:
+                    # Use u.err() for unified error extraction (DSL pattern)
                     return r[dict[str, t.GeneralValueType]].fail(
-                        model_result.error or "Model conversion failed"
+                        u.err(model_result, default="Model conversion failed")
                     )
                 # Return model as dict representation
                 result = model_result.value.model_dump()
@@ -783,8 +874,10 @@ class FlextUtilities:  # noqa: PLR0904
                 if isinstance(result, r):
                     if result.is_failure:
                         if on_error == "stop":
+                            # Use u.err() for unified error extraction (DSL pattern)
                             return r[object].fail(
-                                f"Pipeline step {i} failed: {result.error}"
+                                f"Pipeline step {i} failed: "
+                                f"{u.err(result, default='Unknown error')}"
                             )
                         # on_error == "skip": continue with previous value
                         continue
@@ -838,7 +931,10 @@ class FlextUtilities:  # noqa: PLR0904
                 and isinstance(result[key], list)
                 and isinstance(value, list)
             ):
-                result[key] = list(result[key]) + list(value)  # type: ignore[call-overload]
+                # Type narrowing: both are lists
+                existing_list = cast("list[object]", result[key])
+                new_list = cast("list[object]", value)
+                result[key] = existing_list + new_list
             else:
                 result[key] = value
         return result
@@ -898,11 +994,11 @@ class FlextUtilities:  # noqa: PLR0904
                         merged,
                         filtered,
                         strategy,
-                        should_include_fn,  # type: ignore[arg-type]
+                        should_include_fn,
                     )
 
             return r[dict[str, t.GeneralValueType]].ok(
-                merged  # type: ignore[arg-type]
+                cast("dict[str, t.GeneralValueType]", merged)
             )
 
         except Exception as e:
@@ -943,19 +1039,22 @@ class FlextUtilities:  # noqa: PLR0904
                 else error_or_default(f"Key '{key_part}' not found at '{path_context}'")
             )
         # Handle object attribute
-        elif hasattr(current, key_part):
-            result = r[T | None].ok(cast("T | None", getattr(current, key_part)))
+        # Use u.has() + u.get() for unified attribute access (DSL pattern)
+        elif u.has(current, key_part):
+            result = r[T | None].ok(cast("T | None", u.get(current, key_part)))
         # Handle Pydantic model
-        elif hasattr(current, "model_dump"):
-            model_dump_attr = getattr(current, "model_dump", None)
+        elif u.has(current, "model_dump"):
+            model_dump_attr: Callable[[], dict[str, object]] | None = cast(
+                "Callable[[], dict[str, object]] | None",
+                u.get(current, "model_dump", default=None),
+            )
             if model_dump_attr is None:
                 result = error_or_default(
                     f"Cannot access '{key_part}' at '{path_context}'"
                 )
             else:
-                model_dump_method = cast(
-                    "Callable[[], dict[str, object]]", model_dump_attr
-                )
+                # Type narrowing: model_dump_attr is callable
+                model_dump_method = model_dump_attr
                 model_dict = model_dump_method()
                 result = (
                     r[T | None].ok(cast("T | None", model_dict[key_part]))
@@ -1043,7 +1142,7 @@ class FlextUtilities:  # noqa: PLR0904
 
                 # Get value from dict, object, or Pydantic model
                 path_context = separator.join(parts[:i])
-                get_result: r[T | None] | None = FlextUtilities._extract_get_value(  # type: ignore[misc]
+                get_result = FlextUtilities._extract_get_value(
                     current,
                     key_part,
                     path_context,
@@ -1053,25 +1152,28 @@ class FlextUtilities:  # noqa: PLR0904
                 if get_result is None:
                     continue
                 if get_result.is_failure:
-                    return get_result
+                    # Type narrowing: get_result is r[object], return as r[T | None]
+                    return r[T | None].fail(get_result.error or "Extraction failed")
                 current = get_result.value
 
                 # Handle array index
                 if array_match is not None:
-                    array_result: r[T | None] = (
-                        FlextUtilities._extract_handle_array_index(  # type: ignore[misc]
-                            current,
-                            array_match,
-                            key_part,
-                            required=required,
-                            default=default,
-                        )
+                    array_result = FlextUtilities._extract_handle_array_index(
+                        current,
+                        array_match,
+                        key_part,
+                        required=required,
+                        default=default,
                     )
                     if array_result.is_failure:
-                        return array_result
+                        # Type narrowing: array_result is r[object]
+                        # return as r[T | None]
+                        return r[T | None].fail(
+                            array_result.error or "Array extraction failed"
+                        )
                     current = array_result.value
 
-            return r[T | None].ok(current)  # type: ignore[arg-type]
+            return r[T | None].ok(cast("T | None", current))
 
         except Exception as e:
             return r[T | None].fail(f"Extract failed: {e}")
@@ -1182,12 +1284,16 @@ class FlextUtilities:  # noqa: PLR0904
         errors: list[tuple[int, str]],
         on_error: str,
     ) -> R | r[t.Types.BatchResultDict] | None:
-        """Helper: Process a single batch item, return result, error Result, or None if skipped."""
+        """Helper: Process a single batch item.
+
+        Returns result, error Result, or None if skipped.
+        """
         try:
             result = operation(item)
             if isinstance(result, r):
                 if result.is_failure:
-                    error_msg = result.error or "Unknown error"
+                    # Use u.err() for unified error extraction (DSL pattern)
+                    error_msg = u.err(result, default="Unknown error")
                     error_text = f"Item {idx} failed: {error_msg}"
                     if on_error == "fail":
                         return r[t.Types.BatchResultDict].fail(error_text)
@@ -1214,24 +1320,29 @@ class FlextUtilities:  # noqa: PLR0904
         """Helper: Flatten nested lists if requested using u.flat()."""
         if not flatten:
             return validated_results
+
         # Filter to get only list/tuple items, then use u.flat()
+        def is_list_or_tuple(item: object) -> bool:
+            """Check if item is list or tuple."""
+            return isinstance(item, (list, tuple))
+
         nested = cast(
             "list[list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]]",
-            u.filter(validated_results, lambda x: isinstance(x, (list, tuple))),  # type: ignore[arg-type]
+            u.filter(validated_results, is_list_or_tuple),
         )
         if not nested:
             return validated_results
         # Use u.flat() for unified flattening
-        flattened = u.flat(nested)  # type: ignore[arg-type]
+        flattened: list[t.GeneralValueType] = u.flat(nested)
         # Add non-list items
         non_list = cast(
             "list[t.GeneralValueType]",
-            u.filter(validated_results, lambda x: not isinstance(x, (list, tuple))),  # type: ignore[arg-type]
+            u.filter(validated_results, lambda x: not is_list_or_tuple(x)),
         )
         return flattened + non_list
 
     @staticmethod
-    def batch[T, R](  # noqa: PLR0913
+    def batch[T, R](  # noqa: PLR0912, PLR0913, C901  # Too many branches required for batch processing
         items: list[T],
         operation: Callable[[T], R | r[R]],
         *,
@@ -1240,7 +1351,7 @@ class FlextUtilities:  # noqa: PLR0904
         _parallel: bool = False,  # Reserved for future async support
         progress: Callable[[int, int], None]
         | None = None,  # Progress callback (current, total)
-        progress_interval: int = 1,  # Reserved for future chunking support  # noqa: ARG004
+        progress_interval: int = 1,  # Reserved for future chunking  # noqa: ARG004
         pre_validate: Callable[[T], bool] | None = None,  # Pre-validation filter
         post_validate: Callable[[R], bool] | None = None,  # Post-validation filter
         flatten: bool = False,  # Flatten nested lists in results
@@ -1291,11 +1402,17 @@ class FlextUtilities:  # noqa: PLR0904
         # Pre-filter items if pre_validate provided
         if pre_validate is not None:
             filtered_result = u.filter(items, pre_validate)
-            filtered_items = (
-                cast("list[T]", filtered_result)
-                if isinstance(filtered_result, list)
-                else items
-            )
+            # Type narrowing: u.filter() returns list[T] | dict[str, T] for list/dict inputs
+            # For list inputs, filter returns list; for dict inputs, filter returns dict
+            # Since items is list[T] | dict[str, T], filtered_result is list[T] | dict[str, T]
+            if isinstance(filtered_result, list):
+                filtered_items: list[T] = filtered_result
+            elif isinstance(filtered_result, dict):
+                # For dict, convert values to list
+                filtered_items = list(filtered_result.values())
+            else:
+                # Fallback: should not happen, but handle gracefully
+                filtered_items = list(items) if isinstance(items, list) else []
         else:
             filtered_items = items
 
@@ -1316,19 +1433,29 @@ class FlextUtilities:  # noqa: PLR0904
             processed_results.append(process_result)
 
         # Post-validate and filter results using filter()
-        validated_results_raw = (
-            u.filter(processed_results, post_validate)
-            if post_validate is not None
-            else processed_results
-        )
-        if not isinstance(validated_results_raw, list):
-            validated_results_raw = list(validated_results_raw)
+        validated_results_raw: list[R]
+        if post_validate is not None:
+            filtered_validation = u.filter(processed_results, post_validate)
+            # Type narrowing: u.filter() on list[R] returns list[R]
+            # processed_results is list[R], so filter returns list[R]
+            if isinstance(filtered_validation, list):
+                validated_results_raw = filtered_validation
+            elif isinstance(filtered_validation, dict):
+                # Should not happen for list input, but handle gracefully
+                validated_results_raw = list(filtered_validation.values())
+            else:
+                # Fallback: should not happen, but handle gracefully
+                validated_results_raw = processed_results
+        else:
+            validated_results_raw = processed_results
 
         # Convert to GeneralValueType for flattening using u.map
-        validated_results = cast(
-            "list[t.GeneralValueType]",
-            u.map(validated_results_raw, lambda r: cast("t.GeneralValueType", r)),  # type: ignore[arg-type]
-        )
+        def to_general_value(item: object) -> t.GeneralValueType:
+            """Convert item to GeneralValueType."""
+            return cast("t.GeneralValueType", item)
+
+        validated_results_raw_list = cast("list[object]", validated_results_raw)
+        validated_results = u.map(validated_results_raw_list, to_general_value)
 
         # Flatten nested lists if requested
         flattened_results = FlextUtilities._batch_flatten_results(
@@ -1472,12 +1599,20 @@ class FlextUtilities:  # noqa: PLR0904
         error_msg = error_message
 
         for condition in conditions:
+            # Type narrowing: condition is one of the supported types
+            condition_typed: (
+                type[object]
+                | tuple[type[object], ...]
+                | Callable[[object], bool]
+                | ValidatorSpec
+                | str
+            ) = cast(
+                "type[object] | tuple[type[object], ...] | Callable[[object], bool] | ValidatorSpec | str",
+                condition,
+            )
             check_result = FlextUtilities._guard_check_condition(
-                value,  # type: ignore[arg-type]
-                cast(
-                    "type[object] | tuple[type[object], ...] | Callable[[object], bool] | ValidatorSpec | str",
-                    condition,
-                ),
+                cast("object", value),
+                condition_typed,
                 context_name,
                 error_msg,
             )
@@ -1498,8 +1633,7 @@ class FlextUtilities:  # noqa: PLR0904
         key: str,
         *,
         default: str = "",
-    ) -> str:
-        """Get string value (generalized from get_str)."""
+    ) -> str: ...
 
     @staticmethod
     @overload
@@ -1507,9 +1641,8 @@ class FlextUtilities:  # noqa: PLR0904
         data: Mapping[str, object] | object,
         key: str,
         *,
-        default: list[T] | None = None,
-    ) -> list[T]:
-        """Get list value (generalized from get_list)."""
+        default: list[T],
+    ) -> list[T]: ...
 
     @staticmethod
     @overload
@@ -1518,8 +1651,7 @@ class FlextUtilities:  # noqa: PLR0904
         key: str,
         *,
         default: T | None = None,
-    ) -> T | None:
-        """Get value with default."""
+    ) -> T | None: ...
 
     @staticmethod
     def get[T](
@@ -1559,18 +1691,30 @@ class FlextUtilities:  # noqa: PLR0904
         """
         # Handle string default (generalized from get_str)
         # Check if default is empty string (type hint for string return)
-        if default == "":
+        # Note: isinstance check needed because default can be None
+        if isinstance(default, str) and not default:
             value = FlextUtilities._get_raw(data, key, default=default)
-            return cast(
-                "str", u.build(value, ops={"ensure": "str", "ensure_default": default})
-            )  # type: ignore[arg-type, return-value]
+            build_ops_str: dict[str, object] = {
+                "ensure": "str",
+                "ensure_default": default,
+            }
+            build_result = u.build(value, ops=build_ops_str)
+            if isinstance(build_result, str):
+                return build_result  # type: ignore[return-value]  # T=str when default is str
+            return default  # type: ignore[return-value]  # T=str when default is str
 
         # Handle list default (generalized from get_list)
         # Check if default is empty list (type hint for list return)
         if isinstance(default, list) and len(default) == 0:
-            value = FlextUtilities._get_raw(data, key, default=default)
-            result = u.build(value, ops={"ensure": "list", "ensure_default": default})  # type: ignore[arg-type]
-            return cast("list[T]", result if isinstance(result, list) else default)
+            value_raw = FlextUtilities._get_raw(data, key, default=default)
+            build_ops_list: dict[str, object] = {
+                "ensure": "list",
+                "ensure_default": default,
+            }
+            build_result = u.build(value_raw, ops=build_ops_list)
+            if isinstance(build_result, list):
+                return build_result  # type: ignore[return-value]  # T=list when default is list
+            return default  # type: ignore[return-value]  # T=list when default is list
 
         # Generic get (original behavior)
         return FlextUtilities._get_raw(data, key, default=default)
@@ -1586,7 +1730,9 @@ class FlextUtilities:  # noqa: PLR0904
         match data:
             case dict() | Mapping():
                 if hasattr(data, "get"):
-                    result = data.get(key, default)  # type: ignore[union-attr]
+                    # Type narrowing: data has get method
+                    data_with_get = cast("Mapping[str, object]", data)
+                    result = data_with_get.get(key, default)
                     return cast("T | None", result)
                 return default
             case _:
@@ -1597,7 +1743,12 @@ class FlextUtilities:  # noqa: PLR0904
 
     @staticmethod
     def find[T](
-        items: list[T] | tuple[T, ...] | dict[str, T] | Mapping[str, T],
+        items: list[T]
+        | tuple[T, ...]
+        | set[T]
+        | frozenset[T]
+        | dict[str, T]
+        | Mapping[str, T],
         predicate: Callable[[T], bool] | Callable[[str, T], bool],
         *,
         return_key: bool = False,
@@ -1634,12 +1785,11 @@ class FlextUtilities:  # noqa: PLR0904
 
         """
         match items:
-            case list() | tuple():
+            case list() | tuple() | set() | frozenset():
                 list_predicate = cast("Callable[[T], bool]", predicate)
                 for item in items:
-                    typed_item = cast("T", item)
-                    if list_predicate(typed_item):
-                        return typed_item
+                    if list_predicate(item):
+                        return item
             case dict() | Mapping():
                 dict_predicate = cast("Callable[[str, T], bool]", predicate)
                 for key, value in items.items():
@@ -1653,16 +1803,24 @@ class FlextUtilities:  # noqa: PLR0904
         predicate: Callable[[T], bool] | Callable[[R], bool],
         mapper: Callable[[T], R] | None = None,
     ) -> list[T] | list[R]:
-        """Filter a list with optional mapping (uses u.map + u.filter internally)."""
+        """Filter a list with optional mapping.
+
+        Business Rule: When mapper is provided, filtering operates on mapped values.
+        When mapper is None, filtering operates directly on original values.
+
+        This internal helper is called by u.filter() for list inputs. Uses direct
+        list comprehension to avoid recursion (cannot call u.filter from here).
+        """
         if mapper is not None:
-            # Use u.map() for unified mapping, then u.filter() for unified filtering
-            mapped = cast("list[R]", u.map(items_list, mapper))
+            # Map first, then filter: T -> R, then filter on R
+            mapped_raw = u.map(items_list, mapper)
+            # Type narrowing: u.map() on list[T] returns list[R]
+            mapped_list = mapped_raw if isinstance(mapped_raw, list) else []
             mapped_predicate = cast("Callable[[R], bool]", predicate)
-            # Use u.filter internally (no recursion - different signature)
-            return cast("list[R]", u.filter(mapped, mapped_predicate))
+            return [item for item in mapped_list if mapped_predicate(item)]
+        # Without mapper: filter directly on T
         list_predicate = cast("Callable[[T], bool]", predicate)
-        # Use u.filter internally (no recursion - different signature)
-        return cast("list[T]", u.filter(items_list, list_predicate))
+        return [item for item in items_list if list_predicate(item)]
 
     @staticmethod
     def _filter_dict[T, R](
@@ -1670,16 +1828,23 @@ class FlextUtilities:  # noqa: PLR0904
         predicate: Callable[[str, T], bool] | Callable[[str, R], bool],
         mapper: Callable[[str, T], R] | None = None,
     ) -> dict[str, T] | dict[str, R]:
-        """Filter a dict with optional mapping (uses u.map + u.filter internally)."""
+        """Filter a dict with optional mapping (uses u.map internally)."""
         if mapper is not None:
-            # Use u.map() for unified mapping, then u.filter() for unified filtering
-            mapped_dict = cast("dict[str, R]", u.map(items_dict, mapper))
+            # Use u.map() for unified mapping, then filter with dict comprehension
+            # (cannot use u.filter here - would cause recursion)
+            mapped_dict_raw = u.map(items_dict, mapper)
+            # Type narrowing: u.map() on dict[str, T] returns dict[str, R]
+            mapped_dict = mapped_dict_raw if isinstance(mapped_dict_raw, dict) else {}
+            # After mapping, predicate operates on R
             mapped_dict_predicate = cast("Callable[[str, R], bool]", predicate)
-            # Use u.filter internally (no recursion - different signature)
-            return cast("dict[str, R]", u.filter(mapped_dict, mapped_dict_predicate))
+            # Use dict comprehension directly to avoid recursion
+            # (cannot use u.filter here - would cause recursion)
+            return {k: v for k, v in mapped_dict.items() if mapped_dict_predicate(k, v)}
+        # Without mapper, predicate operates on T
         dict_predicate = cast("Callable[[str, T], bool]", predicate)
-        # Use u.filter internally (no recursion - different signature)
-        return cast("dict[str, T]", u.filter(items_dict, dict_predicate))
+        # Use dict comprehension directly to avoid recursion
+        # (cannot use u.filter here - would cause recursion)
+        return {k: v for k, v in items_dict.items() if dict_predicate(k, v)}
 
     @staticmethod
     def _filter_single[T, R](
@@ -1747,26 +1912,45 @@ class FlextUtilities:  # noqa: PLR0904
 
         """
         # Use match/case for Python 3.13+ pattern matching
+        # Business Rule: Auto-detect input type and delegate to type-specific helper.
+        # Each helper uses list/dict comprehension to avoid recursion.
         match items:
             case list() | tuple():
-                list_items = list(items)
-                list_predicate = cast("Callable[[T], bool]", predicate)
-                list_mapper = cast("Callable[[T], R] | None", mapper)
-                return FlextUtilities._filter_list(
-                    list_items, list_predicate, list_mapper
+                # Cast to object first to break TypeVar scope, then to specific type
+                list_items: list[object] = list(items)
+                list_pred: Callable[[object], bool] = cast(
+                    "Callable[[object], bool]", predicate
+                )
+                list_map: Callable[[object], object] | None = cast(
+                    "Callable[[object], object] | None", mapper
+                )
+                return cast(
+                    "list[T] | list[R]",
+                    FlextUtilities._filter_list(list_items, list_pred, list_map),
                 )
             case dict() | Mapping():
-                dict_items = dict(items)
-                dict_predicate = cast("Callable[[str, T], bool]", predicate)
-                dict_mapper = cast("Callable[[str, T], R] | None", mapper)
-                return FlextUtilities._filter_dict(
-                    dict_items, dict_predicate, dict_mapper
+                dict_items: dict[str, object] = dict(items)
+                dict_pred: Callable[[str, object], bool] = cast(
+                    "Callable[[str, object], bool]", predicate
+                )
+                dict_map: Callable[[str, object], object] | None = cast(
+                    "Callable[[str, object], object] | None", mapper
+                )
+                return cast(
+                    "dict[str, T] | dict[str, R]",
+                    FlextUtilities._filter_dict(dict_items, dict_pred, dict_map),
                 )
             case _:
-                single_predicate = cast("Callable[[T], bool]", predicate)
-                single_mapper = cast("Callable[[T], R] | None", mapper)
-                return FlextUtilities._filter_single(
-                    items, single_predicate, single_mapper
+                single_item: object = cast("object", items)
+                single_pred: Callable[[object], bool] = cast(
+                    "Callable[[object], bool]", predicate
+                )
+                single_map: Callable[[object], object] | None = cast(
+                    "Callable[[object], object] | None", mapper
+                )
+                return cast(
+                    "list[T] | list[R]",
+                    FlextUtilities._filter_single(single_item, single_pred, single_map),
                 )
 
     @staticmethod
@@ -1798,7 +1982,8 @@ class FlextUtilities:  # noqa: PLR0904
         """Helper: Check ValidatorSpec condition."""
         if not condition(value):
             if error_msg is None:
-                desc = getattr(condition, "description", "validation")
+                # Use u.get() for unified attribute access (DSL pattern)
+                desc = u.get(condition, "description", default="validation")
                 return f"{context_name} failed {desc} check"
             return error_msg
         return None
@@ -1813,7 +1998,8 @@ class FlextUtilities:  # noqa: PLR0904
         """Helper: Check string shortcut condition."""
         shortcut_result = FlextUtilities._guard_shortcut(value, condition, context_name)
         if shortcut_result.is_failure:
-            return error_msg or shortcut_result.error or "Guard check failed"
+            # Use u.err() for unified error extraction (DSL pattern)
+            return error_msg or u.err(shortcut_result, default="Guard check failed")
         return None
 
     @staticmethod
@@ -1827,7 +2013,8 @@ class FlextUtilities:  # noqa: PLR0904
         try:
             if not condition(value):
                 if error_msg is None:
-                    func_name = getattr(condition, "__name__", "custom")
+                    # Use u.get() for unified attribute access (DSL pattern)
+                    func_name = u.get(condition, "__name__", default="custom")
                     return f"{context_name} failed {func_name} check"
                 return error_msg
         except Exception as e:
@@ -1872,11 +2059,12 @@ class FlextUtilities:  # noqa: PLR0904
 
         # Custom predicate: Callable[[T], bool]
         if callable(condition):
+            predicate_func = cast("Callable[[object], bool]", condition)
             return FlextUtilities._guard_check_predicate(
                 value,
-                condition,
+                predicate_func,
                 context_name,
-                error_msg,  # type: ignore[arg-type]
+                error_msg,
             )
 
         # Unknown condition type
@@ -2123,11 +2311,15 @@ class FlextUtilities:  # noqa: PLR0904
             return value.lower() if case == "lower" else value.upper()
         # Use u.map() for unified mapping - now supports sets/frozensets
         case_func = str.lower if case == "lower" else str.upper
-        mapped = u.map(value, case_func)  # type: ignore[arg-type]
-        # u.map() now preserves set type automatically
+        # Type narrowing: value is collection of strings
+        mapped = u.map(value, case_func)
+        # u.map() preserves collection type (list/tuple/set/frozenset)
         if isinstance(mapped, set):
-            return mapped  # type: ignore[return-value]
-        return cast("list[str]", mapped)
+            return mapped
+        if isinstance(mapped, (list, tuple)):
+            return mapped
+        # Fallback: should not happen, but handle gracefully
+        return list(mapped) if isinstance(mapped, (tuple, set, frozenset)) else []
 
     @staticmethod
     def _normalize_membership_check(
@@ -2149,46 +2341,63 @@ class FlextUtilities:  # noqa: PLR0904
             )
 
         # Use u.map() for unified mapping
-        normalized = u.map(other, normalize_func)  # type: ignore[arg-type]
+        # Type narrowing: other is collection of strings
+        other_collection: list[str] | tuple[str, ...] | set[str] | frozenset[str] = (
+            cast("list[str] | tuple[str, ...] | set[str] | frozenset[str]", other)
+        )
+        normalized = cast(
+            "list[str] | tuple[str, ...]", u.map(other_collection, normalize_func)
+        )
         # Use u.when() for conditional collection type (DSL pattern)
-        normalized_collection = u.when(
-            condition=isinstance(other, (set, frozenset)),
-            then_value=set(normalized),
-            else_value=normalized,
+        normalized_collection: Collection[str] = cast(
+            "Collection[str]",
+            u.when(
+                condition=isinstance(other, (set, frozenset)),
+                then_value=set(normalized),
+                else_value=normalized,
+            ),
         )
         return item_lower in normalized_collection
 
     @staticmethod
-    def _ensure_to_list[T](
-        value: T | list[T] | tuple[T, ...] | None,
-        default: list[T] | None,
-    ) -> list[T]:
+    def _ensure_to_list(
+        value: t.GeneralValueType
+        | list[t.GeneralValueType]
+        | tuple[t.GeneralValueType, ...]
+        | None,
+        default: list[t.GeneralValueType] | None,
+    ) -> list[t.GeneralValueType]:
         """Helper: Convert value to list."""
         if value is None:
             # Use u.or_() for default fallback (DSL pattern)
-            return u.or_(default, [])
+            result = u.or_(default, [])
+            return cast("list[t.GeneralValueType]", result)
         match value:
             case list():
                 return value
             case tuple():
                 return list(value)
             case _:
-                return [value]  # type: ignore[list-item]
+                # Type narrowing: value is GeneralValueType, wrap in list
+                return [value]
 
     @staticmethod
-    def _ensure_to_dict[T](
-        value: T | dict[str, T] | None,
-        default: dict[str, T] | None,
-    ) -> dict[str, T]:
+    def _ensure_to_dict(
+        value: t.GeneralValueType | dict[str, t.GeneralValueType] | None,
+        default: dict[str, t.GeneralValueType] | None,
+    ) -> dict[str, t.GeneralValueType]:
         """Helper: Convert value to dict."""
         if value is None:
             # Use u.or_() for default fallback (DSL pattern)
-            return u.or_(default, {})
+            result = u.or_(default, {})
+            return cast("dict[str, t.GeneralValueType]", result)
         match value:
             case dict():
-                return value  # type: ignore[return-value]
+                # Type narrowing: value is dict[str, GeneralValueType]
+                return cast("dict[str, t.GeneralValueType]", value)
             case _:
-                return {"value": value}  # type: ignore[dict-item]
+                # Type narrowing: value is GeneralValueType, wrap in dict
+                return {"value": value}
 
     @staticmethod
     def ensure[T](
@@ -2241,33 +2450,43 @@ class FlextUtilities:  # noqa: PLR0904
             return cast("T", FlextDataMapper.ensure_str(value, default=str_default))
         if target_type == "str_list":
             # Use u.when() for conditional cast (DSL pattern)
-            list_default = u.when(
+            str_list_default = u.when(
                 condition=isinstance(default, list),
                 then_value=cast("list[str]", default),
                 else_value=None,
             )
             # Use FlextDataMapper directly for str_list (internal implementation)
             return cast(
-                "list[T]", FlextDataMapper.ensure_str_list(value, default=list_default)
+                "list[T]",
+                FlextDataMapper.ensure_str_list(value, default=str_list_default),
             )
         if target_type == "dict":
-            # Use u.when() for conditional assignment (DSL pattern)
-            dict_default = u.when(
-                condition=isinstance(default, dict),
-                then_value=default,
-                else_value=None,
+            # Type narrowing: value is object, default is dict[str, T] | None
+            # Convert default to correct type for _ensure_to_dict
+            dict_default_typed: dict[str, t.GeneralValueType] | None
+            if isinstance(default, dict):
+                dict_default_typed = cast("dict[str, t.GeneralValueType]", default)
+            else:
+                dict_default_typed = None
+            # Cast value to GeneralValueType for _ensure_to_dict
+            value_typed: t.GeneralValueType | dict[str, t.GeneralValueType] | None = (
+                cast("t.GeneralValueType | dict[str, t.GeneralValueType] | None", value)
             )
-            return FlextUtilities._ensure_to_dict(value, dict_default)  # type: ignore[arg-type, return-value]
+            dict_result = FlextUtilities._ensure_to_dict(
+                value_typed, dict_default_typed
+            )
+            return cast("T", dict_result)
         if target_type == "auto" and isinstance(value, dict):
-            return value  # type: ignore[return-value]
+            return cast("T", value)
         # Handle list or fallback
         # Use u.when() for conditional assignment (DSL pattern)
-        list_default = u.when(
-            condition=isinstance(default, list),
-            then_value=default,
-            else_value=None,
+        list_default_fallback: list[t.GeneralValueType] | None = (
+            cast("list[t.GeneralValueType]", default)
+            if isinstance(default, list)
+            else None
         )
-        return FlextUtilities._ensure_to_list(value, list_default)  # type: ignore[arg-type, return-value]
+        list_result = FlextUtilities._ensure_to_list(value, list_default_fallback)
+        return cast("T", list_result)
 
     @staticmethod
     def _process_list_items[T, R](
@@ -2316,10 +2535,13 @@ class FlextUtilities:  # noqa: PLR0904
         """Helper: Process dict items."""
         # Apply key filtering first
         if filter_keys is not None or exclude_keys is not None:
-            key_predicate = lambda k, _v: (  # noqa: E731
-                (filter_keys is None or k in filter_keys)
-                and (exclude_keys is None or k not in exclude_keys)
-            )
+            # Type narrowing: predicate for dict filtering (key, value) -> bool
+            def key_predicate(k: str, _v: T) -> bool:
+                """Filter predicate for dict keys."""
+                return (filter_keys is None or k in filter_keys) and (
+                    exclude_keys is None or k not in exclude_keys
+                )
+
             items_dict = cast(
                 "dict[str, T]",
                 u.filter(items_dict, key_predicate),
@@ -2456,25 +2678,31 @@ class FlextUtilities:  # noqa: PLR0904
         mapper: Callable[[T], R],
         *,
         default_error: str = "Operation failed",
-    ) -> r[R]:
-        """Map result or return failure (generalized from map_or)."""
+    ) -> r[R]: ...
 
     @staticmethod
     @overload
     def map[T, R](
-        items: T
-        | list[T]
-        | tuple[T, ...]
-        | set[T]
-        | frozenset[T]
-        | dict[str, T]
-        | Mapping[str, T],
-        mapper: Callable[[T], R] | Callable[[str, T], R],
-    ) -> list[R] | set[R] | frozenset[R] | dict[str, R]:
-        """Map collection items."""
+        items: list[T] | tuple[T, ...],
+        mapper: Callable[[T], R],
+    ) -> list[R]: ...
 
     @staticmethod
+    @overload
     def map[T, R](
+        items: set[T] | frozenset[T],
+        mapper: Callable[[T], R],
+    ) -> set[R] | frozenset[R]: ...
+
+    @staticmethod
+    @overload
+    def map[T, R](
+        items: dict[str, T] | Mapping[str, T],
+        mapper: Callable[[str, T], R],
+    ) -> dict[str, R]: ...
+
+    @staticmethod
+    def map[T, R](  # noqa: PLR0911
         items: T
         | list[T]
         | tuple[T, ...]
@@ -2516,7 +2744,8 @@ class FlextUtilities:  # noqa: PLR0904
         # Handle r[T] case (generalized from map_or)
         if isinstance(items, r):
             if items.is_success:
-                return r[R].ok(mapper(items.value))  # type: ignore[arg-type]
+                result_mapper = cast("Callable[[T], R]", mapper)
+                return r[R].ok(result_mapper(items.value))
             return r[R].fail(u.err(items, default=default_error))
 
         # Handle collections (original map behavior)
@@ -2524,15 +2753,15 @@ class FlextUtilities:  # noqa: PLR0904
             list_mapper = cast("Callable[[T], R]", mapper)
             # Cannot use u.map() here - would cause recursion (u.map calls itself for lists)
             # Use list comprehension directly for mapping
-            return [list_mapper(item) for item in items]  # type: ignore[arg-type, list-item]
+            return [list_mapper(item) for item in items]
 
         if isinstance(items, (set, frozenset)):
             set_mapper = cast("Callable[[T], R]", mapper)
-            mapped_items = {set_mapper(item) for item in items}  # type: ignore[arg-type]
+            mapped_items: set[R] = {set_mapper(item) for item in items}
             # Preserve frozenset type if input was frozenset
             if isinstance(items, frozenset):
                 return cast("frozenset[R]", frozenset(mapped_items))
-            return cast("set[R]", mapped_items)
+            return mapped_items
 
         if isinstance(items, (dict, Mapping)):
             dict_mapper = cast("Callable[[str, T], R]", mapper)
@@ -2540,9 +2769,8 @@ class FlextUtilities:  # noqa: PLR0904
 
         # Single value - wrap in list and map
         # This handles the case where items is a single value (not list/tuple/dict/set)
-        # Mypy considers this unreachable because items type is union, but runtime handles it
         single_mapper = cast("Callable[[T], R]", mapper)
-        return [single_mapper(items)]  # type: ignore[arg-type, unreachable]
+        return [single_mapper(items)]
 
     @staticmethod
     def _convert_to_int(value: t.GeneralValueType, default: int, /) -> int:
@@ -2650,14 +2878,23 @@ class FlextUtilities:  # noqa: PLR0904
 
         converter = converters.get(target_type)
         if converter is not None:
-            return converter(value, default)  # type: ignore[arg-type]
+            converter_func = cast("Callable[[object, T], T]", converter)
+            return converter_func(value, default)
 
-        # Fallback: try direct conversion
-        try:
-            converted = target_type(value)  # type: ignore[call-overload, assignment, arg-type, misc]
-            return cast("T", converted)
-        except (ValueError, TypeError):
-            return default
+        # Fallback: try direct conversion only if target_type is a callable type
+        if isinstance(target_type, type) and callable(target_type):
+            try:
+                # Cast value to GeneralValueType for type compatibility
+                value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+                # Call target_type as constructor
+                type_constructor = cast(
+                    "Callable[[t.GeneralValueType], T]", target_type
+                )
+                converted = type_constructor(value_typed)
+                return cast("T", converted)
+            except (ValueError, TypeError):
+                return default
+        return default
 
     @staticmethod
     def _build_apply_ensure(current: object, ops: dict[str, object]) -> object:
@@ -2679,21 +2916,45 @@ class FlextUtilities:  # noqa: PLR0904
             then_value=ensure_default_val,
             else_value=default_map.get(ensure_type, ""),
         )
-        return u.ensure(current, target_type=ensure_type, default=default_val)  # type: ignore[arg-type, return-value]
+        # Type narrowing: ensure_type is str, default_val is object
+        ensure_type_str = cast("str", ensure_type)
+        # Cast current to GeneralValueType for ensure compatibility
+        current_typed: t.GeneralValueType = cast("t.GeneralValueType", current)
+        ensure_result = u.ensure(
+            current_typed, target_type=ensure_type_str, default=default_val
+        )
+        return cast("object", ensure_result)
 
     @staticmethod
     def _build_apply_filter(
         current: object, ops: dict[str, object], default: object
     ) -> object:
-        """Helper: Apply filter operation."""
+        """Helper: Apply filter operation using unified collection handling."""
         if "filter" not in ops:
             return current
         filter_pred = cast("Callable[[object], bool]", ops["filter"])
-        if isinstance(current, (list, tuple, set, frozenset)):
-            return u.filter(current, predicate=filter_pred)  # type: ignore[arg-type, return-value]
-        if isinstance(current, dict):
-            return u.filter(current, predicate=lambda _k, v: filter_pred(v))  # type: ignore[arg-type, return-value]
-        return default if not filter_pred(current) else current  # type: ignore[arg-type]
+        # Use unified collection handling DSL pattern
+        match current:
+            case list() | tuple():
+                current_seq: list[object] | tuple[object, ...] = cast(
+                    "list[object] | tuple[object, ...]", current
+                )
+                return u.filter(current_seq, predicate=filter_pred)
+            case set() | frozenset():
+                current_set: set[object] | frozenset[object] = cast(
+                    "set[object] | frozenset[object]", current
+                )
+                return u.filter(list(current_set), predicate=filter_pred)
+            case dict():
+                current_dict: dict[str, object] = cast("dict[str, object]", current)
+
+                def dict_pred(_k: str, v: object) -> bool:
+                    """Filter predicate for dict items."""
+                    return filter_pred(v)
+
+                return u.filter(current_dict, predicate=dict_pred)
+            case _:
+                return default if not filter_pred(current) else current
 
     @staticmethod
     def _build_apply_map(current: object, ops: dict[str, object]) -> object:
@@ -2701,9 +2962,31 @@ class FlextUtilities:  # noqa: PLR0904
         if "map" not in ops:
             return current
         map_func = cast("Callable[[object], object]", ops["map"])
-        if isinstance(current, (list, tuple, set, frozenset, dict)):
-            return u.map(current, mapper=map_func)  # type: ignore[arg-type, return-value]
-        return map_func(current)  # type: ignore[arg-type, return-value]
+        if isinstance(current, (list, tuple)):
+            # Type narrowing: current is list or tuple
+            current_list: list[object] | tuple[object, ...] = cast(
+                "list[object] | tuple[object, ...]", current
+            )
+            map_result = u.map(current_list, mapper=map_func)
+            return cast("object", map_result)
+        if isinstance(current, (set, frozenset)):
+            # Type narrowing: current is set or frozenset
+            current_set: set[object] | frozenset[object] = cast(
+                "set[object] | frozenset[object]", current
+            )
+            map_result_set = u.map(current_set, mapper=map_func)
+            return cast("object", map_result_set)
+        if isinstance(current, (dict, Mapping)):
+            # Type narrowing: current is dict or Mapping
+            current_dict: dict[str, object] | Mapping[str, object] = cast(
+                "dict[str, object] | Mapping[str, object]", current
+            )
+            # For dict, mapper should be Callable[[str, object], object]
+            dict_mapper = cast("Callable[[str, object], object]", map_func)
+            map_result_dict = u.map(current_dict, mapper=dict_mapper)
+            return cast("object", map_result_dict)
+        map_result_single = map_func(current)
+        return cast("object", map_result_single)
 
     @staticmethod
     def _build_apply_normalize(current: object, ops: dict[str, object]) -> object:
@@ -2713,7 +2996,14 @@ class FlextUtilities:  # noqa: PLR0904
         ):
             return current
         normalize_case = cast("str", ops["normalize"])
-        return u.normalize(current, case=normalize_case)  # type: ignore[arg-type, return-value]
+        # Type narrowing: current is str or collection
+        current_normalizable: (
+            str | list[str] | tuple[str, ...] | set[str] | frozenset[str]
+        ) = cast(
+            "str | list[str] | tuple[str, ...] | set[str] | frozenset[str]", current
+        )
+        normalize_result = u.normalize(current_normalizable, case=normalize_case)
+        return cast("object", normalize_result)
 
     @staticmethod
     def _build_apply_convert(current: object, ops: dict[str, object]) -> object:
@@ -2722,23 +3012,91 @@ class FlextUtilities:  # noqa: PLR0904
             return current
         convert_type = cast("type[object]", ops["convert"])
         convert_default = ops.get("convert_default", convert_type())
-        return u.convert(current, convert_type, convert_default)  # type: ignore[arg-type, return-value]
+        # Type narrowing: current is object, convert_type is type
+        current_typed: t.GeneralValueType = cast("t.GeneralValueType", current)
+        convert_result = u.convert(current_typed, convert_type, convert_default)
+        return cast("object", convert_result)
 
     @staticmethod
-    def _build_apply_transform(
+    def _build_apply_transform(  # noqa: PLR0914
         current: object, ops: dict[str, object], default: object, on_error: str
     ) -> object:
         """Helper: Apply transform operation."""
         if "transform" not in ops or not isinstance(current, (dict, Mapping)):
             return current
-        transform_opts = cast("dict[str, object]", ops["transform"])
-        transform_result = u.transform(current, **transform_opts)  # type: ignore[arg-type]
+        transform_opts_raw = ops["transform"]
+        if not isinstance(transform_opts_raw, dict):
+            return current
+        transform_opts = cast("dict[str, object]", transform_opts_raw)
+        # Type narrowing: current is dict or Mapping
+        current_dict: dict[str, object] | Mapping[str, object] = cast(
+            "dict[str, object] | Mapping[str, object]", current
+        )
+        # Extract transform options as keyword arguments
+        # Type narrowing: current_dict needs to be Mapping[str, GeneralValueType] for transform
+        current_dict_typed: Mapping[str, t.GeneralValueType] = cast(
+            "Mapping[str, t.GeneralValueType]", current_dict
+        )
+        # Extract transform options with proper types
+        normalize_val = transform_opts.get("normalize")
+        normalize_bool = (
+            cast("bool", normalize_val) if isinstance(normalize_val, bool) else False
+        )
+        strip_none_val = transform_opts.get("strip_none")
+        strip_none_bool = (
+            cast("bool", strip_none_val) if isinstance(strip_none_val, bool) else False
+        )
+        strip_empty_val = transform_opts.get("strip_empty")
+        strip_empty_bool = (
+            cast("bool", strip_empty_val)
+            if isinstance(strip_empty_val, bool)
+            else False
+        )
+        map_keys_val = transform_opts.get("map_keys")
+        map_keys_dict = (
+            cast("dict[str, str]", map_keys_val)
+            if isinstance(map_keys_val, dict)
+            else None
+        )
+        filter_keys_val = transform_opts.get("filter_keys")
+        filter_keys_set = (
+            cast("set[str]", filter_keys_val)
+            if isinstance(filter_keys_val, set)
+            else None
+        )
+        exclude_keys_val = transform_opts.get("exclude_keys")
+        exclude_keys_set = (
+            cast("set[str]", exclude_keys_val)
+            if isinstance(exclude_keys_val, set)
+            else None
+        )
+        to_json_val = transform_opts.get("to_json")
+        to_json_bool = (
+            cast("bool", to_json_val) if isinstance(to_json_val, bool) else False
+        )
+        to_model_val = transform_opts.get("to_model")
+        to_model_typed = (
+            cast("type[BaseModel] | None", to_model_val)
+            if isinstance(to_model_val, type) or to_model_val is None
+            else None
+        )
+        transform_result = u.transform(
+            current_dict_typed,
+            normalize=normalize_bool,
+            strip_none=strip_none_bool,
+            strip_empty=strip_empty_bool,
+            map_keys=map_keys_dict,
+            filter_keys=filter_keys_set,
+            exclude_keys=exclude_keys_set,
+            to_json=to_json_bool,
+            to_model=to_model_typed,
+        )
         if transform_result.is_success:
             return transform_result.value
         return default if on_error == "stop" else current
 
     @staticmethod
-    def _build_apply_process(
+    def _build_apply_process(  # noqa: PLR0911
         current: object, ops: dict[str, object], default: object, on_error: str
     ) -> object:
         """Helper: Apply process operation using u.process()."""
@@ -2746,18 +3104,179 @@ class FlextUtilities:  # noqa: PLR0904
             return current
         process_func = cast("Callable[[object], object]", ops["process"])
         # Use u.process() for unified processing
-        if isinstance(current, (list, tuple, dict, Mapping)):
-            process_result = u.process(
-                current, processor=process_func, on_error=on_error
-            )  # type: ignore[arg-type]
-            if process_result.is_success:
-                return process_result.value
+        if isinstance(current, (list, tuple)):
+            # Type narrowing: current is list or tuple
+            current_list: list[object] | tuple[object, ...] = cast(
+                "list[object] | tuple[object, ...]", current
+            )
+            process_result_list = u.process(
+                current_list, processor=process_func, on_error=on_error
+            )
+            if process_result_list.is_success:
+                return cast("object", process_result_list.value)
+            return default if on_error == "stop" else current
+        if isinstance(current, (dict, Mapping)):
+            # Type narrowing: current is dict or Mapping
+            current_dict: dict[str, object] | Mapping[str, object] = cast(
+                "dict[str, object] | Mapping[str, object]", current
+            )
+            process_result_dict = u.process(
+                current_dict, processor=process_func, on_error=on_error
+            )
+            if process_result_dict.is_success:
+                return cast("object", process_result_dict.value)
             return default if on_error == "stop" else current
         # Single value processing with error handling
         try:
-            return process_func(current)  # type: ignore[arg-type, return-value]
+            process_result = process_func(current)
+            return cast("object", process_result)
         except Exception:
             return default if on_error == "stop" else current
+
+    @staticmethod
+    def _build_apply_group(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply group operation."""
+        if "group" not in ops:
+            return current
+        if not isinstance(current, (list, tuple)):
+            return current
+        group_spec = ops["group"]
+        current_list: list[object] | tuple[object, ...] = cast(
+            "list[object] | tuple[object, ...]", current
+        )
+        # Group by field name (str) or key function (callable)
+        if isinstance(group_spec, str):
+            # Group by field name
+            grouped: dict[object, list[object]] = {}
+            for item in current_list:
+                key = u.get(item, group_spec)
+                if key not in grouped:
+                    grouped[key] = []
+                grouped[key].append(item)
+            return grouped
+        if callable(group_spec):
+            # Group by key function
+            key_func: Callable[[object], object] = cast(
+                "Callable[..., object]", group_spec
+            )
+            grouped_by_func: dict[object, list[object]] = {}
+            for item in current_list:
+                item_key = key_func(item)
+                # Cast key to object for dict key (dict keys can be any hashable type)
+                key_obj = cast("object", item_key)
+                if key_obj not in grouped_by_func:
+                    grouped_by_func[key_obj] = []
+                grouped_by_func[key_obj].append(item)
+            return grouped_by_func
+        return current
+
+    @staticmethod
+    def _build_apply_sort(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply sort operation."""
+        if "sort" not in ops:
+            return current
+        if not isinstance(current, (list, tuple)):
+            return current
+        sort_spec = ops["sort"]
+        current_list: list[object] | tuple[object, ...] = cast(
+            "list[object] | tuple[object, ...]", current
+        )
+        # Sort by field name (str), key function (callable), or natural sort (True)
+        if isinstance(sort_spec, str):
+            # Sort by field name
+            def key_func(item: object) -> object:
+                return u.get(item, sort_spec)
+
+            # Type ignore: sorted accepts callable returning object for key
+            sorted_list = sorted(current_list, key=key_func)  # type: ignore[arg-type]
+            return (
+                list(sorted_list) if isinstance(current, list) else tuple(sorted_list)
+            )
+        if callable(sort_spec):
+            # Sort by key function
+            key_func_callable: Callable[[object], object] = cast(
+                "Callable[[object], object]", sort_spec
+            )
+            # Type ignore: sorted accepts callable returning object for key
+            sorted_list = sorted(current_list, key=key_func_callable)  # type: ignore[arg-type]
+            return (
+                list(sorted_list) if isinstance(current, list) else tuple(sorted_list)
+            )
+        if sort_spec is True:
+            # Natural sort - type ignore for object comparison
+            sorted_list = sorted(current_list)  # type: ignore[type-var]
+            return (
+                list(sorted_list) if isinstance(current, list) else tuple(sorted_list)
+            )
+        return current
+
+    @staticmethod
+    def _build_apply_unique(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply unique operation to remove duplicates."""
+        if "unique" not in ops or not ops.get("unique"):
+            return current
+        if not isinstance(current, (list, tuple)):
+            return current
+        current_list: list[object] | tuple[object, ...] = cast(
+            "list[object] | tuple[object, ...]", current
+        )
+        # Remove duplicates while preserving order
+        seen: set[object] = set()
+        unique_list: list[object] = []
+        for item in current_list:
+            # Use hashable representation for comparison
+            item_hashable = (
+                item
+                if isinstance(item, (str, int, float, bool, type(None)))
+                else str(item)
+            )
+            if item_hashable not in seen:
+                seen.add(item_hashable)
+                unique_list.append(item)
+        return list(unique_list) if isinstance(current, list) else tuple(unique_list)
+
+    @staticmethod
+    def _build_apply_slice(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply slice operation."""
+        if "slice" not in ops:
+            return current
+        if not isinstance(current, (list, tuple)):
+            return current
+        slice_spec = ops["slice"]
+        current_list: list[object] | tuple[object, ...] = cast(
+            "list[object] | tuple[object, ...]", current
+        )
+        # Slice can be tuple[int, int] or list[int, int]
+        min_slice_length = 2
+        if (
+            isinstance(slice_spec, (tuple, list))
+            and len(slice_spec) >= min_slice_length
+        ):
+            start = cast("int", slice_spec[0]) if slice_spec[0] is not None else None
+            end = cast("int", slice_spec[1]) if slice_spec[1] is not None else None
+            sliced = current_list[start:end]
+            return list(sliced) if isinstance(current, list) else tuple(sliced)
+        return current
+
+    @staticmethod
+    def _build_apply_chunk(current: object, ops: dict[str, object]) -> object:
+        """Helper: Apply chunk operation to split into sublists."""
+        if "chunk" not in ops:
+            return current
+        if not isinstance(current, (list, tuple)):
+            return current
+        chunk_size = ops["chunk"]
+        if not isinstance(chunk_size, int) or chunk_size <= 0:
+            return current
+        current_list: list[object] | tuple[object, ...] = cast(
+            "list[object] | tuple[object, ...]", current
+        )
+        # Split into chunks of specified size
+        chunked: list[list[object]] = []
+        for i in range(0, len(current_list), chunk_size):
+            chunk = list(current_list[i : i + chunk_size])
+            chunked.append(chunk)
+        return chunked
 
     @staticmethod
     def build[T](
@@ -2786,6 +3305,11 @@ class FlextUtilities:  # noqa: PLR0904
                 - "convert_default": default for convert
                 - "transform": dict with transform options
                 - "process": processor function
+                - "group": str field name or callable for grouping
+                - "sort": str field name, callable key function, or True for natural sort
+                - "unique": bool to remove duplicates
+                - "slice": tuple[int, int] for slicing (start, end)
+                - "chunk": int size for chunking into sublists
             on_error: Error handling ("stop", "skip", "collect")
 
         Returns:
@@ -2810,6 +3334,18 @@ class FlextUtilities:  # noqa: PLR0904
                 ops={"transform": {"normalize": True, "strip_none": True, "filter_keys": {"name", "email"}}},
             )
 
+            # Group, sort, unique, slice, chunk
+            result = u.build(
+                items,
+                ops={
+                    "group": "category",  # Group by field
+                    "sort": "name",       # Sort by field
+                    "unique": True,       # Remove duplicates
+                    "slice": (0, 10),    # Take first 10
+                    "chunk": 5,          # Split into chunks of 5
+                },
+            )
+
         """
         if ops is None:
             return value
@@ -2828,9 +3364,15 @@ class FlextUtilities:  # noqa: PLR0904
         current = FlextUtilities._build_apply_transform(
             current, ops, ensure_default_val or current, on_error
         )
-        return FlextUtilities._build_apply_process(
+        current = FlextUtilities._build_apply_process(
             current, ops, ensure_default_val or current, on_error
-        )  # type: ignore[return-value]
+        )
+        current = FlextUtilities._build_apply_group(current, ops)
+        current = FlextUtilities._build_apply_sort(current, ops)
+        current = FlextUtilities._build_apply_unique(current, ops)
+        current = FlextUtilities._build_apply_slice(current, ops)
+        current = FlextUtilities._build_apply_chunk(current, ops)
+        return cast("object", current)
 
     @staticmethod
     def agg[T](
@@ -2861,42 +3403,65 @@ class FlextUtilities:  # noqa: PLR0904
             # → 30
 
         """
+        items_list: list[T] | tuple[T, ...] = cast("list[T] | tuple[T, ...]", items)
         if callable(field):
-            extracted = cast("list[object]", u.map(items, field))  # type: ignore[arg-type]
+            # Type narrowing: field is Callable[[T], object]
+            field_func = cast("Callable[[T], object]", field)
+            extracted = cast("list[object]", u.map(items_list, field_func))
         else:
             # Use u.get for unified extraction (works for dicts and objects)
+            # Type narrowing: field is str
+            field_str = cast("str", field)
             extracted = cast(
-                "list[object]", u.map(items, lambda item: u.get(item, field))
-            )  # type: ignore[arg-type]
+                "list[object]", u.map(items_list, lambda item: u.get(item, field_str))
+            )
+
         # Filter None values before aggregation
-        filtered = cast("list[object]", u.filter(extracted, lambda x: x is not None))  # type: ignore[arg-type]
+
+        def is_not_none(x: object) -> bool:
+            """Check if value is not None."""
+            return x is not None
+
+        filtered = cast("list[object]", u.filter(extracted, is_not_none))
         agg_fn = fn if fn is not None else sum
-        return agg_fn(filtered)  # type: ignore[arg-type, return-value]
+        # Type narrowing: filtered contains numeric values after mapping
+        filtered_numeric: list[int | float] = [
+            cast("int | float", x) for x in filtered if isinstance(x, (int, float))
+        ]
+        if filtered_numeric:
+            # Type narrowing: agg_fn is Callable[[list[int | float]], int | float]
+            agg_fn_typed = cast("Callable[[list[int | float]], int | float]", agg_fn)
+            agg_result = agg_fn_typed(filtered_numeric)
+        else:
+            agg_result = 0
+        return cast("object", agg_result)
 
     @staticmethod
     @overload
     def fields[T](
         source: Mapping[str, object] | object,
-        name: str,
+        name_or_spec: str,
         *,
         default: T | None = None,
         required: bool = False,
         ops: dict[str, object] | None = None,
-    ) -> T | None:
-        """Extract single field (overload for single field)."""
+        on_error: str = "stop",
+    ) -> T | None: ...
 
     @staticmethod
     @overload
     def fields[T](
         source: Mapping[str, object] | object,
-        spec: dict[str, dict[str, object] | T | None],
+        name_or_spec: dict[str, dict[str, object] | T | None],
         *,
+        default: T | None = None,
+        required: bool = False,
+        ops: dict[str, object] | None = None,
         on_error: str = "stop",
-    ) -> dict[str, T | None] | r[dict[str, T]]:
-        """Extract multiple fields (overload for multiple fields)."""
+    ) -> dict[str, T | None] | r[dict[str, T]]: ...
 
     @staticmethod
-    def fields[T](
+    def fields[T](  # noqa: PLR0913
         source: Mapping[str, object] | object,
         name_or_spec: str | dict[str, dict[str, object] | T | None],
         *,
@@ -2904,7 +3469,7 @@ class FlextUtilities:  # noqa: PLR0904
         required: bool = False,
         ops: dict[str, object] | None = None,
         on_error: str = "stop",
-    ) -> T | None | dict[str, T | None] | r[dict[str, T]]:
+    ) -> dict[str, T | None] | r[dict[str, T]] | T | None:
         """Extract and process field(s) using DSL mnemonic pattern (generalized from field).
 
         Generic replacement for: Repeated u.get() + u.guard() + u.build() chains
@@ -2949,15 +3514,18 @@ class FlextUtilities:  # noqa: PLR0904
         """
         # Handle multiple fields case
         if isinstance(name_or_spec, dict):
+            # For multi-field case, on_error is required
             return FlextUtilities._fields_multi(source, name_or_spec, on_error=on_error)
 
         # Handle single field case
+        # For single field, on_error is ignored (only used for multi-field)
         name = cast("str", name_or_spec)
         value = u.get(source, name, default=default)
         if value is None and required:
             return None
         if ops is not None:
-            return cast("T | None", u.build(value, ops=ops, on_error="stop"))
+            built_value = u.build(value, ops=ops, on_error="stop")
+            return cast("T | None", built_value)
         return cast("T | None", value)
 
     @staticmethod
@@ -3031,9 +3599,10 @@ class FlextUtilities:  # noqa: PLR0904
             if value is None and field_required:
                 extracted = None
             elif field_ops is not None:
-                extracted = cast(
-                    "T | None", u.build(value, ops=field_ops, on_error="stop")
-                )
+                # Type narrowing: field_ops is dict[str, object]
+                field_ops_dict = cast("dict[str, object]", field_ops)
+                build_result = u.build(value, ops=field_ops_dict, on_error="stop")
+                extracted = cast("T | None", build_result)
             else:
                 extracted = cast("T | None", value)
 
@@ -3136,13 +3705,20 @@ class FlextUtilities:  # noqa: PLR0904
                     )
                     continue
 
-                extracted = u.extract(
+                # Extract field value
+                extracted_raw = u.extract(
                     source,
                     source_field,
                     default=field_default,
                     required=False,
-                    ops=cast("dict[str, object] | None", field_ops),
                 )
+                # Apply ops if provided using u.build()
+                if field_ops is not None and extracted_raw is not None:
+                    field_ops_dict = cast("dict[str, object]", field_ops)
+                    build_result = u.build(extracted_raw, ops=field_ops_dict)
+                    extracted = cast("object", build_result)
+                else:
+                    extracted = extracted_raw
                 # Use u.when() for conditional assignment (DSL pattern)
                 constructed[target_key] = u.when(
                     condition=extracted is not None,
@@ -3163,37 +3739,41 @@ class FlextUtilities:  # noqa: PLR0904
     @staticmethod
     @overload
     def take[T](
-        data: Mapping[str, object] | object,
-        key: str,
+        data_or_items: Mapping[str, object] | object,
+        key_or_n: str,
         *,
         as_type: type[T] | None = None,
         default: T | None = None,
         guard: bool = True,
-    ) -> T | None:
-        """Extract value with type guard (overload for dict/object extraction)."""
+        from_start: bool = True,
+    ) -> T | None: ...
 
     @staticmethod
     @overload
     def take[T](
-        items: dict[str, T],
-        n: int,
+        data_or_items: dict[str, T],
+        key_or_n: int,
         *,
+        as_type: type[T] | None = None,
+        default: T | None = None,
+        guard: bool = True,
         from_start: bool = True,
-    ) -> dict[str, T]:
-        """Take first N items from dict (overload)."""
+    ) -> dict[str, T]: ...
 
     @staticmethod
     @overload
     def take[T](
-        items: list[T] | tuple[T, ...],
-        n: int,
+        data_or_items: list[T] | tuple[T, ...],
+        key_or_n: int,
         *,
+        as_type: type[T] | None = None,
+        default: T | None = None,
+        guard: bool = True,
         from_start: bool = True,
-    ) -> list[T]:
-        """Take first N items from list/tuple (overload)."""
+    ) -> list[T]: ...
 
     @staticmethod
-    def take[T](
+    def take[T](  # noqa: PLR0913
         data_or_items: Mapping[str, object]
         | object
         | dict[str, T]
@@ -3205,7 +3785,7 @@ class FlextUtilities:  # noqa: PLR0904
         default: T | None = None,
         guard: bool = True,
         from_start: bool = True,
-    ) -> T | None | dict[str, T] | list[T]:
+    ) -> dict[str, T] | list[T] | T | None:
         """Unified take function (generalized from take_n).
 
         Generic replacement for: u.get() + isinstance() + cast() patterns, list slicing
@@ -3242,24 +3822,26 @@ class FlextUtilities:  # noqa: PLR0904
             key = key_or_n
             value = u.get(data, key, default=default)
             if value is None:
-                return default
+                return cast("T | None", default)
             if as_type and guard:
                 guarded = u.guard(value, as_type, return_value=True, default=default)
                 return cast("T | None", guarded)
             return cast("T | None", value)
 
         # Slice mode: take N items from list/dict
-        items = cast("dict[str, T] | list[T] | tuple[T, ...]", data_or_items)
         n = key_or_n
-        if isinstance(items, dict):
+        if isinstance(data_or_items, dict):
+            items_dict = cast("dict[str, T]", data_or_items)
             # Use u.keys() for unified key extraction
-            keys = u.keys(items)
+            keys = u.keys(items_dict)
             selected_keys = keys[:n] if from_start else keys[-n:]
             # Cannot use u.map() here - would cause recursion (u.map calls itself for lists)
             # Use dict comprehension directly
-            return {k: items[k] for k in selected_keys}
-        items_list = list(items)
-        return items_list[:n] if from_start else items_list[-n:]
+            return {k: items_dict[k] for k in selected_keys}
+        items_list_or_tuple = cast("list[T] | tuple[T, ...]", data_or_items)
+        items_list = list(items_list_or_tuple)
+        sliced = items_list[:n] if from_start else items_list[-n:]
+        return cast("list[T]", sliced)
 
     @staticmethod
     def pick[T](
@@ -3324,10 +3906,12 @@ class FlextUtilities:  # noqa: PLR0904
             return default
         # Try coercion using u.convert()
         try:
+            # Cast value to GeneralValueType for type compatibility
+            value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
             converted = (
-                u.convert(value, target, default)
+                u.convert(value_typed, target, default)
                 if default is not None
-                else u.convert(value, target, cast("T", None))
+                else u.convert(value_typed, target, cast("T", None))
             )
             return converted if converted is not None else default
         except (ValueError, TypeError):
@@ -3352,8 +3936,10 @@ class FlextUtilities:  # noqa: PLR0904
         Example:
             port = u.or_(config.get("port"), env.get("PORT"), default=8080)
             name = u.or_(user.name, user.username, default="anonymous")
+            port = u.or_(config.get("port"), 8080)  # Two-arg form
 
         """
+        # Handle all cases: or_(*values, default=...)
         for value in values:
             if value is not None:
                 return value
@@ -3415,16 +4001,19 @@ class FlextUtilities:  # noqa: PLR0904
             return default
 
     @staticmethod
-    def chain[T](
-        value: T,
+    def chain(
+        value: object,
         *funcs: Callable[[object], object],
     ) -> object:
         """Chain operations (mnemonic: chain = pipeline).
 
+        Business Rule: Execute a sequence of functions in order, passing each
+        result to the next function. This is the functional pipeline pattern.
+
         Generic replacement for: func3(func2(func1(value))) patterns
 
         Args:
-            value: Initial value
+            value: Initial value (any type)
             *funcs: Functions to apply in sequence
 
         Returns:
@@ -3601,17 +4190,30 @@ class FlextUtilities:  # noqa: PLR0904
             if key_sep:
                 # Use u.map for unified mapping - convert items() to list first
                 items_list = list(items.items())
+                # Type narrowing: items_list is list of tuples
+                items_tuples: list[tuple[str, str]] = cast(
+                    "list[tuple[str, str]]", items_list
+                )
                 mapped = cast(
                     "list[str]",
-                    u.map(items_list, lambda kv: f"{kv[0]}{key_sep}{kv[1]}"),
-                )  # type: ignore[arg-type]
+                    u.map(items_tuples, lambda kv: f"{kv[0]}{key_sep}{kv[1]}"),
+                )
                 return sep.join(mapped)
             # Use u.vals() for unified value extraction, then u.map for mapping
-            values_list = u.vals(items)
-            mapped = cast("list[str]", u.map(values_list, str))  # type: ignore[arg-type]
+            # Cast items to dict for type compatibility
+            items_dict: dict[str, str] = cast("dict[str, str]", items)
+            values_list: list[str] = cast("list[str]", u.vals(items_dict))
+            # Type narrowing: values_list is list[str], str() is callable
+            str_func_vals: Callable[[str], str] = str
+            mapped = cast("list[str]", u.map(values_list, str_func_vals))
             return sep.join(mapped)
         # Use u.map for unified mapping
-        mapped = cast("list[str]", u.map(items, str))  # type: ignore[arg-type]
+        # Type narrowing: items is collection of strings
+        items_collection: list[str] | tuple[str, ...] | set[str] | frozenset[str] = (
+            cast("list[str] | tuple[str, ...] | set[str] | frozenset[str]", items)
+        )
+        str_func_collection: Callable[[str], str] = str
+        mapped = cast("list[str]", u.map(items_collection, str_func_collection))
         return sep.join(mapped)
 
     @staticmethod
@@ -3665,13 +4267,23 @@ class FlextUtilities:  # noqa: PLR0904
         """
         result: dict[K, list[T]] = {}
         # Use u.map for unified mapping to extract keys
+        items_list: list[T] | tuple[T, ...] = cast("list[T] | tuple[T, ...]", items)
         if callable(key):
-            keys = cast("list[K]", u.map(items, key))  # type: ignore[arg-type]
+            # Type narrowing: key is Callable[[T], K]
+            key_func = cast("Callable[[T], K]", key)
+            keys = cast("list[K]", u.map(items_list, key_func))
         else:
             # Use u.get for unified extraction (works for dicts and objects)
-            keys = cast("list[K]", u.map(items, lambda item: u.get(item, key)))  # type: ignore[arg-type]
+            # Type narrowing: key is str
+            key_str = cast("str", key)
+            keys = cast("list[K]", u.map(items_list, lambda item: u.get(item, key_str)))
         # Group items by keys using zip_ for unified zip
-        pairs = cast("list[tuple[T, K]]", u.zip_(items, keys))
+        # Cast to object lists for type compatibility with zip_
+        items_obj: list[object] | tuple[object, ...] = cast(
+            "list[object] | tuple[object, ...]", items
+        )
+        keys_obj: list[object] = cast("list[object]", keys)
+        pairs = cast("list[tuple[T, K]]", u.zip_(items_obj, keys_obj))
         for item, k in pairs:
             result.setdefault(k, []).append(item)
         return result
@@ -3747,7 +4359,10 @@ class FlextUtilities:  # noqa: PLR0904
         if predicate is None:
             return len(items)
         # Use u.filter() for unified filtering, then count
-        filtered = u.filter(items, predicate)  # type: ignore[arg-type]
+        # Type narrowing: items is list[T] | tuple[T, ...], predicate is Callable[[T], bool]
+        items_list: list[T] | tuple[T, ...] = cast("list[T] | tuple[T, ...]", items)
+        predicate_func = cast("Callable[[T], bool]", predicate)
+        filtered = u.filter(items_list, predicate_func)
         return (
             len(filtered)
             if isinstance(filtered, (list, tuple, set, frozenset))
@@ -3757,8 +4372,8 @@ class FlextUtilities:  # noqa: PLR0904
         )
 
     @staticmethod
-    def err(
-        result: r[object],
+    def err[T](
+        result: r[T],
         *,
         default: str = "Unknown error",
     ) -> str:
@@ -3767,7 +4382,7 @@ class FlextUtilities:  # noqa: PLR0904
         Generic replacement for: str(result.error) if result.error else "Unknown error"
 
         Args:
-            result: FlextResult to extract error from
+            result: r to extract error from
             default: Default error message if error is None/empty
 
         Returns:
@@ -3778,14 +4393,11 @@ class FlextUtilities:  # noqa: PLR0904
             # → "Connection timeout" or "Operation failed"
 
         """
-        # Use u.when() for conditional return (DSL pattern)
-        return u.when(
-            condition=result.is_failure,
-            then_value=cast(
-                "str", u.ensure(result.error, target_type="str", default=default)
-            ),
-            else_value=default,
-        )
+        if result.is_failure:
+            error_str = result.error
+            if error_str:
+                return str(error_str)
+        return default
 
     @staticmethod
     def val[T](
@@ -3840,29 +4452,10 @@ class FlextUtilities:  # noqa: PLR0904
         """
         if isinstance(value, r):
             if value.is_failure:
-                return cast("T", default) if default is not None else cast("T", None)
+                # Use u.or_() for default fallback (DSL pattern)
+                return cast("T", u.or_(default, None))
             return value.value
         return value
-
-    @staticmethod
-    def or_[T](value: T | None, fallback: T) -> T:
-        """Return value if not None, else fallback (mnemonic: or_ = value or fallback).
-
-        Generic replacement for: value if value is not None else fallback
-
-        Args:
-            value: Value to check
-            fallback: Fallback value if value is None
-
-        Returns:
-            value or fallback
-
-        Example:
-            port = u.or_(config.get("port"), 8080)
-            name = u.or_(user.name, "unknown")
-
-        """
-        return value if value is not None else fallback
 
     @staticmethod
     def req[T](
@@ -3913,13 +4506,16 @@ class FlextUtilities:  # noqa: PLR0904
             values = u.vals(data_dict)
 
         """
-        if isinstance(items, r):
-            if items.is_failure:
-                return default or []
-            items_dict = items.value
-        else:
-            items_dict = items
-        return list(items_dict.values()) if items_dict else (default or [])
+        # Use u.val() for result unwrapping with default
+        items_dict = u.val(items, default={}) if isinstance(items, r) else items
+        # Handle Mapping[str, T] by converting to dict for .values() access
+        if isinstance(items_dict, Mapping) and not isinstance(items_dict, dict):
+            items_dict = dict(items_dict)
+        # Use u.or_() for default fallback (DSL pattern)
+        if items_dict:
+            return list(items_dict.values())
+        result = u.or_(default, [])
+        return cast("list[T]", result)
 
     @staticmethod
     def keys[T](
@@ -3943,13 +4539,11 @@ class FlextUtilities:  # noqa: PLR0904
             field_names = u.keys(data_dict)
 
         """
-        if isinstance(items, r):
-            if items.is_failure:
-                return default or []
-            items_dict = items.value
-        else:
-            items_dict = items
-        return list(items_dict.keys()) if items_dict else (default or [])
+        # Use u.val() for result unwrapping with default
+        items_dict = u.val(items, default={}) if isinstance(items, r) else items
+        # Use u.or_() for default fallback (DSL pattern)
+        keys_list = list(items_dict.keys()) if items_dict else []
+        return keys_list or (default if default is not None else [])
 
     @staticmethod
     def mul[T: (int, float)](
@@ -4010,15 +4604,34 @@ class FlextUtilities:  # noqa: PLR0904
         """
         # Use u.val() for result unwrapping with default
         if isinstance(items, r):
-            items = u.val(items, default=[])
-            if u.empty(items):
+            items_unwrapped = u.val(items, default=[])
+            if u.empty(items_unwrapped):
                 # Use u.or_() for default fallback (DSL pattern)
                 return cast("T", u.or_(default, 0))
+            items = cast("list[T] | tuple[T, ...] | dict[str, T]", items_unwrapped)
 
         # Use u.agg() for unified aggregation when mapper provided
         if mapper is not None:
             # Use u.agg() with mapper for unified aggregation
-            return cast("T", u.agg(items, mapper, fn=sum))  # type: ignore[arg-type, return-value]
+            # Type narrowing: items is collection, mapper is callable
+            # Wrap sum() to avoid overloaded function type issue
+            def sum_wrapper(values: list[object]) -> object:
+                """Wrapper for sum() to avoid overloaded function type issue."""
+                return sum(cast("list[int | float]", values))
+
+            if isinstance(items, dict):
+                # For dict, extract values first
+                items_values = list(items.values())
+                mapper_func = cast("Callable[[object], int | float]", mapper)
+                agg_result = u.agg(items_values, mapper_func, fn=sum_wrapper)
+            else:
+                # For list/tuple
+                items_list: list[object] | tuple[object, ...] = cast(
+                    "list[object] | tuple[object, ...]", items
+                )
+                mapper_func = cast("Callable[[object], int | float]", mapper)
+                agg_result = u.agg(items_list, mapper_func, fn=sum_wrapper)
+            return cast("T", agg_result)
 
         # Direct sum - cannot use u.agg() with lambda x: x (causes recursion)
         # Use direct sum() on values
@@ -4063,11 +4676,13 @@ class FlextUtilities:  # noqa: PLR0904
         # Use u.empty() for unified empty check
         if u.empty(items):
             return default
-        # Use u.keys() for unified key extraction, then access first
+        # Use u.when() for conditional access (DSL pattern)
         if isinstance(items, dict):
             keys = u.keys(items)
-            return items[keys[0]] if keys else default
-        return items[0] if items else default
+            return u.when(
+                condition=bool(keys), then_value=items[keys[0]], else_value=default
+            )
+        return u.when(condition=bool(items), then_value=items[0], else_value=default)
 
     @staticmethod
     def last[T](
@@ -4094,11 +4709,13 @@ class FlextUtilities:  # noqa: PLR0904
         # Use u.empty() for unified empty check
         if u.empty(items):
             return default
-        # Use negative index for unified access
+        # Use u.when() for conditional access (DSL pattern)
         if isinstance(items, dict):
             keys = list(items.keys())
-            return items[keys[-1]] if keys else default
-        return items[-1] if items else default
+            return u.when(
+                condition=bool(keys), then_value=items[keys[-1]], else_value=default
+            )
+        return u.when(condition=bool(items), then_value=items[-1], else_value=default)
 
     @staticmethod
     def at[T](
@@ -4125,23 +4742,28 @@ class FlextUtilities:  # noqa: PLR0904
 
         """
         try:
+            # Use u.when() for conditional access (DSL pattern)
             if isinstance(items, dict):
-                return (
-                    items.get(cast("str", index), default)
-                    if isinstance(index, str)
-                    else default
+                return u.when(
+                    condition=isinstance(index, str),
+                    then_value=items.get(cast("str", index), default),
+                    else_value=default,
                 )
-            return (
-                items[cast("int", index)]
-                if 0 <= cast("int", index) < len(items)
-                else default
+            # Use u.when() for conditional access (DSL pattern)
+            return u.when(
+                condition=0 <= cast("int", index) < len(items),
+                then_value=items[cast("int", index)],
+                else_value=default,
             )
         except (IndexError, KeyError, TypeError):
             return default
 
     @staticmethod
     def flat[T](
-        items: list[list[T]] | list[tuple[T, ...]] | tuple[list[T], ...],
+        items: list[list[T] | tuple[T, ...]]
+        | list[list[T]]
+        | list[tuple[T, ...]]
+        | tuple[list[T], ...],
     ) -> list[T]:
         """Flatten nested lists (mnemonic: flat = flatten).
 
@@ -4160,10 +4782,10 @@ class FlextUtilities:  # noqa: PLR0904
         """
         # Use u.map for unified mapping - convert each sublist to list
         # Process each sublist to extract items
-        processed = cast(
-            "list[list[T]]",
-            u.map(items, list),  # type: ignore[arg-type]
-        )
+        # Type narrowing: items is list[list[T] | tuple[T, ...]] | tuple[list[T], ...]
+        items_typed = cast("list[list[T] | tuple[T, ...]] | tuple[list[T], ...]", items)
+        list_func: Callable[[list[T] | tuple[T, ...]], list[T]] = list
+        processed = cast("list[list[T]]", u.map(items_typed, list_func))
         # Flatten using list comprehension for cleaner functional style
         return [item for sublist in processed for item in sublist]
 
@@ -4194,17 +4816,20 @@ class FlextUtilities:  # noqa: PLR0904
     ) -> r[T]:
         """Create failure result (mnemonic: fail = failure).
 
+        Business Rule: Failures don't carry a value, only an error message.
+        The type parameter T allows type-safe failure results that match expected return types.
+
         Generic replacement for: r[T].fail(error)
 
         Args:
             error: Error message
 
         Returns:
-            r[T] with failure
+            r[T] with failure (type-safe failure matching expected return type)
 
         Example:
-            result = u.fail("Operation failed")
-            # → r.fail("Operation failed")
+            result: r[Entry] = u.fail[Entry]("Operation failed")
+            # → r[Entry].fail("Operation failed")
 
         """
         return r[T].fail(error)
@@ -4280,8 +4905,13 @@ class FlextUtilities:  # noqa: PLR0904
         return not value
 
     @staticmethod
-    def empty(
-        items: list[object] | tuple[object, ...] | dict[str, object] | str | None,
+    def empty[T](
+        items: list[T]
+        | tuple[T, ...]
+        | dict[str, T]
+        | str
+        | r[list[T] | dict[str, T]]
+        | None,
     ) -> bool:
         """Check if collection/string is empty (mnemonic: empty = is empty).
 
@@ -4298,6 +4928,12 @@ class FlextUtilities:  # noqa: PLR0904
                 return u.fail("Items required")
 
         """
+        # Handle r result type
+        if isinstance(items, r):
+            if items.is_failure:
+                return True
+            items = items.value
+
         if items is None:
             return True
         if isinstance(items, str):
@@ -4309,20 +4945,20 @@ class FlextUtilities:  # noqa: PLR0904
     def ends(
         value: str,
         suffix: str,
-    ) -> bool:
-        """Check if string ends with suffix (overload for single suffix)."""
+    ) -> bool: ...
 
     @staticmethod
     @overload
     def ends(
         value: str,
+        suffix: str,
         *suffixes: str,
-    ) -> bool:
-        """Check if string ends with any suffix (overload for multiple suffixes)."""
+    ) -> bool: ...
 
     @staticmethod
     def ends(
         value: str,
+        suffix: str,
         *suffixes: str,
     ) -> bool:
         """Check if string ends with suffix(es) (generalized from ends_any).
@@ -4331,7 +4967,8 @@ class FlextUtilities:  # noqa: PLR0904
 
         Args:
             value: String to check
-            *suffixes: One or more suffixes to check
+            suffix: First suffix to check
+            *suffixes: Additional suffixes to check
 
         Returns:
             True if ends with any suffix
@@ -4346,15 +4983,18 @@ class FlextUtilities:  # noqa: PLR0904
                 process_config()
 
         """
-        if not suffixes:
+        # Combine suffix and suffixes into single tuple for unified processing
+        all_suffixes: tuple[str, ...] = (suffix,) + suffixes
+        if not all_suffixes:
             return False
         # Use u.any_() with u.map() for unified checking
 
-        def check_suffix(suffix: str) -> bool:
+        def check_suffix(suffix_item: str) -> bool:
             """Check if value ends with suffix."""
-            return value.endswith(suffix)
+            return value.endswith(suffix_item)
 
-        mapped = cast("list[bool]", u.map(suffixes, check_suffix))  # type: ignore[arg-type]
+        # Type narrowing: all_suffixes is tuple[str, ...]
+        mapped = cast("list[bool]", u.map(all_suffixes, check_suffix))
         return u.any_(*mapped)
 
     @staticmethod
@@ -4385,20 +5025,20 @@ class FlextUtilities:  # noqa: PLR0904
     def starts(
         value: str,
         prefix: str,
-    ) -> bool:
-        """Check if string starts with prefix (overload for single prefix)."""
+    ) -> bool: ...
 
     @staticmethod
     @overload
     def starts(
         value: str,
+        prefix: str,
         *prefixes: str,
-    ) -> bool:
-        """Check if string starts with any prefix (overload for multiple prefixes)."""
+    ) -> bool: ...
 
     @staticmethod
     def starts(
         value: str,
+        prefix: str,
         *prefixes: str,
     ) -> bool:
         """Check if string starts with prefix(es) (generalized from starts_any).
@@ -4407,7 +5047,8 @@ class FlextUtilities:  # noqa: PLR0904
 
         Args:
             value: String to check
-            *prefixes: Prefixes to check
+            prefix: First prefix to check
+            *prefixes: Additional prefixes to check
 
         Returns:
             True if starts with any prefix
@@ -4417,35 +5058,38 @@ class FlextUtilities:  # noqa: PLR0904
                 process_plugin()
 
         """
-
+        # Combine prefix and prefixes into single tuple for unified processing
+        all_prefixes: tuple[str, ...] = (prefix,) + prefixes
         # Use u.any_() with u.map() for unified checking
         # Use partial for cleaner function composition (DSL pattern)
-        def check_prefix(prefix: str) -> bool:
-            """Check if value starts with prefix."""
-            return value.startswith(prefix)
 
-        mapped = cast("list[bool]", u.map(prefixes, check_prefix))  # type: ignore[arg-type]
+        def check_prefix(prefix_item: str) -> bool:
+            """Check if value starts with prefix."""
+            return value.startswith(prefix_item)
+
+        # Type narrowing: all_prefixes is tuple[str, ...]
+        mapped = cast("list[bool]", u.map(all_prefixes, check_prefix))
         return u.any_(*mapped)
 
     @staticmethod
     @overload
-    def cast[T, R](
-        result: r[T],
+    def cast[R](
+        value_or_result: r[R],
         *,
         default_error: str = "Operation failed",
-    ) -> r[R]:
-        """Cast result type (generalized from cast_r)."""
+    ) -> r[R]: ...
 
     @staticmethod
     @overload
-    def cast[T, R](
-        value: T,
-    ) -> R:
-        """Cast value type."""
+    def cast[R](
+        value_or_result: R,
+        *,
+        default_error: str = "Operation failed",
+    ) -> R: ...
 
     @staticmethod
-    def cast[T, R](
-        value_or_result: T | r[T],
+    def cast[R](
+        value_or_result: R | r[R],
         *,
         default_error: str = "Operation failed",
     ) -> R | r[R]:
@@ -4456,7 +5100,7 @@ class FlextUtilities:  # noqa: PLR0904
         Generic replacement for: if result.is_success: return r.ok(cast(R, result.value)) else return r.fail(result.error)
 
         Args:
-            result: Result to cast
+            value_or_result: Value or result to cast
             default_error: Default error if result.error is None
 
         Returns:
@@ -4472,20 +5116,1790 @@ class FlextUtilities:  # noqa: PLR0904
             # → 123
 
         """
-        # Handle r[T] case (generalized from cast_r)
+        # Handle r[R] case (generalized from cast_r)
         if isinstance(value_or_result, r):
             if value_or_result.is_success:
+                # Type narrowing: value_or_result.value is R when success
                 return r[R].ok(cast("R", value_or_result.value))
             return r[R].fail(u.err(value_or_result, default=default_error))
-        # Handle direct value case
+        # Handle direct value case - value_or_result is R
         return cast("R", value_or_result)
 
-    # Backward compatibility aliases (DEPRECATED - use generalized functions)
-    ends_any = ends  # DEPRECATED: Use u.ends() instead
-    starts_any = starts  # DEPRECATED: Use u.starts() instead
-    take_n = take  # DEPRECATED: Use u.take() instead
-    field = fields  # DEPRECATED: Use u.fields() instead (single field extraction)
-    # get_str, get_list, map_or, map_r, cast_r, ensure_str_list are deprecated - use u.get(), u.map(), u.cast(), u.ensure() instead
+    # ═══════════════════════════════════════════════════════════════════
+    # GENERIC BUILDERS - Mnemonic DSL patterns for composition
+    # ═══════════════════════════════════════════════════════════════════
+    # conv() → to_str(), to_str_list(), to_int(), etc.
+    # norm() → norm_str(), norm_list(), norm_join(), norm_in()
+    # filter() → filter_attrs(), filter_not_none(), filter_truthy()
+    # map() → map_str(), map_int(), attr_to_str_list()
+    # find() → find_callable(), find_attr(), find_value()
+
+    @staticmethod
+    def conv_str(value: object, *, default: str = "") -> str:
+        """Convert to string (builder: conv().str()).
+
+        Mnemonic: conv = convert, str = string
+        Uses advanced DSL: ensure_str() directly to avoid recursion.
+
+        Args:
+            value: Value to convert
+            default: Default if None
+
+        Returns:
+            str: Converted string
+
+        """
+        return FlextUtilities.ensure_str(
+            cast("t.GeneralValueType", value), default=default
+        )
+
+    @staticmethod
+    def conv_str_list(
+        value: t.GeneralValueType, *, default: list[str] | None = None
+    ) -> list[str]:
+        """Convert to str_list (builder: conv().str_list()).
+
+        Mnemonic: conv = convert, str_list = list[str]
+        Uses advanced DSL: ensure_str_list() directly to avoid recursion.
+
+        Args:
+            value: Value to convert
+            default: Default if None
+
+        Returns:
+            list[str]: Converted list
+
+        """
+        return FlextUtilities.ensure_str_list(value, default=default or [])
+
+    @staticmethod
+    def conv_int(value: object, *, default: int = 0) -> int:
+        """Convert to int (builder: conv().int()).
+
+        Mnemonic: conv = convert, int = integer
+        Uses advanced DSL: convert() directly to avoid recursion.
+
+        Args:
+            value: Value to convert
+            default: Default if None
+
+        Returns:
+            int: Converted integer
+
+        """
+        converted = FlextUtilities.convert(
+            cast("t.GeneralValueType", value), int, default
+        )
+        return cast("int", converted)
+
+    @staticmethod
+    def norm_str(value: object, *, case: str | None = None, default: str = "") -> str:
+        """Normalize string (builder: norm().str()).
+
+        Mnemonic: norm = normalize, str = string
+        Uses advanced DSL: ensure_str() → normalize() for fluent composition.
+
+        Args:
+            value: Value to normalize
+            case: Case normalization ("lower", "upper", "title")
+            default: Default if None
+
+        Returns:
+            str: Normalized string
+
+        """
+        str_value = FlextUtilities.ensure_str(
+            cast("t.GeneralValueType", value), default=default
+        )
+        if case:
+            normalized = FlextUtilities.normalize(str_value, case=case)
+            return cast("str", normalized)
+        return str_value
+
+    @staticmethod
+    def norm_list(
+        items: list[str] | dict[str, str],
+        *,
+        case: str | None = None,
+        filter_truthy: bool = False,
+        to_set: bool = False,
+    ) -> list[str] | set[str] | dict[str, str]:
+        """Normalize list/dict (builder: norm().list()).
+
+        Mnemonic: norm = normalize, list = list[str]
+        Generic replacement for: u.map(items, lambda v: u.normalize(v, case=case))
+
+        Args:
+            items: Items to normalize
+            case: Case normalization
+            filter_truthy: Filter truthy first
+            to_set: Return set instead of list
+
+        Returns:
+            Normalized list/set/dict
+
+        """
+        if filter_truthy:
+            items = cast(
+                "list[str] | dict[str, str]",
+                FlextUtilities.filter(items, predicate=bool),
+            )
+
+        if isinstance(items, dict):
+            return FlextUtilities.map(
+                items, mapper=lambda _k, v: FlextUtilities.norm_str(v, case=case)
+            )
+
+        normalized = FlextUtilities.map(
+            items, mapper=lambda v: FlextUtilities.norm_str(v, case=case)
+        )
+        if to_set:
+            return set(normalized) if isinstance(normalized, list) else set()
+        return normalized if isinstance(normalized, list) else []
+
+    @staticmethod
+    def norm_join(items: list[str], *, case: str | None = None, sep: str = " ") -> str:
+        """Normalize and join (builder: norm().join()).
+
+        Mnemonic: norm = normalize, join = string join
+        Uses advanced DSL: mp() → norm_str() → join() for fluent composition.
+
+        Args:
+            items: Items to normalize and join
+            case: Case normalization
+            sep: Separator
+
+        Returns:
+            str: Normalized and joined string
+
+        """
+        if case:
+            normalized = FlextUtilities.map(
+                items, mapper=lambda v: FlextUtilities.norm_str(v, case=case)
+            )
+        else:
+            normalized = items
+        # Type narrowing: normalized is list[str] after map or original items
+        normalized_list = (
+            normalized
+            if isinstance(normalized, list)
+            else list(normalized)
+            if isinstance(normalized, (tuple, set))
+            else []
+        )
+        return FlextUtilities.join(normalized_list, sep=sep)
+
+    @staticmethod
+    def norm_in(
+        value: str, items: list[str] | dict[str, object], *, case: str | None = None
+    ) -> bool:
+        """Normalized membership check (builder: norm().in_()).
+
+        Mnemonic: norm = normalize, in_ = membership check
+        Generic replacement for: u.normalize(value, case=case) in u.map(items, lambda v: u.normalize(v, case=case))
+
+        Args:
+            value: Value to check
+            items: Items to check against
+            case: Case normalization
+
+        Returns:
+            bool: True if normalized value in normalized items
+
+        """
+        items_list = list(items.keys()) if isinstance(items, dict) else items
+        normalized_value = FlextUtilities.norm_str(value, case=case or "lower")
+        normalized_items = cast(
+            "list[str]", FlextUtilities.norm_list(items_list, case=case or "lower")
+        )
+        return normalized_value in normalized_items
+
+    @staticmethod
+    def filter_attrs(
+        attrs: dict[str, object] | dict[str, list[str]],
+        *,
+        predicate: Callable[[str, object], bool] | None = None,
+        only_list_like: bool = False,
+    ) -> dict[str, list[str]]:
+        """Filter attributes (builder: filt().attrs()).
+
+        Mnemonic: filter = filter, attrs = attributes dict
+        Uses advanced DSL: filt() builder internally for fluent composition.
+
+        Args:
+            attrs: Attributes to filter
+            predicate: Optional predicate
+            only_list_like: Keep only list-like values
+
+        Returns:
+            dict[str, list[str]]: Filtered attributes
+
+        """
+        attrs_dict = cast("dict[str, object]", attrs) if isinstance(attrs, dict) else {}
+        return cast(
+            "dict[str, list[str]]",
+            FlextUtilities.filt(attrs_dict)
+            .attrs(predicate=predicate, only_list_like=only_list_like)
+            .build(),
+        )
+
+    @staticmethod
+    def filter_not_none(
+        items: dict[str, object | None] | list[object | None],
+    ) -> dict[str, object] | list[object]:
+        """Filter not None (builder: filt().not_none()).
+
+        Mnemonic: filter = filter, not_none = remove None values
+        Uses advanced DSL: filt() builder internally for fluent composition.
+
+        Args:
+            items: Items to filter
+
+        Returns:
+            Filtered items without None
+
+        """
+        return cast(
+            "dict[str, object] | list[object]",
+            FlextUtilities.filt(items).not_none().build(),
+        )
+
+    @staticmethod
+    def filter_truthy(
+        items: list[object] | dict[str, object],
+    ) -> list[object] | dict[str, object]:
+        """Filter truthy (builder: filt().truthy()).
+
+        Mnemonic: filter = filter, truthy = keep only truthy values
+        Uses advanced DSL: filter() directly to avoid recursion.
+
+        Args:
+            items: Items to filter
+
+        Returns:
+            Filtered items with only truthy values
+
+        """
+        filtered = FlextUtilities.filter(items, predicate=bool)
+        return (
+            filtered
+            if isinstance(filtered, (dict, list))
+            else ([] if isinstance(items, list) else {})
+        )
+
+    @staticmethod
+    def map_str(
+        items: list[str] | dict[str, str],
+        *,
+        case: str | None = None,
+        join: str | None = None,
+    ) -> list[str] | dict[str, str] | str:
+        """Map strings (builder: map().str()).
+
+        Mnemonic: map = map, str = string transformation
+        Generic replacement for: u.map(items, mapper=lambda v: u.normalize(v, case=case))
+
+        Args:
+            items: Items to map
+            case: Case normalization
+            join: Join separator (returns str if provided)
+
+        Returns:
+            Mapped items or joined string
+
+        """
+        mapped: list[str] | dict[str, str] | object = items
+        if case:
+            if isinstance(items, dict):
+                mapped = FlextUtilities.map(
+                    items, mapper=lambda _k, v: FlextUtilities.normalize(v, case=case)
+                )
+            else:
+                mapped = FlextUtilities.map(
+                    items, mapper=lambda v: FlextUtilities.normalize(v, case=case)
+                )
+        # Type narrowing for join
+        if join:
+            if isinstance(mapped, dict):
+                mapped_list = list(mapped.values())
+            elif isinstance(mapped, list):
+                mapped_list = cast("list[str]", mapped)
+            else:
+                mapped_list = []
+            return FlextUtilities.join(mapped_list, sep=join)
+        return cast("list[str] | dict[str, str]", mapped)
+
+    @staticmethod
+    def find_callable(
+        checks: dict[str, Callable[..., bool]] | list[tuple[str, Callable[..., bool]]],
+        *args: object,
+        **kwargs: object,
+    ) -> str | None:
+        """Find by callable (builder: find().callable()).
+
+        Mnemonic: find = find, callable = predicate function
+        Generic replacement for: u.find(checks, predicate=lambda _k, pred: pred(*args, **kwargs))
+
+        Args:
+            checks: Dict or list of (key, callable) tuples
+            *args: Args for callables
+            **kwargs: Kwargs for callables
+
+        Returns:
+            First matching key or None
+
+        """
+        if isinstance(checks, dict):
+            found = FlextUtilities.find(
+                checks, predicate=lambda _k, pred: pred(*args, **kwargs)
+            )
+            return found if isinstance(found, str) else None
+        # Handle list of tuples - convert to dict for find()
+        if isinstance(checks, list):
+            checks_dict: dict[str, Callable[..., bool]] = {
+                k: v for k, v in checks if callable(v)
+            }
+            found = FlextUtilities.find(
+                checks_dict, predicate=lambda _k, pred: pred(*args, **kwargs)
+            )
+            return found if isinstance(found, str) else None
+        return None
+
+    # ═══════════════════════════════════════════════════════════════════
+    # GENERALIZED CONVENIENCE METHODS - Using builders internally
+    # ═══════════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def conv_str_list_truthy(
+        value: object, *, default: list[str] | None = None
+    ) -> list[str]:
+        """Convert to str_list and filter truthy (generalized: conv().str_list().truthy().build()).
+
+        Mnemonic: conv_str_list_truthy = convert + filter truthy
+        Generic replacement for: to_str_list_truthy() in specific utilities
+
+        Args:
+            value: Value to convert
+            default: Default if None
+
+        Returns:
+            list[str]: Converted and filtered list
+
+        """
+        return cast(
+            "list[str]",
+            FlextUtilities.conv(value).str_list(default=default or []).truthy().build(),
+        )
+
+    @staticmethod
+    def conv_str_list_safe(value: object | None) -> list[str]:
+        """Safe str_list conversion (generalized: conv().str_list().safe().build()).
+
+        Mnemonic: conv_str_list_safe = convert + safe mode
+        Generic replacement for: to_str_list_safe() in specific utilities
+
+        Args:
+            value: Value to convert (can be None)
+
+        Returns:
+            list[str]: Converted list or []
+
+        """
+        return cast(
+            "list[str]",
+            FlextUtilities.conv(value).str_list(default=[]).safe().build(),
+        )
+
+    @staticmethod
+    def map_filter(
+        items: Collection[object] | object,  # type: ignore[type-arg,valid-type]  # Collection accepts object
+        *,
+        mapper: Callable[[object], object] | None = None,
+        predicate: Callable[[object], bool] | None = None,
+    ) -> list[object]:
+        """Map then filter items (generalized: mp().str().filter().build()).
+
+        Mnemonic: map_filter = map + filter
+        Generic replacement for: map_filter() in specific utilities
+
+        Args:
+            items: Items to process
+            mapper: Transformation function
+            predicate: Filter function
+
+        Returns:
+            Processed list
+
+        """
+        if not items:
+            return []
+        # Ensure list
+        items_list = (
+            list(items)
+            if isinstance(items, Collection) and not isinstance(items, str)
+            else [items]
+        )
+        # Map if mapper provided
+        mapped = [mapper(item) for item in items_list] if mapper else items_list
+        # Filter if predicate provided
+        if predicate:
+            return [item for item in mapped if predicate(item)]
+        return mapped
+
+    @staticmethod
+    def find_key(
+        obj: dict[str, object],
+        *,
+        predicate: Callable[[str, object], bool] | None = None,
+    ) -> str | None:
+        """Find key using predicate (generalized: fnd(obj).key(predicate).build()).
+
+        Mnemonic: find_key = find key
+        Generic replacement for: find_key() in specific utilities
+
+        Args:
+            obj: Dict to search
+            predicate: (k,v) -> bool
+
+        Returns:
+            First matching key or None
+
+        """
+        if not predicate:
+            return None
+        return cast(
+            "str | None", FlextUtilities.fnd(obj).key(predicate=predicate).build()
+        )
+
+    @staticmethod
+    def find_val(
+        obj: dict[str, object],
+        *,
+        predicate: Callable[[str, object], bool] | None = None,
+    ) -> object | None:
+        """Find value using predicate (generalized: fnd(obj).val(predicate).build()).
+
+        Mnemonic: find_val = find value
+        Generic replacement for: find_val() in specific utilities
+
+        Args:
+            obj: Dict to search
+            predicate: (k,v) -> bool
+
+        Returns:
+            First matching value or None
+
+        """
+        if not predicate:
+            return None
+        return FlextUtilities.fnd(obj).val(predicate=predicate).build()
+
+    @staticmethod
+    def map_dict(
+        obj: dict[str, object],
+        *,
+        mapper: Callable[[str, object], object] | None = None,
+        key_mapper: Callable[[str], str] | None = None,
+        predicate: Callable[[str, object], bool] | None = None,
+    ) -> dict[str, object]:
+        """Map dict (generalized: mp(obj).dict(mapper, key_mapper, predicate).build()).
+
+        Mnemonic: map_dict = map dictionary
+        Generic replacement for: map_dict() in specific utilities
+
+        Args:
+            obj: Dict to map
+            mapper: (k,v) -> new_v
+            key_mapper: (k) -> new_k
+            predicate: (k,v) -> bool
+
+        Returns:
+            Mapped dict
+
+        """
+        return cast(
+            "dict[str, object]",
+            FlextUtilities.mp(obj)
+            .dict(mapper=mapper, key_mapper=key_mapper, predicate=predicate)
+            .build(),
+        )
+
+    @staticmethod
+    def process_flatten(
+        items: Collection[object] | object,  # type: ignore[type-arg,valid-type]  # Collection accepts object
+        *,
+        processor: Callable[[object], object] | None = None,
+        on_error: str = "skip",
+    ) -> list[object]:
+        """Process and flatten (generalized: mp(items).flatten().build()).
+
+        Mnemonic: process_flatten = process then flatten
+        Generic replacement for: process_flatten() in specific utilities
+
+        Args:
+            items: Items to process
+            processor: Processing function
+            on_error: Error handling ("skip", "fail", "return")
+
+        Returns:
+            Flattened list
+
+        """
+        if not items:
+            return []
+        # Ensure list
+        items_list = (
+            list(items)
+            if isinstance(items, Collection) and not isinstance(items, str)
+            else [items]
+        )
+        # Process if processor provided
+        if processor:
+            processed: list[object] = []
+            for item in items_list:
+                try:
+                    result = processor(item)
+                    processed.append(result)
+                except Exception:
+                    if on_error == "fail":
+                        raise
+                    if on_error == "return":
+                        return []
+                    # skip: continue
+            items_list = processed
+        # Flatten nested lists
+        flattened: list[object] = []
+        for item in items_list:
+            if isinstance(item, (list, tuple)):
+                flattened.extend(item)
+            else:
+                flattened.append(item)
+        return flattened
+
+    @staticmethod
+    def _process_dict_item(
+        item: dict[str, object],
+        *,
+        processor: Callable[[str, object], tuple[str, object]] | None = None,
+        predicate: Callable[[str, object], bool] | None = None,
+    ) -> dict[str, object]:
+        """Process single dict item (helper for reduce_dict)."""
+        if processor:
+            mapped_dict: dict[str, object] = {}
+            for k, v in item.items():
+                if not predicate or predicate(k, v):
+                    new_k, new_v = processor(k, v)
+                    mapped_dict[new_k] = new_v
+            return mapped_dict
+        return FlextUtilities.map_dict(item, predicate=predicate)
+
+    @staticmethod
+    def reduce_dict(
+        items: Collection[dict[str, object]] | dict[str, object] | object,  # type: ignore[type-arg,valid-type]  # Collection accepts dict
+        *,
+        processor: Callable[[str, object], tuple[str, object]] | None = None,
+        predicate: Callable[[str, object], bool] | None = None,
+        default: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        """Reduce dicts (generalized: mp(items).dict().flatten() + merge).
+
+        Mnemonic: reduce_dict = reduce dictionaries
+        Generic replacement for: reduce_dict() in specific utilities
+
+        Args:
+            items: Dicts to merge
+            processor: Transform (k,v) -> (new_k, new_v)
+            predicate: Filter (k,v) -> bool
+            default: Default dict
+
+        Returns:
+            Merged dict
+
+        """
+        if not items:
+            return default or {}
+        # Ensure list of dicts
+        items_list: list[dict[str, object]] = []
+        if isinstance(items, dict):
+            items_list = [items]
+        elif isinstance(items, Collection) and not isinstance(items, str):
+            items_list = [item for item in items if isinstance(item, dict)]
+        else:
+            return default or {}
+        # Process each dict
+        processed_dicts = [
+            FlextUtilities._process_dict_item(
+                item, processor=processor, predicate=predicate
+            )
+            for item in items_list
+        ]
+        # Merge all dicts
+        if not processed_dicts:
+            return default or {}
+        result = processed_dicts[0]
+        for d in processed_dicts[1:]:
+            merge_result = FlextUtilities.merge(
+                cast("Mapping[str, t.GeneralValueType]", result),
+                cast("Mapping[str, t.GeneralValueType]", d),
+            )
+            if merge_result.is_success and isinstance(merge_result.value, dict):
+                result = cast("dict[str, object]", merge_result.value)
+        return result
+
+    @staticmethod
+    def map_attrs_to_str_list(
+        attrs: dict[str, object] | dict[str, list[str]],
+        *,
+        filter_list_like: bool = False,
+    ) -> dict[str, list[str]]:
+        """Map attributes to str_list (generalized: mp(attrs).attrs().str_list().build()).
+
+        Mnemonic: map_attrs_to_str_list = map attributes to string list
+        Generic replacement for: attr_to_str_list() in specific utilities
+
+        Uses advanced DSL: mp() builder for fluent mapping composition.
+
+        Args:
+            attrs: Attributes to convert
+            filter_list_like: Only convert list-like values
+
+        Returns:
+            dict[str, list[str]]: Converted attributes
+
+        """
+
+        def convert_value(_k: str, v: object) -> list[str]:
+            # DSL pattern: whn() for conditional list-like check
+            if filter_list_like and not FlextRuntime.is_list_like(
+                cast("t.GeneralValueType", v)
+            ):
+                return [str(v)]
+            return FlextUtilities.conv_str_list(cast("t.GeneralValueType", v))
+
+        # DSL pattern: mp() builder for mapping
+        mapped = FlextUtilities.map(attrs, mapper=convert_value)
+        return cast("dict[str, list[str]]", mapped) if isinstance(mapped, dict) else {}
+
+    @staticmethod
+    def extract_str_from_obj(
+        obj: object | None,
+        *,
+        attr: str = "value",
+        default: str = "unknown",
+    ) -> str:
+        """Extract string from object (generalized: whn().attr().str().build()).
+
+        Mnemonic: extract_str_from_obj = extract string from object attribute
+        Generic replacement for: dn_str() and similar in specific utilities
+
+        Uses advanced DSL: whn() → or_() → conv_str() for fluent composition.
+
+        Args:
+            obj: Object to extract from (can be None or have attribute)
+            attr: Attribute name to extract
+            default: Default if None or no attribute
+
+        Returns:
+            str: Extracted string or default
+
+        """
+        # DSL pattern: whn() for None check, then or_() for value extraction
+        result = FlextUtilities.when(
+            condition=obj is not None,
+            then_value=FlextUtilities.or_(
+                str(getattr(obj, attr))
+                if FlextUtilities.has(obj, attr) and getattr(obj, attr) is not None
+                else None,
+                str(obj) if hasattr(obj, "__str__") else None,
+                default=default,
+            ),
+            else_value=default,
+        )
+        return cast("str", result) if result is not None else default
+
+    # ═══════════════════════════════════════════════════════════════════
+    # BUILDER CLASSES - DSL Parametrizado com Self para encadeamento
+    # ═══════════════════════════════════════════════════════════════════
+
+    class ConvBuilder:
+        """Builder para conversão de tipos (DSL: u.conv(value).str().default("").build()).
+
+        Mnemonic: conv = convert
+        Usage:
+            u.conv(value).str().default("").build()
+            u.conv(value).int().default(0).build()
+            u.conv(value).bool().default(False).build()
+            u.conv(value).str_list().default([]).build()
+        """
+
+        def __init__(self, value: object) -> None:
+            """Initialize builder with value to convert."""
+            self._value = value
+            self._target_type: str | None = None
+            self._default: object = None
+            self._filter_truthy: bool = False
+            self._safe_mode: bool = False
+
+        def str(self, *, default: _StrType = "") -> Self:
+            """Set target type to string."""
+            self._target_type = "str"
+            self._default = default
+            return self
+
+        def int(self, *, default: _IntType = 0) -> Self:
+            """Set target type to int."""
+            self._target_type = "int"
+            self._default = default
+            return self
+
+        def bool(self, *, default: _BoolType = False) -> Self:
+            """Set target type to bool."""
+            self._target_type = "bool"
+            self._default = default
+            return self
+
+        def str_list(self, *, default: Union[list[_StrType], None] = None) -> Self:
+            """Set target type to list[str]."""
+            self._target_type = "str_list"
+            self._default = default or []
+            return self
+
+        def truthy(self) -> Self:
+            """Chain filter truthy after conversion."""
+            self._filter_truthy = True
+            return self
+
+        def safe(self) -> Self:
+            """Enable safe mode (handle None gracefully)."""
+            self._safe_mode = True
+            return self
+
+        def build(self) -> _StrType | _IntType | _BoolType | list[_StrType]:
+            """Build and return converted value."""
+            # Handle safe mode (None handling)
+            if self._safe_mode and self._value is None:
+                if self._target_type == "str_list":
+                    return cast("list[str]", self._default or [])
+                return cast("str | int | bool", self._default)
+
+            # Convert
+            result: object = None
+            if self._target_type == "str":
+                result = FlextUtilities.conv_str(
+                    self._value, default=cast("str", self._default)
+                )
+            elif self._target_type == "int":
+                result = FlextUtilities.conv_int(
+                    self._value, default=cast("int", self._default)
+                )
+            elif self._target_type == "bool":
+                converted = FlextUtilities.convert(
+                    cast("t.GeneralValueType", self._value),
+                    bool,
+                    cast("bool", self._default),
+                )
+                result = cast("bool", converted)
+            elif self._target_type == "str_list":
+                if self._safe_mode and not FlextRuntime.is_list_like(
+                    cast("t.GeneralValueType", self._value)
+                ):
+                    result = (
+                        [str(self._value)]
+                        if self._value is not None
+                        else (self._default or [])
+                    )
+                else:
+                    result = FlextUtilities.conv_str_list(
+                        cast("t.GeneralValueType", self._value),
+                        default=cast("list[str] | None", self._default),
+                    )
+            else:
+                msg = f"Unknown target type: {self._target_type}"
+                raise ValueError(msg)
+
+            # Apply truthy filter if requested
+            if self._filter_truthy and isinstance(result, list):
+                filtered = FlextUtilities.filter_truthy(result)
+                return (
+                    cast("list[str]", filtered)
+                    if isinstance(filtered, list)
+                    else cast("list[str]", [])
+                )
+
+            return cast("str | int | bool | list[str]", result)
+
+    @staticmethod
+    def conv(value: object) -> ConvBuilder:
+        """Create conversion builder (DSL entry point).
+
+        Args:
+            value: Value to convert
+
+        Returns:
+            ConvBuilder instance for chaining
+
+        Example:
+            result = u.conv(value).str().default("").build()
+
+        """
+        return FlextUtilities.ConvBuilder(value)
+
+    class NormBuilder:
+        """Builder para normalização (DSL: u.norm(value).str().case("lower").build()).
+
+        Mnemonic: norm = normalize
+        Usage:
+            u.norm(value).str().case("lower").build()
+            u.norm(items).list().case("upper").filter_truthy().build()
+            u.norm(items).join().case("lower").sep(",").build()
+        """
+
+        def __init__(self, value: object) -> None:
+            """Initialize builder with value to normalize."""
+            self._value = value
+            self._operation: str | None = None
+            self._case: str | None = None
+            self._default: str = ""
+            self._filter_truthy: bool = False
+            self._to_set: bool = False
+            self._sep: str = " "
+
+        def str(self, *, case: str | None = None, default: str = "") -> Self:
+            """Set operation to normalize string."""
+            self._operation = "str"
+            self._case = case
+            self._default = default
+            return self
+
+        def list(
+            self,
+            *,
+            case: _StrType | None = None,
+            filter_truthy: bool = False,
+            to_set: bool = False,
+        ) -> Self:
+            """Set operation to normalize list."""
+            self._operation = "list"
+            self._case = case
+            self._filter_truthy = filter_truthy
+            self._to_set = to_set
+            return self
+
+        def join(
+            self, *, case: _StrType | None = None, sep: _StrType = " "
+        ) -> Self:
+            """Set operation to normalize and join."""
+            self._operation = "join"
+            self._case = case
+            self._sep = sep
+            return self
+
+        def build(
+            self,
+        ) -> Union[_StrType, _ListType[_StrType], _SetType[_StrType], _DictType[_StrType, _StrType]]:
+            """Build and return normalized value."""
+            if self._operation == "str":
+                # Use ensure_str directly to avoid recursion
+                str_value = FlextUtilities.ensure_str(
+                    cast("t.GeneralValueType", self._value), default=self._default
+                )
+                if self._case:
+                    normalized = FlextUtilities.normalize(str_value, case=self._case)
+                    return cast("str", normalized)
+                return str_value
+            if self._operation == "list":
+                if not isinstance(self._value, (list, dict)):
+                    return [] if not self._to_set else set()
+                return FlextUtilities.norm_list(
+                    cast("list[str] | dict[str, str]", self._value),
+                    case=self._case,
+                    filter_truthy=self._filter_truthy,
+                    to_set=self._to_set,
+                )
+            if self._operation == "join":
+                if not isinstance(self._value, list):
+                    return ""
+                # Use norm_join directly (already uses map internally, no recursion)
+                return FlextUtilities.norm_join(
+                    cast("list[str]", self._value), case=self._case, sep=self._sep
+                )
+            msg = f"Unknown operation: {self._operation}"
+            raise ValueError(msg)
+
+    @staticmethod
+    def norm(value: object) -> NormBuilder:
+        """Create normalization builder (DSL entry point).
+
+        Args:
+            value: Value to normalize
+
+        Returns:
+            NormBuilder instance for chaining
+
+        Example:
+            result = u.norm(value).str().case("lower").build()
+
+        """
+        return FlextUtilities.NormBuilder(value)
+
+    class FilterBuilder:
+        """Builder para filtragem (DSL: u.filter(items).attrs().only_list_like().build()).
+
+        Mnemonic: filter = filter
+        Usage:
+            u.filter(items).attrs().only_list_like().build()
+            u.filter(items).not_none().build()
+            u.filter(items).truthy().build()
+        """
+
+        def __init__(self, items: dict[str, object] | list[object]) -> None:
+            """Initialize builder with items to filter."""
+            self._items = items
+            self._operation: str | None = None
+            self._predicate: Callable[[str, object], bool] | None = None
+            self._only_list_like: bool = False
+
+        def attrs(
+            self,
+            *,
+            predicate: Callable[[str, object], bool] | None = None,
+            only_list_like: bool = False,
+        ) -> Self:
+            """Set operation to filter attributes."""
+            self._operation = "attrs"
+            self._predicate = predicate
+            self._only_list_like = only_list_like
+            return self
+
+        def not_none(self) -> Self:
+            """Set operation to filter not None."""
+            self._operation = "not_none"
+            return self
+
+        def truthy(self) -> Self:
+            """Set operation to filter truthy."""
+            self._operation = "truthy"
+            return self
+
+        def build(self) -> dict[str, list[str]] | dict[str, object] | list[object]:
+            """Build and return filtered items."""
+            if self._operation == "attrs":
+                if not isinstance(self._items, dict):
+                    return {}
+                # Use filter directly to avoid recursion
+                attrs_dict = cast(
+                    "dict[str, object] | dict[str, list[str]]", self._items
+                )
+                if self._only_list_like:
+                    filtered = FlextUtilities.filter(
+                        attrs_dict, predicate=lambda _k, v: FlextRuntime.is_list_like(v)
+                    )
+                    filtered_dict = (
+                        cast("dict[str, object]", filtered)
+                        if isinstance(filtered, dict)
+                        else {}
+                    )
+                elif self._predicate:
+                    filtered = FlextUtilities.filter(
+                        attrs_dict, predicate=self._predicate
+                    )
+                    filtered_dict = (
+                        cast("dict[str, object]", filtered)
+                        if isinstance(filtered, dict)
+                        else {}
+                    )
+                else:
+                    filtered_dict = cast("dict[str, object]", attrs_dict)
+                # Ensure all values are list[str]
+                return {
+                    k: (v if isinstance(v, list) else [str(v)])
+                    for k, v in filtered_dict.items()
+                }
+            if self._operation == "not_none":
+                # Use filter directly to avoid recursion
+                filtered = FlextUtilities.filter(
+                    cast("dict[str, object | None] | list[object | None]", self._items),
+                    predicate=lambda _k, v: v is not None,
+                )
+                return (
+                    filtered
+                    if isinstance(filtered, (dict, list))
+                    else ([] if isinstance(self._items, list) else {})
+                )
+            if self._operation == "truthy":
+                # Use filter directly to avoid recursion
+                filtered = FlextUtilities.filter(self._items, predicate=bool)
+                return (
+                    filtered
+                    if isinstance(filtered, (dict, list))
+                    else ([] if isinstance(self._items, list) else {})
+                )
+            msg = f"Unknown operation: {self._operation}"
+            raise ValueError(msg)
+
+    @staticmethod
+    def filt(items: dict[str, object] | list[object]) -> FilterBuilder:
+        """Create filter builder (DSL entry point).
+
+        Mnemonic: filt = filter builder (avoids conflict with generic filter method)
+
+        Args:
+            items: Items to filter
+
+        Returns:
+            FilterBuilder instance for chaining
+
+        Example:
+            result = u.filt(items).attrs().only_list_like().build()
+
+        """
+        return FlextUtilities.FilterBuilder(items)
+
+    class MapBuilder:
+        """Builder para mapeamento (DSL: u.map(items).str().case("lower").join(",").build()).
+
+        Mnemonic: map = map
+        Usage:
+            u.map(items).str().case("lower").build()
+            u.map(items).str().join(",").build()
+        """
+
+        def __init__(
+            self, items: list[str] | dict[str, str] | dict[str, object]
+        ) -> None:
+            """Initialize builder with items to map."""
+            self._items = items
+            self._operation: str | None = None
+            self._case: str | None = None
+            self._join: str | None = None
+            self._filter_predicate: Callable[[object], bool] | None = None
+            self._dict_mapper: Callable[[str, object], object] | None = None
+            self._key_mapper: Callable[[str], str] | None = None
+            self._dict_predicate: Callable[[str, object], bool] | None = None
+            self._flatten: bool = False
+            self._pluck_key: str | int | Callable[[object], object] | None = None
+
+        def str(self, *, case: str | None = None, join: str | None = None) -> Self:
+            """Set operation to map strings."""
+            self._operation = "str"
+            self._case = case
+            self._join = join
+            return self
+
+        def dict(
+            self,
+            *,
+            mapper: Callable[[_StrType, object], object] | None = None,
+            key_mapper: Callable[[_StrType], _StrType] | None = None,
+            predicate: Callable[[_StrType, object], bool] | None = None,
+        ) -> Self:
+            """Set operation to map dict."""
+            self._operation = "dict"
+            self._dict_mapper = mapper
+            self._key_mapper = key_mapper
+            self._dict_predicate = predicate
+            return self
+
+        def filter(self, predicate: Callable[[object], bool] | None = None) -> Self:
+            """Chain filter after map."""
+            self._filter_predicate = predicate
+            return self
+
+        def flatten(self) -> Self:
+            """Chain flatten after map."""
+            self._flatten = True
+            return self
+
+        def pluck(self, key: _StrType | int | Callable[[object], object]) -> Self:
+            """Chain pluck after map."""
+            self._operation = "pluck"
+            self._pluck_key = key
+            return self
+
+        def build(  # noqa: C901  # Complex build logic required for builder pattern
+            self,
+        ) -> Union[
+            _ListType[_StrType],
+            _DictType[_StrType, _StrType],
+            _DictType[_StrType, object],
+            _StrType,
+            _ListType[object],
+        ]:
+            """Build and return mapped items."""
+            if self._operation == "str":
+                # Type narrowing: self._items is list[str] | dict[str, str] | dict[str, object]
+                # map_str accepts list[str] | dict[str, str]
+                if isinstance(self._items, list):
+                    items_for_map: list[str] | dict[str, str] = self._items
+                elif isinstance(self._items, dict):
+                    # Check if it's dict[str, str] or dict[str, object]
+                    # For type safety, cast to dict[str, str] (map_str will handle conversion)
+                    items_for_map = cast("dict[str, str]", self._items)
+                else:
+                    items_for_map = []
+                mapped = FlextUtilities.map_str(
+                    items_for_map, case=self._case, join=self._join
+                )
+                # Apply filter if requested
+                if self._filter_predicate and isinstance(mapped, list):
+                    return [item for item in mapped if self._filter_predicate(item)]
+                return mapped
+            if self._operation == "dict":
+                if not isinstance(self._items, dict):
+                    return {}
+                # Filter first if predicate provided
+                filtered_items = self._items
+                if self._dict_predicate:
+                    filtered = FlextUtilities.filter(
+                        self._items, predicate=self._dict_predicate
+                    )
+                    filtered_items = (
+                        cast("dict[str, object]", filtered)
+                        if isinstance(filtered, dict)
+                        else {}
+                    )
+                # Map values and keys
+                dict_result: dict[str, object] = {}
+                for k, v in filtered_items.items():
+                    new_k = self._key_mapper(k) if self._key_mapper else k
+                    new_v = self._dict_mapper(k, v) if self._dict_mapper else v
+                    dict_result[new_k] = new_v
+                # Apply flatten if requested
+                return list(dict_result.values()) if self._flatten else dict_result
+            if self._operation == "pluck":
+                if not isinstance(self._items, (list, dict)):
+                    return []
+                items_list = (
+                    list(self._items)
+                    if isinstance(self._items, list)
+                    else [cast("object", v) for v in cast("dict[str, object]", self._items).values()]  # type: ignore[misc]  # List comprehension returns list[object], not list[str]
+                )
+                pluck_result = FlextUtilities.pluck(
+                    items_list,
+                    key=cast("str | int | Callable[[object], object]", self._pluck_key),
+                )
+                return cast("list[object]", pluck_result)
+            msg = f"Unknown operation: {self._operation}"
+            raise ValueError(msg)
+
+    @staticmethod
+    def mp(items: list[str] | dict[str, str] | dict[str, object]) -> MapBuilder:
+        """Create map builder (DSL entry point).
+
+        Mnemonic: mp = map builder (avoids conflict with generic map method)
+
+        Args:
+            items: Items to map
+
+        Returns:
+            MapBuilder instance for chaining
+
+        Example:
+            result = u.mp(items).str().case("lower").build()
+
+        """
+        return FlextUtilities.MapBuilder(items)
+
+    class FindBuilder:
+        """Builder para busca (DSL: u.find(checks).callable(*args, **kwargs).build()).
+
+        Mnemonic: find = find
+        Usage:
+            u.find(checks).callable(*args, **kwargs).build()
+        """
+
+        def __init__(
+            self,
+            checks: dict[str, Callable[..., bool]]
+            | list[tuple[str, Callable[..., bool]]]
+            | dict[str, object],
+        ) -> None:
+            """Initialize builder with checks to find."""
+            self._checks = checks
+            self._operation: str | None = None
+            self._args: tuple[object, ...] = ()
+            self._kwargs: dict[str, object] = {}
+            self._predicate: Callable[[str, object], bool] | None = None
+
+        def callable(self, *args: object, **kwargs: object) -> Self:
+            """Set operation to find by callable."""
+            self._operation = "callable"
+            self._args = args
+            self._kwargs = kwargs
+            return self
+
+        def key(self, predicate: Callable[[str, object], bool] | None = None) -> Self:
+            """Set operation to find key."""
+            self._operation = "key"
+            self._predicate = predicate
+            return self
+
+        def val(self, predicate: Callable[[str, object], bool] | None = None) -> Self:
+            """Set operation to find value."""
+            self._operation = "val"
+            self._predicate = predicate
+            return self
+
+        def build(self) -> str | object | None:
+            """Build and return found key/value or None."""
+            if self._operation == "callable":
+                return FlextUtilities.find_callable(
+                    cast(
+                        "dict[str, Callable[..., bool]] | list[tuple[str, Callable[..., bool]]]",
+                        self._checks,
+                    ),
+                    *self._args,
+                    **self._kwargs,
+                )
+            if (
+                self._operation in {"key", "val"}
+                and isinstance(self._checks, dict)
+                and self._predicate
+            ):
+                for k, v in self._checks.items():
+                    if self._predicate(k, v):
+                        return k if self._operation == "key" else v
+            if self._operation not in {"callable", "key", "val"}:
+                msg = f"Unknown operation: {self._operation}"
+                raise ValueError(msg)
+            return None
+
+    @staticmethod
+    def fnd(
+        checks: dict[str, Callable[..., bool]]
+        | list[tuple[str, Callable[..., bool]]]
+        | dict[str, object],
+    ) -> FindBuilder:
+        """Create find builder (DSL entry point).
+
+        Mnemonic: fnd = find builder (avoids conflict with generic find method)
+
+        Args:
+            checks: Dict or list of (key, callable) tuples
+
+        Returns:
+            FindBuilder instance for chaining
+
+        Example:
+            result = u.fnd(checks).callable(*args, **kwargs).build()
+
+        """
+        return FlextUtilities.FindBuilder(checks)
+
+    class WhenBuilder:
+        """Builder para condicionais (DSL: u.when(value).safe(func).build()).
+
+        Mnemonic: when = conditional execution
+        Usage:
+            u.when(value).safe(func).build()
+            u.when(value).not_none(func).build()
+            u.when(value).truthy(func).build()
+        """
+
+        def __init__(self, value: object) -> None:
+            """Initialize builder with value to check."""
+            self._value = value
+            self._operation: str | None = None
+            self._func: Callable[[object], object] | None = None
+
+        def safe(self, func: Callable[[object], object]) -> Self:
+            """Set operation to safe execution."""
+            self._operation = "safe"
+            self._func = func
+            return self
+
+        def not_none(self, func: Callable[[object], object]) -> Self:
+            """Set operation to execute if not None."""
+            self._operation = "not_none"
+            self._func = func
+            return self
+
+        def truthy(self, func: Callable[[object], object]) -> Self:
+            """Set operation to execute if truthy."""
+            self._operation = "truthy"
+            self._func = func
+            return self
+
+        def build(self) -> object:
+            """Build and return result or None."""
+            if self._operation == "safe":
+                try:
+                    return self._func(self._value) if self._func else None
+                except Exception:
+                    return None
+            if self._operation == "not_none":
+                return (
+                    self._func(self._value)
+                    if self._value is not None and self._func
+                    else None
+                )
+            if self._operation == "truthy":
+                return self._func(self._value) if self._value and self._func else None
+            msg = f"Unknown operation: {self._operation}"
+            raise ValueError(msg)
+
+    @staticmethod
+    def whn(value: object) -> WhenBuilder:
+        """Create when builder (DSL entry point).
+
+        Mnemonic: whn = when builder (avoids conflict with generic when method)
+
+        Args:
+            value: Value to check
+
+        Returns:
+            WhenBuilder instance for chaining
+
+        Example:
+            result = u.whn(value).safe(func).build()
+
+        """
+        return FlextUtilities.WhenBuilder(value)
+
+    class EnsureBuilder:
+        """Builder para garantir tipos (DSL: u.ensure(value).str().default("").build()).
+
+        Mnemonic: ensure = ensure type
+        Usage:
+            u.ensure(value).str().default("").build()
+            u.ensure(value).str_list().default([]).build()
+        """
+
+        def __init__(self, value: object) -> None:
+            """Initialize builder with value to ensure."""
+            self._value = value
+            self._target_type: _StrType | None = None
+            self._default: object = None
+
+        def str(self, *, default: _StrType = "") -> Self:
+            """Set target type to string."""
+            self._target_type = "str"
+            self._default = default
+            return self
+
+        def str_list(self, *, default: list[_StrType] | None = None) -> Self:
+            """Set target type to list[str]."""
+            self._target_type = "str_list"
+            self._default = default or []
+            return self
+
+        def build(self) -> Union[_StrType, list[_StrType]]:
+            """Build and return ensured value."""
+            if self._target_type == "str":
+                return FlextUtilities.ensure_str(
+                    cast("t.GeneralValueType", self._value),
+                    default=cast("str", self._default),
+                )
+            if self._target_type == "str_list":
+                return FlextUtilities.ensure_str_list(
+                    cast("t.GeneralValueType", self._value),
+                    default=cast("list[str] | None", self._default),
+                )
+            msg = f"Unknown target type: {self._target_type}"
+            raise ValueError(msg)
+
+    @staticmethod
+    def ens(value: object) -> EnsureBuilder:
+        """Create ensure builder (DSL entry point).
+
+        Mnemonic: ens = ensure builder (avoids conflict with generic ensure method)
+
+        Args:
+            value: Value to ensure
+
+        Returns:
+            EnsureBuilder instance for chaining
+
+        Example:
+            result = u.ens(value).str().default("").build()
+
+        """
+        return FlextUtilities.EnsureBuilder(value)
+
+    class TransformBuilder:
+        """Builder para transformações (DSL: u.transform(value).dict().normalize().build()).
+
+        Mnemonic: transform = transform
+        Usage:
+            u.transform(value).dict().normalize().build()
+            u.transform(value).dict().map_keys({"old": "new"}).build()
+        """
+
+        def __init__(self, value: object) -> None:
+            """Initialize builder with value to transform."""
+            self._value = value
+            self._operation: str | None = None
+            self._normalize: bool = False
+            self._map_keys: dict[str, str] | None = None
+            self._filter_keys: set[str] | None = None
+            self._exclude_keys: set[str] | None = None
+
+        def dict(
+            self,
+            *,
+            normalize: bool = False,
+            map_keys: dict[_StrType, _StrType] | None = None,
+            filter_keys: set[_StrType] | None = None,
+            exclude_keys: set[_StrType] | None = None,
+        ) -> Self:
+            """Set operation to transform dict."""
+            self._operation = "dict"
+            self._normalize = normalize
+            self._map_keys = map_keys
+            self._filter_keys = filter_keys
+            self._exclude_keys = exclude_keys
+            return self
+
+        def build(self) -> _DictType[_StrType, object]:
+            """Build and return transformed value."""
+            if self._operation == "dict":
+                if not isinstance(self._value, dict):
+                    return {}
+                transform_opts: dict[str, object] = {}
+                if self._normalize:
+                    transform_opts["normalize"] = True
+                if self._map_keys:
+                    transform_opts["map_keys"] = self._map_keys
+                if self._filter_keys:
+                    transform_opts["filter_keys"] = self._filter_keys
+                if self._exclude_keys:
+                    transform_opts["exclude_keys"] = self._exclude_keys
+                if transform_opts:
+                    # Extract individual options for type safety
+                    normalize_val = transform_opts.get("normalize", False)
+                    strip_none_val = transform_opts.get("strip_none", False)
+                    strip_empty_val = transform_opts.get("strip_empty", False)
+                    map_keys_val = transform_opts.get("map_keys")
+                    filter_keys_val = transform_opts.get("filter_keys")
+                    exclude_keys_val = transform_opts.get("exclude_keys")
+                    to_json_val = transform_opts.get("to_json", False)
+                    to_model_val = transform_opts.get("to_model")
+                    transform_result = FlextUtilities.transform(
+                        cast("Mapping[str, t.GeneralValueType]", self._value),
+                        normalize=cast("bool", normalize_val)
+                        if isinstance(normalize_val, bool)
+                        else False,
+                        strip_none=cast("bool", strip_none_val)
+                        if isinstance(strip_none_val, bool)
+                        else False,
+                        strip_empty=cast("bool", strip_empty_val)
+                        if isinstance(strip_empty_val, bool)
+                        else False,
+                        map_keys=cast("dict[str, str] | None", map_keys_val)
+                        if isinstance(map_keys_val, dict) or map_keys_val is None
+                        else None,
+                        filter_keys=cast("set[str] | None", filter_keys_val)
+                        if isinstance(filter_keys_val, set) or filter_keys_val is None
+                        else None,
+                        exclude_keys=cast("set[str] | None", exclude_keys_val)
+                        if isinstance(exclude_keys_val, set) or exclude_keys_val is None
+                        else None,
+                        to_json=cast("bool", to_json_val)
+                        if isinstance(to_json_val, bool)
+                        else False,
+                        to_model=cast("type[BaseModel] | None", to_model_val)
+                        if isinstance(to_model_val, type) or to_model_val is None
+                        else None,
+                    )
+                    if transform_result.is_success and isinstance(
+                        transform_result.value, dict
+                    ):
+                        return cast("dict[str, object]", transform_result.value)
+                    return {}
+                return cast("dict[str, object]", self._value)
+            msg = f"Unknown operation: {self._operation}"
+            raise ValueError(msg)
+
+    @staticmethod
+    def transform_builder(value: object) -> TransformBuilder:
+        """Create transform builder (DSL entry point).
+
+        Mnemonic: transform_builder = transform builder (avoids conflict with transform method)
+
+        Args:
+            value: Value to transform
+
+        Returns:
+            TransformBuilder instance for chaining
+
+        Example:
+            result = u.transform_builder(value).dict().normalize().build()
+
+        """
+        return FlextUtilities.TransformBuilder(value)
+
+    class ChainBuilder:
+        """Builder para encadeamento (DSL: u.chain(value).then(func1).then(func2).build()).
+
+        Mnemonic: chain = chain operations
+        Usage:
+            u.chain(value).then(func1).then(func2).build()
+        """
+
+        def __init__(self, value: object) -> None:
+            """Initialize builder with initial value."""
+            self._value = value
+            self._funcs: list[Callable[[object], object]] = []
+
+        def then(self, func: Callable[[object], object]) -> Self:
+            """Add function to chain."""
+            self._funcs.append(func)
+            return self
+
+        def build(self) -> object:
+            """Build and return chained result."""
+            result = self._value
+            for func in self._funcs:
+                result = func(result)
+            return result
+
+    @staticmethod
+    def chain_builder(value: object) -> ChainBuilder:
+        """Create chain builder (DSL entry point).
+
+        Mnemonic: chain_builder = chain builder (avoids conflict with chain method)
+
+        Args:
+            value: Initial value
+
+        Returns:
+            ChainBuilder instance for chaining
+
+        Example:
+            result = u.chain_builder(value).then(func1).then(func2).build()
+
+        """
+        return FlextUtilities.ChainBuilder(value)
+
+    class ValidateBuilder:
+        """Builder para validação (DSL: u.validate(value).not_none().str().build()).
+
+        Mnemonic: validate = validate builder
+        Usage:
+            u.validate(value).not_none().str().build()
+            u.validate(value).truthy().int().build()
+        """
+
+        def __init__(self, value: object) -> None:
+            """Initialize builder with value to validate."""
+            self._value = value
+            self._checks: list[str] = []
+            self._target_type: str | None = None
+            self._default: object = None
+
+        def not_none(self) -> Self:
+            """Add not None check."""
+            self._checks.append("not_none")
+            return self
+
+        def truthy(self) -> Self:
+            """Add truthy check."""
+            self._checks.append("truthy")
+            return self
+
+        def str(self, *, default: _StrType = "") -> Self:
+            """Set target type to string."""
+            self._target_type = "str"
+            self._default = default
+            return self
+
+        def int(self, *, default: _IntType = 0) -> Self:
+            """Set target type to int."""
+            self._target_type = "int"
+            self._default = default
+            return self
+
+        def build(self) -> _StrType | _IntType | object:
+            """Build and return validated value."""
+            # Apply checks
+            for check in self._checks:
+                if check == "not_none" and self._value is None:
+                    return cast("str | int | object", self._default)
+                if check == "truthy" and not self._value:
+                    return cast("str | int | object", self._default)
+            # Convert if target type specified
+            if self._target_type == "str":
+                return FlextUtilities.conv_str(
+                    self._value, default=cast("str", self._default)
+                )
+            if self._target_type == "int":
+                return FlextUtilities.conv_int(
+                    self._value, default=cast("int", self._default)
+                )
+            return self._value
+
+    @staticmethod
+    def validate_builder(value: object) -> ValidateBuilder:
+        """Create validate builder (DSL entry point).
+
+        Mnemonic: validate_builder = validate builder (avoids conflict with validate method)
+
+        Args:
+            value: Value to validate
+
+        Returns:
+            ValidateBuilder instance for chaining
+
+        Example:
+            result = u.validate_builder(value).not_none().str().build()
+
+        """
+        return FlextUtilities.ValidateBuilder(value)
+
+    @staticmethod
+    def pluck(
+        items: Collection[object] | object,  # type: ignore[type-arg,valid-type]  # Collection accepts object
+        *,
+        key: str | int | Callable[[object], object],
+    ) -> list[object]:
+        """Pluck values from items (generalized: mp(items).pluck(key).build()).
+
+        Mnemonic: pluck = extract values
+        Generic replacement for: pluck() in specific utilities
+
+        Args:
+            items: Items to pluck from
+            key: Key/extractor (str/int/callable)
+
+        Returns:
+            List of extracted values
+
+        """
+        if not items:
+            return []
+        items_list = (
+            list(items)
+            if isinstance(items, Collection) and not isinstance(items, str)
+            else [items]
+        )
+        if callable(key):
+            return cast("list[object]", FlextUtilities.map(items_list, mapper=key))
+        return [
+            FlextUtilities.get(item, str(key) if isinstance(key, int) else key)
+            for item in items_list
+        ]
+
+    @staticmethod
+    def fold(
+        items: Collection[object] | object,  # type: ignore[type-arg,valid-type]  # Collection accepts object
+        *,
+        initial: object,
+        folder: Callable[[object, object], object],
+        predicate: Callable[[object], bool] | None = None,
+    ) -> object:
+        """Fold items (generalized: filt(items).fold(initial, folder).build()).
+
+        Mnemonic: fold = reduce/fold
+        Generic replacement for: fold() in specific utilities
+
+        Args:
+            items: Items to fold
+            initial: Initial accumulator
+            folder: (acc, item) -> new_acc
+            predicate: Optional filter
+
+        Returns:
+            Final accumulator
+
+        """
+        if not items:
+            return initial
+        items_list = (
+            list(items)
+            if isinstance(items, Collection) and not isinstance(items, str)
+            else [items]
+        )
+        if predicate:
+            filtered = FlextUtilities.filter(items_list, predicate=predicate)
+            items_list = list(filtered) if isinstance(filtered, (list, tuple)) else []
+        result = initial
+        for item in items_list:
+            result = folder(result, item)
+        return result
+
+    @staticmethod
+    def maybe(
+        value: object | None,
+        *,
+        default: object | None = None,
+        mapper: Callable[[object], object] | None = None,
+    ) -> object:
+        """Maybe monad (generalized: or_(value, default) + chain(mapper)).
+
+        Mnemonic: maybe = optional value processing
+        Generic replacement for: maybe() in specific utilities
+
+        Args:
+            value: Optional value
+            default: Default if None
+            mapper: Optional transformation
+
+        Returns:
+            Processed value or default
+
+        """
+        result = FlextUtilities.or_(value, default=default)
+        if mapper and result is not None:
+            return FlextUtilities.chain(result, mapper)
+        return result
+
+    @staticmethod
+    def zip_with(
+        *sequences: Collection[object],  # type: ignore[type-arg,valid-type]  # Collection accepts object
+        combiner: Callable[..., object] | None = None,
+    ) -> list[object]:
+        """Zip with combiner (generalized: zip() + map(combiner)).
+
+        Mnemonic: zip_with = zip and combine
+        Generic replacement for: zip_with() in specific utilities
+
+        Args:
+            *sequences: Sequences to zip
+            combiner: Combine function (default: tuple)
+
+        Returns:
+            List of combined results
+
+        """
+        if not sequences:
+            return []
+        if len(sequences) == 1:
+            return list(sequences[0])
+        zipped = zip(*sequences, strict=False)
+        if combiner:
+            return list(starmap(combiner, zipped))
+        return [tuple(items) for items in zipped]
+
+    @staticmethod
+    def partition(
+        items: Collection[object] | object,  # type: ignore[type-arg,valid-type]  # Collection accepts object
+        *,
+        predicate: Callable[[object], bool],
+    ) -> tuple[list[object], list[object]]:
+        """Partition items (generalized: filt(items).partition(predicate).build()).
+
+        Mnemonic: partition = split by predicate
+        Generic replacement for: partition() in specific utilities
+
+        Args:
+            items: Items to partition
+            predicate: Test function
+
+        Returns:
+            (true_items, false_items)
+
+        """
+        if not items:
+            return ([], [])
+        items_list = (
+            list(items)
+            if isinstance(items, Collection) and not isinstance(items, str)
+            else [items]
+        )
+        true_items = FlextUtilities.filter(items_list, predicate=predicate)
+        true_list = list(true_items) if isinstance(true_items, (list, tuple)) else []
+        false_list = [item for item in items_list if not predicate(item)]
+        return (true_list, false_list)
 
 
 # Alias for convenience

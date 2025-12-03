@@ -214,7 +214,7 @@ class FlextConstants:
         ... )
 
     **Complete Usage Example**:
-        >>> from flext_core import, r
+            >>> from flext_core.result import r
         >>>
         >>> def validate_input(name: str) -> r[str]:
         ...     if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:

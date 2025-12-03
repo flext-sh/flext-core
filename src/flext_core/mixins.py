@@ -87,10 +87,10 @@ class FlextMixins:
     # RESULT FACTORY UTILITIES (Delegated from FlextResult)
     # =========================================================================
     # All classes inheriting FlextMixins automatically have access to
-    # FlextResult factory methods for railway-oriented programming
+    # r factory methods for railway-oriented programming
 
     # Factory methods - Use: self.ok(value) or self.fail("error")
-    # These delegate to r (FlextResult alias) for unified usage
+    # These delegate to r for unified usage
     ok = r.ok
     fail = r.fail
     traverse = r.traverse
@@ -146,7 +146,7 @@ class FlextMixins:
     # =========================================================================
 
     class ResultHandling:
-        """FlextResult wrapping utilities (eliminates 209+ repetitive patterns)."""
+        """r wrapping utilities (eliminates 209+ repetitive patterns)."""
 
         @staticmethod
         def ensure_result[T](value: T | r[T]) -> r[T]:
@@ -276,6 +276,7 @@ class FlextMixins:
 
     def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
+
         # Use r.create_from_callable() for unified error handling (DSL pattern)
         def register() -> bool:
             """Register service in container."""
@@ -283,9 +284,11 @@ class FlextMixins:
                 "t.GeneralValueType | BaseModel", self
             )
             result = self.container.register(service_name, service)
+            # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
                 error_msg = u.err(result, default="")
-                if "already registered" in error_msg.lower():
+                # Use u.in_() for membership check (DSL pattern)
+                if u.in_("already registered", error_msg.lower()):
                     return True  # Already registered is success
                 raise RuntimeError(u.err(result, default="Service registration failed"))
             return True
@@ -399,7 +402,7 @@ class FlextMixins:
 
         if register_result.is_failure:
             # Only log warning if it's not an "already registered" error
-            # Fast fail: error must be str (FlextResult guarantees this)
+            # Fast fail: error must be str (r guarantees this)
             error_msg = register_result.error
             if error_msg is None:
                 error_msg = "Service registration failed"
@@ -504,7 +507,7 @@ class FlextMixins:
         FlextContext.Request.set_operation_name("")
 
     class Validation:
-        """Railway-oriented validation patterns with FlextResult composition."""
+        """Railway-oriented validation patterns with r composition."""
 
         T = TypeVar("T")
 
@@ -591,7 +594,8 @@ class FlextMixins:
                 "Configurable": p.Configurable,
             }
 
-            if protocol_name not in protocol_map:
+            # Use u.not_() + u.in_() for membership check (DSL pattern)
+            if u.not_(value=u.in_(protocol_name, protocol_map)):
                 supported = ", ".join(protocol_map.keys())
                 return r[bool].fail(
                     f"Unknown protocol: {protocol_name}. Supported: {supported}",

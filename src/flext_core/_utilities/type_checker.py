@@ -81,7 +81,8 @@ class FlextTypeChecker:
             # Layer 0.5: Use FlextRuntime for type introspection
             origin = get_origin(base)
             # Check by name to avoid circular import
-            if origin and origin.__name__ == "h":
+            # Note: origin is FlextHandlers class, not the alias 'h'
+            if origin and origin.__name__ in {"h", "FlextHandlers"}:
                 # Use FlextRuntime.extract_generic_args() from Layer 0.5
                 args = FlextRuntime.extract_generic_args(base)
                 # Accept all type forms: plain types, generic aliases (e.g., dict[str, t.GeneralValueType]),

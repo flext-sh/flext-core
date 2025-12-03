@@ -25,6 +25,7 @@ from flext_core._models.context import FlextModelsContext
 from flext_core.constants import c
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import p
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import u
@@ -79,10 +80,12 @@ class FlextContext:  # noqa: PLR0904
         super().__init__()
         # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
         # Type narrowing: always create FlextModelsContext.ContextData instance
-        if u.guard(initial_data, dict, return_value=True) is not None:
+        if isinstance(initial_data, dict):
+            # Type narrowing: initial_data is dict[str, GeneralValueType]
+            initial_dict = cast("dict[str, t.GeneralValueType]", initial_data)
             # Use u.transform to normalize dict values
             transform_result = u.transform(
-                initial_data,
+                initial_dict,
                 normalize=True,
                 strip_none=False,
             )
@@ -91,11 +94,11 @@ class FlextContext:  # noqa: PLR0904
                 if transform_result.is_success
                 else {
                     str(k): FlextRuntime.normalize_to_general_value(v)
-                    for k, v in initial_data.items()
+                    for k, v in initial_dict.items()
                 }
             )
             context_data = FlextModelsContext.ContextData(data=normalized_data)
-        elif initial_data is not None:
+        elif isinstance(initial_data, FlextModelsContext.ContextData):
             # Already a ContextData instance (not dict, not None)
             context_data = initial_data
         else:
@@ -227,14 +230,18 @@ class FlextContext:  # noqa: PLR0904
         counter_attr = f"{operation}s"
         if hasattr(self._statistics, counter_attr):
             current_value = getattr(self._statistics, counter_attr, 0)
-            if u.guard(current_value, int).is_success:
+            guard_result = u.guard(current_value, int)
+            if isinstance(guard_result, r) and guard_result.is_success:
                 setattr(self._statistics, counter_attr, current_value + 1)
 
         # Update operations dict if exists
         if operation in self._statistics.operations:
             value = self._statistics.operations[operation]
-            if u.guard(value, int).is_success:
-                self._statistics.operations[operation] = value + 1
+            guard_result = u.guard(value, int)
+            if isinstance(guard_result, r) and guard_result.is_success:
+                # Type narrowing: value is int after guard check
+                int_value = cast("int", value)
+                self._statistics.operations[operation] = int_value + 1
 
     def _add_hook(
         self,

@@ -29,7 +29,8 @@ from docker import DockerClient
 from docker.errors import DockerException, NotFound
 from python_on_whales import DockerClient as PowDockerClient, docker as pow_docker
 
-from flext_core import, r
+from flext_core.loggings import FlextLogger
+from flext_core.result import r
 from flext_core.typings import t
 from flext_tests.constants import FlextTestConstants
 from flext_tests.models import FlextTestModels

@@ -23,7 +23,7 @@ from flext_core._models.base import FlextModelsBase
 from flext_core.config import FlextConfig
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.exceptions import FlextExceptions
+from flext_core.exceptions import e
 from flext_core.mixins import x
 from flext_core.models import m
 from flext_core.protocols import p

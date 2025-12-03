@@ -40,7 +40,7 @@ class FlextModel:
         *,
         strict: bool = False,
     ) -> r[M]:
-        """Create Pydantic model from dict with FlextResult.
+        """Create Pydantic model from dict with r.
 
         Example:
              result = uModel.from_dict(
@@ -53,16 +53,16 @@ class FlextModel:
         """
         try:
             instance = model_cls.model_validate(data, strict=strict)
-            return FlextResult.ok(instance)
+            return r.ok(instance)
         except Exception as e:
-            return FlextResult.fail(f"Model validation failed: {e}")
+            return r.fail(f"Model validation failed: {e}")
 
     @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
         **kwargs: t.FlexibleValue,
     ) -> r[M]:
-        """Create Pydantic model from kwargs with FlextResult.
+        """Create Pydantic model from kwargs with r.
 
         Example:
              result = uModel.from_kwargs(
@@ -114,9 +114,9 @@ class FlextModel:
             # Use model_copy with update - modern Pydantic approach
             # This preserves the type M without needing casts or recreating
             updated_instance = instance.model_copy(update=updates)
-            return FlextResult.ok(updated_instance)
+            return r.ok(updated_instance)
         except Exception as e:
-            return FlextResult.fail(f"Model update failed: {e}")
+            return r.fail(f"Model update failed: {e}")
 
     @staticmethod
     def to_dict(

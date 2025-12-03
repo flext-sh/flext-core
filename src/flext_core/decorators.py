@@ -22,6 +22,7 @@ from flext_core._models.config import FlextModelsConfig
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
+from flext_core.exceptions import e
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import p
 from flext_core.result import r
@@ -36,7 +37,7 @@ class FlextDecorators:
     Each decorator wraps callables with dispatcher-friendly behavior: dependency
     injection through ``FlextContainer``, structured logging that respects
     ``FlextContext`` correlation data, performance tracking, and conversion of
-    raised errors into ``FlextResult`` when appropriate. Composition order
+    raised errors into ``r`` when appropriate. Composition order
     mirrors the dispatcher middleware chain to keep telemetry consistent.
     """
 
@@ -83,8 +84,10 @@ class FlextDecorators:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                op_name = operation_name or func.__name__
-                # Convert P.args to tuple for logger resolution (type narrowing happens in _resolve_logger)
+                # Use u.or_() for fallback (DSL pattern)
+                op_name = u.or_(operation_name, func.__name__)
+                # Convert P.args to tuple for logger resolution
+                # (type narrowing happens in _resolve_logger)
                 args_tuple = tuple(args)
                 logger = FlextDecorators._resolve_logger(args_tuple, func)
                 # with_result() returns FlextLogger.ResultAdapter for result-aware logging
@@ -209,7 +212,8 @@ class FlextDecorators:
                         "duration_seconds": duration,
                         "success": True,
                     }
-                    if correlation_id is not None:
+                    # Use u.when() for conditional assignment (DSL pattern)
+                    if u.not_(value=u.empty(correlation_id)):
                         success_extra["correlation_id"] = correlation_id
                     logger.info(
                         "operation_completed",
@@ -233,7 +237,8 @@ class FlextDecorators:
                         "error": str(e),
                         "error_type": type(e).__name__,
                     }
-                    if correlation_id is not None:
+                    # Use u.when() for conditional assignment (DSL pattern)
+                    if u.not_(value=u.empty(correlation_id)):
                         failure_extra["correlation_id"] = correlation_id
                     logger.exception(
                         "operation_failed",
@@ -258,7 +263,7 @@ class FlextDecorators:
     def railway(
         error_code: str | None = None,
     ) -> Callable[[Callable[P, T]], Callable[P, r[T]]]:
-        """Convert exceptions to FlextResult.fail(), returns to FlextResult.ok()."""
+        """Convert exceptions to r.fail(), returns to r.ok()."""
 
         def decorator(
             func: Callable[P, T],
@@ -268,13 +273,13 @@ class FlextDecorators:
                 try:
                     result = func(*args, **kwargs)
 
-                    # If already a FlextResult, return as-is
-                    if isinstance(result, FlextResult):
-                        # Return as FlextResult - no need to recreate
+                    # If already a r, return as-is
+                    if isinstance(result, r):
+                        # Return as r - no need to recreate
                         return result
 
-                    # Wrap successful result using FlextResult directly
-                    return FlextResult.ok(result)
+                    # Wrap successful result using r directly
+                    return r.ok(result)
 
                 except (
                     AttributeError,
@@ -283,11 +288,14 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as e:
-                    # Convert exception to failure using FlextResult directly
-                    effective_error_code: str = (
-                        error_code if isinstance(error_code, str) else "OPERATION_ERROR"
+                    # Convert exception to failure using r directly
+                    # Use u.when() for conditional error code (DSL pattern)
+                    effective_error_code = u.when(
+                        condition=isinstance(error_code, str),
+                        then_value=error_code,
+                        else_value="OPERATION_ERROR",
                     )
-                    return FlextResult.fail(
+                    return r.fail(
                         f"{e!s} ({effective_error_code})",
                         error_code=effective_error_code,
                     )
@@ -441,7 +449,7 @@ class FlextDecorators:
             duration = time.perf_counter() - config.start_time
             bind_dict["duration_ms"] = duration * 1000
             bind_dict["duration_seconds"] = duration
-        # Log failure with exception - using return_result=True to get FlextResult
+        # Log failure with exception - using return_result=True to get r
         failure_result = logger.bind(**bind_dict).exception(
             f"{config.op_name}_failed",
             exception=config.exc,
@@ -733,11 +741,11 @@ class FlextDecorators:
                     ValueError,
                     RuntimeError,
                     KeyError,
-                ) as e:
+                ) as exc:
                     # Check duration even on exception
                     duration = time.perf_counter() - start_time
                     if duration > max_duration:
-                        msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {type(e).__name__}"
+                        msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {type(exc).__name__}"
                         # Use dict directly - no need to create Metadata object
                         raise e.TimeoutError(
                             msg,

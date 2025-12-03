@@ -88,7 +88,7 @@ class FlextEnum:
 
     @staticmethod
     def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
-        """Convert string to StrEnum with FlextResult.
+        """Convert string to StrEnum with r.
 
         Example:
              result = uEnum.parse(Status, "active")
@@ -97,9 +97,9 @@ class FlextEnum:
 
         """
         if isinstance(value, enum_cls):
-            return FlextResult.ok(value)
+            return r.ok(value)
         try:
-            return FlextResult.ok(enum_cls(value))
+            return r.ok(enum_cls(value))
         except ValueError:
             # enum_cls is a StrEnum type, access members via __members__
             # Access enum members via __members__ attribute
@@ -107,7 +107,7 @@ class FlextEnum:
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
             enum_name = getattr(enum_cls, "__name__", "Enum")
-            return FlextResult.fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+            return r.fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
 
     @staticmethod
     def parse_or_default[E: StrEnum](
