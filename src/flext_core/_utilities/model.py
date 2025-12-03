@@ -12,7 +12,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.typings import t
 
 
@@ -39,7 +39,7 @@ class FlextModel:
         data: Mapping[str, t.FlexibleValue],
         *,
         strict: bool = False,
-    ) -> FlextResult[M]:
+    ) -> r[M]:
         """Create Pydantic model from dict with FlextResult.
 
         Example:
@@ -61,7 +61,7 @@ class FlextModel:
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
         **kwargs: t.FlexibleValue,
-    ) -> FlextResult[M]:
+    ) -> r[M]:
         """Create Pydantic model from kwargs with FlextResult.
 
         Example:
@@ -79,7 +79,7 @@ class FlextModel:
         model_cls: type[M],
         defaults: Mapping[str, t.FlexibleValue],
         overrides: Mapping[str, t.FlexibleValue],
-    ) -> FlextResult[M]:
+    ) -> r[M]:
         """Merge defaults with overrides and create model.
 
         Example:
@@ -101,7 +101,7 @@ class FlextModel:
     def update[M: BaseModel](
         instance: M,
         **updates: t.FlexibleValue,
-    ) -> FlextResult[M]:
+    ) -> r[M]:
         """Update existing model with new values.
 
         Example:

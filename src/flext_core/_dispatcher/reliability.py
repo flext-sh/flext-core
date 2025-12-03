@@ -15,7 +15,7 @@ import secrets
 import time
 
 from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.typings import t
 
 
@@ -150,18 +150,18 @@ class CircuitBreakerManager:
             if (time.time() - opened_at) >= self._recovery_timeout:
                 self.transition_to_half_open(message_type)
 
-    def check_before_dispatch(self, message_type: str) -> FlextResult[bool]:
+    def check_before_dispatch(self, message_type: str) -> r[bool]:
         """Return a result indicating whether dispatch can proceed.
 
         Returns:
-            FlextResult[bool]: Success with ``True`` when the circuit is closed
+            r[bool]: Success with ``True`` when the circuit is closed
                 or half-open; failure with metadata when the circuit remains
                 open.
 
         """
         self.attempt_reset(message_type)
         if self.is_open(message_type):
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"Circuit breaker is open for message type '{message_type}'",
                 error_code=FlextConstants.Errors.OPERATION_ERROR,
                 error_data={
@@ -170,7 +170,7 @@ class CircuitBreakerManager:
                     "failure_count": self.get_failure_count(message_type),
                 },
             )
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     def get_failure_count(self, message_type: str) -> int:
         """Get current failure count."""
@@ -261,7 +261,7 @@ class RateLimiterManager:
         jittered = base_delay * (1.0 + variance)
         return max(0.0, jittered)
 
-    def check_rate_limit(self, message_type: str) -> FlextResult[bool]:
+    def check_rate_limit(self, message_type: str) -> r[bool]:
         """Return whether dispatch is allowed under the current rate window."""
         current_time = time.time()
         window_start, count = self._windows.get(message_type, (current_time, 0))
@@ -273,7 +273,7 @@ class RateLimiterManager:
         if count >= self._max_requests:
             elapsed = current_time - window_start
             retry_after = max(0, int(self._window_seconds - elapsed))
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"Rate limit exceeded for message type '{message_type}'",
                 error_code=FlextConstants.Errors.OPERATION_ERROR,
                 error_data={
@@ -286,7 +286,7 @@ class RateLimiterManager:
             )
 
         self._windows[message_type] = (window_start, count + 1)
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     def get_max_requests(self) -> int:
         """Get maximum requests per window."""

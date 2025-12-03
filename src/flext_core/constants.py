@@ -185,7 +185,7 @@ class FlextConstants:
 
     3. Validation limit application:
         >>> if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
-        ...     return FlextResult[str].fail(FlextConstants.Errors.VALIDATION_ERROR)
+        ...     return r[str].fail(FlextConstants.Errors.VALIDATION_ERROR)
 
     4. Dynamic constant path resolution:
         >>> error_path = "Errors.VALIDATION_ERROR"
@@ -214,18 +214,18 @@ class FlextConstants:
         ... )
 
     **Complete Usage Example**:
-        >>> from flext_core import FlextResult
+        >>> from flext_core import, r
         >>>
-        >>> def validate_input(name: str) -> FlextResult[str]:
+        >>> def validate_input(name: str) -> r[str]:
         ...     if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
         ...         error = FlextConstants.Errors.VALIDATION_ERROR
-        ...         return FlextResult[str].fail(error)
+        ...         return r[str].fail(error)
         ...
         ...     if len(name) > FlextConstants.Validation.MAX_NAME_LENGTH:
         ...         error = FlextConstants.Errors.VALIDATION_ERROR
-        ...         return FlextResult[str].fail(error)
+        ...         return r[str].fail(error)
         ...
-        ...     return FlextResult[str].ok(name)
+        ...     return r[str].ok(name)
         >>>
         >>> # Use in configuration
         >>> timeout = FlextConstants.Network.DEFAULT_TIMEOUT
@@ -1178,11 +1178,11 @@ class FlextConstants:
         # ─────────────────────────────────────────────────────────────────
 
         # 1. Aceitar qualquer valor do StrEnum:
-        #    def get_by_status(self, status: Status) -> FlextResult[list[Entry]]: ...
+        #    def get_by_status(self, status: Status) -> r[list[Entry]]: ...
 
         # 2. Aceitar apenas subset do StrEnum:
-        #    def process_active(self, status: ActiveStates) -> FlextResult[bool]: ...
-        #    def finalize(self, status: TerminalStates) -> FlextResult[bool]: ...
+        #    def process_active(self, status: ActiveStates) -> r[bool]: ...
+        #    def finalize(self, status: TerminalStates) -> r[bool]: ...
 
     # ═══════════════════════════════════════════════════════════════════
     # REFERÊNCIAS A FLEXT-CORE (quando necessário reutilizar)

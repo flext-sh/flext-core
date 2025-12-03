@@ -328,7 +328,7 @@ class FlextContext:  # noqa: PLR0904
             value: The value to validate
 
         Returns:
-            FlextResult[bool]: Success with True if valid, failure with error message
+            r[bool]: Success with True if valid, failure with error message
 
         """
         if not key:
@@ -359,7 +359,7 @@ class FlextContext:  # noqa: PLR0904
             scope: The scope for the value (global, user, session)
 
         Returns:
-            FlextResult[bool]: Success with True if set, failure with error message
+            r[bool]: Success with True if set, failure with error message
 
         """
         if not self._active:
@@ -397,7 +397,7 @@ class FlextContext:  # noqa: PLR0904
     ) -> p.ResultProtocol[t.GeneralValueType]:
         """Get a value from the context.
 
-        Fast fail: Returns FlextResult[t.GeneralValueType] - fails if key not found.
+        Fast fail: Returns r[t.GeneralValueType] - fails if key not found.
         No fallback behavior - use FlextResult monadic operations for defaults.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -408,7 +408,7 @@ class FlextContext:  # noqa: PLR0904
             scope: The scope to get from (global, user, session)
 
         Returns:
-            FlextResult[t.GeneralValueType]: Success with value, or failure if key not found
+            r[t.GeneralValueType]: Success with value, or failure if key not found
 
         Example:
             >>> context = FlextContext()
@@ -630,7 +630,7 @@ class FlextContext:  # noqa: PLR0904
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
 
         Returns:
-            FlextResult[bool]: Success with True if valid, failure with error details
+            r[bool]: Success with True if valid, failure with error details
 
         """
         if not self._active:
@@ -944,14 +944,14 @@ class FlextContext:  # noqa: PLR0904
     def get_metadata(self, key: str) -> p.ResultProtocol[t.GeneralValueType]:
         """Get metadata from the context.
 
-        Fast fail: Returns FlextResult[t.GeneralValueType] - fails if key not found.
+        Fast fail: Returns r[t.GeneralValueType] - fails if key not found.
         No fallback behavior - use FlextResult monadic operations for defaults.
 
         Args:
             key: The metadata key
 
         Returns:
-            FlextResult[t.GeneralValueType]: Success with metadata value, or failure if key not found
+            r[t.GeneralValueType]: Success with metadata value, or failure if key not found
 
         Example:
             >>> context = FlextContext()
@@ -1388,7 +1388,7 @@ class FlextContext:  # noqa: PLR0904
                 service: Service instance to register
 
             Returns:
-                FlextResult[bool]: Success with True if registered, failure with error details
+                r[bool]: Success with True if registered, failure with error details
 
             Example:
                 >>> result = FlextContext.Service.register_service(

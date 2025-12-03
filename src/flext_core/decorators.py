@@ -22,10 +22,9 @@ from flext_core._models.config import FlextModelsConfig
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import p
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T, t
 from flext_core.utilities import u
@@ -258,14 +257,14 @@ class FlextDecorators:
     @staticmethod
     def railway(
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, T]], Callable[P, FlextResult[T]]]:
+    ) -> Callable[[Callable[P, T]], Callable[P, r[T]]]:
         """Convert exceptions to FlextResult.fail(), returns to FlextResult.ok()."""
 
         def decorator(
             func: Callable[P, T],
-        ) -> Callable[P, FlextResult[T]]:
+        ) -> Callable[P, r[T]]:
             @wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> FlextResult[T]:
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[T]:
                 try:
                     result = func(*args, **kwargs)
 
@@ -588,7 +587,7 @@ class FlextDecorators:
         effective_error_code: str = (
             error_code if isinstance(error_code, str) else "RETRY_EXHAUSTED"
         )
-        raise FlextExceptions.TimeoutError(
+        raise e.TimeoutError(
             msg,
             error_code=effective_error_code,
         )
@@ -715,7 +714,7 @@ class FlextDecorators:
                             else "OPERATION_TIMEOUT"
                         )
                         # Use dict directly - no need to create Metadata object
-                        raise FlextExceptions.TimeoutError(
+                        raise e.TimeoutError(
                             msg,
                             error_code=effective_error_code,
                             timeout_seconds=max_duration,
@@ -725,7 +724,7 @@ class FlextDecorators:
 
                     return result
 
-                except FlextExceptions.TimeoutError:
+                except e.TimeoutError:
                     # Re-raise timeout errors
                     raise
                 except (
@@ -740,7 +739,7 @@ class FlextDecorators:
                     if duration > max_duration:
                         msg = f"Operation {func.__name__} exceeded timeout of {max_duration}s (took {duration:.2f}s) and raised {type(e).__name__}"
                         # Use dict directly - no need to create Metadata object
-                        raise FlextExceptions.TimeoutError(
+                        raise e.TimeoutError(
                             msg,
                             error_code=error_code or "OPERATION_TIMEOUT",
                             timeout_seconds=max_duration,

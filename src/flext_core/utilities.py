@@ -201,27 +201,20 @@ class FlextUtilities:  # noqa: PLR0904
                     # Business Rule: After validator passes, value conforms to T
                     # Type narrowing: validator ensures value is T
                     return r[T].ok(value)
-            # None passed
-            descriptions = list(
-                u.map(validators, lambda v: getattr(v, "description", "validator"))
-            )
-            error_msg = (
-                f"{field_prefix}None of the validators passed: "
-                f"{', '.join(descriptions)}"
-            )
-            return r[T].fail(error_msg)
+            # None passed - use u.map() + u.join() for unified string building
+            descriptions = cast("list[str]", u.map(validators, lambda v: u.get(v, "description", default="validator")))
+            return r[T].fail(f"{field_prefix}None of the validators passed: {u.join(descriptions, sep=', ')}")
 
-        # Default: "all" mode (AND)
-        for validator in validators:
-            if not validator(value):
-                description = getattr(validator, "description", "validator")
-                error_msg = f"{field_prefix}Validation failed: {description}"
-                if fail_fast and not collect_errors:
-                    return r[T].fail(error_msg)
-                errors.append(error_msg)
-
+        # Default: "all" mode (AND) - use u.filter() + u.map() for unified processing
+        failed_validators = cast("list[Callable[[T], bool]]", u.filter(validators, lambda v: not v(value)))
+        if failed_validators:
+            descriptions = cast("list[str]", u.map(failed_validators, lambda v: u.get(v, "description", default="validator")))
+            if fail_fast and not collect_errors:
+                return r[T].fail(f"{field_prefix}Validation failed: {descriptions[0] if descriptions else 'validator'}")
+            errors.extend(cast("list[str]", u.map(descriptions, lambda d: f"{field_prefix}Validation failed: {d}")))
+        
         if errors:
-            return r[T].fail("; ".join(errors))
+            return r[T].fail(u.join(errors, sep="; "))
 
         # Business Rule: After all validators pass, value is guaranteed to be T
         # Validators ensure value conforms to T at runtime, so we can safely return it
@@ -1192,7 +1185,7 @@ class FlextUtilities:  # noqa: PLR0904
         """Helper: Process a single batch item, return result, error Result, or None if skipped."""
         try:
             result = operation(item)
-            if isinstance(result, FlextResult):
+            if isinstance(result, r):
                 if result.is_failure:
                     error_msg = result.error or "Unknown error"
                     error_text = f"Item {idx} failed: {error_msg}"
@@ -3201,7 +3194,11 @@ class FlextUtilities:  # noqa: PLR0904
 
     @staticmethod
     def take[T](
-        data_or_items: Mapping[str, object] | object | dict[str, T] | list[T] | tuple[T, ...],
+        data_or_items: Mapping[str, object]
+        | object
+        | dict[str, T]
+        | list[T]
+        | tuple[T, ...],
         key_or_n: str | int,
         *,
         as_type: type[T] | None = None,
@@ -3846,6 +3843,26 @@ class FlextUtilities:  # noqa: PLR0904
                 return cast("T", default) if default is not None else cast("T", None)
             return value.value
         return value
+
+    @staticmethod
+    def or_[T](value: T | None, fallback: T) -> T:
+        """Return value if not None, else fallback (mnemonic: or_ = value or fallback).
+
+        Generic replacement for: value if value is not None else fallback
+
+        Args:
+            value: Value to check
+            fallback: Fallback value if value is None
+
+        Returns:
+            value or fallback
+
+        Example:
+            port = u.or_(config.get("port"), 8080)
+            name = u.or_(user.name, "unknown")
+
+        """
+        return value if value is not None else fallback
 
     @staticmethod
     def req[T](

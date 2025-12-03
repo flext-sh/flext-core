@@ -821,12 +821,10 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Use TimeoutEnforcer from Layer 2 (same as dispatch method)
         try:
             executor = self._timeout_enforcer.ensure_executor()
-            future: concurrent.futures.Future[r[t.GeneralValueType]] = (
-                executor.submit(
-                    self.process,
-                    name,
-                    data,
-                )
+            future: concurrent.futures.Future[r[t.GeneralValueType]] = executor.submit(
+                self.process,
+                name,
+                data,
             )
             return future.result(timeout=timeout)
         except concurrent.futures.TimeoutError:
@@ -948,7 +946,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         handler_type_members: dict[str, c.Cqrs.HandlerType] = getattr(
             c.Cqrs.HandlerType, "__members__", {}
         )
-        valid_modes = list(u.map(list(handler_type_members.values()), lambda m: m.value))
+        valid_modes = list(
+            u.map(list(handler_type_members.values()), lambda m: m.value)
+        )
         if str(handler_mode) not in valid_modes:
             return self.fail(
                 f"Invalid handler_mode: {handler_mode}. Must be one of {valid_modes}",
@@ -2684,9 +2684,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         if use_executor:
             executor = self._timeout_enforcer.ensure_executor()
-            future: (
-                concurrent.futures.Future[r[t.GeneralValueType]] | None
-            ) = None
+            future: concurrent.futures.Future[r[t.GeneralValueType]] | None = None
             try:
                 future = executor.submit(execute_func)
                 return future.result(timeout=timeout_seconds)
@@ -3386,7 +3384,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             r[t.GeneralValueType]: Processed result
 
         Raises:
-            FlextExceptions.OperationError: If result is failure but error is None
+            e.OperationError: If result is failure but error is None
 
         """
         if dispatch_result.is_failure:

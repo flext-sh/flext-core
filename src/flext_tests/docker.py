@@ -29,7 +29,7 @@ from docker import DockerClient
 from docker.errors import DockerException, NotFound
 from python_on_whales import DockerClient as PowDockerClient, docker as pow_docker
 
-from flext_core import FlextLogger, FlextResult
+from flext_core import, r
 from flext_core.typings import t
 from flext_tests.constants import FlextTestConstants
 from flext_tests.models import FlextTestModels
@@ -108,25 +108,25 @@ class FlextTestDocker:
         except Exception as e:
             self.logger.warning("Failed to save dirty state", error=str(e))
 
-    def mark_container_dirty(self, container_name: str) -> FlextResult[bool]:
+    def mark_container_dirty(self, container_name: str) -> r[bool]:
         """Mark a container as dirty for recreation on next use."""
         try:
             self._dirty_containers.add(container_name)
             self._save_dirty_state()
             self.logger.info("Container marked dirty", container=container_name)
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         except Exception as e:
-            return FlextResult[bool].fail(f"Failed to mark dirty: {e}")
+            return r[bool].fail(f"Failed to mark dirty: {e}")
 
-    def mark_container_clean(self, container_name: str) -> FlextResult[bool]:
+    def mark_container_clean(self, container_name: str) -> r[bool]:
         """Mark a container as clean after successful recreation."""
         try:
             self._dirty_containers.discard(container_name)
             self._save_dirty_state()
             self.logger.info("Container marked clean", container=container_name)
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         except Exception as e:
-            return FlextResult[bool].fail(f"Failed to mark clean: {e}")
+            return r[bool].fail(f"Failed to mark clean: {e}")
 
     def is_container_dirty(self, container_name: str) -> bool:
         """Check if a container is marked as dirty."""
@@ -138,7 +138,7 @@ class FlextTestDocker:
 
     def cleanup_dirty_containers(
         self,
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Clean up all dirty containers by recreating them with fresh volumes."""
         cleaned: list[str] = []
 
@@ -164,12 +164,12 @@ class FlextTestDocker:
                 self.mark_container_clean(container_name)
                 cleaned.append(container_name)
 
-        return FlextResult[list[str]].ok(cleaned)
+        return r[list[str]].ok(cleaned)
 
     def get_container_info(
         self,
         container_name: str,
-    ) -> FlextResult[FlextTestModels.Docker.ContainerInfo]:
+    ) -> r[FlextTestModels.Docker.ContainerInfo]:
         """Get container information."""
         try:
             client = self.get_client()
@@ -180,7 +180,7 @@ class FlextTestDocker:
                 if v:
                     ports[str(k)] = str(v[0].get("HostPort", "")) if v else ""
 
-            return FlextResult[FlextTestModels.Docker.ContainerInfo].ok(
+            return r[FlextTestModels.Docker.ContainerInfo].ok(
                 FlextTestModels.Docker.ContainerInfo(
                     name=container_name,
                     status=self.ContainerStatus(container.status),
@@ -194,38 +194,38 @@ class FlextTestDocker:
                 )
             )
         except NotFound:
-            return FlextResult[FlextTestModels.Docker.ContainerInfo].fail(
+            return r[FlextTestModels.Docker.ContainerInfo].fail(
                 f"Container {container_name} not found"
             )
         except Exception as e:
-            return FlextResult[FlextTestModels.Docker.ContainerInfo].fail(str(e))
+            return r[FlextTestModels.Docker.ContainerInfo].fail(str(e))
 
     def get_container_status(
         self,
         container_name: str,
-    ) -> FlextResult[FlextTestModels.Docker.ContainerInfo]:
+    ) -> r[FlextTestModels.Docker.ContainerInfo]:
         """Get container status (alias for get_container_info)."""
         return self.get_container_info(container_name)
 
-    def start_existing_container(self, name: str) -> FlextResult[str]:
+    def start_existing_container(self, name: str) -> r[str]:
         """Start an existing stopped container without recreating it."""
         try:
             client = self.get_client()
             container = client.containers.get(name)
 
             if container.status == "running":
-                return FlextResult[str].ok(f"Container {name} already running")
+                return r[str].ok(f"Container {name} already running")
 
             if container.status in {"exited", "created", "paused"}:
                 container.start()
-                return FlextResult[str].ok(f"Container {name} started")
+                return r[str].ok(f"Container {name} started")
 
-            return FlextResult[str].ok(f"Container {name} in state: {container.status}")
+            return r[str].ok(f"Container {name} in state: {container.status}")
 
         except NotFound:
-            return FlextResult[str].fail(f"Container {name} not found")
+            return r[str].fail(f"Container {name} not found")
         except Exception as e:
-            return FlextResult[str].fail(f"Failed to start container: {e}")
+            return r[str].fail(f"Failed to start container: {e}")
 
     def compose_up(
         self,
@@ -233,7 +233,7 @@ class FlextTestDocker:
         service: str | None = None,
         *,
         force_recreate: bool = False,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Start services using docker-compose via python_on_whales."""
         try:
             compose_path = Path(compose_file)
@@ -261,13 +261,13 @@ class FlextTestDocker:
             finally:
                 docker_client.client_config.compose_files = original_files
 
-            return FlextResult[str].ok("Compose up successful")
+            return r[str].ok("Compose up successful")
 
         except Exception as e:
             self.logger.exception("Compose up failed")
-            return FlextResult[str].fail(f"Compose up failed: {e}")
+            return r[str].fail(f"Compose up failed: {e}")
 
-    def compose_down(self, compose_file: str) -> FlextResult[str]:
+    def compose_down(self, compose_file: str) -> r[str]:
         """Stop services using docker-compose via python_on_whales."""
         try:
             compose_path = Path(compose_file)
@@ -283,29 +283,29 @@ class FlextTestDocker:
             finally:
                 docker_client.client_config.compose_files = original_files
 
-            return FlextResult[str].ok("Compose down successful")
+            return r[str].ok("Compose down successful")
 
         except Exception as e:
             self.logger.warning("Compose down failed", error=str(e))
-            return FlextResult[str].fail(f"Compose down failed: {e}")
+            return r[str].fail(f"Compose down failed: {e}")
 
     def start_compose_stack(
         self,
         compose_file: str,
         network_name: str | None = None,
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Start a Docker Compose stack."""
         result = self.compose_up(compose_file)
         if result.is_failure:
-            return FlextResult[str].fail(f"Stack start failed: {result.error}")
-        return FlextResult[str].ok("Stack started successfully")
+            return r[str].fail(f"Stack start failed: {result.error}")
+        return r[str].ok("Stack started successfully")
 
     def wait_for_port_ready(
         self,
         host: str,
         port: int,
         max_wait: int = 60,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Wait for network port to become available."""
         try:
             start_time = time.time()
@@ -318,7 +318,7 @@ class FlextTestDocker:
 
                     if result == 0:
                         self.logger.info("Port ready", host=host, port=port)
-                        return FlextResult[bool].ok(True)
+                        return r[bool].ok(True)
                 except OSError:
                     pass
 
@@ -327,10 +327,10 @@ class FlextTestDocker:
             self.logger.warning(
                 "Port not ready", host=host, port=port, max_wait=max_wait
             )
-            return FlextResult[bool].ok(False)
+            return r[bool].ok(False)
 
         except Exception as e:
-            return FlextResult[bool].fail(f"Failed to wait for port: {e}")
+            return r[bool].fail(f"Failed to wait for port: {e}")
 
 
 __all__ = ["FlextTestDocker"]

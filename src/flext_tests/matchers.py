@@ -20,7 +20,7 @@ import re
 from collections.abc import Mapping
 from typing import Self, TypeVar
 
-from flext_core import FlextResult, u
+from flext_core import, r, u
 from flext_core.typings import T_co, t
 from flext_tests.typings import FlextTestsTypings
 
@@ -37,7 +37,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_success(
-        result: FlextResult[T_co],
+        result: r[T_co],
         error_msg: str | None = None,
     ) -> T_co:
         """Assert result is success and return unwrapped value.
@@ -60,7 +60,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_failure(
-        result: FlextResult[T_co],
+        result: r[T_co],
         expected_error: str | None = None,
     ) -> str:
         """Assert result is failure and return error message.
@@ -146,7 +146,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_result_success(
-        result: FlextResult[T_co],
+        result: r[T_co],
         message: str | None = None,
     ) -> None:
         """Assert that a FlextResult is successful.
@@ -163,7 +163,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     def assert_result_failure(
-        result: FlextResult[T_co],
+        result: r[T_co],
         expected_error: str | None = None,
         message: str | None = None,
     ) -> None:

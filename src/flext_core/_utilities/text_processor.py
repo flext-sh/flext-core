@@ -15,7 +15,7 @@ import re
 
 from flext_core.constants import FlextConstants
 from flext_core.protocols import p
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 
 
@@ -54,13 +54,13 @@ class FlextTextProcessor:
         text: str,
         max_length: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
         suffix: str = "...",
-    ) -> FlextResult[str]:
+    ) -> r[str]:
         """Truncate text to maximum length with suffix."""
         if len(text) <= max_length:
-            return FlextResult[str].ok(text)
+            return r[str].ok(text)
 
         truncated = text[: max_length - len(suffix)] + suffix
-        return FlextResult[str].ok(truncated)
+        return r[str].ok(truncated)
 
     @staticmethod
     def safe_string(text: str | None) -> str:

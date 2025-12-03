@@ -192,7 +192,7 @@ class FlextExceptions:
                 | t.GeneralValueType
                 | None
             ) = metadata
-            self.metadata = FlextExceptions.BaseError._normalize_metadata(
+            self.metadata = e.BaseError._normalize_metadata(
                 metadata_for_normalize,
                 final_kwargs,
             )
@@ -211,7 +211,7 @@ class FlextExceptions:
             Business Rule: Logs exception using FlextRuntime.get_logger() with failure
             level-based logging. Uses get_effective_level() to determine log level
             (STRICT logs as error with exc_info, WARN logs as warning). This method
-            should be called by dispatcher/service layer when catching FlextExceptions.
+            should be called by dispatcher/service layer when catching e.
 
             Audit Implication: Exception logging ensures audit trail completeness by
             logging all exceptions with full context. All exceptions are logged with
@@ -224,7 +224,7 @@ class FlextExceptions:
             # Import here to avoid circular dependency during module initialization
             from flext_core.runtime import FlextRuntime  # noqa: PLC0415
 
-            failure_level = FlextExceptions.Configuration.get_effective_level(
+            failure_level = e.Configuration.get_effective_level(
                 library_name=None,
                 container_id=None,
                 exception_type=type(self),
@@ -1056,22 +1056,22 @@ class FlextExceptions:
         return (correlation_id, metadata)
 
     @staticmethod
-    def create_error(error_type: str, message: str) -> FlextExceptions.BaseError:
+    def create_error(error_type: str, message: str) -> e.BaseError:
         """Create an exception instance based on error type."""
-        error_classes: dict[str, type[FlextExceptions.BaseError]] = {
-            "ValidationError": FlextExceptions.ValidationError,
-            "ConfigurationError": FlextExceptions.ConfigurationError,
-            "ConnectionError": FlextExceptions.ConnectionError,
-            "TimeoutError": FlextExceptions.TimeoutError,
-            "AuthenticationError": FlextExceptions.AuthenticationError,
-            "AuthorizationError": FlextExceptions.AuthorizationError,
-            "NotFoundError": FlextExceptions.NotFoundError,
-            "ConflictError": FlextExceptions.ConflictError,
-            "RateLimitError": FlextExceptions.RateLimitError,
-            "CircuitBreakerError": FlextExceptions.CircuitBreakerError,
-            "TypeError": FlextExceptions.TypeError,
-            "OperationError": FlextExceptions.OperationError,
-            "AttributeError": FlextExceptions.AttributeAccessError,
+        error_classes: dict[str, type[e.BaseError]] = {
+            "ValidationError": e.ValidationError,
+            "ConfigurationError": e.ConfigurationError,
+            "ConnectionError": e.ConnectionError,
+            "TimeoutError": e.TimeoutError,
+            "AuthenticationError": e.AuthenticationError,
+            "AuthorizationError": e.AuthorizationError,
+            "NotFoundError": e.NotFoundError,
+            "ConflictError": e.ConflictError,
+            "RateLimitError": e.RateLimitError,
+            "CircuitBreakerError": e.CircuitBreakerError,
+            "TypeError": e.TypeError,
+            "OperationError": e.OperationError,
+            "AttributeError": e.AttributeAccessError,
         }
         error_class = error_classes.get(error_type)
         if not error_class:
@@ -1155,15 +1155,15 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.ValidationError:
-            field = FlextExceptions._get_str_from_kwargs(kwargs, "field")
+        ) -> e.ValidationError:
+            field = e._get_str_from_kwargs(kwargs, "field")
             value = kwargs.get("value")
             metadata_value = (
                 cast("t.MetadataAttributeValue", meta.attributes)
                 if meta is not None
                 else None
             )
-            return FlextExceptions.ValidationError(
+            return e.ValidationError(
                 msg,
                 error_code=code or FlextConstants.Errors.VALIDATION_ERROR,
                 field=field,
@@ -1178,13 +1178,11 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.ConfigurationError:
-            config_key = FlextExceptions._get_str_from_kwargs(kwargs, "config_key")
-            config_source = FlextExceptions._get_str_from_kwargs(
-                kwargs, "config_source"
-            )
-            metadata_value = FlextExceptions._prepare_metadata_value(meta)
-            return FlextExceptions.ConfigurationError(
+        ) -> e.ConfigurationError:
+            config_key = e._get_str_from_kwargs(kwargs, "config_key")
+            config_source = e._get_str_from_kwargs(kwargs, "config_source")
+            metadata_value = e._prepare_metadata_value(meta)
+            return e.ConfigurationError(
                 msg,
                 error_code=code or FlextConstants.Errors.CONFIGURATION_ERROR,
                 config_key=config_key,
@@ -1199,11 +1197,11 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.OperationError:
-            operation = FlextExceptions._get_str_from_kwargs(kwargs, "operation")
-            reason = FlextExceptions._get_str_from_kwargs(kwargs, "reason")
-            metadata_value = FlextExceptions._prepare_metadata_value(meta)
-            return FlextExceptions.OperationError(
+        ) -> e.OperationError:
+            operation = e._get_str_from_kwargs(kwargs, "operation")
+            reason = e._get_str_from_kwargs(kwargs, "reason")
+            metadata_value = e._prepare_metadata_value(meta)
+            return e.OperationError(
                 msg,
                 error_code=code or FlextConstants.Errors.OPERATION_ERROR,
                 operation=operation,
@@ -1218,9 +1216,9 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.ConnectionError:
-            metadata_value = FlextExceptions._prepare_metadata_value(meta)
-            return FlextExceptions.ConnectionError(
+        ) -> e.ConnectionError:
+            metadata_value = e._prepare_metadata_value(meta)
+            return e.ConnectionError(
                 msg,
                 error_code=code or FlextConstants.Errors.CONNECTION_ERROR,
                 host=kwargs.get("host"),
@@ -1236,7 +1234,7 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.TimeoutError:
+        ) -> e.TimeoutError:
             timeout_seconds_val = kwargs.get("timeout_seconds")
             timeout_seconds: float | None = (
                 float(timeout_seconds_val)
@@ -1248,9 +1246,9 @@ class FlextExceptions:
                     else None
                 )
             )
-            operation = FlextExceptions._get_str_from_kwargs(kwargs, "operation")
-            metadata_value = FlextExceptions._prepare_metadata_value(meta)
-            return FlextExceptions.TimeoutError(
+            operation = e._get_str_from_kwargs(kwargs, "operation")
+            metadata_value = e._prepare_metadata_value(meta)
+            return e.TimeoutError(
                 msg,
                 error_code=code or FlextConstants.Errors.TIMEOUT_ERROR,
                 timeout_seconds=timeout_seconds,
@@ -1265,9 +1263,9 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.AuthorizationError:
-            metadata_value = FlextExceptions._prepare_metadata_value(meta)
-            return FlextExceptions.AuthorizationError(
+        ) -> e.AuthorizationError:
+            metadata_value = e._prepare_metadata_value(meta)
+            return e.AuthorizationError(
                 msg,
                 error_code=code or FlextConstants.Errors.AUTHORIZATION_ERROR,
                 user_id=kwargs.get("user_id"),
@@ -1283,11 +1281,11 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.AuthenticationError:
-            auth_method = FlextExceptions._get_str_from_kwargs(kwargs, "auth_method")
-            user_id = FlextExceptions._get_str_from_kwargs(kwargs, "user_id")
-            metadata_value = FlextExceptions._prepare_metadata_value(meta)
-            return FlextExceptions.AuthenticationError(
+        ) -> e.AuthenticationError:
+            auth_method = e._get_str_from_kwargs(kwargs, "auth_method")
+            user_id = e._get_str_from_kwargs(kwargs, "user_id")
+            metadata_value = e._prepare_metadata_value(meta)
+            return e.AuthenticationError(
                 msg,
                 error_code=code or FlextConstants.Errors.AUTHENTICATION_ERROR,
                 auth_method=auth_method,
@@ -1302,11 +1300,9 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.NotFoundError:
-            resource_type = FlextExceptions._get_str_from_kwargs(
-                kwargs, "resource_type"
-            )
-            resource_id = FlextExceptions._get_str_from_kwargs(kwargs, "resource_id")
+        ) -> e.NotFoundError:
+            resource_type = e._get_str_from_kwargs(kwargs, "resource_type")
+            resource_id = e._get_str_from_kwargs(kwargs, "resource_id")
             metadata_for_error: (
                 FlextModelsBase.Metadata
                 | Mapping[str, t.MetadataAttributeValue]
@@ -1317,7 +1313,7 @@ class FlextExceptions:
                 if meta is not None
                 else None
             )
-            return FlextExceptions.NotFoundError(
+            return e.NotFoundError(
                 msg,
                 error_code=code or FlextConstants.Errors.NOT_FOUND_ERROR,
                 resource_type=resource_type,
@@ -1332,15 +1328,11 @@ class FlextExceptions:
             kwargs: Mapping[str, t.MetadataAttributeValue],
             cid: str | None,
             meta: FlextModelsBase.Metadata | None,
-        ) -> FlextExceptions.AttributeAccessError:
-            attribute_name = FlextExceptions._get_str_from_kwargs(
-                kwargs, "attribute_name"
-            )
-            attribute_context = FlextExceptions._get_str_from_kwargs(
-                kwargs, "attribute_context"
-            )
-            metadata_value = FlextExceptions._prepare_metadata_value(meta)
-            return FlextExceptions.AttributeAccessError(
+        ) -> e.AttributeAccessError:
+            attribute_name = e._get_str_from_kwargs(kwargs, "attribute_name")
+            attribute_context = e._get_str_from_kwargs(kwargs, "attribute_context")
+            metadata_value = e._prepare_metadata_value(meta)
+            return e.AttributeAccessError(
                 msg,
                 error_code=code or FlextConstants.Errors.ATTRIBUTE_ERROR,
                 attribute_name=attribute_name,
@@ -1368,7 +1360,7 @@ class FlextExceptions:
         message: str,
         error_code: str | None,
         context: Mapping[str, t.MetadataAttributeValue] | None = None,
-    ) -> FlextExceptions.BaseError:
+    ) -> e.BaseError:
         """Create error by type using context dict."""
         # Build context with error_code
         error_context: dict[str, t.MetadataAttributeValue] = {}
@@ -1378,16 +1370,16 @@ class FlextExceptions:
             error_context["error_code"] = error_code
 
         # Create appropriate error class based on type
-        error_classes: dict[str, type[FlextExceptions.BaseError]] = {
-            "validation": FlextExceptions.ValidationError,
-            "configuration": FlextExceptions.ConfigurationError,
-            "connection": FlextExceptions.ConnectionError,
-            "timeout": FlextExceptions.TimeoutError,
-            "authentication": FlextExceptions.AuthenticationError,
-            "authorization": FlextExceptions.AuthorizationError,
-            "not_found": FlextExceptions.NotFoundError,
-            "operation": FlextExceptions.OperationError,
-            "attribute_access": FlextExceptions.AttributeAccessError,
+        error_classes: dict[str, type[e.BaseError]] = {
+            "validation": e.ValidationError,
+            "configuration": e.ConfigurationError,
+            "connection": e.ConnectionError,
+            "timeout": e.TimeoutError,
+            "authentication": e.AuthenticationError,
+            "authorization": e.AuthorizationError,
+            "not_found": e.NotFoundError,
+            "operation": e.OperationError,
+            "attribute_access": e.AttributeAccessError,
         }
 
         error_class = error_classes.get(error_type or "") if error_type else None
@@ -1398,7 +1390,7 @@ class FlextExceptions:
                 context=error_context or None,
             )
 
-        return FlextExceptions.BaseError(
+        return e.BaseError(
             message,
             error_code=error_code or FlextConstants.Errors.UNKNOWN_ERROR,
             context=error_context or None,
@@ -1409,10 +1401,10 @@ class FlextExceptions:
         message: str,
         error_code: str | None = None,
         **kwargs: t.MetadataAttributeValue,
-    ) -> FlextExceptions.BaseError:
+    ) -> e.BaseError:
         """Create an appropriate exception instance based on kwargs context."""
-        correlation_id_obj, metadata_obj = FlextExceptions.extract_common_kwargs(kwargs)
-        error_type = FlextExceptions._determine_error_type(kwargs)
+        correlation_id_obj, metadata_obj = e.extract_common_kwargs(kwargs)
+        error_type = e._determine_error_type(kwargs)
         # correlation_id_obj is already str | None from extract_common_kwargs
         correlation_id: str | None = correlation_id_obj
         # Build context dict
@@ -1436,7 +1428,7 @@ class FlextExceptions:
             if k not in {"correlation_id", "metadata"}:
                 error_context[k] = FlextRuntime.normalize_to_metadata_value(v)
 
-        return FlextExceptions._create_error_by_type(
+        return e._create_error_by_type(
             error_type,
             message,
             error_code,
@@ -1501,7 +1493,7 @@ class FlextExceptions:
         message: str,
         error_code: str | None = None,
         **kwargs: t.Types.ExceptionKwargsType,
-    ) -> FlextExceptions.BaseError:
+    ) -> e.BaseError:
         """Create exception by calling the class instance."""
         # Normalize ExceptionKwargsType to t.MetadataAttributeValue
 

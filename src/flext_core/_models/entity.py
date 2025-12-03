@@ -549,7 +549,7 @@ class FlextModelsEntity:
             for invariant in self._invariants:
                 if not invariant():
                     msg = f"Invariant violated: {invariant.__name__}"
-                    raise FlextExceptions.ValidationError(
+                    raise e.ValidationError(
                         msg,
                         error_code=c.Errors.VALIDATION_ERROR,
                     )

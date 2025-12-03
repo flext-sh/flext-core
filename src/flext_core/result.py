@@ -23,7 +23,7 @@ from flext_core.protocols import p
 from flext_core.typings import T_co, U, t
 
 
-class FlextResult[T_co]:  # noqa: PLR0904
+class r[T_co]:  # noqa: PLR0904
     """Type-safe railway result with monadic helpers for CQRS pipelines.
 
     Use FlextResult to compose dispatcher handlers and domain services without
@@ -73,7 +73,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
             if result.is_success:
                 return IO(result.value)
             msg = "Cannot convert failure to IO"
-            raise FlextExceptions.ValidationError(msg)
+            raise e.ValidationError(msg)
 
         @staticmethod
         def from_io_result(
@@ -402,7 +402,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
             IO[T_co]: IO wrapper around the success value
 
         Raises:
-            FlextExceptions.ValidationError: If result is failure
+            e.ValidationError: If result is failure
 
         """
         return FlextResult.Convert.to_io(self)

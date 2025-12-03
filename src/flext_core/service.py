@@ -107,7 +107,7 @@ class FlextService[TDomainResult](
             # This allows: user = AutoGetUserService(user_id="123") to get User object
             if result.is_failure:
                 error_msg = result.error or "Service execution failed"
-                raise FlextExceptions.BaseError(error_msg)
+                raise e.BaseError(error_msg)
             # Return the unwrapped value directly (breaks static typing but is intended behavior)
             # Type cast is necessary because __new__ signature expects Self
             return cast("Self", result.value)
@@ -127,7 +127,7 @@ class FlextService[TDomainResult](
         if result.is_success:
             return result.value
         # On failure, raise exception
-        raise FlextExceptions.BaseError(result.error or "Service execution failed")
+        raise e.BaseError(result.error or "Service execution failed")
 
     def __init__(
         self,

@@ -93,7 +93,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
 
     Example Usage:
         >>> from flext_core.handlers import h
-        >>> from flext_core.result import FlextResult
+        >>> from flext_core.result import r
         >>>
         >>> class UserCommand:
         ...     user_id: str
@@ -157,7 +157,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         }
         if handler_type not in valid_handler_types:
             error_msg = f"Invalid handler mode: {handler_type}"
-            raise FlextExceptions.ValidationError(error_msg)
+            raise e.ValidationError(error_msg)
         # handler_type is validated - HandlerType StrEnum values are compatible with HandlerTypeLiteral
         # After validation, we know handler_type is one of the valid HandlerType values
         # Business Rule: HandlerType StrEnum members are runtime-compatible with HandlerTypeLiteral
@@ -215,7 +215,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             FlextHandlers[GeneralValueType, GeneralValueType]: Handler instance wrapping the callable
 
         Raises:
-            FlextExceptions.ValidationError: If invalid mode is provided
+            e.ValidationError: If invalid mode is provided
 
         Example:
             >>> def my_handler(msg: str) -> r[str]:
@@ -278,7 +278,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
                 resolved_type = mode
             elif mode not in c.Cqrs.VALID_HANDLER_MODES:
                 error_msg = f"Invalid handler mode: {mode}"
-                raise FlextExceptions.ValidationError(error_msg)
+                raise e.ValidationError(error_msg)
             else:
                 # Type narrowing: mode is valid string, HandlerType constructor accepts it
                 resolved_type = c.Cqrs.HandlerType(mode)

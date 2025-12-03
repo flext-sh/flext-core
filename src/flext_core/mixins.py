@@ -24,7 +24,7 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult, r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
@@ -149,10 +149,10 @@ class FlextMixins:
         """FlextResult wrapping utilities (eliminates 209+ repetitive patterns)."""
 
         @staticmethod
-        def ensure_result[T](value: T | FlextResult[T]) -> FlextResult[T]:
-            """Wrap value in FlextResult if not already wrapped."""
-            result = u.guard(value, FlextResult, return_value=True)
-            return result if result is not None else FlextResult.ok(value)
+        def ensure_result[T](value: T | r[T]) -> r[T]:
+            """Wrap value in r if not already wrapped."""
+            result = u.guard(value, r, return_value=True)
+            return u.or_(result, r[T].ok(value))
 
     # =========================================================================
     # SERVICE INFRASTRUCTURE (Original FlextMixins functionality)
@@ -274,20 +274,23 @@ class FlextMixins:
         """Get global FlextConfig instance with namespace support."""
         return FlextConfig.get_global_instance()
 
-    def _register_in_container(self, service_name: str) -> FlextResult[bool]:
+    def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
-        try:
-            # container.register accepts GeneralValueType | BaseModel | Callable
-            # Cast self to satisfy type checker (self is compatible at runtime)
+        # Use r.create_from_callable() for unified error handling (DSL pattern)
+        def register() -> bool:
+            """Register service in container."""
             service: t.GeneralValueType | BaseModel = cast(
                 "t.GeneralValueType | BaseModel", self
             )
-            return self.container.register(service_name, service)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            # If already registered, return success (for test compatibility)
-            if "already registered" in str(e).lower():
-                return FlextResult[bool].ok(True)
-            return FlextResult[bool].fail(f"Service registration failed: {e}")
+            result = self.container.register(service_name, service)
+            if result.is_failure:
+                error_msg = u.err(result, default="")
+                if "already registered" in error_msg.lower():
+                    return True  # Already registered is success
+                raise RuntimeError(u.err(result, default="Service registration failed"))
+            return True
+
+        return r.create_from_callable(register)
 
     @staticmethod
     def _propagate_context(operation_name: str) -> None:
@@ -508,17 +511,17 @@ class FlextMixins:
         @staticmethod
         def validate_with_result(
             data: t.GeneralValueType,
-            validators: list[Callable[[t.GeneralValueType], FlextResult[bool]]],
-        ) -> FlextResult[t.GeneralValueType]:
+            validators: list[Callable[[t.GeneralValueType], r[bool]]],
+        ) -> r[t.GeneralValueType]:
             """Chain validators sequentially, returning first failure or data on success."""
-            result: FlextResult[t.GeneralValueType] = FlextResult.ok(data)
+            result: r[t.GeneralValueType] = r[t.GeneralValueType].ok(data)
 
             for validator in validators:
                 # Create helper function with proper closure to validate and preserve data
                 def validate_and_preserve(
                     data: t.GeneralValueType,
-                    v: Callable[[t.GeneralValueType], FlextResult[bool]],
-                ) -> FlextResult[t.GeneralValueType]:
+                    v: Callable[[t.GeneralValueType], r[bool]],
+                ) -> r[t.GeneralValueType]:
                     validation_result = v(data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"
@@ -527,17 +530,17 @@ class FlextMixins:
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        return FlextResult[t.GeneralValueType].fail(
+                        return r[t.GeneralValueType].fail(
                             error_msg,
                             error_code=validation_result.error_code,
                             error_data=validation_result.error_data,
                         )
                     # Check that validation returned True
                     if validation_result.value is not True:
-                        return FlextResult[t.GeneralValueType].fail(
-                            f"Validator must return FlextResult[bool].ok(True) for success, got {validation_result.value!r}",
+                        return r[t.GeneralValueType].fail(
+                            f"Validator must return r[bool].ok(True) for success, got {validation_result.value!r}",
                         )
-                    return FlextResult[t.GeneralValueType].ok(data)
+                    return r[t.GeneralValueType].ok(data)
 
                 # Use partial to bind validator while passing data through flat_map
                 result = result.flat_map(partial(validate_and_preserve, v=validator))
@@ -578,7 +581,7 @@ class FlextMixins:
             | p.Repository[t.GeneralValueType]
             | p.Configurable,
             protocol_name: str,
-        ) -> FlextResult[bool]:
+        ) -> r[bool]:
             """Validate object compliance with named protocol."""
             protocol_map = {
                 "Handler": p.Handler,
@@ -590,17 +593,17 @@ class FlextMixins:
 
             if protocol_name not in protocol_map:
                 supported = ", ".join(protocol_map.keys())
-                return FlextResult[bool].fail(
+                return r[bool].fail(
                     f"Unknown protocol: {protocol_name}. Supported: {supported}",
                 )
 
             # Type already guarantees protocol compliance
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
         @staticmethod
         def validate_processor_protocol(
             obj: p.HasModelDump,
-        ) -> FlextResult[bool]:
+        ) -> r[bool]:
             """Validate object has required process() and validate() methods."""
             required_methods = ["process", "validate"]
 
@@ -612,13 +615,13 @@ class FlextMixins:
                         f"method '{method_name}()'. "
                         f"Processors must implement: {methods_str}"
                     )
-                    return FlextResult[bool].fail(error_msg)
-                if not callable(getattr(obj, method_name)):
-                    return FlextResult[bool].fail(
+                    return r[bool].fail(error_msg)
+                if not callable(u.get(obj, method_name, default=None)):
+                    return r[bool].fail(
                         f"Processor {type(obj).__name__}.{method_name} is not callable",
                     )
 
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
 
 # Alias for simplified usage

@@ -12,7 +12,7 @@ from collections.abc import Callable
 from enum import StrEnum
 from typing import ClassVar, TypeGuard
 
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.typings import t
 
 
@@ -87,7 +87,7 @@ class FlextEnum:
     # ─────────────────────────────────────────────────────────────
 
     @staticmethod
-    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> FlextResult[E]:
+    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
         """Convert string to StrEnum with FlextResult.
 
         Example:
