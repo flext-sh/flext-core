@@ -324,9 +324,7 @@ class FlextUtilities:
         return filtered if isinstance(filtered, dict) else data
 
     @staticmethod
-    def _coerce_to_int(
-        value: object, *, _strict: bool = False
-    ) -> r[int] | None:
+    def _coerce_to_int(value: object, *, _strict: bool = False) -> r[int] | None:
         """Helper: Coerce value to int."""
         if isinstance(value, (str, float)):
             try:
@@ -336,9 +334,7 @@ class FlextUtilities:
         return None
 
     @staticmethod
-    def _coerce_to_float(
-        value: object, *, _strict: bool = False
-    ) -> r[float] | None:
+    def _coerce_to_float(value: object, *, _strict: bool = False) -> r[float] | None:
         """Helper: Coerce value to float."""
         if isinstance(value, (str, int)):
             try:
@@ -396,9 +392,7 @@ class FlextUtilities:
         )
 
     @staticmethod
-    def _parse_handle_already_correct_type[T](
-        value: T, _target: type[T]
-    ) -> r[T]:
+    def _parse_handle_already_correct_type[T](value: T, _target: type[T]) -> r[T]:
         """Helper: Handle value already matching target type."""
         return r[T].ok(value)
 
@@ -732,9 +726,7 @@ class FlextUtilities:
             return r[dict[str, t.GeneralValueType]].ok(result)
 
         except Exception as e:
-            return r[dict[str, t.GeneralValueType]].fail(
-                f"Transform failed: {e}"
-            )
+            return r[dict[str, t.GeneralValueType]].fail(f"Transform failed: {e}")
 
     @staticmethod
     def pipe(
@@ -924,14 +916,13 @@ class FlextUtilities:
         default: T | None,
     ) -> r[T | None] | None:
         """Helper: Get value from dict/object/model."""
+
         # Helper to create error or default result
         def error_or_default(msg: str) -> r[T | None]:
-            return (
-                r[T | None].fail(msg) if required else r[T | None].ok(default)
-            )
-        
+            return r[T | None].fail(msg) if required else r[T | None].ok(default)
+
         result: r[T | None] | None = None
-        
+
         # Handle Mapping (dict)
         if isinstance(current, Mapping):
             result = (
@@ -946,19 +937,25 @@ class FlextUtilities:
         elif hasattr(current, "model_dump"):
             model_dump_attr = getattr(current, "model_dump", None)
             if model_dump_attr is None:
-                result = error_or_default(f"Cannot access '{key_part}' at '{path_context}'")
+                result = error_or_default(
+                    f"Cannot access '{key_part}' at '{path_context}'"
+                )
             else:
-                model_dump_method = cast("Callable[[], dict[str, object]]", model_dump_attr)
+                model_dump_method = cast(
+                    "Callable[[], dict[str, object]]", model_dump_attr
+                )
                 model_dict = model_dump_method()
                 result = (
                     r[T | None].ok(cast("T | None", model_dict[key_part]))
                     if key_part in model_dict
-                    else error_or_default(f"Key '{key_part}' not found at '{path_context}'")
+                    else error_or_default(
+                        f"Key '{key_part}' not found at '{path_context}'"
+                    )
                 )
         # Cannot access
         else:
             result = error_or_default(f"Cannot access '{key_part}' at '{path_context}'")
-        
+
         return result
 
     @staticmethod
@@ -1034,14 +1031,12 @@ class FlextUtilities:
 
                 # Get value from dict, object, or Pydantic model
                 path_context = separator.join(parts[:i])
-                get_result: r[T | None] | None = (
-                    FlextUtilities._extract_get_value(  # type: ignore[misc]
-                        current,
-                        key_part,
-                        path_context,
-                        required=required,
-                        default=default,
-                    )
+                get_result: r[T | None] | None = FlextUtilities._extract_get_value(  # type: ignore[misc]
+                    current,
+                    key_part,
+                    path_context,
+                    required=required,
+                    default=default,
                 )
                 if get_result is None:
                     continue
@@ -1210,7 +1205,9 @@ class FlextUtilities:
         flattened: list[t.GeneralValueType] = []
         for result_item in validated_results:
             if isinstance(result_item, (list, tuple)):
-                flattened.extend(cast("t.GeneralValueType", item) for item in result_item)
+                flattened.extend(
+                    cast("t.GeneralValueType", item) for item in result_item
+                )
             else:
                 flattened.append(cast("t.GeneralValueType", result_item))
         return flattened
@@ -1813,7 +1810,7 @@ class FlextUtilities:
         """Internal helper for non-empty validation."""
         # Use pattern matching for type-specific validation
         value_typed = cast("t.GeneralValueType", value)
-        
+
         # String validation
         if isinstance(value, str):
             return (
@@ -1821,7 +1818,7 @@ class FlextUtilities:
                 if FlextTypeGuards.is_string_non_empty(value)
                 else r.fail(f"{error_template} non-empty string")
             )
-        
+
         # Dict-like validation
         if FlextRuntime.is_dict_like(value_typed):
             return (
@@ -1829,7 +1826,7 @@ class FlextUtilities:
                 if FlextTypeGuards.is_dict_non_empty(value_typed)
                 else r.fail(f"{error_template} non-empty dict")
             )
-        
+
         # List-like validation
         if FlextRuntime.is_list_like(value_typed):
             return (
@@ -1837,14 +1834,12 @@ class FlextUtilities:
                 if FlextTypeGuards.is_list_non_empty(value_typed)
                 else r.fail(f"{error_template} non-empty list")
             )
-        
+
         # Unknown type
         return r.fail(f"{error_template} non-empty (str/dict/list)")
 
     @staticmethod
-    def _guard_numeric(
-        value: object, shortcut: str, error_template: str
-    ) -> r[object]:
+    def _guard_numeric(value: object, shortcut: str, error_template: str) -> r[object]:
         """Internal helper for numeric validation."""
         match shortcut:
             case "positive":
@@ -1856,9 +1851,7 @@ class FlextUtilities:
         return r.ok(value)
 
     @staticmethod
-    def _guard_type(
-        value: object, shortcut: str, error_template: str
-    ) -> r[object]:
+    def _guard_type(value: object, shortcut: str, error_template: str) -> r[object]:
         """Internal helper for type validation."""
         match shortcut:
             case "dict":
@@ -1921,7 +1914,10 @@ class FlextUtilities:
             # Prefer: str_list = u.ensure(attr_values, target_type="str_list")
 
         """
-        return cast("list[str]", FlextUtilities.ensure(value, target_type="str_list", default=default))
+        return cast(
+            "list[str]",
+            FlextUtilities.ensure(value, target_type="str_list", default=default),
+        )
 
     @staticmethod
     def ensure_str(
@@ -1946,7 +1942,9 @@ class FlextUtilities:
             # Prefer: str_value = u.ensure(value, target_type="str", default="")
 
         """
-        return cast("str", FlextUtilities.ensure(value, target_type="str", default=default))
+        return cast(
+            "str", FlextUtilities.ensure(value, target_type="str", default=default)
+        )
 
     @staticmethod
     def normalize(
@@ -2132,8 +2130,12 @@ class FlextUtilities:
             str_default = cast("str", default) if default is not None else ""
             return cast("T", FlextDataMapper.ensure_str(value, default=str_default))
         if target_type == "str_list":
-            list_default = cast("list[str]", default) if isinstance(default, list) else None
-            return cast("list[T]", FlextDataMapper.ensure_str_list(value, default=list_default))
+            list_default = (
+                cast("list[str]", default) if isinstance(default, list) else None
+            )
+            return cast(
+                "list[T]", FlextDataMapper.ensure_str_list(value, default=list_default)
+            )
         if target_type == "dict":
             dict_default = default if isinstance(default, dict) else None
             return FlextUtilities._ensure_to_dict(value, dict_default)  # type: ignore[arg-type, return-value]
@@ -2167,9 +2169,7 @@ class FlextUtilities:
                 list_results.append(processed)
             except Exception as e:
                 if on_error == "fail":
-                    return r[list[R] | dict[str, R]].fail(
-                        f"Processing failed: {e}"
-                    )
+                    return r[list[R] | dict[str, R]].fail(f"Processing failed: {e}")
                 if on_error == "skip":
                     continue
                 list_errors.append(str(e))
@@ -2325,7 +2325,13 @@ class FlextUtilities:
 
     @staticmethod
     def map[T, R](
-        items: T | list[T] | tuple[T, ...] | set[T] | frozenset[T] | dict[str, T] | Mapping[str, T],
+        items: T
+        | list[T]
+        | tuple[T, ...]
+        | set[T]
+        | frozenset[T]
+        | dict[str, T]
+        | Mapping[str, T],
         mapper: Callable[[T], R] | Callable[[str, T], R],
     ) -> list[R] | set[R] | frozenset[R] | dict[str, R]:  # type: ignore[misc]
         """Unified map function that auto-detects input type.
@@ -2459,16 +2465,24 @@ class FlextUtilities:
 
         # Route to specific converter using dict lookup for cleaner code
         converters: dict[type[object], Callable[[t.GeneralValueType, T], T]] = {
-            int: lambda v, d: cast("T", FlextUtilities._convert_to_int(v, cast("int", d))),
-            float: lambda v, d: cast("T", FlextUtilities._convert_to_float(v, cast("float", d))),
-            str: lambda v, d: cast("T", FlextUtilities._convert_to_str(v, cast("str", d))),
-            bool: lambda v, d: cast("T", FlextUtilities._convert_to_bool(v, default=cast("bool", d))),
+            int: lambda v, d: cast(
+                "T", FlextUtilities._convert_to_int(v, cast("int", d))
+            ),
+            float: lambda v, d: cast(
+                "T", FlextUtilities._convert_to_float(v, cast("float", d))
+            ),
+            str: lambda v, d: cast(
+                "T", FlextUtilities._convert_to_str(v, cast("str", d))
+            ),
+            bool: lambda v, d: cast(
+                "T", FlextUtilities._convert_to_bool(v, default=cast("bool", d))
+            ),
         }
-        
+
         converter = converters.get(target_type)
         if converter is not None:
             return converter(value, default)  # type: ignore[arg-type]
-        
+
         # Fallback: try direct conversion
         try:
             converted = target_type(value)  # type: ignore[call-overload, assignment, arg-type, misc]

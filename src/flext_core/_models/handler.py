@@ -25,6 +25,7 @@ from pydantic import (
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextModelsHandler:
@@ -150,7 +151,7 @@ class FlextModelsHandler:
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
             """Validate timestamp is in ISO 8601 format (using uValidation)."""
-            result = FlextValidation.validate_iso8601_timestamp(
+            result = u.Validation.validate_iso8601_timestamp(
                 v,
                 allow_empty=True,
             )

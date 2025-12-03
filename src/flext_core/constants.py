@@ -1837,6 +1837,8 @@ class FlextConstants:
         log_level_members: dict[str, StrEnum] = getattr(
             cls.Settings.LogLevel, "__members__", {}
         )
+        # NOTE: Cannot use u.map() here due to circular import
+        # (utilities.py -> _utilities/context.py -> _models/context.py -> base.py -> constants.py)
         return tuple(m.value for m in log_level_members.values())
 
     @classmethod
@@ -1852,6 +1854,7 @@ class FlextConstants:
         env_members: dict[str, StrEnum] = getattr(
             cls.Settings.Environment, "__members__", {}
         )
+        # NOTE: Cannot use u.map() here due to circular import
         return tuple(m.value for m in env_members.values())
 
     @classmethod
@@ -1906,6 +1909,7 @@ class FlextConstants:
         # Use getattr for runtime safety, but type checker knows StrEnum has __members__
         # Iterate over enum members using __members__ for proper type checking
         members_dict: dict[str, StrEnum] = getattr(enum_class, "__members__", {})
+        # NOTE: Cannot use u.map() here due to circular import
         return tuple(member.value for member in members_dict.values())
 
     # =============================================================================
@@ -1998,6 +2002,7 @@ class FlextConstants:
             ldif_format_members: dict[str, StrEnum] = getattr(
                 cls.LdifFormatType, "__members__", {}
             )
+            # NOTE: Cannot use u.map() here due to circular import
             return tuple(member.value for member in ldif_format_members.values())
 
         @classmethod
@@ -2013,6 +2018,7 @@ class FlextConstants:
             server_type_members: dict[str, StrEnum] = getattr(
                 cls.ServerType, "__members__", {}
             )
+            # NOTE: Cannot use u.map() here due to circular import
             return tuple(member.value for member in server_type_members.values())
 
     class Example:

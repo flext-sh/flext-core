@@ -108,9 +108,7 @@ class UtilityScenarios:
         (
             "abc123",
             [
-                lambda d: r[bool].ok(True)
-                if len(d) > 0
-                else r[bool].fail("Empty"),
+                lambda d: r[bool].ok(True) if len(d) > 0 else r[bool].fail("Empty"),
                 lambda d: r[bool].ok(True)
                 if d.isalnum()
                 else r[bool].fail("Non-alnum"),

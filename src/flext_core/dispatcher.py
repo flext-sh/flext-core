@@ -948,7 +948,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         handler_type_members: dict[str, c.Cqrs.HandlerType] = getattr(
             c.Cqrs.HandlerType, "__members__", {}
         )
-        valid_modes = list(u.map(handler_type_members.values(), lambda m: m.value))
+        valid_modes = list(u.map(list(handler_type_members.values()), lambda m: m.value))
         if str(handler_mode) not in valid_modes:
             return self.fail(
                 f"Invalid handler_mode: {handler_mode}. Must be one of {valid_modes}",
@@ -1386,7 +1386,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             # Resolve handler
             handler = self._route_to_handler(command)
             if handler is None:
-                handler_names = list(u.map(self._auto_handlers, lambda h: h.__class__.__name__))
+                handler_names = list(
+                    u.map(self._auto_handlers, lambda h: h.__class__.__name__)
+                )
                 self.logger.error(
                     "FAILED to find handler for command - DISPATCH ABORTED",
                     operation="execute",
