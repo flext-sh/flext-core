@@ -134,10 +134,14 @@ class TestuTypeChecker:
         assert len(types) == 1
         # Check that it's a dict type (may be dict or dict[str, GeneralValueType])
         # Generic aliases have origin dict
-        origin = get_origin(types[0]) or types[0]
-        assert origin is dict or (
-            isinstance(types[0], type) and issubclass(types[0], dict)
-        )
+        origin = get_origin(types[0])
+        if origin is None:
+            # For GenericAlias types (e.g., dict[str, GeneralValueType])
+            # Check if the type itself represents dict
+            type_str = str(types[0])
+            assert type_str.startswith("dict[") or types[0] is dict
+        else:
+            assert origin is dict
 
     def test_compute_accepted_message_types_object_handler(self) -> None:
         """Test compute_accepted_message_types with object handler (universal)."""

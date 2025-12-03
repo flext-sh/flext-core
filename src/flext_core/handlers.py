@@ -20,7 +20,7 @@ from flext_core._models.handler import FlextModelsHandler
 from flext_core.constants import c
 from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import x
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.typings import t
 from flext_core.utilities import u
 
@@ -100,17 +100,17 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         ...     action: str
         >>>
         >>> class UserHandler(FlextHandlers[UserCommand, bool]):
-        ...     def handle(self, message: UserCommand) -> FlextResult[bool]:
+        ...     def handle(self, message: UserCommand) -> r[bool]:
         ...         # Implement command handling logic
-        ...         return FlextResult[bool].ok(True)
+        ...         return r[bool].ok(True)
         ...
         ...     def validate(
         ...         self, data: t.HandlerAliases.AcceptableMessageType
-        ...     ) -> FlextResult[bool]:
+        ...     ) -> r[bool]:
         ...         # Custom validation logic
         ...         if not isinstance(data, UserCommand):
-        ...             return FlextResult[bool].fail("Invalid message type")
-        ...         return FlextResult[bool].ok(True)
+        ...             return r[bool].fail("Invalid message type")
+        ...         return r[bool].ok(True)
     """
 
     # Class variables for message type expectations (configurable via inheritance)
@@ -218,8 +218,8 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             FlextExceptions.ValidationError: If invalid mode is provided
 
         Example:
-            >>> def my_handler(msg: str) -> FlextResult[str]:
-            ...     return FlextResult[str].ok(f"processed_{msg}")
+            >>> def my_handler(msg: str) -> r[str]:
+            ...     return r[str].ok(f"processed_{msg}")
             >>> handler = FlextHandlers.create_from_callable(my_handler)
             >>> result = handler.handle("test")
 
@@ -248,7 +248,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
                 super().__init__(config=config)
                 self._handler_fn = handler_fn
 
-            def handle(self, message: object) -> FlextResult[t.GeneralValueType]:
+            def handle(self, message: object) -> r[t.GeneralValueType]:
                 """Execute the wrapped callable."""
                 try:
                     # Message is object, cast to GeneralValueType for handler function
@@ -256,15 +256,15 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
                         "t.GeneralValueType", message
                     )
                     result = self._handler_fn(message_value)
-                    # If result is already FlextResult, return it directly
-                    # Type checker understands result is FlextResult[GeneralValueType] from handler_fn signature
-                    if u.guard(result, FlextResult, return_value=True) is not None:
+                    # If result is already r, return it directly
+                    # Type checker understands result is r[GeneralValueType] from handler_fn signature
+                    if u.guard(result, r, return_value=True) is not None:
                         return result
-                    # Otherwise wrap it in FlextResult
-                    return FlextResult[t.GeneralValueType].ok(result)
+                    # Otherwise wrap it in r
+                    return r[t.GeneralValueType].ok(result)
                 except Exception as exc:
-                    # Wrap exception in FlextResult
-                    return FlextResult[t.GeneralValueType].fail(str(exc))
+                    # Wrap exception in r
+                    return r[t.GeneralValueType].fail(str(exc))
 
         # Use handler_config if provided
         if handler_config is not None:
@@ -302,7 +302,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         return CallableHandler(handler_fn=handler_callable, config=config)
 
     @abstractmethod
-    def handle(self, message: MessageT_contra) -> FlextResult[ResultT]:
+    def handle(self, message: MessageT_contra) -> r[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
 
         This is the core business logic method that must be implemented by all
@@ -313,7 +313,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             message: The message (command, query, or event) to handle
 
         Returns:
-            FlextResult[ResultT]: Success with result or failure with error details
+            r[ResultT]: Success with result or failure with error details
 
         Note:
             This method should focus on business logic only. Validation should
@@ -322,7 +322,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         """
         ...
 
-    def execute(self, message: MessageT_contra) -> FlextResult[ResultT]:
+    def execute(self, message: MessageT_contra) -> r[ResultT]:
         """Execute handler with complete validation and error handling pipeline.
 
         Implements the railway-oriented programming pattern by first validating
@@ -339,7 +339,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             message: The message to execute handler for
 
         Returns:
-            FlextResult[ResultT]: Success with handler result or failure with validation/business error
+            r[ResultT]: Success with handler result or failure with validation/business error
 
         Example:
             >>> handler = UserHandler()
@@ -357,13 +357,13 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         )
         validation = self.validate(message_for_validation)
         if validation.is_failure:
-            return FlextResult[ResultT].fail(validation.error or "Validation failed")
+            return r[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
 
     def validate(  # noqa: PLR6301
         self,
         data: t.HandlerAliases.AcceptableMessageType,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -372,13 +372,13 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         validation rules.
 
         The validation follows railway-oriented programming principles, returning
-        FlextResult[bool] to allow for detailed error reporting and chaining.
+        r[bool] to allow for detailed error reporting and chaining.
 
         Args:
             data: Input data to validate (message, command, query, or event)
 
         Returns:
-            FlextResult[bool]: Success (True) if valid, failure with error details if invalid
+            r[bool]: Success (True) if valid, failure with error details if invalid
 
         Example:
             >>> handler = UserHandler()
@@ -392,16 +392,16 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         """
         # Reject None values using guard
         if u.guard(data, lambda d: d is not None).is_failure:
-            return FlextResult[bool].fail("Message cannot be None")
+            return r[bool].fail("Message cannot be None")
 
         # Base validation - accept any AcceptableMessageType
         # Subclasses should override for specific validation rules
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     def validate_command(
         self,
         command: t.HandlerAliases.AcceptableMessageType,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate command message with command-specific rules.
 
         Convenience method for command validation that delegates to the base
@@ -413,7 +413,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             command: Command message to validate
 
         Returns:
-            FlextResult[bool]: Success if command is valid, failure with error details
+            r[bool]: Success if command is valid, failure with error details
 
         Note:
             By default delegates to validate(). Override for command-specific validation.
@@ -424,7 +424,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
     def validate_query(
         self,
         query: t.HandlerAliases.AcceptableMessageType,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate query message with query-specific rules.
 
         Convenience method for query validation that delegates to the base
@@ -435,7 +435,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             query: Query message to validate
 
         Returns:
-            FlextResult[bool]: Success if query is valid, failure with error details
+            r[bool]: Success if query is valid, failure with error details
 
         Note:
             By default delegates to validate(). Override for query-specific validation.
@@ -446,7 +446,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
     def validate_message(
         self,
         message: t.HandlerAliases.AcceptableMessageType,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Validate message using type checking and validation rules.
 
         Validates the message against accepted message types and custom
@@ -456,7 +456,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             message: Message to validate
 
         Returns:
-            FlextResult[bool]: Success if message is valid, failure with error details
+            r[bool]: Success if message is valid, failure with error details
 
         """
         # Check accepted message types if specified
@@ -464,7 +464,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             message_type = type(message)
             if not any(isinstance(message, t) for t in self._accepted_message_types):
                 msg = f"Message type {message_type.__name__} not in accepted types"
-                return FlextResult[bool].fail(msg)
+                return r[bool].fail(msg)
 
         # Delegate to base validation
         return self.validate(message)
@@ -518,40 +518,40 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
     def push_context(
         self,
         context: dict[str, t.GeneralValueType],
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Push execution context onto the stack.
 
         Args:
             context: Context dictionary to push onto the stack
 
         Returns:
-            FlextResult[bool]: Success if context was pushed
+            r[bool]: Success if context was pushed
 
         """
         self._context_stack.append(context)
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
-    def pop_context(self) -> FlextResult[dict[str, t.GeneralValueType]]:
+    def pop_context(self) -> r[dict[str, t.GeneralValueType]]:
         """Pop execution context from the stack.
 
         Returns:
-            FlextResult[dict[str, t.GeneralValueType]]: Success with popped context or empty dict
+            r[dict[str, t.GeneralValueType]]: Success with popped context or empty dict
 
         """
         if self._context_stack:
-            return FlextResult[dict[str, t.GeneralValueType]].ok(
+            return r[dict[str, t.GeneralValueType]].ok(
                 self._context_stack.pop(),
             )
-        return FlextResult[dict[str, t.GeneralValueType]].ok({})
+        return r[dict[str, t.GeneralValueType]].ok({})
 
-    def get_metrics(self) -> FlextResult[dict[str, t.GeneralValueType]]:
+    def get_metrics(self) -> r[dict[str, t.GeneralValueType]]:
         """Get current metrics dictionary.
 
         Returns:
-            FlextResult[dict[str, t.GeneralValueType]]: Success with metrics collection
+            r[dict[str, t.GeneralValueType]]: Success with metrics collection
 
         """
-        return FlextResult[dict[str, t.GeneralValueType]].ok(
+        return r[dict[str, t.GeneralValueType]].ok(
             self._metrics.copy(),
         )
 
@@ -559,7 +559,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         self,
         name: str,
         value: t.GeneralValueType,
-    ) -> FlextResult[bool]:
+    ) -> r[bool]:
         """Record a metric value.
 
         Args:
@@ -567,11 +567,11 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             value: Metric value to record
 
         Returns:
-            FlextResult[bool]: Success if metric was recorded
+            r[bool]: Success if metric was recorded
 
         """
         self._metrics[name] = value
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     @staticmethod
     def _extract_message_id(message: t.GeneralValueType) -> str | None:
@@ -615,7 +615,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         self,
         message: MessageT_contra,
         operation: str = c.Dispatcher.HANDLER_MODE_COMMAND,
-    ) -> FlextResult[ResultT]:
+    ) -> r[ResultT]:
         """Dispatch message through the handler execution pipeline.
 
         Public method that executes the full handler pipeline including
@@ -630,7 +630,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             operation: Operation type (command, query, event)
 
         Returns:
-            FlextResult[ResultT]: Handler execution result
+            r[ResultT]: Handler execution result
 
         """
         return self._run_pipeline(message, operation)
@@ -639,7 +639,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         self,
         message: MessageT_contra,
         operation: str = c.Dispatcher.HANDLER_MODE_COMMAND,
-    ) -> FlextResult[ResultT]:
+    ) -> r[ResultT]:
         """Run the handler execution pipeline (internal).
 
         Internal implementation that executes the full handler pipeline including
@@ -651,7 +651,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             operation: Operation type (command, query, event)
 
         Returns:
-            FlextResult[ResultT]: Handler execution result
+            r[ResultT]: Handler execution result
 
         """
         # Validate handler mode matches operation
@@ -666,14 +666,14 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
                 f"Handler with mode '{handler_mode}' "
                 f"cannot execute {operation} pipelines"
             )
-            return FlextResult[ResultT].fail(error_msg)
+            return r[ResultT].fail(error_msg)
 
         # Check if handler can handle message type
         message_type = type(message)
         if not self.can_handle(message_type):
             type_name = message_type.__name__
             error_msg = f"Handler cannot handle message type {type_name}"
-            return FlextResult[ResultT].fail(error_msg)
+            return r[ResultT].fail(error_msg)
 
         # Cast message to AcceptableMessageType for validation
         message_for_validation: t.HandlerAliases.AcceptableMessageType = cast(
@@ -691,7 +691,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
             error_msg = f"Message validation failed: {error_detail}"
-            return FlextResult[ResultT].fail(error_msg)
+            return r[ResultT].fail(error_msg)
 
         # Start execution timing
         self._execution_context.start_execution()
@@ -724,7 +724,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             # Record failure metrics
             self._record_execution_metrics(success=False, error=str(exc))
             error_msg = f"Critical handler failure: {exc}"
-            return FlextResult[ResultT].fail(error_msg)
+            return r[ResultT].fail(error_msg)
         finally:
             # Pop execution context
             _ = self.pop_context()
@@ -748,7 +748,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         if error is not None:
             _ = self.record_metric("error", cast("t.GeneralValueType", error))
 
-    def __call__(self, input_data: MessageT_contra) -> FlextResult[ResultT]:
+    def __call__(self, input_data: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless integration with dispatchers.
 
         Enables handlers to be used as callable objects, providing a clean
@@ -759,7 +759,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             input_data: Input message to handle
 
         Returns:
-            FlextResult[ResultT]: Handler execution result
+            r[ResultT]: Handler execution result
 
         Example:
             >>> handler = UserHandler()

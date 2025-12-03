@@ -28,7 +28,7 @@ from flext_core.mixins import x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
-from flext_core.result import FlextResult
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import u
@@ -97,12 +97,12 @@ class FlextService[TDomainResult](
             if not callable(execute_method):
                 msg = f"Class {cls.__name__} must implement execute() method"
                 raise TypeError(msg)
-            # Type narrowing: execute_method is callable and returns FlextResult[TDomainResult]
+            # Type narrowing: execute_method is callable and returns r[TDomainResult]
             result_raw = execute_method()
-            if u.guard(result_raw, FlextResult).is_failure:
-                msg = f"execute() must return FlextResult, got {type(result_raw).__name__}"
+            if u.guard(result_raw, r).is_failure:
+                msg = f"execute() must return r, got {type(result_raw).__name__}"
                 raise TypeError(msg)
-            result: FlextResult[TDomainResult] = result_raw
+            result: r[TDomainResult] = result_raw
             # For auto_execute=True, return the result value directly (V2 Auto pattern)
             # This allows: user = AutoGetUserService(user_id="123") to get User object
             if result.is_failure:
@@ -295,7 +295,7 @@ class FlextService[TDomainResult](
         return self._container
 
     @abstractmethod
-    def execute(self) -> FlextResult[TDomainResult]:
+    def execute(self) -> r[TDomainResult]:
         """Execute domain service logic.
 
         This is the core business logic method that must be implemented by all
@@ -303,11 +303,11 @@ class FlextService[TDomainResult](
         business rules, and result generation logic specific to each service.
 
         The method should follow railway-oriented programming principles,
-        returning ``FlextResult[T]`` for consistent error handling and success
+        returning ``r[T]`` for consistent error handling and success
         indication.
 
         Returns:
-            FlextResult[TDomainResult]: Success with domain result or failure
+            r[TDomainResult]: Success with domain result or failure
                 with error details
 
         Note:
@@ -317,7 +317,7 @@ class FlextService[TDomainResult](
         """
         ...
 
-    def validate_business_rules(self) -> FlextResult[bool]:  # noqa: PLR6301
+    def validate_business_rules(self) -> r[bool]:  # noqa: PLR6301
         """Validate business rules with extensible validation pipeline.
 
         Base method for business rule validation that can be overridden by subclasses
@@ -329,19 +329,19 @@ class FlextService[TDomainResult](
         but the method signature must remain an instance method for polymorphism.
 
         Returns:
-            FlextResult[bool]: Success (True) if all business rules pass, failure with error details
+            r[bool]: Success (True) if all business rules pass, failure with error details
 
         Example:
-            >>> class ValidatedService(FlextService[Data]):
-            ...     def validate_business_rules(self) -> FlextResult[bool]:
+            >>> class ValidatedService(s[Data]):
+            ...     def validate_business_rules(self) -> r[bool]:
             ...         if not self.has_required_data():
-            ...             return FlextResult[bool].fail("Missing required data")
-            ...         return FlextResult[bool].ok(True)
+            ...             return r[bool].fail("Missing required data")
+            ...         return r[bool].ok(True)
 
         """
         # Base implementation - accept all (no validation)
         # Subclasses should override for specific business rules
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     def is_valid(self) -> bool:
         """Check if service is in valid state for execution.
@@ -408,7 +408,7 @@ class FlextService[TDomainResult](
         """
         # Direct access - GeneralValueType covers all domain results
         # Use cast to allow any FlextService[TDomainResult] to be treated as FlextService[GeneralValueType]
-        return _ServiceAccess(cast("FlextService[t.GeneralValueType]", self))
+        return _ServiceAccess(cast("s[t.GeneralValueType]", self))
 
 
 class _ServiceExecutionScope(FlextModelsBase.ArbitraryTypesModel):
@@ -437,9 +437,9 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
 
     _registry: FlextRegistry | None = PrivateAttr(default=None)
-    _service: FlextService[t.GeneralValueType] = PrivateAttr()
+    _service: s[t.GeneralValueType] = PrivateAttr()
 
-    def __init__(self, service: FlextService[t.GeneralValueType]) -> None:
+    def __init__(self, service: s[t.GeneralValueType]) -> None:
         super().__init__()
         # Accept any FlextService instance - GeneralValueType covers all domain results
         object.__setattr__(self, "_service", service)
@@ -501,7 +501,7 @@ class _ServiceAccess(FlextModelsBase.ArbitraryTypesModel):
         Using minimal self reference to satisfy PLR6301.
         """
         _ = type(self)  # Required for @computed_field compliance
-        return FlextResult
+        return r
 
     @computed_field
     def context(self) -> FlextContext:

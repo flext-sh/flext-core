@@ -245,8 +245,8 @@ class FlextDataMapper:
     ) -> dict[str, t.GeneralValueType]:
         """Filter dict by predicate function on key-value pairs.
 
-        **NOTE**: Prefer using u.filter() for unified filtering.
-        This method delegates to u.filter() for consistency.
+        **DEPRECATED**: Use u.filter() for unified filtering.
+        This method is kept for backward compatibility but delegates to u.filter().
 
         Args:
             source: Source dictionary
@@ -257,7 +257,7 @@ class FlextDataMapper:
 
         Example:
             >>> source = {"a": 1, "b": 2, "c": 3}
-            >>> result = uDataMapper.filter_dict(source, lambda k, v: v > 1)
+            >>> result = u.filter(source, predicate=lambda k, v: v > 1)
             >>> # {"b": 2, "c": 3}
 
         """

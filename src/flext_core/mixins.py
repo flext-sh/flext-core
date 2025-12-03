@@ -24,7 +24,7 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult
+from flext_core.result import FlextResult, r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
@@ -58,7 +58,7 @@ class FlextMixins:
         class MyService(x):
             def process(
                 self, data: t.Types.ContextMetadataMapping
-            ) -> FlextResult[t.Types.ContextMetadataMapping]:
+            ) -> r[t.Types.ContextMetadataMapping]:
                 with self.track("process"):
                     self.logger.info("Processing", size=len(data))
                     return self.ok({"status": "processed"})
@@ -90,11 +90,12 @@ class FlextMixins:
     # FlextResult factory methods for railway-oriented programming
 
     # Factory methods - Use: self.ok(value) or self.fail("error")
-    ok = FlextResult.ok
-    fail = FlextResult.fail
-    traverse = FlextResult.traverse
-    parallel_map = FlextResult.parallel_map
-    accumulate_errors = FlextResult.accumulate_errors
+    # These delegate to r (FlextResult alias) for unified usage
+    ok = r.ok
+    fail = r.fail
+    traverse = r.traverse
+    parallel_map = r.parallel_map
+    accumulate_errors = r.accumulate_errors
 
     # =========================================================================
     # MODEL CONVERSION UTILITIES (New in Phase 0 - Consolidation)
