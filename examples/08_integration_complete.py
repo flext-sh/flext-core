@@ -26,8 +26,8 @@ from flext_core import (
     FlextRegistry,
     FlextResult,
     FlextService,
-    FlextTypes,
-    FlextUtilities,
+    t,
+    u,
 )
 
 # ═══════════════════════════════════════════════════════════════════
@@ -57,12 +57,12 @@ class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]
 # ═══════════════════════════════════════════════════════════════════
 
 
-class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
+class IntegrationService(FlextService[t.Types.ServiceMetadataMapping]):
     """Service demonstrating complete flext-core integration."""
 
     def execute(
         self,
-    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Execute complete integration demonstration."""
         print("Starting complete integration demonstration")
 
@@ -77,7 +77,7 @@ class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
             self._demonstrate_registry_dispatcher_integration()
             self._demonstrate_utilities_integration()
 
-            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok({
+            return FlextResult[t.Types.ServiceMetadataMapping].ok({
                 "components_integrated": [
                     "FlextResult",
                     "FlextContainer",
@@ -88,7 +88,7 @@ class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
                     "FlextDecorators",
                     "FlextRegistry",
                     "FlextDispatcher",
-                    "FlextUtilities",
+                    "u",
                 ],
                 "integration_patterns": [
                     "railway_oriented",
@@ -106,7 +106,7 @@ class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"
-            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.Types.ServiceMetadataMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_result_patterns() -> None:
@@ -132,10 +132,7 @@ class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
         # Business Rule: Container accepts any object type including FlextLogger
         # Cast to container.register() compatible type for type checker
         logger_typed: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | Callable[..., FlextTypes.GeneralValueType]
-            | object
+            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
         ) = logger
         container.register("logger", logger_typed)
 
@@ -178,14 +175,14 @@ class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
         print("\n=== FlextModels Integration ===")
 
         user = User(
-            unique_id=FlextUtilities.Generators.generate_entity_id(),
+            unique_id=u.Generators.generate_entity_id(),
             name="Integration User",
             email="integration@example.com",
         )
         print(f"✅ Entity created: {user.name}")
 
         order = Order(
-            unique_id=FlextUtilities.Generators.generate_entity_id(),
+            unique_id=u.Generators.generate_entity_id(),
             customer_id=user.entity_id,
         )
         print(f"✅ Aggregate created: {order.status.value}")
@@ -214,11 +211,11 @@ class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
 
     @staticmethod
     def _demonstrate_utilities_integration() -> None:
-        """Show FlextUtilities integration."""
-        print("\n=== FlextUtilities Integration ===")
+        """Show u integration."""
+        print("\n=== u Integration ===")
 
         # Validation
-        email_result = FlextUtilities.Validation.validate_pattern(
+        email_result = u.Validation.validate_pattern(
             "test@example.com",
             FlextConstants.Platform.PATTERN_EMAIL,
             "email",
@@ -227,11 +224,11 @@ class IntegrationService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
             print("✅ Validation utility")
 
         # ID generation
-        correlation_id = FlextUtilities.Generators.generate_correlation_id()
+        correlation_id = u.Generators.generate_correlation_id()
         print(f"✅ ID generation: {correlation_id[:12]}...")
 
         # Text processing
-        cleaned = FlextUtilities.TextProcessor.clean_text("  test  ")
+        cleaned = u.TextProcessor.clean_text("  test  ")
         print(f"✅ Text processing: '{cleaned}'")
 
 

@@ -20,13 +20,13 @@ import re
 from collections.abc import Mapping
 from typing import Self, TypeVar
 
-from flext_core import FlextResult, FlextUtilities
-from flext_core.typings import FlextTypes, T_co
+from flext_core import FlextResult, u
+from flext_core.typings import T_co, t
 from flext_tests.typings import FlextTestsTypings
 
 TKey = TypeVar("TKey")
 TValue = TypeVar("TValue")
-TConfigValue = TypeVar("TConfigValue", bound=FlextTypes.GeneralValueType)
+TConfigValue = TypeVar("TConfigValue", bound=t.GeneralValueType)
 
 
 class FlextTestsMatchers:
@@ -266,7 +266,7 @@ class FlextTestsMatchers:
         for key in required_keys:
             assert key in config, message or f"Required config key '{key}' missing"
 
-        timeout = config.get("timeout", 0)
+        timeout = u.get(config, "timeout", default=0) or 0
         assert isinstance(timeout, int) and timeout > 0, (
             message or "Config timeout must be positive integer"
         )
@@ -329,7 +329,7 @@ class FlextTestsMatchers:
             ValueError: If validation fails
 
         """
-        if not FlextUtilities.TypeGuards.is_list_non_empty(value):
+        if not u.TypeGuards.is_list_non_empty(value):
             msg = f"{field_name} cannot be empty"
             raise ValueError(msg)
         return value
@@ -343,7 +343,7 @@ class FlextTestsMatchers:
 
         def __init__(self) -> None:
             """Initialize empty builder."""
-            self._data: dict[str, FlextTypes.GeneralValueType] = {}
+            self._data: dict[str, t.GeneralValueType] = {}
 
         def with_users(self, count: int = 5) -> Self:
             """Add users to the dataset.
@@ -355,9 +355,9 @@ class FlextTestsMatchers:
                 Self for method chaining
 
             """
-            users: list[Mapping[str, FlextTypes.ScalarValue]] = []
+            users: list[Mapping[str, t.ScalarValue]] = []
             for i in range(count):
-                user: Mapping[str, FlextTypes.ScalarValue] = {
+                user: Mapping[str, t.ScalarValue] = {
                     "id": f"USER-{i}",
                     "name": f"User {i}",
                     "email": f"user{i}@example.com",
@@ -377,7 +377,7 @@ class FlextTestsMatchers:
                 Self for method chaining
 
             """
-            configs: Mapping[str, FlextTypes.ScalarValue] = {
+            configs: Mapping[str, t.ScalarValue] = {
                 "database_url": "postgresql://localhost/testdb",
                 "api_timeout": 30,
                 "debug": not production,
@@ -413,7 +413,7 @@ class FlextTestsMatchers:
             }
             return self
 
-        def build(self) -> dict[str, FlextTypes.GeneralValueType]:
+        def build(self) -> dict[str, t.GeneralValueType]:
             """Build and return the dataset.
 
             Returns:

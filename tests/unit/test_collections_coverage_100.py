@@ -22,7 +22,7 @@ import pytest
 from pydantic import Field
 
 from flext_core._models.collections import FlextModelsCollections
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 # Use actual classes, not type aliases, for inheritance
 Statistics = FlextModelsCollections.Statistics
@@ -213,7 +213,7 @@ class TestFlextModelsCollectionsStatistics:
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
         assert isinstance(result, dict)
-        result_dict: dict[str, FlextTypes.GeneralValueType] = result
+        result_dict: dict[str, t.GeneralValueType] = result
         assert result_dict.get("count") == 30
 
     def test_statistics_aggregate_lists(self) -> None:
@@ -227,7 +227,7 @@ class TestFlextModelsCollectionsStatistics:
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
         assert isinstance(result, dict)
-        result_dict: dict[str, FlextTypes.GeneralValueType] = result
+        result_dict: dict[str, t.GeneralValueType] = result
         assert result_dict.get("items") == ["a", "b", "c"]
 
     def test_statistics_aggregate_mixed(self) -> None:
@@ -243,7 +243,7 @@ class TestFlextModelsCollectionsStatistics:
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
         assert isinstance(result, dict)
-        result_dict: dict[str, FlextTypes.GeneralValueType] = result
+        result_dict: dict[str, t.GeneralValueType] = result
         assert result_dict.get("count") == 30
         assert result_dict.get("items") == ["a", "b"]
         assert result_dict.get("name") == "second"
@@ -260,7 +260,7 @@ class TestFlextModelsCollectionsStatistics:
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
         assert isinstance(result, dict)
-        result_dict: dict[str, FlextTypes.GeneralValueType] = result
+        result_dict: dict[str, t.GeneralValueType] = result
         assert result_dict.get("count") == 10
         assert result_dict.get("name") == "first"
 
@@ -289,7 +289,7 @@ class TestFlextModelsCollectionsConfig:
 
         data = {"timeout": 60}
         # Convert dict[str, object] to dict[str, GeneralValueType] for type compatibility
-        converted_data: dict[str, FlextTypes.GeneralValueType] = {
+        converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
             else str(v)

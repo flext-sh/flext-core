@@ -19,10 +19,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import t
+from flext_core.utilities import u
 
-# NOTE: Use FlextUtilitiesGenerators.generate_datetime_utc() directly - no inline helpers per FLEXT standards
+# NOTE: Use uGenerators.generate_datetime_utc() directly - no inline helpers per FLEXT standards
 
 
 # Tier 0.5 inline enum (defined outside class to avoid forward reference issues)
@@ -40,7 +40,7 @@ class FlextModelsContainer:
     ValidationLevel = _ContainerValidationLevel
 
     @staticmethod
-    def _is_dict_like(value: FlextTypes.GeneralValueType) -> bool:
+    def _is_dict_like(value: t.GeneralValueType) -> bool:
         """Check if value is dict-like."""
         return isinstance(value, Mapping)
 
@@ -66,23 +66,20 @@ class FlextModelsContainer:
         # while maintaining type safety (all classes inherit from object)
         # This is essential for DI container to accept any service type
         service: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | Callable[..., FlextTypes.GeneralValueType]
-            | object
+            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
         ) = Field(
             ...,
             description="Service instance (primitives, BaseModel, callable, or any object)",
         )
         registration_time: datetime = Field(
-            default_factory=FlextUtilities.Generators.generate_datetime_utc,
+            default_factory=u.Generators.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: (
-            FlextModelsBase.Metadata | FlextTypes.Types.ServiceMetadataMapping | None
-        ) = Field(
-            default=None,
-            description="Additional service metadata (JSON-serializable)",
+        metadata: FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None = (
+            Field(
+                default=None,
+                description="Additional service metadata (JSON-serializable)",
+            )
         )
         service_type: str | None = Field(
             default=None,
@@ -95,9 +92,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(
-            cls, v: FlextTypes.GeneralValueType
-        ) -> FlextModelsBase.Metadata:
+        def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
@@ -109,7 +104,7 @@ class FlextModelsContainer:
                 # Use FlextRuntime.normalize_to_metadata_value directly - no wrapper needed
                 # Type narrowing: v is Mapping after _is_dict_like check
                 if isinstance(v, Mapping):
-                    attributes: dict[str, FlextTypes.MetadataAttributeValue] = {}
+                    attributes: dict[str, t.MetadataAttributeValue] = {}
                     for key, value in v.items():
                         attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(
                             value
@@ -141,32 +136,28 @@ class FlextModelsContainer:
         )
         factory: Callable[
             [],
-            (
-                FlextTypes.ScalarValue
-                | Sequence[FlextTypes.ScalarValue]
-                | Mapping[str, FlextTypes.ScalarValue]
-            ),
+            (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
         ] = Field(
             ...,
             description="Factory function that creates service instances",
         )
         registration_time: datetime = Field(
-            default_factory=FlextUtilities.Generators.generate_datetime_utc,
+            default_factory=u.Generators.generate_datetime_utc,
             description="UTC timestamp when factory was registered",
         )
         is_singleton: bool = Field(
             default=False,
             description="Whether factory creates singleton instances",
         )
-        cached_instance: FlextTypes.GeneralValueType | BaseModel | None = Field(
+        cached_instance: t.GeneralValueType | BaseModel | None = Field(
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: (
-            FlextModelsBase.Metadata | FlextTypes.Types.ServiceMetadataMapping | None
-        ) = Field(
-            default=None,
-            description="Additional factory metadata (JSON-serializable)",
+        metadata: FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None = (
+            Field(
+                default=None,
+                description="Additional factory metadata (JSON-serializable)",
+            )
         )
         invocation_count: int = Field(
             default=0,
@@ -176,9 +167,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(
-            cls, v: FlextTypes.GeneralValueType
-        ) -> FlextModelsBase.Metadata:
+        def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
@@ -190,7 +179,7 @@ class FlextModelsContainer:
                 # Use FlextRuntime.normalize_to_metadata_value directly - no wrapper needed
                 # Type narrowing: v is Mapping after _is_dict_like check
                 if isinstance(v, Mapping):
-                    attributes: dict[str, FlextTypes.MetadataAttributeValue] = {}
+                    attributes: dict[str, t.MetadataAttributeValue] = {}
                     for key, value in v.items():
                         attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(
                             value

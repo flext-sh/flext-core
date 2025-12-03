@@ -15,9 +15,9 @@ from pydantic import BaseModel
 from flext_core import (
     FlextConstants,
     FlextDispatcher,
-    FlextProtocols,
     FlextResult,
-    FlextTypes,
+    p,
+    t,
 )
 
 # ==================== PROCESSOR IMPLEMENTATIONS ====================
@@ -26,21 +26,13 @@ from flext_core import (
 class DataDoubler:
     """Simple processor that doubles numeric data.
 
-    Implements FlextProtocols.Processor for dispatcher integration.
+    Implements p.Processor for dispatcher integration.
     """
 
-    def process(  # noqa: PLR6301  # Required by FlextProtocols.Processor protocol
+    def process(  # noqa: PLR6301  # Required by p.Processor protocol
         self,
-        data: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-        ),
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Double the input value."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -50,21 +42,13 @@ class DataDoubler:
 class DataSquarer:
     """Processor that squares numeric data.
 
-    Implements FlextProtocols.Processor for dispatcher integration.
+    Implements p.Processor for dispatcher integration.
     """
 
     @staticmethod
     def process(
-        data: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-        ),
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Square the input value."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -80,16 +64,8 @@ class SlowProcessor:
 
     def process(
         self,
-        data: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-        ),
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Simulate slow operation then return result."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -100,21 +76,13 @@ class SlowProcessor:
 class DataValidator:
     """Processor validating data integrity.
 
-    Implements FlextProtocols.Processor for dispatcher integration.
+    Implements p.Processor for dispatcher integration.
     """
 
     @staticmethod
     def process(
-        data: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-        ),
-    ) -> (
-        FlextTypes.GeneralValueType
-        | BaseModel
-        | FlextProtocols.ResultProtocol[FlextTypes.GeneralValueType]
-    ):
+        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
         """Validate data is positive."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -161,7 +129,7 @@ def example_2_batch_processing() -> None:
     dispatcher.register_processor("doubler", DataDoubler())
 
     # Process batch of items using FlextConstants (DRY - centralized batch size)
-    data_list: list[FlextTypes.GeneralValueType] = [1, 2, 3, 4, 5]
+    data_list: list[t.GeneralValueType] = [1, 2, 3, 4, 5]
     result = dispatcher.process_batch(
         "doubler",
         data_list,
@@ -193,7 +161,7 @@ def example_3_parallel_processing() -> None:
     dispatcher.register_processor("doubler", DataDoubler())
 
     # Process items in parallel using FlextConstants (DRY - centralized workers)
-    data_list: list[FlextTypes.GeneralValueType] = list(range(1, 11))
+    data_list: list[t.GeneralValueType] = list(range(1, 11))
     start = time.time()
     result = dispatcher.process_parallel(
         "doubler", data_list, max_workers=FlextConstants.Processing.DEFAULT_MAX_WORKERS
@@ -330,7 +298,7 @@ def example_6_metrics_auditing() -> None:
         return
     analytics = analytics_result.unwrap()
     if isinstance(analytics, dict):
-        analytics_dict: dict[str, FlextTypes.GeneralValueType] = analytics
+        analytics_dict: dict[str, t.GeneralValueType] = analytics
         print(f"✅ Analytics keys: {list(analytics_dict.keys())}")
     else:
         print("✅ Analytics retrieved")

@@ -24,7 +24,7 @@ from flext_core.config import FlextConfig
 from flext_core.container import FlextContainer
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 # Suppress pkg_resources deprecation warning from fs package
 warnings.filterwarnings(
@@ -114,13 +114,13 @@ class FunctionalExternalService:
     def __init__(self) -> None:
         """Initialize functional external service with processing state."""
         self.call_count = 0
-        self.processed_items: list[FlextTypes.GeneralValueType] = []
+        self.processed_items: list[t.GeneralValueType] = []
         self._should_fail = False
         self._failure_message = "Service unavailable"
 
     def process(
         self,
-        data: FlextTypes.GeneralValueType | None = None,
+        data: t.GeneralValueType | None = None,
     ) -> FlextResult[str]:
         """Process data through functional external service.
 
@@ -169,7 +169,7 @@ def mock_external_service() -> FunctionalExternalService:
     """Provide functional external service for integration testing.
 
     Real service implementation (not a mock) that can be configured
-    for various test scenarios. Uses proper types from FlextTypes.
+    for various test scenarios. Uses proper types from t.
 
     Returns:
         FunctionalExternalService: A configured external service instance.
@@ -198,7 +198,7 @@ def configured_container(
     """
     _ = clean_container.with_service(
         "external_service",
-        cast("FlextTypes.GeneralValueType", mock_external_service),
+        cast("t.GeneralValueType", mock_external_service),
     )
     _ = clean_container.with_service("config", {"test_mode": True})
     _ = clean_container.with_service("logger", "test_logger")
@@ -222,13 +222,13 @@ def test_scenario() -> dict[str, str]:
 
 
 @pytest.fixture
-def sample_data() -> Mapping[str, FlextTypes.GeneralValueType]:
+def sample_data() -> Mapping[str, t.GeneralValueType]:
     """Provide deterministic sample data for tests."""
     return {"id": 1, "name": "test", "string": "sample_value", "value": "sample"}
 
 
 @pytest.fixture
-def test_user_data() -> Mapping[str, FlextTypes.GeneralValueType] | list[str] | None:
+def test_user_data() -> Mapping[str, t.GeneralValueType] | list[str] | None:
     """Provide consistent user data for domain testing."""
     return {"user_id": 1, "username": "testuser", "email": "test@example.com"}
 
@@ -240,25 +240,25 @@ def error_context() -> dict[str, str | None]:
 
 
 @pytest.fixture
-def test_constants() -> Mapping[str, FlextTypes.GeneralValueType]:
+def test_constants() -> Mapping[str, t.GeneralValueType]:
     """Provide centralized test constants for all tests."""
     return {"timeout": 30, "max_retries": 3, "batch_size": 100}
 
 
 @pytest.fixture
-def test_contexts() -> Mapping[str, FlextTypes.GeneralValueType]:
+def test_contexts() -> Mapping[str, t.GeneralValueType]:
     """Provide common test contexts for various scenarios."""
     return {"environment": "test", "service": "test_service"}
 
 
 @pytest.fixture
-def test_payloads() -> FlextTypes.GeneralValueType:
+def test_payloads() -> t.GeneralValueType:
     """Provide common test payloads for different operations."""
     return {"operation": "test", "data": {"key": "value"}}
 
 
 @pytest.fixture
-def test_error_scenarios() -> FlextTypes.GeneralValueType:
+def test_error_scenarios() -> t.GeneralValueType:
     """Provide common error scenarios for testing."""
     return {"scenario": "network_error", "expected_code": 500}
 
@@ -270,7 +270,7 @@ def performance_threshold() -> Mapping[str, float]:
 
 
 @pytest.fixture
-def benchmark_data() -> FlextTypes.GeneralValueType:
+def benchmark_data() -> t.GeneralValueType:
     """Provide standardized data for performance testing."""
     return {"iterations": 1000, "data_size": 1024}
 

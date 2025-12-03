@@ -19,8 +19,9 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
 
 from flext_core.exceptions import FlextExceptions
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes, T_co, U
+from flext_core.protocols import p
+from flext_core.typings import T_co, U, t
+from flext_core.utilities import u
 
 
 class FlextResult[T_co]:  # noqa: PLR0904
@@ -35,7 +36,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
         self,
         _result: Result[T_co, str],
         error_code: str | None = None,
-        error_data: Mapping[str, FlextTypes.GeneralValueType] | None = None,
+        error_data: Mapping[str, t.GeneralValueType] | None = None,
     ) -> None:
         """Initialize FlextResult with internal Result and optional metadata."""
         self._result = _result
@@ -79,16 +80,14 @@ class FlextResult[T_co]:  # noqa: PLR0904
 
         @staticmethod
         def from_io_result(
-            io_result: IOResult[FlextTypes.GeneralValueType, str],
-        ) -> FlextResult[FlextTypes.GeneralValueType]:
+            io_result: IOResult[t.GeneralValueType, str],
+        ) -> FlextResult[t.GeneralValueType]:
             """Create from returns.io.IOResult."""
             try:
                 if isinstance(io_result, IOSuccess):
                     # IOSuccess[GeneralValueType, str].unwrap() returns GeneralValueType
                     # Cast needed because returns.io type stubs may not be perfect
-                    unwrapped_value = cast(
-                        "FlextTypes.GeneralValueType", io_result.unwrap()
-                    )
+                    unwrapped_value = cast("t.GeneralValueType", io_result.unwrap())
                     return FlextResult.ok(unwrapped_value)
                 if isinstance(io_result, IOFailure):
                     error = io_result.failure()
@@ -102,13 +101,13 @@ class FlextResult[T_co]:  # noqa: PLR0904
 
         @staticmethod
         def safe(
-            func: FlextProtocols.VariadicCallable[T],
-        ) -> FlextProtocols.VariadicCallable[FlextResult[T]]:
+            func: p.VariadicCallable[T],
+        ) -> p.VariadicCallable[FlextResult[T]]:
             """Decorator to wrap function in FlextResult."""
 
             def wrapper(
-                *args: FlextTypes.FlexibleValue,
-                **kwargs: FlextTypes.FlexibleValue,
+                *args: t.FlexibleValue,
+                **kwargs: t.FlexibleValue,
             ) -> FlextResult[T]:
                 try:
                     result = func(*args, **kwargs)
@@ -153,7 +152,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: Mapping[str, FlextTypes.GeneralValueType] | None = None,
+        error_data: Mapping[str, t.GeneralValueType] | None = None,
     ) -> FlextResult[T_co]:
         """Create failed result with error message.
 
@@ -186,8 +185,8 @@ class FlextResult[T_co]:  # noqa: PLR0904
 
     @staticmethod
     def safe[T](
-        func: FlextProtocols.VariadicCallable[T],
-    ) -> FlextProtocols.VariadicCallable[FlextResult[T]]:
+        func: p.VariadicCallable[T],
+    ) -> p.VariadicCallable[FlextResult[T]]:
         """Decorator to wrap function in FlextResult.
 
         Catches exceptions and returns FlextResult.fail() on error.
@@ -244,7 +243,7 @@ class FlextResult[T_co]:  # noqa: PLR0904
         return self._error_code
 
     @property
-    def error_data(self) -> Mapping[str, FlextTypes.GeneralValueType] | None:
+    def error_data(self) -> Mapping[str, t.GeneralValueType] | None:
         """Get error metadata."""
         return self._error_data
 
@@ -417,8 +416,8 @@ class FlextResult[T_co]:  # noqa: PLR0904
     @classmethod
     def from_io_result(
         cls,
-        io_result: IOResult[FlextTypes.GeneralValueType, str],
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        io_result: IOResult[t.GeneralValueType, str],
+    ) -> FlextResult[t.GeneralValueType]:
         """Create FlextResult from returns.io.IOResult.
 
         Args:
@@ -468,12 +467,12 @@ class FlextResult[T_co]:  # noqa: PLR0904
         fail_fast: bool = True,
     ) -> FlextResult[list[U]]:
         """Map with parallel processing and configurable failure handling."""
-        results = [func(item) for item in items]
+        results = list(u.map(items, func))
         if fail_fast:
             for result in results:
                 if result.is_failure:
-                    return FlextResult.fail(result.error or "Unknown error")
-            return FlextResult(Success([r.value for r in results]))
+                    return r.fail(result.error or "Unknown error")
+            return r(Success(list(u.map(results, lambda r: r.value))))
         return cls.accumulate_errors(*results)
 
     @classmethod
@@ -506,8 +505,9 @@ class FlextResult[T_co]:  # noqa: PLR0904
     def __repr__(self) -> str:
         """String representation."""
         if self.is_success:
-            return f"FlextResult.ok({self.value!r})"
-        return f"FlextResult.fail({self.error!r})"
+            return f"r.ok({self.value!r})"
+        return f"r.fail({self.error!r})"
 
 
-__all__ = ["FlextResult"]
+r = FlextResult
+__all__ = ["FlextResult", "r"]

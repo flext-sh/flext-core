@@ -1,4 +1,4 @@
-"""Utilities module - FlextUtilitiesModel.
+"""Utilities module - FlextModel.
 
 Extracted from flext_core.utilities for better modularity.
 
@@ -13,10 +13,10 @@ from collections.abc import Mapping
 from pydantic import BaseModel
 
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
-class FlextUtilitiesModel:
+class FlextModel:
     """Utilities for Pydantic model initialization.
 
     PHILOSOPHY:
@@ -36,14 +36,14 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_dict[M: BaseModel](
         model_cls: type[M],
-        data: Mapping[str, FlextTypes.FlexibleValue],
+        data: Mapping[str, t.FlexibleValue],
         *,
         strict: bool = False,
     ) -> FlextResult[M]:
         """Create Pydantic model from dict with FlextResult.
 
         Example:
-             result = FlextUtilitiesModel.from_dict(
+             result = uModel.from_dict(
                  UserModel,
                  {"status": "active", "name": "John"},
              )
@@ -60,32 +60,32 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
-        **kwargs: FlextTypes.FlexibleValue,
+        **kwargs: t.FlexibleValue,
     ) -> FlextResult[M]:
         """Create Pydantic model from kwargs with FlextResult.
 
         Example:
-             result = FlextUtilitiesModel.from_kwargs(
+             result = uModel.from_kwargs(
                  UserModel,
                  status="active",
                  name="John",
              )
 
         """
-        return FlextUtilitiesModel.from_dict(model_cls, kwargs)
+        return FlextModel.from_dict(model_cls, kwargs)
 
     @staticmethod
     def merge_defaults[M: BaseModel](
         model_cls: type[M],
-        defaults: Mapping[str, FlextTypes.FlexibleValue],
-        overrides: Mapping[str, FlextTypes.FlexibleValue],
+        defaults: Mapping[str, t.FlexibleValue],
+        overrides: Mapping[str, t.FlexibleValue],
     ) -> FlextResult[M]:
         """Merge defaults with overrides and create model.
 
         Example:
              DEFAULTS = {"status": Status.PENDING, "retries": 3}
 
-             result = FlextUtilitiesModel.merge_defaults(
+             result = uModel.merge_defaults(
                  ConfigModel,
                  defaults=DEFAULTS,
                  overrides={"status": "active"},  # Overrides
@@ -95,18 +95,18 @@ class FlextUtilitiesModel:
 
         """
         merged = {**defaults, **overrides}
-        return FlextUtilitiesModel.from_dict(model_cls, merged)
+        return FlextModel.from_dict(model_cls, merged)
 
     @staticmethod
     def update[M: BaseModel](
         instance: M,
-        **updates: FlextTypes.FlexibleValue,
+        **updates: t.FlexibleValue,
     ) -> FlextResult[M]:
         """Update existing model with new values.
 
         Example:
              user = UserModel(status=Status.ACTIVE, name="John")
-             result = FlextUtilitiesModel.update(user, status="inactive")
+             result = uModel.update(user, status="inactive")
              # result.value = UserModel with status=Status.INACTIVE
 
         """
@@ -124,12 +124,12 @@ class FlextUtilitiesModel:
         *,
         by_alias: bool = False,
         exclude_none: bool = False,
-    ) -> dict[str, FlextTypes.FlexibleValue]:
+    ) -> dict[str, t.FlexibleValue]:
         """Convert model to dict (simple wrapper).
 
         Example:
              user = UserModel(status=Status.ACTIVE, name="John")
-             data = FlextUtilitiesModel.to_dict(user)
+             data = uModel.to_dict(user)
              # data = {"status": "active", "name": "John"}
 
         """
@@ -137,3 +137,11 @@ class FlextUtilitiesModel:
             by_alias=by_alias,
             exclude_none=exclude_none,
         )
+
+
+uModel = FlextModel  # noqa: N816
+
+__all__ = [
+    "FlextModel",
+    "uModel",
+]

@@ -90,17 +90,17 @@ from flext_core import (
     FlextContext,
     FlextDecorators,
     FlextExceptions,
-    FlextHandlers,
+    h,
     FlextLogger,
-    FlextMixins,
+    x,
     FlextModels,
-    FlextProtocols,
+    p,
     FlextRegistry,
     FlextResult,  # Only this one!
     FlextRuntime,
     FlextService,
-    FlextTypes,
-    FlextUtilities,
+    t,
+    u,
 )
 ```
 

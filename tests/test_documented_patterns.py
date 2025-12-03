@@ -38,7 +38,7 @@ from flext_core import (
     FlextResult,
     FlextService,
 )
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 # ============================================================================
 # Test Models and Factories
@@ -200,9 +200,7 @@ class TestFactories:
         ]
 
     @staticmethod
-    def multi_operation_cases() -> list[
-        tuple[str, int, FlextTypes.Types.ConfigurationMapping]
-    ]:
+    def multi_operation_cases() -> list[tuple[str, int, t.Types.ConfigurationMapping]]:
         """Generate multiple operation test cases."""
         return [
             ("double", 5, {"operation": "double", "result": 10}),
@@ -271,12 +269,12 @@ class SendEmailService(FlextService[EmailResponse]):
         return FlextResult.ok(EmailResponse(status="sent", message_id=f"msg-{self.to}"))
 
 
-class ValidationService(FlextService[FlextTypes.Types.ConfigurationMapping]):
+class ValidationService(FlextService[t.Types.ConfigurationMapping]):
     """Service that validates input."""
 
     value: int
 
-    def execute(self) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+    def execute(self) -> FlextResult[t.Types.ConfigurationMapping]:
         """Validate value."""
         if self.value < 0:
             return FlextResult.fail("Value must be positive")
@@ -287,13 +285,13 @@ class ValidationService(FlextService[FlextTypes.Types.ConfigurationMapping]):
         return FlextResult.ok({"valid": True, "value": self.value})
 
 
-class MultiOperationService(FlextService[FlextTypes.Types.ConfigurationMapping]):
+class MultiOperationService(FlextService[t.Types.ConfigurationMapping]):
     """Service with multiple operations."""
 
     operation: str
     value: int
 
-    def execute(self) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+    def execute(self) -> FlextResult[t.Types.ConfigurationMapping]:
         """Execute based on operation."""
         match self.operation:
             case "double":
@@ -702,10 +700,10 @@ class TestPattern10MultipleOperations:
         self,
         operation: str,
         value: int,
-        expected: FlextTypes.Types.ConfigurationMapping,
+        expected: t.Types.ConfigurationMapping,
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
-        result: FlextTypes.Types.ConfigurationMapping = MultiOperationService(
+        result: t.Types.ConfigurationMapping = MultiOperationService(
             operation=operation,
             value=value,
         ).result
@@ -811,7 +809,7 @@ class TestAllPatternsIntegration:
         assert message_id.startswith("msg-")
 
         # Step 3: Multiple operations (V2 Property)
-        calc_result: FlextTypes.Types.ConfigurationMapping = MultiOperationService(
+        calc_result: t.Types.ConfigurationMapping = MultiOperationService(
             operation="double",
             value=10,
         ).result

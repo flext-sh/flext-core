@@ -33,15 +33,15 @@ from flext_core._models.base import FlextModelsBase
 from flext_core._models.config import FlextModelsConfig
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.constants import FlextConstants
+from flext_core.constants import c
 from flext_core.context import FlextContext
-from flext_core.handlers import FlextHandlers
-from flext_core.mixins import FlextMixins
-from flext_core.protocols import FlextProtocols
+from flext_core.handlers import h as FlextHandlers  # noqa: N812
+from flext_core.mixins import x as FlextMixins  # noqa: N812
+from flext_core.protocols import p
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextDispatcher(FlextMixins):  # noqa: PLR0904
@@ -49,7 +49,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     The dispatcher exposes CQRS routing, handler registration, and execution
     with layered reliability controls. It leans on structural typing to satisfy
-    ``FlextProtocols.CommandBus`` without inheritance while providing context
+    ``p.CommandBus`` without inheritance while providing context
     propagation, metrics, and audit logging aligned to the current architecture.
 
     Basic usage:
@@ -85,8 +85,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Initialize circuit breaker manager
         self._circuit_breaker = CircuitBreakerManager(
             threshold=self.config.circuit_breaker_threshold,
-            recovery_timeout=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
-            success_threshold=FlextConstants.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
+            recovery_timeout=c.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
+            success_threshold=c.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
         )
 
         # Rate limiting - simplified sliding window implementation via manager
@@ -112,7 +112,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Timeout context tracking for deadline and cancellation propagation
         self._timeout_contexts: dict[
             str,
-            FlextTypes.GeneralValueType,
+            t.GeneralValueType,
         ] = {}  # operation_id → context
         self._timeout_deadlines: dict[
             str,
@@ -124,32 +124,32 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Handler registry (from FlextDispatcher dual-mode registration)
         self._handlers: dict[
             str,
-            FlextTypes.HandlerAliases.HandlerType,
+            t.HandlerAliases.HandlerType,
         ] = {}  # Handler mappings
         self._auto_handlers: list[
-            FlextTypes.HandlerAliases.HandlerType
+            t.HandlerAliases.HandlerType
         ] = []  # Auto-discovery handlers
 
         # Middleware pipeline (from FlextDispatcher)
         self._middleware_configs: list[
-            Mapping[str, FlextTypes.GeneralValueType]
+            Mapping[str, t.GeneralValueType]
         ] = []  # Config + ordering
         self._middleware_instances: dict[
             str,
-            FlextTypes.HandlerAliases.HandlerCallable,
+            t.HandlerAliases.HandlerCallable,
         ] = {}  # Keyed by middleware_id
 
         # Query result caching (from FlextDispatcher - LRU cache)
         # Fast fail: use constant directly, no fallback
-        max_cache_size = FlextConstants.Container.MAX_CACHE_SIZE
-        self._cache: LRUCache[str, FlextResult[FlextTypes.GeneralValueType]] = LRUCache(
+        max_cache_size = c.Container.MAX_CACHE_SIZE
+        self._cache: LRUCache[str, FlextResult[t.GeneralValueType]] = LRUCache(
             maxsize=max_cache_size,
         )
 
         # Event subscribers (from FlextDispatcher event protocol)
         self._event_subscribers: dict[
             str,
-            list[FlextTypes.GeneralValueType],
+            list[t.GeneralValueType],
         ] = {}  # event_type → handlers
 
         # Execution counter for metrics
@@ -160,13 +160,13 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Group 1: Processor Registry (internal processing hooks)
         self._processors: dict[
             str,
-            FlextTypes.HandlerAliases.HandlerCallable
-            | Callable[..., FlextTypes.GeneralValueType]
-            | FlextProtocols.Processor,
+            t.HandlerAliases.HandlerCallable
+            | Callable[..., t.GeneralValueType]
+            | p.Processor,
         ] = {}  # name → processor function
         self._processor_configs: dict[
             str,
-            dict[str, FlextTypes.GeneralValueType],
+            dict[str, t.GeneralValueType],
         ] = {}  # name → config
         self._processor_metrics_per_name: dict[
             str,
@@ -185,31 +185,31 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Group 3: Handler Registry (internal dispatcher handler registry)
         self._handler_registry: dict[
             str,
-            FlextTypes.HandlerAliases.HandlerType,
+            t.HandlerAliases.HandlerType,
         ] = {}  # name → handler function
         self._handler_configs: dict[
             str,
-            Mapping[str, FlextTypes.GeneralValueType],
+            Mapping[str, t.GeneralValueType],
         ] = {}  # name → handler config
         self._handler_validators: dict[
             str,
-            Callable[[FlextTypes.GeneralValueType], bool],
+            Callable[[t.GeneralValueType], bool],
         ] = {}  # validation functions
 
         # Group 4: Pipeline (dispatcher-managed processing pipeline)
         self._pipeline_steps: list[
-            Mapping[str, FlextTypes.GeneralValueType]
+            Mapping[str, t.GeneralValueType]
         ] = []  # Ordered pipeline steps
         self._pipeline_composition: dict[
             str,
             Callable[
-                [FlextTypes.GeneralValueType],
-                FlextResult[FlextTypes.GeneralValueType],
+                [t.GeneralValueType],
+                FlextResult[t.GeneralValueType],
             ],
         ] = {}  # composed functions
         self._pipeline_memo: dict[
             str,
-            FlextTypes.GeneralValueType,
+            t.GeneralValueType,
         ] = {}  # Memoization cache for pipeline
 
         # Group 5: Metrics & Auditing (dispatcher-level counters)
@@ -223,11 +223,11 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             "timeout_executions": 0,
         }
         self._audit_log: list[
-            Mapping[str, FlextTypes.GeneralValueType]
+            Mapping[str, t.GeneralValueType]
         ] = []  # Operation audit trail
         self._performance_metrics: dict[
             str,
-            FlextTypes.GeneralValueType,
+            t.GeneralValueType,
         ] = {}  # Timing and throughput
         self._processor_execution_times: dict[
             str,
@@ -242,29 +242,41 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # No need to check isinstance - dict always implements Mapping
         # Construct DispatcherConfig TypedDict from config values
         return DispatcherConfig(
-            dispatcher_timeout_seconds=config_dict.get(
-                "dispatcher_timeout_seconds",
-                30.0,
-            ),
-            executor_workers=config_dict.get("executor_workers", 4),
-            circuit_breaker_threshold=config_dict.get("circuit_breaker_threshold", 5),
-            rate_limit_max_requests=config_dict.get("rate_limit_max_requests", 100),
-            rate_limit_window_seconds=config_dict.get(
-                "rate_limit_window_seconds",
-                60.0,
-            ),
-            max_retry_attempts=config_dict.get("max_retry_attempts", 3),
-            retry_delay=config_dict.get("retry_delay", 1.0),
-            enable_timeout_executor=config_dict.get("enable_timeout_executor", True),
-            dispatcher_enable_logging=config_dict.get(
-                "dispatcher_enable_logging",
-                True,
-            ),
-            dispatcher_auto_context=config_dict.get("dispatcher_auto_context", True),
-            dispatcher_enable_metrics=config_dict.get(
-                "dispatcher_enable_metrics",
-                True,
-            ),
+            dispatcher_timeout_seconds=u.get(
+                config_dict, "dispatcher_timeout_seconds", default=30.0
+            )
+            or 30.0,
+            executor_workers=u.get(config_dict, "executor_workers", default=4) or 4,
+            circuit_breaker_threshold=u.get(
+                config_dict, "circuit_breaker_threshold", default=5
+            )
+            or 5,
+            rate_limit_max_requests=u.get(
+                config_dict, "rate_limit_max_requests", default=100
+            )
+            or 100,
+            rate_limit_window_seconds=u.get(
+                config_dict, "rate_limit_window_seconds", default=60.0
+            )
+            or 60.0,
+            max_retry_attempts=u.get(config_dict, "max_retry_attempts", default=3) or 3,
+            retry_delay=u.get(config_dict, "retry_delay", default=1.0) or 1.0,
+            enable_timeout_executor=u.get(
+                config_dict, "enable_timeout_executor", default=True
+            )
+            or True,
+            dispatcher_enable_logging=u.get(
+                config_dict, "dispatcher_enable_logging", default=True
+            )
+            or True,
+            dispatcher_auto_context=u.get(
+                config_dict, "dispatcher_auto_context", default=True
+            )
+            or True,
+            dispatcher_enable_metrics=u.get(
+                config_dict, "dispatcher_enable_metrics", default=True
+            )
+            or True,
         )
 
     # ==================== LAYER 3: ADVANCED PROCESSING INTERNAL METHODS ====================
@@ -272,11 +284,11 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def _validate_interface(
         self,
         obj: (
-            FlextTypes.GeneralValueType
-            | FlextTypes.HandlerAliases.HandlerType
+            t.GeneralValueType
+            | t.HandlerAliases.HandlerType
             | BaseModel
-            | Callable[..., FlextTypes.GeneralValueType]
-            | FlextProtocols.Processor
+            | Callable[..., t.GeneralValueType]
+            | p.Processor
         ),
         method_names: list[str] | str,
         context: str,
@@ -298,7 +310,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if allow_callable and callable(obj):
             return self.ok(True)
 
-        methods = [method_names] if isinstance(method_names, str) else method_names
+        methods = cast("list[str]", u.ensure(method_names, target_type="list"))
         for method_name in methods:
             if hasattr(obj, method_name):
                 method = getattr(obj, method_name)
@@ -310,9 +322,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _validate_processor_interface(
         self,
-        processor: FlextTypes.HandlerAliases.HandlerCallable
-        | Callable[..., FlextTypes.GeneralValueType]
-        | FlextProtocols.Processor,
+        processor: t.HandlerAliases.HandlerCallable
+        | Callable[..., t.GeneralValueType]
+        | p.Processor,
         processor_context: str = "processor",
     ) -> FlextResult[bool]:
         """Validate that processor has required interface (callable or process method)."""
@@ -327,9 +339,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         self,
         processor_name: str,
     ) -> (
-        FlextTypes.HandlerAliases.HandlerCallable
-        | Callable[..., FlextTypes.GeneralValueType]
-        | FlextProtocols.Processor
+        t.HandlerAliases.HandlerCallable
+        | Callable[..., t.GeneralValueType]
+        | p.Processor
         | None
     ):
         """Locate registered processor by name.
@@ -346,10 +358,10 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def _apply_processor_circuit_breaker(
         self,
         _processor_name: str,
-        processor: FlextTypes.HandlerAliases.HandlerCallable
-        | Callable[..., FlextTypes.GeneralValueType]
-        | FlextProtocols.Processor,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        processor: t.HandlerAliases.HandlerCallable
+        | Callable[..., t.GeneralValueType]
+        | p.Processor,
+    ) -> FlextResult[t.GeneralValueType]:
         """Apply per-processor circuit breaker pattern.
 
         Args:
@@ -357,15 +369,15 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             processor: Processor object
 
         Returns:
-            FlextResult[FlextTypes.GeneralValueType]: Success if circuit breaker allows, failure if open
+            FlextResult[t.GeneralValueType]: Success if circuit breaker allows, failure if open
 
         """
         # Use global circuit breaker manager
         # Per-processor circuit breaking is handled at dispatch() level
         # For now, always allow (dispatch() will enforce global CB)
         # Cast processor to GeneralValueType for ok() method
-        processor_typed: FlextTypes.GeneralValueType = cast(
-            "FlextTypes.GeneralValueType",
+        processor_typed: t.GeneralValueType = cast(
+            "t.GeneralValueType",
             processor,
         )
         return self.ok(processor_typed)
@@ -389,11 +401,11 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def _execute_processor_with_metrics(
         self,
         processor_name: str,
-        processor: FlextTypes.HandlerAliases.HandlerCallable
-        | Callable[..., FlextTypes.GeneralValueType]
-        | FlextProtocols.Processor,
-        data: FlextTypes.GeneralValueType,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        processor: t.HandlerAliases.HandlerCallable
+        | Callable[..., t.GeneralValueType]
+        | p.Processor,
+        data: t.GeneralValueType,
+    ) -> FlextResult[t.GeneralValueType]:
         """Execute processor and collect metrics.
 
         Args:
@@ -402,13 +414,13 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             data: Data to process
 
         Returns:
-            FlextResult[FlextTypes.GeneralValueType]: Processor result or error
+            FlextResult[t.GeneralValueType]: Processor result or error
 
         """
         start_time = time.time()
         try:
             # Execute processor
-            processor_result: FlextTypes.GeneralValueType
+            processor_result: t.GeneralValueType
             if callable(processor):
                 processor_result = processor(data)
             else:
@@ -430,7 +442,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                     )
                 # Cast needed: process_method() returns object, processor returns GeneralValueType
                 processor_result = cast(
-                    "FlextTypes.GeneralValueType",
+                    "t.GeneralValueType",
                     process_method(data),
                 )
 
@@ -471,9 +483,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def _process_batch_internal(
         self,
         processor_name: str,
-        data_list: list[FlextTypes.GeneralValueType],
+        data_list: list[t.GeneralValueType],
         batch_size: int | None = None,
-    ) -> FlextResult[list[FlextTypes.GeneralValueType]]:
+    ) -> FlextResult[list[t.GeneralValueType]]:
         """Process items in batch (internal).
 
         Args:
@@ -482,27 +494,28 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             batch_size: Size of each batch (default from config)
 
         Returns:
-            FlextResult[list[FlextTypes.GeneralValueType]]: List of results
+            FlextResult[list[t.GeneralValueType]]: List of results
 
         """
         # Fast fail: batch_size must be provided explicitly
         if batch_size is None:
             batch_size = self._batch_size
         if batch_size <= 0:
-            return FlextResult[list[FlextTypes.GeneralValueType]].fail(
+            return FlextResult[list[t.GeneralValueType]].fail(
                 f"Invalid batch_size: {batch_size}. Must be > 0.",
             )
-        results: list[FlextTypes.GeneralValueType] = []
+        results: list[t.GeneralValueType] = []
 
         processor = self._route_to_processor(processor_name)
         if processor is None:
-            return FlextResult[list[FlextTypes.GeneralValueType]].fail(
+            return FlextResult[list[t.GeneralValueType]].fail(
                 f"Processor not found: {processor_name}",
             )
         # Type narrowing: processor is now not None
         assert processor is not None  # noqa: S101
 
-        # Process in batches
+        # Process in batches - use manual loop for fail-fast behavior
+        # (u.batch with on_error="fail" still collects errors)
         for i in range(0, len(data_list), batch_size):
             batch = data_list[i : i + batch_size]
             for data in batch:
@@ -515,18 +528,18 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                     results.append(result.value)
                 else:
                     error_msg = result.error or "Unknown error in processor"
-                    return FlextResult[list[FlextTypes.GeneralValueType]].fail(
+                    return FlextResult[list[t.GeneralValueType]].fail(
                         error_msg,
                     )
 
-        return FlextResult[list[FlextTypes.GeneralValueType]].ok(results)
+        return FlextResult[list[t.GeneralValueType]].ok(results)
 
     def _process_parallel_internal(
         self,
         processor_name: str,
-        data_list: list[FlextTypes.GeneralValueType],
+        data_list: list[t.GeneralValueType],
         max_workers: int | None = None,
-    ) -> FlextResult[list[FlextTypes.GeneralValueType]]:
+    ) -> FlextResult[list[t.GeneralValueType]]:
         """Process items in parallel (internal).
 
         Args:
@@ -535,21 +548,21 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             max_workers: Number of parallel workers (default from config)
 
         Returns:
-            FlextResult[list[FlextTypes.GeneralValueType]]: List of results
+            FlextResult[list[t.GeneralValueType]]: List of results
 
         """
         # Fast fail: max_workers must be provided explicitly
         if max_workers is None:
             max_workers = self._parallel_workers
         if max_workers <= 0:
-            return FlextResult[list[FlextTypes.GeneralValueType]].fail(
+            return FlextResult[list[t.GeneralValueType]].fail(
                 f"Invalid max_workers: {max_workers}. Must be > 0.",
             )
-        results: list[FlextTypes.GeneralValueType] = []
+        results: list[t.GeneralValueType] = []
 
         processor = self._route_to_processor(processor_name)
         if processor is None:
-            return FlextResult[list[FlextTypes.GeneralValueType]].fail(
+            return FlextResult[list[t.GeneralValueType]].fail(
                 f"Processor not found: {processor_name}",
             )
         # Type narrowing: processor is now not None
@@ -576,22 +589,22 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                         results.append(result.value)
                     else:
                         error_msg = result.error or "Unknown error in processor"
-                        return FlextResult[list[FlextTypes.GeneralValueType]].fail(
+                        return FlextResult[list[t.GeneralValueType]].fail(
                             error_msg,
                         )
 
-            return FlextResult[list[FlextTypes.GeneralValueType]].ok(results)
+            return FlextResult[list[t.GeneralValueType]].ok(results)
         except Exception as e:
-            return FlextResult[list[FlextTypes.GeneralValueType]].fail(
+            return FlextResult[list[t.GeneralValueType]].fail(
                 f"Parallel processing failed: {e}",
             )
 
     def _validate_handler_registry_interface(
         self,
         handler: (
-            FlextTypes.HandlerAliases.HandlerType
-            | FlextTypes.HandlerAliases.HandlerCallable
-            | Callable[..., FlextTypes.GeneralValueType]
+            t.HandlerAliases.HandlerType
+            | t.HandlerAliases.HandlerCallable
+            | Callable[..., t.GeneralValueType]
             | BaseModel
         ),
         handler_context: str = "registry handler",
@@ -604,10 +617,10 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def register_processor(
         self,
         name: str,
-        processor: FlextTypes.HandlerAliases.HandlerCallable
-        | Callable[..., FlextTypes.GeneralValueType]
-        | FlextProtocols.Processor,
-        config: Mapping[str, FlextTypes.GeneralValueType] | None = None,
+        processor: t.HandlerAliases.HandlerCallable
+        | Callable[..., t.GeneralValueType]
+        | p.Processor,
+        config: Mapping[str, t.GeneralValueType] | None = None,
     ) -> FlextResult[bool]:
         """Register processor for advanced processing.
 
@@ -652,8 +665,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def process(
         self,
         name: str,
-        data: FlextTypes.GeneralValueType,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        data: t.GeneralValueType,
+    ) -> FlextResult[t.GeneralValueType]:
         """Process data through registered processor.
 
         This is the main entry point for Layer 3 processing. It routes to the
@@ -665,7 +678,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             data: Data to process
 
         Returns:
-            FlextResult[FlextTypes.GeneralValueType]: Processed result or error
+            FlextResult[t.GeneralValueType]: Processed result or error
 
         """
         # Route to processor
@@ -694,11 +707,11 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def _process_collection(
         self,
         name: str,
-        data_list: list[FlextTypes.GeneralValueType],
+        data_list: list[t.GeneralValueType],
         resolved_param: int,
         operation_type: str,
         metric_key: str,
-    ) -> FlextResult[list[FlextTypes.GeneralValueType]]:
+    ) -> FlextResult[list[t.GeneralValueType]]:
         """Process collection with specified operation type (DRY helper).
 
         Eliminates duplication between process_batch and process_parallel.
@@ -713,11 +726,11 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             metric_key: Metric key to increment on success
 
         Returns:
-            FlextResult[list[FlextTypes.GeneralValueType]]: List of processed items or error
+            FlextResult[list[t.GeneralValueType]]: List of processed items or error
 
         """
         if not data_list:
-            return FlextResult[list[FlextTypes.GeneralValueType]].ok([])
+            return FlextResult[list[t.GeneralValueType]].ok([])
 
         # Call appropriate internal method based on operation type
         if operation_type == "batch":
@@ -733,9 +746,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def process_batch(
         self,
         name: str,
-        data_list: list[FlextTypes.GeneralValueType],
+        data_list: list[t.GeneralValueType],
         batch_size: int | None = None,
-    ) -> FlextResult[list[FlextTypes.GeneralValueType]]:
+    ) -> FlextResult[list[t.GeneralValueType]]:
         """Process multiple items in batch.
 
         Args:
@@ -744,7 +757,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             batch_size: Optional batch size (uses config default if None)
 
         Returns:
-            FlextResult[list[FlextTypes.GeneralValueType]]: List of processed items or error
+            FlextResult[list[t.GeneralValueType]]: List of processed items or error
 
         """
         # Fast fail: explicit default value instead of 'or' fallback
@@ -762,9 +775,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def process_parallel(
         self,
         name: str,
-        data_list: list[FlextTypes.GeneralValueType],
+        data_list: list[t.GeneralValueType],
         max_workers: int | None = None,
-    ) -> FlextResult[list[FlextTypes.GeneralValueType]]:
+    ) -> FlextResult[list[t.GeneralValueType]]:
         """Process multiple items in parallel.
 
         Args:
@@ -773,7 +786,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             max_workers: Optional max worker threads (uses config default if None)
 
         Returns:
-            FlextResult[list[FlextTypes.GeneralValueType]]: List of processed items or error
+            FlextResult[list[t.GeneralValueType]]: List of processed items or error
 
         """
         # Fast fail: explicit default value instead of 'or' fallback
@@ -791,9 +804,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def execute_with_timeout(
         self,
         name: str,
-        data: FlextTypes.GeneralValueType,
+        data: t.GeneralValueType,
         timeout: float,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Process with timeout enforcement.
 
         Args:
@@ -802,18 +815,18 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             timeout: Timeout in seconds
 
         Returns:
-            FlextResult[FlextTypes.GeneralValueType]: Processed result or timeout error
+            FlextResult[t.GeneralValueType]: Processed result or timeout error
 
         """
         # Use TimeoutEnforcer from Layer 2 (same as dispatch method)
         try:
             executor = self._timeout_enforcer.ensure_executor()
-            future: concurrent.futures.Future[
-                FlextResult[FlextTypes.GeneralValueType]
-            ] = executor.submit(
-                self.process,
-                name,
-                data,
+            future: concurrent.futures.Future[FlextResult[t.GeneralValueType]] = (
+                executor.submit(
+                    self.process,
+                    name,
+                    data,
+                )
             )
             return future.result(timeout=timeout)
         except concurrent.futures.TimeoutError:
@@ -863,27 +876,27 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def get_process_audit_log(
         self,
-    ) -> FlextResult[list[Mapping[str, FlextTypes.GeneralValueType]]]:
+    ) -> FlextResult[list[Mapping[str, t.GeneralValueType]]]:
         """Retrieve operation audit trail.
 
         Returns:
             FlextResult[list[dict]]: Audit log entries with operation details
 
         """
-        return FlextResult[list[Mapping[str, FlextTypes.GeneralValueType]]].ok(
+        return FlextResult[list[Mapping[str, t.GeneralValueType]]].ok(
             self._audit_log.copy(),
         )
 
     def get_performance_analytics(
         self,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Get comprehensive performance analytics.
 
         Returns:
             FlextResult[dict]: Complete performance analytics including all metrics
 
         """
-        analytics: FlextTypes.GeneralValueType = {
+        analytics: t.GeneralValueType = {
             "global_metrics": self._process_metrics.copy(),
             "processor_metrics": self._processor_metrics_per_name.copy(),
             "batch_performance": self.batch_performance,
@@ -892,13 +905,13 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             "processor_execution_times": self._processor_execution_times.copy(),
             "audit_log_entries": len(self._audit_log),
         }
-        return FlextResult[FlextTypes.GeneralValueType].ok(analytics)
+        return FlextResult[t.GeneralValueType].ok(analytics)
 
     # ==================== LAYER 1: CQRS ROUTING INTERNAL METHODS ====================
 
     @staticmethod
     def _normalize_command_key(
-        command_type_obj: FlextTypes.GeneralValueType | str,
+        command_type_obj: t.GeneralValueType | str,
     ) -> str:
         """Create comparable key for command identifiers (from FlextDispatcher).
 
@@ -918,11 +931,11 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _validate_handler_interface(
         self,
-        handler: FlextTypes.HandlerAliases.HandlerType,
+        handler: t.HandlerAliases.HandlerType,
         handler_context: str = "handler",
     ) -> FlextResult[bool]:
         """Validate that handler has required handle() interface."""
-        method_name = FlextConstants.Mixins.METHOD_HANDLE
+        method_name = c.Mixins.METHOD_HANDLE
         return self._validate_interface(handler, method_name, handler_context)
 
     def _validate_handler_mode(self, handler_mode: str | None) -> FlextResult[bool]:
@@ -932,10 +945,10 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         # Type hint: HandlerType is StrEnum class, so __members__ exists
         # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        handler_type_members: dict[str, FlextConstants.Cqrs.HandlerType] = getattr(
-            FlextConstants.Cqrs.HandlerType, "__members__", {}
+        handler_type_members: dict[str, c.Cqrs.HandlerType] = getattr(
+            c.Cqrs.HandlerType, "__members__", {}
         )
-        valid_modes: list[str] = [m.value for m in handler_type_members.values()]
+        valid_modes = list(u.map(handler_type_members.values(), lambda m: m.value))
         if str(handler_mode) not in valid_modes:
             return self.fail(
                 f"Invalid handler_mode: {handler_mode}. Must be one of {valid_modes}",
@@ -945,8 +958,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _route_to_handler(
         self,
-        command: FlextTypes.GeneralValueType,
-    ) -> FlextTypes.HandlerAliases.HandlerType | None:
+        command: t.GeneralValueType,
+    ) -> t.HandlerAliases.HandlerType | None:
         """Locate the handler that can process the provided message.
 
         Args:
@@ -971,13 +984,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                 # Validate it's callable or BaseModel (valid HandlerType)
                 # HandlerType includes Callable and BaseModel instances
                 if callable(extracted_handler):
-                    return cast(
-                        "FlextTypes.HandlerAliases.HandlerType", extracted_handler
-                    )
-                if isinstance(extracted_handler, BaseModel):
-                    return cast(
-                        "FlextTypes.HandlerAliases.HandlerType", extracted_handler
-                    )
+                    return cast("t.HandlerAliases.HandlerType", extracted_handler)
+                if u.guard(extracted_handler, BaseModel).is_success:
+                    return cast("t.HandlerAliases.HandlerType", extracted_handler)
             # Return handler directly (it's already HandlerType)
             # Type narrowing: handler_entry is HandlerType from dict definition
             return handler_entry
@@ -994,7 +1003,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _is_query(
-        command: FlextTypes.GeneralValueType,
+        command: t.GeneralValueType,
         command_type: type,
     ) -> bool:
         """Determine if command is a query (cacheable).
@@ -1011,8 +1020,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _generate_cache_key(
-        command: FlextTypes.GeneralValueType,
-        command_type: type[FlextTypes.GeneralValueType],
+        command: t.GeneralValueType,
+        command_type: type[t.GeneralValueType],
     ) -> str:
         """Generate a deterministic cache key for the command.
 
@@ -1027,15 +1036,15 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # generate_cache_key accepts *args: GeneralValueType, so pass command and command_type name as string
         command_type_name = command_type.__name__ if command_type else "unknown"
         # Pass command and command_type_name (string) as GeneralValueType-compatible arguments
-        return FlextUtilities.Cache.generate_cache_key(command, command_type_name)
+        return u.Cache.generate_cache_key(command, command_type_name)
 
     def _check_cache_for_result(
         self,
-        command: FlextTypes.GeneralValueType,
+        command: t.GeneralValueType,
         command_type: type,
         *,
         is_query: bool,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Check cache for query result and return if found.
 
         Args:
@@ -1044,7 +1053,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             is_query: Whether command is a query
 
         Returns:
-            FlextResult[FlextTypes.GeneralValueType]: Cached result if found, failure if not cacheable or not cached
+            FlextResult[t.GeneralValueType]: Cached result if found, failure if not cacheable or not cached
 
         """
         # Fast fail: use config value directly, no fallback
@@ -1053,15 +1062,15 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if not should_consider_cache:
             return self.fail(
                 "Cache not enabled or not a query",
-                error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
+                error_code=c.Errors.CONFIGURATION_ERROR,
             )
 
         cache_key = FlextDispatcher._generate_cache_key(command, command_type)
         cached_value = self._cache.get(cache_key)
         if cached_value is not None:
-            # Fast fail: cached value must be FlextResult[FlextTypes.GeneralValueType]
+            # Fast fail: cached value must be FlextResult[t.GeneralValueType]
             # Type narrowing: cache stores FlextResult, so this is safe
-            cached_result: FlextResult[FlextTypes.GeneralValueType] = cached_value
+            cached_result: FlextResult[t.GeneralValueType] = cached_value
             self.logger.debug(
                 "Returning cached query result",
                 operation="check_cache",
@@ -1073,15 +1082,15 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         return self.fail(
             "Cache miss",
-            error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
+            error_code=c.Errors.NOT_FOUND_ERROR,
         )
 
     def _execute_handler(
         self,
-        handler: FlextTypes.HandlerAliases.HandlerType,
-        command: FlextTypes.GeneralValueType,
-        operation: str = FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        handler: t.HandlerAliases.HandlerType,
+        command: t.GeneralValueType,
+        operation: str = c.Dispatcher.HANDLER_MODE_COMMAND,
+    ) -> FlextResult[t.GeneralValueType]:
         """Execute the handler using FlextHandlers pipeline when available.
 
         Delegates to FlextHandlers._run_pipeline() for full CQRS support including
@@ -1109,7 +1118,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         )
 
         # Delegate to FlextHandlers.dispatch_message() for full CQRS support
-        if isinstance(handler, FlextHandlers):
+        if u.guard(handler, FlextHandlers).is_success:
             return handler.dispatch_message(command, operation=operation)
 
         # Fallback for non-FlextHandlers: try handle() then execute()
@@ -1126,25 +1135,25 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if not method_name:
             return self.fail(
                 "Handler must have 'handle' or 'execute' method",
-                error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
+                error_code=c.Errors.COMMAND_BUS_ERROR,
             )
         handle_method = getattr(handler, method_name)
         if not callable(handle_method):
             error_msg = f"Handler '{method_name}' must be callable"
             return self.fail(
                 error_msg,
-                error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
+                error_code=c.Errors.COMMAND_BUS_ERROR,
             )
 
         try:
             result_raw = handle_method(command)
             # Ensure result is GeneralValueType - handlers should return GeneralValueType or FlextResult
-            result: FlextTypes.GeneralValueType
+            result: t.GeneralValueType
             if isinstance(
                 result_raw,
                 (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
             ):
-                result = cast("FlextTypes.GeneralValueType", result_raw)
+                result = cast("t.GeneralValueType", result_raw)
             else:
                 result = str(result_raw)
             return FlextMixins.ResultHandling.ensure_result(result)
@@ -1155,13 +1164,13 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             error_msg = f"Handler execution failed: {e}"
             return self.fail(
                 error_msg,
-                error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
+                error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
 
     def _execute_middleware_chain(
         self,
-        command: FlextTypes.GeneralValueType,
-        handler: FlextTypes.HandlerAliases.HandlerType,
+        command: t.GeneralValueType,
+        handler: t.HandlerAliases.HandlerType,
     ) -> FlextResult[bool]:
         """Run the configured middleware pipeline for the current message.
 
@@ -1197,32 +1206,32 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _get_middleware_order(
-        middleware_config: Mapping[str, FlextTypes.GeneralValueType],
+        middleware_config: Mapping[str, t.GeneralValueType],
     ) -> int:
         """Extract middleware execution order from config."""
-        order_value = middleware_config.get("order", 0)
+        order_value = u.get(middleware_config, "order", default=0) or 0
         if isinstance(order_value, str):
             try:
                 return int(order_value)
             except ValueError:
-                return FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+                return c.Defaults.DEFAULT_MIDDLEWARE_ORDER
         return (
             int(order_value)
             if isinstance(order_value, int)
-            else FlextConstants.Defaults.DEFAULT_MIDDLEWARE_ORDER
+            else c.Defaults.DEFAULT_MIDDLEWARE_ORDER
         )
 
     def _process_middleware_instance(
         self,
-        command: FlextTypes.GeneralValueType,
-        handler: FlextTypes.HandlerAliases.HandlerType,
-        middleware_config: Mapping[str, FlextTypes.GeneralValueType],
+        command: t.GeneralValueType,
+        handler: t.HandlerAliases.HandlerType,
+        middleware_config: Mapping[str, t.GeneralValueType],
     ) -> FlextResult[bool]:
         """Process a single middleware instance."""
-        # Extract configuration values from dict
-        middleware_id_value = middleware_config.get("middleware_id")
-        middleware_type_value = middleware_config.get("middleware_type")
-        enabled_value = middleware_config.get("enabled", True)
+        # Extract configuration values from dict using get()
+        middleware_id_value = u.get(middleware_config, "middleware_id")
+        middleware_type_value = u.get(middleware_config, "middleware_type")
+        enabled_value = u.get(middleware_config, "enabled", default=True) or True
 
         # Skip disabled middleware
         if not enabled_value:
@@ -1250,7 +1259,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             "Applying middleware",
             middleware_id=middleware_id_str,
             middleware_type=str(middleware_type_value),
-            order=middleware_config.get("order", 0),
+            order=u.get(middleware_config, "order", default=0) or 0,
         )
 
         return self._invoke_middleware(
@@ -1262,10 +1271,10 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _invoke_middleware(
         self,
-        middleware: FlextTypes.HandlerAliases.HandlerCallable,
-        command: FlextTypes.GeneralValueType,
-        handler: FlextTypes.HandlerAliases.HandlerType,
-        middleware_type: FlextTypes.GeneralValueType,
+        middleware: t.HandlerAliases.HandlerCallable,
+        command: t.GeneralValueType,
+        handler: t.HandlerAliases.HandlerType,
+        middleware_type: t.GeneralValueType,
     ) -> FlextResult[bool]:
         """Invoke middleware and handle result.
 
@@ -1275,11 +1284,11 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if not callable(process_method):
             return self.fail(
                 "Middleware must have callable 'process' method",
-                error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
+                error_code=c.Errors.CONFIGURATION_ERROR,
             )
         result_raw = process_method(command, handler)
         # Ensure result is GeneralValueType or FlextResult
-        result: FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType]
+        result: t.GeneralValueType | FlextResult[t.GeneralValueType]
         if isinstance(
             result_raw,
             (
@@ -1296,7 +1305,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             ),
         ):
             result = cast(
-                "FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType]",
+                "t.GeneralValueType | FlextResult[t.GeneralValueType]",
                 result_raw,
             )
         else:
@@ -1305,8 +1314,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _handle_middleware_result(
         self,
-        result: FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
-        middleware_type: FlextTypes.GeneralValueType,
+        result: t.GeneralValueType | FlextResult[t.GeneralValueType],
+        middleware_type: t.GeneralValueType,
     ) -> FlextResult[bool]:
         """Handle middleware execution result."""
         if isinstance(result, FlextResult) and result.is_failure:
@@ -1328,8 +1337,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def execute(
         self,
-        command: FlextTypes.GeneralValueType,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        command: t.GeneralValueType,
+    ) -> FlextResult[t.GeneralValueType]:
         """Execute command/query through the CQRS dispatcher routing layer.
 
         This Layer 1 entry point performs routing with caching and middleware.
@@ -1377,7 +1386,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             # Resolve handler
             handler = self._route_to_handler(command)
             if handler is None:
-                handler_names = [h.__class__.__name__ for h in self._auto_handlers]
+                handler_names = list(u.map(self._auto_handlers, lambda h: h.__class__.__name__))
                 self.logger.error(
                     "FAILED to find handler for command - DISPATCH ABORTED",
                     operation="execute",
@@ -1389,7 +1398,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                 )
                 return self.fail(
                     f"No handler found for {command_type.__name__}",
-                    error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
+                    error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
                 )
 
             # Apply middleware pipeline
@@ -1401,16 +1410,16 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                 # Fast fail: use unwrap_error() for type-safe str
                 return self.fail(
                     middleware_result.error or "Unknown error",
-                    error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
+                    error_code=c.Errors.COMMAND_BUS_ERROR,
                 )
 
             # Execute handler with appropriate operation type
             operation = (
-                FlextConstants.Dispatcher.HANDLER_MODE_QUERY
+                c.Dispatcher.HANDLER_MODE_QUERY
                 if is_query
-                else FlextConstants.Dispatcher.HANDLER_MODE_COMMAND
+                else c.Dispatcher.HANDLER_MODE_COMMAND
             )
-            result: FlextResult[FlextTypes.GeneralValueType] = self._execute_handler(
+            result: FlextResult[t.GeneralValueType] = self._execute_handler(
                 handler,
                 command,
                 operation=operation,
@@ -1433,7 +1442,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def layer1_register_handler(
         self,
-        *args: FlextTypes.HandlerAliases.HandlerType,
+        *args: t.HandlerAliases.HandlerType,
     ) -> FlextResult[bool]:
         """Register handler with dual-mode support (from FlextDispatcher).
 
@@ -1448,18 +1457,20 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             FlextResult: Success or failure result
 
         """
-        if len(args) == FlextConstants.Dispatcher.SINGLE_HANDLER_ARG_COUNT:
-            # Register single handler
-            handler_single: FlextTypes.HandlerAliases.HandlerType = args[0]
+        # Use guard() with lambda for concise length validation
+        length_check_single = lambda v: len(v) == c.Dispatcher.SINGLE_HANDLER_ARG_COUNT  # noqa: E731
+        length_check_two = lambda v: len(v) == c.Dispatcher.TWO_HANDLER_ARG_COUNT  # noqa: E731
+        if u.guard(args, length_check_single, return_value=True):
+            handler_single: t.HandlerAliases.HandlerType = args[0]
             return self._register_single_handler(handler_single)
-        if len(args) == FlextConstants.Dispatcher.TWO_HANDLER_ARG_COUNT:
+        if u.guard(args, length_check_two, return_value=True):
             # Cast args[0] to GeneralValueType | str and args[1] to HandlerType
             # args[0] can be HandlerType (when it's a message type), so we need to handle both cases
-            command_type_typed: FlextTypes.GeneralValueType | str = cast(
-                "FlextTypes.GeneralValueType | str",
+            command_type_typed: t.GeneralValueType | str = cast(
+                "t.GeneralValueType | str",
                 args[0],
             )
-            handler_two: FlextTypes.HandlerAliases.HandlerType = args[1]
+            handler_two: t.HandlerAliases.HandlerType = args[1]
             return self._register_two_arg_handler(command_type_typed, handler_two)
 
         return self.fail(
@@ -1468,7 +1479,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _register_single_handler(
         self,
-        handler: FlextTypes.HandlerAliases.HandlerType,
+        handler: t.HandlerAliases.HandlerType,
     ) -> FlextResult[bool]:
         """Register single handler for auto-discovery.
 
@@ -1517,8 +1528,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _register_two_arg_handler(
         self,
-        command_type_obj: FlextTypes.GeneralValueType | str,
-        handler: FlextTypes.HandlerAliases.HandlerType,
+        command_type_obj: t.GeneralValueType | str,
+        handler: t.HandlerAliases.HandlerType,
     ) -> FlextResult[bool]:
         """Register handler with explicit command type.
 
@@ -1559,8 +1570,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def layer1_add_middleware(
         self,
-        middleware: FlextTypes.HandlerAliases.HandlerCallable,
-        middleware_config: Mapping[str, FlextTypes.GeneralValueType] | None = None,
+        middleware: t.HandlerAliases.HandlerCallable,
+        middleware_config: Mapping[str, t.GeneralValueType] | None = None,
     ) -> FlextResult[bool]:
         """Add middleware to processing pipeline (from FlextDispatcher).
 
@@ -1612,8 +1623,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             "order": order_value,
         }
         # Safe cast: str | bool | int are all compatible with GeneralValueType
-        final_config: Mapping[str, FlextTypes.GeneralValueType] = cast(
-            "Mapping[str, FlextTypes.GeneralValueType]",
+        final_config: Mapping[str, t.GeneralValueType] = cast(
+            "Mapping[str, t.GeneralValueType]",
             final_config_raw,
         )
 
@@ -1633,7 +1644,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     # ==================== LAYER 1 EVENT PUBLISHING PROTOCOL ====================
 
-    def publish_event(self, event: FlextTypes.GeneralValueType) -> FlextResult[bool]:
+    def publish_event(self, event: t.GeneralValueType) -> FlextResult[bool]:
         """Publish domain event to subscribers (from FlextDispatcher).
 
         Args:
@@ -1659,7 +1670,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def publish_events(
         self,
-        events: list[FlextTypes.GeneralValueType],
+        events: list[t.GeneralValueType],
     ) -> FlextResult[bool]:
         """Publish multiple domain events (from FlextDispatcher).
 
@@ -1677,34 +1688,34 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         def publish_all() -> bool:
             # Convert events to FlextResult pipeline
             def make_publish_func(
-                event_item: FlextTypes.GeneralValueType,
-            ) -> Callable[[FlextTypes.GeneralValueType], FlextResult[bool]]:
+                event_item: t.GeneralValueType,
+            ) -> Callable[[t.GeneralValueType], FlextResult[bool]]:
                 def publish_func(
-                    _unused: FlextTypes.GeneralValueType,
+                    _unused: t.GeneralValueType,
                 ) -> FlextResult[bool]:
                     return self.publish_event(event_item)
 
                 return publish_func
 
-            # Convert functions to match flow_through signature: Callable[[FlextTypes.GeneralValueType], FlextResult[FlextTypes.GeneralValueType]]
+            # Convert functions to match flow_through signature: Callable[[t.GeneralValueType], FlextResult[t.GeneralValueType]]
             publish_funcs: list[
                 Callable[
-                    [FlextTypes.GeneralValueType],
-                    FlextResult[FlextTypes.GeneralValueType],
+                    [t.GeneralValueType],
+                    FlextResult[t.GeneralValueType],
                 ]
             ] = []
             for event in events:
                 publish_func = make_publish_func(event)
 
                 def make_wrapper(
-                    func: Callable[[FlextTypes.GeneralValueType], FlextResult[bool]],
+                    func: Callable[[t.GeneralValueType], FlextResult[bool]],
                 ) -> Callable[
-                    [FlextTypes.GeneralValueType],
-                    FlextResult[FlextTypes.GeneralValueType],
+                    [t.GeneralValueType],
+                    FlextResult[t.GeneralValueType],
                 ]:
                     def wrapper(
-                        _unused: FlextTypes.GeneralValueType,
-                    ) -> FlextResult[FlextTypes.GeneralValueType]:
+                        _unused: t.GeneralValueType,
+                    ) -> FlextResult[t.GeneralValueType]:
                         bool_result = func(_unused)
                         # Map boolean result to GeneralValueType (True is a valid GeneralValueType)
                         return bool_result.map(lambda _x: True)
@@ -1725,7 +1736,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def subscribe(
         self,
         event_type: str,
-        handler: FlextTypes.HandlerAliases.HandlerType,
+        handler: t.HandlerAliases.HandlerType,
     ) -> FlextResult[bool]:
         """Subscribe handler to event type (from FlextDispatcher).
 
@@ -1739,11 +1750,11 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         """
         try:
             # Cast event_type and handler to HandlerType for layer1_register_handler
-            event_type_typed: FlextTypes.HandlerAliases.HandlerType = cast(
-                "FlextTypes.HandlerAliases.HandlerType",
+            event_type_typed: t.HandlerAliases.HandlerType = cast(
+                "t.HandlerAliases.HandlerType",
                 event_type,
             )
-            handler_typed: FlextTypes.HandlerAliases.HandlerType = handler
+            handler_typed: t.HandlerAliases.HandlerType = handler
             return self.layer1_register_handler(event_type_typed, handler_typed)
         except (TypeError, AttributeError, ValueError) as e:
             # TypeError: invalid handler type
@@ -1754,7 +1765,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def unsubscribe(
         self,
         event_type: str,
-        _handler: FlextTypes.GeneralValueType | None = None,
+        _handler: t.GeneralValueType | None = None,
     ) -> FlextResult[bool]:
         """Unsubscribe from an event type (from FlextDispatcher).
 
@@ -1787,7 +1798,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def publish(
         self,
         event_name: str,
-        data: FlextTypes.GeneralValueType,
+        data: t.GeneralValueType,
     ) -> FlextResult[bool]:
         """Publish a named event with data (from FlextDispatcher).
 
@@ -1802,7 +1813,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         """
         # Create a simple event dict with name and data
-        event: dict[str, FlextTypes.GeneralValueType | float] = {
+        event: dict[str, t.GeneralValueType | float] = {
             "event_name": event_name,
             "data": data,
             "timestamp": time.time(),
@@ -1814,13 +1825,24 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     # ------------------------------------------------------------------
     @staticmethod
     def _get_nested_attr(
-        obj: FlextTypes.GeneralValueType,
+        obj: t.GeneralValueType,
         *path: str,
-    ) -> FlextTypes.GeneralValueType | None:
+    ) -> t.GeneralValueType | None:
         """Get nested attribute safely (e.g., obj.attr1.attr2).
 
         Returns None if any attribute in path doesn't exist or is None.
+        Uses u.extract() for dict-like objects, falls back to
+        attribute access for objects.
         """
+        if not path:
+            return None
+        # Try extract for dict-like objects first
+        if isinstance(obj, Mapping):
+            path_str = ".".join(path)
+            result = u.extract(obj, path_str, default=None, required=False)
+            if result.is_success and result.value is not None:
+                return result.value
+        # Fall back to attribute access for objects
         current = obj
         for attr in path:
             if not hasattr(current, attr):
@@ -1832,8 +1854,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _extract_handler_name(
-        handler: FlextTypes.GeneralValueType,
-        request_dict: dict[str, FlextTypes.GeneralValueType],
+        handler: t.GeneralValueType,
+        request_dict: dict[str, t.GeneralValueType],
     ) -> str:
         """Extract handler_name from request or handler config.
 
@@ -1845,7 +1867,13 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             Handler name string or empty string if not found
 
         """
-        handler_name = str(request_dict.get("handler_name", ""))
+        # Try extract for dict-like request first
+        handler_name_result = u.extract(
+            request_dict, "handler_name", default="", required=False
+        )
+        handler_name = (
+            str(handler_name_result.value) if handler_name_result.is_success else ""
+        )
         if handler_name:
             return handler_name
 
@@ -1867,8 +1895,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _normalize_request_to_dict(
-        request: FlextTypes.GeneralValueType,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+        request: t.GeneralValueType,
+    ) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Normalize request to GeneralValueType dict.
 
         Args:
@@ -1881,42 +1909,51 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if not isinstance(request, BaseModel) and not FlextRuntime.is_dict_like(
             request,
         ):
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+            return FlextResult[dict[str, t.GeneralValueType]].fail(
                 "Request must be dict or Pydantic model",
             )
 
-        request_dict: dict[str, FlextTypes.GeneralValueType]
+        request_dict: dict[str, t.GeneralValueType]
         if isinstance(request, BaseModel):
             dumped = request.model_dump()
             normalized = FlextRuntime.normalize_to_general_value(dumped)
-            request_dict = (
-                normalized if isinstance(normalized, dict) else {"value": normalized}
+            request_dict = cast(
+                "dict[str, t.GeneralValueType]",
+                u.ensure(normalized, target_type="dict"),
             )
         elif isinstance(request, dict):
             # Preserve handler objects directly (don't normalize them to strings)
             # Handler normalization would convert handler instances to string repr
             handler_keys = {"handler", "handlers", "processor", "processors"}
-            request_dict = {}
-            for k, v in request.items():
-                key_str = str(k)
-                if key_str in handler_keys:
-                    # Preserve handler objects directly as GeneralValueType
-                    # No cast needed: v is already GeneralValueType compatible
-                    request_dict[key_str] = v
-                else:
-                    request_dict[key_str] = FlextRuntime.normalize_to_general_value(v)
+            # Use process() for concise request normalization with key conversion
+            process_result = u.process(
+                request,
+                lambda k, v: (
+                    v
+                    if str(k) in handler_keys
+                    else FlextRuntime.normalize_to_general_value(v)
+                ),
+                on_error="collect",
+            )
+            # Convert keys to strings - use process() to transform keys
+            if process_result.is_success:
+                # Create new dict with string keys
+                request_dict = {str(k): v for k, v in process_result.value.items()}
+            else:
+                request_dict = {}
         else:
             normalized = FlextRuntime.normalize_to_general_value(request)
-            request_dict = (
-                normalized if isinstance(normalized, dict) else {"value": normalized}
+            request_dict = cast(
+                "dict[str, t.GeneralValueType]",
+                u.ensure(normalized, target_type="dict"),
             )
 
-        return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(request_dict)
+        return FlextResult[dict[str, t.GeneralValueType]].ok(request_dict)
 
     def _validate_and_extract_handler(
         self,
-        request_dict: dict[str, FlextTypes.GeneralValueType],
-    ) -> FlextResult[tuple[FlextTypes.GeneralValueType, str]]:
+        request_dict: dict[str, t.GeneralValueType],
+    ) -> FlextResult[tuple[t.GeneralValueType, str]]:
         """Validate handler and extract handler name.
 
         Args:
@@ -1928,18 +1965,18 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         """
         handler_raw = request_dict.get("handler")
         if not handler_raw:
-            return FlextResult[tuple[FlextTypes.GeneralValueType, str]].fail(
+            return FlextResult[tuple[t.GeneralValueType, str]].fail(
                 "Handler is required",
             )
 
         # Cast handler to the expected type for validation
         handler_typed: (
-            FlextTypes.HandlerAliases.HandlerType
-            | FlextTypes.HandlerAliases.HandlerCallable
-            | Callable[..., FlextTypes.GeneralValueType]
+            t.HandlerAliases.HandlerType
+            | t.HandlerAliases.HandlerCallable
+            | Callable[..., t.GeneralValueType]
             | BaseModel
         ) = cast(
-            "FlextTypes.HandlerAliases.HandlerType | FlextTypes.HandlerAliases.HandlerCallable | Callable[..., FlextTypes.GeneralValueType] | BaseModel",
+            "t.HandlerAliases.HandlerType | t.HandlerAliases.HandlerCallable | Callable[..., t.GeneralValueType] | BaseModel",
             handler_raw,
         )
 
@@ -1948,36 +1985,36 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             handler_context="registered handler",
         )
         if validation_result.is_failure:
-            return FlextResult[tuple[FlextTypes.GeneralValueType, str]].fail(
+            return FlextResult[tuple[t.GeneralValueType, str]].fail(
                 validation_result.error or "Handler validation failed",
             )
 
         # Cast handler to GeneralValueType for _extract_handler_name
-        handler_for_extraction: FlextTypes.GeneralValueType = cast(
-            "FlextTypes.GeneralValueType",
+        handler_for_extraction: t.GeneralValueType = cast(
+            "t.GeneralValueType",
             handler_typed,
         )
         handler_name = self._extract_handler_name(handler_for_extraction, request_dict)
         if not handler_name:
-            return FlextResult[tuple[FlextTypes.GeneralValueType, str]].fail(
+            return FlextResult[tuple[t.GeneralValueType, str]].fail(
                 "handler_name is required",
             )
 
         # Cast handler_typed to GeneralValueType for return
-        handler_for_return: FlextTypes.GeneralValueType = cast(
-            "FlextTypes.GeneralValueType",
+        handler_for_return: t.GeneralValueType = cast(
+            "t.GeneralValueType",
             handler_typed,
         )
-        return FlextResult[tuple[FlextTypes.GeneralValueType, str]].ok(
+        return FlextResult[tuple[t.GeneralValueType, str]].ok(
             (handler_for_return, handler_name),
         )
 
     def _register_handler_by_mode(
         self,
-        handler: FlextTypes.GeneralValueType,
+        handler: t.GeneralValueType,
         handler_name: str,
-        request_dict: dict[str, FlextTypes.GeneralValueType],
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+        request_dict: dict[str, t.GeneralValueType],
+    ) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Register handler based on auto-discovery or explicit mode.
 
         Args:
@@ -2003,9 +2040,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _register_auto_discovery_handler(
         self,
-        handler: FlextTypes.GeneralValueType,
+        handler: t.GeneralValueType,
         handler_name: str,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Register handler with auto-discovery mode.
 
         Args:
@@ -2017,14 +2054,14 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         """
         # Cast handler to HandlerType for append
-        handler_typed: FlextTypes.HandlerAliases.HandlerType = cast(
-            "FlextTypes.HandlerAliases.HandlerType",
+        handler_typed: t.HandlerAliases.HandlerType = cast(
+            "t.HandlerAliases.HandlerType",
             handler,
         )
         if handler_typed not in self._auto_handlers:
             self._auto_handlers.append(handler_typed)
 
-        return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
+        return FlextResult[dict[str, t.GeneralValueType]].ok({
             "handler_name": handler_name,
             "status": "registered",
             "mode": "auto_discovery",
@@ -2032,10 +2069,10 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _register_explicit_handler(
         self,
-        handler: FlextTypes.GeneralValueType,
+        handler: t.GeneralValueType,
         handler_name: str,
-        request_dict: dict[str, FlextTypes.GeneralValueType],
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+        request_dict: dict[str, t.GeneralValueType],
+    ) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Register handler with explicit mode.
 
         Args:
@@ -2049,7 +2086,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         """
         message_type = request_dict.get("message_type")
         if not message_type:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+            return FlextResult[dict[str, t.GeneralValueType]].fail(
                 "Handler without can_handle() requires message_type",
             )
 
@@ -2061,13 +2098,13 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         message_type_name = name_attr if name_attr is not None else str(message_type)
 
         # Cast handler to HandlerType for assignment
-        handler_typed: FlextTypes.HandlerAliases.HandlerType = cast(
-            "FlextTypes.HandlerAliases.HandlerType",
+        handler_typed: t.HandlerAliases.HandlerType = cast(
+            "t.HandlerAliases.HandlerType",
             handler,
         )
         self._handlers[message_type_name] = handler_typed
 
-        return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
+        return FlextResult[dict[str, t.GeneralValueType]].ok({
             "handler_name": handler_name,
             "message_type": message_type_name,
             "status": "registered",
@@ -2076,8 +2113,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def register_handler_with_request(
         self,
-        request: FlextTypes.GeneralValueType,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+        request: t.GeneralValueType,
+    ) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Register handler using structured request model.
 
         Business Rule: Handler registration supports two modes:
@@ -2097,7 +2134,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Normalize and validate request
         request_dict_result = FlextDispatcher._normalize_request_to_dict(request)
         if request_dict_result.is_failure:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+            return FlextResult[dict[str, t.GeneralValueType]].fail(
                 request_dict_result.error or "Failed to normalize request"
             )
         request_dict = request_dict_result.unwrap()
@@ -2111,19 +2148,19 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         )
         mode_validation = self._validate_handler_mode(handler_mode)
         if mode_validation.is_failure:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+            return FlextResult[dict[str, t.GeneralValueType]].fail(
                 mode_validation.error or "Invalid handler mode"
             )
 
         # Validate and extract handler
         handler_result = self._validate_and_extract_handler(request_dict)
         if handler_result.is_failure:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+            return FlextResult[dict[str, t.GeneralValueType]].fail(
                 handler_result.error or "Handler validation failed"
             )
         handler_general, handler_name = handler_result.unwrap()
         # Cast GeneralValueType to HandlerType for storage in typed collections
-        handler = cast("FlextTypes.HandlerAliases.HandlerType", handler_general)
+        handler = cast("t.HandlerAliases.HandlerType", handler_general)
 
         # Determine registration mode and register
         can_handle_attr = getattr(handler, "can_handle", None)
@@ -2131,7 +2168,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             # Auto-discovery mode
             if handler not in self._auto_handlers:
                 self._auto_handlers.append(handler)
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
+            return FlextResult[dict[str, t.GeneralValueType]].ok({
                 "handler_name": handler_name,
                 "status": "registered",
                 "mode": "auto_discovery",
@@ -2140,7 +2177,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Explicit registration requires message_type
         message_type = request_dict.get("message_type")
         if not message_type:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+            return FlextResult[dict[str, t.GeneralValueType]].fail(
                 "Handler without can_handle() requires message_type"
             )
 
@@ -2149,7 +2186,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         message_type_name = name_attr if name_attr is not None else str(message_type)
         self._handlers[message_type_name] = handler
 
-        return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
+        return FlextResult[dict[str, t.GeneralValueType]].ok({
             "handler_name": handler_name,
             "message_type": message_type_name,
             "status": "registered",
@@ -2158,9 +2195,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def register_handler(
         self,
-        request: FlextTypes.GeneralValueType | BaseModel,
-        handler: FlextTypes.GeneralValueType | None = None,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+        request: t.GeneralValueType | BaseModel,
+        handler: t.GeneralValueType | None = None,
+    ) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Register a handler dynamically.
 
         Args:
@@ -2173,21 +2210,21 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         """
         if handler is not None:
             # Cast request and handler to HandlerType for layer1_register_handler
-            request_typed_for_reg: FlextTypes.HandlerAliases.HandlerType = cast(
-                "FlextTypes.HandlerAliases.HandlerType",
+            request_typed_for_reg: t.HandlerAliases.HandlerType = cast(
+                "t.HandlerAliases.HandlerType",
                 request,
             )
-            handler_typed: FlextTypes.HandlerAliases.HandlerType = cast(
-                "FlextTypes.HandlerAliases.HandlerType",
+            handler_typed: t.HandlerAliases.HandlerType = cast(
+                "t.HandlerAliases.HandlerType",
                 handler,
             )
             result = self.layer1_register_handler(request_typed_for_reg, handler_typed)
             if result.is_failure:
-                return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+                return FlextResult[dict[str, t.GeneralValueType]].fail(
                     result.error or "Registration failed",
                 )
             # Convert to dict format for consistency
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
+            return FlextResult[dict[str, t.GeneralValueType]].ok({
                 "handler_name": request if isinstance(request, str) else "unknown",
                 "status": "registered",
                 "mode": "explicit",
@@ -2197,26 +2234,26 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if isinstance(request, BaseModel) or FlextRuntime.is_dict_like(request):
             # Delegate to register_handler_with_request (eliminates ~100 lines of duplication)
             # Safe cast: request is BaseModel or dict-like, compatible with GeneralValueType
-            request_for_registration: FlextTypes.GeneralValueType = cast(
-                "FlextTypes.GeneralValueType",
+            request_for_registration: t.GeneralValueType = cast(
+                "t.GeneralValueType",
                 request,
             )
             return self.register_handler_with_request(request_for_registration)
 
         # Single handler object - delegate to layer1_register_handler
         # Cast request to HandlerType
-        request_typed_for_single: FlextTypes.HandlerAliases.HandlerType = cast(
-            "FlextTypes.HandlerAliases.HandlerType",
+        request_typed_for_single: t.HandlerAliases.HandlerType = cast(
+            "t.HandlerAliases.HandlerType",
             request,
         )
         result = self.layer1_register_handler(request_typed_for_single)
         if result.is_failure:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+            return FlextResult[dict[str, t.GeneralValueType]].fail(
                 result.error or "Registration failed",
             )
         # Convert to dict format for consistency
         handler_name = getattr(request, "__class__", type(request)).__name__
-        return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
+        return FlextResult[dict[str, t.GeneralValueType]].ok({
             "handler_name": handler_name,
             "status": "registered",
             "mode": "auto_discovery",
@@ -2227,8 +2264,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         message_type: type[TMessage],
         handler: FlextHandlers[TMessage, TResult],
         handler_mode: str,
-        handler_config: FlextTypes.Types.ConfigurationMapping | None = None,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        handler_config: t.Types.ConfigurationMapping | None = None,
+    ) -> FlextResult[t.GeneralValueType]:
         """Register handler with specific mode (DRY helper).
 
         Eliminates duplication between register_command and register_query.
@@ -2248,22 +2285,22 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Cast handler and message_type to GeneralValueType for dict construction
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
-        request: dict[str, FlextTypes.GeneralValueType] = {
-            "handler": cast("FlextTypes.GeneralValueType", handler),
+        request: dict[str, t.GeneralValueType] = {
+            "handler": cast("t.GeneralValueType", handler),
             "message_type": message_type_name,
             "handler_mode": handler_mode,
             "handler_config": handler_config,
         }
 
         result = self.register_handler_with_request(
-            cast("FlextTypes.GeneralValueType", request),
+            cast("t.GeneralValueType", request),
         )
         # Cast result from FlextResult[dict[str, GeneralValueType]] to FlextResult[GeneralValueType]
         if result.is_success:
-            return FlextResult[FlextTypes.GeneralValueType].ok(
-                cast("FlextTypes.GeneralValueType", result.value),
+            return FlextResult[t.GeneralValueType].ok(
+                cast("t.GeneralValueType", result.value),
             )
-        return FlextResult[FlextTypes.GeneralValueType].fail(
+        return FlextResult[t.GeneralValueType].fail(
             result.error or "Registration failed",
         )
 
@@ -2272,8 +2309,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         command_type: type[TCommand],
         handler: FlextHandlers[TCommand, TResult],
         *,
-        handler_config: FlextTypes.Types.ConfigurationMapping | None = None,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        handler_config: t.Types.ConfigurationMapping | None = None,
+    ) -> FlextResult[t.GeneralValueType]:
         """Register command handler using structured model internally.
 
         Args:
@@ -2288,7 +2325,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         return self._register_handler(
             command_type,
             handler,
-            FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
+            c.Dispatcher.HANDLER_MODE_COMMAND,
             handler_config,
         )
 
@@ -2297,8 +2334,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         query_type: type[TQuery],
         handler: FlextHandlers[TQuery, TResult],
         *,
-        handler_config: FlextTypes.Types.ConfigurationMapping | None = None,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        handler_config: t.Types.ConfigurationMapping | None = None,
+    ) -> FlextResult[t.GeneralValueType]:
         """Register query handler using structured model internally.
 
         Args:
@@ -2313,7 +2350,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         return self._register_handler(
             query_type,
             handler,
-            FlextConstants.Dispatcher.HANDLER_MODE_QUERY,
+            c.Dispatcher.HANDLER_MODE_QUERY,
             handler_config,
         )
 
@@ -2322,9 +2359,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         message_type: type[TMessage],
         handler_func: Callable[[TMessage], TResult],
         *,
-        handler_config: FlextTypes.Types.ConfigurationMapping | None = None,
-        mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.HandlerType.COMMAND,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        handler_config: t.Types.ConfigurationMapping | None = None,
+        mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
+    ) -> FlextResult[t.GeneralValueType]:
         """Register function as handler using factory pattern.
 
         Args:
@@ -2338,22 +2375,22 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         """
         # Validate mode
-        if mode not in FlextConstants.Dispatcher.VALID_HANDLER_MODES:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
-                FlextConstants.Dispatcher.ERROR_INVALID_HANDLER_MODE,
+        if mode not in c.Dispatcher.VALID_HANDLER_MODES:
+            return FlextResult[t.GeneralValueType].fail(
+                c.Dispatcher.ERROR_INVALID_HANDLER_MODE,
             )
 
         # Simple registration for basic test compatibility
         if not handler_config:
             # Cast handler_func to HandlerType for assignment
-            handler_func_typed: FlextTypes.HandlerAliases.HandlerType = cast(
-                "FlextTypes.HandlerAliases.HandlerType",
+            handler_func_typed: t.HandlerAliases.HandlerType = cast(
+                "t.HandlerAliases.HandlerType",
                 handler_func,
             )
             # Access __name__ attribute safely - type objects have this attribute
             handler_key = getattr(message_type, "__name__", str(message_type))
             self._handlers[handler_key] = handler_func_typed
-            return FlextResult[FlextTypes.GeneralValueType].ok({
+            return FlextResult[t.GeneralValueType].ok({
                 "status": "registered",
                 "mode": mode,
             })
@@ -2361,8 +2398,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Create handler from function
         # Wrap generic handler_func to match HandlerCallableType signature
         def wrapped_handler(
-            msg: FlextTypes.GeneralValueType,
-        ) -> FlextTypes.GeneralValueType:
+            msg: t.GeneralValueType,
+        ) -> t.GeneralValueType:
             # handler_func is callable, accept any arguments and convert result
             # Cast msg to TMessage for handler_func call
             msg_typed: TMessage = cast("TMessage", msg)
@@ -2372,7 +2409,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                 result_raw,
                 (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
             ):
-                return cast("FlextTypes.GeneralValueType", result_raw)
+                return cast("t.GeneralValueType", result_raw)
             return str(result_raw)
 
         handler_result = self.create_handler_from_function(
@@ -2382,7 +2419,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         )
 
         if handler_result.is_failure:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 f"Handler creation failed: {handler_result.error}",
             )
 
@@ -2390,34 +2427,34 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Cast handler and message_type to GeneralValueType for dict construction
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
-        request: dict[str, FlextTypes.GeneralValueType] = {
-            "handler": cast("FlextTypes.GeneralValueType", handler_result.value),
+        request: dict[str, t.GeneralValueType] = {
+            "handler": cast("t.GeneralValueType", handler_result.value),
             "message_type": message_type_name,
             "handler_mode": mode,
             "handler_config": handler_config,
         }
 
         result = self.register_handler_with_request(
-            cast("FlextTypes.GeneralValueType", request),
+            cast("t.GeneralValueType", request),
         )
         # Cast result from FlextResult[dict[str, GeneralValueType]] to FlextResult[GeneralValueType]
         if result.is_success:
-            return FlextResult[FlextTypes.GeneralValueType].ok(
-                cast("FlextTypes.GeneralValueType", result.value),
+            return FlextResult[t.GeneralValueType].ok(
+                cast("t.GeneralValueType", result.value),
             )
-        return FlextResult[FlextTypes.GeneralValueType].fail(
+        return FlextResult[t.GeneralValueType].fail(
             result.error or "Registration failed",
         )
 
     @staticmethod
     def create_handler_from_function(
-        handler_func: FlextTypes.HandlerAliases.HandlerCallable,
-        _handler_config: FlextTypes.Types.ConfigurationMapping | None = None,
-        mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.HandlerType.COMMAND,
+        handler_func: t.HandlerAliases.HandlerCallable,
+        _handler_config: t.Types.ConfigurationMapping | None = None,
+        mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
     ) -> FlextResult[
         FlextHandlers[
-            FlextTypes.GeneralValueType,
-            FlextTypes.GeneralValueType,
+            t.GeneralValueType,
+            t.GeneralValueType,
         ]
     ]:
         """Create handler from function using FlextHandlers constructor.
@@ -2437,16 +2474,16 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
             class FunctionHandler(
                 FlextHandlers[
-                    FlextTypes.GeneralValueType,
-                    FlextTypes.GeneralValueType,
+                    t.GeneralValueType,
+                    t.GeneralValueType,
                 ],
             ):
                 """Concrete handler implementation for function-based handlers."""
 
                 def handle(  # noqa: PLR6301
                     self,
-                    message: FlextTypes.GeneralValueType,
-                ) -> FlextResult[FlextTypes.GeneralValueType]:
+                    message: t.GeneralValueType,
+                ) -> FlextResult[t.GeneralValueType]:
                     """Handle message by calling the wrapped function.
 
                     Note: self is required for protocol compliance (FlextHandlers),
@@ -2457,7 +2494,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                     if isinstance(result, FlextResult):
                         return result
                     # Wrap non-FlextResult return values
-                    return FlextResult[FlextTypes.GeneralValueType].ok(result)
+                    return FlextResult[t.GeneralValueType].ok(result)
 
             # Create handler config with name and type
             handler_config = FlextModelsCqrs.Handler(
@@ -2468,16 +2505,16 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             handler = FunctionHandler(config=handler_config)
             return FlextResult[
                 FlextHandlers[
-                    FlextTypes.GeneralValueType,
-                    FlextTypes.GeneralValueType,
+                    t.GeneralValueType,
+                    t.GeneralValueType,
                 ]
             ].ok(handler)
 
         except Exception as error:
             return FlextResult[
                 FlextHandlers[
-                    FlextTypes.GeneralValueType,
-                    FlextTypes.GeneralValueType,
+                    t.GeneralValueType,
+                    t.GeneralValueType,
                 ]
             ].fail(
                 f"Handler creation failed: {error}",
@@ -2485,12 +2522,12 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _ensure_handler(
-        handler: FlextTypes.GeneralValueType,
-        mode: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.HandlerType.COMMAND,
+        handler: t.GeneralValueType,
+        mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
     ) -> FlextResult[
         FlextHandlers[
-            FlextTypes.GeneralValueType,
-            FlextTypes.GeneralValueType,
+            t.GeneralValueType,
+            t.GeneralValueType,
         ]
     ]:
         """Ensure handler is a FlextHandlers instance, converting from callable if needed.
@@ -2509,8 +2546,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if isinstance(handler, FlextHandlers):
             return FlextResult[
                 FlextHandlers[
-                    FlextTypes.GeneralValueType,
-                    FlextTypes.GeneralValueType,
+                    t.GeneralValueType,
+                    t.GeneralValueType,
                 ]
             ].ok(handler)
 
@@ -2524,8 +2561,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Invalid handler type
         return FlextResult[
             FlextHandlers[
-                FlextTypes.GeneralValueType,
-                FlextTypes.GeneralValueType,
+                t.GeneralValueType,
+                t.GeneralValueType,
             ]
         ].fail(
             (
@@ -2539,8 +2576,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     # ------------------------------------------------------------------
     def dispatch_with_request(
         self,
-        request: FlextTypes.GeneralValueType | BaseModel,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        request: t.GeneralValueType | BaseModel,
+    ) -> FlextResult[t.GeneralValueType]:
         """Enhanced dispatch accepting Pydantic models or dicts.
 
         Args:
@@ -2555,7 +2592,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if not isinstance(request, BaseModel) and not FlextRuntime.is_dict_like(
             request,
         ):
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 "Request must be dict or Pydantic model",
             )
         # Normalize request to GeneralValueType dict using ModelConversion helper
@@ -2576,9 +2613,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                 "data": dispatch_result.value,
                 "correlation_id": FlextContext.Correlation.get_correlation_id(),
             }
-            return FlextResult[FlextTypes.GeneralValueType].ok(structured_result)
+            return FlextResult[t.GeneralValueType].ok(structured_result)
         error_msg = dispatch_result.error or "Dispatch failed"
-        return FlextResult[FlextTypes.GeneralValueType].fail(error_msg)
+        return FlextResult[t.GeneralValueType].fail(error_msg)
 
     def _check_pre_dispatch_conditions(
         self,
@@ -2601,7 +2638,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             failures = self._circuit_breaker.get_failure_count(message_type)
             return self.fail(
                 f"Circuit breaker is open for message type '{message_type}'",
-                error_code=FlextConstants.Errors.OPERATION_ERROR,
+                error_code=c.Errors.OPERATION_ERROR,
                 error_data={
                     "message_type": message_type,
                     "failure_count": failures,
@@ -2621,22 +2658,22 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _execute_with_timeout(
         self,
-        execute_func: Callable[[], FlextResult[FlextTypes.GeneralValueType]],
+        execute_func: Callable[[], FlextResult[t.GeneralValueType]],
         timeout_seconds: float,
         timeout_override: int | None = None,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Execute a function with timeout enforcement using executor or direct execution.
 
         Handles timeout errors gracefully. If executor is shutdown, reinitializes it.
         This helper encapsulates the timeout orchestration logic.
 
         Args:
-            execute_func: Callable that returns FlextResult[FlextTypes.GeneralValueType]
+            execute_func: Callable that returns FlextResult[t.GeneralValueType]
             timeout_seconds: Timeout in seconds
             timeout_override: Optional timeout override (forces executor usage)
 
         Returns:
-            FlextResult[FlextTypes.GeneralValueType]: Execution result or timeout error
+            FlextResult[t.GeneralValueType]: Execution result or timeout error
 
         """
         use_executor = (
@@ -2646,8 +2683,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if use_executor:
             executor = self._timeout_enforcer.ensure_executor()
             future: (
-                concurrent.futures.Future[FlextResult[FlextTypes.GeneralValueType]]
-                | None
+                concurrent.futures.Future[FlextResult[t.GeneralValueType]] | None
             ) = None
             try:
                 future = executor.submit(execute_func)
@@ -2765,16 +2801,14 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def dispatch(  # noqa: PLR0913
         self,
-        message_or_type: FlextTypes.GeneralValueType,
-        data: FlextTypes.GeneralValueType | None = None,
+        message_or_type: t.GeneralValueType,
+        data: t.GeneralValueType | None = None,
         *,
-        config: FlextModelsConfig.DispatchConfig
-        | FlextTypes.GeneralValueType
-        | None = None,
-        metadata: FlextTypes.GeneralValueType | None = None,
+        config: FlextModelsConfig.DispatchConfig | t.GeneralValueType | None = None,
+        metadata: t.GeneralValueType | None = None,
         correlation_id: str | None = None,
         timeout_override: int | None = None,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Dispatch message.
 
         Args:
@@ -2790,7 +2824,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         """
         # Detect API pattern - (type, data) vs (object)
-        message: FlextTypes.GeneralValueType
+        message: t.GeneralValueType
         if data is not None or isinstance(message_or_type, str):
             # dispatch("type", data) pattern
             message_type_str = str(message_or_type)
@@ -2798,7 +2832,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             message_raw = message_class()
             # Safe cast: dynamically created class instance is compatible with GeneralValueType
             message = cast(
-                "FlextTypes.GeneralValueType",
+                "t.GeneralValueType",
                 message_raw,
             )
         else:
@@ -2809,7 +2843,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if message is None:
             return self.fail(
                 "Message cannot be None",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                error_code=c.Errors.VALIDATION_ERROR,
             )
 
         # Simple dispatch for registered handlers
@@ -2823,12 +2857,12 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                         f"Handler for {message_type} is not callable",
                     )
                 handler: Callable[
-                    [FlextTypes.GeneralValueType],
-                    FlextTypes.GeneralValueType,
+                    [t.GeneralValueType],
+                    t.GeneralValueType,
                 ] = handler_raw
                 result_raw = handler(message)
                 # Ensure result is GeneralValueType
-                result: FlextTypes.GeneralValueType
+                result: t.GeneralValueType
                 if isinstance(
                     result_raw,
                     (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
@@ -2852,7 +2886,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # DispatchConfig (BaseModel) is compatible with GeneralValueType (includes BaseModel via Mapping)
         return self._execute_dispatch_pipeline(
             message,
-            cast("FlextTypes.GeneralValueType | None", dispatch_config),
+            cast("t.GeneralValueType | None", dispatch_config),
             metadata,
             correlation_id,
             timeout_override,
@@ -2860,7 +2894,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _convert_metadata_to_model(
-        metadata: FlextTypes.GeneralValueType | None,
+        metadata: t.GeneralValueType | None,
     ) -> FlextModelsBase.Metadata | None:
         """Convert metadata from GeneralValueType to FlextModelsBase.Metadata model.
 
@@ -2875,45 +2909,58 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             return None
         if isinstance(metadata, FlextModelsBase.Metadata):
             return metadata
-        if isinstance(metadata, Mapping):
-            # Convert Mapping to Metadata with proper type conversion
-            attributes_dict: dict[str, FlextTypes.MetadataAttributeValue] = {}
-            for k, v in metadata.items():
-                # Convert value to FlextTypes.MetadataAttributeValue compatible type
+        # Use guard and process_dict for concise metadata conversion
+        if u.guard(metadata, Mapping).is_success:
+
+            def convert_metadata_value(
+                v: t.GeneralValueType,
+            ) -> t.MetadataAttributeValue:
                 if isinstance(v, (str, int, float, bool, type(None))):
-                    attributes_dict[str(k)] = v
-                elif isinstance(v, list):
-                    # Convert list elements to compatible types
-                    converted_list: list[str | int | float | bool | None] = [
-                        item
+                    return v
+                if isinstance(v, list):
+                    # Use map() for concise list conversion
+                    return u.map(
+                        v,
+                        lambda item: item
                         if isinstance(item, (str, int, float, bool, type(None)))
-                        else str(item)
-                        for item in v
-                    ]
-                    attributes_dict[str(k)] = converted_list
-                elif isinstance(v, (dict, Mapping)):
-                    # Convert dict to compatible type
-                    converted_dict: dict[str, str | int | float | bool | None] = {
-                        str(k2): v2
+                        else str(item),
+                    )
+                if isinstance(v, (dict, Mapping)):
+                    # Use process() for concise dict conversion (transform values and convert keys)
+                    transform_result = u.process(
+                        v,
+                        lambda _k, v2: v2
                         if isinstance(v2, (str, int, float, bool, type(None)))
-                        else str(v2)
-                        for k2, v2 in v.items()
-                    }
-                    attributes_dict[str(k)] = converted_dict
-                else:
-                    # Convert other types to string
-                    attributes_dict[str(k)] = str(v)
+                        else str(v2),
+                        on_error="collect",
+                    )
+                    if transform_result.is_success:
+                        # Convert keys to strings - u.map preserves keys, so use dict comprehension
+                        # for key transformation (u.map only transforms values)
+                        return {str(k): v for k, v in transform_result.value.items()}
+                    return {}
+                return str(v)
+
+            # Use process() for metadata conversion
+            process_result = u.process(
+                metadata, lambda _k, v: convert_metadata_value(v), on_error="collect"
+            )
+            if process_result.is_success:
+                # Convert keys to strings
+                attributes_dict = {str(k): v for k, v in process_result.value.items()}
+            else:
+                attributes_dict = {}
             return FlextModelsBase.Metadata(attributes=attributes_dict)
         # Convert other types to Metadata via dict with string value
         return FlextModelsBase.Metadata(attributes={"value": str(metadata)})
 
     @staticmethod
     def _build_dispatch_config_from_args(
-        config: FlextModelsConfig.DispatchConfig | FlextTypes.GeneralValueType | None,
-        metadata: FlextTypes.GeneralValueType | None,
+        config: FlextModelsConfig.DispatchConfig | t.GeneralValueType | None,
+        metadata: t.GeneralValueType | None,
         correlation_id: str | None,
         timeout_override: int | None,
-    ) -> FlextModelsConfig.DispatchConfig | FlextTypes.GeneralValueType | None:
+    ) -> FlextModelsConfig.DispatchConfig | t.GeneralValueType | None:
         """Build DispatchConfig from arguments if not provided.
 
         Args:
@@ -2943,8 +2990,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _try_simple_dispatch(
         self,
-        message: FlextTypes.GeneralValueType,
-    ) -> FlextResult[FlextTypes.GeneralValueType] | None:
+        message: t.GeneralValueType,
+    ) -> FlextResult[t.GeneralValueType] | None:
         """Try simple dispatch for registered handlers.
 
         Returns:
@@ -2967,8 +3014,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                     f"Handler for {message_type_key} is not callable",
                 )
             handler: Callable[
-                [FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType,
+                [t.GeneralValueType],
+                t.GeneralValueType,
             ] = handler_raw
             result = handler(message)
             return FlextResult.ok(result)
@@ -2977,12 +3024,12 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _execute_dispatch_pipeline(
         self,
-        message: FlextTypes.GeneralValueType,
-        config: FlextTypes.GeneralValueType | None,
-        metadata: FlextTypes.GeneralValueType | None,
+        message: t.GeneralValueType,
+        config: t.GeneralValueType | None,
+        metadata: t.GeneralValueType | None,
         correlation_id: str | None,
         timeout_override: int | None,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Execute full dispatch pipeline with validation and retry.
 
         Returns:
@@ -2997,7 +3044,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             timeout_override,
         )
         if config_result.is_failure:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 config_result.error or "Config extraction failed",
             )
 
@@ -3008,7 +3055,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             config_result.value,
         )
         if context_result.is_failure:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 context_result.error or "Context preparation failed",
             )
 
@@ -3017,7 +3064,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             context_result.value,
         )
         if validated_result.is_failure:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 validated_result.error or "Pre-dispatch validation failed",
             )
 
@@ -3026,12 +3073,12 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _extract_dispatch_config(
-        config: FlextTypes.GeneralValueType | None,
-        metadata: FlextTypes.GeneralValueType | None,
+        config: t.GeneralValueType | None,
+        metadata: t.GeneralValueType | None,
         correlation_id: str | None,
         timeout_override: int | None,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
-        """Extract and validate dispatch configuration using FlextUtilities."""
+    ) -> FlextResult[t.GeneralValueType]:
+        """Extract and validate dispatch configuration using u."""
         try:
             # Extract config values (config takes priority over individual params)
             if config is not None:
@@ -3040,7 +3087,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                 timeout_override = getattr(config, "timeout_override", timeout_override)
 
             # Validate metadata - NO fallback, explicit validation
-            validated_metadata: FlextTypes.GeneralValueType
+            validated_metadata: t.GeneralValueType
             if metadata is None:
                 validated_metadata = {}
             elif FlextRuntime.is_dict_like(metadata):
@@ -3055,42 +3102,42 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
                     f"Invalid metadata type: {type(metadata).__name__}. "
                     "Expected object | FlextModelsBase.Metadata | None"
                 )
-                return FlextResult[FlextTypes.GeneralValueType].fail(msg)
+                return FlextResult[t.GeneralValueType].fail(msg)
 
-            # Use FlextUtilities for configuration validation
+            # Use u for configuration validation
             # Fast fail: explicit type annotation instead of cast
-            config_dict: FlextTypes.GeneralValueType = {
+            config_dict: t.GeneralValueType = {
                 "metadata": validated_metadata,
                 "correlation_id": correlation_id,
                 "timeout_override": timeout_override,
             }
 
             # Cast config_dict to Mapping[str, GeneralValueType] for validate_dispatch_config
-            config_dict_mapping: Mapping[str, FlextTypes.GeneralValueType] = cast(
-                "Mapping[str, FlextTypes.GeneralValueType]",
+            config_dict_mapping: Mapping[str, t.GeneralValueType] = cast(
+                "Mapping[str, t.GeneralValueType]",
                 config_dict,
             )
-            validation_result = FlextUtilities.Validation.validate_dispatch_config(
+            validation_result = u.Validation.validate_dispatch_config(
                 config_dict_mapping,
             )
             if validation_result.is_failure:
-                return FlextResult[FlextTypes.GeneralValueType].fail(
+                return FlextResult[t.GeneralValueType].fail(
                     f"Invalid dispatch configuration: {validation_result.error}",
                 )
 
-            return FlextResult[FlextTypes.GeneralValueType].ok(config_dict)
+            return FlextResult[t.GeneralValueType].ok(config_dict)
 
         except Exception as e:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 f"Configuration extraction failed: {e}",
             )
 
     def _prepare_dispatch_context(
         self,
-        message: FlextTypes.GeneralValueType,
-        _data: FlextTypes.GeneralValueType | None,
-        dispatch_config: FlextTypes.GeneralValueType,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        message: t.GeneralValueType,
+        _data: t.GeneralValueType | None,
+        dispatch_config: t.GeneralValueType,
+    ) -> FlextResult[t.GeneralValueType]:
         """Prepare dispatch context with message normalization and context propagation.
 
         Fast fail: Only accepts message objects. _data parameter is ignored (kept for signature compatibility).
@@ -3107,77 +3154,75 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
             # Fast fail: dispatch_config must be dict-like for unpacking
             if not FlextRuntime.is_dict_like(dispatch_config):
-                return FlextResult[FlextTypes.GeneralValueType].fail(
+                return FlextResult[t.GeneralValueType].fail(
                     f"dispatch_config must be dict-like, got {type(dispatch_config).__name__}",
                 )
             # dispatch_config is dict-like at this point - convert to dict
-            dispatch_config_dict: dict[str, FlextTypes.GeneralValueType] = dict(
-                dispatch_config
-            )
+            dispatch_config_dict: dict[str, t.GeneralValueType] = dict(dispatch_config)
 
-            context: dict[str, FlextTypes.GeneralValueType] = {
+            context: dict[str, t.GeneralValueType] = {
                 **dispatch_config_dict,
                 "message": message,
                 "message_type": message_type,
                 "dispatch_type": dispatch_type,
             }
 
-            return FlextResult[FlextTypes.GeneralValueType].ok(context)
+            return FlextResult[t.GeneralValueType].ok(context)
 
         except Exception as e:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 f"Context preparation failed: {e}",
             )
 
     def _validate_pre_dispatch_conditions(
         self,
-        context: FlextTypes.GeneralValueType,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+        context: t.GeneralValueType,
+    ) -> FlextResult[t.GeneralValueType]:
         """Validate pre-dispatch conditions (circuit breaker + rate limiting)."""
         # Fast fail: context must be dict-like to access message_type
         if not FlextRuntime.is_dict_like(context):
             msg = f"Context must be dict-like, got {type(context).__name__}"
-            return FlextResult[FlextTypes.GeneralValueType].fail(msg)
+            return FlextResult[t.GeneralValueType].fail(msg)
         # Fast fail: message_type must be str (created by _normalize_dispatch_message)
         # Type narrowing: context is dict-like (checked above), which implements Mapping
         message_type_raw = context.get("message_type")
         if not isinstance(message_type_raw, str):
             msg = f"Invalid message_type in context: {type(message_type_raw).__name__}, expected str"
-            return FlextResult[FlextTypes.GeneralValueType].fail(msg)
+            return FlextResult[t.GeneralValueType].fail(msg)
         message_type: str = message_type_raw
 
         # Check pre-dispatch conditions (circuit breaker + rate limiting)
         conditions_check = self._check_pre_dispatch_conditions(message_type)
         if conditions_check.is_failure:
             error_msg = conditions_check.error or "Pre-dispatch conditions check failed"
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 error_msg,
                 error_code=conditions_check.error_code,
                 error_data=conditions_check.error_data,
             )
 
-        return FlextResult[FlextTypes.GeneralValueType].ok(context)
+        return FlextResult[t.GeneralValueType].ok(context)
 
     def _execute_with_retry_policy(
         self,
-        context: FlextTypes.GeneralValueType,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
-        """Execute dispatch with retry policy using FlextUtilities."""
+        context: t.GeneralValueType,
+    ) -> FlextResult[t.GeneralValueType]:
+        """Execute dispatch with retry policy using u."""
         # Fast fail: context must be dict-like to access values
         if not FlextRuntime.is_dict_like(context):
             msg = f"Context must be dict-like, got {type(context).__name__}"
-            return FlextResult[FlextTypes.GeneralValueType].fail(msg)
+            return FlextResult[t.GeneralValueType].fail(msg)
         # Fast fail: validate context values (created by _prepare_dispatch_context)
         # Type narrowing: context is dict-like (checked above), which implements Mapping
         message = context.get("message")
         message_type_raw = context.get("message_type")
         if not isinstance(message_type_raw, str):
             msg = f"Invalid message_type in context: {type(message_type_raw).__name__}, expected str"
-            return FlextResult[FlextTypes.GeneralValueType].fail(msg)
+            return FlextResult[t.GeneralValueType].fail(msg)
         message_type: str = message_type_raw
 
         metadata_raw = context.get("metadata")
-        metadata: FlextTypes.GeneralValueType | None = (
+        metadata: t.GeneralValueType | None = (
             metadata_raw
             if (metadata_raw is None or FlextRuntime.is_dict_like(metadata_raw))
             else None
@@ -3197,13 +3242,13 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             else None
         )
 
-        # Generate operation ID using FlextUtilities
-        operation_id = FlextUtilities.Generators.generate_operation_id(
+        # Generate operation ID using u
+        operation_id = u.Generators.generate_operation_id(
             message_type,
             message,
         )
 
-        # Use FlextUtilities for retry execution
+        # Use u for retry execution
         options = FlextModelsConfig.ExecuteDispatchAttemptOptions(
             message_type=message_type,
             metadata=metadata,
@@ -3211,7 +3256,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             timeout_override=timeout_override,
             operation_id=operation_id,
         )
-        return FlextUtilities.Reliability.with_retry(
+        return u.Reliability.with_retry(
             lambda: self._execute_dispatch_attempt(message, options),
             max_attempts=self._retry_policy.get_max_attempts(),
             should_retry_func=self._should_retry_on_error,
@@ -3220,9 +3265,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _normalize_dispatch_message(
-        message: FlextTypes.GeneralValueType,
-        _data: FlextTypes.GeneralValueType | None,
-    ) -> tuple[FlextTypes.GeneralValueType, str]:
+        message: t.GeneralValueType,
+        _data: t.GeneralValueType | None,
+    ) -> tuple[t.GeneralValueType, str]:
         """Normalize message and extract message type.
 
         Fast fail: Only accepts message objects. No support for (message_type, data) API.
@@ -3246,21 +3291,21 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _create_message_wrapper(
-        data: FlextTypes.GeneralValueType,
+        data: t.GeneralValueType,
         message_type: str,
-    ) -> FlextTypes.GeneralValueType:
+    ) -> t.GeneralValueType:
         """Create message wrapper for string message types."""
 
         class MessageWrapper(FlextModelsEntity.Value):
             """Temporary message wrapper using FlextModels.Value."""
 
-            data: FlextTypes.GeneralValueType
+            data: t.GeneralValueType
             message_type: str
 
             def model_post_init(
                 self,
                 /,
-                __context: FlextTypes.GeneralValueType | None = None,
+                __context: t.GeneralValueType | None = None,
             ) -> None:
                 """Post-initialization to set class name."""
                 super().model_post_init(__context)
@@ -3272,7 +3317,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         # Cast MessageWrapper to GeneralValueType
         wrapper_instance = MessageWrapper(data=data, message_type=message_type)
-        return cast("FlextTypes.GeneralValueType", wrapper_instance)
+        return cast("t.GeneralValueType", wrapper_instance)
 
     def _get_timeout_seconds(self, timeout_override: int | None) -> float:
         """Get timeout seconds from config or override.
@@ -3294,10 +3339,10 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _create_execute_with_context(
         self,
-        message: FlextTypes.GeneralValueType,
+        message: t.GeneralValueType,
         correlation_id: str | None,
         timeout_override: int | None,
-    ) -> Callable[[], FlextResult[FlextTypes.GeneralValueType]]:
+    ) -> Callable[[], FlextResult[t.GeneralValueType]]:
         """Create execution function with context.
 
         Args:
@@ -3310,13 +3355,13 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         """
 
-        def execute_with_context() -> FlextResult[FlextTypes.GeneralValueType]:
+        def execute_with_context() -> FlextResult[t.GeneralValueType]:
             if correlation_id is not None or timeout_override is not None:
-                context_metadata: dict[str, FlextTypes.GeneralValueType] = {}
+                context_metadata: dict[str, t.GeneralValueType] = {}
                 if timeout_override is not None:
                     context_metadata["timeout_override"] = timeout_override
                 with self._context_scope(
-                    cast("FlextTypes.GeneralValueType", context_metadata),
+                    cast("t.GeneralValueType", context_metadata),
                     correlation_id,
                 ):
                     return self.execute(message)
@@ -3326,9 +3371,9 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _handle_dispatch_result(
         self,
-        dispatch_result: FlextResult[FlextTypes.GeneralValueType],
+        dispatch_result: FlextResult[t.GeneralValueType],
         message_type: str,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Handle dispatch result with circuit breaker tracking.
 
         Args:
@@ -3336,7 +3381,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
             message_type: Message type for circuit breaker
 
         Returns:
-            FlextResult[FlextTypes.GeneralValueType]: Processed result
+            FlextResult[t.GeneralValueType]: Processed result
 
         Raises:
             FlextExceptions.OperationError: If result is failure but error is None
@@ -3355,22 +3400,28 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     def _execute_dispatch_attempt(
         self,
-        message: FlextTypes.GeneralValueType,
+        message: t.GeneralValueType,
         options: FlextModelsConfig.ExecuteDispatchAttemptOptions,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Execute a single dispatch attempt with timeout."""
         try:
             # Create structured request
-            if options.metadata and isinstance(options.metadata, Mapping):
-                string_metadata: dict[str, str] = {
-                    str(k): str(v) for k, v in options.metadata.items()
-                }
-                # Convert string_metadata to FlextTypes.MetadataAttributeValue-compatible dict
-                # FlextTypes.MetadataAttributeValue accepts str, so this is safe
-
-                attributes_typed: dict[str, FlextTypes.MetadataAttributeValue] = {
-                    str(k): str(v) for k, v in string_metadata.items()
-                }
+            if options.metadata and u.guard(options.metadata, Mapping).is_success:
+                # Use process() for concise conversion (transform values)
+                transform_result = u.process(
+                    options.metadata,
+                    lambda _k, v: str(v),
+                    on_error="collect",
+                )
+                if transform_result.is_success:
+                    # Convert keys to strings
+                    string_metadata = {
+                        str(k): v for k, v in transform_result.value.items()
+                    }
+                else:
+                    string_metadata = {}
+                # Convert string_metadata to t.MetadataAttributeValue-compatible dict
+                attributes_typed: dict[str, t.MetadataAttributeValue] = string_metadata
                 _ = FlextModelsBase.Metadata(attributes=attributes_typed)
 
             timeout_seconds = self._get_timeout_seconds(options.timeout_override)
@@ -3401,8 +3452,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     # ------------------------------------------------------------------
     @staticmethod
     def _normalize_context_metadata(
-        metadata: FlextTypes.GeneralValueType | None,
-    ) -> dict[str, FlextTypes.GeneralValueType] | None:
+        metadata: t.GeneralValueType | None,
+    ) -> dict[str, t.GeneralValueType] | None:
         """Normalize metadata payloads to plain dictionaries.
 
         Fast fail: Direct validation without helpers.
@@ -3418,18 +3469,15 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         if raw_metadata is None:
             return None
 
-        # Normalize keys to strings
-        # raw_metadata is Mapping[str, GeneralValueType], convert to dict
-        normalized: dict[str, FlextTypes.GeneralValueType] = {
-            str(key): value for key, value in raw_metadata.items()
-        }
+        # Use process() for concise key normalization - convert keys to strings
+        normalized = {str(k): v for k, v in raw_metadata.items()}
 
-        return cast("dict[str, FlextTypes.GeneralValueType] | None", normalized)
+        return cast("dict[str, t.GeneralValueType] | None", normalized)
 
     @staticmethod
     def _extract_metadata_mapping(
-        metadata: FlextTypes.GeneralValueType,
-    ) -> Mapping[str, FlextTypes.GeneralValueType] | None:
+        metadata: t.GeneralValueType,
+    ) -> Mapping[str, t.GeneralValueType] | None:
         """Extract metadata as Mapping from various types.
 
         Fast fail: Direct validation without helpers.
@@ -3466,14 +3514,16 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     @staticmethod
     def _extract_from_flext_metadata(
         metadata: FlextModelsBase.Metadata,
-    ) -> Mapping[str, FlextTypes.GeneralValueType] | None:
+    ) -> Mapping[str, t.GeneralValueType] | None:
         """Extract metadata mapping from FlextModelsBase.Metadata."""
         attributes = metadata.attributes
-        # metadata.attributes is dict[str, FlextTypes.MetadataAttributeValue]
-        # FlextTypes.MetadataAttributeValue is compatible with GeneralValueType (subtype)
-        # Safe cast: all FlextTypes.MetadataAttributeValue values are valid GeneralValueType
-        if attributes and len(attributes) > 0:
-            return cast("Mapping[str, FlextTypes.GeneralValueType]", attributes)
+        # metadata.attributes is dict[str, t.MetadataAttributeValue]
+        # t.MetadataAttributeValue is compatible with GeneralValueType (subtype)
+        # Safe cast: all t.MetadataAttributeValue values are valid GeneralValueType
+        # Use guard() with lambda for concise non-empty validation
+        non_empty_check = lambda v: len(v) > 0  # noqa: E731
+        if attributes and not u.guard(attributes, non_empty_check, return_value=True):
+            return cast("Mapping[str, t.GeneralValueType]", attributes)
 
         # Use model directly - Pydantic v2 supports direct attribute access
         # Fast fail: model_dump() must succeed for valid Pydantic models
@@ -3503,8 +3553,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
     @staticmethod
     def _extract_from_object_attributes(
-        metadata: FlextTypes.GeneralValueType,
-    ) -> Mapping[str, FlextTypes.GeneralValueType] | None:
+        metadata: t.GeneralValueType,
+    ) -> Mapping[str, t.GeneralValueType] | None:
         """Extract metadata mapping from object's attributes."""
         attributes_value = getattr(metadata, "attributes", None)
         if isinstance(attributes_value, Mapping) and attributes_value:
@@ -3523,7 +3573,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
             # Fast fail: dumped must be dict (Pydantic guarantees this)
             # Cast to GeneralValueType for is_dict_like check
-            dumped_as_general = cast("FlextTypes.GeneralValueType", dumped)
+            dumped_as_general = cast("t.GeneralValueType", dumped)
             if not FlextRuntime.is_dict_like(dumped_as_general):
                 # Type checker may think this is unreachable, but it's reachable at runtime
                 msg = (
@@ -3539,7 +3589,7 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     @contextmanager
     def _context_scope(
         self,
-        metadata: FlextTypes.GeneralValueType | None = None,
+        metadata: t.GeneralValueType | None = None,
         correlation_id: str | None = None,
     ) -> Generator[None]:
         """Manage execution context with optional metadata and correlation ID.
@@ -3573,8 +3623,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
         # Set metadata if provided
         if metadata:
             # Cast metadata to dict[str, GeneralValueType] | None for set()
-            metadata_dict: dict[str, FlextTypes.GeneralValueType] | None = (
-                cast("dict[str, FlextTypes.GeneralValueType] | None", metadata)
+            metadata_dict: dict[str, t.GeneralValueType] | None = (
+                cast("dict[str, t.GeneralValueType] | None", metadata)
                 if FlextRuntime.is_dict_like(metadata)
                 else None
             )
@@ -3630,8 +3680,8 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
     def dispatch_batch(
         self,
         _message_type: str,
-        messages: list[FlextTypes.GeneralValueType],
-    ) -> list[FlextResult[FlextTypes.GeneralValueType]]:
+        messages: list[t.GeneralValueType],
+    ) -> list[FlextResult[t.GeneralValueType]]:
         """Dispatch multiple messages in batch.
 
         Args:
@@ -3643,11 +3693,12 @@ class FlextDispatcher(FlextMixins):  # noqa: PLR0904
 
         """
         # Dispatch each message - message_type is extracted from message object
-        return [self.dispatch(msg) for msg in messages]
+        # Use u.map for concise batch processing
+        return list(u.map(messages, self.dispatch))
 
     def get_performance_metrics(
         self,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+    ) -> dict[str, t.GeneralValueType]:
         """Get performance metrics for the dispatcher.
 
         Returns:

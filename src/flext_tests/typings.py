@@ -1,6 +1,6 @@
 """Type system foundation for FLEXT tests.
 
-Provides FlextTestsTypings, extending FlextTypes with test-specific type definitions
+Provides FlextTestsTypings, extending t with test-specific type definitions
 for Docker operations, container management, and test infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -22,10 +22,10 @@ TTestService = TypeVar("TTestService")
 
 
 class FlextTestsTypings:
-    """Type system foundation for FLEXT tests - extends FlextTypes.
+    """Type system foundation for FLEXT tests - extends t.
 
-    Architecture: Extends FlextTypes with test-specific type aliases and definitions.
-    All base types from FlextTypes are available through direct reference.
+    Architecture: Extends t with test-specific type aliases and definitions.
+    All base types from t are available through direct reference.
     Uses specific, directed types instead of GeneralValueType where possible.
     """
 

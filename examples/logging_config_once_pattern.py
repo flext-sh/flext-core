@@ -10,13 +10,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextService, FlextTypes
+from flext_core import FlextResult, FlextService, t
 
 
-class DatabaseService(FlextService[dict[str, FlextTypes.GeneralValueType]]):
+class DatabaseService(FlextService[dict[str, t.GeneralValueType]]):
     """Example service showing config log-once pattern."""
 
-    db_config: dict[str, FlextTypes.GeneralValueType]
+    db_config: dict[str, t.GeneralValueType]
 
     def model_post_init(self, /, __context: object) -> None:
         """Post-initialization hook.
@@ -33,9 +33,7 @@ class DatabaseService(FlextService[dict[str, FlextTypes.GeneralValueType]]):
         # ❌ WRONG: DO NOT pass config to _with_operation_context
         # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
 
-    def execute(
-        self, **_kwargs: object
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Execute database operations.
 
         Returns:
@@ -53,14 +51,12 @@ class DatabaseService(FlextService[dict[str, FlextTypes.GeneralValueType]]):
         self.logger.info("Executing database query")
 
         # Simulate query
-        results: dict[str, FlextTypes.GeneralValueType] = {
-            "users": [{"id": 1, "name": "Alice"}]
-        }
+        results: dict[str, t.GeneralValueType] = {"users": [{"id": 1, "name": "Alice"}]}
 
-        return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(results)
+        return FlextResult[dict[str, t.GeneralValueType]].ok(results)
 
 
-class MigrationService(FlextService[dict[str, FlextTypes.GeneralValueType]]):
+class MigrationService(FlextService[dict[str, t.GeneralValueType]]):
     """Example migration service with config log-once pattern."""
 
     def __init__(self, input_dir: str, output_dir: str, sync: bool) -> None:
@@ -75,7 +71,7 @@ class MigrationService(FlextService[dict[str, FlextTypes.GeneralValueType]]):
         super().__init__()
 
         # Build config dict
-        config: dict[str, FlextTypes.GeneralValueType] = {
+        config: dict[str, t.GeneralValueType] = {
             "input_dir": input_dir,
             "output_dir": output_dir,
             "sync": sync,
@@ -86,9 +82,7 @@ class MigrationService(FlextService[dict[str, FlextTypes.GeneralValueType]]):
         # ✅ CORRECT: Log config ONCE at initialization
         self._log_config_once(config, message="Migration configuration loaded")
 
-    def execute(
-        self, **_kwargs: object
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    def execute(self, **_kwargs: object) -> FlextResult[dict[str, t.GeneralValueType]]:
         """Execute migration.
 
         Returns:
@@ -110,7 +104,7 @@ class MigrationService(FlextService[dict[str, FlextTypes.GeneralValueType]]):
         self.logger.info("Processing batch 2 of 10")
         # Config does NOT repeat in these logs!
 
-        return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok({
+        return FlextResult[dict[str, t.GeneralValueType]].ok({
             "migrated": 1000,
             "failed": 0,
         })
@@ -119,7 +113,7 @@ class MigrationService(FlextService[dict[str, FlextTypes.GeneralValueType]]):
 def main() -> None:
     """Demonstrate config log-once pattern."""
     print("=== Example 1: Database Service ===")
-    db_config: dict[str, FlextTypes.GeneralValueType] = {
+    db_config: dict[str, t.GeneralValueType] = {
         "host": "localhost",
         "port": 5432,
         "database": "mydb",

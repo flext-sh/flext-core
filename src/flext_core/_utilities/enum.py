@@ -1,4 +1,4 @@
-"""Utilities module - FlextUtilitiesEnum.
+"""Utilities module - FlextEnum.
 
 Extracted from flext_core.utilities for better modularity.
 
@@ -13,10 +13,10 @@ from enum import StrEnum
 from typing import ClassVar, TypeGuard
 
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
-class FlextUtilitiesEnum:
+class FlextEnum:
     """Utilities for working with StrEnum in a type-safe way.
 
     PHILOSOPHY:
@@ -38,12 +38,12 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def is_member[E: StrEnum](
-        enum_cls: type[E], value: FlextTypes.GeneralValueType
+        enum_cls: type[E], value: t.GeneralValueType
     ) -> TypeGuard[E]:
         """Generic TypeGuard for any StrEnum.
 
         Example:
-             if FlextUtilitiesEnum.is_member(Status, value):
+             if uEnum.is_member(Status, value):
                  # value: Status (narrowed)
                  process_status(value)
 
@@ -60,14 +60,14 @@ class FlextUtilitiesEnum:
     def is_subset[E: StrEnum](
         enum_cls: type[E],
         valid_members: frozenset[E],
-        value: FlextTypes.GeneralValueType,
+        value: t.GeneralValueType,
     ) -> TypeGuard[E]:
         """TypeGuard for subset of a StrEnum.
 
         Example:
              ACTIVE_STATES = frozenset({Status.ACTIVE, Status.PENDING})
 
-             if FlextUtilitiesEnum.is_subset(Status, ACTIVE_STATES, value):
+             if uEnum.is_subset(Status, ACTIVE_STATES, value):
                  # value: Status (narrowed to subset)
                  process_active(value)
 
@@ -91,7 +91,7 @@ class FlextUtilitiesEnum:
         """Convert string to StrEnum with FlextResult.
 
         Example:
-             result = FlextUtilitiesEnum.parse(Status, "active")
+             result = uEnum.parse(Status, "active")
              if result.is_success:
                  status: Status = result.value
 
@@ -118,7 +118,7 @@ class FlextUtilitiesEnum:
         """Convert with fallback to default (never fails).
 
         Example:
-             status = FlextUtilitiesEnum.parse_or_default(
+             status = uEnum.parse_or_default(
                  Status, user_input, Status.PENDING
              )
 
@@ -139,7 +139,7 @@ class FlextUtilitiesEnum:
     @staticmethod
     def coerce_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[FlextTypes.FlexibleValue], E]:
+    ) -> Callable[[t.FlexibleValue], E]:
         """Create BeforeValidator for automatic coercion in Pydantic.
 
         RECOMMENDED PATTERN for Pydantic fields:
@@ -151,7 +151,7 @@ class FlextUtilitiesEnum:
              # Create the annotated type once
              CoercedStatus = Annotated[
                  Status,
-                 BeforeValidator(FlextUtilitiesEnum.coerce_validator(Status))
+                 BeforeValidator(uEnum.coerce_validator(Status))
              ]
 
              class MyModel(BaseModel):
@@ -159,7 +159,7 @@ class FlextUtilitiesEnum:
 
         """
 
-        def _coerce(value: FlextTypes.FlexibleValue) -> E:
+        def _coerce(value: t.FlexibleValue) -> E:
             if isinstance(value, enum_cls):
                 return value
             if isinstance(value, str):
@@ -176,7 +176,7 @@ class FlextUtilitiesEnum:
     @staticmethod
     def coerce_by_name_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[FlextTypes.FlexibleValue], E]:
+    ) -> Callable[[t.FlexibleValue], E]:
         """BeforeValidator that accepts name OR value of enum.
 
         Accepts:
@@ -187,12 +187,12 @@ class FlextUtilitiesEnum:
         Example:
              StatusByName = Annotated[
                  Status,
-                 BeforeValidator(FlextUtilitiesEnum.coerce_by_name_validator(Status))
+                 BeforeValidator(uEnum.coerce_by_name_validator(Status))
              ]
 
         """
 
-        def _coerce(value: FlextTypes.FlexibleValue) -> E:
+        def _coerce(value: t.FlexibleValue) -> E:
             if isinstance(value, enum_cls):
                 return value
             if isinstance(value, str):
@@ -229,8 +229,8 @@ class FlextUtilitiesEnum:
         important for set operations and identity checks in audit trails.
         """
         # Check cache first
-        if enum_cls in FlextUtilitiesEnum._values_cache:
-            return FlextUtilitiesEnum._values_cache[enum_cls]
+        if enum_cls in FlextEnum._values_cache:
+            return FlextEnum._values_cache[enum_cls]
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
         # Use getattr for runtime safety, but type checker knows StrEnum has __members__
@@ -238,7 +238,7 @@ class FlextUtilitiesEnum:
         result = frozenset(m.value for m in members_dict.values())
 
         # Cache result
-        FlextUtilitiesEnum._values_cache[enum_cls] = result
+        FlextEnum._values_cache[enum_cls] = result
         return result
 
     @staticmethod
@@ -252,15 +252,15 @@ class FlextUtilitiesEnum:
         Audit Implication: Cached results ensure consistent identity across calls.
         """
         # Check cache first
-        if enum_cls in FlextUtilitiesEnum._names_cache:
-            return FlextUtilitiesEnum._names_cache[enum_cls]
+        if enum_cls in FlextEnum._names_cache:
+            return FlextEnum._names_cache[enum_cls]
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
         members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
         result = frozenset(members_dict.keys())
 
         # Cache result
-        FlextUtilitiesEnum._names_cache[enum_cls] = result
+        FlextEnum._names_cache[enum_cls] = result
         return result
 
     @staticmethod
@@ -274,13 +274,21 @@ class FlextUtilitiesEnum:
         Audit Implication: Cached results ensure consistent identity across calls.
         """
         # Check cache first
-        if enum_cls in FlextUtilitiesEnum._members_cache:
-            return FlextUtilitiesEnum._members_cache[enum_cls]  # type: ignore[return-value]
+        if enum_cls in FlextEnum._members_cache:
+            return FlextEnum._members_cache[enum_cls]  # type: ignore[return-value]
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
         members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
         result = frozenset(members_dict.values())
 
         # Cache result
-        FlextUtilitiesEnum._members_cache[enum_cls] = result  # type: ignore[assignment]
+        FlextEnum._members_cache[enum_cls] = result  # type: ignore[assignment]
         return result
+
+
+uEnum = FlextEnum  # noqa: N816
+
+__all__ = [
+    "FlextEnum",
+    "uEnum",
+]

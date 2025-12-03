@@ -20,7 +20,7 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
-    FlextTypes,
+    t,
 )
 
 # ═══════════════════════════════════════════════════════════════════
@@ -28,12 +28,12 @@ from flext_core import (
 # ═══════════════════════════════════════════════════════════════════
 
 
-class DecoratorsService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
+class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
     """Service demonstrating FlextDecorators comprehensive features."""
 
     def execute(
         self,
-    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Execute decorators demonstrations."""
         print("Starting decorators demonstration")
 
@@ -44,7 +44,7 @@ class DecoratorsService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
             self._demonstrate_with_context()
             self._demonstrate_combined()
 
-            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok({
+            return FlextResult[t.Types.ServiceMetadataMapping].ok({
                 "decorators_demonstrated": [
                     "inject",
                     "log_operation",
@@ -64,7 +64,7 @@ class DecoratorsService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Decorators demonstration failed: {e}"
-            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.Types.ServiceMetadataMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_inject() -> None:
@@ -78,10 +78,7 @@ class DecoratorsService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
         # Cast to container.register() compatible type for type checker
 
         logger_typed: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | Callable[..., FlextTypes.GeneralValueType]
-            | object
+            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
         ) = logger
         container.register("logger", logger_typed)
 
@@ -160,10 +157,7 @@ class DecoratorsService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
         # Cast to container.register() compatible type for type checker
 
         logger_typed: (
-            FlextTypes.GeneralValueType
-            | BaseModel
-            | Callable[..., FlextTypes.GeneralValueType]
-            | object
+            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
         ) = logger
         container.register("logger", logger_typed)
 

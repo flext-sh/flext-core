@@ -24,7 +24,7 @@ from flext_core import (
     FlextConstants,
     FlextResult,
     FlextService,
-    FlextTypes,
+    t,
 )
 
 
@@ -35,7 +35,7 @@ class AppConfig(FlextConfig):
     and type-safe configuration management.
     """
 
-    database_url: FlextTypes.Example.DatabaseUrl = Field(
+    database_url: t.Example.DatabaseUrl = Field(
         default=FlextConstants.Example.DEFAULT_DATABASE_URL,
         description="Database connection URL",
     )
@@ -45,7 +45,7 @@ class AppConfig(FlextConfig):
         le=FlextConstants.Performance.MAX_DB_POOL_SIZE,
         description="Database connection pool size",
     )
-    api_timeout: FlextTypes.Example.TimeoutSeconds = Field(
+    api_timeout: t.Example.TimeoutSeconds = Field(
         default=FlextConstants.Example.DEFAULT_API_TIMEOUT,
     )
     api_host: str = Field(
@@ -54,7 +54,7 @@ class AppConfig(FlextConfig):
         max_length=FlextConstants.Network.MAX_HOSTNAME_LENGTH,
         description="API server hostname",
     )
-    api_port: FlextTypes.Example.PortNumber = Field(
+    api_port: t.Example.PortNumber = Field(
         default=FlextConstants.Example.DEFAULT_API_PORT,
         description="API server port number",
     )
@@ -62,7 +62,7 @@ class AppConfig(FlextConfig):
         default=FlextConstants.Example.DEFAULT_DEBUG_MODE,
         description="Enable debug mode",
     )
-    max_workers: FlextTypes.Example.WorkerCount = Field(
+    max_workers: t.Example.WorkerCount = Field(
         default=FlextConstants.Example.DEFAULT_MAX_WORKERS,
         description="Maximum number of worker threads",
     )
@@ -76,7 +76,7 @@ class AppConfig(FlextConfig):
         le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
         description="Cache time-to-live in seconds",
     )
-    worker_timeout: FlextTypes.Example.TimeoutSeconds = Field(
+    worker_timeout: t.Example.TimeoutSeconds = Field(
         default=FlextConstants.Example.DEFAULT_WORKER_TIMEOUT,
         description="Worker operation timeout",
     )
@@ -88,14 +88,14 @@ class AppConfig(FlextConfig):
     )
 
 
-class ConfigManagementService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
+class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
     """Service demonstrating advanced FlextConfig patterns using railway-oriented programming.
 
     Uses functional composition, error handling chains, and type-safe configuration
     management with Python 3.13+ advanced patterns.
     """
 
-    def execute(self) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Execute comprehensive configuration demonstrations using railway pattern."""
         return (
             self._log_start()
@@ -126,9 +126,9 @@ class ConfigManagementService(FlextService[FlextTypes.Types.ServiceMetadataMappi
     @staticmethod
     def _create_success_metadata(
         patterns: tuple[str, ...],
-    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Create success metadata from demonstrated patterns."""
-        return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok({
+        return FlextResult[t.Types.ServiceMetadataMapping].ok({
             "patterns_demonstrated": list(patterns),
             "config_features": [
                 "pydantic_settings",
@@ -148,11 +148,11 @@ class ConfigManagementService(FlextService[FlextTypes.Types.ServiceMetadataMappi
     @staticmethod
     def _handle_execution_error(
         error: str,
-    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Handle execution errors with proper logging."""
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
-        return FlextResult[FlextTypes.Types.ServiceMetadataMapping].fail(
+        return FlextResult[t.Types.ServiceMetadataMapping].fail(
             error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
         )
 
@@ -342,13 +342,13 @@ def main() -> FlextResult[bool]:
         result = demonstrate_file_config()
         return FlextResult[bool].ok(result.is_success)
 
-    def run_service_demo() -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    def run_service_demo() -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Run service-based configuration demonstration."""
         service = ConfigManagementService()
         return service.execute()
 
     def display_results(
-        metadata: FlextTypes.Types.ServiceMetadataMapping,
+        metadata: t.Types.ServiceMetadataMapping,
     ) -> FlextResult[bool]:
         """Display demonstration results."""
         patterns = metadata.get("patterns_demonstrated", [])

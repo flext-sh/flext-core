@@ -19,22 +19,22 @@ from pydantic import Field, computed_field
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
-from flext_core.constants import FlextConstants
+from flext_core.constants import c
 from flext_core.dispatcher import FlextDispatcher
-from flext_core.handlers import FlextHandlers
-from flext_core.mixins import FlextMixins
+from flext_core.handlers import h
+from flext_core.mixins import x
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
-class FlextRegistry(FlextMixins):
+class FlextRegistry(x):
     """Application-layer registry for CQRS handlers.
 
     The registry pairs message types with handlers, enforces idempotent
     registration, and exposes batch operations that return ``FlextResult``
-    summaries. It satisfies ``FlextProtocols.HandlerRegistry`` through
+    summaries. It satisfies ``p.HandlerRegistry`` through
     structural typing and integrates directly with ``FlextDispatcher``.
     """
 
@@ -66,9 +66,9 @@ class FlextRegistry(FlextMixins):
             ...     registered=[
             ...         FlextModelsHandler.RegistrationDetails(
             ...             registration_id="reg-001",
-            ...             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+            ...             handler_mode=c.Cqrs.HandlerType.COMMAND,
             ...             timestamp="2025-01-01T00:00:00Z",
-            ...             status=FlextConstants.Cqrs.CommonStatus.RUNNING,
+            ...             status=c.Cqrs.CommonStatus.RUNNING,
             ...         )
             ...     ],
             ...     skipped=["CreateUserCommand"],
@@ -202,37 +202,48 @@ class FlextRegistry(FlextMixins):
 
     @staticmethod
     def _safe_get_handler_mode(
-        value: FlextTypes.GeneralValueType,
-    ) -> FlextConstants.Cqrs.HandlerType:
+        value: t.GeneralValueType,
+    ) -> c.Cqrs.HandlerType:
         """Safely extract and validate handler mode from GeneralValueType value."""
-        # Use isinstance check first - HandlerType StrEnum values are compatible
-        if isinstance(value, FlextConstants.Cqrs.HandlerType):
-            return value
-        if value == FlextConstants.Cqrs.HandlerType.QUERY:
-            return FlextConstants.Cqrs.HandlerType.QUERY
-        if value == FlextConstants.Cqrs.HandlerType.COMMAND:
-            return FlextConstants.Cqrs.HandlerType.COMMAND
-        # Default to command for invalid values
-        return FlextConstants.Cqrs.HandlerType.COMMAND
+        # Use u.parse() for cleaner enum parsing
+        parse_result = u.parse(
+            value,
+            c.Cqrs.HandlerType,
+            default=c.Cqrs.HandlerType.COMMAND,
+            case_insensitive=True,
+        )
+        return (
+            parse_result.value
+            if parse_result.is_success
+            else c.Cqrs.HandlerType.COMMAND
+        )
 
     @staticmethod
     def _safe_get_status(
-        value: FlextTypes.GeneralValueType,
-    ) -> FlextConstants.Cqrs.CommonStatus:
+        value: t.GeneralValueType,
+    ) -> c.Cqrs.CommonStatus:
         """Safely extract and validate status from GeneralValueType value."""
-        # Use isinstance check first - CommonStatus StrEnum values are compatible
-        if isinstance(value, FlextConstants.Cqrs.CommonStatus):
-            return value
-        if value == FlextConstants.Cqrs.RegistrationStatus.ACTIVE:
-            return FlextConstants.Cqrs.CommonStatus.RUNNING
-        if value == FlextConstants.Cqrs.RegistrationStatus.INACTIVE:
-            return FlextConstants.Cqrs.CommonStatus.FAILED
-        # Default to running for invalid values
-        return FlextConstants.Cqrs.CommonStatus.RUNNING
+        # Handle special case: RegistrationStatus.ACTIVE -> CommonStatus.RUNNING
+        if value == c.Cqrs.RegistrationStatus.ACTIVE:
+            return c.Cqrs.CommonStatus.RUNNING
+        if value == c.Cqrs.RegistrationStatus.INACTIVE:
+            return c.Cqrs.CommonStatus.FAILED
+        # Use u.parse() for cleaner enum parsing
+        parse_result = u.parse(
+            value,
+            c.Cqrs.CommonStatus,
+            default=c.Cqrs.CommonStatus.RUNNING,
+            case_insensitive=True,
+        )
+        return (
+            parse_result.value
+            if parse_result.is_success
+            else c.Cqrs.CommonStatus.RUNNING
+        )
 
     def _create_registration_details(
         self,
-        reg_data: Mapping[str, FlextTypes.GeneralValueType],
+        reg_data: Mapping[str, t.GeneralValueType],
         key: str,
     ) -> FlextModelsHandler.RegistrationDetails:
         """Create RegistrationDetails from registration data (DRY helper).
@@ -248,26 +259,49 @@ class FlextRegistry(FlextMixins):
             RegistrationDetails: Validated registration details model
 
         """
+        # Extract values using u.extract() for cleaner code
+        registration_id_result = u.extract(
+            reg_data, "registration_id", default=key, required=False
+        )
+        handler_mode_result = u.extract(
+            reg_data,
+            "handler_mode",
+            default=c.Dispatcher.HANDLER_MODE_COMMAND,
+            required=False,
+        )
+        timestamp_result = u.extract(reg_data, "timestamp", default="", required=False)
+        status_result = u.extract(
+            reg_data,
+            "status",
+            default=c.Dispatcher.REGISTRATION_STATUS_ACTIVE,
+            required=False,
+        )
+        # Safe value extraction - handle failures gracefully
+        registration_id = (
+            str(registration_id_result.value)
+            if registration_id_result.is_success
+            else key
+        )
+        handler_mode = (
+            handler_mode_result.value
+            if handler_mode_result.is_success
+            else c.Dispatcher.HANDLER_MODE_COMMAND
+        )
+        timestamp = (
+            str(timestamp_result.value)
+            if timestamp_result.is_success and timestamp_result.value
+            else ""
+        )
+        status = (
+            status_result.value
+            if status_result.is_success
+            else c.Dispatcher.REGISTRATION_STATUS_ACTIVE
+        )
         return FlextModelsHandler.RegistrationDetails(
-            registration_id=str(reg_data.get("registration_id", key)),
-            handler_mode=FlextRegistry._safe_get_handler_mode(
-                reg_data.get(
-                    "handler_mode",
-                    FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                ),
-            ),
-            # Fast fail: timestamp must be str or None
-            timestamp=(
-                str(reg_data.get("timestamp"))
-                if reg_data.get("timestamp") is not None
-                else ""
-            ),
-            status=self._safe_get_status(
-                reg_data.get(
-                    "status",
-                    FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-                ),
-            ),
+            registration_id=registration_id,
+            handler_mode=FlextRegistry._safe_get_handler_mode(handler_mode),
+            timestamp=timestamp,
+            status=self._safe_get_status(status),
         )
 
     # ------------------------------------------------------------------
@@ -275,10 +309,7 @@ class FlextRegistry(FlextMixins):
     # ------------------------------------------------------------------
     def register_handler(
         self,
-        handler: (
-            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
-            | None
-        ),
+        handler: (h[t.GeneralValueType, t.GeneralValueType] | None),
     ) -> FlextResult[FlextModelsHandler.RegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -328,9 +359,9 @@ class FlextRegistry(FlextMixins):
             return self.ok(
                 FlextModelsHandler.RegistrationDetails(
                     registration_id=key,
-                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=c.Cqrs.HandlerType.COMMAND,
                     timestamp="",  # Will be set by model if needed
-                    status=FlextConstants.Cqrs.CommonStatus.RUNNING,
+                    status=c.Cqrs.CommonStatus.RUNNING,
                 ),
             )
 
@@ -343,16 +374,16 @@ class FlextRegistry(FlextMixins):
             source="flext-core/src/flext_core/registry.py",
         )
         # register_handler returns FlextResult[dict[str, GeneralValueType]]
-        # register_handler accepts GeneralValueType | BaseModel, but FlextHandlers works via runtime check
-        # Cast handler to GeneralValueType for type compatibility (runtime handles FlextHandlers correctly)
+        # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
+        # Cast handler to GeneralValueType for type compatibility (runtime handles h correctly)
         registration = self._dispatcher.register_handler(
-            cast("FlextTypes.GeneralValueType", handler)
+            cast("t.GeneralValueType", handler)
         )
         if registration.is_success:
             self._registered_keys.add(key)
-            # Extract registration details from dict result
+            # Use get_or_default for concise dict extraction
             reg_dict = registration.value
-            _ = reg_dict.get("handler_name", handler_name)
+            _ = u.get(reg_dict, "handler_name", default=handler_name) or handler_name
             self.logger.info(
                 "Handler registered successfully",
                 operation="register_handler",
@@ -360,42 +391,15 @@ class FlextRegistry(FlextMixins):
                 handler_key=key,
                 source="flext-core/src/flext_core/registry.py",
             )
-            # Convert GeneralValueType to RegistrationDetails
+            # Convert GeneralValueType to RegistrationDetails using helper method
             reg_data = registration.value
-            # Format timestamp without microseconds to match pattern
-            default_timestamp = (
-                FlextUtilities.Generators.generate_iso_timestamp().replace(
+            reg_details = self._create_registration_details(reg_data, key)
+            # Override timestamp with formatted default if not provided
+            if not reg_details.timestamp:
+                reg_details.timestamp = u.Generators.generate_iso_timestamp().replace(
                     "+00:00",
                     "Z",
                 )
-            )
-            # Get timestamp from dispatcher or use default - ensure it matches pattern
-            # Fast fail: timestamp must be str or None
-            timestamp_value = reg_data.get("timestamp")
-            dispatcher_timestamp: str = (
-                "" if timestamp_value is None else str(timestamp_value)
-            )
-            timestamp_value = (
-                default_timestamp
-                if not dispatcher_timestamp
-                else str(dispatcher_timestamp)
-            )
-            reg_details = FlextModelsHandler.RegistrationDetails(
-                registration_id=str(reg_data.get("registration_id", key)),
-                handler_mode=FlextRegistry._safe_get_handler_mode(
-                    reg_data.get(
-                        "handler_mode",
-                        FlextConstants.Dispatcher.HANDLER_MODE_COMMAND,
-                    ),
-                ),
-                timestamp=timestamp_value,
-                status=FlextRegistry._safe_get_status(
-                    reg_data.get(
-                        "status",
-                        FlextConstants.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-                    ),
-                ),
-            )
             return self.ok(reg_details)
 
         error_msg = registration.error or "Unknown error"
@@ -413,9 +417,7 @@ class FlextRegistry(FlextMixins):
 
     def register_handlers(
         self,
-        handlers: Iterable[
-            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
-        ],
+        handlers: Iterable[h[t.GeneralValueType, t.GeneralValueType]],
     ) -> FlextResult[FlextRegistry.Summary]:
         """Register multiple handlers in one shot using railway pattern.
 
@@ -491,9 +493,7 @@ class FlextRegistry(FlextMixins):
 
     def _process_single_handler(
         self,
-        handler: FlextHandlers[
-            FlextTypes.GeneralValueType, FlextTypes.GeneralValueType
-        ],
+        handler: h[t.GeneralValueType, t.GeneralValueType],
         summary: FlextRegistry.Summary,
     ) -> FlextResult[bool]:
         """Process a single handler registration.
@@ -524,9 +524,9 @@ class FlextRegistry(FlextMixins):
             handler_key=key,
             source="flext-core/src/flext_core/registry.py",
         )
-        # register_handler accepts GeneralValueType | BaseModel, but FlextHandlers works via runtime check
+        # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
         registration_result = self._dispatcher.register_handler(
-            cast("FlextTypes.GeneralValueType", handler)
+            cast("t.GeneralValueType", handler)
         )
         if registration_result.is_success:
             # Convert dict result to RegistrationDetails
@@ -536,9 +536,9 @@ class FlextRegistry(FlextMixins):
                 # Fallback: create minimal registration details
                 reg_details = FlextModelsHandler.RegistrationDetails(
                     registration_id=key,
-                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=c.Cqrs.HandlerType.COMMAND,
                     timestamp="",
-                    status=FlextConstants.Cqrs.CommonStatus.RUNNING,
+                    status=c.Cqrs.CommonStatus.RUNNING,
                 )
             self._add_successful_registration(key, reg_details, summary)
             self.logger.debug(
@@ -611,8 +611,8 @@ class FlextRegistry(FlextMixins):
         self,
         bindings: Sequence[
             tuple[
-                type[FlextTypes.GeneralValueType],
-                FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+                type[t.GeneralValueType],
+                h[t.GeneralValueType, t.GeneralValueType],
             ]
         ],
     ) -> FlextResult[FlextRegistry.Summary]:
@@ -639,18 +639,18 @@ class FlextRegistry(FlextMixins):
                 continue
 
             self._registered_keys.add(key)
-            # register_command returns FlextResult[dict[str, GeneralValueType]]
             reg_data = registration.value
-            if isinstance(reg_data, dict):
-                reg_details = self._create_registration_details(reg_data, key)
-            else:
-                # Fallback: create minimal registration details
-                reg_details = FlextModelsHandler.RegistrationDetails(
+            # Use guard with return_value for concise validation
+            reg_details = (
+                self._create_registration_details(reg_data, key)
+                if u.guard(reg_data, dict).is_success
+                else FlextModelsHandler.RegistrationDetails(
                     registration_id=key,
-                    handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+                    handler_mode=c.Cqrs.HandlerType.COMMAND,
                     timestamp="",
-                    status=FlextConstants.Cqrs.CommonStatus.RUNNING,
+                    status=c.Cqrs.CommonStatus.RUNNING,
                 )
+            )
             summary.registered.append(reg_details)
 
         if summary.errors:
@@ -662,16 +662,15 @@ class FlextRegistry(FlextMixins):
     def register_function_map(
         self,
         mapping: Mapping[
-            type[FlextTypes.GeneralValueType],
+            type[t.GeneralValueType],
             (
-                FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+                h[t.GeneralValueType, t.GeneralValueType]
                 | tuple[
-                    FlextTypes.HandlerAliases.HandlerCallable,
-                    FlextTypes.GeneralValueType
-                    | FlextResult[FlextTypes.GeneralValueType],
+                    t.HandlerAliases.HandlerCallable,
+                    t.GeneralValueType | FlextResult[t.GeneralValueType],
                 ]
-                | FlextTypes.GeneralValueType
-                | tuple[FlextTypes.GeneralValueType, ...]
+                | t.GeneralValueType
+                | tuple[t.GeneralValueType, ...]
                 | None
             ),
         ],
@@ -694,24 +693,21 @@ class FlextRegistry(FlextMixins):
                     continue
 
                 # Delegate to specialized helpers based on entry type
-                # Tuple entries must have exactly 2 elements: (handler, config)
-                tuple_entry_size = 2
-                if isinstance(entry, tuple) and len(entry) == tuple_entry_size:
-                    # Type narrowing: verify it's a 2-tuple before passing
-                    # Extract elements and pass to method
-                    handler_elem = entry[0]
-                    config_elem = entry[1]
+                # Use guard() with tuple type and length check
+                tuple_check = lambda v: isinstance(v, tuple) and len(v) == 2  # noqa: E731, PLR2004
+                tuple_result = u.guard(entry, tuple, tuple_check, return_value=True)
+                if tuple_result and isinstance(tuple_result, tuple):
+                    handler_elem, config_elem = tuple_result
                     # Type narrowing: handler_elem should be HandlerCallableType
                     if isinstance(handler_elem, type) or callable(handler_elem):
                         tuple_entry: tuple[
-                            FlextTypes.HandlerAliases.HandlerCallable,
-                            FlextTypes.GeneralValueType
-                            | FlextResult[FlextTypes.GeneralValueType],
+                            t.HandlerAliases.HandlerCallable,
+                            t.GeneralValueType | FlextResult[t.GeneralValueType],
                         ] = (handler_elem, config_elem)
                         result = self._register_tuple_entry(tuple_entry, key)
                     else:
                         result = FlextRegistry._register_other_entry(key)
-                elif isinstance(entry, FlextHandlers):
+                elif u.guard(entry, h).is_success:
                     result = self._register_handler_entry(entry, key)
                 else:
                     result = self._register_other_entry(key)
@@ -736,29 +732,29 @@ class FlextRegistry(FlextMixins):
     def _register_tuple_entry(
         self,
         entry: tuple[
-            FlextTypes.HandlerAliases.HandlerCallable,
-            FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+            t.HandlerAliases.HandlerCallable,
+            t.GeneralValueType | FlextResult[t.GeneralValueType],
         ],
         key: str,
     ) -> FlextResult[FlextModelsHandler.RegistrationDetails]:
         """Register tuple (function, config) entry - DRY helper reduces nesting."""
         handler_func, handler_config = entry
 
-        # Create handler from function
-        # handler_config is GeneralValueType | FlextResult[GeneralValueType], convert to GeneralValueType | None
-        config_dict: FlextTypes.GeneralValueType | None = None
-        if handler_config is not None and isinstance(handler_config, dict):
-            config_dict = handler_config
-            # If it's FlextResult, skip (not supported for config)
+        # Use guard with return_value=True for concise dict validation
+        config_dict = (
+            u.guard(handler_config, dict, return_value=True)
+            if handler_config is not None
+            else None
+        )
         # Cast config_dict to HandlerConfigurationType
-        handler_config_typed: FlextTypes.Types.ConfigurationMapping | None = cast(
-            "FlextTypes.Types.ConfigurationMapping | None",
+        handler_config_typed: t.Types.ConfigurationMapping | None = cast(
+            "t.Types.ConfigurationMapping | None",
             config_dict,
         )
         handler_result = self._dispatcher.create_handler_from_function(
             handler_func,
             handler_config_typed,
-            FlextConstants.Cqrs.HandlerType.COMMAND,
+            c.Cqrs.HandlerType.COMMAND,
         )
         if handler_result.is_failure:
             return FlextResult[FlextModelsHandler.RegistrationDetails].fail(
@@ -767,9 +763,9 @@ class FlextRegistry(FlextMixins):
 
         # Register with dispatcher
         handler = handler_result.value
-        # register_handler accepts GeneralValueType | BaseModel, but FlextHandlers works via runtime check
+        # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
         register_result = self._dispatcher.register_handler(
-            cast("FlextTypes.GeneralValueType", handler)
+            cast("t.GeneralValueType", handler)
         )
         if register_result.is_failure:
             return FlextResult[FlextModelsHandler.RegistrationDetails].fail(
@@ -779,21 +775,21 @@ class FlextRegistry(FlextMixins):
         # Success - create registration details
         reg_details = FlextModelsHandler.RegistrationDetails(
             registration_id=key,
-            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=c.Cqrs.HandlerType.COMMAND,
             timestamp="",
-            status=FlextConstants.Cqrs.CommonStatus.RUNNING,
+            status=c.Cqrs.CommonStatus.RUNNING,
         )
         return FlextResult[FlextModelsHandler.RegistrationDetails].ok(reg_details)
 
     def _register_handler_entry(
         self,
-        entry: FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+        entry: h[t.GeneralValueType, t.GeneralValueType],
         key: str,
     ) -> FlextResult[FlextModelsHandler.RegistrationDetails]:
-        """Register FlextHandlers instance - DRY helper reduces nesting."""
-        # register_handler accepts GeneralValueType | BaseModel, but FlextHandlers works via runtime check
+        """Register h instance - DRY helper reduces nesting."""
+        # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
         register_result = self._dispatcher.register_handler(
-            cast("FlextTypes.GeneralValueType", entry)
+            cast("t.GeneralValueType", entry)
         )
         if register_result.is_failure:
             return FlextResult[FlextModelsHandler.RegistrationDetails].fail(
@@ -803,9 +799,9 @@ class FlextRegistry(FlextMixins):
         # Success - create registration details
         reg_details = FlextModelsHandler.RegistrationDetails(
             registration_id=key,
-            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=c.Cqrs.HandlerType.COMMAND,
             timestamp="",
-            status=FlextConstants.Cqrs.CommonStatus.RUNNING,
+            status=c.Cqrs.CommonStatus.RUNNING,
         )
         return FlextResult[FlextModelsHandler.RegistrationDetails].ok(reg_details)
 
@@ -816,9 +812,9 @@ class FlextRegistry(FlextMixins):
         """Register GeneralValueType or other types - DRY helper reduces nesting."""
         reg_details = FlextModelsHandler.RegistrationDetails(
             registration_id=key,
-            handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+            handler_mode=c.Cqrs.HandlerType.COMMAND,
             timestamp="",
-            status=FlextConstants.Cqrs.CommonStatus.RUNNING,
+            status=c.Cqrs.CommonStatus.RUNNING,
         )
         return FlextResult[FlextModelsHandler.RegistrationDetails].ok(reg_details)
 
@@ -827,21 +823,19 @@ class FlextRegistry(FlextMixins):
     # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
-        handler: FlextHandlers[
-            FlextTypes.GeneralValueType, FlextTypes.GeneralValueType
-        ],
+        handler: h[t.GeneralValueType, t.GeneralValueType],
     ) -> str:
         handler_id = getattr(handler, "handler_id", None)
-        if isinstance(handler_id, str) and handler_id:
-            return handler_id
-        return handler.__class__.__name__
+        return (
+            handler_id
+            if handler_id and u.guard(handler_id, str).is_success
+            else handler.__class__.__name__
+        )
 
     @staticmethod
     def _resolve_binding_key(
-        handler: FlextHandlers[
-            FlextTypes.GeneralValueType, FlextTypes.GeneralValueType
-        ],
-        message_type: type[FlextTypes.GeneralValueType],
+        handler: h[t.GeneralValueType, t.GeneralValueType],
+        message_type: type[t.GeneralValueType],
     ) -> str:
         base_key = FlextRegistry._resolve_handler_key(handler)
         # Handle both type objects and string keys
@@ -854,27 +848,30 @@ class FlextRegistry(FlextMixins):
     @staticmethod
     def _resolve_binding_key_from_entry(
         entry: (
-            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
+            h[t.GeneralValueType, t.GeneralValueType]
             | tuple[
-                FlextTypes.HandlerAliases.HandlerCallable,
-                FlextTypes.GeneralValueType | FlextResult[FlextTypes.GeneralValueType],
+                t.HandlerAliases.HandlerCallable,
+                t.GeneralValueType | FlextResult[t.GeneralValueType],
             ]
-            | FlextTypes.GeneralValueType
-            | tuple[FlextTypes.GeneralValueType, ...]
+            | t.GeneralValueType
+            | tuple[t.GeneralValueType, ...]
             | None
         ),
-        message_type: type[FlextTypes.GeneralValueType],
+        message_type: type[t.GeneralValueType],
     ) -> str:
-        if isinstance(entry, tuple):
-            handler_func = entry[0]
-            handler_name = getattr(handler_func, "__name__", str(handler_func))
+        # Use guard() with tuple type and length check
+        tuple_check = lambda v: isinstance(v, tuple) and len(v) == 2  # noqa: E731, PLR2004
+        tuple_result = u.guard(entry, tuple, tuple_check, return_value=True)
+        if tuple_result and isinstance(tuple_result, tuple):
+            handler_func = tuple_result[0]
+            handler_name = getattr(handler_func, "__name__", None) or str(handler_func)
             # Handle both type objects and string keys
             if hasattr(message_type, "__name__"):
                 type_name = message_type.__name__
             else:
                 type_name = str(message_type)
             return f"{handler_name}::{type_name}"
-        if isinstance(entry, FlextHandlers):
+        if u.guard(entry, h).is_success:
             return FlextRegistry._resolve_binding_key(entry, message_type)
         # Handle GeneralValueType or other types
         return str(entry)
@@ -882,8 +879,8 @@ class FlextRegistry(FlextMixins):
     def register(
         self,
         name: str,
-        service: FlextTypes.GeneralValueType,
-        metadata: FlextTypes.GeneralValueType | FlextModelsBase.Metadata | None = None,
+        service: t.GeneralValueType,
+        metadata: t.GeneralValueType | FlextModelsBase.Metadata | None = None,
     ) -> FlextResult[bool]:
         """Register a service component with optional metadata.
 
@@ -900,14 +897,14 @@ class FlextRegistry(FlextMixins):
 
         """
         # Normalize metadata to dict for internal use
-        validated_metadata: FlextTypes.GeneralValueType | None = None
+        validated_metadata: t.GeneralValueType | None = None
         if metadata is not None:
             # Handle Metadata model first
             if isinstance(metadata, FlextModelsBase.Metadata):
                 validated_metadata = metadata.attributes
             else:
                 # Cast to GeneralValueType for is_dict_like check
-                metadata_as_general = cast("FlextTypes.GeneralValueType", metadata)
+                metadata_as_general = cast("t.GeneralValueType", metadata)
                 if FlextRuntime.is_dict_like(metadata_as_general):
                     # Type guard ensures metadata_as_general is Mapping[str, GeneralValueType]
                     validated_metadata = dict(metadata_as_general.items())
@@ -919,11 +916,12 @@ class FlextRegistry(FlextMixins):
         # Store metadata if provided (for future use)
         if validated_metadata and FlextRuntime.is_dict_like(validated_metadata):
             # Log metadata with service name for observability
-            # Type narrowing: validated_metadata is dict-like, so .keys() is safe
-            metadata_dict = (
-                validated_metadata
-                if isinstance(validated_metadata, dict)
-                else dict(validated_metadata.items())
+            # Use guard with return_value=True and default for concise dict conversion
+            metadata_dict = u.guard(
+                validated_metadata,
+                dict,
+                default=dict(validated_metadata.items()),
+                return_value=True,
             )
             metadata_keys: list[str] = list(metadata_dict.keys())
             self.logger.debug(
@@ -935,7 +933,7 @@ class FlextRegistry(FlextMixins):
                 source="flext-core/src/flext_core/registry.py",
             )
 
-        # Delegate to container (FlextMixins.container returns FlextContainer)
+        # Delegate to container (x.container returns FlextContainer)
         try:
             _ = self.container.with_service(name, service)
             return FlextResult[bool].ok(True)
@@ -949,13 +947,13 @@ class FlextRegistry(FlextMixins):
     def register_item(
         self,
         name: str,
-        item: FlextTypes.GeneralValueType,
+        item: t.GeneralValueType,
     ) -> FlextResult[bool]:
         """Register item (RegistrationTracker protocol)."""
         # Direct implementation without try/except - use FlextResult for error handling
         return self.register(name, item)
 
-    def get_item(self, name: str) -> FlextResult[FlextTypes.GeneralValueType]:
+    def get_item(self, name: str) -> FlextResult[t.GeneralValueType]:
         """Get registered item (RegistrationTracker protocol)."""
         try:
             return self.ok(getattr(self, name))

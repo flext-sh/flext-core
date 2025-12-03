@@ -1,4 +1,4 @@
-"""Comprehensive coverage tests for FlextUtilitiesConfiguration.
+"""Comprehensive coverage tests for uConfiguration.
 
 Module: flext_core._utilities.configuration
 Scope: Configuration parameter access and manipulation utilities
@@ -24,9 +24,9 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._utilities.configuration import FlextUtilitiesConfiguration
+from flext_core._utilities.configuration import uConfiguration
 from flext_core.exceptions import FlextExceptions
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 # Test models using FlextModelsEntity base
@@ -102,45 +102,45 @@ class SingletonWithoutGetGlobalForTest:
 pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 
 
-class TestFlextUtilitiesConfiguration:
-    """Comprehensive tests for FlextUtilitiesConfiguration."""
+class TestuConfiguration:
+    """Comprehensive tests for uConfiguration."""
 
     def test_get_parameter_from_dict(self) -> None:
         """Test get_parameter from dict-like object."""
-        config_dict: dict[str, FlextTypes.GeneralValueType] = {
+        config_dict: dict[str, t.GeneralValueType] = {
             "name": "test",
             "timeout": 60,
             "enabled": True,
         }
 
-        result = FlextUtilitiesConfiguration.get_parameter(config_dict, "name")
+        result = uConfiguration.get_parameter(config_dict, "name")
         assert result == "test"
 
-        result = FlextUtilitiesConfiguration.get_parameter(config_dict, "timeout")
+        result = uConfiguration.get_parameter(config_dict, "timeout")
         assert result == 60
 
-        result = FlextUtilitiesConfiguration.get_parameter(config_dict, "enabled")
+        result = uConfiguration.get_parameter(config_dict, "enabled")
         assert result is True
 
     def test_get_parameter_from_dict_not_found(self) -> None:
         """Test get_parameter raises NotFoundError for missing parameter."""
-        config_dict: dict[str, FlextTypes.GeneralValueType] = {"name": "test"}
+        config_dict: dict[str, t.GeneralValueType] = {"name": "test"}
 
         with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
-            FlextUtilitiesConfiguration.get_parameter(config_dict, "missing")
+            uConfiguration.get_parameter(config_dict, "missing")
         assert "Parameter 'missing' is not defined" in str(exc_info.value)
 
     def test_get_parameter_from_pydantic_model(self) -> None:
         """Test get_parameter from Pydantic model."""
         config = ConfigModelForTest(name="test", timeout=60, enabled=False)
 
-        result = FlextUtilitiesConfiguration.get_parameter(config, "name")
+        result = uConfiguration.get_parameter(config, "name")
         assert result == "test"
 
-        result = FlextUtilitiesConfiguration.get_parameter(config, "timeout")
+        result = uConfiguration.get_parameter(config, "timeout")
         assert result == 60
 
-        result = FlextUtilitiesConfiguration.get_parameter(config, "enabled")
+        result = uConfiguration.get_parameter(config, "enabled")
         assert result is False
 
     def test_get_parameter_from_pydantic_model_not_found(self) -> None:
@@ -148,7 +148,7 @@ class TestFlextUtilitiesConfiguration:
         config = ConfigModelForTest(name="test")
 
         with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
-            FlextUtilitiesConfiguration.get_parameter(config, "missing")
+            uConfiguration.get_parameter(config, "missing")
         assert "Parameter 'missing' is not defined" in str(exc_info.value)
 
     def test_get_parameter_from_pydantic_model_invalid_dump(self) -> None:
@@ -168,7 +168,7 @@ class TestFlextUtilitiesConfiguration:
         # Should fallback to attribute access
         # InvalidModel is compatible at runtime but not statically
         # pyright: ignore[reportArgumentType] - config is compatible at runtime
-        result = FlextUtilitiesConfiguration.get_parameter(config, "value")  # type: ignore[arg-type]
+        result = uConfiguration.get_parameter(config, "value")  # type: ignore[arg-type]
         assert result == "test"
 
     def test_get_parameter_from_attribute_access(self) -> None:
@@ -177,10 +177,10 @@ class TestFlextUtilitiesConfiguration:
 
         # DataclassConfigForTest is compatible at runtime but not statically
         # pyright: ignore[reportArgumentType] - config is compatible at runtime
-        result = FlextUtilitiesConfiguration.get_parameter(config, "name")  # type: ignore[arg-type]
+        result = uConfiguration.get_parameter(config, "name")  # type: ignore[arg-type]
         assert result == "test"
 
-        result = FlextUtilitiesConfiguration.get_parameter(config, "value")  # type: ignore[arg-type]
+        result = uConfiguration.get_parameter(config, "value")  # type: ignore[arg-type]
         assert result == 42
 
     def test_get_parameter_from_attribute_access_not_found(self) -> None:
@@ -190,7 +190,7 @@ class TestFlextUtilitiesConfiguration:
         # Cast dataclass to Any for type checker - method handles dataclasses at runtime
         config_any: Any = config
         with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
-            FlextUtilitiesConfiguration.get_parameter(config_any, "missing")
+            uConfiguration.get_parameter(config_any, "missing")
         assert "Parameter 'missing' is not defined" in str(exc_info.value)
 
     def test_set_parameter_on_pydantic_model_success(self) -> None:
@@ -199,7 +199,7 @@ class TestFlextUtilitiesConfiguration:
 
         # Pydantic v2 models may have validation that prevents direct setattr
         # Try setting timeout - if it fails, it's because Pydantic validates
-        result = FlextUtilitiesConfiguration.set_parameter(config, "timeout", 60)
+        result = uConfiguration.set_parameter(config, "timeout", 60)
         # set_parameter may return False if validation fails or field doesn't exist
         # Check if the value was actually set
         if result:
@@ -210,7 +210,7 @@ class TestFlextUtilitiesConfiguration:
             assert config.timeout == 30  # Original value unchanged
 
         # Test with enabled field (bool, should work)
-        result = FlextUtilitiesConfiguration.set_parameter(config, "enabled", False)
+        result = uConfiguration.set_parameter(config, "enabled", False)
         if result:
             assert config.enabled is False
         else:
@@ -222,11 +222,11 @@ class TestFlextUtilitiesConfiguration:
         config = ConfigModelForTest(name="test", timeout=30)
 
         # Invalid value (negative timeout)
-        result = FlextUtilitiesConfiguration.set_parameter(config, "timeout", -1)
+        result = uConfiguration.set_parameter(config, "timeout", -1)
         assert result is False
 
         # Parameter doesn't exist
-        result = FlextUtilitiesConfiguration.set_parameter(config, "missing", "value")
+        result = uConfiguration.set_parameter(config, "missing", "value")
         assert result is False
 
     def test_set_parameter_on_non_pydantic_object(self) -> None:
@@ -235,19 +235,19 @@ class TestFlextUtilitiesConfiguration:
 
         # Cast dataclass to Any for type checker - method handles dataclasses at runtime
         config_any: Any = config
-        result = FlextUtilitiesConfiguration.set_parameter(config_any, "value", 100)
+        result = uConfiguration.set_parameter(config_any, "value", 100)
         assert result is True
         assert config.value == 100
 
     def test_get_singleton_success(self) -> None:
         """Test get_singleton from singleton class."""
-        result = FlextUtilitiesConfiguration.get_singleton(
+        result = uConfiguration.get_singleton(
             SingletonClassForTest,
             "name",
         )
         assert result == "default"
 
-        result = FlextUtilitiesConfiguration.get_singleton(
+        result = uConfiguration.get_singleton(
             SingletonClassForTest,
             "timeout",
         )
@@ -256,7 +256,7 @@ class TestFlextUtilitiesConfiguration:
     def test_get_singleton_not_found(self) -> None:
         """Test get_singleton raises NotFoundError for missing parameter."""
         with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
-            FlextUtilitiesConfiguration.get_singleton(
+            uConfiguration.get_singleton(
                 SingletonClassForTest,
                 "missing",
             )
@@ -265,7 +265,7 @@ class TestFlextUtilitiesConfiguration:
     def test_get_singleton_no_get_global_instance(self) -> None:
         """Test get_singleton raises ValidationError for class without get_global_instance."""
         with pytest.raises(FlextExceptions.ValidationError) as exc_info:
-            FlextUtilitiesConfiguration.get_singleton(
+            uConfiguration.get_singleton(
                 SingletonWithoutGetGlobalForTest,
                 "value",
             )
@@ -276,7 +276,7 @@ class TestFlextUtilitiesConfiguration:
         instance = SingletonClassForTest.get_global_instance()
         original_timeout = instance.timeout
 
-        result = FlextUtilitiesConfiguration.set_singleton(
+        result = uConfiguration.set_singleton(
             SingletonClassForTest,
             "timeout",
             90,
@@ -290,7 +290,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_set_singleton_no_get_global_instance(self) -> None:
         """Test set_singleton fails for class without get_global_instance."""
-        result = FlextUtilitiesConfiguration.set_singleton(
+        result = uConfiguration.set_singleton(
             SingletonWithoutGetGlobalForTest,
             "value",
             "new_value",
@@ -307,7 +307,7 @@ class TestFlextUtilitiesConfiguration:
 
             get_global_instance = "not callable"
 
-        result = FlextUtilitiesConfiguration.set_singleton(
+        result = uConfiguration.set_singleton(
             BadSingleton,
             "value",
             "test",
@@ -331,7 +331,7 @@ class TestFlextUtilitiesConfiguration:
                     cls._instance = cls()
                 return cls._instance
 
-        result = FlextUtilitiesConfiguration.set_singleton(
+        result = uConfiguration.set_singleton(
             SingletonWithoutModelDump,
             "value",
             "test",
@@ -345,7 +345,7 @@ class TestFlextUtilitiesConfiguration:
         SingletonClassForTest.get_global_instance()
 
         # Try to set invalid parameter
-        result = FlextUtilitiesConfiguration.set_singleton(
+        result = uConfiguration.set_singleton(
             SingletonClassForTest,
             "missing",
             "value",
@@ -356,7 +356,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_validate_config_class_success(self) -> None:
         """Test validate_config_class with valid configuration class."""
-        is_valid, error = FlextUtilitiesConfiguration.validate_config_class(
+        is_valid, error = uConfiguration.validate_config_class(
             ConfigModelForTest,
         )
         assert is_valid is True
@@ -372,7 +372,7 @@ class TestFlextUtilitiesConfiguration:
             def __init__(self) -> None:
                 """Initialize."""
 
-        is_valid, error = FlextUtilitiesConfiguration.validate_config_class(
+        is_valid, error = uConfiguration.validate_config_class(
             ConfigWithoutModelConfig,
         )
         assert is_valid is False
@@ -392,14 +392,14 @@ class TestFlextUtilitiesConfiguration:
                 msg = "Cannot instantiate"
                 raise ValueError(msg)
 
-        is_valid, error = FlextUtilitiesConfiguration.validate_config_class(BadConfig)
+        is_valid, error = uConfiguration.validate_config_class(BadConfig)
         assert is_valid is False
         assert error is not None
         assert "Configuration class validation failed" in error
 
     def test_create_settings_config_minimal(self) -> None:
         """Test create_settings_config with minimal parameters."""
-        config = FlextUtilitiesConfiguration.create_settings_config("MYAPP_")
+        config = uConfiguration.create_settings_config("MYAPP_")
 
         assert config["env_prefix"] == "MYAPP_"
         assert config["env_file"] is None
@@ -410,7 +410,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_create_settings_config_full(self) -> None:
         """Test create_settings_config with all parameters."""
-        config = FlextUtilitiesConfiguration.create_settings_config(
+        config = uConfiguration.create_settings_config(
             "MYAPP_",
             env_file=".env.test",
             env_nested_delimiter="::",
@@ -427,7 +427,7 @@ class TestFlextUtilitiesConfiguration:
         """Test build_options_from_kwargs with explicit options."""
         explicit = OptionsModelForTest(format="xml", indent=4)
 
-        result = FlextUtilitiesConfiguration.build_options_from_kwargs(
+        result = uConfiguration.build_options_from_kwargs(
             model_class=OptionsModelForTest,
             explicit_options=explicit,
             default_factory=OptionsModelForTest,
@@ -442,7 +442,7 @@ class TestFlextUtilitiesConfiguration:
         """Test build_options_from_kwargs with explicit options and kwargs overrides."""
         explicit = OptionsModelForTest(format="xml", indent=4)
 
-        result = FlextUtilitiesConfiguration.build_options_from_kwargs(
+        result = uConfiguration.build_options_from_kwargs(
             model_class=OptionsModelForTest,
             explicit_options=explicit,
             default_factory=OptionsModelForTest,
@@ -457,7 +457,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_build_options_from_kwargs_default_factory(self) -> None:
         """Test build_options_from_kwargs with default factory."""
-        result = FlextUtilitiesConfiguration.build_options_from_kwargs(
+        result = uConfiguration.build_options_from_kwargs(
             model_class=OptionsModelForTest,
             explicit_options=None,
             default_factory=lambda: OptionsModelForTest(format="yaml", indent=2),
@@ -469,7 +469,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_build_options_from_kwargs_default_with_overrides(self) -> None:
         """Test build_options_from_kwargs with default factory and kwargs overrides."""
-        result = FlextUtilitiesConfiguration.build_options_from_kwargs(
+        result = uConfiguration.build_options_from_kwargs(
             model_class=OptionsModelForTest,
             explicit_options=None,
             default_factory=OptionsModelForTest,
@@ -485,7 +485,7 @@ class TestFlextUtilitiesConfiguration:
         """Test build_options_from_kwargs with no kwargs."""
         explicit = OptionsModelForTest(format="json")
 
-        result = FlextUtilitiesConfiguration.build_options_from_kwargs(
+        result = uConfiguration.build_options_from_kwargs(
             model_class=OptionsModelForTest,
             explicit_options=explicit,
             default_factory=OptionsModelForTest,
@@ -497,7 +497,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_build_options_from_kwargs_invalid_kwargs(self) -> None:
         """Test build_options_from_kwargs ignores invalid kwargs."""
-        result = FlextUtilitiesConfiguration.build_options_from_kwargs(
+        result = uConfiguration.build_options_from_kwargs(
             model_class=OptionsModelForTest,
             explicit_options=None,
             default_factory=OptionsModelForTest,
@@ -518,7 +518,7 @@ class TestFlextUtilitiesConfiguration:
 
             value: int = Field(ge=0, le=100)
 
-        result = FlextUtilitiesConfiguration.build_options_from_kwargs(
+        result = uConfiguration.build_options_from_kwargs(
             model_class=StrictOptionsForTest,
             explicit_options=None,
             default_factory=lambda: StrictOptionsForTest(value=50),
@@ -542,7 +542,7 @@ class TestFlextUtilitiesConfiguration:
                 msg = "Unexpected error"
                 raise RuntimeError(msg)
 
-        result = FlextUtilitiesConfiguration.build_options_from_kwargs(
+        result = uConfiguration.build_options_from_kwargs(
             model_class=FailingOptionsForTest,
             explicit_options=FailingOptionsForTest(value="test"),
             default_factory=FailingOptionsForTest,
@@ -555,7 +555,7 @@ class TestFlextUtilitiesConfiguration:
 
     def test_get_parameter_boundary_values(self) -> None:
         """Test get_parameter with boundary values."""
-        config_dict: dict[str, FlextTypes.GeneralValueType] = {
+        config_dict: dict[str, t.GeneralValueType] = {
             "empty_string": "",
             "zero": 0,
             "false": False,
@@ -563,34 +563,27 @@ class TestFlextUtilitiesConfiguration:
             "large_number": 999999,
         }
 
-        assert (
-            FlextUtilitiesConfiguration.get_parameter(config_dict, "empty_string") == ""
-        )
-        assert FlextUtilitiesConfiguration.get_parameter(config_dict, "zero") == 0
-        assert FlextUtilitiesConfiguration.get_parameter(config_dict, "false") is False
-        assert (
-            FlextUtilitiesConfiguration.get_parameter(config_dict, "none_value") is None
-        )
-        assert (
-            FlextUtilitiesConfiguration.get_parameter(config_dict, "large_number")
-            == 999999
-        )
+        assert uConfiguration.get_parameter(config_dict, "empty_string") == ""
+        assert uConfiguration.get_parameter(config_dict, "zero") == 0
+        assert uConfiguration.get_parameter(config_dict, "false") is False
+        assert uConfiguration.get_parameter(config_dict, "none_value") is None
+        assert uConfiguration.get_parameter(config_dict, "large_number") == 999999
 
     def test_set_parameter_boundary_values(self) -> None:
         """Test set_parameter with boundary values."""
         config = ConfigModelForTest(name="test")
 
         # Test with zero
-        result = FlextUtilitiesConfiguration.set_parameter(config, "timeout", 0)
+        result = uConfiguration.set_parameter(config, "timeout", 0)
         assert result is True
         assert config.timeout == 0
 
         # Test with large value
-        result = FlextUtilitiesConfiguration.set_parameter(config, "timeout", 1000)
+        result = uConfiguration.set_parameter(config, "timeout", 1000)
         assert result is True
         assert config.timeout == 1000
 
         # Test with False
-        result = FlextUtilitiesConfiguration.set_parameter(config, "enabled", False)
+        result = uConfiguration.set_parameter(config, "enabled", False)
         assert result is True
         assert config.enabled is False

@@ -23,8 +23,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes, T_Namespace, T_Settings
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import T_Namespace, T_Settings, t
+from flext_core.utilities import u
 
 
 class FlextConfig(BaseSettings):
@@ -33,7 +33,7 @@ class FlextConfig(BaseSettings):
     Architecture: Layer 0.5 (Configuration Foundation)
     Provides enterprise-grade configuration management for the FLEXT ecosystem
     through Pydantic v2 BaseSettings, implementing structural typing via
-    FlextProtocols.Configurable (duck typing - no inheritance required).
+    p.Configurable (duck typing - no inheritance required).
 
     Core Features:
     - Pydantic v2 BaseSettings with type-safe configuration
@@ -60,7 +60,7 @@ class FlextConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix=FlextConstants.Platform.ENV_PREFIX,
         env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
-        env_file=FlextUtilities.Configuration.resolve_env_file(),
+        env_file=u.Configuration.resolve_env_file(),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -93,7 +93,7 @@ class FlextConfig(BaseSettings):
             )
 
         """
-        return FlextUtilities.Configuration.resolve_env_file()
+        return u.Configuration.resolve_env_file()
 
     # Core configuration
     app_name: str = Field(default="flext", description="Application name")
@@ -199,7 +199,7 @@ class FlextConfig(BaseSettings):
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: FlextTypes.GeneralValueType) -> Self:
+    def __new__(cls, **_kwargs: t.GeneralValueType) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -229,7 +229,7 @@ class FlextConfig(BaseSettings):
             if cls in cls._instances:
                 del cls._instances[cls]
 
-    def __init__(self, **kwargs: FlextTypes.GeneralValueType) -> None:
+    def __init__(self, **kwargs: t.GeneralValueType) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -310,7 +310,7 @@ class FlextConfig(BaseSettings):
             members_dict: dict[str, FlextConstants.Settings.LogLevel] = getattr(
                 log_level_enum, "__members__", {}
             )
-            allowed_values = [level.value for level in members_dict.values()]
+            allowed_values = list(u.map(list(members_dict.values()), lambda level: level.value))
             msg = f"Invalid log level: {v}. Must be one of {allowed_values}"
             raise ValueError(msg) from None
 
@@ -381,9 +381,7 @@ class FlextConfig(BaseSettings):
     def validate_override(
         self,
         key: str,
-        _value: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        _value: t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue],
     ) -> bool:
         """Validate if an override is acceptable."""
         # Basic validation - could be extended
@@ -392,9 +390,7 @@ class FlextConfig(BaseSettings):
     def apply_override(
         self,
         key: str,
-        value: FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue],
+        value: t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue],
     ) -> None:
         """Apply a validated configuration override."""
         if self.validate_override(key, value):

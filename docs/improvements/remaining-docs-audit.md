@@ -7,11 +7,13 @@
 ---
 
 ## Key Findings
+
 - Several secondary guides still mention `FlextBus` in verification snippets and import blocks even though the application layer now exposes `FlextDispatcher` only.
 - `FlextProcessors` appears in a few checklists but the module is not present in `src/flext_core`.
 - Import blocks are otherwise lean and map to current symbols.
 
 ## Recommended Remediations
+
 1. Replace `FlextBus` with `FlextDispatcher` (or remove entirely) in:
    - verification commands (`python -c "from flext_core import FlextDispatcher ..."`)
    - example import blocks in secondary guides and standards files.

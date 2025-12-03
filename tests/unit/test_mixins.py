@@ -1,9 +1,9 @@
-"""Tests for FlextMixins infrastructure - Container, Context, Logging, Metrics, Service.
+"""Tests for x infrastructure - Container, Context, Logging, Metrics, Service.
 
 Module: flext_core.mixins
-Scope: FlextMixins - all nested mixin classes
+Scope: x - all nested mixin classes
 
-Tests FlextMixins functionality including:
+Tests x functionality including:
 - Container mixin (_register_in_container)
 - Context mixin (context property, _propagate_context, correlation IDs)
 - Logging mixin (_log_with_context)
@@ -29,9 +29,9 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextContext, FlextMixins, FlextResult
+from flext_core import FlextContext, FlextResult, x
 from flext_core._models.base import FlextModelsBase
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -79,8 +79,8 @@ class ModelConversionScenario:
 
     name: str
     scenario_type: ModelConversionScenarioType
-    input_value: FlextTypes.GeneralValueType
-    expected_output: FlextTypes.Types.ConfigurationMapping
+    input_value: t.GeneralValueType
+    expected_output: t.Types.ConfigurationMapping
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,7 +89,7 @@ class ResultHandlingScenario:
 
     name: str
     scenario_type: ResultHandlingScenarioType
-    input_value: FlextTypes.GeneralValueType
+    input_value: t.GeneralValueType
 
 
 class MixinScenarios:
@@ -180,7 +180,7 @@ class TestFlextMixinsNestedClasses:
     def test_service_mixin_scenarios(self, scenario: ServiceMixinScenario) -> None:
         """Test service mixin functionality across scenarios."""
 
-        class MyService(FlextMixins):
+        class MyService(x):
             """Test service for mixin scenarios."""
 
             def __init__(self) -> None:
@@ -189,10 +189,24 @@ class TestFlextMixinsNestedClasses:
                     self._init_service("MyTestService")
 
             def process(self) -> str:
-                """Process operation for metrics testing."""
+                """Process operation for metrics testing.
+
+                Validates:
+                1. Track context manager provides metrics dict
+                2. Operation completes successfully after delay
+                3. Metrics are tracked correctly
+                """
                 with self.track("test_op") as metrics:
-                    assert isinstance(metrics, dict)
+                    # Validate metrics dict is provided
+                    assert isinstance(metrics, dict), "Metrics should be a dict"
+                    assert "operation_name" in metrics or "start_time" in metrics, (
+                        "Metrics should contain operation info"
+                    )
+
+                    # Simulate work
                     time.sleep(0.01)
+
+                    # Validate operation completes
                     return "done"
 
         service = MyService()
@@ -234,14 +248,14 @@ class TestFlextMixinsNestedClasses:
                 value: int
 
             test_model_instance = TestModel(name="test", value=42)
-            input_value: BaseModel | FlextTypes.GeneralValueType = test_model_instance
+            input_value: BaseModel | t.GeneralValueType = test_model_instance
         else:
             input_value = scenario.input_value
         # Type narrowing: to_dict accepts BaseModel | ContextMetadataMapping | ConfigurationMapping | None
         if isinstance(input_value, (BaseModel, dict, FlextModelsBase.Metadata)):
-            result = FlextMixins.ModelConversion.to_dict(input_value)
+            result = x.ModelConversion.to_dict(input_value)
         else:
-            result = FlextMixins.ModelConversion.to_dict(None)
+            result = x.ModelConversion.to_dict(None)
         assert isinstance(result, dict)
         assert result == scenario.expected_output
         if scenario.scenario_type == ModelConversionScenarioType.WITH_DICT:
@@ -257,20 +271,18 @@ class TestFlextMixinsNestedClasses:
     def test_result_handling_scenarios(self, scenario: ResultHandlingScenario) -> None:
         """Test ResultHandling.ensure_result() with various inputs."""
         if scenario.scenario_type == ResultHandlingScenarioType.RAW_VALUE:
-            raw_result = FlextMixins.ResultHandling.ensure_result(42)
+            raw_result = x.ResultHandling.ensure_result(42)
             assert raw_result.is_success
             assert raw_result.value == 42
         elif scenario.scenario_type == ResultHandlingScenarioType.EXISTING_RESULT:
             original = FlextResult[int].ok(100)
-            existing_result: FlextResult[int] = (
-                FlextMixins.ResultHandling.ensure_result(original)
-            )
+            existing_result: FlextResult[int] = x.ResultHandling.ensure_result(original)
             assert existing_result is original
             assert existing_result.value == 100
         elif scenario.scenario_type == ResultHandlingScenarioType.TYPE_PRESERVATION:
-            int_result = FlextMixins.ResultHandling.ensure_result(42)
-            str_result = FlextMixins.ResultHandling.ensure_result("hello")
-            list_result = FlextMixins.ResultHandling.ensure_result([1, 2, 3])
+            int_result = x.ResultHandling.ensure_result(42)
+            str_result = x.ResultHandling.ensure_result("hello")
+            list_result = x.ResultHandling.ensure_result([1, 2, 3])
             assert int_result.value == 42
             assert str_result.value == "hello"
             assert list_result.value == [1, 2, 3]
@@ -278,7 +290,7 @@ class TestFlextMixinsNestedClasses:
     def test_service_mixin_with_operation_context(self) -> None:
         """Test Service mixin operation context workflow."""
 
-        class MyService(FlextMixins):
+        class MyService(x):
             """Test service with operation context."""
 
             def __init__(self) -> None:

@@ -20,8 +20,8 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import FlextUtilities
-from flext_core.typings import FlextTypes
+from flext_core import u
+from flext_core.typings import t
 
 
 @dataclass(frozen=True, slots=True)
@@ -299,13 +299,13 @@ class PaginationScenarios:
     ]
 
 
-class TestFlextUtilitiesPaginationExtractPageParams:
+class TestuPaginationExtractPageParams:
     """Test FlextUtilitiesPagination.extract_page_params."""
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.EXTRACT_PAGE_PARAMS)
     def test_extract_page_params(self, scenario: ExtractPageParamsScenario) -> None:
         """Test extract_page_params with various scenarios."""
-        result = FlextUtilities.Pagination.extract_page_params(
+        result = u.Pagination.extract_page_params(
             scenario.query_params,
             default_page=scenario.default_page,
             default_page_size=scenario.default_page_size,
@@ -328,7 +328,7 @@ class TestFlextUtilitiesPaginationExtractPageParams:
             )
 
 
-class TestFlextUtilitiesPaginationValidatePaginationParams:
+class TestuPaginationValidatePaginationParams:
     """Test FlextUtilitiesPagination.validate_pagination_params."""
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.VALIDATE_PAGINATION_PARAMS)
@@ -337,7 +337,7 @@ class TestFlextUtilitiesPaginationValidatePaginationParams:
         scenario: ValidatePaginationParamsScenario,
     ) -> None:
         """Test validate_pagination_params with various scenarios."""
-        result = FlextUtilities.Pagination.validate_pagination_params(
+        result = u.Pagination.validate_pagination_params(
             page=scenario.page,
             page_size=scenario.page_size,
             max_page_size=scenario.max_page_size,
@@ -359,7 +359,7 @@ class TestFlextUtilitiesPaginationValidatePaginationParams:
             )
 
 
-class TestFlextUtilitiesPaginationPreparePaginationData:
+class TestuPaginationPreparePaginationData:
     """Test FlextUtilitiesPagination.prepare_pagination_data."""
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.PREPARE_PAGINATION_DATA)
@@ -368,7 +368,7 @@ class TestFlextUtilitiesPaginationPreparePaginationData:
         scenario: PreparePaginationDataScenario,
     ) -> None:
         """Test prepare_pagination_data with various scenarios."""
-        result = FlextUtilities.Pagination.prepare_pagination_data(
+        result = u.Pagination.prepare_pagination_data(
             scenario.data,
             scenario.total,
             page=scenario.page,
@@ -405,12 +405,12 @@ class TestFlextUtilitiesPaginationPreparePaginationData:
             )
 
 
-class TestFlextUtilitiesPaginationBuildPaginationResponse:
+class TestuPaginationBuildPaginationResponse:
     """Test FlextUtilitiesPagination.build_pagination_response."""
 
     def test_build_pagination_response_success(self) -> None:
         """Test build_pagination_response with valid data."""
-        pagination_data: dict[str, FlextTypes.GeneralValueType] = {
+        pagination_data: dict[str, t.GeneralValueType] = {
             "data": ["item1", "item2"],
             "pagination": {
                 "page": 1,
@@ -422,7 +422,7 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
             },
         }
 
-        result = FlextUtilities.Pagination.build_pagination_response(
+        result = u.Pagination.build_pagination_response(
             pagination_data,
             message="Success",
         )
@@ -435,7 +435,7 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_no_message(self) -> None:
         """Test build_pagination_response without message."""
-        pagination_data: dict[str, FlextTypes.GeneralValueType] = {
+        pagination_data: dict[str, t.GeneralValueType] = {
             "data": ["item1"],
             "pagination": {
                 "page": 1,
@@ -447,7 +447,7 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
             },
         }
 
-        result = FlextUtilities.Pagination.build_pagination_response(pagination_data)
+        result = u.Pagination.build_pagination_response(pagination_data)
 
         assert result.is_success
         response = result.value
@@ -457,9 +457,9 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_data(self) -> None:
         """Test build_pagination_response with missing data."""
-        pagination_data: dict[str, FlextTypes.GeneralValueType] = {"pagination": {}}
+        pagination_data: dict[str, t.GeneralValueType] = {"pagination": {}}
 
-        result = FlextUtilities.Pagination.build_pagination_response(pagination_data)
+        result = u.Pagination.build_pagination_response(pagination_data)
 
         assert result.is_failure
         assert (
@@ -469,9 +469,9 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_pagination(self) -> None:
         """Test build_pagination_response with missing pagination."""
-        pagination_data: dict[str, FlextTypes.GeneralValueType] = {"data": []}
+        pagination_data: dict[str, t.GeneralValueType] = {"data": []}
 
-        result = FlextUtilities.Pagination.build_pagination_response(pagination_data)
+        result = u.Pagination.build_pagination_response(pagination_data)
 
         assert result.is_failure
         assert (
@@ -481,7 +481,7 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
         """Test build_pagination_response with non-sequence data."""
-        pagination_data: dict[str, FlextTypes.GeneralValueType] = {
+        pagination_data: dict[str, t.GeneralValueType] = {
             "data": {"key": "value"},  # dict instead of list
             "pagination": {
                 "page": 1,
@@ -493,7 +493,7 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
             },
         }
 
-        result = FlextUtilities.Pagination.build_pagination_response(pagination_data)
+        result = u.Pagination.build_pagination_response(pagination_data)
 
         # Should still succeed - dict is valid GeneralValueType
         assert result.is_success
@@ -501,12 +501,12 @@ class TestFlextUtilitiesPaginationBuildPaginationResponse:
         assert "data" in response
 
 
-class TestFlextUtilitiesPaginationExtractPaginationConfig:
+class TestuPaginationExtractPaginationConfig:
     """Test FlextUtilitiesPagination.extract_pagination_config."""
 
     def test_extract_pagination_config_none(self) -> None:
         """Test extract_pagination_config with None."""
-        result = FlextUtilities.Pagination.extract_pagination_config(None)
+        result = u.Pagination.extract_pagination_config(None)
 
         assert result["default_page_size"] == 20
         assert result["max_page_size"] == 1000
@@ -519,7 +519,7 @@ class TestFlextUtilitiesPaginationExtractPaginationConfig:
             max_page_size = 500
 
         config = Config()
-        result = FlextUtilities.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
+        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
 
         assert result["default_page_size"] == 50
         assert result["max_page_size"] == 500
@@ -531,7 +531,7 @@ class TestFlextUtilitiesPaginationExtractPaginationConfig:
             default_page_size = 30
 
         config = Config()
-        result = FlextUtilities.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
+        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
 
         assert result["default_page_size"] == 30
         assert result["max_page_size"] == 1000  # Default
@@ -544,7 +544,7 @@ class TestFlextUtilitiesPaginationExtractPaginationConfig:
             max_page_size = 0
 
         config = Config()
-        result = FlextUtilities.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
+        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
 
         # Invalid values should be ignored, defaults used
         assert result["default_page_size"] == 20
@@ -559,7 +559,7 @@ class TestFlextUtilitiesPaginationExtractPaginationConfig:
                 self.max_page_size = 600
 
         config = Config()
-        result = FlextUtilities.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
+        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
 
         assert result["default_page_size"] == 40
         assert result["max_page_size"] == 600

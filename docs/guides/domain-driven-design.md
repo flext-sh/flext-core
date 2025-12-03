@@ -311,7 +311,7 @@ Domain events capture important state changes inside aggregates. FLEXT surfaces 
 ```python
 from flext_core import FlextResult
 from flext_core.dispatcher import FlextDispatcher
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import h
 from flext_core.models import FlextModels
 
 
@@ -320,7 +320,7 @@ class InventoryAdjusted(FlextModels.DomainEvent):
     quantity: int
 
 
-class InventoryAdjustedHandler(FlextHandlers[InventoryAdjusted, bool]):
+class InventoryAdjustedHandler(h[InventoryAdjusted, bool]):
     def handle(self, message: InventoryAdjusted) -> FlextResult[bool]:
         # Side-effect: notify downstream system or persist projection
         return FlextResult[bool].ok(True)
@@ -351,7 +351,7 @@ assert dispatch_result.is_success
 Key points:
 
 - Aggregates collect domain events via `add_domain_event` and return them with `get_domain_events` or `commit_domain_events`.
-- `FlextDispatcher.register_handler` accepts command, query, or event handlers; event handlers can subclass `FlextHandlers` for validation and telemetry.
+- `FlextDispatcher.register_handler` accepts command, query, or event handlers; event handlers can subclass `h` for validation and telemetry.
 - `publish_event` / `publish_events` reuse the dispatcher pipeline, so middleware (logging, retries, timeouts) is applied consistently across commands, queries, and domain events.
 
 ## Real-World Examples

@@ -3,7 +3,7 @@
 This module provides version and package metadata for flext-core using
 importlib.metadata, extracting information from the package's metadata
 including version, author, license, and other package details. Implements
-structural typing via FlextProtocols.Version through duck typing,
+structural typing via p.Version through duck typing,
 providing a foundation for version management and package information access.
 
 Scope: Package metadata extraction, version string and tuple representation,
@@ -24,7 +24,7 @@ class FlextVersion:
     """Package version and metadata information for FLEXT ecosystem.
 
     Provides comprehensive package metadata extraction and version management
-    using importlib.metadata. Implements structural typing via FlextProtocols.Version
+    using importlib.metadata. Implements structural typing via p.Version
     through duck typing (no inheritance required), serving as the foundation layer
     (Layer 0) for version information throughout the FLEXT ecosystem.
 

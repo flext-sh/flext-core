@@ -1,7 +1,7 @@
 """Real tests to achieve 100% args coverage - no mocks.
 
 Module: flext_core._utilities.args
-Scope: FlextUtilitiesArgs - all methods and edge cases
+Scope: uArgs - all methods and edge cases
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
 to cover all remaining lines in _utilities/args.py.
@@ -22,8 +22,8 @@ from typing import Annotated, ClassVar
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextResult, FlextUtilities
-from flext_core.typings import FlextTypes
+from flext_core import FlextResult, u
+from flext_core.typings import t
 
 
 class Status(StrEnum):
@@ -47,7 +47,7 @@ class ParseKwargsScenario:
     """Parse kwargs test scenario."""
 
     name: str
-    kwargs: dict[str, FlextTypes.FlexibleValue]
+    kwargs: dict[str, t.FlexibleValue]
     enum_fields: dict[str, type[StrEnum]]
     expected_success: bool
     expected_status: Status | None
@@ -101,13 +101,13 @@ class ArgsScenarios:
     ]
 
 
-class TestFlextUtilitiesArgsValidated:
-    """Test FlextUtilitiesArgs.validated decorator."""
+class TestuArgsValidated:
+    """Test uArgs.validated decorator."""
 
     def test_validated_with_str_enum_string(self) -> None:
         """Test validated decorator with string value for StrEnum."""
 
-        @FlextUtilities.Args.validated
+        @u.Args.validated
         def process(status: Status) -> str:
             return status.value
 
@@ -119,7 +119,7 @@ class TestFlextUtilitiesArgsValidated:
     def test_validated_with_str_enum_enum(self) -> None:
         """Test validated decorator with enum value."""
 
-        @FlextUtilities.Args.validated
+        @u.Args.validated
         def process(status: Status) -> str:
             return status.value
 
@@ -129,7 +129,7 @@ class TestFlextUtilitiesArgsValidated:
     def test_validated_with_invalid_enum(self) -> None:
         """Test validated decorator with invalid enum value."""
 
-        @FlextUtilities.Args.validated
+        @u.Args.validated
         def process(status: Status) -> str:
             return status.value
 
@@ -141,7 +141,7 @@ class TestFlextUtilitiesArgsValidated:
     def test_validated_with_multiple_params(self) -> None:
         """Test validated decorator with multiple parameters."""
 
-        @FlextUtilities.Args.validated
+        @u.Args.validated
         def process(status: Status, priority: Priority, name: str) -> str:
             return f"{name}: {status.value} ({priority.value})"
 
@@ -151,13 +151,13 @@ class TestFlextUtilitiesArgsValidated:
         assert result == "John: active (high)"
 
 
-class TestFlextUtilitiesArgsValidatedWithResult:
-    """Test FlextUtilitiesArgs.validated_with_result decorator."""
+class TestuArgsValidatedWithResult:
+    """Test uArgs.validated_with_result decorator."""
 
     def test_validated_with_result_success(self) -> None:
         """Test validated_with_result with valid input."""
 
-        @FlextUtilities.Args.validated_with_result
+        @u.Args.validated_with_result
         def process(status: Status) -> FlextResult[str]:
             return FlextResult.ok(status.value)
 
@@ -170,7 +170,7 @@ class TestFlextUtilitiesArgsValidatedWithResult:
     def test_validated_with_result_invalid_enum(self) -> None:
         """Test validated_with_result with invalid enum."""
 
-        @FlextUtilities.Args.validated_with_result
+        @u.Args.validated_with_result
         def process(status: Status) -> FlextResult[str]:
             return FlextResult.ok(status.value)
 
@@ -185,7 +185,7 @@ class TestFlextUtilitiesArgsValidatedWithResult:
     def test_validated_with_result_with_exception(self) -> None:
         """Test validated_with_result when function raises exception."""
 
-        @FlextUtilities.Args.validated_with_result
+        @u.Args.validated_with_result
         def process(status: Status) -> FlextResult[str]:
             msg = "Internal error"
             raise ValueError(msg)
@@ -199,8 +199,8 @@ class TestFlextUtilitiesArgsValidatedWithResult:
         assert "Internal error" in error_msg
 
 
-class TestFlextUtilitiesArgsParseKwargs:
-    """Test FlextUtilitiesArgs.parse_kwargs."""
+class TestuArgsParseKwargs:
+    """Test uArgs.parse_kwargs."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -209,7 +209,7 @@ class TestFlextUtilitiesArgsParseKwargs:
     )
     def test_parse_kwargs(self, scenario: ParseKwargsScenario) -> None:
         """Test parse_kwargs with various scenarios."""
-        result = FlextUtilities.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
+        result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
 
         assert result.is_success == scenario.expected_success
 
@@ -227,8 +227,8 @@ class TestFlextUtilitiesArgsParseKwargs:
             assert expected_error_str in error_msg
 
 
-class TestFlextUtilitiesArgsGetEnumParams:
-    """Test FlextUtilitiesArgs.get_enum_params."""
+class TestuArgsGetEnumParams:
+    """Test uArgs.get_enum_params."""
 
     def test_get_enum_params_simple(self) -> None:
         """Test get_enum_params with simple StrEnum parameter."""
@@ -236,7 +236,7 @@ class TestFlextUtilitiesArgsGetEnumParams:
         def process(status: Status, name: str) -> bool:
             return True
 
-        params = FlextUtilities.Args.get_enum_params(process)
+        params = u.Args.get_enum_params(process)
         assert "status" in params
         assert params["status"] == Status
         assert "name" not in params
@@ -247,7 +247,7 @@ class TestFlextUtilitiesArgsGetEnumParams:
         def process(status: Status, priority: Priority, name: str) -> bool:
             return True
 
-        params = FlextUtilities.Args.get_enum_params(process)
+        params = u.Args.get_enum_params(process)
         assert "status" in params
         assert "priority" in params
         assert params["status"] == Status
@@ -260,7 +260,7 @@ class TestFlextUtilitiesArgsGetEnumParams:
         def process(status: Annotated[Status, "test"]) -> bool:
             return True
 
-        params = FlextUtilities.Args.get_enum_params(process)
+        params = u.Args.get_enum_params(process)
         assert "status" in params
         assert params["status"] == Status
 
@@ -270,7 +270,7 @@ class TestFlextUtilitiesArgsGetEnumParams:
         def process(status: str | Status) -> bool:
             return True
 
-        params = FlextUtilities.Args.get_enum_params(process)
+        params = u.Args.get_enum_params(process)
         # Should detect Status in union
         assert "status" in params
         assert params["status"] == Status
@@ -281,7 +281,7 @@ class TestFlextUtilitiesArgsGetEnumParams:
         def process(name: str, age: int) -> bool:
             return True
 
-        params = FlextUtilities.Args.get_enum_params(process)
+        params = u.Args.get_enum_params(process)
         assert params == {}
 
     def test_get_enum_params_no_annotations(self) -> None:
@@ -290,7 +290,7 @@ class TestFlextUtilitiesArgsGetEnumParams:
         def process(name: str, age: int) -> bool:
             return True
 
-        params = FlextUtilities.Args.get_enum_params(process)
+        params = u.Args.get_enum_params(process)
         assert params == {}
 
     def test_get_enum_params_with_exception(self) -> None:
@@ -299,5 +299,5 @@ class TestFlextUtilitiesArgsGetEnumParams:
         class BadFunction:
             __annotations__ = {"invalid": object()}
 
-        params = FlextUtilities.Args.get_enum_params(BadFunction)
+        params = u.Args.get_enum_params(BadFunction)
         assert params == {}

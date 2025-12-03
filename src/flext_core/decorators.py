@@ -19,15 +19,16 @@ from functools import wraps
 from typing import cast
 
 from flext_core._models.config import FlextModelsConfig
-from flext_core.constants import FlextConstants
+from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
-from flext_core.protocols import FlextProtocols
+from flext_core.protocols import p
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes, P, R, T
+from flext_core.typings import P, R, T, t
+from flext_core.utilities import u
 
 
 class FlextDecorators:
@@ -56,9 +57,9 @@ class FlextDecorators:
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         # Get from container using the service key
-                        result: FlextProtocols.ResultProtocol[
-                            FlextTypes.GeneralValueType
-                        ] = container.get(service_key)
+                        result: p.ResultProtocol[t.GeneralValueType] = container.get(
+                            service_key
+                        )
                         if result.is_success:
                             kwargs[name] = result.unwrap()
                         else:
@@ -203,7 +204,7 @@ class FlextDecorators:
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
-                    success_extra: dict[str, FlextTypes.GeneralValueType] = {
+                    success_extra: dict[str, t.GeneralValueType] = {
                         "operation": op_name,
                         "duration_ms": duration * 1000,
                         "duration_seconds": duration,
@@ -225,7 +226,7 @@ class FlextDecorators:
                 ) as e:
                     duration = time.perf_counter() - start_time
 
-                    failure_extra: dict[str, FlextTypes.GeneralValueType] = {
+                    failure_extra: dict[str, t.GeneralValueType] = {
                         "operation": op_name,
                         "duration_ms": duration * 1000,
                         "duration_seconds": duration,
@@ -308,17 +309,17 @@ class FlextDecorators:
         attempts: int = (
             max_attempts
             if max_attempts is not None
-            else FlextConstants.Reliability.DEFAULT_MAX_RETRIES
+            else c.Reliability.DEFAULT_MAX_RETRIES
         )
         delay: float = (
             delay_seconds
             if delay_seconds is not None
-            else float(FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS)
+            else float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS)
         )
         strategy: str = (
             backoff_strategy
             if backoff_strategy is not None
-            else FlextConstants.Reliability.DEFAULT_BACKOFF_STRATEGY
+            else c.Reliability.DEFAULT_BACKOFF_STRATEGY
         )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -328,11 +329,11 @@ class FlextDecorators:
                 # Convert P.args and P.kwargs to types expected by _execute_retry_loop
                 # Convert args and kwargs to GeneralValueType for RetryLoopConfig
                 args_tuple = cast(
-                    "tuple[FlextTypes.GeneralValueType, ...]",
+                    "tuple[t.GeneralValueType, ...]",
                     tuple(args),
                 )
                 kwargs_dict = cast(
-                    "Mapping[str, FlextTypes.GeneralValueType]",
+                    "Mapping[str, t.GeneralValueType]",
                     kwargs or {},
                 )
                 retry_loop_config = FlextModelsConfig.RetryLoopConfig(
@@ -391,9 +392,9 @@ class FlextDecorators:
     @staticmethod
     def _build_operation_extra(
         config: FlextModelsConfig.OperationExtraConfig,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+    ) -> dict[str, t.GeneralValueType]:
         """Build extra dict for operation logging."""
-        extra: dict[str, FlextTypes.GeneralValueType] = {
+        extra: dict[str, t.GeneralValueType] = {
             "function": config.func_name,
             "func_module": config.func_module,
         }
@@ -429,7 +430,7 @@ class FlextDecorators:
         failure_extra = FlextDecorators._build_operation_extra(failure_extra_config)
         failure_extra["operation"] = config.op_name
         # Build bind dict for logger
-        bind_dict: dict[str, FlextTypes.GeneralValueType] = {
+        bind_dict: dict[str, t.GeneralValueType] = {
             "success": "False",
             "error": str(config.exc),
             "error_type": type(config.exc).__name__,
@@ -503,7 +504,7 @@ class FlextDecorators:
                 if FlextRuntime.is_dict_like(kwargs_mapping):
                     kwargs_dict = (
                         kwargs_mapping
-                        if isinstance(kwargs_mapping, dict)
+                        if u.guard(kwargs_mapping, dict).is_success
                         else dict(kwargs_mapping.items())
                     )
                     # Business Rule: func returns object, which is compatible with object | Exception
@@ -612,7 +613,7 @@ class FlextDecorators:
         FlextContext.Request.set_operation_name(operation)
 
         binding_result = FlextLogger.bind_context(
-            FlextConstants.Context.SCOPE_OPERATION,
+            c.Context.SCOPE_OPERATION,
             operation=operation,
         )
         if binding_result.is_failure:
@@ -653,10 +654,10 @@ class FlextDecorators:
     @staticmethod
     def _handle_log_result(
         *,
-        result: FlextProtocols.ResultProtocol[bool],
+        result: p.ResultProtocol[bool],
         logger: FlextLogger,
         fallback_message: str,
-        kwargs: FlextTypes.GeneralValueType,
+        kwargs: t.GeneralValueType,
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
@@ -688,11 +689,11 @@ class FlextDecorators:
         error_code: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Enforce operation timeout, raising TimeoutError if exceeded."""
-        # Use FlextConstants.Defaults for default
+        # Use c.Defaults for default
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None
-            else FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
+            else c.Reliability.DEFAULT_TIMEOUT_SECONDS
         )
 
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -764,16 +765,14 @@ class FlextDecorators:
         track_perf: bool = True,
         use_railway: bool = False,
         error_code: str | None = None,
-    ) -> Callable[
-        [Callable[P, R]], Callable[P, R] | Callable[P, FlextProtocols.ResultProtocol[R]]
-    ]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R] | Callable[P, p.ResultProtocol[R]]]:
         """Combine inject, log_operation, and optionally railway patterns."""
 
         def decorator(
             func: Callable[P, R],
-        ) -> Callable[P, R] | Callable[P, FlextProtocols.ResultProtocol[R]]:
+        ) -> Callable[P, R] | Callable[P, p.ResultProtocol[R]]:
             # Apply railway pattern first if requested (outermost wrapper)
-            # Note: When use_railway=True, the return type changes to Callable[P, FlextProtocols.ResultProtocol[R]]
+            # Note: When use_railway=True, the return type changes to Callable[P, p.ResultProtocol[R]]
             if use_railway:
                 railway_decorated = FlextDecorators.railway(error_code=error_code)(func)
                 # Apply other decorators to railway-wrapped function
@@ -791,7 +790,7 @@ class FlextDecorators:
                 )(cast("Callable[P, R]", railway_decorated))
                 # Cast back to ResultProtocol[R] since log_operation preserves return type
                 return cast(
-                    "Callable[P, FlextProtocols.ResultProtocol[R]]",
+                    "Callable[P, p.ResultProtocol[R]]",
                     decorated_with_logging,
                 )
 
@@ -810,7 +809,7 @@ class FlextDecorators:
             )(decorated)
             # Cast to union type to satisfy type checker (runtime behavior is correct)
             return cast(
-                "Callable[P, R] | Callable[P, FlextProtocols.ResultProtocol[R]]",
+                "Callable[P, R] | Callable[P, p.ResultProtocol[R]]",
                 result,
             )
 
@@ -921,6 +920,9 @@ class FlextDecorators:
         return decorator
 
 
+d = FlextDecorators
+
 __all__ = [
     "FlextDecorators",
+    "d",
 ]

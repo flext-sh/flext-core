@@ -344,7 +344,11 @@ class FailingServiceAutoFactory:
 class ServiceTestCaseFactory:
     """Factory for ServiceTestCase."""
 
-    _service_types: ClassVar[list[ServiceTestType]] = [ServiceTestType.GET_USER, ServiceTestType.VALIDATE, ServiceTestType.FAIL]
+    _service_types: ClassVar[list[ServiceTestType]] = [
+        ServiceTestType.GET_USER,
+        ServiceTestType.VALIDATE,
+        ServiceTestType.FAIL,
+    ]
     _type_index: ClassVar[int] = 0
     _words: ClassVar[list[str]] = ["test", "sample", "example", "demo", "data"]
     _word_index: ClassVar[int] = 0

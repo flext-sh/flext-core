@@ -22,7 +22,7 @@ import pytest
 
 from flext_core import FlextConstants, FlextExceptions, FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 @dataclass(frozen=True, slots=True)
@@ -198,7 +198,7 @@ class TestFlextExceptionsHierarchy:
         if scenario.kwargs:
             # Convert dict[str, object] to dict[str, MetadataAttributeValue]
             # Special handling for TypeError: expected_type and actual_type must remain as types
-            converted_kwargs: dict[str, FlextTypes.MetadataAttributeValue | type] = {}
+            converted_kwargs: dict[str, t.MetadataAttributeValue | type] = {}
             for key, value in scenario.kwargs.items():
                 # For TypeError, preserve type objects for expected_type and actual_type
                 if scenario.exception_type == FlextExceptions.TypeError and key in {
@@ -347,7 +347,7 @@ class TestExceptionContext:
         """Test exception with contextual information via metadata."""
         # ValidationError accepts metadata via **extra_kwargs as MetadataAttributeValue
         # Convert Metadata to dict for extra_kwargs
-        metadata_dict: dict[str, FlextTypes.MetadataAttributeValue] = {
+        metadata_dict: dict[str, t.MetadataAttributeValue] = {
             "user_id": "123",
             "operation": "create_user",
             "timestamp": 1234567890,
@@ -437,7 +437,7 @@ class TestExceptionFactory:
     ) -> None:
         """Test smart error type detection in create()."""
         # Convert dict[str, object] to dict[str, MetadataAttributeValue]
-        converted_kwargs: dict[str, FlextTypes.MetadataAttributeValue] = {}
+        converted_kwargs: dict[str, t.MetadataAttributeValue] = {}
         for key, value in kwargs.items():
             # Type narrowing: ensure value is GeneralValueType before normalization
             if isinstance(value, (str, int, float, bool, type(None), list, dict)):

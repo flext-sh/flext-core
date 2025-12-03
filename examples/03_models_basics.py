@@ -19,7 +19,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
-    FlextTypes,
+    t,
 )
 
 # Using centralized literals from FlextConstants (DRY - no local aliases)
@@ -147,10 +147,10 @@ Order.model_rebuild(_types_namespace=_types_namespace)
 OrderItem.model_rebuild(_types_namespace=_types_namespace)
 
 
-class DomainModelService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
+class DomainModelService(FlextService[t.Types.ServiceMetadataMapping]):
     """Advanced DDD demonstration service with railway-oriented programming."""
 
-    def execute(self) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:  # noqa: PLR6301  # Required by FlextService abstract method
+    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:  # noqa: PLR6301  # Required by FlextService abstract method
         """Execute comprehensive DDD demonstrations using railway patterns."""
         # Railway pattern with value objects using traverse (DRY)
         email_result = FlextResult.ok(Email(address="Test@Example.Com"))

@@ -1,4 +1,4 @@
-"""DataMapper-specific test helpers for FlextUtilities.DataMapper testing.
+"""DataMapper-specific test helpers for u.DataMapper testing.
 
 Provides reusable classes and methods for testing data mapping utilities,
 reducing code duplication and improving maintainability.
@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, ClassVar, cast
 
-from flext_core import FlextResult, FlextUtilities
-from flext_core.typings import FlextTypes
+from flext_core import FlextResult, u
+from flext_core.typings import t
 
 # Test-specific type that allows callables and other test fixtures
 # This is more permissive than GeneralValueType for testing purposes
@@ -45,7 +45,7 @@ class DataMapperTestCase:
     test_type: DataMapperTestType
     description: str
     input_data: TestInputData
-    expected_result: FlextTypes.GeneralValueType
+    expected_result: t.GeneralValueType
     expected_success: bool = True
 
 
@@ -58,7 +58,7 @@ class DataMapperTestHelpers:
             DataMapperTestType,
             Callable[
                 [TestInputData],
-                FlextResult[FlextTypes.GeneralValueType],
+                FlextResult[t.GeneralValueType],
             ],
         ]
     ] = {}
@@ -80,92 +80,90 @@ class DataMapperTestHelpers:
     @staticmethod
     def _handle_map_dict_keys(
         input_data: TestInputData,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Handle MAP_DICT_KEYS test case."""
-        source = cast("dict[str, FlextTypes.GeneralValueType]", input_data["source"])
+        source = cast("dict[str, t.GeneralValueType]", input_data["source"])
         mapping = cast("dict[str, str]", input_data["mapping"])
         keep_unmapped = cast("bool", input_data.get("keep_unmapped", True))
-        result = FlextUtilities.DataMapper.map_dict_keys(
+        result = u.DataMapper.map_dict_keys(
             source, mapping, keep_unmapped=keep_unmapped
         )
-        return cast("FlextResult[FlextTypes.GeneralValueType]", result)
+        return cast("FlextResult[t.GeneralValueType]", result)
 
     @staticmethod
     def _handle_build_flags_dict(
         input_data: TestInputData,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Handle BUILD_FLAGS_DICT test case."""
         flags = cast("list[str]", input_data["flags"])
         mapping = cast("dict[str, str]", input_data["mapping"])
         default_value = cast("bool", input_data.get("default_value", False))
-        result_flags = FlextUtilities.DataMapper.build_flags_dict(
+        result_flags = u.DataMapper.build_flags_dict(
             flags, mapping, default_value=default_value
         )
         if result_flags.is_failure:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 result_flags.error or "Unknown error"
             )
-        return FlextResult[FlextTypes.GeneralValueType].ok(result_flags.value)
+        return FlextResult[t.GeneralValueType].ok(result_flags.value)
 
     @staticmethod
     def _handle_collect_active_keys(
         input_data: TestInputData,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Handle COLLECT_ACTIVE_KEYS test case."""
         source_bool = cast("dict[str, bool]", input_data["source"])
         mapping = cast("dict[str, str]", input_data["mapping"])
-        result_keys = FlextUtilities.DataMapper.collect_active_keys(
-            source_bool, mapping
-        )
+        result_keys = u.DataMapper.collect_active_keys(source_bool, mapping)
         if result_keys.is_failure:
-            return FlextResult[FlextTypes.GeneralValueType].fail(
+            return FlextResult[t.GeneralValueType].fail(
                 result_keys.error or "Unknown error"
             )
-        return FlextResult[FlextTypes.GeneralValueType].ok(result_keys.value)
+        return FlextResult[t.GeneralValueType].ok(result_keys.value)
 
     @staticmethod
     def _handle_transform_values(
         input_data: TestInputData,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Handle TRANSFORM_VALUES test case."""
-        source = cast("dict[str, FlextTypes.GeneralValueType]", input_data["source"])
+        source = cast("dict[str, t.GeneralValueType]", input_data["source"])
         transform_func = cast(
-            "Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]",
+            "Callable[[t.GeneralValueType], t.GeneralValueType]",
             input_data["transform_func"],
         )
-        result_dict = FlextUtilities.DataMapper.transform_values(source, transform_func)
-        return FlextResult[FlextTypes.GeneralValueType].ok(result_dict)
+        result_dict = u.DataMapper.transform_values(source, transform_func)
+        return FlextResult[t.GeneralValueType].ok(result_dict)
 
     @staticmethod
     def _handle_filter_dict(
         input_data: TestInputData,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Handle FILTER_DICT test case."""
-        source = cast("dict[str, FlextTypes.GeneralValueType]", input_data["source"])
+        source = cast("dict[str, t.GeneralValueType]", input_data["source"])
         filter_func = cast(
-            "Callable[[str, FlextTypes.GeneralValueType], bool]",
+            "Callable[[str, t.GeneralValueType], bool]",
             input_data["filter_func"],
         )
-        result_filtered = FlextUtilities.DataMapper.filter_dict(source, filter_func)
-        return FlextResult[FlextTypes.GeneralValueType].ok(result_filtered)
+        result_filtered = u.filter(source, filter_func)
+        return FlextResult[t.GeneralValueType].ok(result_filtered)
 
     @staticmethod
     def _handle_invert_dict(
         input_data: TestInputData,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Handle INVERT_DICT test case."""
         source = cast("dict[str, str]", input_data["source"])
         handle_collisions = cast("str", input_data.get("handle_collisions", "last"))
-        result_inverted = FlextUtilities.DataMapper.invert_dict(
+        result_inverted = u.DataMapper.invert_dict(
             source, handle_collisions=handle_collisions
         )
-        return FlextResult[FlextTypes.GeneralValueType].ok(result_inverted)
+        return FlextResult[t.GeneralValueType].ok(result_inverted)
 
     @classmethod
     def execute_data_mapper_test(
         cls,
         test_case: DataMapperTestCase,
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    ) -> FlextResult[t.GeneralValueType]:
         """Execute a data mapper test case and return FlextResult."""
         cls._init_handlers()
         handler = cls._HANDLERS.get(test_case.test_type)
@@ -178,7 +176,7 @@ class DataMapperTestHelpers:
 class BadDict:
     """Dict-like object that raises exception in items()."""
 
-    def items(self) -> list[tuple[str, FlextTypes.GeneralValueType]]:
+    def items(self) -> list[tuple[str, t.GeneralValueType]]:
         msg = "Items failed"
         raise RuntimeError(msg)
 
@@ -186,7 +184,7 @@ class BadDict:
 class BadList:
     """List-like object that raises exception in __iter__."""
 
-    def __iter__(self) -> FlextTypes.GeneralValueType:
+    def __iter__(self) -> t.GeneralValueType:
         """Raise exception during iteration for testing."""
         msg = "Iteration failed"
         raise RuntimeError(msg)

@@ -37,7 +37,7 @@ from flext_core._models.config import FlextModelsConfig
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 class ModelType(StrEnum):
@@ -533,7 +533,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         # Convert to proper type: Sequence[tuple[str, EventDataMapping | None]]
-        events: Sequence[tuple[str, FlextTypes.Types.EventDataMapping | None]] = [
+        events: Sequence[tuple[str, t.Types.EventDataMapping | None]] = [
             ("event1", {"data": "value1"}),
             ("event2", {"data": "value2"}),
             ("event3", {"data": "value3"}),
@@ -559,9 +559,9 @@ class TestFlextModels:
         result = aggregate.add_domain_events_bulk(invalid_input)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
         assert result.is_failure
         assert result.error is not None and "Events must be a list" in result.error
-        invalid_empty_name: Sequence[
-            tuple[str, FlextTypes.Types.EventDataMapping | None]
-        ] = [("", {"data": "value"})]
+        invalid_empty_name: Sequence[tuple[str, t.Types.EventDataMapping | None]] = [
+            ("", {"data": "value"})
+        ]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
         assert result.is_failure
         assert (
@@ -576,7 +576,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         max_events = FlextConstants.Validation.MAX_UNCOMMITTED_EVENTS
-        events: Sequence[tuple[str, FlextTypes.Types.EventDataMapping | None]] = [
+        events: Sequence[tuple[str, t.Types.EventDataMapping | None]] = [
             (f"event{i}", {"data": f"value{i}"}) for i in range(max_events + 1)
         ]
         result = aggregate.add_domain_events_bulk(events)

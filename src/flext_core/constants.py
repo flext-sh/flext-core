@@ -17,7 +17,7 @@ from typing import Final, Literal, TypeGuard, TypeIs
 
 from pydantic import ConfigDict
 
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 class FlextConstants:
@@ -31,7 +31,7 @@ class FlextConstants:
     throughout the FLEXT ecosystem.
 
     **Structural Typing and Protocol Compliance**:
-    This class satisfies FlextProtocols.Constants through structural typing
+    This class satisfies p.Constants through structural typing
     (duck typing) via the following protocol-compliant interface:
     - 40+ nested namespace classes providing organized constant access
     - typing.Final type annotations for immutability guarantees
@@ -261,7 +261,7 @@ class FlextConstants:
     ZERO: Final[int] = 0
     INITIAL_TIME: Final[float] = 0.0
 
-    def __getitem__(self, key: str) -> FlextTypes.ConstantValue:
+    def __getitem__(self, key: str) -> t.ConstantValue:
         """Dynamic access: FlextConstants['Errors.VALIDATION_ERROR'].
 
         Business Rule: Provides dynamic constant access via dot-separated paths.
@@ -272,7 +272,7 @@ class FlextConstants:
 
         Audit Implication: Dynamic constant access enables audit trail completeness
         by allowing runtime resolution of constant paths. All resolved values are
-        validated to ensure they conform to FlextTypes.ConstantValue type constraints.
+        validated to ensure they conform to t.ConstantValue type constraints.
         Used by configuration loaders and dynamic error handling systems.
 
         Args:
@@ -289,13 +289,13 @@ class FlextConstants:
         """
         parts = key.split(".")
         # Traverse through nested classes and attributes
-        # Intermediate result can be FlextConstants instance, nested class type, or FlextTypes.ConstantValue
-        result: FlextConstants | type | FlextTypes.ConstantValue = self
+        # Intermediate result can be FlextConstants instance, nested class type, or t.ConstantValue
+        result: FlextConstants | type | t.ConstantValue = self
         try:
             for part in parts:
                 attr = getattr(result, part)
                 result = attr
-            # Type narrowing: verify result is a valid FlextTypes.ConstantValue
+            # Type narrowing: verify result is a valid t.ConstantValue
             if self._is_constant_value(result):
                 return result
             msg = f"Constant path '{key}' resolved to invalid type: {type(result).__name__}"
@@ -306,9 +306,9 @@ class FlextConstants:
 
     @staticmethod
     def _is_constant_value(
-        value: FlextConstants | type | FlextTypes.ConstantValue,
-    ) -> TypeGuard[FlextTypes.ConstantValue]:
-        """Type guard to verify value is a valid FlextTypes.ConstantValue type.
+        value: FlextConstants | type | t.ConstantValue,
+    ) -> TypeGuard[t.ConstantValue]:
+        """Type guard to verify value is a valid t.ConstantValue type.
 
         Business Rule: Type guard for runtime validation of constant value types.
         Excludes FlextConstants instances and type classes, then checks for valid
@@ -323,7 +323,7 @@ class FlextConstants:
             value: Value to check (can be FlextConstants instance, type, or constant value)
 
         Returns:
-            True if value is a valid FlextTypes.ConstantValue, False otherwise
+            True if value is a valid t.ConstantValue, False otherwise
 
         """
         # Exclude FlextConstants and type classes first
@@ -450,7 +450,7 @@ class FlextConstants:
                 "flext-redis",
                 "flext-oracle",
             )
-            SHARED_CONTAINERS: Final[FlextTypes.Types.SharedContainersMapping] = {
+            SHARED_CONTAINERS: Final[t.Types.SharedContainersMapping] = {
                 "flext-openldap-test": {
                     "compose_file": "flext-ldap/docker/docker-compose.yml",
                     "service": "openldap",
@@ -2145,3 +2145,8 @@ class FlextConstants:
                 "missing-at-symbol",
             ],
         }
+
+
+c = FlextConstants
+
+__all__ = ["FlextConstants", "c"]

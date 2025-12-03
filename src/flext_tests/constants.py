@@ -14,7 +14,7 @@ from enum import StrEnum
 from typing import Final, Literal
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 class FlextTestConstants(FlextConstants):
@@ -33,7 +33,7 @@ class FlextTestConstants(FlextConstants):
         DEFAULT_CONTAINER_CHOICES: Final[tuple[str, ...]] = (
             FlextConstants.Test.Docker.DEFAULT_CONTAINER_CHOICES
         )
-        SHARED_CONTAINERS: Final[Mapping[str, FlextTypes.Types.ContainerConfigDict]] = (
+        SHARED_CONTAINERS: Final[Mapping[str, t.Types.ContainerConfigDict]] = (
             FlextConstants.Test.Docker.SHARED_CONTAINERS
         )
 

@@ -16,13 +16,13 @@ from typing import cast
 from flext_core import (
     FlextConstants,
     FlextDispatcher,
-    FlextHandlers,
     FlextModels,
     FlextRegistry,
     FlextResult,
     FlextService,
-    FlextTypes,
-    FlextUtilities,
+    h,
+    t,
+    u,
 )
 
 # ═══════════════════════════════════════════════════════════════════
@@ -45,14 +45,14 @@ class UserCreatedEvent(FlextModels.DomainEvent):  # type: ignore[misc,valid-type
     name: str
 
 
-class CreateUserHandler(FlextHandlers[CreateUserCommand, UserCreatedEvent]):
+class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
     """Handler for creating users."""
 
-    def handle(  # noqa: PLR6301  # Required by FlextHandlers interface
+    def handle(  # noqa: PLR6301  # Required by h interface
         self, message: CreateUserCommand
     ) -> FlextResult[UserCreatedEvent]:
         """Handle create user command."""
-        user_id = FlextUtilities.Generators.generate_entity_id()
+        user_id = u.Generators.generate_entity_id()
         return FlextResult[UserCreatedEvent].ok(
             UserCreatedEvent(
                 aggregate_id=user_id,
@@ -67,16 +67,14 @@ class GetUserQuery(FlextModels.Cqrs.Query):  # type: ignore[misc,valid-type]
     user_id: str
 
 
-class GetUserHandler(
-    FlextHandlers[GetUserQuery, FlextTypes.Types.ServiceMetadataMapping]
-):
+class GetUserHandler(h[GetUserQuery, t.Types.ServiceMetadataMapping]):
     """Handler for getting users."""
 
-    def handle(  # noqa: PLR6301  # Required by FlextHandlers interface
+    def handle(  # noqa: PLR6301  # Required by h interface
         self, message: GetUserQuery
-    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Handle get user query."""
-        return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok({
+        return FlextResult[t.Types.ServiceMetadataMapping].ok({
             "user_id": message.user_id,
             "name": "Demo User",
             "email": "demo@example.com",
@@ -88,12 +86,12 @@ class GetUserHandler(
 # ═══════════════════════════════════════════════════════════════════
 
 
-class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
+class RegistryDispatcherService(FlextService[t.Types.ServiceMetadataMapping]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
     def execute(
         self,
-    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Execute registry and dispatcher demonstrations."""
         print("Starting registry and dispatcher demonstration")
 
@@ -102,7 +100,7 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
             self._demonstrate_dispatcher()
             self._demonstrate_integration()
 
-            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok({
+            return FlextResult[t.Types.ServiceMetadataMapping].ok({
                 "patterns_demonstrated": [
                     "handler_registration",
                     "batch_registration",
@@ -124,7 +122,7 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
 
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"
-            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.Types.ServiceMetadataMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_registry() -> None:
@@ -144,9 +142,9 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
         # Business Rule: register_handlers accepts list of handlers compatible with Handler protocol
         # Handler types implement Handler protocol and are compatible at runtime
         # Cast needed because GetUserHandler[GetUserQuery, ServiceMetadataMapping] is compatible
-        # with FlextHandlers[GeneralValueType, GeneralValueType] at runtime
+        # with h[GeneralValueType, GeneralValueType] at runtime
         handler_for_registry = cast(
-            "FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]",
+            "h[t.GeneralValueType, t.GeneralValueType]",
             get_handler,
         )
         batch_result = registry.register_handlers([handler_for_registry])
@@ -167,9 +165,9 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
         # Handler types implement Handler protocol and are compatible at runtime
         create_handler = CreateUserHandler()
         # Cast needed because CreateUserHandler[CreateUserCommand, UserCreatedEvent] is compatible
-        # with FlextHandlers[GeneralValueType, GeneralValueType] at runtime
+        # with h[GeneralValueType, GeneralValueType] at runtime
         handler_for_registry = cast(
-            "FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]",
+            "h[t.GeneralValueType, t.GeneralValueType]",
             create_handler,
         )
         registry.register_handler(handler_for_registry)
@@ -179,7 +177,7 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
         # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
         # Pydantic models implement model_dump() and are compatible at runtime
         # Cast needed because CreateUserCommand is compatible with GeneralValueType at runtime
-        command_for_dispatch = cast("FlextTypes.GeneralValueType", command)
+        command_for_dispatch = cast("t.GeneralValueType", command)
         dispatch_result = dispatcher.dispatch(command_for_dispatch)
         if dispatch_result.is_success:
             event_value = dispatch_result.unwrap()
@@ -202,13 +200,13 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
 
         # Business Rule: register_handler accepts handlers compatible with Handler protocol
         # Handler types implement Handler protocol and are compatible at runtime
-        # Cast needed because handlers are compatible with FlextHandlers[GeneralValueType, GeneralValueType] at runtime
+        # Cast needed because handlers are compatible with h[GeneralValueType, GeneralValueType] at runtime
         create_handler_for_registry = cast(
-            "FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]",
+            "h[t.GeneralValueType, t.GeneralValueType]",
             create_handler,
         )
         get_handler_for_registry = cast(
-            "FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]",
+            "h[t.GeneralValueType, t.GeneralValueType]",
             get_handler,
         )
         registry.register_handler(create_handler_for_registry)
@@ -219,7 +217,7 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
         # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
         # Pydantic models implement model_dump() and are compatible at runtime
         # Cast needed because CreateUserCommand is compatible with GeneralValueType at runtime
-        command_for_dispatch = cast("FlextTypes.GeneralValueType", command)
+        command_for_dispatch = cast("t.GeneralValueType", command)
         command_result = dispatcher.dispatch(command_for_dispatch)
         if command_result.is_success:
             print("✅ Command dispatched successfully")
@@ -229,7 +227,7 @@ class RegistryDispatcherService(FlextService[FlextTypes.Types.ServiceMetadataMap
         # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
         # Pydantic models implement model_dump() and are compatible at runtime
         # Cast needed because GetUserQuery is compatible with GeneralValueType at runtime
-        query_for_dispatch = cast("FlextTypes.GeneralValueType", query)
+        query_for_dispatch = cast("t.GeneralValueType", query)
         query_result = dispatcher.dispatch(query_for_dispatch)
         if query_result.is_success:
             user_data = query_result.unwrap()

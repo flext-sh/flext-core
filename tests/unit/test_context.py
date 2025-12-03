@@ -30,7 +30,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import FlextContext, FlextModels
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,7 +89,7 @@ class ContextTestHelpers:
         """Create test context with optional initial data."""
         if initial_data:
             # Convert object values to GeneralValueType for type safety
-            converted_data: dict[str, FlextTypes.GeneralValueType] = {}
+            converted_data: dict[str, t.GeneralValueType] = {}
             for key, value in initial_data.items():
                 # Type narrowing: ensure value is GeneralValueType compatible
                 if isinstance(value, (str, int, float, bool, type(None), list, dict)):
@@ -151,7 +151,7 @@ class TestFlextContext:
         """Test context set/get value operations."""
         context = ContextTestHelpers.create_test_context()
         # Type narrowing: value must be GeneralValueType compatible
-        converted_value: FlextTypes.GeneralValueType = (
+        converted_value: t.GeneralValueType = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
@@ -213,7 +213,7 @@ class TestFlextContext:
         """Test context with nested data structures."""
         context = ContextTestHelpers.create_test_context()
         # Type narrowing: nested_data must be GeneralValueType compatible
-        nested_data: dict[str, FlextTypes.GeneralValueType] = {
+        nested_data: dict[str, t.GeneralValueType] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -226,13 +226,13 @@ class TestFlextContext:
         assert isinstance(retrieved, dict)
         # Type narrowing: retrieved is dict after isinstance check
         # pyright needs explicit type narrowing for nested dict access
-        retrieved_dict: dict[str, FlextTypes.GeneralValueType] = retrieved
+        retrieved_dict: dict[str, t.GeneralValueType] = retrieved
         user_data = retrieved_dict.get("user")
         assert isinstance(user_data, dict)
-        user_dict: dict[str, FlextTypes.GeneralValueType] = user_data
+        user_dict: dict[str, t.GeneralValueType] = user_data
         profile_data = user_dict.get("profile")
         assert isinstance(profile_data, dict)
-        profile_dict: dict[str, FlextTypes.GeneralValueType] = profile_data
+        profile_dict: dict[str, t.GeneralValueType] = profile_data
         assert profile_dict.get("name") == "John Doe"
 
     def test_context_merge(self) -> None:
@@ -360,7 +360,7 @@ class TestFlextContext:
         hook_called = False
 
         # HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
-        def test_hook(_arg: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+        def test_hook(_arg: t.GeneralValueType) -> t.GeneralValueType:
             nonlocal hook_called
             hook_called = True
             return _arg
@@ -414,7 +414,7 @@ class TestFlextContext:
         new_context = FlextContext()
         if global_data is not None and isinstance(global_data, dict):
             # Convert dict[str, object] to dict[str, GeneralValueType]
-            converted_global: dict[str, FlextTypes.GeneralValueType] = {
+            converted_global: dict[str, t.GeneralValueType] = {
                 str(k): v
                 if isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else str(v)
@@ -458,7 +458,7 @@ class TestFlextContext:
         """Test context with special values."""
         context = ContextTestHelpers.create_test_context()
         # Type narrowing: special_value must be GeneralValueType compatible
-        converted_value: FlextTypes.GeneralValueType = (
+        converted_value: t.GeneralValueType = (
             special_value
             if isinstance(
                 special_value, (str, int, float, bool, type(None), list, dict)
@@ -491,10 +491,10 @@ class TestFlextContext:
                 error_count.append(1)
 
         threads = [threading.Thread(target=read_value) for _ in range(5)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
         assert len(error_count) == 0
 
     def test_context_concurrent_writes(self) -> None:
@@ -512,10 +512,10 @@ class TestFlextContext:
             threading.Thread(target=write_value, args=(f"key_{i}", f"value_{i}"))
             for i in range(10)
         ]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
         assert len(error_count) == 0
 
     def test_context_multiple_sequential_operations(self) -> None:
@@ -804,7 +804,7 @@ class TestFlextContext:
         """Test importing data into context."""
         context = ContextTestHelpers.create_test_context()
         # Type narrowing: convert dict[str, object] to dict[str, GeneralValueType]
-        data_to_import: dict[str, FlextTypes.GeneralValueType] = {
+        data_to_import: dict[str, t.GeneralValueType] = {
             "key1": "value1",
             "key2": "value2",
         }
@@ -854,9 +854,9 @@ class TestFlextContext:
     def test_context_add_hook_and_invoke(self) -> None:
         """Test adding and invoking hooks."""
         context = ContextTestHelpers.create_test_context()
-        hook_called: list[FlextTypes.GeneralValueType] = []
+        hook_called: list[t.GeneralValueType] = []
 
-        def test_hook(arg: FlextTypes.GeneralValueType) -> FlextTypes.GeneralValueType:
+        def test_hook(arg: t.GeneralValueType) -> t.GeneralValueType:
             hook_called.append(arg)
             return arg
 

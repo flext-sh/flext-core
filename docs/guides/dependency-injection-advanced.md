@@ -507,11 +507,11 @@ if result.is_success:
 ### Correct: Semantic Type Aliases
 
 ```python
-from flext_core import FlextTypes
+from flext_core import t
 
 # Use semantic types for consistency
-ServiceName = FlextTypes.ServiceName
-ServiceType = FlextTypes.ServiceType
+ServiceName = t.ServiceName
+ServiceType = t.ServiceType
 
 def get_service(name: ServiceName, type_cls: type[ServiceType]) -> FlextResult[ServiceType]:
     container = FlextContainer.get_global()
@@ -652,7 +652,7 @@ Layer 2: Domain services registered in container
     ↓
 Layer 1: FlextContainer - core dependency injection
     ↓
-Layer 0: FlextConstants, FlextTypes
+Layer 0: FlextConstants, t
 ```
 
 ## Key Takeaways

@@ -40,15 +40,15 @@ class TestResultBasics:
 
     def test_result_repr_format(self) -> None:
         """Test __repr__ format."""
-        r = FlextResult[int].ok(42)
-        repr_str = repr(r)
-        assert "FlextResult" in repr_str
+        result = FlextResult[int].ok(42)
+        repr_str = repr(result)
+        assert "r.ok" in repr_str
 
     def test_result_repr_failure(self) -> None:
         """Test __repr__ on failure."""
-        r = FlextResult[int].fail("error")
-        repr_str = repr(r)
-        assert "error" in repr_str.lower() or "FlextResult" in repr_str
+        result = FlextResult[int].fail("error")
+        repr_str = repr(result)
+        assert "error" in repr_str.lower() or "r.fail" in repr_str
 
     def test_result_value_property(self) -> None:
         """Test .value property."""

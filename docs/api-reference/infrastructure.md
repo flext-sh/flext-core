@@ -5,6 +5,7 @@ This section summarizes the infrastructure layer components that provide configu
 ## Configuration Management
 
 ### FlextConfig — Layered Configuration
+
 Layered configuration system supporting environment variables, files, and programmatic overrides with type-safe access.
 
 ```python
@@ -22,6 +23,7 @@ debug_mode = config.get("debug", default=False)
 ## Logging and Observability
 
 ### FlextLogger — Structured Logging
+
 Structured logging with correlation metadata and DI-friendly construction.
 
 ```python
@@ -35,6 +37,7 @@ with logger.context(operation="user_creation", user_id="user_123"):
 ```
 
 ### FlextContext — Request and Operation Context
+
 Context object that carries correlation IDs, timing metadata, and arbitrary tags through dispatcher pipelines.
 
 ```python

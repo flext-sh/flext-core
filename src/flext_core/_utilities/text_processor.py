@@ -14,16 +14,16 @@ from __future__ import annotations
 import re
 
 from flext_core.constants import FlextConstants
-from flext_core.protocols import FlextProtocols
+from flext_core.protocols import p
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 
 
-class FlextUtilitiesTextProcessor:
+class FlextTextProcessor:
     """Low-level text normalization helpers for CQRS utilities."""
 
     @property
-    def logger(self) -> FlextProtocols.StructlogLogger:
+    def logger(self) -> p.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -88,4 +88,9 @@ class FlextUtilitiesTextProcessor:
         return stripped
 
 
-__all__ = ["FlextUtilitiesTextProcessor"]
+uTextProcessor = FlextTextProcessor  # noqa: N816
+
+__all__ = [
+    "FlextTextProcessor",
+    "uTextProcessor",
+]

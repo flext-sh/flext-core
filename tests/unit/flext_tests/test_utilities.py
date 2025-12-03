@@ -13,8 +13,8 @@ from typing import Any, cast
 import pytest
 
 from flext_core import FlextResult
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core.protocols import p
+from flext_core.typings import t
 from flext_tests.utilities import FlextTestsUtilities
 
 
@@ -90,7 +90,7 @@ class TestFlextTestsUtilities:
                 super().__init__()
                 self.attribute = "original"
 
-            def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+            def model_dump(self) -> Mapping[str, t.FlexibleValue]:
                 """Implement HasModelDump protocol."""
                 return {"attribute": self.attribute}
 
@@ -106,11 +106,11 @@ class TestFlextTestsUtilities:
         """Test test_context adds new attribute temporarily."""
 
         class TestObject:
-            def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+            def model_dump(self) -> Mapping[str, t.FlexibleValue]:
                 """Implement HasModelDump protocol."""
                 return {}
 
-        obj: FlextProtocols.HasModelDump = TestObject()
+        obj: p.HasModelDump = TestObject()
 
         with FlextTestsUtilities.test_context(obj, "new_attr", "new_value"):
             assert hasattr(obj, "new_attr")
@@ -128,7 +128,7 @@ class TestFlextTestsUtilities:
                 super().__init__()
                 self.temp_attr = "temp"
 
-            def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+            def model_dump(self) -> Mapping[str, t.FlexibleValue]:
                 """Implement HasModelDump protocol."""
                 return {"temp_attr": self.temp_attr}
 
@@ -153,7 +153,7 @@ class TestFlextTestsUtilities:
                 super().__init__()
                 self.attribute = "original"
 
-            def model_dump(self) -> Mapping[str, FlextTypes.FlexibleValue]:
+            def model_dump(self) -> Mapping[str, t.FlexibleValue]:
                 """Implement HasModelDump protocol."""
                 return {"attribute": self.attribute}
 
@@ -233,7 +233,8 @@ class TestFlextTestsUtilitiesTestUtilities:
 
         assert isinstance(test_id, str)
         assert test_id.startswith("test_")
-        assert len(test_id) == 13  # "test_" + 8 hex chars
+        # UUID format: prefix_ + 36-char UUID (8-4-4-4-12)
+        assert len(test_id) == 41  # "test_" (5) + UUID (36)
 
     def test_generate_test_id_custom_prefix(self) -> None:
         """Test generate_test_id with custom prefix."""
@@ -241,7 +242,8 @@ class TestFlextTestsUtilitiesTestUtilities:
 
         assert isinstance(test_id, str)
         assert test_id.startswith("custom_")
-        assert len(test_id) == 15  # "custom_" + 8 hex chars
+        # UUID format: prefix_ + 36-char UUID (8-4-4-4-12)
+        assert len(test_id) == 43  # "custom_" (7) + UUID (36)
 
     def test_generate_test_id_uniqueness(self) -> None:
         """Test that generate_test_id produces unique IDs."""

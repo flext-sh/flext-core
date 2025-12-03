@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from ..helpers.constants import TestConstants
 
@@ -23,7 +23,7 @@ class ErrorScenario:
     type: str
     message: str
     code: str
-    context: FlextTypes.Types.ConfigurationMapping = field(default_factory=dict)
+    context: t.Types.ConfigurationMapping = field(default_factory=dict)
     field: str | None = None
     config_key: str | None = None
     service: str | None = None
@@ -31,9 +31,9 @@ class ErrorScenario:
     handler: str | None = None
     user: str | None = None
 
-    def to_dict(self) -> FlextTypes.Types.ConfigurationMapping:
+    def to_dict(self) -> t.Types.ConfigurationMapping:
         """Convert to dictionary format for compatibility."""
-        result: dict[str, FlextTypes.GeneralValueType] = {
+        result: dict[str, t.GeneralValueType] = {
             "type": self.type,
             "message": self.message,
             "code": self.code,
@@ -161,7 +161,7 @@ class ErrorScenarioFactories:
         }
 
     @staticmethod
-    def get_all_scenarios_dict() -> dict[str, FlextTypes.Types.ConfigurationMapping]:
+    def get_all_scenarios_dict() -> dict[str, t.Types.ConfigurationMapping]:
         """Get all scenarios in dict format for backward compatibility."""
         return {
             key: scenario.to_dict()
@@ -170,7 +170,7 @@ class ErrorScenarioFactories:
 
 
 # Backward compatibility function
-def get_test_error_scenarios() -> dict[str, FlextTypes.Types.ConfigurationMapping]:
+def get_test_error_scenarios() -> dict[str, t.Types.ConfigurationMapping]:
     """Provide common error scenarios for testing (backward compatibility).
 
     Returns:

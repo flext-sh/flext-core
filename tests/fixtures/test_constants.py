@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 from ..helpers.constants import TestConstants
 
@@ -100,9 +100,9 @@ class FixtureConstantsCollection:
     patterns: FixturePatterns = FixturePatterns()
     numeric: FixtureNumericValues = FixtureNumericValues()
 
-    def to_dict(self) -> FlextTypes.Types.ConfigurationMapping:
+    def to_dict(self) -> t.Types.ConfigurationMapping:
         """Convert to flat dictionary for backward compatibility."""
-        result: dict[str, FlextTypes.GeneralValueType] = {}
+        result: dict[str, t.GeneralValueType] = {}
 
         # Identifiers
         result.update(
@@ -211,7 +211,7 @@ class FixtureConstantsFactories:
 
 
 # Backward compatibility function
-def get_test_constants() -> FlextTypes.Types.ConfigurationMapping:
+def get_test_constants() -> t.Types.ConfigurationMapping:
     """Provide centralized test constants for all tests (backward compatibility).
 
     Returns:

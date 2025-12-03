@@ -12,7 +12,7 @@ Tests FlextRegistry functionality including:
 - Error handling
 - Dispatcher integration
 
-Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
+Uses Python 3.13 patterns, FlextTestsUtilities, c,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -28,14 +28,14 @@ from typing import ClassVar
 import pytest
 
 from flext_core import (
-    FlextConstants,
     FlextDispatcher,
-    FlextHandlers,
     FlextRegistry,
-    FlextResult,
+    c,
+    h,
+    r,
 )
 from flext_core._models.handler import FlextModelsHandler
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 class RegistryOperationType(StrEnum):
@@ -66,20 +66,16 @@ class RegistryTestCase:
     duplicate_registration: bool = False
 
 
-class ConcreteTestHandler(
-    FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
-):
-    """Concrete implementation of FlextHandlers for testing."""
+class ConcreteTestHandler(h[t.GeneralValueType, t.GeneralValueType]):
+    """Concrete implementation of h for testing."""
 
-    def handle(
-        self, message: FlextTypes.GeneralValueType
-    ) -> FlextResult[FlextTypes.GeneralValueType]:
+    def handle(self, message: t.GeneralValueType) -> r[t.GeneralValueType]:
         """Handle the message."""
-        return FlextResult[FlextTypes.GeneralValueType].ok(f"processed_{message}")
+        return r[t.GeneralValueType].ok(f"processed_{message}")
 
 
 class RegistryScenarios:
-    """Centralized registry test scenarios using FlextConstants."""
+    """Centralized registry test scenarios using c."""
 
     HANDLER_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
@@ -269,19 +265,17 @@ class RegistryScenarios:
     @staticmethod
     def create_handlers(
         count: int,
-    ) -> list[FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]]:
+    ) -> list[h[t.GeneralValueType, t.GeneralValueType]]:
         """Create test handlers."""
         return [ConcreteTestHandler() for _ in range(count)]
 
     @staticmethod
     def create_bindings(
-        handlers: list[
-            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
-        ],
+        handlers: list[h[t.GeneralValueType, t.GeneralValueType]],
     ) -> list[
         tuple[
-            type[FlextTypes.GeneralValueType],
-            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+            type[t.GeneralValueType],
+            h[t.GeneralValueType, t.GeneralValueType],
         ]
     ]:
         """Create test bindings using str message type."""
@@ -289,17 +283,15 @@ class RegistryScenarios:
 
     @staticmethod
     def create_function_map(
-        handlers: list[
-            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType]
-        ],
+        handlers: list[h[t.GeneralValueType, t.GeneralValueType]],
     ) -> dict[
-        type[FlextTypes.GeneralValueType],
-        FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+        type[t.GeneralValueType],
+        h[t.GeneralValueType, t.GeneralValueType],
     ]:
         """Create test function map using str message type."""
         result: dict[
-            type[FlextTypes.GeneralValueType],
-            FlextHandlers[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
+            type[t.GeneralValueType],
+            h[t.GeneralValueType, t.GeneralValueType],
         ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
@@ -317,7 +309,7 @@ class RegistryTestHelpers:
 
     @staticmethod
     def assert_registration_result(
-        result: FlextResult[object],
+        result: r[object],
         should_succeed: bool,
         error_pattern: str | None = None,
     ) -> None:
@@ -417,9 +409,9 @@ class TestFlextRegistry:
                 summary.registered.append(
                     FlextModelsHandler.RegistrationDetails(
                         registration_id=f"test_{i}",
-                        handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
+                        handler_mode=c.Cqrs.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
-                        status=FlextConstants.Cqrs.CommonStatus.RUNNING,
+                        status=c.Cqrs.CommonStatus.RUNNING,
                     ),
                 )
         if not test_case.should_succeed:
@@ -479,10 +471,10 @@ class TestFlextRegistry:
     @pytest.mark.parametrize(
         ("mode", "expected"),
         [
-            ("command", FlextConstants.Cqrs.HandlerType.COMMAND),
-            ("query", FlextConstants.Cqrs.HandlerType.QUERY),
-            ("invalid", FlextConstants.Cqrs.HandlerType.COMMAND),
-            (None, FlextConstants.Cqrs.HandlerType.COMMAND),
+            ("command", c.Cqrs.HandlerType.COMMAND),
+            ("query", c.Cqrs.HandlerType.QUERY),
+            ("invalid", c.Cqrs.HandlerType.COMMAND),
+            (None, c.Cqrs.HandlerType.COMMAND),
         ],
         ids=["command", "query", "invalid", "none"],
     )

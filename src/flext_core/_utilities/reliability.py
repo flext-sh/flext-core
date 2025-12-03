@@ -17,17 +17,17 @@ import time
 from collections.abc import Callable
 
 from flext_core.constants import FlextConstants
-from flext_core.protocols import FlextProtocols
+from flext_core.protocols import p
 from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
-class FlextUtilitiesReliability:
+class FlextReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
     @property
-    def logger(self) -> FlextProtocols.StructlogLogger:
+    def logger(self) -> p.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -179,7 +179,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def calculate_delay(
         attempt: int,
-        config: dict[str, FlextTypes.GeneralValueType] | None,
+        config: dict[str, t.GeneralValueType] | None,
     ) -> float:
         """Calculate delay for retry attempt using configuration.
 
@@ -262,4 +262,9 @@ class FlextUtilitiesReliability:
         return FlextResult[TResult].fail("Max retries exceeded")
 
 
-__all__ = ["FlextUtilitiesReliability"]
+uReliability = FlextReliability  # noqa: N816
+
+__all__ = [
+    "FlextReliability",
+    "uReliability",
+]

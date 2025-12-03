@@ -16,7 +16,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Final, Literal
 
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 from flext_tests.constants import FlextTestConstants
 
 
@@ -269,12 +269,12 @@ class TestConstants(FlextTestConstants):
         INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
         CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
 
-        # Test data - using FlextTypes for type safety
-        TEST_DATA: Final[FlextTypes.Types.ConfigurationMapping] = {
+        # Test data - using t for type safety
+        TEST_DATA: Final[t.Types.ConfigurationMapping] = {
             "key": "value",
             "value": 5,
         }
-        TEST_DICT: Final[FlextTypes.Types.ConfigurationMapping] = {"key": "value"}
+        TEST_DICT: Final[t.Types.ConfigurationMapping] = {"key": "value"}
         TEST_LIST: Final[list[int]] = [1, 2, 3]
 
         # Performance thresholds

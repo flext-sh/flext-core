@@ -1,4 +1,4 @@
-"""Utilities module - FlextUtilitiesCollection.
+"""Utilities module - FlextCollection.
 
 Extracted from flext_core.utilities for better modularity.
 
@@ -12,10 +12,10 @@ from collections.abc import Callable, Iterable, Mapping
 from enum import StrEnum
 
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
-class FlextUtilitiesCollection:
+class FlextCollection:
     """Utilities for collection conversion with StrEnums.
 
     PATTERNS collections.abc:
@@ -37,7 +37,7 @@ class FlextUtilitiesCollection:
         """Convert sequence of strings to tuple of StrEnum.
 
         Example:
-             result = FlextUtilitiesCollection.parse_sequence(
+             result = uCollection.parse_sequence(
                  Status, ["active", "pending"]
              )
              if result.is_success:
@@ -64,13 +64,13 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_list_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[FlextTypes.FlexibleValue], list[E]]:
+    ) -> Callable[[t.FlexibleValue], list[E]]:
         """BeforeValidator for list of StrEnums.
 
         Example:
              StatusList = Annotated[
                  list[Status],
-                 BeforeValidator(FlextUtilitiesCollection.coerce_list_validator(Status))
+                 BeforeValidator(uCollection.coerce_list_validator(Status))
              ]
 
              class MyModel(BaseModel):
@@ -78,7 +78,7 @@ class FlextUtilitiesCollection:
 
         """
 
-        def _coerce(value: FlextTypes.FlexibleValue) -> list[E]:
+        def _coerce(value: t.FlexibleValue) -> list[E]:
             if not isinstance(value, (list, tuple, set, frozenset)):
                 msg = f"Expected sequence, got {type(value).__name__}"
                 raise TypeError(msg)
@@ -113,7 +113,7 @@ class FlextUtilitiesCollection:
         """Convert Mapping with string values to dict with StrEnum.
 
         Example:
-             result = FlextUtilitiesCollection.parse_mapping(
+             result = uCollection.parse_mapping(
                  Status, {"user1": "active", "user2": "pending"}
              )
 
@@ -138,18 +138,18 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_dict_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[FlextTypes.FlexibleValue], dict[str, E]]:
+    ) -> Callable[[t.FlexibleValue], dict[str, E]]:
         """BeforeValidator for dict with StrEnum values.
 
         Example:
              StatusDict = Annotated[
                  dict[str, Status],
-                 BeforeValidator(FlextUtilitiesCollection.coerce_dict_validator(Status))
+                 BeforeValidator(uCollection.coerce_dict_validator(Status))
              ]
 
         """
 
-        def _coerce(value: FlextTypes.FlexibleValue) -> dict[str, E]:
+        def _coerce(value: t.FlexibleValue) -> dict[str, E]:
             if not isinstance(value, dict):
                 msg = f"Expected dict, got {type(value).__name__}"
                 raise TypeError(msg)
@@ -171,3 +171,11 @@ class FlextUtilitiesCollection:
             return result
 
         return _coerce
+
+
+uCollection = FlextCollection  # noqa: N816
+
+__all__ = [
+    "FlextCollection",
+    "uCollection",
+]

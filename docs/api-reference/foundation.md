@@ -3,6 +3,7 @@
 This reference covers **Layers 0, 0.5, and 1**, the primitives that support dispatcher-driven CQRS without leaking higher-layer dependencies.
 
 ## Architecture Overview
+
 - **Layer 0** — Pure constants, typing helpers, and runtime protocols with zero dependencies.
 - **Layer 0.5** — Runtime bridge that adapts external libraries without importing application or domain code.
 - **Layer 1** — Core primitives (`FlextResult`, `FlextContainer`, `FlextExceptions`) that Domain and Application layers rely on.
@@ -14,6 +15,7 @@ See the [Architecture Overview](../architecture/overview.md) for the full layeri
 ## Layer 0: Pure Constants
 
 ### FlextConstants — Centralized Defaults
+
 Immutable defaults and identifiers with no runtime dependencies.
 
 ```python
@@ -25,26 +27,28 @@ request_timeout = FlextConstants.Configuration.DEFAULT_TIMEOUT
 email_pattern = FlextConstants.Validation.EMAIL_PATTERN
 ```
 
-### FlextTypes — Type System
+### t — Type System
+
 Common type variables, aliases, and CQRS markers used throughout the codebase.
 
 ```python
-from flext_core import FlextTypes
+from flext_core import t
 
-T = FlextTypes.T
-U = FlextTypes.U
-TCommand = FlextTypes.TCommand
-TQuery = FlextTypes.TQuery
-TEvent = FlextTypes.TEvent
+T = t.T
+U = t.U
+TCommand = t.TCommand
+TQuery = t.TQuery
+TEvent = t.TEvent
 ```
 
-### FlextProtocols — Runtime Interfaces
+### p — Runtime Interfaces
+
 Runtime-checkable protocols that keep boundary contracts explicit.
 
 ```python
-from flext_core import FlextProtocols
+from flext_core import p
 
-if isinstance(service, FlextProtocols.Configurable):
+if isinstance(service, p.Configurable):
     service.configure(config)
 ```
 
@@ -53,6 +57,7 @@ if isinstance(service, FlextProtocols.Configurable):
 ## Layer 0.5: Runtime Bridge
 
 ### FlextRuntime — External Library Integration
+
 Adapters for external libraries (for example, `structlog`) that stay isolated from the dispatcher and domain layers.
 
 ```python
@@ -69,6 +74,7 @@ data = FlextRuntime.to_json_serializable(payload)
 ## Layer 1: Foundation (Core Primitives)
 
 ### FlextResult[T] — Railway-Oriented Programming
+
 Monadic success/failure handling used across services, handlers, and decorators.
 
 ```python
@@ -82,6 +88,7 @@ result = (
 ```
 
 ### FlextContainer — Dependency Injection
+
 Lightweight DI container with explicit lifecycles that works cleanly with dispatcher-driven handlers.
 
 ```python
@@ -97,6 +104,7 @@ if logger_result.is_success:
 ```
 
 ### FlextExceptions — Exception Hierarchy
+
 Structured exception types with contextual metadata for infrastructure concerns.
 
 ```python

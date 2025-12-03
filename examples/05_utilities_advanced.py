@@ -1,4 +1,4 @@
-"""FlextUtilities advanced features demonstration.
+"""u advanced features demonstration.
 
 Demonstrates Args, Enum, Model, TextProcessor, TypeGuards, DataMapper,
 Domain, Pagination, and Configuration utilities using Python 3.13+ strict
@@ -20,8 +20,8 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
-    FlextTypes,
-    FlextUtilities,
+    t,
+    u,
 )
 
 # ═══════════════════════════════════════════════════════════════════
@@ -49,7 +49,7 @@ class UserModel(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-typ
 # SAMPLE DATA
 # ═══════════════════════════════════════════════════════════════════
 
-TEST_DATA: Mapping[str, FlextTypes.GeneralValueType] = {
+TEST_DATA: Mapping[str, t.GeneralValueType] = {
     "name": "John Doe",
     "status": "active",
     "age": 30,
@@ -65,12 +65,12 @@ TEST_DATA: Mapping[str, FlextTypes.GeneralValueType] = {
 # ═══════════════════════════════════════════════════════════════════
 
 
-class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
-    """Service demonstrating advanced FlextUtilities features."""
+class AdvancedUtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
+    """Service demonstrating advanced u features."""
 
     def execute(
         self,
-    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Execute advanced utilities demonstrations."""
         print("Starting advanced utilities demonstration")
 
@@ -85,7 +85,7 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
             self._demonstrate_pagination()
             self._demonstrate_configuration()
 
-            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok({
+            return FlextResult[t.Types.ServiceMetadataMapping].ok({
                 "utilities_demonstrated": [
                     "args_validation",
                     "enum_utilities",
@@ -113,14 +113,14 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
 
         except Exception as e:
             error_msg = f"Advanced utilities demonstration failed: {e}"
-            return FlextResult[FlextTypes.Types.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.Types.ServiceMetadataMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_args_validation() -> None:
         """Show Args validation utilities."""
         print("\n=== Args Validation ===")
 
-        @FlextUtilities.Args.validated
+        @u.Args.validated
         def process_status(status: StatusEnum) -> str:
             """Process status with automatic validation."""
             return f"Status: {status.value}"
@@ -129,7 +129,7 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         result = process_status(status_enum)
         print(f"✅ Validated function: {result}")
 
-        @FlextUtilities.Args.validated_with_result
+        @u.Args.validated_with_result
         def process_with_result(status: StatusEnum) -> FlextResult[str]:
             """Process with result validation."""
             return FlextResult[str].ok(f"Processed: {status.value}")
@@ -145,14 +145,14 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         print("\n=== Enum Utilities ===")
 
         # Parse enum from string
-        parse_result = FlextUtilities.Enum.parse(StatusEnum, "active")
+        parse_result = u.Enum.parse(StatusEnum, "active")
         if parse_result.is_success:
             status = parse_result.unwrap()
             print(f"✅ Enum parsing: {status.value}")
 
         # Type guard for enum membership
-        test_value: FlextTypes.GeneralValueType = "pending"
-        if FlextUtilities.Enum.is_member(StatusEnum, test_value):
+        test_value: t.GeneralValueType = "pending"
+        if u.Enum.is_member(StatusEnum, test_value):
             print(f"✅ Type guard: {test_value} is valid StatusEnum")
 
         # Subset validation - using string value for type guard
@@ -161,9 +161,7 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         # Business Rule: is_subset accepts enum class (type[E]), frozenset of enum members, and value to check
         # StatusEnum is the enum class type. Use type() to ensure we pass the class, not an instance.
         # This pattern ensures type checker understands it's a class type for proper type inference.
-        if FlextUtilities.Enum.is_subset(
-            type(StatusEnum.ACTIVE), active_states, test_status_str
-        ):
+        if u.Enum.is_subset(type(StatusEnum.ACTIVE), active_states, test_status_str):
             print("✅ Subset validation: 'active' is in active states")
 
     @staticmethod
@@ -172,48 +170,46 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         print("\n=== Model Utilities ===")
 
         # Create model from dict
-        user_data: Mapping[str, FlextTypes.FlexibleValue] = {
+        user_data: Mapping[str, t.FlexibleValue] = {
             "name": "Alice",
             "status": "active",
             "age": 25,
         }
-        model_result = FlextUtilities.Model.from_dict(UserModel, user_data)
+        model_result = u.Model.from_dict(UserModel, user_data)
         if model_result.is_success:
             user = model_result.unwrap()
             status_value = (
                 user.status.value
-                if isinstance(user.status, StatusEnum)
+                if u.guard(user.status, StatusEnum, return_value=True) is not None
                 else str(user.status)
             )
             print(f"✅ Model from dict: {user.name} ({status_value})")
 
         # Create model from kwargs
-        kwargs_result = FlextUtilities.Model.from_kwargs(
+        kwargs_result = u.Model.from_kwargs(
             UserModel, name="Bob", status=StatusEnum.PENDING, age=30
         )
         if kwargs_result.is_success:
             user = kwargs_result.unwrap()
             status_value = (
                 user.status.value
-                if isinstance(user.status, StatusEnum)
+                if u.guard(user.status, StatusEnum, return_value=True) is not None
                 else str(user.status)
             )
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
 
         # Merge defaults
-        defaults: Mapping[str, FlextTypes.FlexibleValue] = {
+        defaults: Mapping[str, t.FlexibleValue] = {
             "status": StatusEnum.PENDING,
             "age": 0,
         }
-        overrides: Mapping[str, FlextTypes.FlexibleValue] = {"name": "Charlie"}
-        merge_result = FlextUtilities.Model.merge_defaults(
-            UserModel, defaults, overrides
-        )
+        overrides: Mapping[str, t.FlexibleValue] = {"name": "Charlie"}
+        merge_result = u.Model.merge_defaults(UserModel, defaults, overrides)
         if merge_result.is_success:
             user = merge_result.unwrap()
             status_value = (
                 user.status.value
-                if isinstance(user.status, StatusEnum)
+                if u.guard(user.status, StatusEnum, return_value=True) is not None
                 else str(user.status)
             )
             print(f"✅ Merged defaults: {user.name} ({status_value})")
@@ -225,21 +221,19 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
 
         # Clean text
         dirty_text = str(TEST_DATA["text"])
-        cleaned = FlextUtilities.TextProcessor.clean_text(dirty_text)
+        cleaned = u.TextProcessor.clean_text(dirty_text)
         print(f"✅ Text cleaning: '{dirty_text}' → '{cleaned}'")
 
         # Truncate text
         long_text = str(TEST_DATA["long_text"])
-        truncate_result = FlextUtilities.TextProcessor.truncate_text(
-            long_text, max_length=50
-        )
+        truncate_result = u.TextProcessor.truncate_text(long_text, max_length=50)
         if truncate_result.is_success:
             truncated = truncate_result.unwrap()
             print(f"✅ Text truncation: {len(truncated)} chars")
 
         # Safe string validation
         try:
-            safe = FlextUtilities.TextProcessor.safe_string("  valid  ")
+            safe = u.TextProcessor.safe_string("  valid  ")
             print(f"✅ Safe string: '{safe}'")
         except ValueError as e:
             print(f"⚠️  Safe string validation: {e}")
@@ -250,17 +244,17 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         print("\n=== Type Guards ===")
 
         # String non-empty guard
-        if FlextUtilities.TypeGuards.is_string_non_empty("hello"):
+        if u.TypeGuards.is_string_non_empty("hello"):
             print("✅ String non-empty guard: 'hello' is valid")
 
         # Dict non-empty guard
         test_dict: dict[str, str] = {"key": "value"}
-        if FlextUtilities.TypeGuards.is_dict_non_empty(test_dict):
+        if u.TypeGuards.is_dict_non_empty(test_dict):
             print("✅ Dict non-empty guard: dict is valid")
 
         # List non-empty guard
         test_list: list[int] = [1, 2, 3]
-        if FlextUtilities.TypeGuards.is_list_non_empty(test_list):
+        if u.TypeGuards.is_list_non_empty(test_list):
             print("✅ List non-empty guard: list is valid")
 
     @staticmethod
@@ -271,22 +265,28 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         # Map dictionary keys
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: FlextResult[dict[str, FlextTypes.GeneralValueType]] = FlextResult[
-            dict[str, FlextTypes.GeneralValueType]
+        map_result: FlextResult[dict[str, t.GeneralValueType]] = FlextResult[
+            dict[str, t.GeneralValueType]
         ].fail("Invalid data types")
-        if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
-            source_dict: dict[str, FlextTypes.GeneralValueType] = dict(source_value)
-            key_mapping: dict[str, str] = {k: str(v) for k, v in mapping_value.items()}
-            map_result = FlextUtilities.DataMapper.map_dict_keys(
-                source_dict, key_mapping
+        if (
+            u.guard(source_value, Mapping, return_value=True) is not None
+            and u.guard(mapping_value, Mapping, return_value=True) is not None
+        ):
+            source_dict: dict[str, t.GeneralValueType] = dict(source_value)
+            mapped_dict = u.map(mapping_value, lambda _k, v: str(v))
+            key_mapping: dict[str, str] = (
+                dict(mapped_dict.items()) if isinstance(mapped_dict, dict) else {}
             )
+            map_result = u.DataMapper.map_dict_keys(source_dict, key_mapping)
         if map_result.is_success:
             mapped = map_result.unwrap()
             print(f"✅ Key mapping: {list(mapped.keys())}")
 
-        # Convert to int safe
-        int_result = FlextUtilities.DataMapper.convert_to_int_safe("123", 0)
-        print(f"✅ Safe int conversion: '123' → {int_result}")
+        # Convert to int safe using parse()
+        int_result = u.parse("123", int, default=0)
+        print(
+            f"✅ Safe int conversion: '123' → {int_result.value if int_result.is_success else 0}"
+        )
 
         # Build flags dict
         flags: list[str] = ["read", "write"]
@@ -294,7 +294,7 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
             "read": "can_read",
             "write": "can_write",
         }
-        flags_result = FlextUtilities.DataMapper.build_flags_dict(flags, flag_mapping)
+        flags_result = u.DataMapper.build_flags_dict(flags, flag_mapping)
         if flags_result.is_success:
             flags_dict = flags_result.unwrap()
             print(f"✅ Flags dict: {list(flags_dict.keys())}")
@@ -309,7 +309,7 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         user2 = UserModel(name="Bob", status=StatusEnum.ACTIVE, age=30)
 
         # Compare value objects by value
-        comparison = FlextUtilities.Domain.compare_value_objects_by_value(user1, user2)
+        comparison = u.Domain.compare_value_objects_by_value(user1, user2)
         print(f"✅ Value object comparison: {comparison}")
 
         # Entity comparison utilities available
@@ -323,7 +323,7 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
 
         # Extract page params
         query_params: dict[str, str] = {"page": "2", "page_size": "10"}
-        page_result = FlextUtilities.Pagination.extract_page_params(
+        page_result = u.Pagination.extract_page_params(
             query_params,
             default_page=1,
             default_page_size=FlextConstants.Pagination.DEFAULT_PAGE_SIZE,
@@ -334,7 +334,7 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
             print(f"✅ Page params: page={page}, size={page_size}")
 
         # Validate pagination params
-        validate_result = FlextUtilities.Pagination.validate_pagination_params(
+        validate_result = u.Pagination.validate_pagination_params(
             page=1,
             page_size=20,
             max_page_size=FlextConstants.Pagination.MAX_PAGE_SIZE,
@@ -351,18 +351,18 @@ class AdvancedUtilitiesService(FlextService[FlextTypes.Types.ServiceMetadataMapp
         # Get parameter from model
         user = UserModel(name="Test", status=StatusEnum.ACTIVE, age=30)
         try:
-            name_param = FlextUtilities.Configuration.get_parameter(user, "name")
+            name_param = u.Configuration.get_parameter(user, "name")
             print(f"✅ Get parameter: name={name_param}")
         except Exception as e:
             print(f"⚠️  Get parameter: {e}")
 
         # Get parameter from dict
-        config_dict: dict[str, FlextTypes.GeneralValueType] = {
+        config_dict: dict[str, t.GeneralValueType] = {
             "timeout": 30,
             "retries": 3,
         }
         try:
-            timeout = FlextUtilities.Configuration.get_parameter(config_dict, "timeout")
+            timeout = u.Configuration.get_parameter(config_dict, "timeout")
             print(f"✅ Get from dict: timeout={timeout}")
         except Exception as e:
             print(f"⚠️  Get from dict: {e}")

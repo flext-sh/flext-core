@@ -1,7 +1,7 @@
-"""Comprehensive coverage tests for FlextUtilities.
+"""Comprehensive coverage tests for u.
 
-Module: flext_core.utilities.FlextUtilities
-Scope: All public FlextUtilities namespaces
+Module: flext_core.utilities.u
+Scope: All public u namespaces
 Pattern: Railway-Oriented, Functional utilities, Type guards, Generators
 
 Tests validate:
@@ -28,9 +28,9 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions, FlextResult, FlextUtilities
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core import FlextExceptions, FlextResult, u
+from flext_core.protocols import p
+from flext_core.typings import t
 
 # =========================================================================
 # Test Data and Scenarios
@@ -56,7 +56,7 @@ class UtilityTestCase:
     """Test case for utility operations."""
 
     operation: UtilityOperationType
-    input_data: FlextTypes.GeneralValueType | None = None
+    input_data: t.GeneralValueType | None = None
     expected_type: type | None = None
     should_succeed: bool = True
     description: str = ""
@@ -154,17 +154,17 @@ class UtilityScenarios:
 
     @staticmethod
     def create_mock_config(
-        **kwargs: FlextTypes.GeneralValueType,
-    ) -> FlextProtocols.HasModelDump:
+        **kwargs: t.GeneralValueType,
+    ) -> p.HasModelDump:
         """Create mock config object."""
 
         class TestConfig:
-            def model_dump(self) -> FlextTypes.Types.ConfigurationMapping:
+            def model_dump(self) -> t.Types.ConfigurationMapping:
                 # Convert kwargs to proper ConfigurationMapping type
                 # HasModelDump expects Mapping[str, FlexibleValue]
                 # ConfigurationMapping = Mapping[str, GeneralValueType]
                 # For test purposes, we return ConfigurationMapping which is compatible
-                result: dict[str, FlextTypes.GeneralValueType] = {}
+                result: dict[str, t.GeneralValueType] = {}
                 for key, value in kwargs.items():
                     result[str(key)] = value
                 # dict[str, GeneralValueType] is compatible with Mapping[str, GeneralValueType]
@@ -186,7 +186,7 @@ class UtilityScenarios:
 
         class TestCachedObject:
             def __init__(self) -> None:
-                self._cache: FlextTypes.Types.ConfigurationMapping = {"key": "value"}
+                self._cache: t.Types.ConfigurationMapping = {"key": "value"}
                 self._simple_cache: str = "cached_value"
 
         return TestCachedObject()
@@ -229,12 +229,12 @@ class UtilityScenarios:
 
 
 # =========================================================================
-# Test Suite - FlextUtilities Comprehensive Coverage
+# Test Suite - u Comprehensive Coverage
 # =========================================================================
 
 
-class TestFlextUtilities:
-    """Unified test suite for FlextUtilities - ALL REAL FUNCTIONALITY."""
+class Testu:
+    """Unified test suite for u - ALL REAL FUNCTIONALITY."""
 
     # =====================================================================
     # Type Guards Tests
@@ -250,7 +250,7 @@ class TestFlextUtilities:
     )
     def test_type_guard_string(self, case: UtilityTestCase) -> None:
         """Test string type guards."""
-        result = FlextUtilities.TypeGuards.is_string_non_empty(case.input_data)
+        result = u.TypeGuards.is_string_non_empty(case.input_data)
         assert isinstance(result, bool)
         assert result is case.should_succeed
 
@@ -264,7 +264,7 @@ class TestFlextUtilities:
     )
     def test_type_guard_dict(self, case: UtilityTestCase) -> None:
         """Test dict type guards."""
-        result = FlextUtilities.TypeGuards.is_dict_non_empty(case.input_data)
+        result = u.TypeGuards.is_dict_non_empty(case.input_data)
         assert isinstance(result, bool)
         assert result is case.should_succeed
 
@@ -278,7 +278,7 @@ class TestFlextUtilities:
     )
     def test_type_guard_list(self, case: UtilityTestCase) -> None:
         """Test list type guards."""
-        result = FlextUtilities.TypeGuards.is_list_non_empty(case.input_data)
+        result = u.TypeGuards.is_list_non_empty(case.input_data)
         assert isinstance(result, bool)
         assert result is case.should_succeed
 
@@ -288,8 +288,8 @@ class TestFlextUtilities:
 
     def test_generate_id_uniqueness(self) -> None:
         """Test ID generation produces unique values."""
-        id1 = FlextUtilities.Generators.generate_id()
-        id2 = FlextUtilities.Generators.generate_id()
+        id1 = u.Generators.generate_id()
+        id2 = u.Generators.generate_id()
         assert isinstance(id1, str)
         assert len(id1) > 0
         assert id1 != id2
@@ -300,7 +300,7 @@ class TestFlextUtilities:
     )
     def test_generators(self, method_name: str, prefix: str | None) -> None:
         """Test various ID and timestamp generators."""
-        method = getattr(FlextUtilities.Generators, method_name)
+        method = getattr(u.Generators, method_name)
         result = method()
         assert isinstance(result, str)
         assert len(result) > 0
@@ -309,7 +309,7 @@ class TestFlextUtilities:
 
     def test_generate_short_id_length(self) -> None:
         """Test short ID generation with specific length."""
-        short_id = FlextUtilities.Generators.generate_short_id(8)
+        short_id = u.Generators.generate_short_id(8)
         assert isinstance(short_id, str)
         assert len(short_id) == 8
 
@@ -319,27 +319,27 @@ class TestFlextUtilities:
 
     def test_text_processor_clean(self) -> None:
         """Test text cleaning - returns str directly."""
-        result = FlextUtilities.TextProcessor.clean_text("  hello   world  ")
+        result = u.TextProcessor.clean_text("  hello   world  ")
         assert isinstance(result, str)
         assert result == "hello world"
 
     def test_text_processor_truncate(self) -> None:
         """Test text truncation - returns FlextResult[str]."""
-        result = FlextUtilities.TextProcessor.truncate_text("hello world", max_length=8)
+        result = u.TextProcessor.truncate_text("hello world", max_length=8)
         assert result.is_success
         assert len(result.value) <= 8
         assert result.value.endswith("...")
 
     def test_text_processor_safe_string_success(self) -> None:
         """Test safe string conversion - returns str directly."""
-        result = FlextUtilities.TextProcessor.safe_string("  hello  ")
+        result = u.TextProcessor.safe_string("  hello  ")
         assert isinstance(result, str)
         assert result == "hello"
 
     def test_text_processor_safe_string_failure(self) -> None:
         """Test safe string conversion with empty - raises ValueError."""
         with pytest.raises(ValueError):
-            FlextUtilities.TextProcessor.safe_string("")
+            u.TextProcessor.safe_string("")
 
     # =====================================================================
     # Cache Tests
@@ -351,31 +351,31 @@ class TestFlextUtilities:
     )
     def test_cache_normalize_component(
         self,
-        input_data: FlextTypes.GeneralValueType | None,
+        input_data: t.GeneralValueType | None,
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""
-        result = FlextUtilities.Cache.normalize_component(input_data)
+        result = u.Cache.normalize_component(input_data)
         assert isinstance(result, (dict, str, type(None), expected_type))
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
         data = {"z": 1, "a": 2, "m": 3}
-        result = FlextUtilities.Cache.sort_dict_keys(data)
+        result = u.Cache.sort_dict_keys(data)
         assert isinstance(result, dict)
         keys = list(result.keys())
         assert keys == sorted(keys)
 
     def test_cache_generate_key(self) -> None:
         """Test cache key generation."""
-        key1 = FlextUtilities.Cache.generate_cache_key(None, None)
+        key1 = u.Cache.generate_cache_key(None, None)
         assert isinstance(key1, str)
         assert len(key1) > 0
 
     def test_cache_generate_key_uniqueness(self) -> None:
         """Test cache keys are unique for different inputs."""
-        key1 = FlextUtilities.Cache.generate_cache_key("arg1", kwarg1="value1")
-        key2 = FlextUtilities.Cache.generate_cache_key("different")
+        key1 = u.Cache.generate_cache_key("arg1", kwarg1="value1")
+        key2 = u.Cache.generate_cache_key("different")
         assert key1 != key2
 
     def test_cache_clear_object(self) -> None:
@@ -384,10 +384,10 @@ class TestFlextUtilities:
         # Type narrowing: obj is object, but clear_object_cache expects GeneralValueType
         # Since obj has model_dump, it's compatible
         if isinstance(obj, BaseModel):
-            result = FlextUtilities.Cache.clear_object_cache(obj)
+            result = u.Cache.clear_object_cache(obj)
         else:
             # For non-BaseModel objects, convert to dict-like structure
-            obj_dict: dict[str, FlextTypes.GeneralValueType] = {}
+            obj_dict: dict[str, t.GeneralValueType] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (
@@ -397,20 +397,20 @@ class TestFlextUtilities:
                         )
                         else str(v)
                     )
-            result = FlextUtilities.Cache.clear_object_cache(obj_dict)
+            result = u.Cache.clear_object_cache(obj_dict)
         assert result.is_success
 
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        assert FlextUtilities.Cache.has_cache_attributes(obj) is True  # type: ignore[arg-type]  # Object is compatible
+        assert u.Cache.has_cache_attributes(obj) is True  # type: ignore[arg-type]  # Object is compatible
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        assert FlextUtilities.Cache.has_cache_attributes(obj) is False  # type: ignore[arg-type]  # Object is compatible
+        assert u.Cache.has_cache_attributes(obj) is False  # type: ignore[arg-type]  # Object is compatible
 
     # =====================================================================
     # Reliability Tests
@@ -422,7 +422,7 @@ class TestFlextUtilities:
         def quick_op() -> FlextResult[str]:
             return FlextResult[str].ok("success")
 
-        result = FlextUtilities.Reliability.with_timeout(quick_op, 5.0)
+        result = u.Reliability.with_timeout(quick_op, 5.0)
         assert result.is_success
         assert result.value == "success"
 
@@ -432,7 +432,7 @@ class TestFlextUtilities:
         def op() -> FlextResult[str]:
             return FlextResult[str].ok("success")
 
-        result = FlextUtilities.Reliability.with_timeout(op, -1.0)
+        result = u.Reliability.with_timeout(op, -1.0)
         assert result.is_failure
 
     def test_reliability_retry_first_success(self) -> None:
@@ -441,14 +441,14 @@ class TestFlextUtilities:
         def op() -> FlextResult[str]:
             return FlextResult[str].ok("success")
 
-        result = FlextUtilities.Reliability.retry(op, max_attempts=3)
+        result = u.Reliability.retry(op, max_attempts=3)
         assert result.is_success
         assert result.value == "success"
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
         attempt_count, flaky_op = UtilityScenarios.create_flaky_operation()
-        result = FlextUtilities.Reliability.retry(
+        result = u.Reliability.retry(
             flaky_op,
             max_attempts=3,
             delay_seconds=0.01,
@@ -464,27 +464,23 @@ class TestFlextUtilities:
         """Test type checking with object (accepts all)."""
         # MessageTypeSpecifier = str | type[GeneralValueType]
         # object is not a valid MessageTypeSpecifier, use str instead
-        accepted: tuple[FlextTypes.Utility.MessageTypeSpecifier, ...] = (str,)
-        assert FlextUtilities.TypeChecker.can_handle_message_type(accepted, str) is True
+        accepted: tuple[t.Utility.MessageTypeSpecifier, ...] = (str,)
+        assert u.TypeChecker.can_handle_message_type(accepted, str) is True
 
     def test_type_checker_specific_type_match(self) -> None:
         """Test type checking with matching specific type."""
         accepted = (str,)
-        assert FlextUtilities.TypeChecker.can_handle_message_type(accepted, str) is True
+        assert u.TypeChecker.can_handle_message_type(accepted, str) is True
 
     def test_type_checker_specific_type_mismatch(self) -> None:
         """Test type checking with mismatched specific type."""
         accepted = (str,)
-        assert (
-            FlextUtilities.TypeChecker.can_handle_message_type(accepted, int) is False
-        )
+        assert u.TypeChecker.can_handle_message_type(accepted, int) is False
 
     def test_type_checker_empty_accepted(self) -> None:
         """Test type checking with no accepted types."""
-        accepted: tuple[FlextTypes.Utility.MessageTypeSpecifier, ...] = ()
-        assert (
-            FlextUtilities.TypeChecker.can_handle_message_type(accepted, str) is False
-        )
+        accepted: tuple[t.Utility.MessageTypeSpecifier, ...] = ()
+        assert u.TypeChecker.can_handle_message_type(accepted, str) is False
 
     # =====================================================================
     # Configuration Tests
@@ -495,7 +491,7 @@ class TestFlextUtilities:
         config = UtilityScenarios.create_mock_config(timeout=30)
         # get_parameter expects HasModelDump | ConfigurationMapping | None
         # TestConfig has model_dump method, so it's compatible
-        value = FlextUtilities.Configuration.get_parameter(config, "timeout")
+        value = u.Configuration.get_parameter(config, "timeout")
         assert value == 30
 
     def test_configuration_get_parameter_missing(self) -> None:
@@ -504,7 +500,7 @@ class TestFlextUtilities:
         # get_parameter expects HasModelDump | ConfigurationMapping | None
         # TestConfig has model_dump method, so it's compatible
         with pytest.raises(FlextExceptions.NotFoundError):
-            FlextUtilities.Configuration.get_parameter(config, "missing")
+            u.Configuration.get_parameter(config, "missing")
 
     # =====================================================================
     # Validation Tests
@@ -517,7 +513,7 @@ class TestFlextUtilities:
             msg = "Validation error"
             raise ValueError(msg)
 
-        result = FlextUtilities.Validation.validate_pipeline(
+        result = u.Validation.validate_pipeline(
             "test_value",
             [failing_validator],
         )
@@ -526,26 +522,26 @@ class TestFlextUtilities:
 
     def test_validation_sort_key_dict(self) -> None:
         """Test sort_key with dict - returns tuple[str, str]."""
-        key = FlextUtilities.Validation.sort_key({"b": 2, "a": 1})
+        key = u.Validation.sort_key({"b": 2, "a": 1})
         assert isinstance(key, tuple)
         assert len(key) == 2
 
     def test_validation_sort_key_list(self) -> None:
         """Test sort_key with list - returns tuple[str, str]."""
-        key = FlextUtilities.Validation.sort_key([1, 2, 3])
+        key = u.Validation.sort_key([1, 2, 3])
         assert isinstance(key, tuple)
         assert len(key) == 2
 
     def test_validation_sort_key_string(self) -> None:
         """Test sort_key with string - returns tuple[str, str]."""
-        key = FlextUtilities.Validation.sort_key("test")
+        key = u.Validation.sort_key("test")
         assert isinstance(key, tuple)
         assert len(key) == 2
 
     def test_validation_sort_key_number(self) -> None:
         """Test sort_key with number - returns tuple[str, str]."""
         # sort_key expects GeneralValueType, numbers are compatible
-        key = FlextUtilities.Validation.sort_key(42)
+        key = u.Validation.sort_key(42)
         assert isinstance(key, tuple)
         assert len(key) == 2
 
@@ -554,14 +550,14 @@ class TestFlextUtilities:
         obj = UtilityScenarios.create_custom_object()
         # Type narrowing: sort_key expects GeneralValueType
         # Convert object to GeneralValueType compatible value
-        obj_value: FlextTypes.GeneralValueType = (
+        obj_value: t.GeneralValueType = (
             obj
             if isinstance(obj, (str, int, float, bool, type(None), list, dict))
             else str(obj)
         )
-        result = FlextUtilities.Validation.sort_key(obj_value)
+        result = u.Validation.sort_key(obj_value)
         assert isinstance(result, tuple)
         assert len(result) == 2
 
 
-__all__ = ["TestFlextUtilities"]
+__all__ = ["Testu"]

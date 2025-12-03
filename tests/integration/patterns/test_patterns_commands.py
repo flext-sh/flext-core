@@ -11,9 +11,9 @@ from typing import cast
 
 from flext_core import (
     FlextConstants,
-    FlextHandlers,
     FlextModels,
     FlextResult,
+    h,
 )
 from flext_core._models.base import FlextModelsBase
 from tests.fixtures.typing import (
@@ -30,7 +30,7 @@ EXPECTED_BULK_SIZE = 2
 FlextCommandId = str
 FlextCommandType = str
 
-FlextCommandHandler = FlextHandlers
+FlextCommandHandler = h
 
 # TEST COMMAND IMPLEMENTATIONS
 # =============================================================================

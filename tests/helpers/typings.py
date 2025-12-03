@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 from flext_tests.typings import (
     FlextTestsTypings,
     T,
@@ -44,34 +44,31 @@ class TestTypings(FlextTestsTypings):
     class Core:
         """Flext-core-specific type definitions for testing (not generic for other FLEXT projects).
 
-        Uses composition of FlextTypes for type safety and consistency.
+        Uses composition of t for type safety and consistency.
         Only defines types that are truly flext-core-specific and not generic.
         """
 
         # Service configuration - more restrictive than general ConfigurationMapping
-        # Uses composition of FlextTypes.GeneralValueType for consistency
+        # Uses composition of t.GeneralValueType for consistency
         type ServiceConfigMapping = Mapping[
             str,
-            FlextTypes.GeneralValueType
-            | Sequence[str]
-            | Mapping[str, str | int]
-            | None,
+            t.GeneralValueType | Sequence[str] | Mapping[str, str | int] | None,
         ]
         """Service configuration mapping specific to flext-core services.
 
-        More restrictive than FlextTypes.Types.ConfigurationMapping,
+        More restrictive than t.Types.ConfigurationMapping,
         allowing only specific value types for service configuration.
         """
 
         # Handler configuration - more restrictive than general ConfigurationMapping
-        # Uses composition of FlextTypes.GeneralValueType for consistency
+        # Uses composition of t.GeneralValueType for consistency
         type HandlerConfigMapping = Mapping[
             str,
-            FlextTypes.GeneralValueType | Sequence[str] | Mapping[str, str] | None,
+            t.GeneralValueType | Sequence[str] | Mapping[str, str] | None,
         ]
         """Handler configuration mapping specific to flext-core handlers.
 
-        More restrictive than FlextTypes.Types.ConfigurationMapping,
+        More restrictive than t.Types.ConfigurationMapping,
         allowing only specific value types for handler configuration.
         """
 

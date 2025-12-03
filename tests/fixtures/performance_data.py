@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from flext_core import u  # Use alias for concise code
+
 
 @dataclass(frozen=True, slots=True)
 class PerformanceThreshold:
@@ -146,7 +148,9 @@ class PerformanceFactories:
     def get_datasets_by_size(size: str) -> list[BenchmarkDataset]:
         """Get datasets filtered by size category."""
         all_datasets = PerformanceFactories.get_all_datasets()
-        return [ds for ds in all_datasets.values() if ds.size_category == size]
+        return list(
+            u.filter(list(all_datasets.values()), lambda ds: ds.size_category == size)
+        )
 
 
 # Backward compatibility functions

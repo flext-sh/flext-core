@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import uuid
 
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 from flext_tests.factories import FlextTestsFactories
 
 
@@ -63,8 +63,8 @@ class FlextTestsDomains:
     def create_configuration(
         service_type: str = "api",
         environment: str = "test",
-        **overrides: FlextTypes.GeneralValueType,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+        **overrides: t.GeneralValueType,
+    ) -> dict[str, t.GeneralValueType]:
         """Create test configuration data using factories.
 
         Args:
@@ -80,7 +80,7 @@ class FlextTestsDomains:
             service_type=service_type,
             environment=environment,
         )
-        base_config: dict[str, FlextTypes.GeneralValueType] = {
+        base_config: dict[str, t.GeneralValueType] = {
             "service_type": config.service_type,
             "environment": config.environment,
             "debug": config.debug,
@@ -98,8 +98,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_payload(
         data_type: str = "user",
-        **custom_fields: FlextTypes.GeneralValueType,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+        **custom_fields: t.GeneralValueType,
+    ) -> dict[str, t.GeneralValueType]:
         """Create test payload data.
 
         Args:
@@ -110,7 +110,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: dict[str, dict[str, FlextTypes.GeneralValueType]] = {
+        payloads: dict[str, dict[str, t.GeneralValueType]] = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",
@@ -141,8 +141,8 @@ class FlextTestsDomains:
     def api_response_data(
         status: str = "success",
         include_data: bool | None = None,
-        **custom_fields: FlextTypes.GeneralValueType,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+        **custom_fields: t.GeneralValueType,
+    ) -> dict[str, t.GeneralValueType]:
         """Create API response test data.
 
         Args:
@@ -154,7 +154,7 @@ class FlextTestsDomains:
             API response dictionary
 
         """
-        response: dict[str, FlextTypes.GeneralValueType] = {
+        response: dict[str, t.GeneralValueType] = {
             "status": status,
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
@@ -194,8 +194,8 @@ class FlextTestsDomains:
     @staticmethod
     def create_service(
         service_type: str = "api",
-        **config: FlextTypes.GeneralValueType,
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+        **config: t.GeneralValueType,
+    ) -> dict[str, t.GeneralValueType]:
         """Create test service configuration.
 
         Args:
@@ -206,7 +206,7 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: dict[str, FlextTypes.GeneralValueType] = {
+        base_service: dict[str, t.GeneralValueType] = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,

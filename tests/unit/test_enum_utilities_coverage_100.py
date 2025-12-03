@@ -1,7 +1,7 @@
 """Real tests to achieve 100% enum utilities coverage - no mocks.
 
 Module: flext_core._utilities.enum
-Scope: FlextUtilitiesEnum - all methods and edge cases
+Scope: uEnum - all methods and edge cases
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
 to cover all remaining lines in _utilities/enum.py.
@@ -21,8 +21,8 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import FlextUtilities
-from flext_core.typings import FlextTypes
+from flext_core import u
+from flext_core.typings import t
 
 
 class Status(StrEnum):
@@ -86,7 +86,7 @@ class CoerceValidatorScenario:
     """Coerce validator test scenario."""
 
     name: str
-    value: FlextTypes.FlexibleValue
+    value: t.FlexibleValue
     expected_success: bool
     expected_status: Status | None
     expected_error: str | None
@@ -219,35 +219,35 @@ class EnumScenarios:
     ]
 
 
-class TestFlextUtilitiesEnumIsMember:
-    """Test FlextUtilitiesEnum.is_member."""
+class TestuEnumIsMember:
+    """Test uEnum.is_member."""
 
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
         # Convert object to GeneralValueType for type compatibility
-        value_typed: FlextTypes.GeneralValueType = (
+        value_typed: t.GeneralValueType = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, type(None)))
             else str(scenario.value)
         )
-        result = FlextUtilities.Enum.is_member(Status, value_typed)
+        result = u.Enum.is_member(Status, value_typed)
         assert result == scenario.expected
 
 
-class TestFlextUtilitiesEnumIsSubset:
-    """Test FlextUtilitiesEnum.is_subset."""
+class TestuEnumIsSubset:
+    """Test uEnum.is_subset."""
 
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
         # Convert object to GeneralValueType for type compatibility
-        value_typed: FlextTypes.GeneralValueType = (
+        value_typed: t.GeneralValueType = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, type(None)))
             else str(scenario.value)
         )
-        result = FlextUtilities.Enum.is_subset(
+        result = u.Enum.is_subset(
             Status,
             scenario.valid_members,
             value_typed,
@@ -255,13 +255,13 @@ class TestFlextUtilitiesEnumIsSubset:
         assert result == scenario.expected
 
 
-class TestFlextUtilitiesEnumParse:
-    """Test FlextUtilitiesEnum.parse."""
+class TestuEnumParse:
+    """Test uEnum.parse."""
 
     @pytest.mark.parametrize("scenario", EnumScenarios.PARSE, ids=lambda s: s.name)
     def test_parse(self, scenario: ParseScenario) -> None:
         """Test parse with various scenarios."""
-        result = FlextUtilities.Enum.parse(Status, scenario.value)
+        result = u.Enum.parse(Status, scenario.value)
 
         assert result.is_success == scenario.expected_success
 
@@ -277,8 +277,8 @@ class TestFlextUtilitiesEnumParse:
             )
 
 
-class TestFlextUtilitiesEnumParseOrDefault:
-    """Test FlextUtilitiesEnum.parse_or_default."""
+class TestuEnumParseOrDefault:
+    """Test uEnum.parse_or_default."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -287,7 +287,7 @@ class TestFlextUtilitiesEnumParseOrDefault:
     )
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
-        result = FlextUtilities.Enum.parse_or_default(
+        result = u.Enum.parse_or_default(
             Status,
             scenario.value,
             scenario.default,
@@ -295,8 +295,8 @@ class TestFlextUtilitiesEnumParseOrDefault:
         assert result == scenario.expected
 
 
-class TestFlextUtilitiesEnumCoerceValidator:
-    """Test FlextUtilitiesEnum.coerce_validator."""
+class TestuEnumCoerceValidator:
+    """Test uEnum.coerce_validator."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -305,7 +305,7 @@ class TestFlextUtilitiesEnumCoerceValidator:
     )
     def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
         """Test coerce_validator with various scenarios."""
-        validator = FlextUtilities.Enum.coerce_validator(Status)
+        validator = u.Enum.coerce_validator(Status)
 
         if scenario.expected_success:
             result = validator(scenario.value)
@@ -320,42 +320,42 @@ class TestFlextUtilitiesEnumCoerceValidator:
             )
 
 
-class TestFlextUtilitiesEnumCoerceByNameValidator:
-    """Test FlextUtilitiesEnum.coerce_by_name_validator."""
+class TestuEnumCoerceByNameValidator:
+    """Test uEnum.coerce_by_name_validator."""
 
     def test_coerce_by_name_validator_by_name(self) -> None:
         """Test coerce_by_name_validator with member name."""
-        validator = FlextUtilities.Enum.coerce_by_name_validator(Status)
+        validator = u.Enum.coerce_by_name_validator(Status)
         result = validator("ACTIVE")
         assert result == Status.ACTIVE
 
     def test_coerce_by_name_validator_by_value(self) -> None:
         """Test coerce_by_name_validator with member value."""
-        validator = FlextUtilities.Enum.coerce_by_name_validator(Status)
+        validator = u.Enum.coerce_by_name_validator(Status)
         result = validator("active")
         assert result == Status.ACTIVE
 
     def test_coerce_by_name_validator_direct_enum(self) -> None:
         """Test coerce_by_name_validator with direct enum."""
-        validator = FlextUtilities.Enum.coerce_by_name_validator(Status)
+        validator = u.Enum.coerce_by_name_validator(Status)
         result = validator(Status.PENDING)
         assert result == Status.PENDING
 
     def test_coerce_by_name_validator_invalid(self) -> None:
         """Test coerce_by_name_validator with invalid value."""
-        validator = FlextUtilities.Enum.coerce_by_name_validator(Status)
+        validator = u.Enum.coerce_by_name_validator(Status)
 
         with pytest.raises(ValueError) as exc_info:
             validator("invalid")
         assert "Invalid Status" in str(exc_info.value)
 
 
-class TestFlextUtilitiesEnumMetadata:
-    """Test FlextUtilitiesEnum metadata methods."""
+class TestuEnumMetadata:
+    """Test uEnum metadata methods."""
 
     def test_values(self) -> None:
         """Test values method."""
-        values = FlextUtilities.Enum.values(Status)
+        values = u.Enum.values(Status)
         assert isinstance(values, frozenset)
         assert "active" in values
         assert "pending" in values
@@ -363,7 +363,7 @@ class TestFlextUtilitiesEnumMetadata:
 
     def test_names(self) -> None:
         """Test names method."""
-        names = FlextUtilities.Enum.names(Status)
+        names = u.Enum.names(Status)
         assert isinstance(names, frozenset)
         assert "ACTIVE" in names
         assert "PENDING" in names
@@ -371,7 +371,7 @@ class TestFlextUtilitiesEnumMetadata:
 
     def test_members(self) -> None:
         """Test members method."""
-        members = FlextUtilities.Enum.members(Status)
+        members = u.Enum.members(Status)
         assert isinstance(members, frozenset)
         assert Status.ACTIVE in members
         assert Status.PENDING in members
@@ -379,7 +379,7 @@ class TestFlextUtilitiesEnumMetadata:
 
     def test_metadata_caching(self) -> None:
         """Test that metadata methods are cached."""
-        values1 = FlextUtilities.Enum.values(Status)
-        values2 = FlextUtilities.Enum.values(Status)
+        values1 = u.Enum.values(Status)
+        values2 = u.Enum.values(Status)
         # Should return same object due to caching
         assert values1 is values2

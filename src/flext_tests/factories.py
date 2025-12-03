@@ -16,15 +16,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import uuid
 from collections.abc import Callable, Mapping, Sequence
 from typing import Never
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextResult, FlextService, FlextUtilities
+from flext_core import FlextResult, FlextService, u
 from flext_core._models.entity import FlextModelsEntity
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 from flext_tests.typings import FlextTestsTypings
 
 
@@ -79,14 +78,15 @@ class FlextTestsFactories:
             User model instance
 
         """
-        user_data: dict[str, FlextTypes.GeneralValueType] = {
-            "id": user_id or str(uuid.uuid4()),
+        user_data: dict[str, t.GeneralValueType] = {
+            "id": user_id or u.generate("uuid"),
             "name": name or "Test User",
-            "email": email
-            or f"user_{FlextUtilities.Generators.generate_short_id()}@example.com",
+            "email": email or f"user_{u.generate('id', length=8)}@example.com",
             "active": True,
         }
-        user_data.update(overrides)
+        merge_result = u.merge(user_data, overrides, strategy="deep")
+        if merge_result.is_success:
+            user_data = merge_result.value
         return FlextTestsFactories.User.model_validate(user_data)
 
     @staticmethod
@@ -110,7 +110,9 @@ class FlextTestsFactories:
             "service_type": service_type,
             "environment": environment,
         }
-        config_data.update(overrides)
+        merge_result = u.merge(config_data, overrides, strategy="deep")
+        if merge_result.is_success:
+            config_data = merge_result.value
         return FlextTestsFactories.Config.model_validate(config_data)
 
     @staticmethod
@@ -131,7 +133,7 @@ class FlextTestsFactories:
 
         """
         service_data: dict[str, FlextTestsTypings.TestResultValue] = {
-            "id": service_id or str(uuid.uuid4()),
+            "id": service_id or u.generate("uuid"),
             "type": service_type,
             "status": "active",
         }
@@ -245,9 +247,9 @@ class FlextTestsFactories:
             def __init__(
                 self,
                 **data: (
-                    FlextTypes.ScalarValue
-                    | Sequence[FlextTypes.ScalarValue]
-                    | Mapping[str, FlextTypes.ScalarValue]
+                    t.ScalarValue
+                    | Sequence[t.ScalarValue]
+                    | Mapping[str, t.ScalarValue]
                 ),
             ) -> None:
                 super().__init__(**data)

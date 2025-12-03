@@ -1,7 +1,7 @@
-"""Comprehensive tests for FlextUtilitiesStringParser - 100% coverage target.
+"""Comprehensive tests for uStringParser - 100% coverage target.
 
 **Modules Tested:**
-- flext_core._utilities.string_parser.FlextUtilitiesStringParser
+- flext_core._utilities.string_parser.uStringParser
 
 **Test Scope:**
 - parse_delimited: All options, validators, legacy params, edge cases, error handling
@@ -26,9 +26,9 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextTypes
+from flext_core import t
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._utilities.string_parser import FlextUtilitiesStringParser
+from flext_core._utilities.string_parser import uStringParser
 from tests.helpers.constants import TestConstants
 from tests.helpers.string_parser_helpers import (
     NormalizeWhitespaceCase,
@@ -440,13 +440,13 @@ class StringParserTestFactory:
         ]
 
 
-class TestFlextUtilitiesStringParser:
-    """Comprehensive tests for FlextUtilitiesStringParser using nested organization."""
+class TestuStringParser:
+    """Comprehensive tests for uStringParser using nested organization."""
 
     @pytest.fixture
-    def parser(self) -> FlextUtilitiesStringParser:
+    def parser(self) -> uStringParser:
         """Create parser instance."""
-        return FlextUtilitiesStringParser()
+        return uStringParser()
 
     class TestParseDelimited:
         """Test parse_delimited method."""
@@ -457,7 +457,7 @@ class TestFlextUtilitiesStringParser:
         )
         def test_parse_delimited(
             self,
-            parser: FlextUtilitiesStringParser,
+            parser: uStringParser,
             case: ParseDelimitedCase,
         ) -> None:
             """Test parse_delimited with parametrized cases."""
@@ -492,7 +492,7 @@ class TestFlextUtilitiesStringParser:
                     case.description,
                 )
 
-        def test_exception_handling(self, parser: FlextUtilitiesStringParser) -> None:
+        def test_exception_handling(self, parser: uStringParser) -> None:
             """Test parsing exception handling with bad object."""
             # Intentionally pass bad object that fails on str() to test error handling
             bad_obj = TestHelpers.BadObjects.create_for_split()
@@ -512,7 +512,7 @@ class TestFlextUtilitiesStringParser:
         @pytest.mark.parametrize("case", StringParserTestFactory.split_escape_cases())
         def test_split_with_escape(
             self,
-            parser: FlextUtilitiesStringParser,
+            parser: uStringParser,
             case: SplitEscapeCase,
         ) -> None:
             """Test split_on_char_with_escape with parametrized cases."""
@@ -536,7 +536,7 @@ class TestFlextUtilitiesStringParser:
                     case.description,
                 )
 
-        def test_exception_handling(self, parser: FlextUtilitiesStringParser) -> None:
+        def test_exception_handling(self, parser: uStringParser) -> None:
             """Test split exception handling with bad object."""
             # Intentionally pass bad object that fails on __getitem__() to test error handling
             bad_obj = TestHelpers.BadObjects.create_for_index()
@@ -562,7 +562,7 @@ class TestFlextUtilitiesStringParser:
         )
         def test_normalize_whitespace(
             self,
-            parser: FlextUtilitiesStringParser,
+            parser: uStringParser,
             case: NormalizeWhitespaceCase,
         ) -> None:
             """Test normalize_whitespace with parametrized cases."""
@@ -586,7 +586,7 @@ class TestFlextUtilitiesStringParser:
                     case.description,
                 )
 
-        def test_exception_handling(self, parser: FlextUtilitiesStringParser) -> None:
+        def test_exception_handling(self, parser: uStringParser) -> None:
             """Test normalization exception handling with bad object."""
             # Intentionally pass bad object that fails on str() to test error handling
             bad_obj = TestHelpers.BadObjects.create_for_str()
@@ -606,7 +606,7 @@ class TestFlextUtilitiesStringParser:
         @pytest.mark.parametrize("case", StringParserTestFactory.regex_pipeline_cases())
         def test_apply_regex_pipeline(
             self,
-            parser: FlextUtilitiesStringParser,
+            parser: uStringParser,
             case: RegexPipelineCase,
         ) -> None:
             """Test apply_regex_pipeline with parametrized cases."""
@@ -626,7 +626,7 @@ class TestFlextUtilitiesStringParser:
                     case.description,
                 )
 
-        def test_exception_handling(self, parser: FlextUtilitiesStringParser) -> None:
+        def test_exception_handling(self, parser: uStringParser) -> None:
             """Test pipeline exception handling."""
             # Intentionally create invalid pattern with None for error testing
             # Type checker: cast to bypass type checking for runtime error testing
@@ -641,7 +641,7 @@ class TestFlextUtilitiesStringParser:
                 "exception handling",
             )
 
-        def test_invalid_pattern(self, parser: FlextUtilitiesStringParser) -> None:
+        def test_invalid_pattern(self, parser: uStringParser) -> None:
             """Test pipeline with invalid regex pattern."""
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [
                 (r"[invalid", "replacement"),
@@ -653,7 +653,7 @@ class TestFlextUtilitiesStringParser:
                 "invalid pattern",
             )
 
-        def test_none_text(self, parser: FlextUtilitiesStringParser) -> None:
+        def test_none_text(self, parser: uStringParser) -> None:
             """Test pipeline with None text."""
             # Intentionally pass None for text to test error handling
             # Type checker: cast to str to test runtime error handling
@@ -665,7 +665,7 @@ class TestFlextUtilitiesStringParser:
             assert result.is_failure
             assert result.error is not None
 
-        def test_invalid_text_type(self, parser: FlextUtilitiesStringParser) -> None:
+        def test_invalid_text_type(self, parser: uStringParser) -> None:
             """Test pipeline with invalid text type."""
             # Intentionally pass int for text to test error handling
             # Type checker: cast to str to test runtime error handling
@@ -677,7 +677,7 @@ class TestFlextUtilitiesStringParser:
             assert result.is_failure
             assert result.error is not None
 
-        def test_empty_patterns(self, parser: FlextUtilitiesStringParser) -> None:
+        def test_empty_patterns(self, parser: uStringParser) -> None:
             """Test pipeline with empty patterns list."""
             patterns: list[tuple[str, str] | tuple[str, str, int]] = []
             result = parser.apply_regex_pipeline("test", patterns)
@@ -691,11 +691,11 @@ class TestFlextUtilitiesStringParser:
         @pytest.mark.parametrize("case", StringParserTestFactory.object_key_cases())
         def test_get_object_key(
             self,
-            parser: FlextUtilitiesStringParser,
+            parser: uStringParser,
             case: ObjectKeyCase,
         ) -> None:
             """Test get_object_key with parametrized cases."""
-            key = parser.get_object_key(cast("FlextTypes.GeneralValueType", case.obj))
+            key = parser.get_object_key(cast("t.GeneralValueType", case.obj))
 
             assert isinstance(key, str), f"Key must be string for: {case.description}"
 

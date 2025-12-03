@@ -1,13 +1,13 @@
-"""FlextService core functionality tests.
+"""s core functionality tests.
 
 Module: flext_core.service
-Scope: FlextService abstract base class - execution, validation, metadata
+Scope: s abstract base class - execution, validation, metadata
 
-Tests core FlextService functionality including:
+Tests core s functionality including:
 - Service creation and Pydantic configuration
 - Service immutability (frozen model)
 - Abstract execute method implementation
-- Basic service execution with FlextResult
+- Basic service execution with r
 - Business rules validation (success, failure, exception handling)
 - Service metadata retrieval
 
@@ -27,8 +27,7 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import FlextResult, FlextService
-from flext_core.typings import FlextTypes
+from flext_core import r, s, t
 from flext_tests.utilities import FlextTestsUtilities
 
 
@@ -49,72 +48,72 @@ class ServiceScenario:
     name: str
     scenario_type: ServiceScenarioType
     is_valid_expected: bool
-    service_kwargs: Mapping[str, FlextTypes.ScalarValue] | None = None
+    service_kwargs: Mapping[str, t.ScalarValue] | None = None
 
 
-class UserService(FlextService[FlextTypes.Types.ConfigurationMapping]):
+class UserService(s[t.Types.ConfigurationMapping]):
     """Basic user service for standard testing."""
 
-    def execute(self) -> FlextResult[FlextTypes.Types.ConfigurationMapping]:
+    def execute(self) -> r[t.Types.ConfigurationMapping]:
         """Execute service and return data."""
-        return FlextResult[FlextTypes.Types.ConfigurationMapping].ok({
+        return r[t.Types.ConfigurationMapping].ok({
             "user_id": 1,
             "name": "test_user",
         })
 
 
-class ComplexService(FlextService[str]):
+class ComplexService(s[str]):
     """Service with custom validation rules."""
 
     name: str = "test"
     amount: int = 0
     enabled: bool = True
 
-    def validate_business_rules(self) -> FlextResult[bool]:
+    def validate_business_rules(self) -> r[bool]:
         """Validate business rules."""
         if not self.name:
-            return FlextResult[bool].fail("Missing value")
+            return r[bool].fail("Missing value")
         if self.amount < 0:
-            return FlextResult[bool].fail("Value too low")
-        return FlextResult[bool].ok(True)
+            return r[bool].fail("Value too low")
+        return r[bool].ok(True)
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> r[str]:
         """Execute operation."""
         if not self.name:
-            return FlextResult[str].fail("Missing value")
-        return FlextResult[str].ok(f"Processed: {self.name}")
+            return r[str].fail("Missing value")
+        return r[str].ok(f"Processed: {self.name}")
 
 
-class FailingService(FlextService[bool]):
+class FailingService(s[bool]):
     """Service that fails validation."""
 
-    def validate_business_rules(self) -> FlextResult[bool]:
+    def validate_business_rules(self) -> r[bool]:
         """Always fail validation."""
-        return FlextResult[bool].fail("Processing error")
+        return r[bool].fail("Processing error")
 
-    def execute(self) -> FlextResult[bool]:
+    def execute(self) -> r[bool]:
         """Execute failing operation."""
-        return FlextResult[bool].fail("Processing error")
+        return r[bool].fail("Processing error")
 
 
-class ExceptionService(FlextService[str]):
+class ExceptionService(s[str]):
     """Service that raises exceptions during validation."""
 
     should_raise: bool = False
 
-    def validate_business_rules(self) -> FlextResult[bool]:
+    def validate_business_rules(self) -> r[bool]:
         """Validation that can raise exceptions."""
         if self.should_raise:
             error_msg = "Processing error"
             raise ValueError(error_msg)
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> r[str]:
         """Execute operation that can raise."""
         if self.should_raise:
             error_msg = "Processing error"
             raise RuntimeError(error_msg)
-        return FlextResult[str].ok("test_value")
+        return r[str].ok("test_value")
 
 
 class ServiceScenarios:
@@ -146,13 +145,9 @@ class ServiceScenarios:
     @staticmethod
     def create_service(
         scenario: ServiceScenario,
-    ) -> (
-        FlextService[FlextTypes.Types.ConfigurationMapping]
-        | FlextService[str]
-        | FlextService[bool]
-    ):
+    ) -> s[t.Types.ConfigurationMapping] | s[str] | s[bool]:
         """Create service instance for scenario."""
-        kwargs_raw: Mapping[str, FlextTypes.ScalarValue] = scenario.service_kwargs or {}
+        kwargs_raw: Mapping[str, t.ScalarValue] = scenario.service_kwargs or {}
 
         if scenario.scenario_type == ServiceScenarioType.BASIC_USER:
             return UserService()
@@ -187,13 +182,13 @@ class ServiceScenarios:
         raise ValueError(error_msg)
 
 
-class TestFlextServiceCore:
-    """Unified test suite for FlextService using FlextTestsUtilities."""
+class TestsCore:
+    """Unified test suite for s using FlextTestsUtilities."""
 
     def test_basic_service_creation(self) -> None:
         """Test basic service creation and Pydantic configuration."""
         service = UserService()
-        assert isinstance(service, FlextService)
+        assert isinstance(service, s)
         assert isinstance(service.model_config, Mapping)
         assert service.model_config.get("validate_assignment") is True
 
@@ -208,9 +203,9 @@ class TestFlextServiceCore:
     def test_execute_abstract_method(self) -> None:
         """Test execute method implementation."""
 
-        class ConcreteService(FlextService[str]):
-            def execute(self) -> FlextResult[str]:
-                return FlextResult[str].ok("test_value")
+        class ConcreteService(s[str]):
+            def execute(self) -> r[str]:
+                return r[str].ok("test_value")
 
         service = ConcreteService()
         result = service.execute()
@@ -293,4 +288,4 @@ class TestFlextServiceCore:
         assert business_result.is_failure
 
 
-__all__ = ["TestFlextServiceCore"]
+__all__ = ["TestsCore"]

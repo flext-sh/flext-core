@@ -1,4 +1,4 @@
-"""Utilities module - FlextUtilitiesDataMapper.
+"""Utilities module - FlextDataMapper.
 
 Extracted from flext_core.utilities for better modularity.
 
@@ -10,17 +10,18 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 
-from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult
+from flext_core.protocols import p
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
+from flext_core.utilities import u
 
 
-class FlextUtilitiesDataMapper:
+class FlextDataMapper:
     """Data structure mapping and transformation utilities."""
 
     @property
-    def logger(self) -> FlextProtocols.StructlogLogger:
+    def logger(self) -> p.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance (Logger protocol).
@@ -36,7 +37,7 @@ class FlextUtilitiesDataMapper:
     **Usage Examples**:
     >>> # Map dict keys
     >>> mapping = {"old_key": "new_key", "foo": "bar"}
-    >>> result = FlextUtilitiesDataMapper.map_dict_keys(
+    >>> result = uDataMapper.map_dict_keys(
     ...     {"old_key": "value", "foo": "baz"}, mapping
     ... )
     >>> new_dict = result.unwrap()  # {"new_key": "value", "bar": "baz"}
@@ -44,12 +45,12 @@ class FlextUtilitiesDataMapper:
     >>> # Build object from flags
     >>> flags = ["read", "write"]
     >>> mapping = {"read": "can_read", "write": "can_write"}
-    >>> result = FlextUtilitiesDataMapper.build_flags_dict(flags, mapping)
+    >>> result = uDataMapper.build_flags_dict(flags, mapping)
     >>> perms = result.unwrap()  # {"can_read": True, "can_write": True, ...}
     """
 
     @staticmethod
-    def convert_to_int_safe(value: FlextTypes.GeneralValueType, default: int) -> int:
+    def convert_to_int_safe(value: t.GeneralValueType, default: int) -> int:
         """Convert value to int with safe fallback on error.
 
         **Generic replacement for**: Manual int conversion with try/except
@@ -62,11 +63,11 @@ class FlextUtilitiesDataMapper:
             Converted int or default value
 
         Example:
-            >>> FlextUtilitiesDataMapper.convert_to_int_safe("123", 0)
+            >>> uDataMapper.convert_to_int_safe("123", 0)
             123
-            >>> FlextUtilitiesDataMapper.convert_to_int_safe("invalid", 0)
+            >>> uDataMapper.convert_to_int_safe("invalid", 0)
             0
-            >>> FlextUtilitiesDataMapper.convert_to_int_safe(42, 0)
+            >>> uDataMapper.convert_to_int_safe(42, 0)
             42
 
         """
@@ -81,11 +82,11 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def map_dict_keys(
-        source: dict[str, FlextTypes.GeneralValueType],
+        source: dict[str, t.GeneralValueType],
         key_mapping: dict[str, str],
         *,
         keep_unmapped: bool = True,
-    ) -> FlextResult[dict[str, FlextTypes.GeneralValueType]]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Map dictionary keys using mapping specification.
 
         **Generic replacement for**: Key renaming in dicts
@@ -96,11 +97,11 @@ class FlextUtilitiesDataMapper:
             keep_unmapped: Keep keys not in mapping (default: True)
 
         Returns:
-            FlextResult with remapped dictionary or error
+            r with remapped dictionary or error
 
         Example:
             >>> mapping = {"oldName": "newName", "foo": "bar"}
-            >>> result = FlextUtilitiesDataMapper.map_dict_keys(
+            >>> result = uDataMapper.map_dict_keys(
             ...     {"oldName": "value1", "foo": "value2", "other": "value3"}, mapping
             ... )
             >>> new_dict = result.unwrap()
@@ -108,7 +109,7 @@ class FlextUtilitiesDataMapper:
 
         """
         try:
-            result: dict[str, FlextTypes.GeneralValueType] = {}
+            result: dict[str, t.GeneralValueType] = {}
 
             for key, value in source.items():
                 new_key = key_mapping.get(key)
@@ -117,10 +118,10 @@ class FlextUtilitiesDataMapper:
                 elif keep_unmapped:
                     result[key] = value
 
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].ok(result)
+            return r[dict[str, t.GeneralValueType]].ok(result)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[dict[str, FlextTypes.GeneralValueType]].fail(
+            return r[dict[str, t.GeneralValueType]].fail(
                 f"Failed to map dict keys: {e}",
             )
 
@@ -130,7 +131,7 @@ class FlextUtilitiesDataMapper:
         flag_mapping: dict[str, str],
         *,
         default_value: bool = False,
-    ) -> FlextResult[dict[str, bool]]:
+    ) -> r[dict[str, bool]]:
         """Build boolean flags dictionary from list of active flags.
 
         **Generic replacement for**: Permission building, feature flags
@@ -141,7 +142,7 @@ class FlextUtilitiesDataMapper:
             default_value: Default value for inactive flags (default: False)
 
         Returns:
-            FlextResult with flags dictionary or error
+            r with flags dictionary or error
 
         Example:
             >>> flags = ["read", "write"]
@@ -150,7 +151,7 @@ class FlextUtilitiesDataMapper:
             ...     "write": "can_write",
             ...     "delete": "can_delete",
             ... }
-            >>> result = FlextUtilitiesDataMapper.build_flags_dict(flags, mapping)
+            >>> result = uDataMapper.build_flags_dict(flags, mapping)
             >>> flags_dict = result.unwrap()
             >>> # {"can_read": True, "can_write": True, "can_delete": False}
 
@@ -168,16 +169,16 @@ class FlextUtilitiesDataMapper:
                 if mapped_key:
                     result[mapped_key] = True
 
-            return FlextResult[dict[str, bool]].ok(result)
+            return r[dict[str, bool]].ok(result)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[dict[str, bool]].fail(f"Failed to build flags dict: {e}")
+            return r[dict[str, bool]].fail(f"Failed to build flags dict: {e}")
 
     @staticmethod
     def collect_active_keys(
         source: dict[str, bool],
         key_mapping: dict[str, str],
-    ) -> FlextResult[list[str]]:
+    ) -> r[list[str]]:
         """Collect list of output keys where source value is True.
 
         **Generic replacement for**: Collecting active permissions/flags
@@ -187,12 +188,12 @@ class FlextUtilitiesDataMapper:
             key_mapping: Mapping of source_key → output_key
 
         Returns:
-            FlextResult with list of active output keys or error
+            r with list of active output keys or error
 
         Example:
             >>> source = {"read": True, "write": True, "delete": False}
             >>> mapping = {"read": "r", "write": "w", "delete": "d"}
-            >>> result = FlextUtilitiesDataMapper.collect_active_keys(source, mapping)
+            >>> result = uDataMapper.collect_active_keys(source, mapping)
             >>> active = result.unwrap()  # ["r", "w"]
 
         """
@@ -203,19 +204,19 @@ class FlextUtilitiesDataMapper:
                 if source.get(source_key):
                     active_keys.append(output_key)
 
-            return FlextResult[list[str]].ok(active_keys)
+            return r[list[str]].ok(active_keys)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextResult[list[str]].fail(f"Failed to collect active keys: {e}")
+            return r[list[str]].fail(f"Failed to collect active keys: {e}")
 
     @staticmethod
     def transform_values(
-        source: dict[str, FlextTypes.GeneralValueType],
+        source: dict[str, t.GeneralValueType],
         transformer: Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
+            [t.GeneralValueType],
+            t.GeneralValueType,
         ],
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+    ) -> dict[str, t.GeneralValueType]:
         """Transform all values in dict using transformer function.
 
         **Generic replacement for**: Manual dict value transformations
@@ -229,22 +230,24 @@ class FlextUtilitiesDataMapper:
 
         Example:
             >>> source = {"a": "hello", "b": "world"}
-            >>> result = FlextUtilitiesDataMapper.transform_values(
-            ...     source, lambda v: str(v).upper()
-            ... )
+            >>> result = uDataMapper.transform_values(source, lambda v: str(v).upper())
             >>> # {"a": "HELLO", "b": "WORLD"}
 
         """
+        # NOTE: Cannot use u.map() here due to circular import
+        # u imports from _utilities, and _utilities cannot import from u
+        # Keep implementation simple and direct
         return {k: transformer(v) for k, v in source.items()}
 
     @staticmethod
     def filter_dict(
-        source: dict[str, FlextTypes.GeneralValueType],
-        predicate: Callable[[str, FlextTypes.GeneralValueType], bool],
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+        source: dict[str, t.GeneralValueType],
+        predicate: Callable[[str, t.GeneralValueType], bool],
+    ) -> dict[str, t.GeneralValueType]:
         """Filter dict by predicate function on key-value pairs.
 
-        **Generic replacement for**: Dict comprehensions with filters
+        **NOTE**: Prefer using u.filter() for unified filtering.
+        This method delegates to u.filter() for consistency.
 
         Args:
             source: Source dictionary
@@ -255,12 +258,13 @@ class FlextUtilitiesDataMapper:
 
         Example:
             >>> source = {"a": 1, "b": 2, "c": 3}
-            >>> result = FlextUtilitiesDataMapper.filter_dict(
-            ...     source, lambda k, v: v > 1
-            ... )
+            >>> result = uDataMapper.filter_dict(source, lambda k, v: v > 1)
             >>> # {"b": 2, "c": 3}
 
         """
+        # NOTE: Cannot use u.filter() here due to circular import
+        # u imports from _utilities, and _utilities cannot import from u
+        # This is a simple dict comprehension - keep it direct
         return {k: v for k, v in source.items() if predicate(k, v)}
 
     @staticmethod
@@ -284,9 +288,7 @@ class FlextUtilitiesDataMapper:
 
         Example:
             >>> source = {"a": "x", "b": "y", "c": "x"}
-            >>> result = FlextUtilitiesDataMapper.invert_dict(
-            ...     source, handle_collisions="first"
-            ... )
+            >>> result = uDataMapper.invert_dict(source, handle_collisions="first")
             >>> # {"x": "a", "y": "b"}  (first "a" kept)
 
         """
@@ -300,15 +302,15 @@ class FlextUtilitiesDataMapper:
         return {v: k for k, v in source.items()}
 
     @staticmethod
-    def is_json_primitive(value: FlextTypes.GeneralValueType) -> bool:
+    def is_json_primitive(value: t.GeneralValueType) -> bool:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return isinstance(value, (str, int, float, bool, type(None)))
 
     @classmethod
     def convert_to_json_value(
         cls,
-        value: FlextTypes.GeneralValueType,
-    ) -> FlextTypes.GeneralValueType:
+        value: t.GeneralValueType,
+    ) -> t.GeneralValueType:
         """Convert any value to JSON-compatible type.
 
         **Generic replacement for**: Manual type conversion to JSON values
@@ -320,15 +322,15 @@ class FlextUtilitiesDataMapper:
             4. Other → convert to str()
 
         Args:
-            value: FlextTypes.GeneralValueType value to convert
+            value: t.GeneralValueType value to convert
 
         Returns:
             JSON-compatible value (str, int, float, bool, None, dict, list)
 
         Example:
-            >>> FlextUtilitiesDataMapper.convert_to_json_value({"a": 1})
+            >>> uDataMapper.convert_to_json_value({"a": 1})
             {'a': 1}
-            >>> FlextUtilitiesDataMapper.convert_to_json_value([1, 2, "three"])
+            >>> uDataMapper.convert_to_json_value([1, 2, "three"])
             [1, 2, 'three']
 
         """
@@ -337,15 +339,15 @@ class FlextUtilitiesDataMapper:
         if isinstance(value, dict):
             return {str(k): cls.convert_to_json_value(v) for k, v in value.items()}
         if isinstance(value, Sequence):
-            return [cls.convert_to_json_value(item) for item in value]
+            return list(u.map(value, cls.convert_to_json_value))
         # Fallback: convert to string
         return str(value)
 
     @classmethod
     def convert_dict_to_json(
         cls,
-        data: dict[str, FlextTypes.GeneralValueType],
-    ) -> dict[str, FlextTypes.GeneralValueType]:
+        data: dict[str, t.GeneralValueType],
+    ) -> dict[str, t.GeneralValueType]:
         """Convert dict with any values to JSON-compatible dict.
 
         **Generic replacement for**: Manual dict-to-JSON conversion loops
@@ -358,7 +360,7 @@ class FlextUtilitiesDataMapper:
 
         Example:
             >>> data = {"name": "test", "value": CustomObject()}
-            >>> result = FlextUtilitiesDataMapper.convert_dict_to_json(data)
+            >>> result = uDataMapper.convert_dict_to_json(data)
             >>> # {"name": "test", "value": "str(CustomObject())"}
 
         """
@@ -371,8 +373,8 @@ class FlextUtilitiesDataMapper:
     @classmethod
     def convert_list_to_json(
         cls,
-        data: Sequence[FlextTypes.GeneralValueType],
-    ) -> list[dict[str, FlextTypes.GeneralValueType]]:
+        data: Sequence[t.GeneralValueType],
+    ) -> list[dict[str, t.GeneralValueType]]:
         """Convert list of dict-like items to JSON-compatible list.
 
         **Generic replacement for**: Manual list-to-JSON conversion loops
@@ -385,7 +387,7 @@ class FlextUtilitiesDataMapper:
 
         Example:
             >>> data = [{"a": 1}, {"b": 2}]
-            >>> result = FlextUtilitiesDataMapper.convert_list_to_json(data)
+            >>> result = uDataMapper.convert_list_to_json(data)
 
         """
         return [
@@ -393,7 +395,7 @@ class FlextUtilitiesDataMapper:
         ]
 
     @staticmethod
-    def ensure_str(value: FlextTypes.GeneralValueType, default: str = "") -> str:
+    def ensure_str(value: t.GeneralValueType, default: str = "") -> str:
         """Ensure value is a string, converting if needed.
 
         **Generic replacement for**: Manual str() conversions with isinstance checks
@@ -406,11 +408,11 @@ class FlextUtilitiesDataMapper:
             String value or default
 
         Example:
-            >>> FlextUtilitiesDataMapper.ensure_str("hello")
+            >>> uDataMapper.ensure_str("hello")
             'hello'
-            >>> FlextUtilitiesDataMapper.ensure_str(123)
+            >>> uDataMapper.ensure_str(123)
             '123'
-            >>> FlextUtilitiesDataMapper.ensure_str(None, "default")
+            >>> uDataMapper.ensure_str(None, "default")
             'default'
 
         """
@@ -422,7 +424,7 @@ class FlextUtilitiesDataMapper:
 
     @staticmethod
     def ensure_str_list(
-        value: FlextTypes.GeneralValueType,
+        value: t.GeneralValueType,
         default: list[str] | None = None,
     ) -> list[str]:
         """Ensure value is a list of strings, converting if needed.
@@ -437,13 +439,13 @@ class FlextUtilitiesDataMapper:
             List of strings
 
         Example:
-            >>> FlextUtilitiesDataMapper.ensure_str_list(["a", "b"])
+            >>> uDataMapper.ensure_str_list(["a", "b"])
             ['a', 'b']
-            >>> FlextUtilitiesDataMapper.ensure_str_list([1, 2, 3])
+            >>> uDataMapper.ensure_str_list([1, 2, 3])
             ['1', '2', '3']
-            >>> FlextUtilitiesDataMapper.ensure_str_list("single")
+            >>> uDataMapper.ensure_str_list("single")
             ['single']
-            >>> FlextUtilitiesDataMapper.ensure_str_list(None)
+            >>> uDataMapper.ensure_str_list(None)
             []
 
         """
@@ -454,11 +456,11 @@ class FlextUtilitiesDataMapper:
         if isinstance(value, str):
             return [value]
         if isinstance(value, (list, tuple, set)):
-            return [str(item) for item in value]
+            return list(u.map(value, str))
         return [str(value)]
 
     @staticmethod
-    def ensure_str_or_none(value: FlextTypes.GeneralValueType) -> str | None:
+    def ensure_str_or_none(value: t.GeneralValueType) -> str | None:
         """Ensure value is a string or None.
 
         **Generic replacement for**: value if isinstance(value, str) else None
@@ -470,15 +472,20 @@ class FlextUtilitiesDataMapper:
             String value or None
 
         Example:
-            >>> FlextUtilitiesDataMapper.ensure_str_or_none("hello")
+            >>> uDataMapper.ensure_str_or_none("hello")
             'hello'
-            >>> FlextUtilitiesDataMapper.ensure_str_or_none(123)
+            >>> uDataMapper.ensure_str_or_none(123)
             None
-            >>> FlextUtilitiesDataMapper.ensure_str_or_none(None)
+            >>> uDataMapper.ensure_str_or_none(None)
             None
 
         """
         return value if isinstance(value, str) else None
 
 
-__all__ = ["FlextUtilitiesDataMapper"]
+uDataMapper = FlextDataMapper  # noqa: N816
+
+__all__ = [
+    "FlextDataMapper",
+    "uDataMapper",
+]

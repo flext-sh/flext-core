@@ -1,4 +1,4 @@
-"""FlextHandlers complete CQRS handler implementation demonstration.
+"""h complete CQRS handler implementation demonstration.
 
 Shows command and query handlers with type safety and pipeline execution.
 Uses configuration-based architecture and error handling patterns.
@@ -13,12 +13,12 @@ from collections.abc import Sequence
 
 from flext_core import (
     FlextConstants,
-    FlextHandlers,
     FlextModels,
     FlextResult,
     FlextService,
-    FlextTypes,
-    FlextUtilities,
+    h,
+    t,
+    u,
 )
 
 
@@ -56,16 +56,16 @@ GetUserQuery.model_rebuild(_types_namespace=_types_namespace)
 UserDTO.model_rebuild(_types_namespace=_types_namespace)
 
 
-# Handlers using FlextHandlers directly
-class CommandHandler(FlextHandlers[CreateUserCommand, str]):
+# Handlers using h directly
+class CommandHandler(h[CreateUserCommand, str]):
     """Example command handler."""
 
     def handle(self, message: CreateUserCommand) -> FlextResult[str]:
-        """Handle user creation command using FlextUtilities validation."""
+        """Handle user creation command using u validation."""
         _ = self.handler_name  # Use self to satisfy ruff
 
-        # Railway pattern with FlextUtilities validation (DRY)
-        name_validation = FlextUtilities.Validation.validate_length(
+        # Railway pattern with u validation (DRY)
+        name_validation = u.Validation.validate_length(
             message.name,
             min_length=FlextConstants.Validation.MIN_NAME_LENGTH,
             max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
@@ -76,7 +76,7 @@ class CommandHandler(FlextHandlers[CreateUserCommand, str]):
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-        email_validation = FlextUtilities.Validation.validate_pattern(
+        email_validation = u.Validation.validate_pattern(
             message.email,
             FlextConstants.Platform.PATTERN_EMAIL,
             "email",
@@ -90,7 +90,7 @@ class CommandHandler(FlextHandlers[CreateUserCommand, str]):
         return FlextResult[str].ok(f"User {message.name} created")
 
 
-class QueryHandler(FlextHandlers[GetUserQuery, UserDTO]):
+class QueryHandler(h[GetUserQuery, UserDTO]):
     """Example query handler."""
 
     def handle(self, message: GetUserQuery) -> FlextResult[UserDTO]:
@@ -111,12 +111,12 @@ class QueryHandler(FlextHandlers[GetUserQuery, UserDTO]):
 
 
 # Service using FlextService directly
-class HandlersService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
+class HandlersService(FlextService[t.Types.ServiceMetadataMapping]):
     """Service demonstrating CQRS handlers with flext-core."""
 
     def execute(
         self,
-    ) -> FlextResult[FlextTypes.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Execute comprehensive handler demonstrations."""
         print("Starting CQRS handlers demonstration")
 
@@ -125,7 +125,7 @@ class HandlersService(FlextService[FlextTypes.Types.ServiceMetadataMapping]):
         self._demonstrate_pipeline_execution()
         self._demonstrate_error_handling()
 
-        return FlextResult[FlextTypes.Types.ServiceMetadataMapping].ok({
+        return FlextResult[t.Types.ServiceMetadataMapping].ok({
             "handlers_demonstrated": [
                 FlextConstants.Cqrs.HandlerType.COMMAND,
                 FlextConstants.Cqrs.HandlerType.QUERY,

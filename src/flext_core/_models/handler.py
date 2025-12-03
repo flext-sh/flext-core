@@ -23,9 +23,8 @@ from pydantic import (
 )
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.validation import FlextUtilitiesValidation
-from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelsHandler:
@@ -40,11 +39,11 @@ class FlextModelsHandler:
 
         name: str = Field(min_length=1, description="Handler name")
         handler: (
-            Callable[[], FlextTypes.GeneralValueType]
-            | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]
+            Callable[[], t.GeneralValueType]
+            | Callable[[t.GeneralValueType], t.GeneralValueType]
             | Callable[
-                [FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType,
+                [t.GeneralValueType, t.GeneralValueType],
+                t.GeneralValueType,
             ]
         )
         event_types: list[str] = Field(
@@ -56,17 +55,17 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: FlextTypes.GeneralValueType | Callable[..., FlextTypes.GeneralValueType],
+            v: t.GeneralValueType | Callable[..., t.GeneralValueType],
         ) -> (
-            Callable[[], FlextTypes.GeneralValueType]
-            | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]
+            Callable[[], t.GeneralValueType]
+            | Callable[[t.GeneralValueType], t.GeneralValueType]
             | Callable[
-                [FlextTypes.GeneralValueType, FlextTypes.GeneralValueType],
-                FlextTypes.GeneralValueType,
+                [t.GeneralValueType, t.GeneralValueType],
+                t.GeneralValueType,
             ]
         ):
             """Validate handler is properly callable (direct validation, no circular imports)."""
-            # Direct callable check - avoid circular import via FlextUtilitiesValidation
+            # Direct callable check - avoid circular import via uValidation
             if not callable(v):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
@@ -74,7 +73,7 @@ class FlextModelsHandler:
             # Cast to handler callable since we've validated it's callable
             return cast(
                 (
-                    "Callable[[], FlextTypes.GeneralValueType] | Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType] | Callable[[FlextTypes.GeneralValueType, FlextTypes.GeneralValueType], FlextTypes.GeneralValueType]"
+                    "Callable[[], t.GeneralValueType] | Callable[[t.GeneralValueType], t.GeneralValueType] | Callable[[t.GeneralValueType, t.GeneralValueType], t.GeneralValueType]"
                 ),
                 v,
             )
@@ -122,36 +121,36 @@ class FlextModelsHandler:
             ),
         ]
         handler_mode: Annotated[
-            FlextConstants.Cqrs.HandlerType,
+            c.Cqrs.HandlerType,
             Field(
-                default=FlextConstants.Cqrs.HandlerType.COMMAND,
+                default=c.Cqrs.HandlerType.COMMAND,
                 description="Handler mode (command, query, or event)",
                 examples=["command", "query", "event"],
             ),
-        ] = FlextConstants.Cqrs.HandlerType.COMMAND
+        ] = c.Cqrs.HandlerType.COMMAND
         timestamp: Annotated[
             str,
             Field(
-                default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP,
+                default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
                 description="ISO 8601 registration timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[Z+\-][0-9:]*)?$",
             ),
-        ] = Field(default_factory=lambda: FlextConstants.Cqrs.DEFAULT_TIMESTAMP)
+        ] = Field(default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP)
         status: Annotated[
-            FlextConstants.Cqrs.CommonStatus,
+            c.Cqrs.CommonStatus,
             Field(
-                default=FlextConstants.Cqrs.CommonStatus.RUNNING,
+                default=c.Cqrs.CommonStatus.RUNNING,
                 description="Current registration status",
                 examples=["running", "stopped", "failed"],
             ),
-        ] = FlextConstants.Cqrs.CommonStatus.RUNNING
+        ] = c.Cqrs.CommonStatus.RUNNING
 
         @field_validator("timestamp", mode="after")
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format (using FlextUtilitiesValidation)."""
-            result = FlextUtilitiesValidation.validate_iso8601_timestamp(
+            """Validate timestamp is in ISO 8601 format (using uValidation)."""
+            result = FlextValidation.validate_iso8601_timestamp(
                 v,
                 allow_empty=True,
             )
@@ -207,7 +206,7 @@ class FlextModelsHandler:
             ),
         ]
         handler_mode: Annotated[
-            FlextConstants.Cqrs.HandlerTypeLiteral,
+            c.Cqrs.HandlerTypeLiteral,
             Field(
                 min_length=1,
                 description="Mode of handler execution",
@@ -215,7 +214,7 @@ class FlextModelsHandler:
             ),
         ]
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: dict[str, FlextTypes.GeneralValueType] | None = PrivateAttr(
+        _metrics_state: dict[str, t.GeneralValueType] | None = PrivateAttr(
             default=None,
         )
 
@@ -259,11 +258,11 @@ class FlextModelsHandler:
             return round(elapsed * 1000, 2)
 
         @computed_field
-        def metrics_state(self) -> Mapping[str, FlextTypes.GeneralValueType]:
+        def metrics_state(self) -> Mapping[str, t.GeneralValueType]:
             """Get current metrics state.
 
             Returns:
-                Dictionary containing metrics state (empty dict[str, FlextTypes.GeneralValueType] if not set)
+                Dictionary containing metrics state (empty dict[str, t.GeneralValueType] if not set)
 
             Examples:
                 >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
@@ -280,7 +279,7 @@ class FlextModelsHandler:
 
         def set_metrics_state(
             self,
-            state: dict[str, FlextTypes.GeneralValueType],
+            state: dict[str, t.GeneralValueType],
         ) -> None:
             """Set metrics state.
 
@@ -321,7 +320,7 @@ class FlextModelsHandler:
         def create_for_handler(
             cls,
             handler_name: str,
-            handler_mode: FlextConstants.Cqrs.HandlerTypeLiteral,
+            handler_mode: c.Cqrs.HandlerTypeLiteral,
         ) -> Self:
             """Create execution context for a handler.
 

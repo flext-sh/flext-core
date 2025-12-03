@@ -18,8 +18,8 @@ from flext_core import (
     FlextContainer,
     FlextExceptions,
     FlextResult,
-    FlextTypes,
-    FlextUtilities,
+    t,
+    u,
 )
 
 
@@ -58,8 +58,8 @@ class TestCompleteFlextSystemIntegration:
         assert FlextResult is not None, "FlextResult não está disponível"
         assert FlextConstants is not None, "FlextConstants não está disponível"
         assert FlextExceptions is not None, "FlextExceptions não está disponível"
-        assert FlextUtilities is not None, "FlextUtilities não está disponível"
-        assert FlextTypes is not None, "FlextTypes não está disponível"
+        assert u is not None, "u não está disponível"
+        assert t is not None, "t não está disponível"
 
     def _test_railway_programming(self) -> None:
         """Test railway-oriented programming with FlextResult."""
@@ -150,8 +150,8 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_utilities(self) -> None:
         """Test utilities and helper functions."""
-        # Geração de ID
-        generated_id = FlextUtilities.Generators.generate_id()
+        # Geração de ID usando método unificado
+        generated_id = u.generate("uuid")
         assert isinstance(generated_id, str)
         assert len(generated_id) == 36  # Formato padrão UUID
 
@@ -160,7 +160,7 @@ class TestCompleteFlextSystemIntegration:
         assert str(uuid_obj) == generated_id
 
         # Geração de timestamp
-        timestamp = FlextUtilities.Generators.generate_iso_timestamp()
+        timestamp = u.Generators.generate_iso_timestamp()
         assert isinstance(timestamp, str)
         assert len(timestamp) > 0
 
@@ -189,15 +189,15 @@ class TestCompleteFlextSystemIntegration:
         assert register_result is container  # Fluent interface returns Self is True
 
         # Recuperar serviço registrado
-        retrieved_service_result: FlextResult[FlextTypes.GeneralValueType] = (
-            container.get("test_service")
+        retrieved_service_result: FlextResult[t.GeneralValueType] = container.get(
+            "test_service"
         )
         assert retrieved_service_result.is_success is True
         retrieved_service = retrieved_service_result.value
         assert retrieved_service == "test_value"
 
         # Teste de serviço não encontrado
-        not_found_result: FlextResult[FlextTypes.GeneralValueType] = container.get(
+        not_found_result: FlextResult[t.GeneralValueType] = container.get(
             "servico_inexistente"
         )
         assert not_found_result.is_success is False
@@ -226,7 +226,7 @@ class TestCompleteFlextSystemIntegration:
             # Processar dados
             dados_processados: dict[str, str] = {}
 
-            # FlextUtilities.Validation was completely removed - using direct validation
+            # u.Validation was completely removed - using direct validation
             for key, value in dados.items():
                 if len(value.strip()) == 0:
                     return FlextResult[dict[str, str]].fail(
@@ -238,9 +238,7 @@ class TestCompleteFlextSystemIntegration:
                 dados_processados[key] = f"processado_{value}"
 
             # Adicionar metadados
-            dados_processados["processado_em"] = (
-                FlextUtilities.Generators.generate_iso_timestamp()
-            )
+            dados_processados["processado_em"] = u.Generators.generate_iso_timestamp()
             dados_processados["processado_por"] = "sistema_flext"
 
             return FlextResult[dict[str, str]].ok(dados_processados)
@@ -323,8 +321,8 @@ class TestCompleteFlextSystemIntegration:
         assert FlextResult is not None
         assert FlextConstants is not None
         assert FlextExceptions is not None
-        assert FlextUtilities is not None
-        assert FlextTypes is not None
+        assert u is not None
+        assert t is not None
 
         # Verificar que o sistema está pronto para uso em produção
         # Create a new container instance for testing

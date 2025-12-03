@@ -1,7 +1,7 @@
 """Final push to 75% coverage - simple, focused tests.
 
 Module: flext_core (coverage tests)
-Scope: FlextResult, FlextContainer, FlextExceptions, FlextUtilities
+Scope: FlextResult, FlextContainer, FlextExceptions, u
 
 Simple tests targeting uncovered lines.
 
@@ -23,7 +23,7 @@ from flext_core import (
     FlextContainer,
     FlextExceptions,
     FlextResult,
-    FlextUtilities,
+    u,
 )
 
 
@@ -216,14 +216,14 @@ class TestCoveragePush75Percent:
 
     def test_utilities_id(self) -> None:
         """Test ID generation."""
-        id1 = FlextUtilities.Generators.generate_id()
-        id2 = FlextUtilities.Generators.generate_id()
+        id1 = u.Generators.generate_id()
+        id2 = u.Generators.generate_id()
         assert id1 != id2
         assert len(id1) == 36
 
     def test_utilities_timestamp(self) -> None:
         """Test timestamp generation."""
-        ts = FlextUtilities.Generators.generate_iso_timestamp()
+        ts = u.Generators.generate_iso_timestamp()
         assert isinstance(ts, str)
         assert len(ts) > 0
 
@@ -254,9 +254,9 @@ class TestCoveragePush75Percent:
 
     def test_result_repr(self) -> None:
         """Test result repr."""
-        r = FlextResult[int].ok(42)
-        repr_str = repr(r)
-        assert "FlextResult" in repr_str
+        result = FlextResult[int].ok(42)
+        repr_str = repr(result)
+        assert "r.ok" in repr_str
 
     def test_result_filter(self) -> None:
         """Test filter method."""

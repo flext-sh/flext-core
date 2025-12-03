@@ -1,6 +1,6 @@
 # Application Layer API Reference
 
-The application layer coordinates domain logic through CQRS-style handlers, reliability policies, and structured observability. It is built around four primary components: `FlextDispatcher`, `FlextHandlers`, `FlextRegistry`, and `FlextDecorators`.
+The application layer coordinates domain logic through CQRS-style handlers, reliability policies, and structured observability. It is built around four primary components: `FlextDispatcher`, `h`, `FlextRegistry`, and `FlextDecorators`.
 
 ## FlextDispatcher - Unified CQRS Dispatcher
 
@@ -36,15 +36,15 @@ user_result = dispatcher.dispatch(GetUserQuery("user-123"))
 - Context propagation for correlation IDs and structured logging
 - Batch dispatch helpers for processing collections of messages
 
-## FlextHandlers - CQRS Handler Base
+## h - CQRS Handler Base
 
-`FlextHandlers` provides the abstract base class for implementing command and query handlers. It supplies validation hooks, context propagation, and `FlextResult`-based error handling.
+`h` provides the abstract base class for implementing command and query handlers. It supplies validation hooks, context propagation, and `FlextResult`-based error handling.
 
 ```python
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import h
 from flext_core.result import FlextResult
 
-class CreateUserHandler(FlextHandlers[CreateUserCommand, bool]):
+class CreateUserHandler(h[CreateUserCommand, bool]):
     def handle(self, message: CreateUserCommand) -> FlextResult[bool]:
         if "@" not in message.email:
             return FlextResult[bool].fail("Invalid email")
@@ -105,7 +105,7 @@ def handle_create_user(cmd: CreateUserCommand, logger) -> FlextResult[bool]:
 
 ## Quick Start Checklist
 
-1. Define command/query messages and corresponding handlers inheriting `FlextHandlers`.
+1. Define command/query messages and corresponding handlers inheriting `h`.
 2. Register handlers with `FlextDispatcher` or via `FlextRegistry` batch helpers.
 3. Apply `FlextDecorators` for retries, timeouts, context propagation, or DI.
 4. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `FlextResult` outputs.

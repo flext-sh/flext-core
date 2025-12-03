@@ -1,6 +1,6 @@
 """Type aliases and generics used across dispatcher-ready components.
 
-``FlextTypes`` centralizes ``TypeVar`` declarations and nested namespaces of
+``t`` centralizes ``TypeVar`` declarations and nested namespaces of
 aliases for CQRS messages, handlers, utilities, logging, and validation. The
 module keeps typing consistent for dispatcher pipelines, services, and examples
 without importing higher-layer implementations while retaining compatibility
@@ -97,10 +97,10 @@ T_Settings = TypeVar("T_Settings", bound=BaseSettings)
 T_Model = TypeVar("T_Model", bound=BaseModel)
 
 # ============================================================================
-# FLEXT TYPES - All complex types defined inside FlextTypes class
+# FLEXT TYPES - All complex types defined inside t class
 # ============================================================================
 # NOTE: Only TypeVars are defined at module level (see above)
-# All complex type aliases MUST be inside FlextTypes class - NO loose types!
+# All complex type aliases MUST be inside t class - NO loose types!
 
 
 class FlextTypes:
@@ -111,7 +111,7 @@ class FlextTypes:
     All complex types are defined at module level and referenced here.
 
     Architecture: Nested type definitions for:
-    - Scalar and base types ("FlextTypes.ScalarValue", FlextTypes.GeneralValueType, etc.)
+    - Scalar and base types ("t.ScalarValue", t.GeneralValueType, etc.)
     - Domain validation types (PortNumber, TimeoutSeconds, etc.)
     - JSON types (JsonPrimitive, JsonValue, etc.)
     - Handler types (HandlerCallable with dispatcher/bus-compatible aliases)
@@ -159,17 +159,17 @@ class FlextTypes:
     )
 
     # Object list type - sequence of general value types for batch operations
-    # Reuses FlextTypes.GeneralValueType (forward reference managed by __future__ annotations)
+    # Reuses t.GeneralValueType (forward reference managed by __future__ annotations)
     type ObjectList = Sequence[FlextTypes.GeneralValueType]
 
     # Sortable object type - types that can be sorted (str, int, float, Mapping)
-    # Note: Uses FlextTypes.ScalarValue but excludes bool/None for sorting compatibility
+    # Note: Uses t.ScalarValue but excludes bool/None for sorting compatibility
     type SortableObjectType = (
         str | int | float | Mapping[str, FlextTypes.SortableObjectType]
     )
 
     # Metadata-compatible attribute value type - composed for strict validation
-    # Reuses FlextTypes.ScalarValue defined above (forward reference managed by __future__ annotations)
+    # Reuses t.ScalarValue defined above (forward reference managed by __future__ annotations)
     type MetadataAttributeValue = (
         FlextTypes.ScalarValue
         | Sequence[FlextTypes.ScalarValue]
@@ -198,8 +198,8 @@ class FlextTypes:
     # =========================================================================
     # TOP-LEVEL JSON TYPE ALIASES (for backward compatibility with ecosystem)
     # =========================================================================
-    # These aliases provide direct access to JSON types at FlextTypes level
-    # instead of requiring FlextTypes.Json.JsonValue etc.
+    # These aliases provide direct access to JSON types at t level
+    # instead of requiring t.Json.JsonValue etc.
 
     # JSON value - primitive or complex value (alias to Json.JsonValue)
     type JsonValue = (
@@ -213,7 +213,7 @@ class FlextTypes:
     )
 
     # JSON dictionary - mapping with string keys and JSON values
-    # NOTE: Use FlextTypes.Json.JsonDict for JSON-specific operations
+    # NOTE: Use t.Json.JsonDict for JSON-specific operations
     # This top-level alias is kept for backward compatibility but prefer Json.JsonDict
     type JsonDict = Mapping[str, GeneralValueType]
 
@@ -226,25 +226,23 @@ class FlextTypes:
         # Type hint specifier - used for type introspection
         # Can be any type hint: type, type alias, generic, or string
         # Note: For runtime type introspection, we accept type, str, or callable types
-        type TypeHintSpecifier = type | str | Callable[..., FlextTypes.GeneralValueType]
+        type TypeHintSpecifier = type | str | Callable[..., t.GeneralValueType]
 
         # Generic type argument - used for extracting generic type arguments
-        # Can be a string type name or a type class representing FlextTypes.GeneralValueType
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class (forward reference)
-        type GenericTypeArgument = str | type[FlextTypes.GeneralValueType]
+        # Can be a string type name or a type class representing t.GeneralValueType
+        # Reuses t.GeneralValueType from parent t class (forward reference)
+        type GenericTypeArgument = str | type[t.GeneralValueType]
 
         # Message type specifier - used for handler type checking
         # Can be a string type name or a type class
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class (forward reference)
-        type MessageTypeSpecifier = str | type[FlextTypes.GeneralValueType]
+        # Reuses t.GeneralValueType from parent t class (forward reference)
+        type MessageTypeSpecifier = str | type[t.GeneralValueType]
 
         # Type origin specifier - used for generic type origin checking
         # Can be a string type name, type class, or callable with __origin__ attribute
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class (forward reference)
+        # Reuses t.GeneralValueType from parent t class (forward reference)
         type TypeOriginSpecifier = (
-            str
-            | type[FlextTypes.GeneralValueType]
-            | Callable[..., FlextTypes.GeneralValueType]
+            str | type[t.GeneralValueType] | Callable[..., t.GeneralValueType]
         )
 
     class Validation:
@@ -313,15 +311,15 @@ class FlextTypes:
         # Primitive JSON types
         type JsonPrimitive = str | int | float | bool | None
 
-        # Complex JSON types using recursive FlextTypes.GeneralValueType
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class (no duplication)
+        # Complex JSON types using recursive t.GeneralValueType
+        # Reuses t.GeneralValueType from parent t class (no duplication)
         type JsonValue = (
             JsonPrimitive
-            | Sequence[FlextTypes.GeneralValueType]
-            | Mapping[str, FlextTypes.GeneralValueType]
+            | Sequence[t.GeneralValueType]
+            | Mapping[str, t.GeneralValueType]
         )
         type JsonList = Sequence[JsonValue]
-        type JsonDict = Mapping[str, FlextTypes.GeneralValueType]
+        type JsonDict = Mapping[str, t.GeneralValueType]
 
     class HandlerAliases:
         """Handler and middleware type alias definitions for CQRS patterns.
@@ -330,48 +328,48 @@ class FlextTypes:
         """
 
         # Single consolidated callable type for handlers and validators
-        # Reuses FlextTypes.GeneralValueType from outer FlextTypes class
+        # Reuses t.GeneralValueType from outer t class
         type HandlerCallable = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
+            [t.GeneralValueType],
+            t.GeneralValueType,
         ]
         # Middleware uses same callable signature as handlers
         # Use HandlerCallable directly - no aliases per FLEXT standards
 
         # Handler type for registry - union of all possible handler types
         # This includes callables, objects with handle() method, and handler instances
-        # Note: Handler protocol is defined in FlextProtocols.Handler for proper protocol organization
+        # Note: Handler protocol is defined in p.Handler for proper protocol organization
 
         # Middleware configuration types
-        type MiddlewareConfig = FlextTypes.Types.ConfigurationMapping
+        type MiddlewareConfig = t.Types.ConfigurationMapping
 
         # Acceptable message types for handlers - union of common message types
-        # Reuses FlextTypes.GeneralValueType and FlextTypes.ScalarValue from parent FlextTypes class
+        # Reuses t.GeneralValueType and t.ScalarValue from parent t class
         type AcceptableMessageType = (
-            FlextTypes.GeneralValueType
-            | Mapping[str, FlextTypes.GeneralValueType]
-            | Sequence[FlextTypes.GeneralValueType]
-            | FlextTypes.ScalarValue
+            t.GeneralValueType
+            | Mapping[str, t.GeneralValueType]
+            | Sequence[t.GeneralValueType]
+            | t.ScalarValue
         )
 
         # Conditional execution callable types (PEP 695)
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class (forward reference)
-        type ConditionCallable = Callable[[FlextTypes.GeneralValueType], bool]
+        # Reuses t.GeneralValueType from parent t class (forward reference)
+        type ConditionCallable = Callable[[t.GeneralValueType], bool]
 
-        # Variadic callable protocol is defined in FlextProtocols.VariadicCallable
+        # Variadic callable protocol is defined in p.VariadicCallable
         # Use that instead of redeclaring here
 
         # Handler type union - all possible handler representations
         # This is used for handler registries where handlers can be callables,
         # handler instances, or configuration dicts
-        # Note: Handler and VariadicCallable protocols are defined in FlextProtocols
+        # Note: Handler and VariadicCallable protocols are defined in p
         # but cannot be imported here due to circular dependency. For type checking,
         # we use Callable as a fallback that works for most use cases.
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class (no duplication)
+        # Reuses t.GeneralValueType from parent t class (no duplication)
         type HandlerType = (
             HandlerCallable
-            | Callable[..., FlextTypes.GeneralValueType]  # Variadic callable fallback
-            | Mapping[str, FlextTypes.GeneralValueType]  # Configuration dict
+            | Callable[..., t.GeneralValueType]  # Variadic callable fallback
+            | Mapping[str, t.GeneralValueType]  # Configuration dict
         )
 
     class Config:
@@ -423,46 +421,46 @@ class FlextTypes:
             )
 
     class Cqrs:
-        """CQRS pattern types - use FlextTypes.GeneralValueType directly."""
+        """CQRS pattern types - use t.GeneralValueType directly."""
 
-        # CQRS types use FlextTypes.GeneralValueType directly - no aliases per FLEXT standards
-        # For commands, events, messages, and queries, use FlextTypes.GeneralValueType directly
+        # CQRS types use t.GeneralValueType directly - no aliases per FLEXT standards
+        # For commands, events, messages, and queries, use t.GeneralValueType directly
 
     class Processor:
         """Processor type definitions for pipeline processing."""
 
         # Processor callable type - takes input and returns processed output
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class
+        # Reuses t.GeneralValueType from parent t class
         type ProcessorCallable = Callable[
-            [FlextTypes.GeneralValueType],
-            FlextTypes.GeneralValueType,
+            [t.GeneralValueType],
+            t.GeneralValueType,
         ]
 
         # Processor configuration type
-        type ProcessorConfig = Mapping[str, FlextTypes.GeneralValueType]
+        type ProcessorConfig = Mapping[str, t.GeneralValueType]
 
     class Factory:
         """Factory type definitions for service creation patterns."""
 
         # Factory callable type - creates instances
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class
-        type FactoryCallable = Callable[[], FlextTypes.GeneralValueType]
+        # Reuses t.GeneralValueType from parent t class
+        type FactoryCallable = Callable[[], t.GeneralValueType]
 
         # Factory with arguments callable type
-        type FactoryWithArgsCallable = Callable[..., FlextTypes.GeneralValueType]
+        type FactoryWithArgsCallable = Callable[..., t.GeneralValueType]
 
         # Factory configuration type
-        type FactoryConfig = Mapping[str, FlextTypes.GeneralValueType]
+        type FactoryConfig = Mapping[str, t.GeneralValueType]
 
     class Bus:
         """Message bus type definitions for event-driven patterns."""
 
         # Bus message type - uses GeneralValueType for flexibility
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class
-        type BusMessage = FlextTypes.GeneralValueType
+        # Reuses t.GeneralValueType from parent t class
+        type BusMessage = t.GeneralValueType
 
         # Bus handler callable type
-        type BusHandler = Callable[[FlextTypes.GeneralValueType], None]
+        type BusHandler = Callable[[t.GeneralValueType], None]
 
         # Bus subscription identifier
         type SubscriptionId = str
@@ -474,7 +472,7 @@ class FlextTypes:
         type LogLevel = str
 
         # Log context type - additional context for log messages
-        type LogContext = Mapping[str, FlextTypes.GeneralValueType]
+        type LogContext = Mapping[str, t.GeneralValueType]
 
         # Log formatter callable type
         type LogFormatter = Callable[[str, LogContext], str]
@@ -514,16 +512,16 @@ class FlextTypes:
         # MAPPING TYPE ALIASES (Python 3.13+ PEP 695)
         # =====================================================================
         # Using PEP 695 type keyword for better type checking and IDE support
-        type ServiceMetadataMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type ServiceMetadataMapping = Mapping[str, t.GeneralValueType]
         """Mapping for service metadata (attribute names to values)."""
 
-        type FieldMetadataMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type FieldMetadataMapping = Mapping[str, t.GeneralValueType]
         """Mapping for field metadata (field names to metadata objects)."""
 
         type SummaryDataMapping = Mapping[str, int | float | str]
         """Mapping for summary data (category names to summary values)."""
 
-        type CategoryGroupsMapping = Mapping[str, Sequence[FlextTypes.GeneralValueType]]
+        type CategoryGroupsMapping = Mapping[str, Sequence[t.GeneralValueType]]
         """Mapping for category groups (category names to entry lists)."""
 
         # ContainerConfigDict must be defined before SharedContainersMapping
@@ -546,19 +544,19 @@ class FlextTypes:
         type SharedContainersMapping = Mapping[str, ContainerConfigDict]
         """Mapping for shared containers (container IDs to container objects)."""
 
-        type EventDataMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type EventDataMapping = Mapping[str, t.GeneralValueType]
         """Mapping for event data (event properties to values)."""
 
-        type ContextMetadataMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type ContextMetadataMapping = Mapping[str, t.GeneralValueType]
         """Mapping for context metadata (context properties to values)."""
 
-        type ConfigurationMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type ConfigurationMapping = Mapping[str, t.GeneralValueType]
         """Mapping for configuration (configuration keys to values)."""
 
-        type ConfigInstanceMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type ConfigInstanceMapping = Mapping[str, t.GeneralValueType]
         """Mapping for configuration instances (instance IDs to instances)."""
 
-        type NamespaceRegistryMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type NamespaceRegistryMapping = Mapping[str, t.GeneralValueType]
         """Mapping for namespace registry (namespace names to registries)."""
 
         type DatabaseQueryResultMapping = Mapping[str, str | int]
@@ -570,19 +568,19 @@ class FlextTypes:
         # Additional mapping types for validation and exceptions
         type FieldValidatorMapping = Mapping[
             str,
-            Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType],
+            Callable[[t.GeneralValueType], t.GeneralValueType],
         ]
         """Mapping for field validators (field names to validator functions)."""
 
         type ConsistencyRuleMapping = Mapping[
             str,
-            Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType],
+            Callable[[t.GeneralValueType], t.GeneralValueType],
         ]
         """Mapping for consistency rules (rule names to validator functions)."""
 
         type EventValidatorMapping = Mapping[
             str,
-            Callable[[FlextTypes.GeneralValueType], FlextTypes.GeneralValueType],
+            Callable[[t.GeneralValueType], t.GeneralValueType],
         ]
         """Mapping for event validators (event types to validator functions)."""
 
@@ -615,13 +613,11 @@ class FlextTypes:
         """Mapping for exception metrics (exception types to occurrence counts)."""
 
         type ExceptionKwargsType = (
-            FlextTypes.ScalarValue
-            | Sequence[FlextTypes.ScalarValue]
+            t.ScalarValue
+            | Sequence[t.ScalarValue]
             | Mapping[
                 str,
-                FlextTypes.ScalarValue
-                | Sequence[FlextTypes.ScalarValue]
-                | Mapping[str, FlextTypes.ScalarValue],
+                t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue],
             ]
         )
         """Type alias for exception kwargs - flexible value handling with proper parametrization."""
@@ -651,7 +647,7 @@ class FlextTypes:
             registration_status: str
             """Status of registration (active, inactive, error)."""
 
-            metadata: dict[str, FlextTypes.GeneralValueType]
+            metadata: dict[str, t.GeneralValueType]
             """Additional service metadata (JSON-serializable).
 
             Business Rule: dict[str, GeneralValueType] is correct here because
@@ -678,7 +674,7 @@ class FlextTypes:
             registration_status: str
             """Status of registration (active, inactive, error)."""
 
-            metadata: dict[str, FlextTypes.GeneralValueType]
+            metadata: dict[str, t.GeneralValueType]
             """Additional factory metadata (JSON-serializable).
 
             Business Rule: dict[str, GeneralValueType] is correct here because
@@ -701,10 +697,10 @@ class FlextTypes:
             field_name: str
             """Name of the field being validated."""
 
-            field_value: FlextTypes.GeneralValueType
+            field_value: t.GeneralValueType
             """Value of the field being validated."""
 
-            parent_data: dict[str, FlextTypes.GeneralValueType]
+            parent_data: dict[str, t.GeneralValueType]
             """Parent data context for cross-field validation.
 
             Business Rule: dict[str, GeneralValueType] is correct here because
@@ -727,14 +723,14 @@ class FlextTypes:
             event_type: str
             """Type of event."""
 
-            event_data: dict[str, FlextTypes.GeneralValueType]
+            event_data: dict[str, t.GeneralValueType]
             """Event payload data.
 
             Business Rule: dict[str, GeneralValueType] is correct here because
             TypedDict fields must specify dict structure.
             """
 
-            metadata: dict[str, FlextTypes.GeneralValueType]
+            metadata: dict[str, t.GeneralValueType]
             """Event metadata (timestamp, correlation ID, etc.).
 
             Business Rule: dict[str, GeneralValueType] is correct here because
@@ -760,7 +756,7 @@ class FlextTypes:
             entity_type: str
             """Type classification of the entity."""
 
-            data: dict[str, FlextTypes.GeneralValueType]
+            data: dict[str, t.GeneralValueType]
             """Entity data payload.
 
             Business Rule: dict[str, GeneralValueType] is correct here because
@@ -784,7 +780,7 @@ class FlextTypes:
             category_name: str
             """Name of the category."""
 
-            items: list[FlextTypes.GeneralValueType]
+            items: list[t.GeneralValueType]
             """List of items in this category."""
 
         class DependencyContainerConfigDict(TypedDict, total=True):
@@ -806,7 +802,7 @@ class FlextTypes:
             service_type: str
             """Type of service."""
 
-            config: dict[str, FlextTypes.GeneralValueType]
+            config: dict[str, t.GeneralValueType]
             """Service configuration data.
 
             Business Rule: dict[str, GeneralValueType] is correct here because
@@ -829,7 +825,7 @@ class FlextTypes:
             Complete result structure ensures audit trail completeness for batch operations.
             """
 
-            results: list[FlextTypes.GeneralValueType]
+            results: list[t.GeneralValueType]
             """List of successful processing results.
 
             Business Rule: TypedDict fields must specify dict structure.
@@ -871,7 +867,7 @@ class FlextTypes:
 
         # Note: TypedDict cannot be generic, so BatchResultDict is used directly
         # Type narrowing for results: list[T] is done at usage site based on operation return type
-        # Users should use FlextTypes.Types.BatchResultDict directly
+        # Users should use t.Types.BatchResultDict directly
 
     class Example:
         """Example-specific types for demonstrating FLEXT features.
@@ -881,8 +877,8 @@ class FlextTypes:
         """
 
         # Configuration data types using advanced mapping patterns
-        # Reuses FlextTypes.ScalarValue from parent FlextTypes class (forward reference)
-        type ConfigDataMapping = Mapping[str, FlextTypes.ScalarValue]
+        # Reuses t.ScalarValue from parent t class (forward reference)
+        type ConfigDataMapping = Mapping[str, t.ScalarValue]
         """Mapping for configuration data (keys to scalar values)."""
 
         type EnvVarsMapping = Mapping[str, str]
@@ -915,8 +911,8 @@ class FlextTypes:
         ]
 
         # Configuration instance type using advanced union
-        # Reuses FlextTypes.GeneralValueType from parent FlextTypes class (forward reference)
-        type ConfigInstance = Mapping[str, FlextTypes.GeneralValueType]
+        # Reuses t.GeneralValueType from parent t class (forward reference)
+        type ConfigInstance = Mapping[str, t.GeneralValueType]
         """Mapping type for configuration instances."""
 
         # Validation result types for configuration operations
@@ -928,35 +924,35 @@ class FlextTypes:
         """Context mapping for environment variable configurations."""
 
         # Types for demonstration data
-        # Reuses FlextTypes.ScalarValue and FlextTypes.GeneralValueType from parent FlextTypes class (forward references)
-        type UserDataMapping = Mapping[str, FlextTypes.ScalarValue]
+        # Reuses t.ScalarValue and t.GeneralValueType from parent t class (forward references)
+        type UserDataMapping = Mapping[str, t.ScalarValue]
         """Mapping for user data in demonstrations."""
 
         type ValidationDataMapping = Mapping[str, Sequence[str]]
         """Mapping for validation data in demonstrations."""
 
         # Result metadata for demonstration outcomes
-        type ResultMetadataMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type ResultMetadataMapping = Mapping[str, t.GeneralValueType]
         """Mapping for demonstration result metadata."""
 
         # Dependency injection service types
-        type ServiceMetadataMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type ServiceMetadataMapping = Mapping[str, t.GeneralValueType]
         """Mapping for service metadata in DI demonstrations."""
 
-        type DatabaseQueryResultMapping = Mapping[str, FlextTypes.ScalarValue]
+        type DatabaseQueryResultMapping = Mapping[str, t.ScalarValue]
         """Mapping for database query results."""
 
-        type ServiceConfigMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type ServiceConfigMapping = Mapping[str, t.GeneralValueType]
         """Mapping for service configuration data."""
 
-        type DIPatternsResultMapping = Mapping[str, FlextTypes.GeneralValueType]
+        type DIPatternsResultMapping = Mapping[str, t.GeneralValueType]
         """Mapping for DI patterns demonstration results."""
 
 
 # NOTE: All TypeVars are defined at module level
-# All complex types are defined in FlextTypes class only (no loose module-level aliases)
-# Use FlextTypes.ScalarValue, FlextTypes.GeneralValueType, FlextTypes.ConstantValue directly
-# Use FlextTypes.Example.ResultMetadataMapping, etc. for example-specific types
+# All complex types are defined in t class only (no loose module-level aliases)
+# Use t.ScalarValue, t.GeneralValueType, t.ConstantValue directly
+# Use t.Example.ResultMetadataMapping, etc. for example-specific types
 
 
 __all__ = [
@@ -1005,4 +1001,8 @@ __all__ = [
     "U",
     "V",
     "W",
+    "t",
 ]
+
+# Alias for simplified usage
+t = FlextTypes

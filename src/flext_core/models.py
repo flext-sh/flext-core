@@ -27,8 +27,8 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.service import FlextModelsService
 from flext_core._models.validation import FlextModelsValidation
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextModels:
@@ -72,7 +72,7 @@ class FlextModels:
 
     # Collections - PEP 695 type aliases (Python 3.13+ strict)
     # Direct access - no nested namespace duplication per FLEXT standards
-    Categories = FlextModelsCollections.Categories[FlextTypes.GeneralValueType]
+    Categories = FlextModelsCollections.Categories[t.GeneralValueType]
     type Statistics = FlextModelsCollections.Statistics
     type Config = FlextModelsCollections.Config
     type Results = FlextModelsCollections.Results
@@ -153,9 +153,9 @@ class FlextModels:
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
         """Runtime triple (config, context, container) for services."""
 
-        config: FlextProtocols.ConfigProtocol
-        context: FlextProtocols.ContextProtocol
-        container: FlextProtocols.ContainerProtocol
+        config: p.ConfigProtocol
+        context: p.ContextProtocol
+        container: p.ContainerProtocol
 
     type DomainServiceExecutionRequest = (
         FlextModelsService.DomainServiceExecutionRequest
@@ -205,5 +205,5 @@ class FlextModels:
 
 # Pydantic v2 with 'from __future__ import annotations' automatically resolves forward references
 # No manual model_rebuild() needed - annotations are stringified and resolved at runtime
-
-__all__ = ["FlextModels", "FlextModelsCollections", "FlextModelsEntity"]
+m = FlextModels
+__all__ = ["FlextModels", "FlextModelsCollections", "FlextModelsEntity", "m"]
