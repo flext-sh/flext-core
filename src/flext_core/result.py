@@ -21,7 +21,6 @@ from returns.result import Failure, Result, Success
 from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import p
 from flext_core.typings import T_co, U, t
-from flext_core.utilities import u
 
 
 class FlextResult[T_co]:  # noqa: PLR0904
@@ -467,12 +466,14 @@ class FlextResult[T_co]:  # noqa: PLR0904
         fail_fast: bool = True,
     ) -> FlextResult[list[U]]:
         """Map with parallel processing and configurable failure handling."""
-        results = list(u.map(items, func))
+        # NOTE: Cannot use u.map() here due to circular import
+        # (utilities.py -> _utilities/args.py -> result.py)
+        results = [func(item) for item in items]
         if fail_fast:
             for result in results:
                 if result.is_failure:
                     return r.fail(result.error or "Unknown error")
-            return r(Success(list(u.map(results, lambda r: r.value))))
+            return r(Success([r.value for r in results]))
         return cls.accumulate_errors(*results)
 
     @classmethod

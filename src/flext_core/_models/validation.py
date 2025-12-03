@@ -46,9 +46,7 @@ class FlextModelsValidation:
             ```python
             def check_age_business_rule(user: User) -> r[bool]:
                 return (
-                    r[bool].ok(True)
-                    if user.age >= 18
-                    else r[bool].fail("Must be 18+")
+                    r[bool].ok(True) if user.age >= 18 else r[bool].fail("Must be 18+")
                 )
 
 
@@ -203,11 +201,7 @@ class FlextModelsValidation:
         Example:
             ```python
             def is_adult(user: User) -> r[bool]:
-                return (
-                    r[bool].ok(True)
-                    if user.age >= 18
-                    else r[bool].fail("Not adult")
-                )
+                return r[bool].ok(True) if user.age >= 18 else r[bool].fail("Not adult")
 
 
             result = FlextModels.Validation.validate_batch(

@@ -14,7 +14,6 @@ from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-from flext_core.utilities import u
 
 
 class FlextDataMapper:
@@ -339,7 +338,9 @@ class FlextDataMapper:
         if isinstance(value, dict):
             return {str(k): cls.convert_to_json_value(v) for k, v in value.items()}
         if isinstance(value, Sequence):
-            return list(u.map(value, cls.convert_to_json_value))
+            # NOTE: Cannot use u.map() here due to circular import
+            # (utilities.py -> data_mapper.py)
+            return [cls.convert_to_json_value(item) for item in value]
         # Fallback: convert to string
         return str(value)
 
@@ -456,7 +457,8 @@ class FlextDataMapper:
         if isinstance(value, str):
             return [value]
         if isinstance(value, (list, tuple, set)):
-            return list(u.map(value, str))
+            # NOTE: Cannot use u.map() here due to circular import
+            return [str(item) for item in value]
         return [str(value)]
 
     @staticmethod

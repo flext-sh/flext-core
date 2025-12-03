@@ -310,7 +310,9 @@ class FlextConfig(BaseSettings):
             members_dict: dict[str, FlextConstants.Settings.LogLevel] = getattr(
                 log_level_enum, "__members__", {}
             )
-            allowed_values = list(u.map(list(members_dict.values()), lambda level: level.value))
+            allowed_values = list(
+                u.map(list(members_dict.values()), lambda level: level.value)
+            )
             msg = f"Invalid log level: {v}. Must be one of {allowed_values}"
             raise ValueError(msg) from None
 
