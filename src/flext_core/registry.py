@@ -733,7 +733,7 @@ class FlextRegistry(x):
         self,
         entry: tuple[
             t.HandlerAliases.HandlerCallable,
-                    t.GeneralValueType | r[t.GeneralValueType],
+            t.GeneralValueType | r[t.GeneralValueType],
         ],
         key: str,
     ) -> r[FlextModelsHandler.RegistrationDetails]:
@@ -851,7 +851,7 @@ class FlextRegistry(x):
             h[t.GeneralValueType, t.GeneralValueType]
             | tuple[
                 t.HandlerAliases.HandlerCallable,
-                    t.GeneralValueType | r[t.GeneralValueType],
+                t.GeneralValueType | r[t.GeneralValueType],
             ]
             | t.GeneralValueType
             | tuple[t.GeneralValueType, ...]

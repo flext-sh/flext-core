@@ -29,9 +29,10 @@ from typing import Protocol, TypedDict, TypeVar, overload, runtime_checkable
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
 
-from flext_core import, r, u
 from flext_core.protocols import p
+from flext_core.result import r
 from flext_core.typings import t
+from flext_core.utilities import u
 from flext_tests.domains import FlextTestsDomains
 from flext_tests.matchers import FlextTestsMatchers
 from flext_tests.protocols import FlextTestProtocols
@@ -180,9 +181,7 @@ class FlextTestsUtilities:
                 List of (result, is_success, value, error) tuples for pytest.parametrize
 
             """
-            cases: list[
-                tuple[r[TValue], bool, TValue | None, str | None]
-            ] = []
+            cases: list[tuple[r[TValue], bool, TValue | None, str | None]] = []
 
             for value in success_values:
                 result = r[TValue].ok(value)
@@ -726,9 +725,7 @@ class FlextTestsUtilities:
                 List of (result, is_success, expected_value, expected_error) tuples
 
             """
-            cases: list[
-                tuple[r[TValue], bool, TValue | None, str | None]
-            ] = []
+            cases: list[tuple[r[TValue], bool, TValue | None, str | None]] = []
             for value, expected in success_cases:
                 result = r[TValue].ok(value)
                 cases.append((result, True, expected, None))

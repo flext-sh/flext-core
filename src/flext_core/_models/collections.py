@@ -136,7 +136,9 @@ class FlextModelsCollections:
 
         def get(self, category: str, default: list[T] | None = None) -> list[T]:
             """Dict-like get with default."""
-            return self.categories.get(category, u.or_(default, []))
+            # Use inline helper to avoid circular import with u
+            fallback = default if default is not None else []
+            return self.categories.get(category, fallback)
 
         @classmethod
         def from_dict(

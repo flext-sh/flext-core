@@ -19,7 +19,7 @@ from flext_core._models.validation import FlextModelsValidation
 from flext_core._utilities.domain import FlextDomain
 from flext_core._utilities.generators import FlextGenerators
 from flext_core.constants import c
-from flext_core.exceptions import FlextExceptions
+from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime

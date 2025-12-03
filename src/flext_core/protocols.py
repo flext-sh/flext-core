@@ -18,12 +18,15 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from datetime import datetime
-from typing import Protocol, runtime_checkable
+from typing import ParamSpec, Protocol, runtime_checkable
 
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
 from flext_core.typings import T_co, t
+
+# ParamSpec for handler functions (must be at module level)
+P_HandlerFunc = ParamSpec("P_HandlerFunc")
 
 
 class FlextProtocols:
@@ -537,7 +540,7 @@ class FlextProtocols:
 
         @staticmethod
         def create_handler_from_function(
-            handler_func: Callable[..., t.GeneralValueType],
+            handler_func: Callable[P_HandlerFunc, t.GeneralValueType],
             handler_config: Mapping[str, t.FlexibleValue] | None = None,
             mode: str = ...,
         ) -> p.ResultProtocol[p.Handler]:

@@ -53,7 +53,7 @@ import string
 import typing
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import TypeGuard, cast
+from typing import ParamSpec, TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -64,6 +64,9 @@ from structlog.typing import BindableLogger
 from flext_core.constants import FlextConstants
 from flext_core.protocols import p
 from flext_core.typings import P, T, t
+
+# ParamSpec for structlog processors (variadic callables)
+P_Processor = ParamSpec("P_Processor")
 
 
 class FlextRuntime:  # noqa: PLR0904
@@ -790,7 +793,7 @@ class FlextRuntime:  # noqa: PLR0904
         config: Mapping[str, t.GeneralValueType] | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[Callable[..., t.GeneralValueType]]
+        additional_processors: Sequence[Callable[P_Processor, t.GeneralValueType]]
         | None = None,
         wrapper_class_factory: Callable[[], type[BindableLogger]] | None = None,
         logger_factory: Callable[P, BindableLogger] | None = None,
@@ -859,7 +862,7 @@ class FlextRuntime:  # noqa: PLR0904
         module = structlog
 
         # structlog processors have specific signatures - use Callable with flexible args
-        processors: list[Callable[..., t.GeneralValueType]] = [
+        processors: list[Callable[P_Processor, t.GeneralValueType]] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -912,7 +915,7 @@ class FlextRuntime:  # noqa: PLR0904
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[Callable[..., t.GeneralValueType]]
+        additional_processors: Sequence[Callable[P_Processor, t.GeneralValueType]]
         | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
@@ -1019,7 +1022,7 @@ class FlextRuntime:  # noqa: PLR0904
             >>> FlextRuntime.enable_runtime_checking()
             True
             >>> # Now all flext_core calls have runtime type validation
-            >>> from flext_core import, r
+            >>> from flext_core.result import r
             >>> result = r[int].ok("not an int")  # Raises BeartypeError
 
         Notes:

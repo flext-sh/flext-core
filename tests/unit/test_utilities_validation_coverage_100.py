@@ -40,7 +40,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from flext_core import FlextResult
+from flext_core import r
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._utilities.validation import uValidation
 from flext_core.typings import t
@@ -72,13 +72,13 @@ class TestuValidation:
     def test_validate_pipeline_all_pass(self) -> None:
         """Test validate_pipeline with all validators passing."""
 
-        def validator1(value: str) -> FlextResult[bool]:
+        def validator1(value: str) -> r[bool]:
             """First validator."""
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
-        def validator2(value: str) -> FlextResult[bool]:
+        def validator2(value: str) -> r[bool]:
             """Second validator."""
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
         result = uValidation.validate_pipeline(
             "test",
@@ -90,13 +90,13 @@ class TestuValidation:
     def test_validate_pipeline_first_fails(self) -> None:
         """Test validate_pipeline with first validator failing."""
 
-        def validator1(value: str) -> FlextResult[bool]:
+        def validator1(value: str) -> r[bool]:
             """First validator fails."""
-            return FlextResult[bool].fail("Validation failed")
+            return r[bool].fail("Validation failed")
 
-        def validator2(value: str) -> FlextResult[bool]:
+        def validator2(value: str) -> r[bool]:
             """Second validator (not reached)."""
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
 
         result = uValidation.validate_pipeline(
             "test",
@@ -108,7 +108,7 @@ class TestuValidation:
     def test_validate_pipeline_validator_raises_exception(self) -> None:
         """Test validate_pipeline handles validator exceptions."""
 
-        def validator(value: str) -> FlextResult[bool]:
+        def validator(value: str) -> r[bool]:
             """Validator that raises exception."""
             msg = "Validator error"
             raise ValueError(msg)
@@ -126,15 +126,15 @@ class TestuValidation:
     def test_validate_pipeline_validator_returns_false(self) -> None:
         """Test validate_pipeline with validator returning False."""
 
-        def validator(value: str) -> FlextResult[bool]:
+        def validator(value: str) -> r[bool]:
             """Validator returns False."""
-            return FlextResult[bool].ok(False)
+            return r[bool].ok(False)
 
         result = uValidation.validate_pipeline("test", [validator])
         assert result.is_failure
         assert (
             result.error is not None
-            and "must return FlextResult[bool].ok(True)" in result.error
+            and "must return r[bool].ok(True)" in result.error
         )
 
     def test_normalize_component_string(self) -> None:

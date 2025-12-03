@@ -21,9 +21,11 @@ from typing import Never
 
 from pydantic import PrivateAttr
 
-from flext_core import, r, FlextService, u
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.result import r
+from flext_core.service import FlextService
 from flext_core.typings import t
+from flext_core.utilities import u
 from flext_tests.typings import FlextTestsTypings
 
 
@@ -316,9 +318,7 @@ class FlextTestsFactories:
                     result_data: FlextTestsTypings.TestResultValue = {
                         "result": "success"
                     }
-                    return r[FlextTestsTypings.TestResultValue].ok(
-                        result_data
-                    )
+                    return r[FlextTestsTypings.TestResultValue].ok(result_data)
                 service_data: FlextTestsTypings.TestResultValue = {
                     "service_type": service_type
                 }

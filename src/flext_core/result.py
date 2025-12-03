@@ -1,6 +1,6 @@
 """Railway-oriented result type for dispatcher-driven applications.
 
-FlextResult wraps outcomes with explicit success/failure states so dispatcher
+r wraps outcomes with explicit success/failure states so dispatcher
 handlers, services, and middleware can compose operations without exceptions.
 It underpins CQRS flows with monadic helpers for predictable, typed pipelines.
 
@@ -18,15 +18,15 @@ from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
 
-from flext_core.exceptions import FlextExceptions
+from flext_core.exceptions import FlextExceptions as e
 from flext_core.protocols import p
 from flext_core.typings import T_co, U, t
 
 
-class r[T_co]:  # noqa: PLR0904
+class r[T_co]:  # noqa: PLR0904, N801
     """Type-safe railway result with monadic helpers for CQRS pipelines.
 
-    Use FlextResult to compose dispatcher handlers and domain services without
+    Use r to compose dispatcher handlers and domain services without
     raising exceptions, while preserving optional error codes and metadata for
     structured logging.
     """
@@ -37,7 +37,7 @@ class r[T_co]:  # noqa: PLR0904
         error_code: str | None = None,
         error_data: Mapping[str, t.GeneralValueType] | None = None,
     ) -> None:
-        """Initialize FlextResult with internal Result and optional metadata."""
+        """Initialize r with internal Result and optional metadata."""
         self._result = _result
         self._error_code = error_code
         self._error_data = error_data
@@ -102,7 +102,7 @@ class r[T_co]:  # noqa: PLR0904
         def safe(
             func: p.VariadicCallable[T],
         ) -> p.VariadicCallable[r[T]]:
-            """Decorator to wrap function in FlextResult."""
+            """Decorator to wrap function in r."""
 
             def wrapper(
                 *args: t.FlexibleValue,
@@ -120,7 +120,7 @@ class r[T_co]:  # noqa: PLR0904
     def ok(cls, value: T_co) -> r[T_co]:
         """Create successful result wrapping data.
 
-        Business Rule: Creates successful FlextResult wrapping value. Raises ValueError
+        Business Rule: Creates successful r wrapping value. Raises ValueError
         if value is None (None values are not allowed in success results). Uses returns
         library Success wrapper for internal representation. This is the primary factory
         method for success results in railway-oriented programming pattern.
@@ -135,7 +135,7 @@ class r[T_co]:  # noqa: PLR0904
             value: Value to wrap in success result (must not be None)
 
         Returns:
-            Successful FlextResult instance
+            Successful r instance
 
         Raises:
             ValueError: If value is None
@@ -155,7 +155,7 @@ class r[T_co]:  # noqa: PLR0904
     ) -> r[T_co]:
         """Create failed result with error message.
 
-        Business Rule: Creates failed FlextResult with error message, optional error
+        Business Rule: Creates failed r with error message, optional error
         code, and optional error metadata. Converts None error to empty string for
         consistency. Uses returns library Failure wrapper for internal representation.
         This is the primary factory method for failure results in railway-oriented
@@ -174,7 +174,7 @@ class r[T_co]:  # noqa: PLR0904
             error_data: Optional error metadata
 
         Returns:
-            Failed FlextResult instance
+            Failed r instance
 
         """
         error_msg = error if error is not None else ""
@@ -184,17 +184,17 @@ class r[T_co]:  # noqa: PLR0904
     def safe[T](
         func: p.VariadicCallable[T],
     ) -> p.VariadicCallable[r[T]]:
-        """Decorator to wrap function in FlextResult.
+        """Decorator to wrap function in r.
 
         Catches exceptions and returns r.fail() on error.
 
         Example:
-            @FlextResult.safe
+            @r.safe
             def risky_operation() -> int:
                 return 42
 
         """
-        return FlextResult.Operations.safe(func)
+        return r.Operations.safe(func)
 
     @property
     def is_success(self) -> bool:
@@ -270,7 +270,7 @@ class r[T_co]:  # noqa: PLR0904
         return r[U](self._result.map(func))  # type: ignore[call-arg]
 
     def flat_map[U](self, func: Callable[[T_co], r[U]]) -> r[U]:
-        """Chain operations returning FlextResult."""
+        """Chain operations returning r."""
 
         def inner(value: T_co) -> Result[U, str]:
             result = func(value)
@@ -287,7 +287,7 @@ class r[T_co]:  # noqa: PLR0904
             func: Function to transform error message
 
         Returns:
-            New FlextResult with transformed error if failure, unchanged if success
+            New r with transformed error if failure, unchanged if success
 
         """
         if self.is_success:
@@ -374,13 +374,13 @@ class r[T_co]:  # noqa: PLR0904
             r[T_co] with transformed error on failure, unchanged on success
 
         """
-        return FlextResult.Monad.alt(self, func)  # type: ignore[return-value]
+        return r.Monad.alt(self, func)  # type: ignore[return-value]
 
     def lash(self, func: Callable[[str], r[T_co]]) -> Self:
         """Apply recovery function on failure.
 
         On failure, calls the provided function with the error message
-        to produce a new FlextResult (recovery attempt).
+        to produce a new r (recovery attempt).
         On success, returns self unchanged.
 
         Args:
@@ -390,7 +390,7 @@ class r[T_co]:  # noqa: PLR0904
             Result of recovery function on failure, unchanged on success
 
         """
-        return FlextResult.Monad.lash(self, func)  # type: ignore[return-value]
+        return r.Monad.lash(self, func)  # type: ignore[return-value]
 
     def to_io(self) -> IO[T_co]:
         """Convert to returns.io.IO.
@@ -405,7 +405,7 @@ class r[T_co]:  # noqa: PLR0904
             e.ValidationError: If result is failure
 
         """
-        return FlextResult.Convert.to_io(self)
+        return r.Convert.to_io(self)
 
     def to_io_result(self) -> IOResult[T_co, str]:
         """Convert to returns.io.IOResult."""
@@ -418,7 +418,7 @@ class r[T_co]:  # noqa: PLR0904
         cls,
         io_result: IOResult[t.GeneralValueType, str],
     ) -> r[t.GeneralValueType]:
-        """Create FlextResult from returns.io.IOResult.
+        """Create r from returns.io.IOResult.
 
         Args:
             io_result: IOResult to convert
@@ -427,7 +427,7 @@ class r[T_co]:  # noqa: PLR0904
             r representing the same success/failure state
 
         """
-        return FlextResult.Convert.from_io_result(io_result)
+        return r.Convert.from_io_result(io_result)
 
     @classmethod
     def traverse[T, U](
@@ -511,5 +511,6 @@ class r[T_co]:  # noqa: PLR0904
         return f"r.fail({self.error!r})"
 
 
-r = FlextResult
+# Backward compatibility alias
+FlextResult = r
 __all__ = ["FlextResult", "r"]

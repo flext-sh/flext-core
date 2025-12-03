@@ -20,8 +20,9 @@ import re
 from collections.abc import Mapping
 from typing import Self, TypeVar
 
-from flext_core import, r, u
+from flext_core.result import r
 from flext_core.typings import T_co, t
+from flext_core.utilities import u
 from flext_tests.typings import FlextTestsTypings
 
 TKey = TypeVar("TKey")

@@ -58,8 +58,8 @@ class FlextCollection:
 
         if errors:
             enum_name = getattr(enum_cls, "__name__", "Enum")
-            return FlextResult.fail(f"Invalid {enum_name} values: {', '.join(errors)}")
-        return FlextResult.ok(tuple(parsed))
+            return r.fail(f"Invalid {enum_name} values: {', '.join(errors)}")
+        return r.ok(tuple(parsed))
 
     @staticmethod
     def coerce_list_validator[E: StrEnum](
@@ -132,8 +132,8 @@ class FlextCollection:
 
         if errors:
             enum_name = getattr(enum_cls, "__name__", "Enum")
-            return FlextResult.fail(f"Invalid {enum_name} values: {', '.join(errors)}")
-        return FlextResult.ok(parsed)
+            return r.fail(f"Invalid {enum_name} values: {', '.join(errors)}")
+        return r.ok(parsed)
 
     @staticmethod
     def coerce_dict_validator[E: StrEnum](

@@ -18,7 +18,7 @@ from typing import ClassVar, cast
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.handler import FlextModelsHandler
 from flext_core.constants import c
-from flext_core.exceptions import FlextExceptions
+from flext_core.exceptions import e
 from flext_core.mixins import x
 from flext_core.result import r
 from flext_core.typings import t
