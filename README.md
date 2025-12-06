@@ -130,8 +130,8 @@ di_container = FlextRuntime.DependencyIntegration.create_container(
 )
 
 # Service runtimes can use the same automation
-# FlextService inherits FlextRuntime and bootstraps a scoped runtime with
-# optional overrides, registrations, and wiring hooks.
+# FlextService inherits FlextMixins (which extends FlextRuntime) and bootstraps
+# a scoped runtime with optional overrides, registrations, and wiring hooks.
 
 class ReportingService(FlextService[r[str]]):
     @classmethod
