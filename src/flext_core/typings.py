@@ -774,6 +774,12 @@ class FlextTypes:
         ]
         """Mapping for consistency rules (rule names to validator returning Result-like)."""
 
+        type ResourceRegistrationDict = dict[str, object]
+        """Mutable dict for resource registration mappings.
+
+        Uses object to avoid circular imports (typically ResourceRegistration).
+        """
+
         type EventValidatorMapping = Mapping[
             str,
             Callable[[t.GeneralValueType], object],
