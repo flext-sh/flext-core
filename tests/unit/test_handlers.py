@@ -30,7 +30,7 @@ from flext_core import (
     t,
     x,
 )
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 class ConcreteTestHandler(h[str, str]):
@@ -140,7 +140,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.handle("test_message")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "processed_test_message",
         )
@@ -153,7 +153,7 @@ class TestFlextHandlers:
         )
         handler = FailingTestHandler(config=config)
         result = handler.handle("test_message")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="Handler failed for: test_message",
         )
@@ -194,7 +194,7 @@ class TestFlextHandlers:
         )
         handler = IntHandler(config=config)
         result = handler.handle(42)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "processed_42",
         )
@@ -291,7 +291,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         result = handler._run_pipeline("test_message", operation="query")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="Handler with mode 'command' cannot execute query pipelines",
         )
@@ -319,7 +319,7 @@ class TestFlextHandlers:
         config = cast("m.Cqrs.Handler", config_raw)
         handler = RestrictiveHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="Handler cannot handle message type str",
         )
@@ -347,7 +347,7 @@ class TestFlextHandlers:
         config = cast("m.Cqrs.Handler", config_raw)
         handler = ValidationFailingHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="Message validation failed: Validation failed for test",
         )
@@ -373,7 +373,7 @@ class TestFlextHandlers:
         config = cast("m.Cqrs.Handler", config_raw)
         handler = ExceptionHandler(config=config)
         result = handler._run_pipeline("test_message", operation="command")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="Critical handler failure: Test exception in handler",
         )
@@ -394,7 +394,7 @@ class TestFlextHandlers:
         assert handler is not None
         assert handler.handler_name == "simple_handler"
         result = handler.handle("test")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "handled_test",
         )
@@ -413,7 +413,7 @@ class TestFlextHandlers:
         )
         assert handler.handler_name == "result_handler"
         result = handler.handle("test")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "result_test",
         )
@@ -433,7 +433,7 @@ class TestFlextHandlers:
             handler_type=c.Cqrs.HandlerType.COMMAND,
         )
         result = handler.handle("test")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="Handler failed",
         )
@@ -461,7 +461,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         result = handler.execute("test_message")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "processed_test_message",
         )
@@ -474,7 +474,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         result = handler("test_message")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "processed_test_message",
         )

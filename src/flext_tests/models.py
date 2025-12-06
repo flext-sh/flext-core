@@ -621,8 +621,15 @@ class FlextTestsModels(FlextModelsBase):
                     return Path(value) if isinstance(value, str) else value
 
             class CreateKwargsParams(FlextModelsBase.Value):
-                """Parameters for file create() kwargs with Pydantic 2 validation."""
+                """Parameters for file create() kwargs with Pydantic 2 validation.
 
+                Fields match FlextTestsFileManager.create() method signature exactly.
+                """
+
+                directory: Path | None = Field(
+                    default=None,
+                    description="Directory to create file in.",
+                )
                 fmt: c.Tests.Files.FormatLiteral = Field(
                     default="auto",
                     description="File format override.",
@@ -632,28 +639,56 @@ class FlextTestsModels(FlextModelsBase):
                     min_length=1,
                     description="File encoding.",
                 )
+                indent: int = Field(
+                    default=c.Tests.Files.DEFAULT_JSON_INDENT,
+                    ge=0,
+                    description="JSON indentation level.",
+                )
                 delim: str = Field(
                     default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
                     min_length=1,
                     max_length=1,
                     description="CSV delimiter (single character).",
                 )
-                has_headers: bool = Field(
-                    default=True,
-                    description="CSV has headers.",
+                headers: list[str] | None = Field(
+                    default=None,
+                    description="CSV column headers.",
                 )
                 readonly: bool = Field(
                     default=False,
                     description="Create file as read-only.",
                 )
 
+            class BatchParams(FlextModelsBase.Value):
+                """Parameters for FlextTestsFiles.batch() method."""
+
+                files: t.Tests.Files.BatchFiles = Field(
+                    description="Mapping or Sequence of files to process",
+                )
+                directory: Path | None = Field(
+                    default=None,
+                    description="Target directory for create operations",
+                )
+                operation: c.Tests.Files.OperationLiteral = Field(
+                    default="create",
+                    description="Operation type: create, read, or delete",
+                )
+                model: type[BaseModel] | None = Field(
+                    default=None,
+                    description="Optional model class for read operations",
+                )
+                on_error: c.Tests.Files.ErrorModeLiteral = Field(
+                    default="collect",
+                    description="Error handling mode: stop, skip, or collect",
+                )
+                parallel: bool = Field(
+                    default=False,
+                    description="Run operations in parallel",
+                )
+
             class BatchResult(FlextModelsBase.Value):
                 """Result of batch file operations."""
 
-                succeeded: int = Field(
-                    ge=0, description="Number of successful operations"
-                )
-                failed: int = Field(ge=0, description="Number of failed operations")
                 total: int = Field(ge=0, description="Total number of operations")
                 results: Mapping[str, r[object]] = Field(
                     default_factory=dict,
@@ -664,12 +699,43 @@ class FlextTestsModels(FlextModelsBase):
                     description="Mapping of file names to error messages",
                 )
 
-                @computed_field
+                @computed_field  # type: ignore[prop-decorator]
+                @property
+                def succeeded(self) -> list[Path]:
+                    """List of successfully created file paths."""
+                    paths: list[Path] = []
+                    for result in self.results.values():
+                        if result.is_success:
+                            value = result.unwrap()
+                            if isinstance(value, Path):
+                                paths.append(value)
+                    return paths
+
+                @computed_field  # type: ignore[prop-decorator]
+                @property
+                def failed(self) -> dict[str, str]:
+                    """Dictionary of failed files and error messages."""
+                    return dict(self.errors)
+
+                @computed_field  # type: ignore[prop-decorator]
+                @property
+                def success_count(self) -> int:
+                    """Number of successful operations."""
+                    return len(self.succeeded)
+
+                @computed_field  # type: ignore[prop-decorator]
+                @property
+                def failure_count(self) -> int:
+                    """Number of failed operations."""
+                    return len(self.errors)
+
+                @computed_field  # type: ignore[prop-decorator]
+                @property
                 def success_rate(self) -> float:
                     """Compute success rate as percentage."""
                     if self.total == 0:
                         return 0.0
-                    return (self.succeeded / self.total) * 100.0
+                    return (self.success_count / self.total) * 100.0
 
         class Validator:
             """Validator models for architecture validation."""
@@ -1236,6 +1302,8 @@ class FlextTestsModels(FlextModelsBase):
             class OkParams(FlextModelsBase.Value):
                 """Parameters for matcher ok() operations with Pydantic 2 validation."""
 
+                model_config = {"populate_by_name": True}  # type: ignore[assignment]
+
                 eq: object | None = Field(
                     default=None, description="Expected value (equality check)"
                 )
@@ -1244,7 +1312,7 @@ class FlextTestsModels(FlextModelsBase):
                 )
                 is_: type[object] | tuple[type[object], ...] | None = Field(
                     default=None,
-                    alias="is",
+                    validation_alias=AliasChoices("is_", "is"),
                     description="Type check (isinstance) - single type or tuple",
                 )
                 none: bool | None = Field(
@@ -1309,20 +1377,24 @@ class FlextTestsModels(FlextModelsBase):
                     default=None, description="Legacy: use lacks="
                 )
 
-                @model_validator(mode="after")
+                @model_validator(mode="before")
+                @classmethod
                 def convert_legacy_params(
-                    self,
-                ) -> FlextTestsModels.Tests.Matcher.OkParams:
+                    cls,
+                    data: dict[str, object] | FlextTestsModels.Tests.Matcher.OkParams,
+                ) -> dict[str, object]:
                     """Convert legacy contains/excludes to has/lacks."""
-                    if self.contains is not None and self.has is None:
-                        self.has = cast(
-                            "t.Tests.Matcher.ContainmentSpec", self.contains
-                        )
-                    if self.excludes is not None and self.lacks is None:
-                        self.lacks = cast(
-                            "t.Tests.Matcher.ExclusionSpec", self.excludes
-                        )
-                    return self
+                    if isinstance(data, dict):
+                        # Convert legacy parameters before model creation
+                        if "contains" in data and "has" not in data:
+                            data["has"] = data.pop("contains")
+                        if "excludes" in data and "lacks" not in data:
+                            data["lacks"] = data.pop("excludes")
+                        return data
+                    # If data is OkParams, convert to dict
+                    if isinstance(data, FlextTestsModels.Tests.Matcher.OkParams):
+                        return data.model_dump()
+                    return cast("dict[str, object]", data)
 
             class FailParams(FlextModelsBase.Value):
                 """Parameters for matcher fail() operations with Pydantic 2 validation."""
@@ -1365,21 +1437,31 @@ class FlextTestsModels(FlextModelsBase):
                     default=None, description="Legacy: use lacks="
                 )
 
-                @model_validator(mode="after")
+                @model_validator(mode="before")
+                @classmethod
                 def convert_legacy_params(
-                    self,
-                ) -> FlextTestsModels.Tests.Matcher.FailParams:
+                    cls,
+                    data: dict[str, object] | FlextTestsModels.Tests.Matcher.FailParams,
+                ) -> dict[str, object]:
                     """Convert legacy error/contains/excludes to has/lacks."""
-                    if self.error is not None and self.has is None:
-                        self.has = self.error
-                    if self.contains is not None and self.has is None:
-                        self.has = self.contains
-                    if self.excludes is not None and self.lacks is None:
-                        self.lacks = self.excludes
-                    return self
+                    if isinstance(data, dict):
+                        # Convert legacy parameters before model creation
+                        if "error" in data and "has" not in data:
+                            data["has"] = data.pop("error")
+                        if "contains" in data and "has" not in data:
+                            data["has"] = data.pop("contains")
+                        if "excludes" in data and "lacks" not in data:
+                            data["lacks"] = data.pop("excludes")
+                        return data
+                    # If data is FailParams, convert to dict
+                    if isinstance(data, FlextTestsModels.Tests.Matcher.FailParams):
+                        return data.model_dump()
+                    return cast("dict[str, object]", data)
 
             class ThatParams(FlextModelsBase.Value):
                 """Parameters for matcher that() operations with Pydantic 2 validation."""
+
+                model_config = {"populate_by_name": True}  # type: ignore[assignment]
 
                 msg: str | None = Field(
                     default=None, description="Custom error message"
@@ -1392,12 +1474,12 @@ class FlextTestsModels(FlextModelsBase):
                 )
                 is_: type[object] | tuple[type[object], ...] | None = Field(
                     default=None,
-                    alias="is",
+                    validation_alias=AliasChoices("is_", "is"),
                     description="Type check (isinstance) - single type or tuple",
                 )
                 not_: type[object] | tuple[type[object], ...] | None = Field(
                     default=None,
-                    alias="not",
+                    validation_alias=AliasChoices("not_", "not"),
                     description="Type check - value is NOT instance of type(s)",
                 )
                 none: bool | None = Field(
@@ -1522,42 +1604,59 @@ class FlextTestsModels(FlextModelsBase):
                     default=None, description="Legacy: use len=(min, max)"
                 )
 
-                @model_validator(mode="after")
+                @model_validator(mode="before")
+                @classmethod
                 def convert_legacy_params(
-                    self,
-                ) -> FlextTestsModels.Tests.Matcher.ThatParams:
+                    cls,
+                    data: dict[str, object] | FlextTestsModels.Tests.Matcher.ThatParams,
+                ) -> dict[str, object]:
                     """Convert legacy parameters to unified ones."""
-                    if self.contains is not None and self.has is None:
-                        self.has = cast(
-                            "t.Tests.Matcher.ContainmentSpec", self.contains
-                        )
-                    if self.excludes is not None and self.lacks is None:
-                        self.lacks = cast(
-                            "t.Tests.Matcher.ExclusionSpec", self.excludes
-                        )
-                    if self.length is not None and self.len is None:
-                        self.len = self.length
-                    if (
-                        self.length_gt is not None
-                        or self.length_gte is not None
-                        or self.length_lt is not None
-                        or self.length_lte is not None
-                    ):
-                        min_len = self.length_gte or self.length_gt
-                        max_len = self.length_lte or self.length_lt
+                    if isinstance(data, dict):
+                        # Convert legacy parameters before model creation
+                        if "contains" in data and "has" not in data:
+                            data["has"] = data.pop("contains")
+                        if "excludes" in data and "lacks" not in data:
+                            data["lacks"] = data.pop("excludes")
+                        if "error" in data and "has" not in data:
+                            data["has"] = data.pop("error")
+                        if "length" in data and "len" not in data:
+                            data["len"] = data.pop("length")
                         if (
-                            min_len is not None or max_len is not None
-                        ) and self.len is None:
-                            # Ensure tuple[int, int] not tuple[int, float]
-                            max_val = max_len if max_len is not None else float("inf")
-                            if max_val == float("inf"):
-                                # Use a large int instead of float("inf")
-                                max_val = 2147483647  # max int32
-                            self.len = cast(
-                                "t.Tests.Matcher.LengthSpec",
-                                (min_len or 0, int(max_val)),
+                            "length_gt" in data
+                            or "length_gte" in data
+                            or "length_lt" in data
+                            or "length_lte" in data
+                        ):
+                            min_len = data.pop(
+                                "length_gte", data.pop("length_gt", None)
                             )
-                    return self
+                            max_len = data.pop(
+                                "length_lte", data.pop("length_lt", None)
+                            )
+                            if (
+                                min_len is not None or max_len is not None
+                            ) and "len" not in data:
+                                # Ensure tuple[int, int] not tuple[int, float]
+                                max_val_raw = (
+                                    max_len if max_len is not None else 2147483647
+                                )  # max int32
+                                max_val: int = (
+                                    int(max_val_raw)
+                                    if isinstance(max_val_raw, (int, float))
+                                    else 2147483647
+                                )
+                                min_val: int = (
+                                    int(min_len)
+                                    if min_len is not None
+                                    and isinstance(min_len, (int, float))
+                                    else 0
+                                )
+                                data["len"] = (min_val, max_val)
+                        return data
+                    # If data is ThatParams, convert to dict
+                    if isinstance(data, FlextTestsModels.Tests.Matcher.ThatParams):
+                        return data.model_dump()
+                    return cast("dict[str, object]", data)
 
             class ScopeParams(FlextModelsBase.Value):
                 """Parameters for matcher scope() operations with Pydantic 2 validation."""
@@ -1609,13 +1708,9 @@ class FlextTestsModels(FlextModelsBase):
                 )
 
             class Chain(FlextModelsBase.Value):
-                """Chain matcher configuration for railway pattern assertions.
+                """Chain matcher configuration for railway pattern assertions."""
 
-                Note: This is a placeholder model. The actual Chain implementation
-                is in matchers.py as a generic class with __init__.
-                """
-
-                result: r[object] = Field(description="FlextResult being chained")
+                result: r[Any] = Field(description="FlextResult being chained")
 
             class TestScope(FlextModelsBase.Value):
                 """Test scope configuration for isolated test execution."""

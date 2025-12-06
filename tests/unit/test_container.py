@@ -31,7 +31,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextContainer, FlextResult, r, t
 from flext_core.constants import c
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,7 +117,7 @@ class TestFlextContainer:
     ) -> None:
         """Test service registration with various types using fixtures."""
         result = clean_container.register(scenario.name, scenario.service)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, True)
+        u.Tests.Result.assert_success_with_value(result, True)
 
     @pytest.mark.parametrize(
         "scenario",
@@ -151,7 +151,7 @@ class TestFlextContainer:
         container = clean_container
         container.register("service1", "value1")
         result = container.register("service1", "value2")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="already registered",
         )
@@ -162,7 +162,7 @@ class TestFlextContainer:
     ) -> None:
         """Test that empty name is rejected using fixtures."""
         result = clean_container.register("", "service")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="at least 1 character",
         )
@@ -185,7 +185,7 @@ class TestFlextContainer:
             f"factory_{type(return_value).__name__}",
             factory,
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, True)
+        u.Tests.Result.assert_success_with_value(result, True)
 
     @pytest.mark.parametrize(
         "return_value",
@@ -219,7 +219,7 @@ class TestFlextContainer:
             "not_callable",
         )
         result = clean_container.register_factory("invalid", non_callable)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="callable",
         )
@@ -233,7 +233,7 @@ class TestFlextContainer:
         clean_container.register_factory("factory1", factory1)
         factory2 = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value2")
         result: r[bool] = clean_container.register_factory("factory1", factory2)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="already registered",
         )
@@ -255,7 +255,7 @@ class TestFlextContainer:
             "t.GeneralValueType",
             scenario.service,
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             expected_value,
         )
@@ -266,7 +266,7 @@ class TestFlextContainer:
     ) -> None:
         """Test getting non-existent service using fixtures."""
         result: r[t.GeneralValueType] = clean_container.get("nonexistent")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="not found",
         )
@@ -282,7 +282,7 @@ class TestFlextContainer:
         )
         clean_container.register_factory("factory_service", factory)
         result: r[t.GeneralValueType] = clean_container.get("factory_service")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             factory_result,
         )
@@ -349,7 +349,7 @@ class TestFlextContainer:
     ) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
         result = clean_container.get_typed("nonexistent", dict)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="not found",
         )
@@ -437,7 +437,7 @@ class TestFlextContainer:
     ) -> None:
         """Test unregistering non-existent service fails using fixtures."""
         unregister_result = clean_container.unregister("nonexistent")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             unregister_result,
             expected_error="not found",
         )

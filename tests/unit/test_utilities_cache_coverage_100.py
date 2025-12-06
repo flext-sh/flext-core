@@ -24,7 +24,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 class CacheTestModel(BaseModel):
@@ -248,7 +248,7 @@ class TestuCacheNormalizeComponent:
         """Test normalize_component with various scenarios."""
         result = u.Cache.normalize_component(scenario.component)
 
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             scenario.expected_type,
             description=scenario.name,
@@ -261,7 +261,7 @@ class TestuCacheNormalizeComponent:
         model = CacheTestModel(name="test", value=42)
         result = u.Cache.normalize_component(model)
 
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -275,7 +275,7 @@ class TestuCacheNormalizeComponent:
         model = NestedModel(inner=CacheTestModel(name="inner", value=10), count=5)
         result = u.Cache.normalize_component(model)
 
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -296,7 +296,7 @@ class TestuCacheNormalizeComponent:
             cast("t.GeneralValueType | BaseModel", component),
         )
 
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             tuple,
         )
@@ -321,7 +321,7 @@ class TestuCacheNormalizeComponent:
             cast("t.GeneralValueType | BaseModel", obj),
         )
 
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(result, str)
+        u.Tests.Assertions.assert_result_matches_expected(result, str)
         assert result == "custom_object"
 
 
@@ -371,7 +371,7 @@ class TestuCacheSortDictKeys:
         data = {"c": 3, "a": 1, "b": 2}
         result = u.Cache.sort_dict_keys(data)
 
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -386,7 +386,7 @@ class TestuCacheSortDictKeys:
 
         # Type narrowing: sort_dict_keys returns GeneralValueType, but for
         # dict input it returns dict
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -406,7 +406,7 @@ class TestuCacheSortDictKeys:
 
         # Type narrowing: sort_dict_keys returns GeneralValueType, but for
         # dict input it returns dict
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )

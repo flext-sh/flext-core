@@ -161,6 +161,9 @@
 		        python-on-whales = "^0.78.0"
 		        rich = "=14.2.0"
 		        types-pyyaml = "^6.0.12.20250822"
+    urllib3 = "^2.6.0"
+    pytest-cov = "^7.0.0"
+    hypothesis = "^6.148.7"
 
 		    [tool.poetry.group.typings.dependencies]
 		        types-colorama = ">=0.4.15.20240311"
@@ -170,8 +173,6 @@
 
     [tool.pytest.ini_options]
         addopts = [
-            "--cov-report=term-missing",
-            "--cov=src/",
             "--strict-config",
             "--strict-markers",
             "--tb=short",
@@ -179,6 +180,8 @@
             "-q",
             "-ra",
         ]
+        # NOTE: Coverage options moved to Makefile test target to avoid conflicts
+        # See: make test (--cov=flext_core --cov-report=term-missing --cov-fail-under=80)
         filterwarnings = [
             "ignore::DeprecationWarning:pyasn1(.*|$)",
             "ignore:pkg_resources is deprecated:UserWarning",

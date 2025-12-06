@@ -43,7 +43,7 @@ from typing import cast
 import pytest
 
 from flext_core import m, r, t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities
 
 
 # Test models using FlextModelsEntity base
@@ -84,7 +84,7 @@ class TestuValidation:
             "test",
             [validator1, validator2],
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, True)
+        u.Tests.Result.assert_success_with_value(result, True)
 
     def test_validate_pipeline_first_fails(self) -> None:
         """Test validate_pipeline with first validator failing."""
@@ -101,7 +101,7 @@ class TestuValidation:
             "test",
             [validator1, validator2],
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="Validation failed",
         )
@@ -115,7 +115,7 @@ class TestuValidation:
             raise ValueError(msg)
 
         result = u.Validation.validate_pipeline("test", [validator])
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "Validator error",
         )
@@ -129,7 +129,7 @@ class TestuValidation:
             "test",
             cast("list[Callable[[str], r[bool]]]", non_callable_validators),
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "Validator must be callable",
         )
@@ -142,7 +142,7 @@ class TestuValidation:
             return r[bool].ok(False)
 
         result = u.Validation.validate_pipeline("test", [validator])
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "must return r[bool].ok(True)",
         )
@@ -429,7 +429,7 @@ class TestuValidation:
         result = u.Validation.validate_choice(choice, choices)
         if should_succeed:
             assert expected_value is not None
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_value,
             )
@@ -475,7 +475,7 @@ class TestuValidation:
             result = u.Validation.validate_length(value)
         if should_succeed:
             assert expected_value is not None
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_value,
             )
@@ -501,7 +501,7 @@ class TestuValidation:
         result = u.Validation.validate_pattern(value, pattern)
         if should_succeed:
             assert expected_value is not None
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_value,
             )
@@ -526,7 +526,7 @@ class TestuValidation:
         result = u.Validation.validate_uri(uri)
         if should_succeed:
             assert expected_value is not None
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_value,
             )
@@ -553,7 +553,7 @@ class TestuValidation:
         result = u.Validation.validate_port_number(port)
         if should_succeed:
             assert expected_value is not None
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_value,
             )
@@ -578,7 +578,7 @@ class TestuValidation:
         result = u.Validation.validate_non_negative(value)
         if should_succeed:
             assert expected_value is not None
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_value,
             )
@@ -604,7 +604,7 @@ class TestuValidation:
         result = u.Validation.validate_positive(value)
         if should_succeed:
             assert expected_value is not None
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_value,
             )
@@ -637,7 +637,7 @@ class TestuValidation:
         )
         if should_succeed:
             assert expected_value is not None
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_value,
             )
@@ -655,7 +655,7 @@ class TestuValidation:
 
         result = u.Validation.validate_callable(cast("t.GeneralValueType", test_func))
         FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, True)
+        u.Tests.Result.assert_success_with_value(result, True)
 
     def test_validate_callable_invalid(self) -> None:
         """Test validate_callable with non-callable."""
@@ -666,7 +666,7 @@ class TestuValidation:
         """Test validate_timeout with valid timeout."""
         result = u.Validation.validate_timeout(30.0, max_timeout=60.0)
         FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             30.0,  # Returns the timeout
         )
@@ -685,7 +685,7 @@ class TestuValidation:
         """Test validate_http_status_codes with valid status codes."""
         result = u.Validation.validate_http_status_codes([200, 404, 500])
         FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             [200, 404, 500],  # Returns the codes
         )
@@ -700,7 +700,7 @@ class TestuValidation:
         timestamp = datetime.now(UTC).isoformat()
         result = u.Validation.validate_iso8601_timestamp(timestamp)
         FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             timestamp,  # Returns the timestamp
         )
@@ -717,7 +717,7 @@ class TestuValidation:
             allow_empty=True,
         )
         FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, "")
+        u.Tests.Result.assert_success_with_value(result, "")
 
     def test_validate_iso8601_timestamp_empty_not_allowed(self) -> None:
         """Test validate_iso8601_timestamp with empty string when not allowed."""
@@ -734,7 +734,7 @@ class TestuValidation:
             perform_dns_lookup=False,
         )
         FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "example.com",  # Returns the hostname
         )
@@ -751,7 +751,7 @@ class TestuValidation:
         """Test validate_identifier with valid identifier."""
         result = u.Validation.validate_identifier("user_123")
         FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "user_123",  # Returns normalized string, not True
         )

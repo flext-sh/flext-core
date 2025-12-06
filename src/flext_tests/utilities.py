@@ -501,6 +501,58 @@ class FlextTestsUtilities(FlextUtilities):
                     expected_error,
                 )
 
+            @staticmethod
+            def assert_result_success_and_type[T](
+                result: r[T],
+                expected_type: str | type[object] | None = None,
+            ) -> T:
+                """Assert result is success and return unwrapped value (type-safe).
+
+                Args:
+                    result: FlextResult to check
+                    expected_type: Optional type hint (for documentation)
+
+                Returns:
+                    Unwrapped value from result
+
+                Raises:
+                    AssertionError: If result is failure
+
+                """
+                return FlextTestsUtilities.Tests.Result.assert_success(result)
+
+            @staticmethod
+            def assert_result_success_and_unwrap_string(result: r[str]) -> str:
+                """Assert result is success and return unwrapped string.
+
+                Args:
+                    result: FlextResult[str] to check
+
+                Returns:
+                    Unwrapped string value
+
+                Raises:
+                    AssertionError: If result is failure
+
+                """
+                return FlextTestsUtilities.Tests.Result.assert_success(result)
+
+            @staticmethod
+            def assert_result_success_and_unwrap_list[T](result: r[list[T]]) -> list[T]:
+                """Assert result is success and return unwrapped list.
+
+                Args:
+                    result: FlextResult[list[T]] to check
+
+                Returns:
+                    Unwrapped list value
+
+                Raises:
+                    AssertionError: If result is failure
+
+                """
+                return FlextTestsUtilities.Tests.Result.assert_success(result)
+
         class GenericHelpers:
             """Generic helpers for test data creation."""
 

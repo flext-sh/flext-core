@@ -1212,38 +1212,45 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         results = batch_data.get("results", [])
         errors = batch_data.get("errors", [])
         total = batch_data.get("total", len(files_dict))
-        success_count = batch_data.get("success_count", 0)
-        error_count = batch_data.get("error_count", 0)
+        batch_data.get("success_count", 0)
+        batch_data.get("error_count", 0)
 
-        # Convert results to Path list and errors to dict
-        # u.Collection.batch() already unwraps Results, so results contains Path directly
-        succeeded: list[Path] = []
-        failed: dict[str, str] = {}
+        # Convert results to dict and errors to dict
+        # u.Collection.batch() returns results as list of (index, result) tuples
+        # We need to map them back to file names
+        results_dict: dict[str, r[object]] = {}
+        failed_dict: dict[str, str] = {}
 
-        # Process successful results (direct Path values, not wrapped in Result)
-        for result in results:
-            if isinstance(result, Path):
-                succeeded.append(result)
-            # Should not happen - u.Collection.batch() unwraps Results
-            # But handle gracefully if it does
-            elif u.is_type(result, "result"):
-                result_typed = cast("r[Path]", result)
-                if result_typed.is_success:
-                    succeeded.append(result_typed.unwrap())
+        # Process successful results - map by index to file name
+        for idx, result in enumerate(results):
+            if idx < len(items_list):
+                name, _ = items_list[idx]
+                if isinstance(result, Path):
+                    results_dict[name] = r[object].ok(result)
+                elif u.is_type(result, "result"):
+                    result_typed = cast("r[Path]", result)
+                    if result_typed.is_success:
+                        results_dict[name] = r[object].ok(result_typed.unwrap())
+                    else:
+                        failed_dict[name] = result_typed.error or "Unknown error"
+                else:
+                    results_dict[name] = r[object].ok(result)
 
         # Process errors from batch result (indexed errors)
         for idx, error_msg in errors:
             if idx < len(items_list):
                 name, _ = items_list[idx]
-                failed[name] = error_msg
+                failed_dict[name] = error_msg
 
+        succeeded_count = len(results_dict)
+        failed_count = len(failed_dict)
         return r[m.Tests.Files.BatchResult].ok(
             m.Tests.Files.BatchResult(
-                succeeded=succeeded,
-                failed=failed,
+                succeeded=succeeded_count,
+                failed=failed_count,
                 total=total,
-                success_count=success_count,
-                failure_count=error_count,
+                results=results_dict,
+                errors=failed_dict,
             ),
         )
 

@@ -25,7 +25,7 @@ from typing import cast
 import pytest
 
 from flext_core import p, t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 
@@ -52,8 +52,8 @@ class TestuDomain:
     def create_compare_entities_cases() -> list[dict[str, t.GeneralValueType]]:
         """Create test cases for entity comparison using constants."""
         # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
-        # Create entities using FlextTestsUtilities.Tests.DomainHelpers with batch creation
-        entities = FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
+        # Create entities using u.Tests.DomainHelpers with batch creation
+        entities = u.Tests.DomainHelpers.create_test_entities_batch(
             names=[
                 TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
                 TestsFlextConstants.TestDomain.ENTITY_NAME_BOB,
@@ -68,12 +68,10 @@ class TestuDomain:
             remove_ids=[False, False, True],  # alice_no_id without ID
         )
         alice_entity, bob_entity, alice_no_id = entities
-        value_obj = (
-            FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
-                data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
-                count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
-                value_class=DomainTestValue,
-            )
+        value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
+            data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+            count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
+            value_class=DomainTestValue,
         )
         custom1 = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
         custom2 = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
@@ -81,35 +79,35 @@ class TestuDomain:
         return cast(
             "list[dict[str, t.GeneralValueType]]",
             [
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="compare_entities_by_id",
                     description="same_id",
                     input_data={"entity_a": alice_entity, "entity_b": alice_entity},
                     expected_result=True,
                     id_attr="unique_id",
                 ),
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="compare_entities_by_id",
                     description="different_id",
                     input_data={"entity_a": alice_entity, "entity_b": bob_entity},
                     expected_result=False,
                     id_attr="unique_id",
                 ),
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="compare_entities_by_id",
                     description="different_type",
                     input_data={"entity_a": alice_entity, "entity_b": value_obj},
                     expected_result=False,
                     id_attr="unique_id",
                 ),
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="compare_entities_by_id",
                     description="no_id",
                     input_data={"entity_a": alice_no_id, "entity_b": bob_entity},
                     expected_result=False,
                     id_attr="unique_id",
                 ),
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="compare_entities_by_id",
                     description="custom_id_attr",
                     input_data={"entity_a": custom1, "entity_b": custom2},
@@ -124,7 +122,7 @@ class TestuDomain:
         """Create test cases for entity hashing using constants."""
         # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
         # Create entities using batch helper
-        entities = FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
+        entities = u.Tests.DomainHelpers.create_test_entities_batch(
             names=[
                 TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
                 TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
@@ -142,21 +140,21 @@ class TestuDomain:
         return cast(
             "list[dict[str, t.GeneralValueType]]",
             [
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="hash_entity_by_id",
                     description="with_id",
                     input_data={"entity": alice_entity},
                     expected_result=int,
                     id_attr="unique_id",
                 ),
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="hash_entity_by_id",
                     description="no_id",
                     input_data={"entity": alice_no_id},
                     expected_result=int,
                     id_attr="unique_id",
                 ),
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="hash_entity_by_id",
                     description="custom_id_attr",
                     input_data={"entity": custom},
@@ -171,55 +169,49 @@ class TestuDomain:
         """Create test cases for value object comparison using constants."""
         # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
         # Create value objects using batch helper
-        value_objs = (
-            FlextTestsUtilities.Tests.DomainHelpers.create_test_value_objects_batch(
-                data_list=[
-                    TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
-                    TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
-                ],
-                count_list=[
-                    TestsFlextConstants.TestDomain.VALUE_COUNT_5,
-                    TestsFlextConstants.TestDomain.VALUE_COUNT_10,
-                ],
-                value_class=DomainTestValue,
-            )
+        value_objs = u.Tests.DomainHelpers.create_test_value_objects_batch(
+            data_list=[
+                TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+                TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+            ],
+            count_list=[
+                TestsFlextConstants.TestDomain.VALUE_COUNT_5,
+                TestsFlextConstants.TestDomain.VALUE_COUNT_10,
+            ],
+            value_class=DomainTestValue,
         )
         value1, value2 = value_objs
-        alice_entity = (
-            FlextTestsUtilities.Tests.DomainHelpers.create_test_entity_instance(
-                name=TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
-                value=TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
-                entity_class=DomainTestEntity,
-            )
+        alice_entity = u.Tests.DomainHelpers.create_test_entity_instance(
+            name=TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
+            value=TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
+            entity_class=DomainTestEntity,
         )
         simple1 = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
         simple2 = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
-        bad1 = FlextTestsUtilities.Tests.BadObjects.BadModelDump()
-        bad2 = FlextTestsUtilities.Tests.BadObjects.BadModelDump()
+        bad1 = u.Tests.BadObjects.BadModelDump()
+        bad2 = u.Tests.BadObjects.BadModelDump()
         no_dict1 = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
         no_dict2 = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
 
-        return (
-            FlextTestsUtilities.Tests.TestCaseHelpers.create_batch_operation_test_cases(
-                operation="compare_value_objects_by_value",
-                descriptions=[
-                    "same_values",
-                    "different_values",
-                    "different_type",
-                    "no_model_dump",
-                    "model_dump_exception",
-                    "no_dict",
-                ],
-                input_data_list=[
-                    {"obj_a": value1, "obj_b": value1},
-                    {"obj_a": value1, "obj_b": value2},
-                    {"obj_a": value1, "obj_b": alice_entity},
-                    {"obj_a": simple1, "obj_b": simple2},
-                    {"obj_a": bad1, "obj_b": bad2},
-                    {"obj_a": no_dict1, "obj_b": no_dict2},
-                ],
-                expected_results=[True, False, False, True, bool, True],
-            )
+        return u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+            operation="compare_value_objects_by_value",
+            descriptions=[
+                "same_values",
+                "different_values",
+                "different_type",
+                "no_model_dump",
+                "model_dump_exception",
+                "no_dict",
+            ],
+            input_data_list=[
+                {"obj_a": value1, "obj_b": value1},
+                {"obj_a": value1, "obj_b": value2},
+                {"obj_a": value1, "obj_b": alice_entity},
+                {"obj_a": simple1, "obj_b": simple2},
+                {"obj_a": bad1, "obj_b": bad2},
+                {"obj_a": no_dict1, "obj_b": no_dict2},
+            ],
+            expected_results=[True, False, False, True, bool, True],
         )
 
     @staticmethod
@@ -227,40 +219,36 @@ class TestuDomain:
         """Create test cases for value object hashing using constants."""
         # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
         # Create value object using helper
-        value_obj = (
-            FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
-                data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
-                count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
-                value_class=DomainTestValue,
-            )
+        value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
+            data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+            count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
+            value_class=DomainTestValue,
         )
         simple_obj = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
-        bad_obj = FlextTestsUtilities.Tests.BadObjects.BadModelDump()
+        bad_obj = u.Tests.BadObjects.BadModelDump()
         complex_obj = ComplexValue(
             TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
             TestsFlextConstants.TestDomain.COMPLEX_ITEMS,
         )
         no_dict_obj = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
 
-        return (
-            FlextTestsUtilities.Tests.TestCaseHelpers.create_batch_operation_test_cases(
-                operation="hash_value_object_by_value",
-                descriptions=[
-                    "with_model_dump",
-                    "no_model_dump",
-                    "model_dump_exception",
-                    "non_hashable_values",
-                    "no_dict",
-                ],
-                input_data_list=[
-                    {"obj": value_obj},
-                    {"obj": simple_obj},
-                    {"obj": bad_obj},
-                    {"obj": complex_obj},
-                    {"obj": no_dict_obj},
-                ],
-                expected_results=[int, int, int, int, int],
-            )
+        return u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+            operation="hash_value_object_by_value",
+            descriptions=[
+                "with_model_dump",
+                "no_model_dump",
+                "model_dump_exception",
+                "non_hashable_values",
+                "no_dict",
+            ],
+            input_data_list=[
+                {"obj": value_obj},
+                {"obj": simple_obj},
+                {"obj": bad_obj},
+                {"obj": complex_obj},
+                {"obj": no_dict_obj},
+            ],
+            expected_results=[int, int, int, int, int],
         )
 
     @staticmethod
@@ -268,7 +256,7 @@ class TestuDomain:
         """Create test cases for entity ID validation using constants."""
         # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
         # Create entities using batch helper
-        entities = FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
+        entities = u.Tests.DomainHelpers.create_test_entities_batch(
             names=[
                 TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
                 TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
@@ -286,21 +274,21 @@ class TestuDomain:
         return cast(
             "list[dict[str, t.GeneralValueType]]",
             [
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="validate_entity_has_id",
                     description="has_id",
                     input_data={"entity": alice_entity},
                     expected_result=True,
                     id_attr="unique_id",
                 ),
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="validate_entity_has_id",
                     description="no_id",
                     input_data={"entity": alice_no_id},
                     expected_result=False,
                     id_attr="unique_id",
                 ),
-                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                u.Tests.TestCaseHelpers.create_operation_test_case(
                     operation="validate_entity_has_id",
                     description="custom_attr",
                     input_data={"entity": custom},
@@ -317,40 +305,36 @@ class TestuDomain:
         """Create test cases for immutability validation using constants."""
         # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
         # Create value object using helper
-        value_obj = (
-            FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
-                data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
-                count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
-                value_class=DomainTestValue,
-            )
+        value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
+            data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+            count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
+            value_class=DomainTestValue,
         )
         mutable_obj = MutableObj(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
         immutable_obj = ImmutableObj(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
-        bad_config_obj = FlextTestsUtilities.Tests.BadObjects.BadConfig()
+        bad_config_obj = u.Tests.BadObjects.BadConfig()
         no_config_obj = NoConfigNoSetattr()
         no_setattr_obj = NoSetattr()
 
-        return (
-            FlextTestsUtilities.Tests.TestCaseHelpers.create_batch_operation_test_cases(
-                operation="validate_value_object_immutable",
-                descriptions=[
-                    "frozen",
-                    "mutable",
-                    "custom_setattr",
-                    "config_exception",
-                    "no_config_no_setattr",
-                    "no_setattr",
-                ],
-                input_data_list=[
-                    {"obj": value_obj},
-                    {"obj": mutable_obj},
-                    {"obj": immutable_obj},
-                    {"obj": bad_config_obj},
-                    {"obj": no_config_obj},
-                    {"obj": no_setattr_obj},
-                ],
-                expected_results=[True, False, True, bool, False, False],
-            )
+        return u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+            operation="validate_value_object_immutable",
+            descriptions=[
+                "frozen",
+                "mutable",
+                "custom_setattr",
+                "config_exception",
+                "no_config_no_setattr",
+                "no_setattr",
+            ],
+            input_data_list=[
+                {"obj": value_obj},
+                {"obj": mutable_obj},
+                {"obj": immutable_obj},
+                {"obj": bad_config_obj},
+                {"obj": no_config_obj},
+                {"obj": no_setattr_obj},
+            ],
+            expected_results=[True, False, True, bool, False, False],
         )
 
     # ============================================================================
@@ -367,8 +351,8 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test compare_entities_by_id using FlextTestsUtilities."""
-        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
                 cast(
                     "dict[str, t.GeneralValueType | p.Foundation.HasModelDump | object]",
@@ -389,8 +373,8 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test hash_entity_by_id using FlextTestsUtilities."""
-        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
                 cast(
                     "dict[str, t.GeneralValueType | p.Foundation.HasModelDump | object]",
@@ -411,8 +395,8 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test compare_value_objects_by_value using FlextTestsUtilities."""
-        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
                 cast("dict[str, t.GeneralValueType]", test_case["input_data"]),
             ),
@@ -429,8 +413,8 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test hash_value_object_by_value using FlextTestsUtilities."""
-        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
                 cast("dict[str, t.GeneralValueType]", test_case["input_data"]),
             ),
@@ -447,8 +431,8 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test validate_entity_has_id using FlextTestsUtilities."""
-        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
                 cast(
                     "dict[str, t.GeneralValueType | p.Foundation.HasModelDump | object]",
@@ -469,8 +453,8 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test validate_value_object_immutable using FlextTestsUtilities."""
-        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
-            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+        u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
                 cast("dict[str, t.GeneralValueType]", test_case["input_data"]),
             ),
@@ -483,7 +467,7 @@ class TestuDomain:
 
     def test_validate_immutable_config_type_error(self) -> None:
         """Test validation with config that raises TypeError using u.Domain directly."""
-        obj = FlextTestsUtilities.Tests.BadObjects.BadConfigTypeError()
+        obj = u.Tests.BadObjects.BadConfigTypeError()
         try:
             obj_value = cast("t.GeneralValueType", obj)
             result = u.Domain.validate_value_object_immutable(obj_value)

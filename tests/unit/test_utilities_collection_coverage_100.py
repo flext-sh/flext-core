@@ -25,7 +25,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import r, t
-from flext_tests import FlextTestsUtilities, u
+from flext_tests import u
 
 
 class FixtureStatus(StrEnum):
@@ -707,7 +707,7 @@ class TestuCollectionCoerceListValidator:
 
         if scenario.expected_success:
             result = validator(scenario.value)
-            FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+            u.Tests.Assertions.assert_result_matches_expected(
                 result,
                 list,
             )
@@ -815,7 +815,7 @@ class TestuCollectionCoerceDictValidator:
 
         if scenario.expected_success:
             result = validator(scenario.value)
-            FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+            u.Tests.Assertions.assert_result_matches_expected(
                 result,
                 dict,
             )

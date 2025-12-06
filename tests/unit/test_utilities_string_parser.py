@@ -33,7 +33,7 @@ from flext_core import (
     FlextResult as r,
     FlextTypes as t,
 )
-from flext_tests import FlextTestsUtilities, u
+from flext_tests import u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 from tests.utilities import TestsFlextUtilities
@@ -488,7 +488,7 @@ class TestuStringParser:
                     )
                 return parser.parse_delimited(case.text, case.delimiter)
 
-            FlextTestsUtilities.Tests.ParserHelpers.execute_and_assert_parser_result(
+            u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast("Callable[[], r[Any]]", operation),
                 expected_value=case.expected,
                 expected_error=case.expected_error,
@@ -522,7 +522,7 @@ class TestuStringParser:
             case: SplitEscapeCase,
         ) -> None:
             """Test split_on_char_with_escape with parametrized cases."""
-            FlextTestsUtilities.Tests.ParserHelpers.execute_and_assert_parser_result(
+            u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[Any]]",
                     lambda: parser.split_on_char_with_escape(
@@ -567,7 +567,7 @@ class TestuStringParser:
             case: NormalizeWhitespaceCase,
         ) -> None:
             """Test normalize_whitespace with parametrized cases."""
-            FlextTestsUtilities.Tests.ParserHelpers.execute_and_assert_parser_result(
+            u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[Any]]",
                     lambda: parser.normalize_whitespace(
@@ -605,7 +605,7 @@ class TestuStringParser:
             case: RegexPipelineCase,
         ) -> None:
             """Test apply_regex_pipeline with parametrized cases."""
-            FlextTestsUtilities.Tests.ParserHelpers.execute_and_assert_parser_result(
+            u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[Any]]",
                     lambda: parser.apply_regex_pipeline(case.text, case.patterns),
@@ -647,7 +647,7 @@ class TestuStringParser:
             # Intentionally pass None for text to test error handling
             # Type checker: cast to str to test runtime error handling
             text = cast("str", None)
-            FlextTestsUtilities.Tests.ParserHelpers.execute_and_assert_parser_result(
+            u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[Any]]",
                     lambda: parser.apply_regex_pipeline(
@@ -669,7 +669,7 @@ class TestuStringParser:
             # Intentionally pass int for text to test error handling
             # Type checker: cast to str to test runtime error handling
             text = cast("str", 123)
-            FlextTestsUtilities.Tests.ParserHelpers.execute_and_assert_parser_result(
+            u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
                     "Callable[[], r[Any]]",
                     lambda: parser.apply_regex_pipeline(
@@ -691,7 +691,7 @@ class TestuStringParser:
             patterns: list[tuple[str, str] | tuple[str, str, int]] = []
             result = parser.apply_regex_pipeline("test", patterns)
             # Empty pattern list should result in unchanged text
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.ResultHelpers.assert_success_with_value(
                 result,
                 "test",
             )

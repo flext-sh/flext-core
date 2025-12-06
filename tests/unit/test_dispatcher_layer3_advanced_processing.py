@@ -29,7 +29,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextDispatcher, FlextResult, p, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 class DoubleProcessor:
@@ -159,7 +159,7 @@ def create_test_dispatcher_with_defaults() -> FlextDispatcher:
         "failing": cast("p.Processor", FailingProcessor()),
         "callable": cast("p.Processor", CallableProcessor()),
     }
-    return FlextTestsUtilities.Tests.DispatcherHelpers.create_test_dispatcher(
+    return u.Tests.DispatcherHelpers.create_test_dispatcher(
         processors,
     )
 
@@ -172,7 +172,7 @@ class TestLayer3MessageProcessing:
         dispatcher = FlextDispatcher()
         processor = DoubleProcessor()
         result = dispatcher.register_processor("double", processor)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
         assert dispatcher.processor_metrics["double"]["executions"] == 0
 
     def test_register_processor_with_config(self) -> None:
@@ -185,14 +185,14 @@ class TestLayer3MessageProcessing:
             "retries": 3,
         }
         result = dispatcher.register_processor("double", processor, config)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
 
     def test_register_callable_processor(self) -> None:
         """Test registering callable as processor."""
         dispatcher = FlextDispatcher()
         processor = CallableProcessor()
         result = dispatcher.register_processor("callable", processor)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
 
     @pytest.mark.parametrize(
         "scenario",
@@ -203,7 +203,7 @@ class TestLayer3MessageProcessing:
         """Test processing through registered processor."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process(scenario.processor_name, scenario.input_data)
-        FlextTestsUtilities.Tests.DispatcherHelpers.assert_processor_result(
+        u.Tests.DispatcherHelpers.assert_processor_result(
             result,
             expected_success=scenario.expected_success,
             expected_value=scenario.expected_value,
@@ -213,7 +213,7 @@ class TestLayer3MessageProcessing:
         """Test processing with unregistered processor returns error."""
         dispatcher = FlextDispatcher()
         result = dispatcher.process("nonexistent", 5)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             expected_error="not registered",
         )
@@ -231,20 +231,20 @@ class TestLayer3BatchProcessing:
         """Test batch processing with various input sizes."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process_batch("double", items)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
         assert len(result.value) == len(items)
 
     def test_batch_process_custom_batch_size(self) -> None:
         """Test batch processing with custom batch size."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process_batch("double", [1, 2, 3, 4, 5], batch_size=2)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
 
     def test_batch_process_unregistered_processor(self) -> None:
         """Test batch processing unregistered processor fails."""
         dispatcher = FlextDispatcher()
         result = dispatcher.process_batch("nonexistent", [1, 2, 3])
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.TestUtilities.assert_result_failure(result)
 
     def test_batch_metrics_updated(self) -> None:
         """Test batch operation metrics are updated."""
@@ -266,14 +266,14 @@ class TestLayer3ParallelProcessing:
         """Test parallel processing with various input sizes."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process_parallel("double", items)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
         assert len(result.value) == len(items)
 
     def test_parallel_process_custom_workers(self) -> None:
         """Test parallel processing with custom worker count."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process_parallel("double", [1, 2, 3, 4, 5], max_workers=2)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
 
     def test_parallel_process_faster_than_sequential(self) -> None:
         """Test parallel processing is faster for slow operations."""
@@ -283,7 +283,7 @@ class TestLayer3ParallelProcessing:
         start = time.time()
         result = dispatcher.process_parallel("slow", [1, 2, 3, 4])
         parallel_time = time.time() - start
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
         assert parallel_time < 0.3
 
     def test_parallel_metrics_updated(self) -> None:
@@ -301,11 +301,7 @@ class TestLayer3FastFailExecution:
         """Test successful processor execution."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process("double", 5)
-        value = (
-            FlextTestsUtilities.Tests.ResultHelpers.assert_result_success_and_unwrap(
-                result,
-            )
-        )
+        value = u.Tests.Result.assert_success(result)
         assert isinstance(value, int)
         assert value == 10
 
@@ -313,13 +309,13 @@ class TestLayer3FastFailExecution:
         """Test processor failure returns error immediately (fast fail)."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process("failing", 5)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.TestUtilities.assert_result_failure(result)
 
     def test_process_unregistered_processor(self) -> None:
         """Test unregistered processor returns error immediately."""
         dispatcher = FlextDispatcher()
         result = dispatcher.process("nonexistent", 5)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.TestUtilities.assert_result_failure(result)
 
 
 class TestLayer3TimeoutEnforcement:
@@ -329,11 +325,7 @@ class TestLayer3TimeoutEnforcement:
         """Test successful execution within timeout."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.execute_with_timeout("double", 5, timeout=5.0)
-        value = (
-            FlextTestsUtilities.Tests.ResultHelpers.assert_result_success_and_unwrap(
-                result,
-            )
-        )
+        value = u.Tests.Result.assert_success(result)
         assert isinstance(value, int)
         assert value == 10
 
@@ -343,7 +335,7 @@ class TestLayer3TimeoutEnforcement:
         slow_processor = SlowProcessor(0.5)
         dispatcher.register_processor("slow", slow_processor)
         result = dispatcher.execute_with_timeout("slow", 5, timeout=0.1)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             expected_error="timeout",
         )
@@ -354,7 +346,7 @@ class TestLayer3TimeoutEnforcement:
         slow_processor = SlowProcessor(0.05)
         dispatcher.register_processor("slow", slow_processor)
         result = dispatcher.execute_with_timeout("slow", 5, timeout=1.0)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
 
 
 class TestLayer3MetricsCollection:
@@ -394,7 +386,7 @@ class TestLayer3MetricsCollection:
         """Test audit log can be retrieved."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.get_process_audit_log()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
         assert isinstance(result.value, list)
 
     def test_performance_analytics(self) -> None:
@@ -402,7 +394,7 @@ class TestLayer3MetricsCollection:
         dispatcher = create_test_dispatcher_with_defaults()
         dispatcher.process("double", 5)
         result = dispatcher.get_performance_analytics()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.TestUtilities.assert_result_success(result)
         analytics = result.value
         # Type narrowing: analytics is a dict at runtime
         assert isinstance(analytics, dict)
@@ -424,11 +416,7 @@ class TestLayer3Integration:
         """Test complete workflow with single processor."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process("double", 5)
-        value = (
-            FlextTestsUtilities.Tests.ResultHelpers.assert_result_success_and_unwrap(
-                result,
-            )
-        )
+        value = u.Tests.Result.assert_success(result)
         assert isinstance(value, int)
         assert value == 10
 
@@ -436,13 +424,9 @@ class TestLayer3Integration:
         """Test workflow combining batch and single processing."""
         dispatcher = create_test_dispatcher_with_defaults()
         batch_result = dispatcher.process_batch("double", [1, 2, 3])
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(batch_result)
+        u.Tests.TestUtilities.assert_result_success(batch_result)
         single_result = dispatcher.process("double", 5)
-        value = (
-            FlextTestsUtilities.Tests.ResultHelpers.assert_result_success_and_unwrap(
-                single_result,
-            )
-        )
+        value = u.Tests.Result.assert_success(single_result)
         assert isinstance(value, int)
         assert value == 10
 
@@ -450,12 +434,10 @@ class TestLayer3Integration:
         """Test workflow combining parallel with fast fail (no fallback)."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process("failing", 5)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.TestUtilities.assert_result_failure(result)
         result2 = dispatcher.process("double", 5)
-        value = (
-            FlextTestsUtilities.Tests.ResultHelpers.assert_result_success_and_unwrap(
-                result2,
-            )
+        value = u.Tests.Result.assert_success(
+            result2,
         )
         assert isinstance(value, int)
         assert value == 10
@@ -466,25 +448,25 @@ class TestLayer3Integration:
         dispatcher.register_processor("double", DoubleProcessor())
         dispatcher.register_processor("square", SquareProcessor())
         dispatcher.register_processor("slow", SlowProcessor(0.01))
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             dispatcher.process("double", 5),
             10,
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(
+        u.Tests.TestUtilities.assert_result_success(
             dispatcher.process_batch("double", [1, 2, 3]),
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(
+        u.Tests.TestUtilities.assert_result_success(
             dispatcher.process_parallel("double", [4, 5, 6]),
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(
+        u.Tests.TestUtilities.assert_result_success(
             dispatcher.execute_with_timeout("slow", 5, timeout=1.0),
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             dispatcher.process("double", 7),
             14,
         )
         analytics = dispatcher.get_performance_analytics()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(analytics)
+        u.Tests.TestUtilities.assert_result_success(analytics)
 
     def test_multiple_processors_independence(self) -> None:
         """Test multiple processors operate independently."""
@@ -493,14 +475,14 @@ class TestLayer3Integration:
         dispatcher.register_processor("square", SquareProcessor())
         r1 = dispatcher.process("double", 5)
         r2 = dispatcher.process("square", 5)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(r1, 10)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(r2, 25)
+        u.Tests.Result.assert_success_with_value(r1, 10)
+        u.Tests.Result.assert_success_with_value(r2, 25)
 
     def test_error_handling_propagates(self) -> None:
         """Test errors propagate through Layer 3."""
         dispatcher = create_test_dispatcher_with_defaults()
         result = dispatcher.process("double", "not-a-number")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             expected_error="Expected int",
         )
