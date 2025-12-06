@@ -134,7 +134,10 @@ class FlextModelsBase:
     class VersionableMixin(BaseModel):
         """Mixin for versioning (usa constante inline, não c)."""
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
+        model_config = ConfigDict(
+            arbitrary_types_allowed=True,
+            # Not frozen - increment_version() mutates self.version
+        )
 
         version: int = Field(
             default=c.Performance.DEFAULT_VERSION,

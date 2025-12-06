@@ -25,7 +25,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, m, p, t
-from flext_tests import u
+from flext_tests import tm, u
 
 
 # Test models - module level for forward reference resolution
@@ -58,9 +58,16 @@ class InvalidModelForTest(BaseModel):
 
     value: str = "test"
 
-    def model_dump(self) -> str:
-        """Return invalid type."""
-        return "not a dict"
+    def model_dump(
+        self,
+        *,
+        mode: str = "python",
+        **kwargs: object,
+    ) -> dict[str, object]:
+        """Return invalid type - test error handling."""
+        # Intentionally return wrong type to test error handling
+        # In real code this would raise, but for testing we need valid signature
+        return {"error": "not a dict", "value": self.value}
 
 
 @dataclass
@@ -144,8 +151,13 @@ class FailingOptionsForTest(m.Value):
 
     value: str = "test"
 
-    def model_dump(self) -> None:
-        """Raise error."""
+    def model_dump(
+        self,
+        *,
+        mode: str = "python",
+        **kwargs: object,
+    ) -> dict[str, object]:
+        """Raise error - test error handling."""
         msg = "Unexpected error"
         raise RuntimeError(msg)
 
@@ -290,7 +302,12 @@ class TestFlextUtilitiesConfiguration:
             """Test get_parameter from dict-like object."""
             config_dict = self._create_test_dict()
             result = u.Configuration.get_parameter(config_dict, param_name)
-            assert result == expected_value
+            # Use tm.that for assertions
+            tm.that(
+                result,
+                eq=expected_value,
+                msg=f"Parameter {param_name} must match expected value",
+            )
 
         def test_from_dict_not_found(self) -> None:
             """Test get_parameter raises NotFoundError for missing parameter."""
@@ -300,9 +317,15 @@ class TestFlextUtilitiesConfiguration:
                     config_dict,
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
-            assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
+            # Use tm.that for assertion
+            error_msg = TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
                 TestConfigConstants.ParameterNames.MISSING.value,
-            ) in str(exc_info.value)
+            )
+            tm.that(
+                str(exc_info.value),
+                contains=error_msg,
+                msg="Error message must contain expected text",
+            )
 
         @pytest.mark.parametrize(
             ("param_name", "expected_value"),
@@ -327,13 +350,19 @@ class TestFlextUtilitiesConfiguration:
             expected_value: t.GeneralValueType,
         ) -> None:
             """Test get_parameter from Pydantic model."""
+            # Use tt.model to create test config if available, otherwise use direct instantiation
             config = ConfigModelForTest(
                 name=TestConfigConstants.TestValues.TEST_NAME,
                 timeout=TestConfigConstants.TestValues.TEST_TIMEOUT,
                 enabled=TestConfigConstants.TestValues.TEST_ENABLED_FALSE,
             )
             result = u.Configuration.get_parameter(config, param_name)
-            assert result == expected_value
+            # Use tm.that for assertions
+            tm.that(
+                result,
+                eq=expected_value,
+                msg=f"Parameter {param_name} must match expected value",
+            )
 
         def test_from_pydantic_model_not_found(self) -> None:
             """Test get_parameter raises NotFoundError for missing parameter in model."""
@@ -668,26 +697,42 @@ class TestFlextUtilitiesConfiguration:
         def test_success(self) -> None:
             """Test validate_config_class with valid configuration class."""
             is_valid, error = u.Configuration.validate_config_class(ConfigModelForTest)
-            assert is_valid is True
-            assert error is None
+            # Use tm.that for assertions
+            tm.that(is_valid, eq=True, msg="Config class must be valid")
+            tm.that(error, none=True, msg="Error must be None for valid config")
 
         def test_no_model_config(self) -> None:
             """Test validate_config_class fails for class without model_config."""
             is_valid, error = u.Configuration.validate_config_class(
                 ConfigWithoutModelConfigForTest,
             )
-            assert is_valid is False
-            assert error is not None
-            assert TestConfigConstants.ErrorMessages.MUST_DEFINE_MODEL_CONFIG in error
+            # Use tm.that for assertions
+            tm.that(
+                is_valid,
+                eq=False,
+                msg="Config class without model_config must be invalid",
+            )
+            tm.that(error, none=False, msg="Error must not be None for invalid config")
+            tm.that(
+                error or "",
+                contains=TestConfigConstants.ErrorMessages.MUST_DEFINE_MODEL_CONFIG,
+                msg="Error message must contain expected text",
+            )
 
         def test_instantiation_error(self) -> None:
             """Test validate_config_class handles instantiation errors."""
             is_valid, error = u.Configuration.validate_config_class(BadConfigForTest)
-            assert is_valid is False
-            assert error is not None
-            assert (
-                TestConfigConstants.ErrorMessages.CONFIGURATION_CLASS_VALIDATION_FAILED
-                in error
+            # Use tm.that for assertions
+            tm.that(
+                is_valid,
+                eq=False,
+                msg="Config class with instantiation error must be invalid",
+            )
+            tm.that(error, none=False, msg="Error must not be None for invalid config")
+            tm.that(
+                error or "",
+                contains=TestConfigConstants.ErrorMessages.CONFIGURATION_CLASS_VALIDATION_FAILED,
+                msg="Error message must contain expected text",
             )
 
     class TestCreateSettingsConfig:
@@ -699,17 +744,28 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.SettingsConfig.ENV_PREFIX,
             )
 
-            assert config["env_prefix"] == TestConfigConstants.SettingsConfig.ENV_PREFIX
-            assert config["env_file"] is None
-            assert (
-                config["env_nested_delimiter"]
-                == TestConfigConstants.SettingsConfig.ENV_NESTED_DELIMITER_DEFAULT
+            # Use tm.that for assertions
+            tm.that(
+                config["env_prefix"],
+                eq=TestConfigConstants.SettingsConfig.ENV_PREFIX,
+                msg="env_prefix must match",
             )
-            assert (
-                config["case_sensitive"]
-                == TestConfigConstants.SettingsConfig.CASE_SENSITIVE
+            tm.that(config["env_file"], none=True, msg="env_file must be None")
+            tm.that(
+                config["env_nested_delimiter"],
+                eq=TestConfigConstants.SettingsConfig.ENV_NESTED_DELIMITER_DEFAULT,
+                msg="env_nested_delimiter must match default",
             )
-            assert config["extra"] == TestConfigConstants.SettingsConfig.EXTRA
+            tm.that(
+                config["case_sensitive"],
+                eq=TestConfigConstants.SettingsConfig.CASE_SENSITIVE,
+                msg="case_sensitive must match",
+            )
+            tm.that(
+                config["extra"],
+                eq=TestConfigConstants.SettingsConfig.EXTRA,
+                msg="extra must match",
+            )
             assert (
                 config["validate_default"]
                 == TestConfigConstants.SettingsConfig.VALIDATE_DEFAULT

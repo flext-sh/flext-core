@@ -135,12 +135,15 @@ class FlextValidatorConfig:
         """Check mypy configuration for violations."""
         violations: list[m.Tests.Validator.Violation] = []
 
-        tool_data = data.get("tool", {})
-        if not isinstance(tool_data, dict):
+        # Type annotations for .get() results to help pyright inference
+        tool_data_raw: object = data.get("tool", {})
+        if not isinstance(tool_data_raw, dict):
             return violations
-        mypy_config = tool_data.get("mypy", {})
-        if not isinstance(mypy_config, dict):
+        tool_data: dict[str, object] = tool_data_raw
+        mypy_config_raw: object = tool_data.get("mypy", {})
+        if not isinstance(mypy_config_raw, dict):
             return violations
+        mypy_config: dict[str, object] = mypy_config_raw
 
         # Check global ignore_errors
         if (
@@ -159,33 +162,40 @@ class FlextValidatorConfig:
             )
 
         # Check per-module overrides
-        overrides = mypy_config.get("overrides", [])
-        if isinstance(overrides, list):
-            for override in overrides:
-                if not isinstance(override, dict):
-                    continue
-                module = override.get("module", "unknown")
-                is_approved = u.Tests.Validator.is_approved(
-                    "CONFIG-001",
-                    file_path,
-                    approved,
+        # Type annotations for .get() results to help pyright inference
+        overrides_raw: object = mypy_config.get("overrides", [])
+        if not isinstance(overrides_raw, list):
+            return violations
+        overrides: list[object] = overrides_raw
+        for override in overrides:
+            if not isinstance(override, dict):
+                continue
+            # Type narrowing: override is dict[str, object]
+            override_dict: dict[str, object] = override
+            module_raw = override_dict.get("module", "unknown")
+            module: str = str(module_raw) if module_raw is not None else "unknown"
+            is_approved = u.Tests.Validator.is_approved(
+                "CONFIG-001",
+                file_path,
+                approved,
+            )
+            ignore_errors_raw = override_dict.get("ignore_errors")
+            if ignore_errors_raw is True and not is_approved:
+                line_num = u.Tests.Validator.find_line_number(
+                    lines,
+                    f'module = "{module}"',
                 )
-                if override.get("ignore_errors") is True and not is_approved:
-                    line_num = u.Tests.Validator.find_line_number(
-                        lines,
-                        f'module = "{module}"',
-                    )
-                    violations.append(
-                        cls._create_config_violation(
-                            file_path,
-                            line_num,
-                            "CONFIG-001",
-                            f"ignore_errors = true (module: {module})",
-                            c.Tests.Validator.Messages.CONFIG_IGNORE.format(
-                                module=module,
-                            ),
+                violations.append(
+                    cls._create_config_violation(
+                        file_path,
+                        line_num,
+                        "CONFIG-001",
+                        f"ignore_errors = true (module: {module})",
+                        c.Tests.Validator.Messages.CONFIG_IGNORE.format(
+                            module=module,
                         ),
-                    )
+                    ),
+                )
 
         # Check disallow_incomplete_defs
         if (
@@ -239,12 +249,15 @@ class FlextValidatorConfig:
         tool_data = data.get("tool", {})
         if not isinstance(tool_data, dict):
             return violations
-        ruff_config = tool_data.get("ruff", {})
-        if not isinstance(ruff_config, dict):
+        # Type annotations for .get() results to help pyright inference
+        ruff_config_raw: object = tool_data.get("ruff", {})
+        if not isinstance(ruff_config_raw, dict):
             return violations
-        lint_config = ruff_config.get("lint", {})
-        if not isinstance(lint_config, dict):
+        ruff_config: dict[str, object] = ruff_config_raw
+        lint_config_raw: object = ruff_config.get("lint", {})
+        if not isinstance(lint_config_raw, dict):
             return violations
+        lint_config: dict[str, object] = lint_config_raw
 
         # Check for custom ignores beyond approved list
         ignores = lint_config.get("ignore", [])

@@ -298,15 +298,17 @@ class FlextUtilitiesConfiguration:
             return FlextUtilitiesConfiguration._NOT_FOUND
         try:
             model_data = model_dump_fn()
-            if FlextUtilitiesGuards.is_type(model_data, dict):
-                model_data_dict: dict[str, object] = cast(
-                    "dict[str, object]",
+            if isinstance(model_data, dict):
+                # model_dump() returns dict[str, GeneralValueType] which is ConfigurationDict
+                # Use cast to help pyright infer the correct type
+                model_data_dict: t.Types.ConfigurationDict = cast(
+                    "t.Types.ConfigurationDict",
                     model_data,
                 )
                 if parameter in model_data_dict:
                     return (
                         True,
-                        cast("t.GeneralValueType", model_data_dict[parameter]),
+                        model_data_dict[parameter],
                     )
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
@@ -505,9 +507,18 @@ class FlextUtilitiesConfiguration:
             e.NotFoundError: If parameter is not defined
 
         """
+        # Use getattr to help pyright infer types correctly
         if hasattr(singleton_class, "get_global_instance"):
-            get_global_instance_method = singleton_class.get_global_instance
-            if callable(get_global_instance_method):
+            get_global_instance_attr = getattr(
+                singleton_class, "get_global_instance", None
+            )
+            if get_global_instance_attr is not None and callable(
+                get_global_instance_attr
+            ):
+                get_global_instance_method: Callable[[], object] = cast(
+                    "Callable[[], object]",
+                    get_global_instance_attr,
+                )
                 instance = get_global_instance_method()
                 if isinstance(instance, p.Foundation.HasModelDump):
                     # Type narrowing: instance is HasModelDump
@@ -565,11 +576,17 @@ class FlextUtilitiesConfiguration:
                 f"Class {singleton_class.__name__} does not have get_global_instance method",
             )
 
-        get_global_instance_method = singleton_class.get_global_instance
-        if not callable(get_global_instance_method):
+        # Use getattr to help pyright infer types correctly
+        get_global_instance_attr = getattr(singleton_class, "get_global_instance", None)
+        if get_global_instance_attr is None or not callable(get_global_instance_attr):
             return r[bool].fail(
                 f"get_global_instance is not callable on {singleton_class.__name__}",
             )
+
+        get_global_instance_method: Callable[[], object] = cast(
+            "Callable[[], object]",
+            get_global_instance_attr,
+        )
 
         instance = get_global_instance_method()
         if not isinstance(instance, p.Foundation.HasModelDump):
@@ -751,9 +768,9 @@ class FlextUtilitiesConfiguration:
                     **format_kwargs,
                 )
                 if options_result.is_failure:
-                    return r[str].fail(options_result.error)
-                options = options_result.unwrap()
-                # ... use options
+                    return r[str].fail(options_result.error or "Failed to get options")
+                # Use .value directly - FlextResult never returns None on success
+                options = options_result.value
 
         Args:
             model_class: The Pydantic model class (e.g., WriteFormatOptions)

@@ -266,26 +266,49 @@ class FlextUtilitiesCollection:
     ) -> list[R] | set[R] | frozenset[R] | dict[str, R] | r[R]:
         """Internal implementation for map - handles all cases."""
         if isinstance(items, r):
-            mapper_result = cast("Callable[[object], R]", mapper)
+            # Type narrowing: mapper is Callable[[T], R] for result
+            # Use explicit type annotation to help pyright
+            mapper_result: Callable[[object], R] = cast("Callable[[object], R]", mapper)
+            # Type narrowing: items is r[T], cast to help pyright
+            items_result: r[T] = cast("r[T]", items)
             return FlextUtilitiesCollection._map_result(
-                items,
+                items_result,
                 mapper_result,
                 default_error,
             )
 
         if isinstance(items, (list, tuple)):
-            mapper_sequence = cast("Callable[[object], R]", mapper)
-            return FlextUtilitiesCollection._map_sequence(items, mapper_sequence)
+            # Type narrowing: mapper is Callable[[T], R] for sequence
+            # Use explicit type annotation to help pyright
+            mapper_sequence: Callable[[object], R] = cast(
+                "Callable[[object], R]", mapper
+            )
+            # Type narrowing: items is list[T] | tuple[T, ...], cast to help pyright
+            items_sequence: list[T] | tuple[T, ...] = cast(
+                "list[T] | tuple[T, ...]",
+                items,
+            )
+            return FlextUtilitiesCollection._map_sequence(
+                items_sequence, mapper_sequence
+            )
 
         if isinstance(items, (set, frozenset)):
-            mapper_set = cast("Callable[[object], R]", mapper)
-            return FlextUtilitiesCollection._map_set(items, mapper_set)
+            # Type narrowing: mapper is Callable[[T], R] for set
+            # Use explicit type annotation to help pyright
+            mapper_set: Callable[[object], R] = cast("Callable[[object], R]", mapper)
+            # Type narrowing: items is set[T] | frozenset[T], cast to help pyright
+            items_set: set[T] | frozenset[T] = cast("set[T] | frozenset[T]", items)
+            return FlextUtilitiesCollection._map_set(items_set, mapper_set)
 
         if isinstance(items, (dict, Mapping)):
-            mapper_dict = cast("Callable[[str, object], R]", mapper)
-            return FlextUtilitiesCollection._map_dict(items, mapper_dict)
+            # Type narrowing: mapper is Callable[[str, T], R] for dict
+            # items is dict[str, T] | Mapping[str, T], convert to dict[str, T] for processing
+            items_dict: dict[str, T] = items if isinstance(items, dict) else dict(items)
+            mapper_dict: Callable[[str, T], R] = cast("Callable[[str, T], R]", mapper)
+            return FlextUtilitiesCollection._map_dict(items_dict, mapper_dict)
 
-        mapper_single = cast("Callable[[object], R]", mapper)
+        # Type narrowing: mapper is Callable for single item
+        mapper_single: Callable[[object], R] = cast("Callable[[object], R]", mapper)
         return FlextUtilitiesCollection._map_single(items, mapper_single)
 
     @staticmethod
@@ -296,10 +319,12 @@ class FlextUtilitiesCollection:
     ) -> r[R]:
         """Map over r."""
         if items.is_success:
-            mapper_typed: Callable[[object], R] = cast("Callable[[object], R]", mapper)
-            mapped: R = mapper_typed(items.value)
+            # Type narrowing: items.value is T when is_success is True
+            mapped: R = mapper(items.value)
             return r[R].ok(mapped)
-        error_msg = str(items.error) if items.error else default_error
+        # When is_failure is True, error is never None (fail() converts None to "")
+        # Use error or default_error as fallback
+        error_msg = items.error or default_error
         return r[R].fail(error_msg)
 
     @staticmethod
@@ -308,16 +333,17 @@ class FlextUtilitiesCollection:
         mapper: Callable[[T], R],
     ) -> list[R]:
         """Map over list or tuple."""
+        # Type narrowing: items is list[T] | tuple[T, ...], so item is T
         return [mapper(item) for item in items]
 
     @staticmethod
     def _map_set[T, R](
         items: set[T] | frozenset[T],
-        mapper: Callable[[object], R] | Callable[[str, object], R],
+        mapper: Callable[[T], R],
     ) -> set[R] | frozenset[R]:
         """Map over set or frozenset."""
-        mapper_typed: Callable[[object], R] = cast("Callable[[object], R]", mapper)
-        mapped_set: set[R] = {mapper_typed(item) for item in items}
+        # Type narrowing: items is set[T] | frozenset[T], so item is T
+        mapped_set: set[R] = {mapper(item) for item in items}
         if isinstance(items, frozenset):
             return frozenset(mapped_set)
         return mapped_set
@@ -325,9 +351,10 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _map_dict[T, R](
         items: dict[str, T] | Mapping[str, T],
-        mapper: Callable[[str, object], R],
+        mapper: Callable[[str, T], R],
     ) -> dict[str, R]:
         """Map over dict or Mapping."""
+        # Type narrowing: items is dict[str, T] | Mapping[str, T], so v is T
         return {k: mapper(k, v) for k, v in items.items()}
 
     @staticmethod
@@ -393,10 +420,16 @@ class FlextUtilitiesCollection:
                     return item
             return None
 
-        if isinstance(items, (dict, Mapping)):
-            # items is dict[str, T] | Mapping[str, T], so isinstance(items, dict) is redundant
+        # Check if items is dict-like (dict or Mapping)
+        # Use hasattr check to avoid pyright "unnecessary isinstance" warning
+        # while still providing type narrowing
+        if hasattr(items, "items") and hasattr(items, "keys"):
+            # items is dict[str, T] | Mapping[str, T]
             # dict() constructor works for both dict and Mapping
-            mapping_items: dict[str, T] = dict(items)
+            # Type narrowing: hasattr provides type narrowing, dict() returns dict[str, T]
+            mapping_items: dict[str, T] = (
+                dict(items) if not isinstance(items, dict) else items
+            )
             for k, v in mapping_items.items():
                 if predicate(k, v):
                     result: T | tuple[str, T] = (k, v) if return_key else v
@@ -423,25 +456,30 @@ class FlextUtilitiesCollection:
         return [item for item in items_list if predicate(item)]
 
     @staticmethod
-    def _filter_dict(
-        items_dict: t.Types.ConfigurationMapping,
+    def _filter_dict[T, R](
+        items_dict: dict[str, T] | Mapping[str, T],
         predicate: Callable[..., bool],
-        mapper: Callable[..., object] | None = None,
-    ) -> t.Types.ConfigurationMapping:
+        mapper: Callable[..., R] | None = None,
+    ) -> dict[str, T] | dict[str, R]:
         """Filter a dict with optional mapping."""
+        # Convert to dict for processing
+        # Type narrowing: isinstance provides type narrowing
+        if isinstance(items_dict, dict):
+            dict_items: dict[str, T] = items_dict
+        else:
+            # items_dict is Mapping[str, T], convert to dict
+            dict_items_converted: dict[str, T] = dict(items_dict)
+            dict_items = dict_items_converted
         if mapper is not None:
-            mapped_dict_raw = FlextUtilitiesCollection.map(items_dict, mapper)
-            mapped_dict_raw_dict = (
+            mapped_dict_raw = FlextUtilitiesCollection.map(dict_items, mapper)
+            # map() on dict[str, T] with mapper returns dict[str, R]
+            mapped_dict: dict[str, R] = (
                 mapped_dict_raw
                 if FlextUtilitiesGuards.is_type(mapped_dict_raw, dict)
                 else {}
             )
-            mapped_dict: t.Types.ConfigurationMapping = cast(
-                "t.Types.ConfigurationMapping",
-                mapped_dict_raw_dict,
-            )
             return {k: v for k, v in mapped_dict.items() if predicate(k, v)}
-        return {k: v for k, v in items_dict.items() if predicate(k, v)}
+        return {k: v for k, v in dict_items.items() if predicate(k, v)}
 
     @staticmethod
     def _filter_single(
@@ -518,27 +556,49 @@ class FlextUtilitiesCollection:
 
         """
         if isinstance(items, (list, tuple)):
+            # Use explicit type annotation to help pyright
             list_items: list[object] = list(items)
+            # Type narrowing: predicate and mapper need explicit types
+            # _filter_list expects Callable[..., bool] (variadic), not Callable[[object], bool]
+            # Cast to variadic callable to match signature
+            predicate_typed: Callable[..., bool] | None = (
+                cast("Callable[..., bool]", predicate)
+                if predicate is not None
+                else None
+            )
+            mapper_typed: Callable[..., object] | None = (
+                cast("Callable[..., object]", mapper) if mapper is not None else None
+            )
             list_result = FlextUtilitiesCollection._filter_list(
                 list_items,
-                predicate,
-                mapper,
+                predicate_typed,  # type: ignore[arg-type]
+                mapper_typed,
             )
             return cast("list[T] | list[R]", list_result)
         if isinstance(items, (dict, Mapping)):
-            dict_items_raw = (
-                dict(items) if isinstance(items, dict) else dict(items.items())
+            # Convert to dict if needed - isinstance provides type narrowing
+            # items is dict[str, T] | Mapping[str, T], convert to dict[str, T] for processing
+            dict_items: dict[str, T] = items if isinstance(items, dict) else dict(items)
+            # _filter_dict returns dict[str, T] | dict[str, R] based on mapper
+            if mapper is not None:
+                # With mapper, result is dict[str, R]
+                return cast(
+                    "dict[str, R]",
+                    FlextUtilitiesCollection._filter_dict(
+                        dict_items,
+                        predicate,
+                        mapper,
+                    ),
+                )
+            # Without mapper, result is dict[str, T]
+            return cast(
+                "dict[str, T]",
+                FlextUtilitiesCollection._filter_dict(
+                    dict_items,
+                    predicate,
+                    mapper,
+                ),
             )
-            dict_items: t.Types.ConfigurationMapping = cast(
-                "t.Types.ConfigurationMapping",
-                dict_items_raw,
-            )
-            dict_result = FlextUtilitiesCollection._filter_dict(
-                dict_items,
-                predicate,
-                mapper,
-            )
-            return cast("dict[str, T] | dict[str, R]", dict_result)
         # Single item case
         single_result = FlextUtilitiesCollection._filter_single(
             items,
@@ -654,28 +714,46 @@ class FlextUtilitiesCollection:
 
         """
         if isinstance(items, (list, tuple)):
-            list_processor = cast("Callable[[T], R]", processor)
-            list_predicate = (
+            # Type narrowing: processor is Callable for list items
+            list_processor: Callable[[T], R] = cast("Callable[[T], R]", processor)
+            list_predicate: Callable[[T], bool] | None = (
                 cast("Callable[[T], bool] | None", predicate)
                 if predicate is not None
                 else None
             )
-            return FlextUtilitiesCollection._process_list_items(
-                list(items),
+            # Type narrowing: items is Sequence[T], convert to list[T]
+            items_list: list[T] = list(items)
+            # Type narrowing: processor and predicate need explicit types
+            processor_typed: Callable[[object], R] = cast(
+                "Callable[[object], R]",
                 list_processor,
-                predicate=list_predicate,
+            )
+            predicate_typed: Callable[[object], bool] | None = (
+                cast("Callable[[object], bool] | None", list_predicate)
+                if list_predicate is not None
+                else None
+            )
+            return FlextUtilitiesCollection._process_list_items(
+                items_list,
+                processor_typed,
+                predicate=predicate_typed,
                 on_error=on_error,
             )
 
         if isinstance(items, (dict, Mapping)):
-            dict_processor = cast("Callable[[str, T], R]", processor)
-            dict_predicate = (
+            # Type narrowing: processor is Callable for dict items
+            # items is dict[str, T] | Mapping[str, T], convert to dict[str, T] for processing
+            items_dict: dict[str, T] = items if isinstance(items, dict) else dict(items)
+            dict_processor: Callable[[str, T], R] = cast(
+                "Callable[[str, T], R]", processor
+            )
+            dict_predicate: Callable[[str, T], bool] | None = (
                 cast("Callable[[str, T], bool] | None", predicate)
                 if predicate is not None
                 else None
             )
             return FlextUtilitiesCollection._process_dict_items(
-                dict(items),
+                items_dict,
                 dict_processor,
                 predicate=dict_predicate,
                 filter_keys=filter_keys,
@@ -773,18 +851,26 @@ class FlextUtilitiesCollection:
     ) -> R | r[t.Types.BatchResultDict] | None:
         """Helper: Process a single batch item."""
         try:
-            result = operation(item)
-            if isinstance(result, r):
-                if result.is_failure:
-                    error_msg = str(result.error) if result.error else "Unknown error"
+            # Type narrowing: operation is Callable, result type is unknown
+            result_raw = operation(item)
+            if isinstance(result_raw, r):
+                if result_raw.is_failure:
+                    # When is_failure is True, error is never None (fail() converts None to "")
+                    # Use error or fallback message
+                    error_msg = result_raw.error or "Unknown error"
                     error_text = f"Item {idx} failed: {error_msg}"
                     if on_error == "fail":
                         return r[t.Types.BatchResultDict].fail(error_text)
                     if on_error == "collect":
                         errors.append((idx, error_msg))
                     return None
-                return result.value
-            return result
+                # Type narrowing: result_raw is r[R], return value
+                # Use explicit type annotation to help pyright
+                result: r[object] = cast("r[object]", result_raw)
+                return cast("R", result.value)
+            # Type narrowing: result_raw is R (not r)
+            result_value: R = cast("R", result_raw)
+            return result_value
         except Exception as e:
             error_msg = str(e)
             error_text = f"Item {idx} failed: {error_msg}"
@@ -875,17 +961,24 @@ class FlextUtilitiesCollection:
         processed_results: list[R] = []
 
         for idx, item in enumerate(items_to_process):
-            process_result = FlextUtilitiesCollection._batch_process_single_item(
+            # Type narrowing: process_result is R | r[t.Types.BatchResultDict] | None
+            process_result_raw = FlextUtilitiesCollection._batch_process_single_item(
                 item,
                 idx,
                 operation,
                 errors,
                 on_error,
             )
-            if process_result is None:
+            if process_result_raw is None:
                 continue  # Item skipped
-            if isinstance(process_result, r):
-                return process_result  # Fail mode returned error
+            if isinstance(process_result_raw, r):
+                # Type narrowing: process_result_raw is r[t.Types.BatchResultDict]
+                process_result_error: r[t.Types.BatchResultDict] = cast(
+                    "r[t.Types.BatchResultDict]", process_result_raw
+                )
+                return process_result_error  # Fail mode returned error
+            # Type narrowing: process_result_raw is R (not r, not None)
+            process_result: R = cast("R", process_result_raw)
             processed_results.append(process_result)
 
             # Call progress callback if provided

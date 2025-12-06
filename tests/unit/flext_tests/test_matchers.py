@@ -75,42 +75,44 @@ class TestFlextTestsMatchers:
             tm.fail(result, contains="connection")
 
     def test_assert_dict_contains_passes(self) -> None:
-        """Test tm.dict_() with contains parameter."""
+        """Test tm.that() with contains parameter for dict."""
         data = {"key1": "value1", "key2": "value2"}
         expected = {"key1": "value1"}
 
-        # Should not raise
-        tm.dict_(data, contains=expected)
+        # Should not raise - use kv for key-value pairs
+        tm.that(data, kv=expected)
 
     def test_assert_dict_contains_missing_key(self) -> None:
-        """Test tm.dict_() with missing key."""
+        """Test tm.that() with missing key."""
         data = {"key1": "value1"}
         expected = {"key2": "value2"}
 
-        with pytest.raises(AssertionError, match="Key 'key2' not found in dict"):
-            tm.dict_(data, contains=expected)
+        with pytest.raises(AssertionError, match="Key 'key2' not found in mapping"):
+            tm.that(data, kv=expected)
 
     def test_assert_dict_contains_wrong_value(self) -> None:
-        """Test tm.dict_() with wrong value."""
+        """Test tm.that() with wrong value."""
         data = {"key1": "value1"}
         expected = {"key1": "wrong_value"}
 
-        with pytest.raises(AssertionError, match="expected wrong_value, got value1"):
-            tm.dict_(data, contains=expected)
+        with pytest.raises(
+            AssertionError, match="expected 'wrong_value', got 'value1'"
+        ):
+            tm.that(data, kv=expected)
 
     def test_assert_list_contains_passes(self) -> None:
-        """Test tm.list_() with contains parameter."""
+        """Test tm.that() with has parameter for list."""
         items = ["item1", "item2", "item3"]
 
         # Should not raise
-        tm.list_(items, contains="item2")
+        tm.that(items, has="item2")
 
     def test_assert_list_contains_missing_item(self) -> None:
-        """Test tm.list_() with item not in list."""
+        """Test tm.that() with item not in list."""
         items = ["item1", "item2"]
 
         with pytest.raises(AssertionError, match=r"Expected.*to contain 'item3'"):
-            tm.list_(items, contains="item3")
+            tm.that(items, has="item3")
 
     def test_assert_valid_email_passes(self) -> None:
         """Test tm.that() with email pattern match."""
@@ -145,7 +147,7 @@ class TestFlextTestsMatchers:
                 tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
 
     def test_assert_config_valid_passes(self) -> None:
-        """Test tm.dict_() with config validation."""
+        """Test tm.that() with keys parameter for config validation."""
         config: dict[str, t.GeneralValueType] = {
             "service_type": "api",
             "environment": "test",
@@ -153,15 +155,15 @@ class TestFlextTestsMatchers:
         }
 
         # Should not raise - validate keys and timeout
-        tm.dict_(config, has_key=["service_type", "environment", "timeout"])
+        tm.that(config, keys=["service_type", "environment", "timeout"])
         tm.that(config["timeout"], is_=int, gt=0)
 
     def test_assert_config_valid_missing_required_key(self) -> None:
-        """Test tm.dict_() with missing required key."""
+        """Test tm.that() with missing required key."""
         config = {"service_type": "api"}  # Missing environment
 
-        with pytest.raises(AssertionError, match="Key 'environment' not found in dict"):
-            tm.dict_(config, has_key=["service_type", "environment", "timeout"])
+        with pytest.raises(AssertionError, match="Missing required keys"):
+            tm.that(config, keys=["service_type", "environment", "timeout"])
 
     def test_assert_config_valid_invalid_timeout(self) -> None:
         """Test tm.that() with invalid timeout type."""
@@ -609,17 +611,19 @@ class TestFlextTestsMatchers:
     # =========================================================================
 
     def test_dict_deprecation_warning(self) -> None:
-        """Test that dict_() emits deprecation warning."""
+        """Test that dict_() emits deprecation warning (using deprecated method)."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
+            # Use the deprecated method directly to test warning
             tm.dict_({"a": 1}, has_key="a")
             assert len(w) == 1
             assert issubclass(w[0].category, DeprecationWarning)
 
     def test_list_deprecation_warning(self) -> None:
-        """Test that list_() emits deprecation warning."""
+        """Test that list_() emits deprecation warning (using deprecated method)."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
+            # Use the deprecated method directly to test warning
             tm.list_([1, 2, 3], contains=1)
             assert len(w) == 1
             assert issubclass(w[0].category, DeprecationWarning)

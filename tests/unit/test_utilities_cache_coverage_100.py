@@ -24,7 +24,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import t, u
-from flext_tests import u as tu
+from flext_tests import tm, u as tu
 
 
 class CacheTestModel(BaseModel):
@@ -302,8 +302,38 @@ class TestuCacheNormalizeComponent:
         )
         # Type narrowing: result is tuple after assert_result_matches_expected
         result_tuple = cast("tuple[t.GeneralValueType, ...]", result)
-        assert len(result_tuple) == 3
-        assert set(result_tuple) == {1, 2, 3}
+        tm.that(len(result_tuple), eq=3, msg="Result tuple must have 3 items")
+        tm.that(
+            set(result_tuple), eq={1, 2, 3}, msg="Result tuple must contain {1, 2, 3}"
+        )
+
+    def test_normalize_set_with_nested_values(self) -> None:
+        """Test normalize_component with set containing nested values."""
+        component = {1, "test", math.pi, None}
+        result = u.Cache.normalize_component(
+            cast("t.GeneralValueType | BaseModel", component),
+        )
+        tm.that(result, is_=tuple, none=False, msg="Result must be tuple")
+        result_tuple = cast("tuple[t.GeneralValueType, ...]", result)
+        tm.that(len(result_tuple), eq=4, msg="Result tuple must have 4 items")
+        # Verify all values are present (order may vary in sets)
+        result_set = set(result_tuple)
+        tm.that(1 in result_set, eq=True, msg="1 must be in result")
+        tm.that("test" in result_set, eq=True, msg="'test' must be in result")
+        tm.that(math.pi in result_set, eq=True, msg="math.pi must be in result")
+        tm.that(None in result_set, eq=True, msg="None must be in result")
+
+    def test_normalize_sequence_with_nested_values(self) -> None:
+        """Test normalize_component with Sequence containing nested values."""
+        component = [1, "test", {"nested": "dict"}, [1, 2, 3]]
+        result = u.Cache.normalize_component(component)
+        tm.that(result, is_=list, none=False, msg="Result must be list")
+        result_list = cast("list[t.GeneralValueType]", result)
+        tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
+        tm.that(result_list[0], eq=1, msg="First item must be 1")
+        tm.that(result_list[1], eq="test", msg="Second item must be 'test'")
+        tm.that(result_list[2], is_=dict, none=False, msg="Third item must be dict")
+        tm.that(result_list[3], is_=list, none=False, msg="Fourth item must be list")
 
     def test_normalize_custom_object_fallback(self) -> None:
         """Test normalize_component fallback to string for unknown types."""

@@ -460,20 +460,20 @@ class FlextUtilitiesGuards:
         return isinstance(value, (list, tuple))
 
     @staticmethod
-    def _is_dict(value: object) -> TypeGuard[dict[str, object]]:
+    def _is_dict(value: object) -> TypeGuard[t.Types.ConfigurationDict]:
         """Check if value is dict.
 
-        Type guard for dict types.
+        Type guard for dict types. Returns ConfigurationDict for type safety.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[dict[str, object]]: True if value is dict
+            TypeGuard[ConfigurationDict]: True if value is dict
 
         Example:
             >>> if FlextUtilitiesGuards.is_dict(value):
-            ...     # value is dict
+            ...     # value is ConfigurationDict
             ...     keys = list(value.keys())
 
         """

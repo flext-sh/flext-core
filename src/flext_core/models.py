@@ -419,6 +419,60 @@ class FlextModels:
     CollectionsResults = Collections.Results
     CollectionsOptions = Collections.Options
 
+    # =========================================================================
+    # PROJECT-SPECIFIC NAMESPACES (Python 3.13+ PEP 695 type organization)
+    # =========================================================================
+    # These namespaces are populated by their respective projects:
+    # - Ldif: Populated by flext-ldif (FlextLdifModels)
+    # - Ldap: Populated by flext-ldap (FlextLdapModels)
+    # - Cli: Populated by flext-cli (FlextCliModels)
+    # - Api: Populated by flext-api (FlextApiModels)
+    #
+    # Architecture:
+    # - Each namespace is a class that can be extended by its project
+    # - Projects populate their namespace by extending these classes
+    # - Allows cross-project access: flext-ldap can access flext-ldif via m.Ldif.*
+    # - Maintains backward compatibility with project-specific Models classes
+    # =========================================================================
+
+    class Ldif:
+        """LDIF project namespace - populated by flext-ldif.
+
+        This namespace contains all LDIF-specific models from flext-ldif.
+        Access via: m.Ldif.Entry, m.Ldif.SchemaAttribute, etc.
+
+        Populated by: flext-ldif/src/flext_ldif/models.py
+        Models are populated dynamically after FlextLdifModels is defined.
+        """
+
+    class Ldap:
+        """LDAP project namespace - populated by flext-ldap.
+
+        This namespace contains all LDAP-specific models from flext-ldap.
+        Access via: m.Ldap.ConnectionConfig, m.Ldap.SearchOptions, etc.
+
+        Populated by: flext-ldap/src/flext_ldap/models.py
+        Can access flext-ldif models via: m.Ldif.*
+        """
+
+    class Cli:
+        """CLI project namespace - populated by flext-cli.
+
+        This namespace contains all CLI-specific models from flext-cli.
+        Access via: m.Cli.CliCommand, m.Cli.CommandResult, etc.
+
+        Populated by: flext-cli/src/flext_cli/models.py
+        """
+
+    class Api:
+        """API project namespace - populated by flext-api.
+
+        This namespace contains all HTTP/API-specific models from flext-api.
+        Access via: m.Api.HttpRequest, m.Api.HttpResponse, etc.
+
+        Populated by: flext-api/src/flext_api/models.py
+        """
+
 
 # =============================================================================
 # Pydantic v2 Forward Reference Resolution
@@ -471,6 +525,12 @@ FlextModelsService.OperationExecutionRequest.model_rebuild(_types_namespace=_TYP
 # ServiceRuntime, DomainServiceRequest, DomainServiceResponse don't exist - commented out
 # FlextModelsService.ServiceRuntime.model_rebuild(_types_namespace=_TYPES_NS)
 # FlextModelsService.DomainServiceRequest.model_rebuild(_types_namespace=_TYPES_NS)
+
+# Collections models - rebuild ParseOptions and PatternApplicationParams
+FlextModelsCollections.ParseOptions.model_rebuild(_types_namespace=_TYPES_NS)
+FlextModelsCollections.PatternApplicationParams.model_rebuild(
+    _types_namespace=_TYPES_NS
+)
 # FlextModelsService.DomainServiceResponse.model_rebuild(_types_namespace=_TYPES_NS)
 
 # Handler models - using Registration (not HandlerRegistration)

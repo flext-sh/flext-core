@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Sequence
+from typing import cast
 
 from pydantic import BaseModel
 
@@ -126,20 +127,40 @@ class FlextUtilitiesCache:
         # Check if dict-like
         if FlextRuntime.is_dict_like(component):
             # Type guard ensures component is Mapping[str, GeneralValueType]
+            # Convert to dict for consistent iteration
+            dict_component: dict[str, t.GeneralValueType] = (
+                dict(component.items())
+                if hasattr(component, "items")
+                else dict(component)
+            )
+            # Type narrowing: dict_component is dict[str, t.GeneralValueType]
+            # so v is t.GeneralValueType
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
-                for k, v in component.items()
+                for k, v in dict_component.items()
             }
         # Handle primitives first (str is a Sequence, so check early)
         if isinstance(component, (str, int, float, bool, type(None))):
             return component
         # Handle collections
         if isinstance(component, set):
+            # Type narrowing: component is set, so item is t.GeneralValueType
+            # Use explicit type annotation to help pyright
+            component_set: set[t.GeneralValueType] = cast(
+                "set[t.GeneralValueType]", component
+            )
             return tuple(
-                FlextUtilitiesCache.normalize_component(item) for item in component
+                FlextUtilitiesCache.normalize_component(item) for item in component_set
             )
         if isinstance(component, Sequence):
-            return [FlextUtilitiesCache.normalize_component(item) for item in component]
+            # Type narrowing: component is Sequence, so item is t.GeneralValueType
+            # Use explicit type annotation to help pyright
+            component_seq: Sequence[t.GeneralValueType] = cast(
+                "Sequence[t.GeneralValueType]", component
+            )
+            return [
+                FlextUtilitiesCache.normalize_component(item) for item in component_seq
+            ]
         # For other types, convert to string as fallback
         return str(component)
 

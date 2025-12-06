@@ -33,7 +33,7 @@ Usage Examples:
     tm.check(result).ok().eq(5).done()       # Railway pattern
 
 Deprecated Methods (use tm.that() instead):
-    tm.eq() -> tm.that(actual, eq=expected)
+    tm.that() -> tm.that(actual, eq=eq=expected)
     tm.true() -> tm.that(condition, eq=True)
     tm.assert_contains() -> tm.that(container, contains=item)
     tm.str_() -> tm.that(text, contains/starts/ends/match/excludes/empty=...)
@@ -87,7 +87,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
         - Length: length, length_gt, length_gte, length_lt, length_lte, empty
 
     Deprecated Methods (all redirect to tm.that()):
-        tm.eq() -> tm.that(actual, eq=expected)
+        tm.that() -> tm.that(actual, eq=eq=expected)
         tm.true() -> tm.that(condition, eq=True)
         tm.assert_contains() -> tm.that(container, contains=item)
         tm.str_() -> tm.that(text, contains/starts/ends/match/excludes/empty=...)
@@ -97,8 +97,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
         tm.method() -> tm.that(hasattr(...), eq=True) + tm.that(callable(...), eq=True)
         tm.not_none() -> tm.that(value, none=False)
         tm.dict_() -> tm.that(data, contains=...) or tm.that(data, length=...)
-        tm.list_() -> tm.that(items, contains=...) or tm.that(items, length=...)
-        tm.is_type() -> tm.that(value, is_=type, none=False)
+        tm.that() -> tm.that(items, has=...) or tm.that(items, length=...)
+        tm.that() -> tm.that(value, is_=is_=type, none=False, none=False)
     """
 
     # =========================================================================
@@ -242,16 +242,21 @@ class FlextTestsMatchers(FlextTestsUtilities):
             )
 
         # Handle unified has/lacks (works for str, list, dict, set, tuple)
+        # params.has is t.Tests.Matcher.ContainmentSpec | None
+        # ContainmentSpec = object | Sequence[object]
         if params.has is not None:
-            # Use isinstance for proper type narrowing (pyrefly requires it)
-            if isinstance(params.has, (list, tuple)):
-                # Type narrowing: params.has is Sequence[object]
-                has_items: Sequence[object] = cast("Sequence[object]", params.has)
+            # Type narrowing: params.has is object | Sequence[object]
+            has_value: object | Sequence[object] = params.has
+            # Use isinstance for proper type narrowing
+            if isinstance(has_value, (list, tuple)):
+                # Type narrowing: has_value is Sequence[object]
+                has_items: Sequence[object] = cast("Sequence[object]", has_value)
             else:
                 # Single item - wrap in list for uniform processing
-                # Type narrowing: params.has is object when not Sequence
-                has_item: object = params.has
-                has_items: Sequence[object] = cast("Sequence[object]", [has_item])
+                # Type narrowing: has_value is object when not Sequence
+                has_item: object = has_value
+                has_items_list: Sequence[object] = cast("Sequence[object]", [has_item])
+                has_items = has_items_list
             for item in has_items:
                 # Type narrowing: item is object from Sequence[object]
                 item_typed: object = item
@@ -650,18 +655,30 @@ class FlextTestsMatchers(FlextTestsUtilities):
             elif params.has is not None:
                 # Validate error message using has parameter
                 err = value.error or ""
-                # params.has can be str or Sequence[str] - handle both
+                # params.has is t.Tests.Matcher.ContainmentSpec | None
+                # ContainmentSpec = object | Sequence[object]
+                # For error validation, we expect str | Sequence[str]
+                # Type narrowing: check if params.has is str or Sequence[str]
+                error_has_value: str | Sequence[str]
                 if isinstance(params.has, str):
-                    error_has_items: list[str] = [params.has]
-                # Type guard: params.has is Sequence[str] when not str
+                    error_has_value = params.has
                 elif isinstance(params.has, Sequence):
-                    # Type narrowing: params.has is Sequence[object], x is object
-                    sequence: Sequence[object] = cast("Sequence[object]", params.has)
-                    error_has_items: list[str] = [
-                        str(cast("object", x)) for x in sequence
-                    ]
+                    # Check if all items are strings
+                    if all(isinstance(x, str) for x in params.has):
+                        error_has_value = cast("Sequence[str]", params.has)
+                    else:
+                        # Convert non-string items to strings
+                        error_has_value = [str(x) for x in params.has]
                 else:
-                    error_has_items = [str(params.has)]
+                    # Convert to string representation
+                    error_has_value = str(params.has)
+
+                # Process error_has_value to get list of strings
+                if isinstance(error_has_value, str):
+                    error_has_items: list[str] = [error_has_value]
+                else:
+                    # error_has_value is Sequence[str]
+                    error_has_items = [str(x) for x in error_has_value]
                 for item in error_has_items:
                     if item not in err:
                         raise AssertionError(
@@ -753,21 +770,26 @@ class FlextTestsMatchers(FlextTestsUtilities):
             raise AssertionError(error_msg)
 
         # Handle unified has/lacks (works for str, list, dict, set, tuple)
+        # params.has is t.Tests.Matcher.ContainmentSpec | None
+        # ContainmentSpec = object | Sequence[object]
         if params.has is not None:
-            # Use isinstance for proper type narrowing (pyrefly requires it)
-            if isinstance(params.has, (list, tuple)):
-                # Type narrowing: params.has is Sequence[object]
-                has_items: Sequence[object] = cast("Sequence[object]", params.has)
+            # Type narrowing: params.has is object | Sequence[object]
+            has_value: object | Sequence[object] = params.has
+            # Use isinstance for proper type narrowing
+            if isinstance(has_value, (list, tuple)):
+                # Type narrowing: has_value is Sequence[object]
+                has_items: Sequence[object] = cast("Sequence[object]", has_value)
             else:
                 # Single item - wrap in list for uniform processing
-                # Type narrowing: params.has is object when not Sequence
-                has_item: object = params.has
-                has_items: Sequence[object] = cast("Sequence[object]", [has_item])
+                # Type narrowing: has_value is object when not Sequence
+                has_item: object = has_value
+                has_items_list: Sequence[object] = cast("Sequence[object]", [has_item])
+                has_items = has_items_list
             for has_item_obj in has_items:
                 # Type narrowing: has_item_obj is object from Sequence[object]
                 has_item_val: object = has_item_obj
                 if not u.chk(value, contains=has_item_val):
-                    # str() already returns str, so cast is redundant
+                    # str() already returns str
                     item_str: str = str(has_item_val)
                     raise AssertionError(
                         params.msg
@@ -808,8 +830,15 @@ class FlextTestsMatchers(FlextTestsUtilities):
         if params.len is not None and not u.Tests.Length.validate(value, params.len):
             # Type guard: value has __len__ if it passed validation
             # Use isinstance to help type checker understand value has __len__
+            # Type narrowing for len() call
             if isinstance(value, (str, bytes, Sequence, Mapping)):
-                actual_len = len(value)
+                # Type narrowing: value has __len__ method
+                value_with_len: (
+                    str | bytes | Sequence[object] | Mapping[object, object]
+                ) = cast(
+                    "str | bytes | Sequence[object] | Mapping[object, object]", value
+                )
+                actual_len = len(value_with_len)
             else:
                 actual_len = 0
             if isinstance(params.len, int):
@@ -832,7 +861,11 @@ class FlextTestsMatchers(FlextTestsUtilities):
         # Sequence assertions
         # Use isinstance for proper type narrowing (pyrefly requires it)
         if isinstance(value, (list, tuple)):
-            seq_value: list[object] | tuple[object, ...] = value
+            # Type narrowing: value is list or tuple
+            # Cast to proper type for type inference
+            seq_value: list[object] | tuple[object, ...] = cast(
+                "list[object] | tuple[object, ...]", value
+            )
             if params.first is not None:
                 if not seq_value:
                     raise AssertionError(
@@ -935,8 +968,11 @@ class FlextTestsMatchers(FlextTestsUtilities):
 
         # Mapping assertions
         if isinstance(value, Mapping):
-            # Type narrowing: value is now Mapping[object, object]
-            mapping_value: Mapping[object, object] = value
+            # Type narrowing: value is now Mapping
+            # Cast to Mapping[object, object] for proper type inference
+            mapping_value: Mapping[object, object] = cast(
+                "Mapping[object, object]", value
+            )
             if params.keys is not None:
                 key_set: set[object] = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
@@ -981,9 +1017,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 # Handle Mapping case (multiple key-value pairs)
                 elif isinstance(params.kv, Mapping):
                     # Type narrowing: params.kv is Mapping[str, object]
-                    mapping_kv: Mapping[str, object] = cast(
-                        "Mapping[str, object]", params.kv
-                    )
+                    mapping_kv: Mapping[str, object] = params.kv
                     for key, expected_val in mapping_kv.items():
                         if key not in mapping_value:
                             raise AssertionError(
@@ -1296,8 +1330,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
         """DEPRECATED: Use tm.has() for key checks, tm.len() for length checks.
 
         Migration:
-            tm.dict_(d, has_key="x") -> tm.has(d, "x")
-            tm.dict_(d, length=5)   -> tm.len(d, expected=5)
+            tm.that(d, keys=["x"]) -> tm.has(d, "x")
+            tm.dict_(d, length=5)   -> tm.that(d, length=5)
             tm.dict_(d, empty=False) -> tm.len(d, empty=False)
 
         This method remains for complex cases requiring key_equals, contains, etc.
@@ -1386,16 +1420,19 @@ class FlextTestsMatchers(FlextTestsUtilities):
             or length_lt is not None
             or length_lte is not None
         ):
-            # Convert Mapping to list for len() check
-            _ = FlextTestsMatchers.len(
-                list(data.keys()),
-                expected=length,
-                gt=length_gt,
-                gte=length_gte,
-                lt=length_lt,
-                lte=length_lte,
-                msg=msg,
-            )
+            # Convert Mapping to list for length check using tm.that()
+            length_kwargs: dict[str, object] = {}
+            if length is not None:
+                length_kwargs["length"] = length
+            if length_gt is not None:
+                length_kwargs["length_gt"] = length_gt
+            if length_gte is not None:
+                length_kwargs["length_gte"] = length_gte
+            if length_lt is not None:
+                length_kwargs["length_lt"] = length_lt
+            if length_lte is not None:
+                length_kwargs["length_lte"] = length_lte
+            _ = FlextTestsMatchers.that(list(data.keys()), msg=msg, **length_kwargs)
 
         return dict(data)
 
@@ -1421,8 +1458,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
         """DEPRECATED: Use tm.has() for containment, tm.len() for length checks.
 
         Migration:
-            tm.list_(l, contains="x") -> tm.has(l, "x")
-            tm.list_(l, length=5)    -> tm.len(l, expected=5)
+            tm.that(l, has="x") -> tm.has(l, "x")
+            tm.that(l, length=5)    -> tm.that(l, length=5)
             tm.list_(l, empty=False) -> tm.len(l, empty=False)
 
         This method remains for complex cases like all_match, any_matches, etc.
@@ -1463,15 +1500,19 @@ class FlextTestsMatchers(FlextTestsUtilities):
             or length_lt is not None
             or length_lte is not None
         ):
-            _ = FlextTestsMatchers.len(
-                items,
-                expected=length,
-                gt=length_gt,
-                gte=length_gte,
-                lt=length_lt,
-                lte=length_lte,
-                msg=msg,
-            )
+            # Use tm.that() directly instead of deprecated tm.len()
+            length_kwargs: dict[str, object] = {}
+            if length is not None:
+                length_kwargs["length"] = length
+            if length_gt is not None:
+                length_kwargs["length_gt"] = length_gt
+            if length_gte is not None:
+                length_kwargs["length_gte"] = length_gte
+            if length_lt is not None:
+                length_kwargs["length_lt"] = length_lt
+            if length_lte is not None:
+                length_kwargs["length_lte"] = length_lte
+            _ = FlextTestsMatchers.that(items, msg=msg, **length_kwargs)
 
         if all_match is not None and not all(all_match(item) for item in items):
             raise AssertionError(msg or "Not all items matched predicate")
@@ -1496,9 +1537,9 @@ class FlextTestsMatchers(FlextTestsUtilities):
         """DEPRECATED: Use tm.that(items, length/length_gt/length_gte/empty=...) instead.
 
         Migration:
-            tm.len(items, expected=5) -> tm.that(items, length=5)
-            tm.len(items, gt=0, lt=10) -> tm.that(items, length_gt=0, length_lt=10)
-            tm.len(items, gte=1) -> tm.that(items, length_gte=1)
+            tm.that(items, length=5) -> tm.that(items, length=5)
+            tm.that(items, length_gt=0, lt=10) -> tm.that(items, length_gt=0, length_lt=10)
+            tm.that(items, length_gte=1) -> tm.that(items, length_gte=1)
             tm.len(items, empty=False) -> tm.that(items, empty=False)
 
         """
@@ -1573,7 +1614,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
         """DEPRECATED: Use tm.that(hasattr(obj, name), eq=True) and tm.that(callable(...), eq=True).
 
         Migration:
-            tm.method(api, "connect") ->
+            tm.that(hasattr(api, "connect"), eq=True) and tm.that(callable(getattr(api, "connect", None)), eq=True) ->
                 tm.that(hasattr(api, "connect"), eq=True)
                 tm.that(callable(getattr(api, "connect")), eq=True)
 
@@ -1591,7 +1632,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
         """DEPRECATED: Use tm.that(value, none=False) for each value.
 
         Migration:
-            tm.not_none(value1, value2, value3) ->
+            tm.that(value1, value2, value3, none=False) ->
                 tm.that(value1, none=False)
                 tm.that(value2, none=False)
                 tm.that(value3, none=False)
@@ -1614,7 +1655,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
         """DEPRECATED: Use tm.that(actual, eq=expected) instead.
 
         Migration:
-            tm.eq(a, b) -> tm.that(a, eq=b)
+            tm.that(a, eq=b) -> tm.that(a, eq=b)
 
         """
         warnings.warn(
@@ -1629,7 +1670,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
         """DEPRECATED: Use tm.that(condition, eq=True) instead.
 
         Migration:
-            tm.true(callable(func)) -> tm.that(callable(func), eq=True)
+            tm.that(callable(func, eq=True)) -> tm.that(callable(func), eq=True)
 
         """
         warnings.warn(

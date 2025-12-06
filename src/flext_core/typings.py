@@ -19,8 +19,10 @@ from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from re import Pattern
+from types import ModuleType
 from typing import (
     Annotated,
+    ClassVar,
     ParamSpec,
     TypedDict,
     TypeVar,
@@ -609,6 +611,13 @@ class FlextTypes:
         type ConfigurationDict = dict[str, t.GeneralValueType]
         """Mutable dict for configuration (configuration keys to values)."""
 
+        type IncEx = set[str] | dict[str, set[str] | bool]
+        """Pydantic include/exclude type for model_dump() and serialization.
+
+        Used for include and exclude parameters in BaseModel.model_dump().
+        Can be a set of field names or a dict mapping field names to nested include/exclude.
+        """
+
         # Common string-to-value mappings
         type StringMapping = Mapping[str, str]
         """Mapping for string-to-string associations (e.g., key mappings, flags)."""
@@ -876,6 +885,119 @@ class FlextTypes:
         # Type narrowing for results: list[T] is done at usage site based on operation return type
         # Users should use t.Types.BatchResultDict directly
 
+        class RuntimeBootstrapOptions(TypedDict, total=False):
+            """Typed dictionary for runtime bootstrap options.
+
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            All fields are optional (total=False) as subclasses can override
+            only specific options. This TypedDict matches the signature of
+            FlextRuntime.create_service_runtime() to reduce casts and improve
+            type safety.
+
+            Audit Implication: Used for runtime bootstrap configuration in service
+            initialization. Complete configuration ensures proper runtime lifecycle
+            management and audit trail completeness for service operations.
+            """
+
+            config_type: type[BaseModel]
+            """Config type for service runtime (defaults to FlextConfig)."""
+
+            config_overrides: Mapping[str, t.FlexibleValue]
+            """Configuration overrides to apply to the config instance."""
+
+            context: object
+            """Context instance (p.Context.Ctx) for service runtime.
+
+            Note: Uses object to avoid circular import with protocols.py.
+            Actual type is p.Context.Ctx, but protocols cannot be imported here.
+            """
+
+            subproject: str
+            """Subproject identifier for scoped container creation."""
+
+            services: Mapping[
+                str,
+                t.GeneralValueType | BaseModel | object,
+            ]
+            """Service registrations for container.
+
+            Note: Uses object for p.Utility.Callable[t.GeneralValueType] to avoid
+            circular import with protocols.py. Actual type includes callables.
+            """
+
+            factories: Mapping[
+                str,
+                Callable[
+                    [],
+                    (
+                        t.ScalarValue
+                        | Sequence[t.ScalarValue]
+                        | Mapping[str, t.ScalarValue]
+                    ),
+                ],
+            ]
+            """Factory registrations for container."""
+
+            resources: Mapping[str, Callable[[], t.GeneralValueType]]
+            """Resource registrations for container."""
+
+            container_overrides: Mapping[str, t.FlexibleValue]
+            """Container configuration overrides."""
+
+            wire_modules: Sequence[ModuleType]
+            """Modules to wire for dependency injection."""
+
+            wire_packages: Sequence[str]
+            """Packages to wire for dependency injection."""
+
+            wire_classes: Sequence[type]
+            """Classes to wire for dependency injection."""
+
+    # =========================================================================
+    # CORE NAMESPACE - For cross-project access pattern consistency
+    # =========================================================================
+    # Provides a .Core. namespace class for accessing core types from other projects
+    # Similar pattern to how flext-ldap uses .Ldif. namespace to access flext-ldif types
+    # This enables consistent namespace patterns across the FLEXT ecosystem
+
+    class Core:
+        """Core types namespace for cross-project access.
+
+        Provides organized access to all core types for other FLEXT projects.
+        Usage: Other projects can reference `t.Core.ScalarValue`, `t.Core.Json.JsonValue`, etc.
+        This enables consistent namespace patterns (e.g., `.Core.`, `.Ldif.`, `.Ldap.`).
+        """
+
+        # Core scalar and value types
+        type ScalarValue = FlextTypes.ScalarValue
+        type GeneralValueType = FlextTypes.GeneralValueType
+        type ConstantValue = FlextTypes.ConstantValue
+        type ObjectList = FlextTypes.ObjectList
+        type SortableObjectType = FlextTypes.SortableObjectType
+        type MetadataAttributeValue = FlextTypes.MetadataAttributeValue
+        type Metadata = FlextTypes.Metadata
+        type FlexibleValue = FlextTypes.FlexibleValue
+        type FlexibleMapping = FlextTypes.FlexibleMapping
+        type JsonValue = FlextTypes.JsonValue
+
+        # Nested namespace classes - defined as ClassVar for proper type checking
+        # These are assigned after class definition to avoid forward reference issues
+        # Note: With from __future__ import annotations, these are automatically strings
+        Utility: ClassVar[type[FlextTypes.Utility]]
+        Validation: ClassVar[type[FlextTypes.Validation]]
+        Json: ClassVar[type[FlextTypes.Json]]
+        Handler: ClassVar[type[FlextTypes.Handler]]
+        Config: ClassVar[type[FlextTypes.Config]]
+        Dispatcher: ClassVar[type[FlextTypes.Dispatcher]]
+        Types: ClassVar[type[FlextTypes.Types]]
+
+    # =========================================================================
+    # CORE NAMESPACE - Access nested classes (defined after Core class)
+    # =========================================================================
+    # Note: These are assigned after all nested classes are defined
+    # to enable .Core. namespace pattern for cross-project access
+
     # =========================================================================
     # ROOT-LEVEL ALIASES (Minimize nesting for common types)
     # Usage: t.PortNumber instead of t.Validation.PortNumber
@@ -911,6 +1033,11 @@ class FlextTypes:
     BatchResultDict = Types.BatchResultDict
     ContainerConfigDict = Types.ContainerConfigDict
 
+    # Core namespace access to nested classes (assigned after class definition)
+    # This enables t.Core.Utility, t.Core.Validation, etc. for consistency
+    # Note: These are assigned via __setattr__ after class definition to avoid
+    # forward reference issues during class construction
+
 
 # NOTE: All TypeVars are defined at module level
 # All complex types are defined in t class only (no loose module-level aliases)
@@ -936,3 +1063,15 @@ __all__ = [
 
 # Alias for simplified usage
 t = FlextTypes
+
+# Enable Core namespace access to nested classes for consistency
+# This allows t.Core.Utility, t.Core.Validation, etc. following the
+# same pattern as other projects (e.g., t.Ldif. in flext-ldap)
+# ClassVar annotations in Core class ensure proper type checking
+FlextTypes.Core.Utility = FlextTypes.Utility
+FlextTypes.Core.Validation = FlextTypes.Validation
+FlextTypes.Core.Json = FlextTypes.Json
+FlextTypes.Core.Handler = FlextTypes.Handler
+FlextTypes.Core.Config = FlextTypes.Config
+FlextTypes.Core.Dispatcher = FlextTypes.Dispatcher
+FlextTypes.Core.Types = FlextTypes.Types

@@ -230,12 +230,13 @@ class TestFlextExceptionsHierarchy:
             # can't infer compatibility with specific exception constructors
 
             # BaseError accepts **extra_kwargs: MetadataAttributeValue
-            # Cast metadata_kwargs to correct type for dynamic kwargs unpacking in tests
-            # Cast to dict[str, MetadataAttributeValue] for **kwargs unpacking
+            # Mypy limitation: dict unpacking to **kwargs not fully supported
+            # The dict[str, MetadataAttributeValue] is compatible with **extra_kwargs: MetadataAttributeValue
+            # Use type ignore for dict unpacking (runtime behavior is correct)
             metadata_typed: dict[str, t.MetadataAttributeValue] = cast(
                 "dict[str, t.MetadataAttributeValue]", metadata_kwargs
             )
-            error = scenario.exception_type(scenario.message, **metadata_typed)
+            error = scenario.exception_type(scenario.message, **metadata_typed)  # type: ignore[arg-type]
         else:
             error = scenario.exception_type(scenario.message)
         assert scenario.message in str(error)
@@ -473,11 +474,13 @@ class TestExceptionFactory:
         # create accepts **kwargs: MetadataAttributeValue, but type checker can't infer compatibility
 
         # Cast converted_kwargs to correct type for dynamic kwargs unpacking in tests
-        # Cast to dict[str, MetadataAttributeValue] for **kwargs unpacking
+        # Mypy limitation: dict unpacking to **kwargs not fully supported
+        # The dict[str, MetadataAttributeValue] is compatible with **kwargs: MetadataAttributeValue
+        # Use type ignore for dict unpacking (runtime behavior is correct)
         kwargs_typed: dict[str, t.MetadataAttributeValue] = cast(
             "dict[str, t.MetadataAttributeValue]", converted_kwargs
         )
-        error = FlextExceptions.create(message, **kwargs_typed)
+        error = FlextExceptions.create(message, **kwargs_typed)  # type: ignore[arg-type]
         assert isinstance(error, expected_type)
 
 

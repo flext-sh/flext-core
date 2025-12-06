@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal, Self, TypeGuard, cast, overload
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel
 
 from flext_core import (
     FlextResult as r,
@@ -73,12 +73,24 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
 
     """
 
-    _data: t_test.Tests.Builders.BuilderDict = PrivateAttr(default_factory=dict)
+    # Use class attribute (not PrivateAttr) to match FlextService pattern
+    # Initialize as None to avoid ClassVar requirement (mutable default)
+    _data: t_test.Tests.Builders.BuilderDict | None = None
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize builder with optional initial data."""
-        super().__init__(**data)
-        object.__setattr__(self, "_data", {})
+        # Call super().__init__() without kwargs - FlextService doesn't accept arbitrary kwargs
+        super().__init__()
+        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+        # Always initialize as empty dict (class attribute is default, instance needs fresh copy)
+        self._data = {}
+
+    def _ensure_data_initialized(self) -> None:
+        """Ensure _data is initialized (helper for type safety)."""
+        if self._data is None:
+            self._data = {}
+        # Type assertion for mypy - after this method, _data is guaranteed to be dict
+        assert self._data is not None, "_data must be initialized"
 
     def execute(self) -> r[t.GeneralValueType]:
         """Execute service - builds and returns as FlextResult.
@@ -87,6 +99,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             FlextResult containing built data.
 
         """
+        self._ensure_data_initialized()
         data = self.build()
         # Cast to GeneralValueType for proper return
         return r[t.GeneralValueType].ok(cast("t.GeneralValueType", data))
@@ -99,7 +112,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         self,
         key: str,
         value: t_test.Tests.Builders.BuilderValue | None = None,
-        **kwargs: t.GeneralValueType,
+        **kwargs: object,  # Accept object to allow Callable, set, etc. - validated by AddParams
     ) -> Self:
         """Add data to builder with smart type inference.
 
@@ -397,8 +410,12 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             raise ValueError(error_msg)
 
         # Store result with merge support (use u.merge)
-        if params.merge and params.key in self._data:
-            existing = self._data[params.key]
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
+        builder_data: t_test.Tests.Builders.BuilderDict = self._data
+        if params.merge and params.key in builder_data:
+            existing = builder_data[params.key]
             if u.is_type(existing, "mapping") and u.is_type(resolved_value, "mapping"):
                 # Cast to Mapping for dict conversion (pyrefly needs explicit narrowing)
                 existing_map = cast("Mapping[str, t.GeneralValueType]", existing)
@@ -413,9 +430,11 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
                         merge_result.unwrap(),
                     )
             else:
-                self._data[params.key] = resolved_value
+                builder_data[params.key] = resolved_value
         else:
-            self._data[params.key] = resolved_value
+            builder_data[params.key] = resolved_value
+        # Update instance attribute after local modifications
+        self._data = builder_data
 
         return self
 
@@ -449,6 +468,9 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             tb().set("a.b.c.d", value=42)
 
         """
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
         # If kwargs provided, merge with value as mapping
         final_value: t_test.Tests.Builders.BuilderValue
         if kwargs:
@@ -467,10 +489,14 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
 
         parts = path.split(".")
         if len(parts) == 1:
+            # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+            assert self._data is not None, "_data must be initialized"
             self._data[path] = final_value
             return self
 
         # Navigate to parent
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
         current: t.Types.ConfigurationDict = cast(
             "t.Types.ConfigurationDict",
             self._data,
@@ -515,6 +541,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             Value at path or default.
 
         """
+        self._ensure_data_initialized()
         parts = path.split(".")
         current: t.GeneralValueType = cast("t.GeneralValueType", self._data)
 
@@ -533,7 +560,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
 
     def to_result[T](
         self,
-        **kwargs: t.GeneralValueType,
+        **kwargs: object,  # Accept object to allow Callable, etc. - validated by ToResultParams
     ) -> (
         r[T]
         | r[t_test.Tests.Builders.BuilderDict]
@@ -673,6 +700,13 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         values_only: bool,
     ) -> list[t_test.Tests.Builders.BuilderValue]: ...
 
+    @overload
+    def build(
+        self,
+        *,
+        as_parametrized: bool = ...,
+    ) -> list[t_test.Tests.Builders.ParametrizedCase]: ...
+
     def build[T](
         self,
         **kwargs: object,
@@ -719,6 +753,9 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             raise ValueError(error_msg)
         params = params_result.unwrap()
 
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
         data: t_test.Tests.Builders.BuilderDict = dict(self._data)
 
         if params.filter_none:
@@ -766,7 +803,8 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             Self for method chaining.
 
         """
-        object.__setattr__(self, "_data", {})
+        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+        self._data = {}
         return self
 
     # =========================================================================
@@ -871,8 +909,12 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             New builder instance with copied data.
 
         """
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
         new_builder = FlextTestsBuilders()
-        object.__setattr__(new_builder, "_data", dict(self._data))
+        # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+        new_builder._data = dict(self._data)
         return cast("Self", new_builder)
 
     def fork(self, **updates: t.GeneralValueType) -> Self:
@@ -946,6 +988,12 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             raise ValueError(error_msg)
         params = params_result.unwrap()
 
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
+        # Ensure other builder's _data is also initialized
+        other._ensure_data_initialized()
+        assert other._data is not None, "other._data must be initialized"
         other_data = dict(other._data)
         if params.exclude_keys:
             other_data = {
@@ -958,10 +1006,11 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             strategy=params.strategy,
         )
         if merge_result.is_success:
-            object.__setattr__(
-                self,
-                "_data",
-                cast("t_test.Tests.Builders.BuilderDict", merge_result.unwrap()),
+            # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+            self._ensure_data_initialized()
+            assert self._data is not None, "_data must be initialized"
+            self._data = cast(
+                "t_test.Tests.Builders.BuilderDict", merge_result.unwrap()
             )
         return self
 
@@ -1019,6 +1068,10 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             raise ValueError(error_msg)
         params = params_result.unwrap()
 
+        self._ensure_data_initialized()
+        # Type narrowing: _ensure_data_initialized() guarantees _data is not None
+        assert self._data is not None, "_data must be initialized"
+        builder_data: t_test.Tests.Builders.BuilderDict = self._data
         batch_data: list[t.GeneralValueType | r[t.GeneralValueType]] = []
         for _scenario_id, scenario_data in params.scenarios:
             if params.as_results:
@@ -1030,7 +1083,11 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             for _fail_id, fail_error in params.with_failures:
                 batch_data.append(r[t.GeneralValueType].fail(fail_error))
 
-        self._data[params.key] = cast("t_test.Tests.Builders.BuilderValue", batch_data)
+        builder_data[params.key] = cast(
+            "t_test.Tests.Builders.BuilderValue", batch_data
+        )
+        # Update instance attribute after local modifications
+        self._data = builder_data
         return self
 
     def scenarios(
@@ -1108,7 +1165,10 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
 
         """
         if factory == "users":
-            users: list[m.Tests.Factory.User] = tt.batch_users(count)
+            users: list[m.Tests.Factory.User] = cast(
+                "list[m.Tests.Factory.User]",
+                tt.batch("user", count=count),
+            )
             return [
                 {
                     c.Tests.Builders.KEY_ID: user.id,
@@ -1170,20 +1230,56 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             if production
             else c.Tests.Builders.DEFAULT_ENVIRONMENT_DEVELOPMENT
         )
-        config = tt.create_config(
+        config_result = tt.model(
+            "config",
             service_type=c.Tests.Factory.DEFAULT_SERVICE_TYPE,
             environment=environment,
             debug=debug,
             timeout=c.Tests.Factory.DEFAULT_TIMEOUT,
         )
+        # Type narrowing: tt.model() returns union type, extract BaseModel
+        # Extract BaseModel from union type (single model case)
+        if isinstance(config_result, r):
+            config_unwrapped = config_result.unwrap()
+            if isinstance(config_unwrapped, BaseModel):
+                config = config_unwrapped
+            else:
+                msg = f"Expected BaseModel from result, got {type(config_unwrapped)}"
+                raise TypeError(msg)
+        elif isinstance(config_result, BaseModel):
+            config = config_result
+        elif isinstance(config_result, list):
+            # Single model case shouldn't return list, but handle gracefully
+            if len(config_result) == 1 and isinstance(config_result[0], BaseModel):
+                config = config_result[0]
+            else:
+                msg = f"Expected single BaseModel, got list with {len(config_result)} items"
+                raise TypeError(msg)
+        elif isinstance(config_result, dict):
+            # Single model case shouldn't return dict, but handle gracefully
+            if len(config_result) == 1:
+                config_value = next(iter(config_result.values()))
+                if isinstance(config_value, BaseModel):
+                    config = config_value
+                else:
+                    msg = f"Expected BaseModel in dict, got {type(config_value)}"
+                    raise TypeError(msg)
+            else:
+                msg = f"Expected single BaseModel, got dict with {len(config_result)} items"
+                raise TypeError(msg)
+        else:
+            msg = f"Expected BaseModel, got {type(config_result)}"
+            raise TypeError(msg)
+        # Type narrowing: config is BaseModel, cast to Config for attribute access
+        config_typed = cast("m.Tests.Factory.Config", config)
         b = c.Tests.Builders
         return {
-            b.KEY_SERVICE_TYPE: config.service_type,
-            b.KEY_ENVIRONMENT: config.environment,
-            b.KEY_DEBUG: config.debug,
-            b.KEY_LOG_LEVEL: config.log_level,
-            b.KEY_TIMEOUT: config.timeout,
-            b.KEY_MAX_RETRIES: config.max_retries,
+            b.KEY_SERVICE_TYPE: config_typed.service_type,
+            b.KEY_ENVIRONMENT: config_typed.environment,
+            b.KEY_DEBUG: config_typed.debug,
+            b.KEY_LOG_LEVEL: config_typed.log_level,
+            b.KEY_TIMEOUT: config_typed.timeout,
+            b.KEY_MAX_RETRIES: config_typed.max_retries,
             b.KEY_DATABASE_URL: b.DEFAULT_DATABASE_URL,
             b.KEY_MAX_CONNECTIONS: b.DEFAULT_MAX_CONNECTIONS,
         }

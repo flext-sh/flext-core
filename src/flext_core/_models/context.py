@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import Annotated, cast
 
 import structlog.contextvars
@@ -18,7 +16,6 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validat
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
@@ -44,30 +41,19 @@ class FlextModelsContext:
         if not FlextRuntime.is_dict_like(value):
             return {}
         result: t.Types.ConfigurationDict = {}
-        # Type narrowing: value is dict after is_dict_like and is_type checks
-        raw_dict: dict[str, object] = cast("dict[str, object]", value) if FlextUtilitiesGuards.is_type(value, dict) else {}
-        for k, v in raw_dict.items():
-            # Type narrowing: k is str from dict[str, object], v is object
-            key: str = str(k)
-            value_item: object = v
-            # Ensure value is GeneralValueType compatible
-            # ScalarValue types: str, int, float, bool, datetime, None
-            if (
-                isinstance(value_item, (str, int, float, bool, datetime))
-                or value_item is None
-                or isinstance(value_item, (list, dict))
-            ):
-                result[key] = cast("t.GeneralValueType", value_item)
-            elif isinstance(value_item, Sequence) and not isinstance(value_item, (str, bytes)):
-                # Convert Sequence to list for GeneralValueType compatibility
-                # Type narrowing: value_item is Sequence[object]
-                sequence: Sequence[object] = cast("Sequence[object]", value_item)
-                result[key] = cast("t.GeneralValueType", list(sequence))
-            elif isinstance(value_item, Mapping):
-                # Convert Mapping to dict for GeneralValueType compatibility
-                # Type narrowing: value_item is Mapping[str, object]
-                mapping: Mapping[str, object] = cast("Mapping[str, object]", value_item)
-                result[key] = cast("t.GeneralValueType", dict(mapping))
+        # Type narrowing: value is dict-like after is_dict_like check
+        # Convert to dict for consistent iteration (handles both dict and Mapping)
+        # Use ConfigurationMapping for type safety - values will be normalized to GeneralValueType
+        dict_value: t.Types.ConfigurationMapping = (
+            cast("t.Types.ConfigurationMapping", dict(value.items()))
+            if hasattr(value, "items")
+            else cast("t.Types.ConfigurationMapping", dict(value))
+        )
+        for k, v in dict_value.items():
+            dict_key: str = str(k)
+            # Normalize value to GeneralValueType
+            normalized = FlextRuntime.normalize_to_general_value(v)
+            result[dict_key] = normalized
         return result
 
     class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):
@@ -191,16 +177,22 @@ class FlextModelsContext:
 
             # Create token for reset functionality
             # T is conceptually bounded to GeneralValueType at runtime (structlog context)
-            # We use object as the bridge type which narrows properly
-            prev_value: object = current_value
+            # Normalize value to ensure type safety
+            if isinstance(
+                current_value,
+                (str, int, float, bool, type(None), dict, list),
+            ):
+                # Type narrowing: current_value is already GeneralValueType
+                prev_value: t.GeneralValueType = cast(
+                    "t.GeneralValueType",
+                    current_value,
+                )
+            else:
+                # Convert to string for type safety
+                prev_value = cast("t.GeneralValueType", str(current_value))
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key,
-                previous_value=prev_value
-                if isinstance(
-                    prev_value,
-                    (str, int, float, bool, type(None), dict, list),
-                )
-                else str(prev_value),
+                previous_value=prev_value,
             )
 
         @staticmethod

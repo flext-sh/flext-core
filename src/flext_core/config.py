@@ -301,8 +301,8 @@ class FlextConfig(BaseSettings, FlextRuntime):
                     if hasattr(self.__class__, f"validate_{key}"):
                         validator = getattr(self.__class__, f"validate_{key}")
                         validated_value = validator(value)
-                    # Apply validated value
-                    object.__setattr__(self, key, validated_value)
+                    # Apply validated value - use direct assignment (no frozen=True in model_config)
+                    setattr(self, key, validated_value)
 
     @field_validator("log_level", mode="before")
     @classmethod

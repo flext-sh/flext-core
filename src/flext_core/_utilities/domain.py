@@ -163,7 +163,7 @@ class FlextUtilitiesDomain:
         try:
             obj_dict = obj.__dict__
             # Filter out non-hashable values and convert to tuple
-            hashable_items = []
+            hashable_items: list[tuple[str, object]] = []
             for key, value in sorted(obj_dict.items()):
                 if isinstance(value, Hashable):
                     hashable_items.append((key, value))

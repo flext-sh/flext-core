@@ -257,6 +257,7 @@
         bad-assignment = false       # Union type inference
         no-matching-overload = false # Generic overload resolution
         bad-argument-type = false    # Complex argument typing
+        bad-override = false         # Valid override with compatible return type (ConfigurationDict extends dict[str, Any])
         not-iterable = false         # StrEnum iteration (valid Python 3.11+)
         unsupported-operation = false  # pyrefly doesn't understand 'not in' operator
         not-a-type = false           # Union return types with generics

@@ -94,26 +94,91 @@ result = dispatcher.dispatch(CreateUser(email="user@example.com"))
 assert result.is_success
 ```
 
-### Dependency injection with the new bridge
+### Dependency Injection Architecture (Clear Architecture + DI)
 
-Use the dependency-injector helpers exported by the runtime to declare and consume dependencies without importing the third-party library directly:
+FLEXT-Core implements a layered dependency injection pattern following Clear Architecture principles, ensuring services are easily accessible via DI for downstream projects:
+
+**Architecture Layers**:
+- **L0.5 (Runtime Bridge)**: `FlextRuntime` is the single surface to access providers/containers/wiring (`Provide`, `inject`) and configuration helpers
+- **L1 (DI Integration)**: `FlextRuntime.DependencyIntegration` owns declarative containers, typed providers (Singleton/Factory/Resource), and `providers.Configuration`
+- **L1.5 (Service Runtime Bootstrap)**: `FlextRuntime.create_service_runtime` materializes config/context/container in one call with optional overrides, registrations, and wiring
+- **L2 (Container)**: `FlextContainer` uses bridge providers to register services, factories, and resources with generics, cloning them for scopes
+- **L3 (Handlers/Dispatcher)**: Handlers are wired via `wire_modules`, and `@inject`/`Provide` decorators are re-exported by the runtime
+
+**Key Services Accessible via DI** (Auto-registered):
+- `FlextConfig`: Available as `"config"` - Configuration management with environment variables and validation
+- `FlextLogger`: Available as `"logger"` (factory) - Structured logging with context propagation
+- `FlextContext`: Available as `"context"` - Request/operation context and correlation IDs
+- `FlextContainer`: Dependency injection container with scoped contexts
+- All domain services via `FlextService` with `_runtime_bootstrap_options` override
+
+**Core Services Auto-Registration**:
+Core services (`config`, `logger`, `context`) are automatically registered when creating a `FlextContainer` instance, making them immediately available for dependency injection:
 
 ```python
-from flext_core import FlextContainer, inject
+from flext_core import FlextContainer, FlextConfig, FlextLogger, FlextContext, r
 
-container = FlextContainer.get_global()
+container = FlextContainer()
+
+# Core services are automatically available
+config_result: r[FlextConfig] = container.get("config")
+logger_result: r[FlextLogger] = container.get("logger")
+context_result: r[FlextContext] = container.get("context")
+
+# All return success with the respective service instances
+assert config_result.is_success
+assert logger_result.is_success
+assert context_result.is_success
+```
+
+**Usage Example**:
+
+```python
+from flext_core import FlextContainer, Provide, inject
+
+container = FlextContainer()
 container.register_resource("db", lambda: create_db_client())
 container.register_factory("token_factory", lambda: {"token": "abc123"})
 
+# Wire modules for automatic dependency injection
+container.wire_modules(modules=[my_module])
+
 @inject
-def do_work(db=container.provide["db"], token_factory=container.provide["token_factory"]):
-    # Dependencies are resolved by the bridge; no manual lookups
+def do_work(
+    db=Provide["db"],
+    token_factory=Provide["token_factory"]
+):
+    # Dependencies are resolved automatically by the bridge
     return db, token_factory()
 
 db_client, tokens = do_work()
 ```
 
-The layered bridge keeps dependency-injector usage isolated to the runtime (L0.5) and container (L2) while handlers (L3) use only the public `provide`/`inject` API. See [`docs/dependency_injector_prompt.md`](docs/dependency_injector_prompt.md) for the full pattern checklist.
+**Service Bootstrap with DI**:
+
+```python
+from flext_core import FlextService, r, t
+
+class MyService(FlextService[str]):
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+        return {
+            "config_overrides": {"app_name": "my_app"},
+            "services": {"feature_flag": True},
+            "factories": {"token_factory": lambda: {"token": "svc"}},
+            "resources": {"api_client": lambda: connect_client()},
+            "wire_modules": [my_module],
+        }
+
+    def execute(self) -> r[str]:
+        # Access services via container
+        token = self.container.get("token_factory").value["token"]
+        return r[str].ok(f"token: {token}")
+```
+
+The layered bridge keeps dependency-injector usage isolated to the runtime (L0.5) and container (L2) while handlers (L3) use only the public `Provide`/`inject` API. **Projects consuming flext-core should NEVER import `dependency-injector` directly** - always use the facades exposed by `FlextRuntime` and `FlextContainer`.
+
+See [`docs/dependency_injector_prompt.md`](docs/dependency_injector_prompt.md) for the complete pattern checklist and architectural rules.
 
 When you need a standalone DI container (for tests or auxiliary modules) without manual follow-up registration, use the parameterized factory helper:
 
@@ -135,7 +200,7 @@ di_container = FlextRuntime.DependencyIntegration.create_container(
 
 class ReportingService(FlextService[r[str]]):
     @classmethod
-    def _runtime_bootstrap_options(cls) -> dict[str, object]:
+    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
         return {
             "config_overrides": {"app_name": "reports"},
             "services": {"feature_flag": True},
@@ -382,6 +447,14 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 - ✅ FlextRuntime and FlextResult patterns unified
 - ✅ FlextTestsUtilities with comprehensive helper classes
 - ✅ All 2561 tests passing with 81.40% coverage
+
+**Type Safety Improvements** ✅ **COMPLETED** (January 2025):
+- ✅ Pyrefly: 0 errors in `src/` and `tests/` (345 ignored - known limitations)
+- ✅ Pyright: 0 errors in core modules (`configuration.py`, `cache.py`, `domain.py`, `context.py`)
+- ✅ Fixed dynamic attribute access using `getattr` with `cast()`
+- ✅ Fixed generic type annotations in collection utilities
+- ✅ Fixed test class inheritance and method override signatures
+- ✅ Tests incrementally using `tt, tf, tb, tv, tm` from `flext_tests` for simplification
 
 **Key Patterns Established**:
 - ✅ Direct import: `from flext_core.typings import t, T, U` (required for MyPy)

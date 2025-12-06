@@ -169,9 +169,8 @@ class FlextUtilitiesReliability:
                 if result.is_success:
                     return result
 
-                last_error = (
-                    result.error if result.error is not None else "Unknown error"
-                )
+                # When is_failure is True, error is never None (fail() converts None to "")
+                last_error = result.error or "Unknown error"
 
                 # Don't delay on the last attempt
                 if attempt < max_attempts_value - 1:

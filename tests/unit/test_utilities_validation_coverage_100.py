@@ -253,8 +253,9 @@ class TestuValidation:
     def test_normalize_component_pydantic_model_direct(self) -> None:
         """Test normalize_component with Pydantic model instance directly."""
         model = PydanticModelForTest(name="test", value=42)
-        # Pass model instance directly
-        result = u.Validation.normalize_component(model)
+        # Convert BaseModel to GeneralValueType via model_dump() before passing
+        model_dict: t.GeneralValueType = model.model_dump()
+        result = u.Validation.normalize_component(model_dict)
         assert isinstance(result, dict)
         assert result.get("name") == "test"
         assert result.get("value") == 42

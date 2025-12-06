@@ -27,7 +27,8 @@ from typing import ClassVar
 import pytest
 
 from flext_core import p, r, t
-from flext_tests import u
+from flext_tests.matchers import tm
+from flext_tests.utilities import u
 
 
 class ProtocolCategoryType(StrEnum):
@@ -155,10 +156,17 @@ class TestFlextProtocols:
     def test_protocol_definition(self, scenario: ProtocolDefinitionScenario) -> None:
         """Test protocol definitions are accessible and valid."""
         protocol = getattr(p, scenario.protocol_name)
-        assert protocol is not None
-        assert hasattr(protocol, "__protocol_attrs__") or hasattr(
-            protocol,
-            "__annotations__",
+        tm.that(
+            protocol, none=False, msg=f"Protocol {scenario.protocol_name} must exist"
+        )
+        tm.that(
+            hasattr(protocol, "__protocol_attrs__")
+            or hasattr(protocol, "__annotations__"),
+            eq=True,
+            msg=(
+                f"Protocol {scenario.protocol_name} must have "
+                f"protocol attributes or annotations"
+            ),
         )
 
     @pytest.mark.parametrize(
@@ -170,19 +178,30 @@ class TestFlextProtocols:
         self,
         scenario: ProtocolAvailabilityScenario,
     ) -> None:
-        """Test that protocols are available by category."""
+        """Test that protocols are available by category with real validation."""
         category_mapping = {
             ProtocolCategoryType.FOUNDATION: p.Foundation,
             ProtocolCategoryType.DOMAIN: p.Domain,
             ProtocolCategoryType.INFRASTRUCTURE: p.Configuration,
             ProtocolCategoryType.APPLICATION: p.Application,
             ProtocolCategoryType.COMMANDS: p.Application,
+            ProtocolCategoryType.EXTENSIONS: p.Application,
         }
         category_class = category_mapping.get(scenario.category, p)
+        tm.that(
+            category_class,
+            none=False,
+            msg=f"Category class for {scenario.category} must exist",
+        )
         for proto_name in scenario.protocol_names:
-            assert hasattr(category_class, proto_name), (
-                f"Protocol {proto_name} not found in {category_class.__name__}"
+            tm.that(
+                hasattr(category_class, proto_name),
+                eq=True,
+                msg=f"Protocol {proto_name} must be found in {category_class.__name__}",
             )
+            # Validate protocol is not None
+            protocol = getattr(category_class, proto_name)
+            tm.that(protocol, none=False, msg=f"Protocol {proto_name} must not be None")
 
     def test_result_protocol_implementation(self) -> None:
         """Test that a class can implement Result protocol."""
@@ -218,9 +237,11 @@ class TestFlextProtocols:
                 return self._value
 
         container = ResultContainer("test")
-        assert container.value == "test"
-        assert container.is_success
-        assert not container.is_failure
+        tm.that(container.value, eq="test", msg="Container value must match input")
+        tm.that(container.is_success, eq=True, msg="Container must be success")
+        tm.that(container.is_failure, eq=False, msg="Container must not be failure")
+        tm.that(container.error, none=True, msg="Success container must have no error")
+        tm.that(container.unwrap(), eq="test", msg="Unwrap must return value")
 
     def test_repository_implementation(self) -> None:
         """Test that a class can implement Repository protocol."""
@@ -244,7 +265,23 @@ class TestFlextProtocols:
                 return r[bool].ok(True)
 
         repo = UserRepository()
-        assert all(hasattr(repo, m) for m in ["find_by_id", "save", "delete"])
+        required_methods = ["find_by_id", "save", "delete"]
+        for method in required_methods:
+            tm.that(
+                hasattr(repo, method),
+                eq=True,
+                msg=f"Repository must have {method} method",
+            )
+            tm.that(
+                callable(getattr(repo, method)),
+                eq=True,
+                msg=f"Repository {method} must be callable",
+            )
+        # Test actual execution
+        find_result = repo.find_by_id("test_id")
+        u.Tests.Result.assert_success(find_result)
+        tm.that(find_result.value, has="id", msg="Find result must contain id")
+        tm.that(find_result.value, has="name", msg="Find result must contain name")
 
     def test_service_implementation(self) -> None:
         """Test that a class can implement Service protocol."""
@@ -256,8 +293,18 @@ class TestFlextProtocols:
                 return r[t.Types.ConfigurationMapping].ok({"status": "success"})
 
         service = UserService()
+        tm.that(
+            hasattr(service, "execute"), eq=True, msg="Service must have execute method"
+        )
+        tm.that(
+            callable(service.execute), eq=True, msg="Service execute must be callable"
+        )
         result = service.execute()
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_success(result)
+        tm.that(result.value, has="status", msg="Service result must contain status")
+        tm.that(
+            result.value["status"], eq="success", msg="Service status must be success"
+        )
 
     def test_handler_implementation(self) -> None:
         """Test that a class can implement Handler protocol."""
@@ -272,8 +319,23 @@ class TestFlextProtocols:
                 return r[t.Types.ConfigurationMapping].ok({"user_id": "123"})
 
         handler = CreateUserHandler()
-        result = handler.handle({"name": "Test"})
-        u.Tests.Result.assert_result_success(result)
+        tm.that(
+            hasattr(handler, "handle"), eq=True, msg="Handler must have handle method"
+        )
+        tm.that(
+            callable(handler.handle), eq=True, msg="Handler handle must be callable"
+        )
+        command = {"name": "Test"}
+        result = handler.handle(command)
+        u.Tests.Result.assert_success(result)
+        tm.that(result.value, has="user_id", msg="Handler result must contain user_id")
+        tm.that(
+            result.value["user_id"],
+            is_=str,
+            none=False,
+            empty=False,
+            msg="user_id must be non-empty string",
+        )
 
     def test_multiple_protocol_implementation(self) -> None:
         """Test that a class can implement multiple protocols."""
@@ -291,7 +353,23 @@ class TestFlextProtocols:
                 return r[t.Types.ConfigurationMapping].ok({})
 
         service = AdvancedService()
-        assert all(hasattr(service, m) for m in ["execute", "handle"])
+        required_methods = ["execute", "handle"]
+        for method in required_methods:
+            tm.that(
+                hasattr(service, method),
+                eq=True,
+                msg=f"AdvancedService must have {method} method",
+            )
+            tm.that(
+                callable(getattr(service, method)),
+                eq=True,
+                msg=f"AdvancedService {method} must be callable",
+            )
+        # Test actual execution
+        execute_result = service.execute()
+        u.Tests.Result.assert_success(execute_result)
+        handle_result = service.handle({"command": "test"})
+        u.Tests.Result.assert_success(handle_result)
 
     def test_protocol_runtime_checkable(self) -> None:
         """Test that protocols support runtime checking."""
@@ -304,7 +382,19 @@ class TestFlextProtocols:
                 return "test"
 
         container = Container()
-        assert hasattr(container, "value")
+        tm.that(
+            hasattr(container, "value"),
+            eq=True,
+            msg="Container must have value property",
+        )
+        tm.that(container.value, eq="test", msg="Container value must be 'test'")
+        tm.that(
+            container.value,
+            is_=str,
+            none=False,
+            empty=False,
+            msg="Container value must be non-empty string",
+        )
 
 
 __all__ = ["TestFlextProtocols"]

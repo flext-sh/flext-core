@@ -8,8 +8,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 import pytest
 import yaml
@@ -175,32 +177,48 @@ class TestFlextTestsFiles:
 
     def test_create_file_set(self, tmp_path: Path) -> None:
         """Test creating multiple files from dictionary."""
-        manager = FlextTestsFiles(base_dir=tmp_path)
-        files = {
+        files: dict[
+            str,
+            str
+            | bytes
+            | t_core.Types.ConfigurationMapping
+            | Sequence[Sequence[str]]
+            | BaseModel,
+        ] = {
             "file1": "content1",
             "file2": "content2",
             "file3.txt": "content3",
         }
 
-        created = manager.create_file_set(files)
-
-        assert len(created) == 3
-        assert created["file1"].read_text() == "content1"
-        assert created["file2"].read_text() == "content2"
-        assert created["file3.txt"].read_text() == "content3"
-        assert created["file1"].name == "file1.txt"
-        assert created["file2"].name == "file2.txt"
-        assert created["file3.txt"].name == "file3.txt"
+        with tf.files(files, directory=tmp_path, ext=".txt") as created:
+            assert len(created) == 3
+            assert created["file1"].read_text() == "content1"
+            assert created["file2"].read_text() == "content2"
+            assert created["file3.txt"].read_text() == "content3"
+            assert created["file1"].name == "file1.txt"
+            assert created["file2"].name == "file2.txt"
+            assert created["file3.txt"].name == "file3.txt"
 
     def test_create_file_set_custom_extension(self, tmp_path: Path) -> None:
         """Test creating file set with custom extension."""
-        manager = FlextTestsFiles(base_dir=tmp_path)
-        files = {"file1": "content1"}
+        files_dict = {"file1": "content1"}
+        # Type: dict[str, str] is compatible with dict[str, str | bytes | ...]
+        # Cast to satisfy mypy's invariant dict type checking
+        files: dict[
+            str,
+            str
+            | bytes
+            | t_core.Types.ConfigurationMapping
+            | Sequence[Sequence[str]]
+            | BaseModel,
+        ] = cast(
+            "dict[str, str | bytes | t_core.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
+            files_dict,
+        )
         extension = ".md"
 
-        created = manager.create_file_set(files, extension=extension)
-
-        assert created["file1"].name == "file1.md"
+        with tf.files(files, directory=tmp_path, ext=extension) as created:
+            assert created["file1"].name == "file1.md"
 
     def test_get_file_info_not_exists(self, tmp_path: Path) -> None:
         """Test getting file info for non-existent file."""
@@ -339,10 +357,23 @@ class TestFlextTestsFiles:
 
     def test_temporary_files_classmethod(self) -> None:
         """Test files classmethod context manager."""
-        files = {
+        files_dict = {
             "file1": "content1",
             "file2": "content2",
         }
+        # Type: dict[str, str] is compatible with dict[str, str | bytes | ...]
+        # Cast to satisfy mypy's invariant dict type checking
+        files: dict[
+            str,
+            str
+            | bytes
+            | t_core.Types.ConfigurationMapping
+            | Sequence[Sequence[str]]
+            | BaseModel,
+        ] = cast(
+            "dict[str, str | bytes | t_core.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
+            files_dict,
+        )
 
         with FlextTestsFiles.files(files) as created:
             assert len(created) == 2
@@ -357,21 +388,45 @@ class TestFlextTestsFiles:
 
     def test_temporary_files_custom_extension(self) -> None:
         """Test files with custom extension."""
-        files = {"file1": "content1"}
+        files_dict = {"file1": "content1"}
+        # Type: dict[str, str] is compatible with dict[str, str | bytes | ...]
+        # Cast to satisfy mypy's invariant dict type checking
+        files: dict[
+            str,
+            str
+            | bytes
+            | t_core.Types.ConfigurationMapping
+            | Sequence[Sequence[str]]
+            | BaseModel,
+        ] = cast(
+            "dict[str, str | bytes | t_core.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
+            files_dict,
+        )
 
         with FlextTestsFiles.files(files, ext=".md") as created:
             assert created["file1"].name == "file1.md"
 
     def test_create_file_set_nested_directory(self, tmp_path: Path) -> None:
         """Test creating files in nested directory."""
-        manager = FlextTestsFiles(base_dir=tmp_path)
         nested_dir = tmp_path / "nested" / "subdir"
-        files = {"file1": "content1"}
+        files_dict = {"file1": "content1"}
+        # Type: dict[str, str] is compatible with dict[str, str | bytes | ...]
+        # Cast to satisfy mypy's invariant dict type checking
+        files: dict[
+            str,
+            str
+            | bytes
+            | t_core.Types.ConfigurationMapping
+            | Sequence[Sequence[str]]
+            | BaseModel,
+        ] = cast(
+            "dict[str, str | bytes | t_core.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
+            files_dict,
+        )
 
-        created = manager.create_file_set(files, directory=nested_dir)
-
-        assert created["file1"].parent == nested_dir
-        assert nested_dir.exists()
+        with tf.files(files, directory=nested_dir) as created:
+            assert created["file1"].parent == nested_dir
+            assert nested_dir.exists()
 
     def test_create_text_file_nested_directory(self, tmp_path: Path) -> None:
         """Test creating text file in nested directory."""
@@ -424,7 +479,12 @@ class TestFlextTestsFilesNewApi:
     def test_create_json_auto_detect_from_dict(self, tmp_path: Path) -> None:
         """Test create() auto-detects JSON from dict content."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        content = {"key": "value", "number": 42}
+        content_dict = {"key": "value", "number": 42}
+        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+        # create() accepts ConfigurationMapping which is compatible
+        content: t_core.Types.ConfigurationMapping = cast(
+            "t_core.Types.ConfigurationMapping", content_dict
+        )
 
         path = manager.create(content, "config.json")
 
@@ -435,7 +495,12 @@ class TestFlextTestsFilesNewApi:
     def test_create_yaml_auto_detect_from_extension(self, tmp_path: Path) -> None:
         """Test create() auto-detects YAML from .yaml extension."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        content = {"name": "test", "enabled": True}
+        content_dict = {"name": "test", "enabled": True}
+        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+        # create() accepts ConfigurationMapping which is compatible
+        content: t_core.Types.ConfigurationMapping = cast(
+            "t_core.Types.ConfigurationMapping", content_dict
+        )
 
         path = manager.create(content, "config.yaml")
 
@@ -533,7 +598,12 @@ class TestFlextTestsFilesNewApi:
     def test_read_json_file(self, tmp_path: Path) -> None:
         """Test read() returns dict content for .json files."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        content = {"key": "value", "number": 42}
+        content_dict = {"key": "value", "number": 42}
+        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+        # create() accepts ConfigurationMapping which is compatible
+        content: t_core.Types.ConfigurationMapping = cast(
+            "t_core.Types.ConfigurationMapping", content_dict
+        )
         path = manager.create(content, "config.json")
 
         result = manager.read(path)
@@ -544,7 +614,12 @@ class TestFlextTestsFilesNewApi:
     def test_read_yaml_file(self, tmp_path: Path) -> None:
         """Test read() returns dict content for .yaml files."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        content = {"name": "test", "enabled": True}
+        content_dict = {"name": "test", "enabled": True}
+        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+        # create() accepts ConfigurationMapping which is compatible
+        content: t_core.Types.ConfigurationMapping = cast(
+            "t_core.Types.ConfigurationMapping", content_dict
+        )
         path = manager.create(content, "config.yaml")
 
         result = manager.read(path)
@@ -1245,7 +1320,9 @@ class TestBatchOperations:
         # Should succeed for the valid file
         assert result.is_success
         batch_result = result.unwrap()
-        assert batch_result.success_count >= 1
+        # success_count is a computed_field property, not a callable
+        # Access it as an attribute, not a method
+        assert batch_result.success_count >= 1  # type: ignore[operator]
 
     def test_batch_result_model_structure(self, tmp_path: Path) -> None:
         """Test BatchResult model has correct structure."""
@@ -1355,7 +1432,12 @@ class TestCreateInStatic:
 
     def test_create_in_json_indent(self, tmp_path: Path) -> None:
         """Test create_in() with custom JSON indentation."""
-        content = {"key": "value", "nested": {"a": 1}}
+        content_dict = {"key": "value", "nested": {"a": 1}}
+        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+        # create_in() accepts ConfigurationMapping which is compatible
+        content: t_core.Types.ConfigurationMapping = cast(
+            "t_core.Types.ConfigurationMapping", content_dict
+        )
         path = tf.create_in(content, "config.json", tmp_path, indent=4)
 
         assert path.exists()

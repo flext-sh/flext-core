@@ -18,10 +18,10 @@ from functools import wraps
 from typing import cast
 
 from flext_core.constants import c
-from flext_core.container import FlextContainer  # For instantiation only
-from flext_core.context import FlextContext  # For instantiation only
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
 from flext_core.exceptions import e
-from flext_core.loggings import FlextLogger  # For instantiation only
+from flext_core.loggings import FlextLogger
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -352,7 +352,8 @@ class FlextDecorators(FlextRuntime):
                         # Get from container using the service key
                         result: r[object] = container.get(service_key)
                         if result.is_success:
-                            kwargs[name] = result.unwrap()
+                            # Use .value directly - FlextResult never returns None on success
+                            kwargs[name] = result.value
                         else:
                             # If resolution fails, let the function handle it
                             # or fail with missing parameter

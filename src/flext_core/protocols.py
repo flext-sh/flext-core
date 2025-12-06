@@ -28,6 +28,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
+from types import ModuleType
 from typing import ParamSpec, Protocol, runtime_checkable
 
 from pydantic import BaseModel
@@ -329,10 +330,40 @@ class FlextProtocols:
                 config: FlextProtocols.Configuration.Config | None = None,
                 context: FlextProtocols.Context.Ctx | None = None,
                 subproject: str | None = None,
-                services: Mapping[str, t.FlexibleValue] | None = None,
-                factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
+                services: Mapping[
+                    str,
+                    t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType],
+                ]
+                | None = None,
+                factories: Mapping[
+                    str,
+                    Callable[
+                        [],
+                        (
+                            t.ScalarValue
+                            | Sequence[t.ScalarValue]
+                            | Mapping[str, t.ScalarValue]
+                        ),
+                    ],
+                ]
+                | None = None,
+                resources: Mapping[str, Callable[[], t.GeneralValueType]] | None = None,
             ) -> FlextProtocols.Container.DI:
                 """Create an isolated container scope with optional overrides."""
+                ...
+
+            def wire_modules(
+                self,
+                *,
+                modules: Sequence[ModuleType] | None = None,
+                packages: Sequence[str] | None = None,
+                classes: Sequence[type] | None = None,
+            ) -> None:
+                """Wire modules/packages to the DI bridge for @inject/Provide usage."""
+                ...
+
+            def get_config(self) -> t.Types.ConfigurationMapping:
+                """Return the merged configuration exposed by this container."""
                 ...
 
             def has_service(self, name: str) -> bool:
