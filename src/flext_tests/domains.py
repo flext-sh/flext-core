@@ -4,11 +4,6 @@ Provides reusable domain objects, test data structures, and fixtures for
 domain-specific testing scenarios. Includes payloads, API responses,
 validation test cases, and domain result helpers.
 
-Scope: Domain-specific test data generators for creating configurations,
-payloads, API responses, user data, service configurations, and validation
-test cases. Integrates with FlextTestsFactories for consistent test data
-generation using Models.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -18,8 +13,8 @@ from __future__ import annotations
 
 import uuid
 
-from flext_core.typings import t
-from flext_tests.factories import FlextTestsFactories
+from flext_tests.factories import tt
+from flext_tests.typings import t
 
 
 class FlextTestsDomains:
@@ -38,6 +33,7 @@ class FlextTestsDomains:
 
         def __init__(self, value: str) -> None:
             """Initialize domain result."""
+            super().__init__()
             self.value = value
 
         @property
@@ -64,7 +60,7 @@ class FlextTestsDomains:
         service_type: str = "api",
         environment: str = "test",
         **overrides: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationDict:
         """Create test configuration data using factories.
 
         Args:
@@ -76,11 +72,11 @@ class FlextTestsDomains:
             Configuration dictionary
 
         """
-        config = FlextTestsFactories.create_config(
+        config = tt.create_config(
             service_type=service_type,
             environment=environment,
         )
-        base_config: dict[str, t.GeneralValueType] = {
+        base_config: t.Types.ConfigurationDict = {
             "service_type": config.service_type,
             "environment": config.environment,
             "debug": config.debug,
@@ -99,7 +95,7 @@ class FlextTestsDomains:
     def create_payload(
         data_type: str = "user",
         **custom_fields: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationDict:
         """Create test payload data.
 
         Args:
@@ -110,7 +106,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: dict[str, dict[str, t.GeneralValueType]] = {
+        payloads: t.Types.StringConfigurationDictDict = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",
@@ -133,16 +129,16 @@ class FlextTestsDomains:
         }
 
         payload = dict(payloads.get(data_type, {}))
-        # Merge with type-safe updates using dict.update
         payload.update(custom_fields)
         return payload
 
     @staticmethod
     def api_response_data(
         status: str = "success",
+        *,
         include_data: bool | None = None,
         **custom_fields: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationDict:
         """Create API response test data.
 
         Args:
@@ -154,7 +150,7 @@ class FlextTestsDomains:
             API response dictionary
 
         """
-        response: dict[str, t.GeneralValueType] = {
+        response: t.Types.ConfigurationDict = {
             "status": status,
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
@@ -169,7 +165,6 @@ class FlextTestsDomains:
                 "message": "Test error message",
             }
 
-        # Merge with type-safe updates using dict.update
         response.update(custom_fields)
         return response
 
@@ -195,7 +190,7 @@ class FlextTestsDomains:
     def create_service(
         service_type: str = "api",
         **config: t.GeneralValueType,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationDict:
         """Create test service configuration.
 
         Args:
@@ -206,13 +201,12 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: dict[str, t.GeneralValueType] = {
+        base_service: t.Types.ConfigurationDict = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,
             "config": FlextTestsDomains.create_configuration(service_type=service_type),
         }
-        # Merge with type-safe updates using dict.update
         base_service.update(config)
         return base_service
 
@@ -231,7 +225,7 @@ class FlextTestsDomains:
         last_name = str(overrides.get("last_name", "User"))
         email = str(overrides.get("email", "test@example.com"))
 
-        user_model = FlextTestsFactories.create_user(
+        user_model = tt.create_user(
             name=f"{first_name} {last_name}",
             email=email,
         )
@@ -308,3 +302,6 @@ class FlextTestsDomains:
 
         """
         return [-5, 0, 17, 151, 200]
+
+
+__all__ = ["FlextTestsDomains"]

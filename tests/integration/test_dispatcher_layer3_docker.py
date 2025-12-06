@@ -1,10 +1,9 @@
 """Docker-based integration tests for FlextDispatcher Layer 3 Advanced Processing.
 
-This module provides comprehensive integration tests for dispatcher.py Layer 3 operations
-using real Docker containers to validate actual service behavior, network I/O, and
-fault tolerance patterns.
+Module: flext_core.dispatcher
+Scope: Layer 3 operations with real Docker containers
 
-Test Coverage:
+Tests validate:
 - Processor registration and lifecycle with real service containers
 - Single item processing against live services
 - Batch processing with rate limiting and circuit breaker
@@ -21,7 +20,6 @@ validating actual network behavior, timeouts, and failure scenarios.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -31,21 +29,83 @@ import random
 import shutil
 import subprocess
 import time
-from typing import cast
+from enum import StrEnum
+from typing import Final, cast
 
 import pytest
 
-from flext_core import (
-    FlextDispatcher,
-    FlextResult,
-)
-from flext_core.typings import t
+from flext_core import FlextDispatcher, FlextResult, t
 
 # Skip entire module if optional dependencies not available
 psycopg2 = pytest.importorskip("psycopg2")
 redis = pytest.importorskip("redis")
 
-# ==================== DOCKER SERVICE HELPERS ====================
+
+# ==================== TEST CONSTANTS ====================
+
+
+class TestDispatcherConstants:
+    """Test constants for dispatcher integration tests."""
+
+    class ProcessorNames(StrEnum):
+        """Processor name constants."""
+
+        POSTGRES = "postgres"
+        LATENCY = "latency"
+        FAULT = "fault"
+        PRIMARY = "primary"
+        FALLBACK1 = "fallback1"
+        FALLBACK2 = "fallback2"
+        SLOW = "slow"
+        NONEXISTENT = "nonexistent"
+
+    class TestValues:
+        """Test value constants."""
+
+        LATENCY_DEFAULT: Final[float] = 0.05
+        LATENCY_SLOW: Final[float] = 0.2
+        LATENCY_FAST: Final[float] = 0.02
+        TIMEOUT_SUCCESS: Final[float] = 1.0
+        TIMEOUT_EXCEEDED: Final[float] = 0.05
+        FAILURE_RATE_50: Final[float] = 0.5
+        FAILURE_RATE_100: Final[float] = 1.0
+        FAILURE_RATE_0: Final[float] = 0.0
+        BATCH_SIZE_SMALL: Final[int] = 2
+        BATCH_SIZE_LARGE: Final[int] = 10
+        MAX_WORKERS_SMALL: Final[int] = 2
+        MAX_WORKERS_LARGE: Final[int] = 4
+        PARALLEL_TIMEOUT_THRESHOLD: Final[float] = 0.2
+        TEST_VALUE: Final[int] = 42
+        ITERATIONS_METRICS: Final[int] = 3
+        ITERATIONS_FAULT: Final[int] = 5
+        ITERATIONS_BATCH: Final[int] = 5
+        ITERATIONS_PARALLEL: Final[int] = 5
+        ITERATIONS_LARGE: Final[int] = 50
+        ITERATIONS_PARALLEL_SMALL: Final[int] = 4
+
+    class DatabaseConfig:
+        """Database configuration constants."""
+
+        HOST_DEFAULT: Final[str] = "localhost"
+        PORT_DEFAULT: Final[int] = 5432
+        DATABASE: Final[str] = "test"
+        USER: Final[str] = "testuser"
+        PASSWORD: Final[str] = "testpass"
+        CONNECT_TIMEOUT: Final[int] = 2
+
+    class QueryStrings:
+        """Query string constants."""
+
+        SELECT_1: Final[str] = "SELECT 1"
+
+    class ErrorMessages:
+        """Error message patterns."""
+
+        DATA_MUST_BE_DICT: Final[str] = "Data must be dict with 'query' key"
+        POSTGRESQL_CONNECTION_ERROR: Final[str] = "PostgreSQL connection error: {}: {}"
+
+
+# ==================== PROCESSOR CLASSES ====================
 
 
 class PostgreSQLService:
@@ -55,7 +115,11 @@ class PostgreSQLService:
     PostgreSQL service running in Docker container.
     """
 
-    def __init__(self, host: str = "localhost", port: int = 5432) -> None:
+    def __init__(
+        self,
+        host: str = TestDispatcherConstants.DatabaseConfig.HOST_DEFAULT,
+        port: int = TestDispatcherConstants.DatabaseConfig.PORT_DEFAULT,
+    ) -> None:
         """Initialize PostgreSQL service processor.
 
         Args:
@@ -82,7 +146,7 @@ class PostgreSQLService:
         """
         if not isinstance(data, dict) or "query" not in data:
             return FlextResult[t.GeneralValueType].fail(
-                "Data must be dict with 'query' key",
+                TestDispatcherConstants.ErrorMessages.DATA_MUST_BE_DICT,
             )
 
         try:
@@ -90,10 +154,10 @@ class PostgreSQLService:
             conn = psycopg2.connect(
                 host=self.host,
                 port=self.port,
-                database="test",
-                user="testuser",
-                password="testpass",
-                connect_timeout=2,
+                database=TestDispatcherConstants.DatabaseConfig.DATABASE,
+                user=TestDispatcherConstants.DatabaseConfig.USER,
+                password=TestDispatcherConstants.DatabaseConfig.PASSWORD,
+                connect_timeout=TestDispatcherConstants.DatabaseConfig.CONNECT_TIMEOUT,
             )
             cursor = conn.cursor()
 
@@ -105,20 +169,19 @@ class PostgreSQLService:
             conn.close()
 
             self.query_count += 1
-            return FlextResult[t.GeneralValueType].ok(
-                cast(
-                    "t.GeneralValueType",
-                    {
-                        "result": result,
-                        "query": data["query"],
-                    },
-                ),
-            )
+            result_dict: dict[str, t.GeneralValueType] = {
+                "result": result,
+                "query": data["query"],
+            }
+            return FlextResult[t.GeneralValueType].ok(result_dict)
 
         except Exception as e:
             self.connection_attempts += 1
             return FlextResult[t.GeneralValueType].fail(
-                f"PostgreSQL connection error: {type(e).__name__}: {e!s}",
+                TestDispatcherConstants.ErrorMessages.POSTGRESQL_CONNECTION_ERROR.format(
+                    type(e).__name__,
+                    str(e),
+                ),
             )
 
 
@@ -128,7 +191,10 @@ class NetworkLatencyProcessor:
     Used to test timeout enforcement and parallel processing performance.
     """
 
-    def __init__(self, latency_seconds: float = 0.05) -> None:
+    def __init__(
+        self,
+        latency_seconds: float = TestDispatcherConstants.TestValues.LATENCY_DEFAULT,
+    ) -> None:
         """Initialize network latency processor.
 
         Args:
@@ -147,39 +213,27 @@ class NetworkLatencyProcessor:
         Returns:
             FlextResult with processed data after delay
 
-        Validates:
-        1. Latency is simulated correctly
-        2. Process count is incremented
-        3. Result contains processed data and latency info
-
         """
-        # Simulate network latency
         time.sleep(self.latency_seconds)
-
-        # Track processing
         self.process_count += 1
 
-        # Validate process count was incremented
         assert self.process_count > 0, "Process count should be incremented"
 
-        # Return result with processed data
-        result = FlextResult[t.GeneralValueType].ok(
-            cast(
-                "t.GeneralValueType",
-                {
-                    "processed": data,
-                    "latency": self.latency_seconds,
-                },
-            ),
-        )
+        # Cast to GeneralValueType for type compatibility
+        result_dict: dict[str, t.GeneralValueType] = {
+            "processed": cast("t.GeneralValueType", data),
+            "latency": cast("t.GeneralValueType", self.latency_seconds),
+        }
+        result = FlextResult[t.GeneralValueType].ok(result_dict)
 
-        # Validate result contains expected data
         assert result.is_success, "Processing should succeed"
         assert result.value is not None, "Result should contain value"
-        assert "processed" in result.value, "Result should contain processed data"
-        assert "latency" in result.value, "Result should contain latency info"
-        assert result.value["latency"] == self.latency_seconds, (
-            f"Latency should be {self.latency_seconds}, got {result.value['latency']}"
+        assert isinstance(result.value, dict), "Result value should be a dict"
+        result_value_dict: dict[str, t.GeneralValueType] = result.value
+        assert "processed" in result_value_dict, "Result should contain processed data"
+        assert "latency" in result_value_dict, "Result should contain latency info"
+        assert result_value_dict["latency"] == self.latency_seconds, (
+            f"Latency should be {self.latency_seconds}, got {result_value_dict['latency']}"
         )
 
         return result
@@ -191,17 +245,27 @@ class FaultInjectionProcessor:
     Used to test circuit breaker, retry logic, and fallback chains.
     """
 
-    def __init__(self, failure_rate: float = 0.5) -> None:
+    def __init__(
+        self,
+        failure_rate: float = TestDispatcherConstants.TestValues.FAILURE_RATE_50,
+        *,
+        rng: random.Random | None = None,
+    ) -> None:
         """Initialize fault injection processor.
 
         Args:
             failure_rate: Probability of failure (0.0-1.0)
+            rng: Random number generator for deterministic testing
 
         """
+        if not 0.0 <= failure_rate <= 1.0:
+            msg = "failure_rate must be between 0.0 and 1.0"
+            raise ValueError(msg)
         self.failure_rate = failure_rate
         self.attempt_count = 0
         self.success_count = 0
         self.failure_count = 0
+        self._rng = rng or random.Random()
 
     def process(self, data: object) -> FlextResult[t.GeneralValueType]:
         """Process with probabilistic failure.
@@ -215,19 +279,19 @@ class FaultInjectionProcessor:
         """
         self.attempt_count += 1
 
-        if random.random() < self.failure_rate:
+        if self._rng.random() < self.failure_rate:
             self.failure_count += 1
             return FlextResult[t.GeneralValueType].fail(
                 f"Injected failure #{self.failure_count}",
             )
 
         self.success_count += 1
-        return FlextResult[t.GeneralValueType].ok(
-            cast(
-                "t.GeneralValueType",
-                {"data": data, "attempt": self.attempt_count},
-            ),
-        )
+        # Cast to GeneralValueType for type compatibility
+        result_dict: dict[str, t.GeneralValueType] = {
+            "data": cast("t.GeneralValueType", data),
+            "attempt": cast("t.GeneralValueType", self.attempt_count),
+        }
+        return FlextResult[t.GeneralValueType].ok(result_dict)
 
 
 # ==================== FIXTURES ====================
@@ -277,8 +341,16 @@ def postgres_service() -> PostgreSQLService:
 
     """
     return PostgreSQLService(
-        host=os.getenv("POSTGRES_HOST", "localhost"),
-        port=int(os.getenv("POSTGRES_PORT", "5432")),
+        host=os.getenv(
+            "POSTGRES_HOST",
+            TestDispatcherConstants.DatabaseConfig.HOST_DEFAULT,
+        ),
+        port=int(
+            os.getenv(
+                "POSTGRES_PORT",
+                str(TestDispatcherConstants.DatabaseConfig.PORT_DEFAULT),
+            ),
+        ),
     )
 
 
@@ -290,7 +362,9 @@ def latency_service() -> NetworkLatencyProcessor:
         NetworkLatencyProcessor with configured latency
 
     """
-    return NetworkLatencyProcessor(latency_seconds=0.05)
+    return NetworkLatencyProcessor(
+        latency_seconds=TestDispatcherConstants.TestValues.LATENCY_DEFAULT,
+    )
 
 
 @pytest.fixture
@@ -301,590 +375,642 @@ def fault_service() -> FaultInjectionProcessor:
         FaultInjectionProcessor with 50% failure rate
 
     """
-    return FaultInjectionProcessor(failure_rate=0.5)
+    return FaultInjectionProcessor(
+        failure_rate=TestDispatcherConstants.TestValues.FAILURE_RATE_50,
+        rng=random.Random(0),
+    )
 
 
-# ==================== TESTS: SERVICE DISCOVERY & REGISTRATION ====================
+pytestmark = [pytest.mark.integration]
 
 
-class TestLayer3DockerServiceDiscovery:
-    """Test Layer 3 operations with real Docker services."""
-
-    def test_register_postgres_service(
-        self,
-        dispatcher: FlextDispatcher,
-        postgres_service: PostgreSQLService,
-    ) -> None:
-        """Test registering real PostgreSQL service processor.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            postgres_service: PostgreSQL service processor
-
-        """
-        result = dispatcher.register_processor("postgres", postgres_service)
-
-        assert result.is_success
-        assert "postgres" in dispatcher.processor_metrics
-        assert dispatcher.processor_metrics["postgres"]["executions"] == 0
-
-    def test_register_latency_service(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test registering network latency service processor.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        result = dispatcher.register_processor("latency", latency_service)
-
-        assert result.is_success
-        assert "latency" in dispatcher.processor_metrics
-
-    def test_register_fault_injection_service(
-        self,
-        dispatcher: FlextDispatcher,
-        fault_service: FaultInjectionProcessor,
-    ) -> None:
-        """Test registering fault injection service processor.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            fault_service: Fault injection processor
-
-        """
-        result = dispatcher.register_processor("fault", fault_service)
-
-        assert result.is_success
-        assert "fault" in dispatcher.processor_metrics
+# ==================== TESTS ====================
 
 
-# ==================== TESTS: SINGLE ITEM PROCESSING ====================
+class TestFlextDispatcherLayer3Docker:
+    """Comprehensive integration tests for FlextDispatcher Layer 3 with Docker.
 
+    Single class pattern with nested classes organizing test cases by functionality.
+    Uses factories, constants, and DRY principles to minimize code duplication.
+    """
 
-class TestLayer3SingleItemProcessing:
-    """Test single item processing with real services."""
+    class TestServiceDiscovery:
+        """Tests for service discovery and registration."""
 
-    def test_process_through_postgres_service(
-        self,
-        dispatcher: FlextDispatcher,
-        postgres_service: PostgreSQLService,
-    ) -> None:
-        """Test processing query through real PostgreSQL service.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            postgres_service: PostgreSQL service processor
-
-        """
-        _ = dispatcher.register_processor("postgres", postgres_service)
-
-        # Process simple query
-        result = dispatcher.process("postgres", {"query": "SELECT 1"})
-
-        assert (
-            result.is_success or result.is_failure
-        )  # May fail if PostgreSQL unavailable
-        if result.is_success:
-            data = result.unwrap()
-            assert isinstance(data, dict)
-            assert "result" in data or "mocked" in data
-            assert postgres_service.query_count > 0
-
-    def test_process_through_latency_service(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test processing with network latency.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
-
-        start_time = time.time()
-        result = dispatcher.process("latency", {"value": 42})
-        elapsed = time.time() - start_time
-
-        assert result.is_success
-        assert elapsed >= 0.05  # Should include latency
-        assert latency_service.process_count == 1
-
-    def test_process_through_fault_injection(
-        self,
-        dispatcher: FlextDispatcher,
-        fault_service: FaultInjectionProcessor,
-    ) -> None:
-        """Test processing with fault injection.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            fault_service: Fault injection processor
-
-        """
-        _ = dispatcher.register_processor("fault", fault_service)
-
-        # Multiple attempts increase likelihood of capturing both success and failure
-        results = [dispatcher.process("fault", {"value": i}) for i in range(5)]
-
-        assert fault_service.attempt_count == 5
-        # At least one should succeed due to 50% failure rate over 5 attempts
-        assert any(r.is_success for r in results)
-
-
-# ==================== TESTS: BATCH PROCESSING ====================
-
-
-class TestLayer3BatchProcessing:
-    """Test batch processing with real services."""
-
-    def test_batch_process_through_latency_service(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test batch processing with network latency.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
-
-        data_list = [{"value": i} for i in range(3)]
-        start_time = time.time()
-        result = dispatcher.process_batch(
-            "latency",
-            cast("list[t.GeneralValueType]", data_list),
-            batch_size=2,
+        @pytest.mark.parametrize(
+            ("processor_name", "processor_class"),
+            [
+                (
+                    TestDispatcherConstants.ProcessorNames.POSTGRES.value,
+                    PostgreSQLService,
+                ),
+                (
+                    TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                    NetworkLatencyProcessor,
+                ),
+                (
+                    TestDispatcherConstants.ProcessorNames.FAULT.value,
+                    FaultInjectionProcessor,
+                ),
+            ],
         )
-        elapsed = time.time() - start_time
+        def test_register_processor(
+            self,
+            dispatcher: FlextDispatcher,
+            processor_name: str,
+            processor_class: type[
+                PostgreSQLService | NetworkLatencyProcessor | FaultInjectionProcessor
+            ],
+        ) -> None:
+            """Test registering processor service.
 
-        assert result.is_success
-        items = result.unwrap()
-        assert len(items) == 3
-        # Batch should still incur latency for each item
-        assert elapsed >= 0.05
-        assert latency_service.process_count == 3
+            Args:
+                dispatcher: FlextDispatcher instance
+                processor_name: Name of processor to register
+                processor_class: Processor class to instantiate
 
-    def test_batch_process_empty_list(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test batch processing with empty list.
+            """
+            processor = processor_class()
+            result = dispatcher.register_processor(processor_name, processor)
 
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
+            assert result.is_success
+            assert processor_name in dispatcher.processor_metrics
+            if processor_name == TestDispatcherConstants.ProcessorNames.POSTGRES.value:
+                assert dispatcher.processor_metrics[processor_name]["executions"] == 0
 
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
+    class TestSingleItemProcessing:
+        """Tests for single item processing."""
 
-        result = dispatcher.process_batch("latency", [])
+        def test_process_through_postgres_service(
+            self,
+            dispatcher: FlextDispatcher,
+            postgres_service: PostgreSQLService,
+        ) -> None:
+            """Test processing query through real PostgreSQL service.
 
-        assert result.is_success
-        assert result.unwrap() == []
-        assert latency_service.process_count == 0
+            Args:
+                dispatcher: FlextDispatcher instance
+                postgres_service: PostgreSQL service processor
 
-    def test_batch_process_large_dataset(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test batch processing with large dataset.
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.POSTGRES.value,
+                postgres_service,
+            )
 
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
+            result = dispatcher.process(
+                TestDispatcherConstants.ProcessorNames.POSTGRES.value,
+                {"query": TestDispatcherConstants.QueryStrings.SELECT_1},
+            )
 
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
+            assert result.is_success or result.is_failure
+            if result.is_success:
+                data = result.unwrap()
+                assert isinstance(data, dict)
+                assert "result" in data or "mocked" in data
+                assert postgres_service.query_count > 0
 
-        data_list = [{"value": i} for i in range(10)]
-        result = dispatcher.process_batch(
-            "latency",
-            cast("list[t.GeneralValueType]", data_list),
-            batch_size=10,
+        def test_process_through_latency_service(
+            self,
+            dispatcher: FlextDispatcher,
+            latency_service: NetworkLatencyProcessor,
+        ) -> None:
+            """Test processing with network latency.
+
+            Args:
+                dispatcher: FlextDispatcher instance
+                latency_service: Network latency processor
+
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                latency_service,
+            )
+
+            start_time = time.time()
+            result = dispatcher.process(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+            )
+            elapsed = time.time() - start_time
+
+            assert result.is_success
+            assert elapsed >= TestDispatcherConstants.TestValues.LATENCY_DEFAULT
+            assert latency_service.process_count == 1
+
+        def test_process_through_fault_injection(
+            self,
+            dispatcher: FlextDispatcher,
+            fault_service: FaultInjectionProcessor,
+        ) -> None:
+            """Test processing with fault injection.
+
+            Args:
+                dispatcher: FlextDispatcher instance
+                fault_service: Fault injection processor
+
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.FAULT.value,
+                fault_service,
+            )
+
+            results = [
+                dispatcher.process(
+                    TestDispatcherConstants.ProcessorNames.FAULT.value,
+                    {"value": i},
+                )
+                for i in range(TestDispatcherConstants.TestValues.ITERATIONS_FAULT)
+            ]
+
+            assert (
+                fault_service.attempt_count
+                == TestDispatcherConstants.TestValues.ITERATIONS_FAULT
+            )
+            assert any(r.is_success for r in results)
+
+    class TestBatchProcessing:
+        """Tests for batch processing."""
+
+        @staticmethod
+        def _create_test_data(count: int) -> list[dict[str, int]]:
+            """Factory for test data."""
+            return [{"value": i} for i in range(count)]
+
+        @pytest.mark.parametrize(
+            ("data_count", "batch_size", "expected_count"),
+            [
+                (3, TestDispatcherConstants.TestValues.BATCH_SIZE_SMALL, 3),
+                (0, TestDispatcherConstants.TestValues.BATCH_SIZE_SMALL, 0),
+                (10, TestDispatcherConstants.TestValues.BATCH_SIZE_LARGE, 10),
+            ],
         )
+        def test_batch_process(
+            self,
+            dispatcher: FlextDispatcher,
+            latency_service: NetworkLatencyProcessor,
+            data_count: int,
+            batch_size: int,
+            expected_count: int,
+        ) -> None:
+            """Test batch processing with network latency.
 
-        assert result.is_success
-        items = result.unwrap()
-        assert len(items) == 10
-        assert latency_service.process_count == 10
+            Args:
+                dispatcher: FlextDispatcher instance
+                latency_service: Network latency processor
+                data_count: Number of items to process
+                batch_size: Batch size for processing
+                expected_count: Expected number of processed items
 
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                latency_service,
+            )
 
-# ==================== TESTS: PARALLEL PROCESSING ====================
+            data_list = self._create_test_data(data_count)
+            # Cast to list[GeneralValueType] for type compatibility
+            data_list_cast = cast("list[t.GeneralValueType]", data_list)
+            start_time = time.time()
+            result = dispatcher.process_batch(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                data_list_cast,
+                batch_size=batch_size if data_count > 0 else 1,
+            )
+            elapsed = time.time() - start_time
 
+            assert result.is_success
+            items = result.unwrap()
+            assert len(items) == expected_count
+            if data_count > 0:
+                assert elapsed >= TestDispatcherConstants.TestValues.LATENCY_DEFAULT
+            assert latency_service.process_count == expected_count
 
-class TestLayer3ParallelProcessing:
-    """Test parallel processing with real services."""
+    class TestParallelProcessing:
+        """Tests for parallel processing."""
 
-    def test_parallel_process_through_latency_service(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test parallel processing with network latency.
+        @staticmethod
+        def _create_test_data(count: int) -> list[dict[str, int]]:
+            """Factory for test data."""
+            return [{"value": i} for i in range(count)]
 
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
-
-        data_list = [{"value": i} for i in range(4)]
-        start_time = time.time()
-        result = dispatcher.process_parallel(
-            "latency",
-            cast("list[t.GeneralValueType]", data_list),
-            max_workers=2,
+        @pytest.mark.parametrize(
+            ("data_count", "max_workers", "expected_count"),
+            [
+                (4, TestDispatcherConstants.TestValues.MAX_WORKERS_SMALL, 4),
+                (0, TestDispatcherConstants.TestValues.MAX_WORKERS_SMALL, 0),
+                (50, TestDispatcherConstants.TestValues.MAX_WORKERS_LARGE, 50),
+            ],
         )
-        elapsed = time.time() - start_time
+        def test_parallel_process(
+            self,
+            dispatcher: FlextDispatcher,
+            latency_service: NetworkLatencyProcessor,
+            data_count: int,
+            max_workers: int,
+            expected_count: int,
+        ) -> None:
+            """Test parallel processing with network latency.
 
-        assert result.is_success
-        items = result.unwrap()
-        assert len(items) == 4
-        # Parallel should be faster than sequential (0.05 * 4 = 0.2 vs ~0.1)
-        # Business Rule: Parallel processing with 2 workers should be roughly 2x faster
-        # Allow some margin for system load variability (0.2s instead of 0.15s)
-        assert elapsed < 0.2  # With 2 workers, should be roughly 2x faster
-        assert latency_service.process_count == 4
+            Args:
+                dispatcher: FlextDispatcher instance
+                latency_service: Network latency processor
+                data_count: Number of items to process
+                max_workers: Maximum number of workers
+                expected_count: Expected number of processed items
 
-    def test_parallel_process_empty_list(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test parallel processing with empty list.
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                latency_service,
+            )
 
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
+            data_list = self._create_test_data(data_count)
+            # Cast to list[GeneralValueType] for type compatibility
+            data_list_cast = cast("list[t.GeneralValueType]", data_list)
+            start_time = time.time()
+            result = dispatcher.process_parallel(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                data_list_cast,
+                max_workers=max_workers if data_count > 0 else 1,
+            )
+            elapsed = time.time() - start_time
 
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
+            assert result.is_success
+            items = result.unwrap()
+            assert len(items) == expected_count
+            if data_count == 4:
+                assert (
+                    elapsed
+                    < TestDispatcherConstants.TestValues.PARALLEL_TIMEOUT_THRESHOLD
+                )
+            assert latency_service.process_count == expected_count
 
-        result = dispatcher.process_parallel("latency", [])
+    class TestTimeoutEnforcement:
+        """Tests for timeout enforcement."""
 
-        assert result.is_success
-        assert result.unwrap() == []
-        assert latency_service.process_count == 0
-
-    def test_parallel_process_large_dataset(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test parallel processing with large dataset.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
-
-        data_list = [{"value": i} for i in range(50)]
-        result = dispatcher.process_parallel(
-            "latency",
-            cast("list[t.GeneralValueType]", data_list),
-            max_workers=4,
+        @pytest.mark.parametrize(
+            ("latency", "timeout", "should_succeed"),
+            [
+                (
+                    TestDispatcherConstants.TestValues.LATENCY_DEFAULT,
+                    TestDispatcherConstants.TestValues.TIMEOUT_SUCCESS,
+                    True,
+                ),
+                (
+                    TestDispatcherConstants.TestValues.LATENCY_SLOW,
+                    TestDispatcherConstants.TestValues.TIMEOUT_EXCEEDED,
+                    False,
+                ),
+            ],
         )
+        def test_execute_with_timeout(
+            self,
+            dispatcher: FlextDispatcher,
+            latency: float,
+            timeout: float,
+            should_succeed: bool,
+        ) -> None:
+            """Test timeout enforcement.
 
-        assert result.is_success
-        items = result.unwrap()
-        assert len(items) == 50
-        assert latency_service.process_count == 50
+            Args:
+                dispatcher: FlextDispatcher instance
+                latency: Latency for processor
+                timeout: Timeout value
+                should_succeed: Whether execution should succeed
 
+            """
+            service = NetworkLatencyProcessor(latency_seconds=latency)
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.SLOW.value,
+                service,
+            )
 
-# ==================== TESTS: TIMEOUT ENFORCEMENT ====================
+            result = dispatcher.execute_with_timeout(
+                TestDispatcherConstants.ProcessorNames.SLOW.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+                timeout=timeout,
+            )
 
+            if should_succeed:
+                assert result.is_success
+                assert service.process_count == 1
+            else:
+                assert result.is_failure
+                assert "timeout" in (result.error or "").lower()
 
-class TestLayer3TimeoutEnforcement:
-    """Test timeout enforcement with real services."""
+        def test_execute_with_timeout_unregistered_processor(
+            self,
+            dispatcher: FlextDispatcher,
+        ) -> None:
+            """Test timeout with unregistered processor.
 
-    def test_execute_with_timeout_success(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test successful execution within timeout.
+            Args:
+                dispatcher: FlextDispatcher instance
 
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
+            """
+            result = dispatcher.execute_with_timeout(
+                TestDispatcherConstants.ProcessorNames.NONEXISTENT.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+                timeout=TestDispatcherConstants.TestValues.TIMEOUT_SUCCESS,
+            )
 
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
+            assert result.is_failure
 
-        # Latency is 0.05s, timeout is 1.0s - should succeed
-        result = dispatcher.execute_with_timeout("latency", {"value": 42}, timeout=1.0)
+    class TestFallbackChains:
+        """Tests for fallback chain execution."""
 
-        assert result.is_success
-        assert latency_service.process_count == 1
+        def test_process_primary_success(
+            self,
+            dispatcher: FlextDispatcher,
+            latency_service: NetworkLatencyProcessor,
+        ) -> None:
+            """Test successful primary processor execution.
 
-    def test_execute_with_timeout_exceeded(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test timeout exceeded scenario.
+            Args:
+                dispatcher: FlextDispatcher instance
+                latency_service: Network latency processor
 
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.PRIMARY.value,
+                latency_service,
+            )
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.FALLBACK1.value,
+                NetworkLatencyProcessor(
+                    latency_seconds=TestDispatcherConstants.TestValues.LATENCY_FAST,
+                ),
+            )
 
-        """
-        # Create service with longer latency
-        slow_service = NetworkLatencyProcessor(latency_seconds=0.2)
-        _ = dispatcher.register_processor("slow", slow_service)
+            result = dispatcher.process(
+                TestDispatcherConstants.ProcessorNames.PRIMARY.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+            )
 
-        # Timeout is 0.05s, latency is 0.2s - should timeout
-        result = dispatcher.execute_with_timeout("slow", {"value": 42}, timeout=0.05)
+            assert result.is_success
+            assert latency_service.process_count == 1
 
-        assert result.is_failure
-        assert "timeout" in (result.error or "").lower()
-
-    def test_execute_with_timeout_unregistered_processor(
-        self,
-        dispatcher: FlextDispatcher,
-    ) -> None:
-        """Test timeout with unregistered processor.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-
-        """
-        result = dispatcher.execute_with_timeout(
-            "nonexistent",
-            {"value": 42},
-            timeout=1.0,
+        @pytest.mark.parametrize(
+            ("primary_rate", "fallback_rate", "expected_failure"),
+            [
+                (
+                    TestDispatcherConstants.TestValues.FAILURE_RATE_100,
+                    TestDispatcherConstants.TestValues.FAILURE_RATE_0,
+                    True,
+                ),
+            ],
         )
+        def test_process_primary_failure_fast_fail(
+            self,
+            dispatcher: FlextDispatcher,
+            primary_rate: float,
+            fallback_rate: float,
+            expected_failure: bool,
+        ) -> None:
+            """Test primary processor failure returns error immediately.
 
-        assert result.is_failure
+            Args:
+                dispatcher: FlextDispatcher instance
+                primary_rate: Primary processor failure rate
+                fallback_rate: Fallback processor failure rate
+                expected_failure: Whether failure is expected
 
+            """
+            primary = FaultInjectionProcessor(failure_rate=primary_rate)
+            fallback = FaultInjectionProcessor(failure_rate=fallback_rate)
 
-# ==================== TESTS: FALLBACK CHAINS ====================
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.PRIMARY.value,
+                primary,
+            )
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.FALLBACK1.value,
+                fallback,
+            )
 
+            result = dispatcher.process(
+                TestDispatcherConstants.ProcessorNames.PRIMARY.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+            )
 
-class TestLayer3FallbackChains:
-    """Test fallback chain execution with real services."""
+            if expected_failure:
+                assert result.is_failure
+                assert primary.attempt_count >= 1
+                assert fallback.attempt_count == 0
 
-    def test_process_primary_success(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test successful primary processor execution (fast fail, no fallback).
+        def test_process_all_fail_fast_fail(
+            self,
+            dispatcher: FlextDispatcher,
+        ) -> None:
+            """Test processor failure returns error immediately.
 
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
+            Args:
+                dispatcher: FlextDispatcher instance
 
-        """
-        _ = dispatcher.register_processor("primary", latency_service)
-        _ = dispatcher.register_processor("fallback1", NetworkLatencyProcessor(0.02))
+            """
+            primary = FaultInjectionProcessor(
+                failure_rate=TestDispatcherConstants.TestValues.FAILURE_RATE_100,
+            )
+            fallback1 = FaultInjectionProcessor(
+                failure_rate=TestDispatcherConstants.TestValues.FAILURE_RATE_100,
+            )
+            fallback2 = FaultInjectionProcessor(
+                failure_rate=TestDispatcherConstants.TestValues.FAILURE_RATE_100,
+            )
 
-        result = dispatcher.process("primary", {"value": 42})
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.PRIMARY.value,
+                primary,
+            )
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.FALLBACK1.value,
+                fallback1,
+            )
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.FALLBACK2.value,
+                fallback2,
+            )
 
-        assert result.is_success
-        assert latency_service.process_count == 1
+            result = dispatcher.process(
+                TestDispatcherConstants.ProcessorNames.PRIMARY.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+            )
 
-    def test_process_primary_failure_fast_fail(
-        self,
-        dispatcher: FlextDispatcher,
-        fault_service: FaultInjectionProcessor,
-    ) -> None:
-        """Test primary processor failure returns error immediately (fast fail).
+            assert result.is_failure
+            assert result.error is not None
+            assert fallback1.attempt_count == 0
+            assert fallback2.attempt_count == 0
 
-        Args:
-            dispatcher: FlextDispatcher instance
-            fault_service: Fault injection processor
+        def test_process_multiple_processors_independent(
+            self,
+            dispatcher: FlextDispatcher,
+        ) -> None:
+            """Test multiple processors operate independently.
 
-        """
-        # Primary fails, no fallback - fast fail
-        primary = FaultInjectionProcessor(failure_rate=1.0)  # Always fails
-        fallback = FaultInjectionProcessor(failure_rate=0.0)  # Always succeeds
+            Args:
+                dispatcher: FlextDispatcher instance
 
-        _ = dispatcher.register_processor("primary", primary)
-        _ = dispatcher.register_processor("fallback", fallback)
+            """
+            primary = FaultInjectionProcessor(
+                failure_rate=TestDispatcherConstants.TestValues.FAILURE_RATE_100,
+            )
+            fallback1 = FaultInjectionProcessor(
+                failure_rate=TestDispatcherConstants.TestValues.FAILURE_RATE_100,
+            )
+            fallback2 = FaultInjectionProcessor(
+                failure_rate=TestDispatcherConstants.TestValues.FAILURE_RATE_0,
+            )
 
-        result = dispatcher.process("primary", {"value": 42})
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.PRIMARY.value,
+                primary,
+            )
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.FALLBACK1.value,
+                fallback1,
+            )
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.FALLBACK2.value,
+                fallback2,
+            )
 
-        # Fast fail: should return error immediately
-        assert result.is_failure
-        assert primary.attempt_count >= 1
-        # Fallback should not be called
-        assert fallback.attempt_count == 0
+            result1 = dispatcher.process(
+                TestDispatcherConstants.ProcessorNames.PRIMARY.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+            )
+            assert result1.is_failure
 
-    def test_process_all_fail_fast_fail(self, dispatcher: FlextDispatcher) -> None:
-        """Test processor failure returns error immediately (fast fail, no fallback).
+            result2 = dispatcher.process(
+                TestDispatcherConstants.ProcessorNames.FALLBACK2.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+            )
+            assert result2.is_success
 
-        Args:
-            dispatcher: FlextDispatcher instance
+    class TestMetricsAndObservability:
+        """Tests for metrics collection."""
 
-        """
-        primary = FaultInjectionProcessor(failure_rate=1.0)  # Always fails
-        fallback1 = FaultInjectionProcessor(failure_rate=1.0)  # Always fails
-        fallback2 = FaultInjectionProcessor(failure_rate=1.0)  # Always fails
+        def test_processor_metrics_tracking(
+            self,
+            dispatcher: FlextDispatcher,
+            latency_service: NetworkLatencyProcessor,
+        ) -> None:
+            """Test processor metrics collection.
 
-        _ = dispatcher.register_processor("primary", primary)
-        _ = dispatcher.register_processor("fallback1", fallback1)
-        _ = dispatcher.register_processor("fallback2", fallback2)
+            Args:
+                dispatcher: FlextDispatcher instance
+                latency_service: Network latency processor
 
-        # Fast fail: primary fails, return error immediately
-        result = dispatcher.process("primary", {"value": 42})
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                latency_service,
+            )
 
-        assert result.is_failure
-        assert result.error is not None
-        # Fallbacks should not be called (fast fail pattern)
-        assert fallback1.attempt_count == 0
-        assert fallback2.attempt_count == 0
+            for _ in range(TestDispatcherConstants.TestValues.ITERATIONS_METRICS):
+                _ = dispatcher.process(
+                    TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                    {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+                )
 
-    def test_process_multiple_processors_independent(
-        self,
-        dispatcher: FlextDispatcher,
-    ) -> None:
-        """Test multiple processors operate independently (no fallback pattern).
+            metrics = dispatcher.processor_metrics
+            assert TestDispatcherConstants.ProcessorNames.LATENCY.value in metrics
+            assert (
+                metrics[TestDispatcherConstants.ProcessorNames.LATENCY.value][
+                    "executions"
+                ]
+                == TestDispatcherConstants.TestValues.ITERATIONS_METRICS
+            )
+            assert (
+                metrics[TestDispatcherConstants.ProcessorNames.LATENCY.value][
+                    "successful_processes"
+                ]
+                == TestDispatcherConstants.TestValues.ITERATIONS_METRICS
+            )
 
-        Args:
-            dispatcher: FlextDispatcher instance
+        @pytest.mark.parametrize(
+            ("operation_type", "data_count"),
+            [
+                ("batch", TestDispatcherConstants.TestValues.ITERATIONS_BATCH),
+                ("parallel", TestDispatcherConstants.TestValues.ITERATIONS_PARALLEL),
+            ],
+        )
+        def test_performance_metrics(
+            self,
+            dispatcher: FlextDispatcher,
+            latency_service: NetworkLatencyProcessor,
+            operation_type: str,
+            data_count: int,
+        ) -> None:
+            """Test performance metrics collection.
 
-        """
-        primary = FaultInjectionProcessor(failure_rate=1.0)
-        fallback1 = FaultInjectionProcessor(failure_rate=1.0)
-        fallback2 = FaultInjectionProcessor(failure_rate=0.0)  # This one succeeds
+            Args:
+                dispatcher: FlextDispatcher instance
+                latency_service: Network latency processor
+                operation_type: Type of operation (batch or parallel)
+                data_count: Number of items to process
 
-        _ = dispatcher.register_processor("primary", primary)
-        _ = dispatcher.register_processor("fallback1", fallback1)
-        _ = dispatcher.register_processor("fallback2", fallback2)
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                latency_service,
+            )
 
-        # Fast fail: primary fails, return error immediately
-        result1 = dispatcher.process("primary", {"value": 42})
-        assert result1.is_failure
+            data_list = [{"value": i} for i in range(data_count)]
+            # Cast to list[GeneralValueType] for type compatibility
+            data_list_cast = cast("list[t.GeneralValueType]", data_list)
+            if operation_type == "batch":
+                _ = dispatcher.process_batch(
+                    TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                    data_list_cast,
+                )
+                perf = dispatcher.batch_performance
+                assert "batch_operations" in perf
+                batch_ops = perf["batch_operations"]
+                assert isinstance(batch_ops, int) and batch_ops >= 0
+            else:
+                _ = dispatcher.process_parallel(
+                    TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                    data_list_cast,
+                )
+                perf = dispatcher.parallel_performance
+                assert "parallel_operations" in perf
+                parallel_ops = perf["parallel_operations"]
+                assert isinstance(parallel_ops, int) and parallel_ops >= 0
 
-        # Each processor can be called independently
-        result2 = dispatcher.process("fallback2", {"value": 42})
-        assert result2.is_success
+        def test_performance_analytics(
+            self,
+            dispatcher: FlextDispatcher,
+            latency_service: NetworkLatencyProcessor,
+        ) -> None:
+            """Test comprehensive performance analytics.
 
+            Args:
+                dispatcher: FlextDispatcher instance
+                latency_service: Network latency processor
 
-# ==================== TESTS: METRICS & OBSERVABILITY ====================
+            """
+            _ = dispatcher.register_processor(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                latency_service,
+            )
 
+            _ = dispatcher.process(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
+            )
+            _ = dispatcher.process_batch(
+                TestDispatcherConstants.ProcessorNames.LATENCY.value,
+                [
+                    {"value": i}
+                    for i in range(
+                        TestDispatcherConstants.TestValues.ITERATIONS_METRICS,
+                    )
+                ],
+            )
 
-class TestLayer3MetricsAndObservability:
-    """Test metrics collection with real services."""
-
-    def test_processor_metrics_tracking(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test processor metrics collection.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
-
-        # Execute multiple operations
-        for _ in range(3):
-            _ = dispatcher.process("latency", {"value": 42})
-
-        metrics = dispatcher.processor_metrics
-        assert "latency" in metrics
-        assert metrics["latency"]["executions"] == 3
-        assert metrics["latency"]["successful_processes"] == 3
-
-    def test_batch_performance_metrics(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test batch operation performance metrics.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
-
-        # Execute batch operations
-        _ = dispatcher.process_batch("latency", [{"value": i} for i in range(5)])
-
-        batch_perf = dispatcher.batch_performance
-        assert "batch_operations" in batch_perf
-        batch_ops = batch_perf["batch_operations"]
-        assert isinstance(batch_ops, int) and batch_ops >= 0
-
-    def test_parallel_performance_metrics(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test parallel operation performance metrics.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
-
-        # Execute parallel operations
-        _ = dispatcher.process_parallel("latency", [{"value": i} for i in range(5)])
-
-        parallel_perf = dispatcher.parallel_performance
-        assert "parallel_operations" in parallel_perf
-        parallel_ops = parallel_perf["parallel_operations"]
-        assert isinstance(parallel_ops, int) and parallel_ops >= 0
-
-    def test_performance_analytics(
-        self,
-        dispatcher: FlextDispatcher,
-        latency_service: NetworkLatencyProcessor,
-    ) -> None:
-        """Test comprehensive performance analytics.
-
-        Args:
-            dispatcher: FlextDispatcher instance
-            latency_service: Network latency processor
-
-        """
-        _ = dispatcher.register_processor("latency", latency_service)
-
-        # Execute various operations
-        _ = dispatcher.process("latency", {"value": 42})
-        _ = dispatcher.process_batch("latency", [{"value": i} for i in range(3)])
-
-        analytics_result = dispatcher.get_performance_analytics()
-        assert analytics_result.is_success
-        analytics = analytics_result.unwrap()
-        assert isinstance(analytics, dict)
-        assert "global_metrics" in analytics or "metrics" in analytics
-
-
-__all__ = [
-    "FaultInjectionProcessor",
-    "NetworkLatencyProcessor",
-    "PostgreSQLService",
-    "TestLayer3BatchProcessing",
-    "TestLayer3DockerServiceDiscovery",
-    "TestLayer3FallbackChains",
-    "TestLayer3MetricsAndObservability",
-    "TestLayer3ParallelProcessing",
-    "TestLayer3SingleItemProcessing",
-    "TestLayer3TimeoutEnforcement",
-]
+            analytics_result = dispatcher.get_performance_analytics()
+            assert analytics_result.is_success
+            analytics = analytics_result.unwrap()
+            assert isinstance(analytics, dict)
+            assert "global_metrics" in analytics or "metrics" in analytics

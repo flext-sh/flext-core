@@ -1,7 +1,7 @@
 """Real tests to achieve 100% enum utilities coverage - no mocks.
 
 Module: flext_core._utilities.enum
-Scope: uEnum - all methods and edge cases
+Scope: FlextUtilitiesEnum - all methods and edge cases
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
 to cover all remaining lines in _utilities/enum.py.
@@ -17,12 +17,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import u
-from flext_core.typings import t
+from flext_core import t, u
+from flext_tests.utilities import FlextTestsUtilities
 
 
 class Status(StrEnum):
@@ -220,7 +220,7 @@ class EnumScenarios:
 
 
 class TestuEnumIsMember:
-    """Test uEnum.is_member."""
+    """Test FlextUtilitiesEnum.is_member."""
 
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
@@ -236,7 +236,7 @@ class TestuEnumIsMember:
 
 
 class TestuEnumIsSubset:
-    """Test uEnum.is_subset."""
+    """Test FlextUtilitiesEnum.is_subset."""
 
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
@@ -256,20 +256,27 @@ class TestuEnumIsSubset:
 
 
 class TestuEnumParse:
-    """Test uEnum.parse."""
+    """Test FlextUtilitiesEnum.parse."""
 
     @pytest.mark.parametrize("scenario", EnumScenarios.PARSE, ids=lambda s: s.name)
     def test_parse(self, scenario: ParseScenario) -> None:
         """Test parse with various scenarios."""
         result = u.Enum.parse(Status, scenario.value)
 
-        assert result.is_success == scenario.expected_success
-
         if scenario.expected_success:
-            assert result.is_success
-            assert result.value == scenario.expected_status
+            # Type annotation: Status is StrEnum, compatible with GeneralValueType
+            # Use explicit type annotation to help mypy infer TValue
+            expected_status_cast: t.GeneralValueType = cast(
+                "t.GeneralValueType",
+                scenario.expected_status,
+            )
+            # Type ignore: mypy cannot infer TValue from StrEnum, but test is valid
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_status_cast,
+            )
         else:
-            assert result.is_failure
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
             assert (
                 result.error is not None
                 and scenario.expected_error is not None
@@ -278,7 +285,7 @@ class TestuEnumParse:
 
 
 class TestuEnumParseOrDefault:
-    """Test uEnum.parse_or_default."""
+    """Test FlextUtilitiesEnum.parse_or_default."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -296,7 +303,7 @@ class TestuEnumParseOrDefault:
 
 
 class TestuEnumCoerceValidator:
-    """Test uEnum.coerce_validator."""
+    """Test FlextUtilitiesEnum.coerce_validator."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -321,7 +328,7 @@ class TestuEnumCoerceValidator:
 
 
 class TestuEnumCoerceByNameValidator:
-    """Test uEnum.coerce_by_name_validator."""
+    """Test FlextUtilitiesEnum.coerce_by_name_validator."""
 
     def test_coerce_by_name_validator_by_name(self) -> None:
         """Test coerce_by_name_validator with member name."""
@@ -351,7 +358,7 @@ class TestuEnumCoerceByNameValidator:
 
 
 class TestuEnumMetadata:
-    """Test uEnum metadata methods."""
+    """Test FlextUtilitiesEnum metadata methods."""
 
     def test_values(self) -> None:
         """Test values method."""

@@ -17,6 +17,7 @@ import socket
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
+from pathlib import Path
 from re import Pattern
 from typing import (
     Annotated,
@@ -28,75 +29,70 @@ from typing import (
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# ============================================================================
-# Module-Level TypeVars - Core and Domain-Specific
-# ============================================================================
-# All TypeVars are defined at module level for clarity and accessibility
-# Note: ParamSpec cannot be used in type aliases within nested classes
-# For variadic callables, we use more specific types or remove them from type aliases
+from flext_core.constants import c
 
-# Core TypeVars - covariant, contravariant, and generic type variables
+# ============================================================================
+# Module-Level TypeVars - Used in flext-core src/
+# ============================================================================
+# All TypeVars are defined at module level for clarity and accessibility.
+# Only TypeVars actually used in flext-core src/ are declared here.
+# Note: ParamSpec cannot be used in type aliases within nested classes.
+
+# ============================================================================
+# Core Generic TypeVars
+# ============================================================================
+# Fundamental type variables used throughout flext-core.
 T = TypeVar("T")
+"""Generic type variable - most commonly used type parameter.
+Used in: decorators, container, mixins, pagination, protocols."""
 T_co = TypeVar("T_co", covariant=True)
+"""Covariant generic type variable - for read-only types.
+Used in: protocols, result."""
 T_contra = TypeVar("T_contra", contravariant=True)
-P = ParamSpec("P")  # ParamSpec for decorator patterns
-R = TypeVar("R")  # Return type for decorators
+"""Contravariant generic type variable - for write-only types.
+Used in: protocols (for future extensions)."""
+E = TypeVar("E")
+"""Element type - for collections and sequences.
+Used in: collection, enum, args utilities."""
+U = TypeVar("U")
+"""Utility type - for utility functions and helpers.
+Used in: result (for map/flat_map operations)."""
+R = TypeVar("R")
+"""Return type - for function return values and decorators.
+Used in: decorators, args utilities."""
 
-# Handler-specific TypeVars for protocol compliance
-TInput_Handler_Protocol_contra = TypeVar(
-    "TInput_Handler_Protocol_contra",
-    contravariant=True,
-)
-TResult_Handler_Protocol = TypeVar("TResult_Handler_Protocol")
-CallableInputT = TypeVar("CallableInputT")  # Input type for callable handlers
-CallableOutputT = TypeVar("CallableOutputT")  # Output type for callable handlers
+# ============================================================================
+# ParamSpec
+# ============================================================================
+P = ParamSpec("P")
+"""ParamSpec for decorator patterns and variadic function signatures.
+Used in: decorators, args utilities."""
 
-# Domain TypeVars for CQRS and domain-driven design patterns
-TEntity_co = TypeVar("TEntity_co", covariant=True)
-TResult_co = TypeVar("TResult_co", covariant=True)
-TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
-TQuery_contra = TypeVar("TQuery_contra", contravariant=True)
+# ============================================================================
+# Handler TypeVars
+# ============================================================================
+# Type variables for CQRS handlers and message processing.
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
-TResult_Handler_co = TypeVar("TResult_Handler_co", covariant=True)
-TInput_Handler_contra = TypeVar("TInput_Handler_contra", contravariant=True)
+"""Contravariant message type - for message objects.
+Used in: handlers (CQRS message processing)."""
+ResultT = TypeVar("ResultT")
+"""Result type - generic result type variable.
+Used in: handlers (handler return types)."""
 
-# Generic TypeVars for utility and collection operations
-E = TypeVar("E")  # Element type
-F = TypeVar("F")  # Function type
-K = TypeVar("K")  # Key type
-ResultT = TypeVar("ResultT")  # Result type
-U = TypeVar("U")  # Utility type
-V = TypeVar("V")  # Value type
-W = TypeVar("W")  # Wrapper type
-
-# Additional domain TypeVars for advanced patterns
-T1_co = TypeVar("T1_co", covariant=True)
-T2_co = TypeVar("T2_co", covariant=True)
-T3_co = TypeVar("T3_co", covariant=True)
-TAggregate_co = TypeVar("TAggregate_co", covariant=True)
-TCacheKey_contra = TypeVar("TCacheKey_contra", contravariant=True)
-TCacheValue_co = TypeVar("TCacheValue_co", covariant=True)
-TConfigKey_contra = TypeVar("TConfigKey_contra", contravariant=True)
-TDomainEvent_co = TypeVar("TDomainEvent_co", covariant=True)
-TEvent_contra = TypeVar("TEvent_contra", contravariant=True)
-TInput_contra = TypeVar("TInput_contra", contravariant=True)
-TItem_contra = TypeVar("TItem_contra", contravariant=True)
-TState_co = TypeVar("TState_co", covariant=True)
-TUtil_contra = TypeVar("TUtil_contra", contravariant=True)
-TValue_co = TypeVar("TValue_co", covariant=True)
-TValueObject_co = TypeVar("TValueObject_co", covariant=True)
-TResult_contra = TypeVar("TResult_contra", contravariant=True)
-
-# Factory TypeVar for dependency injection patterns
-FactoryT = TypeVar("FactoryT")
-
-# Config-specific TypeVars
-T_Config = TypeVar("T_Config")
-T_Namespace = TypeVar("T_Namespace")
-T_Settings = TypeVar("T_Settings", bound=BaseSettings)
-
-# Model-specific TypeVars
+# ============================================================================
+# Config/Model TypeVars
+# ============================================================================
+# Type variables for configuration and model types.
 T_Model = TypeVar("T_Model", bound=BaseModel)
+"""Model type - for Pydantic model types (bound to BaseModel).
+Used in: configuration utilities."""
+T_Namespace = TypeVar("T_Namespace")
+"""Namespace type - for namespace objects.
+Used in: config (namespace configuration)."""
+T_Settings = TypeVar("T_Settings", bound=BaseSettings)
+"""Settings type - for Pydantic settings types (bound to BaseSettings).
+Used in: config (settings configuration)."""
+
 
 # ============================================================================
 # FLEXT TYPES - All complex types defined inside t class
@@ -108,18 +104,76 @@ T_Model = TypeVar("T_Model", bound=BaseModel)
 class FlextTypes:
     """Type system foundation for FLEXT ecosystem - Complex Type Aliases Only.
 
-    NOTE: All TypeVars are defined at module level (see above).
-    This class contains complex type aliases and nested helper classes.
-    All complex types are defined at module level and referenced here.
+    This class serves as the centralized type system for all FLEXT projects.
+    All complex types (type aliases, TypedDict classes) are organized in nested
+    namespaces within this class. TypeVars are defined at module level (see above).
 
-    Architecture: Nested type definitions for:
-    - Scalar and base types ("t.ScalarValue", t.GeneralValueType, etc.)
-    - Domain validation types (PortNumber, TimeoutSeconds, etc.)
-    - JSON types (JsonPrimitive, JsonValue, etc.)
-    - Handler types (HandlerCallable with dispatcher/bus-compatible aliases)
-    - Utility types (SerializableType, MetadataDict, etc.)
-    - CQRS pattern types (Command, Event, Message, Query)
-    - Configuration models (RetryConfig)
+    **Architecture Principles:**
+    - TypeVars: Defined at module level (Python limitation)
+    - Complex types: All in FlextTypes nested namespaces
+    - No loose types: All type aliases must be in appropriate namespaces
+    - Extension: Other projects extend via composition, not modification
+
+    **Namespace Structure:**
+
+    - **Top-level types**: Core scalar and value types (ScalarValue, GeneralValueType,
+      ConstantValue, ObjectList, SortableObjectType, MetadataAttributeValue, Metadata,
+      FlexibleValue, FlexibleMapping, JsonValue, JsonDict)
+
+    - **Utility**: Type introspection helpers (TypeHintSpecifier, GenericTypeArgument,
+      MessageTypeSpecifier, TypeOriginSpecifier)
+
+    - **Validation**: Domain validation types with Pydantic Field annotations
+      (PortNumber, TimeoutSeconds, RetryCount, NonEmptyStr, HostName)
+
+    - **Json**: JSON serialization types (JsonPrimitive, JsonValue, JsonList, JsonDict)
+
+    - **Handler**: Handler and middleware type definitions for CQRS patterns
+      (HandlerCallable, MiddlewareConfig, AcceptableMessageType, ConditionCallable,
+      HandlerType)
+
+    - **Config**: Configuration models (RetryConfig BaseModel)
+
+    - **Dispatcher**: Dispatcher type definitions for message dispatching
+      (DispatcherConfig TypedDict)
+
+    - **Types**: TypedDict classes and mapping type aliases
+      - Mapping aliases: ServiceMetadataMapping, FieldMetadataMapping,
+        SummaryDataMapping, CategoryGroupsMapping, SharedContainersMapping,
+        EventDataMapping, ContextMetadataMapping, ConfigurationMapping,
+        FieldValidatorMapping, ConsistencyRuleMapping,
+        EventValidatorMapping, ErrorTypeMapping, ExceptionKwargsType
+      - TypedDict classes: ContainerConfigDict, BatchResultDict
+
+
+    **Guidelines for Adding New Types:**
+
+    1. **TypeVars**: Add at module level with clear category comments
+    2. **Domain validation types**: Add to Validation namespace
+    3. **JSON types**: Add to Json namespace
+    4. **Handler types**: Add to Handler namespace
+    5. **Configuration types**: Add to Config namespace (BaseModel) or Types namespace (TypedDict)
+    6. **Dispatcher types**: Add to Dispatcher namespace
+    7. **TypedDict classes**: Add to Types namespace
+    8. **Mapping type aliases**: Add to Types namespace
+
+    **Extending FlextTypes in Other Projects:**
+
+    Other FLEXT projects should extend FlextTypes via composition, not modification:
+
+    ```python
+    from flext_core.typings import t
+
+
+    class MyProjectTypes:
+        # Extend via composition
+        type MyCustomType = t.GeneralValueType | MySpecificType
+        # Use base types from t
+        type MyConfig = t.Types.ConfigurationMapping
+    ```
+
+    Do NOT modify FlextTypes directly. Instead, create project-specific type namespaces
+    that reference FlextTypes types via composition.
     """
 
     # =====================================================================
@@ -135,9 +189,7 @@ class FlextTypes:
     # Note: Recursive type uses forward reference (managed by __future__ annotations)
     # Reuses ScalarValue defined above
     type GeneralValueType = (
-        FlextTypes.ScalarValue
-        | Sequence[FlextTypes.GeneralValueType]
-        | Mapping[str, FlextTypes.GeneralValueType]
+        ScalarValue | Sequence[GeneralValueType] | Mapping[str, GeneralValueType]
     )
 
     # Constant value type - all possible constant types in FlextConstants
@@ -162,20 +214,18 @@ class FlextTypes:
 
     # Object list type - sequence of general value types for batch operations
     # Reuses t.GeneralValueType (forward reference managed by __future__ annotations)
-    type ObjectList = Sequence[FlextTypes.GeneralValueType]
+    type ObjectList = Sequence[GeneralValueType]
 
     # Sortable object type - types that can be sorted (str, int, float, Mapping)
     # Note: Uses t.ScalarValue but excludes bool/None for sorting compatibility
-    type SortableObjectType = (
-        str | int | float | Mapping[str, FlextTypes.SortableObjectType]
-    )
+    type SortableObjectType = str | int | float | Mapping[str, SortableObjectType]
 
-    # Metadata-compatible attribute value type - composed for strict validation
-    # Reuses t.ScalarValue defined above (forward reference managed by __future__ annotations)
+    # Metadata-compatible attribute value type - composed for strict
+    # validation
+    # Reuses t.ScalarValue defined above (forward reference managed by
+    # __future__ annotations)
     type MetadataAttributeValue = (
-        FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue]
+        ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]
     )
 
     # Generic metadata dictionary type - read-only interface for metadata containers
@@ -187,22 +237,15 @@ class FlextTypes:
     This is a generic type available to all FLEXT projects.
     """
 
-    # Flexible value type for protocol methods - contains scalars, sequences, or mappings
-    type FlexibleValue = (
-        FlextTypes.ScalarValue
-        | Sequence[FlextTypes.ScalarValue]
-        | Mapping[str, FlextTypes.ScalarValue]
-    )
+    # Flexible value type for protocol methods - contains scalars,
+    # sequences, or mappings
+    type FlexibleValue = ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]
 
     # Mapping of string keys to flexible values
     type FlexibleMapping = Mapping[str, FlexibleValue]
 
     # =========================================================================
-    # TOP-LEVEL JSON TYPE ALIASES (for backward compatibility with ecosystem)
-    # =========================================================================
-    # These aliases provide direct access to JSON types at t level
-    # instead of requiring t.Json.JsonValue etc.
-
+    # TOP-LEVEL JSON TYPE ALIASES
     # JSON value - primitive or complex value (alias to Json.JsonValue)
     type JsonValue = (
         str
@@ -214,10 +257,7 @@ class FlextTypes:
         | None
     )
 
-    # JSON dictionary - mapping with string keys and JSON values
     # NOTE: Use t.Json.JsonDict for JSON-specific operations
-    # This top-level alias is kept for backward compatibility but prefer Json.JsonDict
-    type JsonDict = Mapping[str, GeneralValueType]
 
     # NOTE: ParameterValueType was removed - use GeneralValueType directly
     # No aliases for convenience - use types directly per FLEXT standards
@@ -227,8 +267,10 @@ class FlextTypes:
 
         # Type hint specifier - used for type introspection
         # Can be any type hint: type, type alias, generic, or string
-        # Note: For runtime type introspection, we accept type, str, or callable types
-        # Note: Removed Callable[..., T] to avoid Any - use specific callable types instead
+        # Note: For runtime type introspection, we accept type, str,
+        # or callable types
+        # Note: Removed Callable[..., T] to avoid Any - use specific
+        # callable types instead
         type TypeHintSpecifier = (
             type | str | Callable[[t.GeneralValueType], t.GeneralValueType]
         )
@@ -257,23 +299,40 @@ class FlextTypes:
         """Domain validation types using Pydantic Field annotations."""
 
         # Network validation types
+        # NOTE: Field() requires literal values, so we use constants directly
+        # These constants are centralized in FlextConstants for reuse
         type PortNumber = Annotated[
             int,
-            Field(ge=1, le=65535, description="Network port"),
+            Field(
+                ge=c.Network.MIN_PORT,
+                le=c.Network.MAX_PORT,
+                description="Network port",
+            ),
         ]
         type TimeoutSeconds = Annotated[
             float,
-            Field(gt=0, le=300, description="Timeout in seconds"),
+            Field(
+                gt=c.ZERO,
+                le=int(c.Network.DEFAULT_TIMEOUT),
+                description="Timeout in seconds",
+            ),
         ]
         type RetryCount = Annotated[
             int,
-            Field(ge=0, le=10, description="Retry attempts"),
+            Field(
+                ge=c.ZERO,
+                le=c.Validation.RETRY_COUNT_MAX,
+                description="Retry attempts",
+            ),
         ]
 
         # String validation types
         type NonEmptyStr = Annotated[
             str,
-            Field(min_length=1, description="Non-empty string"),
+            Field(
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Non-empty string",
+            ),
         ]
 
         @staticmethod
@@ -309,7 +368,11 @@ class FlextTypes:
 
         type HostName = Annotated[
             str,
-            Field(min_length=1, max_length=253, description="Valid hostname"),
+            Field(
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                max_length=c.Network.MAX_HOSTNAME_LENGTH,
+                description="Valid hostname",
+            ),
             AfterValidator(_validate_hostname),
         ]
 
@@ -329,11 +392,8 @@ class FlextTypes:
         type JsonList = Sequence[JsonValue]
         type JsonDict = Mapping[str, t.GeneralValueType]
 
-    class HandlerAliases:
-        """Handler and middleware type alias definitions for CQRS patterns.
-
-        NOTE: Renamed from 'Handler' to avoid conflict with Handler TypeVars class.
-        """
+    class Handler:
+        """Handler and middleware type definitions for CQRS patterns."""
 
         # Single consolidated callable type for handlers and validators
         # Reuses t.GeneralValueType from outer t class
@@ -346,9 +406,9 @@ class FlextTypes:
 
         # Handler type for registry - union of all possible handler types
         # This includes callables, objects with handle() method, and handler instances
-        # Note: Handler protocol is defined in p.Handler for proper protocol organization
+        # Note: Handler protocol is defined in p.Application.Handler for proper protocol organization
 
-        # Middleware configuration types
+        # Middleware configuration type
         type MiddlewareConfig = t.Types.ConfigurationMapping
 
         # Acceptable message types for handlers - union of common message types
@@ -364,13 +424,13 @@ class FlextTypes:
         # Reuses t.GeneralValueType from parent t class (forward reference)
         type ConditionCallable = Callable[[t.GeneralValueType], bool]
 
-        # Variadic callable protocol is defined in p.VariadicCallable
+        # Variadic callable protocol is defined in p.Utility.Callable
         # Use that instead of redeclaring here
 
         # Handler type union - all possible handler representations
         # This is used for handler registries where handlers can be callables,
         # handler instances, or configuration dicts
-        # Note: Handler and VariadicCallable protocols are defined in p
+        # Note: Handler and Utility.Callable protocols are defined in p
         # but cannot be imported here due to circular dependency. For type checking,
         # we use HandlerCallable which covers most use cases.
         # Reuses t.GeneralValueType from parent t class (no duplication)
@@ -402,23 +462,27 @@ class FlextTypes:
             model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
             # Retry attempt limits
-            max_attempts: int = Field(ge=1, description="Maximum retry attempts")
+            max_attempts: int = Field(
+                ge=c.Reliability.RETRY_COUNT_MIN,
+                description="Maximum retry attempts",
+            )
 
             # Timing configuration
             initial_delay_seconds: float = Field(
-                gt=0.0,
+                default=float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
+                gt=c.INITIAL_TIME,
                 description="Initial delay in seconds",
             )
             max_delay_seconds: float = Field(
-                gt=0.0,
+                gt=c.INITIAL_TIME,
                 description="Maximum delay in seconds",
             )
 
             # Backoff strategy configuration
             exponential_backoff: bool = Field(description="Enable exponential backoff")
             backoff_multiplier: float = Field(
-                default=2.0,
-                gt=0.0,
+                default=c.Reliability.RETRY_BACKOFF_BASE,
+                gt=c.INITIAL_TIME,
                 description="Backoff multiplier",
             )
 
@@ -427,66 +491,53 @@ class FlextTypes:
                 description="Exception types to retry on",
             )
 
-    class Cqrs:
-        """CQRS pattern types - use t.GeneralValueType directly."""
+    class Dispatcher:
+        """Dispatcher type definitions for message dispatching and processing."""
 
-        # CQRS types use t.GeneralValueType directly - no aliases per FLEXT standards
-        # For commands, events, messages, and queries, use t.GeneralValueType directly
+        class DispatcherConfig(TypedDict, total=True):
+            """Typed dictionary for dispatcher configuration values.
 
-    class Processor:
-        """Processor type definitions for pipeline processing."""
+            Business Rule: TypedDict uses dict[str, ...] for field types because
+            TypedDict defines the structure of a dictionary with known keys.
+            All fields required (total=True) for complete dispatcher configuration.
 
-        # Processor callable type - takes input and returns processed output
-        # Reuses t.GeneralValueType from parent t class
-        type ProcessorCallable = Callable[
-            [t.GeneralValueType],
-            t.GeneralValueType,
-        ]
+            Audit Implication: Used for dispatcher configuration in message processing
+            systems. Complete configuration ensures proper dispatcher lifecycle management
+            and audit trail completeness for dispatcher operations.
+            """
 
-        # Processor configuration type
-        type ProcessorConfig = Mapping[str, t.GeneralValueType]
+            dispatcher_timeout_seconds: float
+            """Timeout in seconds for dispatcher operations."""
 
-    class Factory:
-        """Factory type definitions for service creation patterns."""
+            executor_workers: int
+            """Number of worker threads for executor."""
 
-        # Factory callable type - creates instances
-        # Reuses t.GeneralValueType from parent t class
-        type FactoryCallable = Callable[[], t.GeneralValueType]
+            circuit_breaker_threshold: int
+            """Threshold for circuit breaker activation."""
 
-        # Factory with arguments callable type
-        # Note: Removed Callable[..., T] to avoid Any - use specific callable types instead
-        # For variadic factories, use FactoryCallable with explicit args or HandlerCallable
-        type FactoryWithArgsCallable = Callable[
-            [t.GeneralValueType], t.GeneralValueType
-        ]
+            rate_limit_max_requests: int
+            """Maximum number of requests per rate limit window."""
 
-        # Factory configuration type
-        type FactoryConfig = Mapping[str, t.GeneralValueType]
+            rate_limit_window_seconds: float
+            """Time window in seconds for rate limiting."""
 
-    class Bus:
-        """Message bus type definitions for event-driven patterns."""
+            max_retry_attempts: int
+            """Maximum number of retry attempts for failed operations."""
 
-        # Bus message type - uses GeneralValueType for flexibility
-        # Reuses t.GeneralValueType from parent t class
-        type BusMessage = t.GeneralValueType
+            retry_delay: float
+            """Delay in seconds between retry attempts."""
 
-        # Bus handler callable type
-        type BusHandler = Callable[[t.GeneralValueType], None]
+            enable_timeout_executor: bool
+            """Enable timeout executor for operations."""
 
-        # Bus subscription identifier
-        type SubscriptionId = str
+            dispatcher_enable_logging: bool
+            """Enable logging for dispatcher operations."""
 
-    class Logging:
-        """Logging type definitions for structured logging."""
+            dispatcher_auto_context: bool
+            """Enable automatic context creation for dispatcher."""
 
-        # Log level type - string representation of log levels
-        type LogLevel = str
-
-        # Log context type - additional context for log messages
-        type LogContext = Mapping[str, t.GeneralValueType]
-
-        # Log formatter callable type
-        type LogFormatter = Callable[[str, LogContext], str]
+            dispatcher_enable_metrics: bool
+            """Enable metrics collection for dispatcher."""
 
     class Types:
         """Type aliases for structured mappings and TypedDict definitions.
@@ -504,18 +555,9 @@ class FlextTypes:
         - EventDataMapping: Event data structure
         - ContextMetadataMapping: Context metadata structure
         - ConfigurationMapping: Configuration structure
-        - ConfigInstanceMapping: Config instance structure
-        - NamespaceRegistryMapping: Namespace registry structure
 
         **TypedDict Classes**:
-        - ServiceRegistrationMetadata: Service registration metadata
-        - FactoryRegistrationMetadata: Factory registration metadata
-        - ValidationContextDict: Validation context data
-        - EventDataDict: Domain event data
-        - EntityDataDict: Entity data structure
-        - CategoryGroupDict: Category grouping data
         - ContainerConfigDict: Container configuration
-        - DependencyContainerConfigDict: Dependency injection container config
         - DockerServiceConfigDict: Docker service configuration
         """
 
@@ -564,42 +606,179 @@ class FlextTypes:
         type ConfigurationMapping = Mapping[str, t.GeneralValueType]
         """Mapping for configuration (configuration keys to values)."""
 
-        type ConfigInstanceMapping = Mapping[str, t.GeneralValueType]
-        """Mapping for configuration instances (instance IDs to instances)."""
+        type ConfigurationDict = dict[str, t.GeneralValueType]
+        """Mutable dict for configuration (configuration keys to values)."""
 
-        type NamespaceRegistryMapping = Mapping[str, t.GeneralValueType]
-        """Mapping for namespace registry (namespace names to registries)."""
+        # Common string-to-value mappings
+        type StringMapping = Mapping[str, str]
+        """Mapping for string-to-string associations (e.g., key mappings, flags)."""
 
-        type DatabaseQueryResultMapping = Mapping[str, str | int]
-        """Mapping for database query results (column names to values)."""
+        type StringDict = dict[str, str]
+        """Mutable dict for string-to-string associations (e.g., key mappings, flags)."""
 
-        type DIPatternsResultMapping = Mapping[str, int | Sequence[str] | str]
-        """Mapping for dependency injection patterns demonstration results."""
+        type StringIntMapping = Mapping[str, int]
+        """Mapping for string-to-integer associations (e.g., metrics, counts)."""
+
+        type StringIntDict = dict[str, int]
+        """Mutable dict for string-to-integer associations (e.g., metrics, counts)."""
+
+        type StringFloatMapping = Mapping[str, float]
+        """Mapping for string-to-float associations (e.g., metrics, measurements)."""
+
+        type StringFloatDict = dict[str, float]
+        """Mutable dict for string-to-float associations (e.g., metrics, measurements)."""
+
+        type StringBoolMapping = Mapping[str, bool]
+        """Mapping for string-to-boolean associations (e.g., flags, features)."""
+
+        type StringBoolDict = dict[str, bool]
+        """Mutable dict for string-to-boolean associations (e.g., flags, permissions)."""
+
+        type StringNumericMapping = Mapping[str, int | float]
+        """Mapping for string-to-numeric associations (e.g., metrics)."""
+
+        type StringNumericDict = dict[str, int | float]
+        """Mutable dict for string-to-numeric associations (e.g., metrics)."""
+
+        type NestedStringIntMapping = Mapping[str, Mapping[str, int]]
+        """Nested mapping for string-to-string-to-integer (e.g., nested metrics)."""
+
+        type NestedStringIntDict = dict[str, dict[str, int]]
+        """Mutable nested dict for string-to-string-to-integer (e.g., nested metrics)."""
+
+        type StringConfigurationDictDict = dict[str, dict[str, t.GeneralValueType]]
+        """Mutable nested dict for string-to-configuration-dict (e.g., scoped contexts)."""
+
+        type StringListMapping = Mapping[str, list[t.GeneralValueType]]
+        """Mapping for string-to-list associations (e.g., categories)."""
+
+        type StringListDict = dict[str, list[t.GeneralValueType]]
+        """Mutable dict for string-to-list associations (e.g., categories)."""
+
+        type StringSequenceMapping = Mapping[str, Sequence[str]]
+        """Mapping for string-to-string-sequence associations."""
+
+        type StringSequenceDict = dict[str, Sequence[str]]
+        """Mutable dict for string-to-string-sequence associations."""
+
+        type StringListSequenceDict = dict[str, list[str]]
+        """Mutable dict for string-to-string-list associations (e.g., hooks)."""
+
+        type MetadataAttributeDict = dict[str, t.MetadataAttributeValue]
+        """Mutable dict for metadata attributes (string keys to metadata-compatible values)."""
+
+        type StringGenericTypeArgumentTupleDict = dict[
+            str,
+            tuple[t.Utility.GenericTypeArgument, ...],
+        ]
+        """Mutable dict for string-to-generic-type-argument-tuple mappings."""
+
+        type GeneralValueDict = dict[str, t.GeneralValueType]
+        """Mutable dict for general value types (alias for ConfigurationDict)."""
+
+        type FloatListDict = dict[str, list[float]]
+        """Mutable dict for string-to-float-list associations (e.g., execution times)."""
+
+        type HandlerTypeDict = dict[str, t.Handler.HandlerType]
+        """Mutable dict for handler type mappings."""
+
+        type HandlerCallableDict = dict[str, t.Handler.HandlerCallable]
+        """Mutable dict for handler callable mappings."""
+
+        type StringFlextLoggerDict = dict[str, object]
+        """Mutable dict for string-to-logger mappings.
+
+        Note: Uses 'object' as base type to allow any logger type
+        (typically FlextLogger) without circular import.
+        """
+
+        type StringFlextExceptionTypeDict = dict[str, type[object]]
+        """Mutable dict for string-to-exception-type mappings.
+
+        Note: Uses 'type[object]' as base type to allow any exception type
+        (typically e.BaseError) without circular import.
+        """
+
+        type StringCallableBoolStrTupleDict = dict[
+            str,
+            tuple[Callable[[object], bool], str],
+        ]
+        """Mutable dict for string-to-callable-bool-str-tuple mappings.
+
+        Used for guard shortcuts mapping names to (check_fn, type_desc) tuples.
+        """
+
+        type StringStrEnumTypeDict = dict[str, type[StrEnum]]
+        """Mutable dict for string-to-StrEnum-type mappings."""
+
+        type StringStrEnumInstanceDict = dict[str, StrEnum]
+        """Mutable dict for string-to-StrEnum-instance mappings (e.g., __members__)."""
+
+        type StringPathDict = dict[str, Path]
+        """Mutable dict for string-to-Path mappings (e.g., file paths)."""
+
+        type StringTypeDict = dict[str, type]
+        """Mutable dict for string-to-type mappings (generic type registry)."""
+
+        type StringHandlerCallableListDict = dict[str, list[t.Handler.HandlerCallable]]
+        """Mutable dict for string-to-handler-callable-list mappings (e.g., hooks)."""
+
+        type StringBaseSettingsTypeDict = dict[str, type[BaseSettings]]
+        """Mutable dict for string-to-BaseSettings-type mappings (e.g., namespace registry)."""
+
+        type StringSequenceGeneralValueMapping = Mapping[
+            str,
+            Sequence[t.GeneralValueType],
+        ]
+        """Mapping for string-to-sequence-of-GeneralValueType associations."""
+
+        type StringSequenceGeneralValueDict = dict[str, Sequence[t.GeneralValueType]]
+        """Mutable dict for string-to-sequence-of-GeneralValueType associations."""
+
+        type StringTupleFloatIntDict = dict[str, tuple[float, int]]
+        """Mutable dict for string-to-(float, int)-tuple mappings (e.g., rate limit windows)."""
+
+        type StringTupleGeneralValueDict = dict[
+            str,
+            tuple[t.GeneralValueType, t.GeneralValueType],
+        ]
+        """Mutable dict for string-to-(GeneralValueType, GeneralValueType)-tuple mappings (e.g., differences)."""
+
+        # Container-specific types (forward references to avoid circular imports)
+        type ServiceRegistrationDict = dict[str, object]
+        """Mutable dict for service registration mappings.
+
+        Note: Uses 'object' as base type to allow any service registration type
+        (typically m.Container.ServiceRegistration) without circular import.
+        """
+
+        type FactoryRegistrationDict = dict[str, object]
+        """Mutable dict for factory registration mappings.
+
+        Note: Uses 'object' as base type to allow any factory registration type
+        (typically m.Container.FactoryRegistration) without circular import.
+        """
 
         # Additional mapping types for validation and exceptions
+        # Validators return Result-like objects with is_failure/error attributes
+        # Using object to avoid circular import with protocols.py
         type FieldValidatorMapping = Mapping[
             str,
-            Callable[[t.GeneralValueType], t.GeneralValueType],
+            Callable[[t.GeneralValueType], object],
         ]
-        """Mapping for field validators (field names to validator functions)."""
+        """Mapping for field validators (field names to validator returning Result-like)."""
 
         type ConsistencyRuleMapping = Mapping[
             str,
-            Callable[[t.GeneralValueType], t.GeneralValueType],
+            Callable[[t.GeneralValueType], object],
         ]
-        """Mapping for consistency rules (rule names to validator functions)."""
+        """Mapping for consistency rules (rule names to validator returning Result-like)."""
 
         type EventValidatorMapping = Mapping[
             str,
-            Callable[[t.GeneralValueType], t.GeneralValueType],
+            Callable[[t.GeneralValueType], object],
         ]
-        """Mapping for event validators (event types to validator functions)."""
-
-        type NestedExceptionLevelMapping = Mapping[str, Mapping[type, str]]
-        """Nested mapping for exception levels (library → exception_type → level)."""
-
-        type ExceptionLevelMapping = Mapping[str, str]
-        """Mapping for exception levels (container names to levels)."""
+        """Mapping for event validators (event types to validator returning Result-like)."""
 
         type ErrorTypeMapping = Mapping[
             str,
@@ -620,9 +799,6 @@ class FlextTypes:
         ]
         """Mapping for error type data with details, metadata, correlation IDs, timestamps."""
 
-        type ExceptionMetricsMapping = Mapping[type, int]
-        """Mapping for exception metrics (exception types to occurrence counts)."""
-
         type ExceptionKwargsType = (
             t.ScalarValue
             | Sequence[t.ScalarValue]
@@ -636,192 +812,6 @@ class FlextTypes:
         # =====================================================================
         # TYPEDDICT CLASSES (Python 3.13+ PEP 695)
         # =====================================================================
-        class ServiceRegistrationMetadata(TypedDict, total=True):
-            """Metadata for service registration in the container.
-
-            Used for tracking service registration details including
-            handler type, registration status, and metadata.
-
-            Business Rule: TypedDict uses dict[str, ...] for field types because
-            TypedDict defines the structure of a dictionary with known keys.
-            This is correct - TypedDict fields must use dict, not Mapping.
-            When used as function parameters/returns, prefer Mapping for read-only
-            interface, but TypedDict itself correctly uses dict.
-
-            Audit Implication: This metadata is used for service registration tracking.
-            All fields are required (total=True), ensuring complete registration info.
-            """
-
-            handler_type: str
-            """Type of handler (command, query, event, etc.)."""
-
-            registration_status: str
-            """Status of registration (active, inactive, error)."""
-
-            metadata: dict[str, t.GeneralValueType]
-            """Additional service metadata (JSON-serializable).
-
-            Business Rule: dict[str, GeneralValueType] is correct here because
-            TypedDict fields must specify dict structure. This is not a type annotation
-            for a function parameter/return, but a field definition within TypedDict.
-            """
-
-        class FactoryRegistrationMetadata(TypedDict, total=True):
-            """Metadata for factory registration in the container.
-
-            Used for tracking factory registration details.
-
-            Business Rule: TypedDict uses dict[str, ...] for field types because
-            TypedDict defines the structure of a dictionary with known keys.
-            This is correct - TypedDict fields must use dict, not Mapping.
-
-            Audit Implication: This metadata tracks factory registration state.
-            All fields are required (total=True) for complete factory tracking.
-            """
-
-            factory_type: str
-            """Type of factory."""
-
-            registration_status: str
-            """Status of registration (active, inactive, error)."""
-
-            metadata: dict[str, t.GeneralValueType]
-            """Additional factory metadata (JSON-serializable).
-
-            Business Rule: dict[str, GeneralValueType] is correct here because
-            TypedDict fields must specify dict structure.
-            """
-
-        class ValidationContextDict(TypedDict, total=False):
-            """Context dictionary for validation operations.
-
-            Used for passing validation context data between validators.
-
-            Business Rule: TypedDict uses dict[str, ...] for field types because
-            TypedDict defines the structure of a dictionary with known keys.
-            Fields are optional (total=False) to allow partial context passing.
-
-            Audit Implication: Used for cross-field validation context.
-            Optional fields allow flexible validation scenarios.
-            """
-
-            field_name: str
-            """Name of the field being validated."""
-
-            field_value: t.GeneralValueType
-            """Value of the field being validated."""
-
-            parent_data: dict[str, t.GeneralValueType]
-            """Parent data context for cross-field validation.
-
-            Business Rule: dict[str, GeneralValueType] is correct here because
-            TypedDict fields must specify dict structure.
-            """
-
-        class EventDataDict(TypedDict, total=True):
-            """Data dictionary for event objects.
-
-            Used for structured event data in domain events.
-
-            Business Rule: TypedDict uses dict[str, ...] for field types because
-            TypedDict defines the structure of a dictionary with known keys.
-            All fields required (total=True) for complete event representation.
-
-            Audit Implication: Used for domain event serialization and storage.
-            Complete event structure ensures audit trail completeness.
-            """
-
-            event_type: str
-            """Type of event."""
-
-            event_data: dict[str, t.GeneralValueType]
-            """Event payload data.
-
-            Business Rule: dict[str, GeneralValueType] is correct here because
-            TypedDict fields must specify dict structure.
-            """
-
-            metadata: dict[str, t.GeneralValueType]
-            """Event metadata (timestamp, correlation ID, etc.).
-
-            Business Rule: dict[str, GeneralValueType] is correct here because
-            TypedDict fields must specify dict structure.
-            """
-
-        class EntityDataDict(TypedDict, total=False):
-            """Data dictionary for entity objects.
-
-            Used for structured entity data representation.
-
-            Business Rule: TypedDict uses dict[str, ...] for field types because
-            TypedDict defines the structure of a dictionary with known keys.
-            Fields are optional (total=False) for flexible entity representation.
-
-            Audit Implication: Used for entity serialization and persistence.
-            Optional fields allow partial entity updates.
-            """
-
-            entity_id: str
-            """Unique entity identifier."""
-
-            entity_type: str
-            """Type classification of the entity."""
-
-            data: dict[str, t.GeneralValueType]
-            """Entity data payload.
-
-            Business Rule: dict[str, GeneralValueType] is correct here because
-            TypedDict fields must specify dict structure.
-            """
-
-        class CategoryGroupDict(TypedDict, total=True):
-            """Data dictionary for category groups.
-
-            Business Rule: TypedDict uses dict[str, ...] for field types because
-            TypedDict defines the structure of a dictionary with known keys.
-            All fields required (total=True) for complete category representation.
-
-            Audit Implication: Used for categorized data grouping in audit trails.
-            Complete category structure ensures audit trail completeness for grouped
-            data operations.
-
-            Used for categorized data grouping.
-            """
-
-            category_name: str
-            """Name of the category."""
-
-            items: list[t.GeneralValueType]
-            """List of items in this category."""
-
-        class DependencyContainerConfigDict(TypedDict, total=True):
-            """Configuration dictionary for dependency injection containers.
-
-            Used for dependency injection container configuration.
-
-            Business Rule: TypedDict uses dict[str, ...] for field types because
-            TypedDict defines the structure of a dictionary with known keys.
-            All fields required (total=True) for complete container configuration.
-
-            Audit Implication: Used for DI container service registration.
-            Complete configuration ensures proper service lifecycle management.
-            """
-
-            service_name: str
-            """Name of the service."""
-
-            service_type: str
-            """Type of service."""
-
-            config: dict[str, t.GeneralValueType]
-            """Service configuration data.
-
-            Business Rule: dict[str, GeneralValueType] is correct here because
-            TypedDict fields must specify dict structure.
-            """
-
-            # DockerServiceConfigDict uses ContainerConfigDict directly - no aliases
-
         class _BatchResultDictBase(TypedDict, total=True):
             """Base TypedDict for batch processing operations.
 
@@ -880,138 +870,61 @@ class FlextTypes:
         # Type narrowing for results: list[T] is done at usage site based on operation return type
         # Users should use t.Types.BatchResultDict directly
 
-    class Example:
-        """Example-specific types for demonstrating FLEXT features.
+    # =========================================================================
+    # ROOT-LEVEL ALIASES (Minimize nesting for common types)
+    # Usage: t.PortNumber instead of t.Validation.PortNumber
+    # Both access patterns work - aliases for convenience, namespaces for clarity
+    # =========================================================================
 
-        Provides type-safe type aliases for example configurations and operations,
-        using advanced Python 3.13+ patterns and PEP 695 syntax.
-        """
+    # Validation aliases (most commonly used)
+    PortNumber = Validation.PortNumber
+    TimeoutSeconds = Validation.TimeoutSeconds
+    RetryCount = Validation.RetryCount
+    NonEmptyStr = Validation.NonEmptyStr
+    HostName = Validation.HostName
 
-        # Configuration data types using advanced mapping patterns
-        # Reuses t.ScalarValue from parent t class (forward reference)
-        type ConfigDataMapping = Mapping[str, t.ScalarValue]
-        """Mapping for configuration data (keys to scalar values)."""
+    # Json aliases
+    JsonPrimitive = Json.JsonPrimitive
+    JsonList = Json.JsonList
+    JsonDict = Json.JsonDict
 
-        type EnvVarsMapping = Mapping[str, str]
-        """Mapping for environment variables (variable names to string values)."""
+    # Handler aliases
+    HandlerCallable = Handler.HandlerCallable
+    MiddlewareConfig = Handler.MiddlewareConfig
+    AcceptableMessageType = Handler.AcceptableMessageType
+    ConditionCallable = Handler.ConditionCallable
 
-        # Service metadata for configuration demonstrations
-        type ConfigDemoMetadata = Mapping[str, Sequence[str] | Mapping[str, str]]
-        """Metadata mapping for configuration demonstration results."""
-
-        # Advanced validation types using Pydantic Field annotations
-        type DatabaseUrl = Annotated[
-            str,
-            Field(
-                min_length=10,
-                pattern=r"^(sqlite|postgresql|mysql)://.*$",
-                description="Database URL",
-            ),
-        ]
-        type PortNumber = Annotated[
-            int,
-            Field(ge=1, le=65535, description="Network port"),
-        ]
-        type TimeoutSeconds = Annotated[
-            float,
-            Field(gt=0, le=300, description="Timeout in seconds"),
-        ]
-        type WorkerCount = Annotated[
-            int,
-            Field(ge=1, le=100, description="Number of workers"),
-        ]
-
-        # Configuration instance type using advanced union
-        # Reuses t.GeneralValueType from parent t class (forward reference)
-        type ConfigInstance = Mapping[str, t.GeneralValueType]
-        """Mapping type for configuration instances."""
-
-        # Validation result types for configuration operations
-        type ValidationResult = tuple[bool, Sequence[str]]
-        """Tuple of (is_valid, error_messages)."""
-
-        # Environment configuration context
-        type EnvConfigContext = Mapping[str, str | None]
-        """Context mapping for environment variable configurations."""
-
-        # Types for demonstration data
-        # Reuses t.ScalarValue and t.GeneralValueType from parent t class (forward references)
-        type UserDataMapping = Mapping[str, t.ScalarValue]
-        """Mapping for user data in demonstrations."""
-
-        type ValidationDataMapping = Mapping[str, Sequence[str]]
-        """Mapping for validation data in demonstrations."""
-
-        # Result metadata for demonstration outcomes
-        type ResultMetadataMapping = Mapping[str, t.GeneralValueType]
-        """Mapping for demonstration result metadata."""
-
-        # Dependency injection service types
-        type ServiceMetadataMapping = Mapping[str, t.GeneralValueType]
-        """Mapping for service metadata in DI demonstrations."""
-
-        type DatabaseQueryResultMapping = Mapping[str, t.ScalarValue]
-        """Mapping for database query results."""
-
-        type ServiceConfigMapping = Mapping[str, t.GeneralValueType]
-        """Mapping for service configuration data."""
-
-        type DIPatternsResultMapping = Mapping[str, t.GeneralValueType]
-        """Mapping for DI patterns demonstration results."""
+    # Types aliases (frequently used mappings)
+    StringDict = Types.StringDict
+    StringMapping = Types.StringMapping
+    ConfigurationDict = Types.ConfigurationDict
+    ConfigurationMapping = Types.ConfigurationMapping
+    StringIntDict = Types.StringIntDict
+    StringBoolDict = Types.StringBoolDict
+    GeneralValueDict = Types.GeneralValueDict
+    BatchResultDict = Types.BatchResultDict
+    ContainerConfigDict = Types.ContainerConfigDict
 
 
 # NOTE: All TypeVars are defined at module level
 # All complex types are defined in t class only (no loose module-level aliases)
 # Use t.ScalarValue, t.GeneralValueType, t.ConstantValue directly
-# Use t.Example.ResultMetadataMapping, etc. for example-specific types
 
 
 __all__ = [
-    "CallableInputT",
-    "CallableOutputT",
     "E",
-    "F",
-    "FactoryT",
     "FlextTypes",
-    "K",
     "MessageT_contra",
     "P",
     "R",
     "ResultT",
     "T",
-    "T1_co",
-    "T2_co",
-    "T3_co",
-    "TAggregate_co",
-    "TCacheKey_contra",
-    "TCacheValue_co",
-    "TCommand_contra",
-    "TConfigKey_contra",
-    "TDomainEvent_co",
-    "TEntity_co",
-    "TEvent_contra",
-    "TInput_Handler_Protocol_contra",
-    "TInput_Handler_contra",
-    "TInput_contra",
-    "TItem_contra",
-    "TQuery_contra",
-    "TResult_Handler_Protocol",
-    "TResult_Handler_co",
-    "TResult_co",
-    "TResult_contra",
-    "TState_co",
-    "TUtil_contra",
-    "TValueObject_co",
-    "TValue_co",
-    "T_Config",
     "T_Model",
     "T_Namespace",
     "T_Settings",
     "T_co",
     "T_contra",
     "U",
-    "V",
-    "W",
     "t",
 ]
 

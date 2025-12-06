@@ -2,17 +2,15 @@
 
 **ARCHITECTURE LAYER 0.5** - Integration Bridge (Minimal Dependencies)
 
-This module provides runtime utilities that consume patterns from FlextConstants and
+This module provides runtime utilities that consume patterns from c and
 expose external library APIs to higher-level modules, maintaining proper dependency
 hierarchy while eliminating code duplication. Implements structural typing via
 p (duck typing - no inheritance required).
 
 **Protocol Compliance** (Structural Typing):
-Satisfies p.Runtime through method signatures and capabilities:
-- Type guard utilities matching p interface specification
-- Serialization utilities for object-to-dict conversion
-- External library adapters (structlog, dependency-injector)
-- isinstance(FlextRuntime, p.Runtime) returns True via duck typing
+FlextRuntime provides utility methods without requiring protocol compliance.
+It serves as a bridge to external libraries (structlog, dependency-injector)
+and provides type guards and serialization utilities.
 
 **Core Components** (8 functional categories):
 1. **Type Guard Utilities** - Pattern-based type validation (email, URL, phone, UUID, path, JSON)
@@ -43,17 +41,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import atexit
+import contextlib
 import importlib
 import inspect
 import json
 import logging
+import queue
 import re
 import secrets
 import string
+import sys
+import threading
 import typing
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import ParamSpec, TypeGuard, cast
+from typing import ClassVar, ParamSpec, TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -61,30 +64,92 @@ from beartype.claw import beartype_package
 from dependency_injector import containers, providers
 from structlog.typing import BindableLogger
 
-from flext_core.constants import FlextConstants
+from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.typings import P, T, t
+from flext_core.typings import t
 
-# ParamSpec for structlog processors (variadic callables)
 P_Processor = ParamSpec("P_Processor")
 
 
-class FlextRuntime:  # noqa: PLR0904
+class _AsyncLogWriter:
+    """Background log writer using a queue and a separate thread.
+
+    Provides non-blocking logging by buffering log messages to a queue
+    and writing them to the destination stream in a background thread.
+    """
+
+    def __init__(self, stream: typing.TextIO) -> None:
+        self.stream = stream
+        self.queue: queue.Queue[str | None] = queue.Queue(
+            maxsize=c.Logging.ASYNC_QUEUE_SIZE,
+        )
+        self.stop_event = threading.Event()
+        self.thread = threading.Thread(
+            target=self._worker,
+            daemon=True,
+            name="flext-async-log-writer",
+        )
+        self.thread.start()
+        atexit.register(self.shutdown)
+
+    def write(self, message: str) -> None:
+        """Write message to queue (non-blocking)."""
+        with contextlib.suppress(queue.Full):
+            self.queue.put(
+                message,
+                block=c.Logging.ASYNC_BLOCK_ON_FULL,
+            )
+
+    def flush(self) -> None:
+        """Flush stream (best effort)."""
+        if hasattr(self.stream, "flush"):
+            with contextlib.suppress(OSError, ValueError):
+                self.stream.flush()
+
+    def shutdown(self) -> None:
+        """Stop worker thread and flush remaining messages."""
+        if self.stop_event.is_set():
+            return
+        self.stop_event.set()
+        self.queue.put(None)  # Sentinel
+        self.thread.join(timeout=2.0)
+        self.flush()
+
+    def _worker(self) -> None:
+        """Worker thread processing log queue."""
+        while True:
+            try:
+                msg = self.queue.get(timeout=0.1)
+                if msg is None:
+                    break
+                self.stream.write(msg)
+                if hasattr(self.stream, "flush"):
+                    self.stream.flush()
+                self.queue.task_done()
+            except queue.Empty:
+                if self.stop_event.is_set():
+                    break
+                continue
+            except Exception:
+                # Fallback to direct write if queue processing fails
+                with contextlib.suppress(Exception):
+                    self.stream.write("Error in async log writer\n")
+
+
+class FlextRuntime:
     """Expose structlog, DI providers, and validation helpers to higher layers.
 
     **ARCHITECTURE LAYER 0.5** - Integration Bridge with minimal dependencies
 
-    Provides runtime utilities that consume patterns from FlextConstants and expose
+    Provides runtime utilities that consume patterns from c and expose
     external library APIs to higher-level modules, maintaining proper dependency
     hierarchy while eliminating code duplication. Implements structural typing via
     p (duck typing through method signatures, no inheritance required).
 
-    **Protocol Compliance** (Structural Typing):
-    Satisfies p.Runtime through typed method definitions:
-    - isinstance(FlextRuntime, p.Runtime) returns True via duck typing
-    - Type guard methods match p interface exactly
-    - Serialization utilities follow stdlib patterns
-    - No inheritance from @runtime_checkable protocols
+    **Architecture** (Layer 0.5 - Integration Bridge):
+    FlextRuntime provides utility methods without requiring protocol compliance.
+    It serves as a bridge to external libraries (structlog, dependency-injector)
+    and provides type guards and serialization utilities following stdlib patterns.
 
     **Type Guard Utilities** (5+ pattern-based validators):
     1. **is_valid_phone()** - International phone number validation
@@ -145,10 +210,11 @@ class FlextRuntime:  # noqa: PLR0904
     - Direct structlog usage as single source of truth for context
     - Safe fallback strategies for all risky operations (serialization)
     - Opt-in integration helpers (not forced on all modules)
-    - Pattern-based validation using FlextConstants (single source of truth)
+    - Pattern-based validation using c (single source of truth)
     """
 
     _structlog_configured: bool = False
+    _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
     @classmethod
     def is_structlog_configured(cls) -> bool:
@@ -160,10 +226,10 @@ class FlextRuntime:  # noqa: PLR0904
         """
         return cls._structlog_configured
 
-    # NOTE: Use FlextConstants.Settings.LogLevel directly - no aliases per FLEXT standards
+    # NOTE: Use c.Settings.LogLevel directly - no aliases per FLEXT standards
 
     # =========================================================================
-    # TYPE GUARD UTILITIES (Uses regex patterns from FlextConstants)
+    # TYPE GUARD UTILITIES (Uses regex patterns from c)
     # =========================================================================
 
     @staticmethod
@@ -173,7 +239,7 @@ class FlextRuntime:  # noqa: PLR0904
         """Type guard to check if value is a valid phone number string.
 
         Business Rule: Validates phone numbers using international format pattern
-        from FlextConstants.Platform.PATTERN_PHONE_NUMBER. Uses regex compilation
+        from c.Platform.PATTERN_PHONE_NUMBER. Uses regex compilation
         for O(1) pattern matching. Returns TypeGuard[str] for type narrowing in
         conditional blocks. Pattern supports international formats with optional
         country codes and separators.
@@ -182,7 +248,7 @@ class FlextRuntime:  # noqa: PLR0904
         by validating contact information before storage. All phone numbers are
         validated against international standards before being used in audit systems.
 
-        Uses international format pattern from FlextConstants.Platform.PATTERN_PHONE_NUMBER.
+        Uses international format pattern from c.Platform.PATTERN_PHONE_NUMBER.
 
         Args:
             value: Value to check
@@ -193,7 +259,7 @@ class FlextRuntime:  # noqa: PLR0904
         """
         if not isinstance(value, str):
             return False
-        pattern = re.compile(FlextConstants.Platform.PATTERN_PHONE_NUMBER)
+        pattern = re.compile(c.Platform.PATTERN_PHONE_NUMBER)
         return pattern.match(value) is not None
 
     @staticmethod
@@ -242,12 +308,12 @@ class FlextRuntime:  # noqa: PLR0904
         return instance
 
     @staticmethod
-    def create_context() -> p.ContextProtocol:
+    def create_context() -> p.Context.Ctx:
         """Factory for creating context instances using protocol-based import.
 
         Business Rule: Creates context instances using dynamic import via importlib
         to avoid circular dependencies at module import time. Uses protocol-based
-        typing (p.ContextProtocol) for type safety without inheritance.
+        typing (p.Context.Ctx) for type safety without inheritance.
         This is NOT a lazy import - it's a factory pattern using importlib at runtime.
 
         Audit Implication: Context creation enables audit trail completeness by
@@ -255,10 +321,10 @@ class FlextRuntime:  # noqa: PLR0904
         this factory, ensuring consistent context initialization across FLEXT.
 
         Uses dynamic import to avoid circular dependencies while maintaining
-        type safety through p.ContextProtocol.
+        type safety through p.Context.Ctx.
 
         Returns:
-            ContextProtocol instance
+            Context.Ctx instance
 
         Example:
             >>> context = FlextRuntime.create_context()
@@ -269,15 +335,15 @@ class FlextRuntime:  # noqa: PLR0904
         # This is NOT a lazy import - it's a factory pattern using importlib
         context_module = importlib.import_module("flext_core.context")
         context_class = context_module.FlextContext
-        return cast("p.ContextProtocol", context_class())
+        return cast("p.Context.Ctx", context_class())
 
     @staticmethod
-    def create_container() -> p.ContainerProtocol:
+    def create_container() -> p.Container.DI:
         """Factory for creating container instances using protocol-based import.
 
         Business Rule: Creates container instances using dynamic import via importlib
         to avoid circular dependencies at module import time. Uses protocol-based
-        typing (p.ContainerProtocol) for type safety without inheritance.
+        typing (p.Container.DI) for type safety without inheritance.
         This is NOT a lazy import - it's a factory pattern using importlib at runtime.
 
         Audit Implication: Container creation enables dependency injection for audit
@@ -285,10 +351,10 @@ class FlextRuntime:  # noqa: PLR0904
         consistent container initialization across FLEXT.
 
         Uses dynamic import to avoid circular dependencies while maintaining
-        type safety through p.ContainerProtocol.
+        type safety through p.Container.DI.
 
         Returns:
-            ContainerProtocol instance
+            Container.DI instance
 
         Example:
             >>> container = FlextRuntime.create_container()
@@ -299,19 +365,19 @@ class FlextRuntime:  # noqa: PLR0904
         # This is NOT a lazy import - it's a factory pattern using importlib
         container_module = importlib.import_module("flext_core.container")
         container_class = container_module.FlextContainer
-        return cast("p.ContainerProtocol", container_class())
+        return cast("p.Container.DI", container_class())
 
     @staticmethod
     def is_dict_like(
-        value: t.GeneralValueType,
-    ) -> TypeGuard[Mapping[str, t.GeneralValueType]]:
+        value: object,
+    ) -> TypeGuard[t.Types.ConfigurationMapping]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a Mapping[str, t.GeneralValueType] or dict-like object, False otherwise
+            True if value is a t.Types.ConfigurationMapping or dict-like object, False otherwise
 
         """
         if isinstance(value, dict):
@@ -331,7 +397,7 @@ class FlextRuntime:  # noqa: PLR0904
 
     @staticmethod
     def is_list_like(
-        value: t.GeneralValueType,
+        value: object,
     ) -> TypeGuard[Sequence[t.GeneralValueType]]:
         """Type guard to check if value is list-like.
 
@@ -346,16 +412,16 @@ class FlextRuntime:  # noqa: PLR0904
 
     @staticmethod
     def normalize_to_general_value(
-        val: t.GeneralValueType,
+        val: object,
     ) -> t.GeneralValueType:
         """Normalize any value to t.GeneralValueType recursively.
 
-        Converts dict[str, object], list[object], and other object types
-        to Mapping[str, GeneralValueType], Sequence[GeneralValueType], etc.
+        Converts arbitrary objects, t.Types.ConfigurationDict, list[object], and other types
+        to t.Types.ConfigurationMapping, Sequence[GeneralValueType], etc.
         This is the central conversion function for type safety.
 
         Args:
-            val: Value to normalize (can be object, Mapping[str, GeneralValueType], etc.)
+            val: Any value to normalize (accepts object for flexibility with generics)
 
         Returns:
             Normalized value compatible with GeneralValueType
@@ -372,14 +438,14 @@ class FlextRuntime:  # noqa: PLR0904
         if isinstance(val, (str, int, float, bool, type(None))):
             return val
         if FlextRuntime.is_dict_like(val):
-            # Business Rule: Convert to dict[str, GeneralValueType] recursively
+            # Business Rule: Convert to t.Types.ConfigurationDict recursively
             # dict is compatible with Mapping[str, GeneralValueType] in GeneralValueType union.
             # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
             #
             # Audit Implication: Normalizes nested data structures for type safety.
             # Used throughout FLEXT for converting arbitrary data to GeneralValueType.
             # Returns dict that is compatible with Mapping interface for read-only access.
-            result: dict[str, t.GeneralValueType] = {}
+            result: t.Types.ConfigurationDict = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             for k, v in dict_v.items():
                 if isinstance(k, str):
@@ -429,7 +495,7 @@ class FlextRuntime:  # noqa: PLR0904
             # Audit Implication: Normalizes nested structures to flat metadata format.
             # Used for metadata attribute values that must be JSON-serializable.
             # Returns dict that is compatible with Mapping interface for read-only access.
-            result: dict[str, str | int | float | bool | None] = {}
+            result: t.Types.MetadataAttributeDict = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             for k, v in dict_v.items():
                 if isinstance(k, str):
@@ -438,8 +504,9 @@ class FlextRuntime:  # noqa: PLR0904
                     else:
                         result[k] = str(v)
             # Return type is t.MetadataAttributeValue (dict type)
-            result_dict: t.MetadataAttributeValue = result
-            return result_dict
+            # dict[str, ScalarValue] is compatible with Mapping[str, ScalarValue] in MetadataAttributeValue union
+            # Explicit cast needed because dict is mutable but Mapping is read-only interface
+            return cast("t.MetadataAttributeValue", result)
         if FlextRuntime.is_list_like(val):
             # Convert to list[t.MetadataAttributeValue]
             result_list: list[str | int | float | bool | None] = []
@@ -569,7 +636,7 @@ class FlextRuntime:  # noqa: PLR0904
                 # GenericTypeArgument = str | type[GeneralValueType]
                 # Type objects (str, int, float, bool) are valid GenericTypeArgument
                 # types as they represent type[T] where T is a scalar GeneralValueType
-                type_mapping: dict[str, tuple[t.Utility.GenericTypeArgument, ...]] = {
+                type_mapping: t.Types.StringGenericTypeArgumentTupleDict = {
                     "StringList": (str,),
                     "IntList": (int,),
                     "FloatList": (float,),
@@ -657,7 +724,7 @@ class FlextRuntime:  # noqa: PLR0904
     @staticmethod
     def get_logger(
         name: str | None = None,
-    ) -> p.StructlogLogger:
+    ) -> p.Infrastructure.Logger.StructlogLogger:
         """Get structlog logger instance - same structure/config used by FlextLogger.
 
         Returns the exact same structlog logger instance that FlextLogger uses internally.
@@ -680,10 +747,10 @@ class FlextRuntime:  # noqa: PLR0904
                 name = frame.f_back.f_globals.get("__name__", __name__)
             else:
                 name = __name__
-        # structlog.get_logger returns BoundLoggerLazyProxy which implements p.StructlogLogger protocol
+        # structlog.get_logger returns BoundLoggerLazyProxy which implements p.Infrastructure.Logger.StructlogLogger protocol
         # All methods (debug, info, warning, error, etc.) are available via __getattr__ at runtime
-        # p.StructlogLogger protocol is compatible with structlog's return type via structural typing
-        logger: p.StructlogLogger = structlog.get_logger(name)
+        # p.Infrastructure.Logger.StructlogLogger protocol is compatible with structlog's return type via structural typing
+        logger: p.Infrastructure.Logger.StructlogLogger = structlog.get_logger(name)
         return logger
 
     @staticmethod
@@ -698,10 +765,10 @@ class FlextRuntime:  # noqa: PLR0904
 
     @staticmethod
     def level_based_context_filter(
-        _logger: p.LoggerProtocol,
+        _logger: p.Infrastructure.Logger.Log,
         method_name: str,
-        event_dict: Mapping[str, t.GeneralValueType],
-    ) -> Mapping[str, t.GeneralValueType]:
+        event_dict: t.Types.ConfigurationMapping,
+    ) -> t.Types.ConfigurationMapping:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -748,13 +815,13 @@ class FlextRuntime:  # noqa: PLR0904
 
         # Process all keys in event_dict
         # Business Rule: Build mutable dict for construction, then return as dict
-        # dict is compatible with Mapping[str, GeneralValueType] return type.
+        # dict is compatible with t.Types.ConfigurationMapping return type.
         # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
         #
         # Audit Implication: This method filters log event data based on log level.
         # Used for conditional inclusion of verbose fields in structured logging.
         # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict: dict[str, t.GeneralValueType] = {}
+        filtered_dict: t.Types.ConfigurationDict = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -762,9 +829,9 @@ class FlextRuntime:  # noqa: PLR0904
                 # Format: _level_debug_config -> required_level='debug', actual_key='config'
                 parts = key.split(
                     "_",
-                    FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT,
+                    c.Validation.LEVEL_PREFIX_PARTS_COUNT,
                 )  # Split into ['', 'level', 'debug', 'config']
-                if len(parts) >= FlextConstants.Validation.LEVEL_PREFIX_PARTS_COUNT:
+                if len(parts) >= c.Validation.LEVEL_PREFIX_PARTS_COUNT:
                     required_level_name = parts[2]
                     actual_key = parts[3]
                     required_level = level_hierarchy.get(
@@ -787,16 +854,15 @@ class FlextRuntime:  # noqa: PLR0904
         return filtered_dict
 
     @classmethod
-    def configure_structlog(  # noqa: PLR0913
+    def configure_structlog(
         cls,
         *,
-        config: Mapping[str, t.GeneralValueType] | None = None,
+        config: t.GeneralValueType | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[Callable[P_Processor, t.GeneralValueType]]
-        | None = None,
+        additional_processors: Sequence[object] | None = None,
         wrapper_class_factory: Callable[[], type[BindableLogger]] | None = None,
-        logger_factory: Callable[P, BindableLogger] | None = None,
+        logger_factory: Callable[..., BindableLogger] | None = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.
@@ -824,13 +890,9 @@ class FlextRuntime:  # noqa: PLR0904
             FlextRuntime.configure_structlog(config=config)
             ```
 
-        Example (individual params - backward compatible):
-            ```python
-            FlextRuntime.configure_structlog(log_level=20, console_renderer=True)
-            ```
-
         """
-        # Extract config values or use individual parameters (backward compatibility)
+        # Extract config values or use individual parameters
+        async_logging = True
         if config is not None:
             log_level = getattr(config, "log_level", log_level)
             console_renderer = getattr(config, "console_renderer", console_renderer)
@@ -852,6 +914,7 @@ class FlextRuntime:  # noqa: PLR0904
                 "cache_logger_on_first_use",
                 cache_logger_on_first_use,
             )
+            async_logging = getattr(config, "async_logging", True)
 
         # Single guard - no redundant checks
         if cls._structlog_configured:
@@ -861,8 +924,9 @@ class FlextRuntime:  # noqa: PLR0904
 
         module = structlog
 
-        # structlog processors have specific signatures - use Callable with flexible args
-        processors: list[Callable[P_Processor, t.GeneralValueType]] = [
+        # structlog processors have specific signatures - use object to accept any processor type
+        # structlog processors are callables with varying signatures, so we use object for flexibility
+        processors: list[object] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -888,11 +952,27 @@ class FlextRuntime:  # noqa: PLR0904
             if wrapper_class_factory is not None
             else module.make_filtering_bound_logger(level_to_use)
         )
-        factory_arg = (
-            logger_factory
-            if logger_factory is not None
-            else module.PrintLoggerFactory()
-        )
+
+        # Determine logger factory (handle async buffering)
+        factory_arg = logger_factory
+        if factory_arg is None:
+            # Default factory handling
+            if async_logging:
+                # Use cached async writer or create new one
+                if cls._async_writer is None:
+                    cls._async_writer = _AsyncLogWriter(sys.stdout)
+                factory_arg = cast(
+                    "Callable[..., BindableLogger]",
+                    module.PrintLoggerFactory(
+                        file=cast("typing.TextIO", cls._async_writer),
+                    ),
+                )
+            else:
+                factory_arg = cast(
+                    "Callable[..., BindableLogger]",
+                    module.PrintLoggerFactory(),
+                )
+
         # Call configure directly with constructed arguments
         # Processors are dynamically constructed callables that match structlog's Processor protocol
         # structlog.configure accepts processors as Sequence[Processor] or list[Processor]
@@ -915,8 +995,7 @@ class FlextRuntime:  # noqa: PLR0904
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[Callable[P_Processor, t.GeneralValueType]]
-        | None = None,
+        additional_processors: list[object] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 
@@ -940,10 +1019,10 @@ class FlextRuntime:  # noqa: PLR0904
             ```python
             # CLI override: User passed --debug flag
             from flext_core.runtime import FlextRuntime
-            from flext_core.constants import FlextConstants
+            from flext_core.constants import c
 
             FlextRuntime.reconfigure_structlog(
-                log_level=FlextConstants.Settings.LogLevel.DEBUG.value,
+                log_level=c.Settings.LogLevel.DEBUG.value,
                 console_renderer=True,
             )
             ```
@@ -958,6 +1037,11 @@ class FlextRuntime:  # noqa: PLR0904
         # Reset structlog state (makes is_configured() return False)
         module = structlog
         module.reset_defaults()
+
+        # Shutdown async writer if exists
+        if cls._async_writer:
+            cls._async_writer.shutdown()
+            cls._async_writer = None
 
         # Reset FLEXT configuration flag (single source of truth)
         cls._structlog_configured = False
@@ -1059,14 +1143,14 @@ class FlextRuntime:  # noqa: PLR0904
     # =========================================================================
     # ARCHITECTURE: runtime.py is Tier 0.5, result.py is Tier 1.
     # FlextResult MUST import from runtime, NOT the other way around.
-    # RuntimeResult is a lightweight ResultProtocol implementation that
+    # RuntimeResult is a lightweight Foundation.Result implementation that
     # can be used by higher layers without circular imports.
     # =========================================================================
 
     class RuntimeResult[T]:
-        """Lightweight ResultProtocol implementation for Tier 0.5.
+        """Lightweight Foundation.Result implementation for Tier 0.5.
 
-        This class implements p.ResultProtocol without depending
+        This class implements p.Foundation.Result without depending
         on FlextResult, allowing runtime.py to create results that can be used
         by higher layers. FlextResult can wrap or extend this as needed.
         """
@@ -1078,7 +1162,7 @@ class FlextRuntime:  # noqa: PLR0904
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: Mapping[str, t.GeneralValueType] | None = None,
+            error_data: t.Types.ConfigurationMapping | None = None,
             *,
             is_success: bool = True,
         ) -> None:
@@ -1122,7 +1206,7 @@ class FlextRuntime:  # noqa: PLR0904
             return self._error_code
 
         @property
-        def error_data(self) -> Mapping[str, t.GeneralValueType] | None:
+        def error_data(self) -> t.Types.ConfigurationMapping | None:
             """Get the error data."""
             return self._error_data
 
@@ -1143,7 +1227,7 @@ class FlextRuntime:  # noqa: PLR0904
             return func()
 
     @staticmethod
-    def result_ok[T](value: T) -> p.ResultProtocol[T]:
+    def result_ok[T](value: T) -> p.Foundation.Result[T]:
         """Create a successful result - CORE IMPLEMENTATION.
 
         This is the core factory for creating success results.
@@ -1153,7 +1237,7 @@ class FlextRuntime:  # noqa: PLR0904
             value: The success value (cannot be None)
 
         Returns:
-            RuntimeResult[T] instance with success state (as ResultProtocol)
+            RuntimeResult[T] instance with success state (as Foundation.Result)
 
         Raises:
             ValueError: If value is None
@@ -1168,8 +1252,8 @@ class FlextRuntime:  # noqa: PLR0904
     def result_fail[T](
         error: str,
         error_code: str | None = None,
-        error_data: Mapping[str, t.GeneralValueType] | None = None,
-    ) -> p.ResultProtocol[T]:
+        error_data: t.Types.ConfigurationMapping | None = None,
+    ) -> p.Foundation.Result[T]:
         """Create a failed result - CORE IMPLEMENTATION.
 
         This is the core factory for creating failure results.
@@ -1181,7 +1265,7 @@ class FlextRuntime:  # noqa: PLR0904
             error_data: Optional metadata about the error
 
         Returns:
-            RuntimeResult[T] instance with failure state (as ResultProtocol)
+            RuntimeResult[T] instance with failure state (as Foundation.Result)
 
         """
         return FlextRuntime.RuntimeResult(

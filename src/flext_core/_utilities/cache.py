@@ -51,7 +51,7 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
-class FlextCache:
+class FlextUtilitiesCache:
     """Cache utilities for deterministic normalization and key management.
 
     Business Rules:
@@ -75,7 +75,7 @@ class FlextCache:
     """
 
     @property
-    def logger(self) -> p.StructlogLogger:
+    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
         """Get logger instance using FlextRuntime.
 
         Business Rule: Logger access through FlextRuntime avoids circular
@@ -119,7 +119,7 @@ class FlextCache:
         # Handle BaseModel first - convert to dict
         if isinstance(component, BaseModel):
             return {
-                str(k): FlextCache.normalize_component(v)
+                str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component.model_dump().items()
             }
         # component is already GeneralValueType (not BaseModel)
@@ -127,16 +127,19 @@ class FlextCache:
         if FlextRuntime.is_dict_like(component):
             # Type guard ensures component is Mapping[str, GeneralValueType]
             return {
-                str(k): FlextCache.normalize_component(v) for k, v in component.items()
+                str(k): FlextUtilitiesCache.normalize_component(v)
+                for k, v in component.items()
             }
         # Handle primitives first (str is a Sequence, so check early)
         if isinstance(component, (str, int, float, bool, type(None))):
             return component
         # Handle collections
         if isinstance(component, set):
-            return tuple(FlextCache.normalize_component(item) for item in component)
+            return tuple(
+                FlextUtilitiesCache.normalize_component(item) for item in component
+            )
         if isinstance(component, Sequence):
-            return [FlextCache.normalize_component(item) for item in component]
+            return [FlextUtilitiesCache.normalize_component(item) for item in component]
         # For other types, convert to string as fallback
         return str(component)
 
@@ -211,15 +214,15 @@ class FlextCache:
         """
         if FlextRuntime.is_dict_like(data):
             data_dict = data
-            result: dict[str, t.GeneralValueType] = {}
-            for k in sorted(data_dict.keys(), key=FlextCache.sort_key):
+            result: t.Types.ConfigurationDict = {}
+            for k in sorted(data_dict.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_dict[k]
                 # Handle None values - convert to empty dict for consistency
                 if value is None:
                     result[k] = {}
                 else:
                     # Recursively sort nested structures
-                    sorted_value = FlextCache.sort_dict_keys(value)
+                    sorted_value = FlextUtilitiesCache.sort_dict_keys(value)
                     result[k] = sorted_value
             return result
         return data
@@ -270,7 +273,7 @@ class FlextCache:
                 if hasattr(obj, attr_name):
                     cache_attr = getattr(obj, attr_name, None)
                     if cache_attr is not None:
-                        # Clear dict[str, t.GeneralValueType]-like caches
+                        # Clear t.Types.ConfigurationDict-like caches
                         if hasattr(cache_attr, "clear") and callable(
                             cache_attr.clear,
                         ):
@@ -344,9 +347,6 @@ class FlextCache:
         return hashlib.sha256(key_data.encode()).hexdigest()
 
 
-uCache = FlextCache  # noqa: N816  # noqa: N816
-
 __all__ = [
-    "FlextCache",
-    "uCache",
+    "FlextUtilitiesCache",
 ]

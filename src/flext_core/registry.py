@@ -6,7 +6,6 @@ dispatcher-centric application layer.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -16,13 +15,12 @@ from typing import Annotated, cast
 
 from pydantic import Field, computed_field
 
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.handler import FlextModelsHandler
 from flext_core.constants import c
-from flext_core.dispatcher import FlextDispatcher
+from flext_core.dispatcher import FlextDispatcher  # For instantiation only
 from flext_core.handlers import h
 from flext_core.mixins import x
+from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -34,11 +32,11 @@ class FlextRegistry(x):
 
     The registry pairs message types with handlers, enforces idempotent
     registration, and exposes batch operations that return ``r``
-    summaries. It satisfies ``p.HandlerRegistry`` through
-    structural typing and integrates directly with ``FlextDispatcher``.
+    summaries. It delegates to ``FlextDispatcher`` (which implements
+    ``p.Application.CommandBus``) for actual handler registration and execution.
     """
 
-    class Summary(FlextModelsEntity.Value):
+    class Summary(m.Value):
         """Aggregated outcome for batch handler registration tracking.
 
         Provides comprehensive summary of batch handler registration operations,
@@ -64,7 +62,7 @@ class FlextRegistry(x):
             >>> from flext_core import FlextConstants
             >>> summary = FlextRegistry.Summary(
             ...     registered=[
-            ...         FlextModelsHandler.RegistrationDetails(
+            ...         m.Handler.RegistrationDetails(
             ...             registration_id="reg-001",
             ...             handler_mode=c.Cqrs.HandlerType.COMMAND,
             ...             timestamp="2025-01-01T00:00:00Z",
@@ -82,7 +80,7 @@ class FlextRegistry(x):
         """
 
         registered: Annotated[
-            list[FlextModelsHandler.RegistrationDetails],
+            list[m.Handler.RegistrationDetails],
             Field(
                 default_factory=list,
                 description="Successfully registered handlers with registration details",
@@ -174,7 +172,7 @@ class FlextRegistry(x):
             """
             return not self.errors
 
-    def __init__(self, dispatcher: FlextDispatcher | None = None) -> None:
+    def __init__(self, dispatcher: p.Application.CommandBus | None = None) -> None:
         """Initialize the registry with a CommandBus protocol instance.
 
         Args:
@@ -186,8 +184,14 @@ class FlextRegistry(x):
         # Initialize service infrastructure (DI, Context, Logging, Metrics)
         self._init_service("flext_registry")
 
-        if dispatcher is None:
-            dispatcher = FlextDispatcher()
+        # Structural typing - FlextDispatcher implements p.Application.CommandBus
+        # Create dispatcher instance if not provided
+        actual_dispatcher: p.Application.CommandBus = (
+            dispatcher
+            if dispatcher is not None
+            else cast("p.Application.CommandBus", FlextDispatcher())
+        )
+        self._dispatcher: p.Application.CommandBus = actual_dispatcher
 
         # Enrich context with registry metadata for observability
         self._enrich_context(
@@ -196,8 +200,6 @@ class FlextRegistry(x):
             supports_batch_registration=True,
             idempotent_registration=True,
         )
-
-        self._dispatcher: FlextDispatcher = dispatcher
         self._registered_keys: set[str] = set()
 
     @staticmethod
@@ -205,8 +207,8 @@ class FlextRegistry(x):
         value: t.GeneralValueType,
     ) -> c.Cqrs.HandlerType:
         """Safely extract and validate handler mode from GeneralValueType value."""
-        # Use u.parse() for cleaner enum parsing
-        parse_result = u.parse(
+        # Use u.Parser.parse() for cleaner enum parsing
+        parse_result = u.Parser.parse(
             value,
             c.Cqrs.HandlerType,
             default=c.Cqrs.HandlerType.COMMAND,
@@ -228,8 +230,8 @@ class FlextRegistry(x):
             return c.Cqrs.CommonStatus.RUNNING
         if value == c.Cqrs.RegistrationStatus.INACTIVE:
             return c.Cqrs.CommonStatus.FAILED
-        # Use u.parse() for cleaner enum parsing
-        parse_result = u.parse(
+        # Use u.Parser.parse() for cleaner enum parsing
+        parse_result = u.Parser.parse(
             value,
             c.Cqrs.CommonStatus,
             default=c.Cqrs.CommonStatus.RUNNING,
@@ -243,9 +245,9 @@ class FlextRegistry(x):
 
     def _create_registration_details(
         self,
-        reg_data: Mapping[str, t.GeneralValueType],
+        reg_data: t.Types.ConfigurationMapping,
         key: str,
-    ) -> FlextModelsHandler.RegistrationDetails:
+    ) -> m.Handler.RegistrationDetails:
         """Create RegistrationDetails from registration data (DRY helper).
 
         Eliminates duplication in _process_single_handler and register_handler_batch.
@@ -260,17 +262,25 @@ class FlextRegistry(x):
 
         """
         # Extract values using u.extract() for cleaner code
-        registration_id_result = u.extract(
-            reg_data, "registration_id", default=key, required=False
+        registration_id_result = u.Mapper.extract(
+            reg_data,
+            "registration_id",
+            default=key,
+            required=False,
         )
-        handler_mode_result = u.extract(
+        handler_mode_result = u.Mapper.extract(
             reg_data,
             "handler_mode",
             default=c.Dispatcher.HANDLER_MODE_COMMAND,
             required=False,
         )
-        timestamp_result = u.extract(reg_data, "timestamp", default="", required=False)
-        status_result = u.extract(
+        timestamp_result = u.Mapper.extract(
+            reg_data,
+            "timestamp",
+            default="",
+            required=False,
+        )
+        status_result = u.Mapper.extract(
             reg_data,
             "status",
             default=c.Dispatcher.REGISTRATION_STATUS_ACTIVE,
@@ -297,7 +307,7 @@ class FlextRegistry(x):
             if status_result.is_success
             else c.Dispatcher.REGISTRATION_STATUS_ACTIVE
         )
-        return FlextModelsHandler.RegistrationDetails(
+        return m.Handler.RegistrationDetails(
             registration_id=registration_id,
             handler_mode=FlextRegistry._safe_get_handler_mode(handler_mode),
             timestamp=timestamp,
@@ -310,7 +320,7 @@ class FlextRegistry(x):
     def register_handler(
         self,
         handler: (h[t.GeneralValueType, t.GeneralValueType] | None),
-    ) -> r[FlextModelsHandler.RegistrationDetails]:
+    ) -> r[m.Handler.RegistrationDetails]:
         """Register an already-constructed handler instance.
 
         Re-registration is ignored and treated as success to guarantee
@@ -357,7 +367,7 @@ class FlextRegistry(x):
             )
             # Return successful registration details for idempotent registration
             return self.ok(
-                FlextModelsHandler.RegistrationDetails(
+                m.Handler.RegistrationDetails(
                     registration_id=key,
                     handler_mode=c.Cqrs.HandlerType.COMMAND,
                     timestamp="",  # Will be set by model if needed
@@ -373,17 +383,20 @@ class FlextRegistry(x):
             handler_key=key,
             source="flext-core/src/flext_core/registry.py",
         )
-        # register_handler returns r[dict[str, GeneralValueType]]
+        # register_handler returns r[t.Types.ConfigurationDict]
         # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
         # Cast handler to GeneralValueType for type compatibility (runtime handles h correctly)
         registration = self._dispatcher.register_handler(
-            cast("t.GeneralValueType", handler)
+            cast("t.GeneralValueType", handler),
         )
         if registration.is_success:
             self._registered_keys.add(key)
-            # Use get_or_default for concise dict extraction
+            # Use get() for concise dict extraction
             reg_dict = registration.value
-            _ = u.get(reg_dict, "handler_name", default=handler_name) or handler_name
+            _ = (
+                u.Mapper.get(reg_dict, "handler_name", default=handler_name)
+                or handler_name
+            )
             self.logger.info(
                 "Handler registered successfully",
                 operation="register_handler",
@@ -526,7 +539,7 @@ class FlextRegistry(x):
         )
         # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
         registration_result = self._dispatcher.register_handler(
-            cast("t.GeneralValueType", handler)
+            cast("t.GeneralValueType", handler),
         )
         if registration_result.is_success:
             # Convert dict result to RegistrationDetails
@@ -534,7 +547,7 @@ class FlextRegistry(x):
             reg_details = self._create_registration_details(reg_data, key)
             if not reg_details:
                 # Fallback: create minimal registration details
-                reg_details = FlextModelsHandler.RegistrationDetails(
+                reg_details = m.Handler.RegistrationDetails(
                     registration_id=key,
                     handler_mode=c.Cqrs.HandlerType.COMMAND,
                     timestamp="",
@@ -567,7 +580,7 @@ class FlextRegistry(x):
     def _add_successful_registration(
         self,
         key: str,
-        registration: FlextModelsHandler.RegistrationDetails,
+        registration: m.Handler.RegistrationDetails,
         summary: FlextRegistry.Summary,
     ) -> None:
         """Add successful registration to summary."""
@@ -629,8 +642,12 @@ class FlextRegistry(x):
                 summary.skipped.append(key)
                 continue
 
-            # Handler is already the correct type
-            registration = self._dispatcher.register_command(message_type, handler)
+            # Structural typing - handler is h which implements p.Application.Handler
+            # Cast to GeneralValueType for protocol compatibility
+            registration = self._dispatcher.register_command(
+                message_type,
+                cast("t.GeneralValueType", handler),
+            )
             if registration.is_failure:
                 summary.errors.append(
                     str(registration.error)
@@ -639,18 +656,26 @@ class FlextRegistry(x):
                 continue
 
             self._registered_keys.add(key)
-            reg_data = registration.value
-            # Use guard with return_value for concise validation
-            reg_details = (
-                self._create_registration_details(reg_data, key)
-                if u.guard(reg_data, dict).is_success
-                else FlextModelsHandler.RegistrationDetails(
+            # Type narrowing: registration.value can be various types, ensure it's dict
+            reg_data_raw = registration.value
+            if isinstance(reg_data_raw, (dict, Mapping)):
+                # Type narrowing: reg_data_raw is Mapping after isinstance check
+                reg_data_dict: t.Types.ConfigurationMapping = (
+                    reg_data_raw
+                    if isinstance(reg_data_raw, dict)
+                    else dict(reg_data_raw.items())
+                )
+                reg_details = self._create_registration_details(
+                    reg_data_dict,
+                    key,
+                )
+            else:
+                reg_details = m.Handler.RegistrationDetails(
                     registration_id=key,
                     handler_mode=c.Cqrs.HandlerType.COMMAND,
                     timestamp="",
                     status=c.Cqrs.CommonStatus.RUNNING,
                 )
-            )
             summary.registered.append(reg_details)
 
         if summary.errors:
@@ -666,7 +691,7 @@ class FlextRegistry(x):
             (
                 h[t.GeneralValueType, t.GeneralValueType]
                 | tuple[
-                    t.HandlerAliases.HandlerCallable,
+                    t.Handler.HandlerCallable,
                     t.GeneralValueType | r[t.GeneralValueType],
                 ]
                 | t.GeneralValueType
@@ -694,20 +719,31 @@ class FlextRegistry(x):
 
                 # Delegate to specialized helpers based on entry type
                 # Use guard() with tuple type and length check
-                tuple_check = lambda v: isinstance(v, tuple) and len(v) == 2  # noqa: E731, PLR2004
-                tuple_result = u.guard(entry, tuple, tuple_check, return_value=True)
+                def tuple_check(v: object) -> bool:
+                    return (
+                        isinstance(v, tuple)
+                        and len(v) == c.Performance.EXPECTED_TUPLE_LENGTH
+                    )
+
+                tuple_result = u.Validation.guard(
+                    entry,
+                    tuple,
+                    tuple_check,
+                    return_value=True,
+                )
                 if tuple_result and isinstance(tuple_result, tuple):
                     handler_elem, config_elem = tuple_result
                     # Type narrowing: handler_elem should be HandlerCallableType
                     if isinstance(handler_elem, type) or callable(handler_elem):
                         tuple_entry: tuple[
-                            t.HandlerAliases.HandlerCallable,
+                            t.Handler.HandlerCallable,
                             t.GeneralValueType | r[t.GeneralValueType],
                         ] = (handler_elem, config_elem)
                         result = self._register_tuple_entry(tuple_entry, key)
                     else:
                         result = FlextRegistry._register_other_entry(key)
-                elif u.guard(entry, h).is_success:
+                elif isinstance(entry, h):
+                    # Type narrowing: entry is h instance
                     result = self._register_handler_entry(entry, key)
                 else:
                     result = self._register_other_entry(key)
@@ -732,17 +768,17 @@ class FlextRegistry(x):
     def _register_tuple_entry(
         self,
         entry: tuple[
-            t.HandlerAliases.HandlerCallable,
+            t.Handler.HandlerCallable,
             t.GeneralValueType | r[t.GeneralValueType],
         ],
         key: str,
-    ) -> r[FlextModelsHandler.RegistrationDetails]:
+    ) -> r[m.Handler.RegistrationDetails]:
         """Register tuple (function, config) entry - DRY helper reduces nesting."""
         handler_func, handler_config = entry
 
         # Use guard with return_value=True for concise dict validation
         config_dict = (
-            u.guard(handler_config, dict, return_value=True)
+            u.Validation.guard(handler_config, dict, return_value=True)
             if handler_config is not None
             else None
         )
@@ -751,13 +787,18 @@ class FlextRegistry(x):
             "t.Types.ConfigurationMapping | None",
             config_dict,
         )
+        # Structural typing - handler_func is HandlerCallable compatible
+        # Cast handler_config to protocol-compatible type
         handler_result = self._dispatcher.create_handler_from_function(
             handler_func,
-            handler_config_typed,
-            c.Cqrs.HandlerType.COMMAND,
+            handler_config=cast(
+                "dict[str, t.FlexibleValue] | None",
+                handler_config_typed,
+            ),
+            mode=c.Cqrs.HandlerType.COMMAND,
         )
         if handler_result.is_failure:
-            return r[FlextModelsHandler.RegistrationDetails].fail(
+            return r[m.Handler.RegistrationDetails].fail(
                 f"Failed to create handler: {handler_result.error}",
             )
 
@@ -765,58 +806,58 @@ class FlextRegistry(x):
         handler = handler_result.value
         # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
         register_result = self._dispatcher.register_handler(
-            cast("t.GeneralValueType", handler)
+            cast("t.GeneralValueType", handler),
         )
         if register_result.is_failure:
-            return r[FlextModelsHandler.RegistrationDetails].fail(
+            return r[m.Handler.RegistrationDetails].fail(
                 f"Failed to register handler: {register_result.error}",
             )
 
         # Success - create registration details
-        reg_details = FlextModelsHandler.RegistrationDetails(
+        reg_details = m.Handler.RegistrationDetails(
             registration_id=key,
             handler_mode=c.Cqrs.HandlerType.COMMAND,
             timestamp="",
             status=c.Cqrs.CommonStatus.RUNNING,
         )
-        return r[FlextModelsHandler.RegistrationDetails].ok(reg_details)
+        return r[m.Handler.RegistrationDetails].ok(reg_details)
 
     def _register_handler_entry(
         self,
         entry: h[t.GeneralValueType, t.GeneralValueType],
         key: str,
-    ) -> r[FlextModelsHandler.RegistrationDetails]:
+    ) -> r[m.Handler.RegistrationDetails]:
         """Register h instance - DRY helper reduces nesting."""
         # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
         register_result = self._dispatcher.register_handler(
-            cast("t.GeneralValueType", entry)
+            cast("t.GeneralValueType", entry),
         )
         if register_result.is_failure:
-            return r[FlextModelsHandler.RegistrationDetails].fail(
+            return r[m.Handler.RegistrationDetails].fail(
                 f"Failed to register handler: {register_result.error}",
             )
 
         # Success - create registration details
-        reg_details = FlextModelsHandler.RegistrationDetails(
+        reg_details = m.Handler.RegistrationDetails(
             registration_id=key,
             handler_mode=c.Cqrs.HandlerType.COMMAND,
             timestamp="",
             status=c.Cqrs.CommonStatus.RUNNING,
         )
-        return r[FlextModelsHandler.RegistrationDetails].ok(reg_details)
+        return r[m.Handler.RegistrationDetails].ok(reg_details)
 
     @staticmethod
     def _register_other_entry(
         key: str,
-    ) -> r[FlextModelsHandler.RegistrationDetails]:
+    ) -> r[m.Handler.RegistrationDetails]:
         """Register GeneralValueType or other types - DRY helper reduces nesting."""
-        reg_details = FlextModelsHandler.RegistrationDetails(
+        reg_details = m.Handler.RegistrationDetails(
             registration_id=key,
             handler_mode=c.Cqrs.HandlerType.COMMAND,
             timestamp="",
             status=c.Cqrs.CommonStatus.RUNNING,
         )
-        return r[FlextModelsHandler.RegistrationDetails].ok(reg_details)
+        return r[m.Handler.RegistrationDetails].ok(reg_details)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -828,7 +869,7 @@ class FlextRegistry(x):
         handler_id = getattr(handler, "handler_id", None)
         return (
             handler_id
-            if handler_id and u.guard(handler_id, str).is_success
+            if handler_id and u.is_type(handler_id, str)
             else handler.__class__.__name__
         )
 
@@ -850,7 +891,7 @@ class FlextRegistry(x):
         entry: (
             h[t.GeneralValueType, t.GeneralValueType]
             | tuple[
-                t.HandlerAliases.HandlerCallable,
+                t.Handler.HandlerCallable,
                 t.GeneralValueType | r[t.GeneralValueType],
             ]
             | t.GeneralValueType
@@ -860,8 +901,12 @@ class FlextRegistry(x):
         message_type: type[t.GeneralValueType],
     ) -> str:
         # Use guard() with tuple type and length check
-        tuple_check = lambda v: isinstance(v, tuple) and len(v) == 2  # noqa: E731, PLR2004
-        tuple_result = u.guard(entry, tuple, tuple_check, return_value=True)
+        def tuple_check(v: object) -> bool:
+            return (
+                isinstance(v, tuple) and len(v) == c.Performance.EXPECTED_TUPLE_LENGTH
+            )
+
+        tuple_result = u.Validation.guard(entry, tuple, tuple_check, return_value=True)
         if tuple_result and isinstance(tuple_result, tuple):
             handler_func = tuple_result[0]
             handler_name = getattr(handler_func, "__name__", None) or str(handler_func)
@@ -871,7 +916,8 @@ class FlextRegistry(x):
             else:
                 type_name = str(message_type)
             return f"{handler_name}::{type_name}"
-        if u.guard(entry, h).is_success:
+        if isinstance(entry, h):
+            # Type narrowing: entry is h instance
             return FlextRegistry._resolve_binding_key(entry, message_type)
         # Handle GeneralValueType or other types
         return str(entry)
@@ -880,7 +926,7 @@ class FlextRegistry(x):
         self,
         name: str,
         service: t.GeneralValueType,
-        metadata: t.GeneralValueType | FlextModelsBase.Metadata | None = None,
+        metadata: t.GeneralValueType | m.Metadata | None = None,
     ) -> r[bool]:
         """Register a service component with optional metadata.
 
@@ -890,7 +936,7 @@ class FlextRegistry(x):
         Args:
             name: Service name for later retrieval
             service: Service instance to register
-            metadata: Optional metadata (dict or FlextModelsBase.Metadata)
+            metadata: Optional metadata (dict or m.Metadata)
 
         Returns:
             r[bool]: Success (True) if registered or failure with error details.
@@ -900,29 +946,40 @@ class FlextRegistry(x):
         validated_metadata: t.GeneralValueType | None = None
         if metadata is not None:
             # Handle Metadata model first
-            if isinstance(metadata, FlextModelsBase.Metadata):
+            if isinstance(metadata, m.Metadata):
                 validated_metadata = metadata.attributes
             else:
                 # Cast to GeneralValueType for is_dict_like check
                 metadata_as_general = cast("t.GeneralValueType", metadata)
                 if FlextRuntime.is_dict_like(metadata_as_general):
-                    # Type guard ensures metadata_as_general is Mapping[str, GeneralValueType]
+                    # Type guard ensures metadata_as_general is t.Types.ConfigurationMapping
                     validated_metadata = dict(metadata_as_general.items())
                 else:
                     return r[bool].fail(
-                        f"metadata must be dict or FlextModelsBase.Metadata, got {type(metadata).__name__}",
+                        f"metadata must be dict or m.Metadata, got {type(metadata).__name__}",
                     )
 
         # Store metadata if provided (for future use)
         if validated_metadata and FlextRuntime.is_dict_like(validated_metadata):
             # Log metadata with service name for observability
             # Use guard with return_value=True and default for concise dict conversion
-            metadata_dict = u.guard(
+            metadata_dict_raw = u.Validation.guard(
                 validated_metadata,
                 dict,
                 default=dict(validated_metadata.items()),
                 return_value=True,
             )
+            # Type narrowing: guard returns r[dict] | dict | None when return_value=True
+            if isinstance(metadata_dict_raw, r):
+                metadata_dict = (
+                    metadata_dict_raw.value
+                    if isinstance(metadata_dict_raw.value, dict)
+                    else {}
+                )
+            elif isinstance(metadata_dict_raw, dict):
+                metadata_dict = metadata_dict_raw
+            else:
+                metadata_dict = {}
             metadata_keys: list[str] = list(metadata_dict.keys())
             self.logger.debug(
                 "Registering service with metadata",

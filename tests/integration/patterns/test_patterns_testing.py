@@ -23,15 +23,16 @@ from typing import ParamSpec, TypeVar, cast
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from flext_core import u  # Use alias for concise code
-from flext_core.typings import t
-from tests.fixtures.typing import (
-    FixtureCaseDict,
-    FixtureDataDict,
-    FixtureFixturesDict,
-    FixtureSuiteDict,
-    MockScenarioData,
-)
+from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
+from tests.typings import TestsFlextTypes
+
+# TypedDict definitions from consolidated test typings
+FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
+FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
+FixtureFixturesDict = TestsFlextTypes.Fixtures.FixtureFixturesDict
+FixtureSuiteDict = TestsFlextTypes.Fixtures.FixtureSuiteDict
+MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
@@ -45,7 +46,7 @@ def mark_test_pattern(
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
         # Use setattr for dynamic attribute setting to avoid type checker issues
         # Type ignore needed because Callable doesn't have _test_pattern attribute
-        func._test_pattern = pattern  # type: ignore[attr-defined]
+        func._test_pattern = pattern
         return func
 
     return decorator
@@ -80,28 +81,34 @@ class GivenWhenThenBuilder:
         """Initialize Given-When-Then builder with test name."""
         super().__init__()
         self.name = name
-        self._given: dict[str, t.GeneralValueType] = {}
-        self._when: dict[str, t.GeneralValueType] = {}
-        self._then: dict[str, t.GeneralValueType] = {}
+        self._given: dict[str, FlextTypes.GeneralValueType] = {}
+        self._when: dict[str, FlextTypes.GeneralValueType] = {}
+        self._then: dict[str, FlextTypes.GeneralValueType] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
     def given(
-        self, _description: str, **kwargs: t.GeneralValueType
+        self,
+        _description: str,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> GivenWhenThenBuilder:
         """Add given conditions to the test scenario."""
         self._given.update(kwargs)
         return self
 
     def when(
-        self, _description: str, **kwargs: t.GeneralValueType
+        self,
+        _description: str,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> GivenWhenThenBuilder:
         """Add when actions to the test scenario."""
         self._when.update(kwargs)
         return self
 
     def then(
-        self, _description: str, **kwargs: t.GeneralValueType
+        self,
+        _description: str,
+        **kwargs: FlextTypes.GeneralValueType,
     ) -> GivenWhenThenBuilder:
         """Add then expectations to the test scenario."""
         self._then.update(kwargs)
@@ -140,7 +147,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
         super().__init__()
-        self._data: dict[str, t.GeneralValueType] = {}
+        self._data: dict[str, FlextTypes.GeneralValueType] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """Add ID to the test data."""
@@ -152,7 +159,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: t.GeneralValueType) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: FlextTypes.GeneralValueType) -> FlextTestBuilder:
         """Add metadata to the test data."""
         self._data.update(kwargs)
         return self
@@ -279,7 +286,7 @@ class SuiteBuilder:
         super().__init__()
         self.name = name
         self._scenarios: list[object] = []
-        self._setup_data: dict[str, t.GeneralValueType] = {}
+        self._setup_data: dict[str, FlextTypes.GeneralValueType] = {}
         self._tags: list[str] = []
 
     def add_scenarios(self, scenarios: list[object]) -> SuiteBuilder:
@@ -287,7 +294,7 @@ class SuiteBuilder:
         self._scenarios.extend(scenarios)
         return self
 
-    def with_setup_data(self, **kwargs: t.GeneralValueType) -> SuiteBuilder:
+    def with_setup_data(self, **kwargs: FlextTypes.GeneralValueType) -> SuiteBuilder:
         """Add setup data to the test suite."""
         self._setup_data.update(kwargs)
         return self
@@ -316,16 +323,16 @@ class FixtureBuilder:
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
-        self._fixtures: dict[str, t.GeneralValueType] = {}
+        self._fixtures: dict[str, FlextTypes.GeneralValueType] = {}
         self._setups: list[object] = []
         self._teardowns: list[object] = []
 
-    def with_user(self, **kwargs: t.GeneralValueType) -> FixtureBuilder:
+    def with_user(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add user fixture data."""
         self._fixtures["user"] = kwargs
         return self
 
-    def with_request(self, **kwargs: t.GeneralValueType) -> FixtureBuilder:
+    def with_request(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add request fixture data."""
         self._fixtures["request"] = kwargs
         return self
@@ -344,18 +351,22 @@ class FixtureBuilder:
         self._teardowns.append(func)
         return self
 
-    def add_fixture(self, key: str, value: t.GeneralValueType) -> FixtureBuilder:
+    def add_fixture(
+        self,
+        key: str,
+        value: FlextTypes.GeneralValueType,
+    ) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
         self._fixtures[key] = value
         return self
 
     def setup_context(
         self,
-    ) -> Callable[[], ContextManager[dict[str, t.GeneralValueType]]]:
+    ) -> Callable[[], ContextManager[dict[str, FlextTypes.GeneralValueType]]]:
         """Create a context manager for test setup and teardown."""
 
         @contextmanager
-        def _ctx() -> Iterator[dict[str, t.GeneralValueType]]:
+        def _ctx() -> Iterator[dict[str, FlextTypes.GeneralValueType]]:
             for f in self._setups:
                 if callable(f):
                     _ = f()
@@ -530,7 +541,9 @@ class TestPerformanceAnalysis:
 
         # Create and manipulate large data structures
         large_list = list(range(10000))
-        filtered_list = list(u.filter(large_list, lambda x: x % 2 == 0))
+        filtered_list = list(
+            FlextUtilities.Collection.filter(large_list, lambda x: x % 2 == 0),
+        )
         sorted_list = sorted(filtered_list, reverse=True)
 
         # Verify operations completed
@@ -640,14 +653,15 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: object) -> dict[str, t.GeneralValueType]:
+        def arrange_data(*_args: object) -> dict[str, FlextTypes.GeneralValueType]:
             return {"numbers": [1, 2, 3, 4, 5]}
 
-        def act_on_data(data: dict[str, t.GeneralValueType]) -> int:
+        def act_on_data(data: dict[str, FlextTypes.GeneralValueType]) -> int:
             return sum(cast("list[int]", data["numbers"]))
 
         def assert_result(
-            result: int, original_data: dict[str, t.GeneralValueType]
+            result: int,
+            original_data: dict[str, FlextTypes.GeneralValueType],
         ) -> None:
             assert result == 15
             assert len(cast("list[int]", original_data["numbers"])) == 5
@@ -745,7 +759,7 @@ class TestRealWorldScenarios:
 
         with fixture_builder.setup_context()():
             # Use a fixed test request instead of Hypothesis example
-            test_request: dict[str, t.GeneralValueType] = {
+            test_request: dict[str, FlextTypes.GeneralValueType] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -755,8 +769,8 @@ class TestRealWorldScenarios:
 
             # Simulate API processing
             def process_api_request(
-                request: dict[str, t.GeneralValueType],
-            ) -> dict[str, t.GeneralValueType]:
+                request: dict[str, FlextTypes.GeneralValueType],
+            ) -> dict[str, FlextTypes.GeneralValueType]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -824,7 +838,7 @@ class TestRealWorldScenarios:
     @settings()
     def test_configuration_validation_comprehensive(
         self,
-        config: dict[str, t.GeneralValueType],
+        config: dict[str, FlextTypes.GeneralValueType],
     ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure

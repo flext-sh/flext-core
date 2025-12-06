@@ -22,7 +22,7 @@ import pytest
 
 from flext_core import FlextExceptions, FlextResult
 
-from .fixtures.factories import (
+from .helpers.factories import (
     FailingService,
     GetUserService,
     ServiceTestCase,

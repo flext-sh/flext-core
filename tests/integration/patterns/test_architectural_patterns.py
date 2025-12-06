@@ -15,8 +15,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextResult
-from flext_core._models.entity import FlextModelsEntity
+from flext_core import FlextResult, m
 
 
 class TestEnterprisePatterns:
@@ -220,14 +219,14 @@ class TestEventDrivenPatterns:
         """Test Domain Event pattern implementation."""
 
         # Event classes
-        class UserCreatedEvent(FlextModelsEntity.DomainEvent):
+        class UserCreatedEvent(m.DomainEvent):
             """Domain event for user creation using FlextModels foundation."""
 
             user_id: str
             user_name: str
             timestamp: float
 
-        class UserUpdatedEvent(FlextModelsEntity.DomainEvent):
+        class UserUpdatedEvent(m.DomainEvent):
             """Domain event for user updates."""
 
             user_id: str
@@ -242,7 +241,7 @@ class TestEventDrivenPatterns:
             def __init__(self) -> None:
                 """Initialize handler."""
                 super().__init__()
-                self.processed_events: list[FlextModelsEntity.DomainEvent] = []
+                self.processed_events: list[m.DomainEvent] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[bool]:
                 """Handle user created event."""

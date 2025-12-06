@@ -1,7 +1,7 @@
 """Real tests to achieve 100% collections coverage - no mocks.
 
 Module: flext_core._models.collections
-Scope: FlextModels.Categories, Statistics, Config, Results, Options
+Scope: m.Categories, Statistics, Config, Results, Options
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
 to cover all remaining lines in _models/collections.py.
@@ -16,19 +16,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import Field
 
-from flext_core._models.collections import FlextModelsCollections
-from flext_core.typings import t
+from flext_core import m, t
+from flext_tests.utilities import FlextTestsUtilities
 
 # Use actual classes, not type aliases, for inheritance
-Statistics = FlextModelsCollections.Statistics
-Config = FlextModelsCollections.Config
-Results = FlextModelsCollections.Results
-Options = FlextModelsCollections.Options
+Statistics = m.Collections.Statistics
+Config = m.Collections.Config
+Results = m.Collections.Results
+Options = m.Collections.Options
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,21 +54,17 @@ class CollectionsScenarios:
 
 
 class TestFlextModelsCollectionsCategories:
-    """Real tests for FlextModels.Categories using FlextTestsUtilities."""
+    """Real tests for m.Categories using FlextTestsUtilities."""
 
     def test_categories_initialization(self) -> None:
         """Test Categories initialization."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         assert categories.categories == {}
         assert len(categories) == 0
 
     def test_categories_get_entries_empty(self) -> None:
         """Test get_entries with empty category."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         assert categories.get_entries("nonexistent") == []
 
     @pytest.mark.parametrize(
@@ -78,9 +74,7 @@ class TestFlextModelsCollectionsCategories:
     )
     def test_categories_operations(self, scenario: CategoryOperationScenario) -> None:
         """Test category operations with various scenarios."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         if scenario.operation == "add":
             categories.add_entries(scenario.category, scenario.entries)
             assert categories.get_entries(scenario.category) == scenario.entries
@@ -95,34 +89,26 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_add_entries_existing_category(self) -> None:
         """Test add_entries with existing category."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.add_entries("users", ["user1"])
         categories.add_entries("users", ["user2", "user3"])
         assert categories.get_entries("users") == ["user1", "user2", "user3"]
 
     def test_categories_has_category(self) -> None:
         """Test has_category."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         assert not categories.has_category("users")
         categories.add_entries("users", ["user1"])
         assert categories.has_category("users")
 
     def test_categories_remove_category_nonexistent(self) -> None:
         """Test remove_category with nonexistent category."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.remove_category("nonexistent")
 
     def test_categories_category_names(self) -> None:
         """Test category_names method."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.add_entries("users", ["user1"])
         categories.add_entries("groups", ["group1"])
         names = categories.category_names
@@ -131,18 +117,14 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_total_entries(self) -> None:
         """Test total_entries computed field."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
         assert categories.total_entries == 3
 
     def test_categories_summary(self) -> None:
         """Test summary computed field."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
         summary = categories.summary
@@ -151,9 +133,7 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_dict_like_operations(self) -> None:
         """Test dict-like operations."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.add_entries("users", ["user1"])
         assert ("users", ["user1"]) in categories.items()
         assert "users" in categories
@@ -167,32 +147,28 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_get_with_default(self) -> None:
         """Test get method with default."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         assert categories.get("nonexistent", ["default"]) == ["default"]
         assert categories.get("nonexistent") == []
 
     def test_categories_from_dict(self) -> None:
         """Test from_dict class method."""
         data = {"users": ["user1"], "groups": ["group1"]}
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str].from_dict(data)
-        )
+        # Cast to m.Collections.Categories for type compatibility
+        categories_raw = m.Collections.Categories[str].from_dict(data)
+        categories = cast("m.Collections.Categories[str]", categories_raw)
         assert categories.get_entries("users") == ["user1"]
         assert categories.get_entries("groups") == ["group1"]
 
     def test_categories_to_dict(self) -> None:
         """Test to_dict method."""
-        categories: FlextModelsCollections.Categories[str] = (
-            FlextModelsCollections.Categories[str]()
-        )
+        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.add_entries("users", ["user1"])
         assert categories.to_dict() == {"users": ["user1"]}
 
 
 class TestFlextModelsCollectionsStatistics:
-    """Real tests for FlextModels.Statistics using FlextTestsUtilities."""
+    """Real tests for m.Statistics using FlextTestsUtilities."""
 
     def test_statistics_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
@@ -212,8 +188,12 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=20)
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
-        assert isinstance(result, dict)
-        result_dict: dict[str, t.GeneralValueType] = result
+        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+            result,
+            dict,
+        )
+        # Cast to dict for type compatibility
+        result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert result_dict.get("count") == 30
 
     def test_statistics_aggregate_lists(self) -> None:
@@ -226,8 +206,12 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(items=["c"])
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
-        assert isinstance(result, dict)
-        result_dict: dict[str, t.GeneralValueType] = result
+        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+            result,
+            dict,
+        )
+        # Cast to dict for type compatibility
+        result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert result_dict.get("items") == ["a", "b", "c"]
 
     def test_statistics_aggregate_mixed(self) -> None:
@@ -242,8 +226,12 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=20, items=["b"], name="second")
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
-        assert isinstance(result, dict)
-        result_dict: dict[str, t.GeneralValueType] = result
+        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+            result,
+            dict,
+        )
+        # Cast to dict for type compatibility
+        result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert result_dict.get("count") == 30
         assert result_dict.get("items") == ["a", "b"]
         assert result_dict.get("name") == "second"
@@ -259,14 +247,18 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=None, name=None)
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
-        assert isinstance(result, dict)
-        result_dict: dict[str, t.GeneralValueType] = result
+        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+            result,
+            dict,
+        )
+        # Cast to dict for type compatibility
+        result_dict = cast("dict[str, t.GeneralValueType]", result)
         assert result_dict.get("count") == 10
         assert result_dict.get("name") == "first"
 
 
 class TestFlextModelsCollectionsConfig:
-    """Real tests for FlextModels.Config using FlextTestsUtilities."""
+    """Real tests for m.Config using FlextTestsUtilities."""
 
     def test_config_merge(self) -> None:
         """Test merge method."""
@@ -363,7 +355,7 @@ class TestFlextModelsCollectionsConfig:
 
 
 class TestFlextModelsCollectionsResults:
-    """Real tests for FlextModels.Results using FlextTestsUtilities."""
+    """Real tests for m.Results using FlextTestsUtilities."""
 
     def test_results_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
@@ -436,7 +428,7 @@ class TestFlextModelsCollectionsResults:
 
 
 class TestFlextModelsCollectionsOptions:
-    """Real tests for FlextModels.Options using FlextTestsUtilities."""
+    """Real tests for m.Options using FlextTestsUtilities."""
 
     def test_options_merge(self) -> None:
         """Test merge method."""

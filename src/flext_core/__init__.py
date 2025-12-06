@@ -12,9 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# Type aliases for nested FlextConfig attributes (DEPRECATED - use FlextConfig.AutoConfig directly)
-# DEPRECATED: These aliases will be removed in next major version.
-# Use FlextConfig.AutoConfig and FlextConfig.auto_register directly.
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.__version__ import __version__, __version_info__
@@ -35,58 +32,25 @@ from flext_core.result import FlextResult, r
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService, s
 from flext_core.typings import (
-    CallableInputT,
-    CallableOutputT,
     E,
-    F,
-    FactoryT,
     FlextTypes,
-    K,
     MessageT_contra,
     P,
     R,
     ResultT,
     T,
-    T1_co,
-    T2_co,
-    T3_co,
     T_co,
-    T_Config,
     T_contra,
     T_Model,
     T_Namespace,
-    TAggregate_co,
-    TCacheKey_contra,
-    TCacheValue_co,
-    TCommand_contra,
-    TConfigKey_contra,
-    TDomainEvent_co,
-    TEntity_co,
-    TEvent_contra,
-    TInput_contra,
-    TInput_Handler_contra,
-    TInput_Handler_Protocol_contra,
-    TItem_contra,
-    TQuery_contra,
-    TResult_co,
-    TResult_contra,
-    TResult_Handler_co,
-    TResult_Handler_Protocol,
-    TState_co,
-    TUtil_contra,
-    TValue_co,
-    TValueObject_co,
+    T_Settings,
     U,
-    V,
-    W,
     t,
 )
 from flext_core.utilities import FlextUtilities, u
 
-# DEPRECATED aliases - kept for backward compatibility, no warning on import
-# Use FlextConfig.AutoConfig and FlextConfig.auto_register directly.
-AutoConfig = FlextConfig.AutoConfig
-auto_register = FlextConfig.auto_register
+# Alias for singular form (backwards compatibility and singular usage)
+FlextHandler = FlextHandlers
 
 # =============================================================================
 # RUNTIME TYPE CHECKING - Python 3.13 Strict Typing Enforcement
@@ -113,12 +77,7 @@ BEARTYPE_CONF = BeartypeConf(
 
 __all__ = [
     "BEARTYPE_CONF",
-    "AutoConfig",
-    "CallableInputT",
-    "CallableOutputT",
     "E",
-    "F",
-    "FactoryT",
     "FlextConfig",
     "FlextConstants",
     "FlextContainer",
@@ -126,6 +85,7 @@ __all__ = [
     "FlextDecorators",
     "FlextDispatcher",
     "FlextExceptions",
+    "FlextHandler",
     "FlextHandlers",
     "FlextLogger",
     "FlextMixins",
@@ -137,47 +97,19 @@ __all__ = [
     "FlextService",
     "FlextTypes",
     "FlextUtilities",
-    "K",
     "MessageT_contra",
     "P",
     "R",
     "ResultT",
     "T",
-    "T1_co",
-    "T2_co",
-    "T3_co",
-    "TAggregate_co",
-    "TCacheKey_contra",
-    "TCacheValue_co",
-    "TCommand_contra",
-    "TConfigKey_contra",
-    "TDomainEvent_co",
-    "TEntity_co",
-    "TEvent_contra",
-    "TInput_Handler_Protocol_contra",
-    "TInput_Handler_contra",
-    "TInput_contra",
-    "TItem_contra",
-    "TQuery_contra",
-    "TResult_Handler_Protocol",
-    "TResult_Handler_co",
-    "TResult_co",
-    "TResult_contra",
-    "TState_co",
-    "TUtil_contra",
-    "TValueObject_co",
-    "TValue_co",
-    "T_Config",
     "T_Model",
     "T_Namespace",
+    "T_Settings",
     "T_co",
     "T_contra",
     "U",
-    "V",
-    "W",
     "__version__",
     "__version_info__",
-    "auto_register",
     # Convenience aliases
     "c",
     "d",
@@ -191,5 +123,3 @@ __all__ = [
     "u",
     "x",
 ]
-# NOTE: UserDataMapping and ValidationResult are in t.Example
-# Access via: t.Example.UserDataMapping, t.Example.ValidationResult

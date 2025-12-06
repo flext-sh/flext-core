@@ -12,8 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstants, FlextLogger
-from flext_core.loggings import FlextLogger as LoggerClass
+from flext_core import FlextLogger, p
+from flext_core.constants import c
+
+LoggerClass = FlextLogger
 
 
 class TestLoggingsErrorPaths:
@@ -22,10 +24,9 @@ class TestLoggingsErrorPaths:
     def test_execute_context_op_unknown_operation(self) -> None:
         """Test _execute_context_op with unknown operation (covers line 131)."""
         result = LoggerClass._execute_context_op("unknown_operation", {})
-        # Type narrowing: unknown operation returns ResultProtocol[bool] (RuntimeResult)
-        assert hasattr(result, "is_failure")
+        # Type narrowing: unknown operation returns ResultProtocol[bool], not dict
+        assert isinstance(result, p.Foundation.Result)
         assert result.is_failure
-        assert hasattr(result, "error")
         assert result.error is not None
         assert "Unknown operation" in result.error
 
@@ -33,18 +34,18 @@ class TestLoggingsErrorPaths:
         """Test _execute_context_op UNBIND with non-sequence keys (covers line 123)."""
         # Pass non-sequence keys - isinstance check fails, skips unbind
         result = LoggerClass._execute_context_op(
-            FlextConstants.Logging.ContextOperation.UNBIND,
+            c.Logging.ContextOperation.UNBIND,
             {"keys": 42},  # int is not Sequence
         )
-        # Type narrowing: UNBIND operation returns ResultProtocol[bool] (RuntimeResult)
-        assert hasattr(result, "is_success")
+        # Type narrowing: UNBIND operation returns ResultProtocol[bool], not dict
+        assert isinstance(result, p.Foundation.Result)
         assert result.is_success  # Still succeeds, just skips unbind
 
     def test_handle_context_error_get_operation(self) -> None:
         """Test _handle_context_error for GET operation (covers lines 140-142)."""
         # GET operation returns empty dict on error
         result = LoggerClass._handle_context_error(
-            FlextConstants.Logging.ContextOperation.GET,
+            c.Logging.ContextOperation.GET,
             AttributeError("Test error"),
         )
         assert isinstance(result, dict)
@@ -54,13 +55,12 @@ class TestLoggingsErrorPaths:
         """Test _handle_context_error for non-GET operation (covers line 142)."""
         # Non-GET operations return failure result
         result = LoggerClass._handle_context_error(
-            FlextConstants.Logging.ContextOperation.BIND,
+            c.Logging.ContextOperation.BIND,
             RuntimeError("Test error"),
         )
-        # Type narrowing: non-GET operations return ResultProtocol[bool] (RuntimeResult)
-        assert hasattr(result, "is_failure")
+        # Type narrowing: non-GET operations return ResultProtocol[bool], not dict
+        assert isinstance(result, p.Foundation.Result)
         assert result.is_failure
-        assert hasattr(result, "error")
         assert result.error is not None
         assert "Failed to bind global context" in result.error
 
@@ -73,7 +73,7 @@ class TestLoggingsErrorPaths:
         # Test that normal operations work
         FlextLogger.clear_global_context()
         result = FlextLogger._context_operation(
-            FlextConstants.Logging.ContextOperation.BIND,
+            c.Logging.ContextOperation.BIND,
             test_key="test_value",
         )
         assert result.is_success or isinstance(result, dict)
@@ -83,7 +83,7 @@ class TestLoggingsErrorPaths:
         # This tests the else branch when context_vars is falsy
         FlextLogger.clear_global_context()
         result = LoggerClass._execute_context_op(
-            FlextConstants.Logging.ContextOperation.GET,
+            c.Logging.ContextOperation.GET,
             {},
         )
         # Should return empty dict when context is empty/None

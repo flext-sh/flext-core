@@ -29,9 +29,8 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextContext, FlextResult, x
-from flext_core._models.base import FlextModelsBase
-from flext_core.typings import t
+from flext_core import FlextContext, FlextResult, m, t, x
+from flext_tests.utilities import FlextTestsUtilities
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -212,7 +211,7 @@ class TestFlextMixinsNestedClasses:
         service = MyService()
         if scenario.scenario_type == ServiceMixinScenarioType.CONTAINER_REGISTER:
             result = service._register_in_container("test_service")
-            assert result.is_success
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPERTY:
             assert isinstance(service.context, FlextContext)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPAGATE:
@@ -252,7 +251,7 @@ class TestFlextMixinsNestedClasses:
         else:
             input_value = scenario.input_value
         # Type narrowing: to_dict accepts BaseModel | ContextMetadataMapping | ConfigurationMapping | None
-        if isinstance(input_value, (BaseModel, dict, FlextModelsBase.Metadata)):
+        if isinstance(input_value, (BaseModel, dict, m.Metadata)):
             result = x.ModelConversion.to_dict(input_value)
         else:
             result = x.ModelConversion.to_dict(None)
@@ -272,8 +271,10 @@ class TestFlextMixinsNestedClasses:
         """Test ResultHandling.ensure_result() with various inputs."""
         if scenario.scenario_type == ResultHandlingScenarioType.RAW_VALUE:
             raw_result = x.ResultHandling.ensure_result(42)
-            assert raw_result.is_success
-            assert raw_result.value == 42
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                raw_result,
+                42,
+            )
         elif scenario.scenario_type == ResultHandlingScenarioType.EXISTING_RESULT:
             original = FlextResult[int].ok(100)
             existing_result: FlextResult[int] = x.ResultHandling.ensure_result(original)
@@ -283,9 +284,18 @@ class TestFlextMixinsNestedClasses:
             int_result = x.ResultHandling.ensure_result(42)
             str_result = x.ResultHandling.ensure_result("hello")
             list_result = x.ResultHandling.ensure_result([1, 2, 3])
-            assert int_result.value == 42
-            assert str_result.value == "hello"
-            assert list_result.value == [1, 2, 3]
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                int_result,
+                42,
+            )
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                str_result,
+                "hello",
+            )
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                list_result,
+                [1, 2, 3],
+            )
 
     def test_service_mixin_with_operation_context(self) -> None:
         """Test Service mixin operation context workflow."""

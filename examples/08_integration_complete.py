@@ -25,7 +25,7 @@ from flext_core import (
     FlextModels,
     FlextRegistry,
     FlextResult,
-    FlextService,
+    s,
     t,
     u,
 )
@@ -35,20 +35,20 @@ from flext_core import (
 # ═══════════════════════════════════════════════════════════════════
 
 
-class User(FlextModels.Entity):  # type: ignore[misc,valid-type]
+class User(FlextModels.Entity):
     """User entity."""
 
     name: str
     email: str
 
 
-class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]
+class Order(FlextModels.AggregateRoot):
     """Order aggregate root."""
 
     customer_id: str
     items: list[str] = Field(default_factory=list)
     status: FlextConstants.Domain.Status = Field(
-        default=FlextConstants.Domain.Status.PENDING
+        default=FlextConstants.Domain.Status.PENDING,
     )
 
 
@@ -57,7 +57,7 @@ class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]
 # ═══════════════════════════════════════════════════════════════════
 
 
-class IntegrationService(FlextService[t.Types.ServiceMetadataMapping]):
+class IntegrationService(s[t.Types.ServiceMetadataMapping]):
     """Service demonstrating complete flext-core integration."""
 
     def execute(
@@ -113,12 +113,14 @@ class IntegrationService(FlextService[t.Types.ServiceMetadataMapping]):
         """Show FlextResult patterns."""
         print("\n=== FlextResult Patterns ===")
 
+        def to_upper(x: str) -> str:
+            return x.upper()
+
+        def add_processed(x: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"{x}_processed")
+
         # Railway pattern
-        result = (
-            FlextResult.ok("initial")
-            .map(lambda x: x.upper())
-            .flat_map(lambda x: FlextResult.ok(f"{x}_processed"))
-        )
+        result = FlextResult[str].ok("initial").map(to_upper).flat_map(add_processed)
         if result.is_success:
             print(f"✅ Railway pattern: {result.unwrap()}")
 
@@ -134,7 +136,7 @@ class IntegrationService(FlextService[t.Types.ServiceMetadataMapping]):
         logger_typed: (
             t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
         ) = logger
-        container.register("logger", logger_typed)
+        _ = container.register("logger", logger_typed)
 
         logger_result: FlextResult[FlextLogger] = container.get("logger")
         if logger_result.is_success:
@@ -228,7 +230,7 @@ class IntegrationService(FlextService[t.Types.ServiceMetadataMapping]):
         print(f"✅ ID generation: {correlation_id[:12]}...")
 
         # Text processing
-        cleaned = u.TextProcessor.clean_text("  test  ")
+        cleaned = u.Text.clean_text("  test  ")
         print(f"✅ Text processing: '{cleaned}'")
 
 

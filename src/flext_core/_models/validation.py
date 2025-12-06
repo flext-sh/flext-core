@@ -10,16 +10,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time as time_module
-from collections.abc import Callable
 from datetime import datetime
-from typing import cast
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
 from flext_core.constants import c
 from flext_core.protocols import p
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextModelsValidation:
@@ -30,9 +33,9 @@ class FlextModelsValidation:
         model: t.GeneralValueType,
         *rules: Callable[
             [t.GeneralValueType],
-            p.ResultProtocol[t.GeneralValueType],
+            r[t.GeneralValueType],
         ],
-    ) -> p.ResultProtocol[t.GeneralValueType]:
+    ) -> r[t.GeneralValueType]:
         """Validate business rules with railway patterns.
 
         Args:
@@ -40,7 +43,7 @@ class FlextModelsValidation:
             *rules: Business rule validation functions
 
         Returns:
-            ResultProtocol: Validated model or accumulated errors
+            Foundation.Result: Validated model or accumulated errors
 
         Example:
             ```python
@@ -67,15 +70,15 @@ class FlextModelsValidation:
                     if result.error
                     else f"{base_msg} (validation rule failed)"
                 )
-                return FlextRuntime.result_fail(error_msg)
+                return r[t.GeneralValueType].fail(error_msg)
 
-        return FlextRuntime.result_ok(model)
+        return r[t.GeneralValueType].ok(model)
 
     @staticmethod
     def validate_cross_fields(
         model: t.GeneralValueType,
         field_validators: t.Types.FieldValidatorMapping,
-    ) -> p.ResultProtocol[t.GeneralValueType]:
+    ) -> r[t.GeneralValueType]:
         """Validate cross-field dependencies with railway patterns.
 
         Args:
@@ -83,7 +86,7 @@ class FlextModelsValidation:
             field_validators: Field name to validator mapping
 
         Returns:
-            ResultProtocol: Validated model or accumulated errors
+            Foundation.Result: Validated model or accumulated errors
 
         Example:
             ```python
@@ -100,35 +103,33 @@ class FlextModelsValidation:
             ```
 
         """
-        validation_results: list[p.ResultProtocol[bool]] = [
-            cast("p.ResultProtocol[bool]", validator(model))
-            for validator in field_validators.values()
+        # Call validators and collect results (validators return Result-like objects)
+        validation_results = [
+            validator(model) for validator in field_validators.values()
         ]
 
-        errors = [
-            result.error
-            for result in validation_results
-            if result.is_failure and result.error
-        ]
+        # Extract errors from failed results using duck typing - use getattr for pyright
+        errors: list[str] = []
+        for result in validation_results:
+            is_failure = getattr(result, "is_failure", False)
+            error_value = getattr(result, "error", None)
+            if is_failure and error_value:
+                errors.append(str(error_value))
 
         if errors:
-            # Type assertion: errors contains only non-None strings due to filter above
-            # NOTE: Cannot use u.map() here due to circular import
-            # (utilities.py -> _utilities/context.py -> _models/context.py -> entity.py -> validation.py)
-            error_messages = [str(err) for err in errors]
-            return FlextRuntime.result_fail(
-                f"Cross-field validation failed: {'; '.join(error_messages)}",
+            return r[t.GeneralValueType].fail(
+                f"Cross-field validation failed: {'; '.join(errors)}",
                 error_code="CROSS_FIELD_VALIDATION_FAILED",
-                error_data={"field_errors": error_messages},
+                error_data={"field_errors": errors},
             )
 
-        return FlextRuntime.result_ok(model)
+        return r[t.GeneralValueType].ok(model)
 
     @staticmethod
     def validate_performance(
         model: BaseModel,
         max_validation_time_ms: int | None = None,
-    ) -> p.ResultProtocol[BaseModel]:
+    ) -> r[BaseModel]:
         """Validate model with performance constraints.
 
         Args:
@@ -136,7 +137,7 @@ class FlextModelsValidation:
             max_validation_time_ms: Maximum validation time in milliseconds
 
         Returns:
-            ResultProtocol: Validated model or performance error
+            Foundation.Result: Validated model or performance error
 
         Example:
             ```python
@@ -163,18 +164,20 @@ class FlextModelsValidation:
             )
             # Re-validate the model from the dump
             validated_model = model.__class__.model_validate(dump)
-            validation_time = (time_module.time() - start_time) * 1000
+            validation_time = (
+                time_module.time() - start_time
+            ) * c.MILLISECONDS_MULTIPLIER
 
             if validation_time > timeout_ms:
-                return FlextRuntime.result_fail(
+                return r[BaseModel].fail(
                     f"Validation too slow: {validation_time:.2f}ms > {timeout_ms}ms",
                     error_code="PERFORMANCE_VALIDATION_FAILED",
                     error_data={"validation_time_ms": validation_time},
                 )
 
-            return FlextRuntime.result_ok(validated_model)
+            return r[BaseModel].ok(validated_model)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return FlextRuntime.result_fail(
+            return r[BaseModel].fail(
                 f"Validation failed: {e}",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
@@ -184,10 +187,10 @@ class FlextModelsValidation:
         models: t.ObjectList,
         *validators: Callable[
             [t.GeneralValueType],
-            p.ResultProtocol[t.GeneralValueType],
+            r[t.GeneralValueType],
         ],
         fail_fast: bool = True,
-    ) -> p.ResultProtocol[t.ObjectList]:
+    ) -> r[t.ObjectList]:
         """Validate a batch of models with railway patterns.
 
         Args:
@@ -196,7 +199,7 @@ class FlextModelsValidation:
             fail_fast: Stop on first failure or accumulate all errors
 
         Returns:
-            ResultProtocol: All validated models or first failure
+            Foundation.Result: All validated models or first failure
 
         Example:
             ```python
@@ -226,18 +229,18 @@ class FlextModelsValidation:
                             if result.error
                             else f"{base_msg} (item validation failed)"
                         )
-                        return FlextRuntime.result_fail(error_msg)
+                        return r[t.ObjectList].fail(error_msg)
 
                 valid_models.append(model)
 
-            return FlextRuntime.result_ok(valid_models)
+            return r[t.ObjectList].ok(valid_models)
         # Accumulate all errors
         validated_models: list[t.GeneralValueType] = []
         all_errors: list[str] = []
 
         for model in models:
             # Use individual validation for models since validators may return GeneralValueType
-            validation_result = FlextRuntime.result_ok(model)
+            validation_result: r[t.GeneralValueType] = r[t.GeneralValueType].ok(model)
             for validator in validators:
                 result = validator(model)
                 if result.is_failure:
@@ -247,8 +250,8 @@ class FlextModelsValidation:
                         if result.error
                         else f"{base_msg} (model validation failed)"
                     )
-                    # Create failure result using FlextRuntime
-                    validation_result = FlextRuntime.result_fail(error_msg)
+                    # Create failure result
+                    validation_result = r[t.GeneralValueType].fail(error_msg)
                     break
             if validation_result.is_success:
                 validated_models.append(model)
@@ -262,13 +265,13 @@ class FlextModelsValidation:
                 all_errors.append(error_msg)
 
         if all_errors:
-            return FlextRuntime.result_fail(
+            return r[t.ObjectList].fail(
                 f"Batch validation failed: {'; '.join(all_errors)}",
                 error_code="BATCH_VALIDATION_FAILED",
                 error_data={"error_count": len(all_errors), "errors": all_errors},
             )
 
-        return FlextRuntime.result_ok(validated_models)
+        return r[t.ObjectList].ok(validated_models)
 
     @staticmethod
     def validate_domain_invariants(
@@ -276,10 +279,10 @@ class FlextModelsValidation:
         invariants: list[
             Callable[
                 [t.GeneralValueType],
-                p.ResultProtocol[t.GeneralValueType],
+                r[t.GeneralValueType],
             ]
         ],
-    ) -> p.ResultProtocol[t.GeneralValueType]:
+    ) -> r[t.GeneralValueType]:
         """Validate domain invariants with railway patterns.
 
         Args:
@@ -287,7 +290,7 @@ class FlextModelsValidation:
             invariants: List of domain invariant validation functions
 
         Returns:
-            ResultProtocol: Validated model or first invariant violation
+            Foundation.Result: Validated model or first invariant violation
 
         Example:
             ```python
@@ -305,23 +308,21 @@ class FlextModelsValidation:
         for invariant in invariants:
             # Cast model to GeneralValueType for type safety
             result = invariant(model)
-            if hasattr(result, "is_failure") and result.is_failure:
-                return FlextRuntime.result_fail(
-                    f"Domain invariant violation: {result.error if hasattr(result, 'error') else 'unknown'}",
+            is_failure = getattr(result, "is_failure", False)
+            if is_failure:
+                error_msg = getattr(result, "error", "unknown")
+                return r[t.GeneralValueType].fail(
+                    f"Domain invariant violation: {error_msg}",
                     error_code="DOMAIN_INVARIANT_VIOLATION",
-                    error_data={
-                        "invariant_error": result.error
-                        if hasattr(result, "error")
-                        else "unknown",
-                    },
+                    error_data={"invariant_error": error_msg},
                 )
-        return FlextRuntime.result_ok(model)
+        return r[t.GeneralValueType].ok(model)
 
     @staticmethod
     def validate_aggregate_consistency_with_rules(
         aggregate: t.GeneralValueType,
         consistency_rules: t.Types.ConsistencyRuleMapping,
-    ) -> p.ResultProtocol[t.GeneralValueType]:
+    ) -> r[t.GeneralValueType]:
         """Validate aggregate consistency with railway patterns.
 
         Args:
@@ -329,7 +330,7 @@ class FlextModelsValidation:
             consistency_rules: Dictionary of consistency rule validators
 
         Returns:
-            ResultProtocol: Validated aggregate or consistency violation
+            Foundation.Result: Validated aggregate or consistency violation
 
         Example:
             ```python
@@ -346,24 +347,27 @@ class FlextModelsValidation:
         """
         violations: list[str] = []
         for rule_name, validator in consistency_rules.items():
-            result = cast("p.ResultProtocol[bool]", validator(aggregate))
-            if result.is_failure:
-                violations.append(f"{rule_name}: {result.error}")
+            result = validator(aggregate)
+            # Duck typing for Result-like objects - use getattr for pyright compatibility
+            is_failure = getattr(result, "is_failure", False)
+            if is_failure:
+                error_msg = getattr(result, "error", "Unknown error")
+                violations.append(f"{rule_name}: {error_msg}")
 
         if violations:
-            return FlextRuntime.result_fail(
+            return r[t.GeneralValueType].fail(
                 f"Aggregate consistency violations: {'; '.join(violations)}",
                 error_code="AGGREGATE_CONSISTENCY_VIOLATION",
                 error_data={"violations": violations},
             )
 
-        return FlextRuntime.result_ok(aggregate)
+        return r[t.GeneralValueType].ok(aggregate)
 
     @staticmethod
     def validate_event_sourcing(
         event: t.GeneralValueType,
         event_validators: t.Types.EventValidatorMapping,
-    ) -> p.ResultProtocol[t.GeneralValueType]:
+    ) -> r[t.GeneralValueType]:
         """Validate event sourcing patterns with railway patterns.
 
         Args:
@@ -371,7 +375,7 @@ class FlextModelsValidation:
             event_validators: Dictionary of event-specific validators
 
         Returns:
-            ResultProtocol: Validated event or validation failure
+            Foundation.Result: Validated event or validation failure
 
         Example:
             ```python
@@ -386,26 +390,27 @@ class FlextModelsValidation:
             ```
 
         """
-        validation_results = cast(
-            "list[p.ResultProtocol[bool]]",
-            # NOTE: Cannot use u.map() here due to circular import
-            [validator(event) for validator in event_validators.values()],
-        )
-
-        errors: list[str] = [
-            result.error
-            for result in validation_results
-            if result.is_failure and result.error
+        # Call validators and collect results (validators return Result-like objects)
+        validation_results = [
+            validator(event) for validator in event_validators.values()
         ]
 
+        # Extract errors from failed results using duck typing - use getattr for pyright
+        errors: list[str] = []
+        for result in validation_results:
+            is_failure = getattr(result, "is_failure", False)
+            error_value = getattr(result, "error", None)
+            if is_failure and error_value:
+                errors.append(str(error_value))
+
         if errors:
-            return FlextRuntime.result_fail(
+            return r[t.GeneralValueType].fail(
                 f"Event validation failed: {'; '.join(errors)}",
                 error_code="EVENT_VALIDATION_FAILED",
                 error_data={"event_errors": errors},
             )
 
-        return FlextRuntime.result_ok(event)
+        return r[t.GeneralValueType].ok(event)
 
     @staticmethod
     def validate_cqrs_patterns(
@@ -414,10 +419,10 @@ class FlextModelsValidation:
         validators: list[
             Callable[
                 [t.GeneralValueType],
-                p.ResultProtocol[t.GeneralValueType],
+                r[t.GeneralValueType],
             ]
         ],
-    ) -> p.ResultProtocol[t.GeneralValueType]:
+    ) -> r[t.GeneralValueType]:
         """Validate CQRS patterns with railway patterns.
 
         Args:
@@ -426,7 +431,7 @@ class FlextModelsValidation:
             validators: List of pattern-specific validators
 
         Returns:
-            ResultProtocol: Validated command/query or validation failure
+            Foundation.Result: Validated command/query or validation failure
 
         Example:
             ```python
@@ -447,7 +452,7 @@ class FlextModelsValidation:
             c.Cqrs.HandlerType.QUERY.value,
         }
         if pattern_type not in valid_pattern_types:
-            return FlextRuntime.result_fail(
+            return r[t.GeneralValueType].fail(
                 f"Invalid pattern type: {pattern_type}. Must be '{c.Cqrs.HandlerType.COMMAND.value}' or '{c.Cqrs.HandlerType.QUERY.value}'",
                 error_code="INVALID_PATTERN_TYPE",
             )
@@ -456,7 +461,7 @@ class FlextModelsValidation:
             # Cast command_or_query to GeneralValueType for type safety
             result = validator(command_or_query)
             if result.is_failure:
-                return FlextRuntime.result_fail(
+                return r[t.GeneralValueType].fail(
                     f"CQRS {pattern_type} validation failed: {result.error}",
                     error_code=f"CQRS_{pattern_type.upper()}_VALIDATION_FAILED",
                     error_data={
@@ -465,15 +470,15 @@ class FlextModelsValidation:
                     },
                 )
 
-        return FlextRuntime.result_ok(command_or_query)
+        return r[t.GeneralValueType].ok(command_or_query)
 
     @staticmethod
     def _validate_event_structure(
         event: t.GeneralValueType,
-    ) -> p.ResultProtocol[bool]:
+    ) -> r[bool]:
         """Validate event is not None and has required attributes."""
         if event is None:
-            return FlextRuntime.result_fail(
+            return r[bool].fail(
                 "Domain event cannot be None",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
@@ -489,17 +494,17 @@ class FlextModelsValidation:
             )
         ]
         if missing_attrs:
-            return FlextRuntime.result_fail(
+            return r[bool].fail(
                 f"Domain event missing required attributes: {missing_attrs}",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
 
-        return FlextRuntime.result_ok(True)
+        return r[bool].ok(True)
 
     @staticmethod
     def _validate_event_fields(
         event: t.GeneralValueType,
-    ) -> p.ResultProtocol[bool]:
+    ) -> r[bool]:
         """Validate event field types and values."""
         # Validate event_type is non-empty string
         event_type = (
@@ -510,7 +515,7 @@ class FlextModelsValidation:
             else ""
         )
         if not event_type or not isinstance(event_type, str):
-            return FlextRuntime.result_fail(
+            return r[bool].fail(
                 "Domain event event_type must be a non-empty string",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
@@ -524,7 +529,7 @@ class FlextModelsValidation:
             else ""
         )
         if not aggregate_id or not isinstance(aggregate_id, str):
-            return FlextRuntime.result_fail(
+            return r[bool].fail(
                 "Domain event aggregate_id must be a non-empty string",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
@@ -538,17 +543,17 @@ class FlextModelsValidation:
             else None
         )
         if data is not None and not FlextRuntime.is_dict_like(data):
-            return FlextRuntime.result_fail(
+            return r[bool].fail(
                 "Domain event data must be a dictionary or None",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
 
-        return FlextRuntime.result_ok(True)
+        return r[bool].ok(True)
 
     @staticmethod
     def validate_domain_event(
         event: t.GeneralValueType,
-    ) -> p.ResultProtocol[bool]:
+    ) -> r[bool]:
         """Enhanced domain event validation with comprehensive checks.
 
         Validates domain events for proper structure, required fields,
@@ -558,7 +563,7 @@ class FlextModelsValidation:
             event: The domain event to validate
 
         Returns:
-            ResultProtocol[bool]: Success with True if valid, failure with details
+            Foundation.Result[bool]: Success with True if valid, failure with details
 
         """
         # Validate structure
@@ -571,12 +576,12 @@ class FlextModelsValidation:
         if fields_result.is_failure:
             return fields_result
 
-        return FlextRuntime.result_ok(True)
+        return r[bool].ok(True)
 
     @staticmethod
     def validate_aggregate_consistency(
-        aggregate: t.GeneralValueType | p.HasInvariants,
-    ) -> p.ResultProtocol[t.GeneralValueType | p.HasInvariants]:
+        aggregate: t.GeneralValueType | p.Domain.Validation.HasInvariants,
+    ) -> r[t.GeneralValueType | p.Domain.Validation.HasInvariants]:
         """Validate aggregate consistency and business invariants.
 
         Ensures aggregates maintain consistency boundaries and invariants
@@ -586,19 +591,19 @@ class FlextModelsValidation:
             aggregate: The aggregate root to validate
 
         Returns:
-            ResultProtocol: Validated aggregate or failure with details
+            Foundation.Result: Validated aggregate or failure with details
 
         """
         if aggregate is None:
-            return FlextRuntime.result_fail(
+            return r[t.GeneralValueType | p.Domain.Validation.HasInvariants].fail(
                 "Aggregate cannot be None",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
 
         # Check invariants if the aggregate supports them
-        if isinstance(aggregate, p.HasInvariants):
+        if isinstance(aggregate, p.Domain.Validation.HasInvariants):
             try:
-                _ = aggregate.check_invariants()
+                aggregate.check_invariants()  # Returns None, just call for side effects
             except (
                 AttributeError,
                 TypeError,
@@ -606,7 +611,7 @@ class FlextModelsValidation:
                 RuntimeError,
                 KeyError,
             ) as e:
-                return FlextRuntime.result_fail(
+                return r[t.GeneralValueType | p.Domain.Validation.HasInvariants].fail(
                     f"Aggregate invariant violation: {e}",
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
@@ -621,31 +626,31 @@ class FlextModelsValidation:
                     f"Too many uncommitted domain events: {event_count} "
                     f"(max: {max_events})"
                 )
-                return FlextRuntime.result_fail(
+                return r[t.GeneralValueType | p.Domain.Validation.HasInvariants].fail(
                     error_msg,
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
 
-        return FlextRuntime.result_ok(aggregate)
+        return r[t.GeneralValueType | p.Domain.Validation.HasInvariants].ok(aggregate)
 
     @staticmethod
     def validate_entity_relationships(
-        entity: t.GeneralValueType,
-    ) -> p.ResultProtocol[t.GeneralValueType]:
+        entity: object,
+    ) -> r[object]:
         """Validate entity relationships and references.
 
         Ensures entity references are valid and relationships are consistent.
         Critical for maintaining data integrity across flext-ecosystem.
 
         Args:
-            entity: The entity to validate
+            entity: The entity to validate (accepts any object with attributes)
 
         Returns:
-            ResultProtocol: Validated entity or failure with details
+            Foundation.Result[object]: Validated entity or failure with details
 
         """
         if entity is None:
-            return FlextRuntime.result_fail(
+            return r[object].fail(
                 "Entity cannot be None",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
@@ -657,7 +662,7 @@ class FlextModelsValidation:
         if hasattr(entity, "version"):
             version = getattr(entity, "version", 0)
             if not isinstance(version, int) or version < 0:
-                return FlextRuntime.result_fail(
+                return r[object].fail(
                     "Entity version must be a non-negative integer",
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
@@ -667,13 +672,13 @@ class FlextModelsValidation:
             if hasattr(entity, timestamp_field):
                 timestamp = getattr(entity, timestamp_field)
                 if timestamp is not None and not isinstance(timestamp, datetime):
-                    return FlextRuntime.result_fail(
+                    return r[object].fail(
                         f"Entity {timestamp_field} must be a datetime or None",
                         error_code=c.Errors.VALIDATION_ERROR,
                     )
 
         # Return validated entity
-        return FlextRuntime.result_ok(entity)
+        return r[object].ok(entity)
 
 
 __all__ = ["FlextModelsValidation"]

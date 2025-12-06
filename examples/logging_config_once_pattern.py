@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, FlextService, t
+from flext_core import r, s, t
 
 
-class DatabaseService(FlextService[dict[str, t.GeneralValueType]]):
+class DatabaseService(s[dict[str, t.GeneralValueType]]):
     """Example service showing config log-once pattern."""
 
     db_config: dict[str, t.GeneralValueType]
@@ -33,11 +33,11 @@ class DatabaseService(FlextService[dict[str, t.GeneralValueType]]):
         # ❌ WRONG: DO NOT pass config to _with_operation_context
         # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
 
-    def execute(self, **_kwargs: object) -> FlextResult[dict[str, t.GeneralValueType]]:
+    def execute(self, **_kwargs: object) -> r[dict[str, t.GeneralValueType]]:
         """Execute database operations.
 
         Returns:
-            FlextResult[dict]: Operation results
+            r[dict]: Operation results
 
         """
         # Set operation context WITHOUT config
@@ -53,10 +53,10 @@ class DatabaseService(FlextService[dict[str, t.GeneralValueType]]):
         # Simulate query
         results: dict[str, t.GeneralValueType] = {"users": [{"id": 1, "name": "Alice"}]}
 
-        return FlextResult[dict[str, t.GeneralValueType]].ok(results)
+        return r[dict[str, t.GeneralValueType]].ok(results)
 
 
-class MigrationService(FlextService[dict[str, t.GeneralValueType]]):
+class MigrationService(s[dict[str, t.GeneralValueType]]):
     """Example migration service with config log-once pattern."""
 
     def __init__(self, input_dir: str, output_dir: str, sync: bool) -> None:
@@ -82,11 +82,11 @@ class MigrationService(FlextService[dict[str, t.GeneralValueType]]):
         # ✅ CORRECT: Log config ONCE at initialization
         self._log_config_once(config, message="Migration configuration loaded")
 
-    def execute(self, **_kwargs: object) -> FlextResult[dict[str, t.GeneralValueType]]:
+    def execute(self, **_kwargs: object) -> r[dict[str, t.GeneralValueType]]:
         """Execute migration.
 
         Returns:
-            FlextResult[dict]: Migration results
+            r[dict]: Migration results
 
         """
         # Set operation context with business data (NOT config)
@@ -104,7 +104,7 @@ class MigrationService(FlextService[dict[str, t.GeneralValueType]]):
         self.logger.info("Processing batch 2 of 10")
         # Config does NOT repeat in these logs!
 
-        return FlextResult[dict[str, t.GeneralValueType]].ok({
+        return r[dict[str, t.GeneralValueType]].ok({
             "migrated": 1000,
             "failed": 0,
         })

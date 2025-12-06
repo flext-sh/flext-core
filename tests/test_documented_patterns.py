@@ -29,24 +29,24 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel
 
+# ============================================================================
+# Test Models and Factories
+# ============================================================================
+# Test Models
+# Use public facade m.Entity for inheritance
 from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextExceptions,
     FlextLogger,
-    FlextModels,
     FlextResult,
     FlextService,
+    m,
+    t,
 )
-from flext_core.typings import t
-
-# ============================================================================
-# Test Models and Factories
-# ============================================================================
 
 
-# Test Models
-class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
+class User(m.Entity):
     """User domain model."""
 
     name: str
@@ -97,20 +97,22 @@ class RailwayTestCase:
         user_result = GetUserService(user_id=self.user_ids[0]).execute()
         # Type narrowing: GetUserService returns User, but pipeline may transform to str or EmailResponse
         result: FlextResult[User | str | EmailResponse] = cast(
-            "FlextResult[User | str | EmailResponse]", user_result
+            "FlextResult[User | str | EmailResponse]",
+            user_result,
         )
 
         # Apply operations if specified
         for op in self.operations:
             if op == "get_email":
                 result = result.map(
-                    lambda user: user.email if isinstance(user, User) else str(user)
+                    lambda user: user.email if isinstance(user, User) else str(user),
                 )
             elif op == "send_email":
                 # flat_map returns EmailResponse, cast to maintain union type for return signature
                 email_result = result.flat_map(
                     lambda email: SendEmailService(
-                        to=str(email), subject="Test"
+                        to=str(email),
+                        subject="Test",
                     ).execute(),
                 )
                 result = cast("FlextResult[User | str | EmailResponse]", email_result)
@@ -118,7 +120,7 @@ class RailwayTestCase:
                 result = result.map(
                     lambda response: response.status
                     if isinstance(response, EmailResponse)
-                    else str(response)
+                    else str(response),
                 )
 
         return result
@@ -572,7 +574,7 @@ class TestPattern7MonadicComposition:
                     isinstance(data.get("value"), int)
                     and isinstance(data["value"], int)
                     and data["value"] < 100
-                )
+                ),
             )
         )
 

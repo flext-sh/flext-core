@@ -7,241 +7,125 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
-from flext_core import FlextResult
-from flext_core.typings import t
-from flext_tests.matchers import FlextTestsMatchers
+from flext_core import FlextResult, t
+from flext_tests import tm
+from flext_tests.constants import c
 
-
-class TestDataBuilder:
-    """Test suite for TestDataBuilder nested class."""
-
-    def test_init(self) -> None:
-        """Test TestDataBuilder initialization."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        assert isinstance(builder, FlextTestsMatchers.TestDataBuilder)
-
-    def test_with_users_default(self) -> None:
-        """Test with_users with default count."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        result = builder.with_users()
-
-        assert result is builder  # Returns self for chaining
-        data = builder.build()
-
-        assert "users" in data
-        users = cast("list[dict[str, str | int]]", data["users"])
-        assert len(users) == 5
-
-        # Check first user structure
-        first_user = users[0]
-        assert first_user["id"] == "USER-0"
-        assert first_user["name"] == "User 0"
-        assert first_user["email"] == "user0@example.com"
-        assert first_user["age"] == 20
-
-    def test_with_users_custom_count(self) -> None:
-        """Test with_users with custom count."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        _ = builder.with_users(count=3)
-        data = builder.build()
-
-        users = cast("list[dict[str, str | int]]", data["users"])
-        assert len(users) == 3
-        assert users[-1]["id"] == "USER-2"
-
-    def test_with_configs_development(self) -> None:
-        """Test with_configs in development mode."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        result = builder.with_configs(production=False)
-
-        assert result is builder
-        data = builder.build()
-
-        assert "configs" in data
-        config = cast("dict[str, object]", data["configs"])
-        assert config["environment"] == "development"
-        assert config["debug"] is True
-        assert config["database_url"] == "postgresql://localhost/testdb"
-        assert config["api_timeout"] == 30
-        assert config["max_connections"] == 10
-
-    def test_with_configs_production(self) -> None:
-        """Test with_configs in production mode."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        _ = builder.with_configs(production=True)
-        data = builder.build()
-
-        config = cast("dict[str, object]", data["configs"])
-        assert config["environment"] == "production"
-        assert config["debug"] is False
-
-    def test_with_validation_fields_default(self) -> None:
-        """Test with_validation_fields with default count."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        result = builder.with_validation_fields()
-
-        assert result is builder
-        data = builder.build()
-
-        assert "validation_fields" in data
-        fields = cast("dict[str, object]", data["validation_fields"])
-
-        valid_emails = cast("list[str]", fields["valid_emails"])
-        assert len(valid_emails) == 5
-        assert valid_emails[0] == "user0@example.com"
-        invalid_emails = cast("list[str]", fields["invalid_emails"])
-        assert len(invalid_emails) == 3
-        assert fields["valid_hostnames"] == ["example.com", "localhost"]
-
-    def test_with_validation_fields_custom_count(self) -> None:
-        """Test with_validation_fields with custom count."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        _ = builder.with_validation_fields(count=3)
-        data = builder.build()
-
-        validation_fields = cast("dict[str, object]", data["validation_fields"])
-        valid_emails = cast("list[str]", validation_fields["valid_emails"])
-        assert len(valid_emails) == 3
-
-    def test_build_empty(self) -> None:
-        """Test build with no data added."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        data = builder.build()
-
-        assert isinstance(data, dict)
-        assert data == {}
-
-    def test_build_full_dataset(self) -> None:
-        """Test build with all data types added."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        _ = (
-            builder.with_users(2)
-            .with_configs(production=True)
-            .with_validation_fields(2)
-        )
-        data = builder.build()
-
-        assert "users" in data
-        assert "configs" in data
-        assert "validation_fields" in data
-        users = cast("list[dict[str, str | int]]", data["users"])
-        configs = cast("dict[str, str | int | bool]", data["configs"])
-        assert len(users) == 2
-        assert configs["environment"] == "production"
+# TestDataBuilder was removed - use tt.model() and tt.batch() instead
+# These tests are kept for backward compatibility but marked as skipped
+# New tests should use tt.model() and tt.batch() from flext_tests.factories
 
 
 class TestFlextTestsMatchers:
     """Test suite for FlextTestsMatchers class."""
 
     def test_assert_result_success_passes(self) -> None:
-        """Test assert_result_success with successful result."""
-        matchers = FlextTestsMatchers()
+        """Test tm.ok() with successful result."""
         result = FlextResult[str].ok("success")
 
         # Should not raise
-        matchers.assert_result_success(result)
+        value = tm.ok(result)
+        assert value == "success"
 
     def test_assert_result_success_fails(self) -> None:
-        """Test assert_result_success with failed result."""
-        matchers = FlextTestsMatchers()
+        """Test tm.ok() with failed result."""
         result = FlextResult[str].fail("error")
 
-        with pytest.raises(AssertionError, match="Expected success result"):
-            matchers.assert_result_success(result)
+        with pytest.raises(AssertionError, match="Expected success but got failure"):
+            tm.ok(result)
 
     def test_assert_result_success_custom_message(self) -> None:
-        """Test assert_result_success with custom error message."""
-        matchers = FlextTestsMatchers()
+        """Test tm.ok() with custom error message."""
         result = FlextResult[str].fail("error")
 
         with pytest.raises(AssertionError, match="Custom message"):
-            matchers.assert_result_success(result, "Custom message")
+            tm.ok(result, msg="Custom message")
 
     def test_assert_result_failure_passes(self) -> None:
-        """Test assert_result_failure with failed result."""
+        """Test tm.fail() with failed result."""
         result = FlextResult[str].fail("error")
 
         # Should not raise
-        FlextTestsMatchers.assert_result_failure(result)
+        error = tm.fail(result)
+        assert error == "error"
 
     def test_assert_result_failure_fails(self) -> None:
-        """Test assert_result_failure with successful result."""
+        """Test tm.fail() with successful result."""
         result = FlextResult[str].ok("success")
 
-        with pytest.raises(AssertionError, match="Expected failure result"):
-            FlextTestsMatchers.assert_result_failure(result)
+        with pytest.raises(AssertionError, match="Expected failure but got success"):
+            tm.fail(result)
 
     def test_assert_result_failure_with_expected_error(self) -> None:
-        """Test assert_result_failure with expected error substring."""
+        """Test tm.fail() with expected error substring."""
         result = FlextResult[str].fail("Database connection failed")
 
         # Should not raise
-        FlextTestsMatchers.assert_result_failure(result, "connection")
+        error = tm.fail(result, contains="connection")
+        assert "connection" in error
 
     def test_assert_result_failure_expected_error_not_found(self) -> None:
-        """Test assert_result_failure when expected error substring not found."""
+        """Test tm.fail() when expected error substring not found."""
         result = FlextResult[str].fail("Database error")
 
         with pytest.raises(
             AssertionError,
-            match="Expected error containing 'connection'",
+            match=r"Expected.*to contain 'connection'",
         ):
-            FlextTestsMatchers.assert_result_failure(result, "connection")
+            tm.fail(result, contains="connection")
 
     def test_assert_dict_contains_passes(self) -> None:
-        """Test assert_dict_contains with matching data."""
+        """Test tm.dict_() with contains parameter."""
         data = {"key1": "value1", "key2": "value2"}
         expected = {"key1": "value1"}
 
         # Should not raise
-        FlextTestsMatchers.assert_dict_contains(data, expected)
+        tm.dict_(data, contains=expected)
 
     def test_assert_dict_contains_missing_key(self) -> None:
-        """Test assert_dict_contains with missing key."""
+        """Test tm.dict_() with missing key."""
         data = {"key1": "value1"}
         expected = {"key2": "value2"}
 
-        with pytest.raises(AssertionError, match="Key 'key2' not found"):
-            FlextTestsMatchers.assert_dict_contains(data, expected)
+        with pytest.raises(AssertionError, match="Key 'key2' not found in dict"):
+            tm.dict_(data, contains=expected)
 
     def test_assert_dict_contains_wrong_value(self) -> None:
-        """Test assert_dict_contains with wrong value."""
+        """Test tm.dict_() with wrong value."""
         data = {"key1": "value1"}
         expected = {"key1": "wrong_value"}
 
         with pytest.raises(AssertionError, match="expected wrong_value, got value1"):
-            FlextTestsMatchers.assert_dict_contains(data, expected)
+            tm.dict_(data, contains=expected)
 
     def test_assert_list_contains_passes(self) -> None:
-        """Test assert_list_contains with item in list."""
+        """Test tm.list_() with contains parameter."""
         items = ["item1", "item2", "item3"]
 
         # Should not raise
-        FlextTestsMatchers.assert_list_contains(items, "item2")
+        tm.list_(items, contains="item2")
 
     def test_assert_list_contains_missing_item(self) -> None:
-        """Test assert_list_contains with item not in list."""
+        """Test tm.list_() with item not in list."""
         items = ["item1", "item2"]
 
-        with pytest.raises(AssertionError, match="Expected item 'item3' not found"):
-            FlextTestsMatchers.assert_list_contains(items, "item3")
+        with pytest.raises(AssertionError, match=r"Expected.*to contain 'item3'"):
+            tm.list_(items, contains="item3")
 
     def test_assert_valid_email_passes(self) -> None:
-        """Test assert_valid_email with valid email."""
+        """Test tm.that() with email pattern match."""
         # Should not raise
-        FlextTestsMatchers.assert_valid_email("test@example.com")
+        tm.that("test@example.com", match=c.Tests.Matcher.EMAIL_PATTERN)
 
     def test_assert_valid_email_fails(self) -> None:
-        """Test assert_valid_email with invalid email."""
-        with pytest.raises(AssertionError, match="Invalid email format"):
-            FlextTestsMatchers.assert_valid_email("invalid-email")
+        """Test tm.that() with invalid email."""
+        with pytest.raises(AssertionError, match="Assertion failed"):
+            tm.that("invalid-email", match=c.Tests.Matcher.EMAIL_PATTERN)
 
     def test_assert_valid_email_edge_cases(self) -> None:
-        """Test assert_valid_email with various edge cases."""
+        """Test tm.that() with various email edge cases."""
         valid_emails = [
             "user.name@domain.co.uk",
             "test+tag@example.com",
@@ -256,72 +140,58 @@ class TestFlextTestsMatchers:
 
         for email in valid_emails:
             # Should not raise
-            FlextTestsMatchers.assert_valid_email(email)
+            tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
 
         for email in invalid_emails:
             with pytest.raises(AssertionError):
-                FlextTestsMatchers.assert_valid_email(email)
+                tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
 
     def test_assert_config_valid_passes(self) -> None:
-        """Test assert_config_valid with valid config."""
+        """Test tm.dict_() with config validation."""
         config: dict[str, t.GeneralValueType] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 30,
         }
 
-        # Should not raise
-        FlextTestsMatchers.assert_config_valid(config)
+        # Should not raise - validate keys and timeout
+        tm.dict_(config, has_key=["service_type", "environment", "timeout"])
+        tm.that(config["timeout"], is_=int, gt=0)
 
     def test_assert_config_valid_missing_required_key(self) -> None:
-        """Test assert_config_valid with missing required key."""
+        """Test tm.dict_() with missing required key."""
         config = {"service_type": "api"}  # Missing environment
 
-        with pytest.raises(
-            AssertionError,
-            match="Required config key 'environment' missing",
-        ):
-            FlextTestsMatchers.assert_config_valid(config)
+        with pytest.raises(AssertionError, match="Key 'environment' not found in dict"):
+            tm.dict_(config, has_key=["service_type", "environment", "timeout"])
 
     def test_assert_config_valid_invalid_timeout(self) -> None:
-        """Test assert_config_valid with invalid timeout."""
+        """Test tm.that() with invalid timeout type."""
         config = {
             "service_type": "api",
             "environment": "test",
             "timeout": "invalid",  # Should be positive int
         }
 
-        with pytest.raises(
-            AssertionError,
-            match="Config timeout must be positive integer",
-        ):
-            FlextTestsMatchers.assert_config_valid(config)
+        with pytest.raises(AssertionError, match="Assertion failed"):
+            tm.that(config["timeout"], is_=int, gt=0)
 
     def test_assert_config_valid_zero_timeout(self) -> None:
-        """Test assert_config_valid with zero timeout."""
+        """Test tm.that() with zero timeout."""
         config: dict[str, t.GeneralValueType] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 0,  # Should be positive
         }
 
-        with pytest.raises(
-            AssertionError,
-            match="Config timeout must be positive integer",
-        ):
-            FlextTestsMatchers.assert_config_valid(config)
+        with pytest.raises(AssertionError, match="Assertion failed"):
+            tm.that(config["timeout"], is_=int, gt=0)
 
+    @pytest.mark.skip(
+        reason="TestDataBuilder was removed - use tt.model() and tt.batch() instead",
+    )
     def test_nested_test_data_builder(self) -> None:
-        """Test the nested TestDataBuilder class (legacy) in FlextTestsMatchers."""
-        builder = FlextTestsMatchers.TestDataBuilder()
-        result = builder.with_users(count=2).with_configs()
+        """Test the nested TestDataBuilder class (legacy) - DEPRECATED.
 
-        assert result is builder
-        data = builder.build()
-
-        assert "users" in data
-        assert "configs" in data
-        users = cast("list[dict[str, str | int]]", data["users"])
-        configs = cast("dict[str, str | int | bool]", data["configs"])
-        assert len(users) == 2
-        assert configs["environment"] == "development"
+        Use tt.model() and tt.batch() from flext_tests.factories instead.
+        """

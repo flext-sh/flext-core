@@ -19,11 +19,12 @@ from typing import Any, cast
 import pytest
 
 from flext_core import FlextResult
-from tests.fixtures.typing import (
-    FixtureCaseDict,
-    FixtureDataDict,
-    MockScenarioData,
-)
+from tests.typings import TestsFlextTypes
+
+# TypedDict definitions from consolidated test typings
+FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
+FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
+MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
 
 # Type alias for test functions
 TestFunction = Callable[[object], None]

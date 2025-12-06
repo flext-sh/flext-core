@@ -12,34 +12,49 @@ consistent patterns and comprehensive functionality.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-from flext_tests.builders import FlextTestsBuilders
-from flext_tests.constants import FlextTestConstants
-from flext_tests.docker import FlextTestDocker
+from flext_tests.base import FlextTestsServiceBase, s
+from flext_tests.builders import FlextTestsBuilders, tb
+from flext_tests.constants import FlextTestsConstants, c
+from flext_tests.docker import FlextTestsDocker
 from flext_tests.domains import FlextTestsDomains
-from flext_tests.factories import FlextTestsFactories
-from flext_tests.files import FlextTestsFileManager
-from flext_tests.matchers import FlextTestsMatchers
-from flext_tests.models import FlextTestModels
-from flext_tests.protocols import FlextTestProtocols
-from flext_tests.typings import FlextTestsTypings
-from flext_tests.utilities import FlextTestsUtilities, ModelFactory
+from flext_tests.factories import FlextTestsFactories, f, tt
+from flext_tests.files import FlextTestsFiles, tf
+from flext_tests.matchers import FlextTestsMatchers, tm
+from flext_tests.models import FlextTestsModels, m
+from flext_tests.protocols import FlextTestsProtocols, p
+from flext_tests.typings import FlextTestsTypes, t
+from flext_tests.utilities import FlextTestsUtilities, ModelFactory, u
+from flext_tests.validator import FlextTestsValidator, tv
 
 __all__ = [
-    "FlextTestConstants",
-    "FlextTestDocker",
-    "FlextTestModels",
-    "FlextTestProtocols",
     "FlextTestsBuilders",
+    "FlextTestsConstants",
+    "FlextTestsDocker",
     "FlextTestsDomains",
     "FlextTestsFactories",
-    "FlextTestsFileManager",
+    "FlextTestsFiles",
     "FlextTestsMatchers",
-    "FlextTestsTypings",
+    "FlextTestsModels",
+    "FlextTestsProtocols",
+    "FlextTestsServiceBase",
+    "FlextTestsTypes",
     "FlextTestsUtilities",
+    "FlextTestsValidator",
     "ModelFactory",
+    "c",
+    "f",
+    "m",
+    "p",
+    "s",
+    "t",
+    "tb",
+    "tf",
+    "tm",
+    "tt",
+    "tv",
+    "u",
 ]

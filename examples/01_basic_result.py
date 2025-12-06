@@ -1,7 +1,7 @@
-"""FlextResult comprehensive demonstration.
+"""r comprehensive demonstration.
 
 Shows complete railway-oriented programming with advanced type safety.
-Demonstrates all FlextResult patterns using Python 3.13+ features.
+Demonstrates all r patterns using Python 3.13+ features.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,11 +13,12 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 
 from flext_core import (
-    FlextModels,
-    FlextResult,
-    FlextService,
     c,
     e,
+    m,
+    r,
+    s,
+    t,
     u,
 )
 
@@ -26,18 +27,18 @@ from flext_core import (
 # PEP 695 type aliases only when necessary for complex compositions
 
 # =====================================================================
-# DEMONSTRATION MODELS - Using FlextModels for type safety
+# DEMONSTRATION MODELS - Using m for type safety
 # =====================================================================
 
 
-class User(FlextModels.Entity):  # type: ignore[misc,valid-type]
+class User(m.Entity):
     """User entity for demonstration."""
 
     name: str
     email: str
 
 
-class DemonstrationResult(FlextModels.Value):  # type: ignore[misc,valid-type]
+class DemonstrationResult(m.Value):
     """Result value object for demonstration metadata."""
 
     demonstrations_completed: int
@@ -45,7 +46,7 @@ class DemonstrationResult(FlextModels.Value):  # type: ignore[misc,valid-type]
     completed_at: str
 
 
-class RunDemonstrationCommand(FlextModels.Cqrs.Command):  # type: ignore[misc,valid-type]
+class RunDemonstrationCommand(m.Cqrs.Command):
     """Command to run demonstration."""
 
     operation: str = "demonstration"
@@ -59,17 +60,17 @@ class RunDemonstrationCommand(FlextModels.Cqrs.Command):  # type: ignore[misc,va
 # =====================================================================
 
 
-class RailwayService(FlextService[DemonstrationResult]):
+class RailwayService(s[DemonstrationResult]):
     """Advanced service demonstrating railway patterns with comprehensive flext-core integration."""
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs: t.GeneralValueType) -> None:
         """Initialize service."""
-        super().__init__()
+        super().__init__(**kwargs)
         # Dependencies created directly to avoid serialization issues in handlers
 
-    def execute(self) -> FlextResult[DemonstrationResult]:
-        """Execute comprehensive FlextResult demonstrations."""
-        print("Starting FlextResult comprehensive demonstration")
+    def execute(self) -> r[DemonstrationResult]:
+        """Execute comprehensive r demonstrations."""
+        print("Starting r comprehensive demonstration")
 
         try:
             # Chain all demonstrations using railway pattern
@@ -82,7 +83,7 @@ class RailwayService(FlextService[DemonstrationResult]):
         except Exception as e:
             return self._handle_execution_error(e)
 
-    def _run_demonstrations(self) -> FlextResult[None]:
+    def _run_demonstrations(self) -> r[None]:
         """Run all demonstration methods using advanced functional composition."""
         # Define demonstrations using collections.abc.Sequence for type safety
         demonstrations: Sequence[Callable[[], None]] = (
@@ -97,19 +98,19 @@ class RailwayService(FlextService[DemonstrationResult]):
 
         # Execute demonstrations with advanced traverse pattern (DRY)
         results = [RailwayService._execute_demo(demo) for demo in demonstrations]
-        return FlextResult.traverse(results, lambda r: r).map(lambda _: None)
+        return r.traverse(results, lambda result: result).map(lambda _: None)
 
     @staticmethod
-    def _execute_demo(demo: Callable[[], None]) -> FlextResult[bool]:
+    def _execute_demo(demo: Callable[[], None]) -> r[bool]:
         """Execute demonstration and return success result."""
         try:
             demo()
-            return FlextResult.ok(True)
+            return r.ok(True)
         except Exception as e:
-            return FlextResult.fail(f"Demonstration failed: {e}")
+            return r.fail(f"Demonstration failed: {e}")
 
     @staticmethod
-    def _build_result_data(_: None) -> FlextResult[DemonstrationResult]:
+    def _build_result_data(_: None) -> r[DemonstrationResult]:
         """Build result data using centralized t and DRY patterns."""
         # Use all demo patterns from centralized constants (DRY)
         # Iterate over enum members correctly
@@ -123,42 +124,43 @@ class RailwayService(FlextService[DemonstrationResult]):
             completed_at=datetime.now(UTC).isoformat(),
         )
 
-        return FlextResult.ok(result_data)
+        return r.ok(result_data)
 
     def _log_success(self, data: DemonstrationResult) -> DemonstrationResult:
         """Log success and return data using advanced logging patterns."""
-        self.logger.info("FlextResult demonstration completed successfully")
+        self.logger.info("r demonstration completed successfully")
         return data
 
-    def _handle_execution_error(
-        self, error: Exception
-    ) -> FlextResult[DemonstrationResult]:
+    def _handle_execution_error(self, error: Exception) -> r[DemonstrationResult]:
         """Handle execution errors with proper typing."""
         error_msg = f"Demonstration failed: {error}"
         self.logger.error(error_msg)
-        return FlextResult[DemonstrationResult].fail(
+        return r[DemonstrationResult].fail(
             error_msg,
             error_code=c.Errors.EXCEPTION_ERROR,
         )
 
     @staticmethod
-    def _create_user_validator() -> Callable[[str], FlextResult[User]]:
+    def _create_user_validator() -> Callable[[str], r[User]]:
         """Create user validator using u (DRY)."""
 
-        def validate_user(email: str) -> FlextResult[User]:
+        def validate_user(email: str) -> r[User]:
             # Use u for email validation (DRY)
             email_validation = u.Validation.validate_pattern(
-                email, c.Platform.PATTERN_EMAIL, "email"
+                email,
+                c.Platform.PATTERN_EMAIL,
+                "email",
             )
             if email_validation.is_failure:
-                return FlextResult[User].fail(email_validation.error or "Invalid email")
-            return FlextResult.ok(User(name="Demo User", email=email))
+                return r[User].fail(email_validation.error or "Invalid email")
+            return r.ok(User(name="Demo User", email=email))
 
         return validate_user
 
     @staticmethod
     def _create_data_processor() -> Callable[
-        [DemonstrationResult], DemonstrationResult
+        [DemonstrationResult],
+        DemonstrationResult,
     ]:
         """Create data processor using advanced patterns."""
 
@@ -170,15 +172,15 @@ class RailwayService(FlextService[DemonstrationResult]):
 
     @staticmethod
     def _demonstrate_factory_methods() -> None:
-        """Demonstrate FlextResult factory methods with advanced patterns."""
+        """Demonstrate r factory methods with advanced patterns."""
         print("\n=== Factory Methods ===")
 
         # Success result
-        success = FlextResult.ok("Operation successful")
+        success = r.ok("Operation successful")
         print(f"✅ .ok(): {success.value}")
 
         # Failure result with centralized error code
-        failure: FlextResult[str] = FlextResult.fail(
+        failure: r[str] = r.fail(
             "Validation failed",
             error_code=c.Errors.VALIDATION_ERROR,
         )
@@ -189,17 +191,17 @@ class RailwayService(FlextService[DemonstrationResult]):
             zero = c.ZERO
             return c.Validation.MAX_AGE // zero
 
-        from_callable = FlextResult[int].create_from_callable(risky_operation)
+        from_callable = r[int].create_from_callable(risky_operation)
         print(f"🔥 .create_from_callable(): {from_callable.error}")
 
     @staticmethod
     def _demonstrate_value_extraction() -> None:
-        """Demonstrate FlextResult value extraction with advanced patterns."""
+        """Demonstrate r value extraction with advanced patterns."""
         print("\n=== Value Extraction ===")
 
         # Use example data from constants with centralized t
-        success = FlextResult.ok(c.Example.USER_DATA)
-        failure: FlextResult[str] = FlextResult.fail("Not found")
+        success = r.ok(c.Example.USER_DATA)
+        failure: r[str] = r.fail("Not found")
 
         # Value extraction patterns
         user_data = success.value
@@ -219,32 +221,32 @@ class RailwayService(FlextService[DemonstrationResult]):
 
         # Map transformation
         input_value = "hello"
-        mapped = FlextResult.ok(input_value).map(to_upper)
+        mapped = r.ok(input_value).map(to_upper)
         print(f".map(to_upper): {mapped.unwrap()}")
 
         # FlatMap chaining with u validation (DRY)
         test_value = "test"
-        chained = (
-            FlextResult.ok(test_value)
-            .flat_map(
-                lambda v: u.Validation.validate_length(
-                    v, min_length=c.Validation.MIN_USERNAME_LENGTH
-                )
+
+        def validate_length(v: str) -> r[str]:
+            return u.Validation.validate_length(
+                v,
+                min_length=c.Validation.MIN_USERNAME_LENGTH,
             )
-            .map(to_upper)
-        )
+
+        chained = r.ok(test_value).flat_map(validate_length).map(to_upper)
         print(f".flat_map chain: {chained.unwrap()}")
 
         # Flow through pipeline with advanced composition using u (DRY)
-        def add_prefix(value: str) -> FlextResult[str]:
-            return FlextResult.ok(f"PREFIX_{value}")
+        def add_prefix(value: str) -> r[str]:
+            return r.ok(f"PREFIX_{value}")
 
-        pipeline = FlextResult.ok(input_value).flow_through(
-            lambda v: u.Validation.validate_length(
-                v, min_length=c.Validation.MIN_USERNAME_LENGTH
-            ),
+        def add_exclamation(x: str) -> r[str]:
+            return r[str].ok(f"{x}!")
+
+        pipeline = r.ok(input_value).flow_through(
+            validate_length,
             add_prefix,
-            lambda x: FlextResult.ok(f"{x}!"),
+            add_exclamation,
         )
         print(f".flow_through pipeline: {pipeline.unwrap()}")
 
@@ -253,7 +255,7 @@ class RailwayService(FlextService[DemonstrationResult]):
         """Demonstrate error recovery patterns with advanced functional composition."""
         print("\n=== Error Recovery ===")
 
-        failure: FlextResult[str] = FlextResult.fail("Primary operation failed")
+        failure: r[str] = r.fail("Primary operation failed")
 
         # Alternative (transform error) using functional approach
         def recover_message(error: str) -> str:
@@ -263,8 +265,8 @@ class RailwayService(FlextService[DemonstrationResult]):
         print(f".alt() transform: {recovered.error}")
 
         # Lash (error recovery) with fallback
-        def provide_fallback(_error: str) -> FlextResult[str]:
-            return FlextResult.ok("Fallback value")
+        def provide_fallback(_error: str) -> r[str]:
+            return r.ok("Fallback value")
 
         fallback = failure.lash(provide_fallback)
         print(f".lash() recovery: {fallback.unwrap()}")
@@ -276,20 +278,18 @@ class RailwayService(FlextService[DemonstrationResult]):
 
         # Traverse multiple results with type safety
         results = [
-            FlextResult[int].ok(c.ZERO + 1),  # 1
-            FlextResult[int].ok(c.ZERO + 2),  # 2
-            FlextResult[int].ok(c.ZERO + 3),  # 3
+            r[int].ok(c.ZERO + 1),  # 1
+            r[int].ok(c.ZERO + 2),  # 2
+            r[int].ok(c.ZERO + 3),  # 3
         ]
 
-        traversed = FlextResult.traverse(results, lambda r: r)
+        traversed = r.traverse(results, lambda r: r)
         print(f".traverse(): {len(traversed.unwrap())} results")
 
         # Filter with predicate using c threshold
         test_value = c.Validation.FILTER_THRESHOLD + c.Validation.MIN_AGE  # 10
         filtered = (
-            FlextResult[int]
-            .ok(test_value)
-            .filter(lambda x: x > c.Validation.FILTER_THRESHOLD)
+            r[int].ok(test_value).filter(lambda x: x > c.Validation.FILTER_THRESHOLD)
         )
         print(f".filter(>{c.Validation.FILTER_THRESHOLD}): {filtered.is_success}")
 
@@ -304,7 +304,7 @@ class RailwayService(FlextService[DemonstrationResult]):
         # Chain validations using railway pattern with u (DRY)
         test_email = "test@example.com"
         result = (
-            FlextResult.ok(test_email)
+            r.ok(test_email)
             .flat_map(user_validator)
             .map(lambda user: user.email)
             .flat_map(
@@ -312,7 +312,7 @@ class RailwayService(FlextService[DemonstrationResult]):
                     email,
                     min_length=c.Validation.MIN_USERNAME_LENGTH,
                     max_length=c.Validation.MAX_NAME_LENGTH,
-                )
+                ),
             )
         )
         print(f"Validation chain with User model: {result.is_success}")
@@ -321,7 +321,9 @@ class RailwayService(FlextService[DemonstrationResult]):
         test_email_2 = "user@domain.com"
         validation_results = [
             u.Validation.validate_pattern(
-                test_email_2, c.Platform.PATTERN_EMAIL, "email"
+                test_email_2,
+                c.Platform.PATTERN_EMAIL,
+                "email",
             ),
             u.Validation.validate_length(
                 test_email_2,
@@ -329,12 +331,12 @@ class RailwayService(FlextService[DemonstrationResult]):
                 max_length=c.Validation.MAX_NAME_LENGTH,
             ),
         ]
-        all_valid = FlextResult.traverse(validation_results, lambda r: r)
+        all_valid = r.traverse(validation_results, lambda r: r)
         print(f"Multiple validations: {all_valid.is_success}")
 
     @staticmethod
     def _demonstrate_exception_integration() -> None:
-        """Demonstrate structured exception integration with FlextResult."""
+        """Demonstrate structured exception integration with r."""
         print("\n=== Exception Integration ===")
 
         error_message = "Invalid data provided"
@@ -345,10 +347,8 @@ class RailwayService(FlextService[DemonstrationResult]):
                 value="invalid-email",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
-        except e.ValidationError as e:
-            result: FlextResult[str] = FlextResult.fail(
-                e.message, error_code=e.error_code
-            )
+        except e.ValidationError as exc:
+            result: r[str] = r.fail(exc.message, error_code=exc.error_code)
             print(f"✅ ValidationError integration: {result.error_code}")
 
 
@@ -358,7 +358,7 @@ def main() -> None:
     separator = "=" * width
 
     print(separator)
-    print("FLEXTRESULT COMPREHENSIVE DEMONSTRATION")
+    print("r COMPREHENSIVE DEMONSTRATION")
     print("Railway-oriented programming with advanced type safety")
     print(separator)
 
@@ -367,13 +367,15 @@ def main() -> None:
     result = service.execute()
 
     match result:
-        case FlextResult(is_success=True, value=demo_result):
+        case r(is_success=True, value=demo_result):
             print(
-                f"\n✅ Completed {demo_result.demonstrations_completed} demonstrations"
+                f"\n✅ Completed {demo_result.demonstrations_completed} demonstrations",
             )
             print(f"Patterns: {', '.join(demo_result.patterns_covered)}")
-        case FlextResult(is_success=False, error=error):
+        case r(is_success=False, error=error):
             print(f"\n❌ Failed: {error}")
+        case _:
+            pass
 
     print(f"\n{separator}")
     print("🎯 Railway patterns: .map(), .flat_map(), .flow_through()")
@@ -385,7 +387,7 @@ def main() -> None:
     print("🎯 CQRS integration: h (dispatcher removed due to serialization)")
     print("🎯 Dependency injection: Direct instantiation")
     print("🎯 Context management: FlextContext")
-    print("🎯 Domain models: FlextModels")
+    print("🎯 Domain models: m")
 
 
 if __name__ == "__main__":

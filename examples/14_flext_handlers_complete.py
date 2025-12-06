@@ -22,7 +22,7 @@ from flext_core import (
 )
 
 
-class CreateUserCommand(FlextModels.Cqrs.Command):  # type: ignore[misc,valid-type]
+class CreateUserCommand(FlextModels.Cqrs.Command):
     """Command to create a user."""
 
     user_id: str
@@ -30,13 +30,13 @@ class CreateUserCommand(FlextModels.Cqrs.Command):  # type: ignore[misc,valid-ty
     email: str
 
 
-class GetUserQuery(FlextModels.Cqrs.Query):  # type: ignore[misc,valid-type]
+class GetUserQuery(FlextModels.Cqrs.Query):
     """Query to get a user."""
 
     user_id: str
 
 
-class UserDTO(FlextModels.Value):  # type: ignore[misc,valid-type]
+class UserDTO(FlextModels.Value):
     """User data transfer object."""
 
     id: str
@@ -51,9 +51,9 @@ _types_namespace = {
     "FlextModels": FlextModels,
     "FlextModelsCqrs": FlextModels.Cqrs,
 }
-CreateUserCommand.model_rebuild(_types_namespace=_types_namespace)
-GetUserQuery.model_rebuild(_types_namespace=_types_namespace)
-UserDTO.model_rebuild(_types_namespace=_types_namespace)
+_ = CreateUserCommand.model_rebuild(_types_namespace=_types_namespace)
+_ = GetUserQuery.model_rebuild(_types_namespace=_types_namespace)
+_ = UserDTO.model_rebuild(_types_namespace=_types_namespace)
 
 
 # Handlers using h directly

@@ -12,17 +12,22 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Mapping
+from enum import StrEnum
 from typing import cast
 
 import structlog
+from pydantic import BaseModel
 
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._utilities.model import FlextModel
+from flext_core._utilities.enum import FlextUtilitiesEnum
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core.constants import c
 from flext_core.result import r
 from flext_core.typings import t
 
 
-class FlextStringParser:
+class FlextUtilitiesParser:
     r"""Parse delimited and structured strings with predictable results.
 
     The parser consolidates delimiter handling, escape-aware splits, and
@@ -30,7 +35,7 @@ class FlextStringParser:
     parsing logic in dispatcher pipelines without manual error handling.
 
     Examples:
-        >>> parser = uStringParser()
+        >>> parser = FlextUtilitiesParser()
         >>> parser.parse_delimited("a, b, c", ",").unwrap()
         ['a', 'b', 'c']
         >>> parser.split_on_char_with_escape("cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\").unwrap()
@@ -38,8 +43,9 @@ class FlextStringParser:
 
     """
 
-    PATTERN_TUPLE_MIN_LENGTH: int = 2
-    PATTERN_TUPLE_MAX_LENGTH: int = 3
+    # Use centralized constants from FlextConstants
+    PATTERN_TUPLE_MIN_LENGTH: int = c.Processing.PATTERN_TUPLE_MIN_LENGTH
+    PATTERN_TUPLE_MAX_LENGTH: int = c.Processing.PATTERN_TUPLE_MAX_LENGTH
 
     # Magic value constants to reduce complexity
     TUPLE_LENGTH_2: int = 2
@@ -47,6 +53,7 @@ class FlextStringParser:
 
     def __init__(self) -> None:
         """Initialize string parser with logging."""
+        super().__init__()
         self.logger = structlog.get_logger(__name__)
 
     @staticmethod
@@ -72,7 +79,6 @@ class FlextStringParser:
             self.logger.debug(
                 "Stripping whitespace from components",
                 operation="parse_delimited",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             components = [c.strip() for c in components]
 
@@ -80,7 +86,6 @@ class FlextStringParser:
             self.logger.debug(
                 "Removing empty components",
                 operation="parse_delimited",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             # NOTE: Cannot use u.filter() here due to circular import
             components = [c for c in components if c.strip()]
@@ -89,7 +94,6 @@ class FlextStringParser:
             self.logger.debug(
                 "Validating components with custom validator",
                 operation="parse_delimited",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             # Filter out invalid components instead of failing
             valid_components = []
@@ -102,7 +106,6 @@ class FlextStringParser:
                         operation="parse_delimited",
                         invalid_component=comp,
                         validator_type=type(validator).__name__,
-                        source="flext-core/src/flext_core/_utilities/string_parser.py",
                     )
             components = valid_components
 
@@ -114,7 +117,6 @@ class FlextStringParser:
         delimiter: str,
         *,
         options: FlextModelsCollections.ParseOptions | None = None,
-        **legacy_options: bool | Callable[[str], bool] | None,
     ) -> r[list[str]]:
         """Parse delimited string into list of components.
 
@@ -123,33 +125,22 @@ class FlextStringParser:
         Args:
             text: String to parse
             delimiter: Delimiter character/string
-            options: ParseOptions object (preferred). If provided, overrides legacy_options
-            **legacy_options: Legacy keyword arguments for backward compatibility:
-                - strip: Strip whitespace from each component (default: True)
-                - remove_empty: Remove empty components after stripping (default: True)
-                - validator: Optional validation function for each component (default: None)
+            options: ParseOptions object with parsing configuration
 
         Returns:
             FlextResult with list of parsed components or error
 
         Example:
-            >>> # NEW - Using ParseOptions
             >>> from flext_core._models.collections import FlextModelsCollections
             >>> opts = FlextModelsCollections.ParseOptions(
             ...     strip=True, remove_empty=True
             ... )
-            >>> parser = uStringParser()
+            >>> parser = FlextUtilitiesParser()
             >>> result = parser.parse_delimited(
             ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com", ",", options=opts
             ... )
             >>> components = result.unwrap()
             >>> # ["cn=REDACTED_LDAP_BIND_PASSWORD", "ou=users", "dc=example", "dc=com"]
-
-            >>> # OLD - Backward compatible
-            >>> result = parser.parse_delimited(
-            ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com", ","
-            ... )
-            >>> components = result.unwrap()
 
         """
         # Safely get text length for logging
@@ -158,25 +149,10 @@ class FlextStringParser:
         except (TypeError, AttributeError):
             text_len = -1  # Unknown length
 
-        # Normalize options: use provided ParseOptions or create from legacy_options
-        if options is not None:
-            parse_opts = options
-        else:
-            # Extract legacy options with defaults
-            strip_val = legacy_options.get("strip", True)
-            remove_empty_val = legacy_options.get("remove_empty", True)
-            validator_val = legacy_options.get("validator")
-            # Filter out bool values - validator must be Callable or None
-            validator_typed: Callable[[str], bool] | None = (
-                validator_val
-                if callable(validator_val) and not isinstance(validator_val, bool)
-                else None
-            )
-            parse_opts = FlextModelsCollections.ParseOptions(
-                strip=bool(strip_val),
-                remove_empty=bool(remove_empty_val),
-                validator=validator_typed,
-            )
+        # Use provided ParseOptions or create default
+        parse_opts = (
+            options if options is not None else FlextModelsCollections.ParseOptions()
+        )
 
         strip = parse_opts.strip
         remove_empty = parse_opts.remove_empty
@@ -191,14 +167,12 @@ class FlextStringParser:
             strip=strip,
             remove_empty=remove_empty,
             has_validator=validator is not None,
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
         if not text:
             self.logger.debug(
                 "Empty text provided, returning empty list",
                 operation="parse_delimited",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[list[str]].ok([])
 
@@ -219,7 +193,6 @@ class FlextStringParser:
                 "Splitting text by delimiter",
                 operation="parse_delimited",
                 delimiter=delimiter,
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             components = text.split(delimiter)
 
@@ -227,7 +200,6 @@ class FlextStringParser:
                 "Initial split completed",
                 operation="parse_delimited",
                 raw_components_count=len(components),
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
             # Process components (strip, remove_empty, validate)
@@ -247,7 +219,6 @@ class FlextStringParser:
                 "Delimited parsing completed successfully",
                 operation="parse_delimited",
                 final_components_count=len(components),
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
             return r[list[str]].ok(components)
@@ -267,7 +238,6 @@ class FlextStringParser:
                 text_length=text_len,
                 delimiter=delimiter,
                 consequence="Cannot parse delimited string - invalid input or internal error",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[list[str]].fail(f"Failed to parse delimited string: {e}")
 
@@ -309,10 +279,11 @@ class FlextStringParser:
         try:
             length = self._safe_text_length(text)
             # Ensure return type is int
-            if isinstance(length, int):
-                return length
+            if FlextUtilitiesGuards.is_type(length, int):
+                return cast("int", length)
             # If _safe_text_length returns str, convert to int
-            return int(length) if isinstance(length, str) else -1
+            # Type narrowing: length is str | int, if not int then str
+            return int(length) if length != "unknown" else -1
         except (TypeError, AttributeError, ValueError):
             return -1  # Unknown length
 
@@ -342,7 +313,6 @@ class FlextStringParser:
             text_length=text_len,
             split_char=split_char,
             escape_char=escape_char,
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
         try:
@@ -350,7 +320,6 @@ class FlextStringParser:
                 "Processing text with escape character handling",
                 operation="split_on_char_with_escape",
                 text_length=text_len,
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
             # Process the text and extract components
@@ -367,7 +336,6 @@ class FlextStringParser:
                 operation="split_on_char_with_escape",
                 components_count=len(components),
                 escape_sequences_found=escape_count,
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
             return r[list[str]].ok(components)
@@ -383,7 +351,6 @@ class FlextStringParser:
                 split_char=split_char,
                 escape_char=escape_char,
                 consequence="Cannot split string with escape handling - invalid input or internal error",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[list[str]].fail(f"Failed to split with escape: {e}")
 
@@ -407,7 +374,7 @@ class FlextStringParser:
 
         Example:
             >>> # Parse DN with escaped commas
-            >>> parser = uStringParser()
+            >>> parser = FlextUtilitiesParser()
             >>> result = parser.split_on_char_with_escape(
             ...     "cn=REDACTED_LDAP_BIND_PASSWORD\\,user,ou=users", ","
             ... )
@@ -427,7 +394,6 @@ class FlextStringParser:
                 self.logger.debug(
                     "Empty text provided, returning list with empty string",
                     operation="split_on_char_with_escape",
-                    source="flext-core/src/flext_core/_utilities/string_parser.py",
                 )
                 return r[list[str]].ok([""])
         except (TypeError, AttributeError):
@@ -457,7 +423,7 @@ class FlextStringParser:
             FlextResult with normalized text or error
 
         Example:
-            >>> parser = uStringParser()
+            >>> parser = FlextUtilitiesParser()
             >>> result = parser.normalize_whitespace("hello    world\\t\\nfoo")
             >>> normalized = result.unwrap()  # "hello world foo"
 
@@ -474,14 +440,12 @@ class FlextStringParser:
             text_length=text_len,
             pattern=pattern,
             replacement=replacement,
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
         if not text:
             self.logger.debug(
                 "Empty text provided, returning unchanged",
                 operation="normalize_whitespace",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[str].ok(text)
 
@@ -491,7 +455,6 @@ class FlextStringParser:
                 operation="normalize_whitespace",
                 pattern=pattern,
                 replacement=replacement,
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
             normalized = re.sub(pattern, replacement, text).strip()
@@ -502,7 +465,6 @@ class FlextStringParser:
                 original_length=len(text),
                 normalized_length=len(normalized),
                 replacements_made=len(text) - len(normalized),
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
             return r[str].ok(normalized)
@@ -523,7 +485,6 @@ class FlextStringParser:
                 pattern=pattern,
                 replacement=replacement,
                 consequence="Cannot normalize whitespace - invalid pattern or internal error",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[str].fail(f"Failed to normalize whitespace: {e}")
 
@@ -549,7 +510,7 @@ class FlextStringParser:
             ...     (r",\\s+", ","),  # Remove spaces after ,
             ...     (r"\\s+", " "),  # Normalize whitespace
             ... ]
-            >>> parser = uStringParser()
+            >>> parser = FlextUtilitiesParser()
             >>> result = parser.apply_regex_pipeline(
             ...     "cn = REDACTED_LDAP_BIND_PASSWORD , ou = users", patterns
             ... )
@@ -567,7 +528,6 @@ class FlextStringParser:
             operation="apply_regex_pipeline",
             text_length=text_len,
             patterns_count=len(patterns),
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
         # Handle edge cases
@@ -584,7 +544,6 @@ class FlextStringParser:
                 "Applying regex patterns sequentially",
                 operation="apply_regex_pipeline",
                 patterns_count=len(patterns),
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
             # Process all patterns - text is guaranteed to be str here
@@ -605,7 +564,6 @@ class FlextStringParser:
                 original_length=len(text),
                 final_length=len(final_result),
                 total_replacements=len(text) - len(final_result),
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
 
             return r[str].ok(final_result)
@@ -625,13 +583,12 @@ class FlextStringParser:
                 patterns_count=len(patterns),
                 text_length=text_len,
                 consequence="Cannot apply regex transformations - invalid pattern or internal error",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[str].fail(f"Failed to apply regex pipeline: {e}")
 
     @staticmethod
     def _extract_key_from_mapping(
-        obj: Mapping[str, t.GeneralValueType],
+        obj: t.Types.ConfigurationMapping,
     ) -> str | None:
         """Extract key from mapping object (Strategy 2).
 
@@ -645,8 +602,8 @@ class FlextStringParser:
         for key in ("name", "id"):
             if key in obj:
                 value = obj[key]
-                if isinstance(value, str):
-                    return value
+                if FlextUtilitiesGuards.is_type(value, str):
+                    return cast("str", value)
         return None
 
     @staticmethod
@@ -664,7 +621,7 @@ class FlextStringParser:
         """
         for attr in ("name", "id"):
             attr_value = getattr(obj, attr, None)
-            if isinstance(attr_value, str):
+            if FlextUtilitiesGuards.is_type(attr_value, str):
                 return attr_value
         return None
 
@@ -712,7 +669,8 @@ class FlextStringParser:
 
         Example:
             >>> from flext_core.utilities import u
-            >>> parser = u.StringParser()
+        from flext_core.protocols import p
+            >>> parser = u.Parser()
             >>> # Class/Type
             >>> parser.get_object_key(int)
             'int'
@@ -734,12 +692,11 @@ class FlextStringParser:
             operation="get_object_key",
             obj_type=type(obj).__name__,
             has_name_attr=hasattr(obj, "__name__"),
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
         # Strategy 0: If obj is a string, return it directly
-        if isinstance(obj, str):
-            key: str = obj
+        if FlextUtilitiesGuards.is_type(obj, str):
+            key: str = cast("str", obj)
         # Strategy 1: Try __name__ attribute (for types, classes, functions)
         elif isinstance(dunder_name := getattr(obj, "__name__", None), str):
             key = dunder_name
@@ -783,8 +740,7 @@ class FlextStringParser:
             full_tuple = cast("tuple[str, str, int]", pattern_tuple)
             pattern = str(full_tuple[0])
             replacement = str(full_tuple[1])
-            flags_value = full_tuple[2]
-            flags = flags_value if isinstance(flags_value, int) else 0
+            flags = full_tuple[2]  # Type narrowing: already checked as int in cast
         else:
             return r[tuple[str, str, int]].fail(
                 f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
@@ -805,7 +761,6 @@ class FlextStringParser:
             pattern=params.pattern,
             replacement=params.replacement,
             flags=params.flags,
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
         before_length = len(params.text)
@@ -829,7 +784,6 @@ class FlextStringParser:
             operation="apply_regex_pipeline",
             pattern_index=params.pattern_index + 1,
             replacements_made=replacements,
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
 
         return r[str].ok(result_text)
@@ -849,7 +803,6 @@ class FlextStringParser:
             self.logger.debug(
                 "None text provided, returning failure",
                 operation="apply_regex_pipeline",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[str].fail("Text cannot be None")
 
@@ -857,7 +810,6 @@ class FlextStringParser:
             self.logger.debug(
                 "Empty text provided, returning unchanged",
                 operation="apply_regex_pipeline",
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[str].ok(text)
 
@@ -866,7 +818,6 @@ class FlextStringParser:
                 "No patterns provided for regex pipeline",
                 operation="apply_regex_pipeline",
                 text_length=self._safe_text_length(text),
-                source="flext-core/src/flext_core/_utilities/string_parser.py",
             )
             return r[str].ok(text)
 
@@ -893,7 +844,6 @@ class FlextStringParser:
                     operation="split_on_char_with_escape",
                     position=i,
                     escaped_char=text[i + 1],
-                    source="flext-core/src/flext_core/_utilities/string_parser.py",
                 )
                 current.append(text[i + 1])  # Add only the escaped character
                 escape_count += 1
@@ -905,7 +855,6 @@ class FlextStringParser:
                     operation="split_on_char_with_escape",
                     position=i,
                     current_component_length=len(current),
-                    source="flext-core/src/flext_core/_utilities/string_parser.py",
                 )
                 components.append("".join(current))
                 current = []
@@ -920,7 +869,6 @@ class FlextStringParser:
             "Adding final component",
             operation="split_on_char_with_escape",
             final_component_length=len(current),
-            source="flext-core/src/flext_core/_utilities/string_parser.py",
         )
         components.append("".join(current))
 
@@ -947,7 +895,7 @@ class FlextStringParser:
             pattern, replacement, flags = pattern_result.unwrap()
 
             # Apply the pattern using uModel
-            params_result = FlextModel.from_kwargs(
+            params_result = FlextUtilitiesModel.from_kwargs(
                 FlextModelsCollections.PatternApplicationParams,
                 text=result_text,
                 pattern=pattern,
@@ -972,10 +920,753 @@ class FlextStringParser:
 
         return r[tuple[str, int]].ok((result_text, applied_patterns))
 
+    # =========================================================================
+    # PARSE METHODS - Universal type parsing
+    # These methods avoid circular imports by using inline helper implementations
+    # =========================================================================
 
-uStringParser = FlextStringParser  # noqa: N816
+    @staticmethod
+    def _parse_get_attr(obj: object, attr: str, default: object = None) -> object:
+        """Get attribute safely (avoids circular import with u.get)."""
+        return getattr(obj, attr, default)
+
+    @staticmethod
+    def _parse_find_first[T](
+        items: list[T],
+        predicate: Callable[[T], bool],
+    ) -> T | None:
+        """Find first item matching predicate (avoids circular import)."""
+        for item in items:
+            # Type narrowing: item is T
+            item_typed: T = item
+            if predicate(item_typed):
+                return item_typed
+        return None
+
+    @staticmethod
+    def _parse_normalize_compare(a: object, b: object) -> bool:
+        """Case-insensitive string comparison (avoids circular import)."""
+        if not FlextUtilitiesGuards.is_type(a, str) or not FlextUtilitiesGuards.is_type(
+            b,
+            str,
+        ):
+            return False
+        a_str: str = cast("str", a)
+        b_str: str = cast("str", b)
+        return a_str.lower() == b_str.lower()
+
+    @staticmethod
+    def _parse_normalize_str(value: object, *, case: str = "lower") -> str:
+        """Normalize string value (avoids circular import with u.normalize)."""
+        if not FlextUtilitiesGuards.is_type(value, str):
+            return str(value)
+        value_str: str = cast("str", value)
+        if case == "lower":
+            return value_str.lower()
+        if case == "upper":
+            return value_str.upper()
+        return value_str
+
+    @staticmethod
+    def _parse_result_error[T](result: r[T], default: str = "") -> str:
+        """Extract error from result (avoids circular import with u.err)."""
+        if result.is_failure:
+            return result.error or default
+        return default
+
+    @staticmethod
+    def _parse_with_default[T](
+        default: T | None,
+        default_factory: Callable[[], T] | None,
+        error_msg: str,
+    ) -> r[T]:
+        """Return default or error for parse failures."""
+        if default is not None:
+            return r[T].ok(default)
+        if default_factory is not None:
+            return r[T].ok(default_factory())
+        return r[T].fail(error_msg)
+
+    @staticmethod
+    def _parse_enum[T](
+        value: str,
+        target: type[T],
+        *,
+        case_insensitive: bool,
+    ) -> r[T] | None:
+        """Parse StrEnum with optional case-insensitivity. Returns None if not enum."""
+        # Type narrowing: check if target is a StrEnum subclass
+        if not issubclass(target, StrEnum):
+            return None
+        enum_type: type[StrEnum] = cast("type[StrEnum]", target)
+        if case_insensitive:
+            members_dict: t.Types.ConfigurationDict = cast(
+                "t.Types.ConfigurationDict",
+                FlextUtilitiesParser._parse_get_attr(enum_type, "__members__", {}),
+            )
+            members_list = list(members_dict.values())
+
+            def match_member(member: object) -> bool:
+                if not hasattr(member, "value") or not hasattr(member, "name"):
+                    return False
+                member_value = getattr(member, "value", None)
+                member_name = getattr(member, "name", None)
+                if member_value is None or member_name is None:
+                    return False
+                return bool(
+                    FlextUtilitiesParser._parse_normalize_compare(member_value, value)
+                    or FlextUtilitiesParser._parse_normalize_compare(
+                        member_name,
+                        value,
+                    ),
+                )
+
+            found = FlextUtilitiesParser._parse_find_first(members_list, match_member)
+            if found is not None:
+                found_enum = cast("T", found)
+                return r[T].ok(found_enum)
+        result = FlextUtilitiesEnum.parse(target, value)
+        if result.is_success:
+            return r[T].ok(result.value)
+        return r[T].fail(
+            FlextUtilitiesParser._parse_result_error(result, "Enum parse failed"),
+        )
+
+    @staticmethod
+    def _parse_model[T](
+        value: object,
+        target: type[T],
+        field_prefix: str,
+        *,
+        strict: bool,
+    ) -> r[T] | None:
+        """Parse Pydantic BaseModel. Returns None if not model."""
+        # Type narrowing: check if target is a BaseModel subclass
+        if not issubclass(target, BaseModel):
+            return None
+        if not isinstance(value, Mapping):
+            return r[T].fail(
+                f"{field_prefix}Expected dict for model, got {type(value).__name__}",
+            )
+        result = FlextUtilitiesModel.from_dict(target, dict(value), strict=strict)
+        if result.is_success:
+            return r[T].ok(result.value)
+        return r[T].fail(
+            FlextUtilitiesParser._parse_result_error(result, "Model parse failed"),
+        )
+
+    @staticmethod
+    def _coerce_to_int(value: object) -> r[int] | None:
+        """Coerce value to int. Returns None if not coercible."""
+        if isinstance(value, (str, float)):
+            try:
+                return r[int].ok(int(value))
+            except (ValueError, TypeError):
+                return None
+        return None
+
+    @staticmethod
+    def _coerce_to_float(value: object) -> r[float] | None:
+        """Coerce value to float. Returns None if not coercible."""
+        if isinstance(value, (str, int)):
+            try:
+                return r[float].ok(float(value))
+            except (ValueError, TypeError):
+                return None
+        return None
+
+    @staticmethod
+    def _coerce_to_bool(value: object) -> r[bool] | None:
+        """Coerce value to bool. Returns None if not coercible."""
+        if FlextUtilitiesGuards.is_type(value, str):
+            normalized_val = FlextUtilitiesParser._parse_normalize_str(
+                value,
+                case="lower",
+            )
+            if normalized_val in {"true", "1", "yes", "on"}:
+                return r[bool].ok(True)
+            if normalized_val in {"false", "0", "no", "off"}:
+                return r[bool].ok(False)
+            return None
+        return r[bool].ok(bool(value))
+
+    @staticmethod
+    def _coerce_primitive[T](value: object, target: type[T]) -> r[T] | None:
+        """Coerce primitive types. Returns None if no coercion applied."""
+        if target is int:
+            int_result = FlextUtilitiesParser._coerce_to_int(value)
+            return cast("r[T]", int_result) if int_result is not None else None
+        if target is float:
+            float_result = FlextUtilitiesParser._coerce_to_float(value)
+            return cast("r[T]", float_result) if float_result is not None else None
+        if target is str:
+            return cast("r[T]", r[str].ok(str(value)))
+        if target is bool:
+            bool_result = FlextUtilitiesParser._coerce_to_bool(value)
+            return cast("r[T]", bool_result) if bool_result is not None else None
+        return None
+
+    @staticmethod
+    def _parse_try_enum[T](
+        value: object,
+        target: type[T],
+        *,
+        case_insensitive: bool,
+        default: T | None,
+        default_factory: Callable[[], T] | None,
+        field_prefix: str,
+    ) -> r[T] | None:
+        """Helper: Try enum parsing, return None if not enum."""
+        enum_result = FlextUtilitiesParser._parse_enum(
+            str(value),
+            target,
+            case_insensitive=case_insensitive,
+        )
+        if enum_result is None:
+            return None
+        if enum_result.is_success:
+            return enum_result
+        return FlextUtilitiesParser._parse_with_default(
+            default,
+            default_factory,
+            f"{field_prefix}{enum_result.error}",
+        )
+
+    @staticmethod
+    def _parse_try_model[T](
+        value: object,
+        target: type[T],
+        field_prefix: str,
+        *,
+        strict: bool,
+        default: T | None,
+        default_factory: Callable[[], T] | None,
+    ) -> r[T] | None:
+        """Helper: Try model parsing, return None if not model."""
+        model_result = FlextUtilitiesParser._parse_model(
+            value,
+            target,
+            field_prefix,
+            strict=strict,
+        )
+        if model_result is None:
+            return None
+        if model_result.is_success:
+            return model_result
+        return FlextUtilitiesParser._parse_with_default(
+            default,
+            default_factory,
+            FlextUtilitiesParser._parse_result_error(model_result, ""),
+        )
+
+    @staticmethod
+    def _parse_try_primitive[T](
+        value: object,
+        target: type[T],
+        default: T | None,
+        default_factory: Callable[[], T] | None,
+        field_prefix: str,
+    ) -> r[T] | None:
+        """Helper: Try primitive coercion."""
+        try:
+            prim_result = FlextUtilitiesParser._coerce_primitive(value, target)
+            if prim_result is not None:
+                return prim_result
+        except (ValueError, TypeError) as e:
+            target_name = FlextUtilitiesParser._parse_get_attr(
+                target,
+                "__name__",
+                "type",
+            )
+            return FlextUtilitiesParser._parse_with_default(
+                default,
+                default_factory,
+                f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
+            )
+        return None
+
+    @staticmethod
+    def _parse_try_direct[T](
+        value: object,
+        target: type[T],
+        default: T | None,
+        default_factory: Callable[[], T] | None,
+        field_prefix: str,
+    ) -> r[T]:
+        """Helper: Try direct type call."""
+        try:
+            # Call target directly as type constructor - target is type[T]
+            # Use cast to help mypy understand this is callable, avoid T in cast string
+            # Type ignore needed because mypy complains about T in attribute types when using type[T]
+            # Suppress type-var error on cast line
+            target_callable: Callable[[object], object] = cast(
+                "Callable[[object], object]",
+                target,
+            )
+            parsed_raw: object = target_callable(value)
+            # Type narrowing: parsed_raw is compatible with T after successful call
+            # Cast is required because mypy cannot infer that target(value) returns T
+            return r[T].ok(cast("T", parsed_raw))
+        except Exception as e:
+            target_name = FlextUtilitiesParser._parse_get_attr(
+                target,
+                "__name__",
+                "type",
+            )
+            return FlextUtilitiesParser._parse_with_default(
+                default,
+                default_factory,
+                f"{field_prefix}Cannot parse {type(value).__name__} to {target_name}: {e}",
+            )
+
+    @staticmethod
+    def parse[T](
+        value: object,
+        target: type[T],
+        *,
+        strict: bool = False,
+        coerce: bool = True,
+        case_insensitive: bool = False,
+        default: T | None = None,
+        default_factory: Callable[[], T] | None = None,
+        field_name: str | None = None,
+    ) -> r[T]:
+        """Universal type parser supporting enums, models, and primitives.
+
+        Parsing order: enum → model → primitive coercion → direct type call.
+
+        Args:
+            value: The value to parse.
+            target: Target type to parse into.
+            strict: If True, disable type coercion (exact match only).
+            coerce: If True (default), allow type coercion.
+            case_insensitive: For enums, match case-insensitively.
+            default: Default value to return on parse failure.
+            default_factory: Callable to create default on failure.
+            field_name: Field name for error messages.
+
+        Returns:
+            r[T]: Ok(parsed_value) or Fail with error message.
+
+        Examples:
+            >>> result = FlextUtilitiesParser.parse("ACTIVE", Status)
+            >>> result = FlextUtilitiesParser.parse("42", int)  # Ok(42)
+            >>> result = FlextUtilitiesParser.parse("invalid", int, default=c.ZERO)
+
+        """
+        field_prefix = f"{field_name}: " if field_name else ""
+
+        if value is None:
+            if default is not None:
+                return r[T].ok(default)
+            if default_factory is not None:
+                return r[T].ok(default_factory())
+            return r[T].fail(field_prefix or "Value is None")
+
+        if isinstance(value, target):
+            return r[T].ok(value)
+
+        enum_result = FlextUtilitiesParser._parse_try_enum(
+            value,
+            target,
+            case_insensitive=case_insensitive,
+            default=default,
+            default_factory=default_factory,
+            field_prefix=field_prefix,
+        )
+        if enum_result is not None:
+            return enum_result
+
+        model_result = FlextUtilitiesParser._parse_try_model(
+            value,
+            target,
+            field_prefix,
+            strict=strict,
+            default=default,
+            default_factory=default_factory,
+        )
+        if model_result is not None:
+            return model_result
+
+        if coerce and not strict:
+            prim_result = FlextUtilitiesParser._parse_try_primitive(
+                value,
+                target,
+                default,
+                default_factory,
+                field_prefix,
+            )
+            if prim_result is not None:
+                return prim_result
+
+        return FlextUtilitiesParser._parse_try_direct(
+            value,
+            target,
+            default,
+            default_factory,
+            field_prefix,
+        )
+
+    # =========================================================================
+    # CONVERT METHODS - Type conversion with safe fallback
+    # =========================================================================
+
+    @staticmethod
+    def convert[T](
+        value: t.GeneralValueType,
+        target_type: type[T],
+        default: T,
+    ) -> T:
+        """Unified type conversion with safe fallback using match/case.
+
+        Automatically handles common type conversions (int, str, float, bool) with
+        safe fallback to default value on conversion failure.
+
+        Args:
+            value: Value to convert
+            target_type: Target type (int, str, float, bool)
+            default: Default value to return on conversion failure
+
+        Returns:
+            Converted value or default
+
+        Example:
+            # Convert to int
+            result = FlextUtilitiesParser.convert("123", int, 0)
+            # → 123
+
+            # Convert to int (invalid)
+            result = FlextUtilitiesParser.convert("invalid", int, 0)
+            # → 0
+
+            # Convert to float
+            result = FlextUtilitiesParser.convert("3.14", float, 0.0)
+            # → 3.14
+
+        """
+        # Already correct type - fast path
+        if isinstance(value, target_type):
+            return value
+
+        # Use match/case for unified type dispatch
+        match target_type:
+            case _ if target_type is int:
+                return FlextUtilitiesParser._convert_to_int(value, default)
+            case _ if target_type is float:
+                return FlextUtilitiesParser._convert_to_float(value, default)
+            case _ if target_type is str:
+                return FlextUtilitiesParser._convert_to_str(value, default)
+            case _ if target_type is bool:
+                return FlextUtilitiesParser._convert_to_bool(value, default)
+            case _:
+                return FlextUtilitiesParser._convert_fallback(
+                    value,
+                    target_type,
+                    default,
+                )
+
+    @staticmethod
+    def _convert_to_int[T](value: t.GeneralValueType, default: T) -> T:
+        """Convert value to int with fallback."""
+        if isinstance(value, int) and not isinstance(value, bool):
+            return cast("T", value)
+        if isinstance(value, str):
+            try:
+                return cast("T", int(value))
+            except ValueError:
+                return default
+        if isinstance(value, float):
+            return cast("T", int(value))
+        return default
+
+    @staticmethod
+    def _convert_to_float[T](value: t.GeneralValueType, default: T) -> T:
+        """Convert value to float with fallback."""
+        if FlextUtilitiesGuards.is_type(value, float):
+            return cast("T", value)
+        if isinstance(value, (int, str)):
+            try:
+                return cast("T", float(value))
+            except (ValueError, TypeError):
+                return default
+        return default
+
+    @staticmethod
+    def _convert_to_str[T](value: t.GeneralValueType, default: T) -> T:
+        """Convert value to str with fallback."""
+        if FlextUtilitiesGuards.is_type(value, str):
+            return cast("T", value)
+        if value is None:
+            return default
+        try:
+            return cast("T", str(value))
+        except (ValueError, TypeError):
+            return default
+
+    @staticmethod
+    def _convert_to_bool[T](value: t.GeneralValueType, default: T) -> T:
+        """Convert value to bool with fallback."""
+        if FlextUtilitiesGuards.is_type(value, bool):
+            return cast("T", value)
+        if FlextUtilitiesGuards.is_type(value, str):
+            normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
+            return cast("T", normalized in {"true", "1", "yes", "on"})
+        if isinstance(value, (int, float)):
+            return cast("T", bool(value))
+        return default
+
+    @staticmethod
+    def _convert_fallback[T](
+        value: t.GeneralValueType,
+        target_type: Callable[..., T],
+        default: T,
+    ) -> T:
+        """Fallback: try direct type constructor."""
+        try:
+            # target_type is Callable[..., T] so it returns T
+            result: T = target_type(value)
+            return result
+        except (ValueError, TypeError):
+            return default
+
+    # =========================================================================
+    # CONV_* METHODS - Convenience conversion wrappers
+    # =========================================================================
+
+    @staticmethod
+    def conv_str(value: t.GeneralValueType, *, default: str = "") -> str:
+        """Convert to string (builder: conv().str()).
+
+        Mnemonic: conv = convert, str = string
+
+        Args:
+            value: Value to convert
+            default: Default if None
+
+        Returns:
+            str: Converted string
+
+        """
+        if value is None:
+            return default
+        if isinstance(value, str):
+            return value
+        try:
+            return str(value)
+        except (ValueError, TypeError):
+            return default
+
+    @staticmethod
+    def conv_str_list(
+        value: t.GeneralValueType,
+        *,
+        default: list[str] | None = None,
+    ) -> list[str]:
+        """Convert to str_list (builder: conv().str_list()).
+
+        Mnemonic: conv = convert, str_list = list[str]
+
+        Args:
+            value: Value to convert
+            default: Default if None
+
+        Returns:
+            list[str]: Converted list
+
+        """
+        if default is None:
+            default = []
+        if value is None:
+            return default
+        if isinstance(value, list):
+            return [str(v) for v in value]
+        if isinstance(value, str):
+            return [value] if value else default
+        if isinstance(value, (tuple, set, frozenset)):
+            return [str(v) for v in value]
+        return [str(value)]
+
+    @staticmethod
+    def conv_int(value: t.GeneralValueType, *, default: int = 0) -> int:
+        """Convert to int (builder: conv().int()).
+
+        Mnemonic: conv = convert, int = integer
+
+        Args:
+            value: Value to convert
+            default: Default if None
+
+        Returns:
+            int: Converted integer
+
+        """
+        return FlextUtilitiesParser.convert(value, int, default)
+
+    @staticmethod
+    def conv_str_list_truthy(
+        value: object,
+        *,
+        default: list[str] | None = None,
+    ) -> list[str]:
+        """Convert to str_list and filter truthy.
+
+        Mnemonic: conv_str_list_truthy = convert + filter truthy
+
+        Args:
+            value: Value to convert
+            default: Default if None
+
+        Returns:
+            list[str]: Converted and filtered list
+
+        """
+        # Cast object to GeneralValueType for type compatibility
+        value_typed = cast("t.GeneralValueType", value)
+        result = FlextUtilitiesParser.conv_str_list(value_typed, default=default)
+        return [v for v in result if v]
+
+    @staticmethod
+    def conv_str_list_safe(value: object | None) -> list[str]:
+        """Safe str_list conversion.
+
+        Mnemonic: conv_str_list_safe = convert + safe mode
+
+        Args:
+            value: Value to convert (can be None)
+
+        Returns:
+            list[str]: Converted list or []
+
+        """
+        if value is None:
+            return []
+        # Cast object to GeneralValueType for type compatibility
+        value_typed = cast("t.GeneralValueType", value)
+        return FlextUtilitiesParser.conv_str_list(value_typed, default=[])
+
+    # =========================================================================
+    # NORM_* METHODS - String normalization utilities
+    # =========================================================================
+
+    @staticmethod
+    def norm_str(
+        value: t.GeneralValueType,
+        *,
+        case: str | None = None,
+        default: str = "",
+    ) -> str:
+        """Normalize string (builder: norm().str()).
+
+        Mnemonic: norm = normalize, str = string
+
+        Args:
+            value: Value to normalize
+            case: Case normalization ("lower", "upper", "title")
+            default: Default if None
+
+        Returns:
+            str: Normalized string
+
+        """
+        str_value = FlextUtilitiesParser.conv_str(value, default=default)
+        if case:
+            return FlextUtilitiesParser._parse_normalize_str(str_value, case=case)
+        return str_value
+
+    @staticmethod
+    def norm_list(
+        items: list[str] | t.Types.StringDict,
+        *,
+        case: str | None = None,
+        filter_truthy: bool = False,
+        to_set: bool = False,
+    ) -> list[str] | set[str] | t.Types.StringDict:
+        """Normalize list/dict (builder: norm().list()).
+
+        Mnemonic: norm = normalize, list = list[str]
+
+        Args:
+            items: Items to normalize
+            case: Case normalization
+            filter_truthy: Filter truthy first
+            to_set: Return set instead of list
+
+        Returns:
+            Normalized list/set/dict
+
+        """
+        if isinstance(items, dict):
+            dict_items: t.Types.StringDict = items
+            if filter_truthy:
+                dict_items = {k: v for k, v in dict_items.items() if v}
+            return {
+                k: FlextUtilitiesParser.norm_str(v, case=case)
+                for k, v in dict_items.items()
+            }
+
+        list_items: list[str] = list(items) if not isinstance(items, list) else items
+        if filter_truthy:
+            list_items = [v for v in list_items if v]
+
+        normalized = [FlextUtilitiesParser.norm_str(v, case=case) for v in list_items]
+        if to_set:
+            return set(normalized)
+        return normalized
+
+    @staticmethod
+    def norm_join(items: list[str], *, case: str | None = None, sep: str = " ") -> str:
+        """Normalize and join (builder: norm().join()).
+
+        Mnemonic: norm = normalize, join = string join
+
+        Args:
+            items: Items to normalize and join
+            case: Case normalization
+            sep: Separator
+
+        Returns:
+            str: Normalized and joined string
+
+        """
+        if case:
+            normalized = [FlextUtilitiesParser.norm_str(v, case=case) for v in items]
+        else:
+            normalized = items
+        return sep.join(normalized)
+
+    @staticmethod
+    def norm_in(
+        value: str,
+        items: list[str] | t.Types.ConfigurationMapping,
+        *,
+        case: str | None = None,
+    ) -> bool:
+        """Normalized membership check (builder: norm().in_()).
+
+        Mnemonic: norm = normalize, in_ = membership check
+
+        Args:
+            value: Value to check
+            items: Items to check against
+            case: Case normalization
+
+        Returns:
+            bool: True if normalized value in normalized items
+
+        """
+        items_list: list[str] = (
+            list(items.keys()) if isinstance(items, (dict, Mapping)) else items
+        )
+        normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
+        normalized_result = FlextUtilitiesParser.norm_list(
+            items_list,
+            case=case or "lower",
+        )
+        if isinstance(normalized_result, (list, set)):
+            return normalized_value in normalized_result
+        return normalized_value in normalized_result.values()
+
 
 __all__ = [
-    "FlextStringParser",
-    "uStringParser",
+    "FlextUtilitiesParser",
 ]

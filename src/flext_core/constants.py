@@ -10,14 +10,63 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence, Set as AbstractSet
+from collections.abc import Set as AbstractSet
 from enum import StrEnum
-from types import MappingProxyType
-from typing import Final, Literal, TypeGuard, TypeIs
+from typing import Final, Literal
 
 from pydantic import ConfigDict
 
-from flext_core.typings import t
+# Centralized timeout constants (reused by all namespaces)
+_DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
+_MAX_TIMEOUT_SECONDS: Final[int] = 3600
+_MIN_TIMEOUT_SECONDS: Final[int] = 1
+
+# Centralized cache constants (reused by all namespaces)
+_DEFAULT_MAX_CACHE_SIZE: Final[int] = 100
+
+# Centralized batch size constants (reused by all namespaces)
+_DEFAULT_BATCH_SIZE: Final[int] = 1000
+
+# Centralized page size constants (reused by all namespaces)
+_DEFAULT_PAGE_SIZE: Final[int] = 10
+_MAX_PAGE_SIZE: Final[int] = 1000
+_MIN_PAGE_SIZE: Final[int] = 1
+
+# Centralized retry constants (reused by all namespaces)
+_DEFAULT_MAX_RETRY_ATTEMPTS: Final[int] = 3
+
+# Centralized workers constants (reused by all namespaces)
+_DEFAULT_WORKERS: Final[int] = 4
+
+# Centralized pool size constants (reused by all namespaces)
+_DEFAULT_POOL_SIZE: Final[int] = 10
+_MAX_POOL_SIZE: Final[int] = 100
+_MIN_POOL_SIZE: Final[int] = 1
+
+# Centralized name length constants (reused by all namespaces)
+_MAX_NAME_LENGTH: Final[int] = 100
+_MAX_OPERATION_NAME_LENGTH: Final[int] = 100
+
+# Centralized validation limit constants (reused by typings.py Field annotations)
+_MAX_PORT_NUMBER: Final[int] = 65535
+_MIN_PORT_NUMBER: Final[int] = 1
+_MAX_TIMEOUT_VALIDATION_SECONDS: Final[float] = 300.0
+_MAX_RETRY_COUNT_VALIDATION: Final[int] = 10
+_MAX_HOSTNAME_LENGTH_VALIDATION: Final[int] = 253
+_MAX_WORKERS_VALIDATION: Final[int] = 100
+
+# Centralized generic constants (reused across multiple domains)
+_ZERO: Final[int] = 0
+_EXPECTED_TUPLE_LENGTH: Final[int] = 2
+_DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
+_PREVIEW_LENGTH: Final[int] = 50
+_DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = 60
+_IDENTIFIER_LENGTH: Final[int] = 12  # UUID, correlation ID, bcrypt rounds
+_MAX_BATCH_SIZE_LIMIT: Final[int] = 10000
+_DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
+_DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
+_MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[int] = 600
+_DEFAULT_HOUR_IN_SECONDS: Final[int] = 3600
 
 
 class FlextConstants:
@@ -74,7 +123,6 @@ class FlextConstants:
     - **Dispatcher**: Message dispatcher modes and settings
     - **Pagination**: Pagination configuration constants
     - **Mixins**: Field names, status constants, default states
-    - **FlextWeb**: HTTP status codes, methods, content types, headers
     - **Web**: Web application timeouts
     - **Batch**: Batch processing size constants
     - **Processing**: Processing pipeline constants
@@ -258,105 +306,89 @@ class FlextConstants:
 
     # Core identifiers
     NAME: Final[str] = "FLEXT"
-    ZERO: Final[int] = 0
+    ZERO: Final[int] = _ZERO
     INITIAL_TIME: Final[float] = 0.0
 
-    def __getitem__(self, key: str) -> t.ConstantValue:
-        """Dynamic access: FlextConstants['Errors.VALIDATION_ERROR'].
+    # Centralized timeout constants (reused by all namespaces)
+    DEFAULT_TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
+    MAX_TIMEOUT_SECONDS: Final[int] = _MAX_TIMEOUT_SECONDS
+    MIN_TIMEOUT_SECONDS: Final[int] = _MIN_TIMEOUT_SECONDS
 
-        Business Rule: Provides dynamic constant access via dot-separated paths.
-        Traverses nested classes and attributes to resolve constant values at runtime.
-        All constants are immutable (Final), ensuring thread-safe access and preventing
-        accidental mutation. Used for configuration-driven constant resolution and
-        dynamic error code lookup.
+    # Centralized cache constants (reused by all namespaces)
+    DEFAULT_MAX_CACHE_SIZE: Final[int] = _DEFAULT_MAX_CACHE_SIZE
 
-        Audit Implication: Dynamic constant access enables audit trail completeness
-        by allowing runtime resolution of constant paths. All resolved values are
-        validated to ensure they conform to t.ConstantValue type constraints.
-        Used by configuration loaders and dynamic error handling systems.
+    # Centralized batch size constants (reused by all namespaces)
+    DEFAULT_BATCH_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
 
-        Args:
-            key: Dot-separated path (e.g., 'Errors.VALIDATION_ERROR')
+    # Centralized page size constants (reused by all namespaces)
+    DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
+    MAX_PAGE_SIZE: Final[int] = _MAX_PAGE_SIZE
+    MIN_PAGE_SIZE: Final[int] = _MIN_PAGE_SIZE
 
-        Returns:
-            The constant value (str, int, float, bool, ConfigDict, frozenset,
-            tuple, Mapping, or StrEnum)
+    # Centralized retry constants (reused by all namespaces)
+    DEFAULT_MAX_RETRY_ATTEMPTS: Final[int] = _DEFAULT_MAX_RETRY_ATTEMPTS
 
-        Raises:
-            AttributeError: If path not found
-            TypeError: If resolved value is not a valid constant type
+    # Centralized workers constants (reused by all namespaces)
+    DEFAULT_WORKERS: Final[int] = _DEFAULT_WORKERS
 
-        """
-        parts = key.split(".")
-        # Traverse through nested classes and attributes
-        # Intermediate result can be FlextConstants instance, nested class type, or t.ConstantValue
-        result: FlextConstants | type | t.ConstantValue = self
-        try:
-            for part in parts:
-                attr = getattr(result, part)
-                result = attr
-            # Type narrowing: verify result is a valid t.ConstantValue
-            if self._is_constant_value(result):
-                return result
-            msg = f"Constant path '{key}' resolved to invalid type: {type(result).__name__}"
-            raise TypeError(msg)
-        except AttributeError as e:
-            msg = f"Constant path '{key}' not found"
-            raise AttributeError(msg) from e
+    # Centralized pool size constants (reused by all namespaces)
+    DEFAULT_POOL_SIZE: Final[int] = _DEFAULT_POOL_SIZE
+    MAX_POOL_SIZE: Final[int] = _MAX_POOL_SIZE
+    MIN_POOL_SIZE: Final[int] = _MIN_POOL_SIZE
 
-    @staticmethod
-    def _is_constant_value(
-        value: FlextConstants | type | t.ConstantValue,
-    ) -> TypeGuard[t.ConstantValue]:
-        """Type guard to verify value is a valid t.ConstantValue type.
+    # Centralized name length constants (reused by all namespaces)
+    MAX_NAME_LENGTH: Final[int] = _MAX_NAME_LENGTH
+    MAX_OPERATION_NAME_LENGTH: Final[int] = _MAX_OPERATION_NAME_LENGTH
 
-        Business Rule: Type guard for runtime validation of constant value types.
-        Excludes FlextConstants instances and type classes, then checks for valid
-        constant types (StrEnum, primitives, collections). Used by __getitem__ to
-        ensure type safety before returning constant values.
+    # Centralized validation limit constants (reused by typings.py Field annotations)
+    MAX_PORT_NUMBER: Final[int] = _MAX_PORT_NUMBER
+    MIN_PORT_NUMBER: Final[int] = _MIN_PORT_NUMBER
+    MAX_TIMEOUT_VALIDATION_SECONDS: Final[float] = _MAX_TIMEOUT_VALIDATION_SECONDS
+    MAX_RETRY_COUNT_VALIDATION: Final[int] = _MAX_RETRY_COUNT_VALIDATION
+    MAX_HOSTNAME_LENGTH_VALIDATION: Final[int] = _MAX_HOSTNAME_LENGTH_VALIDATION
+    MAX_WORKERS_VALIDATION: Final[int] = _MAX_WORKERS_VALIDATION
 
-        Audit Implication: Type guard ensures only valid constant types are returned,
-        preventing type errors in audit logging and configuration systems. All constant
-        values are validated before being used in audit trails.
-
-        Args:
-            value: Value to check (can be FlextConstants instance, type, or constant value)
-
-        Returns:
-            True if value is a valid t.ConstantValue, False otherwise
-
-        """
-        # Exclude FlextConstants and type classes first
-        if isinstance(value, (FlextConstants, type)):
-            return False
-        # Check for StrEnum first (before basic types to avoid conflicts)
-        if isinstance(value, StrEnum):
-            return True
-        # Check for basic types
-        if isinstance(value, (str, int, float, bool, frozenset, tuple, Mapping)):
-            return True
-        # Check for Pattern (re.Pattern is a type alias, check via hasattr)
-        # Note: Pattern check must come after StrEnum to avoid mypy unreachable error
-        if hasattr(value, "pattern") and hasattr(value, "match"):
-            return True
-        # Check for ConfigDict (TypedDict, check via type) or dict
-        return type(value).__name__ == "ConfigDict" or isinstance(value, dict)
+    # Centralized generic constants (reused across multiple domains)
+    EXPECTED_TUPLE_LENGTH: Final[int] = _EXPECTED_TUPLE_LENGTH
+    EVENT_TUPLE_SIZE: Final[int] = 2
+    """Domain event tuple size (event_type, event_data)."""
+    MIN_QUALNAME_PARTS_FOR_WRAPPER: Final[int] = 2
+    """Minimum qualname parts for wrapper detection."""
+    PERCENTAGE_MULTIPLIER: Final[int] = 100
+    """Multiplier for percentage calculations (100 = 100%)."""
+    MILLISECONDS_MULTIPLIER: Final[int] = 1000
+    """Multiplier to convert seconds to milliseconds."""
+    MICROSECONDS_MULTIPLIER: Final[int] = 1000000
+    """Multiplier to convert seconds to microseconds."""
+    DEFAULT_FAILURE_THRESHOLD: Final[int] = _DEFAULT_FAILURE_THRESHOLD
+    PREVIEW_LENGTH: Final[int] = _PREVIEW_LENGTH
+    DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = _DEFAULT_RECOVERY_TIMEOUT_SECONDS
+    IDENTIFIER_LENGTH: Final[int] = _IDENTIFIER_LENGTH
+    MAX_BATCH_SIZE_LIMIT: Final[int] = _MAX_BATCH_SIZE_LIMIT
+    DEFAULT_BACKOFF_MULTIPLIER: Final[float] = _DEFAULT_BACKOFF_MULTIPLIER
+    DEFAULT_MAX_DELAY_SECONDS: Final[float] = _DEFAULT_MAX_DELAY_SECONDS
+    MAX_TIMEOUT_SECONDS_PERFORMANCE: Final[int] = _MAX_TIMEOUT_SECONDS_PERFORMANCE
+    DEFAULT_HOUR_IN_SECONDS: Final[int] = _DEFAULT_HOUR_IN_SECONDS
 
     class Network:
         """Network-related defaults."""
 
-        MIN_PORT: Final[int] = 1
-        MAX_PORT: Final[int] = 65535
-        DEFAULT_TIMEOUT: Final[int] = 30
-        DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
-        MAX_CONNECTION_POOL_SIZE: Final[int] = 100
-        MAX_HOSTNAME_LENGTH: Final[int] = 253
+        MIN_PORT: Final[int] = _MIN_PORT_NUMBER
+        MAX_PORT: Final[int] = _MAX_PORT_NUMBER
+        DEFAULT_TIMEOUT: Final[int] = _DEFAULT_TIMEOUT_SECONDS
+        DEFAULT_CONNECTION_POOL_SIZE: Final[int] = _DEFAULT_POOL_SIZE
+        MAX_CONNECTION_POOL_SIZE: Final[int] = _MAX_POOL_SIZE
+        MAX_HOSTNAME_LENGTH: Final[int] = _MAX_HOSTNAME_LENGTH_VALIDATION
+        HTTP_STATUS_MIN: Final[int] = 100
+        """Minimum valid HTTP status code."""
+        HTTP_STATUS_MAX: Final[int] = 599
+        """Maximum valid HTTP status code."""
 
     class Validation:
         """Input validation limits."""
 
         MIN_NAME_LENGTH: Final[int] = 2
-        MAX_NAME_LENGTH: Final[int] = 100
+        MAX_NAME_LENGTH: Final[int] = _MAX_NAME_LENGTH
         MAX_EMAIL_LENGTH: Final[int] = 254
         EMAIL_PARTS_COUNT: Final[int] = 2
         LEVEL_PREFIX_PARTS_COUNT: Final[int] = 4
@@ -365,7 +397,7 @@ class FlextConstants:
         MIN_USERNAME_LENGTH: Final[int] = 3
         MAX_AGE: Final[int] = 150
         MIN_AGE: Final[int] = 0
-        PREVIEW_LENGTH: Final[int] = 50
+        PREVIEW_LENGTH: Final[int] = _PREVIEW_LENGTH
         VALIDATION_TIMEOUT_MS: Final[int] = 100
         MAX_UNCOMMITTED_EVENTS: Final[int] = 100
         DISCOUNT_THRESHOLD: Final[int] = 100
@@ -374,7 +406,11 @@ class FlextConstants:
         RESOURCE_LIMIT_MIN: Final[int] = 50
         FILTER_THRESHOLD: Final[int] = 5
         RETRY_COUNT_MAX: Final[int] = 3
-        MAX_WORKERS_LIMIT: Final[int] = 100
+        MAX_WORKERS_LIMIT: Final[int] = _MAX_WORKERS_VALIDATION
+        MAX_RETRY_STATUS_CODES: Final[int] = 100
+        """Maximum number of HTTP status codes allowed in retry configuration."""
+        MAX_CUSTOM_VALIDATORS: Final[int] = 50
+        """Maximum number of custom validator callables allowed."""
 
     class Errors:
         """Error codes for categorization."""
@@ -433,46 +469,6 @@ class FlextConstants:
         CRITICAL_ERROR: Final[str] = "CRITICAL_ERROR"
         NONEXISTENT_ERROR: Final[str] = "NONEXISTENT_ERROR"
 
-    class Test:
-        """Test constants."""
-
-        DEFAULT_PASSWORD: Final[str] = "password123"
-        DEFAULT_USERNAME: Final[str] = "testuser"
-        NONEXISTENT_USERNAME: Final[str] = "nonexistent"
-
-        class Docker:
-            """Docker test infrastructure constants."""
-
-            DEFAULT_LOG_TAIL: Final[int] = 100
-            DEFAULT_CONTAINER_CHOICES: Final[tuple[str, ...]] = (
-                "flext-shared-ldap",
-                "flext-postgres",
-                "flext-redis",
-                "flext-oracle",
-            )
-            SHARED_CONTAINERS: Final[t.Types.SharedContainersMapping] = {
-                "flext-openldap-test": {
-                    "compose_file": "flext-ldap/docker/docker-compose.yml",
-                    "service": "openldap",
-                    "port": 3390,
-                },
-                "flext-postgres-test": {
-                    "compose_file": "flext-db-postgres/docker/docker-compose.yml",
-                    "service": "postgres",
-                    "port": 5433,
-                },
-                "flext-redis-test": {
-                    "compose_file": "flext-redis/docker/docker-compose.yml",
-                    "service": "redis",
-                    "port": 6380,
-                },
-                "flext-oracle-db-test": {
-                    "compose_file": "flext-db-oracle/docker/docker-compose.yml",
-                    "service": "oracle-db",
-                    "port": 1522,
-                },
-            }
-
     class Exceptions:
         """Exception handling configuration."""
 
@@ -495,16 +491,16 @@ class FlextConstants:
     class Defaults:
         """Default values."""
 
-        TIMEOUT: Final[int] = 30
+        TIMEOUT: Final[int] = _DEFAULT_TIMEOUT_SECONDS
         PAGE_SIZE: Final[int] = 100
-        TIMEOUT_SECONDS: Final[int] = 30
+        TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
         CACHE_TTL: Final[int] = 300
         DEFAULT_CACHE_TTL: Final[int] = CACHE_TTL
-        MAX_CACHE_SIZE: Final[int] = 100
-        DEFAULT_MAX_CACHE_SIZE: Final[int] = MAX_CACHE_SIZE
+        # MAX_CACHE_SIZE removed - use c.Container.MAX_CACHE_SIZE instead
+        DEFAULT_MAX_CACHE_SIZE: Final[int] = _DEFAULT_MAX_CACHE_SIZE
         MAX_MESSAGE_LENGTH: Final[int] = 100
         DEFAULT_MIDDLEWARE_ORDER: Final[int] = 0
-        OPERATION_TIMEOUT_SECONDS: Final[int] = 30
+        OPERATION_TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
         DATABASE_URL: Final[str] = "sqlite:///:memory:"
         DEFAULT_DATABASE_URL: Final[str] = DATABASE_URL
 
@@ -512,8 +508,21 @@ class FlextConstants:
         """Utility constants."""
 
         DEFAULT_ENCODING: Final[str] = "utf-8"
-        DEFAULT_BATCH_SIZE: Final[int] = 1000
-        MAX_TIMEOUT_SECONDS: Final[int] = 3600
+        """Default encoding for string operations."""
+        # Pydantic ConfigDict ser_json_timedelta literal types
+        SERIALIZATION_ISO8601: Final = "iso8601"
+        """ISO8601 format for datetime serialization."""
+        SERIALIZATION_FLOAT: Final = "float"
+        """Float format for datetime serialization."""
+        # Pydantic ConfigDict ser_json_bytes literal types
+        SERIALIZATION_BASE64: Final = "base64"
+        """Base64 format for bytes serialization."""
+        SERIALIZATION_UTF8: Final = "utf8"
+        """UTF-8 format for bytes serialization."""
+        SERIALIZATION_HEX: Final = "hex"
+        """Hex format for bytes serialization."""
+        # DEFAULT_BATCH_SIZE removed - use c.DEFAULT_BATCH_SIZE instead
+        MAX_TIMEOUT_SECONDS: Final[int] = _MAX_TIMEOUT_SECONDS
         LONG_UUID_LENGTH: Final[int] = 12
         SHORT_UUID_LENGTH: Final[int] = 8
         VERSION_MODULO: Final[int] = 100
@@ -530,9 +539,9 @@ class FlextConstants:
 
         MAX_WORKERS_THRESHOLD: Final[int] = 50
         DEFAULT_ENABLE_CACHING: Final[bool] = True
-        DEFAULT_ENABLE_METRICS: Final[bool] = False
+        # DEFAULT_ENABLE_METRICS removed - use c.Dispatcher.DEFAULT_ENABLE_METRICS instead
         DEFAULT_ENABLE_TRACING: Final[bool] = False
-        DEFAULT_TIMEOUT: Final[int] = 30
+        DEFAULT_TIMEOUT: Final[int] = _DEFAULT_TIMEOUT_SECONDS
         DEFAULT_DEBUG_MODE: Final[bool] = False
         DEFAULT_TRACE_MODE: Final[bool] = False
 
@@ -557,6 +566,13 @@ class FlextConstants:
     class ModelConfig:
         """Pydantic model configuration defaults."""
 
+        EXTRA_FORBID: Final = "forbid"
+        """Extra fields behavior: forbid unknown fields."""
+        EXTRA_IGNORE: Final = "ignore"
+        """Extra fields behavior: ignore unknown fields."""
+        EXTRA_ALLOW: Final = "allow"
+        """Extra fields behavior: allow unknown fields."""
+
         BASE: Final[ConfigDict] = ConfigDict(
             validate_assignment=True,
             validate_return=True,
@@ -565,9 +581,9 @@ class FlextConstants:
             str_strip_whitespace=True,
             use_enum_values=True,
             arbitrary_types_allowed=True,
-            extra="forbid",
-            ser_json_timedelta="iso8601",
-            ser_json_bytes="base64",
+            extra="forbid",  # Use c.ModelConfig.EXTRA_FORBID in code
+            ser_json_timedelta="iso8601",  # Use c.Utilities.SERIALIZATION_ISO8601 in code
+            ser_json_bytes="base64",  # Use c.Utilities.SERIALIZATION_BASE64 in code
             hide_input_in_errors=True,
         )
 
@@ -596,6 +612,24 @@ class FlextConstants:
             r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
         )
         PATTERN_PATH: Final[str] = r'^[^<>"|?*\x00-\x1F]+$'
+        # Identifier patterns (valid names/keys)
+        PATTERN_IDENTIFIER: Final[str] = r"^[a-zA-Z][a-zA-Z0-9_]*$"
+        """Pattern for valid identifiers (handler names, resource types, etc.)."""
+        PATTERN_IDENTIFIER_WITH_UNDERSCORE: Final[str] = r"^[a-zA-Z_][a-zA-Z0-9_]*$"
+        """Pattern for identifiers that can start with underscore (context keys)."""
+        PATTERN_SIMPLE_IDENTIFIER: Final[str] = r"^[a-zA-Z0-9]+$"
+        """Pattern for simple alphanumeric identifiers."""
+        # Path patterns
+        PATTERN_MODULE_PATH: Final[str] = r"^[^:]+:[^:]+$"
+        """Pattern for module:class paths (e.g., 'flext_core.dispatcher:FlextDispatcher')."""
+        # Timestamp patterns
+        PATTERN_ISO8601_TIMESTAMP: Final[str] = (
+            r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[Z+\-][0-9:]*)?$"
+        )
+        """Pattern for ISO 8601 timestamps (optional, allows empty string)."""
+        # LDAP/DN patterns
+        PATTERN_DN_STRING: Final[str] = r"^(cn|ou|dc)=.*"
+        """Pattern for LDAP DN strings (distinguished names)."""
         EXT_PYTHON: Final[str] = ".py"
         EXT_YAML: Final[str] = ".yaml"
         EXT_JSON: Final[str] = ".json"
@@ -612,50 +646,56 @@ class FlextConstants:
     class Performance:
         """Performance thresholds."""
 
-        DEFAULT_DB_POOL_SIZE: Final[int] = 10
-        MIN_DB_POOL_SIZE: Final[int] = 1
-        MAX_DB_POOL_SIZE: Final[int] = 100
+        DEFAULT_DB_POOL_SIZE: Final[int] = _DEFAULT_POOL_SIZE
+        MIN_DB_POOL_SIZE: Final[int] = _MIN_POOL_SIZE
+        MAX_DB_POOL_SIZE: Final[int] = _MAX_POOL_SIZE
         MAX_RETRY_ATTEMPTS_LIMIT: Final[int] = 10
         DEFAULT_TIMEOUT_LIMIT: Final[int] = 300
         MIN_CURRENT_STEP: Final[int] = 0
-        DEFAULT_BACKOFF_MULTIPLIER: Final[float] = 2.0
-        DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
+        # DEFAULT_BACKOFF_MULTIPLIER removed - use c.DEFAULT_BACKOFF_MULTIPLIER instead
+        # DEFAULT_MAX_DELAY_SECONDS removed - use c.DEFAULT_MAX_DELAY_SECONDS instead
         DEFAULT_INITIAL_DELAY_SECONDS: Final[float] = 1.0
         MAX_BATCH_SIZE: Final[int] = 10000
         DEFAULT_TIME_RANGE_SECONDS: Final[int] = 3600
         DEFAULT_TTL_SECONDS: Final[int] = 3600
         DEFAULT_VERSION: Final[int] = 1
         MIN_VERSION: Final[int] = 1
-        DEFAULT_PAGE_SIZE: Final[int] = 10
+        DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
         HIGH_MEMORY_THRESHOLD_BYTES: Final[int] = 1073741824
         MAX_TIMEOUT_SECONDS: Final[int] = 600
         MAX_BATCH_OPERATIONS: Final[int] = 1000
-        MAX_OPERATION_NAME_LENGTH: Final[int] = 100
+        MAX_OPERATION_NAME_LENGTH: Final[int] = _MAX_OPERATION_NAME_LENGTH
         EXPECTED_TUPLE_LENGTH: Final[int] = 2
         DEFAULT_EMPTY_STRING: Final[str] = ""
 
         class BatchProcessing:
             """Batch processing constants."""
 
-            DEFAULT_SIZE: Final[int] = 1000
+            DEFAULT_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
             MAX_ITEMS: Final[int] = 10000
-            MAX_VALIDATION_SIZE: Final[int] = 1000
+            MAX_VALIDATION_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
 
         CLI_PERFORMANCE_CRITICAL_MS: Final[float] = 10000.0
 
     class Reliability:
         """Reliability thresholds."""
 
-        MAX_RETRY_ATTEMPTS: Final[int] = 3
-        DEFAULT_MAX_RETRIES: Final[int] = 3
+        MAX_RETRY_ATTEMPTS: Final[int] = _DEFAULT_MAX_RETRY_ATTEMPTS
+        DEFAULT_MAX_RETRIES: Final[int] = _DEFAULT_MAX_RETRY_ATTEMPTS
         DEFAULT_RETRY_DELAY_SECONDS: Final[int] = 1
         RETRY_BACKOFF_BASE: Final[float] = 2.0
         RETRY_BACKOFF_MAX: Final[float] = 60.0
+        DEFAULT_MAX_DELAY_SECONDS: Final[float] = 300.0
+        """Default maximum delay in seconds for retry operations."""
         RETRY_COUNT_MIN: Final[int] = 1
         DEFAULT_BACKOFF_STRATEGY: Final[str] = "exponential"
+        BACKOFF_STRATEGY_EXPONENTIAL: Final[str] = "exponential"
+        """Exponential backoff strategy."""
+        BACKOFF_STRATEGY_LINEAR: Final[str] = "linear"
+        """Linear backoff strategy."""
         DEFAULT_FAILURE_THRESHOLD: Final[int] = 5
         DEFAULT_RECOVERY_TIMEOUT: Final[int] = 60
-        DEFAULT_TIMEOUT_SECONDS: Final[float] = 30.0
+        DEFAULT_TIMEOUT_SECONDS: Final[float] = float(_DEFAULT_TIMEOUT_SECONDS)
         DEFAULT_RATE_LIMIT_WINDOW_SECONDS: Final[int] = 60
         DEFAULT_RATE_LIMIT_MAX_REQUESTS: Final[int] = 100
         DEFAULT_CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5
@@ -669,30 +709,10 @@ class FlextConstants:
             OPEN = "open"
             HALF_OPEN = "half_open"
 
-            @classmethod
-            def validate(cls, value: str) -> bool:
-                """Validate circuit breaker state value.
-
-                Business Rule: Validates circuit breaker state strings against
-                CircuitBreakerState StrEnum members. Uses __members__ access with
-                getattr for runtime safety. Returns True if value matches any enum
-                member value, False otherwise.
-
-                Audit Implication: State validation ensures only valid circuit breaker
-                states are accepted, preventing invalid state transitions in audit trails.
-                Used by reliability systems to validate state changes before applying them.
-
-                Args:
-                    value: State value to validate.
-
-                Returns:
-                    True if value is a valid state, False otherwise.
-
-                """
-                # Type hint: cls is StrEnum class, so __members__ exists
-                # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-                members_dict: dict[str, StrEnum] = getattr(cls, "__members__", {})
-                return value in members_dict.values()
+        # Valid circuit breaker states derived from CircuitBreakerState StrEnum
+        VALID_CIRCUIT_BREAKER_STATES: Final[frozenset[str]] = frozenset(
+            member.value for member in CircuitBreakerState
+        )
 
     class Security:
         """Security constants."""
@@ -743,6 +763,10 @@ class FlextConstants:
         INCLUDE_CORRELATION_ID: Final[bool] = True
         MAX_CONTEXT_KEYS: Final[int] = 50
         MASK_SENSITIVE_DATA: Final[bool] = True
+        ASYNC_ENABLED: Final[bool] = True
+        ASYNC_QUEUE_SIZE: Final[int] = 10000
+        ASYNC_WORKERS: Final[int] = 1
+        ASYNC_BLOCK_ON_FULL: Final[bool] = False
 
         class ContextOperation(StrEnum):
             """Context operation types enumeration (single source of truth)."""
@@ -794,14 +818,17 @@ class FlextConstants:
             internal.invalid,
         ]
 
-        # Registration status literal (references FlextConstants.Cqrs.RegistrationStatus StrEnum members)
+        # Registration status literal (references
+        # FlextConstants.Cqrs.RegistrationStatus StrEnum members)
         type RegistrationStatusLiteral = Literal[
             FlextConstants.Cqrs.RegistrationStatus.ACTIVE,
             FlextConstants.Cqrs.RegistrationStatus.INACTIVE,
         ]
 
         # State literal - NOTE: This combines multiple StrEnum values
-        # References FlextConstants.Domain.Status, FlextConstants.Cqrs.CommonStatus, and FlextConstants.Cqrs.HealthStatus members
+        # References FlextConstants.Domain.Status,
+        # FlextConstants.Cqrs.CommonStatus, and
+        # FlextConstants.Cqrs.HealthStatus members
         type StateLiteral = Literal[
             FlextConstants.Domain.Status.ACTIVE,
             FlextConstants.Domain.Status.INACTIVE,
@@ -1265,16 +1292,25 @@ class FlextConstants:
             MetricType.SUMMARY,
         ]
 
+        class ServiceMetricCategory(StrEnum):
+            """Service metric categories enumeration."""
+
+            PERFORMANCE = "performance"
+            ERRORS = "errors"
+            THROUGHPUT = "throughput"
+
+        DEFAULT_METRIC_CATEGORIES: Final[tuple[str, ...]] = (
+            ServiceMetricCategory.PERFORMANCE,
+            ServiceMetricCategory.ERRORS,
+            ServiceMetricCategory.THROUGHPUT,
+        )
+        """Default metric categories for service metrics requests."""
+
         DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
 
         # Valid handler modes derived from HandlerType StrEnum (single source of truth)
-        # Type hint: HandlerType is StrEnum class, so __members__ exists
-        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        _handler_type_members: dict[str, HandlerType] = getattr(
-            HandlerType, "__members__", {}
-        )
-        VALID_HANDLER_MODES: Final[AbstractSet[str]] = frozenset(
-            member.value for member in _handler_type_members.values()
+        VALID_HANDLER_MODES: Final[frozenset[str]] = frozenset(
+            member.value for member in HandlerType
         )
 
         class ProcessingMode(StrEnum):
@@ -1474,8 +1510,8 @@ class FlextConstants:
         MIN_RETRIES: Final[int] = 0
         MAX_RETRIES: Final[int] = 5
         DEFAULT_MAX_COMMAND_RETRIES: Final[int] = 0
-        DEFAULT_PAGE_SIZE: Final[int] = 10
-        MAX_PAGE_SIZE: Final[int] = 1000
+        DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
+        MAX_PAGE_SIZE: Final[int] = _MAX_PAGE_SIZE
         DEFAULT_MAX_VALIDATION_ERRORS: Final[int] = 10
         DEFAULT_MINIMUM_THROUGHPUT: Final[int] = 10
         DEFAULT_PARALLEL_EXECUTION: Final[bool] = False
@@ -1484,13 +1520,14 @@ class FlextConstants:
         COMMAND_VALIDATION_FAILED: Final[str] = "COMMAND_VALIDATION_FAILED"
         QUERY_VALIDATION_FAILED: Final[str] = "QUERY_VALIDATION_FAILED"
         HANDLER_CONFIG_INVALID: Final[str] = "HANDLER_CONFIG_INVALID"
-        COMMAND_PROCESSING_FAILED: Final[str] = "COMMAND_PROCESSING_FAILED"
+        # COMMAND_PROCESSING_FAILED removed - use c.Errors.COMMAND_PROCESSING_FAILED instead
 
     class Context:
         """Context management constants."""
 
         SCOPE_GLOBAL: Final[str] = "global"
         SCOPE_REQUEST: Final[str] = "request"
+        SCOPE_USER: Final[str] = "user"
         SCOPE_SESSION: Final[str] = "session"
         SCOPE_TRANSACTION: Final[str] = "transaction"
         SCOPE_APPLICATION: Final[str] = "application"
@@ -1510,19 +1547,53 @@ class FlextConstants:
             "session_id",
             "tenant_id",
         })
+        # Context operation names for statistics
+        OPERATION_SET: Final[str] = "set"
+        OPERATION_GET: Final[str] = "get"
+        OPERATION_REMOVE: Final[str] = "remove"
+        OPERATION_CLEAR: Final[str] = "clear"
+        # Context keys
+        KEY_OPERATION_ID: Final[str] = "operation_id"
+        KEY_USER_ID: Final[str] = "user_id"
+        KEY_CORRELATION_ID: Final[str] = "correlation_id"
+        KEY_PARENT_CORRELATION_ID: Final[str] = "parent_correlation_id"
+        KEY_SERVICE_NAME: Final[str] = "service_name"
+        KEY_OPERATION_NAME: Final[str] = "operation_name"
+        KEY_REQUEST_ID: Final[str] = "request_id"
+        KEY_SERVICE_VERSION: Final[str] = "service_version"
+        KEY_OPERATION_START_TIME: Final[str] = "operation_start_time"
+        KEY_OPERATION_METADATA: Final[str] = "operation_metadata"
+        KEY_REQUEST_TIMESTAMP: Final[str] = "request_timestamp"
+        # HTTP headers for context propagation
+        HEADER_CORRELATION_ID: Final[str] = "X-Correlation-Id"
+        HEADER_PARENT_CORRELATION_ID: Final[str] = "X-Parent-Correlation-Id"
+        HEADER_SERVICE_NAME: Final[str] = "X-Service-Name"
+        HEADER_USER_ID: Final[str] = "X-User-Id"
+        # Metadata keys for operation timing
+        METADATA_KEY_START_TIME: Final[str] = "start_time"
+        METADATA_KEY_END_TIME: Final[str] = "end_time"
+        METADATA_KEY_DURATION_SECONDS: Final[str] = "duration_seconds"
 
     class Container:
         """Dependency injection container constants."""
 
-        DEFAULT_WORKERS: Final[int] = 4
-        TIMEOUT_SECONDS: Final[int] = 30
-        MIN_TIMEOUT_SECONDS: Final[int] = 1
+        DEFAULT_WORKERS: Final[int] = _DEFAULT_WORKERS
+        TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
+        MIN_TIMEOUT_SECONDS: Final[int] = _MIN_TIMEOUT_SECONDS
         MAX_TIMEOUT_SECONDS: Final[int] = 300
-        MAX_CACHE_SIZE: Final[int] = 100
+        MAX_CACHE_SIZE: Final[int] = _DEFAULT_MAX_CACHE_SIZE
+        DEFAULT_MAX_SERVICES: Final[int] = 1000
+        """Default maximum number of services allowed in container."""
+        DEFAULT_MAX_FACTORIES: Final[int] = 500
+        """Default maximum number of factories allowed in container."""
+        MAX_FACTORIES: Final[int] = 5000
+        """Maximum number of factories allowed in container."""
 
     class Dispatcher:
         """Message dispatcher constants."""
 
+        THREAD_NAME_PREFIX: Final[str] = "flext-dispatcher"
+        """Thread name prefix for dispatcher thread pool executor."""
         HANDLER_MODE_COMMAND: Final[str] = "command"
         HANDLER_MODE_QUERY: Final[str] = "query"
         VALID_HANDLER_MODES: Final[tuple[str, ...]] = (
@@ -1533,10 +1604,16 @@ class FlextConstants:
         DEFAULT_AUTO_CONTEXT: Final[bool] = True
         DEFAULT_ENABLE_LOGGING: Final[bool] = True
         DEFAULT_ENABLE_METRICS: Final[bool] = True
-        DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
-        MIN_TIMEOUT_SECONDS: Final[int] = 1
+        DEFAULT_TIMEOUT_SECONDS: Final[int] = _DEFAULT_TIMEOUT_SECONDS
+        MIN_TIMEOUT_SECONDS: Final[int] = _MIN_TIMEOUT_SECONDS
         MAX_TIMEOUT_SECONDS: Final[int] = 600
         MIN_REGISTRATION_ID_LENGTH: Final[int] = 1
+        DEFAULT_DISPATCHER_PATH: Final[str] = "flext_core.dispatcher:FlextDispatcher"
+        """Default dispatcher implementation path."""
+        DEFAULT_SERVICE_NAME: Final[str] = "default_service"
+        """Default service name for service models."""
+        DEFAULT_RESOURCE_TYPE: Final[str] = "default_resource"
+        """Default resource type for service models."""
         MIN_REQUEST_ID_LENGTH: Final[int] = 1
         SINGLE_HANDLER_ARG_COUNT: Final[int] = 1
         TWO_HANDLER_ARG_COUNT: Final[int] = 2
@@ -1563,11 +1640,16 @@ class FlextConstants:
         """Pagination configuration."""
 
         DEFAULT_PAGE_NUMBER: Final[int] = 1
-        DEFAULT_PAGE_SIZE: Final[int] = 10
-        MAX_PAGE_SIZE: Final[int] = 1000
-        MIN_PAGE_SIZE: Final[int] = 1
+        DEFAULT_PAGE_SIZE: Final[int] = _DEFAULT_PAGE_SIZE
+        MAX_PAGE_SIZE: Final[int] = _MAX_PAGE_SIZE
+        MIN_PAGE_SIZE: Final[int] = _MIN_PAGE_SIZE
         MIN_PAGE_NUMBER: Final[int] = 1
         MAX_PAGE_NUMBER: Final[int] = 10000
+        # Example/default values for pagination utilities
+        DEFAULT_PAGE_SIZE_EXAMPLE: Final[int] = 20
+        """Default page size for examples and utilities (different from DEFAULT_PAGE_SIZE)."""
+        MAX_PAGE_SIZE_EXAMPLE: Final[int] = 1000
+        """Maximum page size for examples and utilities."""
 
     class Mixins:
         """Constants for mixin operations."""
@@ -1590,11 +1672,12 @@ class FlextConstants:
         FIELD_OCCURRED_AT: Final[str] = "occurred_at"
         STATE_ACTIVE: Final[str] = "active"
         STATE_INACTIVE: Final[str] = "inactive"
-        STATE_PENDING: Final[str] = "pending"
-        STATE_COMPLETED: Final[str] = "completed"
-        STATE_FAILED: Final[str] = "failed"
-        STATE_RUNNING: Final[str] = "running"
-        STATE_COMPENSATING: Final[str] = "compensating"
+        # STATE_* constants removed - use c.Cqrs.CommonStatus StrEnum instead
+        # STATE_PENDING -> c.Cqrs.CommonStatus.PENDING
+        # STATE_COMPLETED -> c.Cqrs.CommonStatus.COMPLETED
+        # STATE_FAILED -> c.Cqrs.CommonStatus.FAILED
+        # STATE_RUNNING -> c.Cqrs.CommonStatus.RUNNING
+        # STATE_COMPENSATING -> c.Cqrs.CommonStatus.COMPENSATING
         STATE_SENT: Final[str] = "sent"
         STATE_IDLE: Final[str] = "idle"
         STATE_HEALTHY: Final[str] = "healthy"
@@ -1614,17 +1697,20 @@ class FlextConstants:
         METHOD_PROCESS: Final[str] = "process"
         METHOD_EXECUTE: Final[str] = "execute"
         METHOD_PROCESS_COMMAND: Final[str] = "process_command"
+        OPERATION_OVERRIDE: Final[str] = "override"
+        """Override operation mode."""
+        OPERATION_COLLECTION: Final[str] = "collection"
+        """Collection operation mode."""
         AUTH_BEARER: Final[str] = "bearer"
         AUTH_API_KEY: Final[str] = "api_key"
         AUTH_JWT: Final[str] = "jwt"
         HANDLER_COMMAND: Final[str] = "command"
         HANDLER_QUERY: Final[str] = "query"
         METHOD_VALIDATE: Final[str] = "validate"
-        VALIDATION_BASIC: Final[str] = "basic"
-        VALIDATION_STRICT: Final[str] = "strict"
-        VALIDATION_CUSTOM: Final[str] = "custom"
+        # Validation strings removed - use c.Cqrs.ValidationLevel StrEnum instead
+        # VALIDATION_BASIC, VALIDATION_STRICT, VALIDATION_CUSTOM removed to avoid duplication
         DEFAULT_JSON_INDENT: Final[int] = 2
-        DEFAULT_ENCODING: Final[str] = "utf-8"
+        # DEFAULT_ENCODING removed - use c.Utilities.DEFAULT_ENCODING instead
         DEFAULT_SORT_KEYS: Final[bool] = False
         DEFAULT_ENSURE_ASCII: Final[bool] = False
         BOOL_TRUE_STRINGS: Final[AbstractSet[str]] = frozenset({
@@ -1645,7 +1731,7 @@ class FlextConstants:
         STRING_FALSE: Final[str] = "false"
         DEFAULT_USE_UTC: Final[bool] = True
         DEFAULT_AUTO_UPDATE: Final[bool] = True
-        MAX_OPERATION_NAME_LENGTH: Final[int] = 100
+        MAX_OPERATION_NAME_LENGTH: Final[int] = _MAX_OPERATION_NAME_LENGTH
         MAX_STATE_VALUE_LENGTH: Final[int] = 50
         MAX_FIELD_NAME_LENGTH: Final[int] = 50
         MIN_FIELD_NAME_LENGTH: Final[int] = 1
@@ -1656,501 +1742,57 @@ class FlextConstants:
         ERROR_MISSING_TIMESTAMP_FIELDS: Final[str] = "Required timestamp fields missing"
         ERROR_INVALID_LOG_LEVEL: Final[str] = "Invalid log level"
 
-    class FlextWeb:
-        """HTTP protocol constants."""
-
-        HTTP_STATUS_MIN: Final[int] = 100
-        HTTP_STATUS_MAX: Final[int] = 599
-
     class Processing:
         """Processing pipeline constants."""
 
-        DEFAULT_MAX_WORKERS: Final[int] = 4
-        DEFAULT_BATCH_SIZE: Final[int] = 1000
-
-    # =============================================================================
-    # GENERALIZED VALIDATION HELPERS - Python 3.13+ collections.abc patterns
-    # =============================================================================
-    # Generic validation methods that can be reused by any FlextConstants subclass
-    # Uses ValidationMappings pattern for type-safe validation
-
-    @classmethod
-    def validate_enum_value(
-        cls,
-        value: str,
-        validation_set: AbstractSet[str],
-        validation_map: Mapping[str, str],
-    ) -> str | None:
-        """Validate enum value using advanced patterns.
-
-        Business Rule: Validates enum values against a set of valid values and
-        returns normalized value from mapping. Uses frozenset for O(1) membership
-        testing and collections.abc.Mapping for immutable validation data. Pattern
-        follows Python 3.13+ best practices for validation with type safety.
-
-        Audit Implication: Validation ensures only valid enum values are accepted,
-        preventing invalid state transitions in audit trails. Normalized values ensure
-        consistent representation across systems. Used by Pydantic 2 validators and
-        configuration loaders for type-safe enum validation.
-
-        Args:
-            value: Value string to validate
-            validation_set: Set of valid values (frozenset for O(1) lookup)
-            validation_map: Mapping of values to normalized values
-
-        Returns:
-            Valid normalized value string or None if invalid
-
-        """
-        if value in validation_set:
-            return validation_map.get(value)
-        return None
-
-    @classmethod
-    def get_valid_enum_values(cls, validation_set: AbstractSet[str]) -> Sequence[str]:
-        """Get immutable sequence of valid enum values.
-
-        Business Rule: Returns sorted immutable sequence of valid enum values from
-        validation set. Uses collections.abc.Sequence for read-only iteration, following
-        Python 3.13+ best practices for exposing validation options. Sorting ensures
-        deterministic ordering for UI display and documentation generation.
-
-        Audit Implication: Immutable sequence prevents accidental mutation of valid
-        values, ensuring audit trail consistency. Used by configuration UIs and
-        documentation generators to display available enum options.
-
-        Args:
-            validation_set: Set of valid values
-
-        Returns:
-            Immutable sequence of valid value strings (sorted)
-
-        """
-        return tuple(sorted(validation_set))
-
-    @classmethod
-    def create_discriminated_union(
-        cls,
-        *enum_classes: type[StrEnum],
-    ) -> Mapping[str, type[StrEnum]]:
-        """Create discriminated union mapping from StrEnum classes.
-
-        Advanced helper for creating validation mappings from StrEnum classes.
-        Python 3.13+ discriminated union construction pattern.
-
-        Args:
-            *enum_classes: StrEnum classes to create union from
-
-        Returns:
-            Immutable mapping of enum values to enum classes
-
-        """
-        # Business Rule: Create discriminated union mapping from StrEnum classes
-        # Used for Pydantic 2 discriminated union validation patterns.
-        # Pattern: Construct mutable dict, then wrap in MappingProxyType for immutability.
-        # This ensures type safety while allowing runtime construction.
-        #
-        # Audit Implication: Returned mapping is immutable after construction,
-        # safe for concurrent access and prevents mutation. Used by Pydantic
-        # validators for discriminated union validation in Python 3.13+.
-        #
-        # Note: dict[str, type[StrEnum]] is necessary here for construction.
-        # The dict is immediately wrapped in MappingProxyType, making it immutable.
-        # This is the correct pattern for creating immutable mappings from runtime data.
-        union_map: dict[str, type[StrEnum]] = {}
-        for enum_class in enum_classes:
-            # Type hint: enum_class is type[StrEnum], so __members__ exists
-            # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-            members_dict: dict[str, StrEnum] = getattr(enum_class, "__members__", {})
-            for member in members_dict.values():
-                union_map[member.value] = enum_class
-        # Return immutable Mapping - safe for concurrent access and prevents mutation
-        return MappingProxyType(union_map)
-
-    # Domain-specific convenience methods using StrEnum directly
-    @classmethod
-    def validate_log_level(cls, value: str) -> str | None:
-        """Validate log level string against Settings.LogLevel StrEnum.
-
-        Business Rule: Validates log level strings against Settings.LogLevel StrEnum
-        using _value2member_map_ for O(1) lookup. Ensures only valid log levels are
-        accepted for configuration and logging systems. Returns normalized log level
-        string if valid, None otherwise.
-
-        Audit Implication: Log level validation ensures audit trail completeness by
-        preventing invalid log levels from being used. All log levels are validated
-        before being used in logging configuration and audit systems.
-
-        Args:
-            value: Log level string to validate
-
-        Returns:
-            Valid log level string or None if invalid
-
-        """
-        if value in cls.Settings.LogLevel._value2member_map_:
-            return value
-        return None
-
-    @classmethod
-    def validate_environment(cls, value: str) -> str | None:
-        """Validate environment string against Settings.Environment StrEnum.
-
-        Business Rule: Validates environment strings against Settings.Environment StrEnum
-        using _value2member_map_ for O(1) lookup. Ensures only valid environment values
-        are accepted for configuration and deployment systems. Returns normalized
-        environment string if valid, None otherwise.
-
-        Audit Implication: Environment validation ensures audit trail completeness by
-        preventing invalid environment values from being used. All environments are
-        validated before being used in configuration and deployment systems.
-
-        Args:
-            value: Environment string to validate
-
-        Returns:
-            Valid environment string or None if invalid
-
-        """
-        if value in cls.Settings.Environment._value2member_map_:
-            return value
-        return None
-
-    @classmethod
-    def get_valid_log_levels(cls) -> Sequence[str]:
-        """Get immutable sequence of valid log levels from Settings.LogLevel StrEnum.
-
-        Business Rule: Returns immutable sequence of all valid log levels from
-        Settings.LogLevel StrEnum. Uses __members__ access with getattr for runtime
-        safety. Returns tuple for immutability and deterministic ordering.
-
-        Audit Implication: Immutable sequence prevents accidental mutation of valid
-        log levels, ensuring audit trail consistency. Used by configuration UIs and
-        documentation generators to display available log level options.
-
-        Returns:
-            Immutable sequence of valid log level strings
-
-        """
-        # Type hint: LogLevel is StrEnum class, so __members__ exists
-        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        log_level_members: dict[str, StrEnum] = getattr(
-            cls.Settings.LogLevel, "__members__", {}
-        )
-        # NOTE: Cannot use u.map() here due to circular import
-        # (utilities.py -> _utilities/context.py -> _models/context.py -> base.py -> constants.py)
-        return tuple(m.value for m in log_level_members.values())
-
-    @classmethod
-    def get_valid_environments(cls) -> Sequence[str]:
-        """Get immutable sequence of valid environments from Settings.Environment StrEnum.
-
-        Returns:
-            Immutable sequence of valid environment strings
-
-        """
-        # Type hint: Environment is StrEnum class, so __members__ exists
-        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        env_members: dict[str, StrEnum] = getattr(
-            cls.Settings.Environment, "__members__", {}
-        )
-        # NOTE: Cannot use u.map() here due to circular import
-        return tuple(m.value for m in env_members.values())
-
-    @classmethod
-    def create_enum_literal_mapping(
-        cls,
-        enum_class: type[StrEnum],
-    ) -> Mapping[str, str]:
-        """Create discriminated union mapping from StrEnum class.
-
-        Advanced helper for creating validation mappings from StrEnum classes.
-        Python 3.13+ discriminated union construction pattern.
-
-        Args:
-            enum_class: StrEnum class to create mapping from
-
-        Returns:
-            Immutable mapping of enum values to themselves
-
-        """
-        # Type hint: enum_class is type[StrEnum], so __members__ exists
-        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        members_dict: dict[str, StrEnum] = getattr(enum_class, "__members__", {})
-        return {member.value: member.value for member in members_dict.values()}
-
-    # =============================================================================
-    # ENUM HELPERS - Extract values from StrEnum for Literal types
-    # =============================================================================
-
-    @staticmethod
-    def extract_enum_values(enum_class: type[StrEnum]) -> tuple[str, ...]:
-        """Extract all values from a StrEnum class as a tuple.
-
-        Python 3.13+ helper for automatically deriving Literal types from StrEnum.
-        Use this to create tuple constants that match StrEnum values, ensuring
-        Literal types stay in sync with their corresponding StrEnum classes.
-
-        Args:
-            enum_class: The StrEnum class to extract values from
-
-        Returns:
-            Tuple of all enum values in definition order
-
-        Example:
-            >>> values = FlextConstants.extract_enum_values(
-            ...     FlextConstants.Settings.LogLevel
-            ... )
-            >>> # Use values to create Literal type:
-            >>> # type LogLevelLiteral = Literal[values[0], values[1], ...]
-
-        """
-        # Type hint: enum_class is type[StrEnum], so __members__ exists
-        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        # Iterate over enum members using __members__ for proper type checking
-        members_dict: dict[str, StrEnum] = getattr(enum_class, "__members__", {})
-        # NOTE: Cannot use u.map() here due to circular import
-        return tuple(member.value for member in members_dict.values())
-
-    # =============================================================================
-    # SHARED DOMAIN CONSTANTS - Cross-cutting domain enums for ecosystem consistency
-    # =============================================================================
-
-    class SharedDomain:
-        """Cross-cutting domain constants shared across FLEXT ecosystem.
-
-        Provides enums for common domain concepts used across multiple FLEXT projects,
-        ensuring consistency and type safety for shared data formats and server types.
-        """
-
-        class LdifFormatType(StrEnum):
-            """LDIF format types supported across FLEXT ecosystem.
-
-            Defines the standard LDIF format types that all FLEXT LDIF processing
-            components must support for interoperability.
-            """
-
-            LDIF = "ldif"  # Standard RFC 2849 LDIF format
-            DSML = "dsml"  # Directory Services Markup Language
-
-        class ServerType(StrEnum):
-            """LDAP server types supported across FLEXT ecosystem.
-
-            Defines the standard LDAP server implementations that FLEXT components
-            must handle for comprehensive LDAP directory support.
-            """
-
-            RFC = "rfc"  # RFC 4512 compliant (baseline)
-            OID = "oid"  # Oracle Internet Directory
-            OUD = "oud"  # Oracle Unified Directory
-            OPENLDAP = "openldap"  # OpenLDAP implementation
-
-        # Pre-computed validation sets for performance
-        # Type hint: LdifFormatType is StrEnum class, so __members__ exists
-        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        _ldif_format_members: dict[str, LdifFormatType] = getattr(
-            LdifFormatType, "__members__", {}
-        )
-        _LDIF_FORMAT_VALIDATION_SET: Final[AbstractSet[str]] = frozenset(
-            member.value for member in _ldif_format_members.values()
-        )
-
-        # Type hint: ServerType is StrEnum class, so __members__ exists
-        _server_type_members: dict[str, ServerType] = getattr(
-            ServerType, "__members__", {}
-        )
-        _SERVER_TYPE_VALIDATION_SET: Final[AbstractSet[str]] = frozenset(
-            member.value for member in _server_type_members.values()
-        )
-
-        @classmethod
-        def is_valid_ldif_format(cls, value: str) -> TypeIs[LdifFormatType]:
-            """Type guard for LDIF format validation.
-
-            Args:
-                value: String to validate as LDIF format
-
-            Returns:
-                TypeIs indicating if value is valid LdifFormatType
-
-            """
-            return value in cls._LDIF_FORMAT_VALIDATION_SET
-
-        @classmethod
-        def is_valid_server_type(cls, value: str) -> TypeIs[ServerType]:
-            """Type guard for server type validation.
-
-            Args:
-                value: String to validate as server type
-
-            Returns:
-                TypeIs indicating if value is valid ServerType
-
-            """
-            return value in cls._SERVER_TYPE_VALIDATION_SET
-
-        @classmethod
-        def get_valid_ldif_formats(cls) -> Sequence[str]:
-            """Get immutable sequence of valid LDIF formats.
-
-            Returns:
-                Sequence of valid LDIF format strings
-
-            """
-            # Type hint: LdifFormatType is StrEnum class, so __members__ exists
-            # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-            ldif_format_members: dict[str, StrEnum] = getattr(
-                cls.LdifFormatType, "__members__", {}
-            )
-            # NOTE: Cannot use u.map() here due to circular import
-            return tuple(member.value for member in ldif_format_members.values())
-
-        @classmethod
-        def get_valid_server_types(cls) -> Sequence[str]:
-            """Get immutable sequence of valid server types.
-
-            Returns:
-                Sequence of valid server type strings
-
-            """
-            # Type hint: ServerType is StrEnum class, so __members__ exists
-            # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-            server_type_members: dict[str, StrEnum] = getattr(
-                cls.ServerType, "__members__", {}
-            )
-            # NOTE: Cannot use u.map() here due to circular import
-            return tuple(member.value for member in server_type_members.values())
-
-    class Example:
-        """Example constants for demonstrating FLEXT features.
-
-        Provides centralized constants for examples, ensuring consistency
-        and type safety across all demonstration code.
-        """
-
-        # Configuration example constants
-        DEFAULT_DATABASE_URL: Final[str] = "sqlite:///:memory:"
-        DEFAULT_API_TIMEOUT: Final[float] = 30.0
-        DEFAULT_DEBUG_MODE: Final[bool] = False
-        DEFAULT_MAX_WORKERS: Final[int] = 4
-        DEFAULT_LOG_LEVEL: Final[str] = "INFO"
-        DEFAULT_DB_POOL_SIZE: Final[int] = 10
-        DEFAULT_API_HOST: Final[str] = "localhost"
-        DEFAULT_API_PORT: Final[int] = 8000
-        DEFAULT_CACHE_ENABLED: Final[bool] = True
-        DEFAULT_CACHE_TTL: Final[int] = 300
-        DEFAULT_WORKER_TIMEOUT: Final[int] = 30
-        DEFAULT_RETRY_ATTEMPTS: Final[int] = 3
-
-        # Environment variable prefixes for examples
-        FLEXT_DEBUG: Final[str] = "FLEXT_DEBUG"
-        FLEXT_DATABASE_URL: Final[str] = "FLEXT_DATABASE_URL"
-        FLEXT_API_TIMEOUT: Final[str] = "FLEXT_API_TIMEOUT"
-
-        # Example environment values
-        EXAMPLE_DEBUG_TRUE: Final[str] = "true"
-        EXAMPLE_DATABASE_URL: Final[str] = "postgresql://localhost/test"
-        EXAMPLE_API_TIMEOUT: Final[str] = "60"
-
-        # File configuration example
-        EXAMPLE_CONFIG_FILE: Final[str] = ".env.test"
-        EXAMPLE_CONFIG_CONTENT: Final[str] = (
-            f"{FLEXT_DEBUG}={EXAMPLE_DEBUG_TRUE}\n"
-            f"{FLEXT_DATABASE_URL}={EXAMPLE_DATABASE_URL}\n"
-            f"{FLEXT_API_TIMEOUT}={EXAMPLE_API_TIMEOUT}\n"
-        )
-
-        # StrEnum for example log levels
-        class LogLevel(StrEnum):
-            """Log levels for example configurations."""
-
-            DEBUG = "DEBUG"
-            INFO = "INFO"
-            WARNING = "WARNING"
-            ERROR = "ERROR"
-            CRITICAL = "CRITICAL"
-
-        # Literals for type-safe configuration
-        type LogLevelLiteral = Literal[
-            LogLevel.DEBUG,
-            LogLevel.INFO,
-            LogLevel.WARNING,
-            LogLevel.ERROR,
-            LogLevel.CRITICAL,
-        ]
-
-        # Configuration validation mapping
-        LOG_LEVEL_MAPPING: Final[Mapping[str, str]] = MappingProxyType({
-            "DEBUG": LogLevel.DEBUG,
-            "INFO": LogLevel.INFO,
-            "WARNING": LogLevel.WARNING,
-            "ERROR": LogLevel.ERROR,
-            "CRITICAL": LogLevel.CRITICAL,
-        })
-
-        # Validation sets for performance
-        # Type hint: LogLevel is StrEnum class, so __members__ exists
-        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        _log_level_members: dict[str, LogLevel] = getattr(LogLevel, "__members__", {})
-        VALID_LOG_LEVELS: Final[AbstractSet[str]] = frozenset(
-            member.value for member in _log_level_members.values()
-        )
-
-        # StrEnum for demonstration patterns
-        class DemoPattern(StrEnum):
-            """Patterns demonstrated in examples."""
-
-            FACTORY_METHODS = "factory_methods"
-            VALUE_EXTRACTION = "value_extraction"
-            RAILWAY_OPERATIONS = "railway_operations"
-            ERROR_RECOVERY = "error_recovery"
-            ADVANCED_COMBINATORS = "advanced_combinators"
-            VALIDATION_PATTERNS = "validation_patterns"
-            EXCEPTION_INTEGRATION = "exception_integration"
-
-        # StrEnum for utility type categories
-        class UtilityType(StrEnum):
-            """Utility type categories for comprehensive demonstrations."""
-
-            VALIDATION = "validation"
-            ID_GENERATION = "id_generation"
-            CONVERSIONS = "conversions"
-            CACHING = "caching"
-            RELIABILITY = "reliability"
-            STRING_PARSING = "string_parsing"
-            COLLECTION = "collection"
-            TYPE_CHECKING = "type_checking"
-
-        # Literals for type-safe pattern references
-        type DemoPatternLiteral = Literal[
-            DemoPattern.FACTORY_METHODS,
-            DemoPattern.VALUE_EXTRACTION,
-            DemoPattern.RAILWAY_OPERATIONS,
-            DemoPattern.ERROR_RECOVERY,
-            DemoPattern.ADVANCED_COMBINATORS,
-            DemoPattern.VALIDATION_PATTERNS,
-            DemoPattern.EXCEPTION_INTEGRATION,
-        ]
-
-        # Example user data for demonstrations
-        USER_DATA: Final[Mapping[str, str | int | float | bool | None]] = {
-            "unique_id": 1,  # Using literal instead of self-reference
-            "name": "Alice Example",
-            "email": "alice@example.com",
-            "age": 30,  # Calculated value: MAX_AGE - MIN_AGE
-        }
-
-        # Validation data for demonstrations
-        VALIDATION_DATA: Final[Mapping[str, Sequence[str]]] = {
-            "valid_emails": [
-                "user@example.com",
-                "contact@flext.dev",
-            ],
-            "invalid_emails": [
-                "invalid",
-                "missing-at-symbol",
-            ],
-        }
+        DEFAULT_MAX_WORKERS: Final[int] = _DEFAULT_WORKERS
+        DEFAULT_BATCH_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
+        # Tuple pattern validation constants
+        PATTERN_TUPLE_MIN_LENGTH: Final[int] = 2
+        """Minimum length for tuple patterns in parsing operations."""
+        PATTERN_TUPLE_MAX_LENGTH: Final[int] = 3
+        """Maximum length for tuple patterns in parsing operations."""
+
+    # =========================================================================
+    # ROOT-LEVEL ALIASES (Minimize nesting for common constants)
+    # Usage: c.VALIDATION_ERROR instead of c.Errors.VALIDATION_ERROR
+    # Both access patterns work - aliases for convenience, namespaces for clarity
+    # =========================================================================
+
+    # Error codes (most commonly used)
+    VALIDATION_ERROR = Errors.VALIDATION_ERROR
+    TYPE_ERROR = Errors.TYPE_ERROR
+    OPERATION_ERROR = Errors.OPERATION_ERROR
+    NOT_FOUND_ERROR = Errors.NOT_FOUND_ERROR
+    TIMEOUT_ERROR = Errors.TIMEOUT_ERROR
+    CONNECTION_ERROR = Errors.CONNECTION_ERROR
+    CONFIGURATION_ERROR = Errors.CONFIGURATION_ERROR
+    AUTHENTICATION_ERROR = Errors.AUTHENTICATION_ERROR
+    AUTHORIZATION_ERROR = Errors.AUTHORIZATION_ERROR
+    SERVICE_ERROR = Errors.SERVICE_ERROR
+
+    # Cqrs StrEnums (frequently used for typing)
+    HandlerType = Cqrs.HandlerType
+    CommonStatus = Cqrs.CommonStatus
+    HealthStatus = Cqrs.HealthStatus
+    ProcessingMode = Cqrs.ProcessingMode
+    ValidationLevel = Cqrs.ValidationLevel
+    OperationStatus = Cqrs.OperationStatus
+    SerializationFormat = Cqrs.SerializationFormat
+
+    # Settings StrEnums
+    LogLevel = Settings.LogLevel
+    Environment = Settings.Environment
+
+    # Domain StrEnums
+    DomainStatus = Domain.Status
+    Currency = Domain.Currency
+
+    # Reliability StrEnums
+    CircuitBreakerState = Reliability.CircuitBreakerState
+
+    # Exceptions StrEnums
+    FailureLevel = Exceptions.FailureLevel
 
 
 c = FlextConstants

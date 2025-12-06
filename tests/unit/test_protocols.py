@@ -4,7 +4,7 @@ Module: flext_core.protocols
 Scope: p - all protocol definitions and implementations
 
 Tests p functionality including:
-- Foundation protocols (HasResultValue, HasModelFields, HasModelDump)
+- Foundation protocols (Result, ResultLike, HasModelFields, HasModelDump, Model)
 - Domain protocols (Repository, Service)
 - Infrastructure protocols (Configurable)
 - Application protocols (Handler)
@@ -27,6 +27,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import p, r, t
+from flext_tests.utilities import FlextTestsUtilities
 
 
 class ProtocolCategoryType(StrEnum):
@@ -63,8 +64,8 @@ class ProtocolScenarios:
 
     DEFINITION_SCENARIOS: ClassVar[list[ProtocolDefinitionScenario]] = [
         ProtocolDefinitionScenario(
-            "has_result_value_protocol",
-            "HasResultValue",
+            "result_protocol",
+            "Result",
             ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
@@ -113,7 +114,7 @@ class ProtocolScenarios:
         ProtocolAvailabilityScenario(
             "all_foundation_protocols_available",
             ProtocolCategoryType.FOUNDATION,
-            ["HasResultValue", "HasModelFields", "HasModelDump"],
+            ["Result", "ResultLike", "HasModelFields", "HasModelDump", "Model"],
         ),
         ProtocolAvailabilityScenario(
             "all_domain_protocols_available",
@@ -170,24 +171,56 @@ class TestFlextProtocols:
         scenario: ProtocolAvailabilityScenario,
     ) -> None:
         """Test that protocols are available by category."""
+        category_mapping = {
+            ProtocolCategoryType.FOUNDATION: p.Foundation,
+            ProtocolCategoryType.DOMAIN: p.Domain,
+            ProtocolCategoryType.INFRASTRUCTURE: p.Configuration,
+            ProtocolCategoryType.APPLICATION: p.Application,
+            ProtocolCategoryType.COMMANDS: p.Application,
+        }
+        category_class = category_mapping.get(scenario.category, p)
         for proto_name in scenario.protocol_names:
-            assert hasattr(p, proto_name)
+            assert hasattr(category_class, proto_name), (
+                f"Protocol {proto_name} not found in {category_class.__name__}"
+            )
 
-    def test_has_result_value_implementation(self) -> None:
-        """Test that a class can implement HasResultValue."""
+    def test_result_protocol_implementation(self) -> None:
+        """Test that a class can implement Result protocol."""
 
         class ResultContainer:
-            """Container with result value property."""
+            """Container implementing Result protocol structure."""
 
             def __init__(self, value: str) -> None:
                 self._value = value
+                self._is_success = True
 
             @property
             def value(self) -> str:
                 return self._value
 
+            @property
+            def is_success(self) -> bool:
+                return self._is_success
+
+            @property
+            def is_failure(self) -> bool:
+                return not self._is_success
+
+            @property
+            def error(self) -> str | None:
+                return None
+
+            @property
+            def error_code(self) -> str | None:
+                return None
+
+            def unwrap(self) -> str:
+                return self._value
+
         container = ResultContainer("test")
         assert container.value == "test"
+        assert container.is_success
+        assert not container.is_failure
 
     def test_repository_implementation(self) -> None:
         """Test that a class can implement Repository protocol."""
@@ -202,7 +235,8 @@ class TestFlextProtocols:
                 })
 
             def save(
-                self, entity: t.Types.ConfigurationMapping
+                self,
+                entity: t.Types.ConfigurationMapping,
             ) -> r[t.Types.ConfigurationMapping]:
                 return r[t.Types.ConfigurationMapping].ok(entity)
 
@@ -223,7 +257,7 @@ class TestFlextProtocols:
 
         service = UserService()
         result = service.execute()
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_handler_implementation(self) -> None:
         """Test that a class can implement Handler protocol."""
@@ -239,7 +273,7 @@ class TestFlextProtocols:
 
         handler = CreateUserHandler()
         result = handler.handle({"name": "Test"})
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_multiple_protocol_implementation(self) -> None:
         """Test that a class can implement multiple protocols."""

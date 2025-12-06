@@ -45,10 +45,13 @@ import socket
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields as get_dataclass_fields, is_dataclass
 from datetime import datetime
-from typing import TypeGuard, cast
+from typing import ClassVar, TypeGuard, cast
 
 import orjson
 
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.mapper import FlextUtilitiesMapper
+from flext_core._utilities.validators import ValidatorSpec
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
@@ -56,7 +59,7 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
-class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
+class FlextUtilitiesValidation:
     """Unified validation patterns using railway composition.
 
     These helpers support dispatcher handlers and services with reusable,
@@ -86,7 +89,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             context: str = "URI",
         ) -> r[str]:
             """Validate URI format."""
-            return FlextValidation.validate_uri(uri, allowed_schemes, context)
+            return FlextUtilitiesValidation.validate_uri(uri, allowed_schemes, context)
 
         @staticmethod
         def validate_port_number(
@@ -94,7 +97,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             context: str = "Port",
         ) -> r[int]:
             """Validate port number (1-65535)."""
-            return FlextValidation.validate_port_number(port, context)
+            return FlextUtilitiesValidation.validate_port_number(port, context)
 
         @staticmethod
         def validate_hostname(
@@ -103,8 +106,9 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             perform_dns_lookup: bool = True,
         ) -> r[str]:
             """Validate hostname format."""
-            return FlextValidation.validate_hostname(
-                hostname, perform_dns_lookup=perform_dns_lookup
+            return FlextUtilitiesValidation.validate_hostname(
+                hostname,
+                perform_dns_lookup=perform_dns_lookup,
             )
 
     class String:
@@ -117,7 +121,10 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         ) -> r[str]:
             """Validate non-empty string (wraps to r)."""
             try:
-                result = FlextValidation.validate_required_string(value, context)
+                result = FlextUtilitiesValidation.validate_required_string(
+                    value,
+                    context,
+                )
                 return r[str].ok(result)
             except ValueError as e:
                 return r[str].fail(str(e))
@@ -131,8 +138,11 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             case_sensitive: bool = False,
         ) -> r[str]:
             """Validate value is in allowed choices."""
-            return FlextValidation.validate_choice(
-                value, valid_choices, context, case_sensitive=case_sensitive
+            return FlextUtilitiesValidation.validate_choice(
+                value,
+                valid_choices,
+                context,
+                case_sensitive=case_sensitive,
             )
 
         @staticmethod
@@ -143,8 +153,11 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             context: str = "Value",
         ) -> r[str]:
             """Validate string/sequence length."""
-            return FlextValidation.validate_length(
-                value, min_length, max_length, context
+            return FlextUtilitiesValidation.validate_length(
+                value,
+                min_length,
+                max_length,
+                context,
             )
 
         @staticmethod
@@ -154,7 +167,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             context: str = "Value",
         ) -> r[str]:
             """Validate string matches regex pattern."""
-            return FlextValidation.validate_pattern(value, pattern, context)
+            return FlextUtilitiesValidation.validate_pattern(value, pattern, context)
 
     class Numeric:
         """Numeric-related validation (positive, range, etc)."""
@@ -165,7 +178,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             context: str = "Value",
         ) -> r[int]:
             """Validate value >= 0."""
-            return FlextValidation.validate_non_negative(value, context)
+            return FlextUtilitiesValidation.validate_non_negative(value, context)
 
         @staticmethod
         def validate_positive(
@@ -173,7 +186,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             context: str = "Value",
         ) -> r[int]:
             """Validate value > 0."""
-            return FlextValidation.validate_positive(value, context)
+            return FlextUtilitiesValidation.validate_positive(value, context)
 
         @staticmethod
         def validate_range(
@@ -183,9 +196,14 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             context: str = "Value",
         ) -> r[int]:
             """Validate numeric range."""
-            return FlextValidation.validate_range(value, min_value, max_value, context)
+            return FlextUtilitiesValidation.validate_range(
+                value,
+                min_value,
+                max_value,
+                context,
+            )
 
-    # CONSOLIDATED: Use uCache for cache operations (no duplication)
+    # CONSOLIDATED: Use FlextUtilitiesCache for cache operations (no duplication)
     # NOTE: _normalize_component, _sort_key, _sort_dict_keys below are INTERNAL
     # recursive helpers. They are NOT duplicates of cache.py - they have different
     # logic and recursion patterns
@@ -214,8 +232,8 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         visited.add(component_id)
 
         try:
-            component = FlextValidation._handle_pydantic_model(component)
-            return FlextValidation._normalize_by_type(component, visited)
+            component = FlextUtilitiesValidation._handle_pydantic_model(component)
+            return FlextUtilitiesValidation._normalize_by_type(component, visited)
         finally:
             # Remove from visited set when done (allow re-visiting at different depth)
             visited.discard(component_id)
@@ -230,18 +248,23 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         if model_dump_attr is not None and callable(model_dump_attr):
             try:
                 dump_result = model_dump_attr()
-                if isinstance(dump_result, dict):
+                if FlextUtilitiesGuards.is_type(dump_result, dict):
                     return cast("t.GeneralValueType", dump_result)
                 return str(component)
             except Exception:
                 return str(component)
 
         # Check for dataclass instance (before Sequence check to avoid treating as list)
-        if is_dataclass(component) and not isinstance(component, type):
-            return FlextValidation._normalize_dataclass_value_instance(component)
+        # GeneralValueType doesn't include type, so isinstance(component, type) is always False
+        # But is_dataclass() can still be True for dataclass instances
+        # Runtime check: is_dataclass() works at runtime even if type system doesn't allow type
+        if is_dataclass(component):
+            return FlextUtilitiesValidation._normalize_dataclass_value_instance(
+                component,
+            )
 
         # Check if already valid GeneralValueType
-        return FlextValidation._ensure_general_value_type(component)
+        return FlextUtilitiesValidation._ensure_general_value_type(component)
 
     @staticmethod
     def _ensure_general_value_type(
@@ -258,9 +281,11 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         """
         if isinstance(component, (str, int, float, bool, type(None))):
             return component
-        if isinstance(component, Sequence) and not isinstance(component, str | bytes):
+        if isinstance(component, type):
+            return str(component)
+        if FlextUtilitiesGuards.is_type(component, "sequence_not_str_bytes"):
             return component
-        if isinstance(component, Mapping):
+        if FlextUtilitiesGuards.is_type(component, "mapping"):
             return component
         return str(component)
 
@@ -273,29 +298,38 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         if visited is None:
             visited = set()
 
+        # Handle primitives first to avoid Sequence matching strings
+        if isinstance(component, (str, int, float, bool, type(None))):
+            return component
+
         if FlextRuntime.is_dict_like(component):
-            return FlextValidation._normalize_dict_like(component, visited)
-        if isinstance(component, Sequence):
+            return FlextUtilitiesValidation._normalize_dict_like(component, visited)
+        if isinstance(component, (list, tuple)) and not isinstance(
+            component, (str, bytes)
+        ):
             # Use _normalize_sequence which returns dict with type marker
-            return FlextValidation._normalize_sequence(component, visited)
+            return FlextUtilitiesValidation._normalize_sequence(component, visited)
+        # Runtime check: set is not in GeneralValueType union, but can occur at runtime
+        # Type narrowing: isinstance(component, set) is always False per type system
+        # But runtime check handles actual set instances
         if isinstance(component, set):
-            return FlextValidation._normalize_set(component, visited)
+            return FlextUtilitiesValidation._normalize_set(component, visited)
 
         # Ensure valid GeneralValueType for primitives
-        return FlextValidation._ensure_general_value_type(
+        return FlextUtilitiesValidation._ensure_general_value_type(
             cast("t.GeneralValueType", component),
         )
 
     @staticmethod
     def _convert_items_to_dict(
         items_result: Sequence[tuple[str, t.GeneralValueType]]
-        | Mapping[str, t.GeneralValueType],
-    ) -> dict[str, t.GeneralValueType]:
+        | t.Types.ConfigurationMapping,
+    ) -> t.Types.ConfigurationDict:
         """Convert items() result to dict with normalization."""
         if isinstance(items_result, (list, tuple)):
             return dict(items_result)
 
-        if isinstance(items_result, Mapping):
+        if FlextUtilitiesGuards.is_type(items_result, "mapping"):
             return dict(items_result)
 
         if not hasattr(items_result, "__iter__"):
@@ -305,11 +339,11 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
         items_iterable = cast("Iterable[tuple[str, t.GeneralValueType]]", items_result)
         items_list = list(items_iterable)
-        temp_dict: dict[str, t.GeneralValueType] = {}
+        temp_dict: t.Types.ConfigurationDict = {}
         for k, v in items_list:
             # k is already str from the cast
             # v is already GeneralValueType from the cast
-            normalized_v = FlextValidation._normalize_component(
+            normalized_v = FlextUtilitiesValidation._normalize_component(
                 v,
                 visited=None,
             )
@@ -318,9 +352,9 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _extract_dict_from_component(
-        component: Mapping[str, t.GeneralValueType] | p.HasModelDump,
+        component: t.Types.ConfigurationMapping | p.Foundation.HasModelDump,
         _visited: set[int] | None = None,
-    ) -> Mapping[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationMapping:
         """Extract dict-like structure from component."""
         if isinstance(component, (Mapping, dict)):
             return component
@@ -335,13 +369,12 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             # Type narrowing: items_result is from dict-like object, should be iterable of tuples
             # Cast to proper type for _convert_items_to_dict
             items_typed: (
-                Sequence[tuple[str, t.GeneralValueType]]
-                | Mapping[str, t.GeneralValueType]
+                Sequence[tuple[str, t.GeneralValueType]] | t.Types.ConfigurationMapping
             ) = cast(
-                "Sequence[tuple[str, t.GeneralValueType]] | Mapping[str, t.GeneralValueType]",
+                "Sequence[tuple[str, t.GeneralValueType]] | t.Types.ConfigurationMapping",
                 items_result,
             )
-            return FlextValidation._convert_items_to_dict(items_typed)
+            return FlextUtilitiesValidation._convert_items_to_dict(items_typed)
         except (TypeError, ValueError) as e:
             msg = f"Cannot convert {type(component).__name__}.items() to dict"
             raise TypeError(msg) from e
@@ -349,16 +382,16 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
     @staticmethod
     def _convert_items_result_to_dict(
         items_result: Sequence[tuple[str, t.GeneralValueType]]
-        | Mapping[str, t.GeneralValueType]
+        | t.Types.ConfigurationMapping
         | Iterable[tuple[str, t.GeneralValueType]],
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationDict:
         """Convert items() result to dict (helper for _convert_to_mapping).
 
         Args:
             items_result: Result from calling items() method
 
         Returns:
-            dict[str, t.GeneralValueType]: Converted dictionary
+            t.Types.ConfigurationDict: Converted dictionary
 
         Raises:
             TypeError: If items_result cannot be converted to dict
@@ -379,16 +412,16 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         items_list = list(items_iterable)
 
         # Convert tuples to dict, normalizing values
-        temp_dict: dict[str, t.GeneralValueType] = {}
+        temp_dict: t.Types.ConfigurationDict = {}
         for k, v in items_list:
-            if isinstance(k, str):
+            if FlextUtilitiesGuards.is_type(k, str):
                 # Normalize value first, then cast to GeneralValueType
                 # v is object from items_list iteration, cast to GeneralValueType
                 v_typed: t.GeneralValueType = cast(
                     "t.GeneralValueType",
                     v,
                 )
-                normalized_v = FlextValidation._normalize_component(
+                normalized_v = FlextUtilitiesValidation._normalize_component(
                     v_typed,
                     visited=None,
                 )
@@ -398,15 +431,15 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _convert_to_mapping(
-        component: Mapping[str, t.GeneralValueType] | p.HasModelDump,
-    ) -> Mapping[str, t.GeneralValueType]:
+        component: t.Types.ConfigurationMapping | p.Foundation.HasModelDump,
+    ) -> t.Types.ConfigurationMapping:
         """Convert object to Mapping (helper for _normalize_dict_like).
 
         Args:
             component: Object to convert to Mapping
 
         Returns:
-            Mapping[str, t.GeneralValueType]: Converted mapping
+            t.Types.ConfigurationMapping: Converted mapping
 
         Raises:
             TypeError: If component cannot be converted to dict
@@ -424,14 +457,13 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             # Has items() method - convert to dict
             # Cast needed: items_method() returns object, but we know it's dict-like
             items_result: (
-                Sequence[tuple[str, t.GeneralValueType]]
-                | Mapping[str, t.GeneralValueType]
+                Sequence[tuple[str, t.GeneralValueType]] | t.Types.ConfigurationMapping
             ) = cast(
-                "Sequence[tuple[str, t.GeneralValueType]] | Mapping[str, t.GeneralValueType]",
+                "Sequence[tuple[str, t.GeneralValueType]] | t.Types.ConfigurationMapping",
                 items_method(),
             )
             try:
-                return FlextValidation._convert_items_result_to_dict(
+                return FlextUtilitiesValidation._convert_items_result_to_dict(
                     items_result,
                 )
             except (TypeError, ValueError) as e:
@@ -445,9 +477,9 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _normalize_dict_like(
-        component: Mapping[str, t.GeneralValueType] | p.HasModelDump,
+        component: t.Types.ConfigurationMapping | p.Foundation.HasModelDump,
         visited: set[int] | None = None,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationDict:
         """Normalize dict-like objects.
 
         Note: visited tracking is handled by _normalize_component, so we don't
@@ -457,11 +489,11 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             visited = set()
 
         # Convert to Mapping for type safety
-        component_dict = FlextValidation._convert_to_mapping(component)
+        component_dict = FlextUtilitiesValidation._convert_to_mapping(component)
         component_id = id(component_dict)
 
         # Normalize values in the dictionary
-        normalized_dict: dict[str, t.GeneralValueType] = {}
+        normalized_dict: t.Types.ConfigurationDict = {}
         for k, v in component_dict.items():
             # Check if value is the same dict (circular reference)
             if id(v) == component_id:
@@ -469,14 +501,17 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
                     "type": "circular_reference",
                     "id": str(component_id),
                 }
-            elif isinstance(v, (Mapping, Sequence)) and not isinstance(v, str):
-                normalized_dict[str(k)] = FlextValidation._normalize_component(
+            elif FlextUtilitiesGuards.is_type(
+                v,
+                "mapping",
+            ) or FlextUtilitiesGuards.is_type(v, "sequence_not_str"):
+                normalized_dict[str(k)] = FlextUtilitiesValidation._normalize_component(
                     v,
                     visited,
                 )
             else:
                 # Use _normalize_value for primitives
-                v_normalized = FlextValidation._normalize_value(v)
+                v_normalized = FlextUtilitiesValidation._normalize_value(v)
                 normalized_dict[str(k)] = v_normalized
         # Return normalized dict (empty dict if empty)
         return normalized_dict
@@ -489,12 +524,12 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         if isinstance(value, (str, int, float, bool, type(None))):
             # Type narrowing: these are all valid t.GeneralValueType
             return value
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        if isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes)):
             # Type narrowing: tuple is valid t.GeneralValueType
             return tuple(value)
-        if isinstance(value, Mapping):
+        if isinstance(value, (dict, Mapping)):
             # Type narrowing: dict is valid t.GeneralValueType
-            return dict(value)
+            return dict(value) if isinstance(value, dict) else dict(value.items())
         # Fallback: convert to string (string is valid t.GeneralValueType)
         return str(value)
 
@@ -507,7 +542,8 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         if visited is None:
             visited = set()
         return [
-            FlextValidation._normalize_component(item, visited) for item in component
+            FlextUtilitiesValidation._normalize_component(item, visited)
+            for item in component
         ]
 
     @staticmethod
@@ -517,7 +553,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         """Normalize set types (helper for internal recursion)."""
         # Normalize items and ensure they are hashable for set
         normalized_items = [
-            FlextValidation._normalize_component(item) for item in component
+            FlextUtilitiesValidation._normalize_component(item) for item in component
         ]
         # Convert to set, ensuring hashability
         result_set: set[t.GeneralValueType] = set()
@@ -525,7 +561,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             # Only add hashable items to set
             if isinstance(item, (str, int, float, bool, type(None))):
                 result_set.add(item)
-            elif isinstance(item, tuple):
+            elif FlextUtilitiesGuards.is_type(item, tuple):
                 # Tuples are hashable if all elements are hashable
                 try:
                     result_set.add(item)
@@ -549,14 +585,16 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
     ) -> t.GeneralValueType:
         """Sort dict keys for consistent representation (internal recursive)."""
         # Type narrowing: GeneralValueType includes Mapping[str, GeneralValueType]
-        if isinstance(data, Mapping):
+        if isinstance(data, (dict, Mapping)):
             # data is Mapping[str, GeneralValueType], which is valid GeneralValueType
-            data_dict: Mapping[str, t.GeneralValueType] = data
+            data_dict: t.Types.ConfigurationMapping = (
+                data if isinstance(data, dict) else dict(data.items())
+            )
             return {
-                str(k): FlextValidation._sort_dict_keys(data_dict[k])
+                str(k): FlextUtilitiesValidation._sort_dict_keys(data_dict[k])
                 for k in sorted(
                     data_dict.keys(),
-                    key=FlextValidation._sort_key,
+                    key=FlextUtilitiesValidation._sort_key,
                 )
             }
         # For non-dict types, return as-is
@@ -575,8 +613,11 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
         """
         for validator in validators:
-            # FAST FAIL: non-callable validators are programming errors
+            # Type narrowing: validators is list[Callable[[str], r[bool]]]
+            # So validator is always callable per type system
+            # Runtime check for safety (type: ignore needed because type system guarantees callable)
             if not callable(validator):
+                # Runtime safety check (type system ensures callable)
                 return r[bool].fail(
                     "Validator must be callable",
                     error_code=c.Errors.VALIDATION_ERROR,
@@ -624,7 +665,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         # Determine type category for non-strings
         if isinstance(value, (int, float)):
             type_cat = "num"
-        elif isinstance(value, dict):
+        elif FlextUtilitiesGuards.is_type(value, dict):
             type_cat = "dict"
         elif isinstance(value, (list, tuple)):
             type_cat = "seq"
@@ -682,14 +723,14 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
     ) -> t.GeneralValueType:
         """Normalize arbitrary objects into cache-friendly deterministic structures."""
         # Handle strings specially - they should not be treated as sequences
-        if isinstance(value, str):
+        if FlextUtilitiesGuards.is_type(value, str):
             return value
         # Use the internal recursive method which handles cycles and returns simple structures
-        return FlextValidation._normalize_component(value, visited=None)
+        return FlextUtilitiesValidation._normalize_component(value, visited=None)
 
     @staticmethod
     def _normalize_pydantic_value(
-        value: p.HasModelDump,
+        value: p.Foundation.HasModelDump,
     ) -> t.GeneralValueType:
         """Normalize Pydantic model to cache-friendly structure."""
         # Fast fail: model_dump() must succeed for valid Pydantic models
@@ -703,7 +744,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             )
             raise TypeError(msg) from e
         # Use private _normalize_component to avoid infinite recursion
-        normalized_dumped = FlextValidation._normalize_component(
+        normalized_dumped = FlextUtilitiesValidation._normalize_component(
             dumped,
             visited=None,
         )
@@ -721,18 +762,18 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         """
         # Caller guarantees value is a dataclass instance via
         # _is_dataclass_instance check. Using manual field extraction
-        field_dict: dict[str, t.GeneralValueType] = {}
+        field_dict: t.Types.ConfigurationDict = {}
         # value.__class__ is type for dataclass instances
         value_class: type = value.__class__
         for field in get_dataclass_fields(value_class):
             field_dict[field.name] = getattr(value, field.name)
-        sorted_data = FlextValidation._sort_dict_keys(field_dict)
+        sorted_data = FlextUtilitiesValidation._sort_dict_keys(field_dict)
         # Return as dict with type marker for cache structure
         return {"type": "dataclass", "data": sorted_data}
 
     @staticmethod
     def _normalize_mapping(
-        value: Mapping[str, t.GeneralValueType],
+        value: t.Types.ConfigurationMapping,
         visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize mapping to cache-friendly structure."""
@@ -740,10 +781,10 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             visited = set()
         sorted_items = sorted(
             value.items(),
-            key=lambda x: FlextValidation._sort_key(x[0]),
+            key=lambda x: FlextUtilitiesValidation._sort_key(x[0]),
         )
         return {
-            str(k): FlextValidation._normalize_component(v, visited)
+            str(k): FlextUtilitiesValidation._normalize_component(v, visited)
             for k, v in sorted_items
         }
 
@@ -756,7 +797,8 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         if visited is None:
             visited = set()
         sequence_items = [
-            FlextValidation._normalize_component(item, visited) for item in value
+            FlextUtilitiesValidation._normalize_component(item, visited)
+            for item in value
         ]
         # Return as dict with type marker for cache structure
         return {"type": "sequence", "data": sequence_items}
@@ -770,7 +812,8 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         if visited is None:
             visited = set()
         set_items = [
-            FlextValidation._normalize_component(item, visited) for item in value
+            FlextUtilitiesValidation._normalize_component(item, visited)
+            for item in value
         ]
         set_items.sort(key=str)
         # Return as dict with type marker for cache structure
@@ -783,15 +826,15 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         """Normalize object attributes to cache-friendly structure."""
         try:
             vars_result = vars(value)
-            # vars() returns dict[str, object] which we normalize to GeneralValueType
+            # vars() returns t.Types.ConfigurationDict which we normalize to GeneralValueType
             # Type narrowing: vars_result is always a dict
-            value_vars_dict: dict[str, t.GeneralValueType] = cast(
-                "dict[str, t.GeneralValueType]",
+            value_vars_dict: t.Types.ConfigurationDict = cast(
+                "t.Types.ConfigurationDict",
                 vars_result,
             )
             # Process vars_result - normalize all values
             normalized_vars = {
-                str(key): FlextValidation._normalize_component(
+                str(key): FlextUtilitiesValidation._normalize_component(
                     val,
                     visited=None,
                 )
@@ -815,14 +858,14 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _generate_key_pydantic(
-        command: p.HasModelDump,
+        command: p.Foundation.HasModelDump,
         command_type: type[t.GeneralValueType],
     ) -> str | None:
         """Generate cache key from Pydantic model."""
         try:
             data = command.model_dump()
-            sorted_data = FlextValidation._sort_dict_keys(data)
-            return FlextValidation._generate_key_from_data(
+            sorted_data = FlextUtilitiesValidation._sort_dict_keys(data)
+            return FlextUtilitiesValidation._generate_key_from_data(
                 command_type,
                 sorted_data,
             )
@@ -836,13 +879,13 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
     ) -> str | None:
         """Generate cache key from dataclass."""
         try:
-            dataclass_data: dict[str, t.GeneralValueType] = {}
+            dataclass_data: t.Types.ConfigurationDict = {}
             # command.__class__ is type for class instances
             command_class: type = command.__class__
             for field in get_dataclass_fields(command_class):
                 dataclass_data[field.name] = getattr(command, field.name)
-            sorted_data = FlextValidation._sort_dict_keys(dataclass_data)
-            return FlextValidation._generate_key_from_data(
+            sorted_data = FlextUtilitiesValidation._sort_dict_keys(dataclass_data)
+            return FlextUtilitiesValidation._generate_key_from_data(
                 command_type,
                 sorted_data,
             )
@@ -851,13 +894,13 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _generate_key_dict(
-        command: Mapping[str, t.GeneralValueType],
+        command: t.Types.ConfigurationMapping,
         command_type: type[t.GeneralValueType],
     ) -> str | None:
         """Generate cache key from dict."""
         try:
-            sorted_data = FlextValidation._sort_dict_keys(command)
-            return FlextValidation._generate_key_from_data(
+            sorted_data = FlextUtilitiesValidation._sort_dict_keys(command)
+            return FlextUtilitiesValidation._generate_key_from_data(
                 command_type,
                 sorted_data,
             )
@@ -880,16 +923,22 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
         """
         # Try Pydantic model
-        if isinstance(command, p.HasModelDump):
-            key = FlextValidation._generate_key_pydantic(command, command_type)
+        if isinstance(command, p.Foundation.HasModelDump):
+            key = FlextUtilitiesValidation._generate_key_pydantic(command, command_type)
             if key is not None:
                 return key
 
         # Try dataclass
         # GeneralValueType doesn't include type, so isinstance(command, type) is always False
         # But we check hasattr and is_dataclass to ensure it's a dataclass instance
-        if hasattr(command, "__dataclass_fields__") and is_dataclass(command):
-            key = FlextValidation._generate_key_dataclass(
+        # Runtime check: hasattr ensures it's not None, is_dataclass checks type
+        # Type narrowing: GeneralValueType doesn't include dataclass types, but runtime check handles instances
+        if (
+            command is not None
+            and hasattr(command, "__dataclass_fields__")
+            and is_dataclass(command)
+        ):
+            key = FlextUtilitiesValidation._generate_key_dataclass(
                 command,
                 command_type,
             )
@@ -897,8 +946,11 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
                 return key
 
         # Try dict
-        if FlextRuntime.is_dict_like(command) and isinstance(command, Mapping):
-            key = FlextValidation._generate_key_dict(command, command_type)
+        if FlextRuntime.is_dict_like(command) and FlextUtilitiesGuards.is_type(
+            command,
+            "mapping",
+        ):
+            key = FlextUtilitiesValidation._generate_key_dict(command, command_type)
             if key is not None:
                 return key
 
@@ -925,9 +977,11 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
         """
         # Type narrowing: obj can be Mapping (which is GeneralValueType)
-        if isinstance(obj, Mapping):
+        if isinstance(obj, (dict, Mapping)):
             # obj is Mapping[str, GeneralValueType]
-            dict_obj: Mapping[str, t.GeneralValueType] = obj
+            dict_obj: t.Types.ConfigurationMapping = (
+                obj if isinstance(obj, dict) else dict(obj.items())
+            )
             # Convert items() view to list for sorting
             items_list: list[tuple[str, t.GeneralValueType]] = list(
                 dict_obj.items(),
@@ -936,18 +990,21 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
                 items_list,
                 key=lambda x: str(x[0]),
             )
-            return {str(k): FlextValidation._sort_dict_keys(v) for k, v in sorted_items}
+            return {
+                str(k): FlextUtilitiesValidation._sort_dict_keys(v)
+                for k, v in sorted_items
+            }
         # Type narrowing: obj can be Sequence (which is GeneralValueType)
         # Handle tuple first (tuple is a Sequence but needs special handling)
         if isinstance(obj, tuple):
             # obj is confirmed to be tuple, iterate directly
-            return tuple(FlextValidation._sort_dict_keys(item) for item in obj)
+            return tuple(FlextUtilitiesValidation._sort_dict_keys(item) for item in obj)
         # Handle other Sequences (but not str, bytes, or tuple)
-        if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
+        if isinstance(obj, (list, tuple)) and not isinstance(obj, (str, bytes)):
             # obj is Sequence[GeneralValueType] - use directly
             obj_list: Sequence[t.GeneralValueType] = obj
             return [
-                FlextValidation._sort_dict_keys(
+                FlextUtilitiesValidation._sort_dict_keys(
                     item
                     if isinstance(
                         item,
@@ -1091,12 +1148,12 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
         from typing import Annotated
 
         # Define reusable type
-        DnString = Annotated[str, Field(pattern=r"^(cn|ou|dc)=.*")]
+        DnString = Annotated[str, Field(pattern=c.Platform.PATTERN_DN_STRING)]
 
 
         class LdapEntry(BaseModel):
             dn: DnString  # Automatic pattern validation
-            cn: Annotated[str, Field(pattern=r"^[a-zA-Z0-9]+$")]
+            cn: Annotated[str, Field(pattern=c.Platform.PATTERN_SIMPLE_IDENTIFIER)]
         ```
 
         This pattern is repeated 5+ times across flext-ldap (DN, filter, attribute),
@@ -1292,7 +1349,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             r[int]: Success with value, or failure
 
         """
-        return FlextValidation._validate_numeric_constraint(
+        return FlextUtilitiesValidation._validate_numeric_constraint(
             value,
             predicate=lambda v: v >= 0,
             error_msg="must be non-negative",
@@ -1316,7 +1373,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             r[int]: Success with value, or failure
 
         """
-        return FlextValidation._validate_numeric_constraint(
+        return FlextUtilitiesValidation._validate_numeric_constraint(
             value,
             predicate=lambda v: v > 0,
             error_msg="must be positive",
@@ -1383,12 +1440,14 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             True
 
         """
+        # Runtime check for callable (type system may not guarantee it)
         if not callable(value):
             return r[bool].fail(
                 error_message,
                 error_code=error_code,
             )
         # Return True for valid callable (not the callable itself)
+        # Type narrowing: value is GeneralValueType, but runtime check ensures callable
         return r[bool].ok(True)
 
     @staticmethod
@@ -1445,8 +1504,8 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
     @staticmethod
     def validate_http_status_codes(
         codes: list[object],
-        min_code: int = 100,
-        max_code: int = 599,
+        min_code: int = c.Network.HTTP_STATUS_MIN,
+        max_code: int = c.Network.HTTP_STATUS_MAX,
     ) -> r[list[int]]:
         """Validate and normalize HTTP status codes (generic helper).
 
@@ -1716,7 +1775,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _validate_max_attempts(
-        retry_config: dict[str, t.GeneralValueType] | None,
+        retry_config: t.Types.ConfigurationDict | None,
     ) -> r[int]:
         """Validate max_attempts parameter."""
         if retry_config is None:
@@ -1735,7 +1794,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _validate_initial_delay(
-        retry_config: dict[str, t.GeneralValueType] | None,
+        retry_config: t.Types.ConfigurationDict | None,
     ) -> r[float]:
         """Validate initial_delay_seconds parameter."""
         if retry_config is None:
@@ -1754,7 +1813,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _validate_max_delay(
-        retry_config: dict[str, t.GeneralValueType] | None,
+        retry_config: t.Types.ConfigurationDict | None,
     ) -> r[float]:
         """Validate max_delay_seconds parameter."""
         if retry_config is None:
@@ -1773,12 +1832,12 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _validate_backoff_multiplier(
-        retry_config: dict[str, t.GeneralValueType] | None,
+        retry_config: t.Types.ConfigurationDict | None,
     ) -> r[float]:
         """Validate backoff_multiplier parameter."""
         if retry_config is None:
             return r[float].ok(
-                c.Performance.DEFAULT_BACKOFF_MULTIPLIER,
+                c.DEFAULT_BACKOFF_MULTIPLIER,
             )
         backoff_multiplier = retry_config.get("backoff_multiplier")
         if backoff_multiplier is not None and isinstance(
@@ -1793,12 +1852,12 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
                 )
             return r[float].ok(backoff_mult)
         return r[float].ok(
-            c.Performance.DEFAULT_BACKOFF_MULTIPLIER,
+            c.DEFAULT_BACKOFF_MULTIPLIER,
         )
 
     @staticmethod
     def create_retry_config(
-        retry_config: dict[str, t.GeneralValueType] | None,
+        retry_config: t.Types.ConfigurationDict | None,
     ) -> r[t.Config.RetryConfig]:
         """Create and validate retry configuration using railway pattern.
 
@@ -1813,7 +1872,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             retry_config = {}
         try:
             # Validate each parameter using railway pattern (DRY consolidation)
-            result = FlextValidation._validate_max_attempts(retry_config)
+            result = FlextUtilitiesValidation._validate_max_attempts(retry_config)
             if result.is_failure:
                 return r[t.Config.RetryConfig].fail(
                     result.error or "Max attempts validation failed",
@@ -1821,7 +1880,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
             max_attempts = result.value
 
-            delay_result = FlextValidation._validate_initial_delay(
+            delay_result = FlextUtilitiesValidation._validate_initial_delay(
                 retry_config,
             )
             if delay_result.is_failure:
@@ -1832,7 +1891,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             initial_delay = delay_result.value
             params_2 = (max_attempts, initial_delay)
 
-            max_delay_result = FlextValidation._validate_max_delay(
+            max_delay_result = FlextUtilitiesValidation._validate_max_delay(
                 retry_config,
             )
             if max_delay_result.is_failure:
@@ -1843,7 +1902,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             max_delay = max_delay_result.value
             params_3 = (*params_2, max_delay)
 
-            backoff_result = FlextValidation._validate_backoff_multiplier(
+            backoff_result = FlextUtilitiesValidation._validate_backoff_multiplier(
                 retry_config,
             )
             if backoff_result.is_failure:
@@ -1937,49 +1996,49 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def validate_batch_services(
-        services: Mapping[str, t.GeneralValueType],
-    ) -> r[Mapping[str, t.GeneralValueType]]:
+        services: t.Types.ConfigurationMapping,
+    ) -> r[t.Types.ConfigurationMapping]:
         """Validate batch services dictionary for container registration.
 
         Args:
             services: Dictionary of service names to service instances
 
         Returns:
-            r[Mapping[str, t.GeneralValueType]]: Validated services or validation error
+            r[t.Types.ConfigurationMapping]: Validated services or validation error
 
         """
         # Allow empty dictionaries for batch_register flexibility
 
         # Validate service names
         for name in services:
-            if not isinstance(name, str) or not name.strip():
-                return r[Mapping[str, t.GeneralValueType]].fail(
+            if not FlextUtilitiesGuards.is_type(name, str) or not name.strip():
+                return r[t.Types.ConfigurationMapping].fail(
                     f"Invalid service name: '{name}'. Must be non-empty string",
                 )
 
             # Check for reserved names
             if name.startswith("_"):
-                return r[Mapping[str, t.GeneralValueType]].fail(
+                return r[t.Types.ConfigurationMapping].fail(
                     f"Service name cannot start with underscore: '{name}'",
                 )
 
         # Validate service instances
         for name, service in services.items():
             if service is None:
-                return r[Mapping[str, t.GeneralValueType]].fail(
+                return r[t.Types.ConfigurationMapping].fail(
                     f"Service '{name}' cannot be None",
                 )
 
             # Check for callable services (should be registered as factories)
             if callable(service):
-                error_msg = (
+                error_msg: str = (
                     f"Service '{name}' appears to be callable. Use with_factory instead"
                 )
-                return r[Mapping[str, t.GeneralValueType]].fail(
+                return r[t.Types.ConfigurationMapping].fail(
                     error_msg,
                 )
 
-        return r[Mapping[str, t.GeneralValueType]].ok(services)
+        return r[t.Types.ConfigurationMapping].ok(services)
 
     @staticmethod
     def analyze_constructor_parameter(
@@ -2009,37 +2068,40 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def validate_dispatch_config(
-        config: Mapping[str, t.GeneralValueType] | None,
-    ) -> r[Mapping[str, t.GeneralValueType]]:
+        config: t.Types.ConfigurationMapping | None,
+    ) -> r[t.Types.ConfigurationMapping]:
         """Validate dispatch configuration dictionary.
 
         Args:
             config: Dispatch configuration dictionary
 
         Returns:
-            r[Mapping[str, t.GeneralValueType]]: Validated configuration or validation error
+            r[t.Types.ConfigurationMapping]: Validated configuration or validation error
 
         """
         if config is None:
-            return r[Mapping[str, t.GeneralValueType]].fail(
+            return r[t.Types.ConfigurationMapping].fail(
                 "Configuration cannot be None",
             )
         if not FlextRuntime.is_dict_like(config):
-            return r[Mapping[str, t.GeneralValueType]].fail(
+            return r[t.Types.ConfigurationMapping].fail(
                 "Configuration must be a dictionary",
             )
 
         # Validate metadata if present
         metadata = config.get("metadata")
         if metadata is not None and not FlextRuntime.is_dict_like(metadata):
-            return r[Mapping[str, t.GeneralValueType]].fail(
+            return r[t.Types.ConfigurationMapping].fail(
                 "Metadata must be a dictionary",
             )
 
         # Validate correlation_id if present
         correlation_id = config.get("correlation_id")
-        if correlation_id is not None and not isinstance(correlation_id, str):
-            return r[Mapping[str, t.GeneralValueType]].fail(
+        if correlation_id is not None and not FlextUtilitiesGuards.is_type(
+            correlation_id,
+            str,
+        ):
+            return r[t.Types.ConfigurationMapping].fail(
                 "Correlation ID must be a string",
             )
 
@@ -2049,21 +2111,21 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
             timeout_override,
             (int, float),
         ):
-            return r[Mapping[str, t.GeneralValueType]].fail(
+            return r[t.Types.ConfigurationMapping].fail(
                 "Timeout override must be a number",
             )
 
         # Type narrowing: config is guaranteed to be Mapping after validation above
-        # Parameter type is already Mapping[str, t.GeneralValueType] | None
+        # Parameter type is already t.Types.ConfigurationMapping | None
         # and we've validated it's not None and is dict-like
         # Cast to correct type for type checker - config is validated as dict-like above
-        return r[Mapping[str, t.GeneralValueType]].ok(
+        return r[t.Types.ConfigurationMapping].ok(
             config,
         )
 
     @staticmethod
     def _validate_event_structure(
-        event: p.HasModelDump | None,
+        event: p.Foundation.HasModelDump | None,
     ) -> r[bool]:
         """Validate event is not None and has required attributes."""
         if event is None:
@@ -2087,12 +2149,12 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def _validate_event_fields(
-        event: p.HasModelDump,
+        event: p.Foundation.HasModelDump,
     ) -> r[bool]:
         """Validate event field types and values."""
         # Validate event_type is non-empty string
         event_type = getattr(event, "event_type", "")
-        if not event_type or not isinstance(event_type, str):
+        if not event_type or not FlextUtilitiesGuards.is_type(event_type, str):
             return r[bool].fail(
                 "Domain event event_type must be a non-empty string",
                 error_code=c.Errors.VALIDATION_ERROR,
@@ -2100,7 +2162,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
         # Validate aggregate_id is non-empty string
         aggregate_id = getattr(event, "aggregate_id", "")
-        if not aggregate_id or not isinstance(aggregate_id, str):
+        if not aggregate_id or not FlextUtilitiesGuards.is_type(aggregate_id, str):
             return r[bool].fail(
                 "Domain event aggregate_id must be a non-empty string",
                 error_code=c.Errors.VALIDATION_ERROR,
@@ -2118,7 +2180,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
     @staticmethod
     def validate_domain_event(
-        event: p.HasModelDump | None,
+        event: p.Foundation.HasModelDump | None,
     ) -> r[bool]:
         """Enhanced domain event validation with comprehensive checks.
 
@@ -2133,7 +2195,7 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
 
         """
         # Validate structure
-        structure_result = FlextValidation._validate_event_structure(event)
+        structure_result = FlextUtilitiesValidation._validate_event_structure(event)
         if structure_result.is_failure:
             return structure_result
 
@@ -2143,16 +2205,1166 @@ class FlextValidation:  # noqa: PLR0904  # 28 validators = comprehensive toolkit
                 "Domain event cannot be None",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
-        fields_result = FlextValidation._validate_event_fields(event)
+        fields_result = FlextUtilitiesValidation._validate_event_fields(event)
         if fields_result.is_failure:
             return fields_result
 
         return r[bool].ok(True)
 
+    # ═══════════════════════════════════════════════════════════════════
+    # VALIDATION & GUARD HELPERS - Core validation logic
+    # ═══════════════════════════════════════════════════════════════════
 
-uValidation = FlextValidation  # noqa: N816
+    @staticmethod
+    def _validate_get_desc(v: ValidatorSpec) -> str:
+        """Extract validator description (helper for validate)."""
+        # Try to extract description from predicate if it's a Validator (preferred)
+        predicate = FlextUtilitiesMapper.get(v, "predicate", default=None)
+        if predicate is not None:
+            predicate_desc = FlextUtilitiesMapper.get(
+                predicate,
+                "description",
+                default=None,
+            )
+            if FlextUtilitiesGuards.is_type(predicate_desc, str) and predicate_desc:
+                return predicate_desc
+        # Fall back to validator's own description
+        desc = FlextUtilitiesMapper.get(v, "description", default="validator")
+        return desc if FlextUtilitiesGuards.is_type(desc, str) else "validator"
+
+    @staticmethod
+    def _validate_check_any[T](
+        value: T,
+        validators: tuple[ValidatorSpec, ...],
+        field_prefix: str,
+    ) -> r[T]:
+        """Check if any validator passes (helper for validate)."""
+        for validator in validators:
+            if validator(value):
+                return r[T].ok(value)
+        descriptions = [
+            FlextUtilitiesValidation._validate_get_desc(v) for v in validators
+        ]
+        return r[T].fail(
+            f"{field_prefix}None of the validators passed: {', '.join(descriptions)}",
+        )
+
+    @staticmethod
+    def _validate_check_all[T](
+        value: T,
+        validators: tuple[ValidatorSpec, ...],
+        field_prefix: str,
+        *,
+        fail_fast: bool,
+        collect_errors: bool,
+    ) -> r[T]:
+        """Check if all validators pass (helper for validate)."""
+
+        def validator_failed(v: ValidatorSpec) -> bool:
+            """Check if validator failed."""
+            return not v(value)
+
+        failed_validators = [v for v in validators if validator_failed(v)]
+        if not failed_validators:
+            return r[T].ok(value)
+
+        descriptions = [
+            FlextUtilitiesValidation._validate_get_desc(v) for v in failed_validators
+        ]
+        if fail_fast and not collect_errors:
+            first_desc = descriptions[0] if descriptions else None
+            error_msg = f"{field_prefix}Validation failed: {FlextUtilitiesValidation.ResultHelpers.or_(first_desc, default='validator')}"
+            return r[T].fail(error_msg)
+
+        def format_error(d: str) -> str:
+            """Format validation error message."""
+            return f"{field_prefix}Validation failed: {d}"
+
+        errors = [format_error(d) for d in descriptions]
+        return r[T].fail("; ".join(errors))
+
+    @staticmethod
+    def validate[T](
+        value: T,
+        *validators: ValidatorSpec,
+        mode: str = "all",
+        fail_fast: bool = True,
+        collect_errors: bool = False,
+        field_name: str | None = None,
+    ) -> r[T]:
+        """Validate value against one or more validators.
+
+        Business Rule: Composes validators using AND (all) or OR (any) logic.
+        Validators ensure value conforms to expected type T after validation passes.
+        Railway-oriented error handling ensures failures propagate correctly.
+
+        Audit Implication: Validation failures are tracked with field context for
+        audit trail completeness. Field names help identify validation failures
+        in complex data structures.
+
+        Args:
+            value: The value to validate.
+            *validators: One or more ValidatorSpec instances (from V namespace
+                or custom validators).
+            mode: Composition mode:
+                - "all": ALL validators must pass (AND) - default
+                - "any": AT LEAST ONE must pass (OR)
+            fail_fast: Stop on first error when mode="all" (default True).
+            collect_errors: Collect all errors even with fail_fast.
+            field_name: Field name for error messages.
+
+        Returns:
+            r[T]: Ok(value) if validation passes, Fail with error message.
+
+        Examples:
+            # Simple validation with V namespace
+            result = u.validate(
+                email,
+                u.V.string.non_empty,
+                u.V.string.email,
+            )
+
+            # With operators
+            validator = V.string.non_empty & V.string.max_length(100)
+            result = u.validate(value, validator)
+
+            # Any mode (OR)
+            result = u.validate(
+                value,
+                V.string.email,
+                V.string.url,
+                mode="any",
+            )
+
+            # With field name for error context
+            result = u.validate(
+                config["port"],
+                V.number.positive,
+                V.number.in_range(1, 65535),
+                field_name="config.port",
+            )
+
+        """
+        if not validators:
+            return r[T].ok(value)
+
+        field_prefix = f"{field_name}: " if field_name else ""
+        if mode == "any":
+            return FlextUtilitiesValidation._validate_check_any(
+                value,
+                validators,
+                field_prefix,
+            )
+
+        return FlextUtilitiesValidation._validate_check_all(
+            value,
+            validators,
+            field_prefix,
+            fail_fast=fail_fast,
+            collect_errors=collect_errors,
+        )
+
+    @staticmethod
+    def _guard_check_type(
+        value: object,
+        condition: type[object] | tuple[type[object], ...],
+        context_name: str,
+        error_msg: str | None,
+    ) -> str | None:
+        """Helper: Check type guard condition."""
+        if not isinstance(value, condition):
+            if error_msg is None:
+                type_name = (
+                    condition.__name__
+                    if isinstance(condition, type)
+                    else " | ".join(c.__name__ for c in condition)
+                )
+                return f"{context_name} must be {type_name}, got {type(value).__name__}"
+            return error_msg
+        return None
+
+    @staticmethod
+    def _guard_check_validator(
+        value: object,
+        condition: ValidatorSpec,
+        context_name: str,
+        error_msg: str | None,
+    ) -> str | None:
+        """Helper: Check ValidatorSpec condition."""
+        if not condition(value):
+            if error_msg is None:
+                # Use Mapper.get for unified attribute access
+                desc = FlextUtilitiesMapper.get(
+                    condition,
+                    "description",
+                    default="validation",
+                )
+                return f"{context_name} failed {desc} check"
+            return error_msg
+        return None
+
+    @staticmethod
+    def _guard_check_string_shortcut(
+        value: object,
+        condition: str,
+        context_name: str,
+        error_msg: str | None,
+    ) -> str | None:
+        """Helper: Check string shortcut condition."""
+        shortcut_result = FlextUtilitiesValidation._guard_shortcut(
+            value,
+            condition,
+            context_name,
+        )
+        if shortcut_result.is_failure:
+            # Use ResultHelpers.err for unified error extraction
+            default_err = "Guard check failed"
+            return error_msg or FlextUtilitiesValidation.ResultHelpers.err(
+                shortcut_result,
+                default=default_err,
+            )
+        return None
+
+    @staticmethod
+    def _guard_check_predicate(
+        value: object,
+        condition: Callable[[object], bool],
+        context_name: str,
+        error_msg: str | None,
+    ) -> str | None:
+        """Helper: Check custom predicate condition."""
+        try:
+            if not condition(value):
+                if error_msg is None:
+                    # Use Mapper.get for unified attribute access
+                    func_name = FlextUtilitiesMapper.get(
+                        condition,
+                        "__name__",
+                        default="custom",
+                    )
+                    return f"{context_name} failed {func_name} check"
+                return error_msg
+        except Exception as e:
+            if error_msg is None:
+                return f"{context_name} guard check raised: {e}"
+            return error_msg
+        return None
+
+    @staticmethod
+    def _guard_check_condition(
+        value: object,
+        condition: type[object]
+        | tuple[type[object], ...]
+        | Callable[[object], bool]
+        | ValidatorSpec
+        | str,
+        context_name: str,
+        error_msg: str | None,
+    ) -> str | None:
+        """Helper: Check a single guard condition, return error message if fails."""
+        # Use match/case for Python 3.13+ pattern matching
+        # Type guard: isinstance check
+        if isinstance(condition, type):
+            return FlextUtilitiesValidation._guard_check_type(
+                value,
+                condition,
+                context_name,
+                error_msg,
+            )
+        if isinstance(condition, tuple) and all(isinstance(c, type) for c in condition):
+            return FlextUtilitiesValidation._guard_check_type(
+                value,
+                condition,
+                context_name,
+                error_msg,
+            )
+
+        # ValidatorSpec: Validator DSL (has __and__ method for composition)
+        if callable(condition) and hasattr(condition, "__and__"):
+            validator_condition = cast("ValidatorSpec", condition)
+            return FlextUtilitiesValidation._guard_check_validator(
+                value,
+                validator_condition,
+                context_name,
+                error_msg,
+            )
+
+        # String shortcuts
+        if isinstance(condition, str):
+            return FlextUtilitiesValidation._guard_check_string_shortcut(
+                value,
+                condition,
+                context_name,
+                error_msg,
+            )
+
+        # Custom predicate: Callable[[T], bool]
+        if callable(condition):
+            return FlextUtilitiesValidation._guard_check_predicate(
+                value,
+                condition,
+                context_name,
+                error_msg,
+            )
+
+        # Unknown condition type
+        return error_msg or f"{context_name} invalid guard condition type"
+
+    @staticmethod
+    def _guard_handle_failure[T](
+        error_message: str,
+        *,
+        return_value: bool,
+        default: T | None,
+    ) -> r[T] | T | None:
+        """Helper: Handle guard failure with return_value and default logic."""
+        if return_value:
+            # Use ResultHelpers.or_ for default fallback
+            return FlextUtilitiesValidation.ResultHelpers.or_(default, default=None)
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail(error_message)
+
+    @staticmethod
+    def _guard_non_empty(value: object, error_template: str) -> r[object]:
+        """Internal helper for non-empty validation."""
+        # Use pattern matching for type-specific validation
+        value_typed = cast("t.GeneralValueType", value)
+
+        # String validation
+        if FlextUtilitiesGuards.is_type(value, str):
+            return (
+                r.ok(value)
+                if FlextUtilitiesGuards.is_type(value, "string_non_empty")
+                else r.fail(f"{error_template} non-empty string")
+            )
+
+        # Dict-like validation
+        if FlextRuntime.is_dict_like(value_typed):
+            return (
+                r.ok(value)
+                if FlextUtilitiesGuards.is_type(value_typed, "dict_non_empty")
+                else r.fail(f"{error_template} non-empty dict")
+            )
+
+        # List-like validation
+        if FlextRuntime.is_list_like(value_typed):
+            return (
+                r.ok(value)
+                if FlextUtilitiesGuards.is_type(value_typed, "list_non_empty")
+                else r.fail(f"{error_template} non-empty list")
+            )
+
+        # Unknown type
+        return r.fail(f"{error_template} non-empty (str/dict/list)")
+
+    # Guard shortcut table: maps shortcut names to (check_fn, type_desc) tuples
+    # check_fn: (value) -> bool (True = valid)
+    _GUARD_SHORTCUTS: ClassVar[t.Types.StringCallableBoolStrTupleDict] = {
+        # Numeric shortcuts
+        "positive": (
+            lambda v: isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0,
+            "positive number",
+        ),
+        "non_negative": (
+            lambda v: isinstance(v, (int, float))
+            and not isinstance(v, bool)
+            and v >= 0,
+            "non-negative number",
+        ),
+        # Type shortcuts
+        "dict": (
+            lambda v: FlextRuntime.is_dict_like(cast("t.GeneralValueType", v)),
+            "dict-like",
+        ),
+        "list": (
+            lambda v: FlextRuntime.is_list_like(cast("t.GeneralValueType", v)),
+            "list-like",
+        ),
+        "string": (lambda v: isinstance(v, str), "string"),
+        "int": (lambda v: isinstance(v, int) and not isinstance(v, bool), "int"),
+        "float": (
+            lambda v: isinstance(v, (int, float)) and not isinstance(v, bool),
+            "float",
+        ),
+        "bool": (lambda v: isinstance(v, bool), "bool"),
+    }
+
+    @staticmethod
+    def _guard_shortcut(
+        value: object,
+        shortcut: str,
+        context: str,
+    ) -> r[object]:
+        """Handle string shortcuts for common guard patterns via table lookup."""
+        # Use lower() instead of u.normalize to avoid dependency
+        shortcut_lower = shortcut.lower()
+        error_template = f"{context} must be"
+
+        # Handle non_empty separately (complex type-specific logic)
+        if shortcut_lower == "non_empty":
+            return FlextUtilitiesValidation._guard_non_empty(value, error_template)
+
+        # Table lookup for simple shortcuts
+        if shortcut_lower in FlextUtilitiesValidation._GUARD_SHORTCUTS:
+            check_fn, type_desc = FlextUtilitiesValidation._GUARD_SHORTCUTS[
+                shortcut_lower
+            ]
+            if check_fn(value):
+                return r.ok(value)
+            return r.fail(f"{error_template} {type_desc}")
+
+        return r.fail(f"{context} unknown guard shortcut: {shortcut}")
+
+    @staticmethod
+    def guard[T](
+        value: T,
+        *conditions: (
+            type[T] | tuple[type[T], ...] | Callable[[T], bool] | ValidatorSpec | str
+        ),
+        error_message: str | None = None,
+        context: str | None = None,
+        default: T | None = None,
+        return_value: bool = False,
+    ) -> r[T] | T | None:
+        """Advanced guard method unifying type guards and validations.
+
+        Business Rule: Provides unified interface for type checking, validation,
+        and custom predicates. Supports multiple validation strategies:
+        - Type guards: isinstance checks (type or tuple of types)
+        - Validators: ValidatorSpec instances (V.string.non_empty, etc.)
+        - Custom predicates: Callable[[T], bool] functions
+        - String shortcuts: "non_empty", "positive", "dict", "list", etc.
+
+        Audit Implication: Guard failures are tracked with context for audit
+        trail completeness. Error messages include validation details for
+        debugging and audit purposes.
+
+        Args:
+            value: The value to guard/validate
+            *conditions: One or more guard conditions:
+                - type or tuple[type, ...]: isinstance check
+                - ValidatorSpec: Validator DSL instance (V.string.non_empty)
+                - Callable[[T], bool]: Custom predicate function
+                - str: Shortcut name ("non_empty", "positive", "dict", "list")
+            error_message: Custom error message (default: auto-generated)
+            context: Context name for error messages (default: "Value")
+            default: Default value to return on failure (if provided, returns Ok(default))
+            return_value: If True, returns value directly instead of r[T]
+
+        Returns:
+            r[T] | T | None:
+                - If return_value=False: p.Foundation.Result[T] (Ok(value) or Fail)
+                - If return_value=True and default=None: T | None (value on success, None on failure)
+                - If return_value=True and default provided: T (value on success, default on failure)
+
+        Examples:
+            # Type guard (returns Result)
+            result = u.guard("hello", str)
+            if result.is_success:
+                value = result.value
+
+            # Return value directly (reduces boilerplate)
+            config = u.guard(data, dict, return_value=True)
+            # config is dict | None
+
+            # With default (returns value or default)
+            config = u.guard(data, dict, default={}, return_value=True)
+            # config is dict (always safe)
+
+            # Multiple conditions
+            result = u.guard("hello", str, "non_empty", return_value=True)
+
+        """
+        context_name = context or "Value"
+        error_msg = error_message
+
+        for condition in conditions:
+            # Type narrowing: condition is one of the supported types
+            condition_typed: (
+                type[object]
+                | tuple[type[object], ...]
+                | Callable[[object], bool]
+                | ValidatorSpec
+                | str
+            ) = cast(
+                "type[object] | tuple[type[object], ...] | Callable[[object], bool] | ValidatorSpec | str",
+                condition,
+            )
+            check_result = FlextUtilitiesValidation._guard_check_condition(
+                cast("object", value),
+                condition_typed,
+                context_name,
+                error_msg,
+            )
+            if check_result is not None:
+                return FlextUtilitiesValidation._guard_handle_failure(
+                    check_result,
+                    return_value=return_value,
+                    default=default,
+                )
+
+        # Return value directly if return_value=True, otherwise return Result
+        if return_value:
+            return value
+        return r[T].ok(value)
+
+    # ═══════════════════════════════════════════════════════════════════
+    # RESULT HELPERS - Railway-Oriented Programming utilities
+    # ═══════════════════════════════════════════════════════════════════
+    # Extracted from FlextUtilities for modularity.
+    # These methods provide mnemonic DSL patterns for working with r[T].
+
+    class ResultHelpers:
+        """Result-related helper methods (ok, fail, val, err, unwrap, etc).
+
+        Provides mnemonic DSL patterns for railway-oriented programming.
+        All methods are thin wrappers around r[T] operations.
+        """
+
+        @staticmethod
+        def ok[T](value: T) -> r[T]:
+            """Create success result (mnemonic: ok = success).
+
+            Generic replacement for: p.Foundation.Result[T].ok(value)
+
+            Args:
+                value: Value to wrap
+
+            Returns:
+                r[T] with success
+
+            Example:
+                result = ResultHelpers.ok(data)
+                # → r.ok(data)
+
+            """
+            return r[T].ok(value)
+
+        @staticmethod
+        def fail(error: str) -> r[object]:
+            """Create failure result (mnemonic: fail = failure).
+
+            Business Rule: Failures don't carry a value, only an error message.
+            The return type r[object] allows type-safe failure results.
+
+            Args:
+                error: Error message
+
+            Returns:
+                r[object] with failure
+
+            Example:
+                result: p.Foundation.Result[Entry] = ResultHelpers.fail("Operation failed")
+
+            """
+            return r[object].fail(error)
+
+        @staticmethod
+        def err[T](
+            result: p.Foundation.Result[T],
+            *,
+            default: str = "Unknown error",
+        ) -> str:
+            """Extract error message from r (mnemonic: err = error).
+
+            Args:
+                result: r to extract error from
+                default: Default error message if error is None/empty
+
+            Returns:
+                Error message string
+
+            Example:
+                error_msg = ResultHelpers.err(result, default="Operation failed")
+
+            """
+            if result.is_failure:
+                error_str = result.error
+                if error_str:
+                    return str(error_str)
+            return default
+
+        @staticmethod
+        def val[T](
+            result: p.Foundation.Result[T],
+            *,
+            default: T | None = None,
+        ) -> T | None:
+            """Extract value from r (mnemonic: val = value).
+
+            Args:
+                result: r to extract value from
+                default: Default value if result is failure
+
+            Returns:
+                Value or default
+
+            Example:
+                data = ResultHelpers.val(result, default={})
+
+            """
+            return result.value if result.is_success else default
+
+        @staticmethod
+        def unwrap[T](
+            value: T | r[T],
+            *,
+            default: T | None = None,
+        ) -> T:
+            """Unwrap r or return value (mnemonic: unwrap = extract value).
+
+            Args:
+                value: Value or r
+                default: Default if result is failure
+
+            Returns:
+                Unwrapped value or default
+
+            Example:
+                data = ResultHelpers.unwrap(fields_result)
+
+            """
+            if isinstance(value, r):
+                if value.is_failure:
+                    return cast("T", default)
+                return value.value
+            return value
+
+        @staticmethod
+        def vals[T](
+            items: dict[str, T] | r[dict[str, T]],
+            *,
+            default: list[T] | None = None,
+        ) -> list[T]:
+            """Extract values from dict or result (mnemonic: vals = values).
+
+            Args:
+                items: Dict or r containing dict
+                default: Default if items is failure or None
+
+            Returns:
+                List of values
+
+            Example:
+                plugins = ResultHelpers.vals(plugins_result)
+
+            """
+            rh = FlextUtilitiesValidation.ResultHelpers
+            items_dict = rh.val(items, default={}) if isinstance(items, r) else items
+            if items_dict:
+                return list(items_dict.values())
+            result = rh.or_(default, default=[])
+            return cast("list[T]", result)
+
+        @staticmethod
+        def or_[T](
+            *values: T | None,
+            default: T | None = None,
+        ) -> T | None:
+            """Return first non-None value (mnemonic: or_ = fallback chain).
+
+            Args:
+                *values: Values to try in order
+                default: Default if all are None
+
+            Returns:
+                First non-None value or default
+
+            Example:
+                port = ResultHelpers.or_(config.get("port"), default=c.Platform.DEFAULT_HTTP_PORT)
+
+            """
+            for value in values:
+                if value is not None:
+                    return value
+            return default
+
+        @staticmethod
+        def try_[T](
+            func: Callable[[], T],
+            *,
+            default: T | None = None,
+            catch: type[Exception] | tuple[type[Exception], ...] = Exception,
+        ) -> T | None:
+            """Try operation with fallback (mnemonic: try_ = safe execution).
+
+            Args:
+                func: Function to execute
+                default: Default if exception occurs
+                catch: Exception types to catch (default: Exception)
+
+            Returns:
+                Function result or default
+
+            Example:
+                port = ResultHelpers.try_(lambda: int(config["port"]), default=c.Platform.DEFAULT_HTTP_PORT)
+
+            """
+            try:
+                return func()
+            except BaseException as exc:
+                if isinstance(exc, catch):
+                    return default
+                raise
+
+        @staticmethod
+        def from_[T](
+            source: t.Types.ConfigurationMapping | object | None,
+            key: str,
+            *,
+            as_type: type[T] | None = None,
+            default: T,
+        ) -> T:
+            """Extract from source with type guard (mnemonic: from_ = extract).
+
+            Args:
+                source: Source data (dict/object/None)
+                key: Key/attribute name
+                as_type: Optional type to guard against
+                default: Default value if source is None or field missing
+
+            Returns:
+                Extracted value with type guard or default
+
+            Example:
+                port = ResultHelpers.from_(config_obj, "port", as_type=int, default=c.Platform.FLEXT_API_PORT)
+
+            """
+            if source is None:
+                return default
+            m = FlextUtilitiesMapper
+            if as_type is not None:
+                taken = m.take(source, key, as_type=as_type, default=default)
+                return taken if taken is not None else default
+            gotten = m.get(source, key, default=default)
+            return gotten if gotten is not None else default
+
+        @staticmethod
+        def req[T](
+            value: T | None,
+            *,
+            name: str = "value",
+        ) -> r[T]:
+            """Require non-None value (mnemonic: req = required).
+
+            Args:
+                value: Value to check
+                name: Field name for error message
+
+            Returns:
+                r[T]: Ok(value) or Fail with error
+
+            Example:
+                result = ResultHelpers.req(tap_name, name="tap_name")
+
+            """
+            if value is None or (
+                FlextUtilitiesGuards.is_type(value, str) and not value
+            ):
+                return r[T].fail(f"{name} is required")
+            return r[T].ok(value)
+
+        @staticmethod
+        def then[T, R2](
+            result: p.Foundation.Result[T],
+            func: Callable[[T], r[R2]],
+        ) -> r[R2]:
+            """Chain operations (mnemonic: then = flat_map).
+
+            Args:
+                result: Initial result
+                func: Function to apply if success
+
+            Returns:
+                Chained result
+
+            Example:
+                result = ResultHelpers.then(parse_result, lambda d: ok(process(d)))
+
+            """
+            # Convert protocol to concrete type for method access
+            # Protocol p.Foundation.Result doesn't have flat_map, need to use concrete r
+            if result.is_success:
+                value = result.value
+                return func(value)
+            # Return failure result unchanged - convert to r for return type
+            return r[R2].fail(result.error if result.is_failure else "Unknown error")
+
+        @staticmethod
+        def if_[T](
+            *,
+            condition: bool = False,
+            then_value: T | None = None,
+            else_value: T | None = None,
+        ) -> T | None:
+            """Conditional value (mnemonic: if_ = if-then-else).
+
+            Args:
+                condition: Boolean condition
+                then_value: Value if condition is True
+                else_value: Value if condition is False
+
+            Returns:
+                then_value or else_value
+
+            Example:
+                port = ResultHelpers.if_(condition=debug, then_value=8080, else_value=80)
+
+            """
+            return then_value if condition else else_value
+
+        @staticmethod
+        def not_(*, value: bool = False) -> bool:
+            """Negate boolean (mnemonic: not_ = not).
+
+            Args:
+                value: Boolean to negate
+
+            Returns:
+                Negated boolean
+
+            Example:
+                is_empty = ResultHelpers.not_(value=all_(items))
+
+            """
+            return not value
+
+        @staticmethod
+        def empty[T](
+            items: list[T]
+            | tuple[T, ...]
+            | dict[str, T]
+            | str
+            | r[list[T] | dict[str, T]]
+            | None,
+        ) -> bool:
+            """Check if collection/string is empty (mnemonic: empty = is empty).
+
+            Args:
+                items: Collection or string to check
+
+            Returns:
+                True if empty
+
+            Example:
+                if ResultHelpers.empty(items):
+                    return fail("Items required")
+
+            """
+            if isinstance(items, r):
+                if items.is_failure:
+                    return True
+                items = items.value
+
+            if items is None:
+                return True
+            if isinstance(items, str):
+                return not items
+            return len(items) == 0
+
+        @staticmethod
+        def ends(
+            value: str,
+            suffix: str,
+            *suffixes: str,
+        ) -> bool:
+            """Check if string ends with suffix(es).
+
+            Args:
+                value: String to check
+                suffix: First suffix to check
+                *suffixes: Additional suffixes to check
+
+            Returns:
+                True if ends with any suffix
+
+            Example:
+                if ResultHelpers.ends(filename, ".json", ".yaml"):
+                    process_config()
+
+            """
+            all_suffixes: tuple[str, ...] = (suffix,) + suffixes
+            if not all_suffixes:
+                return False
+            return any(value.endswith(s) for s in all_suffixes)
+
+        @staticmethod
+        def starts(
+            value: str,
+            prefix: str,
+            *prefixes: str,
+        ) -> bool:
+            """Check if string starts with prefix(es).
+
+            Args:
+                value: String to check
+                prefix: First prefix to check
+                *prefixes: Additional prefixes to check
+
+            Returns:
+                True if starts with any prefix
+
+            Example:
+                if ResultHelpers.starts(name, "tap-", "target-"):
+                    process_plugin()
+
+            """
+            all_prefixes: tuple[str, ...] = (prefix,) + prefixes
+            return any(value.startswith(p) for p in all_prefixes)
+
+        @staticmethod
+        def in_(
+            value: object,
+            items: list[object]
+            | tuple[object, ...]
+            | set[object]
+            | t.Types.ConfigurationMapping,
+        ) -> bool:
+            """Check if value is in items (mnemonic: in_ = membership).
+
+            Args:
+                value: Value to check
+                items: Collection to check membership
+
+            Returns:
+                True if value is in items
+
+            Example:
+                if ResultHelpers.in_(role, ["REDACTED_LDAP_BIND_PASSWORD", "user"]):
+                    process_user()
+
+            """
+            return value in items
+
+        @staticmethod
+        def flat[T](
+            items: list[list[T] | tuple[T, ...]]
+            | list[list[T]]
+            | list[tuple[T, ...]]
+            | tuple[list[T], ...],
+        ) -> list[T]:
+            """Flatten nested lists (mnemonic: flat = flatten).
+
+            Args:
+                items: Nested list/tuple structure
+
+            Returns:
+                Flattened list
+
+            Example:
+                flat_list = ResultHelpers.flat([[1, 2], [3, 4]])
+                # → [1, 2, 3, 4]
+
+            """
+            return [item for sublist in items for item in sublist]
+
+        @staticmethod
+        def all_(*values: object) -> bool:
+            """Check if all values are truthy (mnemonic: all_ = all truthy).
+
+            Args:
+                *values: Values to check
+
+            Returns:
+                True if all values are truthy
+
+            Example:
+                if ResultHelpers.all_(name, email, age):
+                    process_user()
+
+            """
+            return all(bool(v) for v in values)
+
+        @staticmethod
+        def any_(*values: object) -> bool:
+            """Check if any value is truthy (mnemonic: any_ = any truthy).
+
+            Args:
+                *values: Values to check
+
+            Returns:
+                True if any value is truthy
+
+            Example:
+                if ResultHelpers.any_(config, env, default):
+                    use_value()
+
+            """
+            return any(bool(v) for v in values)
+
+        @staticmethod
+        def count[T](
+            items: list[T] | tuple[T, ...] | dict[str, T],
+            predicate: Callable[[T], bool] | None = None,
+        ) -> int:
+            """Count items (mnemonic: count = len or filtered count).
+
+            Args:
+                items: Items to count
+                predicate: Optional filter predicate
+
+            Returns:
+                Count of items (optionally filtered)
+
+            Example:
+                total = ResultHelpers.count(items)
+                active = ResultHelpers.count(users, lambda u: u.is_active if hasattr(u, "is_active") else True)
+
+            """
+            if predicate is None:
+                return len(items)
+            # Handle dict separately - iterate over values, not items
+            if isinstance(items, dict):
+                items_dict: dict[str, T] = items
+                # For dict, predicate receives values (T), not (key, value) pairs
+                # Convert values to list for type compatibility
+                values_list: list[T] = list(items_dict.values())
+                count_gen = (1 for value in values_list if predicate(value))
+                return sum(count_gen)
+            # For list/tuple, iterate directly
+            items_list: list[T] | tuple[T, ...] = (
+                list(items) if isinstance(items, tuple) else items
+            )
+            # Type narrowing: predicate is not None, so it's Callable[[T], bool]
+            # Generator produces int (1) for each item where predicate returns True
+            count_gen = (1 for item in items_list if predicate(item))
+            return sum(count_gen)
+
+        @staticmethod
+        def sum_(
+            items: list[int] | list[float] | tuple[int, ...] | tuple[float, ...],
+        ) -> float:
+            """Sum items (mnemonic: sum_ = sum).
+
+            Args:
+                items: Items to sum
+
+            Returns:
+                Sum of items
+
+            Example:
+                total = ResultHelpers.sum_([1, 2, 3])
+
+            """
+            # Type narrowing: items is Iterable[int | float]
+            # Cast to ensure type compatibility with builtin sum()
+            items_iter: (
+                list[int] | list[float] | tuple[int, ...] | tuple[float, ...]
+            ) = items
+            return float(sum(items_iter))
+
+    # ═══════════════════════════════════════════════════════════════════
+    # ENSURE HELPERS - Type coercion utilities
+    # ═══════════════════════════════════════════════════════════════════
+    # Extracted from FlextUtilities for modularity.
+    # These methods provide type coercion with defaults.
+
+    @staticmethod
+    def _ensure_to_list(
+        value: t.GeneralValueType
+        | list[t.GeneralValueType]
+        | tuple[t.GeneralValueType, ...]
+        | None,
+        default: list[t.GeneralValueType] | None,
+    ) -> list[t.GeneralValueType]:
+        """Helper: Convert value to list."""
+        if value is None:
+            rh = FlextUtilitiesValidation.ResultHelpers
+            result = rh.or_(default, default=[])
+            return cast("list[t.GeneralValueType]", result)
+        match value:
+            case list():
+                return value
+            case tuple():
+                return list(value)
+            case _:
+                return [value]
+
+    @staticmethod
+    def _ensure_to_dict(
+        value: t.GeneralValueType | t.Types.ConfigurationDict | None,
+        default: t.Types.ConfigurationDict | None,
+    ) -> t.Types.ConfigurationDict:
+        """Helper: Convert value to dict."""
+        if value is None:
+            return default if default is not None else {}
+        if isinstance(value, dict):
+            return value
+        return {"value": value}
+
+    @staticmethod
+    def ensure[T](
+        value: t.GeneralValueType,
+        *,
+        target_type: str = "auto",
+        default: T | list[T] | dict[str, T] | None = None,
+    ) -> T | list[T] | dict[str, T]:
+        """Unified ensure function that auto-detects or enforces target type.
+
+        Generic replacement for: ensure_list(), ensure_dict(), ensure_str()
+
+        Automatically detects if value should be list or dict, or enforces
+        target_type. Converts single values, tuples, None to appropriate type.
+        Supports string conversion via target_type="str" or "str_list".
+
+        Args:
+            value: Value to convert (single value, list, tuple, dict, or None)
+            target_type: Target type - "auto" (detect), "list", "dict", "str",
+                         "str_list"
+            default: Default value if None
+
+        Returns:
+            Converted value based on target_type or auto-detection
+
+        Example:
+            # Auto-detect (prefers list for single values)
+            items = ensure(value)
+
+            # Force list
+            items = ensure(value, target_type="list")
+
+            # Convert to string
+            str_value = ensure(value, target_type="str", default="")
+
+        """
+        m = FlextUtilitiesMapper
+
+        # Handle string conversions first
+        if target_type == "str":
+            str_default = cast("str", default) if default is not None else ""
+            return cast("T", m.ensure_str(value, default=str_default))
+        if target_type == "str_list":
+            str_list_default = (
+                cast("list[str]", default) if isinstance(default, list) else None
+            )
+            return cast("list[T]", m.ensure(value, default=str_list_default))
+        if target_type == "dict":
+            dict_default_typed: t.Types.ConfigurationDict | None
+            if isinstance(default, dict):
+                dict_default_typed = cast("t.Types.ConfigurationDict", default)
+            else:
+                dict_default_typed = None
+            dict_result = FlextUtilitiesValidation._ensure_to_dict(
+                value,
+                dict_default_typed,
+            )
+            return cast("T", dict_result)
+        if target_type == "auto" and isinstance(value, dict):
+            return cast("T", value)
+        # Handle list or fallback
+        list_default_fallback: list[t.GeneralValueType] | None = (
+            cast("list[t.GeneralValueType]", default)
+            if isinstance(default, list)
+            else None
+        )
+        list_result = FlextUtilitiesValidation._ensure_to_list(
+            value,
+            list_default_fallback,
+        )
+        return cast("T", list_result)
+
 
 __all__ = [
-    "FlextValidation",
-    "uValidation",
+    "FlextUtilitiesValidation",
 ]

@@ -10,12 +10,15 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextResult
-from flext_tests.factories import FlextTestsFactories
+from flext_tests.factories import FlextTestsFactories, tt
+from flext_tests.models import m
 
-# Access nested classes
-User = FlextTestsFactories.User
-Config = FlextTestsFactories.Config
-Service = FlextTestsFactories.Service
+# Access models from centralized m.Tests.Factory namespace
+User = m.Tests.Factory.User
+Config = m.Tests.Factory.Config
+Service = m.Tests.Factory.Service
+Entity = m.Tests.Factory.Entity
+ValueObject = m.Tests.Factory.ValueObject
 
 
 class TestUser:
@@ -401,3 +404,329 @@ class TestFlextTestsFactories:
         result = service.validate_business_rules()
         # Should call super() which returns success
         assert isinstance(result, FlextResult)
+
+
+# =============================================================================
+# PHASE 7: Tests for Unified Factory Methods (tt.model, tt.res, tt.list, tt.dict, tt.generic)
+# =============================================================================
+class TestsFlextTestsFactoriesModel:
+    """Tests for tt.model() unified method."""
+
+    def test_model_user_default(self) -> None:
+        """Test user model creation with defaults."""
+        user = tt.model("user")
+        assert isinstance(user, User)
+        assert user.id is not None
+        assert user.name == "Test User"
+        assert "@example.com" in user.email
+        assert user.active is True
+
+    def test_model_user_custom(self) -> None:
+        """Test user model creation with custom parameters."""
+        user = tt.model("user", name="Custom User", email="custom@test.com")
+        assert isinstance(user, User)
+        assert user.name == "Custom User"
+        assert user.email == "custom@test.com"
+
+    def test_model_batch(self) -> None:
+        """Test batch model creation."""
+        users = tt.model("user", count=5)
+        assert isinstance(users, list)
+        assert len(users) == 5
+        assert all(isinstance(user, User) for user in users)
+
+    def test_model_as_result(self) -> None:
+        """Test model wrapped in FlextResult."""
+        result = tt.model("user", as_result=True)
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert isinstance(result.value, User)
+
+    def test_model_as_dict(self) -> None:
+        """Test model returned as dict."""
+        users_dict = tt.model("user", count=3, as_dict=True)
+        assert isinstance(users_dict, dict)
+        assert len(users_dict) == 3
+        assert all(isinstance(v, User) for v in users_dict.values())
+
+    def test_model_config(self) -> None:
+        """Test config model creation."""
+        config = tt.model("config", environment="production")
+        assert isinstance(config, Config)
+        assert config.environment == "production"
+
+    def test_model_service(self) -> None:
+        """Test service model creation."""
+        service = tt.model("service", service_type="database")
+        assert isinstance(service, Service)
+        assert service.type == "database"
+
+    def test_model_entity(self) -> None:
+        """Test entity model creation."""
+        entity = tt.model("entity", name="Test Entity", value=42)
+        assert isinstance(entity, Entity)
+        assert entity.name == "Test Entity"
+
+    def test_model_value_object(self) -> None:
+        """Test value object model creation."""
+        value_obj = tt.model("value", data="test_data", value_count=3)
+        assert isinstance(value_obj, ValueObject)
+        assert value_obj.data == "test_data"
+
+    def test_model_with_transform(self) -> None:
+        """Test model creation with transform function."""
+        user = tt.model(
+            "user",
+            name="Original",
+            transform=lambda u: User(
+                id=u.id,
+                name="Transformed",
+                email=u.email,
+                active=u.active,
+            ),
+        )
+        assert user.name == "Transformed"
+
+    def test_model_with_validate(self) -> None:
+        """Test model creation with validation."""
+        # Valid user (active=True)
+        user = tt.model("user", active=True, validate=lambda u: u.active)
+        assert user.active is True
+
+        # Invalid user (active=False) - should return failure result
+        result = tt.model(
+            "user",
+            active=False,
+            validate=lambda u: u.active,
+            as_result=True,
+        )
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+
+
+class TestsFlextTestsFactoriesRes:
+    """Tests for tt.res() unified method."""
+
+    def test_res_ok(self) -> None:
+        """Test successful result creation."""
+        result = tt.res("ok", value=42)
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert result.value == 42
+
+    def test_res_fail(self) -> None:
+        """Test failed result creation."""
+        result = tt.res("fail", error="Error message")
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
+        assert result.error == "Error message"
+
+    def test_res_fail_with_code(self) -> None:
+        """Test failed result creation with error code."""
+        result = tt.res("fail", error="Error message", error_code="ERR001")
+        assert result.is_failure
+        assert result.error == "Error message"
+        # Note: error_code may be stored in result metadata
+
+    def test_res_from_value_success(self) -> None:
+        """Test from_value with non-None value."""
+        result = tt.res("from_value", value=42)
+        assert result.is_success
+        assert result.value == 42
+
+    def test_res_from_value_none(self) -> None:
+        """Test from_value with None value."""
+        result = tt.res("from_value", value=None, error_on_none="Value is required")
+        assert result.is_failure
+        assert "required" in result.error.lower()
+
+    def test_res_batch_values(self) -> None:
+        """Test batch result creation from values."""
+        results = tt.res("ok", values=[1, 2, 3])
+        assert isinstance(results, list)
+        assert len(results) == 3
+        assert all(r.is_success for r in results)
+        assert [r.value for r in results] == [1, 2, 3]
+
+    def test_res_batch_errors(self) -> None:
+        """Test batch result creation from errors."""
+        results = tt.res("fail", errors=["err1", "err2"])
+        assert isinstance(results, list)
+        assert len(results) == 2
+        assert all(r.is_failure for r in results)
+
+    def test_res_mix_pattern(self) -> None:
+        """Test batch result creation with mix pattern."""
+        results = tt.res(
+            "ok",
+            values=[1, 2],
+            errors=["e1", "e2"],
+            mix_pattern=[True, False, True, False],
+        )
+        assert len(results) == 4
+        assert results[0].is_success and results[0].value == 1
+        assert results[1].is_failure
+        assert results[2].is_success and results[2].value == 2
+        assert results[3].is_failure
+
+    def test_res_with_transform(self) -> None:
+        """Test result creation with transform function."""
+        result = tt.res("ok", value=5, transform=lambda x: x * 2)
+        assert result.is_success
+        assert result.value == 10
+
+
+class TestsFlextTestsFactoriesList:
+    """Tests for tt.list() method."""
+
+    def test_list_from_model(self) -> None:
+        """Test list creation from model kind."""
+        users = tt.list("user", count=3)
+        assert isinstance(users, list)
+        assert len(users) == 3
+        assert all(isinstance(u, User) for u in users)
+
+    def test_list_from_callable(self) -> None:
+        """Test list creation from callable factory."""
+        numbers = tt.list(lambda: 42, count=5)
+        assert numbers == [42, 42, 42, 42, 42]
+
+    def test_list_from_sequence(self) -> None:
+        """Test list creation from sequence."""
+        doubled = tt.list([1, 2, 3], transform=lambda x: x * 2)
+        assert doubled == [2, 4, 6]
+
+    def test_list_with_filter(self) -> None:
+        """Test list creation with filter."""
+        evens = tt.list([1, 2, 3, 4, 5], filter_=lambda x: x % 2 == 0)
+        assert evens == [2, 4]
+
+    def test_list_with_unique(self) -> None:
+        """Test list creation with uniqueness."""
+        # Create list with duplicates
+        items = tt.list([1, 2, 2, 3, 3, 3], unique=True)
+        assert len(items) == 3
+        assert set(items) == {1, 2, 3}
+
+    def test_list_as_result(self) -> None:
+        """Test list creation wrapped in result."""
+        result = tt.list("user", count=3, as_result=True)
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert len(result.value) == 3
+
+
+class TestsFlextTestsFactoriesDict:
+    """Tests for tt.dict_factory() method."""
+
+    def test_dict_from_model(self) -> None:
+        """Test dict creation from model kind."""
+        users = tt.dict_factory("user", count=3)
+        assert isinstance(users, dict)
+        assert len(users) == 3
+        assert all(isinstance(u, User) for u in users.values())
+
+    def test_dict_with_key_factory(self) -> None:
+        """Test dict creation with key factory."""
+        users = tt.dict_factory("user", count=3, key_factory=lambda i: f"user_{i}")
+        assert set(users.keys()) == {"user_0", "user_1", "user_2"}
+
+    def test_dict_with_value_factory(self) -> None:
+        """Test dict creation with value factory."""
+
+        def value_factory(key: str) -> User:
+            return User(id=key, name=f"User {key}", email=f"{key}@test.com")
+
+        users = tt.dict_factory("user", count=2, value_factory=value_factory)
+        assert len(users) == 2
+
+    def test_dict_from_mapping(self) -> None:
+        """Test dict creation from existing mapping."""
+        existing = {"a": 1, "b": 2}
+        merged = tt.dict_factory(existing, merge_with={"c": 3})
+        assert merged == {"a": 1, "b": 2, "c": 3}
+
+    def test_dict_as_result(self) -> None:
+        """Test dict creation wrapped in result."""
+        result = tt.dict_factory("user", count=3, as_result=True)
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert len(result.value) == 3
+
+
+class TestsFlextTestsFactoriesGeneric:
+    """Tests for tt.generic() method."""
+
+    def test_generic_simple(self) -> None:
+        """Test generic type instantiation."""
+
+        class SimpleClass:
+            def __init__(self, name: str) -> None:
+                self.name = name
+
+        obj = tt.generic(SimpleClass, kwargs={"name": "test"})
+        assert isinstance(obj, SimpleClass)
+        assert obj.name == "test"
+
+    def test_generic_with_args(self) -> None:
+        """Test generic type instantiation with positional args."""
+
+        class ArgsClass:
+            def __init__(self, a: int, b: int, c: str = "default") -> None:
+                self.a = a
+                self.b = b
+                self.c = c
+
+        obj = tt.generic(ArgsClass, args=[1, 2], kwargs={"c": "custom"})
+        assert obj.a == 1
+        assert obj.b == 2
+        assert obj.c == "custom"
+
+    def test_generic_batch(self) -> None:
+        """Test batch generic type instantiation."""
+
+        class BatchClass:
+            def __init__(self, value: int) -> None:
+                self.value = value
+
+        objs = tt.generic(BatchClass, kwargs={"value": 42}, count=5)
+        assert isinstance(objs, list)
+        assert len(objs) == 5
+        assert all(isinstance(o, BatchClass) for o in objs)
+        assert all(o.value == 42 for o in objs)
+
+    def test_generic_with_validate(self) -> None:
+        """Test generic type instantiation with validation."""
+
+        class ValidatedClass:
+            def __init__(self, age: int) -> None:
+                self.age = age
+
+        # Valid age
+        obj = tt.generic(
+            ValidatedClass,
+            kwargs={"age": 25},
+            validate=lambda o: o.age >= 18,
+        )
+        assert obj.age == 25
+
+        # Invalid age - should raise ValueError
+        with pytest.raises(ValueError, match="Validation failed"):
+            tt.generic(
+                ValidatedClass,
+                kwargs={"age": 15},
+                validate=lambda o: o.age >= 18,
+            )
+
+    def test_generic_as_result(self) -> None:
+        """Test generic type instantiation wrapped in result."""
+
+        class ResultClass:
+            def __init__(self, value: str) -> None:
+                self.value = value
+
+        result = tt.generic(ResultClass, kwargs={"value": "test"}, as_result=True)
+        assert isinstance(result, FlextResult)
+        assert result.is_success
+        assert isinstance(result.value, ResultClass)
+        assert result.value.value == "test"

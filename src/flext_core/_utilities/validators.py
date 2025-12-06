@@ -16,6 +16,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol, Self, runtime_checkable
 
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.constants import c
+
 # ============================================================================
 # VALIDATOR SPEC PROTOCOL - Core interface for all validators
 # ============================================================================
@@ -65,7 +68,7 @@ class Validator:
 
     Example:
         non_empty = Validator(lambda s: bool(s and str(s).strip()))
-        max_len = Validator(lambda s: len(str(s)) <= 100)
+        max_len = Validator(lambda s: len(str(s)) <= c.Validation.MAX_RETRY_STATUS_CODES)
         combined = non_empty & max_len  # Both must pass
 
     """
@@ -340,7 +343,11 @@ class CollectionValidators:
     def min_length(n: int) -> Validator:
         """Validate collection has at least n items."""
         return Validator(
-            predicate=lambda v: isinstance(v, (list, tuple, dict, set)) and len(v) >= n,
+            predicate=lambda v: isinstance(
+                v,
+                (list, tuple, dict, set),
+            )
+            and len(v) >= n,
             description=f"collection.min_length({n})",
         )
 
@@ -348,7 +355,11 @@ class CollectionValidators:
     def max_length(n: int) -> Validator:
         """Validate collection has at most n items."""
         return Validator(
-            predicate=lambda v: isinstance(v, (list, tuple, dict, set)) and len(v) <= n,
+            predicate=lambda v: isinstance(
+                v,
+                (list, tuple, dict, set),
+            )
+            and len(v) <= n,
             description=f"collection.max_length({n})",
         )
 
@@ -356,7 +367,11 @@ class CollectionValidators:
     def length(n: int) -> Validator:
         """Validate collection has exactly n items."""
         return Validator(
-            predicate=lambda v: isinstance(v, (list, tuple, dict, set)) and len(v) == n,
+            predicate=lambda v: isinstance(
+                v,
+                (list, tuple, dict, set),
+            )
+            and len(v) == n,
             description=f"collection.length({n})",
         )
 
@@ -522,7 +537,7 @@ class ValidatorDSL:
     def is_type(expected_type: type) -> Validator:
         """Validator that checks if value is of expected type."""
         return Validator(
-            predicate=lambda v: isinstance(v, expected_type),
+            predicate=lambda v: FlextUtilitiesGuards.is_type(v, expected_type),
             description=f"is_type({expected_type.__name__})",
         )
 
@@ -532,7 +547,7 @@ class ValidatorDSL:
 # ============================================================================
 
 
-class ValidatorBuilder:  # noqa: PLR0904  # Fluent API requires many methods
+class ValidatorBuilder:
     """Fluent builder for composing validators.
 
     Provides a chainable API for building complex validators
@@ -581,7 +596,7 @@ class ValidatorBuilder:  # noqa: PLR0904  # Fluent API requires many methods
 
     def collection(self) -> Self:
         """Switch to collection validation mode."""
-        self._mode = "collection"
+        self._mode = c.Mixins.OPERATION_COLLECTION
         return self
 
     def dict(self) -> Self:
@@ -594,7 +609,7 @@ class ValidatorBuilder:  # noqa: PLR0904  # Fluent API requires many methods
         """Add non_empty validator (string or collection based on mode)."""
         if self._mode == "string":
             return self._add(StringValidators.non_empty)
-        if self._mode == "collection":
+        if self._mode == c.Mixins.OPERATION_COLLECTION:
             return self._add(CollectionValidators.non_empty)
         if self._mode == "dict":
             return self._add(DictValidators.non_empty)
@@ -604,7 +619,7 @@ class ValidatorBuilder:  # noqa: PLR0904  # Fluent API requires many methods
         """Add min_length validator."""
         if self._mode == "string":
             return self._add(StringValidators.min_length(n))
-        if self._mode == "collection":
+        if self._mode == c.Mixins.OPERATION_COLLECTION:
             return self._add(CollectionValidators.min_length(n))
         return self
 
@@ -612,7 +627,7 @@ class ValidatorBuilder:  # noqa: PLR0904  # Fluent API requires many methods
         """Add max_length validator."""
         if self._mode == "string":
             return self._add(StringValidators.max_length(n))
-        if self._mode == "collection":
+        if self._mode == c.Mixins.OPERATION_COLLECTION:
             return self._add(CollectionValidators.max_length(n))
         return self
 
@@ -624,7 +639,7 @@ class ValidatorBuilder:  # noqa: PLR0904  # Fluent API requires many methods
         """Add contains validator."""
         if self._mode == "string" and isinstance(value, str):
             return self._add(StringValidators.contains(value))
-        if self._mode == "collection":
+        if self._mode == c.Mixins.OPERATION_COLLECTION:
             return self._add(CollectionValidators.contains(value))
         return self
 

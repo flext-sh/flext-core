@@ -18,7 +18,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConfig, FlextConstants, FlextLogger, FlextResult
+from flext_core import FlextConfig, FlextLogger, FlextResult, p
+from flext_core.constants import c
 
 
 def make_result_logger(
@@ -100,7 +101,7 @@ class TestGlobalContextManagement:
         FlextLogger.bind_global_context(request_id="req-123")
         # Pass non-sequence keys (int is not Sequence) - should handle gracefully
         result = FlextLogger._context_operation(
-            FlextConstants.Logging.ContextOperation.UNBIND,
+            c.Logging.ContextOperation.UNBIND,
             keys=42,  # int is not Sequence, so isinstance check fails
         )
         assert (
@@ -109,22 +110,22 @@ class TestGlobalContextManagement:
 
     def test_context_operation_unknown_operation(self) -> None:
         """Test context operation with unknown operation (covers line 131)."""
-        # _context_operation returns ResultProtocol[bool] | ContextMetadataMapping
-        # For unknown operations, it returns ResultProtocol[bool] via _execute_context_op
-        result = FlextLogger._context_operation("unknown_operation")
-        # result_fail returns FlextResult which has is_failure
-        assert hasattr(result, "is_failure")
+        # _execute_context_op returns ResultProtocol[bool] | dict[str, GeneralValueType]
+        # For unknown operations, it returns ResultProtocol[bool] via result_fail
+        result = FlextLogger._execute_context_op("unknown_operation", {})
+        # Type narrowing: unknown operation returns ResultProtocol[bool], not dict
+        assert isinstance(result, p.Foundation.Result)
         assert result.is_failure
-        if hasattr(result, "error"):
-            assert "Unknown operation" in str(
-                result.error
-            ) or "unknown_operation" in str(result.error)
+        assert result.error is not None
+        assert (
+            "Unknown operation" in result.error or "unknown_operation" in result.error
+        )
 
     def test_context_operation_get_with_empty_context(self) -> None:
         """Test GET operation with empty context (covers line 130)."""
         FlextLogger.clear_global_context()
         result = FlextLogger._context_operation(
-            FlextConstants.Logging.ContextOperation.GET,
+            c.Logging.ContextOperation.GET,
         )
         # Should return empty dict when context is empty
         assert isinstance(result, dict)
@@ -135,7 +136,7 @@ class TestGlobalContextManagement:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(test_key="test_value")
         result = FlextLogger._context_operation(
-            FlextConstants.Logging.ContextOperation.GET,
+            c.Logging.ContextOperation.GET,
         )
         # Should return dict with context
         assert isinstance(result, dict)

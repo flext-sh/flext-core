@@ -15,6 +15,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.constants import c
 from flext_core.result import r
 from flext_core.typings import T, t
 
@@ -29,11 +31,11 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def extract_page_params(
-        query_params: dict[str, str],
+        query_params: t.Types.StringDict,
         *,
         default_page: int = 1,
-        default_page_size: int = 20,
-        max_page_size: int = 1000,
+        default_page_size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
+        max_page_size: int = c.Pagination.MAX_PAGE_SIZE_EXAMPLE,
     ) -> r[tuple[int, int]]:
         """Extract page and page_size from query parameters.
 
@@ -80,7 +82,7 @@ class FlextUtilitiesPagination:
         page: int,
         page_size: int | None,
         max_page_size: int,
-    ) -> r[dict[str, int]]:
+    ) -> r[t.Types.StringIntDict]:
         """Validate pagination parameters.
 
         Args:
@@ -111,7 +113,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> r[dict[str, t.GeneralValueType]]:
+    ) -> r[t.Types.ConfigurationDict]:
         """Prepare pagination data structure.
 
         Args:
@@ -158,9 +160,9 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: dict[str, t.GeneralValueType],
+        pagination_data: t.Types.ConfigurationDict,
         message: str | None = None,
-    ) -> r[dict[str, t.GeneralValueType]]:
+    ) -> r[t.Types.ConfigurationDict]:
         """Build paginated response dictionary.
 
         Args:
@@ -189,15 +191,15 @@ class FlextUtilitiesPagination:
         else:
             data_typed = str(data)
 
-        if isinstance(
+        if FlextUtilitiesGuards.is_type(
             pagination,
-            (str, int, float, bool, type(None), Sequence, Mapping),
-        ):
+            (str, int, float, bool, type(None)),
+        ) or isinstance(pagination, (Sequence, Mapping)):
             pagination_typed = pagination
         else:
             pagination_typed = str(pagination)
 
-        response: dict[str, t.GeneralValueType] = {
+        response: t.Types.ConfigurationDict = {
             "data": data_typed,
             "pagination": pagination_typed,
         }
@@ -210,7 +212,7 @@ class FlextUtilitiesPagination:
     @staticmethod
     def extract_pagination_config(
         config: t.GeneralValueType | None,
-    ) -> dict[str, int]:
+    ) -> t.Types.StringIntDict:
         """Extract pagination configuration values - no fallbacks.
 
         Args:
@@ -221,15 +223,15 @@ class FlextUtilitiesPagination:
 
         """
         # Default values
-        default_page_size = 20
-        max_page_size = 1000
+        default_page_size = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
+        max_page_size = c.Pagination.MAX_PAGE_SIZE_EXAMPLE
 
         if config is not None:
             # Use getattr to safely access attributes without type narrowing issues
             default_page_size_attr = getattr(config, "default_page_size", None)
             if (
                 default_page_size_attr is not None
-                and isinstance(default_page_size_attr, int)
+                and FlextUtilitiesGuards.is_type(default_page_size_attr, int)
                 and default_page_size_attr > 0
             ):
                 default_page_size = default_page_size_attr
@@ -237,7 +239,7 @@ class FlextUtilitiesPagination:
             max_page_size_attr = getattr(config, "max_page_size", None)
             if (
                 max_page_size_attr is not None
-                and isinstance(max_page_size_attr, int)
+                and FlextUtilitiesGuards.is_type(max_page_size_attr, int)
                 and max_page_size_attr > 0
             ):
                 max_page_size = max_page_size_attr

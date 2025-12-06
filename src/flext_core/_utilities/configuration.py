@@ -42,12 +42,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
 from typing import cast
 
-from flext_core.constants import FlextConstants
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.config import FlextConfig
+from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
@@ -55,7 +55,7 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Model, t
 
 
-class FlextConfiguration:
+class FlextUtilitiesConfiguration:
     """Configuration utilities for parameter access and manipulation.
 
     Business Rules:
@@ -85,7 +85,7 @@ class FlextConfiguration:
     """
 
     @staticmethod
-    def _get_logger() -> p.StructlogLogger:
+    def _get_logger() -> p.Infrastructure.Logger.StructlogLogger:
         """Get logger instance using FlextRuntime.
 
         Business Rule: Logger access through FlextRuntime avoids circular
@@ -134,22 +134,7 @@ class FlextConfiguration:
             )
 
         """
-        # Check for custom env file path
-        custom_env_file = os.environ.get(FlextConstants.Platform.ENV_FILE_ENV_VAR)
-        if custom_env_file:
-            custom_path = Path(custom_env_file)
-            if custom_path.exists():
-                return str(custom_path.resolve())
-            # If custom path doesn't exist, return it anyway (Pydantic will handle gracefully)
-            return custom_env_file
-
-        # Default: use .env from current directory
-        default_path = Path.cwd() / FlextConstants.Platform.ENV_FILE_DEFAULT
-        if default_path.exists():
-            return str(default_path.resolve())
-
-        # Fallback: use default value (Pydantic handles missing file gracefully)
-        return FlextConstants.Platform.ENV_FILE_DEFAULT
+        return FlextConfig.resolve_env_file()
 
     # =========================================================================
     # Sentinel Pattern for Parameter Access
@@ -172,7 +157,7 @@ class FlextConfiguration:
 
     @staticmethod
     def _try_get_attr(
-        obj: t.GeneralValueType | p.HasModelDump,
+        obj: t.GeneralValueType | p.Foundation.HasModelDump,
         parameter: str,
     ) -> tuple[bool, t.GeneralValueType | None]:
         """Try to get attribute value from object via hasattr/getattr.
@@ -199,11 +184,11 @@ class FlextConfiguration:
         """
         if hasattr(obj, parameter):
             return (True, cast("t.GeneralValueType", getattr(obj, parameter)))
-        return FlextConfiguration._NOT_FOUND
+        return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
     def _try_get_from_model_dump(
-        obj: p.HasModelDump,
+        obj: p.Foundation.HasModelDump,
         parameter: str,
     ) -> tuple[bool, t.GeneralValueType | None]:
         """Try to get parameter from HasModelDump protocol object.
@@ -234,11 +219,11 @@ class FlextConfiguration:
         """
         try:
             obj_dict = obj.model_dump()
-            if isinstance(obj_dict, dict) and parameter in obj_dict:
+            if FlextUtilitiesGuards.is_type(obj_dict, dict) and parameter in obj_dict:
                 return (True, cast("t.GeneralValueType", obj_dict[parameter]))
         except (AttributeError, TypeError, ValueError):
             pass
-        return FlextConfiguration._NOT_FOUND
+        return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
     def _try_get_from_dict_like(
@@ -273,11 +258,11 @@ class FlextConfiguration:
         """
         if FlextRuntime.is_dict_like(obj) and parameter in obj:
             return (True, obj[parameter])
-        return FlextConfiguration._NOT_FOUND
+        return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: t.GeneralValueType | p.HasModelDump,
+        obj: t.GeneralValueType | p.Foundation.HasModelDump,
         parameter: str,
     ) -> tuple[bool, t.GeneralValueType | None]:
         """Try to get parameter via duck-typed model_dump method.
@@ -310,21 +295,26 @@ class FlextConfiguration:
         """
         model_dump_fn = getattr(obj, "model_dump", None)
         if model_dump_fn is None or not callable(model_dump_fn):
-            return FlextConfiguration._NOT_FOUND
+            return FlextUtilitiesConfiguration._NOT_FOUND
         try:
             model_data = model_dump_fn()
-            if isinstance(model_data, dict) and parameter in model_data:
-                return (
-                    True,
-                    cast("t.GeneralValueType", model_data[parameter]),
+            if FlextUtilitiesGuards.is_type(model_data, dict):
+                model_data_dict: dict[str, object] = cast(
+                    "dict[str, object]",
+                    model_data,
                 )
+                if parameter in model_data_dict:
+                    return (
+                        True,
+                        cast("t.GeneralValueType", model_data_dict[parameter]),
+                    )
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
-        return FlextConfiguration._NOT_FOUND
+        return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
     def get_parameter(
-        obj: t.GeneralValueType | p.HasModelDump,
+        obj: t.GeneralValueType | p.Foundation.HasModelDump,
         parameter: str,
     ) -> t.GeneralValueType:
         """Get parameter value from a configuration object.
@@ -372,8 +362,11 @@ class FlextConfiguration:
 
         """
         # Strategy 1: HasModelDump protocol
-        if isinstance(obj, p.HasModelDump):
-            found, value = FlextConfiguration._try_get_from_model_dump(obj, parameter)
+        if isinstance(obj, p.Foundation.HasModelDump):
+            found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
+                obj,
+                parameter,
+            )
             if found:
                 # Type narrowing: when found is True, value is GeneralValueType (not None)
                 return value
@@ -381,21 +374,25 @@ class FlextConfiguration:
         # Strategy 2: Dict-like GeneralValueType
         if isinstance(obj, (str, int, float, bool, type(None), Sequence, Mapping)):
             obj_general = cast("t.GeneralValueType", obj)
-            found, value = FlextConfiguration._try_get_from_dict_like(
-                obj_general, parameter
+            found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
+                obj_general,
+                parameter,
             )
             if found:
                 # Type narrowing: when found is True, value is GeneralValueType (not None)
                 return value
 
         # Strategy 3: Object with model_dump method (duck typing)
-        found, value = FlextConfiguration._try_get_from_duck_model_dump(obj, parameter)
+        found, value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+            obj,
+            parameter,
+        )
         if found:
             # Type narrowing: when found is True, value is GeneralValueType (not None)
             return value
 
         # Strategy 4: Direct attribute access (final fallback)
-        found, attr_val = FlextConfiguration._try_get_attr(obj, parameter)
+        found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
         if found:
             # Type narrowing: when found is True, attr_val is GeneralValueType (not None)
             return attr_val
@@ -405,7 +402,7 @@ class FlextConfiguration:
 
     @staticmethod
     def set_parameter(
-        obj: t.GeneralValueType | p.HasModelDump,
+        obj: t.GeneralValueType | p.Foundation.HasModelDump,
         parameter: str,
         value: t.GeneralValueType,
     ) -> bool:
@@ -449,11 +446,11 @@ class FlextConfiguration:
         """
         try:
             # Check if parameter exists in model fields for Pydantic objects
-            if isinstance(obj, p.HasModelFields):
+            if isinstance(obj, p.Foundation.HasModelFields):
                 # Access model_fields from class, not instance (Pydantic 2.11+ compatibility)
                 model_fields_dict = getattr(type(obj), "model_fields", {})
                 if (
-                    not isinstance(model_fields_dict, dict)
+                    not FlextUtilitiesGuards.is_type(model_fields_dict, dict)
                     or parameter not in model_fields_dict
                 ):
                     return False
@@ -512,10 +509,10 @@ class FlextConfiguration:
             get_global_instance_method = singleton_class.get_global_instance
             if callable(get_global_instance_method):
                 instance = get_global_instance_method()
-                if isinstance(instance, p.HasModelDump):
+                if isinstance(instance, p.Foundation.HasModelDump):
                     # Type narrowing: instance is HasModelDump
-                    has_model_dump_instance: p.HasModelDump = instance
-                    return FlextConfiguration.get_parameter(
+                    has_model_dump_instance: p.Foundation.HasModelDump = instance
+                    return FlextUtilitiesConfiguration.get_parameter(
                         has_model_dump_instance,
                         parameter,
                     )
@@ -575,14 +572,14 @@ class FlextConfiguration:
             )
 
         instance = get_global_instance_method()
-        if not isinstance(instance, p.HasModelDump):
+        if not isinstance(instance, p.Foundation.HasModelDump):
             return r[bool].fail(
                 "Instance does not implement HasModelDump protocol",
             )
 
         # Type narrowing: instance is HasModelDump
-        has_model_dump_instance: p.HasModelDump = instance
-        success = FlextConfiguration.set_parameter(
+        has_model_dump_instance: p.Foundation.HasModelDump = instance
+        success = FlextUtilitiesConfiguration.set_parameter(
             has_model_dump_instance,
             parameter,
             value,
@@ -653,7 +650,7 @@ class FlextConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationDict:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration
@@ -694,7 +691,7 @@ class FlextConfiguration:
             "env_file": env_file,
             "env_nested_delimiter": env_nested_delimiter,
             "case_sensitive": False,
-            "extra": "ignore",
+            "extra": c.ModelConfig.EXTRA_IGNORE,
             "validate_default": True,
         }
 
@@ -782,13 +779,15 @@ class FlextConfiguration:
             # Step 3: Get valid field names from model class
             # Access model_fields as class attribute for type safety
             model_fields_attr = getattr(model_class, "model_fields", {})
-            model_fields: dict[str, t.GeneralValueType] = (
-                model_fields_attr if isinstance(model_fields_attr, dict) else {}
+            model_fields: t.Types.ConfigurationDict = (
+                model_fields_attr
+                if FlextUtilitiesGuards.is_type(model_fields_attr, dict)
+                else {}
             )
             valid_field_names = set(model_fields.keys())
 
             # Step 4: Filter kwargs to only valid field names
-            valid_kwargs: dict[str, t.GeneralValueType] = {}
+            valid_kwargs: t.Types.ConfigurationDict = {}
             invalid_kwargs: list[str] = []
 
             for key, value in kwargs.items():
@@ -802,7 +801,7 @@ class FlextConfiguration:
 
             # Step 5: Log warning for invalid kwargs (don't fail)
             if invalid_kwargs:
-                FlextConfiguration._get_logger().warning(
+                FlextUtilitiesConfiguration._get_logger().warning(
                     "Ignored invalid kwargs for %s: %s. Valid fields: %s",
                     class_name,
                     invalid_kwargs,
@@ -834,7 +833,7 @@ class FlextConfiguration:
         except Exception as e:
             # Unexpected error
             class_name = getattr(model_class, "__name__", "UnknownModel")
-            FlextConfiguration._get_logger().exception(
+            FlextUtilitiesConfiguration._get_logger().exception(
                 "Unexpected error building options model",
             )
             return r[T_Model].fail(
@@ -842,9 +841,6 @@ class FlextConfiguration:
             )
 
 
-uConfiguration = FlextConfiguration  # noqa: N816
-
 __all__ = [
-    "FlextConfiguration",
-    "uConfiguration",
+    "FlextUtilitiesConfiguration",
 ]

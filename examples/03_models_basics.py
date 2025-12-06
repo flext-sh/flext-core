@@ -18,7 +18,7 @@ from flext_core import (
     FlextConstants,
     FlextModels,
     FlextResult,
-    FlextService,
+    s,
     t,
 )
 
@@ -27,7 +27,7 @@ from flext_core import (
 # ========== DOMAIN MODELS ==========
 
 
-class Email(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextModels.Value is assignment alias, valid for inheritance
+class Email(FlextModels.Value):
     """Email value object with advanced Pydantic 2 EmailStr validation."""
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
@@ -41,14 +41,14 @@ class Email(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextModels.
     ]
 
 
-class Money(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextModels.Value is assignment alias, valid for inheritance
+class Money(FlextModels.Value):
     """Money value object with StrEnum currency and railway operations."""
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
 
     amount: Annotated[Decimal, Field(gt=0)]
     currency: FlextConstants.Domain.Currency | str = Field(
-        default=FlextConstants.Domain.Currency.USD
+        default=FlextConstants.Domain.Currency.USD,
     )
 
     def add(self, other: Money) -> FlextResult[Money]:
@@ -56,11 +56,11 @@ class Money(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextModels.
         if self.currency != other.currency:
             return FlextResult.fail("Currency mismatch")
         return FlextResult.ok(
-            Money(amount=self.amount + other.amount, currency=self.currency)
+            Money(amount=self.amount + other.amount, currency=self.currency),
         )
 
 
-class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.Entity is assignment alias, valid for inheritance
+class User(FlextModels.Entity):
     """User entity with comprehensive validation and domain rules."""
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
@@ -73,12 +73,13 @@ class User(FlextModels.Entity):  # type: ignore[misc,valid-type]  # FlextModels.
     age: Annotated[
         int,
         Field(
-            ge=FlextConstants.Validation.MIN_AGE, le=FlextConstants.Validation.MAX_AGE
+            ge=FlextConstants.Validation.MIN_AGE,
+            le=FlextConstants.Validation.MAX_AGE,
         ),
     ]
 
 
-class OrderItem(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextModels.Value is assignment alias, valid for inheritance
+class OrderItem(FlextModels.Value):
     """Order item with computed fields and railway validation."""
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
@@ -88,8 +89,8 @@ class OrderItem(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextMod
     price: Money
     quantity: Annotated[int, Field(gt=0, le=1000)]
 
-    @computed_field  # type: ignore[prop-decorator]  # Pydantic 2 requires @property with @computed_field
     @property
+    @computed_field
     def total(self) -> Money:
         """Railway-aware total calculation."""
         return Money(
@@ -98,7 +99,7 @@ class OrderItem(FlextModels.Value):  # type: ignore[misc,valid-type]  # FlextMod
         )
 
 
-class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # FlextModels.AggregateRoot is assignment alias, valid for inheritance
+class Order(FlextModels.AggregateRoot):
     """Order aggregate root with advanced business rules."""
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
@@ -106,7 +107,7 @@ class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # Flex
     customer_id: str = Field(min_length=1)
     items: list[OrderItem] = Field(default_factory=list)
     status: FlextConstants.Domain.OrderStatus = Field(
-        default=FlextConstants.Domain.OrderStatus.PENDING
+        default=FlextConstants.Domain.OrderStatus.PENDING,
     )
 
     def add_item(self, item: OrderItem) -> FlextResult[Order]:
@@ -127,8 +128,8 @@ class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # Flex
         self.status = FlextConstants.Domain.OrderStatus.CONFIRMED
         return FlextResult.ok(self)
 
-    @computed_field  # type: ignore[prop-decorator]  # Pydantic 2 requires @property with @computed_field
     @property
+    @computed_field
     def total(self) -> Money:
         """Railway-aware order total calculation."""
         if not self.items:
@@ -138,69 +139,97 @@ class Order(FlextModels.AggregateRoot):  # type: ignore[misc,valid-type]  # Flex
         return Money(amount=total_amount, currency=currency)
 
 
-# Rebuild models to resolve forward references after all definitions
-# Use FlextModels.Entity directly (no private imports)
-# FlextModels.Entity is already the correct type (FlextModelsEntity.Core)
-_types_namespace = {**globals(), "FlextModels": FlextModels}
-User.model_rebuild(_types_namespace=_types_namespace)
-Order.model_rebuild(_types_namespace=_types_namespace)
-OrderItem.model_rebuild(_types_namespace=_types_namespace)
+# No model_rebuild() needed - Pydantic v2 with 'from __future__ import annotations'
+# automatically resolves forward references at runtime
 
 
-class DomainModelService(FlextService[t.Types.ServiceMetadataMapping]):
+class DomainModelService(s[t.Types.ServiceMetadataMapping]):
     """Advanced DDD demonstration service with railway-oriented programming."""
 
-    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:  # noqa: PLR6301  # Required by FlextService abstract method
+    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Execute comprehensive DDD demonstrations using railway patterns."""
         # Railway pattern with value objects using traverse (DRY)
-        email_result = FlextResult.ok(Email(address="Test@Example.Com"))
-        money_result = FlextResult.ok(
-            Money(amount=Decimal("10.00"), currency=FlextConstants.Domain.Currency.USD)
-        ).flat_map(lambda m: m.add(Money(amount=Decimal("5.00"), currency=m.currency)))
+        email_result = FlextResult[Email].ok(Email(address="Test@Example.Com"))
+
+        def add_money(m: Money) -> FlextResult[Money]:
+            return m.add(Money(amount=Decimal("5.00"), currency=m.currency))
+
+        money_result = (
+            FlextResult[Money]
+            .ok(
+                Money(
+                    amount=Decimal("10.00"),
+                    currency=FlextConstants.Domain.Currency.USD,
+                ),
+            )
+            .flat_map(add_money)
+        )
 
         # Combine results using railway pattern (DRY - no manual error collection)
-        value_objects_result = email_result.flat_map(
-            lambda email: money_result.map(lambda money: (email, money))
+        def combine_email_money(email: Email) -> FlextResult[tuple[Email, Money]]:
+            def make_tuple(money: Money) -> tuple[Email, Money]:
+                return (email, money)
+
+            return money_result.map(make_tuple)
+
+        value_objects_result: FlextResult[tuple[Email, Money]] = email_result.flat_map(
+            combine_email_money,
         )
 
         # Entity and aggregate with railway pattern
-        user_result = FlextResult.ok(
+        user_result = FlextResult[User].ok(
             User(
                 name="Alice",
                 email=Email(address="alice@example.com"),
                 age=30,
-            )
+            ),
         )
 
-        order_result = (
-            FlextResult.ok(Order(customer_id="cust-123"))
-            .flat_map(
-                lambda o: o.add_item(
-                    OrderItem(
-                        product_id="prod-001",
-                        name="Widget",
-                        price=Money(amount=Decimal("29.99")),
-                        quantity=2,
-                    )
-                )
+        def add_order_item(o: Order) -> FlextResult[Order]:
+            return o.add_item(
+                OrderItem(
+                    product_id="prod-001",
+                    name="Widget",
+                    price=Money(amount=Decimal("29.99")),
+                    quantity=2,
+                ),
             )
+
+        order_result = (
+            FlextResult[Order]
+            .ok(Order(customer_id="cust-123"))
+            .flat_map(add_order_item)
             .flat_map(Order.confirm)
         )
 
         # Combine all results using railway pattern (DRY)
-        return value_objects_result.flat_map(
-            lambda vo_tuple: user_result.flat_map(
-                lambda user: order_result.map(
-                    lambda order: {
-                        "email": vo_tuple[0].address,
-                        "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
-                        "user_id": user.entity_id,
-                        "order_total": float(order.total.amount),
-                        "order_status": order.status,
-                    }
-                )
-            )
-        )
+        def build_result(
+            vo_tuple: tuple[Email, Money],
+            user: User,
+            order: Order,
+        ) -> t.Types.ServiceMetadataMapping:
+            return {
+                "email": vo_tuple[0].address,
+                "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
+                "user_id": user.entity_id,
+                "order_total": float(order.total.amount),
+                "order_status": order.status,
+            }
+
+        def combine_with_user(
+            vo_tuple: tuple[Email, Money],
+        ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+            def combine_with_order(
+                user: User,
+            ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+                def finalize(order: Order) -> t.Types.ServiceMetadataMapping:
+                    return build_result(vo_tuple, user, order)
+
+                return order_result.map(finalize)
+
+            return user_result.flat_map(combine_with_order)
+
+        return value_objects_result.flat_map(combine_with_user)
 
 
 def main() -> None:
@@ -214,10 +243,12 @@ def main() -> None:
             print(f"✅ Money sum: {data['money_sum']}")
             print(f"✅ User ID: {data['user_id']}")
             print(
-                f"✅ Order total: {data['order_total']}, status: {data['order_status']}"
+                f"✅ Order total: {data['order_total']}, status: {data['order_status']}",
             )
         case FlextResult(is_success=False, error=error):
             print(f"❌ Failed: {error}")
+        case _:
+            pass
 
     print("🎯 Advanced DDD: Value Objects, Entities, Aggregate Roots")
     print("🎯 Railway Pattern: Comprehensive error handling throughout")

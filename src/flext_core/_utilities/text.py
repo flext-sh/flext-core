@@ -13,17 +13,17 @@ from __future__ import annotations
 
 import re
 
-from flext_core.constants import FlextConstants
+from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 
 
-class FlextTextProcessor:
+class FlextUtilitiesText:
     """Low-level text normalization helpers for CQRS utilities."""
 
     @property
-    def logger(self) -> p.StructlogLogger:
+    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -46,13 +46,13 @@ class FlextTextProcessor:
         return re.sub(
             r"\s+",
             " ",
-            re.sub(FlextConstants.Utilities.CONTROL_CHARS_PATTERN, "", text),
+            re.sub(c.Utilities.CONTROL_CHARS_PATTERN, "", text),
         ).strip()
 
     @staticmethod
     def truncate_text(
         text: str,
-        max_length: int = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+        max_length: int = c.Performance.BatchProcessing.DEFAULT_SIZE,
         suffix: str = "...",
     ) -> r[str]:
         """Truncate text to maximum length with suffix."""
@@ -88,9 +88,6 @@ class FlextTextProcessor:
         return stripped
 
 
-uTextProcessor = FlextTextProcessor  # noqa: N816
-
 __all__ = [
-    "FlextTextProcessor",
-    "uTextProcessor",
+    "FlextUtilitiesText",
 ]

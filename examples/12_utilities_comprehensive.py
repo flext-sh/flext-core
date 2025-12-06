@@ -14,6 +14,7 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import (
     FlextConstants,
+    FlextModels,
     FlextResult,
     FlextService,
     t,
@@ -92,7 +93,9 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         # Email validation using u
         email = str(TEST_DATA["email"])
         email_result = u.Validation.validate_pattern(
-            email, FlextConstants.Platform.PATTERN_EMAIL, "email"
+            email,
+            FlextConstants.Platform.PATTERN_EMAIL,
+            "email",
         )
         print(f"✅ Email validation: {email} -> {email_result.is_success}")
 
@@ -129,13 +132,13 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         # Correlation ID using u
         correlation_id = u.Generators.generate_correlation_id()
         print(
-            f"✅ Correlation ID: {correlation_id[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}..."
+            f"✅ Correlation ID: {correlation_id[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}...",
         )
 
         # Short ID using u
         short_id = u.Generators.Random.generate_short_id()
         print(
-            f"✅ Short ID: {short_id[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}..."
+            f"✅ Short ID: {short_id[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}...",
         )
 
         # Entity ID
@@ -160,9 +163,9 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         float_str = str(TEST_DATA["float_str"])
 
         # Parse delimited strings using railway pattern (DRY)
-        parser = u.StringParser()
+        parser = u.Parser()
         parser.parse_delimited("a,b,c", ",").map(
-            lambda parsed: print(f"✅ Delimited parsing: {parsed}")
+            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
         )
 
         # String to number conversion concepts
@@ -197,7 +200,7 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         def operation() -> FlextResult[str]:
             return FlextResult[str].ok("success")
 
-        retry_result = u.Reliability.retry(
+        retry_result: FlextResult[str] = u.Reliability.retry(
             operation,
             max_attempts=3,
             delay_seconds=0.1,
@@ -220,14 +223,16 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         print("\n=== String Parsing ===")
 
         # Parse delimited strings using railway pattern (DRY)
-        parser = u.StringParser()
-        parser.parse_delimited("a, b, c", ",", strip=True, remove_empty=True).map(
-            lambda parsed: print(f"✅ Delimited parsing: {parsed}")
+        parser = u.Parser()
+        # Use FlextModels.Collections.ParseOptions instead of private import
+        options = FlextModels.Collections.ParseOptions(strip=True, remove_empty=True)
+        parser.parse_delimited("a, b, c", ",", options=options).map(
+            lambda parsed: print(f"✅ Delimited parsing: {parsed}"),
         )
 
         # Split with escape handling using railway pattern (DRY)
         parser.split_on_char_with_escape("cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\").map(
-            lambda split: print(f"✅ Escaped split: {split}")
+            lambda split: print(f"✅ Escaped split: {split}"),
         )
 
     @staticmethod
@@ -237,11 +242,12 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
 
         # Parse sequence of StrEnum values using railway pattern (DRY)
         u.Collection.parse_sequence(
-            FlextConstants.Example.UtilityType, ["validation", "id_generation"]
+            FlextConstants.Example.UtilityType,
+            ["validation", "id_generation"],
         ).map(
             lambda parsed_enums: print(
-                f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}"
-            )
+                f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}",
+            ),
         )
 
     @staticmethod
@@ -250,7 +256,7 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         print("\n=== Type Checking ===")
 
         # Compute accepted message types for a handler class
-        message_types = u.TypeChecker.compute_accepted_message_types(UtilitiesService)
+        message_types = u.Checker.compute_accepted_message_types(UtilitiesService)
         print(f"✅ Message types computed: {len(message_types)} types")
 
 
@@ -269,7 +275,7 @@ def main() -> None:
     print("FLEXT UTILITIES - COMPREHENSIVE DEMONSTRATION")
     print(
         "Validation, generation, conversion, caching, reliability, "
-        "parsing, collections, type checking"
+        "parsing, collections, type checking",
     )
     print("=" * 60)
 

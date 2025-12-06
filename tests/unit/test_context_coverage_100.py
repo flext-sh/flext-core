@@ -18,11 +18,12 @@ from pydantic import BaseModel
 from flext_core import (
     FlextConstants,
     FlextContext,
-    FlextModels,
     FlextResult,
+    m,
+    r,
+    t,
 )
-from flext_core._models.base import FlextModelsBase
-from flext_core.typings import t
+from flext_tests.utilities import FlextTestsUtilities
 
 # ==================== COVERAGE TESTS ====================
 
@@ -40,7 +41,7 @@ class TestContext100Coverage:
 
         # Verify key is removed
         result = context.get("test_key")
-        assert result.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_remove_nonexistent_key(self) -> None:
         """Test remove with nonexistent key (idempotent)."""
@@ -51,7 +52,7 @@ class TestContext100Coverage:
 
         # Verify key still doesn't exist
         result = context.get("nonexistent_key")
-        assert result.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_clear_removes_all_data(self) -> None:
         """Test clear removes all data."""
@@ -65,8 +66,8 @@ class TestContext100Coverage:
         # Verify all keys are removed
         result1 = context.get("key1")
         result2 = context.get("key2")
-        assert result1.is_failure
-        assert result2.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result1)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result2)
 
     def test_merge_with_dict(self) -> None:
         """Test merge with dictionary."""
@@ -87,8 +88,8 @@ class TestContext100Coverage:
         # Verify merged data
         result2 = merged.get("key2")
         result3 = merged.get("key3")
-        assert result2.is_success
-        assert result3.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result2)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result3)
 
     def test_merge_with_context(self) -> None:
         """Test merge with another context."""
@@ -104,8 +105,8 @@ class TestContext100Coverage:
         # Verify merged data
         result1 = merged.get("key1")
         result2 = merged.get("key2")
-        assert result1.is_success
-        assert result2.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result1)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result2)
 
     def test_clone_creates_independent_copy(self) -> None:
         """Test clone creates independent copy."""
@@ -117,14 +118,18 @@ class TestContext100Coverage:
 
         # Verify cloned has same data
         result = cloned.get("key1")
-        assert result.is_success
-        assert result.unwrap() == "value1"
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            cast("r[str]", result),
+            "value1",
+        )
 
         # Modify original - clone should be independent
         context1.set("key1", "modified").unwrap()
         cloned_result = cloned.get("key1")
-        assert cloned_result.is_success
-        assert cloned_result.unwrap() == "value1"  # Clone unchanged
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            cast("r[str]", cloned_result),
+            "value1",
+        )  # Clone unchanged
 
     def test_validate_success(self) -> None:
         """Test validate with valid context."""
@@ -132,7 +137,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").unwrap()
 
         result = context.validate()
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_suspend_resume(self) -> None:
         """Test suspend and resume functionality."""
@@ -160,7 +165,7 @@ class TestContext100Coverage:
 
         # Operations should fail after destroy
         result = context.set("key2", "value2")
-        assert result.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_export_returns_dict(self) -> None:
         """Test export returns dictionary with scoped data."""
@@ -184,7 +189,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").unwrap()
 
         snapshot = context._export_snapshot()
-        assert isinstance(snapshot, FlextModels.ContextExport)
+        assert isinstance(snapshot, m.Context.ContextExport)
         assert "key1" in snapshot.data
 
     def test_import_data_loads_dict(self) -> None:
@@ -204,8 +209,8 @@ class TestContext100Coverage:
         # Verify imported data
         result1 = context.get("key1")
         result2 = context.get("key2")
-        assert result1.is_success
-        assert result2.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result1)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result2)
 
     def test_import_empty_data(self) -> None:
         """Test import_data with empty dict."""
@@ -216,7 +221,7 @@ class TestContext100Coverage:
 
         # Existing data should remain
         result = context.get("existing")
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_get_with_none_value_returns_failure(self) -> None:
         """Test get with None value returns failure."""
@@ -233,7 +238,7 @@ class TestContext100Coverage:
 
         # Get None value should return failure
         result = context.get("none_key")
-        assert result.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
         assert result.error is not None and "None value" in result.error
 
     def test_get_when_context_not_active(self) -> None:
@@ -251,7 +256,7 @@ class TestContext100Coverage:
         context._destroy()  # Deactivates context
 
         result = context.set("key", "value")
-        assert result.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
         assert result.error is not None and "not active" in result.error
 
     def test_has_returns_false_when_not_active(self) -> None:
@@ -321,7 +326,7 @@ class TestContext100Coverage:
         context._destroy()  # Deactivates context
 
         snapshot = context._export_snapshot()
-        assert isinstance(snapshot, FlextModels.ContextExport)
+        assert isinstance(snapshot, m.Context.ContextExport)
 
     def test_import_data_when_not_active(self) -> None:
         """Test import_data when context not active."""
@@ -453,7 +458,7 @@ class TestContext100Coverage:
         context.get("key1")
 
         stats = context._get_statistics()
-        assert isinstance(stats, FlextModels.ContextStatistics)
+        assert isinstance(stats, m.Context.ContextStatistics)
 
     def test_statistics_access(self) -> None:
         """Test statistics access via get_statistics."""
@@ -461,7 +466,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").unwrap()
 
         stats = context._get_statistics()
-        assert isinstance(stats, FlextModels.ContextStatistics)
+        assert isinstance(stats, m.Context.ContextStatistics)
         assert stats.sets >= 1  # Fixed: Field is 'sets', not 'set_count'
 
     def test_to_json_returns_string(self) -> None:
@@ -554,7 +559,7 @@ class TestContext100Coverage:
         # Get nonexistent key and use unwrap_or for default
         result = context.get("nonexistent")
         # Cast to FlextResult to access unwrap_or (ResultProtocol doesn't have it)
-        # pyright: ignore[reportAttributeAccessIssue] - unwrap_or exists on FlextResult
+
         result_typed = cast("FlextResult[t.GeneralValueType]", result)
         value = result_typed.unwrap_or("default_value")
         assert value == "default_value"
@@ -596,9 +601,9 @@ class TestContext100Coverage:
         invalid_metadata: Any = 123
         with pytest.raises(
             TypeError,
-            match=r"metadata must be None, dict, or FlextModelsBase.Metadata",
+            match=r"metadata must be None, dict, or.*Metadata",
         ):
-            FlextModels.ContextData(metadata=invalid_metadata)
+            m.Context.ContextData(metadata=invalid_metadata)
 
     def test_context_data_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextData.validate_dict_serializable with non-string key."""
@@ -617,7 +622,7 @@ class TestContext100Coverage:
             Exception,  # Can be ValidationError from Pydantic or TypeError from custom validation
             match=r".*(keys must be strings|Dictionary keys must be strings|Input should be a valid string).*",
         ):
-            FlextModels.ContextData(data=bad_dict)
+            m.Context.ContextData(data=bad_dict)
 
     def test_context_data_validate_dict_serializable_non_serializable_value(
         self,
@@ -626,7 +631,7 @@ class TestContext100Coverage:
         # Test with dict containing non-serializable value (e.g., set)
         bad_dict: Any = {"key": {1, 2, 3}}  # set is not JSON-serializable
         with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
-            FlextModels.ContextData(data=bad_dict)
+            m.Context.ContextData(data=bad_dict)
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
@@ -636,7 +641,7 @@ class TestContext100Coverage:
 
         # Test with Pydantic model (should convert via model_dump)
         model: Any = TestModel()
-        export = FlextModels.ContextExport(data=model)
+        export = m.Context.ContextExport(data=model)
         assert isinstance(export.data, dict)
         assert "field" in export.data
 
@@ -648,7 +653,7 @@ class TestContext100Coverage:
             TypeError,
             match=r".*must be a dict or Pydantic model.*",
         ):
-            FlextModels.ContextExport(data=invalid_data)
+            m.Context.ContextExport(data=invalid_data)
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-string key."""
@@ -660,7 +665,7 @@ class TestContext100Coverage:
             Exception,  # Can be ValidationError from Pydantic or TypeError from custom validation
             match=r".*(keys must be strings|Dictionary keys must be strings|must be a dictionary|Input should be a valid string).*",
         ):
-            FlextModels.ContextExport(data=bad_data)
+            m.Context.ContextExport(data=bad_data)
 
     def test_context_export_validate_dict_serializable_non_serializable_value(
         self,
@@ -669,13 +674,13 @@ class TestContext100Coverage:
         # Test with dict containing non-serializable value (e.g., set)
         bad_dict: Any = {"key": {1, 2, 3}}  # set is not JSON-serializable
         with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
-            FlextModels.ContextExport(data=bad_dict)
+            m.Context.ContextExport(data=bad_dict)
 
     def test_context_export_total_data_items(self) -> None:
         """Test ContextExport.total_data_items computed field."""
-        export = FlextModels.ContextExport(
+        export = m.Context.ContextExport(
             data={"key1": "value1", "key2": "value2"},
-            metadata=FlextModelsBase.Metadata(attributes={}),
+            metadata=m.Metadata(attributes={}),
             statistics={},
         )
         # Access computed field directly (Pydantic v2 property)
@@ -684,18 +689,18 @@ class TestContext100Coverage:
     def test_context_export_has_statistics(self) -> None:
         """Test ContextExport.has_statistics computed field."""
         # With statistics
-        export1 = FlextModels.ContextExport(
+        export1 = m.Context.ContextExport(
             data={},
-            metadata=FlextModelsBase.Metadata(attributes={}),
+            metadata=m.Metadata(attributes={}),
             statistics={"sets": 5},
         )
         # Check that statistics are non-empty (computed field checks bool(statistics))
         assert bool(export1.statistics) is True
 
         # Without statistics
-        export2 = FlextModels.ContextExport(
+        export2 = m.Context.ContextExport(
             data={},
-            metadata=FlextModelsBase.Metadata(attributes={}),
+            metadata=m.Metadata(attributes={}),
             statistics={},
         )
         # Check that statistics are empty
@@ -709,14 +714,14 @@ class TestContext100Coverage:
 
         model: Any = TestModel()
         # Create instance with BaseModel - validator will be called
-        scope_data = FlextModels.ContextScopeData(data=model)
+        scope_data = m.Context.ContextScopeData(data=model)
         assert isinstance(scope_data.data, dict)
         assert "field" in scope_data.data
 
     def test_context_scope_data_validate_data_with_none(self) -> None:
         """Test ContextScopeData._validate_data with None."""
         # Create instance with empty dict (None validation tests not applicable here)
-        scope_data = FlextModels.ContextScopeData(data={})
+        scope_data = m.Context.ContextScopeData(data={})
         assert isinstance(scope_data.data, dict)
         assert scope_data.data == {}
 
@@ -728,14 +733,14 @@ class TestContext100Coverage:
 
         model: Any = TestModel()
         # Create instance with BaseModel - validator will be called
-        scope_data = FlextModels.ContextScopeData(metadata=model)
+        scope_data = m.Context.ContextScopeData(metadata=model)
         assert isinstance(scope_data.metadata, dict)
         assert "field" in scope_data.metadata
 
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
         """Test ContextScopeData._validate_metadata with None."""
         # Create instance with empty dict (None validation tests not applicable here)
-        scope_data = FlextModels.ContextScopeData(metadata={})
+        scope_data = m.Context.ContextScopeData(metadata={})
         assert isinstance(scope_data.metadata, dict)
         assert scope_data.metadata == {}
 
@@ -747,7 +752,7 @@ class TestContext100Coverage:
 
         model: Any = TestModel()
         # Create instance with BaseModel - validator will be called
-        stats = FlextModels.ContextStatistics(operations=model)
+        stats = m.Context.ContextStatistics(operations=model)
         assert isinstance(stats.operations, dict)
         assert "field" in stats.operations
 
@@ -755,7 +760,7 @@ class TestContext100Coverage:
         """Test ContextStatistics._validate_operations with None."""
         # Create instance with None - validator will convert to {}
         none_operations: Any = None
-        stats = FlextModels.ContextStatistics(operations=none_operations)
+        stats = m.Context.ContextStatistics(operations=none_operations)
         assert isinstance(stats.operations, dict)
         assert stats.operations == {}
 
@@ -767,7 +772,7 @@ class TestContext100Coverage:
 
         model: Any = TestModel()
         # Create instance with BaseModel - validator will be called
-        metadata = FlextModels.ContextMetadata(custom_fields=model)
+        metadata = m.Context.ContextMetadata(custom_fields=model)
         assert isinstance(metadata.custom_fields, dict)
         assert "field" in metadata.custom_fields
 
@@ -775,6 +780,6 @@ class TestContext100Coverage:
         """Test ContextMetadata._validate_custom_fields with None."""
         # Create instance with None - validator will convert to {}
         none_custom_fields: Any = None
-        metadata = FlextModels.ContextMetadata(custom_fields=none_custom_fields)
+        metadata = m.Context.ContextMetadata(custom_fields=none_custom_fields)
         assert isinstance(metadata.custom_fields, dict)
         assert metadata.custom_fields == {}

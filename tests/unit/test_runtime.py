@@ -594,7 +594,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.PHONE_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_phone_validation(self, test_case: RuntimeTestCase) -> None:
         """Test phone number validation.
@@ -603,14 +603,14 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_phone(
-            cast("t.GeneralValueType", test_case.test_input)
+            cast("t.GeneralValueType", test_case.test_input),
         )
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.DICT_LIKE_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test dict-like object validation.
@@ -628,7 +628,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.LIST_LIKE_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test list-like object validation.
@@ -646,7 +646,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.JSON_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_json_validation(self, test_case: RuntimeTestCase) -> None:
         """Test JSON string validation.
@@ -655,14 +655,14 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_json(
-            cast("t.GeneralValueType", test_case.test_input)
+            cast("t.GeneralValueType", test_case.test_input),
         )
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.IDENTIFIER_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_identifier_validation(self, test_case: RuntimeTestCase) -> None:
         """Test Python identifier validation.
@@ -671,14 +671,14 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_identifier(
-            cast("t.GeneralValueType", test_case.test_input)
+            cast("t.GeneralValueType", test_case.test_input),
         )
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.SERIALIZATION_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_safe_get_attribute(self, test_case: RuntimeTestCase) -> None:
         """Test safe attribute retrieval."""
@@ -687,8 +687,10 @@ class TestFlextRuntime:
             class TestObj:
                 attr = "value"
 
-            test_obj: t.GeneralValueType = TestObj()  # type: ignore[assignment]  # TestObj is compatible with GeneralValueType
-            result = FlextRuntime.safe_get_attribute(test_obj, "attr")
+            test_obj = TestObj()
+            # Type narrowing: TestObj is compatible with GeneralValueType
+            test_obj_cast: t.GeneralValueType = cast("t.GeneralValueType", test_obj)
+            result = FlextRuntime.safe_get_attribute(test_obj_cast, "attr")
             assert result == "value"
         elif (
             test_case.operation
@@ -698,9 +700,14 @@ class TestFlextRuntime:
             class TestObjDefault:
                 pass
 
-            test_obj_default: t.GeneralValueType = TestObjDefault()  # type: ignore[assignment]  # TestObjDefault is compatible with GeneralValueType
+            test_obj_default_obj = TestObjDefault()
+            # Type narrowing: TestObjDefault is compatible with GeneralValueType
+            test_obj_default_cast: t.GeneralValueType = cast(
+                "t.GeneralValueType",
+                test_obj_default_obj,
+            )
             result = FlextRuntime.safe_get_attribute(
-                test_obj_default,
+                test_obj_default_cast,
                 "missing",
                 "default",
             )
@@ -722,7 +729,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.GENERIC_ARGS_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_extract_generic_args(self, test_case: RuntimeTestCase) -> None:
         """Test extraction of generic type arguments.
@@ -740,7 +747,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.SEQUENCE_TYPE_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_sequence_type_detection(self, test_case: RuntimeTestCase) -> None:
         """Test sequence type detection.
@@ -758,7 +765,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.LIBRARY_ACCESS_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_external_library_access(self, test_case: RuntimeTestCase) -> None:
         """Test external library access."""
@@ -778,7 +785,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.STRUCTLOG_CONFIG_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_structlog_configuration(self, test_case: RuntimeTestCase) -> None:
         """Test structlog configuration."""
@@ -816,11 +823,10 @@ class TestFlextRuntime:
             # Business Rule: Callable processors are compatible with GeneralValueType at runtime
             # structlog accepts callable processors for custom processing
             processor_typed: t.GeneralValueType = cast(
-                "t.GeneralValueType", custom_processor
+                "t.GeneralValueType",
+                custom_processor,
             )
-            FlextRuntime.configure_structlog(
-                additional_processors=[processor_typed]  # type: ignore[list-item]  # GeneralValueType is compatible with processor type at runtime
-            )
+            FlextRuntime.configure_structlog(additional_processors=[processor_typed])
             assert FlextRuntime._structlog_configured is True
         elif test_case.operation == RuntimeOperationType.CONFIGURE_STRUCTLOG_IDEMPOTENT:
             FlextRuntime.configure_structlog()
@@ -830,7 +836,7 @@ class TestFlextRuntime:
     @pytest.mark.parametrize(
         "test_case",
         RuntimeScenarios.INTEGRATION_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_runtime_integration(self, test_case: RuntimeTestCase) -> None:
         """Test FlextRuntime integration scenarios."""

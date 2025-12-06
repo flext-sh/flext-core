@@ -209,14 +209,16 @@ class TestsCore:
 
         service = ConcreteService()
         result = service.execute()
-        assert result.is_success
-        assert result.value == "test_value"
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            result,
+            "test_value",
+        )
 
     def test_basic_execution(self) -> None:
         """Test basic service execution returns expected type."""
         service = UserService()
         result = service.execute()
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         data = result.value
         assert isinstance(data, Mapping)
         assert "user_id" in data
@@ -235,21 +237,22 @@ class TestsCore:
         """Test default business rules validation."""
         service = UserService()
         result = service.validate_business_rules()
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test custom business rules validation success."""
         service = ComplexService(name="test")
         result = service.validate_business_rules()
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_validate_business_rules_custom_failure(self) -> None:
         """Test custom business rules validation failure."""
         service = ComplexService(name="")
         result = service.validate_business_rules()
-        assert result.is_failure
-        assert result.error is not None
-        assert "Missing value" in result.error
+        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            result,
+            "Missing value",
+        )
 
     def test_get_service_info(self) -> None:
         """Test get_service_info returns proper metadata."""
@@ -263,7 +266,7 @@ class TestsCore:
         # Use generic helper to validate model attributes
         service = ComplexService(name="test", amount=10, enabled=True)
         validation_result = (
-            FlextTestsUtilities.GenericHelpers.validate_model_attributes(
+            FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
                 service,
                 required_attrs=["name", "amount", "enabled"],
                 optional_attrs=["validate_business_rules"],
@@ -276,16 +279,18 @@ class TestsCore:
         # Test with missing required attributes
         service = ComplexService(name="", amount=-1, enabled=False)
         validation_result = (
-            FlextTestsUtilities.GenericHelpers.validate_model_attributes(
+            FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
                 service,
                 required_attrs=["name"],
             )
         )
         # Should pass attribute check, but business rules should fail
-        assert validation_result.is_success  # Attributes exist
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(
+            validation_result,
+        )  # Attributes exist
         # But business rules validation should fail
         business_result = service.validate_business_rules()
-        assert business_result.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(business_result)
 
 
 __all__ = ["TestsCore"]

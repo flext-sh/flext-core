@@ -12,16 +12,13 @@ from __future__ import annotations
 import pytest
 from pydantic import PrivateAttr
 
-from flext_core import FlextContainer, FlextResult, FlextService
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.entity import FlextModelsEntity
-from flext_core.typings import t
+from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
 
 from ..conftest import FunctionalExternalService
 
 
-class UserServiceEntity(FlextModelsEntity.Core):
-    """Test user entity model using FlextModels.Entity."""
+class UserServiceEntity(m.Entity):
+    """Test user entity model using m.Entity."""
 
     name: str
     email: str
@@ -65,9 +62,9 @@ class UserQueryService(FlextService[bool]):
 
         """
         if self._should_fail:
-            return FlextResult[bool].fail("User service unavailable")
+            return r[bool].fail("User service unavailable")
         # Business Rule: Return True to indicate service is ready
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     def get_user(self, user_id: str) -> FlextResult[UserServiceEntity]:
         """Get user by ID.
@@ -79,13 +76,14 @@ class UserQueryService(FlextService[bool]):
             FlextResult[UserServiceEntity]: User entity or failure.
 
         """
-        object.__setattr__(self, "_call_count", self._call_count + 1)
+        # For frozen Pydantic models, use setattr to modify PrivateAttr fields
+        self._call_count += 1
 
         if self._should_fail:
-            return FlextResult[UserServiceEntity].fail("User service unavailable")
+            return r[UserServiceEntity].fail("User service unavailable")
 
         if user_id in self._users:
-            return FlextResult[UserServiceEntity].ok(self._users[user_id])
+            return r[UserServiceEntity].ok(self._users[user_id])
         # Create default user entity
         default_user = UserServiceEntity(
             unique_id=user_id,
@@ -93,7 +91,7 @@ class UserQueryService(FlextService[bool]):
             email=f"user{user_id}@example.com",
             active=True,
         )
-        return FlextResult[UserServiceEntity].ok(default_user)
+        return r[UserServiceEntity].ok(default_user)
 
     def set_user_data(self, user_id: str, user: UserServiceEntity) -> None:
         """Set user data for testing.
@@ -112,7 +110,8 @@ class UserQueryService(FlextService[bool]):
             should_fail: Whether service should fail.
 
         """
-        object.__setattr__(self, "_should_fail", should_fail)
+        # For frozen Pydantic models, PrivateAttr fields can be modified directly
+        self._should_fail = should_fail
 
     @property
     def call_count(self) -> int:
@@ -137,8 +136,8 @@ class NotificationService(FlextService[str]):
     def execute(self) -> FlextResult[str]:
         """Execute notification service."""
         if self._should_fail:
-            return FlextResult[str].fail("Notification service unavailable")
-        return FlextResult[str].ok("sent")
+            return r[str].fail("Notification service unavailable")
+        return r[str].ok("sent")
 
     def send(self, email: str) -> FlextResult[str]:
         """Send notification.
@@ -150,16 +149,17 @@ class NotificationService(FlextService[str]):
             FlextResult[str]: Success confirmation or failure.
 
         """
-        object.__setattr__(self, "_call_count", self._call_count + 1)
+        # For frozen Pydantic models, PrivateAttr fields can be modified directly
+        self._call_count += 1
         if self._should_fail:
-            return FlextResult[str].fail("Notification service unavailable")
+            return r[str].fail("Notification service unavailable")
         self._sent_notifications.append(email)
-        return FlextResult[str].ok("sent")
+        return r[str].ok("sent")
 
     def set_failure_mode(self, should_fail: bool) -> None:
         """Set failure mode for testing.
 
-        Business Rule: Uses object.__setattr__ to modify PrivateAttr fields
+        Business Rule: Uses setattr to modify PrivateAttr fields
         in frozen Pydantic models. This is the correct pattern for mutable
         state in frozen models per Pydantic v2 advanced usage.
 
@@ -167,7 +167,8 @@ class NotificationService(FlextService[str]):
             should_fail: Whether service should fail.
 
         """
-        object.__setattr__(self, "_should_fail", should_fail)
+        # For frozen Pydantic models, PrivateAttr fields can be modified directly
+        self._should_fail = should_fail
 
     @property
     def sent_notifications(self) -> list[str]:
@@ -181,7 +182,7 @@ class NotificationService(FlextService[str]):
 
 
 # Use the actual class, not the type alias
-class ServiceConfig(FlextModelsCollections.Config):
+class ServiceConfig(m.Collections.Config):
     """Service configuration model with required fields."""
 
     name: str
@@ -208,8 +209,8 @@ class LifecycleService(FlextService[str]):
     def execute(self) -> FlextResult[str]:
         """Execute lifecycle service."""
         if self._initialized:
-            return FlextResult[str].ok("initialized")
-        return FlextResult[str].ok("ready")
+            return r[str].ok("initialized")
+        return r[str].ok("ready")
 
     def initialize(self, config: ServiceConfig) -> FlextResult[str]:
         """Initialize service with config model.
@@ -222,10 +223,11 @@ class LifecycleService(FlextService[str]):
 
         """
         if self._should_fail_init:
-            return FlextResult[str].fail("Initialization failed")
-        object.__setattr__(self, "_initialized", True)
-        object.__setattr__(self, "_service_config", config)
-        return FlextResult[str].ok("initialized")
+            return r[str].fail("Initialization failed")
+        # For frozen Pydantic models, PrivateAttr fields can be modified directly
+        self._initialized = True
+        self._service_config = config
+        return r[str].ok("initialized")
 
     def health_check(self) -> bool:
         """Check service health.
@@ -244,9 +246,10 @@ class LifecycleService(FlextService[str]):
 
         """
         if self._should_fail_shutdown:
-            return FlextResult[str].fail("Shutdown failed")
-        object.__setattr__(self, "_shutdown_called", True)
-        return FlextResult[str].ok("shutdown")
+            return r[str].fail("Shutdown failed")
+        # For frozen Pydantic models, PrivateAttr fields can be modified directly
+        self._shutdown_called = True
+        return r[str].ok("shutdown")
 
     def set_failure_mode(
         self,
@@ -265,10 +268,9 @@ class LifecycleService(FlextService[str]):
             fail_shutdown: Whether shutdown should fail.
 
         """
-        # Use object.__setattr__ for frozen Pydantic models (required pattern)
-        # ruff: noqa: PLC2801  # object.__setattr__ required for frozen models
-        object.__setattr__(self, "_should_fail_init", fail_init)
-        object.__setattr__(self, "_should_fail_shutdown", fail_shutdown)
+        # For frozen Pydantic models, PrivateAttr fields can be modified directly
+        self._should_fail_init = fail_init
+        self._should_fail_shutdown = fail_shutdown
 
     @property
     def initialized(self) -> bool:

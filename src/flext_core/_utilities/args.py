@@ -1,4 +1,4 @@
-"""Utilities module - FlextArgs.
+"""Utilities module - FlextUtilitiesArgs.
 
 Extracted from flext_core.utilities for better modularity.
 
@@ -8,18 +8,30 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
 from enum import StrEnum
 from functools import wraps
-from typing import Annotated, Protocol, get_args, get_origin, get_type_hints
+from types import UnionType
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Protocol,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from pydantic import ConfigDict, validate_call
 
 from flext_core.result import r
-from flext_core.typings import P, R, t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    from flext_core.typings import P, R, t
 
 
-class FlextArgs:
+class FlextUtilitiesArgs:
     """Utilities for automatic args/kwargs parsing.
 
     PHILOSOPHY:
@@ -59,7 +71,7 @@ class FlextArgs:
                  ...
 
         AFTER:
-             @uArgs.validated
+             @FlextUtilitiesArgs.validated
              def process(self, status: Status) -> bool:
                  # status is already Status, validated automatically!
                  ...
@@ -89,7 +101,7 @@ class FlextArgs:
         - Don't want exceptions leaking
 
         Example:
-             @uArgs.validated_with_result
+             @FlextUtilitiesArgs.validated_with_result
              def process(self, status: Status) -> r[bool]:
                  # If status invalid → returns r.fail()
                  # If status valid → executes normally
@@ -111,7 +123,7 @@ class FlextArgs:
             except Exception as e:
                 return r.fail(str(e))
 
-        return wrapper
+        return cast("Callable[P, r[R]]", wrapper)
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 2: Parse kwargs to typed dict
@@ -125,7 +137,7 @@ class FlextArgs:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
-             result = uArgs.parse_kwargs(
+             result = FlextUtilitiesArgs.parse_kwargs(
                  kwargs={"status": "active", "name": "John"},
                  enum_fields={"status": Status},
              )
@@ -160,18 +172,18 @@ class FlextArgs:
     class _CallableWithHints(Protocol):
         """Protocol for callables that support type hints introspection."""
 
-        __annotations__: dict[str, object]
+        __annotations__: t.Types.ConfigurationDict
 
     @staticmethod
     def get_enum_params(
         func: _CallableWithHints,
-    ) -> dict[str, type[StrEnum]]:
+    ) -> t.Types.StringStrEnumTypeDict:
         """Extract parameters that are StrEnum from function signature.
 
         Example:
              def process(self, status: Status, name: str) -> bool: ...
 
-             params = uArgs.get_enum_params(process)
+             params = FlextUtilitiesArgs.get_enum_params(process)
              # params = {"status": Status}
 
         """
@@ -180,7 +192,7 @@ class FlextArgs:
         except Exception:
             return {}
 
-        enum_params: dict[str, type[StrEnum]] = {}
+        enum_params: t.Types.StringStrEnumTypeDict = {}
 
         for name, hint in hints.items():
             if name == "return":
@@ -197,8 +209,8 @@ class FlextArgs:
             if isinstance(current_hint, type) and issubclass(current_hint, StrEnum):
                 enum_params[name] = current_hint
 
-            # Check Union types (str | Status)
-            elif origin is type(str | int):  # UnionType
+            # Check Union types (str | Status) - Python 3.10+ uses UnionType
+            elif origin is UnionType:
                 for arg in get_args(current_hint):
                     if isinstance(arg, type) and issubclass(arg, StrEnum):
                         enum_params[name] = arg
@@ -207,9 +219,6 @@ class FlextArgs:
         return enum_params
 
 
-uArgs = FlextArgs  # noqa: N816
-
 __all__ = [
-    "FlextArgs",
-    "uArgs",
+    "FlextUtilitiesArgs",
 ]

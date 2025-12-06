@@ -10,27 +10,26 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Mapping
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
+from flext_core.config import FlextConfig
 from flext_core.constants import c
-from flext_core.exceptions import e
-from flext_core.protocols import p
 from flext_core.result import r
-from flext_core.typings import t
 from flext_core.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+
+    from flext_core.protocols import p
+    from flext_core.typings import t
 
 
 def _get_log_level_from_config() -> int:
-    """Get log level from FlextConfig (lazy import to avoid circular dependency)."""
-    from flext_core.config import (  # noqa: PLC0415  # Lazy import to avoid circular dependency
-        FlextConfig,
-    )
-
+    """Get log level from FlextConfig."""
     return getattr(
         logging,
         FlextConfig().log_level.upper(),
@@ -56,20 +55,20 @@ class FlextModelsConfig:
 
         operation_id: str = Field(
             default_factory=u.Generators.generate_id,
-            min_length=1,
+            min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        context: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        data: t.Types.ConfigurationDict = Field(default_factory=dict)
+        context: t.Types.ConfigurationDict = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
-            gt=0,
+            gt=c.ZERO,
             le=c.Performance.MAX_TIMEOUT_SECONDS,
             description=("Operation timeout from c (Constants default)"),
         )
         retry_attempts: int = Field(
             default=c.Reliability.MAX_RETRY_ATTEMPTS,
-            ge=0,
+            ge=c.ZERO,
             le=c.Reliability.MAX_RETRY_ATTEMPTS,
             description=("Maximum retry attempts from c (Constants default)"),
         )
@@ -77,11 +76,11 @@ class FlextModelsConfig:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: t.GeneralValueType) -> dict[str, str]:
-            """Ensure context has required fields (using uGenerators).
+        def validate_context(cls, v: t.GeneralValueType) -> t.Types.StringDict:
+            """Ensure context has required fields (using FlextUtilitiesGenerators).
 
-            Returns dict[str, str] because ensure_trace_context generates string trace IDs.
-            This is compatible with the field type dict[str, t.GeneralValueType] since str is a subtype.
+            Returns t.Types.StringDict because ensure_trace_context generates string trace IDs.
+            This is compatible with the field type ConfigurationDict since str is a subtype.
             """
             return u.Generators.ensure_trace_context(
                 v,
@@ -110,18 +109,18 @@ class FlextModelsConfig:
         )
         initial_delay_seconds: float = Field(
             default=c.Performance.DEFAULT_INITIAL_DELAY_SECONDS,
-            gt=0,
+            gt=c.ZERO,
             description="Initial delay between retries",
         )
         max_delay_seconds: float = Field(
-            default=c.Performance.DEFAULT_MAX_DELAY_SECONDS,
-            gt=0,
+            default=c.DEFAULT_MAX_DELAY_SECONDS,
+            gt=c.ZERO,
             description="Maximum delay between retries",
         )
         exponential_backoff: bool = True
         backoff_multiplier: float = Field(
-            default=c.Performance.DEFAULT_BACKOFF_MULTIPLIER,
-            ge=1.0,
+            default=c.DEFAULT_BACKOFF_MULTIPLIER,
+            ge=float(c.Reliability.RETRY_COUNT_MIN),
             description="Backoff multiplier for exponential backoff",
         )
         retry_on_exceptions: list[type[BaseException]] = Field(
@@ -130,7 +129,7 @@ class FlextModelsConfig:
         )
         retry_on_status_codes: list[object] = Field(
             default_factory=list,
-            max_length=100,
+            max_length=c.Validation.MAX_RETRY_STATUS_CODES,
             description="HTTP status codes to retry on",
         )
 
@@ -138,11 +137,9 @@ class FlextModelsConfig:
         @classmethod
         def validate_backoff_strategy(cls, v: list[object]) -> list[object]:
             """Validate status codes are valid HTTP codes."""
-            result = u.Validation.validate_http_status_codes(
-                v,
-                min_code=c.FlextWeb.HTTP_STATUS_MIN,
-                max_code=c.FlextWeb.HTTP_STATUS_MAX,
-            )
+            # Use default HTTP status code range (100-599) - domain-specific validation
+            # removed from flext-core per domain violation rules
+            result = u.Validation.validate_http_status_codes(v)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
                 error_msg = (
@@ -152,7 +149,7 @@ class FlextModelsConfig:
                 )
                 raise ValueError(error_msg)
             # Return as list[object] to match Pydantic field type
-            return list(u.map(result.unwrap(), int))
+            return list(u.Collection.map(result.unwrap(), int))
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:
@@ -168,8 +165,8 @@ class FlextModelsConfig:
         enable_strict_mode: bool = Field(default_factory=lambda: True)
         max_validation_errors: int = Field(
             default_factory=lambda: c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
-            ge=1,
-            le=100,
+            ge=c.Reliability.RETRY_COUNT_MIN,
+            le=c.Validation.MAX_RETRY_STATUS_CODES,
             description="Maximum validation errors",
         )
         validate_on_assignment: bool = True
@@ -178,7 +175,7 @@ class FlextModelsConfig:
             list[object],
             Field(
                 default_factory=list,
-                max_length=50,
+                max_length=c.Validation.MAX_CUSTOM_VALIDATORS,
                 description="Custom validator callables",
             ),
         ]
@@ -192,10 +189,7 @@ class FlextModelsConfig:
                 if not callable(validator):
                     base_msg = "Validator must be callable"
                     error_msg = f"{base_msg}: got {type(validator).__name__}"
-                    raise e.TypeError(
-                        error_msg,
-                        error_code=c.Errors.TYPE_ERROR,
-                    )
+                    raise TypeError(error_msg)
             return v
 
     class BatchProcessingConfig(FlextModelsCollections.Config):
@@ -241,9 +235,9 @@ class FlextModelsConfig:
     class HandlerExecutionConfig(FlextModelsCollections.Config):
         """Enhanced handler execution configuration."""
 
-        handler_name: str = Field(pattern=r"^[a-zA-Z][a-zA-Z0-9_]*$")
-        input_data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        execution_context: dict[str, t.GeneralValueType] = Field(
+        handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
+        input_data: t.Types.ConfigurationDict = Field(default_factory=dict)
+        execution_context: t.Types.ConfigurationDict = Field(
             default_factory=dict,
         )
         timeout_seconds: float = Field(
@@ -275,9 +269,12 @@ class FlextModelsConfig:
         )
 
         enabled: bool = Field(default=True, description="Whether middleware is enabled")
-        order: int = Field(default=0, description="Execution order in middleware chain")
+        order: int = Field(
+            default=c.Defaults.DEFAULT_MIDDLEWARE_ORDER,
+            description="Execution order in middleware chain",
+        )
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: dict[str, t.GeneralValueType] = Field(
+        config: t.Types.ConfigurationDict = Field(
             default_factory=dict,
             description="Middleware-specific configuration",
         )
@@ -301,28 +298,28 @@ class FlextModelsConfig:
             description="Name of the rate limiter processor",
         )
         count: int = Field(
-            default=0,
-            ge=0,
+            default=c.ZERO,
+            ge=c.ZERO,
             description="Current request count in window",
         )
         window_start: float = Field(
-            default=0.0,
-            ge=0.0,
+            default=c.INITIAL_TIME,
+            ge=c.INITIAL_TIME,
             description="Timestamp when current window started",
         )
         limit: int = Field(
-            default=100,
-            ge=1,
+            default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+            ge=c.Reliability.RETRY_COUNT_MIN,
             description="Maximum requests allowed per window",
         )
         window_seconds: int = Field(
-            default=60,
-            ge=1,
+            default=c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+            ge=c.Reliability.RETRY_COUNT_MIN,
             description="Duration of rate limit window in seconds",
         )
         block_until: float = Field(
-            default=0.0,
-            ge=0.0,
+            default=c.INITIAL_TIME,
+            ge=c.INITIAL_TIME,
             description="Timestamp until which requests are blocked",
         )
 
@@ -342,7 +339,7 @@ class FlextModelsConfig:
             default=True,
             description="Whether to raise exception on non-zero exit code",
         )
-        env: dict[str, str] | None = Field(
+        env: t.Types.StringDict | None = Field(
             default=None,
             description="Environment variables for the command",
         )
@@ -352,7 +349,7 @@ class FlextModelsConfig:
         )
         timeout_seconds: float | None = Field(
             default=None,
-            gt=0,
+            gt=c.ZERO,
             le=c.Performance.MAX_TIMEOUT_SECONDS,
             description="Command timeout in seconds (max 5 min)",
         )
@@ -374,8 +371,8 @@ class FlextModelsConfig:
 
         log_level: int = Field(
             default_factory=_get_log_level_from_config,
-            ge=0,
-            le=50,
+            ge=c.ZERO,
+            le=c.Validation.MAX_CUSTOM_VALIDATORS,
             description=(
                 "Numeric log level from FlextConfig (DEBUG=10, INFO=20, WARNING=30, "
                 "ERROR=40, CRITICAL=50)"
@@ -393,7 +390,7 @@ class FlextModelsConfig:
             default=None,
             description="Custom wrapper factory for structlog",
         )
-        logger_factory: Callable[..., object] | None = Field(
+        logger_factory: p.Utility.Callable[t.GeneralValueType] | None = Field(
             default=None,
             description="Custom logger factory for structlog",
         )
@@ -447,7 +444,7 @@ class FlextModelsConfig:
         )
         timeout_override: int | None = Field(
             default=None,
-            ge=0,
+            ge=c.ZERO,
             description="Optional timeout override in seconds",
         )
 
@@ -471,7 +468,7 @@ class FlextModelsConfig:
         )
         timeout_override: int | None = Field(
             default=None,
-            ge=0,
+            ge=c.ZERO,
             description="Optional timeout override in seconds",
         )
         operation_id: str = Field(
@@ -489,7 +486,7 @@ class FlextModelsConfig:
             default=None,
             description="Optional configuration overrides",
         )
-        context: p.ContextProtocol | None = Field(
+        context: p.Context.Ctx | None = Field(
             default=None,
             description="Optional context protocol instance",
         )
@@ -573,7 +570,7 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: dict[str, t.GeneralValueType] = Field(
+        extra_kwargs: t.Types.ConfigurationDict = Field(
             default_factory=dict,
             description="Additional keyword arguments for metadata",
         )
@@ -849,8 +846,8 @@ class FlextModelsConfig:
             description="Error type name",
         )
         start_time: float = Field(
-            default=0.0,
-            ge=0.0,
+            default=c.INITIAL_TIME,
+            ge=c.INITIAL_TIME,
             description="Operation start time for performance tracking",
         )
         track_perf: bool = Field(
@@ -874,8 +871,8 @@ class FlextModelsConfig:
         )
         exc: Exception = Field(description="Exception that caused failure")
         start_time: float = Field(
-            default=0.0,
-            ge=0.0,
+            default=c.INITIAL_TIME,
+            ge=c.INITIAL_TIME,
             description="Operation start time",
         )
         track_perf: bool = Field(
@@ -892,12 +889,14 @@ class FlextModelsConfig:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        func: Callable[..., object] = Field(description="Function to execute")
+        func: p.Utility.Callable[t.GeneralValueType] = Field(
+            description="Function to execute",
+        )
         args: tuple[t.GeneralValueType, ...] = Field(
             default_factory=tuple,
             description="Positional arguments for function",
         )
-        kwargs: Mapping[str, t.GeneralValueType] = Field(
+        kwargs: t.Types.ConfigurationMapping = Field(
             default_factory=dict,
             description="Keyword arguments for function",
         )
@@ -906,17 +905,17 @@ class FlextModelsConfig:
             description="Retry configuration (takes priority over individual params)",
         )
         attempts: int = Field(
-            default=3,
-            ge=1,
+            default=c.Reliability.MAX_RETRY_ATTEMPTS,
+            ge=c.Reliability.RETRY_COUNT_MIN,
             description="Number of retry attempts (used if retry_config is None)",
         )
         delay: float = Field(
-            default=1.0,
-            gt=0.0,
+            default=float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
+            gt=c.INITIAL_TIME,
             description="Initial delay between retries (used if retry_config is None)",
         )
         strategy: str = Field(
-            default="exponential",
+            default=c.Reliability.DEFAULT_BACKOFF_STRATEGY,
             description="Retry strategy: 'exponential' or 'linear' (used if retry_config is None)",
         )
 

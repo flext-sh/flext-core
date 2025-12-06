@@ -17,7 +17,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 class FlextVersion:
@@ -62,7 +65,7 @@ class FlextVersion:
         _metadata = metadata("flext-core")
     except PackageNotFoundError:
         # Create PackageMetadata-compatible dict and cast to PackageMetadata
-        _metadata_dict: dict[str, str] = {
+        _metadata_dict: t.Types.StringDict = {
             "Version": "0.0.0-dev",
             "Name": "flext-core",
             "Summary": "FLEXT core (metadata fallback)",
@@ -149,7 +152,7 @@ class FlextVersion:
         return cls.__version_info__ >= (major, minor, patch)
 
     @classmethod
-    def get_package_info(cls) -> dict[str, str]:
+    def get_package_info(cls) -> t.Types.StringDict:
         """Get comprehensive package information dictionary.
 
         Returns all available package metadata in a structured dictionary
@@ -181,7 +184,7 @@ class FlextVersion:
         }
 
 
-# Module-level exports for backward compatibility and external access
+# Module-level exports for external access
 __version__ = FlextVersion.__version__
 __version_info__ = FlextVersion.__version_info__
 __title__ = FlextVersion.__title__

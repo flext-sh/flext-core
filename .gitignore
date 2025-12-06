@@ -6,7 +6,7 @@
 # Block everything at root level
 /*
 /*/
-
+!*.jmx
 
 # ============================================================================
 # ALLOWED: Core Directories

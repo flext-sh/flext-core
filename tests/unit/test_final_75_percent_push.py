@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
@@ -25,6 +25,7 @@ from flext_core import (
     FlextResult,
     u,
 )
+from flext_core.protocols import p
 
 
 @dataclass(frozen=True, slots=True)
@@ -270,14 +271,20 @@ class TestCoveragePush75Percent:
     def test_result_safe_factory(self) -> None:
         """Test safe factory method."""
 
-        @FlextResult.safe  # type: ignore[arg-type]  # safe decorator accepts variadic callables, mypy limitation
+        # Use cast to match VariadicCallable signature
         def divide(a: int, b: int) -> int:
             return a // b
 
-        r: FlextResult[int] = divide(10, 2)
+        # Cast function to match protocol signature before applying decorator
+        divide_func = cast("p.Utility.Callable[int]", divide)
+        divide_wrapped: p.Utility.Callable[FlextResult[int]] = FlextResult.safe(
+            divide_func,
+        )
+
+        r: FlextResult[int] = divide_wrapped(10, 2)
         assert r.is_success
         assert r.value == 5
-        r2: FlextResult[int] = divide(10, 0)
+        r2: FlextResult[int] = divide_wrapped(10, 0)
         assert r2.is_failure
 
 
