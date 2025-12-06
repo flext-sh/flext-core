@@ -133,7 +133,7 @@ class FlextUtilitiesPagination:
         # Ensure page is within bounds
         if page > total_pages > 0:
             return r[t.Types.ConfigurationDict].fail(
-                f"Page {page} exceeds total pages {total_pages}"
+                f"Page {page} exceeds total pages {total_pages}",
             )
 
         has_next = page < total_pages
@@ -177,7 +177,7 @@ class FlextUtilitiesPagination:
 
         if data is None or pagination is None:
             return r[t.Types.ConfigurationDict].fail(
-                "Invalid pagination data structure"
+                "Invalid pagination data structure",
             )
 
         # Type narrowing: data and pagination from dict.get() are object

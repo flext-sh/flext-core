@@ -147,7 +147,8 @@ class FlextUtilitiesCache:
             # Type narrowing: component is set, so item is t.GeneralValueType
             # Use explicit type annotation to help pyright
             component_set: set[t.GeneralValueType] = cast(
-                "set[t.GeneralValueType]", component
+                "set[t.GeneralValueType]",
+                component,
             )
             return tuple(
                 FlextUtilitiesCache.normalize_component(item) for item in component_set
@@ -156,7 +157,8 @@ class FlextUtilitiesCache:
             # Type narrowing: component is Sequence, so item is t.GeneralValueType
             # Use explicit type annotation to help pyright
             component_seq: Sequence[t.GeneralValueType] = cast(
-                "Sequence[t.GeneralValueType]", component
+                "Sequence[t.GeneralValueType]",
+                component,
             )
             return [
                 FlextUtilitiesCache.normalize_component(item) for item in component_seq

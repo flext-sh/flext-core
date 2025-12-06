@@ -647,7 +647,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
             if value.is_success:
                 # Type narrowing: unwrap() returns the value type
                 unwrapped_value: t.GeneralValueType = cast(
-                    "t.GeneralValueType", value.unwrap()
+                    "t.GeneralValueType",
+                    value.unwrap(),
                 )
                 actual_value = unwrapped_value
             # If result is failure, check if we're validating the error
@@ -836,7 +837,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 value_with_len: (
                     str | bytes | Sequence[object] | Mapping[object, object]
                 ) = cast(
-                    "str | bytes | Sequence[object] | Mapping[object, object]", value
+                    "str | bytes | Sequence[object] | Mapping[object, object]",
+                    value,
                 )
                 actual_len = len(value_with_len)
             else:
@@ -864,7 +866,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
             # Type narrowing: value is list or tuple
             # Cast to proper type for type inference
             seq_value: list[object] | tuple[object, ...] = cast(
-                "list[object] | tuple[object, ...]", value
+                "list[object] | tuple[object, ...]",
+                value,
             )
             if params.first is not None:
                 if not seq_value:
@@ -919,7 +922,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_ALL_ITEMS_FAILED.format(
-                            index=failed_idx
+                            index=failed_idx,
                         ),
                     )
 
@@ -942,7 +945,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 if sorted_param is True:
                     # sorted() requires SupportsRichComparison - use str key for any object
                     sorted_list = sorted(
-                        value_list, key=lambda x: (type(x).__name__, str(x))
+                        value_list,
+                        key=lambda x: (type(x).__name__, str(x)),
                     )
                     if value_list != sorted_list:
                         raise AssertionError(params.msg or "Sequence is not sorted")
@@ -971,7 +975,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
             # Type narrowing: value is now Mapping
             # Cast to Mapping[object, object] for proper type inference
             mapping_value: Mapping[object, object] = cast(
-                "Mapping[object, object]", value
+                "Mapping[object, object]",
+                value,
             )
             if params.keys is not None:
                 key_set: set[object] = set(params.keys)

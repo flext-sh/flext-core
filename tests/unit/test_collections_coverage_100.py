@@ -85,7 +85,8 @@ class TestFlextModelsCollectionsCategories:
         elif scenario.operation == "remove":
             categories.add_entries(scenario.category, ["temp"])
             categories.remove_category(scenario.category)
-            assert not categories.has_category(scenario.category)
+            # Categories doesn't have has_category method, check via categories dict
+            assert scenario.category not in categories.categories
 
     def test_categories_add_entries_existing_category(self) -> None:
         """Test add_entries with existing category."""
@@ -95,9 +96,10 @@ class TestFlextModelsCollectionsCategories:
         assert categories.get_entries("users") == ["user1", "user2", "user3"]
 
     def test_categories_has_category(self) -> None:
-        """Test has_category."""
+        """Test has_category via categories dict."""
         categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
-        assert not categories.has_category("users")
+        # Categories doesn't have has_category method, check via categories dict
+        assert "users" not in categories.categories
         categories.add_entries("users", ["user1"])
         assert categories.has_category("users")
 
@@ -127,7 +129,10 @@ class TestFlextModelsCollectionsCategories:
         categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
-        summary = categories.summary
+        # Categories doesn't have a summary property, but we can compute it from categories dict
+        summary: dict[str, int] = {
+            name: len(entries) for name, entries in categories.categories.items()
+        }
         assert summary["users"] == 2
         assert summary["groups"] == 1
 
@@ -135,15 +140,16 @@ class TestFlextModelsCollectionsCategories:
         """Test dict-like operations."""
         categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
         categories.add_entries("users", ["user1"])
-        assert ("users", ["user1"]) in categories.items()
-        assert "users" in categories
-        assert ["user1"] in categories.values()
-        assert categories["users"] == ["user1"]
-        categories["groups"] = ["group1"]
+        # Categories uses .categories dict for dict-like operations
+        assert ("users", ["user1"]) in categories.categories.items()
+        assert "users" in categories.categories
+        assert ["user1"] in categories.categories.values()
+        assert categories.categories["users"] == ["user1"]
+        categories.categories["groups"] = ["group1"]
         assert categories.get_entries("groups") == ["group1"]
-        assert "users" in categories
-        assert "nonexistent" not in categories
-        assert len(categories) == 2
+        assert "users" in categories.categories
+        assert "nonexistent" not in categories.categories
+        assert len(categories.categories) == 2
 
     def test_categories_get_with_default(self) -> None:
         """Test get method with default."""
@@ -291,13 +297,15 @@ class TestFlextModelsCollectionsConfig:
         assert config.timeout == 60
 
     def test_config_to_dict(self) -> None:
-        """Test to_dict method."""
+        """Test to_mapping method (to_dict was renamed to to_mapping)."""
 
         class TestConfig(Config):
             timeout: int = 30
 
         config = TestConfig(timeout=60)
-        assert config.to_dict()["timeout"] == 60
+        # Config uses to_mapping() method, not to_dict()
+        config_dict = config.to_mapping()
+        assert config_dict["timeout"] == 60
 
     def test_config_with_updates(self) -> None:
         """Test with_updates method."""

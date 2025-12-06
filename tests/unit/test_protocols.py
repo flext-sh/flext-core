@@ -157,7 +157,9 @@ class TestFlextProtocols:
         """Test protocol definitions are accessible and valid."""
         protocol = getattr(p, scenario.protocol_name)
         tm.that(
-            protocol, none=False, msg=f"Protocol {scenario.protocol_name} must exist"
+            protocol,
+            none=False,
+            msg=f"Protocol {scenario.protocol_name} must exist",
         )
         tm.that(
             hasattr(protocol, "__protocol_attrs__")
@@ -294,16 +296,22 @@ class TestFlextProtocols:
 
         service = UserService()
         tm.that(
-            hasattr(service, "execute"), eq=True, msg="Service must have execute method"
+            hasattr(service, "execute"),
+            eq=True,
+            msg="Service must have execute method",
         )
         tm.that(
-            callable(service.execute), eq=True, msg="Service execute must be callable"
+            callable(service.execute),
+            eq=True,
+            msg="Service execute must be callable",
         )
         result = service.execute()
         u.Tests.Result.assert_success(result)
         tm.that(result.value, has="status", msg="Service result must contain status")
         tm.that(
-            result.value["status"], eq="success", msg="Service status must be success"
+            result.value["status"],
+            eq="success",
+            msg="Service status must be success",
         )
 
     def test_handler_implementation(self) -> None:
@@ -320,10 +328,14 @@ class TestFlextProtocols:
 
         handler = CreateUserHandler()
         tm.that(
-            hasattr(handler, "handle"), eq=True, msg="Handler must have handle method"
+            hasattr(handler, "handle"),
+            eq=True,
+            msg="Handler must have handle method",
         )
         tm.that(
-            callable(handler.handle), eq=True, msg="Handler handle must be callable"
+            callable(handler.handle),
+            eq=True,
+            msg="Handler handle must be callable",
         )
         command = {"name": "Test"}
         result = handler.handle(command)

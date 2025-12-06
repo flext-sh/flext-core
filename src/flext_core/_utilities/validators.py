@@ -320,7 +320,7 @@ class CollectionValidators:
             cast(
                 "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
                 v,
-            )
+            ),
         )
         > 0,
         description="collection.non_empty",
@@ -358,7 +358,7 @@ class CollectionValidators:
                 cast(
                     "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
                     v,
-                )
+                ),
             )
             >= n,
             description=f"collection.min_length({n})",
@@ -376,7 +376,7 @@ class CollectionValidators:
                 cast(
                     "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
                     v,
-                )
+                ),
             )
             <= n,
             description=f"collection.max_length({n})",

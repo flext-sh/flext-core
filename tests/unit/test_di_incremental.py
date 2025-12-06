@@ -84,7 +84,7 @@ class TestDIBridgeRealExecution:
         """Test create_layered_bridge with real configuration."""
         bridge, service_module, resource_module = (
             FlextRuntime.DependencyIntegration.create_layered_bridge(
-                config={"database": {"dsn": "sqlite://test.db"}}
+                config={"database": {"dsn": "sqlite://test.db"}},
             )
         )
 
@@ -110,7 +110,9 @@ class TestDependencyIntegrationRealExecution:
 
         # Register object
         provider = FlextRuntime.DependencyIntegration.register_object(
-            di_container, "test_object", {"key": "value"}
+            di_container,
+            "test_object",
+            {"key": "value"},
         )
 
         # Verify provider works
@@ -132,7 +134,10 @@ class TestDependencyIntegrationRealExecution:
 
         # Register with cache (Singleton)
         provider = FlextRuntime.DependencyIntegration.register_factory(
-            di_container, "cached_factory", factory, cache=True
+            di_container,
+            "cached_factory",
+            factory,
+            cache=True,
         )
 
         # First call
@@ -156,7 +161,10 @@ class TestDependencyIntegrationRealExecution:
 
         # Register without cache (Factory)
         provider = FlextRuntime.DependencyIntegration.register_factory(
-            di_container, "factory_no_cache", factory, cache=False
+            di_container,
+            "factory_no_cache",
+            factory,
+            cache=False,
         )
 
         # First call
@@ -183,7 +191,9 @@ class TestDependencyIntegrationRealExecution:
 
         # Register resource
         provider = FlextRuntime.DependencyIntegration.register_resource(
-            di_container, "db_connection", resource_factory
+            di_container,
+            "db_connection",
+            resource_factory,
         )
 
         # Get resource
@@ -200,7 +210,9 @@ class TestDependencyIntegrationRealExecution:
 
         # Register services
         FlextRuntime.DependencyIntegration.register_object(
-            di_container, "api_key", "secret123"
+            di_container,
+            "api_key",
+            "secret123",
         )
         FlextRuntime.DependencyIntegration.register_object(di_container, "timeout", 30)
 
@@ -214,17 +226,18 @@ class TestDependencyIntegrationRealExecution:
         ) -> dict[str, str | int]:
             return {"key": key, "timeout": timeout_sec}
 
-        module.api_call = api_call
+        setattr(module, "api_call", api_call)
 
         # Wire module
         FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
 
         try:
             # Execute wired function - use getattr for dynamic ModuleType attributes
-            api_call_attr = module.api_call
+            api_call_attr = getattr(module, "api_call")
             # Type assertion: api_call_attr is the function we just assigned
             api_call_func: Callable[[], dict[str, str | int]] = cast(
-                "Callable[[], dict[str, str | int]]", api_call_attr
+                "Callable[[], dict[str, str | int]]",
+                api_call_attr,
             )
             result = api_call_func()
             assert result == {"key": "secret123", "timeout": 30}
@@ -253,7 +266,7 @@ class TestContainerDIRealExecution:
         ) -> dict[str, str]:
             return {"logger": name, "level": level}
 
-        module.log_message = log_message
+        setattr(module, "log_message", log_message)
 
         # Wire using container
         container.wire_modules(modules=[module])
@@ -263,7 +276,8 @@ class TestContainerDIRealExecution:
             log_message_attr = module.log_message
             # Type assertion: log_message_attr is the function we just assigned
             log_func: Callable[[], dict[str, str]] = cast(
-                "Callable[[], dict[str, str]]", log_message_attr
+                "Callable[[], dict[str, str]]",
+                log_message_attr,
             )
             result = log_func()
             assert result == {"logger": "test_logger", "level": "INFO"}
@@ -310,7 +324,8 @@ class TestContainerDIRealExecution:
         # Get service
         service_result_raw: object = scoped.get("api_key")
         service_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", service_result_raw
+            "r[t.GeneralValueType]",
+            service_result_raw,
         )
         assert service_result.is_success
         assert service_result.value == "secret_key"
@@ -318,7 +333,8 @@ class TestContainerDIRealExecution:
         # Get factory (should be called)
         factory_result_raw: object = scoped.get("token_gen")
         factory_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", factory_result_raw
+            "r[t.GeneralValueType]",
+            factory_result_raw,
         )
         assert factory_result.is_success
         assert isinstance(factory_result.value, dict)
@@ -351,7 +367,7 @@ class TestServiceBootstrapWithDI:
 
         # Create service runtime with resources
         runtime = FlextRuntime.create_service_runtime(
-            resources={"database": db_factory}
+            resources={"database": db_factory},
         )
 
         # Verify runtime created
@@ -370,7 +386,8 @@ class TestServiceBootstrapWithDI:
     def test_create_service_runtime_with_wiring(self) -> None:
         """Test create_service_runtime with wire_modules."""
         runtime = FlextRuntime.create_service_runtime(
-            services={"api_key": "test_key"}, wire_modules=[__import__(__name__)]
+            services={"api_key": "test_key"},
+            wire_modules=[__import__(__name__)],
         )
 
         # Verify runtime has wired modules
@@ -405,7 +422,8 @@ class TestServiceBootstrapWithDI:
         # Verify custom services are registered
         custom_result_raw: object = service.container.get("custom_service")
         custom_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", custom_result_raw
+            "r[t.GeneralValueType]",
+            custom_result_raw,
         )
         custom_value = u.Tests.Result.assert_result_success(custom_result)
         assert custom_value == "custom_value"
@@ -413,7 +431,8 @@ class TestServiceBootstrapWithDI:
         # Verify custom factory works
         factory_result_raw: object = service.container.get("custom_factory")
         factory_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", factory_result_raw
+            "r[t.GeneralValueType]",
+            factory_result_raw,
         )
         factory_value = u.Tests.Result.assert_result_success(factory_result)
         assert factory_value == {"custom": "data"}
@@ -440,7 +459,7 @@ class TestRealWiringScenarios:
         ) -> dict[str, str | int]:
             return {"logger": logger_name, "pool_size": pool["size"]}
 
-        handler_module.process_request = process_request
+        setattr(handler_module, "process_request", process_request)
 
         # Wire handler
         container.wire_modules(modules=[handler_module])
@@ -450,7 +469,8 @@ class TestRealWiringScenarios:
             process_request_attr = handler_module.process_request
             # Type assertion: process_request_attr is the function we just assigned
             process_func: Callable[[], dict[str, str | int]] = cast(
-                "Callable[[], dict[str, str | int]]", process_request_attr
+                "Callable[[], dict[str, str | int]]",
+                process_request_attr,
             )
             result = process_func()
             assert result == {"logger": "test_logger", "pool_size": 10}
@@ -474,15 +494,15 @@ class TestRealWiringScenarios:
         def func2(config: dict = Provide["shared_config"]) -> bool:
             return config["env"] == "test"
 
-        module.func1 = func1
-        module.func2 = func2
+        setattr(module, "func1", func1)
+        setattr(module, "func2", func2)
 
         container.wire_modules(modules=[module])
 
         try:
             # Use getattr for dynamic ModuleType attributes
-            func1_attr = module.func1
-            func2_attr = module.func2
+            func1_attr = getattr(module, "func1")
+            func2_attr = getattr(module, "func2")
             # Type assertions: func1_attr and func2_attr are the functions we just assigned
             func1_wired: Callable[[], str] = cast("Callable[[], str]", func1_attr)
             func2_wired: Callable[[], bool] = cast("Callable[[], bool]", func2_attr)
@@ -519,8 +539,8 @@ class TestRealWiringScenarios:
             # In real scenarios, use factory pattern
             return {"url": url, "base": base}
 
-        module.build_url = build_url
-        module.api_call = api_call
+        setattr(module, "build_url", build_url)
+        setattr(module, "api_call", api_call)
 
         # First build URL
         url_result = build_url()
@@ -529,8 +549,12 @@ class TestRealWiringScenarios:
         container.wire_modules(modules=[module])
 
         try:
-            # Use getattr for dynamic attributes with type annotations
-            api_call_func: Callable[[], dict[str, str]] = module.api_call
+            # Use getattr for dynamic ModuleType attributes
+            api_call_attr = getattr(module, "api_call")
+            # Type assertion: api_call_attr is the function we just assigned
+            api_call_func: Callable[[], dict[str, str]] = cast(
+                "Callable[[], dict[str, str]]", api_call_attr
+            )
             result = api_call_func()
             assert "url" in result
             assert "base" in result
@@ -551,14 +575,16 @@ class TestRealWiringScenarios:
         def test_func(value: str = Provide["test_value"]) -> str:
             return value
 
-        test_module.test_func = test_func
+        setattr(test_module, "test_func", test_func)
 
         # Wire with module (packages parameter requires actual installed packages)
         container.wire_modules(modules=[test_module])
 
         try:
-            # Execute function - use getattr for dynamic attributes
-            func: Callable[[], str] = test_module.test_func
+            # Execute function - use getattr for dynamic ModuleType attributes
+            test_func_attr = getattr(test_module, "test_func")
+            # Type assertion: test_func_attr is the function we just assigned
+            func: Callable[[], str] = cast("Callable[[], str]", test_func_attr)
             result = func()
             assert result == "wired_value"
         finally:
@@ -577,13 +603,15 @@ class TestRealWiringScenarios:
         # Both global and scoped services should be accessible
         global_result_raw: object = scoped.get("global_service")
         global_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", global_result_raw
+            "r[t.GeneralValueType]",
+            global_result_raw,
         )
         assert global_result.is_success
 
         scoped_result_raw: object = scoped.get("scoped_service")
         scoped_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", scoped_result_raw
+            "r[t.GeneralValueType]",
+            scoped_result_raw,
         )
         assert scoped_result.is_success
         assert scoped_result.value == "scoped_value"
@@ -612,7 +640,8 @@ class TestRealWiringScenarios:
         # Verify services
         static_result_raw: object = runtime.container.get("static_service")
         static_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", static_result_raw
+            "r[t.GeneralValueType]",
+            static_result_raw,
         )
         assert static_result.is_success
         assert static_result.value == "static_value"
@@ -620,7 +649,8 @@ class TestRealWiringScenarios:
         # Verify factories
         factory_result_raw: object = runtime.container.get("token_factory")
         factory_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", factory_result_raw
+            "r[t.GeneralValueType]",
+            factory_result_raw,
         )
         assert factory_result.is_success
         assert factory_result.value == {"token": "generated_token"}
@@ -628,7 +658,8 @@ class TestRealWiringScenarios:
         # Verify resources
         resource_result_raw: object = runtime.container.get("connection")
         resource_result: r[t.GeneralValueType] = cast(
-            "r[t.GeneralValueType]", resource_result_raw
+            "r[t.GeneralValueType]",
+            resource_result_raw,
         )
         assert resource_result.is_success
         assert resource_result.value == {"connected": True}
@@ -664,7 +695,7 @@ class TestRealWiringScenarios:
         def func_with_missing(missing: str = Provide["nonexistent"]) -> str:
             return missing
 
-        module.func_with_missing = func_with_missing
+        setattr(module, "func_with_missing", func_with_missing)
 
         # Wiring should succeed even if dependency doesn't exist yet
         container.wire_modules(modules=[module])
@@ -672,7 +703,11 @@ class TestRealWiringScenarios:
         try:
             # Execution should fail gracefully or handle missing dependency
             # This tests that wiring doesn't validate dependencies at wire time
-            func_with_missing_wired: Callable[[], str] = module.func_with_missing
+            func_with_missing_attr = getattr(module, "func_with_missing")
+            # Type assertion: func_with_missing_attr is the function we just assigned
+            func_with_missing_wired: Callable[[], str] = cast(
+                "Callable[[], str]", func_with_missing_attr
+            )
             # Function exists but dependency may be missing - this is expected
             assert callable(func_with_missing_wired)
         finally:

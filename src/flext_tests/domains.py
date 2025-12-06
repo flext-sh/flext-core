@@ -95,7 +95,8 @@ class FlextTestsDomains:
         }
         # Convert to ConfigurationDict - ensure all values are GeneralValueType compatible
         base_config: t.Types.ConfigurationDict = cast(
-            "t.Types.ConfigurationDict", dict(config_dict)
+            "t.Types.ConfigurationDict",
+            dict(config_dict),
         )
         base_config.update(overrides)
         return base_config

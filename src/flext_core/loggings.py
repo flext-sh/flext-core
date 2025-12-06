@@ -570,9 +570,8 @@ class FlextLogger(FlextRuntime):
         """
         return cls(name)
 
-    @classmethod
+    @staticmethod
     def get_logger(
-        cls,
         name: str | None = None,
     ) -> p.Infrastructure.Logger.StructlogLogger:
         """Get structlog logger instance (alias for FlextRuntime.get_logger).

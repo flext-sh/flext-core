@@ -96,7 +96,8 @@ class TestFlextTestsMatchers:
         expected = {"key1": "wrong_value"}
 
         with pytest.raises(
-            AssertionError, match="expected 'wrong_value', got 'value1'"
+            AssertionError,
+            match="expected 'wrong_value', got 'value1'",
         ):
             tm.that(data, kv=expected)
 

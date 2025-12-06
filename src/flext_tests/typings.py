@@ -353,7 +353,11 @@ class FlextTestsTypes(FlextTypes):
             """Literal type for file format specification in create/read operations."""
 
             type OperationLiteral = Literal[
-                "create", "read", "delete", "compare", "info"
+                "create",
+                "read",
+                "delete",
+                "compare",
+                "info",
             ]
             """Literal type for batch operation specification."""
 

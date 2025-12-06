@@ -660,7 +660,9 @@ class TestsFlextTestsFactoriesRes:
     def test_res_fail_with_code(self) -> None:
         """Test failed result creation with error code."""
         result_raw: r[object] | list[r[object]] = tt.res(
-            "fail", error="Error message", error_code="ERR001"
+            "fail",
+            error="Error message",
+            error_code="ERR001",
         )
         # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
         # For single result, it's r[TValue]
@@ -685,7 +687,9 @@ class TestsFlextTestsFactoriesRes:
     def test_res_from_value_none(self) -> None:
         """Test from_value with None value."""
         result_raw: r[object] | list[r[object]] = tt.res(
-            "from_value", value=None, error_on_none="Value is required"
+            "from_value",
+            value=None,
+            error_on_none="Value is required",
         )
         # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
         # For single result, it's r[TValue]
@@ -711,7 +715,8 @@ class TestsFlextTestsFactoriesRes:
     def test_res_batch_errors(self) -> None:
         """Test batch result creation from errors."""
         results_raw: r[object] | list[r[object]] = tt.res(
-            "fail", errors=["err1", "err2"]
+            "fail",
+            errors=["err1", "err2"],
         )
         # Type narrowing: tt.res() with errors returns list[r[TValue]]
         results: list[r[object]] = (
@@ -824,7 +829,9 @@ class TestsFlextTestsFactoriesList:
     def test_list_as_result(self) -> None:
         """Test list creation wrapped in result."""
         result_raw: list[User] | r[list[User]] = tt.list(
-            "user", count=3, as_result=True
+            "user",
+            count=3,
+            as_result=True,
         )
         # Type narrowing: as_result=True returns r[list[User]]
         result: r[list[User]] = (
@@ -843,7 +850,8 @@ class TestsFlextTestsFactoriesDict:
     def test_dict_from_model(self) -> None:
         """Test dict creation from model kind."""
         users_raw: dict[str, User] | r[dict[str, User]] = tt.dict_factory(
-            "user", count=3
+            "user",
+            count=3,
         )
         # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
         # For as_result=False, it's dict[K, V]
@@ -894,7 +902,8 @@ class TestsFlextTestsFactoriesDict:
         """Test dict creation from existing mapping."""
         existing = {"a": 1, "b": 2}
         merged_raw: dict[str, int] | r[dict[str, int]] = tt.dict_factory(
-            existing, merge_with={"c": 3}
+            existing,
+            merge_with={"c": 3},
         )
         # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
         # For as_result=False, it's dict[K, V]
@@ -906,7 +915,9 @@ class TestsFlextTestsFactoriesDict:
     def test_dict_as_result(self) -> None:
         """Test dict creation wrapped in result."""
         result_raw: dict[str, User] | r[dict[str, User]] = tt.dict_factory(
-            "user", count=3, as_result=True
+            "user",
+            count=3,
+            as_result=True,
         )
         # Type narrowing: as_result=True returns r[dict[str, User]]
         result: r[dict[str, User]] = (

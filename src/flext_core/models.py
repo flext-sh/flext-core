@@ -529,7 +529,7 @@ FlextModelsService.OperationExecutionRequest.model_rebuild(_types_namespace=_TYP
 # Collections models - rebuild ParseOptions and PatternApplicationParams
 FlextModelsCollections.ParseOptions.model_rebuild(_types_namespace=_TYPES_NS)
 FlextModelsCollections.PatternApplicationParams.model_rebuild(
-    _types_namespace=_TYPES_NS
+    _types_namespace=_TYPES_NS,
 )
 # FlextModelsService.DomainServiceResponse.model_rebuild(_types_namespace=_TYPES_NS)
 

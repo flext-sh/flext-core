@@ -49,7 +49,7 @@ class TestConfigServiceViaDI:
     def test_config_via_service_runtime(self) -> None:
         """Test FlextConfig accessible via create_service_runtime."""
         runtime = FlextRuntime.create_service_runtime(
-            config_overrides={"app_name": "test_app"}
+            config_overrides={"app_name": "test_app"},
         )
         assert runtime.config is not None
         assert isinstance(runtime.config, FlextConfig)
@@ -67,7 +67,7 @@ class TestConfigServiceViaDI:
         """Test injecting FlextConfig via @inject decorator."""
         # Use DependencyIntegration to create container with config
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config={"app_name": "injected_config"}
+            config={"app_name": "injected_config"},
         )
 
         module = ModuleType("config_injection_module")

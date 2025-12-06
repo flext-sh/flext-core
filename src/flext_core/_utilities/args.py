@@ -162,7 +162,7 @@ class FlextUtilitiesArgs:
 
         if errors:
             return r[dict[str, t.FlexibleValue]].fail(
-                f"Invalid values: {'; '.join(errors)}"
+                f"Invalid values: {'; '.join(errors)}",
             )
         return r[dict[str, t.FlexibleValue]].ok(parsed)
 

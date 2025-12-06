@@ -338,7 +338,9 @@ class TestFlextContainer:
         result2: r[t.GeneralValueType] = clean_container.get("factory_service")
         u.Tests.Result.assert_result_success(result2)
         tm.that(
-            get_count(), eq=2, msg="Factory must be called twice after second get()"
+            get_count(),
+            eq=2,
+            msg="Factory must be called twice after second get()",
         )
 
     @pytest.mark.parametrize(
@@ -447,10 +449,14 @@ class TestFlextContainer:
         services = container.list_services()
         tm.that(services, is_=list, msg="list_services must return a list")
         tm.that(
-            len(services), eq=0, msg="Empty container must return empty services list"
+            len(services),
+            eq=0,
+            msg="Empty container must return empty services list",
         )
         tm.that(
-            services, empty=True, msg="Empty container must have empty services list"
+            services,
+            empty=True,
+            msg="Empty container must have empty services list",
         )
 
     def test_list_services_mixed(
@@ -530,7 +536,10 @@ class TestFlextContainer:
         tm.that(container, none=False, msg="Container must not be None after configure")
         config_result = container.get_config()
         tm.that(
-            config_result, is_=dict, none=False, msg="Container config must be a dict"
+            config_result,
+            is_=dict,
+            none=False,
+            msg="Container config must be a dict",
         )
 
     def test_with_config_fluent(self) -> None:
@@ -552,12 +561,17 @@ class TestFlextContainer:
         )
         config_result = container.get_config()
         tm.that(
-            config_result, is_=dict, none=False, msg="get_config must return a dict"
+            config_result,
+            is_=dict,
+            none=False,
+            msg="get_config must return a dict",
         )
         # max_workers might not be in config if it's not a valid container config key
         # Just verify config is accessible
         tm.that(
-            config_result, none=False, msg="Config must be accessible after with_config"
+            config_result,
+            none=False,
+            msg="Config must be accessible after with_config",
         )
 
     def test_get_config(self) -> None:

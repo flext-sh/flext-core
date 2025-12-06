@@ -211,7 +211,7 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
 
         dispatcher = FlextDispatcher()
         _registry = FlextRegistry(
-            dispatcher=cast("p.Application.CommandBus | None", dispatcher)
+            dispatcher=cast("p.Application.CommandBus | None", dispatcher),
         )
         print("✅ Registry/Dispatcher initialized")
 

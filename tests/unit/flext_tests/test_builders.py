@@ -336,7 +336,8 @@ class TestFlextTestsBuilders:
         cases_raw = builder.build(as_parametrized=True)
         # Type narrowing: as_parametrized=True returns list[ParametrizedCase]
         cases: list[tuple[str, dict[str, object]]] = cast(
-            "list[tuple[str, dict[str, object]]]", cases_raw
+            "list[tuple[str, dict[str, object]]]",
+            cases_raw,
         )
         assert isinstance(cases, list)
         assert len(cases) == 1
@@ -383,7 +384,8 @@ class TestFlextTestsBuilders:
         result_raw = builder.to_result()
         # Type narrowing: to_result() returns union, extract r[BuilderDict]
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
-            "r[t_test.Tests.Builders.BuilderDict]", result_raw
+            "r[t_test.Tests.Builders.BuilderDict]",
+            result_raw,
         )
         assert result.is_success
         data = result.unwrap()
@@ -403,7 +405,8 @@ class TestFlextTestsBuilders:
         result_raw = builder.to_result(unwrap=True)
         # Type narrowing: unwrap=True returns value directly (BuilderDict)
         data: t_test.Tests.Builders.BuilderDict = cast(
-            "t_test.Tests.Builders.BuilderDict", result_raw
+            "t_test.Tests.Builders.BuilderDict",
+            result_raw,
         )
         assert isinstance(data, dict)
         assert data["x"] == 1
@@ -417,7 +420,8 @@ class TestFlextTestsBuilders:
         result_raw = builder.to_result(validate=lambda d: d["count"] > 0)  # type: ignore[call-overload]
         # Type narrowing: to_result() returns union, extract r[BuilderDict]
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
-            "r[t_test.Tests.Builders.BuilderDict]", result_raw
+            "r[t_test.Tests.Builders.BuilderDict]",
+            result_raw,
         )
         assert result.is_success
 
@@ -583,7 +587,8 @@ class TestFlextTestsBuilders:
         result_raw = builder.to_result(error_code="E001")
         # Type narrowing: to_result() returns union, extract r[BuilderDict]
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
-            "r[t_test.Tests.Builders.BuilderDict]", result_raw
+            "r[t_test.Tests.Builders.BuilderDict]",
+            result_raw,
         )
         # Should succeed but error_code is ignored without error
         assert result.is_success or result.is_failure
@@ -635,7 +640,8 @@ class TestFlextTestsBuilders:
         result_raw = builder.to_result(unwrap=False)
         # Type narrowing: to_result() returns union, extract r[BuilderDict]
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
-            "r[t_test.Tests.Builders.BuilderDict]", result_raw
+            "r[t_test.Tests.Builders.BuilderDict]",
+            result_raw,
         )
         assert result.is_success
 
@@ -727,7 +733,7 @@ class TestFlextTestsBuilders:
         result: r[int] = r[int].fail("Error")
         # Type narrowing: assert_failure accepts r[GeneralValueType], r[int] is compatible
         error: str = tb.Tests.Result.assert_failure(
-            cast("r[t_test.GeneralValueType]", result)
+            cast("r[t_test.GeneralValueType]", result),
         )
         assert "Error" in error
 

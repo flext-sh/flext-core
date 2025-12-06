@@ -119,11 +119,16 @@ class TestFlextModels:
         entity = TestEntity(name="Test User", email="test@example.com")
         tm.that(entity.name, eq="Test User", msg="Entity name must match input")
         tm.that(
-            entity.email, eq="test@example.com", msg="Entity email must match input"
+            entity.email,
+            eq="test@example.com",
+            msg="Entity email must match input",
         )
         tm.that(entity.email, contains="@", msg="Entity email must contain @")
         tm.that(
-            entity.unique_id, none=False, empty=False, msg="Entity must have unique_id"
+            entity.unique_id,
+            none=False,
+            empty=False,
+            msg="Entity must have unique_id",
         )
         tm.that(entity.unique_id, is_=str, msg="Entity unique_id must be string")
         entity_dict = entity.model_dump(
@@ -203,7 +208,9 @@ class TestFlextModels:
         )
         tm.that(command.data, eq="test_data", msg="Command data must match input")
         tm.that(
-            command.created_at, none=False, msg="Command must have created_at timestamp"
+            command.created_at,
+            none=False,
+            msg="Command must have created_at timestamp",
         )
         tm.that(
             command.unique_id,
@@ -280,7 +287,9 @@ class TestFlextModels:
         entity = TimestampedEntity(name="Test")
         initial_created = entity.created_at
         tm.that(
-            initial_created, none=False, msg="Entity must have created_at timestamp"
+            initial_created,
+            none=False,
+            msg="Entity must have created_at timestamp",
         )
         entity.update_timestamp()
         tm.that(
@@ -396,7 +405,9 @@ class TestFlextModels:
             )
             class_obj = getattr(m.Config, class_name)
             tm.that(
-                class_obj, none=False, msg=f"Config class {class_name} must not be None"
+                class_obj,
+                none=False,
+                msg=f"Config class {class_name} must not be None",
             )
         # RegistrationDetails is in Handler namespace
         tm.that(
@@ -413,7 +424,9 @@ class TestFlextModels:
             )
             class_obj = getattr(m.Cqrs, class_name)
             tm.that(
-                class_obj, none=False, msg=f"CQRS class {class_name} must not be None"
+                class_obj,
+                none=False,
+                msg=f"CQRS class {class_name} must not be None",
             )
 
     def test_entity_equality_and_hash(self) -> None:
@@ -464,7 +477,9 @@ class TestFlextModels:
 
         entity = TestEntity(name="test")
         tm.that(
-            len(entity.domain_events), eq=0, msg="New entity must have no domain events"
+            len(entity.domain_events),
+            eq=0,
+            msg="New entity must have no domain events",
         )
         result = entity.add_domain_event("test_event", {"data": "value"})
         u.Tests.Result.assert_result_success(result)
@@ -483,7 +498,9 @@ class TestFlextModels:
         )
         cleared_events = entity.clear_domain_events()
         tm.that(
-            len(cleared_events), eq=1, msg="clear_domain_events must return 1 event"
+            len(cleared_events),
+            eq=1,
+            msg="clear_domain_events must return 1 event",
         )
         tm.that(
             len(entity.domain_events),
@@ -511,7 +528,9 @@ class TestFlextModels:
         result = entity.add_domain_event("valid", {"string": "value", "number": 42})
         u.Tests.Result.assert_result_success(result)
         tm.that(
-            len(entity.domain_events), eq=1, msg="Entity must have 1 valid domain event"
+            len(entity.domain_events),
+            eq=1,
+            msg="Entity must have 1 valid domain event",
         )
 
     def test_entity_initial_version(self) -> None:

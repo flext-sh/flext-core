@@ -229,7 +229,7 @@ class TestuMapperConversions:
         """Test convert_to_json_value."""
         obj = SimpleObj("test", 1)
         res = u.Mapper.convert_to_json_value(
-            cast("t.Types.ConfigurationDict", {"obj": obj})
+            cast("t.Types.ConfigurationDict", {"obj": obj}),
         )
         # Should convert obj to string
         assert isinstance(res, dict)
@@ -246,7 +246,7 @@ class TestuMapperConversions:
         """Test convert_list_to_json."""
         test_list = [{"a": SimpleObj("test", 1)}]
         res = u.Mapper.convert_list_to_json(
-            cast("Sequence[t.GeneralValueType]", test_list)
+            cast("Sequence[t.GeneralValueType]", test_list),
         )
         assert isinstance(res[0]["a"], str)
 
@@ -266,7 +266,8 @@ class TestuMapperBuild:
         # Filter (x>2): [3, 4]
         # Map (x*2): [6, 8]
         res = u.Mapper.build(
-            [1, 2, 3, 4], ops=cast("t.Types.ConfigurationDict | None", ops)
+            [1, 2, 3, 4],
+            ops=cast("t.Types.ConfigurationDict | None", ops),
         )
         assert res == [6, 8]
 
@@ -284,7 +285,8 @@ class TestuMapperBuild:
             "slice": (0, 2),  # [25, 35]
         }
         res = u.Mapper.build(
-            input_data, ops=cast("t.Types.ConfigurationDict | None", ops)
+            input_data,
+            ops=cast("t.Types.ConfigurationDict | None", ops),
         )
         assert res == [25, 35]
 
@@ -307,7 +309,8 @@ class TestuMapperBuild:
     def test_build_chunk(self) -> None:
         """Test build chunk."""
         res = u.Mapper.build(
-            [1, 2, 3, 4], ops=cast("t.Types.ConfigurationDict | None", {"chunk": 2})
+            [1, 2, 3, 4],
+            ops=cast("t.Types.ConfigurationDict | None", {"chunk": 2}),
         )
         assert res == [[1, 2], [3, 4]]
 
@@ -356,7 +359,8 @@ class TestuMapperAdvanced:
         """Test build convert exception handling."""
         # Convert fails -> returns default (which is convert_type() -> int() -> 0)
         res = u.Mapper.build(
-            "invalid", ops=cast("t.Types.ConfigurationDict | None", {"convert": int})
+            "invalid",
+            ops=cast("t.Types.ConfigurationDict | None", {"convert": int}),
         )
         assert res == 0
 
@@ -389,14 +393,16 @@ class TestuMapperAdvanced:
         """Test build sort with callable and string."""
         data = [{"a": 2}, {"a": 1}]
         res = u.Mapper.build(
-            data, ops=cast("t.Types.ConfigurationDict | None", {"sort": "a"})
+            data,
+            ops=cast("t.Types.ConfigurationDict | None", {"sort": "a"}),
         )
         assert cast("list[dict[str, int]]", res)[0]["a"] == 1
 
         res = u.Mapper.build(
             data,
             ops=cast(
-                "t.Types.ConfigurationDict | None", {"sort": operator.itemgetter("a")}
+                "t.Types.ConfigurationDict | None",
+                {"sort": operator.itemgetter("a")},
             ),
         )
         assert cast("list[dict[str, int]]", res)[0]["a"] == 1
