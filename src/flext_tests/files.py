@@ -391,7 +391,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         params = params_result.value
 
         target_dir = self._resolve_directory(params.directory)
-        file_path = target_dir / params.name
+        # Type narrowing: ensure params.name is str
+        name_str = str(params.name) if params.name is not None else "file"
+        file_path: Path = target_dir / name_str
 
         # Content already extracted if needed - use validated content
         actual_content = params.content

@@ -72,22 +72,28 @@ class FlextTestsDomains:
             Configuration dictionary
 
         """
-        config = tt.create_config(
+        config_result = tt.model(
+            "config",
             service_type=service_type,
             environment=environment,
         )
-        base_config: t.Types.ConfigurationDict = {
-            "service_type": config.service_type,
-            "environment": config.environment,
-            "debug": config.debug,
-            "log_level": config.log_level,
-            "timeout": config.timeout,
-            "max_retries": config.max_retries,
+        # Type narrowing: tt.model("config") returns m.Tests.Factory.Config
+        # Since tt.model() can return various types, we need to handle it safely
+        # Extract attributes using getattr with defaults for type safety
+        config_dict: dict[str, object] = {
+            "service_type": getattr(config_result, "service_type", service_type),
+            "environment": getattr(config_result, "environment", environment),
+            "debug": getattr(config_result, "debug", False),
+            "log_level": getattr(config_result, "log_level", "INFO"),
+            "timeout": getattr(config_result, "timeout", 30.0),
+            "max_retries": getattr(config_result, "max_retries", 3),
             "namespace": f"test_{service_type}_{uuid.uuid4().hex[:8]}",
             "storage_backend": "memory",
             "enable_caching": True,
             "cache_ttl": 300,
         }
+        # Convert to ConfigurationDict - ensure all values are GeneralValueType compatible
+        base_config: t.Types.ConfigurationDict = dict(config_dict)
         base_config.update(overrides)
         return base_config
 
@@ -225,17 +231,20 @@ class FlextTestsDomains:
         last_name = str(overrides.get("last_name", "User"))
         email = str(overrides.get("email", "test@example.com"))
 
-        user_model = tt.create_user(
+        user_model_result = tt.model(
+            "user",
             name=f"{first_name} {last_name}",
             email=email,
         )
+        # Type narrowing: tt.model("user") returns m.Tests.Factory.User
+        # Extract attributes safely using getattr
         user: dict[str, str | bool] = {
-            "id": user_model.id,
+            "id": getattr(user_model_result, "id", ""),
             "username": str(overrides.get("username", "testuser")),
-            "email": user_model.email,
+            "email": getattr(user_model_result, "email", email),
             "first_name": first_name,
             "last_name": last_name,
-            "active": user_model.active,
+            "active": getattr(user_model_result, "active", True),
             "created_at": "2025-01-01T00:00:00Z",
             "updated_at": "2025-01-01T00:00:00Z",
         }

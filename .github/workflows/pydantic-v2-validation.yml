@@ -1,0 +1,149 @@
+name: Pydantic v2 Validation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "**.py"
+      - ".github/workflows/pydantic-v2-validation.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "**.py"
+  workflow_dispatch:
+
+jobs:
+  validate-pydantic-v2:
+    name: Validate Pydantic v2 Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: "1.8.5"
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: |
+          poetry install --extras "dev"
+
+      - name: Run Pydantic v2 validation
+        run: |
+          echo "🔍 Validating Pydantic v2 compliance..."
+          # Check for deprecated Pydantic v1 patterns
+          poetry run python -c "
+          import ast
+          import sys
+          from pathlib import Path
+
+          deprecated_patterns = [
+              'from pydantic import validator',
+              'from pydantic import root_validator',
+              '@validator',
+              '@root_validator',
+              'class Config:',
+              '.dict(',
+              '.json(',
+              '__fields__',
+              'schema_extra',
+              'orm_mode',
+              'allow_population_by_field_name',
+              'fields = {',
+          ]
+
+          errors = []
+          src_path = Path('src')
+
+          for py_file in src_path.rglob('*.py'):
+              content = py_file.read_text()
+              for pattern in deprecated_patterns:
+                  if pattern in content:
+                      # Skip if it's model_config (v2 style)
+                      if pattern == 'class Config:' and 'model_config' in content:
+                          continue
+                      errors.append(f'{py_file}: Found deprecated pattern: {pattern}')
+
+          if errors:
+              print('❌ Pydantic v2 compliance violations found:')
+              for error in errors[:20]:  # Limit output
+                  print(f'  - {error}')
+              if len(errors) > 20:
+                  print(f'  ... and {len(errors) - 20} more violations')
+              sys.exit(1)
+          else:
+              print('✅ No Pydantic v2 compliance violations found')
+          "
+
+      - name: Verify Pydantic v2 imports
+        run: |
+          echo "🔍 Verifying Pydantic v2 modern imports..."
+          poetry run python -c "
+          import sys
+          from pathlib import Path
+
+          # Check for proper v2 patterns
+          v2_patterns = [
+              'from pydantic import field_validator',
+              'from pydantic import model_validator',
+              'model_config = ConfigDict',
+              'ConfigDict(',
+          ]
+
+          src_path = Path('src')
+          has_pydantic = False
+          uses_v2 = False
+
+          for py_file in src_path.rglob('*.py'):
+              content = py_file.read_text()
+              if 'pydantic' in content.lower():
+                  has_pydantic = True
+              for pattern in v2_patterns:
+                  if pattern in content:
+                      uses_v2 = True
+                      break
+
+          if has_pydantic and uses_v2:
+              print('✅ Project uses Pydantic v2 modern patterns')
+          elif has_pydantic:
+              print('⚠️ Project uses Pydantic but may need v2 migration review')
+          else:
+              print('ℹ️ No Pydantic usage detected in src/')
+          "
+
+      - name: Comment on PR (if violations)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **Pydantic v2 Compliance Check Failed**\n\nThis PR contains deprecated Pydantic v1 patterns that need to be updated.\n\n**Common migrations:**\n- `@validator` → `@field_validator`\n- `@root_validator` → `@model_validator`\n- `class Config:` → `model_config = ConfigDict(...)`\n- `.dict()` → `.model_dump()`\n- `.json()` → `.model_dump_json()`\n\nSee [Pydantic v2 Migration Guide](https://docs.pydantic.dev/latest/migration/) for details.'
+            })
+
+  report:
+    name: Report Results
+    runs-on: ubuntu-latest
+    needs: validate-pydantic-v2
+    if: always()
+
+    steps:
+      - name: Check validation results
+        run: |
+          if [ "${{ needs.validate-pydantic-v2.result }}" = "failure" ]; then
+            echo "❌ Pydantic v2 compliance check failed"
+            exit 1
+          else
+            echo "✅ Pydantic v2 compliance verified for flext-core"
+          fi

@@ -24,9 +24,10 @@ import warnings
 from collections.abc import Callable, Mapping, Sequence
 from typing import Never, TypeVar, cast
 
-from pydantic import PrivateAttr
+from pydantic import BaseModel as _BaseModel, PrivateAttr
 
 from flext_core import FlextResult, r
+from flext_core.models import FlextModels as FlextModelsBase
 from flext_core.typings import t as t_core
 from flext_tests.base import s
 from flext_tests.constants import c
@@ -38,13 +39,9 @@ TModel = TypeVar("TModel")
 TValue = TypeVar("TValue")
 
 # Type alias for model result union - used for early return type matching
-type _ModelResult = r[
-    m.Tests.Factory.User
-    | m.Tests.Factory.Config
-    | m.Tests.Factory.Service
-    | m.Tests.Factory.Entity
-    | m.Tests.Factory.ValueObject
-]
+# Use BaseModel as base type since all factory models are Pydantic models
+
+type _ModelResult = r[_BaseModel]
 
 
 class FlextTestsFactories(s[t_core.GeneralValueType]):
@@ -87,52 +84,12 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         # All parameters via kwargs - will be validated by ModelFactoryParams
         **kwargs: t.Tests.TestResultValue,
     ) -> (
-        m.Tests.Factory.User
-        | m.Tests.Factory.Config
-        | m.Tests.Factory.Service
-        | m.Tests.Factory.Entity
-        | m.Tests.Factory.ValueObject
-        | builtins.list[
-            m.Tests.Factory.User
-            | m.Tests.Factory.Config
-            | m.Tests.Factory.Service
-            | m.Tests.Factory.Entity
-            | m.Tests.Factory.ValueObject
-        ]
-        | dict[
-            str,
-            m.Tests.Factory.User
-            | m.Tests.Factory.Config
-            | m.Tests.Factory.Service
-            | m.Tests.Factory.Entity
-            | m.Tests.Factory.ValueObject,
-        ]
-        | r[
-            m.Tests.Factory.User
-            | m.Tests.Factory.Config
-            | m.Tests.Factory.Service
-            | m.Tests.Factory.Entity
-            | m.Tests.Factory.ValueObject
-        ]
-        | r[
-            list[
-                m.Tests.Factory.User
-                | m.Tests.Factory.Config
-                | m.Tests.Factory.Service
-                | m.Tests.Factory.Entity
-                | m.Tests.Factory.ValueObject
-            ]
-        ]
-        | r[
-            dict[
-                str,
-                m.Tests.Factory.User
-                | m.Tests.Factory.Config
-                | m.Tests.Factory.Service
-                | m.Tests.Factory.Entity
-                | m.Tests.Factory.ValueObject,
-            ]
-        ]
+        _BaseModel
+        | builtins.list[_BaseModel]
+        | dict[str, _BaseModel]
+        | r[_BaseModel]
+        | r[list[_BaseModel]]
+        | r[dict[str, _BaseModel]]
     ):
         """Unified model factory - creates any model type with full customization.
 
@@ -257,22 +214,35 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                     )
                     if merge_result.is_success:
                         config_data = merge_result.value
-                return m.Tests.Factory.Config.model_validate(config_data)
+                # Create Config model - Config is a namespace, use ProcessingRequest as example
+                # For test factories, we create a simple dict-based model
+                # Since Config is a namespace, we'll use Entity as base for test configs
+                from pydantic import create_model  # noqa: PLC0415
+
+                config_model_cls = create_model(
+                    "ConfigModel", **{k: (type(v), ...) for k, v in config_data.items()}
+                )
+                config_model = config_model_cls(**config_data)
+                return cast("_BaseModel", config_model)
 
             if params.kind == "service":
+                service_type_str = params.service_type or "api"
                 svc_data: dict[str, t.Tests.TestResultValue] = {
                     "id": params.model_id or u.generate("uuid"),
-                    "type": params.service_type,
+                    "type": service_type_str,
                     "name": params.name
-                    or c.Tests.Factory.service_name(params.service_type),
-                    "status": params.status,
+                    or c.Tests.Factory.service_name(service_type_str),
+                    "status": params.status or "active",
                 }
                 # Convert overrides to compatible dict
-                overrides_dict: dict[str, t.Tests.TestResultValue] = dict(
-                    params.overrides,
-                )
-                svc_data.update(overrides_dict)
-                return m.Tests.Factory.Service.model_validate(svc_data)
+                if params.overrides:
+                    overrides_dict: dict[str, t.Tests.TestResultValue] = dict(
+                        params.overrides,
+                    )
+                    svc_data.update(overrides_dict)
+                # Create Service model - Service is a namespace, use Entity as base for test services
+                service_model = FlextModelsBase.Entity.model_validate(svc_data)
+                return cast("_BaseModel", service_model)
 
             if params.kind == "entity":
                 # Use DomainHelpers for entity creation
@@ -284,11 +254,13 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
 
             # params.kind == "value"
             # Use DomainHelpers for value object creation
-            return u.Tests.DomainHelpers.create_test_value_object_instance(
+            # Create ValueObject model - use Value as base
+            value_result = u.Tests.DomainHelpers.create_test_value_object_instance(
                 data=params.data,
                 count=params.value_count,
-                value_class=m.Tests.Factory.ValueObject,
+                value_class=FlextModelsBase.Value,
             )
+            return cast("_BaseModel", value_result)
 
         # Create single instance
         instance = _create_single()
@@ -357,75 +329,28 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                     )
                     result_dict[str(inst_id)] = inst
                 if params.as_result:
-                    dict_result: r[
-                        dict[
-                            str,
-                            m.Tests.Factory.User
-                            | m.Tests.Factory.Config
-                            | m.Tests.Factory.Service
-                            | m.Tests.Factory.Entity
-                            | m.Tests.Factory.ValueObject,
-                        ]
-                    ] = r[
-                        dict[
-                            str,
-                            m.Tests.Factory.User
-                            | m.Tests.Factory.Config
-                            | m.Tests.Factory.Service
-                            | m.Tests.Factory.Entity
-                            | m.Tests.Factory.ValueObject,
-                        ]
-                    ].ok(result_dict)
+                    dict_result: r[dict[str, _BaseModel]] = r[dict[str, _BaseModel]].ok(
+                        result_dict
+                    )
                     return dict_result
                 return result_dict
 
             # Handle as_mapping
             if params.as_mapping:
-                mapped_result_dict: dict[
-                    str,
-                    m.Tests.Factory.User
-                    | m.Tests.Factory.Config
-                    | m.Tests.Factory.Service
-                    | m.Tests.Factory.Entity
-                    | m.Tests.Factory.ValueObject,
-                ] = {}
+                mapped_result_dict: dict[str, _BaseModel] = {}
                 for i, inst in enumerate(instances):
                     key = params.as_mapping.get(str(i), str(i))
                     mapped_result_dict[key] = inst
                 if params.as_result:
-                    mapping_result: r[
-                        dict[
-                            str,
-                            m.Tests.Factory.User
-                            | m.Tests.Factory.Config
-                            | m.Tests.Factory.Service
-                            | m.Tests.Factory.Entity
-                            | m.Tests.Factory.ValueObject,
-                        ]
-                    ] = r[
-                        dict[
-                            str,
-                            m.Tests.Factory.User
-                            | m.Tests.Factory.Config
-                            | m.Tests.Factory.Service
-                            | m.Tests.Factory.Entity
-                            | m.Tests.Factory.ValueObject,
-                        ]
+                    mapping_result: r[dict[str, _BaseModel]] = r[
+                        dict[str, _BaseModel]
                     ].ok(mapped_result_dict)
                     return mapping_result
                 return mapped_result_dict
 
             # Return list
             if params.as_result:
-                return r[
-                    list[
-                        m.Tests.Factory.User
-                        | m.Tests.Factory.Config
-                        | m.Tests.Factory.Service
-                        | m.Tests.Factory.Entity
-                        | m.Tests.Factory.ValueObject
-                    ]
-                ].ok(instances)
+                return r[list[_BaseModel]].ok(instances)
             return instances
 
         # Single instance - handle as_dict

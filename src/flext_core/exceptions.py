@@ -530,13 +530,17 @@ class FlextExceptions:
                 return (None, None, False, False)
 
             corr_id = context.get("correlation_id")
-            correlation_id_val: str | None = corr_id if isinstance(corr_id, str) else None
+            correlation_id_val: str | None = (
+                corr_id if isinstance(corr_id, str) else None
+            )
 
             metadata_obj = context.get("metadata")
             metadata_val = metadata_obj if isinstance(metadata_obj, _Metadata) else None
 
             auto_log_obj = context.get("auto_log")
-            auto_log_val: bool = auto_log_obj if isinstance(auto_log_obj, bool) else False
+            auto_log_val: bool = (
+                auto_log_obj if isinstance(auto_log_obj, bool) else False
+            )
 
             auto_corr_obj = context.get("auto_correlation")
             auto_correlation_val: bool = (
@@ -1096,8 +1100,10 @@ class FlextExceptions:
                 # Convert Mapping values to MetadataAttributeValue
                 converted_dict_mapping: t.Types.MetadataAttributeDict = {}
                 for k, v in metadata_raw.items():
-                    converted_dict_mapping[k] = FlextRuntime.normalize_to_metadata_value(
-                        v,
+                    converted_dict_mapping[k] = (
+                        FlextRuntime.normalize_to_metadata_value(
+                            v,
+                        )
                     )
                 metadata = converted_dict_mapping
         return (correlation_id, metadata)

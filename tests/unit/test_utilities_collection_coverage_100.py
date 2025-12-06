@@ -24,8 +24,8 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import r, t, u
-from flext_tests import FlextTestsUtilities
+from flext_core import r, t
+from flext_tests import FlextTestsUtilities, u
 
 
 class FixtureStatus(StrEnum):

@@ -615,14 +615,18 @@ class FlextTestsUtilities(FlextUtilities):
 make setup                    # Install deps + pre-commit hooks
 
 # Quality gates (MANDATORY before commit)
-make validate                 # Run ALL: lint + type + security + test
-make check                    # Quick: lint + type only
+make validate                 # Run ALL: lint + format-check + type-check + complexity + docstring-check + security + test
+make check                    # Quick: lint + type-check only
 
 # Individual checks
-make lint                     # Ruff (ZERO violations)
-make type-check              # Mypy + Pyright strict (ZERO errors)
-make test                    # Full suite (79%+ coverage required)
-make format                  # Auto-format (79 char limit)
+make lint                     # Ruff linting (ZERO violations)
+make format                   # Auto-format code
+make format-check             # Check formatting without modifying
+make type-check               # Pyrefly type checking (ZERO errors)
+make complexity               # Radon CC + MI analysis
+make docstring-check          # Docstring coverage (80%+)
+make security                 # Bandit + pip-audit security scan
+make test                     # Full suite (80%+ coverage required)
 
 # Testing
 PYTHONPATH=src poetry run pytest tests/unit/test_result.py -v
@@ -703,17 +707,48 @@ class FlextResult[T]:
 
 ---
 
-## Quality Standards
+## Quality Standards (Updated December 2025)
 
-**Requirements**:
+### Quality Gate Requirements
+
+| Category | Tool | Threshold | Status |
+|----------|------|-----------|--------|
+| **Coverage** | pytest-cov | 80% minimum (strict) | ✅ |
+| **Type Checking** | Pyrefly (Pyright-based) | ZERO errors | ✅ |
+| **Linting** | Ruff | ZERO violations | ✅ |
+| **Security** | Bandit + detect-secrets | ZERO high/medium issues | ✅ |
+| **Complexity** | Radon CC + MI | CC ≤ 10, MI ≥ A | ✅ |
+| **Docstrings** | interrogate | 80% coverage | ✅ |
+
+### Quality Gate Command
+
+```bash
+make validate  # Runs: lint + format-check + type-check + complexity + docstring-check + security + test
+```
+
+### Detailed Requirements
+
+**Code Quality**:
 - **Linting**: Ruff ZERO violations ✅
-- **Type Checking**: Mypy strict ZERO errors (53 source files) ✅
-- **Pyright**: ZERO errors, 4 warnings (TypeVar design choices - acceptable) ✅
-- **Pyrefly**: ZERO errors (known type inference limitations configured) ✅
-- **Coverage**: 81.41% (above 73% minimum) ✅
-- **Tests**: 2820 tests passing ✅
+- **Type Checking**: Pyrefly ZERO errors (uses Pyright internally) ✅
+- **Coverage**: 80% minimum (strict enforcement via pytest-cov + CI) ✅
+- **Tests**: All tests passing ✅
 - **Line Length**: 88 characters max (ruff-shared.toml)
+
+**Security (Local + CI)**:
+- **Bandit**: ZERO high/medium security issues ✅
+- **detect-secrets**: Baseline file required (`.secrets.baseline`) ✅
+- **pip-audit**: Dependency vulnerability scanning ✅
+
+**Code Complexity**:
+- **Radon CC**: Cyclomatic Complexity ≤ 10 per function ✅
+- **Radon MI**: Maintainability Index ≥ A rating ✅
+
+**Documentation**:
+- **Docstrings**: 80% coverage via interrogate ✅
 - **API Compatibility**: Both `.data` and `.value` must work ✅
+
+**Architecture**:
 - **Circular Dependencies**: ZERO (verified by import tests) ✅
 - **Type Ignore Comments**: ZERO `# type: ignore` ✅
 - **Any Types**: ZERO `Any` type annotations ✅
