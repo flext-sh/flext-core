@@ -235,10 +235,17 @@ class FlextUtilitiesGenerators:
 
         """
         if isinstance(context, dict):
-            return context
+            # Type narrowing: context is dict, cast to ConfigurationDict
+            context_dict_result: t.Types.ConfigurationDict = cast(
+                "t.Types.ConfigurationDict",
+                context,
+            )
+            return context_dict_result
         if isinstance(context, Mapping):
             try:
-                return dict(context.items())
+                # Type narrowing: context is Mapping, convert to dict
+                context_dict_mapping: t.Types.ConfigurationDict = dict(context.items())
+                return context_dict_mapping
             except (AttributeError, TypeError) as e:
                 msg = (
                     f"Failed to convert Mapping {type(context).__name__} to dict: "
@@ -487,9 +494,10 @@ class FlextUtilitiesGenerators:
         """
         # pyrefly doesn't understand type() for dynamic class creation
         # This is valid Python metaprogramming
-        # Runtime validation: base_class parameter is typed as type, but runtime check for safety
-        # Type narrowing: base_class is type per type system, but runtime check for safety
-        # This check is necessary for defensive programming even though type system ensures type
+        # Runtime validation: base_class parameter is typed as type
+        # Note: isinstance(base_class, type) is always True for type parameters,
+        # but we keep this for defensive programming and runtime validation
+        # Pyright reports this as unnecessary, but it's intentional for safety
         if not isinstance(base_class, type):
             # Runtime safety check (type system ensures type, but runtime validation needed)
             msg: str = f"base_class must be a type, got {type(base_class).__name__}"

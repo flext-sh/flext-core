@@ -73,7 +73,12 @@ def test_is_valid_handles_validation_exception() -> None:
 def test_clone_runtime_creates_isolated_scope() -> None:
     """_clone_runtime should produce new config/context/container."""
     service = RuntimeCloneService()
+    # Ensure runtime is initialized by accessing it
+    # This will trigger _create_initial_runtime() if needed
     base_runtime = service.runtime
+    # Get base config app_name before cloning
+    # Access via service.config property which is properly initialized
+    base_app_name = service.config.app_name
 
     cloned = service._clone_runtime(
         config_overrides={"app_name": "cloned"},
@@ -83,7 +88,7 @@ def test_clone_runtime_creates_isolated_scope() -> None:
 
     assert cloned is not base_runtime
     assert cloned.config.app_name == "cloned"
-    assert cloned.config.app_name != base_runtime.config.app_name
+    assert cloned.config.app_name != base_app_name
     # Ensure new container resolves injected service
     resolved_result: p.Foundation.Result[t.GeneralValueType] = cloned.container.get(
         "val",

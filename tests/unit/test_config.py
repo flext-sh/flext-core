@@ -33,6 +33,7 @@ from pydantic_settings import BaseSettings
 from flext_core import FlextConfig
 from flext_core.constants import c
 from flext_core.typings import t
+from flext_tests import tm
 from flext_tests.utilities import FlextTestsUtilities
 
 # cast is already imported at top level
@@ -95,7 +96,7 @@ class TestFlextConfig:
             config,
             config_data_mapping,
         )
-        assert isinstance(config, FlextConfig)
+        tm.that(config, is_=FlextConfig, msg="Config must be FlextConfig instance")
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
@@ -122,10 +123,10 @@ class TestFlextConfig:
             debug=True,
         )
         config_dict = config.model_dump()
-        assert isinstance(config_dict, dict)
-        assert config_dict["app_name"] == "test_app"
-        assert config_dict["version"] == "1.0.0"
-        assert config_dict["debug"] is True
+        tm.that(config_dict, is_=dict, none=False, msg="model_dump must return dict")
+        tm.that(config_dict["app_name"], eq="test_app", msg="app_name must match")
+        tm.that(config_dict["version"], eq="1.0.0", msg="version must match")
+        tm.that(config_dict["debug"], eq=True, msg="debug must be True")
 
     def test_config_clone(self) -> None:
         """Test config cloning with singleton pattern."""
@@ -136,9 +137,21 @@ class TestFlextConfig:
         # Exclude computed fields that have no setters
         config_dict = original_config.model_dump(exclude={"is_production"})
         cloned_config = FlextConfig.model_validate(config_dict)
-        assert cloned_config.app_name == original_config.app_name
-        assert cloned_config.version == original_config.version
-        assert cloned_config is original_config
+        tm.that(
+            cloned_config.app_name,
+            eq=original_config.app_name,
+            msg="Cloned config app_name must match original",
+        )
+        tm.that(
+            cloned_config.version,
+            eq=original_config.version,
+            msg="Cloned config version must match original",
+        )
+        tm.that(
+            cloned_config is original_config,
+            eq=True,
+            msg="Cloned config must be same singleton instance",
+        )
 
     @pytest.mark.parametrize(
         ("field_name", "value", "modified"),
@@ -153,21 +166,29 @@ class TestFlextConfig:
         """Test config field access operations."""
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
         setattr(config, field_name, value)
-        assert getattr(config, field_name) == value
+        tm.that(
+            getattr(config, field_name),
+            eq=value,
+            msg=f"Config {field_name} must equal initial value",
+        )
         setattr(config, field_name, modified)
-        assert getattr(config, field_name) == modified
+        tm.that(
+            getattr(config, field_name),
+            eq=modified,
+            msg=f"Config {field_name} must equal modified value",
+        )
 
     def test_config_field_reset(self) -> None:
         """Test config field reset operation."""
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
         config.app_name = "value1"
         config.version = "2.0.0"
-        assert config.app_name == "value1"
-        assert config.version == "2.0.0"
+        tm.that(config.app_name, eq="value1", msg="app_name must be set to value1")
+        tm.that(config.version, eq="2.0.0", msg="version must be set to 2.0.0")
         config.app_name = FlextConfig.model_fields["app_name"].default
         config.version = FlextConfig.model_fields["version"].default
-        assert config.app_name != "value1"
-        assert config.version != "2.0.0"
+        tm.that(config.app_name, ne="value1", msg="app_name must be reset from value1")
+        tm.that(config.version, ne="2.0.0", msg="version must be reset from 2.0.0")
 
     def test_config_keys_values_items(self) -> None:
         """Test config keys, values, and items operations."""
@@ -175,18 +196,38 @@ class TestFlextConfig:
         config.app_name = "value1"
         config.version = "2.0.0"
         config_dict = config.model_dump()
-        assert "app_name" in config_dict
-        assert "version" in config_dict
-        assert "value1" in config_dict.values()
-        assert "2.0.0" in config_dict.values()
-        assert ("app_name", "value1") in config_dict.items()
+        tm.that(config_dict, has="app_name", msg="config_dict must contain app_name")
+        tm.that(config_dict, has="version", msg="config_dict must contain version")
+        tm.that(
+            "value1" in config_dict.values(),
+            eq=True,
+            msg="config_dict values must contain value1",
+        )
+        tm.that(
+            "2.0.0" in config_dict.values(),
+            eq=True,
+            msg="config_dict values must contain 2.0.0",
+        )
+        tm.that(
+            ("app_name", "value1") in config_dict.items(),
+            eq=True,
+            msg="config_dict items must contain (app_name, value1)",
+        )
 
     def test_config_singleton_pattern(self) -> None:
         """Test config implements true singleton pattern."""
         config1 = FlextConfig()
         config2 = FlextConfig()
-        assert config1 is config2
-        assert config1.model_dump() == config2.model_dump()
+        tm.that(
+            config1 is config2,
+            eq=True,
+            msg="FlextConfig() must return same singleton instance",
+        )
+        tm.that(
+            config1.model_dump(),
+            eq=config2.model_dump(),
+            msg="Singleton configs must have same model_dump",
+        )
 
     def test_config_thread_safety(self) -> None:
         """Test config thread safety."""
@@ -348,8 +389,8 @@ class TestFlextConfigPydantic:
     def test_pydantic_dotenv_file_loading(self, tmp_path: Path) -> None:
         """Test that FlextConfig automatically loads .env file.
 
-        Uses tmp_path fixture and FLEXT_ENV_FILE to avoid writing files to current directory.
-        Validates that .env file is loaded correctly.
+        Uses tmp_path fixture and FLEXT_ENV_FILE to avoid writing files
+        to current directory. Validates that .env file is loaded correctly.
         """
         # Create .env file in temp directory
         env_file = tmp_path / ".env"
@@ -424,8 +465,9 @@ class TestFlextConfigPydantic:
     def test_pydantic_complete_precedence_chain(self, tmp_path: Path) -> None:
         """Test complete Pydantic 2 Settings precedence chain.
 
-        Uses tmp_path fixture and FLEXT_ENV_FILE to avoid writing files to current directory.
-        Validates precedence: explicit > env vars > .env > defaults.
+        Uses tmp_path fixture and FLEXT_ENV_FILE to avoid writing files
+        to current directory. Validates precedence:
+        explicit > env vars > .env > defaults.
         """
         # Create .env file in temp directory
         env_file = tmp_path / ".env"
@@ -460,10 +502,14 @@ class TestFlextConfigPydantic:
             # Reset singleton to test .env file precedence
             FlextConfig.reset_global_instance()
             config_no_env = FlextConfig()
-            # Note: .env loading may not work if model_config was set at class definition
-            # This test validates the behavior, not necessarily that .env is loaded
-            assert config_no_env.timeout_seconds in {45, 30}, (
-                f"Expected 45 (.env) or 30 (default), got {config_no_env.timeout_seconds}"
+            # Note: .env loading may not work if model_config was set at class
+            # definition. This test validates the behavior, not necessarily
+            # that .env is loaded
+            timeout = config_no_env.timeout_seconds
+            tm.that(
+                timeout in {45, 30},
+                eq=True,
+                msg=f"Expected 45 (.env) or 30 (default), got {timeout}",
             )
 
             # Validate precedence chain worked correctly

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time as time_module
 from collections.abc import Callable
-from typing import Annotated, Self
+from typing import Annotated, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -204,10 +204,10 @@ class FlextModelsHandler:
                 examples=["command", "query", "event"],
             ),
         ]
+        # Use PrivateAttr for internal state (Pydantic v2 pattern)
+        # PrivateAttr fields are not validated by Pydantic, so pyright needs explicit type hints
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: t.Types.ConfigurationDict | None = PrivateAttr(
-            default=None,
-        )
+        _metrics_state: t.Types.ConfigurationDict | None = PrivateAttr(default=None)
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -222,6 +222,7 @@ class FlextModelsHandler:
                 >>> context.start_execution()
 
             """
+            # Use PrivateAttr for proper Pydantic v2 pattern
             self._start_time = time_module.time()
 
         @computed_field
@@ -245,7 +246,13 @@ class FlextModelsHandler:
             if self._start_time is None:
                 return 0.0
 
-            elapsed = time_module.time() - self._start_time
+            # Type narrowing: _start_time is not None after check, so it's float
+            # Use getattr to help pyright infer the type
+            start_time_attr = getattr(self, "_start_time", None)
+            if start_time_attr is None:
+                return 0.0
+            start_time: float = cast("float", start_time_attr)
+            elapsed: float = time_module.time() - start_time
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
 
         @computed_field
@@ -265,8 +272,21 @@ class FlextModelsHandler:
 
             """
             if self._metrics_state is None:
-                self._metrics_state = {}
-            return self._metrics_state
+                # Use PrivateAttr for proper Pydantic v2 pattern
+                empty_dict: t.Types.ConfigurationDict = {}
+                self._metrics_state = empty_dict
+            # Type narrowing: _metrics_state is not None after initialization above
+            # Use getattr to help pyright infer the type
+            metrics_state_attr = getattr(self, "_metrics_state", None)
+            if metrics_state_attr is None:
+                return {}
+            # ConfigurationDict is a dict, which is compatible with ConfigurationMapping (Mapping)
+            # Cast to ConfigurationMapping - dict is compatible with Mapping
+            metrics_state: t.Types.ConfigurationDict = cast(
+                "t.Types.ConfigurationDict",
+                metrics_state_attr,
+            )
+            return cast("t.Types.ConfigurationMapping", metrics_state)
 
         def set_metrics_state(
             self,
@@ -286,6 +306,7 @@ class FlextModelsHandler:
                 >>> context.set_metrics_state({"items_processed": 42, "errors": 0})
 
             """
+            # Use PrivateAttr for proper Pydantic v2 pattern
             self._metrics_state = state
 
         def reset(self) -> None:
@@ -304,6 +325,7 @@ class FlextModelsHandler:
                 0.0
 
             """
+            # Use PrivateAttr for proper Pydantic v2 pattern
             self._start_time = None
             self._metrics_state = None
 
@@ -340,12 +362,16 @@ class FlextModelsHandler:
         @computed_field
         def is_running(self) -> bool:
             """Check if execution is currently running."""
-            return self._start_time is not None
+            # Use getattr to help pyright infer the type
+            start_time_attr = getattr(self, "_start_time", None)
+            return start_time_attr is not None
 
         @computed_field
         def has_metrics(self) -> bool:
             """Check if metrics have been recorded."""
-            return self._metrics_state is not None and bool(self._metrics_state)
+            # Use getattr to help pyright infer the type
+            metrics_state_attr = getattr(self, "_metrics_state", None)
+            return metrics_state_attr is not None and bool(metrics_state_attr)
 
 
 __all__ = ["FlextModelsHandler"]

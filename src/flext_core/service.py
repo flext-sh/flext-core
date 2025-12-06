@@ -15,19 +15,20 @@ import inspect
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
-from typing import Self, cast
+from typing import Literal, Self, cast, override
 
-from pydantic import ConfigDict, computed_field
+from pydantic import BaseModel, ConfigDict, PrivateAttr, computed_field
 
-from flext_core.config import FlextConfig  # For instantiation only
+from flext_core.config import FlextConfig
 from flext_core.constants import c
-from flext_core.context import FlextContext  # For instantiation only
+from flext_core.context import FlextContext
 from flext_core.exceptions import e
 from flext_core.mixins import require_initialized, x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 from flext_core.result import r
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
@@ -51,6 +52,63 @@ class FlextService[TDomainResult](
         use_enum_values=True,
         validate_assignment=True,
     )
+
+    @override
+    def model_dump(
+        self,
+        *,
+        mode: str = "python",
+        include: t.Types.IncEx | None = None,  # type: ignore[override]
+        exclude: t.Types.IncEx | None = None,  # type: ignore[override]
+        context: t.GeneralValueType | None = None,
+        by_alias: bool | None = None,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        exclude_computed_fields: bool = False,
+        round_trip: bool = False,
+        warnings: bool | Literal["none", "warn", "error"] = True,
+        fallback: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
+        serialize_as_any: bool = False,
+    ) -> t.Types.ConfigurationDict:
+        """Dump model to dict, excluding runtime if not initialized."""
+        # Exclude runtime from dump if not initialized to avoid RuntimeError
+        # Use exclude_computed_fields=True to avoid evaluating runtime if not initialized
+        exclude_set: t.Types.IncEx
+        if exclude is None:
+            exclude_set = {"runtime"}
+        elif isinstance(exclude, set):
+            # Type narrowing: exclude is set[str]
+            exclude_set = exclude | {"runtime"}
+        else:
+            # Type narrowing: exclude is dict[str, set[str] | bool]
+            exclude_dict: dict[str, set[str] | bool] = dict(exclude)
+            exclude_set = {**exclude_dict, "runtime": True}
+        # Always exclude computed fields to avoid RuntimeError when runtime is not initialized
+        # Unless runtime is explicitly included
+        should_exclude_computed = exclude_computed_fields
+        if include is None or (isinstance(include, set) and "runtime" not in include):
+            should_exclude_computed = True
+        # Pydantic model_dump returns dict[str, GeneralValueType-compatible values]
+        # Cast to ConfigurationDict for type safety - Pydantic serializes to GeneralValueType-compatible values
+        dumped_raw = super().model_dump(
+            exclude_computed_fields=should_exclude_computed,
+            mode=mode,
+            include=include,
+            exclude=exclude_set,
+            context=context,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            round_trip=round_trip,
+            warnings=warnings,
+            fallback=fallback,
+            serialize_as_any=serialize_as_any,
+        )
+        # Type assertion: Pydantic serializes to GeneralValueType-compatible values
+        # Pydantic returns dict[str, GeneralValueType-compatible values]
+        return cast("t.Types.ConfigurationDict", dumped_raw)
 
     def __new__(
         cls,
@@ -95,12 +153,14 @@ class FlextService[TDomainResult](
                 msg = f"Class {cls.__name__} must implement execute() method"
                 raise TypeError(msg)
             # Type narrowing: execute_method is callable and returns r[TDomainResult]
+            # execute() is abstract method that returns r[TDomainResult] per class definition
             result_raw = execute_method()
             if not isinstance(result_raw, r):
                 msg = f"execute() must return r, got {type(result_raw).__name__}"
                 raise TypeError(msg)
-            # Type narrowing: result_raw is r, compatible with r[TDomainResult]
-            result: r[TDomainResult] = result_raw
+            # Type narrowing: result_raw is r, and execute() signature guarantees r[TDomainResult]
+            # Cast is necessary because isinstance() doesn't preserve generic type parameter
+            result: r[TDomainResult] = cast("r[TDomainResult]", result_raw)
             # For auto_execute=True, return the result value directly (V2 Auto pattern)
             # This allows: user = AutoGetUserService(user_id="123") to get User object
             if result.is_failure:
@@ -109,9 +169,11 @@ class FlextService[TDomainResult](
             # Return the unwrapped value directly (breaks static typing but is intended behavior)
             # Type narrowing: result.value is TDomainResult, which may be Self in some cases
             # This is a runtime pattern where TDomainResult can be the service instance itself
-            return result.value
+            # Cast needed because mypy doesn't know that TDomainResult can be Self
+            return cast("Self", result.value)
         # For auto_execute=False, return instance (normal pattern)
-        type(instance).__init__(instance, **kwargs)
+        # Pydantic BaseModel calls __init__ automatically after __new__,
+        # so we don't need to call it manually here
         return instance
 
     @property
@@ -157,18 +219,21 @@ class FlextService[TDomainResult](
         ):
             super().__init__(**data)
 
-        # Set attributes directly (no PrivateAttr needed, compatible with FlextMixins)
+        # Set attributes directly - PrivateAttr allows assignment without validation
         self._context = runtime.context
-        self._config = runtime.config
+        # Type narrowing: runtime.config is p.Configuration.Config, but we need FlextConfig
+        # All implementations of p.Configuration.Config in FLEXT are FlextConfig or subclasses
+        self._config = cast("FlextConfig", runtime.config)
         self._container = runtime.container
         self._runtime = runtime
 
-    # Use class attributes (not PrivateAttr) to match FlextMixins pattern
-    # This allows direct assignment in _create_initial_runtime() and other mixin methods
-    _context: p.Context.Ctx | None = None
-    _config: FlextConfig | None = None
-    _container: p.Container.DI | None = None
-    _runtime: m.ServiceRuntime | None = None
+    # Use PrivateAttr for private attributes (Pydantic v2 pattern)
+    # PrivateAttr allows setting attributes without validation and bypasses __setattr__
+    # Type annotations are provided via type comments for pyright compatibility
+    _context = PrivateAttr(default=None)  # type: p.Context.Ctx | None
+    _config = PrivateAttr(default=None)  # type: FlextConfig | None
+    _container = PrivateAttr(default=None)  # type: p.Container.DI | None
+    _runtime = PrivateAttr(default=None)  # type: m.ServiceRuntime | None
     _auto_result: TDomainResult | None = None
 
     @classmethod
@@ -188,13 +253,34 @@ class FlextService[TDomainResult](
     def _create_initial_runtime(cls) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
         config_type = cls._get_service_config_type()
-        return cls.create_service_runtime(
-            config_type=config_type,
-            **cls._runtime_bootstrap_options(),
+        options = cls._runtime_bootstrap_options()
+        # Use RuntimeBootstrapOptions TypedDict for type safety
+        # TypedDict provides correct types, reducing need for casts
+        return FlextRuntime.create_service_runtime(
+            config_type=cast("type[FlextConfig] | None", options.get("config_type"))
+            if "config_type" in options
+            else config_type,
+            config_overrides=options.get("config_overrides"),
+            context=cast("p.Context.Ctx | None", options.get("context"))
+            if "context" in options
+            else None,
+            subproject=options.get("subproject"),
+            services=cast(
+                "Mapping[str, t.GeneralValueType | BaseModel | p.Utility.Callable[t.GeneralValueType]] | None",
+                options.get("services"),
+            )
+            if "services" in options
+            else None,
+            factories=options.get("factories"),
+            resources=options.get("resources"),
+            container_overrides=options.get("container_overrides"),
+            wire_modules=options.get("wire_modules"),
+            wire_packages=options.get("wire_packages"),
+            wire_classes=options.get("wire_classes"),
         )
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> dict[str, object]:
+    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
         """Hook for subclasses to parametrize runtime automation.
 
         Subclasses can override this method to pass keyword arguments directly
@@ -215,9 +301,9 @@ class FlextService[TDomainResult](
         container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> m.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
-        config = require_initialized(self._config, "Config")
-        ctx = require_initialized(self._context, "Context")
-        container = require_initialized(self._container, "Container")
+        config: FlextConfig = require_initialized(self._config, "Config")
+        ctx: p.Context.Ctx = require_initialized(self._context, "Context")
+        container: p.Container.DI = require_initialized(self._container, "Container")
         cloned_config = config.model_copy(
             update=config_overrides or {},
             deep=True,
@@ -376,13 +462,14 @@ class FlextService[TDomainResult](
         # Direct access - GeneralValueType covers all domain results
         # Type narrowing: self is FlextService[TDomainResult], compatible with FlextService[t.GeneralValueType]
         # TDomainResult is a subtype of GeneralValueType, so this is safe
-        return _ServiceAccess(self)
+        # Cast needed because mypy doesn't infer that TDomainResult <: GeneralValueType
+        return _ServiceAccess(cast("s[t.GeneralValueType]", self))
 
 
 class _ServiceExecutionScope(m.ArbitraryTypesModel):
     """Immutable view of nested execution resources for a service."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     cqrs: type[m.Cqrs]
     registry: FlextRegistry
@@ -406,12 +493,13 @@ class _ServiceAccess(m.ArbitraryTypesModel):
 
     # Use class attributes (not PrivateAttr) for consistency with FlextService
     _registry: FlextRegistry | None = None
-    _service: s[t.GeneralValueType] | None = None
+    _service: s[t.GeneralValueType]
 
     def __init__(self, service: s[t.GeneralValueType]) -> None:
         super().__init__()
         # Accept any FlextService instance - GeneralValueType covers all domain results
         # Set attributes directly (no PrivateAttr needed)
+        # service is never None after __init__, so we can use non-optional type
         self._service = service
         self._registry = FlextRegistry()
 
@@ -516,7 +604,9 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             Configuration.Config: Cloned configuration instance with updates applied.
 
         """
-        config = require_initialized(self._service._config, "Config")
+        config: p.Configuration.Config = require_initialized(
+            self._service._config, "Config"
+        )
         return config.model_copy(update=overrides, deep=True)
 
     @contextmanager
@@ -537,7 +627,10 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         isolated from the parent, enabling containerized execution flows without
         mutating global state.
         """
-        base_runtime = require_initialized(self._service._runtime, "Runtime")
+        base_runtime: m.ServiceRuntime = require_initialized(
+            self._service._runtime,
+            "Runtime",
+        )
         # Type narrowing: base_runtime.context is FlextContext
         base_context = cast("FlextContext", base_runtime.context)
         original_correlation = base_context.Correlation.get_correlation_id()

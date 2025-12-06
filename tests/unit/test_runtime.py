@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from types import ModuleType
 from typing import ClassVar, cast
@@ -30,7 +31,7 @@ import pytest
 import structlog
 from dependency_injector import containers, providers
 
-from flext_core import FlextContext, FlextRuntime, c, t
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, t
 from flext_core.mixins import FlextMixins
 
 
@@ -809,8 +810,7 @@ class TestFlextRuntime:
             assert module is containers
             assert hasattr(module, "DeclarativeContainer")
         elif (
-            test_case.operation
-            == RuntimeOperationType.DEPENDENCY_WIRING_CONFIGURATION
+            test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_CONFIGURATION
         ):
             di_container = FlextRuntime.DependencyIntegration.create_container()
             config_provider = FlextRuntime.DependencyIntegration.bind_configuration(
@@ -818,22 +818,34 @@ class TestFlextRuntime:
                 {"database": {"dsn": "sqlite://"}},
             )
             assert isinstance(config_provider, providers.Configuration)
-            assert di_container.config.database.dsn() == "sqlite://"
+            # Type narrowing: di_container.config is providers.Configuration
+            # Access nested attributes via getattr for mypy compatibility
+            config = di_container.config
+            database_config = getattr(config, "database", None)
+            assert database_config is not None
+            dsn_value = database_config.dsn()
+            assert dsn_value == "sqlite://"
 
             module = ModuleType("di_config_module")
 
             @FlextRuntime.DependencyIntegration.inject
             def read_config(
-                dsn=FlextRuntime.DependencyIntegration.Provide[
+                dsn: str = FlextRuntime.DependencyIntegration.Provide[
                     "config.database.dsn"
                 ],
             ) -> str:
                 return dsn
 
-            module.read_config = read_config
+            # Type annotation for dynamic module attribute
+            setattr(module, "read_config", read_config)
             di_container.wire(modules=[module])
             try:
-                assert module.read_config() == "sqlite://"
+                # Type narrowing: module has read_config attribute after setattr
+                # Mypy limitation: can't infer dynamic module attributes
+                read_func = getattr(module, "read_config")  # type: ignore[attr-defined]
+                assert callable(read_func)
+                result = read_func()
+                assert result == "sqlite://"
             finally:
                 di_container.unwire()
         elif test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES:
@@ -856,15 +868,24 @@ class TestFlextRuntime:
 
             @FlextRuntime.DependencyIntegration.inject
             def consume(
-                token=FlextRuntime.DependencyIntegration.Provide["token_factory"],
-                static=FlextRuntime.DependencyIntegration.Provide["static_value"],
+                token: dict[str, str] = FlextRuntime.DependencyIntegration.Provide[
+                    "token_factory"
+                ],
+                static: int = FlextRuntime.DependencyIntegration.Provide[
+                    "static_value"
+                ],
             ) -> tuple[dict[str, str], int]:
                 return token, static
 
-            module.consume = consume
+            # Type annotation for dynamic module attribute
+            setattr(module, "consume", consume)
             di_container.wire(modules=[module])
             try:
-                tokens, value = module.consume()
+                # Type narrowing: module has consume attribute after setattr
+                # Mypy limitation: can't infer dynamic module attributes
+                consume_func = getattr(module, "consume")  # type: ignore[attr-defined]
+                assert callable(consume_func)
+                tokens, value = consume_func()
                 assert tokens == {"token": "abc123"}
                 assert value == 42
             finally:
@@ -879,19 +900,24 @@ class TestFlextRuntime:
             module = ModuleType("di_automation_module")
 
             @FlextRuntime.DependencyIntegration.inject
-            def consume(
-                static_value=FlextRuntime.DependencyIntegration.Provide[
+            def consume_automation(
+                static_value: int = FlextRuntime.DependencyIntegration.Provide[
                     "static_value"
                 ],
-                token=FlextRuntime.DependencyIntegration.Provide["token_factory"],
-                config_flag=FlextRuntime.DependencyIntegration.Provide[
+                token: dict[str, int] = FlextRuntime.DependencyIntegration.Provide[
+                    "token_factory"
+                ],
+                config_flag: bool = FlextRuntime.DependencyIntegration.Provide[
                     "config.flags.enabled"
                 ],
-                resource=FlextRuntime.DependencyIntegration.Provide["api_client"],
+                resource: dict[str, bool] = FlextRuntime.DependencyIntegration.Provide[
+                    "api_client"
+                ],
             ) -> tuple[int, dict[str, int], bool, dict[str, bool]]:
                 return static_value, token, config_flag, resource
 
-            module.consume = consume
+            # Type annotation for dynamic module attribute
+            setattr(module, "consume", consume_automation)
 
             di_container = FlextRuntime.DependencyIntegration.create_container(
                 config={"flags": {"enabled": True}},
@@ -903,10 +929,14 @@ class TestFlextRuntime:
             )
 
             try:
+                # Type narrowing: module has consume attribute after setattr
+                # Mypy limitation: can't infer dynamic module attributes
+                consume_func = getattr(module, "consume")  # type: ignore[attr-defined]
+                assert callable(consume_func)
                 first_static, first_token, config_enabled, resource_value = (
-                    module.consume()
+                    consume_func()
                 )
-                second_static, second_token, _, _ = module.consume()
+                second_static, second_token, _, _ = consume_func()
 
                 assert first_static == second_static == 7
                 assert config_enabled is True
@@ -925,14 +955,19 @@ class TestFlextRuntime:
             module = ModuleType("service_runtime_module")
 
             @FlextRuntime.DependencyIntegration.inject
-            def consume(
-                flag=FlextRuntime.DependencyIntegration.Provide["feature_flag"],
-                token=FlextRuntime.DependencyIntegration.Provide["token_factory"],
-                resource=FlextRuntime.DependencyIntegration.Provide["api_client"],
+            def consume_service(
+                flag: bool = FlextRuntime.DependencyIntegration.Provide["feature_flag"],
+                token: dict[str, int] = FlextRuntime.DependencyIntegration.Provide[
+                    "token_factory"
+                ],
+                resource: dict[str, bool] = FlextRuntime.DependencyIntegration.Provide[
+                    "api_client"
+                ],
             ) -> tuple[bool, dict[str, int], dict[str, bool]]:
                 return flag, token, resource
 
-            module.consume = consume
+            # Type annotation for dynamic module attribute
+            setattr(module, "consume", consume_service)
 
             runtime = FlextRuntime.create_service_runtime(
                 config_overrides={"app_name": "runtime-service"},
@@ -943,8 +978,12 @@ class TestFlextRuntime:
             )
 
             try:
-                feature_flag, first_token, resource = module.consume()
-                _, second_token, _ = module.consume()
+                # Type narrowing: module has consume attribute after setattr
+                # Mypy limitation: can't infer dynamic module attributes
+                consume_func = getattr(module, "consume")  # type: ignore[attr-defined]
+                assert callable(consume_func)
+                feature_flag, first_token, resource = consume_func()
+                _, second_token, _ = consume_func()
 
                 assert runtime.config.app_name == "runtime-service"
                 assert feature_flag is True
@@ -952,16 +991,51 @@ class TestFlextRuntime:
                 assert first_token["count"] == 1
                 assert second_token["count"] == 2
             finally:
-                runtime.container._di_bridge.unwire()
+                # Type narrowing: runtime.container is p.Container.DI protocol
+                # Cast to FlextContainer to access private _di_bridge attribute
+                container = cast("FlextContainer", runtime.container)
+                container._di_bridge.unwire()
         elif test_case.operation == RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION:
 
             class RuntimeAwareComponent(FlextMixins):
                 @classmethod
-                def _runtime_bootstrap_options(cls) -> dict[str, object]:
+                def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+                    # factories should be Mapping[str, Callable[[], ScalarValue | Sequence | Mapping]]
+                    # RuntimeBootstrapOptions["factories"] has the correct type
+                    def counter_factory() -> t.GeneralValueType:
+                        return {"count": 1}
+
+                    # Type: factories expects Callable[[], ScalarValue | Sequence | Mapping]
+                    # counter_factory returns dict[str, int] which is Mapping[str, ScalarValue]
+                    # Cast to satisfy type checker
+                    counter_factory_typed: Callable[
+                        [],
+                        (
+                            t.ScalarValue
+                            | Sequence[t.ScalarValue]
+                            | Mapping[str, t.ScalarValue]
+                        ),
+                    ] = cast(
+                        "Callable[[], t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]]",
+                        counter_factory,
+                    )
+                    factories_dict: Mapping[
+                        str,
+                        Callable[
+                            [],
+                            (
+                                t.ScalarValue
+                                | Sequence[t.ScalarValue]
+                                | Mapping[str, t.ScalarValue]
+                            ),
+                        ],
+                    ] = {
+                        "counter": counter_factory_typed,
+                    }
                     return {
                         "config_overrides": {"app_name": "runtime-aware"},
                         "services": {"preseed": {"enabled": True}},
-                        "factories": {"counter": lambda: {"count": 1}},
+                        "factories": factories_dict,
                     }
 
             component = RuntimeAwareComponent()
@@ -973,11 +1047,29 @@ class TestFlextRuntime:
             assert component.config.app_name == "runtime-aware"
             assert component.context is runtime_first.context
 
-            service_result = component.container.get("preseed")
+            # Type parameter must be explicit for mypy inference
+            # Mypy limitation: generic method syntax get[T]() not fully supported
+            # Call method directly and let runtime type inference work
+            # Mypy infers Result[Never] for generic methods without explicit type parameter
+            # Annotate explicitly to help mypy
+            service_result_raw: r[t.GeneralValueType] = cast(
+                "r[t.GeneralValueType]", component.container.get("preseed")
+            )
+            # Type narrowing: container.get returns r[T], cast to expected type
+            service_result: r[t.GeneralValueType] = service_result_raw
             assert service_result.is_success
             assert service_result.value == {"enabled": True}
 
-            factory_result = component.container.get("counter")
+            # Type parameter must be explicit for mypy inference
+            # Mypy limitation: generic method syntax get[T]() not fully supported
+            # Call method directly and let runtime type inference work
+            # Mypy infers Result[Never] for generic methods without explicit type parameter
+            # Annotate explicitly to help mypy
+            factory_result_raw: r[t.GeneralValueType] = cast(
+                "r[t.GeneralValueType]", component.container.get("counter")
+            )
+            # Type narrowing: container.get returns r[T], cast to expected type
+            factory_result: r[t.GeneralValueType] = factory_result_raw
             assert factory_result.is_success
             assert factory_result.value == {"count": 1}
 

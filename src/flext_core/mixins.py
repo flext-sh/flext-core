@@ -11,21 +11,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager, suppress
 from functools import partial
 from typing import ClassVar, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 
-from flext_core.config import FlextConfig  # For instantiation only
+from flext_core.config import FlextConfig
 from flext_core.constants import c
-from flext_core.container import FlextContainer  # For instantiation only
-from flext_core.context import FlextContext  # For instantiation only
+from flext_core.container import FlextContainer
+from flext_core.context import FlextContext
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.result import FlextResult, r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import u
@@ -92,7 +92,7 @@ class FlextMixins(FlextRuntime):
 
     """
 
-    _runtime: m.ServiceRuntime | None = None
+    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
 
     # =========================================================================
     # RUNTIME VALIDATION UTILITIES (Delegated from FlextRuntime)
@@ -100,12 +100,8 @@ class FlextMixins(FlextRuntime):
     # All classes inheriting FlextMixins automatically have access to
     # runtime validation utilities without explicit FlextRuntime import
 
-    # Type guard utilities
-    is_dict_like = staticmethod(FlextRuntime.is_dict_like)
-    is_list_like = staticmethod(FlextRuntime.is_list_like)
-    is_valid_json = staticmethod(FlextRuntime.is_valid_json)
-    is_valid_identifier = staticmethod(FlextRuntime.is_valid_identifier)
-    is_valid_phone = staticmethod(FlextRuntime.is_valid_phone)
+    # Type guard utilities - access via FlextRuntime directly
+    # These are inherited from FlextRuntime, no need to redeclare
 
     # Type introspection utilities
     is_sequence_type = staticmethod(FlextRuntime.is_sequence_type)
@@ -119,12 +115,30 @@ class FlextMixins(FlextRuntime):
     # r factory methods for railway-oriented programming
 
     # Factory methods - Use: self.ok(value) or self.fail("error")
-    # These delegate to r for unified usage
-    ok = r.ok
-    fail = r.fail
-    traverse = r.traverse
-    parallel_map = r.parallel_map
-    accumulate_errors = r.accumulate_errors
+    # These delegate to r for unified usage with proper type inference
+    @staticmethod
+    def ok[T](value: T) -> r[T]:
+        """Create successful result wrapping value."""
+        return r[T].ok(value)
+
+    @staticmethod
+    def fail(
+        error: str | None,
+        error_code: str | None = None,
+        error_data: t.Types.ConfigurationMapping | None = None,
+    ) -> r[t.GeneralValueType]:
+        """Create failed result with error message.
+
+        Returns a failed result with the error message. The type parameter
+        is GeneralValueType to allow flexible error handling.
+        """
+        return r[t.GeneralValueType].fail(
+            error, error_code=error_code, error_data=error_data
+        )
+
+    traverse = staticmethod(r.traverse)
+    parallel_map = staticmethod(r.parallel_map)
+    accumulate_errors = staticmethod(r.accumulate_errors)
 
     # =========================================================================
     # MODEL CONVERSION UTILITIES (New in Phase 0 - Consolidation)
@@ -183,8 +197,10 @@ class FlextMixins(FlextRuntime):
         def ensure_result[T](value: T | r[T]) -> r[T]:
             """Wrap value in r if not already wrapped."""
             # Check if value is already a FlextResult
-            if isinstance(value, r):
-                return value
+            # Use type guard for proper type narrowing
+            if isinstance(value, FlextResult):
+                # Type narrowing: value is r[T] after isinstance check
+                return cast("r[T]", value)
             # Wrap non-result value in r.ok()
             # Type narrowing: value is T after isinstance check
             return r[T].ok(value)
@@ -205,7 +221,8 @@ class FlextMixins(FlextRuntime):
     @property
     def container(self) -> p.Container.DI:
         """Get global FlextContainer instance with lazy initialization."""
-        return cast("p.Container.DI", self._get_runtime().container)
+        # _get_runtime().container returns p.Container.DI from ServiceRuntime model
+        return self._get_runtime().container
 
     @property
     def context(self) -> p.Context.Ctx:
@@ -223,28 +240,66 @@ class FlextMixins(FlextRuntime):
         return cast("FlextConfig", self._get_runtime().config)
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> dict[str, object]:
-        """Hook to customize runtime creation for mixin consumers."""
+    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+        """Hook to customize runtime creation for mixin consumers.
+
+        Returns:
+            RuntimeBootstrapOptions: TypedDict with optional runtime configuration options.
+
+        """
         return {}
 
     def _get_runtime(self) -> m.ServiceRuntime:
         """Return or create a runtime triple shared across mixin consumers."""
-        if self._runtime is not None:
-            return self._runtime
+        # Use getattr to safely access PrivateAttr before initialization
+        # PrivateAttr may return the descriptor object if not initialized
+        # Check if _runtime is actually a ServiceRuntime instance
+        runtime = getattr(self, "_runtime", None)
+        # Verify it's actually a ServiceRuntime, not the PrivateAttr descriptor
+        if (
+            runtime is not None
+            and hasattr(runtime, "config")
+            and hasattr(runtime, "container")
+        ):
+            return runtime
 
         runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
-        options_raw = (
-            runtime_options_callable()
-            if callable(runtime_options_callable)
-            else {}
+        # Call method and ensure result is RuntimeBootstrapOptions TypedDict
+        # _runtime_bootstrap_options returns RuntimeBootstrapOptions per class definition
+        options_raw: object = (
+            runtime_options_callable() if callable(runtime_options_callable) else {}
         )
-        # Convert dict[str, object] to dict[str, t.FlexibleValue] for create_service_runtime
-        # FlexibleValue is a union type that includes object, so this is safe
-        options: dict[str, t.FlexibleValue] = {
-            k: cast("t.FlexibleValue", v) for k, v in options_raw.items()
-        }
-
-        runtime = FlextRuntime.create_service_runtime(**options)
+        # Type narrowing: ensure result is RuntimeBootstrapOptions TypedDict
+        # Cast to RuntimeBootstrapOptions - object from callable is compatible
+        options: t.Types.RuntimeBootstrapOptions = cast(
+            "t.Types.RuntimeBootstrapOptions",
+            options_raw if isinstance(options_raw, dict) else {},
+        )
+        # Use RuntimeBootstrapOptions TypedDict for type safety
+        # TypedDict provides correct types, reducing need for casts
+        runtime = FlextRuntime.create_service_runtime(
+            config_type=cast("type[FlextConfig] | None", options.get("config_type"))
+            if "config_type" in options
+            else None,
+            config_overrides=options.get("config_overrides"),
+            context=cast("p.Context.Ctx | None", options.get("context"))
+            if "context" in options
+            else None,
+            subproject=options.get("subproject"),
+            services=cast(
+                "Mapping[str, t.GeneralValueType | BaseModel | p.Utility.Callable[t.GeneralValueType]] | None",
+                options.get("services"),
+            )
+            if "services" in options
+            else None,
+            factories=options.get("factories"),
+            resources=options.get("resources"),
+            container_overrides=options.get("container_overrides"),
+            wire_modules=options.get("wire_modules"),
+            wire_packages=options.get("wire_packages"),
+            wire_classes=options.get("wire_classes"),
+        )
+        # Use PrivateAttr for proper Pydantic v2 pattern
         self._runtime = runtime
         return runtime
 
@@ -357,7 +412,7 @@ class FlextMixins(FlextRuntime):
                 raise RuntimeError(error_msg or "Service registration failed")
             return True
 
-        return r.create_from_callable(register)
+        return r[bool].create_from_callable(register)
 
     @staticmethod
     def _propagate_context(operation_name: str) -> None:
@@ -398,8 +453,8 @@ class FlextMixins(FlextRuntime):
             logger_result = container.get_typed(logger_key, FlextLogger)
 
             if logger_result.is_success:
-                # unwrap() returns FlextLogger when is_success is True
-                logger = logger_result.unwrap()
+                # Use .value directly - FlextResult never returns None on success
+                logger = logger_result.value
                 # Cache the result
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger

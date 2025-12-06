@@ -38,7 +38,7 @@ from types import TracebackType
 from typing import ClassVar, Self, TypeVar, cast, overload
 
 import yaml
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel
 
 from flext_core import r
 from flext_tests.base import s
@@ -79,10 +79,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     # Re-export FileInfo from models for backward compatibility
     FileInfo: ClassVar[type[m.Tests.Files.FileInfo]] = m.Tests.Files.FileInfo
 
-    # Mutable state using PrivateAttr (Pydantic pattern for frozen models)
-    _base_dir: Path | None = PrivateAttr(default=None)
-    _created_files: list[Path] = PrivateAttr(default_factory=list)
-    _created_dirs: list[Path] = PrivateAttr(default_factory=list)
+    # Use class attributes (not PrivateAttr) to match FlextService pattern
+    # Initialize mutable attributes as None to avoid ClassVar requirement
+    _base_dir: Path | None = None
+    _created_files: list[Path] | None = None
+    _created_dirs: list[Path] | None = None
 
     def __init__(
         self,
@@ -97,10 +98,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             **data: Additional data passed to parent service.
 
         """
-        super().__init__(**data)
-        object.__setattr__(self, "_base_dir", base_dir)
-        object.__setattr__(self, "_created_files", [])
-        object.__setattr__(self, "_created_dirs", [])
+        # Call super().__init__() without kwargs - FlextService doesn't accept arbitrary kwargs
+        super().__init__()
+        # Set attributes directly (no PrivateAttr needed, compatible with FlextService)
+        # Initialize mutable attributes in __init__ to avoid ClassVar requirement
+        self._base_dir = base_dir
+        self._created_files = []
+        self._created_dirs = []
 
     @property
     def base_dir(self) -> Path | None:
@@ -110,12 +114,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     @property
     def created_files(self) -> list[Path]:
         """Get list of created files."""
-        return self._created_files
+        return self._created_files or []
 
     @property
     def created_dirs(self) -> list[Path]:
         """Get list of created directories."""
-        return self._created_dirs
+        return self._created_dirs or []
 
     def execute(self) -> r[t.Tests.TestResultValue]:
         """Execute service - returns success for file manager.
@@ -525,7 +529,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if params.readonly:
             file_path.chmod(c.Tests.Files.PERMISSION_READONLY_FILE)
 
-        self.created_files.append(file_path)
+        # Ensure _created_files is initialized before appending
+        if self._created_files is None:
+            self._created_files = []
+        self._created_files.append(file_path)
         return file_path
 
     @overload
@@ -1340,7 +1347,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         """
         manager = cls()
         if directory is not None:
-            object.__setattr__(manager, "_base_dir", directory)
+            # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
+            manager._base_dir = directory
         with manager:
             paths: dict[str, Path] = {}
             default_ext = ext or c.Tests.Files.DEFAULT_EXTENSION
@@ -1606,7 +1614,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             self.base_dir.mkdir(parents=True, exist_ok=True)
             return self.base_dir
         temp_dir = Path(tempfile.mkdtemp())
-        self.created_dirs.append(temp_dir)
+        # Ensure _created_dirs is initialized before appending
+        if self._created_dirs is None:
+            self._created_dirs = []
+        self._created_dirs.append(temp_dir)
         return temp_dir
 
     def _extract_content(

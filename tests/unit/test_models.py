@@ -37,7 +37,8 @@ from flext_core import (
     m,
     t,
 )
-from flext_tests import u
+from flext_tests.matchers import tm
+from flext_tests.utilities import u
 
 
 class ModelType(StrEnum):
@@ -95,10 +96,10 @@ class TestFlextModels:
     """Test suite for FlextModels using FlextTestsUtilities and c."""
 
     def test_models_initialization(self) -> None:
-        """Test models initialization."""
+        """Test models initialization with real validation."""
         models = m()
-        assert models is not None
-        assert isinstance(models, m)
+        tm.that(models, none=False, msg="FlextModels instance must not be None")
+        tm.that(models, is_=m, msg="FlextModels instance must be of type m")
 
     def test_models_entity_creation(self) -> None:
         """Test entity creation and validation."""
@@ -116,14 +117,26 @@ class TestFlextModels:
                 return v
 
         entity = TestEntity(name="Test User", email="test@example.com")
-        assert entity.name == "Test User"
-        assert entity.email == "test@example.com"
-        assert entity.unique_id is not None
+        tm.that(entity.name, eq="Test User", msg="Entity name must match input")
+        tm.that(
+            entity.email, eq="test@example.com", msg="Entity email must match input"
+        )
+        tm.that(entity.email, contains="@", msg="Entity email must contain @")
+        tm.that(
+            entity.unique_id, none=False, empty=False, msg="Entity must have unique_id"
+        )
+        tm.that(entity.unique_id, is_=str, msg="Entity unique_id must be string")
         entity_dict = entity.model_dump(
             exclude={"is_initial_version", "is_modified", "uncommitted_events"},
         )
+        tm.that(entity_dict, has="name", msg="Entity dict must contain name")
+        tm.that(entity_dict, has="email", msg="Entity dict must contain email")
         validated_entity = entity.model_validate(entity_dict)
-        assert validated_entity.email == "test@example.com"
+        tm.that(
+            validated_entity.email,
+            eq="test@example.com",
+            msg="Validated entity email must match",
+        )
         error_msg = "Invalid email"
         with pytest.raises(ValueError, match=error_msg):
             _ = TestEntity(name="Test User", email="invalid-email")
@@ -136,19 +149,44 @@ class TestFlextModels:
             count: int
 
         value = TestValue(data="test", count=42)
-        assert value.data == "test"
-        assert value.count == 42
+        tm.that(value.data, eq="test", msg="Value data must match input")
+        tm.that(value.count, eq=42, msg="Value count must match input")
+        tm.that(value.count, is_=int, gt=0, msg="Value count must be positive integer")
         new_value = TestValue(data="modified", count=100)
-        assert new_value.data == "modified"
-        assert value.data == "test"
+        tm.that(new_value.data, eq="modified", msg="New value data must match input")
+        tm.that(
+            value.data,
+            eq="test",
+            msg="Original value must remain unchanged (immutability)",
+        )
 
     def test_models_aggregate_root_creation(self) -> None:
-        """Test aggregate root creation and basic functionality."""
-        assert issubclass(m.AggregateRoot, m.Entity)
-        assert hasattr(m.AggregateRoot, "_invariants")
-        assert isinstance(m.AggregateRoot._invariants, list)
-        assert hasattr(m.AggregateRoot, "check_invariants")
-        assert callable(m.AggregateRoot.check_invariants)
+        """Test aggregate root creation and basic functionality with real validation."""
+        tm.that(
+            issubclass(m.AggregateRoot, m.Entity),
+            eq=True,
+            msg="AggregateRoot must be subclass of Entity",
+        )
+        tm.that(
+            hasattr(m.AggregateRoot, "_invariants"),
+            eq=True,
+            msg="AggregateRoot must have _invariants attribute",
+        )
+        tm.that(
+            isinstance(m.AggregateRoot._invariants, list),
+            eq=True,
+            msg="AggregateRoot _invariants must be a list",
+        )
+        tm.that(
+            hasattr(m.AggregateRoot, "check_invariants"),
+            eq=True,
+            msg="AggregateRoot must have check_invariants method",
+        )
+        tm.that(
+            callable(m.AggregateRoot.check_invariants),
+            eq=True,
+            msg="AggregateRoot check_invariants must be callable",
+        )
 
     def test_models_command_creation(self) -> None:
         """Test command model creation."""
@@ -158,10 +196,22 @@ class TestFlextModels:
             data: str
 
         command = TestCommand(data="test_data")
-        assert command.command_type == "test_command"
-        assert command.data == "test_data"
-        assert command.created_at is not None
-        assert command.unique_id is not None
+        tm.that(
+            command.command_type,
+            eq="test_command",
+            msg="Command type must match default",
+        )
+        tm.that(command.data, eq="test_data", msg="Command data must match input")
+        tm.that(
+            command.created_at, none=False, msg="Command must have created_at timestamp"
+        )
+        tm.that(
+            command.unique_id,
+            none=False,
+            empty=False,
+            msg="Command must have unique_id",
+        )
+        tm.that(command.unique_id, is_=str, msg="Command unique_id must be string")
 
     def test_models_metadata_creation(self) -> None:
         """Test metadata model creation."""
@@ -169,16 +219,28 @@ class TestFlextModels:
             created_by="test_user",
             tags=["tag1", "tag2"],
         )
-        assert metadata.created_by == "test_user"
-        assert metadata.created_at is not None
-        assert len(metadata.tags) == 2
+        tm.that(
+            metadata.created_by,
+            eq="test_user",
+            msg="Metadata created_by must match input",
+        )
+        tm.that(
+            metadata.created_at,
+            none=False,
+            msg="Metadata must have created_at timestamp",
+        )
+        tm.that(metadata.tags, is_=list, len=2, msg="Metadata must have 2 tags")
+        tm.that(metadata.tags, has="tag1", msg="Metadata tags must contain tag1")
+        tm.that(metadata.tags, has="tag2", msg="Metadata tags must contain tag2")
 
     def test_models_pagination_creation(self) -> None:
         """Test pagination model creation."""
         pagination = m.Cqrs.Pagination(page=1, size=10)
-        assert pagination.page == 1
-        assert pagination.size == 10
-        assert (pagination.page - 1) * pagination.size == 0
+        tm.that(pagination.page, eq=1, msg="Pagination page must match input")
+        tm.that(pagination.size, eq=10, msg="Pagination size must match input")
+        tm.that(pagination.size, gt=0, msg="Pagination size must be positive")
+        offset = (pagination.page - 1) * pagination.size
+        tm.that(offset, eq=0, msg="Pagination offset calculation must be correct")
 
     def test_models_domain_events(self) -> None:
         """Test domain events functionality on Entity base class."""
@@ -196,8 +258,18 @@ class TestFlextModels:
 
         entity = VersionedEntity(name="Test")
         initial_version = entity.version
+        tm.that(initial_version, gt=0, msg="Initial version must be positive")
         entity.increment_version()
-        assert entity.version == initial_version + 1
+        tm.that(
+            entity.version,
+            eq=initial_version + 1,
+            msg="Version must increment by 1",
+        )
+        tm.that(
+            entity.version,
+            gt=initial_version,
+            msg="Version must increase after increment",
+        )
 
     def test_models_timestamped_functionality(self) -> None:
         """Test timestamped functionality."""
@@ -207,9 +279,22 @@ class TestFlextModels:
 
         entity = TimestampedEntity(name="Test")
         initial_created = entity.created_at
+        tm.that(
+            initial_created, none=False, msg="Entity must have created_at timestamp"
+        )
         entity.update_timestamp()
-        assert entity.updated_at is not None
-        assert entity.updated_at > initial_created
+        tm.that(
+            entity.updated_at,
+            none=False,
+            msg="Entity must have updated_at after update",
+        )
+        # Type narrowing: updated_at is not None after check
+        if entity.updated_at is not None and initial_created is not None:
+            tm.that(
+                entity.updated_at > initial_created,
+                eq=True,
+                msg="Updated timestamp must be after created timestamp",
+            )
 
     def test_models_validation_patterns(self) -> None:
         """Test validation patterns."""
@@ -235,8 +320,13 @@ class TestFlextModels:
                 return v
 
         entity = ValidatedEntity(name="Test", email="test@example.com")
-        assert entity.name == "Test"
-        assert entity.email == "test@example.com"
+        tm.that(entity.name, eq="Test", msg="Validated entity name must match input")
+        tm.that(
+            entity.email,
+            eq="test@example.com",
+            msg="Validated entity email must match input",
+        )
+        tm.that(entity.email, contains="@", msg="Validated email must contain @")
         with pytest.raises(ValueError, match="Name is required"):
             _ = ValidatedEntity(name="", email="test@example.com")
         with pytest.raises(ValueError, match="Invalid email"):
@@ -262,7 +352,12 @@ class TestFlextModels:
             thread.start()
         for thread in threads:
             thread.join()
-        assert entity.counter == 500
+        tm.that(
+            entity.counter,
+            eq=500,
+            msg="Thread-safe counter must equal 5 threads × 100 increments",
+        )
+        tm.that(entity.counter, gt=0, msg="Counter must be positive after increments")
 
     def test_models_critical_classes_available(self) -> None:
         """Verify that critical classes are available."""
@@ -275,8 +370,16 @@ class TestFlextModels:
             "Metadata",
         ]
         for class_name in critical_classes:
-            assert hasattr(m, class_name), (
-                f"Critical class {class_name} should be available"
+            tm.that(
+                hasattr(m, class_name),
+                eq=True,
+                msg=f"Critical class {class_name} must be available",
+            )
+            class_obj = getattr(m, class_name)
+            tm.that(
+                class_obj,
+                none=False,
+                msg=f"Critical class {class_name} must not be None",
             )
         # Config classes are in Config namespace
         config_classes = [
@@ -286,17 +389,31 @@ class TestFlextModels:
             "ValidationConfiguration",
         ]
         for class_name in config_classes:
-            assert hasattr(m.Config, class_name), (
-                f"Config class {class_name} should be available in Config namespace"
+            tm.that(
+                hasattr(m.Config, class_name),
+                eq=True,
+                msg=f"Config class {class_name} must be available in Config namespace",
+            )
+            class_obj = getattr(m.Config, class_name)
+            tm.that(
+                class_obj, none=False, msg=f"Config class {class_name} must not be None"
             )
         # RegistrationDetails is in Handler namespace
-        assert hasattr(m.Handler, "RegistrationDetails"), (
-            "RegistrationDetails should be available in Handler namespace"
+        tm.that(
+            hasattr(m.Handler, "RegistrationDetails"),
+            eq=True,
+            msg="RegistrationDetails must be available in Handler namespace",
         )
         cqrs_classes = ["Command", "Query", "Pagination", "Bus", "Handler"]
         for class_name in cqrs_classes:
-            assert hasattr(m.Cqrs, class_name), (
-                f"CQRS class {class_name} should be available"
+            tm.that(
+                hasattr(m.Cqrs, class_name),
+                eq=True,
+                msg=f"CQRS class {class_name} must be available",
+            )
+            class_obj = getattr(m.Cqrs, class_name)
+            tm.that(
+                class_obj, none=False, msg=f"CQRS class {class_name} must not be None"
             )
 
     def test_entity_equality_and_hash(self) -> None:
@@ -308,16 +425,36 @@ class TestFlextModels:
         entity1 = TestEntity(name="test", unique_id="123")
         entity2 = TestEntity(name="test", unique_id="123")
         entity3 = TestEntity(name="test", unique_id="456")
-        assert entity1 == entity2
-        assert entity1 != entity3
-        assert (entity1 == "not an entity") is False
-        assert hash(entity1) == hash(entity2)
-        assert hash(entity1) != hash(entity3)
+        tm.that(
+            entity1 == entity2,
+            eq=True,
+            msg="Entities with same unique_id must be equal",
+        )
+        tm.that(
+            entity1 != entity3,
+            eq=True,
+            msg="Entities with different unique_id must not be equal",
+        )
+        tm.that(
+            (entity1 == "not an entity"),
+            eq=False,
+            msg="Entity must not equal non-entity object",
+        )
+        tm.that(
+            hash(entity1) == hash(entity2),
+            eq=True,
+            msg="Entities with same unique_id must have same hash",
+        )
+        tm.that(
+            hash(entity1) != hash(entity3),
+            eq=True,
+            msg="Entities with different unique_id must have different hash",
+        )
         # Entity implements __hash__, so it's hashable for sets
         # Use list and convert to set to avoid pyright hashability check
         entity_list: list[TestEntity] = [entity1, entity2, entity3]
         entity_set = set(entity_list)
-        assert len(entity_set) == 2
+        tm.that(len(entity_set), eq=2, msg="Set must contain 2 unique entities")
 
     def test_entity_domain_events(self) -> None:
         """Test domain event functionality in Entity."""
@@ -326,17 +463,33 @@ class TestFlextModels:
             name: str
 
         entity = TestEntity(name="test")
-        assert len(entity.domain_events) == 0
+        tm.that(
+            len(entity.domain_events), eq=0, msg="New entity must have no domain events"
+        )
         result = entity.add_domain_event("test_event", {"data": "value"})
         u.Tests.Result.assert_result_success(result)
-        assert len(entity.domain_events) == 1
+        tm.that(
+            len(entity.domain_events),
+            eq=1,
+            msg="Entity must have 1 domain event after add",
+        )
         event = entity.domain_events[0]
-        assert event.event_type == "test_event"
-        assert event.data == {"data": "value"}
-        assert event.aggregate_id == entity.unique_id
+        tm.that(event.event_type, eq="test_event", msg="Event type must match input")
+        tm.that(event.data, eq={"data": "value"}, msg="Event data must match input")
+        tm.that(
+            event.aggregate_id,
+            eq=entity.unique_id,
+            msg="Event aggregate_id must match entity unique_id",
+        )
         cleared_events = entity.clear_domain_events()
-        assert len(cleared_events) == 1
-        assert len(entity.domain_events) == 0
+        tm.that(
+            len(cleared_events), eq=1, msg="clear_domain_events must return 1 event"
+        )
+        tm.that(
+            len(entity.domain_events),
+            eq=0,
+            msg="Entity must have no domain events after clear",
+        )
 
     def test_entity_domain_events_validation(self) -> None:
         """Test domain event validation."""
@@ -347,12 +500,19 @@ class TestFlextModels:
         entity = TestEntity(name="test")
         result = entity.add_domain_event("", {"data": "value"})
         u.Tests.Result.assert_result_failure(result)
-        assert (
-            result.error is not None
-            and "Domain event name must be a non-empty string" in result.error
-        )
+        tm.that(result.error, none=False, msg="Failure result must have error message")
+        # Type narrowing: error is not None after check
+        if result.error is not None:
+            tm.that(
+                "Domain event name must be a non-empty string" in result.error,
+                eq=True,
+                msg="Error message must indicate empty event name",
+            )
         result = entity.add_domain_event("valid", {"string": "value", "number": 42})
         u.Tests.Result.assert_result_success(result)
+        tm.that(
+            len(entity.domain_events), eq=1, msg="Entity must have 1 valid domain event"
+        )
 
     def test_entity_initial_version(self) -> None:
         """Test Entity initial version state."""
@@ -729,9 +889,145 @@ class TestFlextModels:
             max_delay_seconds=30000,
             backoff_multiplier=2.0,
         )
-        assert retry.max_attempts == 3
-        assert retry.initial_delay_seconds == 1000
-        assert retry.backoff_multiplier == 2.0
+        tm.that(retry.max_attempts, eq=3, msg="max_attempts must be 3")
+        tm.that(
+            retry.initial_delay_seconds,
+            eq=1000.0,
+            msg="initial_delay_seconds must be 1000",
+        )
+        tm.that(retry.backoff_multiplier, eq=2.0, msg="backoff_multiplier must be 2.0")
+        # Test default values for retry_on_exceptions and retry_on_status_codes
+        tm.that(
+            retry.retry_on_exceptions,
+            is_=list,
+            none=False,
+            empty=True,
+            msg="retry_on_exceptions must be empty list by default",
+        )
+        tm.that(
+            retry.retry_on_status_codes,
+            is_=list,
+            none=False,
+            empty=True,
+            msg="retry_on_status_codes must be empty list by default",
+        )
+
+    def test_retry_configuration_with_exceptions(self) -> None:
+        """Test RetryConfiguration with retry_on_exceptions."""
+        retry = m.Config.RetryConfiguration(
+            max_attempts=3,
+            retry_on_exceptions=[ValueError, RuntimeError, TypeError],
+        )
+        tm.that(
+            retry.retry_on_exceptions,
+            is_=list,
+            none=False,
+            empty=False,
+            msg="retry_on_exceptions must be list",
+        )
+        tm.that(
+            len(retry.retry_on_exceptions),
+            eq=3,
+            msg="retry_on_exceptions must have 3 items",
+        )
+        tm.that(
+            ValueError in retry.retry_on_exceptions,
+            eq=True,
+            msg="ValueError must be in retry_on_exceptions",
+        )
+        tm.that(
+            RuntimeError in retry.retry_on_exceptions,
+            eq=True,
+            msg="RuntimeError must be in retry_on_exceptions",
+        )
+        tm.that(
+            TypeError in retry.retry_on_exceptions,
+            eq=True,
+            msg="TypeError must be in retry_on_exceptions",
+        )
+
+    def test_retry_configuration_with_status_codes(self) -> None:
+        """Test RetryConfiguration with retry_on_status_codes."""
+        retry = m.Config.RetryConfiguration(
+            max_attempts=3,
+            retry_on_status_codes=[500, 502, 503, 504],
+        )
+        tm.that(
+            retry.retry_on_status_codes,
+            is_=list,
+            none=False,
+            empty=False,
+            msg="retry_on_status_codes must be list",
+        )
+        tm.that(
+            len(retry.retry_on_status_codes),
+            eq=4,
+            msg="retry_on_status_codes must have 4 items",
+        )
+        tm.that(
+            500 in retry.retry_on_status_codes,
+            eq=True,
+            msg="500 must be in retry_on_status_codes",
+        )
+        tm.that(
+            502 in retry.retry_on_status_codes,
+            eq=True,
+            msg="502 must be in retry_on_status_codes",
+        )
+        tm.that(
+            503 in retry.retry_on_status_codes,
+            eq=True,
+            msg="503 must be in retry_on_status_codes",
+        )
+        tm.that(
+            504 in retry.retry_on_status_codes,
+            eq=True,
+            msg="504 must be in retry_on_status_codes",
+        )
+
+    def test_retry_configuration_with_both_exceptions_and_status_codes(self) -> None:
+        """Test RetryConfiguration with both retry_on_exceptions and status codes."""
+        retry = m.Config.RetryConfiguration(
+            max_attempts=3,
+            retry_on_exceptions=[ValueError, ConnectionError],
+            retry_on_status_codes=[429, 500, 503],
+        )
+        tm.that(retry.max_attempts, eq=3, msg="max_attempts must be 3")
+        tm.that(
+            len(retry.retry_on_exceptions),
+            eq=2,
+            msg="retry_on_exceptions must have 2 items",
+        )
+        tm.that(
+            len(retry.retry_on_status_codes),
+            eq=3,
+            msg="retry_on_status_codes must have 3 items",
+        )
+        tm.that(
+            ValueError in retry.retry_on_exceptions,
+            eq=True,
+            msg="ValueError must be in retry_on_exceptions",
+        )
+        tm.that(
+            ConnectionError in retry.retry_on_exceptions,
+            eq=True,
+            msg="ConnectionError must be in retry_on_exceptions",
+        )
+        tm.that(
+            429 in retry.retry_on_status_codes,
+            eq=True,
+            msg="429 must be in retry_on_status_codes",
+        )
+        tm.that(
+            500 in retry.retry_on_status_codes,
+            eq=True,
+            msg="500 must be in retry_on_status_codes",
+        )
+        tm.that(
+            503 in retry.retry_on_status_codes,
+            eq=True,
+            msg="503 must be in retry_on_status_codes",
+        )
 
     def test_validation_configuration_model(self) -> None:
         """Test ValidationConfiguration model with correct fields."""

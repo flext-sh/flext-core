@@ -31,7 +31,8 @@ from pydantic import BaseModel
 
 from flext_core import FlextContainer, FlextResult, r, t
 from flext_core.constants import c
-from flext_tests import FlextTestsUtilities, u
+from flext_tests import tm, u
+from flext_tests.utilities import FlextTestsUtilities
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,14 +97,24 @@ class TestFlextContainer:
         clean_container: FlextContainer,
     ) -> None:
         """Test container initialization creates valid instance using fixtures."""
-        assert clean_container is not None
-        assert isinstance(clean_container, FlextContainer)
+        tm.that(clean_container, none=False, msg="Container must not be None")
+        tm.that(
+            clean_container,
+            is_=FlextContainer,
+            msg="Container must be FlextContainer instance",
+        )
 
     def test_container_singleton(self) -> None:
         """Test that FlextContainer returns singleton instance."""
         container1 = FlextContainer()
         container2 = FlextContainer()
-        assert container1 is container2
+        tm.that(container1, none=False, msg="Container1 must not be None")
+        tm.that(container2, none=False, msg="Container2 must not be None")
+        tm.that(
+            container1 is container2,
+            eq=True,
+            msg="Containers must be the same singleton instance",
+        )
 
     @pytest.mark.parametrize(
         "scenario",
@@ -140,8 +151,16 @@ class TestFlextContainer:
             scenario.service,
         )
         result = container.with_service(scenario.name, service_typed)
-        assert result is container
-        assert container.has_service(scenario.name)
+        tm.that(
+            result is container,
+            eq=True,
+            msg="with_service must return self for fluent interface",
+        )
+        tm.that(
+            container.has_service(scenario.name),
+            eq=True,
+            msg=f"Container must have service {scenario.name} after registration",
+        )
 
     def test_register_duplicate_service(
         self,
@@ -202,11 +221,26 @@ class TestFlextContainer:
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory(
             return_value,
         )
-        result = container.with_factory(
-            f"factory_{type(return_value).__name__}",
+        # Cast factory to correct type for with_factory
+        factory_typed: Callable[[], t.GeneralValueType] = cast(
+            "Callable[[], t.GeneralValueType]",
             factory,
         )
-        assert result is container
+        result = container.with_factory(
+            f"factory_{type(return_value).__name__}",
+            factory_typed,
+        )
+        tm.that(
+            result is container,
+            eq=True,
+            msg="with_factory must return self for fluent interface",
+        )
+        factory_name = f"factory_{type(return_value).__name__}"
+        tm.that(
+            container.has_service(factory_name),
+            eq=True,
+            msg=f"Container must have factory {factory_name} after registration",
+        )
 
     def test_register_factory_non_callable(
         self,
@@ -300,10 +334,12 @@ class TestFlextContainer:
         clean_container.register_factory("factory_service", factory)
         result1: r[t.GeneralValueType] = clean_container.get("factory_service")
         u.Tests.Result.assert_result_success(result1)
-        assert get_count() == 1
+        tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
         result2: r[t.GeneralValueType] = clean_container.get("factory_service")
         u.Tests.Result.assert_result_success(result2)
-        assert get_count() == 2
+        tm.that(
+            get_count(), eq=2, msg="Factory must be called twice after second get()"
+        )
 
     @pytest.mark.parametrize(
         "scenario",
@@ -330,7 +366,19 @@ class TestFlextContainer:
         )
         if scenario.should_pass:
             u.Tests.Result.assert_result_success(typed_result)
-            assert typed_result.value == scenario.service
+            tm.that(
+                typed_result.value,
+                eq=scenario.service,
+                msg=f"Typed result value must match service for {scenario.name}",
+            )
+            tm.that(
+                isinstance(typed_result.value, scenario.expected_type),
+                eq=True,
+                msg=(
+                    f"Typed result must be instance of "
+                    f"{scenario.expected_type.__name__}"
+                ),
+            )
         else:
             u.Tests.Result.assert_result_failure(typed_result)
 
@@ -367,11 +415,13 @@ class TestFlextContainer:
     ) -> None:
         """Test has_service returns correct value using fixtures."""
         container = clean_container
+        service_name = "test_service" if has_service else "nonexistent"
         if has_service:
-            container.register("test_service", "value")
-        assert (
-            container.has_service("test_service" if has_service else "nonexistent")
-            == expected
+            container.register(service_name, "value")
+        tm.that(
+            container.has_service(service_name),
+            eq=expected,
+            msg=f"has_service must return {expected} for {service_name}",
         )
 
     def test_has_service_factory(
@@ -382,7 +432,11 @@ class TestFlextContainer:
         container = clean_container
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value")
         container.register_factory("factory_service", factory)
-        assert container.has_service("factory_service") is True
+        tm.that(
+            container.has_service("factory_service"),
+            eq=True,
+            msg="Container must have factory_service after registration",
+        )
 
     def test_list_services_empty(
         self,
@@ -391,7 +445,13 @@ class TestFlextContainer:
         """Test listing services when none registered using fixtures."""
         container = clean_container
         services = container.list_services()
-        assert len(services) == 0
+        tm.that(services, is_=list, msg="list_services must return a list")
+        tm.that(
+            len(services), eq=0, msg="Empty container must return empty services list"
+        )
+        tm.that(
+            services, empty=True, msg="Empty container must have empty services list"
+        )
 
     def test_list_services_mixed(
         self,
@@ -404,8 +464,14 @@ class TestFlextContainer:
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value3")
         container.register_factory("factory1", factory)
         services = container.list_services()
-        assert len(services) == 3
-        assert all(key in services for key in ["service1", "service2", "factory1"])
+        tm.that(len(services), eq=3, msg="Container must list 3 registered services")
+        required_keys = ["service1", "service2", "factory1"]
+        for key in required_keys:
+            tm.that(
+                key in services,
+                eq=True,
+                msg=f"Services list must contain {key}",
+            )
 
     @pytest.mark.parametrize(
         ("service_type", "use_factory"),
@@ -426,10 +492,18 @@ class TestFlextContainer:
             container.register_factory(name, factory)
         else:
             container.register(name, "value")
-        assert container.has_service(name)
+        tm.that(
+            container.has_service(name),
+            eq=True,
+            msg=f"Container must have {name} before unregister",
+        )
         unregister_result = container.unregister(name)
         u.Tests.Result.assert_result_success(unregister_result)
-        assert not container.has_service(name)
+        tm.that(
+            container.has_service(name),
+            eq=False,
+            msg=f"Container must not have {name} after unregister",
+        )
 
     def test_unregister_nonexistent(
         self,
@@ -453,7 +527,11 @@ class TestFlextContainer:
             config,
         )
         container.configure(config_typed)
-        assert container is not None
+        tm.that(container, none=False, msg="Container must not be None after configure")
+        config_result = container.get_config()
+        tm.that(
+            config_result, is_=dict, none=False, msg="Container config must be a dict"
+        )
 
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
@@ -467,20 +545,44 @@ class TestFlextContainer:
             config,
         )
         result = container.with_config(config_typed)
-        assert result is container
+        tm.that(
+            result is container,
+            eq=True,
+            msg="with_config must return self for fluent interface",
+        )
+        config_result = container.get_config()
+        tm.that(
+            config_result, is_=dict, none=False, msg="get_config must return a dict"
+        )
+        # max_workers might not be in config if it's not a valid container config key
+        # Just verify config is accessible
+        tm.that(
+            config_result, none=False, msg="Config must be accessible after with_config"
+        )
 
     def test_get_config(self) -> None:
         """Test retrieving current configuration."""
         container = FlextContainer()
         config = container.get_config()
-        assert isinstance(config, dict)
-        assert "enable_singleton" in config or "max_services" in config
+        tm.that(config, is_=dict, none=False, msg="get_config must return a dict")
+        tm.that(
+            "enable_singleton" in config or "max_services" in config,
+            eq=True,
+            msg="Config must contain enable_singleton or max_services",
+        )
 
     def test_config_property(self) -> None:
         """Test accessing config via property."""
         container = FlextContainer()
         config = container.config
-        assert config is not None
+        tm.that(config, none=False, msg="Container config property must not be None")
+        # config property returns p.Configuration.Config, not dict
+        # Use isinstance check for protocol compatibility
+        tm.that(
+            hasattr(config, "app_name") or hasattr(config, "enable_singleton"),
+            eq=True,
+            msg="Container config property must have config attributes",
+        )
 
     def test_clear_all_services(
         self,
@@ -492,9 +594,22 @@ class TestFlextContainer:
         container.register("service2", "value2")
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory("value3")
         container.register_factory("factory1", factory)
-        assert len(container.list_services()) == 3
+        tm.that(
+            len(container.list_services()),
+            eq=3,
+            msg="Container must have 3 services before clear_all",
+        )
         container.clear_all()
-        assert len(container.list_services()) == 0
+        tm.that(
+            len(container.list_services()),
+            eq=0,
+            msg="Container must have 0 services after clear_all",
+        )
+        tm.that(
+            container.list_services(),
+            empty=True,
+            msg="Container services list must be empty after clear_all",
+        )
 
     def test_clear_all_empty(
         self,
@@ -503,7 +618,16 @@ class TestFlextContainer:
         """Test clearing when no services exist using fixtures."""
         container = clean_container
         container.clear_all()
-        assert len(container.list_services()) == 0
+        tm.that(
+            len(container.list_services()),
+            eq=0,
+            msg="Empty container must have 0 services after clear_all",
+        )
+        tm.that(
+            container.list_services(),
+            empty=True,
+            msg="Empty container services list must be empty after clear_all",
+        )
 
     def test_full_workflow(
         self,
@@ -517,18 +641,34 @@ class TestFlextContainer:
             "logger": "instance",
         })
         container.register_factory("logger", factory)
-        assert all(
-            container.has_service(k) for k in ["db_connection", "cache", "logger"]
-        )
-        for name in ["db_connection", "cache", "logger"]:
+        required_services = ["db_connection", "cache", "logger"]
+        for service_name in required_services:
+            tm.that(
+                container.has_service(service_name),
+                eq=True,
+                msg=f"Container must have {service_name} after registration",
+            )
+        for name in required_services:
             result: r[t.GeneralValueType] = container.get(name)
             u.Tests.Result.assert_result_success(result)
-        assert len(container.list_services()) == 3
+        tm.that(
+            len(container.list_services()),
+            eq=3,
+            msg="Container must have 3 services in full workflow",
+        )
         unregister_result = container.unregister("cache")
         u.Tests.Result.assert_result_success(unregister_result)
-        assert len(container.list_services()) == 2
+        tm.that(
+            len(container.list_services()),
+            eq=2,
+            msg="Container must have 2 services after unregistering cache",
+        )
         container.clear_all()
-        assert len(container.list_services()) == 0
+        tm.that(
+            len(container.list_services()),
+            eq=0,
+            msg="Container must have 0 services after clear_all in workflow",
+        )
 
     def test_factory_exception_handling(
         self,

@@ -38,7 +38,7 @@ from flext_core._dispatcher import (
     TimeoutEnforcer,
 )
 from flext_core.constants import c
-from flext_core.context import FlextContext  # For instantiation only
+from flext_core.context import FlextContext
 from flext_core.handlers import h
 from flext_core.mixins import x
 from flext_core.models import m
@@ -441,7 +441,9 @@ class FlextDispatcher(x):
             processor_result: t.GeneralValueType
             if callable(processor):
                 processor_result_raw = processor(data)
-                processor_result = cast("t.GeneralValueType", processor_result_raw)
+                # processor() returns object, but we need GeneralValueType
+                # Type narrowing: processor_result_raw is object, convert to GeneralValueType
+                processor_result = processor_result_raw
             else:
                 # Fast fail: check if process method exists, no fallback
                 if not hasattr(processor, "process"):
@@ -986,15 +988,19 @@ class FlextDispatcher(x):
 
         # Type hint: HandlerType is StrEnum class, so __members__ exists
         # Use u.Mapper.get() for unified attribute access (DSL pattern)
-        # Type narrowing: __members__ is dict, compatible with HandlerTypeDict
-        handler_type_members_raw: dict[str, object] = cast(
-            "dict[str, object]",
+        # __members__ returns mappingproxy[str, HandlerType], which is compatible with HandlerTypeDict
+        handler_type_members_raw: (
+            Mapping[str, t.Handler.HandlerType] | dict[str, t.Handler.HandlerType]
+        ) = cast(
+            "Mapping[str, t.Handler.HandlerType] | dict[str, t.Handler.HandlerType]",
             u.Mapper.get(c.Cqrs.HandlerType, "__members__", default={}) or {},
         )
+        # __members__ returns mappingproxy[str, HandlerType], cast to HandlerTypeDict
+        # HandlerTypeDict is dict[str, HandlerType], which matches __members__ structure
         handler_type_members: t.Types.HandlerTypeDict = cast(
             "t.Types.HandlerTypeDict",
             handler_type_members_raw
-            if isinstance(handler_type_members_raw, dict)
+            if isinstance(handler_type_members_raw, Mapping)
             else {},
         )
         valid_modes = list(
@@ -1037,11 +1043,13 @@ class FlextDispatcher(x):
                 and "handler" in handler_entry
             ):
                 # Type narrowing: extract handler from dict structure
-                # handler_entry is dict[str, object], "handler" key returns object
-                handler_entry_dict: dict[str, object] = cast(
-                    "dict[str, object]", handler_entry
+                # handler_entry is dict-like with "handler" key containing HandlerType
+                handler_entry_dict: t.Types.ConfigurationMapping = cast(
+                    "t.Types.ConfigurationMapping", handler_entry
                 )
-                extracted_handler: object = handler_entry_dict["handler"]
+                extracted_handler: t.GeneralValueType = handler_entry_dict.get(
+                    "handler"
+                )
                 # Validate it's callable or BaseModel (valid HandlerType)
                 # HandlerType includes Callable and BaseModel instances
                 # Type narrowing: extracted_handler is HandlerType after validation
@@ -1393,7 +1401,7 @@ class FlextDispatcher(x):
             )
         else:
             result = str(result_raw)
-        return cast("r[bool]", self._handle_middleware_result(result, middleware_type))
+        return self._handle_middleware_result(result, middleware_type)
 
     def _handle_middleware_result(
         self,
@@ -1808,8 +1816,10 @@ class FlextDispatcher(x):
                 event_item: t.GeneralValueType,
             ) -> Callable[[t.GeneralValueType], r[bool]]:
                 def publish_func(
-                    _unused: t.GeneralValueType,
+                    _message: t.GeneralValueType,
                 ) -> r[bool]:
+                    # _message parameter required by signature but not used (event_item is used instead)
+                    del _message  # Explicitly mark as intentionally unused
                     return self.publish_event(event_item)
 
                 return publish_func
@@ -1831,11 +1841,11 @@ class FlextDispatcher(x):
                     r[t.GeneralValueType],
                 ]:
                     def wrapper(
-                        _unused: t.GeneralValueType,
+                        message: t.GeneralValueType,
                     ) -> r[t.GeneralValueType]:
-                        bool_result = func(_unused)
+                        bool_result = func(message)
                         # Map boolean result to GeneralValueType (True is a valid GeneralValueType)
-                        return bool_result.map(lambda _x: True)
+                        return bool_result.map(lambda _value: True)
 
                     return wrapper
 
@@ -1957,7 +1967,8 @@ class FlextDispatcher(x):
         if u.is_type(obj, "mapping"):
             path_str = ".".join(path)
             result = u.Mapper.extract(obj, path_str, default=None, required=False)
-            if result.is_success and result.value is not None:
+            # Use .value directly - FlextResult never returns None on success
+            if result.is_success:
                 return result.value
         # Fall back to attribute access for objects
         current = obj
@@ -2257,7 +2268,8 @@ class FlextDispatcher(x):
             return r[t.Types.ConfigurationMapping].fail(
                 request_dict_result.error or "Failed to normalize request",
             )
-        request_dict = request_dict_result.unwrap()
+        # Use .value directly - FlextResult never returns None on success
+        request_dict = request_dict_result.value
 
         # Validate handler mode
         handler_mode_raw = request_dict.get("handler_mode")
@@ -2278,7 +2290,8 @@ class FlextDispatcher(x):
             return r[t.Types.ConfigurationMapping].fail(
                 handler_result.error or "Handler validation failed",
             )
-        handler_general, handler_name = handler_result.unwrap()
+        # Use .value directly - FlextResult never returns None on success
+        handler_general, handler_name = handler_result.value
         # Cast GeneralValueType to HandlerType for storage in typed collections
         handler = cast("t.Handler.HandlerType", handler_general)
 
@@ -3709,8 +3722,8 @@ class FlextDispatcher(x):
         """Extract metadata mapping from object's attributes."""
         attributes_value = getattr(metadata, "attributes", None)
         if isinstance(attributes_value, (dict, Mapping)) and attributes_value:
-            # Type narrowing: attributes_value is dict[str, object] | Mapping[str, object]
-            # Convert to ConfigurationMapping for return type
+            # Type narrowing: attributes_value is dict-like, convert to ConfigurationMapping
+            # ConfigurationMapping is compatible with dict and Mapping types
             attributes_dict: t.Types.ConfigurationMapping = cast(
                 "t.Types.ConfigurationMapping", attributes_value
             )

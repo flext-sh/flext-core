@@ -16,7 +16,7 @@ from typing import Annotated, cast
 from pydantic import Field, computed_field
 
 from flext_core.constants import c
-from flext_core.dispatcher import FlextDispatcher  # For instantiation only
+from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import h
 from flext_core.mixins import x
 from flext_core.models import m
@@ -340,7 +340,6 @@ class FlextRegistry(x):
             operation="register_handler",
             handler_name=handler_name,
             handler_type=type(handler).__name__ if handler else "None",
-            source="flext-core/src/flext_core/registry.py",
         )
 
         # Validate handler is not None
@@ -350,7 +349,6 @@ class FlextRegistry(x):
                 operation="register_handler",
                 consequence="Cannot register None handler",
                 resolution_hint="Provide a valid handler instance",
-                source="flext-core/src/flext_core/registry.py",
             )
             return r[m.Handler.RegistrationDetails].fail(
                 "Handler cannot be None",
@@ -363,7 +361,6 @@ class FlextRegistry(x):
                 operation="register_handler",
                 handler_name=handler_name,
                 handler_key=key,
-                source="flext-core/src/flext_core/registry.py",
             )
             # Return successful registration details for idempotent registration
             return r[m.Handler.RegistrationDetails].ok(
@@ -381,7 +378,6 @@ class FlextRegistry(x):
             operation="register_handler",
             handler_name=handler_name,
             handler_key=key,
-            source="flext-core/src/flext_core/registry.py",
         )
         # register_handler returns r[t.Types.ConfigurationDict]
         # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
@@ -402,7 +398,6 @@ class FlextRegistry(x):
                 operation="register_handler",
                 handler_name=handler_name,
                 handler_key=key,
-                source="flext-core/src/flext_core/registry.py",
             )
             # Convert GeneralValueType to RegistrationDetails using helper method
             reg_data = registration.value
@@ -424,7 +419,6 @@ class FlextRegistry(x):
             error=error_msg,
             consequence="Handler will not be available for dispatch",
             resolution_hint="Check dispatcher configuration and handler compatibility",
-            source="flext-core/src/flext_core/registry.py",
         )
         return r[m.Handler.RegistrationDetails].fail(error_msg)
 
@@ -446,7 +440,6 @@ class FlextRegistry(x):
             "Starting batch handler registration",
             operation="register_handlers",
             handlers_count=len(handlers_list),
-            source="flext-core/src/flext_core/registry.py",
         )
 
         summary = FlextRegistry.Summary()
@@ -458,16 +451,18 @@ class FlextRegistry(x):
                 handler_index=idx + 1,
                 total_handlers=len(handlers_list),
                 handler_name=handler_name,
-                source="flext-core/src/flext_core/registry.py",
             )
             result: r[bool] = self._process_single_handler(handler, summary)
             if result.is_failure:
+                # When is_failure is True, error is never None (fail() converts None to "")
+                # Use error or fallback message
                 base_msg = "Handler processing failed"
-                error_msg = (
-                    f"{base_msg}: {result.error}"
-                    if result.error
-                    else f"{base_msg} (operation failed)"
-                )
+                error_msg = result.error or f"{base_msg} (operation failed)"
+                if error_msg == f"{base_msg} (operation failed)":
+                    # If error is empty string, use base message
+                    error_msg = base_msg
+                else:
+                    error_msg = f"{base_msg}: {error_msg}"
                 self.logger.error(
                     "FAILED: Batch registration stopped due to handler error",
                     operation="register_handlers",
@@ -478,7 +473,6 @@ class FlextRegistry(x):
                     successful_registrations=len(summary.registered),
                     skipped_registrations=len(summary.skipped),
                     consequence="Remaining handlers in batch will not be registered",
-                    source="flext-core/src/flext_core/registry.py",
                 )
                 return r[FlextRegistry.Summary].fail(error_msg)
 
@@ -490,7 +484,6 @@ class FlextRegistry(x):
                 total_handlers=len(handlers_list),
                 successful_registrations=len(summary.registered),
                 skipped_registrations=len(summary.skipped),
-                source="flext-core/src/flext_core/registry.py",
             )
         else:
             self.logger.warning(
@@ -500,7 +493,6 @@ class FlextRegistry(x):
                 successful_registrations=len(summary.registered),
                 failed_registrations=len(summary.errors),
                 errors=summary.errors[:5],  # Show first 5 errors
-                source="flext-core/src/flext_core/registry.py",
             )
         return final_summary
 
@@ -524,7 +516,6 @@ class FlextRegistry(x):
                 operation="process_single_handler",
                 handler_name=handler_name,
                 handler_key=key,
-                source="flext-core/src/flext_core/registry.py",
             )
             summary.skipped.append(key)
             return r[bool].ok(True)
@@ -535,7 +526,6 @@ class FlextRegistry(x):
             operation="process_single_handler",
             handler_name=handler_name,
             handler_key=key,
-            source="flext-core/src/flext_core/registry.py",
         )
         # register_handler accepts GeneralValueType | BaseModel, but h works via runtime check
         registration_result = self._dispatcher.register_handler(
@@ -559,7 +549,6 @@ class FlextRegistry(x):
                 operation="process_single_handler",
                 handler_name=handler_name,
                 handler_key=key,
-                source="flext-core/src/flext_core/registry.py",
             )
             return r[bool].ok(True)
         error_msg = registration_result.error
@@ -570,12 +559,13 @@ class FlextRegistry(x):
             handler_key=key,
             error=error_msg,
             consequence="Handler will not be available for dispatch",
-            source="flext-core/src/flext_core/registry.py",
         )
-        # Use unwrap_error() for type-safe str
+        # Use error property for type-safe str
         error_str = registration_result.error or "Unknown error"
         _ = FlextRegistry._add_registration_error(key, error_str, summary)
-        return r[FlextRegistry.Summary].fail(error_str)
+        # Return type should be r[bool] but we're returning r[Summary]
+        # Fix: return r[bool] as expected by method signature
+        return r[bool].fail(error_str)
 
     def _add_successful_registration(
         self,
@@ -601,7 +591,9 @@ class FlextRegistry(x):
             str: The error message that was added.
 
         """
-        summary.errors.append(str(error) or f"Failed to register handler '{key}'")
+        # When is_failure is True, error is never None (fail() converts None to "")
+        # Use error or fallback message
+        summary.errors.append(error or f"Failed to register handler '{key}'")
         return error
 
     def _finalize_summary(
@@ -649,8 +641,10 @@ class FlextRegistry(x):
                 cast("t.GeneralValueType", handler),
             )
             if registration.is_failure:
+                # When is_failure is True, error is never None (fail() converts None to "")
+                # Use error or fallback message
                 summary.errors.append(
-                    str(registration.error)
+                    registration.error
                     or f"Failed to register handler '{key}' for '{message_type.__name__}'",
                 )
                 continue
@@ -752,8 +746,10 @@ class FlextRegistry(x):
                 if result.is_success:
                     summary.registered.append(result.value)
                     self._registered_keys.add(key)
-                elif result.error is not None:
-                    summary.errors.append(result.error)
+                else:
+                    # When is_failure is True, error is never None (fail() converts None to "")
+                    # Use error or empty string as fallback
+                    summary.errors.append(result.error or "")
 
             except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
                 error_msg = f"Failed to register handler for {message_type}: {e}"
@@ -987,15 +983,21 @@ class FlextRegistry(x):
                 service_name=name,
                 has_metadata=True,
                 metadata_keys=metadata_keys,
-                source="flext-core/src/flext_core/registry.py",
             )
 
         # Delegate to container (x.container returns FlextContainer)
+        # Use with_service for fluent API compatibility (returns Self)
         try:
-            _ = self.container.with_service(name, service)
+            # Cast service to GeneralValueType | BaseModel | Callable for type compatibility
+            # with_service accepts GeneralValueType | BaseModel | Callable[..., GeneralValueType]
+            # Cast to GeneralValueType for protocol compatibility (container handles BaseModel/Callable at runtime)
+            service_typed: t.GeneralValueType = cast("t.GeneralValueType", service)
+            # with_service returns Self for fluent chaining, but we don't need the return value
+            _ = self.container.with_service(name, service_typed)
             return r[bool].ok(True)
         except ValueError as e:
-            return r[bool].fail(str(e))
+            error_str = str(e)
+            return r[bool].fail(error_str)
 
     # =========================================================================
     # Protocol Implementations: RegistrationTracker, BatchProcessor

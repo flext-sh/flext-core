@@ -2533,15 +2533,17 @@ class FlextUtilitiesValidation:
 
         # String validation
         if FlextUtilitiesGuards.is_type(value, str):
-            return (
+            result_str = (
                 r[str].ok(cast("str", value))
                 if FlextUtilitiesGuards.is_type(value, "string_non_empty")
                 else r[str].fail(f"{error_template} non-empty string")
             )
+            # Cast to r[object] for return type compatibility
+            return cast("r[object]", result_str)
 
         # Dict-like validation
         if FlextRuntime.is_dict_like(value_typed):
-            return (
+            result_dict = (
                 r[t.Types.ConfigurationDict].ok(
                     cast("t.Types.ConfigurationDict", value_typed)
                 )
@@ -2550,10 +2552,12 @@ class FlextUtilitiesValidation:
                     f"{error_template} non-empty dict"
                 )
             )
+            # Cast to r[object] for return type compatibility
+            return cast("r[object]", result_dict)
 
         # List-like validation
         if FlextRuntime.is_list_like(value_typed):
-            return (
+            result_list = (
                 r[list[t.GeneralValueType]].ok(
                     cast("list[t.GeneralValueType]", value_typed)
                 )
@@ -2562,6 +2566,8 @@ class FlextUtilitiesValidation:
                     f"{error_template} non-empty list"
                 )
             )
+            # Cast to r[object] for return type compatibility
+            return cast("r[object]", result_list)
 
         # Unknown type
         return r[object].fail(f"{error_template} non-empty (str/dict/list)")
@@ -2619,12 +2625,18 @@ class FlextUtilitiesValidation:
                 shortcut_lower
             ]
             if check_fn(value):
-                return r[t.GeneralValueType].ok(cast("t.GeneralValueType", value))
-            return r[t.GeneralValueType].fail(f"{error_template} {type_desc}")
+                result_ok = r[t.GeneralValueType].ok(cast("t.GeneralValueType", value))
+                # Cast to r[object] for return type compatibility
+                return cast("r[object]", result_ok)
+            result_fail = r[t.GeneralValueType].fail(f"{error_template} {type_desc}")
+            # Cast to r[object] for return type compatibility
+            return cast("r[object]", result_fail)
 
-        return r[t.GeneralValueType].fail(
+        result_unknown = r[t.GeneralValueType].fail(
             f"{context} unknown guard shortcut: {shortcut}"
         )
+        # Cast to r[object] for return type compatibility
+        return cast("r[object]", result_unknown)
 
     @staticmethod
     def guard[T](

@@ -15,19 +15,27 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from returns.io import IOFailure, IOResult, IOSuccess
+from returns.io import IOFailure, IOResult
 
 from flext_core import r, t
 from flext_tests import u
 
 
-class ExplodingGetattr(IOSuccess[int]):
-    """IOSuccess that raises on getattr to exercise error guard."""
+class ExplodingGetattr:
+    """Mock IOSuccess that raises on getattr to exercise error guard.
+
+    Note: Cannot inherit from IOSuccess as it's a final class from returns library.
+    Instead, we create a mock that behaves similarly for testing purposes.
+    """
+
+    def __init__(self, value: int) -> None:
+        """Initialize with a value."""
+        self._value = value
 
     def __getattribute__(self, name: str) -> object:
-        """Raise on attribute access except for class/dict."""
-        # Allow __class__ and isinstance checks
-        if name in {"__class__", "__dict__"}:
+        """Raise on attribute access except for class/dict/value."""
+        # Allow __class__ and __dict__ for isinstance checks
+        if name in {"__class__", "__dict__", "_value"}:
             return super().__getattribute__(name)
         # Raise on any other attribute access (like _inner_value)
         msg = "boom"

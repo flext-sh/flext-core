@@ -10,31 +10,28 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Annotated, Self, cast
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.result import r
+from flext_core.typings import t
 from flext_core.utilities import u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
-
     from flext_core.protocols import p
-    from flext_core.typings import t
 
 
 def _get_log_level_from_config() -> int:
-    """Get log level from FlextConfig."""
-    return getattr(
-        logging,
-        FlextConfig().log_level.upper(),
-        logging.INFO,
-    )
+    """Get log level from default constant (avoids circular import with config.py)."""
+    # Use default log level from constants to avoid circular import
+    # config.py -> runtime.py -> models.py -> _models/config.py -> config.py
+    default_log_level = c.Logging.DEFAULT_LEVEL.upper()
+    return getattr(logging, default_log_level, logging.INFO)
 
 
 class FlextModelsConfig:
@@ -79,8 +76,9 @@ class FlextModelsConfig:
         def validate_context(cls, v: t.GeneralValueType) -> t.Types.StringDict:
             """Ensure context has required fields (using FlextUtilitiesGenerators).
 
-            Returns t.Types.StringDict because ensure_trace_context generates string trace IDs.
-            This is compatible with the field type ConfigurationDict since str is a subtype.
+            Returns t.Types.StringDict because ensure_trace_context generates
+            string trace IDs. This is compatible with the field type
+            ConfigurationDict since str is a subtype.
             """
             return u.Generators.ensure_trace_context(
                 v,
@@ -124,22 +122,24 @@ class FlextModelsConfig:
             description="Backoff multiplier for exponential backoff",
         )
         retry_on_exceptions: list[type[BaseException]] = Field(
-            default_factory=list,
+            default_factory=lambda: list[type[BaseException]](),  # noqa: PLW0108
             description="Exception types to retry on",
         )
-        retry_on_status_codes: list[object] = Field(
-            default_factory=list,
+        retry_on_status_codes: list[int] = Field(
+            default_factory=lambda: list[int](),  # noqa: PLW0108
             max_length=c.Validation.MAX_RETRY_STATUS_CODES,
             description="HTTP status codes to retry on",
         )
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
-        def validate_backoff_strategy(cls, v: list[object]) -> list[object]:
+        def validate_backoff_strategy(cls, v: list[int] | list[object]) -> list[int]:
             """Validate status codes are valid HTTP codes."""
             # Use default HTTP status code range (100-599) - domain-specific validation
             # removed from flext-core per domain violation rules
-            result = u.Validation.validate_http_status_codes(v)
+            # Convert to list[object] for validation function (accepts object)
+            codes_for_validation: list[object] = list(v)
+            result = u.Validation.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
                 error_msg = (
@@ -148,10 +148,10 @@ class FlextModelsConfig:
                     else f"{base_msg} (invalid status code)"
                 )
                 raise ValueError(error_msg)
-            # Return as list[object] to match Pydantic field type
-            # map() returns list[int], convert to list[object] for Pydantic
-            mapped_result: list[int] = u.Collection.map(result.unwrap(), int)
-            return cast("list[object]", mapped_result)
+            # Return validated list[int] - FlextResult never returns None on success
+            # Use .value directly - FlextResult never returns None on success
+            validated_codes: list[int] = result.value
+            return validated_codes
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:
@@ -187,7 +187,8 @@ class FlextModelsConfig:
         def validate_additional_validators(cls, v: list[object]) -> list[object]:
             """Validate custom validators are callable."""
             for validator in v:
-                # Direct callable check - object can be any callable, not just GeneralValueType
+                # Direct callable check - object can be any callable,
+                # not just GeneralValueType
                 if not callable(validator):
                     base_msg = "Validator must be callable"
                     error_msg = f"{base_msg}: got {type(validator).__name__}"
@@ -245,12 +246,12 @@ class FlextModelsConfig:
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             le=c.Performance.MAX_TIMEOUT_SECONDS,
-            description="Timeout from FlextConfig",
+            description="Timeout in seconds (default from constants)",
         )
         retry_on_failure: bool = True
         max_retries: int = Field(
             default=c.Reliability.MAX_RETRY_ATTEMPTS,
-            description="Max retries from FlextConfig",
+            description="Max retries (default from constants)",
         )
 
     class MiddlewareConfig(BaseModel):
@@ -376,16 +377,16 @@ class FlextModelsConfig:
             ge=c.ZERO,
             le=c.Validation.MAX_CUSTOM_VALIDATORS,
             description=(
-                "Numeric log level from FlextConfig (DEBUG=10, INFO=20, WARNING=30, "
-                "ERROR=40, CRITICAL=50)"
+                "Numeric log level (DEBUG=10, INFO=20, WARNING=30, "
+                "ERROR=40, CRITICAL=50) - default from constants"
             ),
         )
         console_renderer: bool = Field(
             default=True,
             description="Use console renderer (True) or JSON renderer (False)",
         )
-        additional_processors: list[t.GeneralValueType] = Field(
-            default_factory=list,
+        additional_processors: list[Callable[..., object]] = Field(
+            default_factory=lambda: list[Callable[..., object]](),  # noqa: PLW0108
             description="Optional extra processors after standard FLEXT processors",
         )
         wrapper_class_factory: Callable[[], type] | None = Field(
@@ -410,7 +411,7 @@ class FlextModelsConfig:
 
         level: str = Field(
             default=c.Logging.DEFAULT_LEVEL,
-            description="Log level from FlextConfig (can be overridden)",
+            description="Log level (default from constants, can be overridden)",
         )
         service_name: str | None = Field(
             default=None,
@@ -918,7 +919,10 @@ class FlextModelsConfig:
         )
         strategy: str = Field(
             default=c.Reliability.DEFAULT_BACKOFF_STRATEGY,
-            description="Retry strategy: 'exponential' or 'linear' (used if retry_config is None)",
+            description=(
+                "Retry strategy: 'exponential' or 'linear' "
+                "(used if retry_config is None)"
+            ),
         )
 
 

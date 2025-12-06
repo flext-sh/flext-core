@@ -247,7 +247,8 @@ class FlextModelsEntity:
                     error_code=c.Errors.DOMAIN_EVENT_ERROR,
                 )
 
-            domain_event = event_result.unwrap()
+            # Use .value directly - FlextResult never returns None on success
+            domain_event = event_result.value
 
             # Add event and track
             self.domain_events.append(domain_event)
@@ -471,7 +472,8 @@ class FlextModelsEntity:
                 )
 
             # Handle empty case
-            if count_result.unwrap() == 0:
+            # Use .value directly - FlextResult never returns None on success
+            if count_result.value == 0:
                 return r[bool].ok(True)
 
             # Validate and collect events
@@ -491,7 +493,8 @@ class FlextModelsEntity:
                 )
 
             # Add validated events
-            return self._add_validated_events_bulk(validated_result.unwrap())
+            # Use .value directly - FlextResult never returns None on success
+            return self._add_validated_events_bulk(validated_result.value)
 
         def validate_consistency(self: Self) -> r[bool]:
             """Validate entity consistency using centralized validation."""

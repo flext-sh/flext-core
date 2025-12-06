@@ -21,7 +21,7 @@ from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Self, overload
 
-from flext_core.config import FlextConfig  # For instantiation only
+from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r

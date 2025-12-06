@@ -506,8 +506,9 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
+            # Type narrowing: assert_failure expects r[GeneralValueType], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                result,
+                cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.FAILED_PARSE,
                 "exception handling",
             )
@@ -548,8 +549,9 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
+            # Type narrowing: assert_failure expects r[GeneralValueType], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                result,
+                cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.FAILED_SPLIT,
                 "exception handling",
             )
@@ -589,8 +591,9 @@ class TestuStringParser:
             # Type checker: cast to str to test runtime error handling
             bad_str = cast("str", bad_obj)
             result = parser.normalize_whitespace(bad_str)
+            # Type narrowing: assert_failure expects r[GeneralValueType], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                result,
+                cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.FAILED_NORMALIZE,
                 "exception handling",
             )
@@ -624,8 +627,9 @@ class TestuStringParser:
                 invalid_pattern,
             ]  # Runtime allows this
             result = parser.apply_regex_pipeline("test", patterns)
+            # Type narrowing: assert_failure expects r[GeneralValueType], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                result,
+                cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.FAILED_PIPELINE,
                 "exception handling",
             )
@@ -636,8 +640,9 @@ class TestuStringParser:
                 (r"[invalid", "replacement"),
             ]
             result = parser.apply_regex_pipeline("test", patterns)
+            # Type narrowing: assert_failure expects r[GeneralValueType], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
-                result,
+                cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.INVALID_REGEX,
                 "invalid pattern",
             )

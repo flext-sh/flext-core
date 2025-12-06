@@ -268,10 +268,24 @@ class FlextResult[T_co]:
 
     @property
     def value(self) -> T_co:
-        """Get the success value."""
+        """Get the success value.
+
+        ARCHITECTURAL NOTE: FlextCore never returns None on success, so this
+        property always returns a valid value when is_success is True. Use this
+        property directly instead of the deprecated unwrap() method.
+
+        Returns:
+            The success value (never None)
+
+        Raises:
+            RuntimeError: If result is failure
+
+        """
         if self.is_failure:
             msg = f"Cannot access value of failed result: {self.error}"
             raise RuntimeError(msg)
+        # Direct access to internal Result's value - this is the canonical way
+        # to get the value from a Success result
         return self._result.unwrap()
 
     @property
@@ -297,11 +311,25 @@ class FlextResult[T_co]:
         return self._error_data
 
     def unwrap(self) -> T_co:
-        """Unwrap the result value or raise RuntimeError."""
+        """Unwrap the result value or raise RuntimeError.
+
+        .. deprecated:: 2025-01-XX
+            Use :attr:`value` property directly instead. This method is deprecated
+            as FlextCore never returns None on success, so direct property access
+            is safer and more explicit.
+
+        Returns:
+            The success value
+
+        Raises:
+            RuntimeError: If result is failure
+
+        """
         if self.is_failure:
             msg = f"Cannot unwrap failed result: {self.error}"
             raise RuntimeError(msg)
-        return self._result.unwrap()
+        # Use .value property directly instead of internal _result.unwrap()
+        return self.value
 
     def unwrap_or(self, default: T_co) -> T_co:
         """Unwrap the result value or return default if failure.
@@ -315,7 +343,8 @@ class FlextResult[T_co]:
         """
         if self.is_failure:
             return default
-        return self._result.unwrap()
+        # Use .value property directly instead of internal _result.unwrap()
+        return self.value
 
     def map[U](self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform success value using function."""
@@ -530,14 +559,15 @@ class FlextResult[T_co]:
         """Map with parallel processing and configurable failure handling."""
         # NOTE: Cannot use u.map() here due to circular import
         # (utilities.py -> _utilities/args.py -> result.py)
-        results = [func(item) for item in items]
+        results: list[FlextResult[U]] = [func(item) for item in items]
         if fail_fast:
             for result in results:
                 if result.is_failure:
                     return FlextResult[list[U]].fail(result.error or "Unknown error")
-            return FlextResult[list[U]](
-                Success([FlextResult.value for FlextResult in results]),
-            )
+            # Use .value property directly - FlextCore never returns None on success
+            # Type narrowing: all results are success at this point
+            values: list[U] = [result.value for result in results]
+            return FlextResult[list[U]](Success(values))
         return cls.accumulate_errors(*results)
 
     @classmethod

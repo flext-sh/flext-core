@@ -13,7 +13,9 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextResult as r
+from flext_tests import m
 from flext_tests.builders import FlextTestsBuilders, tb
+from flext_tests.typings import t as t_test
 
 
 class TestFlextTestsBuilders:
@@ -209,7 +211,9 @@ class TestFlextTestsBuilders:
     def test_add_with_items_and_map(self) -> None:
         """Test add() with items and items_map."""
         builder = FlextTestsBuilders()
-        builder.add("doubled", items=[1, 2, 3], items_map=lambda x: x * 2)
+        # items_map is a special kwarg processed by AddParams
+        # Type ignore needed because items_map is Callable, not GeneralValueType
+        builder.add("doubled", items=[1, 2, 3], items_map=lambda x: x * 2)  # type: ignore[arg-type]
         data = builder.build()
         doubled = cast("list[int]", data["doubled"])
         assert doubled == [2, 4, 6]
@@ -217,10 +221,12 @@ class TestFlextTestsBuilders:
     def test_add_with_entries_and_filter(self) -> None:
         """Test add() with entries and entries_filter."""
         builder = FlextTestsBuilders()
+        # entries_filter is a special kwarg processed by AddParams
+        # Type ignore needed because entries_filter is set[str], not GeneralValueType
         builder.add(
             "filtered",
             entries={"a": 1, "b": 2, "c": 3},
-            entries_filter={"a", "c"},
+            entries_filter={"a", "c"},  # type: ignore[arg-type]
         )
         data = builder.build()
         filtered = cast("dict[str, int]", data["filtered"])
@@ -301,7 +307,11 @@ class TestFlextTestsBuilders:
         """Test build() with flatten parameter."""
         builder = FlextTestsBuilders()
         builder.set("a.b.c", 42)
-        flattened = builder.build(flatten=True)
+        # flatten is a special kwarg processed by BuildParams
+        # Type ignore needed because mypy can't match overload for bool parameter
+        flattened_raw = builder.build(flatten=True)  # type: ignore[call-overload]
+        # Type narrowing: flatten=True returns BuilderDict
+        flattened: dict[str, object] = cast("dict[str, object]", flattened_raw)
         assert isinstance(flattened, dict)
         assert "a.b.c" in flattened
         assert flattened["a.b.c"] == 42
@@ -310,7 +320,11 @@ class TestFlextTestsBuilders:
         """Test build() with filter_none parameter."""
         builder = FlextTestsBuilders()
         builder.add("a", 1).add("b", None).add("c", 3)
-        filtered = builder.build(filter_none=True)
+        # filter_none is a special kwarg processed by BuildParams
+        # Type ignore needed because mypy can't match overload for bool parameter
+        filtered_raw = builder.build(filter_none=True)  # type: ignore[call-overload]
+        # Type narrowing: filter_none=True returns BuilderDict
+        filtered: dict[str, object] = cast("dict[str, object]", filtered_raw)
         assert "a" in filtered
         assert "b" not in filtered
         assert "c" in filtered
@@ -319,7 +333,11 @@ class TestFlextTestsBuilders:
         """Test build() with as_parametrized parameter."""
         builder = FlextTestsBuilders()
         builder.add("test_id", "case_1").add("value", 42)
-        cases = builder.build(as_parametrized=True)
+        cases_raw = builder.build(as_parametrized=True)
+        # Type narrowing: as_parametrized=True returns list[ParametrizedCase]
+        cases: list[tuple[str, dict[str, object]]] = cast(
+            "list[tuple[str, dict[str, object]]]", cases_raw
+        )
         assert isinstance(cases, list)
         assert len(cases) == 1
         test_id, data = cases[0]
@@ -330,14 +348,28 @@ class TestFlextTestsBuilders:
         """Test build() with validate_with parameter."""
         builder = FlextTestsBuilders()
         builder.add("count", 5)
-        data = builder.build(validate_with=lambda d: d["count"] > 0)
+        # validate_with is a special kwarg processed by BuildParams
+        # Type ignore needed because validate_with is Callable, not GeneralValueType
+        build_result = builder.build(validate_with=lambda d: d["count"] > 0)  # type: ignore[arg-type]
+        # Type narrowing: build() returns union, extract dict
+        if isinstance(build_result, dict):
+            data = build_result
+        elif isinstance(build_result, m.BaseModel):
+            data = build_result.model_dump()
+        else:
+            msg = f"Expected dict, got {type(build_result)}"
+            raise AssertionError(msg)
         assert data["count"] == 5
 
     def test_build_with_map_result(self) -> None:
         """Test build() with map_result parameter."""
         builder = FlextTestsBuilders()
         builder.add("x", 1)
-        doubled = builder.build(map_result=lambda d: d["x"] * 2)
+        # map_result is a special kwarg processed by BuildParams
+        # Type ignore needed because map_result is Callable, not GeneralValueType
+        build_result = builder.build(map_result=lambda d: d["x"] * 2)  # type: ignore[call-overload]
+        # Type narrowing: map_result returns transformed value (int in this case)
+        doubled: int = cast("int", build_result)
         assert doubled == 2
 
     # =========================================================================
@@ -348,7 +380,11 @@ class TestFlextTestsBuilders:
         """Test to_result() with success case."""
         builder = FlextTestsBuilders()
         builder.add("x", 1)
-        result = builder.to_result()
+        result_raw = builder.to_result()
+        # Type narrowing: to_result() returns union, extract r[BuilderDict]
+        result: r[t_test.Tests.Builders.BuilderDict] = cast(
+            "r[t_test.Tests.Builders.BuilderDict]", result_raw
+        )
         assert result.is_success
         data = result.unwrap()
         assert data["x"] == 1
@@ -364,7 +400,11 @@ class TestFlextTestsBuilders:
         """Test to_result() with unwrap parameter."""
         builder = FlextTestsBuilders()
         builder.add("x", 1)
-        data = builder.to_result(unwrap=True)
+        result_raw = builder.to_result(unwrap=True)
+        # Type narrowing: unwrap=True returns value directly (BuilderDict)
+        data: t_test.Tests.Builders.BuilderDict = cast(
+            "t_test.Tests.Builders.BuilderDict", result_raw
+        )
         assert isinstance(data, dict)
         assert data["x"] == 1
 
@@ -372,7 +412,13 @@ class TestFlextTestsBuilders:
         """Test to_result() with validate parameter."""
         builder = FlextTestsBuilders()
         builder.add("count", 5)
-        result = builder.to_result(validate=lambda d: d["count"] > 0)
+        # validate is a special kwarg processed by ToResultParams
+        # Type ignore needed because validate is Callable, not GeneralValueType
+        result_raw = builder.to_result(validate=lambda d: d["count"] > 0)  # type: ignore[call-overload]
+        # Type narrowing: to_result() returns union, extract r[BuilderDict]
+        result: r[t_test.Tests.Builders.BuilderDict] = cast(
+            "r[t_test.Tests.Builders.BuilderDict]", result_raw
+        )
         assert result.is_success
 
     # =========================================================================
@@ -461,7 +507,9 @@ class TestFlextTestsBuilders:
 
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
-        result = tb.Tests.Result.fail("Error", code="E001")
+        result_raw = tb.Tests.Result.fail("Error", code="E001")
+        # Type narrowing: Result.fail() returns r[T]
+        result: r[object] = cast("r[object]", result_raw)
         assert result.is_failure
 
     def test_tests_result_batch_ok(self) -> None:
@@ -532,7 +580,11 @@ class TestFlextTestsBuilders:
         """Test ToResultParams validates error_code is only with error."""
         builder = FlextTestsBuilders()
         # error_code without error should work (uses default)
-        result = builder.to_result(error_code="E001")
+        result_raw = builder.to_result(error_code="E001")
+        # Type narrowing: to_result() returns union, extract r[BuilderDict]
+        result: r[t_test.Tests.Builders.BuilderDict] = cast(
+            "r[t_test.Tests.Builders.BuilderDict]", result_raw
+        )
         # Should succeed but error_code is ignored without error
         assert result.is_success or result.is_failure
 
@@ -570,7 +622,9 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("x", 1)
         # build() uses u.Model.from_kwargs() internally
-        data = builder.build(filter_none=True)
+        data_raw = builder.build(filter_none=True)
+        # Type narrowing: filter_none=True returns BuilderDict
+        data: dict[str, object] = cast("dict[str, object]", data_raw)
         assert data["x"] == 1
 
     def test_to_result_uses_model_from_kwargs(self) -> None:
@@ -578,7 +632,11 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("x", 1)
         # to_result() uses u.Model.from_kwargs() internally
-        result = builder.to_result(unwrap=False)
+        result_raw = builder.to_result(unwrap=False)
+        # Type narrowing: to_result() returns union, extract r[BuilderDict]
+        result: r[t_test.Tests.Builders.BuilderDict] = cast(
+            "r[t_test.Tests.Builders.BuilderDict]", result_raw
+        )
         assert result.is_success
 
     def test_merge_from_uses_merge_utility(self) -> None:
@@ -620,7 +678,9 @@ class TestFlextTestsBuilders:
     def test_result_fail_delegates_to_tt_res(self) -> None:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
         # Result.fail() delegates to tt.res("fail", error=...)
-        result = tb.Tests.Result.fail("Error")
+        result_raw = tb.Tests.Result.fail("Error")
+        # Type narrowing: Result.fail() returns r[T]
+        result: r[object] = cast("r[object]", result_raw)
         assert result.is_failure
 
     def test_result_batch_ok_delegates_to_tt_results(self) -> None:
@@ -664,8 +724,11 @@ class TestFlextTestsBuilders:
     def test_result_assert_failure_delegates_to_tu(self) -> None:
         """Test tb.Tests.Result.assert_failure() delegates to tu.Tests.Result."""
         # Result.assert_failure() delegates to tu.Tests.Result.assert_failure()
-        result = r[int].fail("Error")
-        error = tb.Tests.Result.assert_failure(result)
+        result: r[int] = r[int].fail("Error")
+        # Type narrowing: assert_failure accepts r[GeneralValueType], r[int] is compatible
+        error: str = tb.Tests.Result.assert_failure(
+            cast("r[t_test.GeneralValueType]", result)
+        )
         assert "Error" in error
 
     def test_batch_parametrized_delegates_to_tu(self) -> None:

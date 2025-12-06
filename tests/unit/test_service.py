@@ -193,12 +193,15 @@ class TestsCore:
         assert service.model_config.get("validate_assignment") is True
 
     def test_service_immutability(self) -> None:
-        """Test service immutability (frozen model)."""
+        """Test service mutability (frozen removed for compatibility with FlextMixins)."""
         service = UserService()
-        # Test immutability - frozen model prevents field assignment
-        # Pydantic frozen models raise ValidationError when trying to set attributes
-        # This is tested implicitly through the model's frozen configuration
-        assert service.model_config.get("frozen") is True
+        # frozen=True was removed from FlextService to allow direct attribute assignment
+        # compatible with FlextMixins pattern (e.g., _runtime assignment)
+        # Service is now mutable to support runtime initialization
+        assert (
+            service.model_config.get("frozen") is None
+            or service.model_config.get("frozen") is False
+        )
 
     def test_execute_abstract_method(self) -> None:
         """Test execute method implementation."""

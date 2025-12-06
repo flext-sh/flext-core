@@ -36,9 +36,9 @@ class FlextUtilitiesParser:
 
     Examples:
         >>> parser = FlextUtilitiesParser()
-        >>> parser.parse_delimited("a, b, c", ",").unwrap()
+        >>> parser.parse_delimited("a, b, c", ",").value
         ['a', 'b', 'c']
-        >>> parser.split_on_char_with_escape("cn=admin\\,dc=com", ",", "\\").unwrap()
+        >>> parser.split_on_char_with_escape("cn=admin\\,dc=com", ",", "\\").value
         ['cn=admin', 'dc=com']
 
     """
@@ -139,7 +139,7 @@ class FlextUtilitiesParser:
             >>> result = parser.parse_delimited(
             ...     "cn=admin, ou=users, dc=example, dc=com", ",", options=opts
             ... )
-            >>> components = result.unwrap()
+            >>> components = result.value
             >>> # ["cn=admin", "ou=users", "dc=example", "dc=com"]
 
         """
@@ -213,7 +213,8 @@ class FlextUtilitiesParser:
             if result.is_failure:
                 return result
 
-            components = result.unwrap()
+            # Use .value directly - FlextResult never returns None on success
+            components = result.value
 
             self.logger.debug(
                 "Delimited parsing completed successfully",
@@ -329,7 +330,8 @@ class FlextUtilitiesParser:
                     split_result.error or "Unknown error in escape splitting",
                 )
 
-            components, escape_count = split_result.unwrap()
+            # Use .value directly - FlextResult never returns None on success
+            components, escape_count = split_result.value
 
             self.logger.debug(
                 "Escape-aware splitting completed successfully",
@@ -378,7 +380,7 @@ class FlextUtilitiesParser:
             >>> result = parser.split_on_char_with_escape(
             ...     "cn=admin\\,user,ou=users", ","
             ... )
-            >>> parts = result.unwrap()
+            >>> parts = result.value
             >>> # ["cn=admin\\,user", "ou=users"]
 
         """
@@ -425,7 +427,7 @@ class FlextUtilitiesParser:
         Example:
             >>> parser = FlextUtilitiesParser()
             >>> result = parser.normalize_whitespace("hello    world\\t\\nfoo")
-            >>> normalized = result.unwrap()  # "hello world foo"
+            >>> normalized = result.value  # "hello world foo"
 
         """
         # Safely get text length for logging
@@ -514,7 +516,7 @@ class FlextUtilitiesParser:
             >>> result = parser.apply_regex_pipeline(
             ...     "cn = admin , ou = users", patterns
             ... )
-            >>> cleaned = result.unwrap()  # "cn=admin,ou=users"
+            >>> cleaned = result.value  # "cn=admin,ou=users"
 
         """
         # Safely get text length for logging
@@ -553,7 +555,8 @@ class FlextUtilitiesParser:
                     process_result.error or "Unknown error in pattern processing",
                 )
 
-            result_text, applied_patterns = process_result.unwrap()
+            # Use .value directly - FlextResult never returns None on success
+            result_text, applied_patterns = process_result.value
 
             final_result = result_text.strip()
 
@@ -892,7 +895,8 @@ class FlextUtilitiesParser:
                     or "Unknown error extracting pattern components",
                 )
 
-            pattern, replacement, flags = pattern_result.unwrap()
+            # Use .value directly - FlextResult never returns None on success
+            pattern, replacement, flags = pattern_result.value
 
             # Apply the pattern using uModel
             params_result = FlextUtilitiesModel.from_kwargs(
@@ -909,13 +913,15 @@ class FlextUtilitiesParser:
                     params_result.error or "Unknown error creating params",
                 )
 
-            apply_result = self._apply_single_pattern(params_result.unwrap())
+            # Use .value directly - FlextResult never returns None on success
+            apply_result = self._apply_single_pattern(params_result.value)
             if apply_result.is_failure:
                 return r[tuple[str, int]].fail(
                     apply_result.error or "Unknown error applying pattern",
                 )
 
-            result_text = apply_result.unwrap()
+            # Use .value directly - FlextResult never returns None on success
+            result_text = apply_result.value
             applied_patterns += 1
 
         return r[tuple[str, int]].ok((result_text, applied_patterns))

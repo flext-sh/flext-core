@@ -115,6 +115,30 @@ class FlextUtilities:
     class V(ValidatorDSL):
         """V utility class - alias for Validators - real inheritance."""
 
+    # === PROJECT NAMESPACES ===
+    # Base class for project-specific utility namespaces (e.g., .Ldif., .Ldap.)
+    # Projects should extend this class to create their own namespaces
+    class ProjectNamespaces:
+        """Base class for project-specific utility namespaces.
+
+        This class provides a foundation for project-specific utility namespaces
+        that can be accessed via u.ProjectName.* pattern. Projects should extend
+        this class and add their utilities as nested classes or static methods.
+
+        Example:
+            # In flext-ldif
+            class Ldif(FlextUtilities.ProjectNamespaces):
+                class DN:
+                    @staticmethod
+                    def parse(dn: str) -> r[Entry]:
+                        ...
+
+            # Usage
+            from flext_ldif.utilities import u
+            result = u.Ldif.DN.parse("cn=test,dc=example")
+
+        """
+
     # === UTILITY METHODS ===
     # These are convenience methods that delegate to specialized classes.
     # Access specialized classes directly: FlextUtilities.Parser.parse(), etc.
@@ -216,7 +240,8 @@ class FlextUtilities:
     @staticmethod
     def val[T](result: r[T], default: T) -> T:
         """Extract value from FlextResult with default fallback."""
-        return result.unwrap() if result.is_success else default
+        # Use .value directly - FlextResult never returns None on success
+        return result.value if result.is_success else default
 
     @staticmethod
     def result_val[T](result: r[T], default: T) -> T:
@@ -226,13 +251,15 @@ class FlextUtilities:
     @staticmethod
     def vals[T](results: Sequence[r[T]]) -> list[T]:
         """Extract values from collection of results, skipping failures."""
-        return [r.unwrap() for r in results if r.is_success]
+        # Use .value directly - FlextResult never returns None on success
+        return [r.value for r in results if r.is_success]
 
     @staticmethod
     def err[T](result: r[T], default: str = "") -> str:
         """Get error message from FlextResult."""
-        if result.is_failure and result.error is not None:
-            return result.error
+        # When is_failure is True, error is never None (fail() converts None to "")
+        if result.is_failure:
+            return result.error or default
         return default
 
     @staticmethod
@@ -406,7 +433,7 @@ class FlextUtilities:
 
         Example:
             >>> result = u.extract({"user": {"name": "John"}}, "user.name")
-            >>> value = result.unwrap()  # "John"
+            >>> value = result.value  # "John"
 
         """
         return FlextUtilitiesMapper.extract(
@@ -557,7 +584,8 @@ class FlextUtilities:
             pattern=pattern,
             replacement=replacement,
         )
-        normalized = result.unwrap() if result.is_success else text
+        # Use .value directly - FlextResult never returns None on success
+        normalized = result.value if result.is_success else text
         return normalized if FlextUtilities.is_type(normalized, str) else text
 
     # Power methods - convenience delegates

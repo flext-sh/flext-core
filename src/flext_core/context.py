@@ -411,7 +411,7 @@ class FlextContext(FlextRuntime):
             >>> context.set("key", "value")
             >>> result = context.get("key")
             >>> if result.is_success:
-            ...     value = result.unwrap()  # "value"
+            ...     value = result.value  # "value"
             >>>
             >>> # Key not found - fast fail
             >>> result = context.get("nonexistent")
@@ -975,7 +975,7 @@ class FlextContext(FlextRuntime):
             >>> context.set_metadata("key", "value")
             >>> result = context.get_metadata("key")
             >>> if result.is_success:
-            ...     value = result.unwrap()  # "value"
+            ...     value = result.value  # "value"
             >>>
             >>> # Key not found - fast fail
             >>> result = context.get_metadata("nonexistent")
@@ -1401,7 +1401,7 @@ class FlextContext(FlextRuntime):
             Example:
                 >>> result = FlextContext.Service.get_service("logger")
                 >>> if result.is_success:
-                ...     logger = result.unwrap()
+                ...     logger = result.value
                 ...     logger.info("Service retrieved")
 
             """
@@ -1439,10 +1439,12 @@ class FlextContext(FlextRuntime):
             # get_container is a classmethod on FlextContext, access via class
             container = FlextContext.get_container()
             try:
-                # Cast service to FlexibleValue for protocol compatibility
-                # FlextContainer.with_service accepts GeneralValueType internally
-                service_flexible = cast("t.FlexibleValue", service)
-                _ = container.with_service(service_name, service_flexible)
+                # Use container.with_service for fluent API (accepts GeneralValueType | BaseModel | Callable)
+                # Cast service to GeneralValueType for protocol compatibility
+                # The actual implementation accepts BaseModel and Callable too, but protocol specifies GeneralValueType
+                service_typed: t.GeneralValueType = cast("t.GeneralValueType", service)
+                # with_service returns Self for fluent chaining, but we don't need the return value
+                _ = container.with_service(service_name, service_typed)
                 return r[bool].ok(True)
             except ValueError as e:
                 return r[bool].fail(str(e))

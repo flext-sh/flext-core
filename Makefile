@@ -259,6 +259,95 @@ v: validate
 sec: security
 
 # =============================================================================
+# GIT OPERATIONS
+# =============================================================================
+
+# Optional: MESSAGE="your commit message" make commit
+MESSAGE ?= "chore: update project files"
+
+.PHONY: status
+status: ## Show git status
+	@git status --short
+
+.PHONY: diff
+diff: ## Show git diff
+	@git diff --stat
+
+.PHONY: add
+add: ## Stage all changes
+	@git add -A
+
+.PHONY: commit
+commit: add ## Commit changes (use MESSAGE="..." to customize)
+	@git commit -m "$(MESSAGE)"
+
+.PHONY: push
+push: ## Push to remote
+	@git push
+
+.PHONY: save
+save: commit push ## Add, commit and push (use MESSAGE="...")
+
+.PHONY: amend
+amend: add ## Amend last commit
+	@git commit --amend --no-edit
+
+.PHONY: commit-force
+commit-force: add ## Commit without pre-commit hooks (use MESSAGE="...")
+	@git commit --no-verify -m "$(MESSAGE)"
+
+.PHONY: save-force
+save-force: commit-force push ## Add, commit (no hooks) and push (use MESSAGE="...")
+
+# =============================================================================
+# GITHUB ACTIONS (gh CLI required)
+# =============================================================================
+
+.PHONY: gh-runs
+gh-runs: ## List recent workflow runs
+	@gh run list --limit 10
+
+.PHONY: gh-watch
+gh-watch: ## Watch latest workflow run
+	@gh run watch
+
+.PHONY: gh-status
+gh-status: ## Show status of latest run
+	@gh run list --limit 1
+
+.PHONY: gh-logs
+gh-logs: ## View logs of latest run
+	@gh run view --log
+
+.PHONY: gh-failed
+gh-failed: ## List failed runs
+	@gh run list --status failure --limit 5
+
+.PHONY: gh-pr
+gh-pr: ## Create pull request
+	@gh pr create --fill
+
+.PHONY: gh-pr-status
+gh-pr-status: ## Check PR status
+	@gh pr status
+
+.PHONY: gh-checks
+gh-checks: ## View PR checks
+	@gh pr checks
+
+# Shortcuts for git/gh
+.PHONY: s d cm p sv ghr ghw ghs ghl
+s: status
+d: diff
+cm: commit
+p: push
+sv: save
+ghr: gh-runs
+ghw: gh-watch
+ghs: gh-status
+ghl: gh-logs
+
+# =============================================================================
 # CONFIGURATION
 # =============================================================================
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Protocol, Self, runtime_checkable
+from typing import Protocol, Self, cast, runtime_checkable
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
@@ -59,7 +59,7 @@ class ValidatorSpec(Protocol):
 # ============================================================================
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Validator:
     """Base validator with operator overloads for composition.
 
@@ -315,7 +315,14 @@ class CollectionValidators:
     """
 
     non_empty: Validator = Validator(
-        predicate=lambda v: isinstance(v, (list, tuple, dict, set)) and len(v) > 0,
+        predicate=lambda v: isinstance(v, (list, tuple, dict, set))
+        and len(
+            cast(
+                "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
+                v,
+            )
+        )
+        > 0,
         description="collection.non_empty",
     )
 
@@ -347,7 +354,13 @@ class CollectionValidators:
                 v,
                 (list, tuple, dict, set),
             )
-            and len(v) >= n,
+            and len(
+                cast(
+                    "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
+                    v,
+                )
+            )
+            >= n,
             description=f"collection.min_length({n})",
         )
 
@@ -359,7 +372,13 @@ class CollectionValidators:
                 v,
                 (list, tuple, dict, set),
             )
-            and len(v) <= n,
+            and len(
+                cast(
+                    "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
+                    v,
+                )
+            )
+            <= n,
             description=f"collection.max_length({n})",
         )
 
@@ -388,7 +407,10 @@ class CollectionValidators:
         """Validate all items in collection match validator."""
         return Validator(
             predicate=lambda v: isinstance(v, (list, tuple, set))
-            and all(validator(item) for item in v),
+            and all(
+                validator(cast("object", item))
+                for item in cast("list[object] | tuple[object, ...] | set[object]", v)
+            ),
             description=f"collection.all_match({getattr(validator, 'description', 'validator')})",
         )
 
@@ -397,7 +419,10 @@ class CollectionValidators:
         """Validate at least one item in collection matches validator."""
         return Validator(
             predicate=lambda v: isinstance(v, (list, tuple, set))
-            and any(validator(item) for item in v),
+            and any(
+                validator(cast("object", item))
+                for item in cast("list[object] | tuple[object, ...] | set[object]", v)
+            ),
             description=f"collection.any_match({getattr(validator, 'description', 'validator')})",
         )
 
@@ -451,7 +476,10 @@ class DictValidators:
     def all_keys_match(validator: ValidatorSpec) -> Validator:
         """Validate all dict keys match validator."""
         return Validator(
-            predicate=lambda v: isinstance(v, dict) and all(validator(k) for k in v),
+            predicate=lambda v: isinstance(v, dict)
+            and all(
+                validator(cast("object", k)) for k in cast("dict[object, object]", v)
+            ),
             description=f"dict.all_keys_match({getattr(validator, 'description', 'validator')})",
         )
 
@@ -460,7 +488,10 @@ class DictValidators:
         """Validate all dict values match validator."""
         return Validator(
             predicate=lambda v: isinstance(v, dict)
-            and all(validator(val) for val in v.values()),
+            and all(
+                validator(cast("object", val))
+                for val in cast("dict[object, object]", v).values()
+            ),
             description=f"dict.all_values_match({getattr(validator, 'description', 'validator')})",
         )
 

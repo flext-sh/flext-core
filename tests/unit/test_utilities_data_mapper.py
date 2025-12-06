@@ -66,8 +66,8 @@ class TestMapperMapDictKeys:
         class BadDict(UserDict[str, FlextTypes.GeneralValueType]):
             """Dict that raises on items()."""
 
-            def items(self) -> FlextTypes.GeneralValueType:
-                """Raise error on items attempt."""
+            def items(self) -> object:  # type: ignore[override]
+                """Raise error on items attempt - test error handling."""
                 msg = "Bad dict items"
                 raise RuntimeError(msg)
 
@@ -170,8 +170,8 @@ class TestMapperCollectActiveKeys:
         class BadDictGet(UserDict[str, bool]):
             """Dict that raises on get()."""
 
-            def get(self, key: str, default: bool | None = None) -> bool:
-                """Raise error on get attempt."""
+            def get(self, key: str, default: bool | None = None) -> bool:  # type: ignore[override]
+                """Raise error on get attempt - test error handling."""
                 msg = "Bad dict get"
                 raise RuntimeError(msg)
 
