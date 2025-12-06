@@ -70,7 +70,6 @@ from flext_core.typings import t
 
 if typing.TYPE_CHECKING:  # pragma: no cover - import cycle guard for typing only
     from flext_core.config import FlextConfig
-    from flext_core.context import FlextContext
     from flext_core.models import m
 
 P_Processor = ParamSpec("P_Processor")
