@@ -32,9 +32,8 @@ from flext_core import (
     FlextModels as core_m,
     FlextResult as r,
     FlextTypes as t,
-    FlextUtilities as u,
 )
-from flext_tests import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
 from tests.utilities import TestsFlextUtilities

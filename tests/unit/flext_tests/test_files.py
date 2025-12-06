@@ -93,7 +93,7 @@ class TestFlextTestsFiles:
         manager = FlextTestsFiles(base_dir=tmp_path)
         content = "test content"
 
-        file_path = manager.create_text_file(content)
+        file_path = manager.create(content, "test.txt")
 
         assert file_path.exists()
         assert file_path.read_text() == content
@@ -107,7 +107,7 @@ class TestFlextTestsFiles:
         filename = "custom.txt"
         custom_dir = tmp_path / "subdir"
 
-        file_path = manager.create_text_file(content, filename, custom_dir)
+        file_path = manager.create(content, filename, directory=custom_dir)
 
         assert file_path.exists()
         assert file_path.read_text() == content
@@ -121,7 +121,7 @@ class TestFlextTestsFiles:
         content = "test content"
         encoding = "utf-16"
 
-        file_path = manager.create_text_file(content, encoding=encoding)
+        file_path = manager.create(content, "test.txt", enc=encoding)
 
         assert file_path.exists()
         assert file_path.read_text(encoding=encoding) == content
@@ -131,7 +131,7 @@ class TestFlextTestsFiles:
         manager = FlextTestsFiles(base_dir=tmp_path)
         content = b"binary content"
 
-        file_path = manager.create_binary_file(content)
+        file_path = manager.create(content, "binary_data.bin")
 
         assert file_path.exists()
         assert file_path.read_bytes() == content
@@ -145,7 +145,7 @@ class TestFlextTestsFiles:
         filename = "custom.bin"
         custom_dir = tmp_path / "subdir"
 
-        file_path = manager.create_binary_file(content, filename, custom_dir)
+        file_path = manager.create(content, filename, directory=custom_dir)
 
         assert file_path.exists()
         assert file_path.read_bytes() == content
@@ -156,7 +156,7 @@ class TestFlextTestsFiles:
         """Test creating empty file."""
         manager = FlextTestsFiles(base_dir=tmp_path)
 
-        file_path = manager.create_empty_file()
+        file_path = manager.create("", "empty.txt")
 
         assert file_path.exists()
         assert file_path.read_text() == ""
@@ -167,7 +167,7 @@ class TestFlextTestsFiles:
         manager = FlextTestsFiles(base_dir=tmp_path)
         filename = "custom_empty.txt"
 
-        file_path = manager.create_empty_file(filename)
+        file_path = manager.create("", filename)
 
         assert file_path.exists()
         assert file_path.read_text() == ""
@@ -207,56 +207,64 @@ class TestFlextTestsFiles:
         manager = FlextTestsFiles()
         non_existent = tmp_path / "non_existent.txt"
 
-        info = manager.get_file_info(non_existent)
+        result = manager.info(non_existent)
 
-        assert isinstance(info, FlextTestsFiles.FileInfo)
-        assert info.exists is False
+        assert result.is_success
+        file_info = result.unwrap()
+        assert isinstance(file_info, FlextTestsFiles.FileInfo)
+        assert file_info.exists is False
 
     def test_get_file_info_exists(self, tmp_path: Path) -> None:
         """Test getting file info for existing file."""
         manager = FlextTestsFiles(base_dir=tmp_path)
         content = "line1\nline2\nline3"
-        file_path = manager.create_text_file(content, "test.txt")
+        file_path = manager.create(content, "test.txt")
 
-        info = manager.get_file_info(file_path)
+        result = manager.info(file_path)
 
-        assert isinstance(info, FlextTestsFiles.FileInfo)
-        assert info.exists is True
-        assert info.size > 0
-        assert info.lines == 3
-        assert info.encoding == "utf-8"
-        assert info.is_empty is False
-        assert info.first_line == "line1"
+        assert result.is_success
+        file_info = result.unwrap()
+        assert isinstance(file_info, FlextTestsFiles.FileInfo)
+        assert file_info.exists is True
+        assert file_info.size > 0
+        assert file_info.lines == 3
+        assert file_info.encoding == "utf-8"
+        assert file_info.is_empty is False
+        assert file_info.first_line == "line1"
 
     def test_get_file_info_empty_file(self, tmp_path: Path) -> None:
         """Test getting file info for empty file."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        file_path = manager.create_empty_file("empty.txt")
+        file_path = manager.create("", "empty.txt")
 
-        info = manager.get_file_info(file_path)
+        result = manager.info(file_path)
 
-        assert isinstance(info, FlextTestsFiles.FileInfo)
-        assert info.exists is True
-        assert info.size == 0
-        assert info.is_empty is True
-        assert info.first_line == ""
+        assert result.is_success
+        file_info = result.unwrap()
+        assert isinstance(file_info, FlextTestsFiles.FileInfo)
+        assert file_info.exists is True
+        assert file_info.size == 0
+        assert file_info.is_empty is True
+        assert file_info.first_line == ""
 
     def test_get_file_info_multiline(self, tmp_path: Path) -> None:
         """Test getting file info for multiline file."""
         manager = FlextTestsFiles(base_dir=tmp_path)
         content = "first line\nsecond line\nthird line"
-        file_path = manager.create_text_file(content, "multiline.txt")
+        file_path = manager.create(content, "multiline.txt")
 
-        info = manager.get_file_info(file_path)
+        result = manager.info(file_path)
 
-        assert info.lines == 3
-        assert info.first_line == "first line"
+        assert result.is_success
+        file_info = result.unwrap()
+        assert file_info.lines == 3
+        assert file_info.first_line == "first line"
 
     def test_cleanup_files(self, tmp_path: Path) -> None:
         """Test cleaning up created files."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        file1 = manager.create_text_file("content1", "file1.txt")
-        file2 = manager.create_text_file("content2", "file2.txt")
+        file1 = manager.create("content1", "file1.txt")
+        file2 = manager.create("content2", "file2.txt")
 
         assert file1.exists()
         assert file2.exists()
@@ -271,7 +279,7 @@ class TestFlextTestsFiles:
         """Test cleaning up created directories."""
         manager = FlextTestsFiles()
         # Create a file which will create a temp directory
-        file_path = manager.create_text_file("content", "test.txt")
+        file_path = manager.create("content", "test.txt")
         temp_dir = file_path.parent
 
         assert temp_dir.exists()
@@ -285,7 +293,7 @@ class TestFlextTestsFiles:
     def test_cleanup_nonexistent_files(self, tmp_path: Path) -> None:
         """Test cleanup handles non-existent files gracefully."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        file_path = manager.create_text_file("content", "test.txt")
+        file_path = manager.create("content", "test.txt")
         file_path.unlink()  # Delete file manually
 
         # Cleanup should not raise error
@@ -296,7 +304,7 @@ class TestFlextTestsFiles:
     def test_context_manager(self, tmp_path: Path) -> None:
         """Test context manager usage."""
         with FlextTestsFiles(base_dir=tmp_path) as manager:
-            file_path = manager.create_text_file("content", "test.txt")
+            file_path = manager.create("content", "test.txt")
             assert file_path.exists()
 
         # File should be cleaned up after context exit
@@ -330,13 +338,13 @@ class TestFlextTestsFiles:
         assert resolved in manager.created_dirs
 
     def test_temporary_files_classmethod(self) -> None:
-        """Test temporary_files classmethod context manager."""
+        """Test files classmethod context manager."""
         files = {
             "file1": "content1",
             "file2": "content2",
         }
 
-        with FlextTestsFiles.temporary_files(files) as created:
+        with FlextTestsFiles.files(files) as created:
             assert len(created) == 2
             assert created["file1"].exists()
             assert created["file2"].exists()
@@ -348,10 +356,10 @@ class TestFlextTestsFiles:
         assert not created["file2"].exists()
 
     def test_temporary_files_custom_extension(self) -> None:
-        """Test temporary_files with custom extension."""
+        """Test files with custom extension."""
         files = {"file1": "content1"}
 
-        with FlextTestsFiles.temporary_files(files, extension=".md") as created:
+        with FlextTestsFiles.files(files, ext=".md") as created:
             assert created["file1"].name == "file1.md"
 
     def test_create_file_set_nested_directory(self, tmp_path: Path) -> None:
@@ -370,7 +378,7 @@ class TestFlextTestsFiles:
         manager = FlextTestsFiles(base_dir=tmp_path)
         nested_dir = tmp_path / "nested" / "subdir"
 
-        file_path = manager.create_text_file("content", "test.txt", nested_dir)
+        file_path = manager.create("content", "test.txt", directory=nested_dir)
 
         assert file_path.parent == nested_dir
         assert nested_dir.exists()
@@ -378,7 +386,7 @@ class TestFlextTestsFiles:
     def test_multiple_cleanup_calls(self, tmp_path: Path) -> None:
         """Test multiple cleanup calls are safe."""
         manager = FlextTestsFiles(base_dir=tmp_path)
-        _ = manager.create_text_file("content", "test.txt")
+        _ = manager.create("content", "test.txt")
 
         manager.cleanup()
         # Second cleanup should not raise error

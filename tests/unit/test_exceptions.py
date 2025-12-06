@@ -29,7 +29,7 @@ from typing import ClassVar, cast
 import pytest
 
 from flext_core import c, e, m, p, t
-from flext_tests import FlextTestsUtilities
+from flext_tests import u
 
 
 class ExceptionScenarioType(StrEnum):
@@ -381,12 +381,10 @@ class Teste:
             error = e.BaseError("Test error", correlation_id="corr-123")
             assert error.correlation_id == "corr-123"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_METADATA:
-            metadata = (
-                FlextTestsUtilities.Tests.ExceptionHelpers.create_metadata_object({
-                    "field": "email",
-                    "value": "invalid",
-                })
-            )
+            metadata = u.Tests.ExceptionHelpers.create_metadata_object({
+                "field": "email",
+                "value": "invalid",
+            })
             error = e.BaseError("Test error", metadata=metadata)
             assert error.metadata.attributes["field"] == "email"
         elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
@@ -591,7 +589,7 @@ class Teste:
         assert exc.error_code == f"{scenario.scenario_type.upper()}_ERROR"
         exc = scenario.exception_class(
             f"{scenario.scenario_type} error",
-            metadata=FlextTestsUtilities.Tests.ExceptionHelpers.create_metadata_object({
+            metadata=u.Tests.ExceptionHelpers.create_metadata_object({
                 "test": "data",
             }),
         )
@@ -620,7 +618,7 @@ class Teste:
 
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
-        metadata = FlextTestsUtilities.Tests.ExceptionHelpers.create_metadata_object({
+        metadata = u.Tests.ExceptionHelpers.create_metadata_object({
             "existing": "value",
         })
         error = e.BaseError(
@@ -654,12 +652,10 @@ class Teste:
 
     def test_exception_serialization(self) -> None:
         """Test exception serialization to dict."""
-        metadata_obj = (
-            FlextTestsUtilities.Tests.ExceptionHelpers.create_metadata_object({
-                "field": "email",
-                "value": "invalid",
-            })
-        )
+        metadata_obj = u.Tests.ExceptionHelpers.create_metadata_object({
+            "field": "email",
+            "value": "invalid",
+        })
         # ValidationError accepts metadata via extra_kwargs, but BaseError.__init__ accepts it
         # Pass metadata directly - it will be preserved and passed to BaseError.__init__
         exc = e.ValidationError(
@@ -1265,15 +1261,17 @@ class Teste:
     def test_create_with_dict_like_metadata_basic(self) -> None:
         """Test create with dict-like metadata - tests lines 1376-1379."""
 
-        class DictLike:
-            def items(self) -> list[tuple[str, object]]:
-                return [("key1", "value1")]
+        class DictLike(Mapping[str, object]):
+            def __getitem__(self, key: str) -> object:
+                if key == "key1":
+                    return "value1"
+                raise KeyError(key)
 
-            def keys(self) -> list[str]:
-                return ["key1"]
+            def __iter__(self) -> Iterator[str]:
+                return iter(["key1"])
 
-            def get(self, key: str, default: object = None) -> object:
-                return "value1" if key == "key1" else default
+            def __len__(self) -> int:
+                return 1
 
         dict_like = DictLike()
         error = e.create(
@@ -1449,19 +1447,24 @@ class Teste:
     def test_create_with_dict_like_metadata_normalization(self) -> None:
         """Test create normalizes dict-like metadata values - tests lines 1376-1379."""
 
-        class DictLike:
-            def items(self) -> list[tuple[str, object]]:
-                return [
-                    ("key1", "value1"),
-                    ("key2", object()),
-                ]
+        class DictLike(Mapping[str, object]):
+            _obj: object
 
-            def keys(self) -> list[str]:
-                return ["key1", "key2"]
+            def __init__(self) -> None:
+                self._obj = object()
 
-            def get(self, key: str, default: object = None) -> object:
-                mapping = {"key1": "value1", "key2": object()}
-                return mapping.get(key, default)
+            def __getitem__(self, key: str) -> object:
+                if key == "key1":
+                    return "value1"
+                if key == "key2":
+                    return self._obj
+                raise KeyError(key)
+
+            def __iter__(self) -> Iterator[str]:
+                return iter(["key1", "key2"])
+
+            def __len__(self) -> int:
+                return 2
 
         dict_like = DictLike()
         error = e.create(
@@ -1477,16 +1480,18 @@ class Teste:
     def test_create_with_dict_like_metadata_items_iteration(self) -> None:
         """Test create iterates dict-like metadata items - tests lines 1378-1379."""
 
-        class DictLike:
-            def items(self) -> list[tuple[str, object]]:
-                return [("key1", "value1"), ("key2", 123)]
+        class DictLike(Mapping[str, object]):
+            def __getitem__(self, key: str) -> object:
+                mapping: dict[str, object] = {"key1": "value1", "key2": 123}
+                if key in mapping:
+                    return mapping[key]
+                raise KeyError(key)
 
-            def keys(self) -> list[str]:
-                return ["key1", "key2"]
+            def __iter__(self) -> Iterator[str]:
+                return iter(["key1", "key2"])
 
-            def get(self, key: str, default: object = None) -> object:
-                mapping = {"key1": "value1", "key2": 123}
-                return mapping.get(key, default)
+            def __len__(self) -> int:
+                return 2
 
         dict_like = DictLike()
         error = e.create(
@@ -1502,16 +1507,22 @@ class Teste:
     def test_create_with_dict_like_metadata_normalize_values(self) -> None:
         """Test create normalizes dict-like metadata values - tests line 1379."""
 
-        class DictLike:
-            def items(self) -> list[tuple[str, object]]:
-                return [("key1", object())]
+        class DictLike(Mapping[str, object]):
+            _obj: object
 
-            def keys(self) -> list[str]:
-                return ["key1"]
+            def __init__(self) -> None:
+                self._obj = object()
 
-            def get(self, key: str, default: object = None) -> object:
-                mapping = {"key1": object()}
-                return mapping.get(key, default)
+            def __getitem__(self, key: str) -> object:
+                if key == "key1":
+                    return self._obj
+                raise KeyError(key)
+
+            def __iter__(self) -> Iterator[str]:
+                return iter(["key1"])
+
+            def __len__(self) -> int:
+                return 1
 
         dict_like = DictLike()
         error = e.create(
@@ -1673,15 +1684,17 @@ class Teste:
         assert isinstance(metadata_dict, dict)
 
         # Test with dict-like metadata
-        class DictLike:
-            def items(self) -> list[tuple[str, object]]:
-                return [("key", "value")]
+        class DictLike(Mapping[str, object]):
+            def __getitem__(self, key: str) -> object:
+                if key == "key":
+                    return "value"
+                raise KeyError(key)
 
-            def keys(self) -> list[str]:
-                return ["key"]
+            def __iter__(self) -> Iterator[str]:
+                return iter(["key"])
 
-            def get(self, key: str, default: object = None) -> object:
-                return "value" if key == "key" else default
+            def __len__(self) -> int:
+                return 1
 
         kwargs_dict_like = {
             "correlation_id": "test-id",

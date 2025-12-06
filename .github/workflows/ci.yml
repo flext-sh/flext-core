@@ -49,7 +49,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install --with dev --no-interaction
+          poetry install --extras "dev security" --no-interaction
 
       - name: Run formatting check
         run: |
@@ -112,7 +112,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install --with dev,test --no-interaction
+          poetry install --extras "dev test" --no-interaction
 
       - name: Run tests with coverage
         run: |
@@ -220,7 +220,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install --with dev --no-interaction
+          poetry install --extras "dev test security" --no-interaction
 
       - name: Run full validation
         run: |

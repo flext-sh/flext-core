@@ -404,12 +404,14 @@ class FlextTestsMatchers(FlextTestsUtilities):
         if params.has or params.lacks or params.starts or params.ends or params.match:
             # Handle unified has/lacks
             if params.has is not None:
-                # Use FlextUtilitiesGuards for type narrowing
+                # ExclusionSpec is str | Sequence[str] - need to handle both cases
+                # Convert to list[str] for uniform processing
                 has_value = params.has
-                if isinstance(has_value, Sequence) and not isinstance(has_value, str):
-                    items_has: list[str] = [str(x) for x in has_value]
+                if isinstance(has_value, str):
+                    items_has: list[str] = [has_value]
                 else:
-                    items_has = [str(has_value)]
+                    # Sequence[str] case - convert to list
+                    items_has = [str(x) for x in has_value]
                 for item in items_has:
                     if not u.chk(err, contains=item):
                         raise AssertionError(
@@ -421,12 +423,14 @@ class FlextTestsMatchers(FlextTestsUtilities):
                         )
 
             if params.lacks is not None:
-                # Use FlextUtilitiesGuards for type narrowing
+                # ExclusionSpec is str | Sequence[str] - need to handle both cases
+                # Convert to list[str] for uniform processing
                 lacks_value = params.lacks
-                if isinstance(lacks_value, Sequence) and not isinstance(lacks_value, str):
-                    items_lacks: list[str] = [str(x) for x in lacks_value]
+                if isinstance(lacks_value, str):
+                    items_lacks: list[str] = [lacks_value]
                 else:
-                    items_lacks = [str(lacks_value)]
+                    # Sequence[str] case - convert to list
+                    items_lacks = [str(x) for x in lacks_value]
                 for item in items_lacks:
                     if u.chk(err, contains=item):
                         raise AssertionError(
@@ -477,13 +481,14 @@ class FlextTestsMatchers(FlextTestsUtilities):
 
         if params.code_has is not None:
             actual_code = result.error_code or ""
-            # Use FlextUtilitiesGuards for type narrowing
+            # ErrorCodeSpec is str | Sequence[str] - need to handle both cases
+            # Convert to list[str] for uniform processing
             code_has_value = params.code_has
-            items_list: list[str]
-            if isinstance(code_has_value, Sequence) and not isinstance(code_has_value, str):
-                items_list = [str(x) for x in code_has_value]
+            if isinstance(code_has_value, str):
+                items_list: list[str] = [code_has_value]
             else:
-                items_list = [str(code_has_value)]
+                # Sequence[str] case - convert to list
+                items_list = [str(x) for x in code_has_value]
             for item in items_list:
                 if item not in actual_code:
                     raise AssertionError(
@@ -841,13 +846,17 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 value_list = list(seq_value)
                 if sorted_param is True:
                     # sorted() requires SupportsRichComparison - use str key for any object
-                    sorted_list = sorted(value_list, key=lambda x: (type(x).__name__, str(x)))
+                    sorted_list = sorted(
+                        value_list, key=lambda x: (type(x).__name__, str(x))
+                    )
                     if value_list != sorted_list:
                         raise AssertionError(params.msg or "Sequence is not sorted")
                 elif callable(sorted_param):
                     # callable() builtin narrows type for pyrefly/mypy
                     # sorted() runtime accepts any callable as key
-                    sorted_list = sorted(value_list, key=sorted_param)  # pyright: ignore[reportCallIssue, reportArgumentType]
+                    # Type: SortKey is bool | Callable[[object], SupportsLessThan]
+                    # The callable is validated at runtime, type checker may not understand
+                    sorted_list = sorted(value_list, key=sorted_param)
                     if value_list != sorted_list:
                         raise AssertionError(
                             params.msg or "Sequence is not sorted by key function",
@@ -894,6 +903,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
                         )
 
             if params.kv is not None:
+                # KeyValueSpec is tuple[str, object] | Mapping[str, object]
+                # Handle tuple case first (single key-value pair)
                 if isinstance(params.kv, tuple) and len(params.kv) == 2:
                     key, expected_val = params.kv
                     if key not in mapping_value:
@@ -905,6 +916,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                             params.msg
                             or f"Key {key!r}: expected {expected_val!r}, got {mapping_value[key]!r}",
                         )
+                # Handle Mapping case (multiple key-value pairs)
                 elif isinstance(params.kv, Mapping):
                     for key, expected_val in params.kv.items():
                         if key not in mapping_value:
@@ -991,9 +1003,9 @@ class FlextTestsMatchers(FlextTestsUtilities):
             )
 
     @staticmethod
-    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain[TResult]:
+    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain:
         """Start chained assertions on result (railway pattern)."""
-        return m.Tests.Matcher.Chain(result)
+        return m.Tests.Matcher.Chain(result=result)
 
     # =========================================================================
     # NEW GENERALIST METHODS
@@ -1273,15 +1285,15 @@ class FlextTestsMatchers(FlextTestsUtilities):
 
         if key_equals is not None:
             pairs_to_check: list[tuple[TK, TV]]
+            # Check for single tuple first (tuple is a Sequence, so order matters)
             if isinstance(key_equals, tuple) and len(key_equals) == 2:
                 # Single tuple: (key, value) - cast to help type narrowing
                 pairs_to_check = [cast("tuple[TK, TV]", key_equals)]
-            elif isinstance(key_equals, Sequence):
-                # Sequence of tuples - cast each item since tuple IS a Sequence
-                pairs_to_check = [cast("tuple[TK, TV]", item) for item in key_equals]
             else:
-                err = f"key_equals: expected tuple/Sequence, got {type(key_equals)}"
-                raise TypeError(err)
+                # Sequence of tuples - mypy understands Sequence[tuple[TK, TV]] from type annotation
+                # Since tuple is a Sequence, this branch handles all non-single-tuple cases
+                # Type annotation ensures items are tuple[TK, TV], no cast needed
+                pairs_to_check = list(key_equals)
             for key, expected_value in pairs_to_check:
                 if key not in data:
                     raise AssertionError(msg or f"Key {key!r} not found in dict")
@@ -1562,6 +1574,64 @@ class FlextTestsMatchers(FlextTestsUtilities):
             stacklevel=2,
         )
         _ = FlextTestsMatchers.that(condition, msg=msg, eq=True)
+
+    @staticmethod
+    def assert_length_equals(
+        value: object,
+        expected: int,
+        msg: str | None = None,
+    ) -> None:
+        """Assert value length equals expected.
+
+        Args:
+            value: Value to check length of (must have __len__)
+            expected: Expected length
+            msg: Optional custom error message
+
+        Raises:
+            AssertionError: If length doesn't match
+
+        """
+        FlextTestsMatchers.that(value, length=expected, msg=msg)
+
+    @staticmethod
+    def assert_length_greater_than(
+        value: object,
+        min_length: int,
+        msg: str | None = None,
+    ) -> None:
+        """Assert value length is greater than min_length.
+
+        Args:
+            value: Value to check length of (must have __len__)
+            min_length: Minimum expected length
+            msg: Optional custom error message
+
+        Raises:
+            AssertionError: If length is not greater than min_length
+
+        """
+        FlextTestsMatchers.that(value, length_gt=min_length, msg=msg)
+
+    @staticmethod
+    def assert_result_success[TResult](
+        result: r[TResult],
+        msg: str | None = None,
+    ) -> TResult:
+        """Assert result is success and return unwrapped value.
+
+        Args:
+            result: FlextResult to check
+            msg: Optional custom error message
+
+        Returns:
+            Unwrapped value from result
+
+        Raises:
+            AssertionError: If result is failure
+
+        """
+        return FlextTestsMatchers.ok(result, msg=msg)
 
 
 tm = FlextTestsMatchers

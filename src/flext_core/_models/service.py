@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from pydantic import Field, field_validator
 
@@ -17,10 +17,8 @@ from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import c
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
-    from flext_core.typings import t
+from flext_core.protocols import p
+from flext_core.typings import t
 
 
 class FlextModelsService:

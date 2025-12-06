@@ -9,13 +9,14 @@ default_language_version:
   python: python3.13
 
 repos:
-  # ===== SECURITY SCANNING DISABLED TEMPORARILY - BASELINE ISSUES =====
-  # - repo: https://github.com/Yelp/detect-secrets
-  #   rev: v1.4.0
-  #   hooks:
-  #     - id: detect-secrets
-  #       args: ["--baseline", ".secrets.baseline"]
-  #       exclude: .*\.lock$|.*\.lockb$
+  # ===== SECURITY SCANNING =====
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: "🔐 Detect Secrets"
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: .*\.lock$|.*\.lockb$|poetry\.lock
 
   # Poetry-managed tools via local repo
   - repo: local
@@ -45,24 +46,15 @@ repos:
       #   require_serial: true
       #   args: [--check-only, --diff]
 
-      - id: mypy
-        name: "🛡️ MyPy Strict"
-        entry: poetry run mypy
+      # Bandit security
+      - id: bandit
+        name: "🔒 Bandit Security"
+        entry: poetry run bandit
         language: system
         types: [python]
         require_serial: true
         pass_filenames: false
-        args: [src/, tests/, --config-file=pyproject.toml]
-
-      # Bandit security
-      # - id: bandit
-      #   name: "🔒 Bandit Security"
-      #   entry: poetry run bandit
-      #   language: system
-      #   types: [python]
-      #   require_serial: true
-      #   args: [-r, src/, --severity-level=medium]
-      #   exclude: tests/
+        args: [-r, src/, --exclude, src/flext_tests, --severity-level=medium]
 
       # Vulture dead code - TEMPORARILY DISABLED while configuring whitelist
       # - id: vulture
@@ -157,15 +149,14 @@ ci:
   autofix_prs: false # No automatic fixes - must be intentional
   autoupdate_schedule: weekly
   skip: [
-      # Local Poetry hooks do not work in CI
+      # Local Poetry hooks do not work in CI - CI runs via Makefile targets
       ruff-format,
       ruff-lint,
       isort,
-      mypy,
-      bandit,
+      bandit,  # Run via make security
       vulture,
-      radon-cc,
-      radon-mi,
+      radon-cc,  # Run via make complexity
+      radon-mi,  # Run via make complexity
       commitizen,
     ]
   submodules: false

@@ -241,18 +241,35 @@ Full documentation lives in [`docs/`](./docs/) and follows the standards in [`do
 
 ## Project Status
 
-**Version**: 0.9.9 → 1.0.0 (January 2025)
+**Version**: 0.9.9 → 1.0.0 (December 2025)
 **Python**: 3.13+ only
 **Tests**: 2820 tests passing
-**Coverage**: 81.41% (above 73% minimum)
+**Coverage**: 81.41% (above 80% minimum)
 **Files**: 66 Python files in `src/`
+
+### Quality Gate Command
+
+```bash
+make validate  # Runs: lint + format-check + type-check + complexity + docstring-check + security + test
+```
 
 ### Quality Metrics
 
+| Category | Tool | Threshold | Status |
+|----------|------|-----------|--------|
+| **Coverage** | pytest-cov | 80% minimum | ✅ |
+| **Type Checking** | Pyrefly (Pyright-based) | ZERO errors | ✅ |
+| **Linting** | Ruff | ZERO violations | ✅ |
+| **Security** | Bandit + detect-secrets | ZERO high/medium issues | ✅ |
+| **Complexity** | Radon CC + MI | CC ≤ 10, MI ≥ A | ✅ |
+| **Docstrings** | interrogate | 80% coverage | ✅ |
+
+### Detailed Quality Status
+
 - ✅ **Linting**: Ruff ZERO violations (both `src/flext_core/` and `src/flext_tests/`)
-- ✅ **Type Checking**: Mypy strict ZERO errors
-- ✅ **Pyright**: ZERO errors (4 warnings for TypeVar design choices - acceptable)
-- ✅ **Pyrefly**: ZERO errors (known type inference limitations configured)
+- ✅ **Type Checking**: Pyrefly ZERO errors (uses Pyright internally)
+- ✅ **Security**: Bandit + detect-secrets with baseline (local + CI)
+- ✅ **Complexity**: Radon CC + MI analysis passing
 - ✅ **Circular Dependencies**: ZERO (verified by import tests)
 - ✅ **API Compatibility**: Both `.data` and `.value` work (backward compatible)
 - ✅ **Centralized Types**: ✅ **COMPLETED** - All modules using `t.Types.*` aliases

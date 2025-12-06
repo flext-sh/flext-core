@@ -13,7 +13,7 @@ COV_DIR := flext_core
 TESTS_DIR := tests
 
 # Quality Standards (MANDATORY - HIGH COVERAGE)
-MIN_COVERAGE := 75
+MIN_COVERAGE := 80
 
 # Export Configuration
 export PROJECT_NAME PYTHON_VERSION MIN_COVERAGE
@@ -58,7 +58,7 @@ setup: install-dev ## Complete project setup
 # =============================================================================
 
 .PHONY: validate
-validate: lint type-check security test ## Run all quality gates (MANDATORY ORDER)
+validate: lint format-check type-check complexity docstring-check security test ## Run all quality gates (MANDATORY ORDER)
 
 .PHONY: check
 check: lint type-check ## Quick health check
@@ -94,6 +94,22 @@ security: ## Run security scanning
 fix: ## Auto-fix issues
 	$(POETRY) run ruff check . --fix
 	$(POETRY) run ruff format .
+
+.PHONY: format-check
+format-check: ## Check code formatting without modifying
+	@echo "🔍 Checking code formatting..."
+	$(POETRY) run ruff format . --check --diff
+
+.PHONY: complexity
+complexity: ## Run complexity analysis (radon)
+	@echo "🔍 Running complexity analysis..."
+	$(POETRY) run radon cc $(SRC_DIR) -a -nb --total-average
+	$(POETRY) run radon mi $(SRC_DIR) -nb
+
+.PHONY: docstring-check
+docstring-check: ## Check docstring coverage
+	@echo "🔍 Checking docstring coverage..."
+	$(POETRY) run interrogate $(SRC_DIR) --fail-under=80 --ignore-init-method --ignore-magic
 
 # =============================================================================
 # TESTING (MANDATORY - HIGH COVERAGE)
@@ -229,14 +245,18 @@ doctor: diagnose check ## Health check
 
 # =============================================================================
 
-.PHONY: t l f tc c i v
+.PHONY: t l f fc tc cx dc c i v sec
 t: test
 l: lint
 f: format
+fc: format-check
 tc: type-check
+cx: complexity
+dc: docstring-check
 c: clean
 i: install
 v: validate
+sec: security
 
 # =============================================================================
 # CONFIGURATION

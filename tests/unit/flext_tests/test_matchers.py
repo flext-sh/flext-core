@@ -13,10 +13,6 @@ from flext_core import FlextResult, t
 from flext_tests import tm
 from flext_tests.constants import c
 
-# TestDataBuilder was removed - use tt.model() and tt.batch() instead
-# These tests are kept for backward compatibility but marked as skipped
-# New tests should use tt.model() and tt.batch() from flext_tests.factories
-
 
 class TestFlextTestsMatchers:
     """Test suite for FlextTestsMatchers class."""
@@ -186,12 +182,3 @@ class TestFlextTestsMatchers:
 
         with pytest.raises(AssertionError, match="Assertion failed"):
             tm.that(config["timeout"], is_=int, gt=0)
-
-    @pytest.mark.skip(
-        reason="TestDataBuilder was removed - use tt.model() and tt.batch() instead",
-    )
-    def test_nested_test_data_builder(self) -> None:
-        """Test the nested TestDataBuilder class (legacy) - DEPRECATED.
-
-        Use tt.model() and tt.batch() from flext_tests.factories instead.
-        """
