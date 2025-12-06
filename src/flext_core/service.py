@@ -41,10 +41,10 @@ class FlextService[TDomainResult](
     """Base class for domain services used in CQRS flows.
 
     Subclasses implement ``execute`` to run business logic and return
-    ``FlextResult`` values. The base inherits :class:`FlextRuntime` so services
-    can reuse runtime automation for creating scoped config/context/container
-    triples via :meth:`create_service_runtime` while remaining protocol
-    compliant via structural typing.
+    ``FlextResult`` values. The base inherits :class:`FlextMixins` (which extends
+    :class:`FlextRuntime`) so services can reuse runtime automation for creating
+    scoped config/context/container triples via :meth:`create_service_runtime`
+    while remaining protocol compliant via structural typing.
     """
 
     model_config = ConfigDict(
