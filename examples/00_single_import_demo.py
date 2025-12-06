@@ -70,7 +70,8 @@ def validate_transform_user(
     return r.traverse(
         [
             u.Validation.validate_length(
-                name, min_length=c.Validation.MIN_USERNAME_LENGTH
+                name,
+                min_length=c.Validation.MIN_USERNAME_LENGTH,
             ),
             u.Validation.validate_pattern(email, c.Platform.PATTERN_EMAIL, "email"),
         ],
@@ -82,8 +83,8 @@ def validate_transform_user(
                 name=name.upper(),
                 email=email.lower(),
                 status=c.Domain.Status.ACTIVE,
-            )
-        )
+            ),
+        ),
     )
 
 
@@ -94,7 +95,7 @@ def process_user_data(
 ) -> r[str]:
     """Decorated railway with centralized StrEnum constraints - direct functional composition."""
     return validate_transform_user(user_data).map(
-        lambda profile: f"{operation.value.upper()}D: {profile.name} ({profile.status.value})"
+        lambda profile: f"{operation.value.upper()}D: {profile.name} ({profile.status.value})",
     )
 
 
@@ -161,7 +162,8 @@ class UserService:
         return user
 
     def _log_final_result(
-        self, correlation_id: str
+        self,
+        correlation_id: str,
     ) -> Callable[[UserProfile], UserProfile]:
         """Create logging function for final result - advanced functional pattern."""
 
@@ -194,7 +196,9 @@ def demonstrate_utilities() -> None:
     validation_results = [
         u.Validation.validate_length("test", min_length=1, max_length=10),
         u.Validation.validate_pattern(
-            "test@example.com", c.Platform.PATTERN_EMAIL, "email"
+            "test@example.com",
+            c.Platform.PATTERN_EMAIL,
+            "email",
         ),
     ]
 
@@ -206,7 +210,7 @@ def demonstrate_utilities() -> None:
                 f"Cache cleared: {cache_cleared}",
                 f"Generated ID: {correlation_id[:12]}",
                 f"All validations passed: {len(validation_results)} checks",
-            ])
+            ]),
         )
     )
 
@@ -237,11 +241,11 @@ def demonstrate_exceptions() -> None:
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
                 .map(
-                    lambda _: f"Error: {field}={value}, code: {c.Errors.VALIDATION_ERROR}, railway: True"
+                    lambda _: f"Error: {field}={value}, code: {c.Errors.VALIDATION_ERROR}, railway: True",
                 )
                 .map(print),
                 error_scenarios,
-            )
+            ),
         )
         + [
             # Standard exception conversion
@@ -264,13 +268,14 @@ def execute_validation_chain(
     (
         validate_transform_user(user_data)
         .map(
-            lambda user: f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}"
+            lambda user: f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}",
         )
         .flat_map(r.ok)
         .flat_map(
             lambda output: process_user_data(
-                user_data=user_data, operation=c.Cqrs.Action.CREATE
-            ).map(lambda result: f"{output}\nProcess: {result}")
+                user_data=user_data,
+                operation=c.Cqrs.Action.CREATE,
+            ).map(lambda result: f"{output}\nProcess: {result}"),
         )
         .map(print)
         .lash(lambda error: r[None].ok(print(f"Validation failed: {error}") or None))
@@ -278,7 +283,8 @@ def execute_validation_chain(
 
 
 def execute_service_operations(
-    service: UserService, user_data: t.Example.UserDataMapping
+    service: UserService,
+    user_data: t.Example.UserDataMapping,
 ) -> None:
     """Execute service operations - SRP focused on service interaction."""
     result = service.create_user(user_data)
@@ -290,7 +296,8 @@ def execute_service_operations(
 
 
 def execute_demonstrations(
-    service: UserService, user_data: t.Example.UserDataMapping
+    service: UserService,
+    user_data: t.Example.UserDataMapping,
 ) -> None:
     """Execute utility demonstrations - SRP focused on side effect execution."""
     # Railway pattern with side effects (DRY - no manual loops)

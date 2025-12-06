@@ -13,42 +13,26 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core.runtime import FlextRuntime
+from flext_core.constants import c
 from flext_core.typings import t
 from flext_core.utilities import u
-
-# NOTE: Use uGenerators.generate_datetime_utc() directly - no inline helpers per FLEXT standards
-
-
-# Tier 0.5 inline enum (defined outside class to avoid forward reference issues)
-class _ContainerValidationLevel(StrEnum):
-    """Validation level for container operations."""
-
-    STRICT = "strict"
-    LENIENT = "lenient"
 
 
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    # Re-export for external access
-    ValidationLevel = _ContainerValidationLevel
-
-    @staticmethod
-    def _is_dict_like(value: t.GeneralValueType) -> bool:
-        """Check if value is dict-like."""
-        return isinstance(value, Mapping)
+    # Re-export for external access - use centralized ValidationLevel from FlextConstants
+    ValidationLevel = c.Cqrs.ValidationLevel
 
     class ServiceRegistration(BaseModel):
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: dict[str, object] for service tracking.
+        Replaces: t.Types.ServiceRegistrationDict for service tracking.
         """
 
         model_config = ConfigDict(
@@ -59,7 +43,7 @@ class FlextModelsContainer:
 
         name: str = Field(
             ...,
-            min_length=1,
+            min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Service identifier/name",
         )
         # Note: Using 'object' as base type allows arbitrary service instances
@@ -96,31 +80,15 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Maintains advanced capability to convert dict → Metadata.
+            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
             """
-            if v is None:
-                return FlextModelsBase.Metadata(attributes={})
-            if FlextModelsContainer._is_dict_like(v):
-                # Use FlextRuntime.normalize_to_metadata_value directly - no wrapper needed
-                # Type narrowing: v is Mapping after _is_dict_like check
-                if isinstance(v, Mapping):
-                    attributes: dict[str, t.MetadataAttributeValue] = {}
-                    for key, value in v.items():
-                        attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(
-                            value
-                        )
-                    return FlextModelsBase.Metadata(attributes=attributes)
-                return FlextModelsBase.Metadata(attributes={})
-            if isinstance(v, FlextModelsBase.Metadata):
-                return v
-            msg = f"metadata must be None, dict, or FlextModelsBase.Metadata, got {type(v).__name__}"
-            raise TypeError(msg)
+            return u.Model.normalize_to_metadata(v)
 
     class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: dict[str, object] for factory tracking.
+        Replaces: t.Types.FactoryRegistrationDict for factory tracking.
         """
 
         model_config = ConfigDict(
@@ -131,7 +99,7 @@ class FlextModelsContainer:
 
         name: str = Field(
             ...,
-            min_length=1,
+            min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Factory identifier/name",
         )
         factory: Callable[
@@ -160,8 +128,8 @@ class FlextModelsContainer:
             )
         )
         invocation_count: int = Field(
-            default=0,
-            ge=0,
+            default=c.ZERO,
+            ge=c.ZERO,
             description="Number of times factory has been invoked",
         )
 
@@ -171,30 +139,14 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Maintains advanced capability to convert dict → Metadata.
+            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
             """
-            if v is None:
-                return FlextModelsBase.Metadata(attributes={})
-            if FlextModelsContainer._is_dict_like(v):
-                # Use FlextRuntime.normalize_to_metadata_value directly - no wrapper needed
-                # Type narrowing: v is Mapping after _is_dict_like check
-                if isinstance(v, Mapping):
-                    attributes: dict[str, t.MetadataAttributeValue] = {}
-                    for key, value in v.items():
-                        attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(
-                            value
-                        )
-                    return FlextModelsBase.Metadata(attributes=attributes)
-                return FlextModelsBase.Metadata(attributes={})
-            if isinstance(v, FlextModelsBase.Metadata):
-                return v
-            msg = f"metadata must be None, dict, or FlextModelsBase.Metadata, got {type(v).__name__}"
-            raise TypeError(msg)
+            return u.Model.normalize_to_metadata(v)
 
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 
-        Replaces: dict[str, object] for container configuration storage.
+        Replaces: t.Types.ConfigurationDict for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 
@@ -212,19 +164,19 @@ class FlextModelsContainer:
             description="Enable caching of factory-created instances",
         )
         max_services: int = Field(
-            default=1000,
-            ge=1,
-            le=10000,
+            default=c.Container.DEFAULT_MAX_SERVICES,
+            ge=c.Reliability.RETRY_COUNT_MIN,
+            le=c.Performance.MAX_BATCH_SIZE,
             description="Maximum number of services allowed in registry",
         )
         max_factories: int = Field(
-            default=500,
-            ge=1,
-            le=5000,
+            default=c.Container.DEFAULT_MAX_FACTORIES,
+            ge=c.Reliability.RETRY_COUNT_MIN,
+            le=c.Container.MAX_FACTORIES,
             description="Maximum number of factories allowed in registry",
         )
-        validation_mode: _ContainerValidationLevel = Field(
-            default=_ContainerValidationLevel.STRICT,
+        validation_mode: c.Cqrs.ValidationLevel = Field(
+            default=c.Cqrs.ValidationLevel.STRICT,
             description="Validation mode: 'strict' or 'lenient'",
         )
         enable_auto_registration: bool = Field(

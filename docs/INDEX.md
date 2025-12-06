@@ -6,9 +6,11 @@ Concise navigation for FLEXT-Core reference materials. All documents follow the 
 
 - **Onboarding:** [`QUICK_START.md`](./QUICK_START.md)
 - **Architecture overview:** [`architecture/overview.md`](./architecture/overview.md)
+- **CQRS architecture:** [`architecture/cqrs.md`](./architecture/cqrs.md)
 - **Clean architecture details:** [`architecture/clean-architecture.md`](./architecture/clean-architecture.md)
 - **API reference by layer:** [`api-reference/`](./api-reference/) (foundation, domain, application, infrastructure)
 - **Guides:** [`guides/`](./guides/) covering railway-oriented programming, DI, DDD, configuration, error handling, testing, and troubleshooting
+- **Service patterns:** [`guides/service-patterns.md`](./guides/service-patterns.md)
 - **Standards:** [`standards/`](./standards/) for development, documentation, and templates
 - **Contributing:** [`development/contributing.md`](./development/contributing.md)
 

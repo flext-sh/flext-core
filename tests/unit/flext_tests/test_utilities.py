@@ -7,159 +7,152 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from typing import Any, cast
-
 import pytest
 
 from flext_core import FlextResult
-from flext_core.protocols import p
-from flext_core.typings import t
 from flext_tests.utilities import FlextTestsUtilities
 
 
-class TestFlextTestsUtilities:
-    """Test suite for FlextTestsUtilities class."""
+class TestFlextTestsUtilitiesResult:
+    """Test suite for FlextTestsUtilities.Tests.Result class."""
 
-    def test_create_test_result_success_default(self) -> None:
-        """Test create_test_result success with default parameters."""
-        result = FlextTestsUtilities.create_test_result()
+    def test_assert_success_passes(self) -> None:
+        """Test assert_success with successful result."""
+        result = FlextResult[str].ok("success")
 
-        assert result.is_success
-        # Default data is empty dict (None is not valid for FlextResult)
-        assert result.value == {}
+        # Should not raise and return value
+        value = FlextTestsUtilities.Tests.Result.assert_success(result)
+        assert value == "success"
 
-    def test_create_test_result_success_with_data(self) -> None:
-        """Test create_test_result success with data."""
-        test_data = {"key": "value"}
-        result = FlextTestsUtilities.create_test_result(success=True, data=test_data)
+    def test_assert_success_fails(self) -> None:
+        """Test assert_success with failed result."""
+        result = FlextResult[str].fail("error")
 
-        assert result.is_success
-        assert result.value == test_data
+        with pytest.raises(AssertionError, match="Expected success but got failure"):
+            FlextTestsUtilities.Tests.Result.assert_success(result)
 
-    def test_create_test_result_failure_default(self) -> None:
-        """Test create_test_result failure with default parameters."""
-        result = FlextTestsUtilities.create_test_result(success=False)
+    def test_assert_failure_passes(self) -> None:
+        """Test assert_failure with failed result."""
+        result = FlextResult[str].fail("error message")
 
-        assert result.is_failure
-        assert result.error == "Test error"
+        # Should not raise and return error
+        error = FlextTestsUtilities.Tests.Result.assert_failure(result)
+        assert error == "error message"
 
-    def test_create_test_result_failure_custom_error(self) -> None:
-        """Test create_test_result failure with custom error."""
-        result = FlextTestsUtilities.create_test_result(
-            success=False,
-            error="Custom error",
-        )
+    def test_assert_failure_fails(self) -> None:
+        """Test assert_failure with successful result."""
+        result = FlextResult[str].ok("success")
 
-        assert result.is_failure
-        assert result.error == "Custom error"
+        with pytest.raises(AssertionError, match="Expected failure but got success"):
+            FlextTestsUtilities.Tests.Result.assert_failure(result)
 
-    def test_functional_service_default(self) -> None:
-        """Test functional_service with default parameters."""
-        service = FlextTestsUtilities.functional_service()
+    def test_assert_failure_with_expected_error(self) -> None:
+        """Test assert_failure with expected error substring."""
+        result = FlextResult[str].fail("validation error occurred")
 
-        assert isinstance(service, dict)
-        assert service["type"] == "api"
-        assert service["name"] == "functional_api_service"
-        assert service["enabled"] is True
-        assert service["host"] == "localhost"
-        assert service["port"] == 8000
-        assert service["timeout"] == 30
-        assert service["retries"] == 3
+        # Should not raise when substring matches
+        error = FlextTestsUtilities.Tests.Result.assert_failure(result, "validation")
+        assert "validation" in error
 
-    def test_functional_service_custom(self) -> None:
-        """Test functional_service with custom parameters."""
-        service = FlextTestsUtilities.functional_service(
-            "database",
-            host="db.example.com",
-            port=5432,
-            custom_field="custom_value",
-        )
+    def test_assert_failure_with_expected_error_mismatch(self) -> None:
+        """Test assert_failure when expected error doesn't match."""
+        result = FlextResult[str].fail("validation error occurred")
 
-        assert service["type"] == "database"
-        assert service["name"] == "functional_database_service"
-        assert service["host"] == "db.example.com"
-        assert service["port"] == 5432
-        assert service["custom_field"] == "custom_value"
+        with pytest.raises(AssertionError, match="Expected error containing"):
+            FlextTestsUtilities.Tests.Result.assert_failure(result, "not found")
 
-    def test_test_context_attribute_change(self) -> None:
-        """Test test_context changes attribute temporarily."""
+    def test_assert_success_with_value(self) -> None:
+        """Test assert_success_with_value with matching value."""
+        result = FlextResult[str].ok("expected")
+
+        # Should not raise
+        FlextTestsUtilities.Tests.Result.assert_success_with_value(result, "expected")
+
+    def test_assert_success_with_value_mismatch(self) -> None:
+        """Test assert_success_with_value with non-matching value."""
+        result = FlextResult[str].ok("actual")
+
+        with pytest.raises(AssertionError):
+            FlextTestsUtilities.Tests.Result.assert_success_with_value(
+                result,
+                "expected",
+            )
+
+    def test_assert_failure_with_error(self) -> None:
+        """Test assert_failure_with_error with matching error."""
+        result = FlextResult[str].fail("test error")
+
+        # Should not raise
+        FlextTestsUtilities.Tests.Result.assert_failure_with_error(result, "test")
+
+    def test_assert_failure_with_error_mismatch(self) -> None:
+        """Test assert_failure_with_error with non-matching error."""
+        result = FlextResult[str].fail("actual error")
+
+        with pytest.raises(AssertionError):
+            FlextTestsUtilities.Tests.Result.assert_failure_with_error(
+                result,
+                "expected",
+            )
+
+
+class TestFlextTestsUtilitiesTestContext:
+    """Test suite for FlextTestsUtilities.Tests.TestContext class."""
+
+    def test_temporary_attribute_change(self) -> None:
+        """Test temporary_attribute changes attribute temporarily."""
 
         class TestObject:
             def __init__(self) -> None:
                 super().__init__()
                 self.attribute = "original"
 
-            def model_dump(self) -> Mapping[str, t.FlexibleValue]:
-                """Implement HasModelDump protocol."""
-                return {"attribute": self.attribute}
+        obj = TestObject()
 
-        obj: Any = TestObject()
-
-        with FlextTestsUtilities.test_context(obj, "attribute", "modified"):
+        with FlextTestsUtilities.Tests.TestContext.temporary_attribute(
+            obj,
+            "attribute",
+            "modified",
+        ):
             assert obj.attribute == "modified"
 
         # Should restore original value
         assert obj.attribute == "original"
 
-    def test_test_context_new_attribute(self) -> None:
-        """Test test_context adds new attribute temporarily."""
+    def test_temporary_attribute_new(self) -> None:
+        """Test temporary_attribute adds new attribute temporarily."""
 
         class TestObject:
-            def model_dump(self) -> Mapping[str, t.FlexibleValue]:
-                """Implement HasModelDump protocol."""
-                return {}
+            pass
 
-        obj: p.HasModelDump = TestObject()
+        obj = TestObject()
 
-        with FlextTestsUtilities.test_context(obj, "new_attr", "new_value"):
+        with FlextTestsUtilities.Tests.TestContext.temporary_attribute(
+            obj,
+            "new_attr",
+            "new_value",
+        ):
             assert hasattr(obj, "new_attr")
-            # Attribute is added dynamically, use getattr for type safety
             assert getattr(obj, "new_attr", None) == "new_value"
 
         # Should remove the attribute
         assert not hasattr(obj, "new_attr")
 
-    def test_test_context_delete_after(self) -> None:
-        """Test test_context with delete_after option."""
-
-        class TestObject:
-            def __init__(self) -> None:
-                super().__init__()
-                self.temp_attr = "temp"
-
-            def model_dump(self) -> Mapping[str, t.FlexibleValue]:
-                """Implement HasModelDump protocol."""
-                return {"temp_attr": self.temp_attr}
-
-        obj: Any = TestObject()
-
-        with FlextTestsUtilities.test_context(
-            obj,
-            "temp_attr",
-            "modified",
-        ):
-            assert obj.temp_attr == "modified"
-
-        # Should restore original value since attribute existed
-        assert hasattr(obj, "temp_attr")
-        assert obj.temp_attr == "temp"
-
-    def test_test_context_exception_restores(self) -> None:
-        """Test test_context restores value even when exception occurs."""
+    def test_temporary_attribute_exception_restores(self) -> None:
+        """Test temporary_attribute restores value even when exception occurs."""
 
         class TestObject:
             def __init__(self) -> None:
                 super().__init__()
                 self.attribute = "original"
 
-            def model_dump(self) -> Mapping[str, t.FlexibleValue]:
-                """Implement HasModelDump protocol."""
-                return {"attribute": self.attribute}
+        obj = TestObject()
 
-        obj: Any = TestObject()
-
-        with FlextTestsUtilities.test_context(obj, "attribute", "modified"):
+        with FlextTestsUtilities.Tests.TestContext.temporary_attribute(
+            obj,
+            "attribute",
+            "modified",
+        ):
             assert obj.attribute == "modified"
             msg = "Test exception"
             with pytest.raises(RuntimeError):
@@ -169,85 +162,73 @@ class TestFlextTestsUtilities:
         assert obj.attribute == "original"
 
 
-class TestFlextTestsUtilitiesTestUtilities:
-    """Test suite for nested TestUtilities class."""
+class TestFlextTestsUtilitiesFactory:
+    """Test suite for FlextTestsUtilities.Tests.Factory class."""
+
+    def test_create_result_success(self) -> None:
+        """Test create_result with value."""
+        result = FlextTestsUtilities.Tests.Factory.create_result("test_value")
+
+        assert result.is_success
+        assert result.value == "test_value"
+
+    def test_create_result_failure(self) -> None:
+        """Test create_result with error."""
+        result = FlextTestsUtilities.Tests.Factory.create_result(
+            None,
+            error="test error",
+        )
+
+        assert result.is_failure
+        assert result.error == "test error"
+
+    def test_create_result_no_args(self) -> None:
+        """Test create_result with no arguments returns failure."""
+        result = FlextTestsUtilities.Tests.Factory.create_result(None)
+
+        assert result.is_failure
+        assert result.error == "No value or error provided"
+
+    def test_create_test_data(self) -> None:
+        """Test create_test_data creates dict with kwargs."""
+        data = FlextTestsUtilities.Tests.Factory.create_test_data(
+            key1="value1",
+            key2=42,
+            key3=True,
+        )
+
+        assert data["key1"] == "value1"
+        assert data["key2"] == 42
+        assert data["key3"] is True
+
+
+class TestFlextTestsUtilitiesTestUtilitiesCompat:
+    """Test suite for TestUtilities compatibility class."""
 
     def test_assert_result_success_passes(self) -> None:
         """Test assert_result_success with successful result."""
         result = FlextResult[str].ok("success")
 
         # Should not raise
-        FlextTestsUtilities.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_assert_result_success_fails(self) -> None:
         """Test assert_result_success with failed result."""
         result = FlextResult[str].fail("error")
 
-        with pytest.raises(AssertionError, match="Expected success result"):
-            FlextTestsUtilities.TestUtilities.assert_result_success(result)
+        with pytest.raises(AssertionError, match="Expected success but got failure"):
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_assert_result_failure_passes(self) -> None:
         """Test assert_result_failure with failed result."""
         result = FlextResult[str].fail("error")
 
         # Should not raise
-        FlextTestsUtilities.TestUtilities.assert_result_failure(result)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_assert_result_failure_fails(self) -> None:
         """Test assert_result_failure with successful result."""
         result = FlextResult[str].ok("success")
 
-        with pytest.raises(AssertionError, match="Expected failure result"):
-            FlextTestsUtilities.TestUtilities.assert_result_failure(result)
-
-    def test_create_test_service_no_methods(self) -> None:
-        """Test create_test_service with no methods specified."""
-        service = FlextTestsUtilities.TestUtilities.create_test_service()
-
-        assert service is not None
-        assert hasattr(service, "__class__")
-
-    def test_create_test_service_with_methods(self) -> None:
-        """Test create_test_service with method implementations."""
-
-        def test_method() -> str:
-            return "test_result"
-
-        service = FlextTestsUtilities.TestUtilities.create_test_service(
-            test_method=test_method,
-        )
-
-        assert hasattr(service, "test_method")
-        # Method is added dynamically, use getattr for type safety
-        test_method_func: object = getattr(service, "test_method", None)
-        assert test_method_func is not None
-        assert callable(test_method_func)
-        # Type narrowing: test_method_func is callable
-        # Use cast to satisfy type checkers for dynamically added methods
-        callable_method = cast("Callable[[], str]", test_method_func)
-        assert callable_method() == "test_result"
-
-    def test_generate_test_id_default(self) -> None:
-        """Test generate_test_id with default prefix."""
-        test_id = FlextTestsUtilities.TestUtilities.generate_test_id()
-
-        assert isinstance(test_id, str)
-        assert test_id.startswith("test_")
-        # UUID format: prefix_ + 36-char UUID (8-4-4-4-12)
-        assert len(test_id) == 41  # "test_" (5) + UUID (36)
-
-    def test_generate_test_id_custom_prefix(self) -> None:
-        """Test generate_test_id with custom prefix."""
-        test_id = FlextTestsUtilities.TestUtilities.generate_test_id("custom")
-
-        assert isinstance(test_id, str)
-        assert test_id.startswith("custom_")
-        # UUID format: prefix_ + 36-char UUID (8-4-4-4-12)
-        assert len(test_id) == 43  # "custom_" (7) + UUID (36)
-
-    def test_generate_test_id_uniqueness(self) -> None:
-        """Test that generate_test_id produces unique IDs."""
-        ids = [FlextTestsUtilities.TestUtilities.generate_test_id() for _ in range(10)]
-
-        # All IDs should be unique
-        assert len(set(ids)) == len(ids)
+        with pytest.raises(AssertionError, match="Expected failure but got success"):
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)

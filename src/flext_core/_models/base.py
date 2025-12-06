@@ -15,11 +15,14 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
 from flext_core.constants import c
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 class FlextModelsBase:
@@ -30,7 +33,7 @@ class FlextModelsBase:
 
         model_config = ConfigDict(
             validate_assignment=True,
-            extra="forbid",
+            extra=c.ModelConfig.EXTRA_FORBID,
             arbitrary_types_allowed=True,
             use_enum_values=True,
         )
@@ -46,9 +49,9 @@ class FlextModelsBase:
             str_strip_whitespace=True,
             use_enum_values=True,
             arbitrary_types_allowed=True,
-            extra="forbid",
-            ser_json_timedelta="iso8601",
-            ser_json_bytes="base64",
+            extra=c.ModelConfig.EXTRA_FORBID,
+            ser_json_timedelta=c.Utilities.SERIALIZATION_ISO8601,
+            ser_json_bytes=c.Utilities.SERIALIZATION_BASE64,
             hide_input_in_errors=True,
             frozen=True,
         )
@@ -57,13 +60,23 @@ class FlextModelsBase:
         """Value model with equality/hash by value."""
 
         def __eq__(self, other: object) -> bool:
-            """Compare by value using model_dump."""
+            """Compare by value using model_dump.
+
+            Returns:
+                bool: True if models are equal by value, False otherwise.
+
+            """
             if not isinstance(other, self.__class__):
                 return NotImplemented
             return self.model_dump() == other.model_dump()
 
         def __hash__(self) -> int:
-            """Hash based on values for use in sets/dicts."""
+            """Hash based on values for use in sets/dicts.
+
+            Returns:
+                int: Hash value based on model's field values.
+
+            """
             data = self.model_dump()
             return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
 
@@ -92,17 +105,26 @@ class FlextModelsBase:
         )
 
         @field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(self, value: datetime | None) -> str | None:  # noqa: PLR6301
+        def serialize_timestamps(self, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 format for JSON.
 
             Note: Pydantic @field_serializer requires instance method signature
             even if self is not used in the implementation.
+
+            Returns:
+                str | None: ISO 8601 formatted timestamp string, or None if value is None.
+
             """
             return value.isoformat() if value else None
 
         @computed_field
         def is_modified(self) -> bool:
-            """Check if the model has been modified after creation."""
+            """Check if the model has been modified after creation.
+
+            Returns:
+                bool: True if updated_at is not None, False otherwise.
+
+            """
             return self.updated_at is not None
 
         def update_timestamp(self) -> None:
@@ -122,53 +144,44 @@ class FlextModelsBase:
 
         @computed_field
         def is_initial_version(self) -> bool:
-            """Check if this is the initial version (version 1)."""
+            """Check if this is the initial version (version 1).
+
+            Returns:
+                bool: True if version equals DEFAULT_VERSION, False otherwise.
+
+            """
             return self.version == c.Performance.DEFAULT_VERSION
 
         def increment_version(self) -> None:
             """Increment the version number for optimistic locking."""
             self.version += 1
 
-    class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
-        """Model with timestamp fields."""
-
     class Metadata(BaseModel):
-        """Immutable metadata model - zero-dependency foundation.
+        """Standard metadata model.
 
-        This is the SINGLE source of truth for metadata across the entire FLEXT ecosystem.
-        All other modules import from here, creating a clear dependency hierarchy.
+        Business Rule: Provides standard metadata fields (timestamps, audit info,
+        tags, attributes) for all entities. Enforces strict validation with frozen
+        instances for immutability and thread safety.
         """
 
         model_config = ConfigDict(
+            extra=c.ModelConfig.EXTRA_FORBID,
             frozen=True,
             validate_assignment=True,
-            extra="forbid",
+            populate_by_name=True,
+            arbitrary_types_allowed=True,
         )
 
-        created_by: str | None = Field(
-            default=None,
-            description="User/service that created this metadata",
-        )
-        created_at: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
-            description="UTC timestamp of creation",
-        )
-        modified_by: str | None = Field(
-            default=None,
-            description="User/service that last modified this metadata",
-        )
-        modified_at: datetime | None = Field(
-            default=None,
-            description="UTC timestamp of last modification",
-        )
-        tags: list[str] = Field(
-            default_factory=list,
-            description="Tags for categorization and filtering",
-        )
-        attributes: dict[str, t.MetadataAttributeValue] = Field(
-            default_factory=dict,
-            description="Additional metadata attributes (JSON-serializable)",
-        )
+        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        version: str = Field(default="1.0.0")
+        created_by: str | None = Field(default=None)
+        modified_by: str | None = Field(default=None)
+        tags: list[str] = Field(default_factory=list)
+        attributes: t.Types.ConfigurationDict = Field(default_factory=dict)
+
+    class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
+        """Model with timestamp fields."""
 
 
 __all__ = ["FlextModelsBase"]

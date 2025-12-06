@@ -9,21 +9,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
-from typing import ClassVar, Self, cast, override
+from typing import TYPE_CHECKING, ClassVar, Self, override
 
 from pydantic import Field
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.validation import FlextModelsValidation
-from flext_core._utilities.domain import FlextDomain
-from flext_core._utilities.generators import FlextGenerators
+from flext_core._utilities.domain import FlextUtilitiesDomain
+from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 
 class FlextModelsEntity:
@@ -32,9 +34,6 @@ class FlextModelsEntity:
     This class acts as a namespace container for Entity and related DDD patterns.
     Uses FlextModelsBase for all base classes (Tier 0).
     """
-
-    # Constants
-    EVENT_TUPLE_SIZE: ClassVar[int] = 2
 
     class DomainEvent(
         FlextModelsBase.ArbitraryTypesModel,
@@ -86,7 +85,7 @@ class FlextModelsEntity:
             return self.unique_id
 
         @property
-        def logger(self) -> p.StructlogLogger:
+        def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
             """Get logger instance."""
             return FlextRuntime.get_logger(__name__)
 
@@ -94,11 +93,11 @@ class FlextModelsEntity:
         def model_post_init(self, __context: object, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
-                self.updated_at = FlextGenerators.generate_datetime_utc()
+                self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
         @override
         def __eq__(self, other: object) -> bool:
-            """Identity-based equality for entities (using uDomain).
+            """Identity-based equality for entities (using FlextUtilitiesDomain).
 
             Returns:
                 True if entities have the same unique_id, False otherwise.
@@ -106,18 +105,18 @@ class FlextModelsEntity:
 
             """
             # Type narrowing: other must implement HasModelDump protocol for comparison
-            if not isinstance(other, p.HasModelDump):
+            if not isinstance(other, p.Foundation.HasModelDump):
                 return NotImplemented
-            return FlextDomain.compare_entities_by_id(self, other)
+            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
-            """Identity-based hash for entities (using uDomain).
+            """Identity-based hash for entities (using FlextUtilitiesDomain).
 
             Returns:
                 Hash value based on entity's unique_id.
 
             """
-            return FlextDomain.hash_entity_by_id(self)
+            return FlextUtilitiesDomain.hash_entity_by_id(self)
 
         def _validate_event_input(
             self: Self,
@@ -379,7 +378,7 @@ class FlextModelsEntity:
                 )
 
             for i, event_item in enumerate(events):
-                event_tuple_size = 2  # Event tuple: (name, data)
+                event_tuple_size = c.EVENT_TUPLE_SIZE
                 if len(event_item) != event_tuple_size:
                     return r[list[tuple[str, t.Types.EventDataMapping]]].fail(
                         f"Event {i}: must have exactly 2 elements (name, data)",
@@ -395,7 +394,7 @@ class FlextModelsEntity:
                     )
                 if data is not None and not FlextRuntime.is_dict_like(data):
                     return r[list[tuple[str, t.Types.EventDataMapping]]].fail(
-                        f"Event {i}: data must be dict[str, t.GeneralValueType] or None",
+                        f"Event {i}: data must be ConfigurationDict or None",
                         error_code=c.Errors.VALIDATION_ERROR,
                     )
                 # Fast fail: data must be dict (None not allowed)
@@ -496,14 +495,8 @@ class FlextModelsEntity:
 
         def validate_consistency(self: Self) -> r[bool]:
             """Validate entity consistency using centralized validation."""
-            # Cast self to GeneralValueType for validation
-            entity_typed: t.GeneralValueType = cast(
-                "t.GeneralValueType",
-                self,
-            )
-            entity_result = FlextModelsValidation.validate_entity_relationships(
-                entity_typed,
-            )
+            # validate_entity_relationships accepts object directly
+            entity_result = FlextModelsValidation.validate_entity_relationships(self)
             if entity_result.is_failure:
                 return r[bool].fail(
                     f"Entity validation failed: {entity_result.error}",
@@ -527,17 +520,14 @@ class FlextModelsEntity:
 
         @override
         def __eq__(self: Self, other: object) -> bool:
-            """Compare by value (using uDomain)."""
-            if not isinstance(other, p.HasModelDump):
+            """Compare by value (using FlextUtilitiesDomain)."""
+            if not isinstance(other, p.Foundation.HasModelDump):
                 return NotImplemented
-            return FlextDomain.compare_value_objects_by_value(self, other)
+            return FlextUtilitiesDomain.compare_value_objects_by_value(self, other)
 
         def __hash__(self) -> int:
-            """Hash based on values for use in sets/dicts (using uDomain)."""
-            return FlextDomain.hash_value_object_by_value(self)
-
-    # Alias for backward compatibility - Entity is the same as Core
-    Entity = Core
+            """Hash based on values for use in sets/dicts (using FlextUtilitiesDomain)."""
+            return FlextUtilitiesDomain.hash_value_object_by_value(self)
 
     class AggregateRoot(Core):
         """Base class for aggregate roots - consistency boundaries."""
@@ -563,7 +553,5 @@ class FlextModelsEntity:
 
 __all__ = ["FlextModelsEntity"]
 
-# Rebuild models to resolve forward references within the module
-# This is required because Core references DomainEvent which is defined in the same class
-_ = FlextModelsEntity.Core.model_rebuild()
-_ = FlextModelsEntity.AggregateRoot.model_rebuild()
+# No model_rebuild() needed - Pydantic v2 with 'from __future__ import annotations'
+# automatically resolves forward references at runtime

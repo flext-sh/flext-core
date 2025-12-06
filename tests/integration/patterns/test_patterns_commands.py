@@ -9,18 +9,16 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import (
-    FlextConstants,
-    FlextModels,
-    FlextResult,
-    h,
-)
-from flext_core._models.base import FlextModelsBase
-from tests.fixtures.typing import (
-    CommandPayloadDict,
-    UpdatePayloadDict,
-    UserPayloadDict,
-)
+from flext_core import FlextResult
+from flext_core.constants import FlextConstants
+from flext_core.handlers import FlextHandlers
+from flext_core.models import FlextModels
+from tests.typings import TestsFlextTypes
+
+# TypedDict definitions from consolidated test typings
+CommandPayloadDict = TestsFlextTypes.Fixtures.CommandPayloadDict
+UpdatePayloadDict = TestsFlextTypes.Fixtures.UpdatePayloadDict
+UserPayloadDict = TestsFlextTypes.Fixtures.UserPayloadDict
 
 # =============================================================================
 # Import required classes for CQRS patterns
@@ -30,13 +28,13 @@ EXPECTED_BULK_SIZE = 2
 FlextCommandId = str
 FlextCommandType = str
 
-FlextCommandHandler = h
+FlextCommandHandler = FlextHandlers
 
 # TEST COMMAND IMPLEMENTATIONS
 # =============================================================================
 
 
-class CreateUserCommand(FlextModelsBase.TimestampedModel):
+class CreateUserCommand(FlextModels.TimestampedModel):
     """Test command for creating users."""
 
     username: str
@@ -63,7 +61,7 @@ class CreateUserCommand(FlextModelsBase.TimestampedModel):
         return FlextResult[bool].ok(True)
 
 
-class UpdateUserCommand(FlextModelsBase.TimestampedModel):
+class UpdateUserCommand(FlextModels.TimestampedModel):
     """Test command for updating users."""
 
     target_user_id: str
@@ -88,7 +86,7 @@ class UpdateUserCommand(FlextModelsBase.TimestampedModel):
         return FlextResult[bool].ok(True)
 
 
-class FailingCommand(FlextModelsBase.TimestampedModel):
+class FailingCommand(FlextModels.TimestampedModel):
     """Test command that always fails validation."""
 
     def get_payload(self) -> CommandPayloadDict:

@@ -1,6 +1,6 @@
 """Protocol definitions for FLEXT tests.
 
-Provides FlextTestProtocols, extending p with test-specific protocol
+Provides FlextTestsProtocols, extending FlextProtocols with test-specific protocol
 definitions for Docker operations, container management, and test infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -9,393 +9,1061 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import Protocol, runtime_checkable
+import builtins
+from collections.abc import Callable, Mapping, Sequence
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core.protocols import p
+from pydantic import BaseModel
+
+from flext_core import FlextProtocols, r
+
+if TYPE_CHECKING:
+    from flext_tests.typings import t
 
 
-class FlextTestProtocols:
-    """Protocol definitions for FLEXT tests - extends p.
+class FlextTestsProtocols(FlextProtocols):
+    """Protocol definitions for FLEXT tests - extends FlextProtocols.
 
-    Architecture: Extends p with test-specific protocol definitions.
-    All base protocols from p are available through inheritance pattern.
+    Architecture: Extends FlextProtocols with test-specific protocol definitions.
+    All base protocols from FlextProtocols are available through inheritance pattern.
     Protocols cannot import models - only other protocols and types.
     """
 
-    # Re-export base protocols from p
-    ResultProtocol = p.ResultProtocol
-    ResultLike = p.ResultLike
-    ConfigProtocol = p.ConfigProtocol
-    ModelProtocol = p.ModelProtocol
-    Service = p.Service
-    Repository = p.Repository
-    Handler = p.Handler
-    CommandBus = p.CommandBus
-    Middleware = p.Middleware
-    LoggerProtocol = p.LoggerProtocol
-    Connection = p.Connection
+    class Tests:
+        """Test-specific protocol definitions."""
 
-    class Docker:
-        """Docker-specific protocol definitions."""
+        class Docker:
+            """Docker-specific protocol definitions."""
 
-        @runtime_checkable
-        class ContainerProtocol(Protocol):
-            """Protocol for Docker container objects."""
+            @runtime_checkable
+            class Container(Protocol):
+                """Protocol for Docker container objects."""
 
-            @property
-            def id(self) -> str:
-                """Container ID."""
-                ...
+                @property
+                def id(self) -> str:
+                    """Container ID."""
+                    ...
 
-            @property
-            def name(self) -> str:
-                """Container name."""
-                ...
+                @property
+                def name(self) -> str:
+                    """Container name."""
+                    ...
 
-            @property
-            def status(self) -> str:
-                """Container status."""
-                ...
+                @property
+                def status(self) -> str:
+                    """Container status."""
+                    ...
 
-            @property
-            def image(self) -> str:
-                """Container image."""
-                ...
+                @property
+                def image(self) -> str:
+                    """Container image."""
+                    ...
 
-            def start(self) -> None:
-                """Start the container."""
-                ...
+                def start(self) -> None:
+                    """Start the container."""
+                    ...
 
-            def stop(self) -> None:
-                """Stop the container."""
-                ...
+                def stop(self) -> None:
+                    """Stop the container."""
+                    ...
 
-            def remove(
-                self,
-                *,
-                force: bool = False,
-                **kwargs: str | int | bool | None,
-            ) -> None:
-                """Remove the container.
+                def remove(
+                    self,
+                    *,
+                    force: bool = False,
+                    **kwargs: str | int | bool | None,
+                ) -> None:
+                    """Remove the container.
 
-                Args:
-                    force: Force removal of running container
-                    **kwargs: Additional removal options (labels, volumes, etc.)
+                    Args:
+                        force: Force removal of running container
+                        **kwargs: Additional removal options (labels, volumes, etc.)
 
+                    """
+                    ...
+
+            @runtime_checkable
+            class DockerClient(Protocol):
+                """Protocol for Docker client operations."""
+
+                def containers(
+                    self,
+                ) -> FlextTestsProtocols.Tests.Docker.ContainerCollection:
+                    """Get container collection."""
+                    ...
+
+                def images(self) -> FlextTestsProtocols.Tests.Docker.ImageCollection:
+                    """Get image collection."""
+                    ...
+
+                def networks(
+                    self,
+                ) -> FlextTestsProtocols.Tests.Docker.NetworkCollection:
+                    """Get network collection."""
+                    ...
+
+                def volumes(
+                    self,
+                ) -> FlextTestsProtocols.Tests.Docker.VolumeCollection:
+                    """Get volume collection."""
+                    ...
+
+            @runtime_checkable
+            class ContainerCollection(Protocol):
+                """Protocol for container collection operations."""
+
+                def get(
+                    self,
+                    container_id: str,
+                ) -> FlextTestsProtocols.Tests.Docker.Container:
+                    """Get container by ID."""
+                    ...
+
+                def list(
+                    self,
+                    *,
+                    show_all: bool = False,
+                    filters: Mapping[str, str | Sequence[str]] | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> list[FlextTestsProtocols.Tests.Docker.Container]:
+                    """List containers with filters.
+
+                    Args:
+                        show_all: Show all containers (including stopped)
+                        filters: Filter mapping (e.g., {"status": ["running"]})
+                        **kwargs: Additional filter options
+
+                    """
+                    ...
+
+                def run(
+                    self,
+                    image: str,
+                    *,
+                    name: str | None = None,
+                    detach: bool = True,
+                    ports: Mapping[str, str | int] | None = None,
+                    environment: Sequence[str] | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> FlextTestsProtocols.Tests.Docker.Container:
+                    """Run a new container.
+
+                    Args:
+                        image: Container image name
+                        name: Container name
+                        detach: Run in detached mode
+                        ports: Port mappings
+                        environment: Environment variables
+                        **kwargs: Additional container options
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class ImageCollection(Protocol):
+                """Protocol for image collection operations."""
+
+                def get(self, image_id: str) -> FlextTestsProtocols.Tests.Docker.Image:
+                    """Get image by ID."""
+                    ...
+
+                def list(
+                    self,
+                    *,
+                    show_all: bool = False,
+                    filters: Mapping[str, str | Sequence[str]] | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> list[FlextTestsProtocols.Tests.Docker.Image]:
+                    """List images with filters.
+
+                    Args:
+                        show_all: Show all images (including intermediate)
+                        filters: Filter mapping
+                        **kwargs: Additional filter options
+
+                    """
+                    ...
+
+                def build(
+                    self,
+                    path: str,
+                    *,
+                    tag: str | None = None,
+                    build_args: Mapping[str, str] | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> FlextTestsProtocols.Tests.Docker.Image:
+                    """Build an image.
+
+                    Args:
+                        path: Build context path
+                        tag: Image tag
+                        build_args: Build arguments
+                        **kwargs: Additional build options
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class Image(Protocol):
+                """Protocol for Docker image objects."""
+
+                @property
+                def id(self) -> str:
+                    """Image ID."""
+                    ...
+
+                @property
+                def tags(self) -> list[str]:
+                    """Image tags."""
+                    ...
+
+            @runtime_checkable
+            class NetworkCollection(Protocol):
+                """Protocol for network collection operations."""
+
+                def get(
+                    self,
+                    network_id: str,
+                ) -> FlextTestsProtocols.Tests.Docker.Network:
+                    """Get network by ID."""
+                    ...
+
+                def list(
+                    self,
+                    *,
+                    filters: Mapping[str, str | Sequence[str]] | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> list[FlextTestsProtocols.Tests.Docker.Network]:
+                    """List networks with filters.
+
+                    Args:
+                        filters: Filter mapping
+                        **kwargs: Additional filter options
+
+                    """
+                    ...
+
+                def create(
+                    self,
+                    name: str,
+                    *,
+                    driver: str = "bridge",
+                    ipam: Mapping[str, str | Sequence[str]] | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> FlextTestsProtocols.Tests.Docker.Network:
+                    """Create a network.
+
+                    Args:
+                        name: Network name
+                        driver: Network driver
+                        ipam: IPAM configuration
+                        **kwargs: Additional network options
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class Network(Protocol):
+                """Protocol for Docker network objects."""
+
+                @property
+                def id(self) -> str:
+                    """Network ID."""
+                    ...
+
+                @property
+                def name(self) -> str:
+                    """Network name."""
+                    ...
+
+            @runtime_checkable
+            class VolumeCollection(Protocol):
+                """Protocol for volume collection operations."""
+
+                def get(
+                    self,
+                    volume_id: str,
+                ) -> FlextTestsProtocols.Tests.Docker.Volume:
+                    """Get volume by ID."""
+                    ...
+
+                def list(
+                    self,
+                    *,
+                    filters: Mapping[str, str | Sequence[str]] | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> list[FlextTestsProtocols.Tests.Docker.Volume]:
+                    """List volumes with filters.
+
+                    Args:
+                        filters: Filter mapping
+                        **kwargs: Additional filter options
+
+                    """
+                    ...
+
+                def create(
+                    self,
+                    name: str,
+                    *,
+                    driver: str | None = None,
+                    driver_opts: Mapping[str, str] | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> FlextTestsProtocols.Tests.Docker.Volume:
+                    """Create a volume.
+
+                    Args:
+                        name: Volume name
+                        driver: Volume driver
+                        driver_opts: Driver options
+                        **kwargs: Additional volume options
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class Volume(Protocol):
+                """Protocol for Docker volume objects."""
+
+                @property
+                def id(self) -> str:
+                    """Volume ID."""
+                    ...
+
+                @property
+                def name(self) -> str:
+                    """Volume name."""
+                    ...
+
+            @runtime_checkable
+            class ComposeClient(Protocol):
+                """Protocol for docker-compose operations.
+
+                Compatible with python-on-whales DockerClient.
+                Uses structural typing - any object with compose/client_config.
                 """
-                ...
 
-        @runtime_checkable
-        class DockerClientProtocol(Protocol):
-            """Protocol for Docker client operations."""
+                compose: object
+                """Compose API access (python-on-whales style)."""
 
-            def containers(
-                self,
-            ) -> FlextTestProtocols.Docker.ContainerCollectionProtocol:
-                """Get container collection."""
-                ...
+                client_config: object
+                """Client configuration (python-on-whales style)."""
 
-            def images(self) -> FlextTestProtocols.Docker.ImageCollectionProtocol:
-                """Get image collection."""
-                ...
+                def up(
+                    self,
+                    services: Sequence[str] | None = None,
+                    *,
+                    detach: bool = True,
+                    build: bool = False,
+                    **kwargs: str | int | bool | None,
+                ) -> None:
+                    """Start compose services.
 
-            def networks(self) -> FlextTestProtocols.Docker.NetworkCollectionProtocol:
-                """Get network collection."""
-                ...
+                    Args:
+                        services: Specific services to start
+                        detach: Run in detached mode
+                        build: Build images before starting
+                        **kwargs: Additional compose options
 
-            def volumes(self) -> FlextTestProtocols.Docker.VolumeCollectionProtocol:
-                """Get volume collection."""
-                ...
+                    """
+                    ...
 
-        @runtime_checkable
-        class ContainerCollectionProtocol(Protocol):
-            """Protocol for container collection operations."""
+                def down(
+                    self,
+                    *,
+                    volumes: bool = False,
+                    remove_orphans: bool = False,
+                    timeout: int | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> None:
+                    """Stop compose services.
 
-            def get(
-                self, container_id: str
-            ) -> FlextTestProtocols.Docker.ContainerProtocol:
-                """Get container by ID."""
-                ...
+                    Args:
+                        volumes: Remove volumes
+                        remove_orphans: Remove orphan containers
+                        timeout: Stop timeout in seconds
+                        **kwargs: Additional compose options
 
-            def list(
-                self,
-                *,
-                show_all: bool = False,
-                filters: Mapping[str, str | Sequence[str]] | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> list[FlextTestProtocols.Docker.ContainerProtocol]:
-                """List containers with filters.
+                    """
+                    ...
 
-                Args:
-                    show_all: Show all containers (including stopped)
-                    filters: Filter mapping (e.g., {"status": ["running"]})
-                    **kwargs: Additional filter options
+                def restart(
+                    self,
+                    services: Sequence[str] | None = None,
+                    *,
+                    timeout: int | None = None,
+                    **kwargs: str | int | bool | None,
+                ) -> None:
+                    """Restart compose services.
 
-                """
-                ...
+                    Args:
+                        services: Specific services to restart
+                        timeout: Restart timeout in seconds
+                        **kwargs: Additional compose options
 
-            def run(
-                self,
-                image: str,
-                *,
-                name: str | None = None,
-                detach: bool = True,
-                ports: Mapping[str, str | int] | None = None,
-                environment: Sequence[str] | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> FlextTestProtocols.Docker.ContainerProtocol:
-                """Run a new container.
+                    """
+                    ...
 
-                Args:
-                    image: Container image name
-                    name: Container name
-                    detach: Run in detached mode
-                    ports: Port mappings
-                    environment: Environment variables
-                    **kwargs: Additional container options
+        class Factory:
+            """Factory-specific protocol definitions for test data generation.
 
-                """
-                ...
-
-        @runtime_checkable
-        class ImageCollectionProtocol(Protocol):
-            """Protocol for image collection operations."""
-
-            def get(self, image_id: str) -> FlextTestProtocols.Docker.ImageProtocol:
-                """Get image by ID."""
-                ...
-
-            def list(
-                self,
-                *,
-                show_all: bool = False,
-                filters: Mapping[str, str | Sequence[str]] | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> list[FlextTestProtocols.Docker.ImageProtocol]:
-                """List images with filters.
-
-                Args:
-                    show_all: Show all images (including intermediate)
-                    filters: Filter mapping
-                    **kwargs: Additional filter options
-
-                """
-                ...
-
-            def build(
-                self,
-                path: str,
-                *,
-                tag: str | None = None,
-                build_args: Mapping[str, str] | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> FlextTestProtocols.Docker.ImageProtocol:
-                """Build an image.
-
-                Args:
-                    path: Build context path
-                    tag: Image tag
-                    build_args: Build arguments
-                    **kwargs: Additional build options
-
-                """
-                ...
-
-        @runtime_checkable
-        class ImageProtocol(Protocol):
-            """Protocol for Docker image objects."""
-
-            @property
-            def id(self) -> str:
-                """Image ID."""
-                ...
-
-            @property
-            def tags(self) -> list[str]:
-                """Image tags."""
-                ...
-
-        @runtime_checkable
-        class NetworkCollectionProtocol(Protocol):
-            """Protocol for network collection operations."""
-
-            def get(self, network_id: str) -> FlextTestProtocols.Docker.NetworkProtocol:
-                """Get network by ID."""
-                ...
-
-            def list(
-                self,
-                *,
-                filters: Mapping[str, str | Sequence[str]] | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> list[FlextTestProtocols.Docker.NetworkProtocol]:
-                """List networks with filters.
-
-                Args:
-                    filters: Filter mapping
-                    **kwargs: Additional filter options
-
-                """
-                ...
-
-            def create(
-                self,
-                name: str,
-                *,
-                driver: str = "bridge",
-                ipam: Mapping[str, str | Sequence[str]] | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> FlextTestProtocols.Docker.NetworkProtocol:
-                """Create a network.
-
-                Args:
-                    name: Network name
-                    driver: Network driver
-                    ipam: IPAM configuration
-                    **kwargs: Additional network options
-
-                """
-                ...
-
-        @runtime_checkable
-        class NetworkProtocol(Protocol):
-            """Protocol for Docker network objects."""
-
-            @property
-            def id(self) -> str:
-                """Network ID."""
-                ...
-
-            @property
-            def name(self) -> str:
-                """Network name."""
-                ...
-
-        @runtime_checkable
-        class VolumeCollectionProtocol(Protocol):
-            """Protocol for volume collection operations."""
-
-            def get(self, volume_id: str) -> FlextTestProtocols.Docker.VolumeProtocol:
-                """Get volume by ID."""
-                ...
-
-            def list(
-                self,
-                *,
-                filters: Mapping[str, str | Sequence[str]] | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> list[FlextTestProtocols.Docker.VolumeProtocol]:
-                """List volumes with filters.
-
-                Args:
-                    filters: Filter mapping
-                    **kwargs: Additional filter options
-
-                """
-                ...
-
-            def create(
-                self,
-                name: str,
-                *,
-                driver: str | None = None,
-                driver_opts: Mapping[str, str] | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> FlextTestProtocols.Docker.VolumeProtocol:
-                """Create a volume.
-
-                Args:
-                    name: Volume name
-                    driver: Volume driver
-                    driver_opts: Driver options
-                    **kwargs: Additional volume options
-
-                """
-                ...
-
-        @runtime_checkable
-        class VolumeProtocol(Protocol):
-            """Protocol for Docker volume objects."""
-
-            @property
-            def id(self) -> str:
-                """Volume ID."""
-                ...
-
-            @property
-            def name(self) -> str:
-                """Volume name."""
-                ...
-
-        @runtime_checkable
-        class ComposeClientProtocol(Protocol):
-            """Protocol for docker-compose operations.
-
-            Compatible with python-on-whales DockerClient.
-            Uses structural typing - any object with compose and client_config attributes is accepted.
+            Provides structural typing for factory operations following FLEXT patterns.
+            All protocols use types from t.Tests.Factory.* for consistency.
             """
 
-            compose: object
-            """Compose API access (python-on-whales style)."""
+            @runtime_checkable
+            class ModelFactory(Protocol):
+                """Protocol for model factory operations.
 
-            client_config: object
-            """Client configuration (python-on-whales style)."""
+                Compatible with FlextTestsFactories.model() method.
+                Uses structural typing - any callable matching this signature.
+                All parameters validated via ModelFactoryParams with u.Model.from_kwargs().
+                """
 
-            def up(
-                self,
-                services: Sequence[str] | None = None,
-                *,
-                detach: bool = True,
-                build: bool = False,
-                **kwargs: str | int | bool | None,
-            ) -> None:
-                """Start compose services.
+                def __call__(
+                    self,
+                    kind: t.Tests.Factory.ModelKind = ...,
+                    # All parameters via kwargs - validated by ModelFactoryParams
+                    **kwargs: t.Tests.TestResultValue,
+                ) -> (
+                    t.Tests.Factory.FactoryModel
+                    | t.Tests.Factory.FactoryModelList
+                    | t.Tests.Factory.FactoryModelDict
+                    | r[t.Tests.Factory.FactoryModel]
+                    | r[t.Tests.Factory.FactoryModelList]
+                    | r[t.Tests.Factory.FactoryModelDict]
+                ):
+                    """Create model instance(s) with optional transformations.
 
-                Args:
-                    services: Specific services to start
-                    detach: Run in detached mode
-                    build: Build images before starting
-                    **kwargs: Additional compose options
+                    Args:
+                        kind: Model type to create
+                        **kwargs: All parameters validated by ModelFactoryParams:
+                            - count: Number of instances (returns list if > 1)
+                            - as_dict: Return as dict with ID keys
+                            - as_result: Wrap in FlextResult
+                            - as_mapping: Map to custom keys
+                            - factory: Custom factory callable
+                            - transform: Post-transform function
+                            - validate: Validation predicate
+                            - model_id, name, email, active, etc.: Model-specific fields
+                            - **overrides: Override any field directly
+
+                    Returns:
+                        Model instance, list, dict, or FlextResult wrapping any
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class ResultFactory(Protocol):
+                """Protocol for result factory operations.
+
+                Compatible with FlextTestsFactories.res() method.
+                Uses structural typing for FlextResult creation.
+                All parameters validated via ResultFactoryParams with u.Model.from_kwargs().
+                """
+
+                def __call__[TValue](
+                    self,
+                    kind: t.Tests.Factory.ResultKind = "ok",
+                    value: TValue | None = None,
+                    # All parameters via kwargs - validated by ResultFactoryParams
+                    **kwargs: t.Tests.TestResultValue,
+                ) -> r[TValue] | list[r[TValue]]:
+                    """Create FlextResult instance(s) with full customization.
+
+                    Args:
+                        kind: Result type ('ok', 'fail', 'from_value')
+                        value: Value for success results
+                        **kwargs: All parameters validated by ResultFactoryParams:
+                            - count: Number of results to create
+                            - values: Explicit value list for batch
+                            - errors: Error messages for failures
+                            - mix_pattern: Success/failure pattern
+                            - error: Error message for failures
+                            - error_code: Optional error code
+                            - error_on_none: Error when value is None
+                            - transform: Transform function for values
+
+                    Returns:
+                        FlextResult or list of FlextResult instances
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class CollectionFactory(Protocol):
+                """Protocol for collection factory operations.
+
+                Compatible with FlextTestsFactories.list() and dict() methods.
+                Uses structural typing for collection creation.
+                All parameters validated via ListFactoryParams/DictFactoryParams with u.Model.from_kwargs().
+                """
+
+                def list[T](
+                    self,
+                    source: (
+                        Sequence[T] | Callable[[], T] | t.Tests.Factory.ModelKind
+                    ) = "user",
+                    # All parameters via kwargs - validated by ListFactoryParams
+                    **kwargs: t.Tests.TestResultValue,
+                ) -> list[T] | r[list[T]]:
+                    """Create typed list from source.
+
+                    Args:
+                        source: Source for items (Sequence, Callable, or ModelKind)
+                        **kwargs: All parameters validated by ListFactoryParams:
+                            - count: Number of items to create
+                            - as_result: Wrap in FlextResult
+                            - unique: Ensure uniqueness
+                            - transform: Transform each item
+                            - filter: Filter predicate
+
+                    Returns:
+                        List of items or FlextResult wrapping list
+
+                    """
+                    ...
+
+                def dict[K, V](
+                    self,
+                    source: (
+                        Mapping[K, V]
+                        | Callable[[], tuple[K, V]]
+                        | t.Tests.Factory.ModelKind
+                    ) = "user",
+                    # All parameters via kwargs - validated by DictFactoryParams
+                    **kwargs: t.Tests.TestResultValue,
+                ) -> dict[K, V] | r[dict[K, V]]:
+                    """Create typed dict from source.
+
+                    Args:
+                        source: Source for items (Mapping, Callable, or ModelKind)
+                        **kwargs: All parameters validated by DictFactoryParams:
+                            - count: Number of items to create
+                            - key_factory: Factory for keys
+                            - value_factory: Factory for values
+                            - as_result: Wrap in FlextResult
+                            - merge_with: Additional mapping to merge
+
+                    Returns:
+                        Dict of items or FlextResult wrapping dict
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class GenericFactory(Protocol):
+                """Protocol for generic type factory operations.
+
+                Compatible with FlextTestsFactories.generic() method.
+                Uses structural typing for generic type instantiation.
+                All parameters validated via GenericFactoryParams with u.Model.from_kwargs().
+                """
+
+                def __call__[T](
+                    self,
+                    type_: type[T],
+                    # All parameters via kwargs - validated by GenericFactoryParams
+                    **kwargs: t.Tests.TestResultValue,
+                ) -> T | list[T] | r[T] | r[list[T]]:
+                    """Create instance(s) of any type with full type safety.
+
+                    Args:
+                        type_: Type class to instantiate
+                        **kwargs: All parameters validated by GenericFactoryParams:
+                            - args: Positional arguments for constructor
+                            - kwargs: Keyword arguments for constructor
+                            - count: Number of instances
+                            - as_result: Wrap in FlextResult
+                            - validate: Validation predicate
+
+                    Returns:
+                        Instance, list, or FlextResult wrapping any
+
+                    """
+                    ...
+
+        class Matcher:
+            """Matcher protocol definitions for test assertions (tm.* methods).
+
+            Provides structural typing for matcher operations without requiring
+            inheritance. All protocols are runtime-checkable.
+            """
+
+            @runtime_checkable
+            class Assertion(Protocol):
+                """Protocol for assertion operations.
+
+                Structural typing for objects that can perform assertions.
+                Used for validation and testing operations.
+                """
+
+                def assert_ok(self, result: object) -> object:
+                    """Assert result is success and return value."""
+                    ...
+
+                def assert_fail(self, result: object) -> str:
+                    """Assert result is failure and return error."""
+                    ...
+
+                def assert_that(
+                    self,
+                    value: object,
+                    **kwargs: object,
+                ) -> None:
+                    """Assert value satisfies conditions."""
+                    ...
+
+            @runtime_checkable
+            class DeepMatcher(Protocol):
+                """Protocol for deep structural matching operations.
+
+                Structural typing for objects that can perform deep matching.
+                """
+
+                def match(
+                    self,
+                    obj: object,
+                    spec: Mapping[str, object | Callable[[object], bool]],
+                    *,
+                    path_sep: str = ".",
+                ) -> object:
+                    """Match object against deep specification.
+
+                    Args:
+                        obj: Object to match against
+                        spec: Mapping of path -> expected value or predicate
+                        path_sep: Path separator (default: ".")
+
+                    Returns:
+                        Match result with path, expected, actual, matched, reason
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class LengthValidator(Protocol):
+                """Protocol for length validation operations.
+
+                Structural typing for objects that can validate lengths.
+                """
+
+                def validate(
+                    self,
+                    value: object,
+                    spec: int | tuple[int, int],
+                ) -> bool:
+                    """Validate length against spec.
+
+                    Args:
+                        value: Value to check length of
+                        spec: Length spec (exact int or (min, max) tuple)
+
+                    Returns:
+                        True if length matches spec
+
+                    """
+                    ...
+
+            @runtime_checkable
+            class ChainBuilder(Protocol):
+                """Protocol for fluent chain builder operations.
+
+                Structural typing for objects that support chained assertions.
+                """
+
+                def ok(self, msg: str | None = None) -> object:
+                    """Assert result is success."""
+                    ...
+
+                def fail(
+                    self,
+                    error: str | None = None,
+                    msg: str | None = None,
+                ) -> object:
+                    """Assert result is failure."""
+                    ...
+
+                def eq(self, expected: object, msg: str | None = None) -> object:
+                    """Assert value equals expected."""
+                    ...
+
+                def has(self, item: object, msg: str | None = None) -> object:
+                    """Assert value/error contains item."""
+                    ...
+
+                def len(self, expected: int, msg: str | None = None) -> object:
+                    """Assert value has expected length."""
+                    ...
+
+                def done(self) -> object:
+                    """Finish chain and return value (for success)."""
+                    ...
+
+                def err(self) -> str:
+                    """Finish chain and return error (for failure)."""
+                    ...
+
+            @runtime_checkable
+            class ScopeManager(Protocol):
+                """Protocol for test scope management operations.
+
+                Structural typing for objects that can manage test execution scopes.
+                """
+
+                def scope(
+                    self,
+                    **kwargs: object,
+                ) -> object:
+                    """Enter test execution scope with **kwargs pattern.
+
+                    Args:
+                        **kwargs: Scope parameters (config, container, context,
+                            cleanup, env, cwd) - validated via ScopeParams model
+
+                    Returns:
+                        Scope object with config, container, context
+
+                    """
+                    ...
+
+                def exit_scope(self, scope: object) -> None:
+                    """Exit test execution scope and cleanup.
+
+                    Args:
+                        scope: Scope object to exit
+
+                    """
+                    ...
+
+        class Files:
+            """File-specific protocol definitions for test file operations (tf).
+
+            Provides structural typing for file operations following FLEXT patterns.
+            All protocols use types from t.Tests.Files.* and protocols from
+            FlextProtocols.Foundation.Result for consistency.
+            """
+
+            @runtime_checkable
+            class FileOperation(Protocol):
+                """Protocol for file operation methods.
+
+                Compatible with FlextTestsFiles core methods (create, read, compare, info, batch).
+                Uses structural typing - any callable matching these signatures.
+                Follows FLEXT patterns using FlextProtocols.Foundation.Result for return types.
+                """
+
+                def create(
+                    self,
+                    content: object,
+                    name: str = ...,
+                    directory: object = ...,
+                    **kwargs: object,
+                ) -> FlextProtocols.Foundation.Result[object]:
+                    """Create file with auto-detection.
+
+                    Returns:
+                        Result protocol wrapping Path on success.
+
+                    """
+                    ...
+
+                def read(
+                    self,
+                    path: object,
+                    *,
+                    model_cls: type[object] | None = ...,
+                    **kwargs: object,
+                ) -> FlextProtocols.Foundation.Result[object]:
+                    """Read file with optional model deserialization.
+
+                    Returns:
+                        Result protocol wrapping content or model instance.
+
+                    """
+                    ...
+
+                def compare(
+                    self,
+                    file1: object,
+                    file2: object,
+                    *,
+                    mode: str = ...,
+                    **kwargs: object,
+                ) -> FlextProtocols.Foundation.Result[bool]:
+                    """Compare two files.
+
+                    Returns:
+                        Result protocol wrapping bool (True if match).
+
+                    """
+                    ...
+
+                def info(
+                    self,
+                    path: object,
+                    *,
+                    compute_hash: bool = ...,
+                    detect_fmt: bool = ...,
+                    **kwargs: object,
+                ) -> FlextProtocols.Foundation.Result[object]:
+                    """Get comprehensive file information.
+
+                    Returns:
+                        Result protocol wrapping FileInfo model.
+
+                    """
+                    ...
+
+                def batch(
+                    self,
+                    files: object,
+                    *,
+                    directory: object = ...,
+                    operation: str = ...,
+                    model: type[object] | None = ...,
+                    on_error: str = ...,
+                    **kwargs: object,
+                ) -> FlextProtocols.Foundation.Result[object]:
+                    """Batch file operations.
+
+                    Returns:
+                        Result protocol wrapping BatchResult model.
+
+                    """
+                    ...
+
+        class Builders:
+            """Builder protocol definitions for test data construction (tb).
+
+            Provides structural typing for builder operations without requiring
+            inheritance. All protocols are runtime-checkable.
+            """
+
+            @runtime_checkable
+            class Builder(Protocol):
+                """Protocol for builder operations.
+
+                Structural typing for objects that can build test data.
+                Used for fluent interface pattern.
+                """
+
+                def add(
+                    self,
+                    key: str,
+                    value: t.Tests.Builders.BuilderValue | None = ...,
+                    **kwargs: t.GeneralValueType,
+                ) -> Self:
+                    """Add data to builder.
+
+                    Args:
+                        key: Key to store data under
+                        value: Direct value to store
+                        **kwargs: Additional parameters (factory, count, etc.)
+
+                    Returns:
+                        Self for method chaining
+
+                    """
+                    ...
+
+                def set(
+                    self,
+                    path: str,
+                    value: t.Tests.Builders.BuilderValue | None = ...,
+                    *,
+                    create_parents: bool = ...,
+                    **kwargs: str | float | bool,
+                ) -> Self:
+                    """Set value at nested path.
+
+                    Args:
+                        path: Dot-separated path
+                        value: Value to set
+                        create_parents: Whether to create intermediate dicts
+                        **kwargs: Additional values to set as mapping
+
+                    Returns:
+                        Self for method chaining
+
+                    """
+                    ...
+
+                def get[T](
+                    self,
+                    path: str,
+                    default: T | None = ...,
+                    *,
+                    as_type: type[T] | None = ...,
+                ) -> T | None:
+                    """Get value from path.
+
+                    Args:
+                        path: Dot-separated path
+                        default: Default value if not found
+                        as_type: Type to cast result to
+
+                    Returns:
+                        Value at path or default
+
+                    """
+                    ...
+
+                def build(
+                    self,
+                    **kwargs: t.GeneralValueType,
+                ) -> (
+                    t.Tests.Builders.BuilderDict
+                    | BaseModel
+                    | list[tuple[str, t.Tests.Builders.BuilderValue]]
+                    | list[str]
+                    | list[t.Tests.Builders.BuilderValue]
+                    | list[t.Tests.Builders.ParametrizedCase]
+                    | t.GeneralValueType
+                ):
+                    """Build the dataset with output type control.
+
+                    Args:
+                        **kwargs: Build parameters (as_model, as_list, etc.)
+
+                    Returns:
+                        Built dataset in requested format
+
+                    """
+                    ...
+
+                def to_result[T](
+                    self,
+                    **kwargs: t.GeneralValueType,
+                ) -> (
+                    r[T]
+                    | r[t.Tests.Builders.BuilderDict]
+                    | r[BaseModel]
+                    | r[list[T]]
+                    | r[dict[str, T]]
+                    | T
+                ):
+                    """Build data wrapped in FlextResult.
+
+                    Args:
+                        **kwargs: Result parameters (as_model, error, unwrap, etc.)
+
+                    Returns:
+                        FlextResult containing built data or unwrapped value
+
+                    """
+                    ...
+
+                def copy_builder(self) -> Self:
+                    """Create independent copy of builder state.
+
+                    Returns:
+                        New builder instance with copied data
+
+                    """
+                    ...
+
+                def fork(self, **updates: t.Tests.Builders.BuilderValue) -> Self:
+                    """Copy and immediately add updates.
+
+                    Args:
+                        **updates: Key-value pairs to add to copied builder
+
+                    Returns:
+                        New builder instance with copied data and updates
+
+                    """
+                    ...
+
+                def merge_from(
+                    self,
+                    other: FlextTestsProtocols.Tests.Builders.Builder,
+                    *,
+                    strategy: str = ...,
+                    exclude_keys: builtins.set[str] | None = ...,
+                ) -> Self:
+                    """Merge data from another builder.
+
+                    Args:
+                        other: Another builder to merge from
+                        strategy: Merge strategy
+                        exclude_keys: Set of keys to exclude from merge
+
+                    Returns:
+                        Self for method chaining
+
+                    """
+                    ...
+
+                def batch(
+                    self,
+                    key: str,
+                    scenarios: Sequence[tuple[str, t.GeneralValueType]],
+                    **kwargs: t.GeneralValueType,
+                ) -> Self:
+                    """Build batch of test scenarios.
+
+                    Args:
+                        key: Key to store batch under
+                        scenarios: Sequence of (scenario_id, data) tuples
+                        **kwargs: Additional parameters (as_results, with_failures)
+
+                    Returns:
+                        Self for method chaining
+
+                    """
+                    ...
+
+                def scenarios(
+                    self,
+                    *cases: tuple[str, dict[str, t.Tests.Builders.BuilderValue]],
+                ) -> list[t.Tests.Builders.ParametrizedCase]:
+                    """Build pytest.mark.parametrize compatible scenarios.
+
+                    Args:
+                        *cases: Variable number of (test_id, data) tuples
+
+                    Returns:
+                        List of parametrized test cases
+
+                    """
+                    ...
+
+                def reset(self) -> Self:
+                    """Reset builder state.
+
+                    Returns:
+                        Self for method chaining
+
+                    """
+                    ...
+
+        class Support:
+            """Support protocols for type system compatibility."""
+
+            @runtime_checkable
+            class SupportsLessThan(Protocol):
+                """Protocol for types that support less-than comparison.
+
+                Required by sorted() key functions - the return type must
+                be comparable. This protocol ensures type safety for key
+                functions used with sorted().
+
+                Example:
+                    def get_id(obj: object) -> int:
+                        return obj.id  # int supports __lt__
+
+                    sorted(items, key=get_id)  # OK - int satisfies SupportsLessThan
 
                 """
-                ...
 
-            def down(
-                self,
-                *,
-                volumes: bool = False,
-                remove_orphans: bool = False,
-                timeout: int | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> None:
-                """Stop compose services.
-
-                Args:
-                    volumes: Remove volumes
-                    remove_orphans: Remove orphan containers
-                    timeout: Stop timeout in seconds
-                    **kwargs: Additional compose options
-
-                """
-                ...
-
-            def restart(
-                self,
-                services: Sequence[str] | None = None,
-                *,
-                timeout: int | None = None,
-                **kwargs: str | int | bool | None,
-            ) -> None:
-                """Restart compose services.
-
-                Args:
-                    services: Specific services to restart
-                    timeout: Restart timeout in seconds
-                    **kwargs: Additional compose options
-
-                """
-                ...
+                def __lt__(self, other: object, /) -> bool:
+                    """Less-than comparison operator."""
+                    ...
 
 
-__all__ = ["FlextTestProtocols"]
+__all__ = ["FlextTestsProtocols", "p"]
+
+# Alias for simplified usage
+p = FlextTestsProtocols

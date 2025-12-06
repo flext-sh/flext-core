@@ -29,7 +29,7 @@ class DataDoubler:
     Implements p.Processor for dispatcher integration.
     """
 
-    def process(  # noqa: PLR6301  # Required by p.Processor protocol
+    def process(
         self,
         data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
     ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
@@ -60,6 +60,7 @@ class SlowProcessor:
 
     def __init__(self, delay: float = 0.1) -> None:
         """Initialize with delay in seconds."""
+        super().__init__()
         self.delay = delay
 
     def process(
@@ -126,7 +127,7 @@ def example_2_batch_processing() -> None:
     print("\n=== EXAMPLE 2: Batch Processing ===\n")
 
     dispatcher = FlextDispatcher()
-    dispatcher.register_processor("doubler", DataDoubler())
+    _ = dispatcher.register_processor("doubler", DataDoubler())
 
     # Process batch of items using FlextConstants (DRY - centralized batch size)
     data_list: list[t.GeneralValueType] = [1, 2, 3, 4, 5]
@@ -158,13 +159,15 @@ def example_3_parallel_processing() -> None:
     print("\n=== EXAMPLE 3: Parallel Processing ===\n")
 
     dispatcher = FlextDispatcher()
-    dispatcher.register_processor("doubler", DataDoubler())
+    _ = dispatcher.register_processor("doubler", DataDoubler())
 
     # Process items in parallel using FlextConstants (DRY - centralized workers)
     data_list: list[t.GeneralValueType] = list(range(1, 11))
     start = time.time()
     result = dispatcher.process_parallel(
-        "doubler", data_list, max_workers=FlextConstants.Processing.DEFAULT_MAX_WORKERS
+        "doubler",
+        data_list,
+        max_workers=FlextConstants.Processing.DEFAULT_MAX_WORKERS,
     )
     elapsed = time.time() - start
 
@@ -192,11 +195,13 @@ def example_4_timeout_enforcement() -> None:
 
     # Register slow processor using FlextConstants (DRY - centralized timeout)
     slow = SlowProcessor(delay=FlextConstants.Validation.SLOW_OPERATION_THRESHOLD)
-    dispatcher.register_processor("slow", slow)
+    _ = dispatcher.register_processor("slow", slow)
 
     # Execute with reasonable timeout using FlextConstants (DRY)
     result = dispatcher.execute_with_timeout(
-        "slow", 10, timeout=float(FlextConstants.Defaults.TIMEOUT_SECONDS)
+        "slow",
+        10,
+        timeout=float(FlextConstants.Defaults.TIMEOUT_SECONDS),
     )
     if result.is_failure:
         print(f"❌ Operation should have succeeded but failed: {result.error}")
@@ -205,7 +210,7 @@ def example_4_timeout_enforcement() -> None:
 
     # Execute with tight timeout - should fail
     very_slow = SlowProcessor(delay=0.5)
-    dispatcher.register_processor("very_slow", very_slow)
+    _ = dispatcher.register_processor("very_slow", very_slow)
     result = dispatcher.execute_with_timeout("very_slow", 10, timeout=0.1)
     if result.is_success:
         print("❌ Operation should have timed out but succeeded")
@@ -228,8 +233,8 @@ def example_5_fallback_chains() -> None:
     # Register processors
     doubler = DataDoubler()
     squarer = DataSquarer()
-    dispatcher.register_processor("doubler", doubler)
-    dispatcher.register_processor("squarer", squarer)
+    _ = dispatcher.register_processor("doubler", doubler)
+    _ = dispatcher.register_processor("squarer", squarer)
 
     # Try primary, fall back to secondary
     result = dispatcher.process("doubler", 5)
@@ -246,7 +251,7 @@ def example_5_fallback_chains() -> None:
 
     # Now test with validator that fails - falls back
     validator = DataValidator()
-    dispatcher.register_processor("validator", validator)
+    _ = dispatcher.register_processor("validator", validator)
 
     # Try validator, fall back to doubler if validation fails
     result = dispatcher.process("validator", -5)
@@ -272,12 +277,12 @@ def example_6_metrics_auditing() -> None:
     print("\n=== EXAMPLE 6: Metrics & Auditing ===\n")
 
     dispatcher = FlextDispatcher()
-    dispatcher.register_processor("doubler", DataDoubler())
+    _ = dispatcher.register_processor("doubler", DataDoubler())
 
     # Execute several operations
-    dispatcher.process("doubler", 1)
-    dispatcher.process("doubler", 2)
-    dispatcher.process_batch("doubler", [3, 4, 5])
+    _ = dispatcher.process("doubler", 1)
+    _ = dispatcher.process("doubler", 2)
+    _ = dispatcher.process_batch("doubler", [3, 4, 5])
 
     # Get processor metrics
     metrics = dispatcher.processor_metrics
@@ -322,9 +327,9 @@ def example_7_integrated_workflow() -> None:
     dispatcher = FlextDispatcher()
 
     # Register multiple processors
-    dispatcher.register_processor("doubler", DataDoubler())
-    dispatcher.register_processor("squarer", DataSquarer())
-    dispatcher.register_processor("validator", DataValidator())
+    _ = dispatcher.register_processor("doubler", DataDoubler())
+    _ = dispatcher.register_processor("squarer", DataSquarer())
+    _ = dispatcher.register_processor("validator", DataValidator())
 
     # Step 1: Validate input
     data = 5
@@ -374,7 +379,7 @@ def example_7_integrated_workflow() -> None:
             print(f"   Processor metrics: {analytics.get('processor_metrics', 'N/A')}")
             print(f"   Batch performance: {analytics.get('batch_performance', 'N/A')}")
             print(
-                f"   Parallel performance: {analytics.get('parallel_performance', 'N/A')}"
+                f"   Parallel performance: {analytics.get('parallel_performance', 'N/A')}",
             )
         else:
             print("   Analytics retrieved")

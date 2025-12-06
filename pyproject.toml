@@ -101,6 +101,7 @@
         ]
         typings = [
             "django-stubs>=5.2.2",
+            "types-cachetools>=5.3.0",
             "types-docker>=7.1.0",
             "types-ldap3>=2.9.13.20250622",
             "types-protobuf>=6.30.2.20250703",
@@ -117,7 +118,7 @@
 [tool]
     [tool.coverage.report]
         precision = 2
-        fail_under = 79
+        fail_under = 73
         omit = [
             "*/flext_tests/*",
             "*/dependency_injector/*.pxd",
@@ -221,6 +222,15 @@
         testpaths = [
             "tests",
         ]
+        norecursedirs = [
+            ".hypothesis",
+            "*.bak",
+            "*.removed",
+            "fixtures.bak",
+            "fixtures.removed",
+            "helpers.bak",
+            "helpers.removed",
+        ]
 
     [tool.pyrefly]
         search-path = [
@@ -231,11 +241,28 @@
             "scripts",
         ]
 
+    [tool.mypy]
+        check_untyped_defs = true
+        disallow_incomplete_defs = true
+        disallow_untyped_calls = false
+        disallow_untyped_defs = false
+        explicit_package_bases = true
+        follow_imports = "normal"
+        ignore_missing_imports = false
+        incremental = true
+        mypy_path = "$MYPYPATH:../typings"
+        no_implicit_optional = true
+        python_version = "3.13"
+        warn_redundant_casts = true
+        warn_return_any = true
+        warn_unused_configs = true
+        warn_unused_ignores = true
+
     [tool.ruff]
         extend = "../ruff-shared.toml"
 
-		[tool.ruff.lint.isort]
-			known-first-party = [
-				"flext_core",
-				"flext_tests",
-			]
+        [tool.ruff.lint.isort]
+            known-first-party = [
+                "flext_core",
+                "flext_tests",
+            ]

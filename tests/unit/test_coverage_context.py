@@ -27,8 +27,9 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import FlextContext, FlextModels
-from flext_core.typings import t
+from flext_core import FlextContext, t
+from flext_core.models import m
+from flext_tests.utilities import FlextTestsUtilities
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,15 +107,6 @@ class ContextScenarios:
     ]
 
 
-class ContextTestHelpers:
-    """Helper methods for context tests."""
-
-    @staticmethod
-    def clear_context() -> None:
-        """Clear all context."""
-        FlextContext.Utilities.clear_context()
-
-
 class TestCorrelationDomain:
     """Test FlextContext.Correlation domain for distributed tracing using FlextTestsUtilities."""
 
@@ -132,7 +124,7 @@ class TestCorrelationDomain:
     )
     def test_correlation_operations(self, scenario: ContextOperationScenario) -> None:
         """Test correlation operations with various scenarios."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         if scenario.operation == "generate":
             correlation_id = FlextContext.Correlation.generate_correlation_id()
             assert isinstance(correlation_id, str)
@@ -154,7 +146,7 @@ class TestCorrelationDomain:
 
     def test_new_correlation_context(self) -> None:
         """Test new correlation context manager."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Correlation.new_correlation() as correlation_id:
             assert isinstance(correlation_id, str)
             assert correlation_id.startswith("corr_")
@@ -162,7 +154,7 @@ class TestCorrelationDomain:
 
     def test_new_correlation_with_explicit_id(self) -> None:
         """Test new correlation context with explicit correlation ID."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         explicit_id = "explicit-corr-789"
         with FlextContext.Correlation.new_correlation(
             correlation_id=explicit_id,
@@ -172,7 +164,7 @@ class TestCorrelationDomain:
 
     def test_new_correlation_with_parent_id(self) -> None:
         """Test new correlation context with parent ID tracking."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         parent_id = "parent-123"
         with FlextContext.Correlation.new_correlation(
             correlation_id="child-456",
@@ -182,14 +174,14 @@ class TestCorrelationDomain:
 
     def test_inherit_correlation_with_existing(self) -> None:
         """Test inherit correlation when correlation ID already exists."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Correlation.set_correlation_id("existing-id-999")
         with FlextContext.Correlation.inherit_correlation() as inherited_id:
             assert inherited_id == "existing-id-999"
 
     def test_inherit_correlation_without_existing(self) -> None:
         """Test inherit correlation creates new when none exists."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Correlation.inherit_correlation() as inherited_id:
             assert inherited_id is not None
             assert isinstance(inherited_id, str)
@@ -206,7 +198,7 @@ class TestServiceDomain:
     )
     def test_service_operations(self, scenario: ContextOperationScenario) -> None:
         """Test service operations with various scenarios."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         if scenario.operation == "set_get_name" and scenario.value:
             FlextContext.Service.set_service_name(scenario.value)
             assert FlextContext.Service.get_service_name() == scenario.expected_result
@@ -218,14 +210,14 @@ class TestServiceDomain:
 
     def test_service_context_manager(self) -> None:
         """Test service context manager."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Service.service_context("order_service", "v2.0"):
             assert FlextContext.Service.get_service_name() == "order_service"
             assert FlextContext.Service.get_service_version() == "v2.0"
 
     def test_service_context_cleanup(self) -> None:
         """Test service context cleanup after exit."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Service.service_context("test_service", "v1.0"):
             pass
         assert FlextContext.Service.get_service_name() is None
@@ -236,14 +228,14 @@ class TestServiceDomain:
         test_service_obj: t.GeneralValueType = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         assert result.unwrap() is test_service_obj
 
     def test_register_service(self) -> None:
         """Test registering service in container via FlextContext."""
         service_obj = {"name": "test_service", "version": "1.0"}
         result = FlextContext.Service.register_service("my_service", service_obj)
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_get_nonexistent_service(self) -> None:
         """Test retrieving nonexistent service returns failure."""
@@ -261,7 +253,7 @@ class TestRequestDomain:
     )
     def test_request_operations(self, scenario: ContextOperationScenario) -> None:
         """Test request operations with various scenarios."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         if scenario.operation == "set_get_user_id" and scenario.value:
             FlextContext.Request.set_user_id(scenario.value)
             assert FlextContext.Request.get_user_id() == scenario.expected_result
@@ -274,7 +266,7 @@ class TestRequestDomain:
 
     def test_request_context_manager(self) -> None:
         """Test request context manager with all metadata."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         metadata: dict[str, t.GeneralValueType] = {
             "transaction_id": "txn_123",
             "amount": 99.99,
@@ -291,7 +283,7 @@ class TestRequestDomain:
 
     def test_request_context_partial_metadata(self) -> None:
         """Test request context manager with partial metadata."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Request.request_context(
             user_id="user_partial",
             operation_name="data_processing",
@@ -301,7 +293,7 @@ class TestRequestDomain:
 
     def test_request_context_cleanup(self) -> None:
         """Test request context cleanup after exit."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Request.request_context(
             user_id="user_temp",
             operation_name="temp_op",
@@ -316,7 +308,7 @@ class TestPerformanceDomain:
 
     def test_operation_start_time_getter_setter(self) -> None:
         """Test operation start time getter and setter."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         start_time = datetime.now(UTC)
         FlextContext.Performance.set_operation_start_time(start_time)
         retrieved_time = FlextContext.Performance.get_operation_start_time()
@@ -325,7 +317,7 @@ class TestPerformanceDomain:
 
     def test_operation_start_time_auto_set(self) -> None:
         """Test operation start time auto-sets to current time."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Performance.set_operation_start_time()
         retrieved_time = FlextContext.Performance.get_operation_start_time()
         assert retrieved_time is not None
@@ -333,7 +325,7 @@ class TestPerformanceDomain:
 
     def test_operation_metadata_getter_setter(self) -> None:
         """Test operation metadata getter and setter."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         metadata: dict[str, t.GeneralValueType] = {
             "request_size": 1024,
             "response_code": 200,
@@ -344,7 +336,7 @@ class TestPerformanceDomain:
 
     def test_add_operation_metadata(self) -> None:
         """Test adding individual metadata entries."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Performance.add_operation_metadata("key1", "value1")
         FlextContext.Performance.add_operation_metadata("key2", "value2")
         metadata = FlextContext.Performance.get_operation_metadata()
@@ -361,7 +353,7 @@ class TestPerformanceDomain:
         3. Duration is calculated correctly
         4. All expected metadata fields are present
         """
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Performance.timed_operation("database_query") as metadata:
             # Validate initial metadata
             assert "start_time" in metadata
@@ -409,7 +401,7 @@ class TestPerformanceDomain:
         2. Duration matches expected sleep time (within reasonable tolerance)
         3. Metadata contains all required fields
         """
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         expected_sleep = 0.05
 
         with FlextContext.Performance.timed_operation("slow_operation") as metadata:
@@ -448,7 +440,7 @@ class TestSerializationDomain:
 
     def test_get_full_context(self) -> None:
         """Test getting full context snapshot."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Correlation.set_correlation_id("corr_123")
         FlextContext.Service.set_service_name("my_service")
         FlextContext.Request.set_user_id("user_456")
@@ -460,7 +452,7 @@ class TestSerializationDomain:
 
     def test_get_correlation_context_headers(self) -> None:
         """Test getting correlation context in HTTP header format."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Correlation.set_correlation_id("corr_789")
         FlextContext.Correlation.set_parent_correlation_id("parent_123")
         FlextContext.Service.set_service_name("payment_service")
@@ -472,14 +464,14 @@ class TestSerializationDomain:
 
     def test_get_correlation_context_empty(self) -> None:
         """Test getting correlation context when empty."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         context_headers = FlextContext.Serialization.get_correlation_context()
         assert isinstance(context_headers, dict)
         assert len(context_headers) == 0
 
     def test_set_from_context_headers(self) -> None:
         """Test setting context from HTTP headers."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         headers = {
             "X-Correlation-Id": "corr_from_header",
             "X-Parent-Correlation-Id": "parent_from_header",
@@ -496,7 +488,7 @@ class TestSerializationDomain:
 
     def test_set_from_context_alternative_names(self) -> None:
         """Test setting context from dict with alternative field names."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         headers = {
             "correlation_id": "alt_corr_id",
             "parent_correlation_id": "alt_parent_id",
@@ -524,14 +516,14 @@ class TestUtilitiesDomain:
 
     def test_ensure_correlation_id_creates_if_missing(self) -> None:
         """Test ensure correlation ID creates one if not present."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
         assert isinstance(correlation_id, str)
         assert correlation_id.startswith("corr_")
 
     def test_ensure_correlation_id_uses_existing(self) -> None:
         """Test ensure correlation ID uses existing if present."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         existing_id = "existing_corr_789"
         FlextContext.Correlation.set_correlation_id(existing_id)
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
@@ -539,18 +531,18 @@ class TestUtilitiesDomain:
 
     def test_has_correlation_id_true(self) -> None:
         """Test has correlation ID returns true when set."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Correlation.set_correlation_id("test_corr")
         assert FlextContext.Utilities.has_correlation_id() is True
 
     def test_has_correlation_id_false(self) -> None:
         """Test has correlation ID returns false when not set."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         assert FlextContext.Utilities.has_correlation_id() is False
 
     def test_get_context_summary(self) -> None:
         """Test getting human-readable context summary."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Correlation.set_correlation_id("corr_abc123def456")
         FlextContext.Service.set_service_name("user_service")
         FlextContext.Request.set_operation_name("get_user_profile")
@@ -561,18 +553,18 @@ class TestUtilitiesDomain:
 
     def test_get_context_summary_empty(self) -> None:
         """Test getting context summary when empty."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         summary = FlextContext.Utilities.get_context_summary()
         assert isinstance(summary, str)
         assert "empty" in summary.lower() or "FlextContext" in summary
 
 
 class TestContextDataModel:
-    """Test FlextContext with FlextModels.ContextData using FlextTestsUtilities."""
+    """Test FlextContext with m.Context.ContextData using FlextTestsUtilities."""
 
     def test_context_with_context_data_model(self) -> None:
         """Test FlextContext initialization with ContextData model."""
-        context_data = FlextModels.ContextData(
+        context_data = m.Context.ContextData(
             data={"key1": "value1", "key2": "value2"},
         )
         context = FlextContext(context_data)
@@ -589,7 +581,7 @@ class TestContextDataModel:
         context.set("key1", "value1")
         context.set_metadata("created_at", "2025-01-01")
         export_snapshot = context._export_snapshot()
-        assert isinstance(export_snapshot, FlextModels.ContextExport)
+        assert isinstance(export_snapshot, m.Context.ContextExport)
         assert export_snapshot.data.get("key1") == "value1"
         assert export_snapshot.metadata is not None
         metadata = export_snapshot.metadata
@@ -610,7 +602,7 @@ class TestContextIntegration:
 
     def test_multiple_domains_together(self) -> None:
         """Test using multiple context domains together."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Correlation.new_correlation() as correlation_id:
             with FlextContext.Service.service_context("order_service", "v1.0"):
                 with FlextContext.Request.request_context(
@@ -632,11 +624,11 @@ class TestContextIntegration:
 
     def test_context_propagation_across_layers(self) -> None:
         """Test context propagation between service layers."""
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Correlation.set_correlation_id("layer1_corr_id")
         FlextContext.Service.set_service_name("layer1_service")
         headers = FlextContext.Serialization.get_correlation_context()
-        ContextTestHelpers.clear_context()
+        FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         FlextContext.Serialization.set_from_context(headers)
         assert FlextContext.Correlation.get_correlation_id() == "layer1_corr_id"
         assert FlextContext.Service.get_service_name() == "layer1_service"

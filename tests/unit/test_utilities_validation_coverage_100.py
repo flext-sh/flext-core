@@ -1,4 +1,4 @@
-"""Comprehensive coverage tests for uValidation.
+"""Comprehensive coverage tests for u.Validation.
 
 Module: flext_core._utilities.validation
 Scope: Validation utilities for pipeline validation, normalization, sorting, and type checking
@@ -35,19 +35,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from typing import cast
 
 import pytest
 
-from flext_core import r
-from flext_core._models.entity import FlextModelsEntity
-from flext_core._utilities.validation import uValidation
-from flext_core.typings import t
+from flext_core import m, r, t, u
+from flext_tests.utilities import FlextTestsUtilities
 
 
 # Test models using FlextModelsEntity base
-class PydanticModelForTest(FlextModelsEntity.Value):
+class PydanticModelForTest(m.Value):
     """Test Pydantic model for normalization."""
 
     name: str
@@ -67,7 +67,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.coverage]
 
 
 class TestuValidation:
-    """Comprehensive tests for uValidation."""
+    """Comprehensive tests for u.Validation."""
 
     def test_validate_pipeline_all_pass(self) -> None:
         """Test validate_pipeline with all validators passing."""
@@ -80,12 +80,11 @@ class TestuValidation:
             """Second validator."""
             return r[bool].ok(True)
 
-        result = uValidation.validate_pipeline(
+        result = u.Validation.validate_pipeline(
             "test",
             [validator1, validator2],
         )
-        assert result.is_success
-        assert result.value is True
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, True)
 
     def test_validate_pipeline_first_fails(self) -> None:
         """Test validate_pipeline with first validator failing."""
@@ -98,12 +97,14 @@ class TestuValidation:
             """Second validator (not reached)."""
             return r[bool].ok(True)
 
-        result = uValidation.validate_pipeline(
+        result = u.Validation.validate_pipeline(
             "test",
             [validator1, validator2],
         )
-        assert result.is_failure
-        assert result.error is not None and "Validation failed" in result.error
+        FlextTestsUtilities.Tests.ResultHelpers.assert_result_failure_with_error(
+            result,
+            expected_error="Validation failed",
+        )
 
     def test_validate_pipeline_validator_raises_exception(self) -> None:
         """Test validate_pipeline handles validator exceptions."""
@@ -113,15 +114,25 @@ class TestuValidation:
             msg = "Validator error"
             raise ValueError(msg)
 
-        result = uValidation.validate_pipeline("test", [validator])
-        assert result.is_failure
-        assert result.error is not None and "Validator error" in result.error
+        result = u.Validation.validate_pipeline("test", [validator])
+        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            result,
+            "Validator error",
+        )
 
     def test_validate_pipeline_non_callable_validator(self) -> None:
         """Test validate_pipeline with non-callable validator."""
-        result = uValidation.validate_pipeline("test", ["not callable"])  # type: ignore[list-item]
-        assert result.is_failure
-        assert result.error is not None and "Validator must be callable" in result.error
+        # Type narrowing: validate_pipeline expects list[Callable] but we test with str
+        # This tests runtime error handling - mypy will complain but runtime works
+        non_callable_validators: list[object] = ["not callable"]
+        result = u.Validation.validate_pipeline(
+            "test",
+            cast("list[Callable[[str], r[bool]]]", non_callable_validators),
+        )
+        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            result,
+            "Validator must be callable",
+        )
 
     def test_validate_pipeline_validator_returns_false(self) -> None:
         """Test validate_pipeline with validator returning False."""
@@ -130,16 +141,15 @@ class TestuValidation:
             """Validator returns False."""
             return r[bool].ok(False)
 
-        result = uValidation.validate_pipeline("test", [validator])
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and "must return r[bool].ok(True)" in result.error
+        result = u.Validation.validate_pipeline("test", [validator])
+        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            result,
+            "must return r[bool].ok(True)",
         )
 
     def test_normalize_component_string(self) -> None:
         """Test normalize_component with string."""
-        result = uValidation.normalize_component("test")
+        result = u.Validation.normalize_component("test")
         assert result == "test"
 
     def test_normalize_component_dict(self) -> None:
@@ -149,7 +159,7 @@ class TestuValidation:
             "value": 42,
             "nested": {"key": "value"},
         }
-        result = uValidation.normalize_component(data)
+        result = u.Validation.normalize_component(data)
         assert isinstance(result, dict)
         assert result["name"] == "test"
         assert result["value"] == 42
@@ -157,9 +167,10 @@ class TestuValidation:
     def test_normalize_component_list(self) -> None:
         """Test normalize_component with list."""
         data: list[t.GeneralValueType] = [1, 2, 3, "test"]
-        result = uValidation.normalize_component(data)
+        result = u.Validation.normalize_component(data)
         assert isinstance(
-            result, dict
+            result,
+            dict,
         )  # Sequences are normalized to dict with type marker
         assert result.get("type") == "sequence"
 
@@ -168,7 +179,7 @@ class TestuValidation:
         model = PydanticModelForTest(name="test", value=42)
         # Convert BaseModel to GeneralValueType via model_dump()
         model_dict: t.GeneralValueType = model.model_dump()
-        result = uValidation.normalize_component(model_dict)
+        result = u.Validation.normalize_component(model_dict)
         # normalize_component converts Pydantic models to dict via model_dump
         assert isinstance(result, dict)
         assert result.get("name") == "test"
@@ -179,17 +190,123 @@ class TestuValidation:
         data = DataclassForTest(name="test", value=42)
         # Convert dataclass to dict (GeneralValueType) for type compatibility
         data_dict: t.GeneralValueType = asdict(data)
-        result = uValidation.normalize_component(data_dict)
+        result = u.Validation.normalize_component(data_dict)
         # normalize_component converts dataclasses to dict
         assert isinstance(result, dict)
         # May be normalized dict or dict with type marker
         assert isinstance(result, dict)
 
+    def test_normalize_component_dataclass_direct(self) -> None:
+        """Test normalize_component with dataclass instance directly."""
+        data = DataclassForTest(name="test", value=42)
+        # Pass dataclass instance directly - casts required for type checker
+        # but runtime supports it
+        result = u.Validation.normalize_component(cast("t.GeneralValueType", data))
+        assert isinstance(result, dict)
+        assert result.get("type") == "dataclass"
+        assert result["data"]["name"] == "test"
+
+    def test_normalize_component_pydantic_exception(self) -> None:
+        """Test normalize_component with failing model_dump."""
+
+        class FailingModel:
+            def model_dump(self) -> dict[str, int]:
+                msg = "Dump failed"
+                raise ValueError(msg)
+
+            def __str__(self) -> str:
+                return "FailingModelString"
+
+        obj = FailingModel()
+        # Should fallback to string representation
+        result = u.Validation.normalize_component(cast("t.GeneralValueType", obj))
+        assert result == "FailingModelString"
+
+    def test_normalize_component_pydantic_non_dict(self) -> None:
+        """Test normalize_component with model_dump returning non-dict."""
+
+        class NonDictModel:
+            def model_dump(self) -> str:
+                return "not a dict"
+
+            def __str__(self) -> str:
+                return "NonDictModelString"
+
+        obj = NonDictModel()
+        # Should fallback to string representation
+        result = u.Validation.normalize_component(cast("t.GeneralValueType", obj))
+        assert result == "NonDictModelString"
+
+    def test_normalize_component_circular_reference_list(self) -> None:
+        """Test normalize_component handles circular references in list."""
+        data: list[t.GeneralValueType] = []
+        data.append(data)  # Create circular reference
+
+        result = u.Validation.normalize_component(data)
+        assert isinstance(result, dict)
+        assert result.get("type") == "sequence"
+        items = cast("list[t.GeneralValueType]", result.get("data"))
+        assert len(items) == 1
+        assert isinstance(items[0], dict)
+        assert items[0].get("type") == "circular_reference"
+
+    def test_normalize_component_pydantic_model_direct(self) -> None:
+        """Test normalize_component with Pydantic model instance directly."""
+        model = PydanticModelForTest(name="test", value=42)
+        # Pass model instance directly
+        result = u.Validation.normalize_component(model)
+        assert isinstance(result, dict)
+        assert result.get("name") == "test"
+        assert result.get("value") == 42
+
+    def test_nested_classes_wrappers_failure(self) -> None:
+        """Test nested class wrappers failure cases."""
+        # String.validate_required_string failure
+        res_req = u.Validation.String.validate_required_string("")
+        assert res_req.is_failure
+        assert "cannot be empty" in str(res_req.error)
+
+    def test_nested_classes_wrappers(self) -> None:
+        """Test nested class wrappers to ensure coverage."""
+        # Network
+        res_uri = u.Validation.Network.validate_uri("https://example.com")
+        assert res_uri.is_success
+
+        res_port = u.Validation.Network.validate_port_number(8080)
+        assert res_port.is_success
+
+        res_host = u.Validation.Network.validate_hostname("localhost")
+        assert res_host.is_success
+
+        # String
+        res_req = u.Validation.String.validate_required_string("test")
+        assert res_req.is_success
+        assert res_req.value == "test"
+
+        res_choice = u.Validation.String.validate_choice("a", {"a", "b"})
+        assert res_choice.is_success
+
+        res_len = u.Validation.String.validate_length("test", min_length=1)
+        assert res_len.is_success
+
+        res_pat = u.Validation.String.validate_pattern("test", r"test")
+        assert res_pat.is_success
+
+        # Numeric
+        res_non_neg = u.Validation.Numeric.validate_non_negative(0)
+        assert res_non_neg.is_success
+
+        res_pos = u.Validation.Numeric.validate_positive(1)
+        assert res_pos.is_success
+
+        res_range = u.Validation.Numeric.validate_range(5, 1, 10)
+        assert res_range.is_success
+
     def test_normalize_component_circular_reference(self) -> None:
         """Test normalize_component handles circular references."""
         data: dict[str, t.GeneralValueType] = {"key": "value"}
         data["self"] = data  # Create circular reference
-        result = uValidation.normalize_component(data)
+        result = u.Validation.normalize_component(data)
         # Should handle circular reference gracefully
         assert isinstance(result, dict)
 
@@ -200,7 +317,7 @@ class TestuValidation:
             "a": 1,
             "m": 2,
         }
-        result = uValidation.sort_dict_keys(data)
+        result = u.Validation.sort_dict_keys(data)
         assert isinstance(result, dict)
         keys = list(result.keys())
         assert keys == sorted(keys, key=str.casefold)
@@ -211,19 +328,19 @@ class TestuValidation:
             "z": {"c": 3, "a": 1},
             "a": {"b": 2},
         }
-        result = uValidation.sort_dict_keys(data)
+        result = u.Validation.sort_dict_keys(data)
         assert isinstance(result, dict)
         # Keys should be sorted
         assert next(iter(result.keys())) == "a"
 
     def test_sort_dict_keys_non_dict(self) -> None:
         """Test sort_dict_keys with non-dict value."""
-        result = uValidation.sort_dict_keys("not a dict")
+        result = u.Validation.sort_dict_keys("not a dict")
         assert result == "not a dict"
 
     def test_sort_key_string(self) -> None:
         """Test sort_key with string."""
-        result = uValidation.sort_key("Test")
+        result = u.Validation.sort_key("Test")
         assert isinstance(result, tuple)
         assert len(result) == 2
         assert result[0] == "test"  # casefold
@@ -231,7 +348,7 @@ class TestuValidation:
 
     def test_sort_key_number(self) -> None:
         """Test sort_key with number."""
-        result = uValidation.sort_key(42.5)
+        result = u.Validation.sort_key(42.5)
         assert isinstance(result, tuple)
         assert len(result) == 2
 
@@ -244,7 +361,7 @@ class TestuValidation:
         # The type parameter determines the type name in the cache key
 
         # Pass str as command_type - the key format is "{type_name}_{hash}"
-        key = uValidation.generate_cache_key(model_dict, str)
+        key = u.Validation.generate_cache_key(model_dict, str)
         assert isinstance(key, str)
         # Key format is "str_{hash}" when using str as command_type
         assert key.startswith("str_")
@@ -252,7 +369,7 @@ class TestuValidation:
     def test_generate_cache_key_dict(self) -> None:
         """Test generate_cache_key with dict."""
         data: dict[str, t.GeneralValueType] = {"name": "test", "value": 42}
-        key = uValidation.generate_cache_key(data, dict)
+        key = u.Validation.generate_cache_key(data, dict)
         assert isinstance(key, str)
 
     def test_generate_cache_key_dataclass(self) -> None:
@@ -260,27 +377,30 @@ class TestuValidation:
         data = DataclassForTest(name="test", value=42)
         # Convert dataclass to GeneralValueType via asdict()
         data_dict: t.GeneralValueType = asdict(data)
-        # command_type accepts custom types at runtime but pyright expects specific types
-        # pyright: ignore[reportArgumentType] - DataclassForTest is compatible at runtime
-        key = uValidation.generate_cache_key(data_dict, DataclassForTest)  # type: ignore[arg-type]
+        # Type narrowing: generate_cache_key accepts type hints, cast for mypy
+        # DataclassForTest is compatible at runtime but mypy expects specific types
+        key = u.Validation.generate_cache_key(
+            data_dict,
+            cast("type[str]", DataclassForTest),
+        )
         assert isinstance(key, str)
         assert "DataclassForTest" in key
 
     def test_generate_cache_key_none(self) -> None:
         """Test generate_cache_key with None."""
-        key = uValidation.generate_cache_key(None, str)
+        key = u.Validation.generate_cache_key(None, str)
         assert isinstance(key, str)
         assert "str" in key
 
     def test_validate_required_string_valid(self) -> None:
         """Test validate_required_string with valid string."""
-        result = uValidation.validate_required_string("test")
+        result = u.Validation.validate_required_string("test")
         assert result == "test"  # Returns the string directly
 
     def test_validate_required_string_empty(self) -> None:
         """Test validate_required_string with empty string."""
         with pytest.raises(ValueError):
-            uValidation.validate_required_string("")
+            u.Validation.validate_required_string("")
 
     def test_validate_required_string_none(self) -> None:
         """Test validate_required_string with None."""
@@ -288,126 +408,241 @@ class TestuValidation:
         # None is not a valid string value - intentionally passed to test error handling
         # Function signature accepts str | None, but raises ValueError for None
         with pytest.raises(ValueError):
-            uValidation.validate_required_string(None)
+            u.Validation.validate_required_string(None)
 
-    def test_validate_choice_valid(self) -> None:
-        """Test validate_choice with valid choice."""
-        result = uValidation.validate_choice("a", {"a", "b", "c"})
-        assert result.is_success
-        assert result.value == "a"  # Returns the chosen value
+    @pytest.mark.parametrize(
+        ("choice", "choices", "should_succeed", "expected_value"),
+        [
+            ("a", {"a", "b", "c"}, True, "a"),
+            ("b", {"a", "b", "c"}, True, "b"),
+            ("d", {"a", "b", "c"}, False, None),
+        ],
+    )
+    def test_validate_choice(
+        self,
+        choice: str,
+        choices: set[str],
+        should_succeed: bool,
+        expected_value: str | None,
+    ) -> None:
+        """Test validate_choice with valid and invalid choices."""
+        result = u.Validation.validate_choice(choice, choices)
+        if should_succeed:
+            assert expected_value is not None
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_value,
+            )
+        else:
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
-    def test_validate_choice_invalid(self) -> None:
-        """Test validate_choice with invalid choice."""
-        result = uValidation.validate_choice("d", {"a", "b", "c"})
-        assert result.is_failure
+    @pytest.mark.parametrize(
+        ("value", "min_length", "max_length", "should_succeed", "expected_value"),
+        [
+            ("test", 2, 10, True, "test"),
+            ("ab", 2, 10, True, "ab"),
+            ("a", 2, 10, False, None),  # Too short
+            ("a" * 100, 2, 10, False, None),  # Too long
+        ],
+    )
+    def test_validate_length(
+        self,
+        value: str,
+        min_length: int | None,
+        max_length: int | None,
+        should_succeed: bool,
+        expected_value: str | None,
+    ) -> None:
+        """Test validate_length with various length constraints."""
+        # Type narrowing: validate_length accepts keyword args, unpack dict explicitly
+        if min_length is not None and max_length is not None:
+            result = u.Validation.validate_length(
+                value,
+                min_length=min_length,
+                max_length=max_length,
+            )
+        elif min_length is not None:
+            result = u.Validation.validate_length(
+                value,
+                min_length=min_length,
+            )
+        elif max_length is not None:
+            result = u.Validation.validate_length(
+                value,
+                max_length=max_length,
+            )
+        else:
+            result = u.Validation.validate_length(value)
+        if should_succeed:
+            assert expected_value is not None
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_value,
+            )
+        else:
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
-    def test_validate_length_valid(self) -> None:
-        """Test validate_length with valid length."""
-        result = uValidation.validate_length("test", min_length=2, max_length=10)
-        assert result.is_success
-        assert result.value == "test"  # Returns the string
+    @pytest.mark.parametrize(
+        ("value", "pattern", "should_succeed", "expected_value"),
+        [
+            ("test@example.com", r"^[^@]+@[^@]+\.[^@]+$", True, "test@example.com"),
+            ("invalid-email", r"^[^@]+@[^@]+\.[^@]+$", False, None),
+            ("test", "[invalid", False, None),  # Invalid regex
+        ],
+    )
+    def test_validate_pattern(
+        self,
+        value: str,
+        pattern: str,
+        should_succeed: bool,
+        expected_value: str | None,
+    ) -> None:
+        """Test validate_pattern with valid and invalid patterns."""
+        result = u.Validation.validate_pattern(value, pattern)
+        if should_succeed:
+            assert expected_value is not None
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_value,
+            )
+        else:
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
-    def test_validate_length_too_short(self) -> None:
-        """Test validate_length with too short string."""
-        result = uValidation.validate_length("a", min_length=2)
-        assert result.is_failure
+    @pytest.mark.parametrize(
+        ("uri", "should_succeed", "expected_value"),
+        [
+            ("https://example.com", True, "https://example.com"),
+            ("http://localhost:8000", True, "http://localhost:8000"),
+            ("not a uri", False, None),
+        ],
+    )
+    def test_validate_uri(
+        self,
+        uri: str,
+        should_succeed: bool,
+        expected_value: str | None,
+    ) -> None:
+        """Test validate_uri with valid and invalid URIs."""
+        result = u.Validation.validate_uri(uri)
+        if should_succeed:
+            assert expected_value is not None
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_value,
+            )
+        else:
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
-    def test_validate_length_too_long(self) -> None:
-        """Test validate_length with too long string."""
-        result = uValidation.validate_length("a" * 100, max_length=10)
-        assert result.is_failure
+    @pytest.mark.parametrize(
+        ("port", "should_succeed", "expected_value"),
+        [
+            (8080, True, 8080),
+            (1, True, 1),
+            (65535, True, 65535),
+            (0, False, None),  # Too low
+            (65536, False, None),  # Too high
+        ],
+    )
+    def test_validate_port_number(
+        self,
+        port: int,
+        should_succeed: bool,
+        expected_value: int | None,
+    ) -> None:
+        """Test validate_port_number with valid and invalid ports."""
+        result = u.Validation.validate_port_number(port)
+        if should_succeed:
+            assert expected_value is not None
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_value,
+            )
+        else:
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
-    def test_validate_pattern_valid(self) -> None:
-        """Test validate_pattern with valid pattern match."""
-        result = uValidation.validate_pattern(
-            "test@example.com", r"^[^@]+@[^@]+\.[^@]+$"
+    @pytest.mark.parametrize(
+        ("value", "should_succeed", "expected_value"),
+        [
+            (42, True, 42),
+            (0, True, 0),
+            (-1, False, None),
+        ],
+    )
+    def test_validate_non_negative(
+        self,
+        value: int,
+        should_succeed: bool,
+        expected_value: int | None,
+    ) -> None:
+        """Test validate_non_negative with valid and invalid numbers."""
+        result = u.Validation.validate_non_negative(value)
+        if should_succeed:
+            assert expected_value is not None
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_value,
+            )
+        else:
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+
+    @pytest.mark.parametrize(
+        ("value", "should_succeed", "expected_value"),
+        [
+            (42, True, 42),
+            (1, True, 1),
+            (0, False, None),
+            (-1, False, None),
+        ],
+    )
+    def test_validate_positive(
+        self,
+        value: int,
+        should_succeed: bool,
+        expected_value: int | None,
+    ) -> None:
+        """Test validate_positive with valid and invalid numbers."""
+        result = u.Validation.validate_positive(value)
+        if should_succeed:
+            assert expected_value is not None
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_value,
+            )
+        else:
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+
+    @pytest.mark.parametrize(
+        ("value", "min_value", "max_value", "should_succeed", "expected_value"),
+        [
+            (5, 1, 10, True, 5),
+            (1, 1, 10, True, 1),
+            (10, 1, 10, True, 10),
+            (0, 1, 10, False, None),  # Too low
+            (11, 1, 10, False, None),  # Too high
+        ],
+    )
+    def test_validate_range(
+        self,
+        value: int,
+        min_value: int,
+        max_value: int,
+        should_succeed: bool,
+        expected_value: int | None,
+    ) -> None:
+        """Test validate_range with valid and invalid ranges."""
+        result = u.Validation.validate_range(
+            value,
+            min_value=min_value,
+            max_value=max_value,
         )
-        assert result.is_success
-        assert result.value == "test@example.com"  # Returns the string
-
-    def test_validate_pattern_invalid(self) -> None:
-        """Test validate_pattern with invalid pattern match."""
-        result = uValidation.validate_pattern("invalid-email", r"^[^@]+@[^@]+\.[^@]+$")
-        assert result.is_failure
-
-    def test_validate_pattern_invalid_regex(self) -> None:
-        """Test validate_pattern with invalid regex."""
-        result = uValidation.validate_pattern("test", "[invalid")
-        assert result.is_failure
-
-    def test_validate_uri_valid(self) -> None:
-        """Test validate_uri with valid URI."""
-        result = uValidation.validate_uri("https://example.com")
-        assert result.is_success
-        assert result.value == "https://example.com"  # Returns the URI
-
-    def test_validate_uri_invalid(self) -> None:
-        """Test validate_uri with invalid URI."""
-        result = uValidation.validate_uri("not a uri")
-        assert result.is_failure
-
-    def test_validate_port_number_valid(self) -> None:
-        """Test validate_port_number with valid port."""
-        result = uValidation.validate_port_number(8080)
-        assert result.is_success
-        assert result.value == 8080  # Returns the port number
-
-    def test_validate_port_number_invalid_low(self) -> None:
-        """Test validate_port_number with port too low."""
-        result = uValidation.validate_port_number(0)
-        assert result.is_failure
-
-    def test_validate_port_number_invalid_high(self) -> None:
-        """Test validate_port_number with port too high."""
-        result = uValidation.validate_port_number(65536)
-        assert result.is_failure
-
-    def test_validate_non_negative_valid(self) -> None:
-        """Test validate_non_negative with valid number."""
-        result = uValidation.validate_non_negative(42)
-        assert result.is_success
-        assert result.value == 42  # Returns the number
-
-        result = uValidation.validate_non_negative(0)
-        assert result.is_success
-        assert result.value == 0
-
-    def test_validate_non_negative_invalid(self) -> None:
-        """Test validate_non_negative with negative number."""
-        result = uValidation.validate_non_negative(-1)
-        assert result.is_failure
-
-    def test_validate_positive_valid(self) -> None:
-        """Test validate_positive with valid number."""
-        result = uValidation.validate_positive(42)
-        assert result.is_success
-        assert result.value == 42  # Returns the number
-
-    def test_validate_positive_invalid_zero(self) -> None:
-        """Test validate_positive with zero."""
-        result = uValidation.validate_positive(0)
-        assert result.is_failure
-
-    def test_validate_positive_invalid_negative(self) -> None:
-        """Test validate_positive with negative number."""
-        result = uValidation.validate_positive(-1)
-        assert result.is_failure
-
-    def test_validate_range_valid(self) -> None:
-        """Test validate_range with value in range."""
-        result = uValidation.validate_range(5, min_value=1, max_value=10)
-        assert result.is_success
-        assert result.value == 5  # Returns the value
-
-    def test_validate_range_invalid_low(self) -> None:
-        """Test validate_range with value below minimum."""
-        result = uValidation.validate_range(0, min_value=1, max_value=10)
-        assert result.is_failure
-
-    def test_validate_range_invalid_high(self) -> None:
-        """Test validate_range with value above maximum."""
-        result = uValidation.validate_range(11, min_value=1, max_value=10)
-        assert result.is_failure
+        if should_succeed:
+            assert expected_value is not None
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                expected_value,
+            )
+        else:
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validate_callable_valid(self) -> None:
         """Test validate_callable with callable."""
@@ -417,122 +652,147 @@ class TestuValidation:
             return "test"
 
         # validate_callable accepts callables at runtime but expects GeneralValueType
-        # pyright: ignore[reportArgumentType] - callable is compatible at runtime
-        result = uValidation.validate_callable(test_func)  # type: ignore[arg-type]
-        assert result.is_success
-        assert result.value is True
+
+        result = u.Validation.validate_callable(cast("t.GeneralValueType", test_func))
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, True)
 
     def test_validate_callable_invalid(self) -> None:
         """Test validate_callable with non-callable."""
-        result = uValidation.validate_callable("not callable")
-        assert result.is_failure
+        result = u.Validation.validate_callable("not callable")
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validate_timeout_valid(self) -> None:
         """Test validate_timeout with valid timeout."""
-        result = uValidation.validate_timeout(30.0, max_timeout=60.0)
-        assert result.is_success
-        assert result.value == 30.0  # Returns the timeout
+        result = u.Validation.validate_timeout(30.0, max_timeout=60.0)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            result,
+            30.0,  # Returns the timeout
+        )
 
     def test_validate_timeout_invalid_negative(self) -> None:
         """Test validate_timeout with negative timeout."""
-        result = uValidation.validate_timeout(-1.0, max_timeout=60.0)
-        assert result.is_failure
+        result = u.Validation.validate_timeout(-1.0, max_timeout=60.0)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validate_timeout_invalid_exceeds_max(self) -> None:
         """Test validate_timeout with timeout exceeding max."""
-        result = uValidation.validate_timeout(100.0, max_timeout=60.0)
-        assert result.is_failure
+        result = u.Validation.validate_timeout(100.0, max_timeout=60.0)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validate_http_status_codes_valid(self) -> None:
         """Test validate_http_status_codes with valid status codes."""
-        result = uValidation.validate_http_status_codes([200, 404, 500])
-        assert result.is_success
-        assert result.value == [200, 404, 500]  # Returns the codes
+        result = u.Validation.validate_http_status_codes([200, 404, 500])
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            result,
+            [200, 404, 500],  # Returns the codes
+        )
 
     def test_validate_http_status_codes_invalid(self) -> None:
         """Test validate_http_status_codes with invalid status code."""
-        result = uValidation.validate_http_status_codes([999])
-        assert result.is_failure
+        result = u.Validation.validate_http_status_codes([999])
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validate_iso8601_timestamp_valid(self) -> None:
         """Test validate_iso8601_timestamp with valid timestamp."""
         timestamp = datetime.now(UTC).isoformat()
-        result = uValidation.validate_iso8601_timestamp(timestamp)
-        assert result.is_success
-        assert result.value == timestamp  # Returns the timestamp
+        result = u.Validation.validate_iso8601_timestamp(timestamp)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            result,
+            timestamp,  # Returns the timestamp
+        )
 
     def test_validate_iso8601_timestamp_invalid(self) -> None:
         """Test validate_iso8601_timestamp with invalid timestamp."""
-        result = uValidation.validate_iso8601_timestamp("not a timestamp")
-        assert result.is_failure
+        result = u.Validation.validate_iso8601_timestamp("not a timestamp")
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validate_iso8601_timestamp_empty_allowed(self) -> None:
         """Test validate_iso8601_timestamp with empty string when allowed."""
-        result = uValidation.validate_iso8601_timestamp("", allow_empty=True)
-        assert result.is_success
-        assert result.value == ""
+        result = u.Validation.validate_iso8601_timestamp(
+            "",
+            allow_empty=True,
+        )
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, "")
 
     def test_validate_iso8601_timestamp_empty_not_allowed(self) -> None:
         """Test validate_iso8601_timestamp with empty string when not allowed."""
-        result = uValidation.validate_iso8601_timestamp("", allow_empty=False)
-        assert result.is_failure
+        result = u.Validation.validate_iso8601_timestamp(
+            "",
+            allow_empty=False,
+        )
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validate_hostname_valid(self) -> None:
         """Test validate_hostname with valid hostname."""
-        result = uValidation.validate_hostname("example.com", perform_dns_lookup=False)
-        assert result.is_success
-        assert result.value == "example.com"  # Returns the hostname
+        result = u.Validation.validate_hostname(
+            "example.com",
+            perform_dns_lookup=False,
+        )
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            result,
+            "example.com",  # Returns the hostname
+        )
 
     def test_validate_hostname_invalid(self) -> None:
         """Test validate_hostname with invalid hostname."""
-        result = uValidation.validate_hostname(
-            "invalid..hostname", perform_dns_lookup=False
+        result = u.Validation.validate_hostname(
+            "invalid..hostname",
+            perform_dns_lookup=False,
         )
-        assert result.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validate_identifier_valid(self) -> None:
         """Test validate_identifier with valid identifier."""
-        result = uValidation.validate_identifier("user_123")
-        assert result.is_success
-        assert result.value == "user_123"  # Returns normalized string, not True
+        result = u.Validation.validate_identifier("user_123")
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            result,
+            "user_123",  # Returns normalized string, not True
+        )
 
     def test_validate_identifier_invalid(self) -> None:
         """Test validate_identifier with invalid identifier."""
-        result = uValidation.validate_identifier("123-invalid")
-        assert result.is_failure
+        result = u.Validation.validate_identifier("123-invalid")
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_boundary_normalize_component_empty_dict(self) -> None:
         """Test normalize_component with empty dict."""
-        result = uValidation.normalize_component({})
+        result = u.Validation.normalize_component({})
         assert isinstance(result, dict)
         assert len(result) == 0
 
     def test_boundary_normalize_component_empty_list(self) -> None:
         """Test normalize_component with empty list."""
-        result = uValidation.normalize_component([])
+        result = u.Validation.normalize_component([])
         assert isinstance(result, dict)
         assert result.get("type") == "sequence"
 
     def test_boundary_normalize_component_none(self) -> None:
         """Test normalize_component with None."""
-        result = uValidation.normalize_component(None)
+        result = u.Validation.normalize_component(None)
         assert result is None
 
     def test_boundary_normalize_component_primitive_types(self) -> None:
         """Test normalize_component with primitive types."""
-        assert uValidation.normalize_component(42) == 42
-        assert uValidation.normalize_component(math.pi) == math.pi
-        assert uValidation.normalize_component(True) is True
-        assert uValidation.normalize_component(False) is False
+        assert u.Validation.normalize_component(42) == 42
+        assert u.Validation.normalize_component(math.pi) == math.pi
+        assert u.Validation.normalize_component(True) is True
+        assert u.Validation.normalize_component(False) is False
 
     def test_boundary_sort_dict_keys_empty_dict(self) -> None:
         """Test sort_dict_keys with empty dict."""
-        result = uValidation.sort_dict_keys({})
+        result = u.Validation.sort_dict_keys({})
         assert isinstance(result, dict)
         assert len(result) == 0
 
     def test_boundary_generate_cache_key_empty_dict(self) -> None:
         """Test generate_cache_key with empty dict."""
-        key = uValidation.generate_cache_key({}, dict)
+        key = u.Validation.generate_cache_key({}, dict)
         assert isinstance(key, str)
         assert "dict" in key

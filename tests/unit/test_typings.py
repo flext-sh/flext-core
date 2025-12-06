@@ -23,36 +23,13 @@ import pytest
 
 from flext_core import (
     E,
-    F,
-    K,
     P,
     R,
     ResultT,
     T,
-    T1_co,
-    T2_co,
-    T3_co,
+    T_co,
     T_contra,
-    TAggregate_co,
-    TCacheKey_contra,
-    TCacheValue_co,
-    TCommand_contra,
-    TConfigKey_contra,
-    TDomainEvent_co,
-    TEntity_co,
-    TEvent_contra,
-    TInput_contra,
-    TItem_contra,
-    TQuery_contra,
-    TResult_co,
-    TResult_contra,
-    TState_co,
-    TUtil_contra,
-    TValue_co,
-    TValueObject_co,
     U,
-    V,
-    W,
     t,
 )
 
@@ -78,110 +55,22 @@ class TypeVarTestCase:
 
 
 class TypeScenarios:
-    """Factory for type system test scenarios with centralized test data using FlextConstants."""
+    """Factory for type system test scenarios with centralized test data."""
 
     CORE_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
         TypeVarTestCase("T", TypeVarCategory.CORE, T, True),
         TypeVarTestCase("U", TypeVarCategory.CORE, U, True),
-        TypeVarTestCase("V", TypeVarCategory.CORE, V, True),
-        TypeVarTestCase("W", TypeVarCategory.CORE, W, True),
         TypeVarTestCase("E", TypeVarCategory.CORE, E, True),
-        TypeVarTestCase("F", TypeVarCategory.CORE, F, True),
-        TypeVarTestCase("K", TypeVarCategory.CORE, K, True),
         TypeVarTestCase("R", TypeVarCategory.CORE, R, True),
         TypeVarTestCase("ResultT", TypeVarCategory.CORE, ResultT, True),
     ]
 
     COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T1_co", TypeVarCategory.COVARIANT, T1_co, True),
-        TypeVarTestCase("T2_co", TypeVarCategory.COVARIANT, T2_co, True),
-        TypeVarTestCase("T3_co", TypeVarCategory.COVARIANT, T3_co, True),
-        TypeVarTestCase("TState_co", TypeVarCategory.COVARIANT, TState_co, True),
-        TypeVarTestCase(
-            "TAggregate_co",
-            TypeVarCategory.COVARIANT,
-            TAggregate_co,
-            True,
-        ),
-        TypeVarTestCase(
-            "TCacheValue_co",
-            TypeVarCategory.COVARIANT,
-            TCacheValue_co,
-            True,
-        ),
-        TypeVarTestCase(
-            "TDomainEvent_co",
-            TypeVarCategory.COVARIANT,
-            TDomainEvent_co,
-            True,
-        ),
-        TypeVarTestCase("TEntity_co", TypeVarCategory.COVARIANT, TEntity_co, True),
-        TypeVarTestCase("TResult_co", TypeVarCategory.COVARIANT, TResult_co, True),
-        TypeVarTestCase("TValue_co", TypeVarCategory.COVARIANT, TValue_co, True),
-        TypeVarTestCase(
-            "TValueObject_co",
-            TypeVarCategory.COVARIANT,
-            TValueObject_co,
-            True,
-        ),
+        TypeVarTestCase("T_co", TypeVarCategory.COVARIANT, T_co, True),
     ]
 
     CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
         TypeVarTestCase("T_contra", TypeVarCategory.CONTRAVARIANT, T_contra, True),
-        TypeVarTestCase(
-            "TCommand_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TCommand_contra,
-            True,
-        ),
-        TypeVarTestCase(
-            "TEvent_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TEvent_contra,
-            True,
-        ),
-        TypeVarTestCase(
-            "TInput_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TInput_contra,
-            True,
-        ),
-        TypeVarTestCase(
-            "TQuery_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TQuery_contra,
-            True,
-        ),
-        TypeVarTestCase(
-            "TItem_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TItem_contra,
-            True,
-        ),
-        TypeVarTestCase(
-            "TResult_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TResult_contra,
-            True,
-        ),
-        TypeVarTestCase(
-            "TUtil_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TUtil_contra,
-            True,
-        ),
-        TypeVarTestCase(
-            "TCacheKey_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TCacheKey_contra,
-            True,
-        ),
-        TypeVarTestCase(
-            "TConfigKey_contra",
-            TypeVarCategory.CONTRAVARIANT,
-            TConfigKey_contra,
-            True,
-        ),
     ]
 
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
@@ -207,7 +96,7 @@ class TestFlextTypings:
     @pytest.mark.parametrize(
         "test_case",
         TypeScenarios.CORE_TYPEVARS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_core_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test core TypeVar definitions are properly exported."""
@@ -218,7 +107,7 @@ class TestFlextTypings:
     @pytest.mark.parametrize(
         "test_case",
         TypeScenarios.COVARIANT_TYPEVARS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_covariant_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test covariant TypeVar definitions are properly exported."""
@@ -229,7 +118,7 @@ class TestFlextTypings:
     @pytest.mark.parametrize(
         "test_case",
         TypeScenarios.CONTRAVARIANT_TYPEVARS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_contravariant_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test contravariant TypeVar definitions are properly exported."""
@@ -240,7 +129,7 @@ class TestFlextTypings:
     @pytest.mark.parametrize(
         "test_case",
         TypeScenarios.CQRS_ALIASES,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_cqrs_aliases(self, test_case: TypeVarTestCase) -> None:
         """Test CQRS type aliases are properly defined."""
@@ -250,7 +139,7 @@ class TestFlextTypings:
     @pytest.mark.parametrize(
         "test_case",
         TypeScenarios.PARAMSPEC_ITEMS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_paramspec(self, test_case: TypeVarTestCase) -> None:
         """Test ParamSpec is properly defined and exported."""
@@ -261,19 +150,19 @@ class TestFlextTypings:
     def test_flexttypes_accessible(self) -> None:
         """Test t namespace is accessible."""
         assert t is not None
+        # Verify actual nested classes in FlextTypes
+        # Note: Handler (not HandlerAliases), Dispatcher (not Processor)
+        # Factory, Bus, Logging, Cqrs exist in other modules (constants, models)
         assert all(
             hasattr(t, attr)
             for attr in [
                 "Validation",
                 "Json",
-                "HandlerAliases",
-                "Processor",
-                "Factory",
+                "Handler",
+                "Dispatcher",
                 "Utility",
-                "Bus",
-                "Logging",
-                "Cqrs",
                 "Config",
+                "Types",
             ]
         )
 
@@ -293,6 +182,26 @@ class TestFlextTypings:
                 t.GeneralValueType,  # Message
             ]
         )
+
+    def test_hostname_validation_success(self) -> None:
+        """Test hostname validation success path for 100% coverage."""
+        # Test with a valid hostname (localhost should always resolve)
+        result = t.Validation._validate_hostname("localhost")
+        assert result == "localhost"
+
+        # Test with a valid IP address (should also work)
+        result = t.Validation._validate_hostname("127.0.0.1")
+        assert result == "127.0.0.1"
+
+    def test_hostname_validation_error(self) -> None:
+        """Test hostname validation error path for 100% coverage."""
+        # Access the validator via t.Validation namespace
+        # The validator is a static method in t.Validation class
+        invalid_hostname = "this-hostname-definitely-does-not-exist-12345.invalid"
+
+        # Test that invalid hostname raises ValueError
+        with pytest.raises(ValueError, match="Cannot resolve hostname"):
+            t.Validation._validate_hostname(invalid_hostname)
 
 
 __all__ = ["TestFlextTypings"]

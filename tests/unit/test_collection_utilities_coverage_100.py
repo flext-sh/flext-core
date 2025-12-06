@@ -1,7 +1,7 @@
 """Real tests to achieve 100% collection utilities coverage - no mocks.
 
 Module: flext_core._utilities.collection
-Scope: uCollection - all methods and edge cases
+Scope: FlextUtilitiesCollection - all methods and edge cases
 
 This module provides comprehensive real tests (no mocks, patches, or bypasses)
 to cover all remaining lines in _utilities/collection.py.
@@ -21,8 +21,8 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import u
-from flext_core.typings import t
+from flext_core import t, u
+from flext_tests.utilities import FlextTestsUtilities
 
 
 class Status(StrEnum):
@@ -212,7 +212,7 @@ class CollectionScenarios:
 
 
 class TestuCollectionParseSequence:
-    """Test uCollection.parse_sequence."""
+    """Test FlextUtilitiesCollection.parse_sequence."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -223,22 +223,20 @@ class TestuCollectionParseSequence:
         """Test parse_sequence with various scenarios."""
         result = u.Collection.parse_sequence(Status, scenario.values)
 
-        assert result.is_success == scenario.expected_success
-
         if scenario.expected_success:
-            assert result.is_success
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, tuple)
         else:
-            assert result.is_failure
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg
 
 
 class TestuCollectionCoerceListValidator:
-    """Test uCollection.coerce_list_validator."""
+    """Test FlextUtilitiesCollection.coerce_list_validator."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -266,7 +264,7 @@ class TestuCollectionCoerceListValidator:
 
 
 class TestuCollectionParseMapping:
-    """Test uCollection.parse_mapping."""
+    """Test FlextUtilitiesCollection.parse_mapping."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -277,23 +275,21 @@ class TestuCollectionParseMapping:
         """Test parse_mapping with various scenarios."""
         result = u.Collection.parse_mapping(Status, scenario.mapping)
 
-        assert result.is_success == scenario.expected_success
-
         if scenario.expected_success:
-            assert result.is_success
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, dict)
             assert all(isinstance(v, Status) for v in parsed.values())
         else:
-            assert result.is_failure
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg
 
 
 class TestuCollectionCoerceDictValidator:
-    """Test uCollection.coerce_dict_validator."""
+    """Test FlextUtilitiesCollection.coerce_dict_validator."""
 
     def test_coerce_dict_validator_valid_strings(self) -> None:
         """Test coerce_dict_validator with valid string values."""

@@ -8,13 +8,15 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_core._dispatcher.config import DispatcherConfig
 from flext_core._dispatcher.reliability import (
     CircuitBreakerManager,
     RateLimiterManager,
     RetryPolicy,
 )
 from flext_core._dispatcher.timeout import TimeoutEnforcer
+from flext_core.typings import t
+
+DispatcherConfig = t.Dispatcher.DispatcherConfig
 
 __all__ = [
     "CircuitBreakerManager",

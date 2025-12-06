@@ -36,6 +36,7 @@ from flext_core import (
     FlextLogger,
     FlextResult,
 )
+from flext_tests.utilities import FlextTestsUtilities
 
 
 class DecoratorOperationType(StrEnum):
@@ -274,7 +275,7 @@ class TestFlextDecorators:
     @pytest.mark.parametrize(
         "test_case",
         DecoratorScenarios.INJECT_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_inject_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test inject decorator with various scenarios."""
@@ -299,7 +300,7 @@ class TestFlextDecorators:
 
             assert process_data_missing() == "default"
         elif test_case.operation == DecoratorOperationType.INJECT_PROVIDED:
-            container = DecoratorScenarios.get_container()
+            container = FlextContainer()
 
             @dataclasses.dataclass
             class TestServiceTyped:
@@ -319,7 +320,7 @@ class TestFlextDecorators:
     @pytest.mark.parametrize(
         "test_case",
         DecoratorScenarios.LOG_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_log_operation_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test log_operation decorator with various scenarios."""
@@ -343,7 +344,7 @@ class TestFlextDecorators:
     @pytest.mark.parametrize(
         "test_case",
         DecoratorScenarios.TRACK_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_track_performance_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test track_performance decorator with various scenarios."""
@@ -373,7 +374,7 @@ class TestFlextDecorators:
     @pytest.mark.parametrize(
         "test_case",
         DecoratorScenarios.RAILWAY_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_railway_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test railway decorator with various scenarios."""
@@ -385,8 +386,10 @@ class TestFlextDecorators:
 
             result = successful_operation()
             assert isinstance(result, FlextResult)
-            assert result.is_success
-            assert result.value == "success"
+            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                result,
+                "success",
+            )
         elif test_case.operation == DecoratorOperationType.RAILWAY_EXCEPTION:
 
             @FlextDecorators.railway(error_code="CUSTOM_ERROR")
@@ -396,14 +399,14 @@ class TestFlextDecorators:
 
             result = failing_operation()
             assert isinstance(result, FlextResult)
-            assert result.is_failure
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
             assert result.error is not None
             assert "Operation failed" in result.error
 
     @pytest.mark.parametrize(
         "test_case",
         DecoratorScenarios.RETRY_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_retry_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test retry decorator with various scenarios."""
@@ -441,7 +444,7 @@ class TestFlextDecorators:
     @pytest.mark.parametrize(
         "test_case",
         DecoratorScenarios.TIMEOUT_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_timeout_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test timeout decorator with various scenarios."""
@@ -471,13 +474,13 @@ class TestFlextDecorators:
             # Validate exception contains timeout information
             assert exc_info.value is not None
             assert "timeout" in str(exc_info.value).lower() or "0.005" in str(
-                exc_info.value
+                exc_info.value,
             )
 
     @pytest.mark.parametrize(
         "test_case",
         DecoratorScenarios.COMBINED_SCENARIOS,
-        ids=lambda tc: tc.name,
+        ids=lambda c: c.name,
     )
     def test_combined_decorator(self, test_case: DecoratorTestCase) -> None:
         """Test combined decorator with various scenarios."""
@@ -496,7 +499,7 @@ class TestFlextDecorators:
 
             result = operation()
             assert isinstance(result, FlextResult)
-            assert result.is_success
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_railway_with_existing_result(self) -> None:
         """Test railway decorator with existing FlextResult."""
@@ -507,7 +510,7 @@ class TestFlextDecorators:
 
         result = returns_result()
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         unwrapped = result.unwrap()
         # Railway decorator may unwrap nested FlextResult or keep it
         if isinstance(unwrapped, FlextResult):
@@ -554,7 +557,7 @@ class TestFlextDecorators:
 
         result = stacked_operation()
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     def test_integration_retry_with_railway(self) -> None:
         """Test retry decorator with railway."""
@@ -572,7 +575,7 @@ class TestFlextDecorators:
 
         result = flaky_with_railway()
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         assert attempts == 2
 
 

@@ -16,16 +16,15 @@ from itertools import count
 from typing import ClassVar
 
 from flext_core import FlextResult, FlextService
-from flext_core._models.entity import FlextModelsEntity
-
-from ..helpers.constants import TestConstants
+from flext_core.models import FlextModels
+from tests.constants import TestsFlextConstants
 
 # =========================================================================
 # Test Models
 # =========================================================================
 
 
-class User(FlextModelsEntity.Core):
+class User(FlextModels.Entity):
     """Test user entity."""
 
     user_id: str
@@ -50,7 +49,7 @@ class ServiceTestCase:
     input_value: str
     expected_success: bool = True
     expected_error: str | None = None
-    extra_param: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
+    extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
     description: str = field(default="", compare=False)
 
 
@@ -69,8 +68,8 @@ class GetUserService(FlextService[User]):
         return FlextResult.ok(
             User(
                 user_id=self.user_id,
-                name=f"{TestConstants.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
-                email=f"user{self.user_id}{TestConstants.Services.DEFAULT_EMAIL_DOMAIN}",
+                name=f"{TestsFlextConstants.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
+                email=f"user{self.user_id}{TestsFlextConstants.Services.DEFAULT_EMAIL_DOMAIN}",
             ),
         )
 
@@ -79,7 +78,7 @@ class ValidatingService(FlextService[str]):
     """Service with validation."""
 
     value_input: str
-    min_length: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT
+    min_length: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT
 
     def execute(self) -> FlextResult[str]:
         """Validate and return value."""
@@ -93,7 +92,7 @@ class ValidatingService(FlextService[str]):
 class FailingService(FlextService[str]):
     """Service that always fails."""
 
-    error_message: str = TestConstants.Services.DEFAULT_ERROR_MESSAGE
+    error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE
 
     def execute(self) -> FlextResult[str]:
         """Always fails."""
@@ -224,7 +223,7 @@ class ValidatingServiceFactory:
         cls,
         *,
         value_input: str | None = None,
-        min_length: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT,
+        min_length: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT,
     ) -> ValidatingService:
         """Build a ValidatingService instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
@@ -248,7 +247,7 @@ class FailingServiceFactory:
     def build(
         cls,
         *,
-        error_message: str = TestConstants.Services.DEFAULT_ERROR_MESSAGE,
+        error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingService:
         """Build a FailingService instance."""
         return FailingService(error_message=error_message)
@@ -306,7 +305,7 @@ class ValidatingServiceAutoFactory:
         cls,
         *,
         value_input: str | None = None,
-        min_length: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT,
+        min_length: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT,
     ) -> ValidatingServiceAuto:
         """Build a ValidatingServiceAuto instance."""
         actual_value = value_input if value_input is not None else cls._next_word()
@@ -330,7 +329,7 @@ class FailingServiceAutoFactory:
     def build(
         cls,
         *,
-        error_message: str = TestConstants.Services.DEFAULT_ERROR_MESSAGE,
+        error_message: str = TestsFlextConstants.Services.DEFAULT_ERROR_MESSAGE,
     ) -> FailingServiceAuto:
         """Build a FailingServiceAuto instance."""
         return FailingServiceAuto(error_message=error_message)
@@ -375,7 +374,7 @@ class ServiceTestCaseFactory:
         input_value: str | None = None,
         expected_success: bool = True,
         expected_error: str | None = None,
-        extra_param: int = TestConstants.TestValidation.MIN_LENGTH_DEFAULT,
+        extra_param: int = TestsFlextConstants.TestValidation.MIN_LENGTH_DEFAULT,
         description: str | None = None,
     ) -> ServiceTestCase:
         """Build a ServiceTestCase instance."""

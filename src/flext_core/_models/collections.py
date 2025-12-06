@@ -10,23 +10,42 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self, cast
+from typing import TYPE_CHECKING, Self, TypeGuard
 
 from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 # Tier 0.5 - Helper functions inline (avoid FlextRuntime import)
-def _is_list_like(value: t.GeneralValueType) -> bool:
-    """Check if value is list-like (but not string/bytes)."""
-    return isinstance(value, Sequence) and not isinstance(value, str | bytes)
+def _is_list_like(value: t.GeneralValueType) -> TypeGuard[Sequence[t.GeneralValueType]]:
+    """Check if value is list-like (but not string/bytes) with type narrowing.
+
+    Returns:
+        TypeGuard[Sequence[t.GeneralValueType]]: True if value is Sequence and not str/bytes.
+
+    """
+    return isinstance(value, Sequence) and not FlextUtilitiesGuards.is_type(
+        value,
+        (str, bytes),
+    )
 
 
-def _is_dict_like(value: t.GeneralValueType) -> bool:
-    """Check if value is dict-like."""
+def _is_dict_like(
+    value: t.GeneralValueType,
+) -> TypeGuard[Mapping[str, t.GeneralValueType]]:
+    """Check if value is dict-like with type narrowing.
+
+    Returns:
+        TypeGuard[Mapping[str, t.GeneralValueType]]: True if value is Mapping.
+
+    """
     return isinstance(value, Mapping)
 
 
@@ -63,21 +82,43 @@ class FlextModelsCollections:
         )
 
         def get_entries(self, category: str) -> list[T]:
-            """Get entries for a category, returns empty list if not found."""
+            """Get entries for a category, returns empty list if not found.
+
+            Returns:
+                list[T]: List of entries for the category, or empty list if not found.
+
+            """
             return self.categories.get(category, [])
 
-        def add_entries(self, category: str, entries: list[T]) -> None:
-            """Add entries to a category."""
+        def add_entries(self, category: str, entries: Sequence[T]) -> None:
+            """Add entries to a category.
+
+            Args:
+                category: Category name
+                entries: Sequence of entries (accepts subtypes due to covariance)
+
+            """
             if category not in self.categories:
                 self.categories[category] = []
             self.categories[category].extend(entries)
 
-        def set_entries(self, category: str, entries: list[T]) -> None:
-            """Set (replace) entries for a category."""
-            self.categories[category] = entries
+        def set_entries(self, category: str, entries: Sequence[T]) -> None:
+            """Set (replace) entries for a category.
+
+            Args:
+                category: Category name
+                entries: Sequence of entries (accepts subtypes due to covariance)
+
+            """
+            self.categories[category] = list(entries)
 
         def has_category(self, category: str) -> bool:
-            """Check if category exists."""
+            """Check if category exists.
+
+            Returns:
+                bool: True if category exists, False otherwise.
+
+            """
             return category in self.categories
 
         def remove_category(self, category: str) -> None:
@@ -87,15 +128,25 @@ class FlextModelsCollections:
 
         @property
         def category_names(self) -> list[str]:
-            """Get list of all category names."""
+            """Get list of all category names.
+
+            Returns:
+                list[str]: List of all category names.
+
+            """
             return list(self.categories.keys())
 
         @property
         def total_entries(self) -> int:
-            """Get total number of entries across all categories."""
+            """Get total number of entries across all categories.
+
+            Returns:
+                int: Total number of entries across all categories.
+
+            """
             # Use u.map for consistency, but need to convert to list for sum()
             # NOTE: Cannot use u.map() here due to circular import
-            # (utilities.py -> string_parser.py -> collections.py)
+            # (utilities.py -> parser.py -> collections.py)
             return sum(len(entries) for entries in self.categories.values())
 
         @property
@@ -107,19 +158,39 @@ class FlextModelsCollections:
             return {name: len(entries) for name, entries in self.categories.items()}
 
         def items(self) -> list[tuple[str, list[T]]]:
-            """Iterate over categories."""
+            """Iterate over categories.
+
+            Returns:
+                list[tuple[str, list[T]]]: List of (category_name, entries) tuples.
+
+            """
             return list(self.categories.items())
 
         def keys(self) -> list[str]:
-            """Get category names."""
+            """Get category names.
+
+            Returns:
+                list[str]: List of category names.
+
+            """
             return list(self.categories.keys())
 
         def values(self) -> list[list[T]]:
-            """Get all entry lists."""
+            """Get all entry lists.
+
+            Returns:
+                list[list[T]]: List of all entry lists for all categories.
+
+            """
             return list(self.categories.values())
 
         def __getitem__(self, category: str) -> list[T]:
-            """Dict-like access: categories['users']."""
+            """Dict-like access: categories['users'].
+
+            Returns:
+                list[T]: List of entries for the category.
+
+            """
             return self.categories[category]
 
         def __setitem__(self, category: str, entries: list[T]) -> None:
@@ -127,15 +198,30 @@ class FlextModelsCollections:
             self.categories[category] = entries
 
         def __contains__(self, category: str) -> bool:
-            """Support 'in' operator: 'users' in categories."""
+            """Support 'in' operator: 'users' in categories.
+
+            Returns:
+                bool: True if category exists, False otherwise.
+
+            """
             return category in self.categories
 
         def __len__(self) -> int:
-            """Number of categories."""
+            """Return the number of categories.
+
+            Returns:
+                int: Number of categories.
+
+            """
             return len(self.categories)
 
         def get(self, category: str, default: list[T] | None = None) -> list[T]:
-            """Dict-like get with default."""
+            """Dict-like get with default.
+
+            Returns:
+                list[T]: List of entries for the category, or default if not found.
+
+            """
             # Use inline helper to avoid circular import with u
             fallback = default if default is not None else []
             return self.categories.get(category, fallback)
@@ -145,20 +231,28 @@ class FlextModelsCollections:
             cls,
             data: dict[str, list[T]],
         ) -> FlextModelsCollections.Categories[T]:
-            """Create from existing dict."""
+            """Create from existing dict.
+
+            Returns:
+                Categories[T]: New Categories instance from dict data.
+
+            """
             return cls.model_validate({"categories": data})
 
         def to_dict(self) -> t.Types.CategoryGroupsMapping:
-            """Convert to dict (CategoryGroupsMapping pattern)."""
+            """Convert to dict (CategoryGroupsMapping pattern).
+
+            Returns:
+                CategoryGroupsMapping: Dictionary representation of categories.
+
+            """
             # Normalize list[T] to Sequence[GeneralValueType] for type compatibility
-            result: dict[str, Sequence[t.GeneralValueType]] = {}
+            result: t.Types.StringSequenceGeneralValueDict = {}
             for key, value_list in self.categories.items():
                 # Normalize each item in the list to GeneralValueType
+                # FlextRuntime.normalize_to_general_value accepts object for generic T
                 normalized_list: list[t.GeneralValueType] = [
-                    FlextRuntime.normalize_to_general_value(
-                        cast("t.GeneralValueType", item)
-                    )
-                    for item in value_list
+                    FlextRuntime.normalize_to_general_value(item) for item in value_list
                 ]
                 result[key] = normalized_list
             return result
@@ -176,6 +270,9 @@ class FlextModelsCollections:
             - Using max for comparable values
             - Keeping last value for other types
 
+            Returns:
+                GeneralValueType: Aggregated statistics dictionary.
+
             Example:
                 stats1 = Stats(count=10, items=['a'])
                 stats2 = Stats(count=20, items=['b'])
@@ -186,12 +283,12 @@ class FlextModelsCollections:
             if not stats_list:
                 return {}
 
-            result: dict[str, t.GeneralValueType] = {}
+            result: t.Types.ConfigurationDict = {}
             first = stats_list[0].model_dump()
 
             for key in first:
                 # NOTE: Cannot use u.map() here due to circular import
-                # (utilities.py -> string_parser.py -> collections.py)
+                # (utilities.py -> parser.py -> collections.py)
                 values = [s.model_dump().get(key) for s in stats_list]
 
                 # Filter None values
@@ -204,10 +301,14 @@ class FlextModelsCollections:
                 first_val = non_none[0]
 
                 # Sum numbers
-                if isinstance(first_val, int | float):
+                if FlextUtilitiesGuards.is_type(first_val, (int, float)):
                     # NOTE: Cannot use u.filter() here due to circular import
-                    # (utilities.py -> string_parser.py -> collections.py)
-                    numeric_values = [v for v in non_none if isinstance(v, int | float)]
+                    # (utilities.py -> parser.py -> collections.py)
+                    numeric_values = [
+                        v
+                        for v in non_none
+                        if FlextUtilitiesGuards.is_type(v, (int, float))
+                    ]
                     result[key] = sum(numeric_values)
                 # Concatenate lists
                 elif _is_list_like(first_val):
@@ -217,7 +318,7 @@ class FlextModelsCollections:
                             # Normalize each item to GeneralValueType
                             for item in v:
                                 normalized = FlextRuntime.normalize_to_general_value(
-                                    item
+                                    item,
                                 )
                                 combined.append(normalized)
                     result[key] = combined
@@ -226,7 +327,7 @@ class FlextModelsCollections:
                     result[key] = non_none[-1]
 
             # Normalize result dict to GeneralValueType
-            normalized_result: dict[str, t.GeneralValueType] = {}
+            normalized_result: t.Types.ConfigurationDict = {}
             for key, value in result.items():
                 normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
             return normalized_result
@@ -241,8 +342,8 @@ class FlextModelsCollections:
         def __hash__(self) -> int:
             """Make Config instances unhashable (mutable models should not be hashable).
 
-            Returns:
-                Never returns - always raises TypeError
+            Raises:
+                TypeError: Always raised to indicate instances are not hashable.
 
             """
             msg = f"{self.__class__.__name__} instances are not hashable"
@@ -252,24 +353,44 @@ class FlextModelsCollections:
             self,
             other: Self,
         ) -> Self:
-            """Merge another config into this one (other takes precedence)."""
+            """Merge another config into this one (other takes precedence).
+
+            Returns:
+                Self: New config instance with merged values.
+
+            """
             # NOTE: Cannot use u.merge() here due to circular import
-            # (utilities.py -> _utilities/string_parser.py -> _models/collections.py)
+            # (utilities.py -> _utilities/parser.py -> _models/collections.py)
             merged = self.model_dump()
             merged.update(other.model_dump(exclude_unset=True))
             return self.__class__(**merged)
 
         @classmethod
         def from_dict(cls, data: t.Types.ConfigurationMapping) -> Self:
-            """Create config from dict."""
+            """Create config from dict.
+
+            Returns:
+                Self: New config instance from dict data.
+
+            """
             return cls.model_validate(data)
 
-        def to_dict(self) -> dict[str, t.GeneralValueType]:
-            """Convert to dict."""
+        def to_dict(self) -> t.Types.ConfigurationDict:
+            """Convert to dict.
+
+            Returns:
+                ConfigurationDict: Dictionary representation of config.
+
+            """
             return self.model_dump()
 
         def with_updates(self, **kwargs: t.GeneralValueType) -> Self:
-            """Return new config with updated fields."""
+            """Return new config with updated fields.
+
+            Returns:
+                Self: New config instance with updated field values.
+
+            """
             # NOTE: Cannot use u.merge() here due to circular import
             data = self.model_dump()
             data.update(kwargs)
@@ -278,11 +399,12 @@ class FlextModelsCollections:
         def diff(
             self,
             other: FlextModelsCollections.Config,
-        ) -> dict[str, tuple[t.GeneralValueType, t.GeneralValueType]]:
+        ) -> t.Types.StringTupleGeneralValueDict:
             """Get differences between configs for debugging.
 
-            Returns dict mapping field names to (self_value, other_value) tuples
-            for fields that differ between the two configs.
+            Returns:
+                StringTupleGeneralValueDict: Dictionary mapping field names to (self_value, other_value) tuples
+                for fields that differ between the two configs.
 
             Example:
                 config1 = Config(timeout=30, retries=3)
@@ -293,7 +415,7 @@ class FlextModelsCollections:
             """
             self_data = self.model_dump()
             other_data = other.model_dump()
-            differences: dict[str, tuple[t.GeneralValueType, t.GeneralValueType]] = {}
+            differences: t.Types.StringTupleGeneralValueDict = {}
 
             all_keys = set(self_data.keys()) | set(other_data.keys())
             for key in all_keys:
@@ -305,7 +427,12 @@ class FlextModelsCollections:
             return differences
 
         def __eq__(self, other: object) -> bool:
-            """Compare configs by value."""
+            """Compare configs by value.
+
+            Returns:
+                bool: True if configs are equal by value, False otherwise.
+
+            """
             if not isinstance(other, self.__class__):
                 return NotImplemented
             return self.model_dump() == other.model_dump()
@@ -315,9 +442,15 @@ class FlextModelsCollections:
 
         @classmethod
         def _aggregate_values(
-            cls, values: list[t.GeneralValueType | None]
+            cls,
+            values: list[t.GeneralValueType | None],
         ) -> t.GeneralValueType | None:
-            """Aggregate a list of values based on type."""
+            """Aggregate a list of values based on type.
+
+            Returns:
+                GeneralValueType | None: Aggregated value, or None if all values are None.
+
+            """
             # NOTE: Cannot use u.filter() here due to circular import
             non_none = [v for v in values if v is not None]
             if not non_none:
@@ -326,36 +459,36 @@ class FlextModelsCollections:
             first_val = non_none[0]
 
             # Sum numbers
-            if isinstance(first_val, int | float):
+            if isinstance(first_val, (int, float)):
                 # NOTE: Cannot use u.filter() here due to circular import
-                return sum(v for v in non_none if isinstance(v, int | float))
+                # Collect numeric values and sum them
+                numeric_vals = [v for v in non_none if isinstance(v, (int, float))]
+                return sum(numeric_vals)
 
             # Concatenate lists
             if _is_list_like(first_val):
                 combined: list[t.GeneralValueType] = []
                 for v in non_none:
                     if _is_list_like(v):
-                        # Cast to Sequence[GeneralValueType] for type safety
-                        seq = cast("Sequence[t.GeneralValueType]", v)
-                        combined.extend(seq)
+                        # TypeGuard narrows v to Sequence[GeneralValueType]
+                        combined.extend(v)
                 return combined
 
             # Merge dicts
             if _is_dict_like(first_val):
                 # NOTE: Cannot use u.merge() here due to circular import
-                merged: dict[str, t.GeneralValueType] = {}
+                merged: t.Types.ConfigurationDict = {}
                 for v in non_none:
                     if _is_dict_like(v):
-                        # Cast to Mapping[str, GeneralValueType] for type safety
-                        mapping = cast("Mapping[str, t.GeneralValueType]", v)
-                        merged.update(mapping)
+                        # TypeGuard narrows v to Mapping[str, GeneralValueType]
+                        merged.update(v)
                 return merged
 
             # Keep last for other types
             return non_none[-1]
 
         @classmethod
-        def aggregate(cls, results: list[Self]) -> dict[str, t.GeneralValueType]:
+        def aggregate(cls, results: list[Self]) -> t.Types.ConfigurationDict:
             """Aggregate multiple result instances.
 
             Combines results by:
@@ -363,6 +496,9 @@ class FlextModelsCollections:
             - Concatenating lists
             - Merging dicts (later values override)
             - Keeping last value for other types
+
+            Returns:
+                ConfigurationDict: Aggregated result dictionary.
 
             Example:
                 result1 = MyResult(processed=10, errors=['a'])
@@ -374,7 +510,7 @@ class FlextModelsCollections:
             if not results:
                 return {}
 
-            aggregated: dict[str, t.GeneralValueType] = {}
+            aggregated: t.Types.ConfigurationDict = {}
             first = results[0].model_dump()
 
             for key in first:
@@ -386,7 +522,10 @@ class FlextModelsCollections:
     class Rules(FlextModelsBase.ArbitraryTypesModel):
         """Base for rules models."""
 
-        model_config = ConfigDict(extra="forbid", validate_assignment=True)
+        model_config = ConfigDict(
+            extra=c.ModelConfig.EXTRA_FORBID,
+            validate_assignment=True,
+        )
 
     class Options(FlextModelsBase.FrozenValueModel):
         """Base for options models."""
@@ -396,6 +535,9 @@ class FlextModelsCollections:
 
             Creates a new Options instance with values from other overriding self.
             Uses exclude_unset to only override explicitly set values.
+
+            Returns:
+                Self: New Options instance with merged values.
 
             Example:
                 defaults = Options(verbose=False, timeout=30)
@@ -410,10 +552,13 @@ class FlextModelsCollections:
             base_data.update(override_data)
             return self.__class__(**base_data)
 
-        def with_only(self, *fields: str) -> dict[str, t.GeneralValueType]:
+        def with_only(self, *fields: str) -> t.Types.ConfigurationDict:
             """Return dict with only specified fields.
 
             Useful for extracting subset of options for specific operations.
+
+            Returns:
+                ConfigurationDict: Dictionary with only specified fields.
 
             Example:
                 opts = Options(verbose=True, timeout=30, retries=3)
@@ -428,7 +573,7 @@ class FlextModelsCollections:
     class ParseOptions(Options):
         """Parameter object for parse_delimited configuration.
 
-        Used by uStringParser for configuring string parsing operations.
+        Used by FlextUtilitiesParser for configuring string parsing operations.
         """
 
         strip: bool = True
@@ -449,6 +594,6 @@ class FlextModelsCollections:
         text: str = Field(description="Text to apply pattern to")
         pattern: str = Field(description="Regex pattern")
         replacement: str = Field(description="Replacement string")
-        flags: int = Field(default=0, description="Regex flags")
+        flags: int = Field(default=c.ZERO, description="Regex flags")
         pattern_index: int = Field(description="Index of pattern in pipeline")
         total_patterns: int = Field(description="Total number of patterns")

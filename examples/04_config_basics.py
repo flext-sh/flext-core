@@ -120,7 +120,7 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
 
         results = [demo_func() for _, demo_func in demonstrations]
         return FlextResult.traverse(results, lambda r: r).map(
-            lambda _: tuple(name for name, _ in demonstrations)
+            lambda _: tuple(name for name, _ in demonstrations),
         )
 
     @staticmethod
@@ -153,7 +153,8 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
         return FlextResult[t.Types.ServiceMetadataMapping].fail(
-            error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR
+            error_msg,
+            error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
 
     @staticmethod
@@ -174,7 +175,7 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
                 debug=FlextConstants.Example.DEFAULT_DEBUG_MODE,
                 max_workers=FlextConstants.Example.DEFAULT_MAX_WORKERS,
                 log_level=FlextConstants.Settings.LogLevel.INFO,
-            )
+            ),
         )
         print_config(result.unwrap())
         return FlextResult[bool].ok(True)
@@ -235,7 +236,7 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
                 config = AppConfig.model_validate(invalid_data)
                 if config.api_timeout < 0:
                     print(
-                        "⚠️  Note: Validation constraints may not apply to singleton instances"
+                        "⚠️  Note: Validation constraints may not apply to singleton instances",
                     )
                     print("✅ Config created (validation handled by type system)")
                 else:

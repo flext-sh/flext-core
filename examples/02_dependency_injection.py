@@ -17,7 +17,7 @@ from flext_core import (
     FlextContainer,
     FlextModels,
     FlextResult,
-    FlextService,
+    s,
     t,
     u,
 )
@@ -42,7 +42,7 @@ from flext_core import (
 # No separate config classes - using t and FlextConstants directly (DRY)
 
 
-class DatabaseService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]  # FlextModels.ArbitraryTypesModel is assignment alias, valid for inheritance
+class DatabaseService(FlextModels.ArbitraryTypesModel):
     """Database service using centralized types and railway pattern."""
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
@@ -75,7 +75,7 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,val
         """Execute query with comprehensive validation using u."""
         if self.status != FlextConstants.Domain.Status.ACTIVE:
             return FlextResult[t.Example.DatabaseQueryResultMapping].fail(
-                FlextConstants.Errors.CONNECTION_ERROR
+                FlextConstants.Errors.CONNECTION_ERROR,
             )
 
         # Use u for advanced SQL pattern validation with centralized keywords
@@ -89,7 +89,7 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,val
         sql_pattern = rf"\b({'|'.join(sql_keywords)})\b"
         if not u.Validation.validate_pattern(sql, sql_pattern).is_success:
             return FlextResult[t.Example.DatabaseQueryResultMapping].fail(
-                FlextConstants.Errors.VALIDATION_ERROR
+                FlextConstants.Errors.VALIDATION_ERROR,
             )
 
         result: t.Example.DatabaseQueryResultMapping = {
@@ -100,7 +100,7 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,val
         return FlextResult[t.Example.DatabaseQueryResultMapping].ok(result)
 
 
-class CacheService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]  # FlextModels.ArbitraryTypesModel is assignment alias, valid for inheritance
+class CacheService(FlextModels.ArbitraryTypesModel):
     """Cache service using centralized types."""
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
@@ -115,13 +115,14 @@ class CacheService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-
 
         # Railway pattern with u validation (DRY)
         return u.Validation.validate_length(
-            key, max_length=FlextConstants.Validation.MAX_NAME_LENGTH
+            key,
+            max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
         ).flat_map(
             lambda _: (
                 FlextResult[str | int].fail(FlextConstants.Errors.NOT_FOUND_ERROR)
                 if key == "missing"
                 else FlextResult[str | int].ok("cached_value")
-            )
+            ),
         )
 
     def set(self, key: str, value: str | int) -> FlextResult[bool]:
@@ -132,22 +133,24 @@ class CacheService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-
         # Railway pattern with u validation (DRY)
         return (
             u.Validation.validate_length(
-                key, max_length=FlextConstants.Validation.MAX_NAME_LENGTH
+                key,
+                max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
             )
             .flat_map(
                 lambda _: (
                     u.Validation.validate_length(
-                        value, max_length=FlextConstants.Validation.MAX_NAME_LENGTH
+                        value,
+                        max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
                     )
                     if isinstance(value, str)
                     else FlextResult[str].ok("")
-                )
+                ),
             )
             .map(lambda _: True)
         )
 
 
-class EmailService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]  # FlextModels.ArbitraryTypesModel is assignment alias, valid for inheritance
+class EmailService(FlextModels.ArbitraryTypesModel):
     """Email service using centralized types."""
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
@@ -163,7 +166,9 @@ class EmailService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-
         # Railway pattern with multiple validations using traverse (DRY)
         validations = [
             u.Validation.validate_pattern(
-                to, FlextConstants.Platform.PATTERN_EMAIL, "email"
+                to,
+                FlextConstants.Platform.PATTERN_EMAIL,
+                "email",
             ),
             u.Validation.validate_length(
                 subject,
@@ -184,7 +189,7 @@ class EmailService(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-
 # ═══════════════════════════════════════════════════════════════════
 
 
-class DependencyInjectionService(FlextService[t.Example.DIPatternsResultMapping]):
+class DependencyInjectionService(s[t.Example.DIPatternsResultMapping]):
     """Service demonstrating FlextContainer dependency injection patterns."""
 
     def execute(self) -> FlextResult[t.Example.DIPatternsResultMapping]:
@@ -241,9 +246,9 @@ class DependencyInjectionService(FlextService[t.Example.DIPatternsResultMapping]
         email_service = EmailService(config=email_config)
         email_service.status = FlextConstants.Domain.Status.ACTIVE
 
-        container.register("database", db_service)
-        container.register("cache", cache_service)
-        container.register("email", email_service)
+        _ = container.register("database", db_service)
+        _ = container.register("cache", cache_service)
+        _ = container.register("email", email_service)
 
         return container
 
@@ -259,7 +264,7 @@ class DependencyInjectionService(FlextService[t.Example.DIPatternsResultMapping]
 
         for service_type, name in services:
             has_service = container.has_service(service_type)
-            self.logger.info(f"✅ {name} registered: {has_service}")
+            self.logger.info("✅ %s registered: %s", name, has_service)
 
         self.logger.info(f"📋 Services: {container.list_services()}")
 
@@ -314,7 +319,7 @@ class DependencyInjectionService(FlextService[t.Example.DIPatternsResultMapping]
         original_count = len(container.list_services())
         container.clear_all()
         print(
-            f"✅ Container cleared: {original_count} → {len(container.list_services())}"
+            f"✅ Container cleared: {original_count} → {len(container.list_services())}",
         )
 
         # Error handling
@@ -329,7 +334,7 @@ class DependencyInjectionService(FlextService[t.Example.DIPatternsResultMapping]
             if isinstance(db_service, DatabaseService):
                 invalid_query = db_service.query("INVALID QUERY")
                 print(
-                    f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}"
+                    f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}",
                 )
 
 

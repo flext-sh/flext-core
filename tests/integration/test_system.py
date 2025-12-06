@@ -151,7 +151,7 @@ class TestCompleteFlextSystemIntegration:
     def _test_utilities(self) -> None:
         """Test utilities and helper functions."""
         # Geração de ID usando método unificado
-        generated_id = u.generate("uuid")
+        generated_id = u.Generators.generate_id()
         assert isinstance(generated_id, str)
         assert len(generated_id) == 36  # Formato padrão UUID
 
@@ -175,7 +175,9 @@ class TestCompleteFlextSystemIntegration:
             safe_int_failure = int("not_a_number")
         except ValueError:
             safe_int_failure = -1
-        assert safe_int_failure == -1  # Retorna default em caso de erro
+        assert (
+            safe_int_failure == -1
+        )  # Retorna default em caso de erro  # Retorna default em caso de erro
 
     def _test_container_system(self) -> None:
         """Test container system (Dependency Injection)."""
@@ -190,7 +192,7 @@ class TestCompleteFlextSystemIntegration:
 
         # Recuperar serviço registrado
         retrieved_service_result: FlextResult[t.GeneralValueType] = container.get(
-            "test_service"
+            "test_service",
         )
         assert retrieved_service_result.is_success is True
         retrieved_service = retrieved_service_result.value
@@ -198,7 +200,7 @@ class TestCompleteFlextSystemIntegration:
 
         # Teste de serviço não encontrado
         not_found_result: FlextResult[t.GeneralValueType] = container.get(
-            "servico_inexistente"
+            "servico_inexistente",
         )
         assert not_found_result.is_success is False
         assert not_found_result.error is not None

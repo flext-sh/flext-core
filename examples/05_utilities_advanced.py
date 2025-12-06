@@ -1,6 +1,6 @@
 """u advanced features demonstration.
 
-Demonstrates Args, Enum, Model, TextProcessor, TypeGuards, DataMapper,
+Demonstrates Args, Enum, Model, Text, Guards, Mapper,
 Domain, Pagination, and Configuration utilities using Python 3.13+ strict
 patterns with PEP 695 type aliases and collections.abc.
 
@@ -19,7 +19,7 @@ from flext_core import (
     FlextConstants,
     FlextModels,
     FlextResult,
-    FlextService,
+    s,
     t,
     u,
 )
@@ -37,7 +37,7 @@ class StatusEnum(StrEnum):
     INACTIVE = "inactive"
 
 
-class UserModel(FlextModels.ArbitraryTypesModel):  # type: ignore[misc,valid-type]  # FlextModels.ArbitraryTypesModel is assignment alias, valid for inheritance
+class UserModel(FlextModels.ArbitraryTypesModel):
     """User model for demonstration using FlextModels."""
 
     name: str = Field(min_length=1)
@@ -65,7 +65,7 @@ TEST_DATA: Mapping[str, t.GeneralValueType] = {
 # ═══════════════════════════════════════════════════════════════════
 
 
-class AdvancedUtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
+class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
     """Service demonstrating advanced u features."""
 
     def execute(
@@ -91,7 +91,7 @@ class AdvancedUtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
                     "enum_utilities",
                     "model_utilities",
                     "text_processing",
-                    "type_guards",
+                    "guards",
                     "data_mapping",
                     "domain_utilities",
                     "pagination",
@@ -180,20 +180,25 @@ class AdvancedUtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
             user = model_result.unwrap()
             status_value = (
                 user.status.value
-                if u.guard(user.status, StatusEnum, return_value=True) is not None
+                if u.Validation.guard(user.status, StatusEnum, return_value=True)
+                is not None
                 else str(user.status)
             )
             print(f"✅ Model from dict: {user.name} ({status_value})")
 
         # Create model from kwargs
         kwargs_result = u.Model.from_kwargs(
-            UserModel, name="Bob", status=StatusEnum.PENDING, age=30
+            UserModel,
+            name="Bob",
+            status=StatusEnum.PENDING,
+            age=30,
         )
         if kwargs_result.is_success:
             user = kwargs_result.unwrap()
             status_value = (
                 user.status.value
-                if u.guard(user.status, StatusEnum, return_value=True) is not None
+                if u.Validation.guard(user.status, StatusEnum, return_value=True)
+                is not None
                 else str(user.status)
             )
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
@@ -209,57 +214,58 @@ class AdvancedUtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
             user = merge_result.unwrap()
             status_value = (
                 user.status.value
-                if u.guard(user.status, StatusEnum, return_value=True) is not None
+                if u.Validation.guard(user.status, StatusEnum, return_value=True)
+                is not None
                 else str(user.status)
             )
             print(f"✅ Merged defaults: {user.name} ({status_value})")
 
     @staticmethod
     def _demonstrate_text_processing() -> None:
-        """Show TextProcessor utilities."""
+        """Show Text utilities."""
         print("\n=== Text Processing ===")
 
         # Clean text
         dirty_text = str(TEST_DATA["text"])
-        cleaned = u.TextProcessor.clean_text(dirty_text)
+        cleaned = u.Text.clean_text(dirty_text)
         print(f"✅ Text cleaning: '{dirty_text}' → '{cleaned}'")
 
         # Truncate text
         long_text = str(TEST_DATA["long_text"])
-        truncate_result = u.TextProcessor.truncate_text(long_text, max_length=50)
+        truncate_result = u.Text.truncate_text(long_text, max_length=50)
         if truncate_result.is_success:
             truncated = truncate_result.unwrap()
             print(f"✅ Text truncation: {len(truncated)} chars")
 
         # Safe string validation
         try:
-            safe = u.TextProcessor.safe_string("  valid  ")
+            safe = u.Text.safe_string("  valid  ")
             print(f"✅ Safe string: '{safe}'")
         except ValueError as e:
             print(f"⚠️  Safe string validation: {e}")
 
     @staticmethod
     def _demonstrate_type_guards() -> None:
-        """Show TypeGuards utilities."""
+        """Show Guards utilities."""
         print("\n=== Type Guards ===")
 
         # String non-empty guard
-        if u.TypeGuards.is_string_non_empty("hello"):
+        if u.is_type("hello", "string_non_empty"):
             print("✅ String non-empty guard: 'hello' is valid")
 
         # Dict non-empty guard
         test_dict: dict[str, str] = {"key": "value"}
-        if u.TypeGuards.is_dict_non_empty(test_dict):
+        if u.is_type(test_dict, "dict_non_empty"):
             print("✅ Dict non-empty guard: dict is valid")
 
         # List non-empty guard
         test_list: list[int] = [1, 2, 3]
-        if u.TypeGuards.is_list_non_empty(test_list):
+        if u.is_type(test_list, "list_non_empty"):
             print("✅ List non-empty guard: list is valid")
 
     @staticmethod
     def _demonstrate_data_mapping() -> None:
-        """Show DataMapper utilities."""
+        """Show Mapper utilities."""
         print("\n=== Data Mapping ===")
 
         # Map dictionary keys
@@ -269,23 +275,34 @@ class AdvancedUtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
             dict[str, t.GeneralValueType]
         ].fail("Invalid data types")
         if (
-            u.guard(source_value, Mapping, return_value=True) is not None
-            and u.guard(mapping_value, Mapping, return_value=True) is not None
+            u.Validation.guard(source_value, Mapping, return_value=True) is not None
+            and u.Validation.guard(mapping_value, Mapping, return_value=True)
+            is not None
         ):
-            source_dict: dict[str, t.GeneralValueType] = dict(source_value)
-            mapped_dict = u.map(mapping_value, lambda _k, v: str(v))
-            key_mapping: dict[str, str] = (
-                dict(mapped_dict.items()) if isinstance(mapped_dict, dict) else {}
+            # Type-safe dictionary creation from Mapping
+            source_dict: dict[str, t.GeneralValueType] = (
+                {str(k): v for k, v in source_value.items()}
+                if isinstance(source_value, Mapping)
+                else {}
             )
-            map_result = u.DataMapper.map_dict_keys(source_dict, key_mapping)
+            # u.map expects dict/Mapping, ensure proper type
+            if isinstance(mapping_value, Mapping):
+                mapping_dict: dict[str, t.GeneralValueType] = {
+                    str(k): v for k, v in mapping_value.items()
+                }
+                mapped_dict = u.Mapper.transform_values(mapping_dict, str)
+                key_mapping: dict[str, str] = {
+                    str(k): str(v) for k, v in mapped_dict.items()
+                }
+                map_result = u.Mapper.map_dict_keys(source_dict, key_mapping)
         if map_result.is_success:
             mapped = map_result.unwrap()
             print(f"✅ Key mapping: {list(mapped.keys())}")
 
         # Convert to int safe using parse()
-        int_result = u.parse("123", int, default=0)
+        int_result = u.Parser.parse("123", int, default=0)
         print(
-            f"✅ Safe int conversion: '123' → {int_result.value if int_result.is_success else 0}"
+            f"✅ Safe int conversion: '123' → {int_result.value if int_result.is_success else 0}",
         )
 
         # Build flags dict
@@ -294,7 +311,7 @@ class AdvancedUtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
             "read": "can_read",
             "write": "can_write",
         }
-        flags_result = u.DataMapper.build_flags_dict(flags, flag_mapping)
+        flags_result = u.Mapper.build_flags_dict(flags, flag_mapping)
         if flags_result.is_success:
             flags_dict = flags_result.unwrap()
             print(f"✅ Flags dict: {list(flags_dict.keys())}")
@@ -372,10 +389,7 @@ def main() -> None:
     """Main entry point."""
     print("=" * 60)
     print("FLEXT UTILITIES - ADVANCED FEATURES")
-    print(
-        "Args, Enum, Model, TextProcessor, TypeGuards, DataMapper, "
-        "Domain, Pagination, Configuration"
-    )
+    print("Args, Enum, Model, Text, Guards, Mapper, Domain, Pagination, Configuration")
     print("=" * 60)
 
     service = AdvancedUtilitiesService()
@@ -393,8 +407,8 @@ def main() -> None:
         print(f"\n❌ Failed: {result.error}")
 
     print("\n" + "=" * 60)
-    print("🎯 Advanced Utilities: Args, Enum, Model, TextProcessor")
-    print("🎯 Type Safety: TypeGuards, DataMapper, Domain, Pagination")
+    print("🎯 Advanced Utilities: Args, Enum, Model, Text")
+    print("🎯 Type Safety: Guards, Mapper, Domain, Pagination")
     print("🎯 Configuration: Parameter access and manipulation")
     print("🎯 Python 3.13+: PEP 695 type aliases, collections.abc")
     print("=" * 60)

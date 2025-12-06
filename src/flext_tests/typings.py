@@ -1,6 +1,6 @@
 """Type system foundation for FLEXT tests.
 
-Provides FlextTestsTypings, extending t with test-specific type definitions
+Provides FlextTestsTypes, extending FlextTypes with test-specific type definitions
 for Docker operations, container management, and test infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -9,164 +9,641 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import TypeVar
+from typing import Literal, TypeVar
 
-from flext_core.typings import T, T_co, T_contra
+from pydantic import BaseModel
 
-# Test-specific TypeVars (module-level only, as per FLEXT standards)
+from flext_core import FlextTypes
+from flext_core.result import r
+from flext_tests.protocols import p
+
 TTestResult = TypeVar("TTestResult")
 TTestModel = TypeVar("TTestModel")
 TTestService = TypeVar("TTestService")
 
 
-class FlextTestsTypings:
-    """Type system foundation for FLEXT tests - extends t.
+class FlextTestsTypes(FlextTypes):
+    """Type system foundation for FLEXT tests - extends FlextTypes.
 
-    Architecture: Extends t with test-specific type aliases and definitions.
-    All base types from t are available through direct reference.
+    Architecture: Extends FlextTypes with test-specific type aliases and definitions.
+    All base types from FlextTypes are available through inheritance.
     Uses specific, directed types instead of GeneralValueType where possible.
+
+    This class serves as a library of support and base for all tests in the FLEXT
+    workspace projects, without being directed to any specific project.
     """
 
-    # Test-specific type aliases using Python 3.13+ PEP 695
-    # Use specific types instead of GeneralValueType where possible
-    type ContainerPortMapping = Mapping[str, str]
-    """Mapping of container port names to host port bindings."""
+    class Tests:
+        """Test-specific type definitions namespace.
 
-    type ContainerConfigMapping = Mapping[
-        str,
-        str | int | float | bool | Sequence[str | int | float | bool] | None,
-    ]
-    """Mapping for container configuration data with specific value types."""
+        All test-specific types organized under t.Tests.* pattern.
+        Use specific types instead of GeneralValueType where possible.
+        """
 
-    type DockerComposeServiceMapping = Mapping[
-        str,
-        str
-        | int
-        | float
-        | bool
-        | Sequence[str | int | float | bool]
-        | Mapping[str, str | int | float | bool]
-        | None,
-    ]
-    """Mapping for docker-compose service configuration with specific types."""
+        type ContainerPortMapping = Mapping[str, str]
+        """Mapping of container port names to host port bindings."""
 
-    type ContainerStateMapping = Mapping[
-        str,
-        str | int | float | bool | Sequence[str] | Mapping[str, str | int] | None,
-    ]
-    """Mapping for container state information with specific value types."""
-
-    type TestDataMapping = Mapping[
-        str,
-        str | int | float | bool | Sequence[str | int | float | bool] | None,
-    ]
-    """Mapping for test data with specific value types."""
-
-    type TestConfigMapping = Mapping[
-        str,
-        str | int | float | bool | Sequence[str] | Mapping[str, str | int] | None,
-    ]
-    """Mapping for test configuration with specific value types."""
-
-    type TestResultValue = (
-        str
-        | int
-        | float
-        | bool
-        | Sequence[str | int | float | bool]
-        | Mapping[str, str | int | float | bool]
-        | None
-    )
-    """Type for test result values with specific constraints."""
-
-    # Note: Generic callable types cannot use module-level TypeVars in class-level type aliases
-    # Use Callable[..., T] or Callable[[T], bool] directly with TypeVar T when needed
-
-    class Docker:
-        """Docker-specific type definitions with specific types."""
-
-        type ContainerPorts = Mapping[str, str]
-        """Container port mappings (container_port -> host:port)."""
-
-        type ContainerLabels = Mapping[str, str]
-        """Container labels mapping."""
-
-        type ContainerEnvironment = Sequence[str]
-        """Container environment variables as sequence."""
-
-        type ComposeFileConfig = Mapping[
-            str,
-            str
-            | int
-            | float
-            | bool
-            | Sequence[str | int | float | bool]
-            | Mapping[str, str | int | float | bool]
-            | None,
-        ]
-        """Docker compose file configuration structure with specific types."""
-
-        type VolumeMapping = Mapping[str, str]
-        """Volume mappings (host_path -> container_path)."""
-
-        type NetworkMapping = Mapping[
-            str,
-            str | int | float | bool | Sequence[str] | Mapping[str, str | int] | None,
-        ]
-        """Network configuration mapping with specific types."""
-
-        type ContainerHealthStatus = str
-        """Container health status type (healthy, unhealthy, starting, none)."""
-
-        type ContainerHealthStatusLiteral = str  # Will be Literal["healthy", "unhealthy", "starting", "none"] when needed
-        """Type-safe literal for container health status."""
-
-        type ContainerOperationResult = Mapping[
-            str,
-            str | int | bool | Sequence[str] | None,
-        ]
-        """Result type for container operations with specific fields."""
-
-    class Test:
-        """Test-specific type definitions."""
-
-        type TestCaseData = Mapping[
+        type ContainerConfigMapping = Mapping[
             str,
             str | int | float | bool | Sequence[str | int | float | bool] | None,
         ]
-        """Test case data structure with specific value types."""
+        """Mapping for container configuration data with specific value types."""
 
-        type TestFixtureData = Mapping[
+        type DockerComposeServiceMapping = Mapping[
             str,
             str
             | int
             | float
             | bool
-            | Path
             | Sequence[str | int | float | bool]
             | Mapping[str, str | int | float | bool]
             | None,
         ]
-        """Test fixture data structure with specific value types."""
+        """Mapping for docker-compose service configuration with specific types."""
 
-        type TestAssertionResult = Mapping[str, str | bool | int | None]
-        """Test assertion result structure."""
-
-        type TestExecutionContext = Mapping[
+        type ContainerStateMapping = Mapping[
             str,
-            str | int | float | bool | Sequence[str] | Mapping[str, str] | None,
+            str | int | float | bool | Sequence[str] | Mapping[str, str | int] | None,
         ]
-        """Test execution context with specific metadata types."""
+        """Mapping for container state information with specific value types."""
 
+        type TestDataMapping = Mapping[
+            str,
+            str | int | float | bool | Sequence[str | int | float | bool] | None,
+        ]
+        """Mapping for test data with specific value types."""
+
+        type TestConfigMapping = Mapping[
+            str,
+            str | int | float | bool | Sequence[str] | Mapping[str, str | int] | None,
+        ]
+        """Mapping for test configuration with specific value types."""
+
+        type TestResultValue = (
+            str
+            | int
+            | float
+            | bool
+            | Sequence[str | int | float | bool]
+            | Mapping[str, str | int | float | bool]
+            | None
+        )
+        """Type for test result values with specific constraints."""
+
+        # Note: Generic callables can't use module TypeVars in type aliases
+        # Use Callable[..., T] directly with TypeVar T when needed
+
+        class Docker:
+            """Docker-specific type definitions with specific types."""
+
+            type ContainerPorts = Mapping[str, str]
+            """Container port mappings (container_port -> host:port)."""
+
+            type ContainerLabels = Mapping[str, str]
+            """Container labels mapping."""
+
+            type ContainerEnvironment = Sequence[str]
+            """Container environment variables as sequence."""
+
+            type ComposeFileConfig = Mapping[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | Sequence[str | int | float | bool]
+                | Mapping[str, str | int | float | bool]
+                | None,
+            ]
+            """Docker compose file configuration structure with specific types."""
+
+            type VolumeMapping = Mapping[str, str]
+            """Volume mappings (host_path -> container_path)."""
+
+            type NetworkMapping = Mapping[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | Sequence[str]
+                | Mapping[str, str | int]
+                | None,
+            ]
+            """Network configuration mapping with specific types."""
+
+            type ContainerHealthStatus = str
+            """Container health status type (healthy, unhealthy, starting, none)."""
+
+            type ContainerHealthStatusLiteral = str  # Future: Literal health values
+            """Type-safe literal for container health status."""
+
+            type ContainerOperationResult = Mapping[
+                str,
+                str | int | bool | Sequence[str] | None,
+            ]
+            """Result type for container operations with specific fields."""
+
+        class Test:
+            """Test-specific type definitions."""
+
+            type TestCaseData = Mapping[
+                str,
+                str | int | float | bool | Sequence[str | int | float | bool] | None,
+            ]
+            """Test case data structure with specific value types."""
+
+            type TestFixtureData = Mapping[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | Path
+                | Sequence[str | int | float | bool]
+                | Mapping[str, str | int | float | bool]
+                | None,
+            ]
+            """Test fixture data structure with specific value types."""
+
+            type TestAssertionResult = Mapping[str, str | bool | int | None]
+            """Test assertion result structure."""
+
+            type TestExecutionContext = Mapping[
+                str,
+                str | int | float | bool | Sequence[str] | Mapping[str, str] | None,
+            ]
+            """Test execution context with specific metadata types."""
+
+        class Factory:
+            """Factory-specific type definitions for test factories (tt).
+
+            Provides comprehensive type aliases for factory operations following
+            FLEXT patterns. All types use centralized definitions from flext_core.
+            """
+
+            # Kind literals for factory methods
+            type ModelKind = Literal[
+                "user",
+                "config",
+                "service",
+                "entity",
+                "value",
+                "command",
+                "query",
+                "event",
+            ]
+            """Kind parameter for model() factory method."""
+
+            type ResultKind = Literal["ok", "fail", "from_value"]
+            """Kind parameter for res() factory method."""
+
+            type OpKind = Literal[
+                "simple",
+                "add",
+                "format",
+                "error",
+                "type_error",
+                "result_ok",
+                "result_fail",
+            ]
+            """Kind parameter for op() factory method."""
+
+            type BatchKind = Literal["user", "config", "service"]
+            """Kind parameter for batch() factory method."""
+
+            # Pattern and collection types
+            type BatchPattern = Sequence[bool]
+            """Pattern for batch result creation (True=success, False=failure)."""
+
+            type FactoryCallable[T] = Callable[[], T]
+            """Factory function type that creates instances of T."""
+
+            type TransformCallable[T] = Callable[[T], T]
+            """Transform function that modifies instances of T."""
+
+            type ValidateCallable[T] = Callable[[T], bool]
+            """Validation predicate that checks instances of T."""
+
+            type KeyFactory[K] = Callable[[int], K]
+            """Key factory function that generates keys from index."""
+
+            type ValueFactory[K, V] = Callable[[K], V]
+            """Value factory function that generates values from keys."""
+
+            # Model union types (for type-safe factory returns)
+            # Uses BaseModel as the base - all factory models are Pydantic models
+            type FactoryModel = BaseModel
+            """Base type for all factory model types (Pydantic BaseModel)."""
+
+            type FactoryModelList = list[FactoryModel]
+            """List of factory models."""
+
+            type FactoryModelDict = dict[str, FactoryModel]
+            """Dictionary of factory models keyed by string ID."""
+
+            # Result types
+            type FactoryResult[T] = r[T]
+            """FlextResult wrapper for factory operations."""
+
+            type FactoryResultList[T] = list[r[T]]
+            """List of FlextResult instances."""
+
+            # Collection factory types
+            type ListSource[T] = (
+                Sequence[T]
+                | Callable[[], T]
+                | Literal["user", "config", "service", "entity", "value"]
+            )
+            """Source type for list() factory method."""
+
+            type DictSource[K, V] = (
+                Mapping[K, V]
+                | Callable[[], tuple[K, V]]
+                | Literal["user", "config", "service", "entity", "value"]
+            )
+            """Source type for dict() factory method."""
+
+            # Generic factory types
+            type GenericArgs = Sequence[t.GeneralValueType]
+            """Positional arguments for generic type instantiation."""
+
+            type GenericKwargs = Mapping[str, t.GeneralValueType]
+            """Keyword arguments for generic type instantiation."""
+
+        class Files:
+            """File-specific type definitions for test file operations (tf)."""
+
+            type ScalarValue = str | int | float | bool | None
+            """Scalar values that can be serialized directly."""
+
+            type SerializableValue = (
+                str
+                | int
+                | float
+                | bool
+                | Sequence[str | int | float | bool | None]
+                | Mapping[str, str | int | float | bool | None]
+                | None
+            )
+            """Values that can be serialized to JSON/YAML."""
+
+            type FileContentValue = (
+                str
+                | bytes
+                | Mapping[str, str | int | float | bool | Sequence[str] | None]
+                | Sequence[Sequence[str]]
+            )
+            """Unified file content type for read/write operations."""
+
+            type JsonValue = (
+                str
+                | int
+                | float
+                | bool
+                | Sequence[str | int | float | bool | None]
+                | Mapping[str, str | int | float | bool | None]
+                | None
+            )
+            """JSON-compatible value type."""
+
+            type CsvRow = Sequence[str]
+            """Single CSV row as sequence of strings."""
+
+            type CsvData = Sequence[Sequence[str]]
+            """CSV data as sequence of rows."""
+
+            type FileResultValue = (
+                str
+                | bytes
+                | Mapping[str, str | int | float | bool | Sequence[str] | None]
+                | Sequence[Sequence[str]]
+            )
+            """Union type for file read results."""
+
+            # Enhanced type aliases for batch operations and content handling
+            # Following plan: includes BaseModel support for Pydantic models
+            type FileContent = (
+                str
+                | bytes
+                | t.Types.ConfigurationMapping
+                | Sequence[Sequence[str]]
+                | BaseModel
+            )
+            """File content type supporting all serializable formats including Pydantic models."""
+
+            type BatchFiles = (
+                Mapping[str, FileContent] | Sequence[tuple[str, FileContent]]
+            )
+            """Batch file operations input type."""
+
+            type PathMapping = Mapping[str, Path]
+            """Mapping of names to file paths."""
+
+            type ReadResult[T] = (
+                T
+                | dict[str, t.GeneralValueType]
+                | list[str | dict[str, t.GeneralValueType]]
+            )
+            """Result type for file read operations with generic support."""
+
+            type FormatLiteral = Literal["json", "yaml", "csv", "txt", "md", "auto"]
+            """Literal type for file format specification in create/read operations."""
+
+            type OperationLiteral = Literal[
+                "create", "read", "delete", "compare", "info"
+            ]
+            """Literal type for batch operation specification."""
+
+            type ErrorModeLiteral = Literal["stop", "skip", "collect"]
+            """Error handling mode for batch operations.
+
+            - stop: Stop at first error
+            - skip: Skip failed operations, continue with remaining
+            - collect: Collect all errors, return BatchResult with failures
+            """
+
+        class Builders:
+            """Builder-specific type definitions for test data construction (tb).
+
+            Provides centralized types for FlextTestsBuilders following FLEXT patterns.
+            Use t.Tests.Builders.* for access.
+            """
+
+            type BuilderValue = (
+                t.GeneralValueType
+                | BaseModel
+                | r[t.GeneralValueType]
+                | list[t.GeneralValueType]
+                | dict[str, t.GeneralValueType]
+            )
+            """Type for values that can be added to builder."""
+
+            type BuilderDict = dict[str, BuilderValue]
+            """Type for builder internal data structure."""
+
+            type BuilderMapping = Mapping[str, BuilderValue]
+            """Type for builder mappings."""
+
+            type BuilderSequence = Sequence[BuilderValue]
+            """Type for builder sequences."""
+
+            type ParametrizedCase = tuple[str, BuilderDict]
+            """Type for parametrized test cases (test_id, data)."""
+
+            type TransformFunc = Callable[[t.GeneralValueType], t.GeneralValueType]
+            """Type for transformation functions."""
+
+            type ValidateFunc = Callable[[t.GeneralValueType], bool]
+            """Type for validation functions."""
+
+            type ResultBuilder[T] = Callable[[], r[T]]
+            """Type for result builder functions that return FlextResult."""
+
+            type ResultTransform[T, U] = Callable[[T], r[U]]
+            """Type for result transformation functions."""
+
+        class Matcher:
+            """Matcher-specific type definitions for test assertions (tm.* methods).
+
+            All types follow FLEXT patterns:
+            - Use type aliases for complex types
+            - Use Callable for predicates and validators
+            - Use Mapping/Sequence for structured data
+            - All types are documented with docstrings
+            """
+
+            # =====================================================================
+            # Length and Size Specifications
+            # =====================================================================
+
+            type LengthSpec = int | tuple[int, int]
+            """Length specification: exact int or (min, max) tuple.
+
+            Examples:
+                len=5              # Exact length 5
+                len=(1, 10)        # Length between 1 and 10 (inclusive)
+            """
+
+            # =====================================================================
+            # Deep Structural Matching
+            # =====================================================================
+
+            type DeepSpec = Mapping[str, Callable[[object], bool] | object]
+            """Deep structural matching specification: path -> value or predicate.
+
+            Supports unlimited nesting with dot notation paths.
+            Values can be direct values or predicate functions.
+
+            Examples:
+                deep={"user.name": "John"}                    # Direct value
+                deep={"user.email": lambda e: "@" in e}       # Predicate
+                deep={"user.profile.age": lambda a: a >= 18}  # Deep nesting
+            """
+
+            type PathSpec = str | Sequence[str]
+            """Path specification for nested value extraction.
+
+            Supports dot notation (str) or sequence of keys (Sequence[str]).
+
+            Examples:
+                path="user.profile.name"        # Dot notation
+                path=["user", "profile", "name"]  # Sequence of keys
+            """
+
+            # =====================================================================
+            # Predicates and Validators
+            # =====================================================================
+
+            type PredicateSpec = Callable[[object], bool]
+            """Custom predicate function for validation.
+
+            Takes a value and returns True if validation passes.
+
+            Examples:
+                where=lambda x: x > 0
+                where=lambda u: u.age >= 18 and u.verified
+            """
+
+            type ValueSpec = Callable[[object], bool] | object
+            """Value specification: direct value or predicate function.
+
+            Used in deep matching and custom validation.
+            Can be a direct value for equality check or a predicate for custom logic.
+            """
+
+            type AssertionSpec = (
+                Mapping[str, object]
+                | Callable[[object], bool]
+                | type[object]
+                | tuple[type[object], ...]
+            )
+            """Assertion specification for flexible validation.
+
+            Supports multiple assertion types:
+            - Mapping: Key-value pairs for structured validation
+            - Callable: Predicate function
+            - type: Type check (single type)
+            - tuple[type, ...]: Type check (multiple types)
+
+            Note: object appears in union but is handled by type checking.
+            """
+
+            # =====================================================================
+            # Containment Specifications
+            # =====================================================================
+
+            type ContainmentSpec = object | Sequence[object]
+            """Containment specification: single item or sequence of items.
+
+            Used for has/lacks parameters that check if container contains item(s).
+
+            Examples:
+                has="key"              # Single item
+                has=["key1", "key2"]   # Multiple items
+            """
+
+            type ExclusionSpec = str | Sequence[str]
+            """Exclusion specification: single string or sequence of strings.
+
+            Used for lacks/excludes parameters that check if container does NOT contain.
+
+            Examples:
+                lacks="error"              # Single exclusion
+                lacks=["error", "fail"]    # Multiple exclusions
+            """
+
+            # =====================================================================
+            # Sequence Assertions
+            # =====================================================================
+
+            type SequencePredicate = type[object] | Callable[[object], bool]
+            """Sequence predicate: type check or custom predicate.
+
+            Used for all_/any_ parameters that validate sequence items.
+
+            Examples:
+                all_=str                    # All items are strings
+                all_=lambda x: x > 0        # All items pass predicate
+            """
+
+            type SortKey = bool | Callable[[object], p.Tests.Support.SupportsLessThan]
+            """Sort key specification: boolean or key function.
+
+            Used for sorted parameter.
+            - True: Check if sequence is sorted (ascending)
+            - Callable: Key function returning a comparable type
+
+            The key function must return a type that supports __lt__ (less-than
+            comparison), as required by Python's sorted() function.
+
+            Examples:
+                sorted=True                  # Check ascending sort
+                sorted=lambda x: x.id       # Check sort by id (int supports __lt__)
+            """
+
+            # =====================================================================
+            # Mapping Assertions
+            # =====================================================================
+
+            type KeySpec = Sequence[str] | set[str]
+            """Key specification: sequence or set of keys.
+
+            Used for keys/lacks_keys parameters.
+
+            Examples:
+                keys=["id", "name"]         # Sequence
+                keys={"id", "name"}         # Set
+            """
+
+            type KeyValueSpec = tuple[str, object] | Mapping[str, object]
+            """Key-value specification: single pair or mapping.
+
+            Used for kv parameter that validates key-value pairs.
+
+            Examples:
+                kv=("status", "active")                    # Single pair
+                kv={"status": "active", "type": "user"}    # Multiple pairs
+            """
+
+            # =====================================================================
+            # Object Assertions
+            # =====================================================================
+
+            type AttributeSpec = str | Sequence[str]
+            """Attribute specification: single attribute or sequence.
+
+            Used for attrs/methods parameters.
+
+            Examples:
+                attrs="name"                    # Single attribute
+                attrs=["name", "email"]          # Multiple attributes
+            """
+
+            type AttributeValueSpec = tuple[str, object] | Mapping[str, object]
+            """Attribute-value specification: single pair or mapping.
+
+            Used for attr_eq parameter that validates attribute values.
+
+            Examples:
+                attr_eq=("status", "active")                    # Single pair
+                attr_eq={"status": "active", "type": "user"}   # Multiple pairs
+            """
+
+            # =====================================================================
+            # Error Validation
+            # =====================================================================
+
+            type ErrorCodeSpec = str | Sequence[str]
+            """Error code specification: single code or sequence.
+
+            Used for code/code_has parameters in tm.fail().
+
+            Examples:
+                code="VALIDATION"                    # Exact code
+                code_has=["VALID", "ERROR"]          # Contains codes
+            """
+
+            type ErrorDataSpec = Mapping[str, object]
+            """Error data specification: key-value pairs.
+
+            Used for data parameter in tm.fail() to validate error metadata.
+
+            Examples:
+                data={"field": "email", "reason": "invalid"}
+            """
+
+            # =====================================================================
+            # Scope Configuration
+            # =====================================================================
+
+            type CleanupSpec = Sequence[Callable[[], None]]
+            """Cleanup specification: sequence of cleanup functions.
+
+            Used for cleanup parameter in tm.scope().
+
+            Examples:
+                cleanup=[lambda: resource.cleanup(), lambda: db.close()]
+            """
+
+            type EnvironmentSpec = Mapping[str, str]
+            """Environment specification: mapping of env var names to values.
+
+            Used for env parameter in tm.scope().
+
+            Examples:
+                env={"API_KEY": "test", "DEBUG": "true"}
+            """
+
+
+t = FlextTestsTypes
 
 __all__ = [
-    "FlextTestsTypings",
-    "T",
+    "FlextTestsTypes",
     "TTestModel",
     "TTestResult",
     "TTestService",
-    "T_co",
-    "T_contra",
+    "t",
 ]

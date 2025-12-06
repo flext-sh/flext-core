@@ -23,14 +23,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions, FlextResult, u
-from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core import FlextExceptions, FlextResult, p, t, u
 
 # =========================================================================
 # Test Data and Scenarios
@@ -155,7 +153,7 @@ class UtilityScenarios:
     @staticmethod
     def create_mock_config(
         **kwargs: t.GeneralValueType,
-    ) -> p.HasModelDump:
+    ) -> p.Foundation.HasModelDump:
         """Create mock config object."""
 
         class TestConfig:
@@ -177,8 +175,8 @@ class UtilityScenarios:
         # GeneralValueType is compatible with FlexibleValue at runtime
         # Type assertion: TestConfig structurally implements HasModelDump
         # The model_dump() method signature is compatible with the protocol
-        # pyright: ignore[reportReturnType] - TestConfig structurally implements HasModelDump
-        return TestConfig()  # type: ignore[return-value]
+        # Use cast to help type checker understand structural typing
+        return cast("p.Foundation.HasModelDump", TestConfig())
 
     @staticmethod
     def create_mock_cached_object() -> object:
@@ -250,7 +248,7 @@ class Testu:
     )
     def test_type_guard_string(self, case: UtilityTestCase) -> None:
         """Test string type guards."""
-        result = u.TypeGuards.is_string_non_empty(case.input_data)
+        result = u.is_type(case.input_data, "string_non_empty")
         assert isinstance(result, bool)
         assert result is case.should_succeed
 
@@ -264,7 +262,7 @@ class Testu:
     )
     def test_type_guard_dict(self, case: UtilityTestCase) -> None:
         """Test dict type guards."""
-        result = u.TypeGuards.is_dict_non_empty(case.input_data)
+        result = u.is_type(case.input_data, "dict_non_empty")
         assert isinstance(result, bool)
         assert result is case.should_succeed
 
@@ -278,7 +276,7 @@ class Testu:
     )
     def test_type_guard_list(self, case: UtilityTestCase) -> None:
         """Test list type guards."""
-        result = u.TypeGuards.is_list_non_empty(case.input_data)
+        result = u.is_type(case.input_data, "list_non_empty")
         assert isinstance(result, bool)
         assert result is case.should_succeed
 
@@ -319,27 +317,27 @@ class Testu:
 
     def test_text_processor_clean(self) -> None:
         """Test text cleaning - returns str directly."""
-        result = u.TextProcessor.clean_text("  hello   world  ")
+        result = u.Text.clean_text("  hello   world  ")
         assert isinstance(result, str)
         assert result == "hello world"
 
     def test_text_processor_truncate(self) -> None:
         """Test text truncation - returns FlextResult[str]."""
-        result = u.TextProcessor.truncate_text("hello world", max_length=8)
+        result = u.Text.truncate_text("hello world", max_length=8)
         assert result.is_success
         assert len(result.value) <= 8
         assert result.value.endswith("...")
 
     def test_text_processor_safe_string_success(self) -> None:
         """Test safe string conversion - returns str directly."""
-        result = u.TextProcessor.safe_string("  hello  ")
+        result = u.Text.safe_string("  hello  ")
         assert isinstance(result, str)
         assert result == "hello"
 
     def test_text_processor_safe_string_failure(self) -> None:
         """Test safe string conversion with empty - raises ValueError."""
         with pytest.raises(ValueError):
-            u.TextProcessor.safe_string("")
+            u.Text.safe_string("")
 
     # =====================================================================
     # Cache Tests
@@ -393,7 +391,8 @@ class Testu:
                     obj_dict[str(k)] = (
                         v
                         if isinstance(
-                            v, (str, int, float, bool, type(None), list, dict)
+                            v,
+                            (str, int, float, bool, type(None), list, dict),
                         )
                         else str(v)
                     )
@@ -404,13 +403,17 @@ class Testu:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        assert u.Cache.has_cache_attributes(obj) is True  # type: ignore[arg-type]  # Object is compatible
+        # Cast to GeneralValueType for type checker
+        obj_typed: t.GeneralValueType = cast("t.GeneralValueType", obj)
+        assert u.Cache.has_cache_attributes(obj_typed) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        assert u.Cache.has_cache_attributes(obj) is False  # type: ignore[arg-type]  # Object is compatible
+        # Cast to GeneralValueType for type checker
+        obj_typed: t.GeneralValueType = cast("t.GeneralValueType", obj)
+        assert u.Cache.has_cache_attributes(obj_typed) is False
 
     # =====================================================================
     # Reliability Tests
@@ -441,14 +444,14 @@ class Testu:
         def op() -> FlextResult[str]:
             return FlextResult[str].ok("success")
 
-        result = u.Reliability.retry(op, max_attempts=3)
+        result: FlextResult[str] = u.Reliability.retry(op, max_attempts=3)
         assert result.is_success
         assert result.value == "success"
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
         attempt_count, flaky_op = UtilityScenarios.create_flaky_operation()
-        result = u.Reliability.retry(
+        result: FlextResult[str] = u.Reliability.retry(
             flaky_op,
             max_attempts=3,
             delay_seconds=0.01,
@@ -465,22 +468,22 @@ class Testu:
         # MessageTypeSpecifier = str | type[GeneralValueType]
         # object is not a valid MessageTypeSpecifier, use str instead
         accepted: tuple[t.Utility.MessageTypeSpecifier, ...] = (str,)
-        assert u.TypeChecker.can_handle_message_type(accepted, str) is True
+        assert u.Checker.can_handle_message_type(accepted, str) is True
 
     def test_type_checker_specific_type_match(self) -> None:
         """Test type checking with matching specific type."""
         accepted = (str,)
-        assert u.TypeChecker.can_handle_message_type(accepted, str) is True
+        assert u.Checker.can_handle_message_type(accepted, str) is True
 
     def test_type_checker_specific_type_mismatch(self) -> None:
         """Test type checking with mismatched specific type."""
         accepted = (str,)
-        assert u.TypeChecker.can_handle_message_type(accepted, int) is False
+        assert u.Checker.can_handle_message_type(accepted, int) is False
 
     def test_type_checker_empty_accepted(self) -> None:
         """Test type checking with no accepted types."""
         accepted: tuple[t.Utility.MessageTypeSpecifier, ...] = ()
-        assert u.TypeChecker.can_handle_message_type(accepted, str) is False
+        assert u.Checker.can_handle_message_type(accepted, str) is False
 
     # =====================================================================
     # Configuration Tests

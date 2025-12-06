@@ -20,9 +20,8 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import FlextConstants, FlextExceptions, FlextResult
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextExceptions, FlextResult, FlextRuntime, t
+from flext_core.constants import c
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,7 +36,7 @@ class ExceptionCreationScenario:
 
 
 class ExceptionScenarios:
-    """Centralized exception coverage test scenarios using FlextConstants."""
+    """Centralized exception coverage test scenarios using c."""
 
     EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
         ExceptionCreationScenario(
@@ -197,26 +196,42 @@ class TestFlextExceptionsHierarchy:
         """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
             # Convert dict[str, object] to dict[str, MetadataAttributeValue]
-            # Special handling for TypeError: expected_type and actual_type must remain as types
-            converted_kwargs: dict[str, t.MetadataAttributeValue | type] = {}
+            # Separate type values from metadata values for proper type handling
+            type_kwargs: dict[str, type] = {}
+            metadata_kwargs: dict[str, t.MetadataAttributeValue] = {}
             for key, value in scenario.kwargs.items():
                 # For TypeError, preserve type objects for expected_type and actual_type
-                if scenario.exception_type == FlextExceptions.TypeError and key in {
-                    "expected_type",
-                    "actual_type",
-                }:
-                    converted_kwargs[key] = value  # type: ignore[assignment]  # Keep as type
+                if (
+                    scenario.exception_type == FlextExceptions.TypeError
+                    and key
+                    in {
+                        "expected_type",
+                        "actual_type",
+                    }
+                    and isinstance(value, type)
+                ):
+                    type_kwargs[key] = value
                 elif isinstance(value, (str, int, float, bool, type(None), list, dict)):
-                    converted_kwargs[key] = FlextRuntime.normalize_to_metadata_value(
-                        value
+                    metadata_kwargs[key] = FlextRuntime.normalize_to_metadata_value(
+                        value,
                     )
                 else:
                     # Convert non-compatible types to string
-                    converted_kwargs[key] = FlextRuntime.normalize_to_metadata_value(
-                        str(value)
+                    metadata_kwargs[key] = FlextRuntime.normalize_to_metadata_value(
+                        str(value),
                     )
-            # Type ignore needed: mypy can't infer that **converted_kwargs matches **extra_kwargs
-            error = scenario.exception_type(scenario.message, **converted_kwargs)  # type: ignore[arg-type]
+            # For TypeError, pass type_kwargs separately, then metadata_kwargs
+            if type_kwargs:
+                # Convert type objects to strings for metadata compatibility
+                for key, type_value in type_kwargs.items():
+                    metadata_kwargs[key] = type_value.__name__
+            # Type narrowing: all values in metadata_kwargs are MetadataAttributeValue
+            # BaseError accepts **extra_kwargs: MetadataAttributeValue, but type checker
+            # can't infer compatibility with specific exception constructors
+
+            # BaseError accepts **extra_kwargs: MetadataAttributeValue
+            # Use type: ignore for dynamic kwargs unpacking in tests
+            error = scenario.exception_type(scenario.message, **metadata_kwargs)
         else:
             error = scenario.exception_type(scenario.message)
         assert scenario.message in str(error)
@@ -352,9 +367,12 @@ class TestExceptionContext:
             "operation": "create_user",
             "timestamp": 1234567890,
         }
+        # ValidationError accepts metadata via **extra_kwargs: MetadataAttributeValue
+        # Pass metadata_dict via **extra_kwargs, not as named parameter
+        # Use type: ignore for dynamic metadata dict in tests
         error = FlextExceptions.ValidationError(
             "Validation failed in context",
-            metadata=metadata_dict,  # type: ignore[arg-type]
+            metadata=metadata_dict,
         )
         assert "user_id" in error.metadata.attributes
         assert error.metadata.attributes["user_id"] == "123"
@@ -402,7 +420,7 @@ class TestExceptionSerialization:
         error_dict = error.to_dict()
         assert error_dict["error_type"] == "ValidationError"
         assert error_dict["message"] == "Invalid email"
-        assert error_dict["error_code"] == FlextConstants.Errors.VALIDATION_ERROR
+        assert error_dict["error_code"] == c.Errors.VALIDATION_ERROR
 
     def test_exception_dict_with_metadata(self) -> None:
         """Test exception dict includes metadata (flattened)."""
@@ -445,10 +463,13 @@ class TestExceptionFactory:
             else:
                 # Convert non-compatible types to string
                 converted_kwargs[key] = FlextRuntime.normalize_to_metadata_value(
-                    str(value)
+                    str(value),
                 )
-        # Type ignore needed: mypy can't infer that **converted_kwargs matches **kwargs
-        error = FlextExceptions.create(message, **converted_kwargs)  # type: ignore[arg-type]
+        # Type narrowing: all values in converted_kwargs are MetadataAttributeValue
+        # create accepts **kwargs: MetadataAttributeValue, but type checker can't infer compatibility
+
+        # Use type: ignore for dynamic kwargs unpacking in tests
+        error = FlextExceptions.create(message, **converted_kwargs)
         assert isinstance(error, expected_type)
 
 
@@ -503,21 +524,21 @@ class TestHierarchicalExceptionSystem:
 
     def test_failure_level_enum_values(self) -> None:
         """Test FailureLevel enum has all required values."""
-        failure_level = FlextConstants.Exceptions.FailureLevel
+        failure_level = c.Exceptions.FailureLevel
         assert all(
             hasattr(failure_level, level) for level in ["STRICT", "WARN", "PERMISSIVE"]
         )
 
     def test_failure_level_string_values(self) -> None:
         """Test FailureLevel enum string values."""
-        failure_level = FlextConstants.Exceptions.FailureLevel
+        failure_level = c.Exceptions.FailureLevel
         assert failure_level.STRICT.value == "strict"
         assert failure_level.WARN.value == "warn"
         assert failure_level.PERMISSIVE.value == "permissive"
 
     def test_failure_level_comparison(self) -> None:
         """Test FailureLevel enum comparison."""
-        failure_level = FlextConstants.Exceptions.FailureLevel
+        failure_level = c.Exceptions.FailureLevel
         # Test enum members are distinct - use str() to avoid Literal type overlap issues
         strict_val: str = str(failure_level.STRICT.value)
         warn_val: str = str(failure_level.WARN.value)
@@ -525,95 +546,6 @@ class TestHierarchicalExceptionSystem:
         assert strict_val != warn_val
         assert warn_val != permissive_val
         assert strict_val == str(failure_level.STRICT.value)
-
-    @pytest.mark.parametrize(
-        ("level_name", "expected_value"),
-        [("STRICT", "strict"), ("WARN", "warn"), ("PERMISSIVE", "permissive")],
-        ids=["strict", "warn", "permissive"],
-    )
-    def test_flext_exception_config_levels(
-        self,
-        level_name: str,
-        expected_value: str,
-    ) -> None:
-        """Test setting and getting global failure level."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-        original_level = config._global_failure_level
-        try:
-            level = getattr(failure_level, level_name)
-            config.set_global_level(level)
-            assert config._global_failure_level == level
-            assert config.get_effective_level() == level
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_flext_exception_config_register_library_level(self) -> None:
-        """Test registering library-specific failure level."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-        config.register_library_exception_level(
-            "test_lib",
-            ValueError,
-            failure_level.WARN,
-        )
-        level = config.get_effective_level(
-            library_name="test_lib",
-            exception_type=ValueError,
-        )
-        assert level == failure_level.WARN
-
-    def test_flext_exception_config_set_container_level(self) -> None:
-        """Test setting container-specific failure level."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-        config.set_container_level("test_container", failure_level.WARN)
-        assert (
-            config.get_effective_level(container_id="test_container")
-            == failure_level.WARN
-        )
-
-    def test_hierarchical_resolution_library_level(self) -> None:
-        """Test hierarchical resolution library-level overrides global."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.PERMISSIVE)
-            config.register_library_exception_level(
-                "test_lib",
-                ValueError,
-                failure_level.WARN,
-            )
-            assert (
-                config.get_effective_level(
-                    library_name="test_lib",
-                    exception_type=ValueError,
-                )
-                == failure_level.WARN
-            )
-            assert config.get_effective_level() == failure_level.PERMISSIVE
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
-
-    def test_hierarchical_resolution_container_level(self) -> None:
-        """Test hierarchical resolution container-level works correctly."""
-        config = FlextExceptions.Configuration
-        failure_level = FlextConstants.Exceptions.FailureLevel
-        original_level = config._global_failure_level
-        try:
-            config.set_global_level(failure_level.PERMISSIVE)
-            config.set_container_level("test_container", failure_level.WARN)
-            assert (
-                config.get_effective_level(container_id="test_container")
-                == failure_level.WARN
-            )
-            assert (
-                config.get_effective_level(container_id="other_container")
-                == failure_level.PERMISSIVE
-            )
-        finally:
-            config.set_global_level(original_level or failure_level.PERMISSIVE)
 
 
 __all__ = [

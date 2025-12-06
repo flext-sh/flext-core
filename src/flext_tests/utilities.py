@@ -1,1880 +1,2024 @@
 """Test utilities for FLEXT ecosystem tests.
 
-Provides comprehensive utility functions, helpers, and patterns for testing
-FLEXT components including Docker operations, result validation, model testing,
-and context management. Includes nested classes for specialized utilities.
-
-Scope: General-purpose test utilities including FlextResult creation/validation,
-Docker compose operations with timeout handling, container management helpers,
-model testing patterns, context managers for temporary attribute changes, and
-test data generation. Supports protocol-based logger integration and generic
-factory pattern testing.
+Provides essential test utilities extending FlextUtilities with test-specific
+helpers for result validation, context management, and test data creation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
 
-import fnmatch
-import threading
-import time
-from collections.abc import Callable, Generator, Mapping, Sequence
+import ast
+import csv
+import hashlib
+import os
+import re
+from collections.abc import Callable, Generator, Mapping, Sized
 from contextlib import contextmanager
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol, TypedDict, TypeVar, overload, runtime_checkable
+from re import Pattern
+from typing import cast
 
-from docker import DockerClient
-from docker.errors import DockerException, NotFound
+from flext_core import (
+    FlextConfig,
+    FlextContext,
+    FlextDispatcher,
+    FlextRegistry,
+    FlextUtilities,
+    T,
+    r,
+    t,
+)
+from flext_tests.constants import c
+from flext_tests.models import m
+from flext_tests.protocols import p
 
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
-from flext_core.utilities import u
-from flext_tests.domains import FlextTestsDomains
-from flext_tests.matchers import FlextTestsMatchers
-from flext_tests.protocols import FlextTestProtocols
-from flext_tests.typings import FlextTestsTypings
-
-TResult = TypeVar("TResult")
-TModel_co = TypeVar("TModel_co", covariant=True)
-TValue = TypeVar("TValue")
-
-
-# Use p.LoggerProtocol for type compatibility with FlextLogger
-# Local alias for convenience in test utilities
-LoggerProtocol = p.LoggerProtocol
+# Type alias for model factory methods
+ModelFactory = Callable[..., T]
 
 
-class FlextTestsUtilities:
-    """Test utilities for FLEXT ecosystem.
+class FlextTestsUtilities(FlextUtilities):
+    """Test utilities for FLEXT ecosystem - extends FlextUtilities.
 
-    Provides helper functions and utilities for testing FLEXT components.
-    Includes generic reusable helpers that replace 10+ lines of duplicated code.
+    Provides essential test helpers that complement FlextUtilities.
+    All FlextUtilities functionality is available via inheritance.
     """
 
-    class GenericHelpers:
-        """Generic reusable helpers that replace duplicated code patterns.
+    class Tests:
+        """Test-specific utilities namespace.
 
-        These helpers consolidate common test patterns that appear 10+ times
-        across the test suite, reducing duplication and improving maintainability.
+        All test utilities organized under u.Tests.* pattern.
         """
 
-        @staticmethod
-        def create_result_from_value[TValue](
-            value: TValue | None,
-            *,
-            default_on_none: TValue | None = None,
-            error_on_none: str | None = None,
-        ) -> r[TValue]:
-            """Create FlextResult from value with standardized None handling.
+        class Result:
+            """Result helpers for test assertions."""
 
-            Replaces 10+ lines of duplicated result creation code.
+            @staticmethod
+            def assert_success[TResult](
+                result: r[TResult],
+                error_msg: str | None = None,
+            ) -> TResult:
+                """Assert result is success and return unwrapped value.
 
-            Args:
-                value: Value to wrap in result
-                default_on_none: Default value if value is None (creates success)
-                error_on_none: Error message if value is None (creates failure)
+                Args:
+                    result: FlextResult to check
+                    error_msg: Optional custom error message
 
-            Returns:
-                FlextResult with value or appropriate default/error
+                Returns:
+                    Unwrapped value from result
 
-            """
-            if value is not None:
-                return r[TValue].ok(value)
-            if default_on_none is not None:
-                return r[TValue].ok(default_on_none)
-            if error_on_none is not None:
-                return r[TValue].fail(error_on_none)
-            return r[TValue].fail("Value is None and no default provided")
+                Raises:
+                    AssertionError: If result is failure
 
-        @staticmethod
-        def extract_mapping_values[TKey, TValue](
-            mapping: Mapping[TKey, TValue],
-            *,
-            keys: Sequence[TKey] | None = None,
-            default: TValue | None = None,
-        ) -> dict[TKey, TValue]:
-            """Extract values from mapping for specified keys.
+                """
+                if not result.is_success:
+                    msg = (
+                        error_msg or f"Expected success but got failure: {result.error}"
+                    )
+                    raise AssertionError(msg)
+                return result.unwrap()
 
-            Replaces 10+ lines of duplicated dict extraction code.
+            @staticmethod
+            def assert_failure[TResult](
+                result: r[TResult],
+                expected_error: str | None = None,
+            ) -> str:
+                """Assert result is failure and return error message.
 
-            Args:
-                mapping: Source mapping to extract from
-                keys: Keys to extract (None = all keys)
-                default: Default value for missing keys
+                Args:
+                    result: FlextResult to check
+                    expected_error: Optional expected error substring
 
-            Returns:
-                Dictionary with extracted key-value pairs
+                Returns:
+                    Error message from result
 
-            """
-            if keys is None:
-                return dict(mapping)
-            result: dict[TKey, TValue] = {}
-            for key in keys:
-                if key in mapping:
-                    result[key] = mapping[key]
-                elif default is not None:
-                    result[key] = default
-            return result
+                Raises:
+                    AssertionError: If result is success
 
-        @staticmethod
-        def validate_model_attributes(
-            instance: p.HasModelDump,
-            *,
-            required_attrs: Sequence[str],
-            optional_attrs: Sequence[str] | None = None,
-        ) -> r[bool]:
-            """Validate model instance has required attributes.
-
-            Replaces 10+ lines of duplicated attribute validation code.
-
-            Args:
-                instance: Model instance to validate
-                required_attrs: Required attribute names
-                optional_attrs: Optional attribute names to check existence
-
-            Returns:
-                FlextResult with True if valid, error message if invalid
-
-            """
-            missing: list[str] = []
-            for attr in required_attrs:
-                if not hasattr(instance, attr):
-                    missing.append(attr)
-                elif getattr(instance, attr, None) is None:
-                    missing.append(f"{attr} (None value)")
-
-            if missing:
-                return r[bool].fail(
-                    f"Missing required attributes: {', '.join(missing)}",
-                )
-
-            if optional_attrs:
-                for attr in optional_attrs:
-                    if not hasattr(instance, attr):
-                        return r[bool].fail(
-                            f"Missing optional attribute: {attr}",
-                        )
-
-            return r[bool].ok(True)
-
-        @staticmethod
-        def create_parametrized_cases[TValue](
-            success_values: Sequence[TValue],
-            failure_errors: Sequence[str],
-            *,
-            error_codes: Sequence[str | None] | None = None,
-        ) -> list[tuple[r[TValue], bool, TValue | None, str | None]]:
-            """Create parametrized test cases from value/error sequences.
-
-            Replaces 10+ lines of duplicated test case creation code.
-
-            Args:
-                success_values: Values for success cases
-                failure_errors: Error messages for failure cases
-                error_codes: Optional error codes for failure cases
-
-            Returns:
-                List of (result, is_success, value, error) tuples for pytest.parametrize
-
-            """
-            cases: list[tuple[r[TValue], bool, TValue | None, str | None]] = []
-
-            for value in success_values:
-                result = r[TValue].ok(value)
-                cases.append((result, True, value, None))
-
-            error_codes_list = error_codes or [None] * len(failure_errors)
-            for error, error_code in zip(
-                failure_errors, error_codes_list, strict=False
-            ):
-                result = r[TValue].fail(error, error_code=error_code)
-                cases.append((result, False, None, error))
-
-            return cases
-
-        @staticmethod
-        def assert_result_chain[TValue](
-            results: Sequence[r[TValue]],
-            *,
-            expected_success_count: int | None = None,
-            expected_failure_count: int | None = None,
-            first_failure_index: int | None = None,
-        ) -> None:
-            """Assert result chain meets expectations.
-
-            Replaces 10+ lines of duplicated chain validation code.
-
-            Args:
-                results: Sequence of results to validate
-                expected_success_count: Expected number of successes
-                expected_failure_count: Expected number of failures
-                first_failure_index: Expected index of first failure (None = no failures)
-
-            Raises:
-                AssertionError: If expectations not met
-
-            """
-            successes = [r for r in results if r.is_success]
-            failures = [r for r in results if r.is_failure]
-
-            if expected_success_count is not None:
-                assert len(successes) == expected_success_count, (
-                    f"Expected {expected_success_count} successes, got {len(successes)}"
-                )
-
-            if expected_failure_count is not None:
-                assert len(failures) == expected_failure_count, (
-                    f"Expected {expected_failure_count} failures, got {len(failures)}"
-                )
-
-            if first_failure_index is not None:
-                actual_first_failure = next(
-                    (i for i, r in enumerate(results) if r.is_failure),
-                    None,
-                )
-                assert actual_first_failure == first_failure_index, (
-                    f"Expected first failure at index {first_failure_index}, "
-                    f"got {actual_first_failure}"
-                )
-            elif first_failure_index is None and failures:
-                actual_first_failure = next(
-                    (i for i, r in enumerate(results) if r.is_failure),
-                    None,
-                )
-                assert actual_first_failure is None, (
-                    f"Expected no failures, but found first failure at index {actual_first_failure}"
-                )
-
-        @staticmethod
-        def create_test_config_mapping(
-            *,
-            base_config: FlextTestsTypings.TestConfigMapping | None = None,
-            overrides: FlextTestsTypings.TestConfigMapping | None = None,
-        ) -> FlextTestsTypings.TestConfigMapping:
-            """Create test configuration mapping with base and overrides.
-
-            Replaces 10+ lines of duplicated config creation code.
-
-            Args:
-                base_config: Base configuration mapping
-                overrides: Configuration overrides
-
-            Returns:
-                Merged configuration mapping
-
-            """
-            if base_config is None:
-                base_config = {}
-            if overrides is None:
-                overrides = {}
-            return {**base_config, **overrides}
-
-        @staticmethod
-        def execute_with_retry_and_timeout[TResult](
-            operation: Callable[[], r[TResult]],
-            *,
-            max_attempts: int = 3,
-            delay_seconds: float = 1.0,
-            timeout_seconds: int | None = None,
-            logger: LoggerProtocol | None = None,
-        ) -> r[TResult]:
-            """Execute operation with retry logic and optional timeout.
-
-            Replaces 15+ lines of duplicated retry/timeout code across test utilities.
-
-            Args:
-                operation: Operation that returns FlextResult
-                max_attempts: Maximum retry attempts (default 3)
-                delay_seconds: Delay between attempts (default 1.0)
-                timeout_seconds: Optional total timeout in seconds
-                logger: Optional logger for retry attempts
-
-            Returns:
-                FlextResult from operation or last failure
-
-            """
-            start_time = time.time()
-            last_error: str | None = None
-
-            for attempt in range(max_attempts):
-                if timeout_seconds is not None:
-                    elapsed = time.time() - start_time
-                    if elapsed >= timeout_seconds:
-                        error_msg = f"Operation timed out after {timeout_seconds}s"
-                        if logger and hasattr(logger, "error"):
-                            logger.error(
-                                error_msg,
-                                timeout=timeout_seconds,
-                                attempts=attempt,
-                            )
-                        return r[TResult].fail(
-                            error_msg
-                            if last_error is None
-                            else f"{error_msg}: {last_error}",
-                        )
-
-                result = operation()
+                """
                 if result.is_success:
-                    if attempt > 0 and logger and hasattr(logger, "info"):
-                        logger.info(
-                            "Operation succeeded after %s attempts",
-                            attempt + 1,
-                            attempts=attempt + 1,
-                        )
-                    return result
-
-                last_error = result.error or "Unknown error"
-                if logger and hasattr(logger, "warning"):
-                    logger.warning(
-                        "Operation failed (attempt %s/%s): %s",
-                        attempt + 1,
-                        max_attempts,
-                        last_error,
-                        attempt=attempt + 1,
-                        max_attempts=max_attempts,
-                        error=last_error,
+                    msg = f"Expected failure but got success: {result.unwrap()}"
+                    raise AssertionError(msg)
+                error = result.error
+                if error is None:
+                    msg = "Expected error but got None"
+                    raise AssertionError(msg)
+                if expected_error and expected_error not in error:
+                    msg = (
+                        f"Expected error containing '{expected_error}' but got: {error}"
                     )
+                    raise AssertionError(msg)
+                return error
 
-                if attempt < max_attempts - 1:
-                    time.sleep(delay_seconds)
+            @staticmethod
+            def assert_success_with_value[T](
+                result: r[T],
+                expected_value: T,
+            ) -> None:
+                """Assert result is success and has expected value.
 
-            error_msg = f"Operation failed after {max_attempts} attempts"
-            if last_error:
-                error_msg = f"{error_msg}: {last_error}"
-            return r[TResult].fail(error_msg)
+                Args:
+                    result: FlextResult to check
+                    expected_value: Expected value
 
-        @staticmethod
-        def validate_config_structure(
-            config: Mapping[str, t.GeneralValueType],
-            *,
-            required_keys: Sequence[str],
-            optional_keys: Sequence[str] | None = None,
-            key_validators: Mapping[str, Callable[[t.GeneralValueType], bool]]
-            | None = None,
-        ) -> r[bool]:
-            """Validate configuration structure with required/optional keys and validators.
+                Raises:
+                    AssertionError: If result is failure or value doesn't match
 
-            Replaces 12+ lines of duplicated config validation code.
+                """
+                if not result.is_success:
+                    msg = f"Expected success, got failure: {result.error}"
+                    raise AssertionError(msg)
+                assert result.value == expected_value
 
-            Args:
-                config: Configuration mapping to validate
-                required_keys: Required key names
-                optional_keys: Optional key names to check existence
-                key_validators: Optional mapping of key names to validator functions
+            @staticmethod
+            def assert_failure_with_error[T](
+                result: r[T],
+                expected_error: str | None = None,
+            ) -> None:
+                """Assert result is failure and has expected error.
 
-            Returns:
-                FlextResult with True if valid, error message if invalid
+                Args:
+                    result: FlextResult to check
+                    expected_error: Optional expected error substring
 
-            """
-            missing_keys = [key for key in required_keys if key not in config]
-            if missing_keys:
-                return r[bool].fail(
-                    f"Missing required config keys: {', '.join(missing_keys)}",
+                Raises:
+                    AssertionError: If result is success or error doesn't match
+
+                """
+                if result.is_success:
+                    msg = f"Expected failure, got success: {result.value}"
+                    raise AssertionError(msg)
+                if expected_error:
+                    assert result.error is not None
+                    assert expected_error in result.error
+
+        class TestContext:
+            """Context managers for tests."""
+
+            @staticmethod
+            @contextmanager
+            def temporary_attribute(
+                target: object,
+                attribute: str,
+                value: t.GeneralValueType,
+            ) -> Generator[None]:
+                """Temporarily set attribute on target object.
+
+                Args:
+                    target: Object to modify
+                    attribute: Attribute name
+                    value: Temporary value
+
+                Yields:
+                    None
+
+                """
+                attribute_existed = hasattr(target, attribute)
+                original_value = (
+                    getattr(target, attribute, None) if attribute_existed else None
                 )
-
-            if optional_keys:
-                for key in optional_keys:
-                    if key not in config:
-                        return r[bool].fail(
-                            f"Missing optional config key: {key}",
-                        )
-
-            if key_validators:
-                for key, validator in key_validators.items():
-                    if key in config:
-                        value = config[key]
-                        if not validator(value):
-                            return r[bool].fail(
-                                f"Validation failed for key '{key}': value {value}",
-                            )
-
-            return r[bool].ok(True)
-
-    @staticmethod
-    @overload
-    def create_test_result[TValue: t.GeneralValueType](
-        *,
-        success: bool = True,
-        data: TValue,
-        error: str | None = None,
-    ) -> r[TValue]: ...
-
-    @staticmethod
-    @overload
-    def create_test_result[TValue: t.GeneralValueType](
-        *,
-        success: bool = True,
-        data: None = None,
-        error: str | None = None,
-    ) -> r[t.GeneralValueType]: ...
-
-    @staticmethod
-    def create_test_result[TValue: t.GeneralValueType](
-        *,
-        success: bool = True,
-        data: TValue | None = None,
-        error: str | None = None,
-    ) -> r[TValue] | r[t.GeneralValueType]:
-        """Create a test FlextResult.
-
-        Args:
-            success: Whether the result should be successful
-            data: Success data (must not be None for success)
-            error: Error message for failure results
-
-        Returns:
-            FlextResult instance
-
-        """
-        if success:
-            # Fast fail: None is not a valid success value
-            if data is None:
-                # Use empty dict as default test data
-                empty_dict: t.GeneralValueType = {}
-                return r[t.GeneralValueType].ok(empty_dict)
-            return r[TValue].ok(data)
-        if data is None:
-            return r[t.GeneralValueType].fail(error or "Test error")
-        return r[TValue].fail(error or "Test error")
-
-    @staticmethod
-    def functional_service(
-        service_type: str = "api",
-        **config: str | int | bool,
-    ) -> t.Types.ConfigurationMapping:
-        """Create a functional service configuration for testing using domains.
-
-        Args:
-            service_type: Type of service
-            **config: Service configuration overrides
-
-        Returns:
-            Service configuration mapping
-
-        """
-        base_config: dict[str, t.GeneralValueType] = {
-            "type": service_type,
-            "name": f"functional_{service_type}_service",
-            "enabled": True,
-            "host": "localhost",
-            "port": 8000,
-            "timeout": 30,
-            "retries": 3,
-        }
-        # Update with config overrides (config is already GeneralValueType compatible)
-        base_config.update(config)
-        return base_config
-
-    @staticmethod
-    @contextmanager
-    def test_context(
-        target: p.HasModelDump,
-        attribute: str,
-        new_value: t.GeneralValueType,
-    ) -> Generator[None]:
-        """Context manager for temporarily changing object attributes.
-
-        Args:
-            target: Object to modify (must support attribute access)
-            attribute: Attribute name to change
-            new_value: New value for the attribute
-
-        Yields:
-            None
-
-        """
-        original_value = getattr(target, attribute, None)
-        attribute_existed = hasattr(target, attribute)
-        setattr(target, attribute, new_value)
-
-        try:
-            yield
-        finally:
-            if attribute_existed:
-                setattr(target, attribute, original_value)
-            else:
-                # Attribute didn't exist originally, remove it
-                delattr(target, attribute)
-
-    class TestUtilities:
-        """Nested class with additional test utilities."""
-
-        @staticmethod
-        def assert_result_success(
-            result: r[TResult] | p.ResultProtocol[TResult],
-        ) -> None:
-            """Assert that a result is successful.
-
-            Args:
-                result: FlextResult or result protocol implementation to check
-
-            Raises:
-                AssertionError: If result is not successful
-
-            """
-            assert result.is_success, f"Expected success result, got: {result}"
-
-        @staticmethod
-        def assert_result_failure(
-            result: r[TResult] | p.ResultProtocol[TResult],
-        ) -> None:
-            """Assert that a result is a failure.
-
-            Args:
-                result: FlextResult or result protocol implementation to check
-
-            Raises:
-                AssertionError: If result is not a failure
-
-            """
-            assert result.is_failure, f"Expected failure result, got: {result}"
-
-        @staticmethod
-        def create_test_service(
-            **methods: Callable[..., t.GeneralValueType],
-        ) -> object:
-            """Create a test service with specified methods.
-
-            Args:
-                **methods: Method implementations for the service
-
-            Returns:
-                Test service instance with specified methods
-
-            Note:
-                Returns object instead of Service protocol because dynamically
-                created classes cannot fully implement the Service protocol
-                without explicit method definitions.
-
-            """
-
-            # Create a real service class dynamically
-            class TestService:
-                """Real test service implementation."""
-
-                def __init__(
-                    self, **method_impls: Callable[..., t.GeneralValueType]
-                ) -> None:
-                    """Initialize test service with method implementations."""
-                    for method_name, implementation in method_impls.items():
-                        setattr(self, method_name, implementation)
-
-            return TestService(**methods)
-
-        @staticmethod
-        def generate_test_id(prefix: str = "test") -> str:
-            """Generate a unique test identifier.
-
-            Args:
-                prefix: Prefix for the identifier
-
-            Returns:
-                Unique test identifier
-
-            """
-            return f"{prefix}_{u.generate('id', length=8)}"
-
-    @staticmethod
-    def create_test_data(
-        size: int = 10,
-        prefix: str = "test",
-        data_type: str = "generic",
-    ) -> dict[str, t.GeneralValueType]:
-        """Create test data dictionary using domains.
-
-        Args:
-            size: Size of the data
-            prefix: Prefix for keys
-            data_type: Type of data to create
-
-        Returns:
-            Test data dictionary
-
-        """
-        data: dict[str, t.GeneralValueType] = {
-            "id": u.generate("uuid"),
-            "name": f"{prefix}_{data_type}",
-            "size": size,
-            "created_at": "2025-01-01T00:00:00Z",
-        }
-
-        if data_type == "user":
-            user_payload = FlextTestsDomains.create_payload("user")
-            # Merge with type-safe updates
-            email_value = user_payload.get("email", f"{prefix}@example.com")
-            active_value = user_payload.get("active", True)
-            if isinstance(email_value, str) and isinstance(active_value, bool):
-                data["email"] = email_value
-                data["active"] = active_value
-        elif data_type == "config":
-            config_data = FlextTestsDomains.create_configuration()
-            # Merge with type-safe updates
-            timeout_value = config_data.get("timeout", 30)
-            if isinstance(timeout_value, (int, float)):
-                data["enabled"] = True
-                data["timeout"] = int(timeout_value)
-
-        return data
-
-    @staticmethod
-    def create_api_response(
-        *,
-        success: bool = True,
-        data: t.GeneralValueType | None = None,
-        error_message: str | None = None,
-    ) -> dict[str, t.GeneralValueType]:
-        """Create API response test data using domains.
-
-        Args:
-            success: Whether the response should be successful
-            data: Response data
-            error_message: Error message for failed responses
-
-        Returns:
-            API response dictionary
-
-        """
-        status_str = "success" if success else "error"
-        base_response = FlextTestsDomains.api_response_data(
-            status=status_str,
-            include_data=data is not None if success else None,
-        )
-
-        # Convert to mutable dict with type-safe updates
-        response_dict: dict[str, t.GeneralValueType] = {
-            key: value
-            for key, value in base_response.items()
-            if isinstance(value, (str, int, float, bool, type(None), Sequence, Mapping))
-        }
-
-        if success and data is not None:
-            response_dict["data"] = data
-        elif not success and error_message:
-            error_dict: Mapping[str, str] = {
-                "code": "TEST_ERROR",
-                "message": error_message,
-            }
-            response_dict["error"] = error_dict
-
-        return response_dict
-
-    @classmethod
-    def utilities(cls) -> FlextTestsUtilities:
-        """Get utilities instance."""
-        return cls()
-
-    @classmethod
-    def assertion(cls) -> FlextTestsMatchers:
-        """Get assertion instance (for compatibility - returns matchers instance)."""
-        return FlextTestsMatchers()
-
-    class ResultHelpers:
-        """Helpers for FlextResult testing."""
-
-        @staticmethod
-        def create_success_result[TValue: t.GeneralValueType](
-            value: TValue,
-        ) -> r[TValue]:
-            """Create a successful FlextResult with given value."""
-            return r[TValue].ok(value)
-
-        @staticmethod
-        def create_failure_result[TValue: t.GeneralValueType](
-            error: str,
-            error_code: str | None = None,
-        ) -> r[TValue]:
-            """Create a failed FlextResult with given error."""
-            return r[TValue].fail(error, error_code=error_code)
-
-        @staticmethod
-        def assert_success_with_value[TValue: t.GeneralValueType](
-            result: r[TValue],
-            expected_value: TValue,
-        ) -> None:
-            """Assert result is success and has expected value."""
-            assert result.is_success, f"Expected success, got failure: {result.error}"
-            assert result.value == expected_value
-
-        @staticmethod
-        def assert_failure_with_error[TValue: t.GeneralValueType](
-            result: r[TValue],
-            expected_error: str | None = None,
-        ) -> None:
-            """Assert result is failure and has expected error."""
-            assert result.is_failure, f"Expected failure, got success: {result.value}"
-            if expected_error:
-                assert result.error is not None
-                assert expected_error in result.error
-
-        @staticmethod
-        def create_test_cases[TValue: t.GeneralValueType](
-            success_cases: list[tuple[TValue, TValue]],
-            failure_cases: list[tuple[str, str | None]],
-        ) -> list[tuple[r[TValue], bool, TValue | None, str | None]]:
-            """Create parametrized test cases for Result testing.
-
-            Args:
-                success_cases: List of (value, expected_value) tuples
-                failure_cases: List of (error, error_code) tuples
-
-            Returns:
-                List of (result, is_success, expected_value, expected_error) tuples
-
-            """
-            cases: list[tuple[r[TValue], bool, TValue | None, str | None]] = []
-            for value, expected in success_cases:
-                result = r[TValue].ok(value)
-                cases.append((result, True, expected, None))
-            for error, error_code in failure_cases:
-                result = r[TValue].fail(error, error_code=error_code)
-                cases.append((result, False, None, error))
-            return cases
-
-        @staticmethod
-        def validate_composition[TValue: t.GeneralValueType](
-            results: list[r[TValue]],
-        ) -> t.Types.ConfigurationMapping:
-            """Validate FlextResult composition patterns.
-
-            Args:
-                results: List of FlextResult instances to analyze
-
-            Returns:
-                Mapping with composition statistics including total_results,
-                success_count, failure_count, success_rate, all_successful,
-                any_successful, error_messages, error_codes, has_structured_errors
-
-            """
-            successes = [r for r in results if r.is_success]
-            failures = [r for r in results if r.is_failure]
-
-            return {
-                "total_results": len(results),
-                "success_count": len(successes),
-                "failure_count": len(failures),
-                "success_rate": len(successes) / len(results) if results else 0.0,
-                "all_successful": all(r.is_success for r in results),
-                "any_successful": any(r.is_success for r in results),
-                "error_messages": [r.error for r in failures if r.error],
-                "error_codes": [r.error_code for r in failures if r.error_code],
-                "has_structured_errors": any(r.error_data for r in failures),
-            }
-
-        @staticmethod
-        def validate_chain[TValue: t.GeneralValueType](
-            results: list[r[TValue]],
-        ) -> t.Types.ConfigurationMapping:
-            """Validate FlextResult chain operations.
-
-            Args:
-                results: List of FlextResult instances in order
-
-            Returns:
-                Mapping with chain statistics including is_valid_chain,
-                chain_length, first_failure_index, successful_operations,
-                failed_operations
-
-            """
-            if not results:
-                return {
-                    "is_valid_chain": True,
-                    "chain_length": 0,
-                    "first_failure_index": None,
-                    "successful_operations": 0,
-                    "failed_operations": 0,
-                }
-
-            first_failure_index = None
-            for i, result in enumerate(results):
-                if result.is_failure:
-                    first_failure_index = i
-                    break
-
-            successful = (
-                first_failure_index if first_failure_index is not None else len(results)
-            )
-
-            return {
-                "is_valid_chain": first_failure_index is None,
-                "chain_length": len(results),
-                "first_failure_index": first_failure_index,
-                "successful_operations": successful,
-                "failed_operations": len(results) - successful,
-            }
-
-        @staticmethod
-        def assert_composition[TValue: t.GeneralValueType](
-            results: list[r[TValue]],
-            expected_success_rate: float = 1.0,
-        ) -> None:
-            """Assert FlextResult composition meets expectations.
-
-            Args:
-                results: List of FlextResult instances
-                expected_success_rate: Minimum expected success rate (0.0-1.0)
-
-            Raises:
-                AssertionError: If success rate is below expected
-
-            """
-            helpers = FlextTestsUtilities.ResultHelpers
-            composition = helpers.validate_composition(results)
-
-            success_rate_value = composition.get("success_rate", 0.0)
-            if not isinstance(success_rate_value, (int, float)):
-                success_rate_value = 0.0
-            success_rate = float(success_rate_value)
-
-            assert success_rate >= expected_success_rate, (
-                f"Success rate {success_rate:.2f} below expected "
-                f"{expected_success_rate:.2f}"
-            )
-
-            if expected_success_rate == 1.0:
-                all_successful = composition.get("all_successful", False)
-                assert all_successful, (
-                    f"Expected all results to be successful, but "
-                    f"{composition.get('failure_count', 0)} failed"
-                )
-
-        @staticmethod
-        def assert_chain_success[TValue: t.GeneralValueType](
-            results: list[r[TValue]],
-        ) -> None:
-            """Assert all results in chain are successful.
-
-            Args:
-                results: List of FlextResult instances
-
-            Raises:
-                AssertionError: If any result in chain fails
-
-            """
-            helpers = FlextTestsUtilities.ResultHelpers
-            chain_info = helpers.validate_chain(results)
-
-            is_valid = chain_info.get("is_valid_chain", False)
-            assert is_valid, (
-                f"Chain failed at index {chain_info.get('first_failure_index')}"
-            )
-
-    class ModelTestHelpers:
-        """Generic helpers for model testing with reusable patterns.
-
-        Provides factory-based testing patterns for Pydantic models
-        and validation testing across the FLEXT ecosystem.
-        """
-
-        @staticmethod
-        def assert_model_creation_success(
-            factory_method: ModelFactory[TResult],
-            expected_attrs: t.Types.ConfigurationMapping,
-            **factory_kwargs: t.GeneralValueType,
-        ) -> TResult:
-            """Assert successful model creation and validate attributes.
-
-            Args:
-                factory_method: Factory method to create the model
-                expected_attrs: Expected attribute values to validate
-                **factory_kwargs: Arguments for the factory method
-
-            Returns:
-                Created model instance
-
-            Raises:
-                AssertionError: If creation fails or attributes don't match
-
-            """
-            instance = factory_method(**factory_kwargs)
-
-            for attr, expected_value in expected_attrs.items():
-                actual_value = getattr(instance, attr)
-                assert actual_value == expected_value, (
-                    f"Attribute '{attr}' mismatch: "
-                    f"expected {expected_value}, got {actual_value}"
-                )
-
-            return instance
-
-        @staticmethod
-        def assert_model_validation_failure(
-            factory_method: ModelFactory[TResult],
-            expected_error_patterns: list[str],
-            **factory_kwargs: t.GeneralValueType,
-        ) -> None:
-            """Assert model creation fails with expected validation errors.
-
-            Args:
-                factory_method: Factory method that should raise ValueError
-                expected_error_patterns: Patterns that should be in error message
-                **factory_kwargs: Arguments for the factory method
-
-            Raises:
-                AssertionError: If validation doesn't fail or error doesn't match
-
-            """
-            try:
-                _ = factory_method(**factory_kwargs)
-                msg = "Expected ValueError but model creation succeeded"
-                raise AssertionError(msg)
-            except ValueError as e:
-                error_msg = str(e)
-                for pattern in expected_error_patterns:
-                    assert pattern in error_msg, (
-                        f"Expected error pattern '{pattern}' not found in: {error_msg}"
-                    )
-
-        @staticmethod
-        def parametrize_model_scenarios(
-            scenarios: Mapping[str, t.Types.ConfigurationMapping],
-        ) -> list[tuple[str, t.Types.ConfigurationMapping]]:
-            """Create parametrized test cases from scenario dictionaries.
-
-            Args:
-                scenarios: Dictionary mapping scenario names to test parameters
-
-            Returns:
-                List of (scenario_name, params) tuples for pytest.mark.parametrize
-
-            """
-            return list(scenarios.items())
-
-        @staticmethod
-        def batch_create_models(
-            factory_method: ModelFactory[TResult],
-            count: int,
-            base_kwargs: t.Types.ConfigurationMapping,
-            variations: list[t.Types.ConfigurationMapping] | None = None,
-        ) -> list[TResult]:
-            """Create a batch of model instances with variations.
-
-            Args:
-                factory_method: Factory method to create models
-                count: Number of instances to create
-                base_kwargs: Base kwargs for all instances
-                variations: Optional list of variation kwargs
-
-            Returns:
-                List of created model instances
-
-            """
-            instances: list[TResult] = []
-            for i in range(count):
-                # Convert Mapping to dict for mutability (copy operation)
-                kwargs = (
-                    dict(base_kwargs)
-                    if isinstance(base_kwargs, Mapping)
-                    else base_kwargs.copy()
-                )
-                if variations:
-                    variation = variations[i % len(variations)]
-                    # Convert variation Mapping to dict if needed
-                    if isinstance(variation, Mapping):
-                        variation = dict(variation)
-                    kwargs.update(variation)
-                instances.append(factory_method(**kwargs))
-            return instances
-
-        @staticmethod
-        def assert_attr_values(
-            instance: p.HasModelDump,
-            expected: t.Types.ConfigurationMapping,
-        ) -> None:
-            """Assert multiple attribute values on an instance.
-
-            Args:
-                instance: Object to check attributes on
-                expected: Dict of attribute names to expected values
-
-            """
-            for attr, expected_value in expected.items():
-                actual = getattr(instance, attr, None)
-                assert actual == expected_value, (
-                    f"Attribute '{attr}': expected {expected_value}, got {actual}"
-                )
-
-        @staticmethod
-        def assert_has_attrs(
-            instance: p.HasModelDump,
-            attrs: list[str],
-        ) -> None:
-            """Assert instance has all specified attributes.
-
-            Args:
-                instance: Object to check
-                attrs: List of attribute names that must exist
-
-            """
-            for attr in attrs:
-                assert hasattr(instance, attr), f"Missing required attribute: {attr}"
-
-    class DockerHelpers:
-        """Generalized helpers for Docker operations to reduce code duplication."""
-
-        @staticmethod
-        def execute_docker_operation[TResult](
-            operation: Callable[[], TResult | None],
-            success_value: TResult,
-            operation_name: str,
-            logger: LoggerProtocol | None = None,
-        ) -> r[TResult]:
-            """Execute Docker operation with standardized error handling.
-
-            Args:
-                operation: Docker operation to execute (may return None)
-                success_value: Value to return on success
-                operation_name: Name of operation for error messages
-                logger: Optional logger for exception logging
-
-            Returns:
-                FlextResult with success value or failure with error
-
-            """
-            try:
-                _ = operation()
-                return r[TResult].ok(success_value)
-            except NotFound as e:
-                error_msg = f"{operation_name} not found: {e}"
-                return r[TResult].fail(error_msg)
-            except DockerException as e:
-                if logger and hasattr(logger, "exception"):
-                    logger.exception(
-                        f"Failed to {operation_name}",
-                        exception=e,
-                    )
-                error_msg = f"Failed to {operation_name}: {e}"
-                return r[TResult].fail(error_msg)
-            except Exception as e:
-                if logger and hasattr(logger, "exception"):
-                    logger.exception(
-                        f"Unexpected error in {operation_name}",
-                        exception=e,
-                    )
-                error_msg = f"Unexpected error in {operation_name}: {e}"
-                return r[TResult].fail(error_msg)
-
-        @staticmethod
-        def validate_container_config(
-            config: dict[str, str | int],
-            required_keys: list[str],
-        ) -> r[dict[str, str | int]]:
-            """Validate container configuration dictionary.
-
-            Args:
-                config: Configuration dictionary to validate
-                required_keys: List of required key names
-
-            Returns:
-                FlextResult with validated config or failure
-
-            """
-            missing_keys = [key for key in required_keys if key not in config]
-            if missing_keys:
-                return r[dict[str, str | int]].fail(
-                    f"Missing required config keys: {', '.join(missing_keys)}",
-                )
-            return r[dict[str, str | int]].ok(config)
-
-        @staticmethod
-        def safe_execute[TResult](
-            operation: Callable[[], TResult],
-            default_value: TResult,
-            error_prefix: str = "Operation",
-            logger: LoggerProtocol | None = None,
-        ) -> TResult:
-            """Execute operation safely, returning default on exception.
-
-            Args:
-                operation: Operation to execute
-                default_value: Value to return on exception
-                error_prefix: Prefix for error logging
-                logger: Optional logger
-
-            Returns:
-                Operation result or default_value on exception
-
-            """
-            try:
-                return operation()
-            except Exception as e:
-                if logger and hasattr(logger, "warning"):
-                    logger.warning(
-                        f"{error_prefix} failed: {e!s}",
-                        error=str(e),
-                    )
-                return default_value
-
-        @staticmethod
-        def get_container_config(
-            container_name: str,
-            shared_containers: t.Types.SharedContainersMapping,
-            registered_configs: Mapping[str, t.Types.ContainerConfigDict],
-        ) -> t.Types.ContainerConfigDict | None:
-            """Get container configuration from shared or registered configs.
-
-            Args:
-                container_name: Name of container to get config for
-                shared_containers: Shared containers configuration mapping
-                registered_configs: Registered private container configs
-
-            Returns:
-                Container config dict or None if not found
-
-            """
-            if container_name in shared_containers:
-                return shared_containers[container_name]
-            if container_name in registered_configs:
-                return registered_configs[container_name]
-            return None
-
-        @staticmethod
-        def resolve_compose_file_path(
-            compose_file: str,
-            workspace_root: Path,
-        ) -> str:
-            """Resolve compose file path (absolute or relative).
-
-            Args:
-                compose_file: Compose file path (absolute or relative)
-                workspace_root: Workspace root directory
-
-            Returns:
-                Resolved absolute compose file path
-
-            """
-            if Path(compose_file).is_absolute():
-                return compose_file
-            return str(workspace_root / compose_file)
-
-        @staticmethod
-        def extract_service_from_config(
-            config: Mapping[str, str | int],
-        ) -> str | None:
-            """Extract service name from container config.
-
-            Args:
-                config: Container configuration dict
-
-            Returns:
-                Service name string or None
-
-            """
-            service_value = config.get("service")
-            if isinstance(service_value, str):
-                return service_value
-            if isinstance(service_value, int):
-                return str(service_value)
-            return None
-
-        class ResourceConfig(TypedDict):
-            """Configuration for Docker resource cleanup operations."""
-
-            resource_type: str
-            list_attr: str
-            remove_attr: str
-            resource_name_attr: str
-
-        @staticmethod
-        def cleanup_docker_resources(
-            client: DockerClient,
-            config: ResourceConfig,
-            *,
-            filter_pattern: str | None = None,
-            logger: LoggerProtocol | None = None,
-        ) -> r[dict[str, int | list[str]]]:
-            """Generalized Docker resource cleanup helper.
-
-            Args:
-                client: Docker client instance
-                config: Resource configuration dict with type and attribute names
-                filter_pattern: Optional glob pattern to filter resources
-                logger: Optional logger instance
-
-            Returns:
-                FlextResult with cleanup statistics
-
-            """
-            resource_type = config["resource_type"]
-            try:
-                removed_items: list[str] = []
-                list_attr = config["list_attr"]
-                remove_attr = config["remove_attr"]
-                resource_name_attr = config["resource_name_attr"]
-
-                resources_api = getattr(client, list_attr, None)
-                if not resources_api:
-                    return r[dict[str, int | list[str]]].ok({
-                        "removed": 0,
-                        resource_type: [],
-                    })
-
-                list_method = getattr(resources_api, "list", None)
-                if not list_method:
-                    return r[dict[str, int | list[str]]].ok({
-                        "removed": 0,
-                        resource_type: [],
-                    })
-
-                all_resources = list_method()
-
-                for resource in all_resources:
-                    resource_name: str = getattr(
-                        resource,
-                        resource_name_attr,
-                        "unknown",
-                    )
-
-                    if filter_pattern and not fnmatch.fnmatch(
-                        resource_name,
-                        filter_pattern,
-                    ):
-                        continue
-
-                    try:
-                        remove_method = getattr(resource, remove_attr, None)
-                        if remove_method:
-                            remove_method(force=True)
-                            removed_items.append(resource_name)
-                            if logger and hasattr(logger, "info"):
-                                # Call with explicit context unpacking
-                                logger.info(
-                                    f"Removed {resource_type}: {resource_name}",
-                                    resource_type=resource_type,
-                                    resource_name=str(resource_name),
-                                )
-                    except Exception as e:
-                        if logger and hasattr(logger, "warning"):
-                            # Use explicit keyword arguments to avoid type confusion
-                            # Pass context as individual keyword arguments
-                            error_msg = str(e)
-                            resource_name_str = str(resource_name)
-                            logger.warning(
-                                f"Failed to remove {resource_type} {resource_name_str}: {error_msg}",
-                                error=error_msg,
-                                resource_type=resource_type,
-                                resource_name=resource_name_str,
-                            )
-
-                return r[dict[str, int | list[str]]].ok({
-                    "removed": len(removed_items),
-                    resource_type: removed_items,
-                })
-
-            except Exception as e:
-                if logger and hasattr(logger, "exception"):
-                    logger.exception(
-                        f"Failed to cleanup {resource_type}s",
-                        exception=e,
-                        resource_type=resource_type,
-                    )
-                return r[dict[str, int | list[str]]].fail(
-                    f"{resource_type.title()} cleanup failed: {e}",
-                )
-
-        @staticmethod
-        def resolve_compose_path(
-            compose_file: str,
-            workspace_root: Path,
-        ) -> Path:
-            """Resolve compose file path (absolute or relative to workspace).
-
-            Args:
-                compose_file: Compose file path (absolute or relative)
-                workspace_root: Workspace root directory
-
-            Returns:
-                Resolved absolute Path to compose file
-
-            """
-            compose_path = Path(compose_file)
-            if not compose_path.is_absolute():
-                compose_path = workspace_root / compose_path
-            return compose_path
-
-        @staticmethod
-        def execute_compose_operation_with_timeout(
-            operation: Callable[[], None],
-            timeout_seconds: int,
-            operation_name: str,
-            compose_file: str,
-            logger: LoggerProtocol | None = None,
-        ) -> r[str]:
-            """Execute docker-compose operation with threading and timeout.
-
-            Args:
-                operation: Compose operation to execute in thread
-                timeout_seconds: Timeout in seconds
-                operation_name: Name of operation for logging
-                compose_file: Compose file path for logging
-                logger: Optional logger instance
-
-            Returns:
-                FlextResult with operation result
-
-            """
-            try:
-                thread_exceptions: list[Exception] = []
-
-                def run_operation() -> None:
-                    try:
-                        operation()
-                    except Exception as e:
-                        thread_exceptions.append(e)
-
-                thread = threading.Thread(target=run_operation, daemon=False)
-                thread.start()
-                thread.join(timeout=timeout_seconds)
-
-                if thread.is_alive():
-                    return r[str].fail(
-                        f"docker compose {operation_name} timed out after {timeout_seconds} seconds",
-                    )
-
-                if thread_exceptions:
-                    raise thread_exceptions[0]
-
-                if logger and hasattr(logger, "info"):
-                    logger.info(
-                        "docker compose %s succeeded",
-                        operation_name,
-                        compose_file=compose_file,
-                    )
-
-                # Return messages that match test expectations
-                if operation_name == "up":
-                    success_msg = f"Compose stack started for {compose_file}"
-                elif operation_name == "down":
-                    success_msg = f"Compose stack stopped for {compose_file}"
-                else:
-                    success_msg = (
-                        f"Compose {operation_name} completed for {compose_file}"
-                    )
-                return r[str].ok(success_msg)
-
-            except Exception as e:
-                error_msg = str(e)
-                if logger and hasattr(logger, "exception"):
-                    logger.exception(
-                        f"docker compose {operation_name} failed: {error_msg}",
-                        exception=e,
-                        compose_file=compose_file,
-                        error=error_msg,
-                    )
-                return r[str].fail(
-                    f"docker compose {operation_name} failed: {error_msg}",
-                )
-
-        @staticmethod
-        def with_compose_file_config(
-            docker_client: (FlextTestProtocols.Docker.ComposeClientProtocol | object),
-            compose_path: Path,
-            operation: Callable[[], None],
-        ) -> None:
-            """Execute operation with compose file configured and restored.
-
-            Args:
-                docker_client: Python-on-whales Docker client
-                compose_path: Path to compose file
-                operation: Operation to execute with compose file configured
-
-            """
-            # Access client_config dynamically using getattr/setattr for type safety
-            client_config = getattr(docker_client, "client_config", None)
-            if client_config is None:
-                operation()
-                return
-
-            original_compose_files = getattr(client_config, "compose_files", None)
-            original_project_directory = getattr(
-                client_config,
-                "compose_project_directory",
-                None,
-            )
-            try:
-                client_config.compose_files = [str(compose_path)]
-                # Set project directory to compose file's parent for correct container matching
-                client_config.compose_project_directory = compose_path.parent
-                operation()
-            finally:
-                if original_compose_files is not None:
-                    client_config.compose_files = original_compose_files
-                if original_project_directory is not None:
-                    client_config.compose_project_directory = original_project_directory
-                else:
-                    # Reset to None if it wasn't set before
-                    client_config.compose_project_directory = None
-
-        @staticmethod
-        def execute_docker_client_operation[TResult, TClient](
-            get_client_fn: Callable[[], TClient],
-            operation: Callable[[TClient], TResult],
-            operation_name: str,
-            success_value: TResult | None = None,
-            logger: LoggerProtocol | None = None,
-        ) -> r[TResult]:
-            """Execute Docker client operation with standardized error handling.
-
-            Args:
-                get_client_fn: Function to get Docker client
-                operation: Operation function that takes client and returns result
-                operation_name: Name of operation for error messages
-                success_value: Value to return on success (if operation returns None)
-                logger: Optional logger instance
-
-            Returns:
-                FlextResult with operation result or failure
-
-            """
-            try:
-                client = get_client_fn()
-                result = operation(client)
-
-                if result is None and success_value is not None:
-                    result = success_value
-                elif result is None:
-                    return r[TResult].fail(
-                        f"{operation_name} returned None",
-                    )
-
-                return r[TResult].ok(result)
-            except NotFound as e:
-                error_msg = f"{operation_name} not found: {e}"
-                return r[TResult].fail(error_msg)
-            except DockerException as e:
-                if logger and hasattr(logger, "exception"):
-                    logger.exception(
-                        f"Failed to {operation_name}",
-                        exception=e,
-                    )
-                error_msg = f"Failed to {operation_name}: {e}"
-                return r[TResult].fail(error_msg)
-            except Exception as e:
-                if logger and hasattr(logger, "exception"):
-                    logger.exception(
-                        f"Unexpected error in {operation_name}",
-                        exception=e,
-                    )
-                error_msg = f"Unexpected error in {operation_name}: {e}"
-                return r[TResult].fail(error_msg)
-
-        @staticmethod
-        def extract_container_info(
-            container: FlextTestProtocols.Docker.ContainerProtocol,
-            container_name: str | None = None,
-        ) -> t.Types.ConfigurationMapping:
-            """Extract container information from Docker container object.
-
-            Args:
-                container: Docker container object
-                container_name: Optional container name (if not available from container object)
-
-            Returns:
-                Dict with container info fields: name, status, image, container_id, ports
-
-            """
-            container_status = getattr(container, "status", "unknown")
-            status_str = "running" if container_status == "running" else "stopped"
-
-            container_image = getattr(container, "image", None)
-            image_tags: list[str] = (
-                container_image.tags
-                if container_image and hasattr(container_image, "tags")
-                else []
-            )
-            image_name: str = image_tags[0] if image_tags else "unknown"
-
-            name_attr = getattr(container, "name", None)
-            name = (
-                container_name
-                if container_name is not None
-                else (str(name_attr) if name_attr is not None else "unknown")
-            )
-
-            container_id = getattr(container, "id", "unknown") or "unknown"
-
-            return {
-                "name": name,
-                "status": status_str,
-                "image": image_name,
-                "container_id": container_id,
-                "ports": {},
-            }
-
-        @staticmethod
-        def parse_env_list_to_dict(env_list: list[str]) -> dict[str, str]:
-            """Parse environment variable list (KEY=VALUE format) to dictionary.
-
-            Args:
-                env_list: List of environment variables in KEY=VALUE format
-
-            Returns:
-                Dict mapping environment variable names to values
-
-            """
-            env_vars: dict[str, str] = {}
-            for env_str in env_list:
-                if "=" in env_str:
-                    key, value = env_str.split("=", 1)
-                    env_vars[key] = value
-            return env_vars
-
-        @staticmethod
-        def extract_container_state(
-            container: FlextTestProtocols.Docker.ContainerProtocol,
-        ) -> FlextTestsTypings.ContainerStateMapping:
-            """Extract container state information from Docker container object.
-
-            Args:
-                container: Docker container object
-
-            Returns:
-                Dict with state fields: running, restarting, health (dict), started_at, exit_code
-
-            """
-            attrs = getattr(container, "attrs", {})
-            state = attrs.get("State", {}) if isinstance(attrs, dict) else {}
-
-            running = state.get("Running", False) if isinstance(state, dict) else False
-            restarting = (
-                state.get("Restarting", False) if isinstance(state, dict) else False
-            )
-            health = state.get("Health", {}) if isinstance(state, dict) else {}
-            started_at = state.get("StartedAt", "") if isinstance(state, dict) else ""
-            exit_code = state.get("ExitCode") if isinstance(state, dict) else None
-
-            return {
-                "running": bool(running),
-                "restarting": bool(restarting),
-                "health": health if isinstance(health, dict) else {},
-                "started_at": str(started_at),
-                "exit_code": exit_code,
-            }
-
-        @staticmethod
-        def get_health_status(
-            health: dict[str, str | int],
-            started_at: str,
-            stuck_threshold_seconds: int = 300,
-        ) -> str:
-            """Determine health status from health dict and start time.
-
-            Args:
-                health: Health dict from container state
-                started_at: Container start time (ISO format)
-                stuck_threshold_seconds: Seconds before considering stuck (default 300)
-
-            Returns:
-                Health status: healthy, unhealthy, starting, stuck, or none
-
-            """
-            if not health:
-                return "none"
-
-            # Convert health values to string for comparison
-            status_raw = health.get("Status")
-            status = str(status_raw) if status_raw is not None else "unknown"
-            if status == "starting" and started_at:
+                setattr(target, attribute, value)
                 try:
-                    started_str = (
-                        started_at.replace("Z", "+00:00")
-                        if started_at.endswith("Z")
-                        else started_at
+                    yield
+                finally:
+                    if attribute_existed:
+                        setattr(target, attribute, original_value)
+                    else:
+                        delattr(target, attribute)
+
+        class Factory:
+            """Factory helpers for test data creation."""
+
+            @staticmethod
+            def create_result[T](
+                value: T | None = None,
+                *,
+                error: str | None = None,
+            ) -> r[T]:
+                """Create FlextResult for tests.
+
+                Args:
+                    value: Value for success result
+                    error: Error message for failure result
+
+                Returns:
+                    FlextResult with value or error
+
+                """
+                if error is not None:
+                    return r[T].fail(error)
+                if value is not None:
+                    return r[T].ok(value)
+                return r[T].fail("No value or error provided")
+
+            @staticmethod
+            def create_test_data(
+                **kwargs: t.GeneralValueType,
+            ) -> t.Types.ConfigurationDict:
+                """Create test data dictionary.
+
+                Args:
+                    **kwargs: Key-value pairs for test data
+
+                Returns:
+                    Configuration dictionary
+
+                """
+                return dict(kwargs)
+
+            # =====================================================================
+            # Operations - Reusable operation factories for testing
+            # =====================================================================
+
+            @staticmethod
+            def simple_operation() -> t.GeneralValueType:
+                """Execute simple operation returning success message.
+
+                Returns:
+                    Success message string from constants.
+
+                """
+                return c.Tests.Factory.SUCCESS_MESSAGE
+
+            @staticmethod
+            def add_operation(
+                a: t.GeneralValueType,
+                b: t.GeneralValueType,
+            ) -> t.GeneralValueType:
+                """Execute add operation for numeric or string values.
+
+                Args:
+                    a: First operand (numeric or string)
+                    b: Second operand (numeric or string)
+
+                Returns:
+                    Sum if both numeric, concatenation otherwise.
+
+                """
+                if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+                    return a + b
+                return str(a) + str(b)
+
+            @staticmethod
+            def format_operation(name: str, value: int = 10) -> str:
+                """Execute format operation returning formatted string.
+
+                Args:
+                    name: Name part of format
+                    value: Value part of format (default: 10)
+
+                Returns:
+                    Formatted string "name: value".
+
+                """
+                return f"{name}: {value}"
+
+            @staticmethod
+            def create_error_operation(
+                error_message: str,
+            ) -> Callable[[], t.GeneralValueType]:
+                """Create callable that raises ValueError.
+
+                Args:
+                    error_message: Error message for ValueError
+
+                Returns:
+                    Callable that raises ValueError when called.
+
+                """
+
+                def error_op() -> t.GeneralValueType:
+                    raise ValueError(error_message)
+
+                return error_op
+
+            @staticmethod
+            def create_type_error_operation(
+                error_message: str,
+            ) -> Callable[[], t.GeneralValueType]:
+                """Create callable that raises TypeError.
+
+                Args:
+                    error_message: Error message for TypeError
+
+                Returns:
+                    Callable that raises TypeError when called.
+
+                """
+
+                def type_error_op() -> t.GeneralValueType:
+                    raise TypeError(error_message)
+
+                return type_error_op
+
+            # =====================================================================
+            # Service execution - Reusable service execution helpers
+            # =====================================================================
+
+            @staticmethod
+            def execute_user_service(
+                overrides: t.Types.ConfigurationDict,
+            ) -> r[t.GeneralValueType]:
+                """Execute user service operation.
+
+                Args:
+                    overrides: Service configuration overrides
+
+                Returns:
+                    FlextResult with user data.
+
+                """
+                user_id = "default_123" if overrides.get("default") else "test_123"
+                user_data: t.GeneralValueType = {
+                    "user_id": user_id,
+                    "email": "test@example.com",
+                }
+                return r[t.GeneralValueType].ok(user_data)
+
+            @staticmethod
+            def execute_complex_service(
+                validation_result: r[bool],
+            ) -> r[t.GeneralValueType]:
+                """Execute complex service operation.
+
+                Args:
+                    validation_result: Result of business rules validation
+
+                Returns:
+                    FlextResult with service data or error.
+
+                """
+                if validation_result.is_failure:
+                    return r[t.GeneralValueType].fail(
+                        validation_result.error or "Validation failed",
                     )
-                    started = datetime.fromisoformat(started_str)
-                    now = datetime.now(UTC)
-                    elapsed = (now - started).total_seconds()
+                result_data: t.GeneralValueType = {"result": "success"}
+                return r[t.GeneralValueType].ok(result_data)
 
-                    if elapsed > stuck_threshold_seconds:
-                        return "stuck"
-                except (ValueError, AttributeError):
-                    pass
+            @staticmethod
+            def execute_default_service(
+                service_type: str,
+            ) -> r[t.GeneralValueType]:
+                """Execute default service operation.
 
-            return str(status)
+                Args:
+                    service_type: Type of service
 
-        @staticmethod
-        def detect_container_state_issues(
-            state: FlextTestsTypings.ContainerStateMapping,
-            container_name: str,
-            stuck_threshold_seconds: int = 300,
-        ) -> list[str]:
-            """Detect issues from container state.
+                Returns:
+                    FlextResult with service type data.
 
-            Args:
-                state: Container state dict from extract_container_state
-                container_name: Container name for logging context
-                stuck_threshold_seconds: Seconds before considering stuck (default 300)
+                """
+                service_data: t.GeneralValueType = {"service_type": service_type}
+                return r[t.GeneralValueType].ok(service_data)
 
-            Returns:
-                List of detected issue messages
+            @staticmethod
+            def generate_id() -> str:
+                """Generate unique ID using FlextUtilities.
 
-            """
-            issues: list[str] = []
-            running = state.get("running", False)
-            restarting = state.get("restarting", False)
-            health = state.get("health", {})
-            started_at = str(state.get("started_at", ""))
-            exit_code = state.get("exit_code")
+                Returns:
+                    Generated UUID string.
 
-            if restarting:
-                issues.append("Container is restarting")
+                """
+                return FlextUtilities.generate()
 
-            if not running:
-                issues.append("Container is stopped")
+            @staticmethod
+            def generate_short_id(length: int = 8) -> str:
+                """Generate short unique ID.
 
-            if health and isinstance(health, dict):
-                health_status = FlextTestsUtilities.DockerHelpers.get_health_status(
-                    health,
-                    started_at,
-                    stuck_threshold_seconds,
+                Args:
+                    length: Length of ID (default: 8)
+
+                Returns:
+                    Generated short ID string.
+
+                """
+                return FlextUtilities.generate("ulid", length=length)
+
+        # Compatibility aliases for existing test code
+        class TestUtilities:
+            """Compatibility alias - use Result instead."""
+
+            @staticmethod
+            def assert_result_success[TResult](
+                result: r[TResult],
+            ) -> None:
+                """Assert result is success - compatibility method."""
+                _ = FlextTestsUtilities.Tests.Result.assert_success(result)
+
+            @staticmethod
+            def assert_result_failure[TResult](
+                result: r[TResult],
+            ) -> None:
+                """Assert result is failure - compatibility method."""
+                _ = FlextTestsUtilities.Tests.Result.assert_failure(result)
+
+        class ResultHelpers:
+            """Result helpers for test creation and assertions."""
+
+            @staticmethod
+            def create_success_result[T](value: T) -> r[T]:
+                """Create a success result with the given value.
+
+                Args:
+                    value: Value for the success result
+
+                Returns:
+                    FlextResult with success and value
+
+                """
+                return r[T].ok(value)
+
+            @staticmethod
+            def create_failure_result(error: str) -> r[object]:
+                """Create a failure result with the given error.
+
+                Args:
+                    error: Error message for the failure result
+
+                Returns:
+                    FlextResult with failure and error
+
+                """
+                return r[object].fail(error)
+
+            @staticmethod
+            def assert_success_with_value[T](
+                result: r[T],
+                expected_value: T,
+            ) -> None:
+                """Assert result is success with expected value (compat)."""
+                FlextTestsUtilities.Tests.Result.assert_success_with_value(
+                    result,
+                    expected_value,
                 )
 
-                if health_status == "unhealthy":
-                    failing_streak = health.get("FailingStreak", 0)
-                    issues.append(f"Container is unhealthy: {failing_streak} failures")
+            @staticmethod
+            def assert_failure_with_error[T](
+                result: r[T],
+                expected_error: str | None = None,
+            ) -> None:
+                """Assert result is failure with expected error (compat)."""
+                FlextTestsUtilities.Tests.Result.assert_failure_with_error(
+                    result,
+                    expected_error,
+                )
 
-                if health_status == "stuck":
-                    issues.append(
-                        f"Container stuck in starting state for >{stuck_threshold_seconds}s",
+            @staticmethod
+            def assert_result_success_and_unwrap[T](result: r[T]) -> T:
+                """Assert result is success and return unwrapped value.
+
+                Args:
+                    result: FlextResult to check and unwrap
+
+                Returns:
+                    The unwrapped value if result is success
+
+                Raises:
+                    AssertionError: If result is not success
+
+                """
+                _ = FlextTestsUtilities.Tests.Result.assert_success(result)
+                return result.unwrap()
+
+            @staticmethod
+            def assert_result_failure_with_error[T](
+                result: r[T],
+                expected_error: str,
+            ) -> None:
+                """Assert result failure with error (compat alias).
+
+                Args:
+                    result: FlextResult to check
+                    expected_error: Expected error substring
+
+                Raises:
+                    AssertionError: If result is not failure or error mismatch
+
+                """
+                FlextTestsUtilities.Tests.Result.assert_failure_with_error(
+                    result,
+                    expected_error,
+                )
+
+        class GenericHelpers:
+            """Generic helpers for test data creation."""
+
+            @staticmethod
+            def create_result_from_value[T](
+                value: T | None,
+                error_on_none: str = "Value cannot be None",
+                default_on_none: T | None = None,
+            ) -> r[T]:
+                """Create result from value, failing if None (unless default).
+
+                Args:
+                    value: Value to wrap in result
+                    error_on_none: Error message if value is None
+                    default_on_none: Default value to use if value is None
+
+                Returns:
+                    FlextResult with success or failure
+
+                """
+                if value is None:
+                    if default_on_none is not None:
+                        return r[T].ok(default_on_none)
+                    return r[T].fail(error_on_none)
+                return r[T].ok(value)
+
+            @staticmethod
+            def validate_model_attributes(
+                model: object,
+                required_attrs: list[str],
+                optional_attrs: list[str] | None = None,
+            ) -> r[bool]:
+                """Validate model has required attributes.
+
+                Args:
+                    model: Model object to validate
+                    required_attrs: List of required attribute names
+                    optional_attrs: Optional list of optional attribute names
+
+                Returns:
+                    FlextResult with True if all required attrs exist
+
+                """
+                missing = [attr for attr in required_attrs if not hasattr(model, attr)]
+                if missing:
+                    return r[bool].fail(f"Missing required attributes: {missing}")
+                return r[bool].ok(True)
+
+            @staticmethod
+            def create_parametrized_cases(
+                success_values: list[t.GeneralValueType],
+                failure_errors: list[str] | None = None,
+                *,
+                error_codes: list[str | None] | None = None,
+            ) -> list[
+                tuple[
+                    r[t.GeneralValueType],
+                    bool,
+                    t.GeneralValueType | None,
+                    str | None,
+                ]
+            ]:
+                """Create parametrized test cases from values and errors.
+
+                Args:
+                    success_values: List of values for success results
+                    failure_errors: Optional list of error messages for failure results
+                    error_codes: Optional list of error codes for failure results
+
+                Returns:
+                    List of tuples (result, is_success, value, error)
+
+                """
+                cases: list[
+                    tuple[
+                        r[t.GeneralValueType],
+                        bool,
+                        t.GeneralValueType | None,
+                        str | None,
+                    ]
+                ] = []
+
+                # Create success cases
+                for value in success_values:
+                    result = r[t.GeneralValueType].ok(value)
+                    cases.append((result, True, value, None))
+
+                # Create failure cases
+                if failure_errors:
+                    codes = error_codes or [None] * len(failure_errors)
+                    for i, error in enumerate(failure_errors):
+                        error_code = codes[i] if i < len(codes) else None
+                        result = r[t.GeneralValueType].fail(
+                            error,
+                            error_code=error_code,
+                        )
+                        cases.append((result, False, None, error))
+
+                return cases
+
+            @staticmethod
+            def assert_result_chain[T](
+                results: list[r[T]],
+                expected_successes: int | None = None,
+                expected_failures: int | None = None,
+                expected_success_count: int | None = None,
+                expected_failure_count: int | None = None,
+                first_failure_index: int | None = None,
+            ) -> None:
+                """Assert result chain has expected success/failure counts.
+
+                Args:
+                    results: List of results to check
+                    expected_successes: Expected number of successes
+                    expected_failures: Expected number of failures
+                    expected_success_count: Alias for expected_successes
+                    expected_failure_count: Alias for expected_failures
+                    first_failure_index: Expected index of first failure (if any)
+
+                Raises:
+                    AssertionError: If counts don't match
+
+                """
+                # Use alias if main param not provided
+                successes_expected = expected_successes or expected_success_count
+                failures_expected = expected_failures or expected_failure_count
+
+                successes = sum(1 for res in results if res.is_success)
+                failures = sum(1 for res in results if res.is_failure)
+
+                if successes_expected is not None:
+                    assert successes == successes_expected, (
+                        f"Expected {successes_expected} successes, got {successes}"
+                    )
+                if failures_expected is not None:
+                    assert failures == failures_expected, (
+                        f"Expected {failures_expected} failures, got {failures}"
                     )
 
-            if exit_code and exit_code != 0:
-                issues.append(f"Container exited with code {exit_code}")
+                # Check first failure index
+                if first_failure_index is not None:
+                    actual_first_failure = next(
+                        (i for i, res in enumerate(results) if res.is_failure),
+                        None,
+                    )
+                    assert actual_first_failure == first_failure_index, (
+                        f"Expected first failure at index {first_failure_index}, "
+                        f"got {actual_first_failure}"
+                    )
+                elif failures == 0:
+                    # Verify no failures when first_failure_index is None
+                    actual_first_failure = next(
+                        (i for i, res in enumerate(results) if res.is_failure),
+                        None,
+                    )
+                    assert actual_first_failure is None, (
+                        f"Expected no failures but found first failure at index "
+                        f"{actual_first_failure}"
+                    )
 
-            return issues
+            @staticmethod
+            def normalize_dict_values_to_lists(
+                data: dict[str, str | None] | None,
+            ) -> dict[str, list[str]]:
+                """Normalize dictionary values to lists.
 
-        @staticmethod
-        def execute_container_stop_operation(
-            container: FlextTestProtocols.Docker.ContainerProtocol,
-            container_name: str,
-            timeout: int = 10,
-            *,
-            force_kill: bool = True,
-            logger: LoggerProtocol | None = None,
-        ) -> r[bool]:
-            """Stop container with graceful fallback to force kill.
+                Converts single values to single-element lists for LDAP attribute
+                compatibility where all values must be list[str].
 
-            Args:
-                container: Docker container object
-                container_name: Container name for logging
-                timeout: Seconds to wait for graceful stop (default 10)
-                force_kill: Whether to force kill if graceful stop fails (default True)
-                logger: Optional logger for operations
+                Args:
+                    data: Dictionary with mixed value types (strings, lists, ec.)
 
-            Returns:
-                FlextResult with True if stopped successfully
+                Returns:
+                    Dictionary with all values as lists of strings
 
-            """
-            try:
-                stop_method = getattr(container, "stop", None)
-                if stop_method:
-                    stop_method(timeout=timeout)
-                    if logger and hasattr(logger, "info"):
-                        logger.info(
-                            "Container %s stopped gracefully",
-                            container_name,
-                            container=container_name,
-                        )
-                    return r[bool].ok(True)
-            except Exception as e:
-                if force_kill:
-                    try:
-                        kill_method = getattr(container, "kill", None)
-                        if kill_method:
-                            kill_method(signal="SIGKILL")
-                            if logger and hasattr(logger, "warning"):
-                                logger.warning(
-                                    "Graceful stop failed for %s, force killed",
-                                    container_name,
-                                    container=container_name,
-                                    error=str(e),
-                                )
-                            return r[bool].ok(True)
-                    except Exception as kill_error:
-                        error_msg = f"Failed to stop/kill container {container_name}: {kill_error}"
-                        if logger and hasattr(logger, "exception"):
-                            logger.exception(
-                                error_msg,
-                                container=container_name,
-                            )
-                        return r[bool].fail(error_msg)
+                """
+                if data is None:
+                    return {}
 
-                error_msg = f"Failed to stop container {container_name}: {e}"
-                if logger and hasattr(logger, "exception"):
-                    logger.exception(error_msg, container=container_name)
-                return r[bool].fail(error_msg)
-
-            return r[bool].fail(
-                f"Container {container_name} has no stop method",
-            )
-
-        @staticmethod
-        def execute_container_remove_operation(
-            container: FlextTestProtocols.Docker.ContainerProtocol,
-            container_name: str,
-            *,
-            force: bool = False,
-            logger: LoggerProtocol | None = None,
-        ) -> r[bool]:
-            """Remove container with optional force flag.
-
-            Args:
-                container: Docker container object
-                container_name: Container name for logging
-                force: Whether to force remove (default False)
-                logger: Optional logger for operations
-
-            Returns:
-                FlextResult with True if removed successfully
-
-            """
-            try:
-                remove_method = getattr(container, "remove", None)
-                if remove_method:
-                    if force:
-                        remove_method(force=True)
+                result: dict[str, list[str]] = {}
+                for key, value in data.items():
+                    if value is None:
+                        result[key] = []
+                    elif u.is_type(value, "list_or_tuple") or isinstance(value, set):
+                        result[key] = [str(v) for v in value]
                     else:
-                        remove_method()
-                    if logger and hasattr(logger, "info"):
-                        logger.info(
-                            "Container %s removed",
-                            container_name,
-                            container=container_name,
-                            force=force,
-                        )
-                    return r[bool].ok(True)
-            except Exception as e:
-                if not force:
-                    # Try force remove as fallback
-                    try:
-                        remove_method = getattr(container, "remove", None)
-                        if remove_method:
-                            remove_method(force=True)
-                            if logger and hasattr(logger, "info"):
-                                logger.info(
-                                    "Container %s force removed",
-                                    container_name,
-                                    container=container_name,
-                                )
-                            return r[bool].ok(True)
-                    except Exception as force_error:
-                        error_msg = f"Failed to remove container {container_name}: {force_error}"
-                        if logger and hasattr(logger, "exception"):
-                            logger.exception(
-                                error_msg,
-                                container=container_name,
-                            )
-                        return r[bool].fail(error_msg)
+                        result[key] = [str(value)]
 
-                error_msg = f"Failed to remove container {container_name}: {e}"
-                if logger and hasattr(logger, "exception"):
-                    logger.exception(error_msg, container=container_name)
-                return r[bool].fail(error_msg)
+                return result
 
-            return r[bool].fail(
-                f"Container {container_name} has no remove method",
-            )
+        class ModelTestHelpers:
+            """Model testing helpers."""
 
-        @staticmethod
-        def _get_container_with_state(
-            client: DockerClient,
-            container_name: str,
-        ) -> tuple[
-            FlextTestProtocols.Docker.ContainerProtocol,
-            FlextTestsTypings.ContainerStateMapping,
-        ]:
-            """Get container and its state for operations.
+            @staticmethod
+            def assert_model_creation_success[TResult](
+                factory_method: ModelFactory[TResult],
+                expected_attrs: t.Types.ConfigurationMapping,
+                **factory_kwargs: t.GeneralValueType,
+            ) -> TResult:
+                """Assert successful model creation and validate attributes.
 
-            Args:
-                client: Docker client object
-                container_name: Name of container
+                Args:
+                    factory_method: Factory method to call
+                    expected_attrs: Expected attributes to validate
+                    **factory_kwargs: Factory method arguments
 
-            Returns:
-                Tuple of (container object, state dict)
+                Returns:
+                    Created model instance
 
-            """
-            containers_api = getattr(client, "containers", None)
-            if containers_api:
-                get_method = getattr(containers_api, "get", None)
-                if get_method:
-                    container = get_method(container_name)
-                    state = FlextTestsUtilities.DockerHelpers.extract_container_state(
-                        container,
+                Raises:
+                    AssertionError: If creation fails or attributes don't match
+
+                """
+                instance = factory_method(**factory_kwargs)
+                for key, expected_value in expected_attrs.items():
+                    actual_value = getattr(instance, key, None)
+                    msg = f"Attr {key}: expected {expected_value}, got {actual_value}"
+                    assert actual_value == expected_value, msg
+                return instance
+
+        class RegistryHelpers:
+            """Registry testing helpers - use FlextRegistry directly when possible."""
+
+            @staticmethod
+            def create_test_registry() -> FlextRegistry:
+                """Create a test registry instance.
+
+                Returns:
+                    New FlextRegistry instance
+
+                """
+                return FlextRegistry()
+
+        class ConfigHelpers:
+            """Config testing helpers - use FlextConfig directly when possible."""
+
+            @staticmethod
+            def create_test_config(
+                **kwargs: t.GeneralValueType,
+            ) -> FlextConfig:
+                """Create a test config instance.
+
+                Args:
+                    **kwargs: Config field values
+
+                Returns:
+                    New FlextConfig instance
+
+                """
+                return FlextConfig(**kwargs)
+
+            @staticmethod
+            def assert_config_fields(
+                config: FlextConfig,
+                expected_fields: t.Types.ConfigurationMapping,
+            ) -> None:
+                """Assert config has expected field values.
+
+                Args:
+                    config: Config instance to check
+                    expected_fields: Expected field values
+
+                Raises:
+                    AssertionError: If fields don't match
+
+                """
+                for key, expected_value in expected_fields.items():
+                    actual_value = getattr(config, key, None)
+                    msg = f"Config {key}: expected {expected_value}, got {actual_value}"
+                    assert actual_value == expected_value, msg
+
+            @staticmethod
+            @contextmanager
+            def env_vars_context(
+                env_vars: t.Types.ConfigurationDict,
+                vars_to_clear: list[str] | None = None,
+            ) -> Generator[None]:
+                """Context manager for temporary environment variable changes.
+
+                Args:
+                    env_vars: Environment variables to set
+                    vars_to_clear: Variables to clear on entry
+
+                Yields:
+                    None
+
+                """
+                original_values: dict[str, str | None] = {}
+
+                # Save and clear specified vars
+                if vars_to_clear:
+                    for var in vars_to_clear:
+                        original_values[var] = os.environ.get(var)
+                        if var in os.environ:
+                            del os.environ[var]
+
+                # Save original values and set new ones
+                for key, value in env_vars.items():
+                    if key not in original_values:
+                        original_values[key] = os.environ.get(key)
+                    os.environ[key] = str(value)
+
+                try:
+                    yield
+                finally:
+                    # Restore original values
+                    for key, original in original_values.items():
+                        if original is None:
+                            if key in os.environ:
+                                del os.environ[key]
+                        else:
+                            os.environ[key] = original
+
+        class ContextHelpers:
+            """Helpers for context testing."""
+
+            @staticmethod
+            def create_test_context() -> FlextContext:
+                """Create a test context instance.
+
+                Returns:
+                    New FlextContext instance
+
+                """
+                return FlextContext()
+
+            @staticmethod
+            def assert_context_get_success(
+                context: FlextContext,
+                key: str,
+                expected_value: t.GeneralValueType,
+            ) -> None:
+                """Assert context get returns expected value.
+
+                Args:
+                    context: FlextContext instance
+                    key: Key to get
+                    expected_value: Expected value
+
+                Raises:
+                    AssertionError: If value doesn't match
+
+                """
+                result = context.get(key)
+                assert result.is_success, (
+                    f"Expected success for key '{key}', got: {result.error}"
+                )
+                assert result.value == expected_value, (
+                    f"Expected {expected_value} for key '{key}', got {result.value}"
+                )
+
+            @staticmethod
+            def clear_context() -> None:
+                """Clear the global context."""
+                FlextContext.Utilities.clear_context()
+
+        class ContainerHelpers:
+            """Helpers for container testing."""
+
+            @staticmethod
+            def create_factory[TFactory](
+                return_value: TFactory,
+            ) -> Callable[[], TFactory]:
+                """Create a factory function that returns a fixed value.
+
+                Args:
+                    return_value: Value to return from factory
+
+                Returns:
+                    Factory function
+
+                """
+
+                def factory() -> TFactory:
+                    return return_value
+
+                return factory
+
+            @staticmethod
+            def create_counting_factory[TFactory](
+                return_value: TFactory,
+            ) -> tuple[Callable[[], TFactory], Callable[[], int]]:
+                """Create a factory that counts invocations.
+
+                Args:
+                    return_value: Value to return from factory
+
+                Returns:
+                    Tuple of (factory function, count getter)
+
+                """
+                count = [0]
+
+                def factory() -> TFactory:
+                    count[0] += 1
+                    return return_value
+
+                def get_count() -> int:
+                    return count[0]
+
+                return factory, get_count
+
+        class HandlerHelpers:
+            """Helpers for handler testing."""
+
+            @staticmethod
+            def create_handler_config(
+                handler_id: str,
+                handler_name: str,
+                handler_type: c.Cqrs.HandlerType | None = None,
+                handler_mode: c.Cqrs.HandlerType | None = None,
+                command_timeout: int | None = None,
+                max_command_retries: int | None = None,
+                metadata: m.Metadata | None = None,
+            ) -> m.Cqrs.Handler:
+                """Create a handler configuration model.
+
+                Args:
+                    handler_id: Handler identifier
+                    handler_name: Handler name
+                    handler_type: Optional handler type (default: COMMAND)
+                    handler_mode: Optional handler mode (default: type or COMMAND)
+                    command_timeout: Optional command timeout in seconds
+                    max_command_retries: Optional max retry count
+                    metadata: Optional handler metadata
+
+                Returns:
+                    Handler configuration model
+
+                """
+                # Default values
+                h_type = handler_type or c.Cqrs.HandlerType.COMMAND
+                h_mode = handler_mode or h_type
+
+                return m.Cqrs.Handler(
+                    handler_id=handler_id,
+                    handler_name=handler_name,
+                    handler_type=h_type,
+                    handler_mode=h_mode,
+                    command_timeout=command_timeout or c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
+                    max_command_retries=max_command_retries
+                    or c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
+                    metadata=metadata,
+                )
+
+        class DispatcherHelpers:
+            """Helpers for dispatcher testing."""
+
+            @staticmethod
+            def create_test_dispatcher(
+                processors: dict[str, p.Application.Processor] | None = None,
+            ) -> FlextDispatcher:
+                """Create a test dispatcher instance with optional processors.
+
+                Args:
+                    processors: Optional dict of processor name -> processor instance
+
+                Returns:
+                    New FlextDispatcher instance with registered processors
+
+                """
+                dispatcher = FlextDispatcher()
+                if processors:
+                    for name, processor in processors.items():
+                        _ = dispatcher.register_processor(name, processor)
+                return dispatcher
+
+            @staticmethod
+            def assert_processor_result(
+                result: r[t.GeneralValueType],
+                *,
+                expected_success: bool = True,
+                expected_value: t.GeneralValueType | None = None,
+                expected_error: str | None = None,
+            ) -> None:
+                """Assert processor result matches expectations.
+
+                Args:
+                    result: FlextResult from processor
+                    expected_success: Whether result should be success
+                    expected_value: Expected value if success
+                    expected_error: Expected error substring if failure
+
+                Raises:
+                    AssertionError: If result doesn't match expectations
+
+                """
+                if expected_success:
+                    assert result.is_success, (
+                        f"Expected success, got failure: {result.error}"
                     )
-                    return (container, state)
-            raise RuntimeError(f"Failed to get container {container_name}")
-
-        @staticmethod
-        def wait_with_retry[T](
-            check_fn: Callable[[], r[T]],
-            max_wait_seconds: int,
-            check_interval_seconds: int = 5,
-            success_condition: Callable[[T], bool] | None = None,
-            logger: LoggerProtocol | None = None,
-        ) -> tuple[bool, T | None, str]:
-            """Execute a check function repeatedly until success or timeout.
-
-            Args:
-                check_fn: Function that returns r[T] to check
-                max_wait_seconds: Maximum seconds to wait
-                check_interval_seconds: Seconds between checks (default 5)
-                success_condition: Optional function to determine if result is successful
-                logger: Optional logger for operations
-
-            Returns:
-                Tuple of (success: bool, result: T | None, error_message: str)
-
-            """
-            start_time = time.time()
-            check_count = 0
-
-            while True:
-                result = check_fn()
-                if result.is_success:
-                    value = result.unwrap()
-                    if success_condition is None or success_condition(value):
-                        if logger and hasattr(logger, "info"):
-                            logger.info(
-                                "Check succeeded after %s attempts",
-                                check_count,
-                                checks=check_count,
-                            )
-                        return (True, value, "")
-                    # Check failed condition - continue waiting
+                    if expected_value is not None:
+                        assert result.value == expected_value, (
+                            f"Expected {expected_value}, got {result.value}"
+                        )
                 else:
-                    # Check function itself failed - continue waiting
-                    pass
-
-                elapsed = time.time() - start_time
-                if elapsed >= max_wait_seconds:
-                    error_msg = (
-                        f"Timeout after {max_wait_seconds}s ({check_count} checks)"
+                    assert result.is_failure, (
+                        f"Expected failure, got success: {result.value}"
                     )
-                    if logger and hasattr(logger, "error"):
-                        logger.error(
-                            error_msg,
-                            max_wait=max_wait_seconds,
-                            checks=check_count,
+                    if expected_error is not None:
+                        assert expected_error in str(result.error), (
+                            f"Expected error '{expected_error}' in '{result.error}'"
                         )
-                    # Return last result value if available, None on failure
-                    last_result = result.unwrap() if result.is_success else None
-                    return (False, last_result, error_msg)
 
-                check_count += 1
-                time.sleep(check_interval_seconds)
+        class ParserHelpers:
+            """Helpers for parser testing."""
+
+            @staticmethod
+            def execute_and_assert_parser_result(
+                operation: Callable[[], r[t.GeneralValueType]],
+                expected_value: t.GeneralValueType | None = None,
+                expected_error: str | None = None,
+                description: str = "",
+            ) -> None:
+                """Execute parser operation and assert result.
+
+                Args:
+                    operation: Callable that returns a FlextResult
+                    expected_value: Expected value on success
+                    expected_error: Expected error substring on failure
+                    description: Test case description for error messages
+
+                """
+                result = operation()
+
+                if expected_error is not None:
+                    assert result.is_failure, (
+                        f"Expected failure for: {description}, got success"
+                    )
+                    m = f"'{expected_error}' not in '{result.error}': {description}"
+                    assert expected_error in str(result.error), m
+                else:
+                    assert result.is_success, (
+                        f"Expected success for: {description}, got: {result.error}"
+                    )
+                    if expected_value is not None:
+                        m = f"Want {expected_value}, got {result.value}: {description}"
+                        assert result.value == expected_value, m
+
+        class TestCaseHelpers:
+            """Helpers for creating test cases."""
+
+            @staticmethod
+            def create_operation_test_case(
+                operation: str,
+                description: str,
+                input_data: t.Types.ConfigurationDict,
+                expected_result: t.GeneralValueType,
+                **kwargs: t.GeneralValueType,
+            ) -> t.Types.ConfigurationDict:
+                """Create a test case dict for operation testing.
+
+                Args:
+                    operation: Operation name
+                    description: Test case description
+                    input_data: Input data for the operation
+                    expected_result: Expected result or type
+                    **kwargs: Additional test case parameters
+
+                Returns:
+                    Test case dictionary
+
+                """
+                result: t.Types.ConfigurationDict = {
+                    "operation": operation,
+                    "description": description,
+                    "input_data": input_data,
+                    "expected_result": expected_result,
+                }
+                result.update(kwargs)
+                return result
+
+            @staticmethod
+            def create_batch_operation_test_cases(
+                operation: str,
+                descriptions: list[str],
+                input_data_list: list[t.Types.ConfigurationDict],
+                expected_results: list[t.GeneralValueType],
+                **common_kwargs: t.GeneralValueType,
+            ) -> list[t.Types.ConfigurationDict]:
+                """Create batch test cases for operation testing.
+
+                Args:
+                    operation: Operation name
+                    descriptions: List of descriptions
+                    input_data_list: List of input data dicts
+                    expected_results: List of expected results
+                    **common_kwargs: Common parameters for all cases
+
+                Returns:
+                    List of test case dictionaries
+
+                """
+                cases: list[t.Types.ConfigurationDict] = []
+                for desc, data, expected in zip(
+                    descriptions,
+                    input_data_list,
+                    expected_results,
+                    strict=True,
+                ):
+                    th = FlextTestsUtilities.Tests.TestCaseHelpers
+                    case = th.create_operation_test_case(
+                        operation=operation,
+                        description=desc,
+                        input_data=data,
+                        expected_result=expected,
+                        **common_kwargs,
+                    )
+                    cases.append(case)
+                return cases
+
+            @staticmethod
+            def execute_and_assert_operation_result(
+                operation: Callable[[], t.GeneralValueType],
+                test_case: t.Types.ConfigurationDict,
+            ) -> None:
+                """Execute operation and assert result.
+
+                Args:
+                    operation: Callable that returns the result
+                    test_case: Test case dict with expected_result
+
+                Raises:
+                    AssertionError: If result doesn't match expectation
+
+                """
+                result = operation()
+                expected = test_case.get("expected_result")
+
+                # Handle type expectations (e.g., int, bool, str)
+                if isinstance(expected, type):
+                    m = f"Want type {expected.__name__}, got {type(result).__name__}"
+                    assert isinstance(result, expected), m
+                else:
+                    assert result == expected, f"Expected {expected}, got {result}"
+
+        class DomainHelpers:
+            """Helpers for domain model testing."""
+
+            @staticmethod
+            def create_test_entity_instance[TEntity](
+                name: str,
+                value: t.GeneralValueType,
+                entity_class: Callable[..., TEntity],
+                *,
+                remove_id: bool = False,
+            ) -> TEntity:
+                """Create a test entity instance.
+
+                Args:
+                    name: Entity name
+                    value: Entity value
+                    entity_class: Entity class or factory callable
+                    remove_id: If True, remove unique_id attribute
+
+                Returns:
+                    Created entity instance
+
+                """
+                entity = entity_class(name=name, value=value)
+                if remove_id and hasattr(entity, "unique_id"):
+                    delattr(entity, "unique_id")
+                return entity
+
+            @staticmethod
+            def create_test_entities_batch[TEntity](
+                names: list[str],
+                values: list[t.GeneralValueType],
+                entity_class: Callable[..., TEntity],
+                remove_ids: list[bool] | None = None,
+            ) -> list[TEntity]:
+                """Create batch of test entities.
+
+                Args:
+                    names: List of entity names
+                    values: List of entity values
+                    entity_class: Entity class to instantiate
+                    remove_ids: List of booleans for ID removal
+
+                Returns:
+                    List of created entities
+
+                """
+                ids_removal = remove_ids or [False] * len(names)
+                entities: list[TEntity] = []
+                for name, value, remove_id in zip(
+                    names,
+                    values,
+                    ids_removal,
+                    strict=True,
+                ):
+                    dh = FlextTestsUtilities.Tests.DomainHelpers
+                    entity = dh.create_test_entity_instance(
+                        name=name,
+                        value=value,
+                        entity_class=entity_class,
+                        remove_id=remove_id,
+                    )
+                    entities.append(entity)
+                return entities
+
+            @staticmethod
+            def create_test_value_object_instance[TValue](
+                data: str,
+                count: int,
+                value_class: Callable[..., TValue],
+            ) -> TValue:
+                """Create a test value object instance.
+
+                Args:
+                    data: Data field value
+                    count: Count field value
+                    value_class: Value object class or factory callable
+
+                Returns:
+                    Created value object instance
+
+                """
+                return value_class(data=data, count=count)
+
+            @staticmethod
+            def create_test_value_objects_batch[TValue](
+                data_list: list[str],
+                count_list: list[int],
+                value_class: Callable[..., TValue],
+            ) -> list[TValue]:
+                """Create batch of test value objects.
+
+                Args:
+                    data_list: List of data values
+                    count_list: List of count values
+                    value_class: Value object class to instantiate
+
+                Returns:
+                    List of created value objects
+
+                """
+                return [
+                    FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
+                        data=data,
+                        count=count,
+                        value_class=value_class,
+                    )
+                    for data, count in zip(data_list, count_list, strict=True)
+                ]
+
+            @staticmethod
+            def execute_domain_operation(
+                operation: str,
+                input_data: t.Types.ConfigurationDict,
+                **kwargs: t.GeneralValueType,
+            ) -> object:
+                """Execute a domain utility operation.
+
+                Args:
+                    operation: Operation name from FlextUtilities.Domain
+                    input_data: Input data dictionary
+                    **kwargs: Additional arguments
+
+                Returns:
+                    Operation result (type depends on operation)
+
+                """
+                op_method = getattr(FlextUtilities.Domain, operation, None)
+                if op_method is None:
+                    msg = f"Unknown operation: {operation}"
+                    raise ValueError(msg)
+
+                # Merge input_data with kwargs
+                all_args = {**input_data, **kwargs}
+                return op_method(**all_args)
+
+        class ExceptionHelpers:
+            """Helpers for exception testing."""
+
+            @staticmethod
+            def create_metadata_object(
+                attributes: t.Types.ConfigurationDict,
+            ) -> t.Types.ConfigurationDict:
+                """Create a metadata object for exceptions.
+
+                Args:
+                    attributes: Metadata attributes
+
+                Returns:
+                    Metadata object with attributes as dict
+
+                """
+                return {"attributes": attributes, **attributes}
+
+        class MapperHelpers:
+            """Helpers for data mapper testing."""
+
+            @staticmethod
+            def execute_mapper_operation(
+                operation: str,
+                input_data: t.Types.ConfigurationDict,
+                **kwargs: t.GeneralValueType,
+            ) -> r[object]:
+                """Execute a mapper utility operation.
+
+                Args:
+                    operation: Operation name from FlextUtilities.Mapper
+                    input_data: Input data dictionary
+                    **kwargs: Additional arguments
+
+                Returns:
+                    FlextResult from mapper operation
+
+                """
+                op_method = getattr(FlextUtilities.Mapper, operation, None)
+                if op_method is None:
+                    msg = f"Unknown operation: {operation}"
+                    raise ValueError(msg)
+
+                all_args = {**input_data, **kwargs}
+                result = op_method(**all_args)
+                # Type narrowing: op_method returns FlextResult
+                if isinstance(result, r):
+                    return result
+                # If operation returns a value directly, wrap it
+                return r[object].ok(result)
+
+        class BadObjects:
+            """Factory for objects that cause errors during testing."""
+
+            class BadModelDump:
+                """Object with model_dump that raises."""
+
+                def model_dump(self) -> t.Types.ConfigurationDict:
+                    """Raise error on model_dump."""
+                    msg = "Bad model_dump"
+                    raise RuntimeError(msg)
+
+            class BadConfig:
+                """Config object that raises on attribute access."""
+
+                def __getattr__(self, name: str) -> t.GeneralValueType:
+                    """Raise error on attribute access."""
+                    msg = f"Bad config: {name}"
+                    raise AttributeError(msg)
+
+            class BadConfigTypeError:
+                """Config object that raises TypeError on attribute access."""
+
+                def __getattr__(self, name: str) -> t.GeneralValueType:
+                    """Raise TypeError on attribute access."""
+                    msg = f"Bad config type: {name}"
+                    raise TypeError(msg)
+
+        class ConstantsHelpers:
+            """Helpers for testing FlextConstants."""
+
+            @staticmethod
+            def get_constant_by_path(path: str) -> object:
+                """Get a constant value by dot-separated path.
+
+                Args:
+                    path: Dot-separated path like "Utilities.MAX_TIMEOUT_SECONDS"
+
+                Returns:
+                    The constant value at the given path
+
+                """
+                parts = path.split(".")
+                current: object = c
+                for part in parts:
+                    current = getattr(current, part)
+                return current
+
+            @staticmethod
+            def compile_pattern(pattern_attr: str) -> Pattern[str]:
+                """Compile a regex pattern from FlextConstants.
+
+                Args:
+                    pattern_attr: Attribute name like "Patterns.EMAIL_REGEX"
+
+                Returns:
+                    Compiled regex pattern
+
+                """
+                parts = pattern_attr.split(".")
+                current: object = c
+                for part in parts:
+                    current = getattr(current, part)
+                pattern_str = str(current)
+                return re.compile(pattern_str, re.IGNORECASE)
+
+        class Assertions:
+            """Common assertion helpers for tests."""
+
+            @staticmethod
+            def assert_result_success(result: r[T]) -> T:
+                """Assert result is success and return value.
+
+                Args:
+                    result: FlextResult to check
+
+                Returns:
+                    The success value
+
+                Raises:
+                    AssertionError: If result is not successful
+
+                """
+                assert result.is_success, (
+                    f"Expected success, got failure: {result.error}"
+                )
+                return result.value
+
+            @staticmethod
+            def assert_result_failure(
+                result: r[T],
+                expected_error: str | None = None,
+            ) -> str:
+                """Assert result is failure and optionally check error message.
+
+                Args:
+                    result: FlextResult to check
+                    expected_error: Optional expected error substring
+
+                Returns:
+                    The error message
+
+                Raises:
+                    AssertionError: If result is not failure or error doesn't match
+
+                """
+                assert result.is_failure, (
+                    f"Expected failure, got success: {result.value}"
+                )
+                error = result.error or ""
+                if expected_error is not None:
+                    assert expected_error in error, (
+                        f"Expected error '{expected_error}' not in '{error}'"
+                    )
+                return error
+
+            @staticmethod
+            def assert_result_failure_with_error(
+                result: r[T],
+                expected_error: str,
+            ) -> None:
+                """Assert result is failure with specific error message.
+
+                Args:
+                    result: FlextResult to check
+                    expected_error: Expected error substring
+
+                Raises:
+                    AssertionError: If result is not failure or error doesn't match
+
+                """
+                _ = FlextTestsUtilities.Tests.Assertions.assert_result_failure(
+                    result,
+                    expected_error,
+                )
+
+            @staticmethod
+            def assert_result_matches_expected(
+                result: t.GeneralValueType,
+                expected_type: type,
+                description: str = "",
+            ) -> None:
+                """Assert result is instance of expected type.
+
+                Args:
+                    result: Value to check
+                    expected_type: Expected type
+                    description: Optional test description for error messages
+
+                Raises:
+                    AssertionError: If result is not instance of expected_type
+
+                """
+                assert isinstance(result, expected_type), (
+                    f"Expected {expected_type.__name__}, got {type(result).__name__}"
+                    f"{f' for {description}' if description else ''}"
+                )
+
+        class Files:
+            """File utilities for test file operations.
+
+            Provides reusable helper functions for file operations that can be
+            used by FlextTestsFiles and other test utilities.
+            """
+
+            @staticmethod
+            def compute_hash(path: Path, chunk_size: int | None = None) -> str:
+                """Compute SHA256 hash of file.
+
+                Args:
+                    path: Path to file
+                    chunk_size: Size of chunks to read (default: from constants)
+
+                Returns:
+                    SHA256 hash as hex string
+
+                """
+                size = chunk_size or c.Tests.Files.HASH_CHUNK_SIZE
+                sha256 = hashlib.sha256()
+                with path.open("rb") as f:
+                    for chunk in iter(lambda: f.read(size), b""):
+                        sha256.update(chunk)
+                return sha256.hexdigest()
+
+            @staticmethod
+            def detect_format(
+                content: str
+                | bytes
+                | Mapping[str, t.GeneralValueType]
+                | list[list[str]],
+                name: str,
+                fmt: str,
+            ) -> str:
+                """Detect file format from content type or filename.
+
+                Args:
+                    content: File content (type determines format)
+                    name: Filename (extension hints format)
+                    fmt: Explicit format override ("auto" for detection)
+
+                Returns:
+                    Detected format string
+
+                """
+                if fmt != c.Tests.Files.Format.AUTO:
+                    return fmt
+
+                # Detect from content type
+                if isinstance(content, bytes):
+                    return c.Tests.Files.Format.BIN
+                if u.is_type(content, "mapping"):
+                    # Check extension for yaml vs json
+                    ext = Path(name).suffix.lower()
+                    if ext in {".yaml", ".yml"}:
+                        return c.Tests.Files.Format.YAML
+                    return c.Tests.Files.Format.JSON
+                # Runtime check needed to distinguish nested sequences from flat sequences
+                if u.is_type(content, "list") and all(
+                    u.is_type(row, "list") for row in content
+                ):
+                    return c.Tests.Files.Format.CSV
+
+                # Detect from extension
+                return c.Tests.Files.get_format(Path(name).suffix)
+
+            @staticmethod
+            def detect_format_from_path(path: Path, fmt: str) -> str:
+                """Detect format from file path.
+
+                Args:
+                    path: File path
+                    fmt: Explicit format override ("auto" for detection)
+
+                Returns:
+                    Detected format string
+
+                """
+                if fmt != c.Tests.Files.Format.AUTO:
+                    return fmt
+                return c.Tests.Files.get_format(path.suffix)
+
+            @staticmethod
+            def write_csv(
+                path: Path,
+                content: str
+                | bytes
+                | Mapping[str, t.GeneralValueType]
+                | list[list[str]],
+                headers: list[str] | None,
+                delimiter: str | None = None,
+                encoding: str | None = None,
+            ) -> None:
+                """Write CSV file.
+
+                Args:
+                    path: File path
+                    content: Content to write (list of rows)
+                    headers: Optional header row
+                    delimiter: CSV delimiter (default: from constants)
+                    encoding: File encoding (default: from constants)
+
+                """
+                delim = delimiter or c.Tests.Files.DEFAULT_CSV_DELIMITER
+                enc = encoding or c.Tests.Files.DEFAULT_ENCODING
+                with path.open("w", newline="", encoding=enc) as f:
+                    writer = csv.writer(f, delimiter=delim)
+                    if headers:
+                        writer.writerow(headers)
+                    if isinstance(content, list):
+                        for row in content:
+                            if isinstance(row, list):
+                                writer.writerow(row)
+
+            @staticmethod
+            def read_csv(
+                path: Path,
+                delimiter: str | None = None,
+                encoding: str | None = None,
+                *,
+                has_headers: bool = True,
+            ) -> list[list[str]]:
+                """Read CSV file.
+
+                Args:
+                    path: File path
+                    delimiter: CSV delimiter (default: from constants)
+                    encoding: File encoding (default: from constants)
+                    has_headers: If True, skip first row (headers)
+
+                Returns:
+                    List of rows (each row is list of strings)
+
+                """
+                delim = delimiter or c.Tests.Files.DEFAULT_CSV_DELIMITER
+                enc = encoding or c.Tests.Files.DEFAULT_ENCODING
+                with path.open(newline="", encoding=enc) as f:
+                    reader = csv.reader(f, delimiter=delim)
+                    rows = list(reader)
+                    if has_headers and rows:
+                        return rows[1:]  # Skip header row
+                    return rows
+
+            @staticmethod
+            def format_size(size: int) -> str:
+                """Format size in human-readable format.
+
+                Delegates to constants.Files.format_size for consistency.
+
+                Args:
+                    size: Size in bytes
+
+                Returns:
+                    Human-readable size string like "1.2 KB"
+
+                """
+                return c.Tests.Files.format_size(size)
+
+            @staticmethod
+            def get_format_from_extension(extension: str) -> str:
+                """Get format from file extension.
+
+                Delegates to constants.Files.get_format for consistency.
+
+                Args:
+                    extension: File extension (e.g., ".json")
+
+                Returns:
+                    Format string or "text" as default
+
+                """
+                return c.Tests.Files.get_format(extension)
+
+        class Validator:
+            """Validator utilities for architecture validation (tv.* methods).
+
+            Provides reusable helper functions for validators. All validators
+            should use these instead of implementing their own versions.
+            """
+
+            @staticmethod
+            def is_approved(
+                rule_id: str,
+                file_path: Path,
+                approved: dict[str, list[str]],
+            ) -> bool:
+                """Check if file is approved for this rule.
+
+                Args:
+                    rule_id: Rule identifier (e.g., "IMPORT-001")
+                    file_path: Path to file being checked
+                    approved: Dict mapping rule IDs to list of approved file patterns
+
+                Returns:
+                    True if file matches any approved pattern for this rule
+
+                """
+                patterns = approved.get(rule_id, [])
+                file_str = str(file_path)
+                return any(re.search(pattern, file_str) for pattern in patterns)
+
+            @staticmethod
+            def create_violation(
+                file_path: Path,
+                line_number: int,
+                rule_id: str,
+                lines: list[str],
+                extra_desc: str = "",
+            ) -> m.Tests.Validator.Violation:
+                """Create a violation model using c.Tests.Validator.Rules.
+
+                Args:
+                    file_path: Path to file with violation
+                    line_number: Line number of violation (1-indexed)
+                    rule_id: Rule identifier (e.g., "IMPORT-001")
+                    lines: File content as list of lines
+                    extra_desc: Optional extra description
+
+                Returns:
+                    Violation model instance
+
+                """
+                severity, desc = c.Tests.Validator.Rules.get(rule_id)
+                description = f"{desc}: {extra_desc}" if extra_desc else desc
+                line = lines[line_number - 1] if line_number <= len(lines) else ""
+                return m.Tests.Validator.Violation(
+                    file_path=file_path,
+                    line_number=line_number,
+                    rule_id=rule_id,
+                    severity=severity,
+                    description=description,
+                    code_snippet=line.strip(),
+                )
+
+            @staticmethod
+            def get_parent(tree: ast.AST, node: ast.AST) -> ast.AST | None:
+                """Get parent node of an AST node.
+
+                Args:
+                    tree: AST tree root
+                    node: Node to find parent of
+
+                Returns:
+                    Parent node or None if not found
+
+                """
+                for parent in ast.walk(tree):
+                    for child in ast.iter_child_nodes(parent):
+                        if child is node:
+                            return parent
+                return None
+
+            @staticmethod
+            def get_exception_names(exc_type: ast.expr) -> set[str]:
+                """Extract exception names from exception type AST node.
+
+                Args:
+                    exc_type: Exception type AST node
+
+                Returns:
+                    Set of exception names found
+
+                """
+                names: set[str] = set()
+                if isinstance(exc_type, ast.Name):
+                    names.add(exc_type.id)
+                elif isinstance(exc_type, ast.Tuple):
+                    for elt in exc_type.elts:
+                        if isinstance(elt, ast.Name):
+                            names.add(elt.id)
+                return names
+
+            @staticmethod
+            def is_any_type(node: ast.expr) -> bool:
+                """Check if an annotation node represents Any type.
+
+                Args:
+                    node: AST annotation node
+
+                Returns:
+                    True if node represents Any type
+
+                """
+                return (
+                    (isinstance(node, ast.Name) and node.id == "Any")
+                    or (isinstance(node, ast.Attribute) and node.attr == "Any")
+                    or (isinstance(node, ast.Constant) and node.value == "Any")
+                )
+
+            @staticmethod
+            def find_line_number(lines: list[str], pattern: str) -> int:
+                """Find line number containing pattern.
+
+                Args:
+                    lines: File content as list of lines
+                    pattern: Pattern to search for
+
+                Returns:
+                    Line number (1-indexed) or 1 if not found
+
+                """
+                for i, line in enumerate(lines, start=1):
+                    if pattern in line:
+                        return i
+                return 1
+
+            @staticmethod
+            def is_only_pass(body: list[ast.stmt]) -> bool:
+                """Check if exception handler body contains only pass or ellipsis.
+
+                Used by BYPASS-003 to detect exception swallowing patterns.
+
+                Args:
+                    body: AST statement list (exception handler body)
+
+                Returns:
+                    True if body contains only pass or ellipsis (...)
+
+                """
+                if len(body) == 1:
+                    stmt = body[0]
+                    if isinstance(stmt, ast.Pass):
+                        return True
+                    # Also check for ellipsis (...)
+                    if (
+                        isinstance(stmt, ast.Expr)
+                        and isinstance(stmt.value, ast.Constant)
+                        and stmt.value.value is ...
+                    ):
+                        return True
+                return False
+
+            @staticmethod
+            def is_real_comment(line: str, pattern: re.Pattern[str]) -> bool:
+                """Check if pattern match is in a real comment, not inside a string.
+
+                Used by validators to avoid false positives from patterns appearing
+                in docstrings or string literals.
+
+                Args:
+                    line: Source code line
+                    pattern: Compiled regex pattern to search
+
+                Returns:
+                    True if pattern appears in real code comment (after #),
+                    not inside a string literal (single/double/triple quoted)
+
+                """
+                match = pattern.search(line)
+                if not match:
+                    return False
+
+                pos = match.start()
+
+                # Track quote state to determine if position is inside string
+                in_single = False
+                in_double = False
+                in_triple_single = False
+                in_triple_double = False
+                i = 0
+                while i < pos:
+                    # Check for triple quotes first
+                    if (
+                        line[i : i + 3] == '"""'
+                        and not in_single
+                        and not in_triple_single
+                    ):
+                        in_triple_double = not in_triple_double
+                        i += 3
+                        continue
+                    if (
+                        line[i : i + 3] == "'''"
+                        and not in_double
+                        and not in_triple_double
+                    ):
+                        in_triple_single = not in_triple_single
+                        i += 3
+                        continue
+                    # Check for single quotes
+                    if (
+                        line[i] == '"'
+                        and not in_single
+                        and not in_triple_single
+                        and not in_triple_double
+                    ):
+                        in_double = not in_double
+                    elif (
+                        line[i] == "'"
+                        and not in_double
+                        and not in_triple_single
+                        and not in_triple_double
+                    ):
+                        in_single = not in_single
+                    i += 1
+
+                # If inside any string, it's not a real comment
+                return not (
+                    in_single or in_double or in_triple_single or in_triple_double
+                )
+
+        class DeepMatch:
+            """Deep structural matching utilities - delegates to u.Mapper.extract().
+
+            Follows FLEXT patterns:
+            - Zero code duplication - delegates to flext-core utilities
+            - Uses t.Tests.Matcher.DeepSpec for type safety
+            - Returns m.Tests.Matcher.DeepMatchResult for structured results
+            - Supports unlimited nesting depth via dot notation
+
+            All operations delegate to FlextUtilities.Mapper.extract() for
+            path extraction, ensuring consistency with flext-core patterns.
+            """
+
+            @staticmethod
+            def match(
+                obj: object,
+                spec: Mapping[str, object | Callable[[object], bool]],
+                *,
+                path_sep: str = ".",
+            ) -> m.Tests.Matcher.DeepMatchResult:
+                """Match object against deep specification.
+
+                Uses u.Mapper.extract() for path extraction - NO code duplication.
+                Supports unlimited nesting depth via dot notation paths.
+
+                Args:
+                    obj: Object to match against (dict, Pydantic model, or object)
+                    spec: DeepSpec mapping of path -> expected value or predicate
+                    path_sep: Path separator (default: ".")
+
+                Returns:
+                    DeepMatchResult with match status and details
+
+                Examples:
+                    result = u.Tests.DeepMatch.match(
+                        data,
+                        {
+                            "user.name": "John",
+                            "user.email": lambda e: "@" in e,
+                            "user.profile.age": 25,
+                        }
+                    )
+                    if not result.matched:
+                        raise AssertionError(f"Failed at {result.path}: {result.reason}")
+
+                """
+                for path, expected in spec.items():
+                    result = FlextUtilities.Mapper.extract(
+                        obj,
+                        path,
+                        separator=path_sep,
+                    )
+                    if result.is_failure:
+                        return m.Tests.Matcher.DeepMatchResult(
+                            path=path,
+                            expected=expected,
+                            actual=None,
+                            matched=False,
+                            reason=f"Path not found: {path}",
+                        )
+
+                    actual = result.unwrap()
+                    if callable(expected):
+                        if not expected(actual):
+                            return m.Tests.Matcher.DeepMatchResult(
+                                path=path,
+                                expected="<predicate>",
+                                actual=actual,
+                                matched=False,
+                                reason="Predicate failed",
+                            )
+                    elif actual != expected:
+                        return m.Tests.Matcher.DeepMatchResult(
+                            path=path,
+                            expected=expected,
+                            actual=actual,
+                            matched=False,
+                            reason="Value mismatch",
+                        )
+
+                return m.Tests.Matcher.DeepMatchResult(
+                    path="",
+                    expected=spec,
+                    actual=obj,
+                    matched=True,
+                )
+
+        class Length:
+            """Length validation utilities - delegates to u.chk().
+
+            Follows FLEXT patterns:
+            - Zero code duplication - delegates to flext-core utilities
+            - Uses t.Tests.Matcher.LengthSpec for type safety
+            - Supports exact length or range validation
+            - Works with any object that has __len__
+
+            All operations delegate to FlextUtilities.chk() for validation,
+            ensuring consistency with flext-core patterns.
+            """
+
+            @staticmethod
+            def validate(
+                value: object,
+                spec: int | tuple[int, int],
+            ) -> bool:
+                """Validate length against spec.
+
+                Uses u.chk() for validation - NO code duplication.
+                Supports exact length (int) or range (tuple[int, int]).
+
+                Args:
+                    value: Value to check length of (must have __len__)
+                    spec: LengthSpec - exact int or (min, max) tuple
+
+                Returns:
+                    True if length matches spec, False otherwise
+
+                Examples:
+                    u.Tests.Length.validate("hello", 5)           # Exact: True
+                    u.Tests.Length.validate([1, 2, 3], (1, 10))  # Range: True
+                    u.Tests.Length.validate("hi", 5)              # Exact: False
+
+                """
+                if not hasattr(value, "__len__"):
+                    return False
+
+                # Type guard: value has __len__ so it's Sized
+                actual_len = len(cast("Sized", value))
+
+                if isinstance(spec, int):
+                    # Delegate to flext-core chk() - zero duplication
+                    return FlextUtilities.chk(actual_len, eq=spec)
+                min_len, max_len = spec
+                # Delegate to flext-core chk() - zero duplication
+                return FlextUtilities.chk(actual_len, gte=min_len, lte=max_len)
 
 
-@runtime_checkable
-class ModelFactory(Protocol[TModel_co]):
-    """Protocol for model factory methods used in testing.
+u = FlextTestsUtilities
 
-    This protocol defines callable objects that create model instances
-    from keyword arguments. Used by ModelTestHelpers for type-safe testing.
-    """
-
-    def __call__(self, **kwargs: t.GeneralValueType) -> TModel_co:
-        """Create a model instance from kwargs."""
-        ...
+__all__ = ["FlextTestsUtilities", "ModelFactory", "u"]

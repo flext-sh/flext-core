@@ -19,8 +19,8 @@ from flext_core import (
     FlextModels,
     FlextRegistry,
     FlextResult,
-    FlextService,
     h,
+    s,
     t,
     u,
 )
@@ -30,14 +30,14 @@ from flext_core import (
 # ═══════════════════════════════════════════════════════════════════
 
 
-class CreateUserCommand(FlextModels.Cqrs.Command):  # type: ignore[misc,valid-type]
+class CreateUserCommand(FlextModels.Cqrs.Command):
     """Create user command."""
 
     name: str
     email: str
 
 
-class UserCreatedEvent(FlextModels.DomainEvent):  # type: ignore[misc,valid-type]
+class UserCreatedEvent(FlextModels.DomainEvent):
     """User created event."""
 
     event_type: str = "user_created"
@@ -48,20 +48,18 @@ class UserCreatedEvent(FlextModels.DomainEvent):  # type: ignore[misc,valid-type
 class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
     """Handler for creating users."""
 
-    def handle(  # noqa: PLR6301  # Required by h interface
-        self, message: CreateUserCommand
-    ) -> FlextResult[UserCreatedEvent]:
+    def handle(self, message: CreateUserCommand) -> FlextResult[UserCreatedEvent]:
         """Handle create user command."""
         user_id = u.Generators.generate_entity_id()
         return FlextResult[UserCreatedEvent].ok(
             UserCreatedEvent(
                 aggregate_id=user_id,
                 name=message.name,
-            )
+            ),
         )
 
 
-class GetUserQuery(FlextModels.Cqrs.Query):  # type: ignore[misc,valid-type]
+class GetUserQuery(FlextModels.Cqrs.Query):
     """Get user query."""
 
     user_id: str
@@ -70,8 +68,9 @@ class GetUserQuery(FlextModels.Cqrs.Query):  # type: ignore[misc,valid-type]
 class GetUserHandler(h[GetUserQuery, t.Types.ServiceMetadataMapping]):
     """Handler for getting users."""
 
-    def handle(  # noqa: PLR6301  # Required by h interface
-        self, message: GetUserQuery
+    def handle(
+        self,
+        message: GetUserQuery,
     ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Handle get user query."""
         return FlextResult[t.Types.ServiceMetadataMapping].ok({
@@ -86,7 +85,7 @@ class GetUserHandler(h[GetUserQuery, t.Types.ServiceMetadataMapping]):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class RegistryDispatcherService(FlextService[t.Types.ServiceMetadataMapping]):
+class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
     def execute(
@@ -133,7 +132,12 @@ class RegistryDispatcherService(FlextService[t.Types.ServiceMetadataMapping]):
 
         # Register single handler
         create_handler = CreateUserHandler()
-        register_result = registry.register_handler(create_handler)  # type: ignore[arg-type]  # Handler types are more specific than object, object
+        # Cast handler to compatible type for registry
+        handler_for_registry = cast(
+            "h[t.GeneralValueType, t.GeneralValueType]",
+            create_handler,
+        )
+        register_result = registry.register_handler(handler_for_registry)
         if register_result.is_success:
             print("✅ Handler registered successfully")
 
@@ -170,7 +174,7 @@ class RegistryDispatcherService(FlextService[t.Types.ServiceMetadataMapping]):
             "h[t.GeneralValueType, t.GeneralValueType]",
             create_handler,
         )
-        registry.register_handler(handler_for_registry)
+        _ = registry.register_handler(handler_for_registry)
 
         # Dispatch command
         command = CreateUserCommand(name="Alice", email="alice@example.com")
@@ -209,8 +213,8 @@ class RegistryDispatcherService(FlextService[t.Types.ServiceMetadataMapping]):
             "h[t.GeneralValueType, t.GeneralValueType]",
             get_handler,
         )
-        registry.register_handler(create_handler_for_registry)
-        registry.register_handler(get_handler_for_registry)
+        _ = registry.register_handler(create_handler_for_registry)
+        _ = registry.register_handler(get_handler_for_registry)
 
         # Dispatch command
         command = CreateUserCommand(name="Bob", email="bob@example.com")

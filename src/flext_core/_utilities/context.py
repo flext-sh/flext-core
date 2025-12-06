@@ -16,7 +16,7 @@ from flext_core._models.context import FlextModelsContext
 from flext_core.typings import t
 
 
-class FlextContext:
+class FlextUtilitiesContext:
     """Context utility helpers for creating and managing context variables."""
 
     @staticmethod
@@ -76,8 +76,8 @@ class FlextContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: dict[str, t.GeneralValueType] | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[dict[str, t.GeneralValueType]]:
+        default: t.Types.ConfigurationDict | None = None,
+    ) -> FlextModelsContext.StructlogProxyContextVar[t.Types.ConfigurationDict]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -88,7 +88,7 @@ class FlextContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[dict[str, t.GeneralValueType]] instance
+            StructlogProxyContextVar[t.Types.ConfigurationDict] instance
 
         Example:
             >>> var = uContext.create_dict_proxy("metadata")
@@ -96,17 +96,15 @@ class FlextContext:
             >>> var.get()  # Returns dict
 
         """
-        return FlextModelsContext.StructlogProxyContextVar[
-            dict[str, t.GeneralValueType]
-        ](
+        return FlextModelsContext.StructlogProxyContextVar[t.Types.ConfigurationDict](
             key,
             default=default,
         )
 
 
-uContext = FlextContext  # noqa: N816
+uContext = FlextUtilitiesContext
 
 __all__ = [
-    "FlextContext",
+    "FlextUtilitiesContext",
     "uContext",
 ]

@@ -12,10 +12,11 @@ import time
 
 import pytest
 
-from flext_core import FlextConstants, FlextLogger
+from flext_core import FlextLogger
+from flext_core.constants import c
 
 # Alias for the LogLevel enum
-FlextLogLevel = FlextConstants.Settings.LogLevel
+FlextLogLevel = c.Settings.LogLevel
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -360,7 +361,9 @@ class TestFlextLoggerUsage:
         assert result_info.is_success, "Info logging with context should succeed"
 
         result_error = logger.error(
-            "Operation failed", error_code="E001", duration_ms=150.5
+            "Operation failed",
+            error_code="E001",
+            duration_ms=150.5,
         )
         assert result_error.is_success, "Error logging with context should succeed"
 
@@ -509,7 +512,8 @@ class TestFlextLoggerIntegration:
         assert result_debug_db.is_success, "Database debug log should succeed"
 
         result_info_db = database_logger.info(
-            "User saved successfully", user_id="user-456"
+            "User saved successfully",
+            user_id="user-456",
         )
         assert result_info_db.is_success, "Database info log should succeed"
 

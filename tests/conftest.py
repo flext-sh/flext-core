@@ -20,11 +20,17 @@ from typing import cast
 
 import pytest
 
-from flext_core.config import FlextConfig
-from flext_core.container import FlextContainer
-from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import (
+    FlextConfig,
+    FlextContainer,
+    FlextContext,
+    FlextResult,
+    FlextRuntime,
+    t,
+)
+
+# Pytest collection configuration - ignore backup directories
+collect_ignore = ["fixtures.bak", "helpers.bak"]
 
 # Suppress pkg_resources deprecation warning from fs package
 warnings.filterwarnings(
@@ -203,6 +209,25 @@ def configured_container(
     _ = clean_container.with_service("config", {"test_mode": True})
     _ = clean_container.with_service("logger", "test_logger")
     return clean_container
+
+
+# =============================================================================
+# CONTEXT FIXTURES - Context Management Testing
+# =============================================================================
+
+
+@pytest.fixture
+def test_context() -> FlextContext:
+    """Provide isolated FlextContext for context management testing.
+
+    Enterprise-grade context fixture ensuring complete test isolation.
+    Each test receives a fresh context with no initial data.
+
+    Returns:
+        FlextContext instance ready for testing
+
+    """
+    return FlextContext()
 
 
 # =============================================================================

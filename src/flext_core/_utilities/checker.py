@@ -13,12 +13,13 @@ from __future__ import annotations
 import inspect
 from typing import cast, get_origin, get_type_hints
 
+from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
-class FlextTypeChecker:
+class FlextUtilitiesChecker:
     """Handler type checking utilities for h complexity reduction.
 
     Extracts type introspection and compatibility logic from h
@@ -26,7 +27,7 @@ class FlextTypeChecker:
     """
 
     @property
-    def logger(self) -> p.StructlogLogger:
+    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -85,7 +86,7 @@ class FlextTypeChecker:
             if origin and origin.__name__ in {"h", "FlextHandlers"}:
                 # Use FlextRuntime.extract_generic_args() from Layer 0.5
                 args = FlextRuntime.extract_generic_args(base)
-                # Accept all type forms: plain types, generic aliases (e.g., dict[str, t.GeneralValueType]),
+                # Accept all type forms: plain types, generic aliases (e.g., t.Types.ConfigurationDict),
                 # and string type references. The _evaluate_type_compatibility method
                 # handles all these forms correctly.
                 if args and args[0] is not None:
@@ -95,13 +96,11 @@ class FlextTypeChecker:
     @classmethod
     def _get_method_signature(
         cls,
-        handle_method: t.HandlerAliases.HandlerCallable,
+        handle_method: t.Handler.HandlerCallable,
     ) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
-            # inspect.signature accepts any callable
-            if not callable(handle_method):
-                return None
+            # HandlerCallable is always callable per type definition
             # Pass directly - inspect.signature accepts any callable
             return inspect.signature(handle_method)
         except (TypeError, ValueError):
@@ -110,9 +109,9 @@ class FlextTypeChecker:
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: t.HandlerAliases.HandlerCallable,
+        handle_method: t.Handler.HandlerCallable,
         handler_class: type,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Types.ConfigurationDict:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(
@@ -127,7 +126,7 @@ class FlextTypeChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: dict[str, t.GeneralValueType],
+        type_hints: t.Types.ConfigurationDict,
         param_name: str,
     ) -> t.Utility.MessageTypeSpecifier | None:
         """Extract message type from parameter hints or annotation."""
@@ -171,7 +170,7 @@ class FlextTypeChecker:
             Message type from handle method or None
 
         """
-        handle_method = getattr(handler_class, "handle", None)
+        handle_method = getattr(handler_class, c.Mixins.METHOD_HANDLE, None)
         if handle_method is None:
             return None
 
@@ -260,15 +259,15 @@ class FlextTypeChecker:
             True if dict compatible, None if not dict types
 
         """
-        # Handle dict/dict[str, t.GeneralValueType] compatibility
-        # If expected is dict or dict[str, t.GeneralValueType], accept dict instances
+        # Handle dict/t.Types.ConfigurationDict compatibility
+        # If expected is dict or t.Types.ConfigurationDict, accept dict instances
         if origin_type is dict and (
             message_origin is dict
             or (isinstance(message_type, type) and issubclass(message_type, dict))
         ):
             return True
 
-        # If message is dict or dict[str, t.GeneralValueType], and expected is also dict-like
+        # If message is dict or t.Types.ConfigurationDict, and expected is also dict-like
         if (
             isinstance(message_type, type)
             and issubclass(message_type, dict)
@@ -381,9 +380,6 @@ class FlextTypeChecker:
             return True
 
 
-uTypeChecker = FlextTypeChecker  # noqa: N816
-
 __all__ = [
-    "FlextTypeChecker",
-    "uTypeChecker",
+    "FlextUtilitiesChecker",
 ]

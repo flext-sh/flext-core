@@ -11,8 +11,8 @@ Tests u.Domain functionality including:
 - Entity ID validation (validate_entity_has_id)
 - Value object immutability validation (validate_value_object_immutable)
 
-Uses Python 3.13 patterns (dataclasses with slots), centralized factory methods,
-and parametrization for DRY testing with full edge case coverage.
+Uses Python 3.13 patterns, FlextTestsUtilities, constants (c), types (t),
+utilities (u), protocols (p), models (m) extensively for maximum code reuse.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,452 +20,473 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
+from typing import cast
 
 import pytest
 
-from flext_core import u
-from tests.fixtures.constants import TestConstants
-from tests.helpers import (
-    BadConfig,
-    BadConfigTypeError,
-    BadModelDump,
-    ComplexValue,
-    DomainTestCase,
-    DomainTestHelpers,
-    DomainTestType,
-    ImmutableObj,
-    MutableObj,
-    NoConfigNoSetattr,
-    NoDict,
-    NoSetattr,
-    SimpleValue,
-)
+from flext_core import p, t, u
+from flext_tests.utilities import FlextTestsUtilities
+from tests.constants import TestsFlextConstants
+from tests.models import TestsFlextModels
 
-# =========================================================================
-# Domain Test Function Type Enumeration
-# =========================================================================
-
-
-class DomainTestFunctionType(StrEnum):
-    """Domain test function types for organization."""
-
-    COMPARE_ENTITIES = "compare_entities"
-    HASH_ENTITY = "hash_entity"
-    COMPARE_VALUES = "compare_value_objects"
-    HASH_VALUE = "hash_value_object"
-    VALIDATE_ENTITY_ID = "validate_entity_has_id"
-    VALIDATE_IMMUTABLE = "validate_value_object_immutable"
+ComplexValue = TestsFlextModels.ComplexValue
+CustomEntity = TestsFlextModels.CustomEntity
+DomainTestEntity = TestsFlextModels.DomainTestEntity
+DomainTestValue = TestsFlextModels.DomainTestValue
+ImmutableObj = TestsFlextModels.ImmutableObj
+MutableObj = TestsFlextModels.MutableObj
+NoConfigNoSetattr = TestsFlextModels.NoConfigNoSetattr
+NoDict = TestsFlextModels.NoDict
+NoSetattr = TestsFlextModels.NoSetattr
+SimpleValue = TestsFlextModels.SimpleValue
 
 
 class TestuDomain:
-    """Comprehensive tests for u.Domain using advanced patterns."""
+    """Comprehensive tests for u.Domain using FlextTestsUtilities and constants extensively."""
 
     # ============================================================================
-    # Factory Methods for Test Cases
+    # Factory Methods for Test Cases - Using Constants Extensively
     # ============================================================================
 
     @staticmethod
-    def create_compare_entities_cases() -> list[DomainTestCase]:
-        """Create test cases for entity comparison."""
-        alice_entity = DomainTestHelpers.create_entity(
-            TestConstants.TestDomain.ENTITY_NAME_ALICE,
-            TestConstants.TestDomain.ENTITY_VALUE_10,
+    def create_compare_entities_cases() -> list[dict[str, t.GeneralValueType]]:
+        """Create test cases for entity comparison using constants."""
+        # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
+        # Create entities using FlextTestsUtilities.Tests.DomainHelpers with batch creation
+        entities = FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
+            names=[
+                TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
+                TestsFlextConstants.TestDomain.ENTITY_NAME_BOB,
+                TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
+            ],
+            values=[
+                TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
+                TestsFlextConstants.TestDomain.ENTITY_VALUE_20,
+                TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
+            ],
+            entity_class=DomainTestEntity,
+            remove_ids=[False, False, True],  # alice_no_id without ID
         )
-        bob_entity = DomainTestHelpers.create_entity(
-            TestConstants.TestDomain.ENTITY_NAME_BOB,
-            TestConstants.TestDomain.ENTITY_VALUE_20,
+        alice_entity, bob_entity, alice_no_id = entities
+        value_obj = (
+            FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
+                data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+                count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
+                value_class=DomainTestValue,
+            )
         )
-        alice_no_id = DomainTestHelpers.create_entity(
-            TestConstants.TestDomain.ENTITY_NAME_ALICE,
-            TestConstants.TestDomain.ENTITY_VALUE_10,
-            with_id=False,
-        )
-        value_obj = DomainTestHelpers.create_value(
-            TestConstants.TestDomain.VALUE_DATA_TEST,
-            TestConstants.TestDomain.VALUE_COUNT_5,
-        )
-        custom1 = DomainTestHelpers.create_custom_entity(
-            TestConstants.TestDomain.CUSTOM_ID_1,
-        )
-        custom2 = DomainTestHelpers.create_custom_entity(
-            TestConstants.TestDomain.CUSTOM_ID_1,
-        )
+        custom1 = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
+        custom2 = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
-        return [
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
-                description="same_id",
-                input_data={"entity1": alice_entity, "entity2": alice_entity},
-                expected_result=True,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
-                description="different_id",
-                input_data={"entity1": alice_entity, "entity2": bob_entity},
-                expected_result=False,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
-                description="different_type",
-                input_data={"entity1": alice_entity, "entity2": value_obj},
-                expected_result=False,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
-                description="no_id",
-                input_data={"entity1": alice_no_id, "entity2": bob_entity},
-                expected_result=False,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_ENTITIES_BY_ID,
-                description="custom_id_attr",
-                input_data={"entity1": custom1, "entity2": custom2},
-                expected_result=True,
-                id_attr="custom_id",
-            ),
-        ]
-
-    @staticmethod
-    def create_hash_entity_cases() -> list[DomainTestCase]:
-        """Create test cases for entity hashing."""
-        alice_entity = DomainTestHelpers.create_entity(
-            TestConstants.TestDomain.ENTITY_NAME_ALICE,
-            TestConstants.TestDomain.ENTITY_VALUE_10,
+        return cast(
+            "list[dict[str, t.GeneralValueType]]",
+            [
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="compare_entities_by_id",
+                    description="same_id",
+                    input_data={"entity_a": alice_entity, "entity_b": alice_entity},
+                    expected_result=True,
+                    id_attr="unique_id",
+                ),
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="compare_entities_by_id",
+                    description="different_id",
+                    input_data={"entity_a": alice_entity, "entity_b": bob_entity},
+                    expected_result=False,
+                    id_attr="unique_id",
+                ),
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="compare_entities_by_id",
+                    description="different_type",
+                    input_data={"entity_a": alice_entity, "entity_b": value_obj},
+                    expected_result=False,
+                    id_attr="unique_id",
+                ),
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="compare_entities_by_id",
+                    description="no_id",
+                    input_data={"entity_a": alice_no_id, "entity_b": bob_entity},
+                    expected_result=False,
+                    id_attr="unique_id",
+                ),
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="compare_entities_by_id",
+                    description="custom_id_attr",
+                    input_data={"entity_a": custom1, "entity_b": custom2},
+                    expected_result=True,
+                    id_attr="custom_id",
+                ),
+            ],
         )
-        alice_no_id = DomainTestHelpers.create_entity(
-            TestConstants.TestDomain.ENTITY_NAME_ALICE,
-            TestConstants.TestDomain.ENTITY_VALUE_10,
-            with_id=False,
-        )
-        custom = DomainTestHelpers.create_custom_entity(
-            TestConstants.TestDomain.CUSTOM_ID_1,
-        )
-
-        return [
-            DomainTestCase(
-                test_type=DomainTestType.HASH_ENTITY_BY_ID,
-                description="with_id",
-                input_data={"entity": alice_entity},
-                expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.HASH_ENTITY_BY_ID,
-                description="no_id",
-                input_data={"entity": alice_no_id},
-                expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.HASH_ENTITY_BY_ID,
-                description="custom_id_attr",
-                input_data={"entity": custom},
-                expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
-                id_attr="custom_id",
-            ),
-        ]
 
     @staticmethod
-    def create_compare_value_objects_cases() -> list[DomainTestCase]:
-        """Create test cases for value object comparison."""
-        value1 = DomainTestHelpers.create_value(
-            TestConstants.TestDomain.VALUE_DATA_TEST,
-            TestConstants.TestDomain.VALUE_COUNT_5,
+    def create_hash_entity_cases() -> list[dict[str, t.GeneralValueType]]:
+        """Create test cases for entity hashing using constants."""
+        # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
+        # Create entities using batch helper
+        entities = FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
+            names=[
+                TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
+                TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
+            ],
+            values=[
+                TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
+                TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
+            ],
+            entity_class=DomainTestEntity,
+            remove_ids=[False, True],  # alice_no_id without ID
         )
-        value2 = DomainTestHelpers.create_value(
-            TestConstants.TestDomain.VALUE_DATA_TEST,
-            TestConstants.TestDomain.VALUE_COUNT_10,
-        )
-        alice_entity = DomainTestHelpers.create_entity(
-            TestConstants.TestDomain.ENTITY_NAME_ALICE,
-            TestConstants.TestDomain.ENTITY_VALUE_10,
-        )
-        simple1 = SimpleValue(TestConstants.TestDomain.VALUE_DATA_TEST)
-        simple2 = SimpleValue(TestConstants.TestDomain.VALUE_DATA_TEST)
-        bad1 = BadModelDump()
-        bad2 = BadModelDump()
-        no_dict1 = NoDict(TestConstants.TestDomain.VALUE_COUNT_5)
-        no_dict2 = NoDict(TestConstants.TestDomain.VALUE_COUNT_5)
+        alice_entity, alice_no_id = entities
+        custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
-        return [
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
-                description="same_values",
-                input_data={"obj1": value1, "obj2": value1},
-                expected_result=True,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
-                description="different_values",
-                input_data={"obj1": value1, "obj2": value2},
-                expected_result=False,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
-                description="different_type",
-                input_data={"obj1": value1, "obj2": alice_entity},
-                expected_result=False,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
-                description="no_model_dump",
-                input_data={"obj1": simple1, "obj2": simple2},
-                expected_result=True,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
-                description="model_dump_exception",
-                input_data={"obj1": bad1, "obj2": bad2},
-                expected_result=bool,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.COMPARE_VALUE_OBJECTS_BY_VALUE,
-                description="no_dict",
-                input_data={"obj1": no_dict1, "obj2": no_dict2},
-                expected_result=True,
-            ),
-        ]
+        return cast(
+            "list[dict[str, t.GeneralValueType]]",
+            [
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="hash_entity_by_id",
+                    description="with_id",
+                    input_data={"entity": alice_entity},
+                    expected_result=int,
+                    id_attr="unique_id",
+                ),
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="hash_entity_by_id",
+                    description="no_id",
+                    input_data={"entity": alice_no_id},
+                    expected_result=int,
+                    id_attr="unique_id",
+                ),
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="hash_entity_by_id",
+                    description="custom_id_attr",
+                    input_data={"entity": custom},
+                    expected_result=int,
+                    id_attr="custom_id",
+                ),
+            ],
+        )
 
     @staticmethod
-    def create_hash_value_object_cases() -> list[DomainTestCase]:
-        """Create test cases for value object hashing."""
-        value_obj = DomainTestHelpers.create_value(
-            TestConstants.TestDomain.VALUE_DATA_TEST,
-            TestConstants.TestDomain.VALUE_COUNT_5,
+    def create_compare_value_objects_cases() -> list[dict[str, t.GeneralValueType]]:
+        """Create test cases for value object comparison using constants."""
+        # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
+        # Create value objects using batch helper
+        value_objs = (
+            FlextTestsUtilities.Tests.DomainHelpers.create_test_value_objects_batch(
+                data_list=[
+                    TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+                    TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+                ],
+                count_list=[
+                    TestsFlextConstants.TestDomain.VALUE_COUNT_5,
+                    TestsFlextConstants.TestDomain.VALUE_COUNT_10,
+                ],
+                value_class=DomainTestValue,
+            )
         )
-        simple_obj = SimpleValue(TestConstants.TestDomain.VALUE_DATA_TEST)
-        bad_obj = BadModelDump()
+        value1, value2 = value_objs
+        alice_entity = (
+            FlextTestsUtilities.Tests.DomainHelpers.create_test_entity_instance(
+                name=TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
+                value=TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
+                entity_class=DomainTestEntity,
+            )
+        )
+        simple1 = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
+        simple2 = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
+        bad1 = FlextTestsUtilities.Tests.BadObjects.BadModelDump()
+        bad2 = FlextTestsUtilities.Tests.BadObjects.BadModelDump()
+        no_dict1 = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
+        no_dict2 = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
+
+        return (
+            FlextTestsUtilities.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+                operation="compare_value_objects_by_value",
+                descriptions=[
+                    "same_values",
+                    "different_values",
+                    "different_type",
+                    "no_model_dump",
+                    "model_dump_exception",
+                    "no_dict",
+                ],
+                input_data_list=[
+                    {"obj_a": value1, "obj_b": value1},
+                    {"obj_a": value1, "obj_b": value2},
+                    {"obj_a": value1, "obj_b": alice_entity},
+                    {"obj_a": simple1, "obj_b": simple2},
+                    {"obj_a": bad1, "obj_b": bad2},
+                    {"obj_a": no_dict1, "obj_b": no_dict2},
+                ],
+                expected_results=[True, False, False, True, bool, True],
+            )
+        )
+
+    @staticmethod
+    def create_hash_value_object_cases() -> list[dict[str, t.GeneralValueType]]:
+        """Create test cases for value object hashing using constants."""
+        # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
+        # Create value object using helper
+        value_obj = (
+            FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
+                data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+                count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
+                value_class=DomainTestValue,
+            )
+        )
+        simple_obj = SimpleValue(TestsFlextConstants.TestDomain.VALUE_DATA_TEST)
+        bad_obj = FlextTestsUtilities.Tests.BadObjects.BadModelDump()
         complex_obj = ComplexValue(
-            TestConstants.TestDomain.VALUE_DATA_TEST,
-            TestConstants.TestDomain.COMPLEX_ITEMS,
+            TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+            TestsFlextConstants.TestDomain.COMPLEX_ITEMS,
         )
-        no_dict_obj = NoDict(TestConstants.TestDomain.VALUE_COUNT_5)
+        no_dict_obj = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
 
-        return [
-            DomainTestCase(
-                test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
-                description="with_model_dump",
-                input_data={"obj": value_obj},
-                expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
-                description="no_model_dump",
-                input_data={"obj": simple_obj},
-                expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
-                description="model_dump_exception",
-                input_data={"obj": bad_obj},
-                expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
-                description="non_hashable_values",
-                input_data={"obj": complex_obj},
-                expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.HASH_VALUE_OBJECT_BY_VALUE,
-                description="no_dict",
-                input_data={"obj": no_dict_obj},
-                expected_result=int,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-        ]
+        return (
+            FlextTestsUtilities.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+                operation="hash_value_object_by_value",
+                descriptions=[
+                    "with_model_dump",
+                    "no_model_dump",
+                    "model_dump_exception",
+                    "non_hashable_values",
+                    "no_dict",
+                ],
+                input_data_list=[
+                    {"obj": value_obj},
+                    {"obj": simple_obj},
+                    {"obj": bad_obj},
+                    {"obj": complex_obj},
+                    {"obj": no_dict_obj},
+                ],
+                expected_results=[int, int, int, int, int],
+            )
+        )
 
     @staticmethod
-    def create_validate_entity_has_id_cases() -> list[DomainTestCase]:
-        """Create test cases for entity ID validation."""
-        alice_entity = DomainTestHelpers.create_entity(
-            TestConstants.TestDomain.ENTITY_NAME_ALICE,
-            TestConstants.TestDomain.ENTITY_VALUE_10,
+    def create_validate_entity_has_id_cases() -> list[dict[str, t.GeneralValueType]]:
+        """Create test cases for entity ID validation using constants."""
+        # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
+        # Create entities using batch helper
+        entities = FlextTestsUtilities.Tests.DomainHelpers.create_test_entities_batch(
+            names=[
+                TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
+                TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
+            ],
+            values=[
+                TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
+                TestsFlextConstants.TestDomain.ENTITY_VALUE_10,
+            ],
+            entity_class=DomainTestEntity,
+            remove_ids=[False, True],  # alice_no_id without ID
         )
-        alice_no_id = DomainTestHelpers.create_entity(
-            TestConstants.TestDomain.ENTITY_NAME_ALICE,
-            TestConstants.TestDomain.ENTITY_VALUE_10,
-            with_id=False,
-        )
-        custom = DomainTestHelpers.create_custom_entity(
-            TestConstants.TestDomain.CUSTOM_ID_1,
-        )
+        alice_entity, alice_no_id = entities
+        custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
-        return [
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_ENTITY_HAS_ID,
-                description="has_id",
-                input_data={"entity": alice_entity},
-                expected_result=True,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_ENTITY_HAS_ID,
-                description="no_id",
-                input_data={"entity": alice_no_id},
-                expected_result=False,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_ENTITY_HAS_ID,
-                description="custom_attr",
-                input_data={"entity": custom},
-                expected_result=True,
-                id_attr="custom_id",
-            ),
-        ]
+        return cast(
+            "list[dict[str, t.GeneralValueType]]",
+            [
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="validate_entity_has_id",
+                    description="has_id",
+                    input_data={"entity": alice_entity},
+                    expected_result=True,
+                    id_attr="unique_id",
+                ),
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="validate_entity_has_id",
+                    description="no_id",
+                    input_data={"entity": alice_no_id},
+                    expected_result=False,
+                    id_attr="unique_id",
+                ),
+                FlextTestsUtilities.Tests.TestCaseHelpers.create_operation_test_case(
+                    operation="validate_entity_has_id",
+                    description="custom_attr",
+                    input_data={"entity": custom},
+                    expected_result=True,
+                    id_attr="custom_id",
+                ),
+            ],
+        )
 
     @staticmethod
-    def create_validate_value_object_immutable_cases() -> list[DomainTestCase]:
-        """Create test cases for value object immutability validation."""
-        value_obj = DomainTestHelpers.create_value(
-            TestConstants.TestDomain.VALUE_DATA_TEST,
-            TestConstants.TestDomain.VALUE_COUNT_5,
+    def create_validate_value_object_immutable_cases() -> list[
+        dict[str, t.GeneralValueType]
+    ]:
+        """Create test cases for immutability validation using constants."""
+        # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
+        # Create value object using helper
+        value_obj = (
+            FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
+                data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
+                count=TestsFlextConstants.TestDomain.VALUE_COUNT_5,
+                value_class=DomainTestValue,
+            )
         )
-        mutable_obj = MutableObj(TestConstants.TestDomain.VALUE_COUNT_5)
-        immutable_obj = ImmutableObj(TestConstants.TestDomain.VALUE_COUNT_5)
-        bad_config_obj = BadConfig()
+        mutable_obj = MutableObj(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
+        immutable_obj = ImmutableObj(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
+        bad_config_obj = FlextTestsUtilities.Tests.BadObjects.BadConfig()
         no_config_obj = NoConfigNoSetattr()
         no_setattr_obj = NoSetattr()
 
-        return [
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
-                description="frozen",
-                input_data={"obj": value_obj},
-                expected_result=True,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
-                description="mutable",
-                input_data={"obj": mutable_obj},
-                expected_result=False,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
-                description="custom_setattr",
-                input_data={"obj": immutable_obj},
-                expected_result=True,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
-                description="config_exception",
-                input_data={"obj": bad_config_obj},
-                expected_result=bool,  # type: ignore[arg-type]  # isinstance check - type used for validation
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
-                description="no_config_no_setattr",
-                input_data={"obj": no_config_obj},
-                expected_result=False,
-            ),
-            DomainTestCase(
-                test_type=DomainTestType.VALIDATE_VALUE_OBJECT_IMMUTABLE,
-                description="no_setattr",
-                input_data={"obj": no_setattr_obj},
-                expected_result=False,
-            ),
-        ]
+        return (
+            FlextTestsUtilities.Tests.TestCaseHelpers.create_batch_operation_test_cases(
+                operation="validate_value_object_immutable",
+                descriptions=[
+                    "frozen",
+                    "mutable",
+                    "custom_setattr",
+                    "config_exception",
+                    "no_config_no_setattr",
+                    "no_setattr",
+                ],
+                input_data_list=[
+                    {"obj": value_obj},
+                    {"obj": mutable_obj},
+                    {"obj": immutable_obj},
+                    {"obj": bad_config_obj},
+                    {"obj": no_config_obj},
+                    {"obj": no_setattr_obj},
+                ],
+                expected_results=[True, False, True, bool, False, False],
+            )
+        )
 
     # ============================================================================
-    # Parametrized Tests
+    # Parametrized Tests - Using FlextTestsUtilities Extensively
     # ============================================================================
 
     @pytest.mark.parametrize(
         "test_case",
         create_compare_entities_cases(),
-        ids=lambda case: f"compare_entities_{case.description}",
+        ids=lambda case: f"compare_entities_{case['description']}",
     )
-    def test_compare_entities_by_id(self, test_case: DomainTestCase) -> None:
-        """Test compare_entities_by_id with various scenarios."""
-        result = DomainTestHelpers.execute_domain_test(test_case)
-        # Business Rule: Check if expected_result is the bool type (not an instance)
-        # Use isinstance check for type comparison
-        if (
-            isinstance(test_case.expected_result, type)
-            and test_case.expected_result is bool
-        ):
-            assert isinstance(result, bool)
-        else:
-            assert result == test_case.expected_result
+    def test_compare_entities_by_id(
+        self,
+        test_case: dict[str, t.GeneralValueType],
+    ) -> None:
+        """Test compare_entities_by_id using FlextTestsUtilities."""
+        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+                cast("str", test_case["operation"]),
+                cast(
+                    "dict[str, t.GeneralValueType | p.Foundation.HasModelDump | object]",
+                    test_case["input_data"],
+                ),
+                id_attr=cast("str", test_case.get("id_attr", "unique_id")),
+            ),
+            cast("dict[str, t.GeneralValueType]", test_case),
+        )
 
     @pytest.mark.parametrize(
         "test_case",
         create_hash_entity_cases(),
-        ids=lambda case: f"hash_entity_{case.description}",
+        ids=lambda case: f"hash_entity_{case['description']}",
     )
-    def test_hash_entity_by_id(self, test_case: DomainTestCase) -> None:
-        """Test hash_entity_by_id with various scenarios."""
-        result = DomainTestHelpers.execute_domain_test(test_case)
-        # expected_result is a type (int) used for isinstance check
-        # pyright: ignore[reportArgumentType] - expected_result is a type for validation
-        assert isinstance(result, test_case.expected_result)  # type: ignore[arg-type]
+    def test_hash_entity_by_id(
+        self,
+        test_case: dict[str, t.GeneralValueType],
+    ) -> None:
+        """Test hash_entity_by_id using FlextTestsUtilities."""
+        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+                cast("str", test_case["operation"]),
+                cast(
+                    "dict[str, t.GeneralValueType | p.Foundation.HasModelDump | object]",
+                    test_case["input_data"],
+                ),
+                id_attr=cast("str", test_case.get("id_attr", "unique_id")),
+            ),
+            cast("dict[str, t.GeneralValueType]", test_case),
+        )
 
     @pytest.mark.parametrize(
         "test_case",
         create_compare_value_objects_cases(),
-        ids=lambda case: f"compare_value_objects_{case.description}",
+        ids=lambda case: f"compare_value_objects_{case['description']}",
     )
-    def test_compare_value_objects_by_value(self, test_case: DomainTestCase) -> None:
-        """Test compare_value_objects_by_value with various scenarios."""
-        result = DomainTestHelpers.execute_domain_test(test_case)
-        # Business Rule: Check if expected_result is the bool type (not an instance)
-        # Use isinstance check for type comparison
-        if (
-            isinstance(test_case.expected_result, type)
-            and test_case.expected_result is bool
-        ):
-            assert isinstance(result, bool)
-        else:
-            assert result == test_case.expected_result
+    def test_compare_value_objects_by_value(
+        self,
+        test_case: dict[str, t.GeneralValueType],
+    ) -> None:
+        """Test compare_value_objects_by_value using FlextTestsUtilities."""
+        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+                cast("str", test_case["operation"]),
+                cast("dict[str, t.GeneralValueType]", test_case["input_data"]),
+            ),
+            test_case,
+        )
 
     @pytest.mark.parametrize(
         "test_case",
         create_hash_value_object_cases(),
-        ids=lambda case: f"hash_value_object_{case.description}",
+        ids=lambda case: f"hash_value_object_{case['description']}",
     )
-    def test_hash_value_object_by_value(self, test_case: DomainTestCase) -> None:
-        """Test hash_value_object_by_value with various scenarios."""
-        result = DomainTestHelpers.execute_domain_test(test_case)
-        # expected_result is a type (int) used for isinstance check
-        # pyright: ignore[reportArgumentType] - expected_result is a type for validation
-        assert isinstance(result, test_case.expected_result)  # type: ignore[arg-type]
+    def test_hash_value_object_by_value(
+        self,
+        test_case: dict[str, t.GeneralValueType],
+    ) -> None:
+        """Test hash_value_object_by_value using FlextTestsUtilities."""
+        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+                cast("str", test_case["operation"]),
+                cast("dict[str, t.GeneralValueType]", test_case["input_data"]),
+            ),
+            test_case,
+        )
 
     @pytest.mark.parametrize(
         "test_case",
         create_validate_entity_has_id_cases(),
-        ids=lambda case: f"validate_entity_has_id_{case.description}",
+        ids=lambda case: f"validate_entity_has_id_{case['description']}",
     )
-    def test_validate_entity_has_id(self, test_case: DomainTestCase) -> None:
-        """Test validate_entity_has_id with various scenarios."""
-        result = DomainTestHelpers.execute_domain_test(test_case)
-        assert result == test_case.expected_result
+    def test_validate_entity_has_id(
+        self,
+        test_case: dict[str, t.GeneralValueType],
+    ) -> None:
+        """Test validate_entity_has_id using FlextTestsUtilities."""
+        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+                cast("str", test_case["operation"]),
+                cast(
+                    "dict[str, t.GeneralValueType | p.Foundation.HasModelDump | object]",
+                    test_case["input_data"],
+                ),
+                id_attr=cast("str", test_case.get("id_attr", "unique_id")),
+            ),
+            cast("dict[str, t.GeneralValueType]", test_case),
+        )
 
     @pytest.mark.parametrize(
         "test_case",
         create_validate_value_object_immutable_cases(),
-        ids=lambda case: f"validate_value_object_immutable_{case.description}",
+        ids=lambda case: f"validate_value_object_immutable_{case['description']}",
     )
-    def test_validate_value_object_immutable(self, test_case: DomainTestCase) -> None:
-        """Test validate_value_object_immutable with various scenarios."""
-        result = DomainTestHelpers.execute_domain_test(test_case)
-        # Business Rule: Check if expected_result is the bool type (not an instance)
-        # Use isinstance check for type comparison
-        if (
-            isinstance(test_case.expected_result, type)
-            and test_case.expected_result is bool
-        ):
-            assert isinstance(result, bool)
-        else:
-            assert result == test_case.expected_result
+    def test_validate_value_object_immutable(
+        self,
+        test_case: dict[str, t.GeneralValueType],
+    ) -> None:
+        """Test validate_value_object_immutable using FlextTestsUtilities."""
+        FlextTestsUtilities.Tests.TestCaseHelpers.execute_and_assert_operation_result(
+            lambda: FlextTestsUtilities.Tests.DomainHelpers.execute_domain_operation(
+                cast("str", test_case["operation"]),
+                cast("dict[str, t.GeneralValueType]", test_case["input_data"]),
+            ),
+            test_case,
+        )
 
     # ============================================================================
     # Special Cases Not Covered by Parametrized Tests
     # ============================================================================
 
     def test_validate_immutable_config_type_error(self) -> None:
-        """Test validation with config that raises TypeError (special exception handling)."""
-        obj = BadConfigTypeError()
+        """Test validation with config that raises TypeError using u.Domain directly."""
+        obj = FlextTestsUtilities.Tests.BadObjects.BadConfigTypeError()
         try:
-            # BadConfigTypeError is compatible at runtime but not statically
-            # pyright: ignore[reportArgumentType] - obj is compatible at runtime
-            result = u.Domain.validate_value_object_immutable(obj)  # type: ignore[arg-type]
+            obj_value = cast("t.GeneralValueType", obj)
+            result = u.Domain.validate_value_object_immutable(obj_value)
             assert isinstance(result, bool)
         except TypeError:
             # Exception propagation is also acceptable for coverage

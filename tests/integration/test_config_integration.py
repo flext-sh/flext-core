@@ -250,7 +250,7 @@ class TestFlextConfigSingletonIntegration:
             # Verify file was created with correct content
             assert config_file_path.exists()
             assert config_file_path.read_text(encoding="utf-8") == json.dumps(
-                config_data
+                config_data,
             )
 
             # Get config using singleton API (should load from JSON)

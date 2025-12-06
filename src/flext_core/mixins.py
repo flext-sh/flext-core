@@ -14,25 +14,51 @@ import threading
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager, suppress
 from functools import partial
-from typing import ClassVar, TypeVar, cast
+from typing import ClassVar, cast
 
 from pydantic import BaseModel
 
-from flext_core.config import FlextConfig
-from flext_core.constants import FlextConstants
-from flext_core.container import FlextContainer
-from flext_core.context import FlextContext
+from flext_core.config import FlextConfig  # For instantiation only
+from flext_core.constants import c
+from flext_core.container import FlextContainer  # For instantiation only
+from flext_core.context import FlextContext  # For instantiation only
 from flext_core.loggings import FlextLogger
-from flext_core.protocols import FlextProtocols
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
+from flext_core.typings import t
+from flext_core.utilities import u
 
-c = FlextConstants
-p = FlextProtocols
-t = FlextTypes
-u = FlextUtilities
+# =============================================================================
+# DRY HELPER FUNCTIONS (Python 3.13 PEP 695)
+# =============================================================================
+
+
+def require_initialized[T](value: T | None, name: str) -> T:
+    """Guard function that raises RuntimeError if value is None.
+
+    Eliminates repetitive null-check boilerplate across service classes.
+
+    Args:
+        value: The value to check (may be None).
+        name: Human-readable name for error messages.
+
+    Returns:
+        The value if not None.
+
+    Raises:
+        RuntimeError: If value is None.
+
+    Example:
+        @property
+        def context(self) -> p.Context.Ctx:
+            return require_initialized(self._context, "Context")
+
+    """
+    if value is None:
+        msg = f"{name} not initialized"
+        raise RuntimeError(msg)
+    return value
 
 
 class FlextMixins:
@@ -121,24 +147,26 @@ class FlextMixins:
             if obj is None:
                 return {}
             if isinstance(obj, BaseModel):
-                # BaseModel.model_dump() returns dict[str, Any], normalize to GeneralValueType
+                # BaseModel.model_dump() returns t.Types.ConfigurationDict, normalize to GeneralValueType
                 dumped = obj.model_dump()
                 # Recursively normalize to ensure GeneralValueType compliance
                 normalized = FlextRuntime.normalize_to_general_value(dumped)
-                # Use guard for type checking
-                dict_result = u.guard(normalized, dict, return_value=True)
+                # Use isinstance for type checking - returns dict or None
+                dict_result = normalized if u.is_type(normalized, dict) else None
                 if dict_result is not None:
-                    return dict_result
+                    # Cast to correct type - dict is Mapping[str, GeneralValueType]
+                    return cast("t.Types.ContextMetadataMapping", dict_result)
                 # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
                 return {"value": normalized}
-            # For Mapping, use process() to normalize each value
-            process_result = u.process(
+            # For Mapping, use Collection.process() to normalize each value
+            process_result = u.Collection.process(
                 obj,
                 lambda _k, v: FlextRuntime.normalize_to_general_value(v),
                 on_error="skip",
             )
             if process_result.is_success:
-                return process_result.value
+                # Cast to ContextMetadataMapping - process returns t.Types.ConfigurationDict
+                return cast("t.Types.ContextMetadataMapping", process_result.value)
             return {}
 
     # =========================================================================
@@ -151,15 +179,19 @@ class FlextMixins:
         @staticmethod
         def ensure_result[T](value: T | r[T]) -> r[T]:
             """Wrap value in r if not already wrapped."""
-            result = u.guard(value, r, return_value=True)
-            return u.or_(result, r[T].ok(value))
+            # Check if value is already a FlextResult
+            if isinstance(value, r):
+                return value
+            # Wrap non-result value in r.ok()
+            # Type narrowing: value is T after isinstance check
+            return r[T].ok(value)
 
     # =========================================================================
     # SERVICE INFRASTRUCTURE (Original FlextMixins functionality)
     # =========================================================================
 
     # Class-level cache for loggers to avoid repeated DI lookups
-    _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
+    _logger_cache: ClassVar[t.Types.StringFlextLoggerDict] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
     def __init_subclass__(cls, **kwargs: t.GeneralValueType) -> None:
@@ -168,18 +200,18 @@ class FlextMixins:
         # Container is lazily initialized on first access
 
     @property
-    def container(self) -> FlextContainer:
+    def container(self) -> p.Container.DI:
         """Get global FlextContainer instance with lazy initialization."""
-        return FlextContainer()
+        return cast("p.Container.DI", FlextContainer())  # Structural typing
 
     @property
-    def context(self) -> p.ContextProtocol:
+    def context(self) -> p.Context.Ctx:
         """Get FlextContext instance for context operations."""
-        # FlextContext implements ContextProtocol structurally (no cast needed)
+        # FlextContext implements Context.Ctx structurally (no cast needed)
         return FlextContext()
 
     @property
-    def logger(self) -> FlextLogger:
+    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
         """Get FlextLogger instance (DI-backed with caching)."""
         return self._get_or_create_logger()
 
@@ -187,13 +219,13 @@ class FlextMixins:
     def track(
         self,
         operation_name: str,
-    ) -> Iterator[dict[str, t.GeneralValueType]]:
+    ) -> Iterator[t.Types.ConfigurationDict]:
         """Track operation performance with timing and automatic context cleanup."""
         # Get or initialize stats storage for this operation
         stats_attr = f"_stats_{operation_name}"
         # Use correct type - stats values are all GeneralValueType (int, float)
         # Use dict for mutability (not Mapping)
-        stats: dict[str, t.GeneralValueType] = getattr(
+        stats: t.Types.ConfigurationDict = getattr(
             self,
             stats_attr,
             {
@@ -271,7 +303,12 @@ class FlextMixins:
 
     @property
     def config(self) -> FlextConfig:
-        """Get global FlextConfig instance with namespace support."""
+        """Get global FlextConfig instance with namespace support.
+
+        Returns FlextConfig directly (not protocol) to avoid cast() throughout
+        the codebase. Internal code uses concrete FlextConfig; protocols are
+        for external interface compatibility.
+        """
         return FlextConfig.get_global_instance()
 
     def _register_in_container(self, service_name: str) -> r[bool]:
@@ -281,16 +318,20 @@ class FlextMixins:
         def register() -> bool:
             """Register service in container."""
             service: t.GeneralValueType | BaseModel = cast(
-                "t.GeneralValueType | BaseModel", self
+                "t.GeneralValueType | BaseModel",
+                self,
             )
-            result = self.container.register(service_name, service)
+            result = self.container.register(
+                service_name,
+                cast("t.FlexibleValue", service),
+            )
             # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
-                error_msg = u.err(result, default="")
-                # Use u.in_() for membership check (DSL pattern)
-                if u.in_("already registered", error_msg.lower()):
+                error_msg = result.error or ""
+                # Check if error is "already registered" (using native 'in' for string check)
+                if "already registered" in error_msg.lower():
                     return True  # Already registered is success
-                raise RuntimeError(u.err(result, default="Service registration failed"))
+                raise RuntimeError(error_msg or "Service registration failed")
             return True
 
         return r.create_from_callable(register)
@@ -312,7 +353,7 @@ class FlextMixins:
         FlextContext.Correlation.set_correlation_id(correlation_id)
 
     @classmethod
-    def _get_or_create_logger(cls) -> FlextLogger:
+    def _get_or_create_logger(cls) -> p.Infrastructure.Logger.StructlogLogger:
         """Get or create DI-injected logger with fallback to direct creation."""
         # Generate unique logger name based on module and class
         logger_name = f"{cls.__module__}.{cls.__name__}"
@@ -320,7 +361,10 @@ class FlextMixins:
         # Check cache first (thread-safe)
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
-                return cls._logger_cache[logger_name]
+                return cast(
+                    "p.Infrastructure.Logger.StructlogLogger",
+                    cls._logger_cache[logger_name],
+                )
 
         # Try to get from DI container
         try:
@@ -336,12 +380,12 @@ class FlextMixins:
                 # Cache the result
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger
-                return logger
+                return cast("p.Infrastructure.Logger.StructlogLogger", logger)
 
             # Logger not in container - create and register
             logger = FlextLogger(logger_name)
             # FlextLogger is not BaseModel, so use register_factory to wrap it
-            container_impl: FlextContainer = container
+            container_impl: p.Container.DI = container
             # Register factory instead of instance (FlextLogger is not BaseModel or FlexibleValue)
 
             def _logger_factory() -> t.GeneralValueType:
@@ -357,14 +401,14 @@ class FlextMixins:
             with cls._cache_lock:
                 cls._logger_cache[logger_name] = logger
 
-            return logger
+            return cast("p.Infrastructure.Logger.StructlogLogger", logger)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # Fallback: create logger without DI if container unavailable
             logger = FlextLogger(logger_name)
             with cls._cache_lock:
                 cls._logger_cache[logger_name] = logger
-            return logger
+            return cast("p.Infrastructure.Logger.StructlogLogger", logger)
 
     def _log_with_context(
         self,
@@ -376,7 +420,7 @@ class FlextMixins:
         # Normalize extra values to GeneralValueType for logging
         correlation_id = FlextContext.Correlation.get_correlation_id()
         operation_name = FlextContext.Request.get_operation_name()
-        context_data: dict[str, t.GeneralValueType] = {
+        context_data: t.Types.ConfigurationDict = {
             "correlation_id": FlextRuntime.normalize_to_general_value(correlation_id),
             "operation": FlextRuntime.normalize_to_general_value(operation_name),
             **{k: FlextRuntime.normalize_to_general_value(v) for k, v in extra.items()},
@@ -394,7 +438,7 @@ class FlextMixins:
         # Fast fail: service_name must be str or None
         effective_service_name: str = (
             service_name
-            if isinstance(service_name, str) and service_name
+            if u.is_type(service_name, str) and service_name
             else self.__class__.__name__
         )
 
@@ -420,7 +464,7 @@ class FlextMixins:
         """Log service information ONCE at initialization (not bound to context)."""
         # Build service context for logging using correct types
         # Use dict for mutability
-        service_context: dict[str, t.GeneralValueType] = {
+        service_context: t.Types.ConfigurationDict = {
             "service_name": self.__class__.__name__,
             "service_module": self.__class__.__module__,
             **context_data,
@@ -436,7 +480,7 @@ class FlextMixins:
         """Log configuration ONCE without binding to context."""
         # Convert config to GeneralValueType for logging
         # ConfigurationMapping is Mapping[str, GeneralValueType], convert to dict
-        config_typed: dict[str, t.GeneralValueType] = dict(config.items())
+        config_typed: t.Types.ConfigurationDict = dict(config.items())
         # Log configuration as single event, not bound to context
         self.logger.info(message, config=config_typed)
 
@@ -463,13 +507,13 @@ class FlextMixins:
 
             # Separate data by level - preserve GeneralValueType from operation_data
             # Use dict for mutability
-            debug_data: dict[str, t.GeneralValueType] = {
+            debug_data: t.Types.ConfigurationDict = {
                 k: v for k, v in operation_data.items() if k in debug_keys
             }
-            error_data: dict[str, t.GeneralValueType] = {
+            error_data: t.Types.ConfigurationDict = {
                 k: v for k, v in operation_data.items() if k in error_keys
             }
-            normal_data: dict[str, t.GeneralValueType] = {
+            normal_data: t.Types.ConfigurationDict = {
                 k: v
                 for k, v in operation_data.items()
                 if k not in debug_keys and k not in error_keys
@@ -477,18 +521,16 @@ class FlextMixins:
 
             # Bind context using bind_global_context - no level-specific binding available
             # Combine all context data for global binding
-            all_context_data: dict[str, t.GeneralValueType] = {}
-            merge_result = u.merge(all_context_data, normal_data, strategy="deep")
-            if merge_result.is_success:
-                all_context_data = merge_result.value
+            all_context_data: t.Types.ConfigurationDict = dict(normal_data)
+            # Simple merge: deep strategy - new values override existing ones
             if debug_data:
-                merge_result = u.merge(all_context_data, debug_data, strategy="deep")
-                if merge_result.is_success:
-                    all_context_data = merge_result.value
+                merged_debug: t.Types.ConfigurationDict = dict(all_context_data)
+                merged_debug.update(debug_data)
+                all_context_data = merged_debug
             if error_data:
-                merge_result = u.merge(all_context_data, error_data, strategy="deep")
-                if merge_result.is_success:
-                    all_context_data = merge_result.value
+                merged_error: t.Types.ConfigurationDict = dict(all_context_data)
+                merged_error.update(error_data)
+                all_context_data = merged_error
             if all_context_data:
                 _ = FlextLogger.bind_global_context(**all_context_data)
             if normal_data:
@@ -508,8 +550,6 @@ class FlextMixins:
 
     class Validation:
         """Railway-oriented validation patterns with r composition."""
-
-        T = TypeVar("T")
 
         @staticmethod
         def validate_with_result(
@@ -555,16 +595,16 @@ class FlextMixins:
 
         @staticmethod
         def is_handler(
-            obj: p.Handler | Callable[..., t.GeneralValueType],
+            obj: p.Application.Handler | Callable[..., t.GeneralValueType],
         ) -> bool:
-            """Check if object satisfies p.Handler protocol."""
-            return isinstance(obj, p.Handler)
+            """Check if object satisfies p.Application.Handler protocol."""
+            return isinstance(obj, p.Application.Handler)
 
         @staticmethod
         def is_service(
-            _obj: p.Service[t.GeneralValueType],
+            _obj: p.Domain.Service[t.GeneralValueType],
         ) -> bool:
-            """Check if object satisfies p.Service protocol.
+            """Check if object satisfies p.Domain.Service protocol.
 
             Uses structural typing - any object implementing Service protocol
             will pass this check, including FlextService instances.
@@ -572,30 +612,30 @@ class FlextMixins:
             return True
 
         @staticmethod
-        def is_command_bus(_obj: p.CommandBus) -> bool:
-            """Check if object satisfies p.CommandBus protocol."""
+        def is_command_bus(_obj: p.Application.CommandBus) -> bool:
+            """Check if object satisfies p.Application.CommandBus protocol."""
             return True
 
         @staticmethod
         def validate_protocol_compliance(
-            _obj: p.Handler
-            | p.Service[t.GeneralValueType]
-            | p.CommandBus
-            | p.Repository[t.GeneralValueType]
-            | p.Configurable,
+            _obj: p.Application.Handler
+            | p.Domain.Service[t.GeneralValueType]
+            | p.Application.CommandBus
+            | p.Domain.Repository[t.GeneralValueType]
+            | p.Configuration.Configurable,
             protocol_name: str,
         ) -> r[bool]:
             """Validate object compliance with named protocol."""
             protocol_map = {
-                "Handler": p.Handler,
-                "Service": p.Service,
-                "CommandBus": p.CommandBus,
-                "Repository": p.Repository,
-                "Configurable": p.Configurable,
+                "Handler": p.Application.Handler,
+                "Service": p.Domain.Service,
+                "CommandBus": p.Application.CommandBus,
+                "Repository": p.Domain.Repository,
+                "Configurable": p.Configuration.Configurable,
             }
 
-            # Use u.not_() + u.in_() for membership check (DSL pattern)
-            if u.not_(value=u.in_(protocol_name, protocol_map)):
+            # Check if protocol_name is in protocol_map (using native 'not in')
+            if protocol_name not in protocol_map:
                 supported = ", ".join(protocol_map.keys())
                 return r[bool].fail(
                     f"Unknown protocol: {protocol_name}. Supported: {supported}",
@@ -606,7 +646,7 @@ class FlextMixins:
 
         @staticmethod
         def validate_processor_protocol(
-            obj: p.HasModelDump,
+            obj: p.Foundation.HasModelDump,
         ) -> r[bool]:
             """Validate object has required process() and validate() methods."""
             required_methods = ["process", "validate"]
@@ -620,7 +660,7 @@ class FlextMixins:
                         f"Processors must implement: {methods_str}"
                     )
                     return r[bool].fail(error_msg)
-                if not callable(u.get(obj, method_name, default=None)):
+                if not callable(u.Mapper.get(obj, method_name, default=None)):
                     return r[bool].fail(
                         f"Processor {type(obj).__name__}.{method_name} is not callable",
                     )
@@ -633,5 +673,6 @@ x = FlextMixins
 
 __all__ = [
     "FlextMixins",
+    "require_initialized",
     "x",
 ]

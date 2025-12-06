@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import operator
 
-from flext_core import u  # Use alias for concise code
-from flext_core.typings import t
+from flext_core import (
+    t,
+    u,
+)
 from flext_tests.domains import FlextTestsDomains
 
 
@@ -141,10 +143,16 @@ class TestFlextTestsDomains:
 
         # Check some specific cases
         valid_emails = list(
-            u.map(u.filter(cases, operator.itemgetter(1)), operator.itemgetter(0))
+            u.Collection.map(
+                u.Collection.filter(cases, operator.itemgetter(1)),
+                operator.itemgetter(0),
+            ),
         )
         invalid_emails = list(
-            u.map(u.filter(cases, lambda item: not item[1]), operator.itemgetter(0))
+            u.Collection.map(
+                u.Collection.filter(cases, lambda item: not item[1]),
+                operator.itemgetter(0),
+            ),
         )
 
         assert "test@example.com" in valid_emails

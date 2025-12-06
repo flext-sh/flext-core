@@ -12,16 +12,17 @@ from __future__ import annotations
 
 from collections.abc import Hashable
 
+from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
-class FlextDomain:
+class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @property
-    def logger(self) -> p.StructlogLogger:
+    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -31,9 +32,9 @@ class FlextDomain:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: p.HasModelDump,
-        entity_b: p.HasModelDump,
-        id_attr: str = "unique_id",
+        entity_a: p.Foundation.HasModelDump,
+        entity_b: p.Foundation.HasModelDump,
+        id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Compare two entities by their unique ID attribute.
 
@@ -50,7 +51,7 @@ class FlextDomain:
         Example:
             >>> user1 = User(unique_id="123", name="Alice")
             >>> user2 = User(unique_id="123", name="Bob")  # Same ID
-            >>> uDomain.compare_entities_by_id(user1, user2)
+            >>> FlextUtilitiesDomain.compare_entities_by_id(user1, user2)
             True
 
         """
@@ -63,7 +64,10 @@ class FlextDomain:
         return id_a is not None and id_a == id_b
 
     @staticmethod
-    def hash_entity_by_id(entity: p.HasModelDump, id_attr: str = "unique_id") -> int:
+    def hash_entity_by_id(
+        entity: p.Foundation.HasModelDump,
+        id_attr: str = c.Mixins.FIELD_ID,
+    ) -> int:
         """Generate hash for entity based on unique ID and type.
 
         Generic hashing for DDD entities - uses identity (ID + type), not value.
@@ -77,7 +81,7 @@ class FlextDomain:
 
         Example:
             >>> user = User(unique_id="123", name="Alice")
-            >>> hash_val = uDomain.hash_entity_by_id(user)
+            >>> hash_val = FlextUtilitiesDomain.hash_entity_by_id(user)
 
         """
         entity_id = getattr(entity, id_attr, None)
@@ -103,7 +107,7 @@ class FlextDomain:
         Example:
             >>> addr1 = Address(street="123 Main", city="NYC")
             >>> addr2 = Address(street="123 Main", city="NYC")
-            >>> uDomain.compare_value_objects_by_value(addr1, addr2)
+            >>> FlextUtilitiesDomain.compare_value_objects_by_value(addr1, addr2)
             True
 
         """
@@ -111,12 +115,15 @@ class FlextDomain:
             return False
 
         # Try Pydantic model_dump first (using protocol for type safety)
-        if isinstance(obj_a, p.HasModelDump) and isinstance(obj_b, p.HasModelDump):
+        if isinstance(obj_a, p.Foundation.HasModelDump) and isinstance(
+            obj_b,
+            p.Foundation.HasModelDump,
+        ):
             try:
                 dump_a = obj_a.model_dump()
                 dump_b = obj_b.model_dump()
                 return bool(dump_a == dump_b)
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError, RuntimeError):
                 pass
 
         # Try __dict__ comparison
@@ -140,16 +147,16 @@ class FlextDomain:
 
         Example:
             >>> addr = Address(street="123 Main", city="NYC")
-            >>> hash_val = uDomain.hash_value_object_by_value(addr)
+            >>> hash_val = FlextUtilitiesDomain.hash_value_object_by_value(addr)
 
         """
         # Try Pydantic model_dump first (using protocol for type safety)
-        if isinstance(obj, p.HasModelDump):
+        if isinstance(obj, p.Foundation.HasModelDump):
             try:
                 data = obj.model_dump()
                 # Convert to hashable tuple of items
                 return hash(tuple(sorted(data.items())))
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError, RuntimeError):
                 pass
 
         # Try __dict__
@@ -170,7 +177,10 @@ class FlextDomain:
             return hash(repr(obj))
 
     @staticmethod
-    def validate_entity_has_id(entity: object, id_attr: str = "unique_id") -> bool:
+    def validate_entity_has_id(
+        entity: object,
+        id_attr: str = c.Mixins.FIELD_ID,
+    ) -> bool:
         """Validate that entity has a non-None unique ID.
 
         Args:
@@ -214,9 +224,6 @@ class FlextDomain:
         return False
 
 
-uDomain = FlextDomain  # noqa: N816
-
 __all__ = [
-    "FlextDomain",
-    "uDomain",
+    "FlextUtilitiesDomain",
 ]

@@ -27,14 +27,13 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextConfig, r, u
-from flext_core.constants import FlextConstants
-from flext_core.typings import t
+from flext_core import FlextConfig, p, r, t, u
+from flext_core.constants import c
 from flext_tests.utilities import FlextTestsUtilities
 
 
 class UtilityScenarios:
-    """Centralized utility test scenarios using FlextConstants."""
+    """Centralized utility test scenarios using c (FlextConstants)."""
 
     TYPE_GUARD_CASES: ClassVar[
         dict[
@@ -78,7 +77,7 @@ class UtilityScenarios:
         (5, 5),
         (10, 10),
         (20, 20),
-        (None, FlextConstants.Utilities.SHORT_UUID_LENGTH),
+        (None, c.Utilities.SHORT_UUID_LENGTH),
     ]
 
     TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = [
@@ -143,14 +142,19 @@ class UtilityScenarios:
             name: str
             value: int
 
-        return FlextTestsUtilities.ModelTestHelpers.assert_model_creation_success(
-            factory_method=lambda **kw: TestModel(name="test", value=42, **kw),
+        # Use cast to match VariadicCallable signature
+        def factory_func(**kw: object) -> TestModel:
+            return TestModel(name="test", value=42, **kw)
+
+        factory_method = cast("p.Utility.Callable[TestModel]", factory_func)
+        return FlextTestsUtilities.Tests.ModelTestHelpers.assert_model_creation_success(
+            factory_method=factory_method,
             expected_attrs={"name": "test", "value": 42},
         )
 
 
 class Testu:
-    """Unified test suite for u using flext_tests and FlextConstants."""
+    """Unified test suite for u using flext_tests and c."""
 
     # =====================================================================
     # Type Guards Tests - Parametrized
@@ -167,7 +171,7 @@ class Testu:
         expected: bool,
     ) -> None:
         """Test string type guards."""
-        result = u.TypeGuards.is_string_non_empty(value)
+        result = u.is_type(value, "string_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -181,7 +185,7 @@ class Testu:
         expected: bool,
     ) -> None:
         """Test dict type guards."""
-        result = u.TypeGuards.is_dict_non_empty(value)
+        result = u.is_type(value, "dict_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -195,7 +199,7 @@ class Testu:
         expected: bool,
     ) -> None:
         """Test list type guards."""
-        result = u.TypeGuards.is_list_non_empty(value)
+        result = u.is_type(value, "list_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     # =====================================================================
@@ -229,7 +233,7 @@ class Testu:
     def test_generators_batch_id(self) -> None:
         """Test batch ID generation."""
         batch_id = u.Generators.generate_batch_id(
-            FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+            c.Performance.BatchProcessing.DEFAULT_SIZE,
         )
         assert isinstance(batch_id, str) and len(batch_id) > 0
 
@@ -260,7 +264,7 @@ class Testu:
         expected_pattern: str,
     ) -> None:
         """Test text cleaning."""
-        result = u.TextProcessor.clean_text(input_text)
+        result = u.Text.clean_text(input_text)
         assert isinstance(result, str) and len(result) > 0
 
     @pytest.mark.parametrize(
@@ -274,8 +278,8 @@ class Testu:
         should_truncate: bool,
     ) -> None:
         """Test text truncation."""
-        result = u.TextProcessor.truncate_text(text, max_length=max_length)
-        assert result.is_success
+        result = u.Text.truncate_text(text, max_length=max_length)
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         if should_truncate:
             assert len(result.value) <= max_length + 3  # +3 for "..."
         else:
@@ -283,13 +287,13 @@ class Testu:
 
     def test_text_processor_safe_string_success(self) -> None:
         """Test safe string with valid input."""
-        result = u.TextProcessor.safe_string("valid")
+        result = u.Text.safe_string("valid")
         assert isinstance(result, str) and result == "valid"
 
     def test_text_processor_safe_string_empty(self) -> None:
         """Test safe string with empty raises ValueError."""
         with pytest.raises(ValueError):
-            _ = u.TextProcessor.safe_string("")
+            _ = u.Text.safe_string("")
 
     # =====================================================================
     # Cache Tests - Parametrized
@@ -333,7 +337,7 @@ class Testu:
         """Test clearing object cache."""
         cache_data: t.Types.ConfigurationMapping = {"test": "data"}
         result = u.Cache.clear_object_cache(cache_data)
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
 
     @pytest.mark.parametrize(
         ("has_cache", "expected"),
@@ -361,7 +365,7 @@ class Testu:
             no_cache_obj = TestNoCache()
             # Cast to GeneralValueType for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
-                cast("t.GeneralValueType", no_cache_obj)
+                cast("t.GeneralValueType", no_cache_obj),
             )
             assert result is expected
 
@@ -385,7 +389,7 @@ class Testu:
         expected: bool,
     ) -> None:
         """Test type checking."""
-        result = u.TypeChecker.can_handle_message_type(
+        result = u.Checker.can_handle_message_type(
             accepted_types,
             message_type,
         )
@@ -470,9 +474,9 @@ class Testu:
         """Test validation pipeline."""
         result = u.Validation.validate_pipeline(data, list(validators))
         if should_succeed:
-            assert result.is_success
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         else:
-            assert result.is_failure
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
             if error_pattern:
                 assert error_pattern in str(result.error)
 
@@ -484,7 +488,7 @@ class Testu:
             raise ValueError(error_msg)
 
         result = u.Validation.validate_pipeline("test", [bad_validator])
-        assert result.is_failure
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
 
     def test_validation_normalize_dataclass(self) -> None:
         """Test normalize with dataclass."""
@@ -542,12 +546,14 @@ class Testu:
         def quick_success() -> r[str]:
             return r[str].ok("success")
 
-        result = u.Reliability.retry(
+        result: r[str] = u.Reliability.retry(
             quick_success,
-            max_attempts=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
+            max_attempts=c.Reliability.MAX_RETRY_ATTEMPTS,
         )
-        assert result.is_success
-        assert result.value == "success"
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            result,
+            "success",
+        )
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
@@ -559,13 +565,15 @@ class Testu:
                 return r[str].fail("Temporary failure")
             return r[str].ok("Success")
 
-        result = u.Reliability.retry(
+        result: r[str] = u.Reliability.retry(
             flaky_op,
             max_attempts=5,
-            delay_seconds=FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+            delay_seconds=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
         )
-        assert result.is_success
-        assert result.value == "Success"
+        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            result,
+            "Success",
+        )
         assert call_count[0] >= 3
 
 

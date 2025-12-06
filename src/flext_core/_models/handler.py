@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time as time_module
-from collections.abc import Callable, Mapping
-from typing import Annotated, Self, cast
+from collections.abc import Callable
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
@@ -38,7 +38,10 @@ class FlextModelsHandler:
     class Registration(FlextModelsBase.ArbitraryTypesModel):
         """Handler registration with advanced validation."""
 
-        name: str = Field(min_length=1, description="Handler name")
+        name: str = Field(
+            min_length=c.Reliability.RETRY_COUNT_MIN,
+            description="Handler name",
+        )
         handler: (
             Callable[[], t.GeneralValueType]
             | Callable[[t.GeneralValueType], t.GeneralValueType]
@@ -56,28 +59,15 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: t.GeneralValueType | Callable[..., t.GeneralValueType],
-        ) -> (
-            Callable[[], t.GeneralValueType]
-            | Callable[[t.GeneralValueType], t.GeneralValueType]
-            | Callable[
-                [t.GeneralValueType, t.GeneralValueType],
-                t.GeneralValueType,
-            ]
-        ):
+            v: Callable[..., t.GeneralValueType],
+        ) -> Callable[..., t.GeneralValueType]:
             """Validate handler is properly callable (direct validation, no circular imports)."""
-            # Direct callable check - avoid circular import via uValidation
+            # Direct callable check - avoid circular import via FlextUtilitiesValidation
             if not callable(v):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
-            # Type-safe return: v is confirmed callable by validation above
-            # Cast to handler callable since we've validated it's callable
-            return cast(
-                (
-                    "Callable[[], t.GeneralValueType] | Callable[[t.GeneralValueType], t.GeneralValueType] | Callable[[t.GeneralValueType, t.GeneralValueType], t.GeneralValueType]"
-                ),
-                v,
-            )
+            # v is already typed as Callable via Pydantic field validation
+            return v
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.
@@ -116,7 +106,7 @@ class FlextModelsHandler:
         registration_id: Annotated[
             str,
             Field(
-                min_length=1,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
                 description="Unique registration identifier",
                 examples=["reg-abc123", "handler-create-user-001"],
             ),
@@ -135,7 +125,7 @@ class FlextModelsHandler:
                 default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
                 description="ISO 8601 registration timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
-                pattern=r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[Z+\-][0-9:]*)?$",
+                pattern=c.Platform.PATTERN_ISO8601_TIMESTAMP,
             ),
         ] = Field(default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP)
         status: Annotated[
@@ -150,7 +140,7 @@ class FlextModelsHandler:
         @field_validator("timestamp", mode="after")
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format (using uValidation)."""
+            """Validate timestamp is in ISO 8601 format (using FlextUtilitiesValidation)."""
             result = u.Validation.validate_iso8601_timestamp(
                 v,
                 allow_empty=True,
@@ -201,7 +191,7 @@ class FlextModelsHandler:
         handler_name: Annotated[
             str,
             Field(
-                min_length=1,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
                 description="Name of the handler being executed",
                 examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
             ),
@@ -209,13 +199,13 @@ class FlextModelsHandler:
         handler_mode: Annotated[
             c.Cqrs.HandlerTypeLiteral,
             Field(
-                min_length=1,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
                 description="Mode of handler execution",
                 examples=["command", "query", "event"],
             ),
         ]
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: dict[str, t.GeneralValueType] | None = PrivateAttr(
+        _metrics_state: t.Types.ConfigurationDict | None = PrivateAttr(
             default=None,
         )
 
@@ -256,14 +246,14 @@ class FlextModelsHandler:
                 return 0.0
 
             elapsed = time_module.time() - self._start_time
-            return round(elapsed * 1000, 2)
+            return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
 
         @computed_field
-        def metrics_state(self) -> Mapping[str, t.GeneralValueType]:
+        def metrics_state(self) -> t.Types.ConfigurationMapping:
             """Get current metrics state.
 
             Returns:
-                Dictionary containing metrics state (empty dict[str, t.GeneralValueType] if not set)
+                Dictionary containing metrics state (empty ConfigurationDict if not set)
 
             Examples:
                 >>> context = FlextModelsHandler.ExecutionContext.create_for_handler(
@@ -280,7 +270,7 @@ class FlextModelsHandler:
 
         def set_metrics_state(
             self,
-            state: dict[str, t.GeneralValueType],
+            state: t.Types.ConfigurationDict,
         ) -> None:
             """Set metrics state.
 

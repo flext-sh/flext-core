@@ -1,6 +1,6 @@
 """Railway-oriented result type for dispatcher-driven applications.
 
-r wraps outcomes with explicit success/failure states so dispatcher
+FlextResult wraps outcomes with explicit success/failure states so dispatcher
 handlers, services, and middleware can compose operations without exceptions.
 It underpins CQRS flows with monadic helpers for predictable, typed pipelines.
 
@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from typing import Self, cast
 
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -20,24 +20,30 @@ from returns.result import Failure, Result, Success
 
 from flext_core.exceptions import FlextExceptions as e
 from flext_core.protocols import p
-from flext_core.typings import T_co, U, t
+from flext_core.typings import U, t
 
 
-class r[T_co]:  # noqa: PLR0904, N801
+class FlextResult[T_co]:
     """Type-safe railway result with monadic helpers for CQRS pipelines.
 
-    Use r to compose dispatcher handlers and domain services without
+    Use FlextResult to compose dispatcher handlers and domain services without
     raising exceptions, while preserving optional error codes and metadata for
     structured logging.
+
+    TODO(docs/FLEXT_SERVICE_ARCHITECTURE.md#smart-resolution): expose an
+    explicit ``and_then`` helper so the implementation matches the "Smart
+    Resolution" flow described in the documentation. At the moment
+    ``flat_map`` covers the scenario with slightly different syntax.
     """
 
     def __init__(
         self,
         _result: Result[T_co, str],
         error_code: str | None = None,
-        error_data: Mapping[str, t.GeneralValueType] | None = None,
+        error_data: t.Types.ConfigurationMapping | None = None,
     ) -> None:
-        """Initialize r with internal Result and optional metadata."""
+        """Initialize FlextResult with internal Result and optional metadata."""
+        super().__init__()
         self._result = _result
         self._error_code = error_code
         self._error_data = error_data
@@ -50,25 +56,28 @@ class r[T_co]:  # noqa: PLR0904, N801
         """Monadic operations: map, flat_map, filter, alt, lash, flow_through."""
 
         @staticmethod
-        def alt(result: r[T], func: Callable[[str], str]) -> r[T]:
+        def alt(result: FlextResult[T], func: Callable[[str], str]) -> FlextResult[T]:
             """Apply alternative function on failure."""
-            return r[T](result.result.alt(func))  # type: ignore[call-arg]
+            return FlextResult[T](result.result.alt(func))
 
         @staticmethod
-        def lash(result: r[T], func: Callable[[str], r[T]]) -> r[T]:
+        def lash(
+            result: FlextResult[T],
+            func: Callable[[str], FlextResult[T]],
+        ) -> FlextResult[T]:
             """Apply recovery function on failure."""
 
             def inner(error: str) -> Result[T, str]:
                 recovery = func(error)
                 return recovery.result
 
-            return r[T](result.result.lash(inner))  # type: ignore[call-arg]
+            return FlextResult[T](result.result.lash(inner))
 
     class Convert[T]:
         """Conversion operations: to/from Maybe, IO, IOResult."""
 
         @staticmethod
-        def to_io(result: r[T]) -> IO[T]:
+        def to_io(result: FlextResult[T]) -> IO[T]:
             """Convert to returns.io.IO."""
             if result.is_success:
                 return IO(result.value)
@@ -78,49 +87,75 @@ class r[T_co]:  # noqa: PLR0904, N801
         @staticmethod
         def from_io_result(
             io_result: IOResult[t.GeneralValueType, str],
-        ) -> r[t.GeneralValueType]:
+        ) -> FlextResult[t.GeneralValueType]:
             """Create from returns.io.IOResult."""
             try:
                 if isinstance(io_result, IOSuccess):
-                    # IOSuccess[GeneralValueType, str].unwrap() returns GeneralValueType
-                    # Cast needed because returns.io type stubs may not be perfect
-                    unwrapped_value = cast("t.GeneralValueType", io_result.unwrap())
-                    return r[t.GeneralValueType].ok(unwrapped_value)
+                    # IOSuccess is a successful IOResult
+                    # Access value using getattr with fallback (returns library internal structure)
+                    try:
+                        # Try to access value via internal attribute (returns library pattern)
+                        # Use getattr to safely access _inner_value which stores the IO value
+                        unwrapped_value_raw = getattr(io_result, "_inner_value", None)
+                        if unwrapped_value_raw is None:
+                            # Fallback: try value attribute if _inner_value doesn't exist
+                            unwrapped_value_raw = getattr(io_result, "value", None)
+                        if unwrapped_value_raw is None:
+                            return FlextResult[t.GeneralValueType].fail(
+                                "Cannot extract value from IOSuccess",
+                            )
+                        # Type narrowing: unwrapped_value_raw is the inner value type
+                        # IO[Any] needs to be converted to GeneralValueType
+                        unwrapped_value = cast(
+                            "t.GeneralValueType",
+                            unwrapped_value_raw,
+                        )
+                        return FlextResult[t.GeneralValueType].ok(unwrapped_value)
+                    except Exception as unwrap_error:  # pragma: no cover
+                        # Defensive exception handling - hard to test without complex mocking
+                        # since IOSuccess is immutable
+                        return FlextResult[t.GeneralValueType].fail(
+                            f"Error processing IO result: {unwrap_error}",
+                        )
                 if isinstance(io_result, IOFailure):
-                    error = io_result.failure()
-                    return r[t.GeneralValueType].fail(str(error))
-                return r[t.GeneralValueType].fail(
-                    f"Invalid IO result type: {type(io_result)}"
+                    # IOFailure stores error in _inner_value attribute
+                    error = getattr(io_result, "_inner_value", "Unknown error")
+                    return FlextResult[t.GeneralValueType].fail(str(error))
+                return FlextResult[t.GeneralValueType].fail(
+                    f"Invalid IO result type: {type(io_result)}",
                 )
-            except Exception as e:
-                return r[t.GeneralValueType].fail(f"Error processing IO result: {e}")
+            except Exception as e:  # pragma: no cover
+                # Defensive exception handling - hard to test without complex mocking
+                return FlextResult[t.GeneralValueType].fail(
+                    f"Error processing IO result: {e}",
+                )
 
     class Operations[T]:
         """Utility operations: safe, traverse, accumulate_errors, parallel_map."""
 
         @staticmethod
         def safe(
-            func: p.VariadicCallable[T],
-        ) -> p.VariadicCallable[r[T]]:
-            """Decorator to wrap function in r."""
+            func: p.Utility.Callable[T],
+        ) -> p.Utility.Callable[FlextResult[T]]:
+            """Decorator to wrap function in FlextResult."""
 
             def wrapper(
-                *args: t.FlexibleValue,
-                **kwargs: t.FlexibleValue,
-            ) -> r[T]:
+                *args: t.GeneralValueType,
+                **kwargs: t.GeneralValueType,
+            ) -> FlextResult[T]:
                 try:
                     result = func(*args, **kwargs)
-                    return r[T].ok(result)
+                    return FlextResult[T].ok(result)
                 except Exception as e:
-                    return r[T].fail(str(e))
+                    return FlextResult[T].fail(str(e))
 
             return wrapper
 
     @classmethod
-    def ok(cls, value: T_co) -> r[T_co]:
+    def ok(cls, value: T_co) -> FlextResult[T_co]:
         """Create successful result wrapping data.
 
-        Business Rule: Creates successful r wrapping value. Raises ValueError
+        Business Rule: Creates successful FlextResult wrapping value. Raises ValueError
         if value is None (None values are not allowed in success results). Uses returns
         library Success wrapper for internal representation. This is the primary factory
         method for success results in railway-oriented programming pattern.
@@ -135,7 +170,7 @@ class r[T_co]:  # noqa: PLR0904, N801
             value: Value to wrap in success result (must not be None)
 
         Returns:
-            Successful r instance
+            Successful FlextResult instance
 
         Raises:
             ValueError: If value is None
@@ -144,18 +179,18 @@ class r[T_co]:  # noqa: PLR0904, N801
         if value is None:
             msg = "Cannot create success result with None value"
             raise ValueError(msg)
-        return cls(Success(value))  # type: ignore[call-arg]
+        return cls(Success(value))
 
     @classmethod
     def fail(
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: Mapping[str, t.GeneralValueType] | None = None,
-    ) -> r[T_co]:
+        error_data: t.Types.ConfigurationMapping | None = None,
+    ) -> FlextResult[T_co]:
         """Create failed result with error message.
 
-        Business Rule: Creates failed r with error message, optional error
+        Business Rule: Creates failed FlextResult with error message, optional error
         code, and optional error metadata. Converts None error to empty string for
         consistency. Uses returns library Failure wrapper for internal representation.
         This is the primary factory method for failure results in railway-oriented
@@ -174,7 +209,7 @@ class r[T_co]:  # noqa: PLR0904, N801
             error_data: Optional error metadata
 
         Returns:
-            Failed r instance
+            Failed FlextResult instance
 
         """
         error_msg = error if error is not None else ""
@@ -182,19 +217,19 @@ class r[T_co]:  # noqa: PLR0904, N801
 
     @staticmethod
     def safe[T](
-        func: p.VariadicCallable[T],
-    ) -> p.VariadicCallable[r[T]]:
-        """Decorator to wrap function in r.
+        func: p.Utility.Callable[T],
+    ) -> p.Utility.Callable[FlextResult[T]]:
+        """Decorator to wrap function in FlextResult.
 
-        Catches exceptions and returns r.fail() on error.
+        Catches exceptions and returns FlextResult.fail() on error.
 
         Example:
-            @r.safe
+            @FlextResult.safe
             def risky_operation() -> int:
                 return 42
 
         """
-        return r.Operations.safe(func)
+        return FlextResult.Operations.safe(func)
 
     @property
     def is_success(self) -> bool:
@@ -221,10 +256,7 @@ class r[T_co]:  # noqa: PLR0904, N801
 
     @property
     def data(self) -> T_co:
-        """Get the success value (alias for .value for backward compatibility).
-
-        CRITICAL: Both .data and .value must work (backward compatibility).
-        """
+        """Alias for value - backward compatibility with older API."""
         return self.value
 
     @property
@@ -240,7 +272,7 @@ class r[T_co]:  # noqa: PLR0904, N801
         return self._error_code
 
     @property
-    def error_data(self) -> Mapping[str, t.GeneralValueType] | None:
+    def error_data(self) -> t.Types.ConfigurationMapping | None:
         """Get error metadata."""
         return self._error_data
 
@@ -265,12 +297,12 @@ class r[T_co]:  # noqa: PLR0904, N801
             return default
         return self._result.unwrap()
 
-    def map[U](self, func: Callable[[T_co], U]) -> r[U]:
+    def map[U](self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform success value using function."""
-        return r[U](self._result.map(func))  # type: ignore[call-arg]
+        return FlextResult[U](self._result.map(func))
 
-    def flat_map[U](self, func: Callable[[T_co], r[U]]) -> r[U]:
-        """Chain operations returning r."""
+    def flat_map[U](self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
+        """Chain operations returning FlextResult."""
 
         def inner(value: T_co) -> Result[U, str]:
             result = func(value)
@@ -278,7 +310,7 @@ class r[T_co]:  # noqa: PLR0904, N801
                 return Success(result.value)
             return Failure(result.error or "")
 
-        return r[U](self._result.bind(inner))  # type: ignore[call-arg]
+        return FlextResult[U](self._result.bind(inner))
 
     def map_error(self, func: Callable[[str], str]) -> Self:
         """Transform error message on failure.
@@ -287,7 +319,7 @@ class r[T_co]:  # noqa: PLR0904, N801
             func: Function to transform error message
 
         Returns:
-            New r with transformed error if failure, unchanged if success
+            New FlextResult with transformed error if failure, unchanged if success
 
         """
         if self.is_success:
@@ -311,22 +343,22 @@ class r[T_co]:  # noqa: PLR0904, N801
 
     def flow_through[U](
         self,
-        *funcs: Callable[[T_co | U], r[U]],
-    ) -> r[U]:
+        *funcs: Callable[[T_co | U], FlextResult[U]],
+    ) -> FlextResult[U]:
         """Chain multiple operations in a pipeline."""
-        result: r[T_co | U] = cast("r[T_co | U]", self)
+        result: FlextResult[T_co | U] = cast("FlextResult[T_co | U]", self)
         for func in funcs:
             if result.is_failure:
                 break
-            result = cast("r[T_co | U]", func(result.value))
-        return cast("r[U]", result)
+            result = cast("FlextResult[T_co | U]", func(result.value))
+        return cast("FlextResult[U]", result)
 
     @classmethod
     def create_from_callable(
         cls,
         func: Callable[[], T_co],
         error_code: str | None = None,
-    ) -> r[T_co]:
+    ) -> FlextResult[T_co]:
         """Create result from callable, catching exceptions."""
         try:
             value = func()
@@ -355,7 +387,7 @@ class r[T_co]:  # noqa: PLR0904, N801
         cls,
         maybe: Maybe[T_co],
         error: str = "Value is Nothing",
-    ) -> r[T_co]:
+    ) -> FlextResult[T_co]:
         """Create from returns.maybe.Maybe."""
         if isinstance(maybe, Some):
             return cls.ok(maybe.unwrap())
@@ -371,16 +403,16 @@ class r[T_co]:  # noqa: PLR0904, N801
             func: Function to transform error message
 
         Returns:
-            r[T_co] with transformed error on failure, unchanged on success
+            return FlextResult[T_co] with transformed error on failure, unchanged on success
 
         """
-        return r.Monad.alt(self, func)  # type: ignore[return-value]
+        return cast("Self", FlextResult.Monad.alt(self, func))
 
-    def lash(self, func: Callable[[str], r[T_co]]) -> Self:
+    def lash(self, func: Callable[[str], FlextResult[T_co]]) -> Self:
         """Apply recovery function on failure.
 
         On failure, calls the provided function with the error message
-        to produce a new r (recovery attempt).
+        to produce a new FlextResult (recovery attempt).
         On success, returns self unchanged.
 
         Args:
@@ -390,7 +422,7 @@ class r[T_co]:  # noqa: PLR0904, N801
             Result of recovery function on failure, unchanged on success
 
         """
-        return r.Monad.lash(self, func)  # type: ignore[return-value]
+        return cast("Self", FlextResult.Monad.lash(self, func))
 
     def to_io(self) -> IO[T_co]:
         """Convert to returns.io.IO.
@@ -405,7 +437,7 @@ class r[T_co]:  # noqa: PLR0904, N801
             e.ValidationError: If result is failure
 
         """
-        return r.Convert.to_io(self)
+        return FlextResult.Convert.to_io(self)
 
     def to_io_result(self) -> IOResult[T_co, str]:
         """Convert to returns.io.IOResult."""
@@ -417,35 +449,35 @@ class r[T_co]:  # noqa: PLR0904, N801
     def from_io_result(
         cls,
         io_result: IOResult[t.GeneralValueType, str],
-    ) -> r[t.GeneralValueType]:
-        """Create r from returns.io.IOResult.
+    ) -> FlextResult[t.GeneralValueType]:
+        """Create FlextResult from returns.io.IOResult.
 
         Args:
             io_result: IOResult to convert
 
         Returns:
-            r representing the same success/failure state
+            FlextResult representing the same success/failure state
 
         """
-        return r.Convert.from_io_result(io_result)
+        return FlextResult.Convert.from_io_result(io_result)
 
     @classmethod
     def traverse[T, U](
         cls,
         items: Sequence[T],
-        func: Callable[[T], r[U]],
-    ) -> r[list[U]]:
+        func: Callable[[T], FlextResult[U]],
+    ) -> FlextResult[list[U]]:
         """Map over sequence with failure propagation."""
         results: list[U] = []
         for item in items:
             result = func(item)
             if result.is_failure:
-                return r[list[U]].fail(result.error or "Unknown error")
+                return FlextResult[list[U]].fail(result.error or "Unknown error")
             results.append(result.value)
-        return r[list[U]](Success(results))  # type: ignore[call-arg]
+        return FlextResult[list[U]](Success(results))
 
     @classmethod
-    def accumulate_errors(cls, *results: r[U]) -> r[list[U]]:
+    def accumulate_errors(cls, *results: FlextResult[U]) -> FlextResult[list[U]]:
         """Collect all successes, fail if any failure."""
         successes: list[U] = []
         errors = []
@@ -455,17 +487,17 @@ class r[T_co]:  # noqa: PLR0904, N801
             else:
                 errors.append(result.error or "Unknown error")
         if errors:
-            return r[list[U]].fail("; ".join(errors))
-        return r[list[U]](Success(successes))  # type: ignore[call-arg]
+            return FlextResult[list[U]].fail("; ".join(errors))
+        return FlextResult[list[U]](Success(successes))
 
     @classmethod
     def parallel_map[T, U](
         cls,
         items: Sequence[T],
-        func: Callable[[T], r[U]],
+        func: Callable[[T], FlextResult[U]],
         *,
         fail_fast: bool = True,
-    ) -> r[list[U]]:
+    ) -> FlextResult[list[U]]:
         """Map with parallel processing and configurable failure handling."""
         # NOTE: Cannot use u.map() here due to circular import
         # (utilities.py -> _utilities/args.py -> result.py)
@@ -473,17 +505,19 @@ class r[T_co]:  # noqa: PLR0904, N801
         if fail_fast:
             for result in results:
                 if result.is_failure:
-                    return r[list[U]].fail(result.error or "Unknown error")
-            return r[list[U]](Success([r.value for r in results]))  # type: ignore[call-arg]
+                    return FlextResult[list[U]].fail(result.error or "Unknown error")
+            return FlextResult[list[U]](
+                Success([FlextResult.value for FlextResult in results]),
+            )
         return cls.accumulate_errors(*results)
 
     @classmethod
     def with_resource[R](
         cls,
         factory: Callable[[], R],
-        op: Callable[[R], r[T_co]],
+        op: Callable[[R], FlextResult[T_co]],
         cleanup: Callable[[R], None] | None = None,
-    ) -> r[T_co]:
+    ) -> FlextResult[T_co]:
         """Resource management with automatic cleanup."""
         resource = factory()
         try:
@@ -505,12 +539,14 @@ class r[T_co]:  # noqa: PLR0904, N801
         """Context manager exit."""
 
     def __repr__(self) -> str:
-        """String representation."""
+        """String representation using short alias 'r' for brevity."""
         if self.is_success:
             return f"r.ok({self.value!r})"
         return f"r.fail({self.error!r})"
 
 
-# Backward compatibility alias
-FlextResult = r
+# Short alias for FlextResult - assignment for runtime compatibility
+# mypy handles generic class aliases correctly with this pattern
+r = FlextResult
+
 __all__ = ["FlextResult", "r"]

@@ -13,8 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 import threading
 from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from typing import ClassVar, Self
 
 from dependency_injector import providers
@@ -22,9 +24,34 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
-from flext_core.constants import FlextConstants
+from flext_core.constants import c
 from flext_core.typings import T_Namespace, T_Settings, t
-from flext_core.utilities import u
+
+
+def _resolve_env_file() -> str | None:
+    """Resolve .env file path from FLEXT_ENV_FILE environment variable.
+
+    Internal helper for configuration initialization.
+    Precedence (highest to lowest):
+    1. FLEXT_ENV_FILE environment variable (custom path)
+    2. Default .env file from current directory
+    """
+    # Check for custom env file path
+    custom_env_file = os.environ.get(c.Platform.ENV_FILE_ENV_VAR)
+    if custom_env_file:
+        custom_path = Path(custom_env_file)
+        if custom_path.exists():
+            return str(custom_path.resolve())
+        # If custom path doesn't exist, return it anyway (Pydantic will handle gracefully)
+        return custom_env_file
+
+    # Default: use .env from current directory
+    default_path = Path.cwd() / c.Platform.ENV_FILE_DEFAULT
+    if default_path.exists():
+        return str(default_path.resolve())
+
+    # Fallback: use default value (Pydantic handles missing file gracefully)
+    return c.Platform.ENV_FILE_DEFAULT
 
 
 class FlextConfig(BaseSettings):
@@ -33,7 +60,7 @@ class FlextConfig(BaseSettings):
     Architecture: Layer 0.5 (Configuration Foundation)
     Provides enterprise-grade configuration management for the FLEXT ecosystem
     through Pydantic v2 BaseSettings, implementing structural typing via
-    p.Configurable (duck typing - no inheritance required).
+    p.Configuration.Configurable (duck typing - no inheritance required).
 
     Core Features:
     - Pydantic v2 BaseSettings with type-safe configuration
@@ -58,12 +85,12 @@ class FlextConfig(BaseSettings):
     # Configuration fields
     # env_file resolved at module load time via FLEXT_ENV_FILE env var
     model_config = SettingsConfigDict(
-        env_prefix=FlextConstants.Platform.ENV_PREFIX,
-        env_nested_delimiter=FlextConstants.Platform.ENV_NESTED_DELIMITER,
-        env_file=u.Configuration.resolve_env_file(),
-        env_file_encoding="utf-8",
+        env_prefix=c.Platform.ENV_PREFIX,
+        env_nested_delimiter=c.Platform.ENV_NESTED_DELIMITER,
+        env_file=_resolve_env_file(),
+        env_file_encoding=c.Utilities.DEFAULT_ENCODING,
         case_sensitive=False,
-        extra="ignore",
+        extra=c.ModelConfig.EXTRA_IGNORE,
     )
 
     # =========================================================================
@@ -93,7 +120,7 @@ class FlextConfig(BaseSettings):
             )
 
         """
-        return u.Configuration.resolve_env_file()
+        return _resolve_env_file()
 
     # Core configuration
     app_name: str = Field(default="flext", description="Application name")
@@ -103,49 +130,54 @@ class FlextConfig(BaseSettings):
 
     # Logging configuration (true application config only)
     # FlextRuntime and FlextLogger handle logging infrastructure
-    log_level: FlextConstants.Settings.LogLevel = Field(
-        default=FlextConstants.Settings.LogLevel.INFO,
+    log_level: c.Settings.LogLevel = Field(
+        default=c.Settings.LogLevel.INFO,
         description="Log level",
+    )
+    async_logging: bool = Field(
+        default=True,
+        description="Enable asynchronous buffered logging for performance",
     )
 
     # Cache configuration
     enable_caching: bool = Field(
-        default=FlextConstants.Settings.DEFAULT_ENABLE_CACHING,
+        default=c.Settings.DEFAULT_ENABLE_CACHING,
         description="Enable caching",
     )
     cache_ttl: int = Field(
-        default=FlextConstants.Defaults.CACHE_TTL,
+        default=c.Defaults.CACHE_TTL,
         description="Cache TTL",
     )
 
     # Database configuration
     database_url: str = Field(
-        default=FlextConstants.Defaults.DATABASE_URL, description="Database URL"
+        default=c.Defaults.DATABASE_URL,
+        description="Database URL",
     )
     database_pool_size: int = Field(
-        default=FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
+        default=c.Performance.DEFAULT_DB_POOL_SIZE,
         description="Database pool size",
     )
 
     # Reliability configuration
     circuit_breaker_threshold: int = Field(
-        default=FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
+        default=c.Reliability.DEFAULT_FAILURE_THRESHOLD,
         description="Circuit breaker threshold",
     )
     rate_limit_max_requests: int = Field(
-        default=FlextConstants.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+        default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
         description="Rate limit max requests",
     )
     rate_limit_window_seconds: int = Field(
-        default=FlextConstants.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+        default=c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
         description="Rate limit window",
     )
     retry_delay: int = Field(
-        default=FlextConstants.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+        default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
         description="Retry delay",
     )
     max_retry_attempts: int = Field(
-        default=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
+        default=c.Reliability.MAX_RETRY_ATTEMPTS,
         description="Max retry attempts",
     )
 
@@ -155,37 +187,37 @@ class FlextConfig(BaseSettings):
         description="Enable timeout executor",
     )
     dispatcher_enable_logging: bool = Field(
-        default=FlextConstants.Dispatcher.DEFAULT_ENABLE_LOGGING,
+        default=c.Dispatcher.DEFAULT_ENABLE_LOGGING,
         description="Enable dispatcher logging",
     )
     dispatcher_auto_context: bool = Field(
-        default=FlextConstants.Dispatcher.DEFAULT_AUTO_CONTEXT,
+        default=c.Dispatcher.DEFAULT_AUTO_CONTEXT,
         description="Auto context in dispatcher",
     )
     dispatcher_timeout_seconds: float = Field(
-        default=FlextConstants.Dispatcher.DEFAULT_TIMEOUT_SECONDS,
+        default=c.Dispatcher.DEFAULT_TIMEOUT_SECONDS,
         description="Dispatcher timeout",
     )
     dispatcher_enable_metrics: bool = Field(
-        default=FlextConstants.Dispatcher.DEFAULT_ENABLE_METRICS,
+        default=c.Dispatcher.DEFAULT_ENABLE_METRICS,
         description="Enable dispatcher metrics",
     )
     executor_workers: int = Field(
-        default=FlextConstants.Container.DEFAULT_WORKERS,
+        default=c.Container.DEFAULT_WORKERS,
         description="Executor workers",
     )
 
     # Processing configuration
     timeout_seconds: float = Field(
-        default=FlextConstants.Network.DEFAULT_TIMEOUT,
+        default=c.Network.DEFAULT_TIMEOUT,
         description="Default timeout",
     )
     max_workers: int = Field(
-        default=FlextConstants.Processing.DEFAULT_MAX_WORKERS,
+        default=c.Processing.DEFAULT_MAX_WORKERS,
         description="Max workers",
     )
     max_batch_size: int = Field(
-        default=FlextConstants.Performance.MAX_BATCH_SIZE,
+        default=c.Performance.MAX_BATCH_SIZE,
         description="Max batch size",
     )
 
@@ -194,8 +226,8 @@ class FlextConfig(BaseSettings):
 
     # Exception configuration
     # Note: Using FailureLevel StrEnum directly for type safety
-    exception_failure_level: FlextConstants.Exceptions.FailureLevel = Field(
-        default=FlextConstants.Exceptions.FAILURE_LEVEL_DEFAULT,
+    exception_failure_level: c.Exceptions.FailureLevel = Field(
+        default=c.Exceptions.FAILURE_LEVEL_DEFAULT,
         description="Exception failure level",
     )
 
@@ -274,8 +306,8 @@ class FlextConfig(BaseSettings):
     @classmethod
     def validate_log_level(
         cls,
-        v: str | FlextConstants.Settings.LogLevel,
-    ) -> FlextConstants.Settings.LogLevel:
+        v: str | c.Settings.LogLevel,
+    ) -> c.Settings.LogLevel:
         """Validate and normalize log level against allowed values.
 
         Business Rule: Validates log level strings against Settings.LogLevel StrEnum.
@@ -292,7 +324,7 @@ class FlextConfig(BaseSettings):
         Accepts string or LogLevel StrEnum, normalizes to uppercase string.
         Returns LogLevel StrEnum member which is compatible with LogLevelLiteral.
         """
-        if isinstance(v, FlextConstants.Settings.LogLevel):
+        if isinstance(v, c.Settings.LogLevel):
             # v is already LogLevel enum member, which is compatible with LogLevelLiteral
             # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
             # Return the enum member directly (compatible with Literal type)
@@ -302,17 +334,17 @@ class FlextConfig(BaseSettings):
         try:
             # Return LogLevel enum member, compatible with LogLevelLiteral
             # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
-            return FlextConstants.Settings.LogLevel(normalized)
+            return c.Settings.LogLevel(normalized)
         except ValueError:
-            log_level_enum = FlextConstants.Settings.LogLevel
+            log_level_enum = c.Settings.LogLevel
             # Type hint: log_level_enum is StrEnum class, so __members__ exists
             # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-            members_dict: dict[str, FlextConstants.Settings.LogLevel] = getattr(
-                log_level_enum, "__members__", {}
+            members_dict: dict[str, c.Settings.LogLevel] = getattr(
+                log_level_enum,
+                "__members__",
+                {},
             )
-            allowed_values = list(
-                u.map(list(members_dict.values()), lambda level: level.value)
-            )
+            allowed_values = [level.value for level in members_dict.values()]
             msg = f"Invalid log level: {v}. Must be one of {allowed_values}"
             raise ValueError(msg) from None
 
@@ -354,14 +386,14 @@ class FlextConfig(BaseSettings):
         return self
 
     @property
-    def effective_log_level(self) -> FlextConstants.Settings.LogLevel:
+    def effective_log_level(self) -> c.Settings.LogLevel:
         """Get effective log level based on debug/trace flags."""
         if self.trace:
             # LogLevel.DEBUG is already compatible with LogLevelLiteral
-            return FlextConstants.Settings.LogLevel.DEBUG
+            return c.Settings.LogLevel.DEBUG
         if self.debug:
             # LogLevel.INFO is already compatible with LogLevelLiteral
-            return FlextConstants.Settings.LogLevel.INFO
+            return c.Settings.LogLevel.INFO
         # self.log_level is already LogLevelLiteral (from field_validator)
         return self.log_level
 
@@ -402,7 +434,7 @@ class FlextConfig(BaseSettings):
         """Auto-configuration model for dynamic config creation."""
 
         config_class: type[BaseSettings]
-        env_prefix: str = Field(default=FlextConstants.Platform.ENV_PREFIX)
+        env_prefix: str = Field(default=c.Platform.ENV_PREFIX)
         env_file: str | None = None
 
         def create_config(self) -> BaseSettings:
@@ -418,7 +450,7 @@ class FlextConfig(BaseSettings):
     # Audit Implication: This registry tracks namespace configuration classes for
     # auto-registration pattern. Used by @auto_register decorator to map namespace
     # strings to configuration classes.
-    _namespace_registry: ClassVar[dict[str, type[BaseSettings]]] = {}
+    _namespace_registry: ClassVar[t.Types.StringBaseSettingsTypeDict] = {}
 
     @staticmethod
     def auto_register(

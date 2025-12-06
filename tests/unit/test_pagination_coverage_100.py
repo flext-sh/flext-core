@@ -16,12 +16,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import u
-from flext_core.typings import t
+from flext_core import t, u
+from flext_tests.utilities import FlextTestsUtilities
 
 
 @dataclass(frozen=True, slots=True)
@@ -312,19 +312,15 @@ class TestuPaginationExtractPageParams:
             max_page_size=scenario.max_page_size,
         )
 
-        assert result.is_success == scenario.expected_success
-
         if scenario.expected_success:
-            assert result.is_success
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
             page, page_size = result.value
             assert page == scenario.expected_page
             assert page_size == scenario.expected_page_size
         else:
-            assert result.is_failure
-            assert (
-                result.error is not None
-                and scenario.expected_error is not None
-                and scenario.expected_error in result.error
+            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+                result,
+                expected_error=scenario.expected_error,
             )
 
 
@@ -343,19 +339,15 @@ class TestuPaginationValidatePaginationParams:
             max_page_size=scenario.max_page_size,
         )
 
-        assert result.is_success == scenario.expected_success
-
         if scenario.expected_success:
-            assert result.is_success
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
             params = result.value
             assert params["page"] == scenario.page
             assert params["page_size"] == scenario.expected_page_size
         else:
-            assert result.is_failure
-            assert (
-                result.error is not None
-                and scenario.expected_error is not None
-                and scenario.expected_error in result.error
+            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+                result,
+                expected_error=scenario.expected_error,
             )
 
 
@@ -375,10 +367,8 @@ class TestuPaginationPreparePaginationData:
             page_size=scenario.page_size,
         )
 
-        assert result.is_success == scenario.expected_success
-
         if scenario.expected_success:
-            assert result.is_success
+            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
             data = result.value
             assert "data" in data
             assert "pagination" in data
@@ -397,11 +387,9 @@ class TestuPaginationPreparePaginationData:
                 )
                 assert pagination["has_prev"] == (scenario.page > 1)
         else:
-            assert result.is_failure
-            assert (
-                result.error is not None
-                and scenario.expected_error is not None
-                and scenario.expected_error in result.error
+            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+                result,
+                expected_error=scenario.expected_error,
             )
 
 
@@ -427,7 +415,7 @@ class TestuPaginationBuildPaginationResponse:
             message="Success",
         )
 
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         response = result.value
         assert "data" in response
         assert "pagination" in response
@@ -449,7 +437,7 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         response = result.value
         assert "data" in response
         assert "pagination" in response
@@ -461,10 +449,9 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and "Invalid pagination data structure" in result.error
+        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            result,
+            expected_error="Invalid pagination data structure",
         )
 
     def test_build_pagination_response_missing_pagination(self) -> None:
@@ -473,10 +460,9 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        assert result.is_failure
-        assert (
-            result.error is not None
-            and "Invalid pagination data structure" in result.error
+        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            result,
+            expected_error="Invalid pagination data structure",
         )
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
@@ -496,7 +482,7 @@ class TestuPaginationBuildPaginationResponse:
         result = u.Pagination.build_pagination_response(pagination_data)
 
         # Should still succeed - dict is valid GeneralValueType
-        assert result.is_success
+        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
         response = result.value
         assert "data" in response
 
@@ -519,7 +505,9 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 500
 
         config = Config()
-        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
+        # extract_pagination_config accepts object with attributes, cast to GeneralValueType
+        config_cast = cast("t.GeneralValueType", config)
+        result = u.Pagination.extract_pagination_config(config_cast)
 
         assert result["default_page_size"] == 50
         assert result["max_page_size"] == 500
@@ -531,7 +519,9 @@ class TestuPaginationExtractPaginationConfig:
             default_page_size = 30
 
         config = Config()
-        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
+        # extract_pagination_config accepts object with attributes, cast to GeneralValueType
+        config_cast = cast("t.GeneralValueType", config)
+        result = u.Pagination.extract_pagination_config(config_cast)
 
         assert result["default_page_size"] == 30
         assert result["max_page_size"] == 1000  # Default
@@ -544,7 +534,9 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 0
 
         config = Config()
-        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
+        # extract_pagination_config accepts object with attributes, cast to GeneralValueType
+        config_cast = cast("t.GeneralValueType", config)
+        result = u.Pagination.extract_pagination_config(config_cast)
 
         # Invalid values should be ignored, defaults used
         assert result["default_page_size"] == 20
@@ -559,7 +551,9 @@ class TestuPaginationExtractPaginationConfig:
                 self.max_page_size = 600
 
         config = Config()
-        result = u.Pagination.extract_pagination_config(config)  # type: ignore[arg-type]  # Config is compatible with GeneralValueType at runtime
+        # extract_pagination_config accepts object with attributes, cast to GeneralValueType
+        config_cast = cast("t.GeneralValueType", config)
+        result = u.Pagination.extract_pagination_config(config_cast)
 
         assert result["default_page_size"] == 40
         assert result["max_page_size"] == 600

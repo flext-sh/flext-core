@@ -1,0 +1,300 @@
+# Service Patterns Guide
+
+**Version:** 1.0 (2025-12-03)  
+**Python:** 3.13+  
+**Pydantic:** 2.x  
+**Status:** V1 stable; V2 patterns under validation
+
+This guide describes FlextService usage patterns and the evolution from
+explicit execution (V1) to zero-ceremony patterns (V2).
+
+---
+
+## Overview
+
+`FlextService[T]` is the foundation for domain services in FLEXT-Core. A service
+is essentially a **Pydantic model with an `execute()` method** that returns
+`FlextResult[T]`.
+
+```python
+from flext_core import FlextService, FlextResult
+
+class CreateUserService(FlextService[User]):
+    name: str
+    email: str
+
+    def execute(self) -> FlextResult[User]:
+        user = User(name=self.name, email=self.email)
+        return FlextResult[User].ok(user)
+```
+
+---
+
+## Execution Patterns
+
+### V1: Explicit Execution (✅ Production Ready)
+
+The baseline pattern uses explicit method calls:
+
+```python
+# Instantiate service with parameters
+service = CreateUserService(name="Alice", email="alice@example.com")
+
+# Execute and handle result
+result = service.execute()
+if result.is_success:
+    user = result.unwrap()
+    print(f"Created user: {user.name}")
+else:
+    print(f"Error: {result.error}")
+```
+
+**Characteristics:**
+- ✅ Railway pattern explicit – full control over errors
+- ✅ Type-safe with `FlextResult[T]`
+- ✅ 100% backward compatible
+- ⚠️ Verbose (`.execute().unwrap()` on every use)
+
+**When to use:**
+- Existing codebases (32+ projects using this pattern)
+- When explicit error handling is critical
+- Railway composition with `.flat_map()`
+
+### V2 Property: `.result` (🟡 Under Validation)
+
+> **Status:** Code implemented in `service.py:122-140`, tests exist in
+> `tests/unit/test_service_v2_patterns.py`. Run full test suite for validation.
+
+The property pattern provides a shorthand:
+
+```python
+# V2 Property: Access result directly
+try:
+    user = CreateUserService(name="Alice", email="alice@example.com").result
+    print(f"Created user: {user.name}")
+except FlextExceptions.BaseError as e:
+    print(f"Error: {e}")
+```
+
+**Characteristics:**
+- ✅ 68% reduction in code (7 chars vs 19)
+- ✅ Lazy evaluation (executes on first access)
+- ⚠️ Error handling via exceptions
+
+### V2 Auto: `auto_execute` (🟡 Under Validation)
+
+> **Status:** Code implemented in `service.py:58-113`, tests exist in
+> `tests/test_service_auto_execute.py`. Run full test suite for validation.
+
+The auto-execution pattern returns the value directly on instantiation:
+
+```python
+class AutoUserService(FlextService[User]):
+    auto_execute: ClassVar[bool] = True  # Opt-in
+    name: str
+    email: str
+
+    def execute(self) -> FlextResult[User]:
+        return FlextResult[User].ok(User(name=self.name, email=self.email))
+
+# Instantiation returns User directly (not service instance)
+user = AutoUserService(name="Alice", email="alice@example.com")
+print(f"Created user: {user.name}")
+```
+
+**Characteristics:**
+- ✅ 95% reduction in code (4 chars vs 19)
+- ✅ Zero ceremony – just instantiate
+- ⚠️ Opt-in via `auto_execute = True`
+- ⚠️ Error handling via exceptions
+
+---
+
+## Infrastructure Properties
+
+FlextService inherits from `FlextMixins`, providing automatic access to
+infrastructure:
+
+| Property          | Type            | Description                    |
+| ----------------- | --------------- | ------------------------------ |
+| `self.config`     | `FlextConfig`   | Configuration singleton        |
+| `self.logger`     | `FlextLogger`   | Logger with context            |
+| `self.container`  | `FlextContainer`| Dependency injection container |
+| `self.context`    | `FlextContext`  | Execution context (task-local) |
+
+All properties are **lazy-loaded** – no overhead if unused.
+
+### Example with Infrastructure
+
+```python
+class ProcessOrderService(FlextService[Order]):
+    order_id: str
+
+    def execute(self) -> FlextResult[Order]:
+        # Logging (via FlextMixins)
+        self.logger.info(f"Processing order {self.order_id}")
+
+        # Configuration (via FlextMixins)
+        max_retries = self.config.max_retry_attempts
+
+        # Dependency resolution (via FlextMixins)
+        repo_result = self.container.get("order_repository")
+        if repo_result.is_failure:
+            return FlextResult[Order].fail("Repository unavailable")
+
+        repo = repo_result.unwrap()
+        return repo.find_by_id(self.order_id)
+```
+
+---
+
+## Composition Patterns
+
+### Railway Composition
+
+Chain services using `flat_map`:
+
+```python
+def process_user(name: str, email: str) -> FlextResult[User]:
+    return (
+        ValidateEmailService(email=email).execute()
+        .flat_map(lambda _: ValidateNameService(name=name).execute())
+        .flat_map(lambda _: CreateUserService(name=name, email=email).execute())
+    )
+```
+
+> **TODO(flext_core/result.py::FlextResult):** Implement `.and_then()` helper
+> as alias for `.flat_map()` for naming parity with other railway libraries.
+
+### Service Factories
+
+Create services dynamically:
+
+```python
+def create_notification_service(
+    channel: str,
+    message: str,
+) -> FlextService[bool]:
+    match channel:
+        case "email":
+            return EmailNotificationService(message=message)
+        case "sms":
+            return SmsNotificationService(message=message)
+        case _:
+            return NoOpNotificationService(message=message)
+
+# Usage
+service = create_notification_service("email", "Hello!")
+result = service.execute()
+```
+
+---
+
+## Integration with Handlers
+
+Services are called by CQRS handlers for domain operations:
+
+```python
+from flext_core.handlers import FlextHandlers
+from flext_core.result import r
+
+class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
+    def handle(self, command: CreateUserCommand) -> r[User]:
+        # Handler orchestrates, service executes
+        return CreateUserService(
+            name=command.name,
+            email=command.email,
+        ).execute()
+```
+
+See [CQRS Architecture](../architecture/cqrs.md) for handler details.
+
+---
+
+## Testing Services
+
+### Unit Testing
+
+```python
+def test_create_user_service_success():
+    service = CreateUserService(name="Alice", email="alice@example.com")
+    result = service.execute()
+
+    assert result.is_success
+    user = result.unwrap()
+    assert user.name == "Alice"
+    assert user.email == "alice@example.com"
+
+def test_create_user_service_invalid_email():
+    service = CreateUserService(name="Alice", email="invalid")
+    result = service.execute()
+
+    assert result.is_failure
+    assert "email" in result.error.lower()
+```
+
+### Integration Testing
+
+```python
+def test_service_with_container(container: FlextContainer):
+    container.register("email_validator", MockEmailValidator())
+
+    service = CreateUserService(name="Alice", email="alice@example.com")
+    result = service.execute()
+
+    assert result.is_success
+```
+
+---
+
+## Migration Guide
+
+### From V1 to V2 Property
+
+```python
+# Before (V1)
+result = MyService(param="value").execute()
+if result.is_success:
+    value = result.unwrap()
+else:
+    handle_error(result.error)
+
+# After (V2 Property)
+try:
+    value = MyService(param="value").result
+except FlextExceptions.BaseError as e:
+    handle_error(str(e))
+```
+
+### Gradual Adoption
+
+1. **New code:** Consider V2 patterns if tests pass
+2. **Existing code:** Keep V1 (no changes required)
+3. **Critical paths:** Prefer V1 for explicit error handling
+
+---
+
+## Best Practices
+
+### DO ✅
+
+- Keep services focused (single responsibility)
+- Return `FlextResult` from `execute()` (railway pattern)
+- Use lazy infrastructure properties (`self.config`, `self.logger`)
+- Validate inputs early with `FlextResult.fail()`
+
+### DON'T ❌
+
+- Raise exceptions in `execute()` (use `FlextResult.fail()`)
+- Access infrastructure in `__init__` (properties are lazy)
+- Mix V1 and V2 patterns in the same module
+
+---
+
+## References
+
+- `flext_core/service.py` – Service base class
+- `flext_core/mixins.py` – Infrastructure properties
+- `flext_core/result.py` – FlextResult monad
+- [Railway-Oriented Programming Guide](./railway-oriented-programming.md)
+- [CQRS Architecture](../architecture/cqrs.md)
