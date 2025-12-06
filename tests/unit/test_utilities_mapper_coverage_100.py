@@ -13,12 +13,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel
 
-from flext_core import u
+from flext_core import t, u
 
 
 @dataclass
@@ -227,7 +228,9 @@ class TestuMapperConversions:
     def test_convert_to_json_value(self) -> None:
         """Test convert_to_json_value."""
         obj = SimpleObj("test", 1)
-        res = u.Mapper.convert_to_json_value({"obj": obj})
+        res = u.Mapper.convert_to_json_value(
+            cast("t.Types.ConfigurationDict", {"obj": obj})
+        )
         # Should convert obj to string
         assert isinstance(res, dict)
         assert "obj" in res
@@ -236,13 +239,15 @@ class TestuMapperConversions:
     def test_convert_dict_to_json(self) -> None:
         """Test convert_dict_to_json."""
         d = {"a": SimpleObj("test", 1)}
-        res = u.Mapper.convert_dict_to_json(d)
+        res = u.Mapper.convert_dict_to_json(cast("t.Types.ConfigurationDict", d))
         assert isinstance(res["a"], str)
 
     def test_convert_list_to_json(self) -> None:
         """Test convert_list_to_json."""
         test_list = [{"a": SimpleObj("test", 1)}]
-        res = u.Mapper.convert_list_to_json(test_list)
+        res = u.Mapper.convert_list_to_json(
+            cast("Sequence[t.GeneralValueType]", test_list)
+        )
         assert isinstance(res[0]["a"], str)
 
 
@@ -260,7 +265,9 @@ class TestuMapperBuild:
         # Ensure: [1, 2, 3, 4]
         # Filter (x>2): [3, 4]
         # Map (x*2): [6, 8]
-        res = u.Mapper.build([1, 2, 3, 4], ops=ops)
+        res = u.Mapper.build(
+            [1, 2, 3, 4], ops=cast("t.Types.ConfigurationDict | None", ops)
+        )
         assert res == [6, 8]
 
     def test_build_all_ops(self) -> None:
@@ -276,22 +283,32 @@ class TestuMapperBuild:
             "unique": True,  # [25, 35, 45]
             "slice": (0, 2),  # [25, 35]
         }
-        res = u.Mapper.build(input_data, ops=ops)
+        res = u.Mapper.build(
+            input_data, ops=cast("t.Types.ConfigurationDict | None", ops)
+        )
         assert res == [25, 35]
 
     def test_build_normalize(self) -> None:
         """Test build normalize."""
-        res = u.Mapper.build(["A", "b"], ops={"normalize": "lower"})
+        res = u.Mapper.build(
+            ["A", "b"],
+            ops=cast("t.Types.ConfigurationDict | None", {"normalize": "lower"}),
+        )
         assert res == ["a", "b"]
 
     def test_build_group(self) -> None:
         """Test build group."""
-        res = u.Mapper.build(["cat", "dog", "ant"], ops={"group": len})
+        res = u.Mapper.build(
+            ["cat", "dog", "ant"],
+            ops=cast("t.Types.ConfigurationDict | None", {"group": len}),
+        )
         assert res == {3: ["cat", "dog", "ant"]}
 
     def test_build_chunk(self) -> None:
         """Test build chunk."""
-        res = u.Mapper.build([1, 2, 3, 4], ops={"chunk": 2})
+        res = u.Mapper.build(
+            [1, 2, 3, 4], ops=cast("t.Types.ConfigurationDict | None", {"chunk": 2})
+        )
         assert res == [[1, 2], [3, 4]]
 
     def test_fields_single(self) -> None:
@@ -303,7 +320,7 @@ class TestuMapperBuild:
         """Test fields multi extraction."""
         data = {"a": 1, "b": 2}
         spec = {"a": None, "b": None}
-        res = u.Mapper.fields_multi(data, spec)
+        res = u.Mapper.fields_multi(data, cast("dict[str, t.GeneralValueType]", spec))
         assert res == {"a": 1, "b": 2}
 
     def test_construct(self) -> None:
@@ -314,7 +331,10 @@ class TestuMapperBuild:
             "age": "user_age",
             "role": {"value": "admin"},
         }
-        res = u.Mapper.construct(spec, source)
+        res = u.Mapper.construct(
+            cast("t.Types.ConfigurationDict", spec),
+            cast("t.Types.ConfigurationDict", source),
+        )
         assert res == {"name": "john", "age": 30, "role": "admin"}
 
 
@@ -335,11 +355,19 @@ class TestuMapperAdvanced:
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
         # Convert fails -> returns default (which is convert_type() -> int() -> 0)
-        res = u.Mapper.build("invalid", ops={"convert": int})
+        res = u.Mapper.build(
+            "invalid", ops=cast("t.Types.ConfigurationDict | None", {"convert": int})
+        )
         assert res == 0
 
         # With custom default
-        res = u.Mapper.build("invalid", ops={"convert": int, "convert_default": 10})
+        res = u.Mapper.build(
+            "invalid",
+            ops=cast(
+                "t.Types.ConfigurationDict | None",
+                {"convert": int, "convert_default": 10},
+            ),
+        )
         assert res == 10
 
     def test_transform_options(self) -> None:
@@ -353,18 +381,25 @@ class TestuMapperAdvanced:
                 "strip_empty": True,
             },
         }
-        res = u.Mapper.build(data, ops=ops)
+        res = u.Mapper.build(data, ops=cast("t.Types.ConfigurationDict | None", ops))
         # c stripped (empty), b stripped (None). 'a' preserved (cache normalization doesn't lowercase values)
         assert res == {"a": "UPPER"}
 
     def test_build_sort_complex(self) -> None:
         """Test build sort with callable and string."""
         data = [{"a": 2}, {"a": 1}]
-        res = u.Mapper.build(data, ops={"sort": "a"})
-        assert res[0]["a"] == 1
+        res = u.Mapper.build(
+            data, ops=cast("t.Types.ConfigurationDict | None", {"sort": "a"})
+        )
+        assert cast("list[dict[str, int]]", res)[0]["a"] == 1
 
-        res = u.Mapper.build(data, ops={"sort": operator.itemgetter("a")})
-        assert res[0]["a"] == 1
+        res = u.Mapper.build(
+            data,
+            ops=cast(
+                "t.Types.ConfigurationDict | None", {"sort": operator.itemgetter("a")}
+            ),
+        )
+        assert cast("list[dict[str, int]]", res)[0]["a"] == 1
 
     def test_build_unique(self) -> None:
         """Test build unique."""

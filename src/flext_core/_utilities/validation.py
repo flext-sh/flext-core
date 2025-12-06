@@ -2534,29 +2534,37 @@ class FlextUtilitiesValidation:
         # String validation
         if FlextUtilitiesGuards.is_type(value, str):
             return (
-                r.ok(value)
+                r[str].ok(cast("str", value))
                 if FlextUtilitiesGuards.is_type(value, "string_non_empty")
-                else r.fail(f"{error_template} non-empty string")
+                else r[str].fail(f"{error_template} non-empty string")
             )
 
         # Dict-like validation
         if FlextRuntime.is_dict_like(value_typed):
             return (
-                r.ok(value)
+                r[t.Types.ConfigurationDict].ok(
+                    cast("t.Types.ConfigurationDict", value_typed)
+                )
                 if FlextUtilitiesGuards.is_type(value_typed, "dict_non_empty")
-                else r.fail(f"{error_template} non-empty dict")
+                else r[t.Types.ConfigurationDict].fail(
+                    f"{error_template} non-empty dict"
+                )
             )
 
         # List-like validation
         if FlextRuntime.is_list_like(value_typed):
             return (
-                r.ok(value)
+                r[list[t.GeneralValueType]].ok(
+                    cast("list[t.GeneralValueType]", value_typed)
+                )
                 if FlextUtilitiesGuards.is_type(value_typed, "list_non_empty")
-                else r.fail(f"{error_template} non-empty list")
+                else r[list[t.GeneralValueType]].fail(
+                    f"{error_template} non-empty list"
+                )
             )
 
         # Unknown type
-        return r.fail(f"{error_template} non-empty (str/dict/list)")
+        return r[object].fail(f"{error_template} non-empty (str/dict/list)")
 
     # Guard shortcut table: maps shortcut names to (check_fn, type_desc) tuples
     # check_fn: (value) -> bool (True = valid)
@@ -2611,10 +2619,12 @@ class FlextUtilitiesValidation:
                 shortcut_lower
             ]
             if check_fn(value):
-                return r.ok(value)
-            return r.fail(f"{error_template} {type_desc}")
+                return r[t.GeneralValueType].ok(cast("t.GeneralValueType", value))
+            return r[t.GeneralValueType].fail(f"{error_template} {type_desc}")
 
-        return r.fail(f"{context} unknown guard shortcut: {shortcut}")
+        return r[t.GeneralValueType].fail(
+            f"{context} unknown guard shortcut: {shortcut}"
+        )
 
     @staticmethod
     def guard[T](

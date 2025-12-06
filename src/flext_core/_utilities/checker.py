@@ -89,7 +89,8 @@ class FlextUtilitiesChecker:
                 # Accept all type forms: plain types, generic aliases (e.g., t.Types.ConfigurationDict),
                 # and string type references. The _evaluate_type_compatibility method
                 # handles all these forms correctly.
-                if args and args[0] is not None:
+                # args[0] is never None - extract_generic_args returns tuple of types/strings
+                if args:
                     message_types.append(args[0])
         return message_types
 

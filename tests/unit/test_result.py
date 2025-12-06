@@ -31,7 +31,7 @@ from returns.maybe import Nothing, Some
 from returns.result import Success
 
 from flext_core import c, e, r, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, u
 
 
 class ResultOperationType(StrEnum):
@@ -154,18 +154,18 @@ class Testr:
                 )
             )
             # value is already GeneralValueType from ResultScenario
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 creation_result,
                 value,
             )
 
         elif op_type == ResultOperationType.CREATION_FAILURE:
             failure_result: r[t.GeneralValueType] = (
-                FlextTestsUtilities.Tests.ResultHelpers.create_failure_result(
+                u.Tests.Result.create_failure_result(
                     str(value),
                 )
             )
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 failure_result,
                 str(value),
             )
@@ -173,9 +173,9 @@ class Testr:
         elif op_type == ResultOperationType.UNWRAP_OR:
             # value is already GeneralValueType from ResultScenario
             unwrap_result: r[t.GeneralValueType] = (
-                FlextTestsUtilities.Tests.ResultHelpers.create_success_result(value)
+                u.Tests.Result.create_success_result(value)
                 if is_success
-                else FlextTestsUtilities.Tests.ResultHelpers.create_failure_result(
+                else u.Tests.Result.create_failure_result(
                     str(value),
                 )
             )
@@ -187,21 +187,21 @@ class Testr:
         elif op_type == ResultOperationType.MAP:
             map_result: r[str] = r[str].fail(str(value))
             mapped = map_result.map(lambda x: str(x) * 2)
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 mapped,
                 str(value),
             )
 
         elif op_type == ResultOperationType.FLAT_MAP:
             flat_map_result: r[t.GeneralValueType] = (
-                FlextTestsUtilities.Tests.ResultHelpers.create_failure_result(
+                u.Tests.Result.create_failure_result(
                     str(value),
                 )
             )
             flat_mapped = flat_map_result.flat_map(
                 lambda x: r[str].ok(f"value_{x}"),
             )
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 flat_mapped,
                 str(value),
             )
@@ -209,21 +209,21 @@ class Testr:
         elif op_type == ResultOperationType.ALT:
             # value is already GeneralValueType from ResultScenario
             result_alt: r[t.GeneralValueType] = (
-                FlextTestsUtilities.Tests.ResultHelpers.create_success_result(value)
+                u.Tests.Result.create_success_result(value)
                 if is_success
-                else FlextTestsUtilities.Tests.ResultHelpers.create_failure_result(
+                else u.Tests.Result.create_failure_result(
                     str(value),
                 )
             )
             alt_result = result_alt.alt(lambda e: f"alt_{e}")
             if is_success:
-                FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                u.Tests.Result.assert_success_with_value(
                     alt_result,
                     value,
                 )
             else:
                 error_str_alt: str = f"alt_{value}"
-                FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+                u.Tests.Result.assert_failure_with_error(
                     alt_result,
                     error_str_alt,
                 )
@@ -236,13 +236,13 @@ class Testr:
                 lambda e: r[str].ok(f"recovered_{e}"),
             )
             if is_success:
-                FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                u.Tests.Result.assert_success_with_value(
                     lash_result,
                     str(value),
                 )
             else:
                 expected = f"recovered_{value}"
-                FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                u.Tests.Result.assert_success_with_value(
                     lash_result,
                     expected,
                 )
@@ -250,9 +250,9 @@ class Testr:
         elif op_type == ResultOperationType.OR_OPERATOR:
             # value is already GeneralValueType from ResultScenario
             result_or: r[t.GeneralValueType] = (
-                FlextTestsUtilities.Tests.ResultHelpers.create_success_result(value)
+                u.Tests.Result.create_success_result(value)
                 if is_success
-                else FlextTestsUtilities.Tests.ResultHelpers.create_failure_result(
+                else u.Tests.Result.create_failure_result(
                     str(value),
                 )
             )
@@ -279,7 +279,7 @@ class Testr:
             assert isinstance(value, int)
             result = r[int].ok(value)
             mapped = result.map(lambda x: x * 2)
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 mapped,
                 value * 2,
             )
@@ -292,7 +292,7 @@ class Testr:
             )
             expected = f"value_{value}"
             # Direct assert to avoid type-var issue with object
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 flat_mapped,
                 expected,
             )
@@ -302,12 +302,12 @@ class Testr:
             result = r[int].ok(value)
             filtered = result.filter(lambda x: x > 5)
             if is_success:
-                FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+                u.Tests.Result.assert_success_with_value(
                     filtered,
                     value,
                 )
             else:
-                FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(filtered)
+                u.Tests.Result.assert_result_failure(filtered)
 
         elif op_type == ResultOperationType.RAILWAY_COMPOSITION:
             assert isinstance(value, int)
@@ -325,7 +325,7 @@ class Testr:
                 expected_failure_count=0,
                 first_failure_index=None,
             )
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 res3,
                 expected,
             )
@@ -339,9 +339,9 @@ class Testr:
         """Test r with boolean values across all scenarios."""
         if scenario.operation_type == ResultOperationType.BOOL_CONVERSION:
             result = (
-                FlextTestsUtilities.Tests.ResultHelpers.create_success_result("value")
+                u.Tests.Result.create_success_result("value")
                 if scenario.value
-                else FlextTestsUtilities.Tests.ResultHelpers.create_failure_result(
+                else u.Tests.Result.create_failure_result(
                     c.Errors.GENERIC_ERROR,
                 )
             )
@@ -380,7 +380,7 @@ class Testr:
         )
 
         # Verify final value
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             res3,
             20,  # (5 * 2) + 10
         )
@@ -404,7 +404,7 @@ class Testr:
         results.append(res3)
 
         # Should still succeed (20 // 2 = 10)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             res3,
             10,
         )
@@ -444,7 +444,7 @@ class Testr:
         # Verify success cases
         for i, (result, is_success, _value, error) in enumerate(cases[:3]):
             assert is_success is True
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 success_values[i],
             )
@@ -453,7 +453,7 @@ class Testr:
         # Verify failure cases
         for i, (result, is_success, _value, error) in enumerate(cases[3:]):
             assert is_success is False
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert error == failure_errors[i]
 
     def test_result_none_handling_limits(self) -> None:
@@ -467,7 +467,7 @@ class Testr:
                 default_on_none="default_value",
             )
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result1,
             "default_value",
         )
@@ -479,7 +479,7 @@ class Testr:
                 error_on_none="Value is None",
             )
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result2,
             "Value is None",
         )
@@ -488,7 +488,7 @@ class Testr:
         result3 = FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
             "actual_value",
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result3,
             "actual_value",
         )

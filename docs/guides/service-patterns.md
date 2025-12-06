@@ -1,8 +1,8 @@
 # Service Patterns Guide
 
-**Version:** 1.0 (2025-12-03)  
-**Python:** 3.13+  
-**Pydantic:** 2.x  
+**Version:** 1.0 (2025-12-03)
+**Python:** 3.13+
+**Pydantic:** 2.x
 **Status:** V1 stable; V2 patterns under validation
 
 This guide describes FlextService usage patterns and the evolution from

@@ -22,7 +22,7 @@ from typing import ClassVar, cast
 import pytest
 
 from flext_core import t, u
-from flext_tests import u
+from flext_tests import u as tu
 
 
 @dataclass(frozen=True, slots=True)
@@ -263,7 +263,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         result = u.Guards.normalize_to_metadata_value(scenario.value)
 
         # Verify type
-        u.Tests.Assertions.assert_result_matches_expected(
+        tu.Tests.Assertions.assert_result_matches_expected(
             result,
             scenario.expected_type,
             description=scenario.name,
@@ -278,7 +278,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         value = cast("t.GeneralValueType", {123: "value", "key": "test"})
         result = u.Guards.normalize_to_metadata_value(value)
 
-        u.Tests.Assertions.assert_result_matches_expected(
+        tu.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -302,7 +302,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         )
         result = u.Guards.normalize_to_metadata_value(value)
 
-        u.Tests.Assertions.assert_result_matches_expected(
+        tu.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -331,7 +331,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         )
         result = u.Guards.normalize_to_metadata_value(value)
 
-        u.Tests.Assertions.assert_result_matches_expected(
+        tu.Tests.Assertions.assert_result_matches_expected(
             result,
             list,
         )
@@ -356,7 +356,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         value = cast("t.GeneralValueType", CustomObject())
         result = u.Guards.normalize_to_metadata_value(value)
 
-        u.Tests.Assertions.assert_result_matches_expected(result, str)
+        tu.Tests.Assertions.assert_result_matches_expected(result, str)
         assert result == "custom_object"
 
 

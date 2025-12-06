@@ -27,9 +27,9 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextConfig, p, r, t, u
+from flext_core import FlextConfig, p, r, t
 from flext_core.constants import c
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, u
 
 
 class UtilityScenarios:
@@ -279,7 +279,7 @@ class Testu:
     ) -> None:
         """Test text truncation."""
         result = u.Text.truncate_text(text, max_length=max_length)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         if should_truncate:
             assert len(result.value) <= max_length + 3  # +3 for "..."
         else:
@@ -337,7 +337,7 @@ class Testu:
         """Test clearing object cache."""
         cache_data: t.Types.ConfigurationMapping = {"test": "data"}
         result = u.Cache.clear_object_cache(cache_data)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     @pytest.mark.parametrize(
         ("has_cache", "expected"),
@@ -474,9 +474,9 @@ class Testu:
         """Test validation pipeline."""
         result = u.Validation.validate_pipeline(data, list(validators))
         if should_succeed:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             if error_pattern:
                 assert error_pattern in str(result.error)
 
@@ -488,7 +488,7 @@ class Testu:
             raise ValueError(error_msg)
 
         result = u.Validation.validate_pipeline("test", [bad_validator])
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_validation_normalize_dataclass(self) -> None:
         """Test normalize with dataclass."""
@@ -550,7 +550,7 @@ class Testu:
             quick_success,
             max_attempts=c.Reliability.MAX_RETRY_ATTEMPTS,
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "success",
         )
@@ -570,7 +570,7 @@ class Testu:
             max_attempts=5,
             delay_seconds=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "Success",
         )

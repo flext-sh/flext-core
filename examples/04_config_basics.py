@@ -35,53 +35,53 @@ class AppConfig(FlextConfig):
     and type-safe configuration management.
     """
 
-    database_url: t.Example.DatabaseUrl = Field(
-        default=FlextConstants.Example.DEFAULT_DATABASE_URL,
+    database_url: str = Field(
+        default="postgresql://localhost:5432/testdb",
         description="Database connection URL",
     )
     db_pool_size: int = Field(
-        default=FlextConstants.Example.DEFAULT_DB_POOL_SIZE,
+        default=10,
         ge=1,
         le=FlextConstants.Performance.MAX_DB_POOL_SIZE,
         description="Database connection pool size",
     )
-    api_timeout: t.Example.TimeoutSeconds = Field(
-        default=FlextConstants.Example.DEFAULT_API_TIMEOUT,
+    api_timeout: int = Field(
+        default=30,
     )
     api_host: str = Field(
-        default=FlextConstants.Example.DEFAULT_API_HOST,
+        default="localhost",
         min_length=1,
         max_length=FlextConstants.Network.MAX_HOSTNAME_LENGTH,
         description="API server hostname",
     )
-    api_port: t.Example.PortNumber = Field(
-        default=FlextConstants.Example.DEFAULT_API_PORT,
+    api_port: t.Validation.PortNumber = Field(
+        default=8080,
         description="API server port number",
     )
     debug: bool = Field(
-        default=FlextConstants.Example.DEFAULT_DEBUG_MODE,
+        default=False,
         description="Enable debug mode",
     )
-    max_workers: t.Example.WorkerCount = Field(
-        default=FlextConstants.Example.DEFAULT_MAX_WORKERS,
+    max_workers: int = Field(
+        default=4,
         description="Maximum number of worker threads",
     )
     cache_enabled: bool = Field(
-        default=FlextConstants.Example.DEFAULT_CACHE_ENABLED,
+        default=True,
         description="Enable caching",
     )
     cache_ttl: int = Field(
-        default=FlextConstants.Example.DEFAULT_CACHE_TTL,
+        default=3600,
         ge=0,
         le=FlextConstants.Performance.MAX_TIMEOUT_SECONDS,
         description="Cache time-to-live in seconds",
     )
-    worker_timeout: t.Example.TimeoutSeconds = Field(
-        default=FlextConstants.Example.DEFAULT_WORKER_TIMEOUT,
+    worker_timeout: int = Field(
+        default=60,
         description="Worker operation timeout",
     )
     retry_attempts: int = Field(
-        default=FlextConstants.Example.DEFAULT_RETRY_ATTEMPTS,
+        default=3,
         ge=0,
         le=FlextConstants.Reliability.MAX_RETRY_ATTEMPTS,
         description="Number of retry attempts",
@@ -170,10 +170,10 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
 
         result = FlextResult[AppConfig].ok(
             AppConfig(
-                database_url=FlextConstants.Example.DEFAULT_DATABASE_URL,
-                api_timeout=FlextConstants.Example.DEFAULT_API_TIMEOUT,
-                debug=FlextConstants.Example.DEFAULT_DEBUG_MODE,
-                max_workers=FlextConstants.Example.DEFAULT_MAX_WORKERS,
+                database_url="postgresql://localhost:5432/testdb",
+                api_timeout=30,
+                debug=False,
+                max_workers=4,
                 log_level=FlextConstants.Settings.LogLevel.INFO,
             ),
         )
@@ -187,9 +187,9 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
         def set_env_vars() -> FlextResult[Mapping[str, str]]:
             """Set environment variables safely."""
             env_vars = {
-                FlextConstants.Example.FLEXT_DEBUG: FlextConstants.Example.EXAMPLE_DEBUG_TRUE,
-                FlextConstants.Example.FLEXT_DATABASE_URL: FlextConstants.Example.EXAMPLE_DATABASE_URL,
-                FlextConstants.Example.FLEXT_API_TIMEOUT: FlextConstants.Example.EXAMPLE_API_TIMEOUT,
+                "FLEXT_DEBUG": "true",
+                "FLEXT_DATABASE_URL": "postgresql://localhost:5432/testdb",
+                "FLEXT_API_TIMEOUT": "30",
             }
             for key, value in env_vars.items():
                 os.environ[key] = value
@@ -297,10 +297,10 @@ def demonstrate_file_config() -> FlextResult[bool]:
 
     def create_config_file() -> FlextResult[Path]:
         """Create temporary config file safely."""
-        config_file = Path(FlextConstants.Example.EXAMPLE_CONFIG_FILE)
+        config_file = Path("example_config.json")
         try:
             config_file.write_text(
-                FlextConstants.Example.EXAMPLE_CONFIG_CONTENT.strip(),
+                '{"database_url": "postgresql://localhost:5432/testdb", "api_timeout": 30}',
                 encoding=FlextConstants.Utilities.DEFAULT_ENCODING,
             )
             return FlextResult[Path].ok(config_file)

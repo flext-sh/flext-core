@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from typing import cast
 
 from pydantic import BaseModel, Field
 
@@ -29,6 +30,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core.protocols import p
 
 # ═══════════════════════════════════════════════════════════════════
 # DOMAIN MODELS
@@ -208,7 +210,9 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
         print("\n=== Registry/Dispatcher Integration ===")
 
         dispatcher = FlextDispatcher()
-        _registry = FlextRegistry(dispatcher=dispatcher)
+        _registry = FlextRegistry(
+            dispatcher=cast("p.Application.CommandBus | None", dispatcher)
+        )
         print("✅ Registry/Dispatcher initialized")
 
     @staticmethod

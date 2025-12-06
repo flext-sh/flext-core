@@ -46,7 +46,7 @@ def mark_test_pattern(
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
         # Use setattr for dynamic attribute setting to avoid type checker issues
         # Type ignore needed because Callable doesn't have _test_pattern attribute
-        func._test_pattern = pattern
+        func._test_pattern = pattern  # type: ignore[attr-defined]
         return func
 
     return decorator

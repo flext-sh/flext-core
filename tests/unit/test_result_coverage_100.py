@@ -29,7 +29,7 @@ from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 
 from flext_core import e, r, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 # =========================================================================
 # Test Suite - r Core Functionality
@@ -62,7 +62,7 @@ class TestrCoverage:
         """Test creating success results with different value types."""
         result = r[object].ok(value)
         # Use TestUtilities for success check, then direct value check for object type
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert result.value == expected
 
     def test_ok_rejects_none_value(self) -> None:
@@ -73,7 +73,7 @@ class TestrCoverage:
     def test_fail_creates_failure_with_message(self) -> None:
         """Test creating failure results."""
         result = r[str].fail("Test error")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             expected_error="Test error",
         )
@@ -81,14 +81,14 @@ class TestrCoverage:
     def test_fail_with_error_code(self) -> None:
         """Test creating failure with error code."""
         result = r[str].fail("Error", error_code="TEST_CODE")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error_code == "TEST_CODE"
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
         error_data: t.Types.EventDataMapping = {"status": "failed", "count": 5}
         result = r[str].fail("Error", error_data=error_data)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error_data == error_data
 
     # =====================================================================
@@ -98,7 +98,7 @@ class TestrCoverage:
     def test_value_property_on_success(self) -> None:
         """Test accessing value on success result."""
         result = r[str].ok("test")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "test",
         )
@@ -112,7 +112,7 @@ class TestrCoverage:
     def test_value_property(self) -> None:
         """Test that value property works correctly."""
         result = r[str].ok("test")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "test",
         )
@@ -120,7 +120,7 @@ class TestrCoverage:
     def test_error_property_on_failure(self) -> None:
         """Test accessing error on failure result."""
         result = r[str].fail("test_error")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             expected_error="test_error",
         )
@@ -162,12 +162,12 @@ class TestrCoverage:
     def test_map_success(self) -> None:
         """Test map operation on success."""
         result = r[int].ok(5).map(lambda x: x * 2)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, 10)
+        u.Tests.Result.assert_success_with_value(result, 10)
 
     def test_map_failure_skips_function(self) -> None:
         """Test that map skips function on failure."""
         result = r[int].fail("error").map(lambda x: x * 2)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             expected_error="error",
         )
@@ -189,7 +189,7 @@ class TestrCoverage:
             return str(x)
 
         result = r[int].ok(5).map(double).map(add_three).map(to_str)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "13",
         )
@@ -204,7 +204,7 @@ class TestrCoverage:
 
         result = r[int].ok(5).flat_map(double_in_result)
         # Use TestUtilities for success check, then direct value check for object type
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert result.value == 10
 
     def test_flat_map_failure_propagates(self) -> None:
@@ -215,7 +215,7 @@ class TestrCoverage:
 
         result = r[int].ok(5).flat_map(failing_op)
         # Use TestUtilities for object type to avoid type-var issue
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error == "Inner failed"
 
     def test_flat_map_initial_failure_skips(self) -> None:
@@ -228,7 +228,7 @@ class TestrCoverage:
 
         result = r[int].fail("error").flat_map(double_in_result)
         # Use TestUtilities for object type to avoid type-var issue
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error == "error"
 
     # =====================================================================
@@ -238,7 +238,7 @@ class TestrCoverage:
     def test_filter_success_when_predicate_true(self) -> None:
         """Test filter passes when predicate is true."""
         result = r[int].ok(5).filter(lambda x: x > 3)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             5,
         )
@@ -246,7 +246,7 @@ class TestrCoverage:
     def test_filter_failure_when_predicate_false(self) -> None:
         """Test filter fails when predicate is false."""
         result = r[int].ok(5).filter(lambda x: x > 10)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "Filter predicate failed",
         )
@@ -254,7 +254,7 @@ class TestrCoverage:
     def test_filter_failure_skips_predicate(self) -> None:
         """Test that filter skips on failure."""
         result = r[int].fail("error").filter(lambda x: x > 3)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error == "error"
 
     # =====================================================================
@@ -264,7 +264,7 @@ class TestrCoverage:
     def test_alt_maps_error_message(self) -> None:
         """Test alt maps error message on failure."""
         result = r[str].fail("original").alt(lambda e: f"Modified: {e}")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "Modified: original",
         )
@@ -272,7 +272,7 @@ class TestrCoverage:
     def test_alt_skips_on_success(self) -> None:
         """Test that alt skips on success."""
         result = r[str].ok("test").alt(lambda e: f"Modified: {e}")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "test",
         )
@@ -284,7 +284,7 @@ class TestrCoverage:
             return r[str].ok(f"Recovered from: {error}")
 
         result = r[str].fail("error").lash(recovery)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "Recovered from: error",
         )
@@ -296,7 +296,7 @@ class TestrCoverage:
             return r[str].fail("recovery failed")
 
         result = r[str].ok("test").lash(recovery)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "test",
         )
@@ -308,7 +308,7 @@ class TestrCoverage:
             return r[str].fail("recovery also failed")
 
         result = r[str].fail("original").lash(failing_recovery)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "recovery also failed",
         )
@@ -332,7 +332,7 @@ class TestrCoverage:
 
         result = r[int].ok(5).flow_through(double, add_ten)
         # Use TestUtilities for success check, then direct value check for object type
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert result.value == 20
 
     def test_flow_through_stops_on_failure(self) -> None:
@@ -350,7 +350,7 @@ class TestrCoverage:
         # First operation fails with string input
         result = r[str].ok("test").flow_through(double, add_ten)
         # Use TestUtilities for object type to avoid type-var issue
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error == "Not an int"
 
     # =====================================================================
@@ -374,7 +374,7 @@ class TestrCoverage:
         """Test creation from Maybe with Some."""
         maybe = Some("test")
         result = r[str].from_maybe(maybe)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "test",
         )
@@ -382,7 +382,7 @@ class TestrCoverage:
     def test_from_maybe_failure(self) -> None:
         """Test creation from Maybe with Nothing."""
         result = r[str].from_maybe(Nothing, "No value")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "No value",
         )
@@ -417,14 +417,14 @@ class TestrCoverage:
         # IOResult wraps returns.result Success/Failure
         io_result: IOResult[str, str] = IOResult.from_value("test")
         result = r[str].from_io_result(io_result)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_from_io_result_failure(self) -> None:
         """Test creation from IOResult failure - wraps returns IOFailure/Failure."""
         # IOResult wraps returns.result Success/Failure
         io_result: IOResult[str, str] = IOResult.from_failure("error")
         result = r[str].from_io_result(io_result)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     # =====================================================================
     # Utility Methods Tests - safe, traverse, accumulate_errors, parallel_map
@@ -438,7 +438,7 @@ class TestrCoverage:
             return "success"
 
         result: r[str] = success_func()
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "success",
         )
@@ -452,7 +452,7 @@ class TestrCoverage:
             raise ValueError(error_msg)
 
         result: r[str] = failing_func()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and error_msg in result.error
 
     def test_create_from_callable_success(self) -> None:
@@ -462,7 +462,7 @@ class TestrCoverage:
             return "success"
 
         result = r[str].create_from_callable(success_func)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "success",
         )
@@ -475,7 +475,7 @@ class TestrCoverage:
             raise ValueError(error_msg)
 
         result = r[str].create_from_callable(failing_func)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and error_msg in result.error
 
     def test_create_from_callable_with_error_code(self) -> None:
@@ -489,7 +489,7 @@ class TestrCoverage:
             failing_func,
             error_code="TEST_ERROR",
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error_code == "TEST_ERROR"
 
     def test_traverse_success(self) -> None:
@@ -502,7 +502,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].traverse(items, double)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             [2, 4, 6],
         )
@@ -519,7 +519,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].traverse(items, double)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "Found 2",
         )
@@ -532,7 +532,7 @@ class TestrCoverage:
             r[int].ok(3),
         ]
         combined = r[list[int]].accumulate_errors(*results)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             combined,
             [1, 2, 3],
         )
@@ -545,7 +545,7 @@ class TestrCoverage:
             r[int].fail("error2"),
         ]
         combined = r[list[int]].accumulate_errors(*results)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(combined)
+        u.Tests.Result.assert_result_failure(combined)
         assert combined.error is not None
         assert "error1" in combined.error
         assert "error2" in combined.error
@@ -560,7 +560,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].parallel_map(items, double, fail_fast=True)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             [2, 4, 6],
         )
@@ -577,7 +577,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].parallel_map(items, check, fail_fast=True)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_parallel_map_accumulate_errors(self) -> None:
         """Test parallel_map with fail_fast=False accumulates errors."""
@@ -591,7 +591,7 @@ class TestrCoverage:
 
         items = [1, 2, 3]
         result = r[list[int]].parallel_map(items, check, fail_fast=False)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "Found 2" in result.error
 
     # =====================================================================
@@ -615,7 +615,7 @@ class TestrCoverage:
             return r[str].fail("Invalid resource")
 
         result = r[str].with_resource(factory, operation)
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "success",
         )
@@ -637,7 +637,7 @@ class TestrCoverage:
             cleanups_called.append(True)
 
         result = r[str].with_resource(factory, operation, cleanup=cleanup)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert len(cleanups_called) == 1
 
     # =====================================================================
@@ -680,13 +680,13 @@ class TestrCoverage:
         """Test context manager __exit__ succeeds."""
         result = r[str].ok("test")
         with result:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
 
     def test_context_manager_exit_failure(self) -> None:
         """Test context manager __exit__ on failure."""
         result = r[str].fail("error")
         with result:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     # =====================================================================
     # Representation Tests
@@ -720,13 +720,13 @@ class TestrCoverage:
     def test_empty_string_vs_none_error(self) -> None:
         """Test empty string error vs None."""
         result = r[str].fail("")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(result, "")
+        u.Tests.Result.assert_failure_with_error(result, "")
 
     def test_large_value_handling(self) -> None:
         """Test handling of large values."""
         large_list = list(range(10000))
         result = r[list[int]].ok(large_list)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert len(result.value) == 10000
 
     def test_complex_chaining_scenario(self) -> None:
@@ -753,7 +753,7 @@ class TestrCoverage:
         result = (
             r[int].ok(5).map(double).flat_map(add_three).filter(is_gt_10).map(to_str)
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, "13")
+        u.Tests.Result.assert_success_with_value(result, "13")
 
 
 __all__ = ["TestrCoverage"]

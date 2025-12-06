@@ -24,7 +24,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import p, t, u
+from flext_core import p, t
 from flext_tests import u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels

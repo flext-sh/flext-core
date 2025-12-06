@@ -153,6 +153,37 @@ class FlextTestsUtilities(FlextUtilities):
                     assert result.error is not None
                     assert expected_error in result.error
 
+            # Backward compatibility aliases (old API names)
+            assert_result_success = assert_success
+            assert_result_failure = assert_failure
+            assert_result_failure_with_error = assert_failure_with_error
+
+            @staticmethod
+            def create_success_result[T](value: T) -> r[T]:
+                """Create a success result with the given value.
+
+                Args:
+                    value: Value for the success result
+
+                Returns:
+                    FlextResult with success and value
+
+                """
+                return r[T].ok(value)
+
+            @staticmethod
+            def create_failure_result(error: str) -> r[object]:
+                """Create a failure result with the given error.
+
+                Args:
+                    error: Error message for the failure result
+
+                Returns:
+                    FlextResult with failure and error message
+
+                """
+                return r[object].fail(error)
+
         class TestContext:
             """Context managers for tests."""
 

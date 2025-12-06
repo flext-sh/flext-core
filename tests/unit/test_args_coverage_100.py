@@ -22,8 +22,8 @@ from typing import Annotated, Final
 
 import pytest
 
-from flext_core import r, t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_core import r, t
+from flext_tests import u
 
 
 class TestFlextUtilitiesArgs:
@@ -299,7 +299,7 @@ class TestFlextUtilitiesArgs:
                 values.STATUS_ACTIVE,
             )
             result = process(status_val)
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 values.STATUS_ACTIVE,
             )
@@ -338,7 +338,7 @@ class TestFlextUtilitiesArgs:
                 values.STATUS_ACTIVE,
             )
             result = process(status_val)
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 result,
                 expected_error=errors.INTERNAL_ERROR,
             )
@@ -362,12 +362,12 @@ class TestFlextUtilitiesArgs:
 
             result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             if scenario.expected_success:
-                FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+                u.Tests.Result.assert_result_success(result)
                 parsed = result.value
                 if scenario.expected_status:
                     assert parsed["status"] == scenario.expected_status
             else:
-                FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+                u.Tests.Result.assert_result_failure(result)
 
         def test_parse_kwargs_invalid_enum_value(self) -> None:
             """Test parse_kwargs with invalid enum value."""
@@ -375,7 +375,7 @@ class TestFlextUtilitiesArgs:
             scenario = scenarios["invalid_enum_value"]
 
             result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 result,
                 expected_error=scenario.expected_error,
             )

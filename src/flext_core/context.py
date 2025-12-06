@@ -197,14 +197,10 @@ class FlextContext:
         scope: str,
     ) -> t.Types.ConfigurationDict:
         """Get all values from contextvar scope."""
-        return cast(
-            "t.Types.ConfigurationDict",
-            (
-                self._get_or_create_scope_var(scope).get()
-                if u.is_type(self._get_or_create_scope_var(scope).get(), dict)
-                else {}
-            ),
-        )
+        # Type narrowing: get() returns dict after isinstance check
+        ctx_var = self._get_or_create_scope_var(scope)
+        value_raw = ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}
+        return value_raw if isinstance(value_raw, dict) else {}
 
     def _update_statistics(self, operation: str) -> None:
         """Update statistics counter for an operation (DRY helper).
@@ -225,10 +221,13 @@ class FlextContext:
         if operation in self._statistics.operations:
             value = self._statistics.operations[operation]
             guard_result = u.Validation.guard(value, int)
-            if isinstance(guard_result, r) and guard_result.is_success:
-                # Type narrowing: value is int after guard check
-                int_value = cast("int", value)
-                self._statistics.operations[operation] = int_value + 1
+            # Type narrowing: value is int after guard check
+            if (
+                isinstance(guard_result, r)
+                and guard_result.is_success
+                and isinstance(value, int)
+            ):
+                self._statistics.operations[operation] = value + 1
 
     def _add_hook(
         self,
@@ -369,9 +368,10 @@ class FlextContext:
 
         try:
             ctx_var = self._get_or_create_scope_var(scope)
-            current = cast(
-                "t.Types.ConfigurationDict",
-                (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
+            # Type narrowing: ctx_var.get() is dict after isinstance check
+            current_raw = ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}
+            current: t.Types.ConfigurationDict = (
+                current_raw if isinstance(current_raw, dict) else {}
             )
             _ = ctx_var.set({**current, key: value})
             FlextContext._propagate_to_logger(key, value, scope)
@@ -474,9 +474,10 @@ class FlextContext:
         if not self._active:
             return
         ctx_var = self._get_or_create_scope_var(scope)
-        current = cast(
-            "t.Types.ConfigurationDict",
-            (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
+        # Type narrowing: ctx_var.get() is dict after isinstance check
+        current_raw = ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}
+        current: t.Types.ConfigurationDict = (
+            current_raw if isinstance(current_raw, dict) else {}
         )
         if key in current:
             # Use filter_dict for concise key removal
@@ -538,9 +539,10 @@ class FlextContext:
         # Get keys from all contextvar scopes
         all_keys: set[str] = set()
         for ctx_var in self._scope_vars.values():
-            scope_dict = cast(
-                "t.Types.ConfigurationDict",
-                (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
+            # Type narrowing: ctx_var.get() is dict after isinstance check
+            scope_dict_raw = ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}
+            scope_dict: t.Types.ConfigurationDict = (
+                scope_dict_raw if isinstance(scope_dict_raw, dict) else {}
             )
             all_keys.update(scope_dict.keys())
         return list(all_keys)
@@ -569,20 +571,24 @@ class FlextContext:
             # Iterate through all scope variables in other context
             for scope_name, other_ctx_var in other.iter_scope_vars().items():
                 # Get scope data from other context
-                other_scope_dict = cast(
-                    "t.Types.ConfigurationDict",
-                    (
-                        other_ctx_var.get()
-                        if u.is_type(other_ctx_var.get(), dict)
-                        else {}
-                    ),
+                # Type narrowing: other_ctx_var.get() is dict after isinstance check
+                other_scope_dict_raw = (
+                    other_ctx_var.get() if u.is_type(other_ctx_var.get(), dict) else {}
+                )
+                other_scope_dict: t.Types.ConfigurationDict = (
+                    other_scope_dict_raw
+                    if isinstance(other_scope_dict_raw, dict)
+                    else {}
                 )
                 if other_scope_dict:
                     # Merge into this context's scope
                     ctx_var = self._get_or_create_scope_var(scope_name)
-                    current_dict = cast(
-                        "t.Types.ConfigurationDict",
-                        (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
+                    # Type narrowing: ctx_var.get() is dict after isinstance check
+                    current_dict_raw = (
+                        ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}
+                    )
+                    current_dict: t.Types.ConfigurationDict = (
+                        current_dict_raw if isinstance(current_dict_raw, dict) else {}
                     )
                     # Simple merge: deep strategy - new values override existing ones
                     merged: t.Types.ConfigurationDict = dict(current_dict)
@@ -596,7 +602,10 @@ class FlextContext:
                         _ = FlextLogger.bind_global_context(**current_dict)
         else:
             # Merge dictionary into global scope (other is dict at this point)
-            dict_data = cast("t.Types.ConfigurationDict", other)
+            # Type narrowing: other is dict after isinstance check
+            dict_data: t.Types.ConfigurationDict = (
+                other if isinstance(other, dict) else {}
+            )
             self._set_in_contextvar(c.Context.SCOPE_GLOBAL, dict_data)
 
         return self
@@ -637,9 +646,10 @@ class FlextContext:
             return r[bool].fail("Context is not active")
         for ctx_var in self._scope_vars.values():
             try:
-                scope_dict = cast(
-                    "t.Types.ConfigurationDict",
-                    (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
+                # Type narrowing: ctx_var.get() is dict after isinstance check
+                scope_dict_raw = ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}
+                scope_dict: t.Types.ConfigurationDict = (
+                    scope_dict_raw if isinstance(scope_dict_raw, dict) else {}
                 )
             except TypeError as e:
                 return r[bool].fail(str(e))
@@ -659,9 +669,10 @@ class FlextContext:
         """
         all_data: t.Types.ConfigurationDict = {}
         for ctx_var in self._scope_vars.values():
-            scope_dict = cast(
-                "t.Types.ConfigurationDict",
-                (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
+            # Type narrowing: ctx_var.get() is dict after isinstance check
+            scope_dict_raw = ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}
+            scope_dict: t.Types.ConfigurationDict = (
+                scope_dict_raw if isinstance(scope_dict_raw, dict) else {}
             )
             # Simple merge: deep strategy - new values override existing ones
             merged: t.Types.ConfigurationDict = dict(all_data)
@@ -826,10 +837,10 @@ class FlextContext:
                 for k, v in metadata_dict.items()
             }
 
-        # Cast normalized_metadata to t.Types.ConfigurationDict for invariance compatibility
+        # Type narrowing: normalized_metadata is dict after normalization
         metadata_general: t.Types.ConfigurationDict | None = (
             cast("t.Types.ConfigurationDict", normalized_metadata)
-            if normalized_metadata
+            if isinstance(normalized_metadata, dict)
             else None
         )
 
@@ -1080,10 +1091,10 @@ class FlextContext:
                 # Normalize GeneralValueType to t.MetadataAttributeValue
                 normalized_metadata[k] = FlextRuntime.normalize_to_metadata_value(v)
 
-        # Cast normalized_metadata to t.Types.ConfigurationDict for invariance compatibility
+        # Type narrowing: normalized_metadata is dict after normalization
         metadata_general: t.Types.ConfigurationDict | None = (
             cast("t.Types.ConfigurationDict", normalized_metadata)
-            if normalized_metadata
+            if isinstance(normalized_metadata, dict)
             else None
         )
 
@@ -1578,10 +1589,8 @@ class FlextContext:
         @staticmethod
         def get_operation_start_time() -> datetime | None:
             """Get operation start time from context."""
-            value = FlextContext.Variables.Performance.OPERATION_START_TIME.get()
-            if value is None or isinstance(value, datetime):
-                return value
-            return None
+            # OPERATION_START_TIME.get() returns datetime | None, so isinstance is redundant
+            return FlextContext.Variables.Performance.OPERATION_START_TIME.get()
 
         @staticmethod
         def set_operation_start_time(

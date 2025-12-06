@@ -101,15 +101,17 @@ class FlextService[TDomainResult](
             if not isinstance(result_raw, r):
                 msg = f"execute() must return r, got {type(result_raw).__name__}"
                 raise TypeError(msg)
-            result: r[TDomainResult] = cast("r[TDomainResult]", result_raw)
+            # Type narrowing: result_raw is r, compatible with r[TDomainResult]
+            result: r[TDomainResult] = result_raw
             # For auto_execute=True, return the result value directly (V2 Auto pattern)
             # This allows: user = AutoGetUserService(user_id="123") to get User object
             if result.is_failure:
                 error_msg = result.error or "Service execution failed"
                 raise e.BaseError(error_msg)
             # Return the unwrapped value directly (breaks static typing but is intended behavior)
-            # Type cast is necessary because __new__ signature expects Self
-            return cast("Self", result.value)
+            # Type narrowing: result.value is TDomainResult, which may be Self in some cases
+            # This is a runtime pattern where TDomainResult can be the service instance itself
+            return result.value  # type: ignore[return-value]
         # For auto_execute=False, return instance (normal pattern)
         type(instance).__init__(instance, **kwargs)
         return instance
@@ -148,7 +150,7 @@ class FlextService[TDomainResult](
 
         """
         runtime = self._create_initial_runtime()
-        # runtime.context is FlextContext - cast to access nested classes
+        # Type narrowing: runtime.context is FlextContext
         context = cast("FlextContext", runtime.context)
 
         with context.Service.service_context(
@@ -391,8 +393,9 @@ class FlextService[TDomainResult](
 
         """
         # Direct access - GeneralValueType covers all domain results
-        # Use cast to allow any FlextService[TDomainResult] to be treated as FlextService[GeneralValueType]
-        return _ServiceAccess(cast("s[t.GeneralValueType]", self))
+        # Type narrowing: self is FlextService[TDomainResult], compatible with FlextService[t.GeneralValueType]
+        # TDomainResult is a subtype of GeneralValueType, so this is safe
+        return _ServiceAccess(self)  # type: ignore[arg-type]
 
 
 class _ServiceExecutionScope(m.ArbitraryTypesModel):
@@ -553,9 +556,7 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         mutating global state.
         """
         base_runtime = require_initialized(self._service._runtime, "Runtime")
-        # Context is guaranteed to be non-None in ServiceRuntime
-        # Cast to FlextContext to access nested classes (Correlation, Service, Utilities)
-        # base_runtime.context is FlextContext - cast to access nested classes
+        # Type narrowing: base_runtime.context is FlextContext
         base_context = cast("FlextContext", base_runtime.context)
         original_correlation = base_context.Correlation.get_correlation_id()
 
@@ -567,8 +568,7 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             container_factories=container_factories,
         )
 
-        # Cast to FlextContext to access nested classes
-        # runtime.context is FlextContext - cast to access nested classes
+        # Type narrowing: runtime.context is FlextContext
         runtime_context = cast("FlextContext", runtime.context)
         if correlation_id:
             runtime_context.Correlation.set_correlation_id(correlation_id)

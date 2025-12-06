@@ -31,8 +31,10 @@ class DataDoubler:
 
     def process(
         self,
-        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
-    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
+        data: (
+            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
+        ),
+    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
         """Double the input value."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -47,8 +49,10 @@ class DataSquarer:
 
     @staticmethod
     def process(
-        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
-    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
+        data: (
+            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
+        ),
+    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
         """Square the input value."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -65,8 +69,10 @@ class SlowProcessor:
 
     def process(
         self,
-        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
-    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
+        data: (
+            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
+        ),
+    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
         """Simulate slow operation then return result."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")
@@ -82,8 +88,10 @@ class DataValidator:
 
     @staticmethod
     def process(
-        data: (t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]),
-    ) -> t.GeneralValueType | BaseModel | p.ResultProtocol[t.GeneralValueType]:
+        data: (
+            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
+        ),
+    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
         """Validate data is positive."""
         if not isinstance(data, int):
             return FlextResult[int].fail(f"Expected int, got {type(data)}")

@@ -20,6 +20,7 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextService,
+    c,
     t,
     u,
 )
@@ -251,8 +252,7 @@ class ContextManagementService(
         """Build success metadata using centralized FlextConstants (DRY)."""
         # Iterate over enum members correctly
         all_patterns = tuple(
-            member.value
-            for member in FlextConstants.Example.DemoPattern.__members__.values()
+            member.value for member in c.Cqrs.HandlerType.__members__.values()
         )
         filtered_patterns = tuple(
             pattern

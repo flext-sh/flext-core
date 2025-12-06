@@ -37,11 +37,6 @@ from flext_tests.utilities import u
 TModel = TypeVar("TModel")
 TValue = TypeVar("TValue")
 
-# Type alias for model result union - used for early return type matching
-# Use BaseModel as base type since all factory models are Pydantic models
-
-type _ModelResult = r[_BaseModel]
-
 
 class FlextTestsFactories(s[t_core.GeneralValueType]):
     """Comprehensive test data factories extending FlextService.
@@ -153,12 +148,9 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
             **kwargs,
         )
         if params_result.is_failure:
-            # Return validation error as FlextResult - cast to match return type
-            return cast(
-                "_ModelResult",
-                r[t.Tests.Factory.FactoryModel].fail(
-                    f"Invalid parameters: {params_result.error}",
-                ),
+            # FactoryModel is _BaseModel, so cast is redundant
+            return r[t.Tests.Factory.FactoryModel].fail(
+                f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
 
@@ -282,9 +274,9 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
 
         # Apply validation if provided
         if params.validate_fn and not params.validate_fn(instance):
-            return cast(
-                "_ModelResult",
-                r[t.Tests.Factory.FactoryModel].fail(c.Tests.Factory.ERROR_VALIDATION),
+            # FactoryModel is BaseModel, so cast is redundant
+            return r[t.Tests.Factory.FactoryModel].fail(
+                c.Tests.Factory.ERROR_VALIDATION
             )
 
         # Handle count > 1
@@ -381,11 +373,8 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
 
         # Return single instance
         if params.as_result:
-            # Cast to match return type
-            return cast(
-                "_ModelResult",
-                r[t.Tests.Factory.FactoryModel].ok(typed_instance),
-            )
+            # FactoryModel is BaseModel, so cast is redundant
+            return r[t.Tests.Factory.FactoryModel].ok(typed_instance)
         return typed_instance
 
     @classmethod

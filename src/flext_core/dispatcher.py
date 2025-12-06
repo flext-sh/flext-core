@@ -313,10 +313,11 @@ class FlextDispatcher(x):
 
         """
         if allow_callable and callable(obj):
-            return self.ok(True)
+            return r[bool].ok(True)
 
+        # method_names is list[str] | str, so isinstance checks are redundant
         methods: list[str] = (
-            [m if isinstance(m, str) else str(m) for m in method_names]
+            [str(m) for m in method_names]
             if isinstance(method_names, list)
             else [method_names]
             if isinstance(method_names, str)
@@ -326,10 +327,10 @@ class FlextDispatcher(x):
             if hasattr(obj, method_name):
                 method = getattr(obj, method_name)
                 if callable(method):
-                    return self.ok(True)
+                    return r[bool].ok(True)
 
         method_list = "' or '".join(methods)
-        return self.fail(f"Invalid {context}: must have '{method_list}' method")
+        return r[bool].fail(f"Invalid {context}: must have '{method_list}' method")
 
     def _validate_processor_interface(
         self,
@@ -386,12 +387,16 @@ class FlextDispatcher(x):
         # Use global circuit breaker manager
         # Per-processor circuit breaking is handled at dispatch() level
         # For now, always allow (dispatch() will enforce global CB)
-        # Cast processor to GeneralValueType for ok() method
+        # Type narrowing: processor is already GeneralValueType compatible
+        # processor is HandlerCallable | Callable[GeneralValueType] | Processor
+        # Convert to GeneralValueType for return
         processor_typed: t.GeneralValueType = cast(
             "t.GeneralValueType",
-            processor,
+            processor
+            if isinstance(processor, (str, int, float, bool, type(None), dict, list))
+            else str(processor)
         )
-        return self.ok(processor_typed)
+        return r[t.GeneralValueType].ok(processor_typed)
 
     @staticmethod
     def _apply_processor_rate_limiter(_processor_name: str) -> r[bool]:
@@ -433,11 +438,12 @@ class FlextDispatcher(x):
             # Execute processor
             processor_result: t.GeneralValueType
             if callable(processor):
-                processor_result = processor(data)
+                processor_result_raw = processor(data)
+                processor_result = cast("t.GeneralValueType", processor_result_raw)
             else:
                 # Fast fail: check if process method exists, no fallback
                 if not hasattr(processor, "process"):
-                    return self.fail(
+                    return r[t.GeneralValueType].fail(
                         (
                             f"Cannot execute processor '{processor_name}': "
                             "processor must be callable or have 'process' method"
@@ -445,16 +451,34 @@ class FlextDispatcher(x):
                     )
                 process_method = getattr(processor, "process", None)
                 if process_method is None or not callable(process_method):
-                    return self.fail(
+                    return r[t.GeneralValueType].fail(
                         (
                             f"Cannot execute processor '{processor_name}': "
                             "'process' attribute must be callable"
                         ),
                     )
-                # Cast needed: process_method() returns object, processor returns GeneralValueType
+                # Type narrowing: process_method() returns object, convert to GeneralValueType
+                process_result_raw = process_method(data)
                 processor_result = cast(
                     "t.GeneralValueType",
-                    process_method(data),
+                    (
+                        process_result_raw
+                        if isinstance(
+                            process_result_raw,
+                            (
+                                str,
+                                int,
+                                float,
+                                bool,
+                                type(None),
+                                dict,
+                                list,
+                                BaseModel,
+                                r,
+                            ),
+                        )
+                        else str(process_result_raw)
+                    ),
                 )
 
             # Convert to r if needed
@@ -489,7 +513,7 @@ class FlextDispatcher(x):
             if processor_name not in self._processor_execution_times:
                 self._processor_execution_times[processor_name] = []
             self._processor_execution_times[processor_name].append(execution_time)
-            return self.fail(f"Processor execution failed: {e}")
+            return r[t.GeneralValueType].fail(f"Processor execution failed: {e}")
 
     def _process_batch_internal(
         self,
@@ -673,7 +697,7 @@ class FlextDispatcher(x):
         # Update global metrics
         self._process_metrics["registrations"] += 1
 
-        return self.ok(True)
+        return r[bool].ok(True)
 
     def process(
         self,
@@ -697,21 +721,23 @@ class FlextDispatcher(x):
         # Route to processor
         processor = self._route_to_processor(name)
         if processor is None:
-            return self.fail(
+            return r[t.GeneralValueType].fail(
                 f"Processor '{name}' not registered. Register with register_processor().",
             )
 
         # Apply per-processor circuit breaker
         cb_result = self._apply_processor_circuit_breaker(name, processor)
         if cb_result.is_failure:
-            return self.fail(f"Processor '{name}' circuit breaker is open")
+            return r[t.GeneralValueType].fail(
+                f"Processor '{name}' circuit breaker is open"
+            )
 
         # Apply per-processor rate limiter
         rate_limit_result = FlextDispatcher._apply_processor_rate_limiter(name)
         if rate_limit_result.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
             error_msg = u.err(rate_limit_result, default="Rate limit exceeded")
-            return self.fail(error_msg)
+            return r[t.GeneralValueType].fail(error_msg)
 
         # Execute processor with metrics collection
         return self._execute_processor_with_metrics(name, processor, data)
@@ -842,7 +868,9 @@ class FlextDispatcher(x):
         except concurrent.futures.TimeoutError:
             self._process_metrics["failed_processes"] += 1
             self._process_metrics["timeout_executions"] += 1
-            return self.fail(f"Processor '{name}' timeout after {timeout}s")
+            return r[t.GeneralValueType].fail(
+                f"Processor '{name}' timeout after {timeout}s"
+            )
 
     # ==================== LAYER 3: METRICS & AUDITING ====================
 
@@ -952,13 +980,20 @@ class FlextDispatcher(x):
     def _validate_handler_mode(self, handler_mode: str | None) -> r[bool]:
         """Validate handler mode against CQRS types (consolidates register_handler duplication)."""
         if handler_mode is None:
-            return self.ok(True)
+            return r[bool].ok(True)
 
         # Type hint: HandlerType is StrEnum class, so __members__ exists
         # Use u.Mapper.get() for unified attribute access (DSL pattern)
+        # Type narrowing: __members__ is dict, compatible with HandlerTypeDict
+        handler_type_members_raw: dict[str, object] = cast(
+            "dict[str, object]",
+            u.Mapper.get(c.Cqrs.HandlerType, "__members__", default={}) or {},
+        )
         handler_type_members: t.Types.HandlerTypeDict = cast(
             "t.Types.HandlerTypeDict",
-            u.Mapper.get(c.Cqrs.HandlerType, "__members__", default={}) or {},
+            handler_type_members_raw
+            if isinstance(handler_type_members_raw, dict)
+            else {},
         )
         valid_modes = list(
             u.Collection.map(
@@ -967,11 +1002,11 @@ class FlextDispatcher(x):
             ),
         )
         if str(handler_mode) not in valid_modes:
-            return self.fail(
+            return r[bool].fail(
                 f"Invalid handler_mode: {handler_mode}. Must be one of {valid_modes}",
             )
 
-        return self.ok(True)
+        return r[bool].ok(True)
 
     def _route_to_handler(
         self,
@@ -1000,12 +1035,15 @@ class FlextDispatcher(x):
                 and "handler" in handler_entry
             ):
                 # Type narrowing: extract handler from dict structure
-                extracted_handler = handler_entry["handler"]
+                # handler_entry is dict[str, object], "handler" key returns object
+                handler_entry_dict: dict[str, object] = cast("dict[str, object]", handler_entry)
+                extracted_handler: object = handler_entry_dict["handler"]
                 # Validate it's callable or BaseModel (valid HandlerType)
                 # HandlerType includes Callable and BaseModel instances
-                if callable(extracted_handler):
-                    return cast("t.Handler.HandlerType", extracted_handler)
-                if isinstance(extracted_handler, BaseModel):
+                # Type narrowing: extracted_handler is HandlerType after validation
+                if callable(extracted_handler) or isinstance(
+                    extracted_handler, BaseModel
+                ):
                     return cast("t.Handler.HandlerType", extracted_handler)
             # Return handler directly (it's already HandlerType)
             # Type narrowing: handler_entry is HandlerType from dict definition
@@ -1080,7 +1118,7 @@ class FlextDispatcher(x):
         cache_enabled = self.config.enable_caching
         should_consider_cache = cache_enabled and is_query
         if not should_consider_cache:
-            return self.fail(
+            return r[t.GeneralValueType].fail(
                 "Cache not enabled or not a query",
                 error_code=c.Errors.CONFIGURATION_ERROR,
             )
@@ -1100,7 +1138,7 @@ class FlextDispatcher(x):
             )
             return cached_result
 
-        return self.fail(
+        return r[t.GeneralValueType].fail(
             "Cache miss",
             error_code=c.Errors.NOT_FOUND_ERROR,
         )
@@ -1159,7 +1197,7 @@ class FlextDispatcher(x):
                 method_name = c.Mixins.METHOD_EXECUTE
 
         if not method_name:
-            return self.fail(
+            return r[t.GeneralValueType].fail(
                 f"Handler must have '{c.Mixins.METHOD_HANDLE}' or '{c.Mixins.METHOD_EXECUTE}' method",
                 error_code=c.Errors.COMMAND_BUS_ERROR,
             )
@@ -1167,7 +1205,7 @@ class FlextDispatcher(x):
         handle_method = u.Mapper.get(handler, method_name, default=None)
         if not callable(handle_method):
             error_msg = f"Handler '{method_name}' must be callable"
-            return self.fail(
+            return r[t.GeneralValueType].fail(
                 error_msg,
                 error_code=c.Errors.COMMAND_BUS_ERROR,
             )
@@ -1175,18 +1213,19 @@ class FlextDispatcher(x):
         try:
             result_raw = handle_method(command)
             # Ensure result is GeneralValueType - handlers should return GeneralValueType or FlextResult
+            # Type narrowing: result_raw is GeneralValueType after isinstance check
             result: t.GeneralValueType
             if isinstance(
                 result_raw,
                 (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
             ):
-                result = cast("t.GeneralValueType", result_raw)
+                result = result_raw
             else:
                 result = str(result_raw)
             return x.ResultHandling.ensure_result(result)
         except Exception as exc:
             error_msg = f"Handler execution failed: {exc}"
-            return self.fail(
+            return r[t.GeneralValueType].fail(
                 error_msg,
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
@@ -1209,7 +1248,7 @@ class FlextDispatcher(x):
         # Fast fail: middleware is always enabled if configs exist, no fallback
         # Middleware is enabled by default when configs are present
         if not self._middleware_configs:
-            return self.ok(True)
+            return r[bool].ok(True)
 
         # Sort middleware by order
         sorted_middleware = sorted(
@@ -1226,7 +1265,7 @@ class FlextDispatcher(x):
             if result.is_failure:
                 return result
 
-        return self.ok(True)
+        return r[bool].ok(True)
 
     @staticmethod
     def _get_middleware_order(
@@ -1268,24 +1307,26 @@ class FlextDispatcher(x):
         # Skip disabled middleware
         if not enabled_value:
             # Fast fail: middleware_id must be str if provided
+            # u.Mapper.get() without default returns GeneralValueType | None, so check is necessary for runtime safety
             middleware_id_str = (
                 "" if middleware_id_value is None else str(middleware_id_value)
-            )
+            )  # type: ignore[reportUnnecessaryComparison]
             self.logger.debug(
                 "Skipping disabled middleware",
                 middleware_id=middleware_id_str,
                 middleware_type=str(middleware_type_value),
             )
-            return self.ok(True)
+            return r[bool].ok(True)
 
         # Get actual middleware instance
         # Fast fail: middleware_id must be str if provided
+        # u.Mapper.get() without default returns GeneralValueType | None, so check is necessary for runtime safety
         middleware_id_str = (
             str(middleware_id_value) if middleware_id_value is not None else ""
-        )
+        )  # type: ignore[reportUnnecessaryComparison]
         middleware = self._middleware_instances.get(middleware_id_str)
         if middleware is None:
-            return self.ok(True)
+            return r[bool].ok(True)
 
         self.logger.debug(
             "Applying middleware",
@@ -1320,7 +1361,7 @@ class FlextDispatcher(x):
         # Use u.Mapper.get() for unified attribute access (DSL pattern)
         process_method = u.Mapper.get(middleware, "process", default=None)
         if not callable(process_method):
-            return self.fail(
+            return r[bool].fail(
                 "Middleware must have callable 'process' method",
                 error_code=c.Errors.CONFIGURATION_ERROR,
             )
@@ -1348,7 +1389,7 @@ class FlextDispatcher(x):
             )
         else:
             result = str(result_raw)
-        return self._handle_middleware_result(result, middleware_type)
+        return cast("r[bool]", self._handle_middleware_result(result, middleware_type))
 
     def _handle_middleware_result(
         self,
@@ -1367,9 +1408,9 @@ class FlextDispatcher(x):
                 consequence="Command will not be processed by handler",
                 source="flext-core/src/flext_core/dispatcher.py",
             )
-            return self.fail(error_msg)
+            return r[bool].fail(error_msg)
 
-        return self.ok(True)
+        return r[bool].ok(True)
 
     # ==================== LAYER 1 PUBLIC API: CQRS ROUTING & MIDDLEWARE ====================
 
@@ -1440,7 +1481,7 @@ class FlextDispatcher(x):
                     resolution_hint="Register handler using register_handler() before dispatch",
                     source="flext-core/src/flext_core/dispatcher.py",
                 )
-                return self.fail(
+                return r[t.GeneralValueType].fail(
                     f"No handler found for {command_type.__name__}",
                     error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
                 )
@@ -1452,7 +1493,7 @@ class FlextDispatcher(x):
             )
             if middleware_result.is_failure:
                 # Fast fail: use unwrap_error() for type-safe str
-                return self.fail(
+                return r[t.GeneralValueType].fail(
                     middleware_result.error or "Unknown error",
                     error_code=c.Errors.COMMAND_BUS_ERROR,
                 )
@@ -1515,7 +1556,7 @@ class FlextDispatcher(x):
             handler_two: t.Handler.HandlerType = args[1]
             return self._register_two_arg_handler(command_type_typed, handler_two)
 
-        return self.fail(
+        return r[bool].fail(
             f"register_handler takes 1 or 2 arguments but {len(args)} were given",
         )
 
@@ -1533,7 +1574,7 @@ class FlextDispatcher(x):
 
         """
         if handler is None:
-            return self.fail("Handler cannot be None")
+            return r[bool].fail("Handler cannot be None")
 
         # handler is already HandlerType from method signature
         validation_result = self._validate_handler_interface(handler)
@@ -1566,7 +1607,7 @@ class FlextDispatcher(x):
                 total_handlers=len(self._auto_handlers),
             )
 
-        return self.ok(True)
+        return r[bool].ok(True)
 
     def _register_two_arg_handler(
         self,
@@ -1584,12 +1625,12 @@ class FlextDispatcher(x):
 
         """
         if handler is None or command_type_obj is None:
-            return self.fail(
+            return r[bool].fail(
                 "Invalid arguments: command_type and handler are required",
             )
 
         if isinstance(command_type_obj, str) and not command_type_obj.strip():
-            return self.fail("Command type cannot be empty")
+            return r[bool].fail("Command type cannot be empty")
 
         # handler is already HandlerType from method signature
         validation_result = self._validate_handler_interface(
@@ -1608,7 +1649,7 @@ class FlextDispatcher(x):
             total_handlers=len(self._handlers),
         )
 
-        return self.ok(True)
+        return r[bool].ok(True)
 
     def layer1_add_middleware(
         self,
@@ -1679,7 +1720,7 @@ class FlextDispatcher(x):
             source="flext-core/src/flext_core/dispatcher.py",
         )
 
-        return self.ok(True)
+        return r[bool].ok(True)
 
     # ==================== LAYER 1 EVENT PUBLISHING PROTOCOL ====================
 
@@ -1698,14 +1739,14 @@ class FlextDispatcher(x):
             result = self.execute(event)
 
             if result.is_failure:
-                return self.fail(f"Event publishing failed: {result.error}")
+                return r[bool].fail(f"Event publishing failed: {result.error}")
 
-            return self.ok(True)
+            return r[bool].ok(True)
         except (TypeError, AttributeError, ValueError) as e:
             # TypeError: invalid event type
             # AttributeError: missing event attribute
             # ValueError: event validation failed
-            return self.fail(f"Event publishing error: {e}")
+            return r[bool].fail(f"Event publishing error: {e}")
 
     def publish_events(
         self,
@@ -1763,7 +1804,7 @@ class FlextDispatcher(x):
 
                 publish_funcs.append(make_wrapper(publish_func))
 
-            result = self.ok(True).flow_through(*publish_funcs)
+            result = r[bool].ok(True).flow_through(*publish_funcs)
             if result.is_failure:
                 error_msg = result.error
                 raise RuntimeError(error_msg or "Unknown error")
@@ -1799,7 +1840,7 @@ class FlextDispatcher(x):
             # TypeError: invalid handler type
             # AttributeError: handler missing required attributes
             # ValueError: handler validation failed
-            return self.fail(f"Event subscription error: {e}")
+            return r[bool].fail(f"Event subscription error: {e}")
 
     def unsubscribe(
         self,
@@ -1824,15 +1865,15 @@ class FlextDispatcher(x):
                     "Handler unregistered",
                     command_type=event_type,
                 )
-                return self.ok(True)
+                return r[bool].ok(True)
 
-            return self.fail(f"Handler not found for event type: {event_type}")
+            return r[bool].fail(f"Handler not found for event type: {event_type}")
         except (TypeError, KeyError, AttributeError) as e:
             # TypeError: invalid event_type
             # KeyError: event_type not registered
             # AttributeError: handler missing attributes
             self.logger.exception("Event unsubscription error")
-            return self.fail(f"Event unsubscription error: {e}")
+            return r[bool].fail(f"Event unsubscription error: {e}")
 
     def publish(
         self,
@@ -2676,7 +2717,7 @@ class FlextDispatcher(x):
         # Check circuit breaker state
         if not self._circuit_breaker.check_before_dispatch(message_type):
             failures = self._circuit_breaker.get_failure_count(message_type)
-            return self.fail(
+            return r[bool].fail(
                 f"Circuit breaker is open for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
                 error_data={
@@ -2692,9 +2733,9 @@ class FlextDispatcher(x):
         rate_limit_result = self._rate_limiter.check_rate_limit(message_type)
         if rate_limit_result.is_failure:
             error_msg = rate_limit_result.error or "Rate limit exceeded"
-            return self.fail(error_msg)
+            return r[bool].fail(error_msg)
 
-        return self.ok(True)
+        return r[bool].ok(True)
 
     def _execute_with_timeout(
         self,
@@ -2730,7 +2771,7 @@ class FlextDispatcher(x):
                 # Cancel the future and return timeout error
                 if future is not None:
                     _ = future.cancel()
-                return self.fail(
+                return r[t.GeneralValueType].fail(
                     f"Operation timeout after {timeout_seconds} seconds",
                 )
             except RuntimeError as exc:
@@ -2738,7 +2779,7 @@ class FlextDispatcher(x):
                 if "shutdown" in error_text or "cannot schedule" in error_text:
                     # Executor was shut down; reinitialize and allow caller to retry
                     self._timeout_enforcer.reset_executor()
-                    return self.fail(
+                    return r[t.GeneralValueType].fail(
                         "Executor was shutdown, retry requested",
                     )
                 raise
@@ -2884,7 +2925,7 @@ class FlextDispatcher(x):
 
         # Fast fail: message cannot be None
         if message is None:
-            return self.fail(
+            return r[t.GeneralValueType].fail(
                 "Message cannot be None",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
@@ -2896,7 +2937,7 @@ class FlextDispatcher(x):
             try:
                 handler_raw = self._handlers[message_type_name]
                 if not callable(handler_raw):
-                    return r.fail(
+                    return r[t.GeneralValueType].fail(
                         f"Handler for {message_type} is not callable",
                     )
                 handler: Callable[
@@ -2913,9 +2954,9 @@ class FlextDispatcher(x):
                     result = result_raw
                 else:
                     result = str(result_raw)
-                return r.ok(result)
+                return r[t.GeneralValueType].ok(result)
             except Exception as e:
-                return r.fail(str(e))
+                return r[t.GeneralValueType].fail(str(e))
 
         # Build DispatchConfig from arguments if not provided
         dispatch_config = FlextDispatcher._build_dispatch_config_from_args(
@@ -3064,7 +3105,7 @@ class FlextDispatcher(x):
         try:
             handler_raw = self._handlers[message_type_key]
             if not callable(handler_raw):
-                return r.fail(
+                return r[t.GeneralValueType].fail(
                     f"Handler for {message_type_key} is not callable",
                 )
             handler: Callable[
@@ -3072,9 +3113,9 @@ class FlextDispatcher(x):
                 t.GeneralValueType,
             ] = handler_raw
             result = handler(message)
-            return r.ok(result)
+            return r[t.GeneralValueType].ok(result)
         except Exception as e:
-            return r.fail(str(e))
+            return r[t.GeneralValueType].fail(str(e))
 
     def _execute_dispatch_pipeline(
         self,
@@ -3450,12 +3491,12 @@ class FlextDispatcher(x):
             # Use unwrap_error() for type-safe str
             error_msg = dispatch_result.error or "Unknown error"
             if "Executor was shutdown" in error_msg:
-                return self.fail(error_msg)
-            self._circuit_breaker.record_failure(message_type)
-            return self.fail(error_msg)
+                return r[t.GeneralValueType].fail(error_msg)
+            self._circuit_breaker.record_success(message_type)
+            return r[t.GeneralValueType].fail(error_msg)
 
         self._circuit_breaker.record_success(message_type)
-        return self.ok(dispatch_result.value)
+        return r[t.GeneralValueType].ok(dispatch_result.value)
 
     def _execute_dispatch_attempt(
         self,
@@ -3510,7 +3551,7 @@ class FlextDispatcher(x):
 
         except Exception as e:
             self._circuit_breaker.record_failure(options.message_type)
-            return self.fail(f"Dispatch error: {e}")
+            return r[t.GeneralValueType].fail(f"Dispatch error: {e}")
 
     # ------------------------------------------------------------------
     # Private helper methods
@@ -3631,7 +3672,10 @@ class FlextDispatcher(x):
         """Extract metadata mapping from object's attributes."""
         attributes_value = getattr(metadata, "attributes", None)
         if isinstance(attributes_value, (dict, Mapping)) and attributes_value:
-            return attributes_value
+            # Type narrowing: attributes_value is dict[str, object] | Mapping[str, object]
+            # Convert to ConfigurationMapping for return type
+            attributes_dict: t.Types.ConfigurationMapping = cast("t.Types.ConfigurationMapping", attributes_value)
+            return attributes_dict
 
         # Use model_dump() directly if available - Pydantic v2 pattern
         model_dump = getattr(metadata, "model_dump", None)

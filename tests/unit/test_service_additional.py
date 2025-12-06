@@ -8,7 +8,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import e, p, r, s, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 class AutoSuccessService(s[str]):
@@ -88,7 +88,7 @@ def test_clone_runtime_creates_isolated_scope() -> None:
     resolved_result: p.Foundation.Result[t.GeneralValueType] = cloned.container.get(
         "val",
     )
-    FlextTestsUtilities.Tests.TestUtilities.assert_result_success(resolved_result)
+    u.Tests.Result.assert_result_success(resolved_result)
     assert resolved_result.value == "data"
 
 

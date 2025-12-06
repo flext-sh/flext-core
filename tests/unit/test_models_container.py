@@ -276,8 +276,9 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         # ContainerConfig accepts keyword arguments directly
-        # Use type: ignore for dynamic dict unpacking in tests
-        config = FlextModelsContainer.ContainerConfig(**config_dict)
+        # Use model_construct for dynamic dict unpacking in tests
+        config_dict_typed = cast("t.Types.ConfigurationDict", config_dict)
+        config = FlextModelsContainer.ContainerConfig.model_validate(config_dict_typed)
         assert config.enable_singleton is config_dict.get("enable_singleton", True)
         assert config.enable_factory_caching is config_dict.get(
             "enable_factory_caching",

@@ -292,30 +292,30 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         print("\n=== 2. flow_through: Automation Pipeline Composition ===")
 
         def validate(
-            data: t.Example.UserDataMapping,
-        ) -> FlextResult[t.Example.UserDataMapping]:
+            data: t.Types.ConfigurationDict,
+        ) -> FlextResult[t.Types.ConfigurationDict]:
             task_type = data.get("task_type", "")
             if not isinstance(task_type, str) or not task_type:
-                return FlextResult[t.Example.UserDataMapping].fail("Task type required")
-            return FlextResult[t.Example.UserDataMapping].ok(data)
+                return FlextResult[t.Types.ConfigurationDict].fail("Task type required")
+            return FlextResult[t.Types.ConfigurationDict].ok(data)
 
         def enrich(
-            data: t.Example.UserDataMapping,
-        ) -> FlextResult[t.Example.UserDataMapping]:
-            enriched: t.Example.UserDataMapping = {
+            data: t.Types.ConfigurationDict,
+        ) -> FlextResult[t.Types.ConfigurationDict]:
+            enriched: t.Types.ConfigurationDict = {
                 **data,
                 "automation_timestamp": "2025-01-01T12:00:00Z",
                 "duration_ms": 250,
                 "result_id": "RESULT-001",
             }
-            return FlextResult[t.Example.UserDataMapping].ok(enriched)
+            return FlextResult[t.Types.ConfigurationDict].ok(enriched)
 
-        automation_input: t.Example.UserDataMapping = {
+        automation_input: t.Types.ConfigurationDict = {
             "task_type": FlextConstants.Cqrs.ProcessingMode.BATCH.value,
             "source": "database",
         }
         pipeline_result = (
-            FlextResult[t.Example.UserDataMapping]
+            FlextResult[t.Types.ConfigurationDict]
             .ok(automation_input)
             .flow_through(validate, enrich)
         )
@@ -424,26 +424,26 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         """ETL Pipeline with Error Recovery."""
         print("\n--- Data Pipeline with Error Recovery ---")
 
-        def extract() -> FlextResult[list[t.Example.UserDataMapping]]:
-            return FlextResult[list[t.Example.UserDataMapping]].ok([
+        def extract() -> FlextResult[list[t.Types.ConfigurationDict]]:
+            return FlextResult[list[t.Types.ConfigurationDict]].ok([
                 {"id": 1, "name": "Item A", "value": 100},
                 {"id": 2, "name": "Item B", "value": 200},
             ])
 
         def transform(
-            data: list[t.Example.UserDataMapping],
-        ) -> FlextResult[list[t.Example.UserDataMapping]]:
-            transformed: list[t.Example.UserDataMapping] = [
+            data: list[t.Types.ConfigurationDict],
+        ) -> FlextResult[list[t.Types.ConfigurationDict]]:
+            transformed: list[t.Types.ConfigurationDict] = [
                 {**item, "processed": True, "timestamp": "2025-01-01T12:00:00Z"}
                 for item in data
             ]
-            return FlextResult[list[t.Example.UserDataMapping]].ok(transformed)
+            return FlextResult[list[t.Types.ConfigurationDict]].ok(transformed)
 
         def load(
-            data: list[t.Example.UserDataMapping],
-        ) -> FlextResult[list[t.Example.UserDataMapping]]:
+            data: list[t.Types.ConfigurationDict],
+        ) -> FlextResult[list[t.Types.ConfigurationDict]]:
             print(f"   💾 Loaded {len(data)} records successfully")
-            return FlextResult[list[t.Example.UserDataMapping]].ok(data)
+            return FlextResult[list[t.Types.ConfigurationDict]].ok(data)
 
         result = extract().flow_through(transform, load)
         if result.is_success:
@@ -483,7 +483,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
             if not cache:
                 print("   📄 Loading configuration from file...")
                 cache.update({
-                    "database_url": FlextConstants.Example.DEFAULT_DATABASE_URL,
+                    "database_url": "postgresql://localhost:5432/testdb",
                     "cache_ttl": FlextConstants.Defaults.DEFAULT_CACHE_TTL,
                 })
             return cache

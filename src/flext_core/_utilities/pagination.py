@@ -49,32 +49,29 @@ class FlextUtilitiesPagination:
             r with (page, page_size) tuple or error
 
         """
+        # StringDict values are always str, so isinstance is redundant
         page_str = str(default_page)
         if "page" in query_params:
-            page_value = query_params["page"]
-            if isinstance(page_value, str):
-                page_str = page_value
+            page_str = query_params["page"]
 
         page_size_str = str(default_page_size)
         if "page_size" in query_params:
-            page_size_value = query_params["page_size"]
-            if isinstance(page_size_value, str):
-                page_size_str = page_size_value
+            page_size_str = query_params["page_size"]
 
         try:
             page = int(page_str)
             page_size = int(page_size_str)
 
             if page < 1:
-                return r.fail("Page must be >= 1")
+                return r[tuple[int, int]].fail("Page must be >= 1")
             if page_size < 1:
-                return r.fail("Page size must be >= 1")
+                return r[tuple[int, int]].fail("Page size must be >= 1")
             if page_size > max_page_size:
-                return r.fail(f"Page size must be <= {max_page_size}")
+                return r[tuple[int, int]].fail(f"Page size must be <= {max_page_size}")
 
-            return r.ok((page, page_size))
+            return r[tuple[int, int]].ok((page, page_size))
         except ValueError as e:
-            return r.fail(f"Invalid page parameters: {e}")
+            return r[tuple[int, int]].fail(f"Invalid page parameters: {e}")
 
     @staticmethod
     def validate_pagination_params(
@@ -95,16 +92,16 @@ class FlextUtilitiesPagination:
 
         """
         if page < 1:
-            return r.fail("Page must be >= 1")
+            return r[dict[str, int]].fail("Page must be >= 1")
 
         effective_page_size = page_size if page_size is not None else 20
 
         if effective_page_size < 1:
-            return r.fail("Page size must be >= 1")
+            return r[dict[str, int]].fail("Page size must be >= 1")
         if effective_page_size > max_page_size:
-            return r.fail(f"Page size must be <= {max_page_size}")
+            return r[dict[str, int]].fail(f"Page size must be <= {max_page_size}")
 
-        return r.ok({"page": page, "page_size": effective_page_size})
+        return r[dict[str, int]].ok({"page": page, "page_size": effective_page_size})
 
     @staticmethod
     def prepare_pagination_data(
@@ -135,7 +132,9 @@ class FlextUtilitiesPagination:
 
         # Ensure page is within bounds
         if page > total_pages > 0:
-            return r.fail(f"Page {page} exceeds total pages {total_pages}")
+            return r[t.Types.ConfigurationDict].fail(
+                f"Page {page} exceeds total pages {total_pages}"
+            )
 
         has_next = page < total_pages
         has_prev = page > 1
@@ -146,7 +145,7 @@ class FlextUtilitiesPagination:
             list(data),
         )
 
-        return r.ok({
+        return r[t.Types.ConfigurationDict].ok({
             "data": data_list,
             "pagination": {
                 "page": page,
@@ -177,7 +176,9 @@ class FlextUtilitiesPagination:
         pagination = pagination_data.get("pagination")
 
         if data is None or pagination is None:
-            return r.fail("Invalid pagination data structure")
+            return r[t.Types.ConfigurationDict].fail(
+                "Invalid pagination data structure"
+            )
 
         # Type narrowing: data and pagination from dict.get() are object
         # but we know they are valid GeneralValueType from prepare_pagination_data
@@ -207,7 +208,7 @@ class FlextUtilitiesPagination:
         if message is not None:
             response["message"] = message
 
-        return r.ok(response)
+        return r[t.Types.ConfigurationDict].ok(response)
 
     @staticmethod
     def extract_pagination_config(

@@ -34,7 +34,7 @@ from python_on_whales.exceptions import DockerException as PowDockerException
 
 from flext_core.loggings import FlextLogger
 from flext_core.result import r
-from flext_tests.constants import c
+from flext_tests.constants import ContainerStatus, c
 from flext_tests.models import m
 from flext_tests.typings import t
 
@@ -52,7 +52,8 @@ class FlextTestsDocker:
     """
 
     # ContainerStatus is StrEnum - cannot inherit, use direct reference
-    ContainerStatus = c.Tests.Docker.ContainerStatus
+    # Use imported alias to avoid mypy resolution issues with deeply nested classes
+    ContainerStatus: type[ContainerStatus] = ContainerStatus
 
     class ContainerInfo(m.Tests.Docker.ContainerInfo):
         """Container information model for tests - real inheritance from m."""

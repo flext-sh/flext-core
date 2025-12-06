@@ -121,7 +121,8 @@ class FlextContainer(p.Container.DI):
     @property
     def config(self) -> p.Configuration.Config:
         """Return configuration bound to this container."""
-        return cast("p.Configuration.Config", self._config)
+        # Type narrowing: self._config is p.Configuration.Config
+        return self._config
 
     @property
     def context(self) -> p.Context.Ctx:
@@ -167,16 +168,22 @@ class FlextContainer(p.Container.DI):
         """
         # FlexibleValue is a subset of GeneralValueType; runtime validation
         # ensures compatibility - use process() for concise iteration
+        # Type narrowing: filter values to FlexibleValue compatible types
         process_result = u.Collection.process(
             config,
-            lambda _k, v: cast("t.FlexibleValue", v),
+            lambda _k, v: (
+                v
+                if isinstance(v, (str, int, float, bool, type(None), dict, list))
+                else str(v)
+            ),
             on_error="collect",
         )
-        if process_result.is_success and u.is_type(process_result.value, dict):
+        if process_result.is_success and isinstance(process_result.value, dict):
             # Type narrowing: process_result.value is dict after isinstance check
+            # process() returns dict[str, R] where R is FlexibleValue
+            # and FlexibleValue is compatible with GeneralValueType (which ConfigurationDict uses)
             processed_dict: t.Types.ConfigurationDict = cast(
-                "t.Types.ConfigurationDict",
-                process_result.value,
+                "t.Types.ConfigurationDict", process_result.value
             )
             # Simple merge: override strategy - new values override existing ones
             merged: t.Types.ConfigurationDict = dict(self._user_overrides)
@@ -283,7 +290,8 @@ class FlextContainer(p.Container.DI):
             if name in self._factories:
                 return r[bool].fail(f"Factory '{name}' already registered")
             # Factory returns GeneralValueType which is compatible with FactoryRegistration requirements
-            # Cast factory to expected type - GeneralValueType includes ScalarValue, Sequence, Mapping
+            # Type narrowing: factory is already compatible with the expected type
+            # GeneralValueType includes ScalarValue, Sequence, Mapping
             factory_typed: Callable[
                 [],
                 (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
@@ -323,24 +331,26 @@ class FlextContainer(p.Container.DI):
         """
         # Try service first
         if name in self._services:
+            # Type narrowing: self._services[name] is m.Container.ServiceRegistration
             service_registration = cast(
-                "m.Container.ServiceRegistration",
-                self._services[name],
+                "m.Container.ServiceRegistration", self._services[name]
             )
             service = service_registration.service
             # Runtime type safety guaranteed by container registration
-            return r[T].ok(cast("T", service))
+            # Type narrowing: service is T at runtime (guaranteed by registration)
+            return r[T].ok(service)  # type: ignore[arg-type]
 
         # Try factory
         if name in self._factories:
             try:
+                # Type narrowing: self._factories[name] is m.Container.FactoryRegistration
                 factory_registration = cast(
-                    "m.Container.FactoryRegistration",
-                    self._factories[name],
+                    "m.Container.FactoryRegistration", self._factories[name]
                 )
                 instance = factory_registration.factory()
                 # Runtime type safety guaranteed by container registration
-                return r[T].ok(cast("T", instance))
+                # Type narrowing: instance is T at runtime (guaranteed by registration)
+                return r[T].ok(instance)  # type: ignore[arg-type]
             except Exception as e:
                 return r[T].fail(str(e))
 
@@ -449,7 +459,8 @@ class FlextContainer(p.Container.DI):
         # Call private method via getattr variable to bypass SLF001 and B009
         method_name = "_sync_config_to_di"
         getattr(instance, method_name)()
-        return cast("p.Container.DI", instance)  # Structural typing
+        # Type narrowing: instance is p.Container.DI (structural typing)
+        return instance
 
     def scoped(
         self,
@@ -506,22 +517,21 @@ class FlextContainer(p.Container.DI):
             _ = scoped_context.set("subproject", subproject)
 
         # Use process() for concise dict transformation
+        # Type narrowing: registration is m.Container.ServiceRegistration
         process_result = u.Collection.process(
             self._services,
-            lambda _name, registration: cast(
-                "m.Container.ServiceRegistration",
-                registration,
-            ).model_copy(deep=True),
+            lambda _name, registration: registration.model_copy(deep=True),
             on_error="collect",
         )
         cloned_services: t.Types.ServiceRegistrationDict = (
             cast("t.Types.ServiceRegistrationDict", process_result.value)
-            if process_result.is_success and u.is_type(process_result.value, dict)
+            if process_result.is_success and isinstance(process_result.value, dict)
             else {}
         )
+        # Type narrowing: registration is m.Container.FactoryRegistration
         cloned_factories: t.Types.FactoryRegistrationDict = {
             name: cast("m.Container.FactoryRegistration", registration).model_copy(
-                deep=True,
+                deep=True
             )
             for name, registration in self._factories.items()
         }

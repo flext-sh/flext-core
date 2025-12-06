@@ -23,7 +23,7 @@ from flext_core import (
     r,
     t,
 )
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 # ==================== COVERAGE TESTS ====================
 
@@ -41,7 +41,7 @@ class TestContext100Coverage:
 
         # Verify key is removed
         result = context.get("test_key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_remove_nonexistent_key(self) -> None:
         """Test remove with nonexistent key (idempotent)."""
@@ -52,7 +52,7 @@ class TestContext100Coverage:
 
         # Verify key still doesn't exist
         result = context.get("nonexistent_key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_clear_removes_all_data(self) -> None:
         """Test clear removes all data."""
@@ -66,8 +66,8 @@ class TestContext100Coverage:
         # Verify all keys are removed
         result1 = context.get("key1")
         result2 = context.get("key2")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result1)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result2)
+        u.Tests.Result.assert_result_failure(result1)
+        u.Tests.Result.assert_result_failure(result2)
 
     def test_merge_with_dict(self) -> None:
         """Test merge with dictionary."""
@@ -88,8 +88,8 @@ class TestContext100Coverage:
         # Verify merged data
         result2 = merged.get("key2")
         result3 = merged.get("key3")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result2)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result3)
+        u.Tests.Result.assert_result_success(result2)
+        u.Tests.Result.assert_result_success(result3)
 
     def test_merge_with_context(self) -> None:
         """Test merge with another context."""
@@ -105,8 +105,8 @@ class TestContext100Coverage:
         # Verify merged data
         result1 = merged.get("key1")
         result2 = merged.get("key2")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result1)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result2)
+        u.Tests.Result.assert_result_success(result1)
+        u.Tests.Result.assert_result_success(result2)
 
     def test_clone_creates_independent_copy(self) -> None:
         """Test clone creates independent copy."""
@@ -118,7 +118,7 @@ class TestContext100Coverage:
 
         # Verify cloned has same data
         result = cloned.get("key1")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             cast("r[str]", result),
             "value1",
         )
@@ -126,7 +126,7 @@ class TestContext100Coverage:
         # Modify original - clone should be independent
         context1.set("key1", "modified").unwrap()
         cloned_result = cloned.get("key1")
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             cast("r[str]", cloned_result),
             "value1",
         )  # Clone unchanged
@@ -137,7 +137,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").unwrap()
 
         result = context.validate()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_suspend_resume(self) -> None:
         """Test suspend and resume functionality."""
@@ -165,7 +165,7 @@ class TestContext100Coverage:
 
         # Operations should fail after destroy
         result = context.set("key2", "value2")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_export_returns_dict(self) -> None:
         """Test export returns dictionary with scoped data."""
@@ -209,8 +209,8 @@ class TestContext100Coverage:
         # Verify imported data
         result1 = context.get("key1")
         result2 = context.get("key2")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result1)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result2)
+        u.Tests.Result.assert_result_success(result1)
+        u.Tests.Result.assert_result_success(result2)
 
     def test_import_empty_data(self) -> None:
         """Test import_data with empty dict."""
@@ -221,7 +221,7 @@ class TestContext100Coverage:
 
         # Existing data should remain
         result = context.get("existing")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_get_with_none_value_returns_failure(self) -> None:
         """Test get with None value returns failure."""
@@ -238,7 +238,7 @@ class TestContext100Coverage:
 
         # Get None value should return failure
         result = context.get("none_key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "None value" in result.error
 
     def test_get_when_context_not_active(self) -> None:
@@ -256,7 +256,7 @@ class TestContext100Coverage:
         context._destroy()  # Deactivates context
 
         result = context.set("key", "value")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "not active" in result.error
 
     def test_has_returns_false_when_not_active(self) -> None:

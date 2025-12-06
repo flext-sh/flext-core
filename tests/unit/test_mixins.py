@@ -30,7 +30,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextContext, FlextResult, m, t, x
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -211,7 +211,7 @@ class TestFlextMixinsNestedClasses:
         service = MyService()
         if scenario.scenario_type == ServiceMixinScenarioType.CONTAINER_REGISTER:
             result = service._register_in_container("test_service")
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPERTY:
             assert isinstance(service.context, FlextContext)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPAGATE:
@@ -271,7 +271,7 @@ class TestFlextMixinsNestedClasses:
         """Test ResultHandling.ensure_result() with various inputs."""
         if scenario.scenario_type == ResultHandlingScenarioType.RAW_VALUE:
             raw_result = x.ResultHandling.ensure_result(42)
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 raw_result,
                 42,
             )
@@ -284,15 +284,15 @@ class TestFlextMixinsNestedClasses:
             int_result = x.ResultHandling.ensure_result(42)
             str_result = x.ResultHandling.ensure_result("hello")
             list_result = x.ResultHandling.ensure_result([1, 2, 3])
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 int_result,
                 42,
             )
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 str_result,
                 "hello",
             )
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 list_result,
                 [1, 2, 3],
             )

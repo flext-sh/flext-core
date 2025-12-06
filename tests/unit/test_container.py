@@ -31,7 +31,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextContainer, FlextResult, r, t
 from flext_core.constants import c
-from flext_tests import u
+from flext_tests import FlextTestsUtilities, u
 
 
 @dataclass(frozen=True, slots=True)
@@ -299,10 +299,10 @@ class TestFlextContainer:
         )
         clean_container.register_factory("factory_service", factory)
         result1: r[t.GeneralValueType] = clean_container.get("factory_service")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result1)
+        u.Tests.Result.assert_result_success(result1)
         assert get_count() == 1
         result2: r[t.GeneralValueType] = clean_container.get("factory_service")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result2)
+        u.Tests.Result.assert_result_success(result2)
         assert get_count() == 2
 
     @pytest.mark.parametrize(
@@ -329,10 +329,10 @@ class TestFlextContainer:
             scenario.expected_type,
         )
         if scenario.should_pass:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(typed_result)
+            u.Tests.Result.assert_result_success(typed_result)
             assert typed_result.value == scenario.service
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(typed_result)
+            u.Tests.Result.assert_result_failure(typed_result)
 
     def test_get_typed_wrong_type(
         self,
@@ -341,7 +341,7 @@ class TestFlextContainer:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.register("string_service", "test_value")
         result = clean_container.get_typed("string_service", dict)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_get_typed_nonexistent(
         self,
@@ -428,7 +428,7 @@ class TestFlextContainer:
             container.register(name, "value")
         assert container.has_service(name)
         unregister_result = container.unregister(name)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(unregister_result)
+        u.Tests.Result.assert_result_success(unregister_result)
         assert not container.has_service(name)
 
     def test_unregister_nonexistent(
@@ -522,10 +522,10 @@ class TestFlextContainer:
         )
         for name in ["db_connection", "cache", "logger"]:
             result: r[t.GeneralValueType] = container.get(name)
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
         assert len(container.list_services()) == 3
         unregister_result = container.unregister("cache")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(unregister_result)
+        u.Tests.Result.assert_result_success(unregister_result)
         assert len(container.list_services()) == 2
         container.clear_all()
         assert len(container.list_services()) == 0
@@ -543,7 +543,7 @@ class TestFlextContainer:
 
         container.register_factory("failing", failing_factory)
         result: r[t.GeneralValueType] = container.get("failing")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
 
 __all__ = ["TestFlextContainer"]

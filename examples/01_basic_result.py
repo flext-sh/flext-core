@@ -115,7 +115,7 @@ class RailwayService(s[DemonstrationResult]):
         # Use all demo patterns from centralized constants (DRY)
         # Iterate over enum members correctly
         patterns = tuple(
-            member.value for member in c.Example.DemoPattern.__members__.values()
+            member.value for member in c.Cqrs.HandlerType.__members__.values()
         )
 
         result_data = DemonstrationResult(
@@ -200,7 +200,7 @@ class RailwayService(s[DemonstrationResult]):
         print("\n=== Value Extraction ===")
 
         # Use example data from constants with centralized t
-        success = r.ok(c.Example.USER_DATA)
+        success = r.ok({"name": "John", "email": "john@example.com"})
         failure: r[str] = r.fail("Not found")
 
         # Value extraction patterns

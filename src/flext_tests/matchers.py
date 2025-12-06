@@ -245,19 +245,22 @@ class FlextTestsMatchers(FlextTestsUtilities):
         if params.has is not None:
             # Use isinstance for proper type narrowing (pyrefly requires it)
             if isinstance(params.has, (list, tuple)):
-                has_items: Sequence[object] = params.has
+                # Type narrowing: params.has is Sequence[object]
+                has_items: Sequence[object] = cast("Sequence[object]", params.has)
             else:
                 # Single item - wrap in list for uniform processing
                 # Type narrowing: params.has is object when not Sequence
                 has_item: object = params.has
-                has_items = cast("Sequence[object]", [has_item])
+                has_items: Sequence[object] = cast("Sequence[object]", [has_item])
             for item in has_items:
-                if not u.chk(value, contains=item):
+                # Type narrowing: item is object from Sequence[object]
+                item_typed: object = item
+                if not u.chk(value, contains=item_typed):
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
                             container=value,
-                            item=item,
+                            item=item_typed,
                         ),
                     )
 
@@ -634,9 +637,14 @@ class FlextTestsMatchers(FlextTestsUtilities):
             # Legacy error parameter already converted to has by model validator
             # Use params.has instead of params.error
             # Unwrap FlextResult for further validation
+            # value is r[TResult], we need to extract the actual value for validation
+            actual_value: object
             if value.is_success:
-                unwrapped_value = value.unwrap()
-                value = unwrapped_value
+                # Type narrowing: unwrap() returns the value type
+                unwrapped_value: t.GeneralValueType = cast(
+                    "t.GeneralValueType", value.unwrap()
+                )
+                actual_value = unwrapped_value
             # If result is failure, check if we're validating the error
             # params.has (converted from error) means we want to validate the error message
             elif params.has is not None:
@@ -647,7 +655,11 @@ class FlextTestsMatchers(FlextTestsUtilities):
                     error_has_items: list[str] = [params.has]
                 # Type guard: params.has is Sequence[str] when not str
                 elif isinstance(params.has, Sequence):
-                    error_has_items = [str(x) for x in params.has]
+                    # Type narrowing: params.has is Sequence[object], x is object
+                    sequence: Sequence[object] = cast("Sequence[object]", params.has)
+                    error_has_items: list[str] = [
+                        str(cast("object", x)) for x in sequence
+                    ]
                 else:
                     error_has_items = [str(params.has)]
                 for item in error_has_items:
@@ -659,8 +671,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
                                 item=item,
                             ),
                         )
-                # Error validated, return error string for further validation if needed
-                value = err
+                # Error validated, use error string for further validation
+                actual_value = err
             elif params.ok is None:
                 # If result is failure and no ok/error checks, fail
                 raise AssertionError(
@@ -669,7 +681,10 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 )
             else:
                 # params.ok is False, which means we expect failure - continue validation
-                value = value.error or ""
+                actual_value = value.error or ""
+
+            # Use actual_value for all further validations
+            value = actual_value
 
         # Apply basic validations via u.chk() - pass parameters directly for type safety
         # Note: u.chk() doesn't support tuple types for is_/not_, handle separately
@@ -741,12 +756,19 @@ class FlextTestsMatchers(FlextTestsUtilities):
         if params.has is not None:
             # Use isinstance for proper type narrowing (pyrefly requires it)
             if isinstance(params.has, (list, tuple)):
-                has_items: Sequence[object] = params.has
+                # Type narrowing: params.has is Sequence[object]
+                has_items: Sequence[object] = cast("Sequence[object]", params.has)
             else:
-                has_items = [params.has]
-            for item in has_items:
-                if not u.chk(value, contains=item):
-                    item_str: str = str(item)
+                # Single item - wrap in list for uniform processing
+                # Type narrowing: params.has is object when not Sequence
+                has_item: object = params.has
+                has_items: Sequence[object] = cast("Sequence[object]", [has_item])
+            for has_item_obj in has_items:
+                # Type narrowing: has_item_obj is object from Sequence[object]
+                has_item_val: object = has_item_obj
+                if not u.chk(value, contains=has_item_val):
+                    # str() already returns str, so cast is redundant
+                    item_str: str = str(has_item_val)
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
@@ -760,15 +782,20 @@ class FlextTestsMatchers(FlextTestsUtilities):
             if isinstance(params.lacks, (list, tuple)):
                 lacks_items: Sequence[object] = params.lacks
             else:
-                lacks_items = [params.lacks]
-            for item in lacks_items:
-                if u.chk(value, contains=item):
-                    item_str: str = str(item)
+                # Single item - wrap in list for uniform processing
+                # Type narrowing: params.lacks is object when not Sequence
+                lacks_item: object = params.lacks
+                lacks_items = cast("Sequence[object]", [lacks_item])
+            for lacks_item_obj in lacks_items:
+                lacks_item_val: object = lacks_item_obj
+                if u.chk(value, contains=lacks_item_val):
+                    # str() already returns str, so cast is redundant
+                    lacks_item_str: str = str(lacks_item_val)
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
                             container=value,
-                            item=item_str,
+                            item=lacks_item_str,
                         ),
                     )
 
@@ -953,7 +980,11 @@ class FlextTestsMatchers(FlextTestsUtilities):
                         )
                 # Handle Mapping case (multiple key-value pairs)
                 elif isinstance(params.kv, Mapping):
-                    for key, expected_val in params.kv.items():
+                    # Type narrowing: params.kv is Mapping[str, object]
+                    mapping_kv: Mapping[str, object] = cast(
+                        "Mapping[str, object]", params.kv
+                    )
+                    for key, expected_val in mapping_kv.items():
                         if key not in mapping_value:
                             raise AssertionError(
                                 params.msg or f"Key {key!r} not found in mapping",

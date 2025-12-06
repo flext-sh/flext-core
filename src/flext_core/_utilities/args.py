@@ -24,11 +24,10 @@ from typing import (
 from pydantic import ConfigDict, validate_call
 
 from flext_core.result import r
+from flext_core.typings import P, R, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
-
-    from flext_core.typings import P, R, t
 
 
 class FlextUtilitiesArgs:
@@ -121,7 +120,7 @@ class FlextUtilitiesArgs:
             try:
                 return validated_func(*args, **kwargs)
             except Exception as e:
-                return r.fail(str(e))
+                return r[R].fail(str(e))
 
         return cast("Callable[P, r[R]]", wrapper)
 
@@ -162,8 +161,10 @@ class FlextUtilitiesArgs:
                         errors.append(f"{field}: '{value}' not in [{valid}]")
 
         if errors:
-            return r.fail(f"Invalid values: {'; '.join(errors)}")
-        return r.ok(parsed)
+            return r[dict[str, t.FlexibleValue]].fail(
+                f"Invalid values: {'; '.join(errors)}"
+            )
+        return r[dict[str, t.FlexibleValue]].ok(parsed)
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 3: Signature introspection for auto-parsing

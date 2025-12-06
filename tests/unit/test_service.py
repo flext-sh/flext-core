@@ -28,7 +28,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import r, s, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, u
 
 
 class ServiceScenarioType(StrEnum):
@@ -209,7 +209,7 @@ class TestsCore:
 
         service = ConcreteService()
         result = service.execute()
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             "test_value",
         )
@@ -218,7 +218,7 @@ class TestsCore:
         """Test basic service execution returns expected type."""
         service = UserService()
         result = service.execute()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         data = result.value
         assert isinstance(data, Mapping)
         assert "user_id" in data
@@ -237,19 +237,19 @@ class TestsCore:
         """Test default business rules validation."""
         service = UserService()
         result = service.validate_business_rules()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test custom business rules validation success."""
         service = ComplexService(name="test")
         result = service.validate_business_rules()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_validate_business_rules_custom_failure(self) -> None:
         """Test custom business rules validation failure."""
         service = ComplexService(name="")
         result = service.validate_business_rules()
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             "Missing value",
         )
@@ -285,12 +285,12 @@ class TestsCore:
             )
         )
         # Should pass attribute check, but business rules should fail
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(
+        u.Tests.Result.assert_result_success(
             validation_result,
         )  # Attributes exist
         # But business rules validation should fail
         business_result = service.validate_business_rules()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(business_result)
+        u.Tests.Result.assert_result_failure(business_result)
 
 
 __all__ = ["TestsCore"]

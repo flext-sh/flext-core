@@ -22,8 +22,8 @@ from typing import Final
 
 import pytest
 
-from flext_core import r, t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_core import r, t
+from flext_tests import u
 
 
 class TestFlextUtilitiesReliability:
@@ -220,13 +220,13 @@ class TestFlextUtilitiesReliability:
         result = u.Reliability.with_timeout(operation, timeout)
 
         if expected_success:
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 self.Constants.SUCCESS_STRING,
             )
         else:
             assert error_pattern is not None
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert error_pattern in (result.error or "")
 
     def test_with_timeout_invalid_timeout(self) -> None:
@@ -235,7 +235,7 @@ class TestFlextUtilitiesReliability:
             lambda: r[str].ok("test"),
             -1.0,
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert "Timeout must be positive" in (result.error or "")
 
     def test_retry_succeeds_after_failure(self) -> None:
@@ -248,7 +248,7 @@ class TestFlextUtilitiesReliability:
             delay_seconds=0.0,
         )
 
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             self.Constants.SUCCESS_VALUE,
         )
@@ -260,7 +260,7 @@ class TestFlextUtilitiesReliability:
             lambda: r[int].fail("fail"),
             max_attempts=self.Constants.MAX_ATTEMPTS_INVALID,
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert "Max attempts must be at least" in (result.error or "")
 
     @pytest.mark.parametrize(
@@ -333,7 +333,7 @@ class TestFlextUtilitiesReliability:
             cleanup_func=lambda: cleanups.append("done"),
         )
 
-        FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+        u.Tests.Result.assert_success_with_value(
             result,
             self.Constants.SUCCESS_RETRY,
         )
@@ -347,7 +347,7 @@ class TestFlextUtilitiesReliability:
             max_attempts=2,
             should_retry_func=lambda attempt, _error: attempt == 0,
         )
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             blocked,
             "stop",
         )

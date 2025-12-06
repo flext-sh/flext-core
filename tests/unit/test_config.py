@@ -24,7 +24,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import ValidationError
@@ -32,7 +32,10 @@ from pydantic_settings import BaseSettings
 
 from flext_core import FlextConfig
 from flext_core.constants import c
+from flext_core.typings import t
 from flext_tests.utilities import FlextTestsUtilities
+
+# cast is already imported at top level
 
 
 class ConfigScenarios:
@@ -83,12 +86,14 @@ class TestFlextConfig:
     )
     def test_config_initialization(self, config_data: dict[str, object]) -> None:
         """Test config initialization with various values."""
+        config_data_typed = cast("dict[str, t.GeneralValueType]", config_data)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
-            **config_data,
+            **config_data_typed,
         )
+        config_data_mapping = cast("t.Types.ConfigurationMapping", config_data)
         FlextTestsUtilities.Tests.ConfigHelpers.assert_config_fields(
             config,
-            config_data,
+            config_data_mapping,
         )
         assert isinstance(config, FlextConfig)
 
@@ -99,12 +104,14 @@ class TestFlextConfig:
             "version": "2.0.0",
             "debug": False,
         }
+        config_data_typed = cast("dict[str, t.GeneralValueType]", config_data)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
-            **config_data,
+            **config_data_typed,
         )
+        config_data_mapping = cast("t.Types.ConfigurationMapping", config_data)
         FlextTestsUtilities.Tests.ConfigHelpers.assert_config_fields(
             config,
-            config_data,
+            config_data_mapping,
         )
 
     def test_config_to_dict(self) -> None:
@@ -268,8 +275,9 @@ class TestFlextConfig:
     )
     def test_config_debug_enabled(self, debug_trace: dict[str, object]) -> None:
         """Test debug enabled checking using direct fields."""
+        debug_trace_typed = cast("dict[str, t.GeneralValueType]", debug_trace)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
-            **debug_trace,
+            **debug_trace_typed,
         )
         assert config.debug == debug_trace["debug"]
         if "trace" in debug_trace:
@@ -531,7 +539,7 @@ class TestFlextConfigPydantic:
             class WrongType:
                 pass
 
-            FlextConfig._instances[FlextConfig] = WrongType()
+            FlextConfig._instances[FlextConfig] = cast("FlextConfig", WrongType())
 
             # Now trying to get instance should raise TypeError
             with pytest.raises(

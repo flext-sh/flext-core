@@ -691,7 +691,7 @@ class TestuStringParser:
             patterns: list[tuple[str, str] | tuple[str, str, int]] = []
             result = parser.apply_regex_pipeline("test", patterns)
             # Empty pattern list should result in unchanged text
-            u.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 "test",
             )

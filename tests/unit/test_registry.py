@@ -35,7 +35,7 @@ from flext_core import (
     r,
     t,
 )
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, u
 
 
 class RegistryOperationType(StrEnum):
@@ -317,12 +317,12 @@ class TestFlextRegistry:
             if test_case.duplicate_registration:
                 result = registry.register_handler(handler)
         if test_case.should_succeed:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             if test_case.error_pattern:
                 # Type ignore: RegistrationDetails is not GeneralValueType but test is valid
-                FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+                u.Tests.Result.assert_failure_with_error(
                     result,
                     test_case.error_pattern,
                 )
@@ -341,9 +341,9 @@ class TestFlextRegistry:
             result = registry.register_handlers(handlers)
         else:
             result = registry.register_handlers(handlers)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(
+        u.Tests.Result.assert_result_success(
             result,
-        ) if test_case.should_succeed else FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
         assert isinstance(result.value, FlextRegistry.Summary)
@@ -363,9 +363,9 @@ class TestFlextRegistry:
             result = registry.register_bindings(bindings)
         else:
             result = registry.register_bindings(bindings)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(
+        u.Tests.Result.assert_result_success(
             result,
-        ) if test_case.should_succeed else FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
         assert isinstance(result.value, FlextRegistry.Summary)
@@ -385,9 +385,9 @@ class TestFlextRegistry:
             result = registry.register_function_map(function_map)
         else:
             result = registry.register_function_map(function_map)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(
+        u.Tests.Result.assert_result_success(
             result,
-        ) if test_case.should_succeed else FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(
+        ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
         assert isinstance(result.value, FlextRegistry.Summary)
@@ -442,16 +442,16 @@ class TestFlextRegistry:
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         if test_case.handler_count == 0:
             result = registry.register_handler(None)
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             # Type ignore: RegistrationDetails is not GeneralValueType but test is valid
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 result,
                 "Handler cannot be None",
             )
         else:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             assert isinstance(result.value, m.Handler.RegistrationDetails)
 
     def test_registry_initialization(self) -> None:
@@ -465,7 +465,7 @@ class TestFlextRegistry:
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handler = ConcreteTestHandler()
         result = registry.register_handler(handler)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert isinstance(result.value, m.Handler.RegistrationDetails)
 
     @pytest.mark.parametrize(

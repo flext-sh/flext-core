@@ -62,8 +62,10 @@ class FlextUtilitiesCollection:
 
         if errors:
             enum_name = getattr(enum_cls, "__name__", "Enum")
-            return r.fail(f"Invalid {enum_name} values: {', '.join(errors)}")
-        return r.ok(tuple(parsed))
+            return r[tuple[E, ...]].fail(
+                f"Invalid {enum_name} values: {', '.join(errors)}"
+            )
+        return r[tuple[E, ...]].ok(tuple(parsed))
 
     @staticmethod
     def coerce_list_validator[E: StrEnum](
@@ -136,8 +138,10 @@ class FlextUtilitiesCollection:
 
         if errors:
             enum_name = getattr(enum_cls, "__name__", "Enum")
-            return r.fail(f"Invalid {enum_name} values: {', '.join(errors)}")
-        return r.ok(parsed)
+            return r[dict[str, E]].fail(
+                f"Invalid {enum_name} values: {', '.join(errors)}"
+            )
+        return r[dict[str, E]].ok(parsed)
 
     @staticmethod
     def coerce_dict_validator[E: StrEnum](
@@ -390,9 +394,9 @@ class FlextUtilitiesCollection:
             return None
 
         if isinstance(items, (dict, Mapping)):
-            mapping_items: dict[str, T] = (
-                dict(items) if isinstance(items, dict) else dict(items.items())
-            )
+            # items is dict[str, T] | Mapping[str, T], so isinstance(items, dict) is redundant
+            # dict() constructor works for both dict and Mapping
+            mapping_items: dict[str, T] = dict(items)
             for k, v in mapping_items.items():
                 if predicate(k, v):
                     result: T | tuple[str, T] = (k, v) if return_key else v
@@ -732,13 +736,7 @@ class FlextUtilitiesCollection:
         result: dict[object, list[T]] = {}
         items_list = list(items)
         for item in items_list:
-            k: object
-            if callable(key):
-                k = key(item)
-            elif isinstance(key, str):
-                k = getattr(item, key, None)
-            else:
-                k = None
+            k: object = key(item) if callable(key) else getattr(item, key, None)
             if k not in result:
                 result[k] = []
             result[k].append(item)
@@ -866,12 +864,9 @@ class FlextUtilitiesCollection:
         # Pre-filter items if pre_validate provided
         if pre_validate is not None:
             filtered_items = FlextUtilitiesCollection.filter(items, pre_validate)
-            # Type narrowing: filter() on list[T] returns list[T]
-            if isinstance(filtered_items, list):
-                items_to_process: list[T] = filtered_items
-            else:
-                # filtered_items is dict[str, T] (should not happen for list input)
-                items_to_process = list(filtered_items.values())
+            # Type narrowing: filter() on list[T] returns list[T], so isinstance is redundant
+            # filtered_items is list[T] when items is list[T]
+            items_to_process: list[T] = filtered_items
         else:
             items_to_process = items
 
@@ -985,12 +980,9 @@ class FlextUtilitiesCollection:
         try:
             # Convert inputs to dicts for manipulation
             # Deep copy base to avoid side effects
-            merged: t.Types.ConfigurationDict = (
-                copy.deepcopy(dict(base)) if isinstance(base, Mapping) else {}
-            )
-            other_dict: t.Types.ConfigurationDict = (
-                dict(other) if isinstance(other, Mapping) else {}
-            )
+            # ConfigurationMapping is always a Mapping, so isinstance is redundant
+            merged: t.Types.ConfigurationDict = copy.deepcopy(dict(base))
+            other_dict: t.Types.ConfigurationDict = dict(other)
 
             if strategy == c.Mixins.OPERATION_OVERRIDE:
                 merged.update(other_dict)
@@ -1021,13 +1013,13 @@ class FlextUtilitiesCollection:
 
                         # Both are dicts -> recurse
                         if isinstance(target_val, dict) and isinstance(value, dict):
-                            # Cast to dict for type checker, recursion handles nested structure
-                            target_dict = cast(
-                                "t.Types.ConfigurationDict",
-                                target_val,
+                            # Type narrowing: isinstance ensures both are dict
+                            # No cast needed - isinstance provides type narrowing
+                            _deep_merge(
+                                target_val,  # type: ignore[arg-type]
+                                value,  # type: ignore[arg-type]
+                                mode,
                             )
-                            source_dict = cast("t.Types.ConfigurationDict", value)
-                            _deep_merge(target_dict, source_dict, mode)
                             continue
 
                         # Both are lists and mode is append -> append
