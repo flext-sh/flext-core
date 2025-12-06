@@ -1016,8 +1016,8 @@ class FlextUtilitiesCollection:
                             # Type narrowing: isinstance ensures both are dict
                             # No cast needed - isinstance provides type narrowing
                             _deep_merge(
-                                target_val,  # type: ignore[arg-type]
-                                value,  # type: ignore[arg-type]
+                                target_val,
+                                value,
                                 mode,
                             )
                             continue

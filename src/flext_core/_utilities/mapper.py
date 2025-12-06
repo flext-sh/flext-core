@@ -490,12 +490,12 @@ class FlextUtilitiesMapper:
         """Helper: Get raw value from dict/object/model."""
         # Handle Mapping (dict)
         if FlextUtilitiesGuards.is_type(current, "mapping"):
-            current_mapping: Mapping[str, object] = cast(
-                "Mapping[str, object]",
-                current,
-            )
-            if key_part in current_mapping:
-                return current_mapping[key_part], True
+            # Type narrowing: current is Mapping after is_type check
+            # Use ConfigurationMapping which is compatible with GeneralValueType
+            if isinstance(current, Mapping):
+                current_mapping: t.Types.ConfigurationMapping = current
+                if key_part in current_mapping:
+                    return current_mapping[key_part], True
             return None, False
 
         # Handle object attribute
@@ -507,11 +507,9 @@ class FlextUtilitiesMapper:
             model_dump_attr = getattr(current, "model_dump", None)
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
-                if FlextUtilitiesGuards.is_type(model_dict, dict):
-                    model_dict_typed: dict[str, object] = cast(
-                        "dict[str, object]",
-                        model_dict,
-                    )
+                if isinstance(model_dict, dict):
+                    # model_dump() returns dict[str, GeneralValueType] which is ConfigurationDict
+                    model_dict_typed: t.Types.ConfigurationDict = model_dict
                     if key_part in model_dict_typed:
                         return model_dict_typed[key_part], True
 
@@ -1049,8 +1047,8 @@ class FlextUtilitiesMapper:
         """
         if isinstance(item, dict):
             # Type narrowing: item is dict at this point
-            # Cast to dict[str, object] for type safety
-            dict_item: dict[str, object] = cast("dict[str, object]", item)
+            # Use ConfigurationDict which is dict[str, GeneralValueType]
+            dict_item: t.Types.ConfigurationDict = item
             return dict_item.get(field_name)
         if hasattr(item, field_name):
             # getattr returns object since we know the attribute exists
@@ -1097,7 +1095,7 @@ class FlextUtilitiesMapper:
                 val = field(item)
                 # field returns int | float, so isinstance is redundant
                 # But keep for runtime safety in case field doesn't respect type signature
-                if isinstance(val, (int, float)):  # type: ignore[reportUnnecessaryIsInstance]
+                if isinstance(val, (int, float)):
                     numeric_values.append(val)
         else:
             # After callable check, field is str, so isinstance is redundant
@@ -1171,9 +1169,9 @@ class FlextUtilitiesMapper:
                 )
             case "dict":
                 if isinstance(current, dict):
-                    # Type narrowing: current is dict[str, object], return as dict[str, t.GeneralValueType]
-                    current_dict: dict[str, object] = cast("dict[str, object]", current)
-                    return cast("dict[str, t.GeneralValueType]", current_dict)
+                    # Type narrowing: current is dict, return as ConfigurationDict
+                    current_dict: t.Types.ConfigurationDict = current
+                    return current_dict
                 return default_val
             case _:
                 return current
@@ -1194,13 +1192,9 @@ class FlextUtilitiesMapper:
             sequence: Sequence[object] = cast("Sequence[object]", current)
             return [cast("t.GeneralValueType", x) for x in sequence if filter_pred(x)]
         if isinstance(current, dict):
-            # Type narrowing: current is dict[str, object], k is str, v is GeneralValueType
-            current_dict: dict[str, object] = cast("dict[str, object]", current)
-            return {
-                k: cast("t.GeneralValueType", v)
-                for k, v in current_dict.items()
-                if filter_pred(v)
-            }
+            # Type narrowing: current is dict, use ConfigurationDict
+            current_dict: t.Types.ConfigurationDict = current
+            return {k: v for k, v in current_dict.items() if filter_pred(v)}
         # Single value
         return default if not filter_pred(current) else current
 
@@ -1218,10 +1212,10 @@ class FlextUtilitiesMapper:
                 for x in sequence
             ]
         if isinstance(current, dict):
-            # Type narrowing: current is dict[str, object], k is str, v is GeneralValueType
-            current_dict: dict[str, object] = cast("dict[str, object]", current)
+            # Type narrowing: current is dict, use ConfigurationDict
+            current_dict: t.Types.ConfigurationDict = current
             return {
-                k: cast("t.GeneralValueType", map_func(cast("t.GeneralValueType", v)))
+                k: cast("t.GeneralValueType", map_func(v))
                 for k, v in current_dict.items()
             }
         return map_func(current)
@@ -1500,8 +1494,8 @@ class FlextUtilitiesMapper:
                 sequence: Sequence[object] = cast("Sequence[object]", current)
                 return [process_func(x) for x in sequence]
             if isinstance(current, dict):
-                # Type narrowing: current is dict[str, object], k is str, v is object
-                current_dict: dict[str, object] = cast("dict[str, object]", current)
+                # Type narrowing: current is dict, use ConfigurationDict
+                current_dict: t.Types.ConfigurationDict = current
                 return {k: process_func(v) for k, v in current_dict.items()}
             return process_func(current)
         except Exception:
@@ -1650,7 +1644,11 @@ class FlextUtilitiesMapper:
             # Type narrowing: current is Sequence[object]
             sequence_slice: Sequence[object] = cast("Sequence[object]", current)
             sliced: Sequence[object] = sequence_slice[start:end]
-            return cast("list[object]", list(sliced)) if isinstance(current, list) else cast("tuple[object, ...]", tuple(sliced))
+            return (
+                cast("list[object]", list(sliced))
+                if isinstance(current, list)
+                else cast("tuple[object, ...]", tuple(sliced))
+            )
         return current
 
     @staticmethod
@@ -1789,8 +1787,14 @@ class FlextUtilitiesMapper:
             return None
         if ops is not None:
             # Type narrowing: value is T | None, but ops requires value to be GeneralValueType
-            value_for_build: t.GeneralValueType = cast("t.GeneralValueType", value) if value is not None else cast("t.GeneralValueType", "")
-            result = FlextUtilitiesMapper.build(value_for_build, ops=ops, on_error="stop")
+            value_for_build: t.GeneralValueType = (
+                cast("t.GeneralValueType", value)
+                if value is not None
+                else cast("t.GeneralValueType", "")
+            )
+            result = FlextUtilitiesMapper.build(
+                value_for_build, ops=ops, on_error="stop"
+            )
             # build returns r[T], unwrap if success
             if isinstance(result, r) and result.is_success:
                 extracted: T | None = cast("T | None", result.unwrap())
@@ -1870,14 +1874,22 @@ class FlextUtilitiesMapper:
             elif field_ops is not None:
                 field_ops_dict = cast("t.Types.ConfigurationDict", field_ops)
                 # Type narrowing: value is T | None, but build requires GeneralValueType
-                value_for_build: t.GeneralValueType = cast("t.GeneralValueType", value) if value is not None else cast("t.GeneralValueType", "")
+                value_for_build: t.GeneralValueType = (
+                    cast("t.GeneralValueType", value)
+                    if value is not None
+                    else cast("t.GeneralValueType", "")
+                )
                 build_result = FlextUtilitiesMapper.build(
                     value_for_build,
                     ops=field_ops_dict,
                     on_error="stop",
                 )
                 # build_result is r[T], unwrap if success
-                extracted = cast("T | None", build_result.unwrap()) if isinstance(build_result, r) and build_result.is_success else None
+                extracted = (
+                    cast("T | None", build_result.unwrap())
+                    if isinstance(build_result, r) and build_result.is_success
+                    else None
+                )
             else:
                 extracted = cast("T | None", value)
 

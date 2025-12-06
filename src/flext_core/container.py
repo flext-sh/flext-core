@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, Sequence
+from types import ModuleType
 from typing import Self, cast
 
 from pydantic import BaseModel
@@ -27,7 +28,7 @@ from flext_core.typings import T, t
 from flext_core.utilities import u
 
 
-class FlextContainer(p.Container.DI):
+class FlextContainer(FlextRuntime, p.Container.DI):
     """Singleton container that exposes DI registration and resolution helpers.
 
     Services and factories remain local to the container, keeping dispatcher and
@@ -46,8 +47,9 @@ class FlextContainer(p.Container.DI):
         *,
         _config: p.Configuration.Config | None = None,
         _context: p.Context.Ctx | None = None,
-        _services: t.Types.ServiceRegistrationDict | None = None,
-        _factories: t.Types.FactoryRegistrationDict | None = None,
+        _services: dict[str, m.Container.ServiceRegistration] | None = None,
+        _factories: dict[str, m.Container.FactoryRegistration] | None = None,
+        _resources: dict[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: t.Types.ConfigurationDict | None = None,
         _container_config: m.Container.ContainerConfig | None = None,
     ) -> Self:
@@ -74,8 +76,9 @@ class FlextContainer(p.Container.DI):
         *,
         _config: p.Configuration.Config | None = None,
         _context: p.Context.Ctx | None = None,
-        _services: t.Types.ServiceRegistrationDict | None = None,
-        _factories: t.Types.FactoryRegistrationDict | None = None,
+        _services: dict[str, m.Container.ServiceRegistration] | None = None,
+        _factories: dict[str, m.Container.FactoryRegistration] | None = None,
+        _resources: dict[str, m.Container.ResourceRegistration] | None = None,
         _user_overrides: t.Types.ConfigurationDict | None = None,
         _container_config: m.Container.ContainerConfig | None = None,
     ) -> None:
@@ -90,9 +93,22 @@ class FlextContainer(p.Container.DI):
             return
         self.containers = FlextRuntime.dependency_containers()
         self.providers = FlextRuntime.dependency_providers()
+        (
+            self._di_bridge,
+            self._di_services,
+            self._di_resources,
+        ) = FlextRuntime.DependencyIntegration.create_layered_bridge()
         self._di_container = self.containers.DynamicContainer()
-        self._services: t.Types.ServiceRegistrationDict = _services or {}
-        self._factories: t.Types.FactoryRegistrationDict = _factories or {}
+        self._config_provider = self._di_bridge.config
+        self._base_config_provider = self.providers.Configuration()
+        self._user_config_provider = self.providers.Configuration()
+        # Layer providers to avoid manual merging while keeping overrides distinct
+        self._config_provider.override(self._base_config_provider)
+        self._config_provider.override(self._user_config_provider)
+        self._di_container.config = self._config_provider
+        self._services: dict[str, m.Container.ServiceRegistration] = _services or {}
+        self._factories: dict[str, m.Container.FactoryRegistration] = _factories or {}
+        self._resources: dict[str, m.Container.ResourceRegistration] = _resources or {}
         self._global_config: m.Container.ContainerConfig = (
             _container_config or self._create_container_config()
         )
@@ -102,6 +118,34 @@ class FlextContainer(p.Container.DI):
         )
         self._context: p.Context.Ctx | None = _context
         self._sync_config_to_di()
+        self._register_existing_providers()
+
+    @property
+    def provide(self) -> Callable[[str], object]:
+        """Return the dependency-injector Provide helper scoped to the bridge.
+
+        ``Provide`` is used alongside the ``@inject`` decorator to declare
+        dependencies without importing ``dependency-injector`` in higher layers.
+        It resolves registered providers (services, factories, resources,
+        configuration) by name and injects the resulting value into the
+        decorated callable. Example:
+
+        .. code-block:: python
+
+           from flext_core import FlextContainer, inject
+
+           container = FlextContainer.get_global()
+           container.register_factory("token_factory", lambda: {"token": "abc123"})
+
+
+           @inject
+           def consume(token=container.provide["token_factory"]):
+               return token["token"]
+
+
+           assert consume() == "abc123"
+        """
+        return self._di_bridge.Provide
 
     @classmethod
     def get_global(
@@ -140,7 +184,10 @@ class FlextContainer(p.Container.DI):
         """Create default configuration values for container behavior."""
         return m.Container.ContainerConfig(
             enable_singleton=True,
-            enable_factory_caching=True,
+            # Factories should default to new instances on each resolution to
+            # preserve expected DI semantics; caching can be opt-in via
+            # ``configure``.
+            enable_factory_caching=False,
             max_services=c.Container.DEFAULT_MAX_SERVICES,
             max_factories=c.Container.DEFAULT_MAX_FACTORIES,
         )
@@ -148,12 +195,46 @@ class FlextContainer(p.Container.DI):
     def _sync_config_to_di(self) -> None:
         """Sync configuration values onto the dependency-injector container.
 
-        Dependency Injector's dynamic container does not expose a first-class
-        configuration API. Configuration is mirrored on this instance and
-        consumed whenever providers are built in ``register`` or
-        ``register_factory``. The method remains a single responsibility hook for
-        future provider-based configuration.
+        Dependency Injector's layered ``providers.Configuration`` instances are
+        used to avoid manual merges while still honoring validated defaults from
+        ``FlextConfig`` and runtime overrides. Base config and user overrides are
+        applied as separate providers to keep precedence explicit.
         """
+        self._base_config_provider.from_dict(self._global_config.model_dump())
+        if self._user_overrides:
+            self._user_config_provider.from_dict(dict(self._user_overrides))
+        else:
+            self._user_config_provider.from_dict({})
+
+    def _register_existing_providers(self) -> None:
+        """Hydrate the dynamic container with current registrations."""
+        for name, registration in self._services.items():
+            provider = FlextRuntime.DependencyIntegration.register_object(
+                self._di_services,
+                name,
+                registration.service,
+            )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
+
+        for name, factory_registration in self._factories.items():
+            provider = FlextRuntime.DependencyIntegration.register_factory(
+                self._di_services,
+                name,
+                factory_registration.factory,
+                cache=self._global_config.enable_factory_caching,
+            )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
+
+        for name, resource_registration in self._resources.items():
+            provider = FlextRuntime.DependencyIntegration.register_resource(
+                self._di_resources,
+                name,
+                resource_registration.factory,
+            )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
 
     def configure(
         self,
@@ -189,7 +270,34 @@ class FlextContainer(p.Container.DI):
             merged: t.Types.ConfigurationDict = dict(self._user_overrides)
             merged.update(processed_dict)
             self._user_overrides = merged
+            # Sync validated overrides onto the container config model so
+            # provider registration respects updated settings (e.g.,
+            # enable_factory_caching).
+            container_values = self._global_config.model_dump()
+            applicable_overrides = {
+                key: value for key, value in merged.items() if key in container_values
+            }
+            if applicable_overrides:
+                self._global_config = self._global_config.model_copy(
+                    update=applicable_overrides,
+                    deep=True,
+                )
         self._sync_config_to_di()
+
+    def wire_modules(
+        self,
+        *,
+        modules: Sequence[ModuleType] | None = None,
+        packages: Sequence[str] | None = None,
+        classes: Sequence[type] | None = None,
+    ) -> None:
+        """Wire modules/packages to the DI bridge for @inject/Provide usage."""
+        FlextRuntime.DependencyIntegration.wire(
+            self._di_container,
+            modules=modules,
+            packages=packages,
+            classes=classes,
+        )
 
     def get_config(
         self,
@@ -231,16 +339,16 @@ class FlextContainer(p.Container.DI):
         _ = self.register_factory(name, factory)
         return self
 
-    def register(
+    def with_resource(
         self,
         name: str,
-        service: (
-            t.GeneralValueType
-            | BaseModel
-            | p.Utility.Callable[t.GeneralValueType]
-            | object
-        ),
-    ) -> r[bool]:
+        factory: Callable[[], t.GeneralValueType],
+    ) -> Self:
+        """Register a lifecycle-managed resource for fluent chaining."""
+        _ = self.register_resource(name, factory)
+        return self
+
+    def register(self, name: str, service: T) -> r[bool]:
         """Register a service instance for dependency resolution.
 
         Business Rule: The container accepts any object type for registration,
@@ -260,8 +368,10 @@ class FlextContainer(p.Container.DI):
             when construction fails.
 
         """
+        if not name:
+            return r[bool].fail("Service name must have at least 1 character")
         try:
-            if name in self._services:
+            if hasattr(self._di_services, name):
                 return r[bool].fail(f"Service '{name}' already registered")
             registration = m.Container.ServiceRegistration(
                 name=name,
@@ -269,6 +379,13 @@ class FlextContainer(p.Container.DI):
                 service_type=type(service).__name__,
             )
             self._services[name] = registration
+            provider = FlextRuntime.DependencyIntegration.register_object(
+                self._di_services,
+                name,
+                service,
+            )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
             return r[bool].ok(True)
         except Exception as e:
             return r[bool].fail(str(e))
@@ -276,7 +393,7 @@ class FlextContainer(p.Container.DI):
     def register_factory(
         self,
         name: str,
-        factory: Callable[[], t.GeneralValueType],
+        factory: Callable[[], T],
     ) -> r[bool]:
         """Register a factory used to build services on demand.
 
@@ -286,12 +403,15 @@ class FlextContainer(p.Container.DI):
             registration.
 
         """
+        if not callable(factory):
+            return r[bool].fail("Factory must be callable")
         try:
-            if name in self._factories:
+            if hasattr(self._di_services, name):
                 return r[bool].fail(f"Factory '{name}' already registered")
             # Factory returns GeneralValueType which is compatible with FactoryRegistration requirements
             # Type narrowing: factory is already compatible with the expected type
             # GeneralValueType includes ScalarValue, Sequence, Mapping
+            # Cast factory to expected type for FactoryRegistration
             factory_typed: Callable[
                 [],
                 (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
@@ -304,6 +424,46 @@ class FlextContainer(p.Container.DI):
                 factory=factory_typed,
             )
             self._factories[name] = registration
+            provider = FlextRuntime.DependencyIntegration.register_factory(
+                self._di_services,
+                name,
+                factory,
+                cache=self._global_config.enable_factory_caching,
+            )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
+            return r[bool].ok(True)
+        except Exception as e:
+            return r[bool].fail(str(e))
+
+    def register_resource(
+        self,
+        name: str,
+        factory: Callable[[], T],
+    ) -> r[bool]:
+        """Register a dependency-injector Resource provider."""
+        if not callable(factory):
+            return r[bool].fail("Resource factory must be callable")
+        try:
+            if hasattr(self._di_resources, name):
+                return r[bool].fail(f"Resource '{name}' already registered")
+            # Cast factory to expected type for ResourceRegistration
+            factory_typed: Callable[[], t.GeneralValueType] = cast(
+                "Callable[[], t.GeneralValueType]",
+                factory,
+            )
+            registration = m.Container.ResourceRegistration(
+                name=name,
+                factory=factory_typed,
+            )
+            self._resources[name] = registration
+            provider = FlextRuntime.DependencyIntegration.register_resource(
+                self._di_resources,
+                name,
+                factory,
+            )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
             return r[bool].ok(True)
         except Exception as e:
             return r[bool].fail(str(e))
@@ -331,26 +491,29 @@ class FlextContainer(p.Container.DI):
         """
         # Try service first
         if name in self._services:
-            # Type narrowing: self._services[name] is m.Container.ServiceRegistration
-            service_registration = cast(
-                "m.Container.ServiceRegistration", self._services[name]
-            )
+            service_registration = self._services[name]
             service = service_registration.service
             # Runtime type safety guaranteed by container registration
-            # Type narrowing: service is T at runtime (guaranteed by registration)
-            return r[T].ok(service)  # type: ignore[arg-type]
+            return r[T].ok(cast("T", service))
 
         # Try factory
         if name in self._factories:
             try:
-                # Type narrowing: self._factories[name] is m.Container.FactoryRegistration
-                factory_registration = cast(
-                    "m.Container.FactoryRegistration", self._factories[name]
-                )
+                factory_registration = self._factories[name]
                 instance = factory_registration.factory()
                 # Runtime type safety guaranteed by container registration
-                # Type narrowing: instance is T at runtime (guaranteed by registration)
-                return r[T].ok(instance)  # type: ignore[arg-type]
+                return r[T].ok(cast("T", instance))
+            except Exception as e:
+                return r[T].fail(str(e))
+
+        # Try resource
+        if name in self._resources:
+            try:
+                resource_registration = self._resources[name]
+                instance = resource_registration.factory()
+                # Runtime type safety guaranteed by container registration
+                # Cast instance directly to T (bypass mypy type narrowing issue)
+                return r[T].ok(cast("T", instance))
             except Exception as e:
                 return r[T].fail(str(e))
 
@@ -379,19 +542,37 @@ class FlextContainer(p.Container.DI):
 
     def has_service(self, name: str) -> bool:
         """Return whether a service or factory is registered for ``name``."""
-        return name in self._services or name in self._factories
+        return (
+            name in self._services or name in self._factories or name in self._resources
+        )
 
     def list_services(self) -> Sequence[str]:
         """List the names of registered services and factories."""
-        return list(self._services.keys()) + list(self._factories.keys())
+        return (
+            list(self._services.keys())
+            + list(self._factories.keys())
+            + list(self._resources.keys())
+        )
 
     def unregister(self, name: str) -> r[bool]:
         """Remove a service or factory registration by name."""
+        removed = False
         if name in self._services:
             del self._services[name]
-            return r[bool].ok(True)
+            removed = True
         if name in self._factories:
             del self._factories[name]
+            removed = True
+        if name in self._resources:
+            del self._resources[name]
+            removed = True
+
+        if hasattr(self._di_services, name):
+            delattr(self._di_services, name)
+        if hasattr(self._di_resources, name):
+            delattr(self._di_resources, name)
+
+        if removed:
             return r[bool].ok(True)
         return r[bool].fail(f"Service '{name}' not found")
 
@@ -403,8 +584,14 @@ class FlextContainer(p.Container.DI):
         singleton pattern - use reset_singleton_for_testing() for that.
 
         """
+        for name in self.list_services():
+            if hasattr(self._di_services, name):
+                delattr(self._di_services, name)
+            if hasattr(self._di_resources, name):
+                delattr(self._di_resources, name)
         self._services.clear()
         self._factories.clear()
+        self._resources.clear()
 
     @classmethod
     def reset_singleton_for_testing(cls) -> None:
@@ -430,8 +617,9 @@ class FlextContainer(p.Container.DI):
         *,
         config: p.Configuration.Config,
         context: p.Context.Ctx,
-        services: t.Types.ServiceRegistrationDict,
-        factories: t.Types.FactoryRegistrationDict,
+        services: dict[str, m.Container.ServiceRegistration],
+        factories: dict[str, m.Container.FactoryRegistration],
+        resources: dict[str, m.Container.ResourceRegistration],
         user_overrides: t.Types.ConfigurationDict,
         container_config: m.Container.ContainerConfig,
     ) -> p.Container.DI:
@@ -446,12 +634,31 @@ class FlextContainer(p.Container.DI):
         # Initialize public attributes directly
         instance.containers = FlextRuntime.dependency_containers()
         instance.providers = FlextRuntime.dependency_providers()
+        bridge, service_module, resource_module = (
+            FlextRuntime.DependencyIntegration.create_layered_bridge()
+        )
+        di_container = instance.containers.DynamicContainer()
         # Use object.__setattr__ for private attrs to bypass SLF001
         # (classmethod factory pattern - valid Python, false positive from ruff)
         setattr_ = object.__setattr__
-        setattr_(instance, "_di_container", instance.containers.DynamicContainer())
+        setattr_(instance, "_di_bridge", bridge)
+        setattr_(instance, "_di_services", service_module)
+        setattr_(instance, "_di_resources", resource_module)
+        setattr_(instance, "_di_container", di_container)
+        setattr_(instance, "_config_provider", bridge.config)
+        base_config_provider = instance.providers.Configuration()
+        user_config_provider = instance.providers.Configuration()
+        setattr_(instance, "_base_config_provider", base_config_provider)
+        setattr_(instance, "_user_config_provider", user_config_provider)
+        # Access private members in factory pattern (bypass SLF001)
+        config_provider = instance._config_provider  # noqa: SLF001
+        config_provider.override(base_config_provider)
+        config_provider.override(user_config_provider)
+        di_container = instance._di_container  # noqa: SLF001
+        di_container.config = config_provider
         setattr_(instance, "_services", services)
         setattr_(instance, "_factories", factories)
+        setattr_(instance, "_resources", resources)
         setattr_(instance, "_global_config", container_config)
         setattr_(instance, "_user_overrides", user_overrides)
         setattr_(instance, "_config", config)
@@ -459,8 +666,10 @@ class FlextContainer(p.Container.DI):
         # Call private method via getattr variable to bypass SLF001 and B009
         method_name = "_sync_config_to_di"
         getattr(instance, method_name)()
-        # Type narrowing: instance is p.Container.DI (structural typing)
-        return instance
+        # Register all providers on the bridge for @inject/Provide usage
+        method_name_register = "_register_existing_providers"
+        getattr(instance, method_name_register)()
+        return cast("p.Container.DI", instance)  # Structural typing
 
     def scoped(
         self,
@@ -481,6 +690,7 @@ class FlextContainer(p.Container.DI):
             ],
         ]
         | None = None,
+        resources: Mapping[str, Callable[[], t.GeneralValueType]] | None = None,
     ) -> p.Container.DI:
         """Create an isolated container scope with optional overrides.
 
@@ -493,6 +703,8 @@ class FlextContainer(p.Container.DI):
             services: Additional service registrations merged into the scoped
                 instance.
             factories: Additional factory registrations merged into the scoped
+                instance.
+            resources: Additional resource registrations merged into the scoped
                 instance.
 
         Returns:
@@ -525,15 +737,16 @@ class FlextContainer(p.Container.DI):
         )
         cloned_services: t.Types.ServiceRegistrationDict = (
             cast("t.Types.ServiceRegistrationDict", process_result.value)
-            if process_result.is_success and isinstance(process_result.value, dict)
+            if process_result.is_success and u.is_type(process_result.value, dict)
             else {}
         )
-        # Type narrowing: registration is m.Container.FactoryRegistration
         cloned_factories: t.Types.FactoryRegistrationDict = {
-            name: cast("m.Container.FactoryRegistration", registration).model_copy(
-                deep=True
-            )
+            name: registration.model_copy(deep=True)
             for name, registration in self._factories.items()
+        }
+        cloned_resources: dict[str, m.Container.ResourceRegistration] = {
+            name: registration.model_copy(deep=True)
+            for name, registration in self._resources.items()
         }
 
         for name, service in (services or {}).items():
@@ -547,15 +760,27 @@ class FlextContainer(p.Container.DI):
                 name=name,
                 factory=factory,
             )
+        for name, resource_factory in (resources or {}).items():
+            cloned_resources[name] = m.Container.ResourceRegistration(
+                name=name,
+                factory=resource_factory,
+            )
 
         # Use factory method to create scoped container (avoids mypy __init__ error)
         # Structural typing - FlextContainer implements p.Container.DI
         # base_config already implements p.Configuration.Config protocol
+        # Type narrowing: cloned_services and cloned_factories are dict[str, object]
+        # but contain ServiceRegistration/FactoryRegistration instances
         return FlextContainer._create_scoped_instance(
             config=base_config,
             context=scoped_context,
-            services=cloned_services,
-            factories=cloned_factories,
+            services=cast(
+                "dict[str, m.Container.ServiceRegistration]", cloned_services
+            ),
+            factories=cast(
+                "dict[str, m.Container.FactoryRegistration]", cloned_factories
+            ),
+            resources=cloned_resources,
             user_overrides=self._user_overrides.copy(),
             container_config=self._global_config.model_copy(deep=True),
         )

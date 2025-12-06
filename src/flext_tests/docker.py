@@ -98,7 +98,7 @@ class FlextTestsDocker:
 
         _offline_containers: ContainerCollection
 
-        def __init__(self) -> None:  # pyright: ignore[reportMissingSuperCall]
+        def __init__(self) -> None:
             """Avoid contacting Docker daemon; provide minimal containers API.
 
             Intentionally does NOT call super().__init__() because DockerClient.__init__()

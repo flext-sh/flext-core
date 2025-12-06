@@ -916,7 +916,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 elif callable(sorted_param):
                     # callable() builtin narrows type for pyrefly/mypy
                     # sorted() runtime accepts any callable as key
-                    # Type: SortKey is bool | Callable[[object], SupportsLessThan]
+
                     # The callable is validated at runtime, type checker may not understand
                     sorted_list = sorted(value_list, key=sorted_param)
                     if value_list != sorted_list:

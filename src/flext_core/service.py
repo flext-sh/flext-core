@@ -17,11 +17,10 @@ from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from typing import Self, cast
 
-from pydantic import ConfigDict, PrivateAttr, computed_field
+from pydantic import ConfigDict, computed_field
 
 from flext_core.config import FlextConfig  # For instantiation only
 from flext_core.constants import c
-from flext_core.container import FlextContainer  # For instantiation only
 from flext_core.context import FlextContext  # For instantiation only
 from flext_core.exceptions import e
 from flext_core.mixins import require_initialized, x
@@ -29,7 +28,6 @@ from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 from flext_core.result import r
-from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
@@ -41,13 +39,13 @@ class FlextService[TDomainResult](
     """Base class for domain services used in CQRS flows.
 
     Subclasses implement ``execute`` to run business logic and return
-    ``FlextResult`` values. The base provides validation hooks, dependency
-    injection, and context-aware logging while remaining protocol compliant via
-    structural typing.
+    ``FlextResult`` values. The base inherits :class:`FlextMixins` (which extends
+    :class:`FlextRuntime`) so services can reuse runtime automation for creating
+    scoped config/context/container triples via :meth:`create_service_runtime`
+    while remaining protocol compliant via structural typing.
     """
 
     model_config = ConfigDict(
-        frozen=True,
         arbitrary_types_allowed=True,
         extra="forbid",
         use_enum_values=True,
@@ -111,7 +109,7 @@ class FlextService[TDomainResult](
             # Return the unwrapped value directly (breaks static typing but is intended behavior)
             # Type narrowing: result.value is TDomainResult, which may be Self in some cases
             # This is a runtime pattern where TDomainResult can be the service instance itself
-            return result.value  # type: ignore[return-value]
+            return result.value
         # For auto_execute=False, return instance (normal pattern)
         type(instance).__init__(instance, **kwargs)
         return instance
@@ -159,16 +157,19 @@ class FlextService[TDomainResult](
         ):
             super().__init__(**data)
 
-        object.__setattr__(self, "_context", runtime.context)
-        object.__setattr__(self, "_config", runtime.config)
-        object.__setattr__(self, "_container", runtime.container)
-        object.__setattr__(self, "_runtime", runtime)
+        # Set attributes directly (no PrivateAttr needed, compatible with FlextMixins)
+        self._context = runtime.context
+        self._config = runtime.config
+        self._container = runtime.container
+        self._runtime = runtime
 
-    _context: p.Context.Ctx | None = PrivateAttr(default=None)
-    _config: FlextConfig | None = PrivateAttr(default=None)
-    _container: p.Container.DI | None = PrivateAttr(default=None)
-    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _auto_result: TDomainResult | None = PrivateAttr(default=None)
+    # Use class attributes (not PrivateAttr) to match FlextMixins pattern
+    # This allows direct assignment in _create_initial_runtime() and other mixin methods
+    _context: p.Context.Ctx | None = None
+    _config: FlextConfig | None = None
+    _container: p.Container.DI | None = None
+    _runtime: m.ServiceRuntime | None = None
+    _auto_result: TDomainResult | None = None
 
     @classmethod
     def _get_service_config_type(cls) -> type[FlextConfig]:
@@ -186,43 +187,23 @@ class FlextService[TDomainResult](
     @classmethod
     def _create_initial_runtime(cls) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
-        base_context = FlextContext()
-        # Get the service-specific config type
         config_type = cls._get_service_config_type()
-
-        # If service specifies a specific config type, use it directly
-        # Otherwise, clone from global FlextConfig instance
-        if config_type is not FlextConfig:
-            # Service has specific config type - create instance directly
-            base_config = config_type()
-        else:
-            # Generic service - clone from global config
-            global_config = FlextConfig.get_global_instance()
-
-            class _ClonedConfig(FlextConfig):
-                """Lightweight clone to bypass FlextConfig singleton semantics."""
-
-                def __new__(
-                    cls,
-                    **_data: t.GeneralValueType,
-                ) -> Self:  # pragma: no cover - construction hook
-                    # Create raw instance using type-safe factory helper
-                    return FlextRuntime.create_instance(cls)
-
-            base_config = _ClonedConfig.model_construct(**global_config.model_dump())
-
-        # base_context is FlextContext which implements Context.Ctx structurally
-        # base_config is already FlextConfig (either config_type() or _ClonedConfig)
-        base_container = FlextContainer().scoped(
-            config=base_config,
-            context=base_context,
+        return cls.create_service_runtime(
+            config_type=config_type,
+            **cls._runtime_bootstrap_options(),
         )
 
-        return m.ServiceRuntime.model_construct(
-            config=base_config,
-            context=base_context,
-            container=base_container,
-        )
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> dict[str, object]:
+        """Hook for subclasses to parametrize runtime automation.
+
+        Subclasses can override this method to pass keyword arguments directly
+        to :meth:`FlextRuntime.create_service_runtime`, enabling opt-in
+        configuration overrides, scoped service registrations, factory/resource
+        wiring, and container configuration changes without duplicating
+        setup code in ``__init__``.
+        """
+        return {}
 
     def _clone_runtime(
         self,
@@ -395,7 +376,7 @@ class FlextService[TDomainResult](
         # Direct access - GeneralValueType covers all domain results
         # Type narrowing: self is FlextService[TDomainResult], compatible with FlextService[t.GeneralValueType]
         # TDomainResult is a subtype of GeneralValueType, so this is safe
-        return _ServiceAccess(self)  # type: ignore[arg-type]
+        return _ServiceAccess(self)
 
 
 class _ServiceExecutionScope(m.ArbitraryTypesModel):
@@ -421,17 +402,18 @@ class _ServiceAccess(m.ArbitraryTypesModel):
     context.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    _registry: FlextRegistry | None = PrivateAttr(default=None)
-    _service: s[t.GeneralValueType] = PrivateAttr()
+    # Use class attributes (not PrivateAttr) for consistency with FlextService
+    _registry: FlextRegistry | None = None
+    _service: s[t.GeneralValueType] | None = None
 
     def __init__(self, service: s[t.GeneralValueType]) -> None:
         super().__init__()
         # Accept any FlextService instance - GeneralValueType covers all domain results
-        # Use object.__setattr__ for frozen model (Pydantic frozen=True requires this pattern)
-        object.__setattr__(self, "_service", service)
-        object.__setattr__(self, "_registry", FlextRegistry())
+        # Set attributes directly (no PrivateAttr needed)
+        self._service = service
+        self._registry = FlextRegistry()
 
     @computed_field
     def cqrs(self) -> type[m.Cqrs]:

@@ -54,21 +54,23 @@ import string
 import sys
 import threading
 import typing
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import ClassVar, ParamSpec, TypeGuard, cast
+from typing import ClassVar, TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
 from beartype.claw import beartype_package
-from dependency_injector import containers, providers
+from dependency_injector import containers, providers, wiring
 from structlog.typing import BindableLogger
 
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.typings import t
+from flext_core.typings import T, t
 
-P_Processor = ParamSpec("P_Processor")
+if typing.TYPE_CHECKING:  # pragma: no cover - import cycle guard for typing only
+    from flext_core.config import FlextConfig
+    from flext_core.models import m
 
 
 class _AsyncLogWriter:
@@ -366,6 +368,111 @@ class FlextRuntime:
         container_module = importlib.import_module("flext_core.container")
         container_class = container_module.FlextContainer
         return cast("p.Container.DI", container_class())
+
+    @classmethod
+    def create_service_runtime(
+        cls,
+        *,
+        config_type: type[FlextConfig] | None = None,
+        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        context: p.Context.Ctx | None = None,
+        subproject: str | None = None,
+        services: Mapping[str, object] | None = None,
+        factories: Mapping[str, Callable[[], object]] | None = None,
+        resources: Mapping[str, Callable[[], object]] | None = None,
+        container_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        wire_modules: Sequence[ModuleType] | None = None,
+        wire_packages: Sequence[str] | None = None,
+        wire_classes: Sequence[type] | None = None,
+    ) -> m.ServiceRuntime:
+        """Materialize config, context, and container with DI wiring in one call.
+
+        This helper provides the same parameterized automation used by
+        ``DependencyIntegration.create_container`` but returns a
+        :class:`~flext_core.models.m.ServiceRuntime` triple tailored for
+        services. It allows callers to:
+
+        - Clone or materialize configuration models with optional overrides.
+        - Seed containers with services/factories/resources without additional
+          registration calls.
+        - Apply container configuration overrides (e.g., factory caching)
+          before wiring modules, packages, or classes for ``@inject`` usage.
+
+        All imports are performed lazily to avoid circular dependencies at
+        module import time. The created container is a scoped
+        :class:`~flext_core.container.FlextContainer` instance so registry state
+        remains isolated per service runtime.
+        """
+        from flext_core import models as _models  # noqa: PLC0415
+        from flext_core.config import FlextConfig  # noqa: PLC0415
+        from flext_core.container import FlextContainer  # noqa: PLC0415
+        from flext_core.context import FlextContext  # noqa: PLC0415
+
+        runtime_config = cls._materialize_service_config(
+            config_type or FlextConfig,
+            config_overrides=config_overrides,
+        )
+        runtime_context = context if context is not None else FlextContext()
+
+        runtime_container = FlextContainer().scoped(
+            config=runtime_config,
+            context=runtime_context,
+            subproject=subproject,
+            services=services,
+            factories=factories,
+            resources=resources,
+        )
+
+        if container_overrides:
+            runtime_container.configure(container_overrides)
+
+        if wire_modules or wire_packages or wire_classes:
+            runtime_container.wire_modules(
+                modules=wire_modules,
+                packages=wire_packages,
+                classes=wire_classes,
+            )
+
+        return _models.m.ServiceRuntime.model_construct(
+            config=runtime_config,
+            context=runtime_context,
+            container=runtime_container,
+        )
+
+    @staticmethod
+    def _materialize_service_config(
+        config_type: type[FlextConfig],
+        *,
+        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+    ) -> FlextConfig:
+        """Create a configuration instance with optional overrides."""
+        from flext_core.config import FlextConfig  # noqa: PLC0415
+
+        if config_type is FlextConfig:
+            global_config = FlextConfig.get_global_instance()
+
+            class _ClonedConfig(FlextConfig):
+                """Lightweight clone bypassing singleton semantics."""
+
+                def __new__(
+                    cls,
+                    **_data: t.GeneralValueType,
+                ) -> FlextConfig:
+                    return FlextRuntime.create_instance(cls)
+
+            config_instance = _ClonedConfig.model_construct(
+                **global_config.model_dump(),
+            )
+        else:
+            config_instance = config_type()
+
+        if config_overrides:
+            config_instance = config_instance.model_copy(
+                update=config_overrides,
+                deep=True,
+            )
+
+        return config_instance
 
     @staticmethod
     def is_dict_like(
@@ -762,6 +869,219 @@ class FlextRuntime:
     def dependency_containers() -> ModuleType:
         """Return the dependency-injector containers module."""
         return containers
+
+    class DependencyIntegration:
+        """Centralize dependency-injector wiring with provider helpers.
+
+        This bridge keeps dependency-injector usage confined to L1 while
+        exposing a narrow API for higher layers. Factories and configuration
+        providers are materialized here to avoid duplicate dictionaries or
+        direct imports of ``dependency_injector`` outside the runtime module.
+        A small DeclarativeContainer captures config/resources so L3 callers
+        never import dependency-injector directly.
+        """
+
+        class BridgeContainer(containers.DeclarativeContainer):
+            """Declarative container grouping config and resource modules."""
+
+            config = providers.Configuration()
+            services = providers.DependenciesContainer()
+            resources = providers.DependenciesContainer()
+
+        Provide = wiring.Provide
+        inject = staticmethod(wiring.inject)
+
+        @classmethod
+        def create_layered_bridge(
+            cls,
+            config: t.Types.ConfigurationMapping | None = None,
+        ) -> tuple[
+            containers.DeclarativeContainer,
+            containers.DynamicContainer,
+            containers.DynamicContainer,
+        ]:
+            """Create a DeclarativeContainer bridged to dynamic modules.
+
+            Returns a tuple with the declarative bridge plus dynamic containers
+            for services and resources. The bridge isolates dependency-injector
+            usage to L1/L2 while allowing higher layers to work only with
+            FlextContainer's APIs. The declarative bridge exposes ``config``,
+            ``services``, and ``resources`` providers, plus ``Provide``/``inject``
+            helpers re-exported by the runtime. See
+            :class:`DependencyIntegration.BridgeContainer` for attributes
+            available to wire modules, classes, and functions.
+            """
+            bridge = cls.BridgeContainer()
+            service_module = containers.DynamicContainer()
+            resource_module = containers.DynamicContainer()
+            bridge.services.override(service_module)
+            bridge.resources.override(resource_module)
+            cls.bind_configuration_provider(bridge.config, config)
+            return bridge, service_module, resource_module
+
+        @classmethod
+        def create_container(
+            cls,
+            *,
+            config: t.Types.ConfigurationMapping | None = None,
+            services: Mapping[str, object] | None = None,
+            factories: Mapping[str, Callable[[], object]] | None = None,
+            resources: Mapping[str, Callable[[], object]] | None = None,
+            wire_modules: Sequence[ModuleType] | None = None,
+            wire_packages: Sequence[str] | None = None,
+            wire_classes: Sequence[type] | None = None,
+            factory_cache: bool = True,
+        ) -> containers.DynamicContainer:
+            """Create a DynamicContainer with optional pre-registration and wiring.
+
+            Args:
+                config: Optional configuration mapping bound to ``config`` provider.
+                services: Optional mapping of provider names to concrete objects
+                    registered via ``providers.Object``.
+                factories: Optional mapping of provider names to factory callables
+                    registered via ``providers.Singleton`` (default) or
+                    ``providers.Factory`` when ``factory_cache=False``.
+                resources: Optional mapping of provider names to resource factories
+                    registered via ``providers.Resource``.
+                wire_modules: Optional modules to wire immediately for ``@inject``/
+                    ``Provide`` usage.
+                wire_packages: Optional packages to wire immediately.
+                wire_classes: Optional classes to wire immediately.
+                factory_cache: Whether factories use singleton semantics. When
+                    ``False``, factories are registered with ``providers.Factory``
+                    to produce new instances per resolution.
+
+            Returns:
+                A dynamic container ready for immediate ``@inject`` consumption
+                without manual follow-up registration calls.
+
+            """
+            di_container = containers.DynamicContainer()
+
+            if config is not None:
+                cls.bind_configuration(di_container, config)
+
+            if services:
+                for name, instance in services.items():
+                    cls.register_object(di_container, name, instance)
+
+            if factories:
+                for name, factory in factories.items():
+                    cls.register_factory(
+                        di_container,
+                        name,
+                        factory,
+                        cache=factory_cache,
+                    )
+
+            if resources:
+                for name, factory in resources.items():
+                    cls.register_resource(di_container, name, factory)
+
+            if wire_modules or wire_packages or wire_classes:
+                cls.wire(
+                    di_container,
+                    modules=wire_modules,
+                    packages=wire_packages,
+                    classes=wire_classes,
+                )
+
+            return di_container
+
+        @staticmethod
+        def bind_configuration(
+            di_container: containers.DynamicContainer,
+            config: t.Types.ConfigurationMapping | None,
+        ) -> providers.Configuration:
+            """Bind configuration mapping to the DI container.
+
+            Uses ``providers.Configuration`` to expose values to downstream
+            providers without higher layers interacting with dependency-injector
+            directly.
+            """
+            configuration_provider = providers.Configuration()
+            if config:
+                configuration_provider.from_dict(dict(config))
+            di_container.config = configuration_provider
+            return configuration_provider
+
+        @staticmethod
+        def bind_configuration_provider(
+            configuration_provider: providers.Configuration,
+            config: t.Types.ConfigurationMapping | None,
+        ) -> providers.Configuration:
+            """Bind configuration directly to an existing provider."""
+            if config:
+                configuration_provider.from_dict(dict(config))
+            return configuration_provider
+
+        @staticmethod
+        def register_object(
+            di_container: containers.DynamicContainer,
+            name: str,
+            instance: T,
+        ) -> providers.Provider[T]:
+            """Register a concrete instance using ``providers.Object``."""
+            if hasattr(di_container, name):
+                msg = f"Provider '{name}' is already registered"
+                raise ValueError(msg)
+            provider: providers.Provider[T] = providers.Object(instance)
+            setattr(di_container, name, provider)
+            return provider
+
+        @staticmethod
+        def register_factory(
+            di_container: containers.DynamicContainer,
+            name: str,
+            factory: Callable[[], T],
+            *,
+            cache: bool = True,
+        ) -> providers.Provider[T]:
+            """Register a factory using Singleton/Factory providers."""
+            if hasattr(di_container, name):
+                msg = f"Provider '{name}' is already registered"
+                raise ValueError(msg)
+            provider: providers.Provider[T] = (
+                providers.Singleton(factory) if cache else providers.Factory(factory)
+            )
+            setattr(di_container, name, provider)
+            return provider
+
+        @staticmethod
+        def register_resource(
+            di_container: containers.DynamicContainer,
+            name: str,
+            factory: Callable[[], T],
+        ) -> providers.Provider[T]:
+            """Register a resource provider for lifecycle-managed dependencies."""
+            if hasattr(di_container, name):
+                msg = f"Provider '{name}' is already registered"
+                raise ValueError(msg)
+            provider: providers.Provider[T] = providers.Resource(factory)
+            setattr(di_container, name, provider)
+            return provider
+
+        @staticmethod
+        def wire(
+            container: containers.DeclarativeContainer,
+            *,
+            modules: Sequence[ModuleType] | None = None,
+            packages: Sequence[str] | None = None,
+            classes: Sequence[type] | None = None,
+        ) -> None:
+            """Wire modules or packages to a DeclarativeContainer for @inject usage."""
+            modules_to_wire: list[ModuleType] = list(modules or [])
+            if classes:
+                for target_class in classes:
+                    module = inspect.getmodule(target_class)
+                    if module is not None:
+                        modules_to_wire.append(module)
+
+            wiring.wire(
+                modules=modules_to_wire or None,
+                packages=packages,
+                container=container,
+            )
 
     @staticmethod
     def level_based_context_filter(

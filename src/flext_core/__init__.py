@@ -51,6 +51,8 @@ from flext_core.utilities import FlextUtilities, u
 
 # Alias for singular form (backwards compatibility and singular usage)
 FlextHandler = FlextHandlers
+Provide = FlextRuntime.DependencyIntegration.Provide
+inject = FlextRuntime.DependencyIntegration.inject
 
 # =============================================================================
 # RUNTIME TYPE CHECKING - Python 3.13 Strict Typing Enforcement
@@ -99,6 +101,7 @@ __all__ = [
     "FlextUtilities",
     "MessageT_contra",
     "P",
+    "Provide",
     "R",
     "ResultT",
     "T",
@@ -110,11 +113,11 @@ __all__ = [
     "U",
     "__version__",
     "__version_info__",
-    # Convenience aliases
     "c",
     "d",
     "e",
     "h",
+    "inject",
     "m",
     "p",
     "r",

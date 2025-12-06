@@ -1797,7 +1797,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
             amount: int | None = None
             enabled: bool | None = None
             _overrides: dict[str, t.Tests.TestResultValue] = PrivateAttr(
-                default_factory=lambda: {},  # noqa: PIE807
+                default_factory=dict,
             )
 
             def __init__(

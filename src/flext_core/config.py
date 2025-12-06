@@ -19,12 +19,12 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, Self
 
-from dependency_injector import providers
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
 from flext_core.constants import c
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Namespace, T_Settings, t
 
 
@@ -54,7 +54,7 @@ def _resolve_env_file() -> str | None:
     return c.Platform.ENV_FILE_DEFAULT
 
 
-class FlextConfig(BaseSettings):
+class FlextConfig(BaseSettings, FlextRuntime):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)
@@ -284,7 +284,9 @@ class FlextConfig(BaseSettings):
         # look for .env files in the current working directory, so changing directories
         # in tests will work correctly. The env_file in model_config is a fallback.
         super().__init__()
-        self._di_provider: providers.Singleton[Self] | None = None
+        # Use runtime bridge for dependency-injector providers (L0.5 pattern)
+        # Store as object to avoid direct dependency-injector import in this module
+        self._di_provider: object | None = None
 
         # Apply explicit kwargs after BaseSettings initialization (overrides env values)
         # Validate kwargs using Pydantic validators before applying
@@ -402,10 +404,15 @@ class FlextConfig(BaseSettings):
         """Get the global singleton instance."""
         return cls()
 
-    def get_di_config_provider(self) -> providers.Singleton[Self]:
-        """Get dependency injection provider for this config."""
+    def get_di_config_provider(self) -> object:
+        """Get dependency injection provider for this config.
+
+        Returns a providers.Singleton instance via the runtime bridge.
+        Type annotation uses object to avoid direct dependency-injector import.
+        """
         if self._di_provider is None:
-            self._di_provider = providers.Singleton(lambda: self)
+            providers_module = FlextRuntime.dependency_providers()
+            self._di_provider = providers_module.Singleton(lambda: self)
         return self._di_provider
 
     def update_from_env(self) -> None:
