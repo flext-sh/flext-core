@@ -352,7 +352,7 @@ class FlextRegistry(x):
                 resolution_hint="Provide a valid handler instance",
                 source="flext-core/src/flext_core/registry.py",
             )
-            return self.fail(
+            return r[m.Handler.RegistrationDetails].fail(
                 "Handler cannot be None",
             )
 
@@ -366,7 +366,7 @@ class FlextRegistry(x):
                 source="flext-core/src/flext_core/registry.py",
             )
             # Return successful registration details for idempotent registration
-            return self.ok(
+            return r[m.Handler.RegistrationDetails].ok(
                 m.Handler.RegistrationDetails(
                     registration_id=key,
                     handler_mode=c.Cqrs.HandlerType.COMMAND,
@@ -413,7 +413,7 @@ class FlextRegistry(x):
                     "+00:00",
                     "Z",
                 )
-            return self.ok(reg_details)
+            return r[m.Handler.RegistrationDetails].ok(reg_details)
 
         error_msg = registration.error or "Unknown error"
         self.logger.error(
@@ -426,7 +426,7 @@ class FlextRegistry(x):
             resolution_hint="Check dispatcher configuration and handler compatibility",
             source="flext-core/src/flext_core/registry.py",
         )
-        return self.fail(error_msg)
+        return r[m.Handler.RegistrationDetails].fail(error_msg)
 
     def register_handlers(
         self,
@@ -480,7 +480,7 @@ class FlextRegistry(x):
                     consequence="Remaining handlers in batch will not be registered",
                     source="flext-core/src/flext_core/registry.py",
                 )
-                return self.fail(error_msg)
+                return r[FlextRegistry.Summary].fail(error_msg)
 
         final_summary = self._finalize_summary(summary)
         if final_summary.is_success:
@@ -527,7 +527,7 @@ class FlextRegistry(x):
                 source="flext-core/src/flext_core/registry.py",
             )
             summary.skipped.append(key)
-            return self.ok(True)
+            return r[bool].ok(True)
 
         # Handler is already the correct type
         self.logger.debug(
@@ -561,7 +561,7 @@ class FlextRegistry(x):
                 handler_key=key,
                 source="flext-core/src/flext_core/registry.py",
             )
-            return self.ok(True)
+            return r[bool].ok(True)
         error_msg = registration_result.error
         self.logger.warning(
             "Handler registration failed in batch",
@@ -575,7 +575,7 @@ class FlextRegistry(x):
         # Use unwrap_error() for type-safe str
         error_str = registration_result.error or "Unknown error"
         _ = FlextRegistry._add_registration_error(key, error_str, summary)
-        return self.fail(error_str)
+        return r[FlextRegistry.Summary].fail(error_str)
 
     def _add_successful_registration(
         self,
@@ -615,10 +615,10 @@ class FlextRegistry(x):
 
         """
         if summary.errors:
-            return self.fail(
+            return r[FlextRegistry.Summary].fail(
                 "; ".join(summary.errors),
             )
-        return self.ok(summary)
+        return r[FlextRegistry.Summary].ok(summary)
 
     def register_bindings(
         self,
@@ -679,10 +679,10 @@ class FlextRegistry(x):
             summary.registered.append(reg_details)
 
         if summary.errors:
-            return self.fail(
+            return r[FlextRegistry.Summary].fail(
                 "; ".join(summary.errors),
             )
-        return self.ok(summary)
+        return r[FlextRegistry.Summary].ok(summary)
 
     def register_function_map(
         self,
@@ -760,7 +760,7 @@ class FlextRegistry(x):
                 summary.errors.append(error_msg)
                 continue
 
-        return self.ok(summary)
+        return r[FlextRegistry.Summary].ok(summary)
 
     # ------------------------------------------------------------------
     # Internal helpers for register_function_map (DRY + Reduce nesting)
@@ -1013,9 +1013,9 @@ class FlextRegistry(x):
     def get_item(self, name: str) -> r[t.GeneralValueType]:
         """Get registered item (RegistrationTracker protocol)."""
         try:
-            return self.ok(getattr(self, name))
+            return r[t.GeneralValueType].ok(getattr(self, name))
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return self.fail(str(e))
+            return r[t.GeneralValueType].fail(str(e))
 
     def list_items(self) -> r[list[str]]:
         """List registered items (RegistrationTracker protocol)."""

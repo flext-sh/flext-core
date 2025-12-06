@@ -21,8 +21,8 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_core import t
+from flext_tests import u
 
 
 class Status(StrEnum):
@@ -271,12 +271,12 @@ class TestuEnumParse:
                 scenario.expected_status,
             )
             # Type ignore: mypy cannot infer TValue from StrEnum, but test is valid
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 expected_status_cast,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert (
                 result.error is not None
                 and scenario.expected_error is not None

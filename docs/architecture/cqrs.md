@@ -1,8 +1,8 @@
 # CQRS Architecture
 
-**Version:** 1.0 (2025-12-03)  
-**Python:** 3.13+  
-**Pydantic:** 2.x  
+**Version:** 1.0 (2025-12-03)
+**Python:** 3.13+
+**Pydantic:** 2.x
 **Status:** V1 production baseline; V2 modernization in progress
 
 This document describes the Command Query Responsibility Segregation (CQRS)
@@ -182,7 +182,7 @@ class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
         validation_result = ValidateEmailService(email=command.email).execute()
         if validation_result.is_failure:
             return r[User].fail(validation_result.error or "Validation failed")
-        
+
         # Service executes domain logic
         return CreateUserService(
             name=command.name,
@@ -257,7 +257,7 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
     def handle(self, command: UpdateUserCommand) -> r[UserDto]:
         # Manual metrics tracking
         self._metrics["commands_processed"] = self._metrics.get("commands_processed", 0) + 1
-        
+
         # Manual context management
         self.push_context({"command_id": command.id})
         try:

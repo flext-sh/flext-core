@@ -42,8 +42,8 @@ from typing import cast
 
 import pytest
 
-from flext_core import m, r, t, u
-from flext_tests import FlextTestsUtilities
+from flext_core import m, r, t
+from flext_tests import u
 
 
 # Test models using FlextModelsEntity base
@@ -434,7 +434,7 @@ class TestuValidation:
                 expected_value,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     @pytest.mark.parametrize(
         ("value", "min_length", "max_length", "should_succeed", "expected_value"),
@@ -480,7 +480,7 @@ class TestuValidation:
                 expected_value,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     @pytest.mark.parametrize(
         ("value", "pattern", "should_succeed", "expected_value"),
@@ -506,7 +506,7 @@ class TestuValidation:
                 expected_value,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     @pytest.mark.parametrize(
         ("uri", "should_succeed", "expected_value"),
@@ -531,7 +531,7 @@ class TestuValidation:
                 expected_value,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     @pytest.mark.parametrize(
         ("port", "should_succeed", "expected_value"),
@@ -558,7 +558,7 @@ class TestuValidation:
                 expected_value,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     @pytest.mark.parametrize(
         ("value", "should_succeed", "expected_value"),
@@ -583,7 +583,7 @@ class TestuValidation:
                 expected_value,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     @pytest.mark.parametrize(
         ("value", "should_succeed", "expected_value"),
@@ -609,7 +609,7 @@ class TestuValidation:
                 expected_value,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     @pytest.mark.parametrize(
         ("value", "min_value", "max_value", "should_succeed", "expected_value"),
@@ -642,7 +642,7 @@ class TestuValidation:
                 expected_value,
             )
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
 
     def test_validate_callable_valid(self) -> None:
         """Test validate_callable with callable."""
@@ -654,18 +654,18 @@ class TestuValidation:
         # validate_callable accepts callables at runtime but expects GeneralValueType
 
         result = u.Validation.validate_callable(cast("t.GeneralValueType", test_func))
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         u.Tests.Result.assert_success_with_value(result, True)
 
     def test_validate_callable_invalid(self) -> None:
         """Test validate_callable with non-callable."""
         result = u.Validation.validate_callable("not callable")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_validate_timeout_valid(self) -> None:
         """Test validate_timeout with valid timeout."""
         result = u.Validation.validate_timeout(30.0, max_timeout=60.0)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         u.Tests.Result.assert_success_with_value(
             result,
             30.0,  # Returns the timeout
@@ -674,17 +674,17 @@ class TestuValidation:
     def test_validate_timeout_invalid_negative(self) -> None:
         """Test validate_timeout with negative timeout."""
         result = u.Validation.validate_timeout(-1.0, max_timeout=60.0)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_validate_timeout_invalid_exceeds_max(self) -> None:
         """Test validate_timeout with timeout exceeding max."""
         result = u.Validation.validate_timeout(100.0, max_timeout=60.0)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_validate_http_status_codes_valid(self) -> None:
         """Test validate_http_status_codes with valid status codes."""
         result = u.Validation.validate_http_status_codes([200, 404, 500])
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         u.Tests.Result.assert_success_with_value(
             result,
             [200, 404, 500],  # Returns the codes
@@ -693,13 +693,13 @@ class TestuValidation:
     def test_validate_http_status_codes_invalid(self) -> None:
         """Test validate_http_status_codes with invalid status code."""
         result = u.Validation.validate_http_status_codes([999])
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_validate_iso8601_timestamp_valid(self) -> None:
         """Test validate_iso8601_timestamp with valid timestamp."""
         timestamp = datetime.now(UTC).isoformat()
         result = u.Validation.validate_iso8601_timestamp(timestamp)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         u.Tests.Result.assert_success_with_value(
             result,
             timestamp,  # Returns the timestamp
@@ -708,7 +708,7 @@ class TestuValidation:
     def test_validate_iso8601_timestamp_invalid(self) -> None:
         """Test validate_iso8601_timestamp with invalid timestamp."""
         result = u.Validation.validate_iso8601_timestamp("not a timestamp")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_validate_iso8601_timestamp_empty_allowed(self) -> None:
         """Test validate_iso8601_timestamp with empty string when allowed."""
@@ -716,7 +716,7 @@ class TestuValidation:
             "",
             allow_empty=True,
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         u.Tests.Result.assert_success_with_value(result, "")
 
     def test_validate_iso8601_timestamp_empty_not_allowed(self) -> None:
@@ -725,7 +725,7 @@ class TestuValidation:
             "",
             allow_empty=False,
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_validate_hostname_valid(self) -> None:
         """Test validate_hostname with valid hostname."""
@@ -733,7 +733,7 @@ class TestuValidation:
             "example.com",
             perform_dns_lookup=False,
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         u.Tests.Result.assert_success_with_value(
             result,
             "example.com",  # Returns the hostname
@@ -745,12 +745,12 @@ class TestuValidation:
             "invalid..hostname",
             perform_dns_lookup=False,
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_validate_identifier_valid(self) -> None:
         """Test validate_identifier with valid identifier."""
         result = u.Validation.validate_identifier("user_123")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         u.Tests.Result.assert_success_with_value(
             result,
             "user_123",  # Returns normalized string, not True
@@ -759,7 +759,7 @@ class TestuValidation:
     def test_validate_identifier_invalid(self) -> None:
         """Test validate_identifier with invalid identifier."""
         result = u.Validation.validate_identifier("123-invalid")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_boundary_normalize_component_empty_dict(self) -> None:
         """Test normalize_component with empty dict."""

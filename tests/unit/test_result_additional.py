@@ -18,7 +18,7 @@ import pytest
 from returns.io import IOFailure, IOResult, IOSuccess
 
 from flext_core import r, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 class ExplodingGetattr(IOSuccess[int]):
@@ -47,7 +47,7 @@ def test_from_io_result_invalid_type() -> None:
         "not_io_result",
     )
     invalid_result = r.from_io_result(invalid)
-    FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(invalid_result)
+    u.Tests.Result.assert_result_failure(invalid_result)
     assert "Invalid IO result type" in (invalid_result.error or "")
 
 
@@ -58,7 +58,7 @@ def test_map_error_identity_and_transform() -> None:
 
     failure = r[int].fail("bad", error_code="E1", error_data={"k": "v"})
     transformed = failure.map_error(lambda msg: f"{msg}_mapped")
-    FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+    u.Tests.Result.assert_failure_with_error(
         transformed,
         "bad_mapped",
     )
@@ -82,7 +82,7 @@ def test_flow_through_short_circuits_on_failure() -> None:
         return r[int].ok(0)
 
     result = r[int].ok(1).flow_through(step1, fail_step, unreachable)
-    FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(result, "stop")
+    u.Tests.Result.assert_failure_with_error(result, "stop")
     assert visited == [1]
 
 
@@ -96,15 +96,15 @@ def test_parallel_map_fail_fast_and_accumulate() -> None:
         return r[int].ok(value * 2)
 
     fast = r.parallel_map(items, fn, fail_fast=True)
-    FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(fast)
+    u.Tests.Result.assert_result_failure(fast)
     assert "boom" in (fast.error or "")
 
     accumulated = r.parallel_map(items, fn, fail_fast=False)
-    FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(accumulated)
+    u.Tests.Result.assert_result_failure(accumulated)
     assert "boom" in (accumulated.error or "")
 
     all_success = r.parallel_map([3, 4], lambda v: r[int].ok(v + 1))
-    FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+    u.Tests.Result.assert_success_with_value(
         all_success,
         [4, 5],
     )
@@ -113,11 +113,11 @@ def test_parallel_map_fail_fast_and_accumulate() -> None:
 def test_create_from_callable_and_repr() -> None:
     """Exercise callable None/exception branches and repr formatting."""
     none_result = r[int].create_from_callable(lambda: None)
-    FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(none_result)
+    u.Tests.Result.assert_result_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
 
     error_result = r[int].create_from_callable(lambda: 1 / 0)
-    FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(error_result)
+    u.Tests.Result.assert_result_failure(error_result)
     assert "division" in (error_result.error or "")
 
     success_result = r[int].create_from_callable(lambda: 7)
@@ -152,11 +152,11 @@ def test_with_resource_cleanup_runs() -> None:
         cleanup_calls.append("ran")
 
     result = r[str].with_resource(factory, op, cleanup)
-    FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(result, "done")
+    u.Tests.Result.assert_success_with_value(result, "done")
     assert cleanup_calls == ["ran"]
 
 
 def test_data_alias_matches_value() -> None:
     """Confirm data alias returns same value property."""
-    success = FlextTestsUtilities.Tests.ResultHelpers.create_success_result("v")
+    success = u.Tests.Result.create_success_result("v")
     assert success.data == success.value == "v"

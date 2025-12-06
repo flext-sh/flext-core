@@ -24,8 +24,8 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, m, p, t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_core import FlextExceptions, m, p, t
+from flext_tests import u
 
 
 # Test models - module level for forward reference resolution
@@ -598,7 +598,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.TIMEOUT.value,
                 TestConfigConstants.TestValues.TEST_TIMEOUT_LARGE,
             )
-            FlextTestsUtilities.Tests.ResultHelpers.assert_success_with_value(
+            u.Tests.Result.assert_success_with_value(
                 result,
                 True,
             )
@@ -613,7 +613,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 "new_value",
             )
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL
@@ -627,7 +627,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert result.error is not None
             assert TestConfigConstants.ErrorMessages.IS_NOT_CALLABLE in result.error
 
@@ -638,7 +638,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_IMPLEMENT_HAS_MODEL_DUMP
@@ -653,7 +653,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.MISSING.value,
                 TestConfigConstants.TestValues.TEST_NAME,
             )
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_SET_PARAMETER.format(
@@ -783,7 +783,7 @@ class TestFlextUtilitiesConfiguration:
                 default_factory=OptionsModelForTest,
             )
 
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             assert result.value.format == expected_format
             assert result.value.indent == expected_indent
 
@@ -802,7 +802,7 @@ class TestFlextUtilitiesConfiguration:
                 sort_keys=TestConfigConstants.TestValues.TEST_SORT_KEYS_TRUE,
             )
 
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             assert result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_XML
             assert result.value.indent == TestConfigConstants.TestValues.TEST_INDENT_8
             assert (
@@ -821,7 +821,7 @@ class TestFlextUtilitiesConfiguration:
                 ),
             )
 
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_YAML
             )
@@ -837,7 +837,7 @@ class TestFlextUtilitiesConfiguration:
                 indent=TestConfigConstants.TestValues.TEST_INDENT_6,
             )
 
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_TOML
             )
@@ -855,7 +855,7 @@ class TestFlextUtilitiesConfiguration:
                 default_factory=OptionsModelForTest,
             )
 
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_JSON
             )
@@ -872,7 +872,7 @@ class TestFlextUtilitiesConfiguration:
                 format=TestConfigConstants.TestValues.TEST_FORMAT_JSON,
             )
 
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_JSON
             )
@@ -886,7 +886,7 @@ class TestFlextUtilitiesConfiguration:
                 value=TestConfigConstants.TestValues.TEST_VALUE_INVALID,
             )
 
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_BUILD.format(
@@ -906,7 +906,7 @@ class TestFlextUtilitiesConfiguration:
                 value="new",
             )
 
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             assert result.error is not None
             assert (
                 TestConfigConstants.ErrorMessages.UNEXPECTED_ERROR_BUILDING.format(

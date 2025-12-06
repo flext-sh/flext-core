@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -149,7 +149,9 @@ class FlextModelsConfig:
                 )
                 raise ValueError(error_msg)
             # Return as list[object] to match Pydantic field type
-            return list(u.Collection.map(result.unwrap(), int))
+            # map() returns list[int], convert to list[object] for Pydantic
+            mapped_result: list[int] = u.Collection.map(result.unwrap(), int)
+            return cast("list[object]", mapped_result)
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:

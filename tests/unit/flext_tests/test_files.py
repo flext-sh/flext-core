@@ -1204,7 +1204,7 @@ class TestBatchOperations:
         assert batch_result.total == 3
         assert batch_result.success_count == 3
         assert batch_result.failure_count == 0
-        assert len(batch_result.succeeded) == 3
+        assert batch_result.succeeded == 3
 
     def test_batch_create_json_files(self, tmp_path: Path) -> None:
         """Test batch create for JSON files."""
@@ -1267,8 +1267,8 @@ class TestBatchOperations:
         assert hasattr(batch_result, "failure_count")
 
         # Verify types
-        assert isinstance(batch_result.succeeded, list)
-        assert isinstance(batch_result.failed, dict)
+        assert isinstance(batch_result.succeeded, int)
+        assert isinstance(batch_result.failed, int)
         assert isinstance(batch_result.total, int)
 
 

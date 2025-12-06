@@ -20,8 +20,8 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_core import t
+from flext_tests import u
 
 
 @dataclass(frozen=True, slots=True)
@@ -313,12 +313,12 @@ class TestuPaginationExtractPageParams:
         )
 
         if scenario.expected_success:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             page, page_size = result.value
             assert page == scenario.expected_page
             assert page_size == scenario.expected_page_size
         else:
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 result,
                 expected_error=scenario.expected_error,
             )
@@ -340,12 +340,12 @@ class TestuPaginationValidatePaginationParams:
         )
 
         if scenario.expected_success:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             params = result.value
             assert params["page"] == scenario.page
             assert params["page_size"] == scenario.expected_page_size
         else:
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 result,
                 expected_error=scenario.expected_error,
             )
@@ -368,7 +368,7 @@ class TestuPaginationPreparePaginationData:
         )
 
         if scenario.expected_success:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             data = result.value
             assert "data" in data
             assert "pagination" in data
@@ -387,7 +387,7 @@ class TestuPaginationPreparePaginationData:
                 )
                 assert pagination["has_prev"] == (scenario.page > 1)
         else:
-            FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+            u.Tests.Result.assert_failure_with_error(
                 result,
                 expected_error=scenario.expected_error,
             )
@@ -415,7 +415,7 @@ class TestuPaginationBuildPaginationResponse:
             message="Success",
         )
 
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         response = result.value
         assert "data" in response
         assert "pagination" in response
@@ -437,7 +437,7 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         response = result.value
         assert "data" in response
         assert "pagination" in response
@@ -449,7 +449,7 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             expected_error="Invalid pagination data structure",
         )
@@ -460,7 +460,7 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        FlextTestsUtilities.Tests.ResultHelpers.assert_failure_with_error(
+        u.Tests.Result.assert_failure_with_error(
             result,
             expected_error="Invalid pagination data structure",
         )
@@ -482,7 +482,7 @@ class TestuPaginationBuildPaginationResponse:
         result = u.Pagination.build_pagination_response(pagination_data)
 
         # Should still succeed - dict is valid GeneralValueType
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         response = result.value
         assert "data" in response
 

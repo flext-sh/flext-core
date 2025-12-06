@@ -579,23 +579,23 @@ The `FlextTestsUtilities` class was significantly simplified to:
 ```python
 class FlextTestsUtilities(FlextUtilities):
     """Extends FlextUtilities with test-specific helpers."""
-    
+
     class Result:
         """Result assertion helpers."""
         assert_success[TResult](result: r[TResult]) -> TResult
         assert_failure[TResult](result: r[TResult]) -> str
         assert_success_with_value[T](result: r[T], expected: T) -> None
         assert_failure_with_error[T](result: r[T], expected: str) -> None
-    
+
     class TestContext:
         """Context managers for tests."""
         temporary_attribute(target, attribute, value) -> Generator
-    
+
     class Factory:
         """Test data creation helpers."""
         create_result[T](value: T | None, error: str | None) -> r[T]
         create_test_data(**kwargs) -> dict
-    
+
     # Compatibility aliases
     class TestUtilities: ...      # Old API compatibility
     class ResultHelpers: ...      # Old API compatibility

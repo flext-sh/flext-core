@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
@@ -230,8 +230,12 @@ class TestFlextExceptionsHierarchy:
             # can't infer compatibility with specific exception constructors
 
             # BaseError accepts **extra_kwargs: MetadataAttributeValue
-            # Use type: ignore for dynamic kwargs unpacking in tests
-            error = scenario.exception_type(scenario.message, **metadata_kwargs)
+            # Cast metadata_kwargs to correct type for dynamic kwargs unpacking in tests
+            # Cast to dict[str, MetadataAttributeValue] for **kwargs unpacking
+            metadata_typed: dict[str, t.MetadataAttributeValue] = cast(
+                "dict[str, t.MetadataAttributeValue]", metadata_kwargs
+            )
+            error = scenario.exception_type(scenario.message, **metadata_typed)  # type: ignore[arg-type]
         else:
             error = scenario.exception_type(scenario.message)
         assert scenario.message in str(error)
@@ -368,11 +372,11 @@ class TestExceptionContext:
             "timestamp": 1234567890,
         }
         # ValidationError accepts metadata via **extra_kwargs: MetadataAttributeValue
-        # Pass metadata_dict via **extra_kwargs, not as named parameter
-        # Use type: ignore for dynamic metadata dict in tests
+        # Cast metadata_dict to correct type
+        metadata_typed = cast("t.MetadataAttributeValue", metadata_dict)
         error = FlextExceptions.ValidationError(
             "Validation failed in context",
-            metadata=metadata_dict,
+            metadata=metadata_typed,
         )
         assert "user_id" in error.metadata.attributes
         assert error.metadata.attributes["user_id"] == "123"
@@ -468,8 +472,12 @@ class TestExceptionFactory:
         # Type narrowing: all values in converted_kwargs are MetadataAttributeValue
         # create accepts **kwargs: MetadataAttributeValue, but type checker can't infer compatibility
 
-        # Use type: ignore for dynamic kwargs unpacking in tests
-        error = FlextExceptions.create(message, **converted_kwargs)
+        # Cast converted_kwargs to correct type for dynamic kwargs unpacking in tests
+        # Cast to dict[str, MetadataAttributeValue] for **kwargs unpacking
+        kwargs_typed: dict[str, t.MetadataAttributeValue] = cast(
+            "dict[str, t.MetadataAttributeValue]", converted_kwargs
+        )
+        error = FlextExceptions.create(message, **kwargs_typed)  # type: ignore[arg-type]
         assert isinstance(error, expected_type)
 
 

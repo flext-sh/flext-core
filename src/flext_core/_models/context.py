@@ -44,23 +44,30 @@ class FlextModelsContext:
         if not FlextRuntime.is_dict_like(value):
             return {}
         result: t.Types.ConfigurationDict = {}
-        raw_dict = value if FlextUtilitiesGuards.is_type(value, dict) else {}
+        # Type narrowing: value is dict after is_dict_like and is_type checks
+        raw_dict: dict[str, object] = cast("dict[str, object]", value) if FlextUtilitiesGuards.is_type(value, dict) else {}
         for k, v in raw_dict.items():
-            key = str(k)
+            # Type narrowing: k is str from dict[str, object], v is object
+            key: str = str(k)
+            value_item: object = v
             # Ensure value is GeneralValueType compatible
             # ScalarValue types: str, int, float, bool, datetime, None
             if (
-                isinstance(v, (str, int, float, bool, datetime))
-                or v is None
-                or isinstance(v, (list, dict))
+                isinstance(value_item, (str, int, float, bool, datetime))
+                or value_item is None
+                or isinstance(value_item, (list, dict))
             ):
-                result[key] = v
-            elif isinstance(v, Sequence) and not isinstance(v, (str, bytes)):
+                result[key] = cast("t.GeneralValueType", value_item)
+            elif isinstance(value_item, Sequence) and not isinstance(value_item, (str, bytes)):
                 # Convert Sequence to list for GeneralValueType compatibility
-                result[key] = list(v)
-            elif isinstance(v, Mapping):
+                # Type narrowing: value_item is Sequence[object]
+                sequence: Sequence[object] = cast("Sequence[object]", value_item)
+                result[key] = cast("t.GeneralValueType", list(sequence))
+            elif isinstance(value_item, Mapping):
                 # Convert Mapping to dict for GeneralValueType compatibility
-                result[key] = dict(v)
+                # Type narrowing: value_item is Mapping[str, object]
+                mapping: Mapping[str, object] = cast("Mapping[str, object]", value_item)
+                result[key] = cast("t.GeneralValueType", dict(mapping))
         return result
 
     class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):

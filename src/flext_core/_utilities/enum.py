@@ -99,9 +99,9 @@ class FlextUtilitiesEnum:
 
         """
         if isinstance(value, enum_cls):
-            return r.ok(value)
+            return r[E].ok(value)
         try:
-            return r.ok(enum_cls(value))
+            return r[E].ok(enum_cls(value))
         except ValueError:
             # enum_cls is a StrEnum type, access members via __members__
             # Access enum members via __members__ attribute
@@ -109,7 +109,7 @@ class FlextUtilitiesEnum:
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
             enum_name = getattr(enum_cls, "__name__", "Enum")
-            return r.fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+            return r[E].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
 
     @staticmethod
     def parse_or_default[E: StrEnum](

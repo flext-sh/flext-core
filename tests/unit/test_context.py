@@ -30,7 +30,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import FlextContext, m, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, u
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,7 +127,7 @@ class TestFlextContext:
             else str(value)
         )
         set_result = context.set(key, converted_value)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(set_result)
+        u.Tests.Result.assert_result_success(set_result)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
             key,
@@ -138,7 +138,7 @@ class TestFlextContext:
         """Test context get with default value using monadic operations."""
         context = test_context
         result = context.get("nonexistent_key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         # context.get() returns ResultProtocol, use is_success/value pattern
         default_value = "default_value"
         # ResultProtocol pattern: use is_success and value directly
@@ -193,7 +193,7 @@ class TestFlextContext:
         }
         context.set("nested", nested_data).unwrap()
         result = context.get("nested")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         retrieved = result.value
         assert isinstance(retrieved, dict)
         # Type narrowing: retrieved is dict after isinstance check
@@ -285,13 +285,13 @@ class TestFlextContext:
         context = test_context
         context.set("valid_key", "valid_value").unwrap()
         result = context.validate()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_context_validation_failure(self, test_context: FlextContext) -> None:
         """Test context validation failure - empty key returns failure."""
         context = test_context
         result = context.set("", "empty_key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "must be a non-empty string" in result.error
 
     def test_context_thread_safety(self, test_context: FlextContext) -> None:
@@ -320,14 +320,14 @@ class TestFlextContext:
         for i in range(100):
             context.set(f"key_{i}", f"value_{i}")
             result = context.get(f"key_{i}")
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
         assert time.time() - start_time < 1.0
 
     def test_context_error_handling(self, test_context: FlextContext) -> None:
         """Test context error handling with FlextResult pattern."""
         context = test_context
         result = context.set("", "value")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "must be a non-empty string" in result.error
 
     @pytest.mark.parametrize(
@@ -351,7 +351,7 @@ class TestFlextContext:
             "global_value",
         )
         scoped_result = context.get(f"{scope}_key", scope=scope)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(scoped_result)
+        u.Tests.Result.assert_result_success(scoped_result)
         assert scoped_result.value == value
 
     def test_context_lifecycle(self, test_context: FlextContext) -> None:
@@ -384,7 +384,7 @@ class TestFlextContext:
         context.set_metadata("created_at", "2025-01-01")
         context.set_metadata("version", "1.0.0")
         created_at_result = context.get_metadata("created_at")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(created_at_result)
+        u.Tests.Result.assert_result_success(created_at_result)
         assert created_at_result.value == "2025-01-01"
         metadata = context._get_all_metadata()
         assert "created_at" in metadata and "version" in metadata
@@ -487,7 +487,7 @@ class TestFlextContext:
         )
         context.set(f"{value_name}_key", converted_value).unwrap()
         result = context.get(f"{value_name}_key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert result.value == special_value
 
     def test_context_edge_case_duplicate_keys_overwrite(
@@ -498,11 +498,11 @@ class TestFlextContext:
         context = test_context
         context.set("key", "value1").unwrap()
         result1 = context.get("key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result1)
+        u.Tests.Result.assert_result_success(result1)
         assert result1.value == "value1"
         context.set("key", "value2").unwrap()
         result2 = context.get("key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result2)
+        u.Tests.Result.assert_result_success(result2)
         assert result2.value == "value2"
 
     def test_context_concurrent_reads(self, test_context: FlextContext) -> None:
@@ -574,7 +574,7 @@ class TestFlextContext:
         """Test getting metadata that doesn't exist."""
         context = test_context
         result = context.get_metadata("nonexistent_meta")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None
 
     def test_context_get_metadata_with_default(
@@ -595,7 +595,7 @@ class TestFlextContext:
         context = test_context
         context.set_metadata("meta_key", "meta_value")
         result = context.get_metadata("meta_key")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert result.value == "meta_value"
 
     def test_context_get_all_metadata_empty(self, test_context: FlextContext) -> None:
@@ -785,7 +785,7 @@ class TestFlextContext:
         """Test context with None value."""
         context = test_context
         result = context.set("key_none", None)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
 
     def test_context_export_snapshot(self, test_context: FlextContext) -> None:
         """Test exporting context snapshot."""

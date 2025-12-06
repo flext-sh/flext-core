@@ -24,6 +24,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core.protocols import p
 
 # ═══════════════════════════════════════════════════════════════════
 # HANDLER IMPLEMENTATIONS
@@ -162,7 +163,9 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
         print("\n=== Dispatcher Operations ===")
 
         dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        registry = FlextRegistry(
+            dispatcher=cast("p.Application.CommandBus | None", dispatcher)
+        )
 
         # Register handlers
         # Business Rule: register_handler accepts handlers compatible with Handler protocol
@@ -196,7 +199,9 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
         print("\n=== Registry/Dispatcher Integration ===")
 
         dispatcher = FlextDispatcher()
-        registry = FlextRegistry(dispatcher=dispatcher)
+        registry = FlextRegistry(
+            dispatcher=cast("p.Application.CommandBus | None", dispatcher)
+        )
 
         # Register handlers
         create_handler = CreateUserHandler()

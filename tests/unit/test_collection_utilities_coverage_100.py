@@ -21,8 +21,8 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import t, u
-from flext_tests.utilities import FlextTestsUtilities
+from flext_core import t
+from flext_tests import u
 
 
 class Status(StrEnum):
@@ -224,12 +224,12 @@ class TestuCollectionParseSequence:
         result = u.Collection.parse_sequence(Status, scenario.values)
 
         if scenario.expected_success:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, tuple)
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg
@@ -276,13 +276,13 @@ class TestuCollectionParseMapping:
         result = u.Collection.parse_mapping(Status, scenario.mapping)
 
         if scenario.expected_success:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+            u.Tests.Result.assert_result_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, dict)
             assert all(isinstance(v, Status) for v in parsed.values())
         else:
-            FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+            u.Tests.Result.assert_result_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg

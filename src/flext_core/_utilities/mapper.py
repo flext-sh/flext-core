@@ -345,11 +345,8 @@ class FlextUtilitiesMapper:
             >>> # {"name": "test", "value": "str(CustomObject())"}
 
         """
-        return {
-            key: cls.convert_to_json_value(value)
-            for key, value in data.items()
-            if isinstance(key, str)
-        }
+        # ConfigurationDict keys are always str, so isinstance is redundant
+        return {key: cls.convert_to_json_value(value) for key, value in data.items()}
 
     @classmethod
     def convert_list_to_json(
@@ -534,7 +531,9 @@ class FlextUtilitiesMapper:
             if idx < 0:
                 idx = len(current) + idx
             if 0 <= idx < len(current):
-                return current[idx], None
+                # Type narrowing: current is Sequence[object] after isinstance check
+                sequence: Sequence[object] = cast("Sequence[object]", current)
+                return sequence[idx], None
             return None, f"Index {int(array_match)} out of range"
         except (ValueError, IndexError):
             return None, f"Invalid index {array_match}"
@@ -1050,7 +1049,8 @@ class FlextUtilitiesMapper:
         """
         if isinstance(item, dict):
             # Type narrowing: item is dict at this point
-            dict_item: dict[str, object] = item
+            # Cast to dict[str, object] for type safety
+            dict_item: dict[str, object] = cast("dict[str, object]", item)
             return dict_item.get(field_name)
         if hasattr(item, field_name):
             # getattr returns object since we know the attribute exists
@@ -1089,14 +1089,18 @@ class FlextUtilitiesMapper:
             # → 30
 
         """
-        items_list: list[T] = list(items) if isinstance(items, (list, tuple)) else []
+        # items is list[T] | tuple[T, ...], so isinstance is redundant
+        items_list: list[T] = list(items)
         numeric_values: list[int | float] = []
         if callable(field):
             for item in items_list:
                 val = field(item)
-                if isinstance(val, (int, float)):
+                # field returns int | float, so isinstance is redundant
+                # But keep for runtime safety in case field doesn't respect type signature
+                if isinstance(val, (int, float)):  # type: ignore[reportUnnecessaryIsInstance]
                     numeric_values.append(val)
-        elif isinstance(field, str):
+        else:
+            # After callable check, field is str, so isinstance is redundant
             field_name: str = field
             for item in items_list:
                 # Extract value using helper method for better type inference
@@ -1145,7 +1149,9 @@ class FlextUtilitiesMapper:
                 return str(current) if current is not None else default_val
             case "list":
                 if isinstance(current, list):
-                    return current
+                    # Type narrowing: current is list[object], return as list[t.GeneralValueType]
+                    current_list: list[object] = cast("list[object]", current)
+                    return cast("list[t.GeneralValueType]", current_list)
                 return (
                     default_val
                     if current is None
@@ -1153,10 +1159,22 @@ class FlextUtilitiesMapper:
                 )
             case "str_list":
                 if isinstance(current, list):
-                    return [str(x) for x in current]
-                return default_val if current is None else [str(current)]
+                    # Type narrowing: current is list[object], x is GeneralValueType
+                    current_list_str: list[object] = cast("list[object]", current)
+                    return [
+                        str(cast("t.GeneralValueType", x)) for x in current_list_str
+                    ]
+                return (
+                    default_val
+                    if current is None
+                    else [str(cast("t.GeneralValueType", current))]
+                )
             case "dict":
-                return current if isinstance(current, dict) else default_val
+                if isinstance(current, dict):
+                    # Type narrowing: current is dict[str, object], return as dict[str, t.GeneralValueType]
+                    current_dict: dict[str, object] = cast("dict[str, object]", current)
+                    return cast("dict[str, t.GeneralValueType]", current_dict)
+                return default_val
             case _:
                 return current
 
@@ -1172,9 +1190,17 @@ class FlextUtilitiesMapper:
         filter_pred = cast("Callable[[object], bool]", ops["filter"])
         # Handle collections
         if isinstance(current, (list, tuple)):
-            return [x for x in current if filter_pred(x)]
+            # Type narrowing: current is Sequence[object], x is GeneralValueType
+            sequence: Sequence[object] = cast("Sequence[object]", current)
+            return [cast("t.GeneralValueType", x) for x in sequence if filter_pred(x)]
         if isinstance(current, dict):
-            return {k: v for k, v in current.items() if filter_pred(v)}
+            # Type narrowing: current is dict[str, object], k is str, v is GeneralValueType
+            current_dict: dict[str, object] = cast("dict[str, object]", current)
+            return {
+                k: cast("t.GeneralValueType", v)
+                for k, v in current_dict.items()
+                if filter_pred(v)
+            }
         # Single value
         return default if not filter_pred(current) else current
 
@@ -1185,9 +1211,19 @@ class FlextUtilitiesMapper:
             return current
         map_func = cast("Callable[[object], object]", ops["map"])
         if isinstance(current, (list, tuple)):
-            return [map_func(x) for x in current]
+            # Type narrowing: current is Sequence[object], x is GeneralValueType
+            sequence: Sequence[object] = cast("Sequence[object]", current)
+            return [
+                cast("t.GeneralValueType", map_func(cast("t.GeneralValueType", x)))
+                for x in sequence
+            ]
         if isinstance(current, dict):
-            return {k: map_func(v) for k, v in current.items()}
+            # Type narrowing: current is dict[str, object], k is str, v is GeneralValueType
+            current_dict: dict[str, object] = cast("dict[str, object]", current)
+            return {
+                k: cast("t.GeneralValueType", map_func(cast("t.GeneralValueType", v)))
+                for k, v in current_dict.items()
+            }
         return map_func(current)
 
     @staticmethod
@@ -1202,8 +1238,10 @@ class FlextUtilitiesMapper:
         if isinstance(current, str):
             return current.lower() if normalize_case == "lower" else current.upper()
         if isinstance(current, (list, tuple)):
-            result = []
-            for x in current:
+            # Type narrowing: current is Sequence[object], x is object
+            sequence: Sequence[object] = cast("Sequence[object]", current)
+            result: list[object] = []
+            for x in sequence:
                 if isinstance(x, str):
                     result.append(
                         x.lower() if normalize_case == "lower" else x.upper(),
@@ -1408,7 +1446,8 @@ class FlextUtilitiesMapper:
         transform_opts_raw = ops["transform"]
         if not isinstance(transform_opts_raw, dict):
             return current
-        transform_opts = cast("t.Types.ConfigurationDict", transform_opts_raw)
+        # transform_opts_raw is dict after isinstance check, so cast is redundant
+        transform_opts: t.Types.ConfigurationDict = transform_opts_raw
         # Extract transform options
         (
             normalize_bool,
@@ -1426,6 +1465,8 @@ class FlextUtilitiesMapper:
         )
         # Implement transform logic directly using available utilities
         try:
+            # Type narrowing: current_dict is ConfigurationMapping, dict() returns ConfigurationDict
+            # dict() constructor returns dict[str, GeneralValueType] which is ConfigurationDict
             result: t.Types.ConfigurationDict = dict(current_dict)
             return FlextUtilitiesMapper._apply_transform_steps(
                 result,
@@ -1455,9 +1496,13 @@ class FlextUtilitiesMapper:
         process_func = cast("Callable[[object], object]", ops["process"])
         try:
             if isinstance(current, (list, tuple)):
-                return [process_func(x) for x in current]
+                # Type narrowing: current is Sequence[object], x is object
+                sequence: Sequence[object] = cast("Sequence[object]", current)
+                return [process_func(x) for x in sequence]
             if isinstance(current, dict):
-                return {k: process_func(v) for k, v in current.items()}
+                # Type narrowing: current is dict[str, object], k is str, v is object
+                current_dict: dict[str, object] = cast("dict[str, object]", current)
+                return {k: process_func(v) for k, v in current_dict.items()}
             return process_func(current)
         except Exception:
             return default if on_error == "stop" else current
@@ -1470,23 +1515,35 @@ class FlextUtilitiesMapper:
         if not isinstance(current, (list, tuple)):
             return current
         group_spec = ops["group"]
-        current_list = list(current)
+        # Type narrowing: current is Sequence[object], convert to list[object]
+        sequence: Sequence[object] = cast("Sequence[object]", current)
+        current_list: list[object] = list(sequence)
         # Group by field name (str) or key function (callable)
         if isinstance(group_spec, str):
-            grouped: dict[object, list[object]] = {}
+            grouped: dict[t.GeneralValueType, list[object]] = {}
             for item in current_list:
                 key = FlextUtilitiesMapper.get(item, group_spec)
-                if key not in grouped:
-                    grouped[key] = []
-                grouped[key].append(item)
+                key_typed: t.GeneralValueType = (
+                    cast("t.GeneralValueType", key)
+                    if key is not None
+                    else cast("t.GeneralValueType", "")
+                )
+                if key_typed not in grouped:
+                    grouped[key_typed] = []
+                grouped[key_typed].append(item)
             return grouped
         if callable(group_spec):
-            grouped_by_func: dict[object, list[object]] = {}
+            grouped_by_func: dict[t.GeneralValueType, list[object]] = {}
             for item in current_list:
                 item_key = group_spec(item)
-                if item_key not in grouped_by_func:
-                    grouped_by_func[item_key] = []
-                grouped_by_func[item_key].append(item)
+                item_key_typed: t.GeneralValueType = (
+                    cast("t.GeneralValueType", item_key)
+                    if item_key is not None
+                    else cast("t.GeneralValueType", "")
+                )
+                if item_key_typed not in grouped_by_func:
+                    grouped_by_func[item_key_typed] = []
+                grouped_by_func[item_key_typed].append(item)
             return grouped_by_func
         return current
 
@@ -1498,43 +1555,56 @@ class FlextUtilitiesMapper:
         if not isinstance(current, (list, tuple)):
             return current
         sort_spec = ops["sort"]
-        current_list = list(current)
+        # Type narrowing: current is Sequence[object], convert to list[object]
+        sequence: Sequence[object] = cast("Sequence[object]", current)
+        current_list: list[object] = list(sequence)
         if isinstance(sort_spec, str):
             # Sort by field name
             field_name: str = sort_spec
 
             def key_func(item: object) -> str:
+                # get() with default="" returns str (never None), so is not None check is redundant
                 result = FlextUtilitiesMapper.get(item, field_name, default="")
-                return str(result) if result is not None else ""
+                return str(result)
 
-            sorted_list = sorted(current_list, key=key_func)
+            sorted_list_key: list[object] = sorted(current_list, key=key_func)
             return (
-                list(sorted_list) if isinstance(current, list) else tuple(sorted_list)
+                cast("list[object]", list(sorted_list_key))
+                if isinstance(current, list)
+                else cast("tuple[object, ...]", tuple(sorted_list_key))
             )
         if callable(sort_spec):
             sort_fn: Callable[[object], object] = sort_spec
 
             def key_func_wrapper(item: object) -> str | int | float:
-                key_value = sort_fn(item)
+                # Type narrowing: item is object from list[object]
+                item_typed: object = item
+                key_value: object = sort_fn(item_typed)
                 if isinstance(key_value, (str, int, float)):
                     return key_value
                 return str(key_value)
 
-            sorted_list = sorted(current_list, key=key_func_wrapper)
+            sorted_list_wrapper: list[object] = sorted(
+                current_list, key=key_func_wrapper
+            )
             return (
-                list(sorted_list) if isinstance(current, list) else tuple(sorted_list)
+                cast("list[object]", list(sorted_list_wrapper))
+                if isinstance(current, list)
+                else cast("tuple[object, ...]", tuple(sorted_list_wrapper))
             )
         if sort_spec is True:
             # Natural sort
             comparable_items: list[str | int | float] = [
-                item if isinstance(item, (str, int, float)) else str(item)
+                cast("str | int | float", item)
+                if isinstance(item, (str, int, float))
+                else str(item)
                 for item in current_list
             ]
-            sorted_comparable = sorted(comparable_items)
+            sorted_comparable: list[str | int | float] = sorted(comparable_items)
             return (
-                list(sorted_comparable)
+                cast("list[str | int | float]", list(sorted_comparable))
                 if isinstance(current, list)
-                else tuple(sorted_comparable)
+                else cast("tuple[str | int | float, ...]", tuple(sorted_comparable))
             )
         return current
 
@@ -1546,9 +1616,12 @@ class FlextUtilitiesMapper:
         if not isinstance(current, (list, tuple)):
             return current
         # Remove duplicates while preserving order
+        # Type narrowing: current is Sequence[object], convert to list[object]
+        sequence: Sequence[object] = cast("Sequence[object]", current)
+        current_list_unique: list[object] = list(sequence)
         seen: set[object] = set()
         unique_list: list[object] = []
-        for item in current:
+        for item in current_list_unique:
             item_hashable = (
                 item
                 if isinstance(item, (str, int, float, bool, type(None)))
@@ -1574,8 +1647,10 @@ class FlextUtilitiesMapper:
         ):
             start = cast("int", slice_spec[0]) if slice_spec[0] is not None else None
             end = cast("int", slice_spec[1]) if slice_spec[1] is not None else None
-            sliced = current[start:end]
-            return list(sliced) if isinstance(current, list) else tuple(sliced)
+            # Type narrowing: current is Sequence[object]
+            sequence_slice: Sequence[object] = cast("Sequence[object]", current)
+            sliced: Sequence[object] = sequence_slice[start:end]
+            return cast("list[object]", list(sliced)) if isinstance(current, list) else cast("tuple[object, ...]", tuple(sliced))
         return current
 
     @staticmethod
@@ -1588,10 +1663,14 @@ class FlextUtilitiesMapper:
         chunk_size = ops["chunk"]
         if not isinstance(chunk_size, int) or chunk_size <= 0:
             return current
-        current_list = list(current)
+        # Type narrowing: current is Sequence[object], convert to list[object]
+        sequence_chunk: Sequence[object] = cast("Sequence[object]", current)
+        current_list: list[object] = list(sequence_chunk)
         chunked: list[list[object]] = []
         for i in range(0, len(current_list), chunk_size):
-            chunk = list(current_list[i : i + chunk_size])
+            # Type narrowing: slice returns Sequence[object]
+            chunk_slice: Sequence[object] = current_list[i : i + chunk_size]
+            chunk: list[object] = list(chunk_slice)
             chunked.append(chunk)
         return chunked
 
@@ -1709,10 +1788,12 @@ class FlextUtilitiesMapper:
         if value is None and required:
             return None
         if ops is not None:
-            result = FlextUtilitiesMapper.build(value, ops=ops, on_error="stop")
+            # Type narrowing: value is T | None, but ops requires value to be GeneralValueType
+            value_for_build: t.GeneralValueType = cast("t.GeneralValueType", value) if value is not None else cast("t.GeneralValueType", "")
+            result = FlextUtilitiesMapper.build(value_for_build, ops=ops, on_error="stop")
             # build returns r[T], unwrap if success
             if isinstance(result, r) and result.is_success:
-                extracted: T | None = result.unwrap()
+                extracted: T | None = cast("T | None", result.unwrap())
                 return extracted
             return None
         return value
@@ -1785,15 +1866,18 @@ class FlextUtilitiesMapper:
             # Extract field
             value = FlextUtilitiesMapper.get(source, field_name, default=field_default)
             if value is None and field_required:
-                extracted = None
+                extracted: T | None = None
             elif field_ops is not None:
                 field_ops_dict = cast("t.Types.ConfigurationDict", field_ops)
+                # Type narrowing: value is T | None, but build requires GeneralValueType
+                value_for_build: t.GeneralValueType = cast("t.GeneralValueType", value) if value is not None else cast("t.GeneralValueType", "")
                 build_result = FlextUtilitiesMapper.build(
-                    value,
+                    value_for_build,
                     ops=field_ops_dict,
                     on_error="stop",
                 )
-                extracted = cast("T | None", build_result)
+                # build_result is r[T], unwrap if success
+                extracted = cast("T | None", build_result.unwrap()) if isinstance(build_result, r) and build_result.is_success else None
             else:
                 extracted = cast("T | None", value)
 
@@ -1905,11 +1989,10 @@ class FlextUtilitiesMapper:
                 else:
                     extracted = extracted_raw
 
-                # Type narrowing: ensure extracted is GeneralValueType-compatible
-                final_value: t.GeneralValueType = (
-                    cast("t.GeneralValueType", extracted)
-                    if extracted is not None
-                    else cast("t.GeneralValueType", field_default)
+                # Cast extracted to GeneralValueType for type safety
+                final_value: t.GeneralValueType = cast(
+                    "t.GeneralValueType",
+                    extracted if extracted is not None else field_default,
                 )
                 constructed[target_key] = final_value
 
@@ -1959,10 +2042,8 @@ class FlextUtilitiesMapper:
 
         """
         try:
-            # Convert Mapping to dict if needed
-            source_dict: t.Types.ConfigurationDict = (
-                dict(source) if isinstance(source, Mapping) else source
-            )
+            # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
+            source_dict: t.Types.ConfigurationDict = dict(source)
 
             # Apply transform steps
             transformed = FlextUtilitiesMapper._apply_transform_steps(
@@ -2033,9 +2114,8 @@ class FlextUtilitiesMapper:
         if a is b:
             return True
 
-        # Type check
-        if not isinstance(a, dict) or not isinstance(b, dict):
-            return False
+        # ConfigurationDict is always dict, so isinstance is redundant
+        # Type check is implicit - both parameters are ConfigurationDict
 
         # Key count check
         if len(a) != len(b):

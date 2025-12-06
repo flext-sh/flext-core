@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextResult
+from flext_core.result import r
 from flext_tests.utilities import FlextTestsUtilities
 
 
@@ -174,7 +175,7 @@ class TestFlextTestsUtilitiesFactory:
 
     def test_create_result_failure(self) -> None:
         """Test create_result with error."""
-        result = FlextTestsUtilities.Tests.Factory.create_result(
+        result: r[str] = FlextTestsUtilities.Tests.Factory.create_result(
             None,
             error="test error",
         )
@@ -184,7 +185,7 @@ class TestFlextTestsUtilitiesFactory:
 
     def test_create_result_no_args(self) -> None:
         """Test create_result with no arguments returns failure."""
-        result = FlextTestsUtilities.Tests.Factory.create_result(None)
+        result: r[str] = FlextTestsUtilities.Tests.Factory.create_result(None)
 
         assert result.is_failure
         assert result.error == "No value or error provided"

@@ -37,7 +37,7 @@ from flext_core import (
     m,
     t,
 )
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 class ModelType(StrEnum):
@@ -328,7 +328,7 @@ class TestFlextModels:
         entity = TestEntity(name="test")
         assert len(entity.domain_events) == 0
         result = entity.add_domain_event("test_event", {"data": "value"})
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert len(entity.domain_events) == 1
         event = entity.domain_events[0]
         assert event.event_type == "test_event"
@@ -346,13 +346,13 @@ class TestFlextModels:
 
         entity = TestEntity(name="test")
         result = entity.add_domain_event("", {"data": "value"})
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert (
             result.error is not None
             and "Domain event name must be a non-empty string" in result.error
         )
         result = entity.add_domain_event("valid", {"string": "value", "number": 42})
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_entity_initial_version(self) -> None:
         """Test Entity initial version state."""
@@ -422,7 +422,7 @@ class TestFlextModels:
         assert hasattr(aggregate, "_invariants")
         assert isinstance(aggregate._invariants, list)
         result = aggregate.add_domain_event("test", {"data": "value"})
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_aggregate_root_invariants(self) -> None:
         """Test AggregateRoot invariant checking."""
@@ -519,7 +519,7 @@ class TestFlextModels:
         _ = aggregate.add_domain_event("event2", {"data": "value2"})
         assert len(aggregate.domain_events) == 2
         result = aggregate.mark_events_as_committed()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert len(aggregate.domain_events) == 0
         committed_events = result.unwrap()
         assert len(committed_events) == 2
@@ -532,7 +532,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         result = aggregate.mark_events_as_committed()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         committed_events = result.unwrap()
         assert len(committed_events) == 0
 
@@ -550,7 +550,7 @@ class TestFlextModels:
             ("event3", {"data": "value3"}),
         ]
         result = aggregate.add_domain_events_bulk(events)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert len(aggregate.domain_events) == 3
         assert all(
             aggregate.domain_events[i].event_type == f"event{i + 1}" for i in range(3)
@@ -564,7 +564,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_events_bulk([])
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         # Testing invalid input type - intentionally passing wrong type
         # for runtime validation
         invalid_input = cast(
@@ -572,13 +572,13 @@ class TestFlextModels:
             "not a list",
         )
         result = aggregate.add_domain_events_bulk(invalid_input)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "Events must be a list" in result.error
         invalid_empty_name: Sequence[tuple[str, t.Types.EventDataMapping | None]] = [
             ("", {"data": "value"}),
         ]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert (
             result.error is not None and "name must be non-empty string" in result.error
         )
@@ -595,7 +595,7 @@ class TestFlextModels:
             (f"event{i}", {"data": f"value{i}"}) for i in range(max_events + 1)
         ]
         result = aggregate.add_domain_events_bulk(events)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_failure(result)
+        u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "would exceed max events" in result.error
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
@@ -615,7 +615,7 @@ class TestFlextModels:
             "user_action",
             {"event_type": "test_event", "key": "value"},
         )
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert aggregate.handler_called is True
         assert aggregate.handler_data == {"event_type": "test_event", "key": "value"}
 
@@ -631,7 +631,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         result = aggregate.add_domain_event("failing_event", {"data": "value"})
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_domain_event_model_creation(self) -> None:
         """Test DomainEvent model creation and properties."""

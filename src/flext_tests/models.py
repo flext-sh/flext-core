@@ -25,7 +25,7 @@ from pydantic import (
 
 from flext_core import r
 from flext_core.models import FlextModels as FlextModelsBase
-from flext_tests.constants import c
+from flext_tests.constants import ContainerStatus, c
 from flext_tests.typings import t
 
 
@@ -43,7 +43,7 @@ class FlextTestsModels(FlextModelsBase):
                 """Container information model."""
 
                 name: str
-                status: c.Tests.Docker.ContainerStatus
+                status: ContainerStatus
                 ports: Mapping[str, str]
                 image: str
                 container_id: str = ""
@@ -689,6 +689,10 @@ class FlextTestsModels(FlextModelsBase):
             class BatchResult(FlextModelsBase.Value):
                 """Result of batch file operations."""
 
+                succeeded: int = Field(
+                    ge=0, description="Number of successful operations"
+                )
+                failed: int = Field(ge=0, description="Number of failed operations")
                 total: int = Field(ge=0, description="Total number of operations")
                 results: Mapping[str, r[object]] = Field(
                     default_factory=dict,
@@ -699,43 +703,22 @@ class FlextTestsModels(FlextModelsBase):
                     description="Mapping of file names to error messages",
                 )
 
-                @computed_field  # type: ignore[prop-decorator]
-                @property
-                def succeeded(self) -> list[Path]:
-                    """List of successfully created file paths."""
-                    paths: list[Path] = []
-                    for result in self.results.values():
-                        if result.is_success:
-                            value = result.unwrap()
-                            if isinstance(value, Path):
-                                paths.append(value)
-                    return paths
-
-                @computed_field  # type: ignore[prop-decorator]
-                @property
-                def failed(self) -> dict[str, str]:
-                    """Dictionary of failed files and error messages."""
-                    return dict(self.errors)
-
-                @computed_field  # type: ignore[prop-decorator]
-                @property
+                @computed_field
                 def success_count(self) -> int:
-                    """Number of successful operations."""
-                    return len(self.succeeded)
+                    """Alias for succeeded count."""
+                    return self.succeeded
 
-                @computed_field  # type: ignore[prop-decorator]
-                @property
+                @computed_field
                 def failure_count(self) -> int:
-                    """Number of failed operations."""
-                    return len(self.errors)
+                    """Alias for failed count."""
+                    return self.failed
 
-                @computed_field  # type: ignore[prop-decorator]
-                @property
+                @computed_field
                 def success_rate(self) -> float:
                     """Compute success rate as percentage."""
                     if self.total == 0:
                         return 0.0
-                    return (self.success_count / self.total) * 100.0
+                    return (self.succeeded / self.total) * 100.0
 
         class Validator:
             """Validator models for architecture validation."""
@@ -1302,7 +1285,7 @@ class FlextTestsModels(FlextModelsBase):
             class OkParams(FlextModelsBase.Value):
                 """Parameters for matcher ok() operations with Pydantic 2 validation."""
 
-                model_config = {"populate_by_name": True}  # type: ignore[assignment]
+                model_config = {"populate_by_name": True}  # noqa: RUF012
 
                 eq: object | None = Field(
                     default=None, description="Expected value (equality check)"
@@ -1461,7 +1444,7 @@ class FlextTestsModels(FlextModelsBase):
             class ThatParams(FlextModelsBase.Value):
                 """Parameters for matcher that() operations with Pydantic 2 validation."""
 
-                model_config = {"populate_by_name": True}  # type: ignore[assignment]
+                model_config = {"populate_by_name": True}  # noqa: RUF012
 
                 msg: str | None = Field(
                     default=None, description="Custom error message"

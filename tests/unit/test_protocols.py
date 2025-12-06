@@ -27,7 +27,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core import p, r, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 
 class ProtocolCategoryType(StrEnum):
@@ -257,7 +257,7 @@ class TestFlextProtocols:
 
         service = UserService()
         result = service.execute()
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_handler_implementation(self) -> None:
         """Test that a class can implement Handler protocol."""
@@ -273,7 +273,7 @@ class TestFlextProtocols:
 
         handler = CreateUserHandler()
         result = handler.handle({"name": "Test"})
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_multiple_protocol_implementation(self) -> None:
         """Test that a class can implement multiple protocols."""

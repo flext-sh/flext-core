@@ -105,11 +105,31 @@ class FlextResult[T_co]:
                                 "Cannot extract value from IOSuccess",
                             )
                         # Type narrowing: unwrapped_value_raw is the inner value type
-                        # IO[Any] needs to be converted to GeneralValueType
-                        unwrapped_value = cast(
-                            "t.GeneralValueType",
+                        # Convert to GeneralValueType with proper type narrowing
+                        unwrapped_value: t.GeneralValueType
+                        if isinstance(
                             unwrapped_value_raw,
-                        )
+                            (
+                                str,
+                                int,
+                                float,
+                                bool,
+                                type(None),
+                                dict,
+                                list,
+                                Success,
+                                Failure,
+                                IOSuccess,
+                                IOFailure,
+                            ),
+                        ):
+                            unwrapped_value = cast(
+                                "t.GeneralValueType", unwrapped_value_raw
+                            )
+                        else:
+                            unwrapped_value = cast(
+                                "t.GeneralValueType", str(unwrapped_value_raw)
+                            )
                         return FlextResult[t.GeneralValueType].ok(unwrapped_value)
                     except Exception as unwrap_error:  # pragma: no cover
                         # Defensive exception handling - hard to test without complex mocking
@@ -326,6 +346,7 @@ class FlextResult[T_co]:
             return self
         error_msg = self.error or ""
         transformed_error = func(error_msg)
+        # Type narrowing: type(self).fail() returns Self
         return cast(
             "Self",
             type(self).fail(
@@ -338,6 +359,7 @@ class FlextResult[T_co]:
     def filter(self, predicate: Callable[[T_co], bool]) -> Self:
         """Filter success value using predicate."""
         if self.is_success and not predicate(self.value):
+            # Type narrowing: type(self).fail() returns Self
             return cast("Self", type(self).fail("Filter predicate failed"))
         return self
 
@@ -346,11 +368,16 @@ class FlextResult[T_co]:
         *funcs: Callable[[T_co | U], FlextResult[U]],
     ) -> FlextResult[U]:
         """Chain multiple operations in a pipeline."""
-        result: FlextResult[T_co | U] = cast("FlextResult[T_co | U]", self)
+        # Start with self, which is FlextResult[T_co]
+        result: FlextResult[T_co] | FlextResult[U] = self
         for func in funcs:
             if result.is_failure:
                 break
-            result = cast("FlextResult[T_co | U]", func(result.value))
+            # Type narrowing: func returns FlextResult[U]
+            func_result = func(result.value)
+            # func_result is already FlextResult[U] from func signature
+            result = func_result
+        # Final type narrowing: result is now FlextResult[U] after all transformations
         return cast("FlextResult[U]", result)
 
     @classmethod
@@ -406,6 +433,7 @@ class FlextResult[T_co]:
             return FlextResult[T_co] with transformed error on failure, unchanged on success
 
         """
+        # Type narrowing: Monad.alt returns Self
         return cast("Self", FlextResult.Monad.alt(self, func))
 
     def lash(self, func: Callable[[str], FlextResult[T_co]]) -> Self:
@@ -422,6 +450,7 @@ class FlextResult[T_co]:
             Result of recovery function on failure, unchanged on success
 
         """
+        # Type narrowing: Monad.lash returns Self
         return cast("Self", FlextResult.Monad.lash(self, func))
 
     def to_io(self) -> IO[T_co]:

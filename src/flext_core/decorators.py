@@ -1057,7 +1057,8 @@ class FlextDecorators:
     ) -> None:
         """Clear operation scope and log if cleanup fails."""
         clear_result = FlextLogger.clear_scope("operation")
-        if clear_result is not None and clear_result.is_failure:
+        # clear_scope() returns r[bool] (never None), so is not None check is redundant
+        if clear_result.is_failure:
             FlextDecorators._handle_log_result(
                 result=clear_result,
                 logger=logger,

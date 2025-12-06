@@ -17,6 +17,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextService,
+    c,
     t,
     u,
 )
@@ -132,13 +133,13 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         # Correlation ID using u
         correlation_id = u.Generators.generate_correlation_id()
         print(
-            f"✅ Correlation ID: {correlation_id[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}...",
+            f"✅ Correlation ID: {correlation_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
         )
 
         # Short ID using u
         short_id = u.Generators.Random.generate_short_id()
         print(
-            f"✅ Short ID: {short_id[: FlextConstants.Utilities.SHORT_UUID_LENGTH]}...",
+            f"✅ Short ID: {short_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
         )
 
         # Entity ID
@@ -242,7 +243,7 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
 
         # Parse sequence of StrEnum values using railway pattern (DRY)
         u.Collection.parse_sequence(
-            FlextConstants.Example.UtilityType,
+            c.Cqrs.HandlerType,
             ["validation", "id_generation"],
         ).map(
             lambda parsed_enums: print(

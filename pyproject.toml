@@ -156,14 +156,14 @@
 		    [tool.poetry.group.dev.dependencies]
 		        click = "^8.3.0"
 		        docker = "^7.1.0"
+		        hypothesis = "^6.148.7"
 		        pyrefly = "^0.34.0"
 		        pytest = "^8.4.0"
+		        pytest-cov = "^7.0.0"
 		        python-on-whales = "^0.78.0"
 		        rich = "=14.2.0"
 		        types-pyyaml = "^6.0.12.20250822"
-    urllib3 = "^2.6.0"
-    pytest-cov = "^7.0.0"
-    hypothesis = "^6.148.7"
+		        urllib3 = "^2.6.0"
 
 		    [tool.poetry.group.typings.dependencies]
 		        types-colorama = ">=0.4.15.20240311"

@@ -29,7 +29,7 @@ import pytest
 
 from flext_core import FlextContext, t
 from flext_core.models import m
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, u
 
 
 @dataclass(frozen=True, slots=True)
@@ -228,14 +228,14 @@ class TestServiceDomain:
         test_service_obj: t.GeneralValueType = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
         assert result.unwrap() is test_service_obj
 
     def test_register_service(self) -> None:
         """Test registering service in container via FlextContext."""
         service_obj = {"name": "test_service", "version": "1.0"}
         result = FlextContext.Service.register_service("my_service", service_obj)
-        FlextTestsUtilities.Tests.TestUtilities.assert_result_success(result)
+        u.Tests.Result.assert_result_success(result)
 
     def test_get_nonexistent_service(self) -> None:
         """Test retrieving nonexistent service returns failure."""

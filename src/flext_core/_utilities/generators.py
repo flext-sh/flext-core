@@ -16,6 +16,7 @@ import time
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from typing import cast
 
 from pydantic import BaseModel
 
@@ -411,7 +412,8 @@ class FlextUtilitiesGenerators:
                     # Type narrowing: normalize_to_general_value on dict returns dict
                     # Runtime check: normalized is GeneralValueType, but we know it's dict from input
                     if FlextUtilitiesGuards.is_type(normalized, dict):
-                        return normalized
+                        # Cast to ConfigurationDict - we know it's a dict from is_type check
+                        return cast("t.Types.ConfigurationDict", normalized)
                     # Fallback: if normalization changed type, return empty dict
                     return {}
                 return {}
@@ -492,13 +494,9 @@ class FlextUtilitiesGenerators:
             # Runtime safety check (type system ensures type, but runtime validation needed)
             msg: str = f"base_class must be a type, got {type(base_class).__name__}"
             raise TypeError(msg)
-        # Convert Mapping to dict if needed - accept both Mapping and dict per FLEXT standards
-        if isinstance(attributes, Mapping) and not isinstance(attributes, dict):
-            attributes = dict(attributes.items())
-        # Ensure attributes is a dict for type() call
-        attributes_dict: dict[str, t.GeneralValueType] = (
-            attributes if isinstance(attributes, dict) else dict(attributes.items())
-        )
+        # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
+        # Convert to dict for type() call
+        attributes_dict: dict[str, t.GeneralValueType] = dict(attributes)
         base_type: type = base_class
         return type(name, (base_type,), attributes_dict)
 
