@@ -60,6 +60,8 @@ class RuntimeOperationType(StrEnum):
     STRUCTLOG_MODULE = "structlog_module"
     DEPENDENCY_PROVIDERS_MODULE = "dependency_providers_module"
     DEPENDENCY_CONTAINERS_MODULE = "dependency_containers_module"
+    DEPENDENCY_WIRING_CONFIGURATION = "dependency_wiring_configuration"
+    DEPENDENCY_WIRING_FACTORIES = "dependency_wiring_factories"
     CONFIGURE_STRUCTLOG_DEFAULTS = "configure_structlog_defaults"
     CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL = "configure_structlog_custom_log_level"
     CONFIGURE_STRUCTLOG_JSON_RENDERER = "configure_structlog_json_renderer"
@@ -503,6 +505,14 @@ class RuntimeScenarios:
             None,
             containers,
         ),
+        RuntimeTestCase(
+            "dependency_wiring_configuration",
+            RuntimeOperationType.DEPENDENCY_WIRING_CONFIGURATION,
+        ),
+        RuntimeTestCase(
+            "dependency_wiring_factories",
+            RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES,
+        ),
     ]
 
     STRUCTLOG_CONFIG_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
@@ -781,6 +791,32 @@ class TestFlextRuntime:
             module = FlextRuntime.dependency_containers()
             assert module is containers
             assert hasattr(module, "DeclarativeContainer")
+        elif (
+            test_case.operation
+            == RuntimeOperationType.DEPENDENCY_WIRING_CONFIGURATION
+        ):
+            di_container = FlextRuntime.DependencyIntegration.create_container()
+            config_provider = FlextRuntime.DependencyIntegration.bind_configuration(
+                di_container,
+                {"database": {"dsn": "sqlite://"}},
+            )
+            assert isinstance(config_provider, providers.Configuration)
+            assert di_container.config.database.dsn() == "sqlite://"
+        elif test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES:
+            di_container = FlextRuntime.DependencyIntegration.create_container()
+            factory_provider = FlextRuntime.DependencyIntegration.register_factory(
+                di_container,
+                "token_factory",
+                lambda: {"token": "abc123"},
+            )
+            object_provider = FlextRuntime.DependencyIntegration.register_object(
+                di_container,
+                "static_value",
+                42,
+            )
+            assert isinstance(factory_provider, providers.Singleton)
+            assert factory_provider() == {"token": "abc123"}
+            assert object_provider() == 42
 
     @pytest.mark.parametrize(
         "test_case",

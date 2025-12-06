@@ -19,10 +19,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import concurrent.futures
+import inspect
 import threading
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
+from types import ModuleType
 from typing import cast, override
 
 from cachetools import LRUCache
@@ -1519,6 +1521,38 @@ class FlextDispatcher(x):
             f"register_handler takes 1 or 2 arguments but {len(args)} were given",
         )
 
+    def _wire_handler_dependencies(
+        self,
+        handler: t.Handler.HandlerType,
+    ) -> None:
+        """Wire handler modules/classes to the DI bridge for @inject usage."""
+
+        modules: list[ModuleType] = []
+        classes: list[type] = []
+
+        handler_cls = handler if inspect.isclass(handler) else handler.__class__
+        if handler_cls:
+            classes.append(handler_cls)
+            handler_module = inspect.getmodule(handler_cls)
+            if handler_module:
+                modules.append(handler_module)
+
+        handler_module_from_instance = inspect.getmodule(handler)
+        if handler_module_from_instance and handler_module_from_instance not in modules:
+            modules.append(handler_module_from_instance)
+
+        try:
+            self.container.wire_modules(
+                modules=modules or None,
+                classes=classes or None,
+            )
+        except Exception:
+            self.logger.debug(
+                "DI wiring skipped for handler",
+                handler_type=type(handler).__name__,
+                exc_info=True,
+            )
+
     def _register_single_handler(
         self,
         handler: t.Handler.HandlerType,
@@ -1540,6 +1574,7 @@ class FlextDispatcher(x):
         if validation_result.is_failure:
             return validation_result
 
+        self._wire_handler_dependencies(handler)
         self._auto_handlers.append(handler)
 
         handler_id = getattr(handler, "handler_id", None)
@@ -1599,6 +1634,7 @@ class FlextDispatcher(x):
         if validation_result.is_failure:
             return validation_result
 
+        self._wire_handler_dependencies(handler)
         key = self._normalize_command_key(command_type_obj)
         self._handlers[key] = handler
         self.logger.info(
