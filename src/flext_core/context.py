@@ -30,7 +30,7 @@ from flext_core.typings import t
 from flext_core.utilities import u
 
 
-class FlextContext:
+class FlextContext(FlextRuntime):
     """Context manager for correlation, request data, and timing metadata.
 
     The dispatcher and decorators rely on FlextContext to move correlation IDs,

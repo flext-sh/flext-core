@@ -341,6 +341,9 @@ class FlextModels:
         class FactoryRegistration(FlextModelsContainer.FactoryRegistration):
             """Factory registration - real inheritance."""
 
+        class ResourceRegistration(FlextModelsContainer.ResourceRegistration):
+            """Resource registration - real inheritance."""
+
         class ContainerConfig(FlextModelsContainer.ContainerConfig):
             """Container config - real inheritance."""
 
@@ -406,6 +409,7 @@ class FlextModels:
     # Container aliases
     ServiceRegistration = Container.ServiceRegistration
     FactoryRegistration = Container.FactoryRegistration
+    ResourceRegistration = Container.ResourceRegistration
     ContainerConfig = Container.ContainerConfig
 
     # Collections aliases

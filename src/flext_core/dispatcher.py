@@ -19,10 +19,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import concurrent.futures
+import inspect
 import threading
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
+from types import ModuleType
 from typing import cast, override
 
 from cachetools import LRUCache
@@ -394,7 +396,7 @@ class FlextDispatcher(x):
             "t.GeneralValueType",
             processor
             if isinstance(processor, (str, int, float, bool, type(None), dict, list))
-            else str(processor)
+            else str(processor),
         )
         return r[t.GeneralValueType].ok(processor_typed)
 
@@ -1036,7 +1038,9 @@ class FlextDispatcher(x):
             ):
                 # Type narrowing: extract handler from dict structure
                 # handler_entry is dict[str, object], "handler" key returns object
-                handler_entry_dict: dict[str, object] = cast("dict[str, object]", handler_entry)
+                handler_entry_dict: dict[str, object] = cast(
+                    "dict[str, object]", handler_entry
+                )
                 extracted_handler: object = handler_entry_dict["handler"]
                 # Validate it's callable or BaseModel (valid HandlerType)
                 # HandlerType includes Callable and BaseModel instances
@@ -1310,7 +1314,7 @@ class FlextDispatcher(x):
             # u.Mapper.get() without default returns GeneralValueType | None, so check is necessary for runtime safety
             middleware_id_str = (
                 "" if middleware_id_value is None else str(middleware_id_value)
-            )  # type: ignore[reportUnnecessaryComparison]
+            )
             self.logger.debug(
                 "Skipping disabled middleware",
                 middleware_id=middleware_id_str,
@@ -1323,7 +1327,7 @@ class FlextDispatcher(x):
         # u.Mapper.get() without default returns GeneralValueType | None, so check is necessary for runtime safety
         middleware_id_str = (
             str(middleware_id_value) if middleware_id_value is not None else ""
-        )  # type: ignore[reportUnnecessaryComparison]
+        )
         middleware = self._middleware_instances.get(middleware_id_str)
         if middleware is None:
             return r[bool].ok(True)
@@ -1560,6 +1564,37 @@ class FlextDispatcher(x):
             f"register_handler takes 1 or 2 arguments but {len(args)} were given",
         )
 
+    def _wire_handler_dependencies(
+        self,
+        handler: t.Handler.HandlerType,
+    ) -> None:
+        """Wire handler modules/classes to the DI bridge for @inject usage."""
+        modules: list[ModuleType] = []
+        classes: list[type] = []
+
+        handler_cls = handler if inspect.isclass(handler) else handler.__class__
+        if handler_cls:
+            classes.append(handler_cls)
+            handler_module = inspect.getmodule(handler_cls)
+            if handler_module:
+                modules.append(handler_module)
+
+        handler_module_from_instance = inspect.getmodule(handler)
+        if handler_module_from_instance and handler_module_from_instance not in modules:
+            modules.append(handler_module_from_instance)
+
+        try:
+            self.container.wire_modules(
+                modules=modules or None,
+                classes=classes or None,
+            )
+        except Exception:
+            self.logger.debug(
+                "DI wiring skipped for handler",
+                handler_type=type(handler).__name__,
+                exc_info=True,
+            )
+
     def _register_single_handler(
         self,
         handler: t.Handler.HandlerType,
@@ -1581,6 +1616,7 @@ class FlextDispatcher(x):
         if validation_result.is_failure:
             return validation_result
 
+        self._wire_handler_dependencies(handler)
         self._auto_handlers.append(handler)
 
         handler_id = getattr(handler, "handler_id", None)
@@ -1640,6 +1676,7 @@ class FlextDispatcher(x):
         if validation_result.is_failure:
             return validation_result
 
+        self._wire_handler_dependencies(handler)
         key = self._normalize_command_key(command_type_obj)
         self._handlers[key] = handler
         self.logger.info(
@@ -3674,7 +3711,9 @@ class FlextDispatcher(x):
         if isinstance(attributes_value, (dict, Mapping)) and attributes_value:
             # Type narrowing: attributes_value is dict[str, object] | Mapping[str, object]
             # Convert to ConfigurationMapping for return type
-            attributes_dict: t.Types.ConfigurationMapping = cast("t.Types.ConfigurationMapping", attributes_value)
+            attributes_dict: t.Types.ConfigurationMapping = cast(
+                "t.Types.ConfigurationMapping", attributes_value
+            )
             return attributes_dict
 
         # Use model_dump() directly if available - Pydantic v2 pattern

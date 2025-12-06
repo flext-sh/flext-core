@@ -143,6 +143,45 @@ class FlextModelsContainer:
             """
             return u.Model.normalize_to_metadata(v)
 
+    class ResourceRegistration(BaseModel):
+        """Model for lifecycle-managed resource registrations.
+
+        Captures resource factories that dependency-injector should wrap via
+        ``providers.Resource`` for connection-style dependencies (DB/HTTP).
+        """
+
+        model_config = ConfigDict(
+            frozen=False,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+        name: str = Field(
+            ...,
+            min_length=c.Reliability.RETRY_COUNT_MIN,
+            description="Resource identifier/name",
+        )
+        factory: Callable[[], t.GeneralValueType] = Field(
+            ...,
+            description="Factory returning the lifecycle-managed resource",
+        )
+        registration_time: datetime = Field(
+            default_factory=u.Generators.generate_datetime_utc,
+            description="UTC timestamp when resource was registered",
+        )
+        metadata: FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None = (
+            Field(
+                default=None,
+                description="Additional resource metadata (JSON-serializable)",
+            )
+        )
+
+        @field_validator("metadata", mode="before")
+        @classmethod
+        def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
+            """Normalize resource metadata to Metadata model."""
+            return u.Model.normalize_to_metadata(v)
+
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 

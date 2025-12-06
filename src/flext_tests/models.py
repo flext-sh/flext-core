@@ -17,6 +17,7 @@ from typing import Any, cast
 from pydantic import (
     AliasChoices,
     BaseModel,
+    ConfigDict,
     Field,
     computed_field,
     field_validator,
@@ -1285,7 +1286,7 @@ class FlextTestsModels(FlextModelsBase):
             class OkParams(FlextModelsBase.Value):
                 """Parameters for matcher ok() operations with Pydantic 2 validation."""
 
-                model_config = {"populate_by_name": True}  # noqa: RUF012
+                model_config = ConfigDict(populate_by_name=True)
 
                 eq: object | None = Field(
                     default=None, description="Expected value (equality check)"
@@ -1444,7 +1445,7 @@ class FlextTestsModels(FlextModelsBase):
             class ThatParams(FlextModelsBase.Value):
                 """Parameters for matcher that() operations with Pydantic 2 validation."""
 
-                model_config = {"populate_by_name": True}  # noqa: RUF012
+                model_config = ConfigDict(populate_by_name=True)
 
                 msg: str | None = Field(
                     default=None, description="Custom error message"

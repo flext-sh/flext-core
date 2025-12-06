@@ -23,6 +23,7 @@ from flext_core.constants import c
 from flext_core.container import FlextContainer  # For instantiation only
 from flext_core.context import FlextContext  # For instantiation only
 from flext_core.loggings import FlextLogger
+from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -61,7 +62,7 @@ def require_initialized[T](value: T | None, name: str) -> T:
     return value
 
 
-class FlextMixins:
+class FlextMixins(FlextRuntime):
     """Composable behaviors for dispatcher-driven services and handlers.
 
     These mixins centralize DI container access, structured logging, and
@@ -90,6 +91,8 @@ class FlextMixins:
                     return self.ok({"status": "processed"})
 
     """
+
+    _runtime: m.ServiceRuntime | None = None
 
     # =========================================================================
     # RUNTIME VALIDATION UTILITIES (Delegated from FlextRuntime)
@@ -202,18 +205,48 @@ class FlextMixins:
     @property
     def container(self) -> p.Container.DI:
         """Get global FlextContainer instance with lazy initialization."""
-        return cast("p.Container.DI", FlextContainer())  # Structural typing
+        return cast("p.Container.DI", self._get_runtime().container)
 
     @property
     def context(self) -> p.Context.Ctx:
         """Get FlextContext instance for context operations."""
-        # FlextContext implements Context.Ctx structurally (no cast needed)
-        return FlextContext()
+        return self._get_runtime().context
 
     @property
     def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
         """Get FlextLogger instance (DI-backed with caching)."""
         return self._get_or_create_logger()
+
+    @property
+    def config(self) -> FlextConfig:
+        """Return the runtime configuration associated with this component."""
+        return cast("FlextConfig", self._get_runtime().config)
+
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> dict[str, object]:
+        """Hook to customize runtime creation for mixin consumers."""
+        return {}
+
+    def _get_runtime(self) -> m.ServiceRuntime:
+        """Return or create a runtime triple shared across mixin consumers."""
+        if self._runtime is not None:
+            return self._runtime
+
+        runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
+        options_raw = (
+            runtime_options_callable()
+            if callable(runtime_options_callable)
+            else {}
+        )
+        # Convert dict[str, object] to dict[str, t.FlexibleValue] for create_service_runtime
+        # FlexibleValue is a union type that includes object, so this is safe
+        options: dict[str, t.FlexibleValue] = {
+            k: cast("t.FlexibleValue", v) for k, v in options_raw.items()
+        }
+
+        runtime = FlextRuntime.create_service_runtime(**options)
+        self._runtime = runtime
+        return runtime
 
     @contextmanager
     def track(
@@ -300,16 +333,6 @@ class FlextMixins:
         finally:
             # Auto-cleanup operation context
             FlextMixins._clear_operation_context()
-
-    @property
-    def config(self) -> FlextConfig:
-        """Get global FlextConfig instance with namespace support.
-
-        Returns FlextConfig directly (not protocol) to avoid cast() throughout
-        the codebase. Internal code uses concrete FlextConfig; protocols are
-        for external interface compatibility.
-        """
-        return FlextConfig.get_global_instance()
 
     def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
