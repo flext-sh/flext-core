@@ -27,7 +27,6 @@ from typing import Never, TypeVar, cast
 from pydantic import BaseModel as _BaseModel, PrivateAttr
 
 from flext_core import FlextResult, r
-from flext_core.models import FlextModels as FlextModelsBase
 from flext_core.typings import t as t_core
 from flext_tests.base import s
 from flext_tests.constants import c
@@ -185,7 +184,11 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                     "name": params.name or c.Tests.Factory.DEFAULT_USER_NAME,
                     "email": params.email
                     or c.Tests.Factory.user_email(u.Tests.Factory.generate_short_id(8)),
-                    "active": params.active,
+                    "active": (
+                        params.active
+                        if params.active is not None
+                        else c.Tests.Factory.DEFAULT_USER_ACTIVE
+                    ),
                 }
                 if params.overrides:
                     # Convert overrides to ConfigurationDict for merge
@@ -197,12 +200,20 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
 
             if params.kind == "config":
                 config_data: t.Types.ConfigurationDict = {
-                    "service_type": params.service_type,
-                    "environment": params.environment,
-                    "debug": params.debug,
-                    "log_level": params.log_level,
-                    "timeout": params.timeout,
-                    "max_retries": params.max_retries,
+                    "service_type": params.service_type
+                    or c.Tests.Factory.DEFAULT_SERVICE_TYPE,
+                    "environment": params.environment
+                    or c.Tests.Factory.DEFAULT_ENVIRONMENT,
+                    "debug": params.debug
+                    if params.debug is not None
+                    else c.Tests.Factory.DEFAULT_DEBUG,
+                    "log_level": params.log_level or c.Tests.Factory.DEFAULT_LOG_LEVEL,
+                    "timeout": params.timeout
+                    if params.timeout is not None
+                    else c.Tests.Factory.DEFAULT_TIMEOUT,
+                    "max_retries": params.max_retries
+                    if params.max_retries is not None
+                    else c.Tests.Factory.DEFAULT_MAX_RETRIES,
                 }
                 if params.overrides:
                     # Convert overrides to ConfigurationDict for merge
@@ -214,16 +225,8 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                     )
                     if merge_result.is_success:
                         config_data = merge_result.value
-                # Create Config model - Config is a namespace, use ProcessingRequest as example
-                # For test factories, we create a simple dict-based model
-                # Since Config is a namespace, we'll use Entity as base for test configs
-                from pydantic import create_model  # noqa: PLC0415
-
-                config_model_cls = create_model(
-                    "ConfigModel", **{k: (type(v), ...) for k, v in config_data.items()}
-                )
-                config_model = config_model_cls(**config_data)
-                return cast("_BaseModel", config_model)
+                # Create Config model - use m.Tests.Factory.Config which is a real Pydantic model
+                return m.Tests.Factory.Config.model_validate(config_data)
 
             if params.kind == "service":
                 service_type_str = params.service_type or "api"
@@ -236,13 +239,16 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 }
                 # Convert overrides to compatible dict
                 if params.overrides:
+                    # Type narrowing: params.overrides is Mapping[str, GeneralValueType]
+                    overrides_mapping = cast(
+                        "Mapping[str, t.Tests.TestResultValue]", params.overrides
+                    )
                     overrides_dict: dict[str, t.Tests.TestResultValue] = dict(
-                        params.overrides,
+                        overrides_mapping
                     )
                     svc_data.update(overrides_dict)
-                # Create Service model - Service is a namespace, use Entity as base for test services
-                service_model = FlextModelsBase.Entity.model_validate(svc_data)
-                return cast("_BaseModel", service_model)
+                # Create Service model using the proper test Service model
+                return m.Tests.Factory.Service.model_validate(svc_data)
 
             if params.kind == "entity":
                 # Use DomainHelpers for entity creation
@@ -253,14 +259,14 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 )
 
             # params.kind == "value"
-            # Use DomainHelpers for value object creation
-            # Create ValueObject model - use Value as base
-            value_result = u.Tests.DomainHelpers.create_test_value_object_instance(
-                data=params.data,
-                count=params.value_count,
-                value_class=FlextModelsBase.Value,
+            # Use DomainHelpers for value object creation with proper ValueObject model
+            value_data = params.data or "default_value"
+            value_count = params.value_count or 1
+            return u.Tests.DomainHelpers.create_test_value_object_instance(
+                data=value_data,
+                count=value_count,
+                value_class=m.Tests.Factory.ValueObject,
             )
-            return cast("_BaseModel", value_result)
 
         # Create single instance
         instance = _create_single()
@@ -300,26 +306,12 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                         transformed,
                     )
                 if params.validate_fn and not params.validate_fn(new_instance):
-                    model_list_type = list[
-                        m.Tests.Factory.User
-                        | m.Tests.Factory.Config
-                        | m.Tests.Factory.Service
-                        | m.Tests.Factory.Entity
-                        | m.Tests.Factory.ValueObject
-                    ]
-                    return r[model_list_type].fail(c.Tests.Factory.ERROR_VALIDATION)
+                    return r[list[_BaseModel]].fail(c.Tests.Factory.ERROR_VALIDATION)
                 instances.append(new_instance)
 
             # Handle as_dict
             if params.as_dict:
-                result_dict: dict[
-                    str,
-                    m.Tests.Factory.User
-                    | m.Tests.Factory.Config
-                    | m.Tests.Factory.Service
-                    | m.Tests.Factory.Entity
-                    | m.Tests.Factory.ValueObject,
-                ] = {}
+                result_dict: dict[str, _BaseModel] = {}
                 for inst in instances:
                     # Try to get ID from common attributes using getattr
                     inst_id = (
@@ -349,9 +341,12 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 return mapped_result_dict
 
             # Return list
+            typed_instances: list[_BaseModel] = [
+                cast("_BaseModel", inst) for inst in instances
+            ]
             if params.as_result:
-                return r[list[_BaseModel]].ok(instances)
-            return instances
+                return r[list[_BaseModel]].ok(typed_instances)
+            return typed_instances
 
         # Single instance - handle as_dict
         typed_instance = instance
@@ -361,33 +356,12 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 or getattr(typed_instance, "model_id", None)
                 or u.Tests.Factory.generate_id()
             )
-            single_result_dict: dict[
-                str,
-                m.Tests.Factory.User
-                | m.Tests.Factory.Config
-                | m.Tests.Factory.Service
-                | m.Tests.Factory.Entity
-                | m.Tests.Factory.ValueObject,
-            ] = {str(inst_id): typed_instance}
+            single_result_dict: dict[str, _BaseModel] = {
+                str(inst_id): cast("_BaseModel", typed_instance)
+            }
             if params.as_result:
-                single_dict_result: r[
-                    dict[
-                        str,
-                        m.Tests.Factory.User
-                        | m.Tests.Factory.Config
-                        | m.Tests.Factory.Service
-                        | m.Tests.Factory.Entity
-                        | m.Tests.Factory.ValueObject,
-                    ]
-                ] = r[
-                    dict[
-                        str,
-                        m.Tests.Factory.User
-                        | m.Tests.Factory.Config
-                        | m.Tests.Factory.Service
-                        | m.Tests.Factory.Entity
-                        | m.Tests.Factory.ValueObject,
-                    ]
+                single_dict_result: r[dict[str, _BaseModel]] = r[
+                    dict[str, _BaseModel]
                 ].ok(single_result_dict)
                 return single_dict_result
             return single_result_dict
@@ -395,33 +369,12 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         # Handle as_mapping for single instance
         if params.as_mapping:
             key = params.as_mapping.get("0", "0")
-            single_mapped_dict: dict[
-                str,
-                m.Tests.Factory.User
-                | m.Tests.Factory.Config
-                | m.Tests.Factory.Service
-                | m.Tests.Factory.Entity
-                | m.Tests.Factory.ValueObject,
-            ] = {key: typed_instance}
+            single_mapped_dict: dict[str, _BaseModel] = {
+                key: cast("_BaseModel", typed_instance)
+            }
             if params.as_result:
-                single_mapping_result: r[
-                    dict[
-                        str,
-                        m.Tests.Factory.User
-                        | m.Tests.Factory.Config
-                        | m.Tests.Factory.Service
-                        | m.Tests.Factory.Entity
-                        | m.Tests.Factory.ValueObject,
-                    ]
-                ] = r[
-                    dict[
-                        str,
-                        m.Tests.Factory.User
-                        | m.Tests.Factory.Config
-                        | m.Tests.Factory.Service
-                        | m.Tests.Factory.Entity
-                        | m.Tests.Factory.ValueObject,
-                    ]
+                single_mapping_result: r[dict[str, _BaseModel]] = r[
+                    dict[str, _BaseModel]
                 ].ok(single_mapped_dict)
                 return single_mapping_result
             return single_mapped_dict
@@ -963,47 +916,6 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         if params.as_result:
             return r[builtins.list[T]].ok(items)
         return items
-
-    @classmethod
-    def dict[K, V](  # type: ignore[override]  # Overrides BaseModel.dict() for factory method
-        cls,
-        source: (
-            Mapping[K, V] | Callable[[], tuple[K, V]] | t.Tests.Factory.ModelKind
-        ) = "user",
-        # All parameters via kwargs - will be validated by DictFactoryParams
-        **kwargs: t.Tests.TestResultValue,
-    ) -> dict[K, V] | r[dict[K, V]]:
-        """Create typed dict from source (factory method, overrides BaseModel.dict()).
-
-        This is the preferred way to create dicts of test data.
-        Use tt.dict() instead of manual dict comprehensions.
-
-        Args:
-            source: Source for dict items:
-                - Mapping[K, V]: Use mapping directly
-                - Callable[[], tuple[K, V]]: Factory function returning (key, value)
-                - ModelKind: Create models as values with auto-generated keys
-            count: Number of items to create (if source is callable or ModelKind)
-            key_factory: Factory function for keys (takes index, returns K)
-            value_factory: Factory function for values (takes key, returns V)
-            as_result: Wrap result in FlextResult
-            merge_with: Additional mapping to merge into result
-
-        Returns:
-            Dict of items or FlextResult wrapping dict
-
-        Examples:
-            # Create dict from model kind
-            users = tt.dict("user", count=3)
-            # Create dict with custom keys
-            users = tt.dict("user", count=3, key_factory=lambda i: f"user_{i}")
-            # Create dict from existing mapping
-            data = tt.dict({"a": 1, "b": 2})
-            # Create dict wrapped in FlextResult
-            result = tt.dict("user", count=2, as_result=True)
-
-        """
-        return cls.dict_factory(source, **kwargs)
 
     @classmethod
     def dict_factory[K, V](

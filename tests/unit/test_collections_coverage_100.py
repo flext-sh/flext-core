@@ -22,7 +22,7 @@ import pytest
 from pydantic import Field
 
 from flext_core import m, t
-from flext_tests.utilities import FlextTestsUtilities
+from flext_tests import u
 
 # Use actual classes, not type aliases, for inheritance
 Statistics = m.Collections.Statistics
@@ -188,7 +188,7 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=20)
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -206,7 +206,7 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(items=["c"])
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -226,7 +226,7 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=20, items=["b"], name="second")
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )
@@ -247,7 +247,7 @@ class TestFlextModelsCollectionsStatistics:
         stats2 = TestStats(count=None, name=None)
         result = TestStats.aggregate([stats1, stats2])
         # Type narrowing: aggregate returns dict-like structure
-        FlextTestsUtilities.Tests.Assertions.assert_result_matches_expected(
+        u.Tests.Assertions.assert_result_matches_expected(
             result,
             dict,
         )

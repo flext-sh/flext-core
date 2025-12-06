@@ -862,7 +862,7 @@ class FlextRuntime:
         console_renderer: bool = True,
         additional_processors: Sequence[object] | None = None,
         wrapper_class_factory: Callable[[], type[BindableLogger]] | None = None,
-        logger_factory: Callable[..., BindableLogger] | None = None,
+        logger_factory: Callable[[], BindableLogger] | None = None,
         cache_logger_on_first_use: bool = True,
     ) -> None:
         """Configure structlog once using FLEXT defaults.
@@ -962,14 +962,14 @@ class FlextRuntime:
                 if cls._async_writer is None:
                     cls._async_writer = _AsyncLogWriter(sys.stdout)
                 factory_arg = cast(
-                    "Callable[..., BindableLogger]",
+                    "Callable[[], BindableLogger]",
                     module.PrintLoggerFactory(
                         file=cast("typing.TextIO", cls._async_writer),
                     ),
                 )
             else:
                 factory_arg = cast(
-                    "Callable[..., BindableLogger]",
+                    "Callable[[], BindableLogger]",
                     module.PrintLoggerFactory(),
                 )
 

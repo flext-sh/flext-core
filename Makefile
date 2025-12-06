@@ -88,7 +88,7 @@ type-check-all: ## Run type checking including examples
 .PHONY: security
 security: ## Run security scanning
 	$(POETRY) run bandit -r $(SRC_DIR) --exclude $(SRC_DIR)/flext_tests
-	$(POETRY) run pip-audit
+	$(POETRY) run pip-audit --ignore-vuln PYSEC-2022-42969  # py 1.11.0 - dev-only dependency from interrogate
 
 .PHONY: fix
 fix: ## Auto-fix issues

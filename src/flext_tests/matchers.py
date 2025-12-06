@@ -247,7 +247,10 @@ class FlextTestsMatchers(FlextTestsUtilities):
             if isinstance(params.has, (list, tuple)):
                 has_items: Sequence[object] = params.has
             else:
-                has_items = [params.has]
+                # Single item - wrap in list for uniform processing
+                # Type narrowing: params.has is object when not Sequence
+                has_item: object = params.has
+                has_items = cast("Sequence[object]", [has_item])
             for item in has_items:
                 if not u.chk(value, contains=item):
                     raise AssertionError(
@@ -263,7 +266,10 @@ class FlextTestsMatchers(FlextTestsUtilities):
             if isinstance(params.lacks, (list, tuple)):
                 lacks_items: Sequence[object] = params.lacks
             else:
-                lacks_items = [params.lacks]
+                # Single item - wrap in list for uniform processing
+                # Type narrowing: params.lacks is object when not Sequence
+                lacks_item: object = params.lacks
+                lacks_items = cast("Sequence[object]", [lacks_item])
             for item in lacks_items:
                 if u.chk(value, contains=item):
                     raise AssertionError(
@@ -631,12 +637,39 @@ class FlextTestsMatchers(FlextTestsUtilities):
             if value.is_success:
                 unwrapped_value = value.unwrap()
                 value = unwrapped_value
-            else:
+            # If result is failure, check if we're validating the error
+            # params.has (converted from error) means we want to validate the error message
+            elif params.has is not None:
+                # Validate error message using has parameter
+                err = value.error or ""
+                # params.has can be str or Sequence[str] - handle both
+                if isinstance(params.has, str):
+                    error_has_items: list[str] = [params.has]
+                # Type guard: params.has is Sequence[str] when not str
+                elif isinstance(params.has, Sequence):
+                    error_has_items = [str(x) for x in params.has]
+                else:
+                    error_has_items = [str(params.has)]
+                for item in error_has_items:
+                    if item not in err:
+                        raise AssertionError(
+                            params.msg
+                            or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
+                                container=err,
+                                item=item,
+                            ),
+                        )
+                # Error validated, return error string for further validation if needed
+                value = err
+            elif params.ok is None:
                 # If result is failure and no ok/error checks, fail
                 raise AssertionError(
                     params.msg
                     or c.Tests.Matcher.ERR_OK_FAILED.format(error=value.error),
                 )
+            else:
+                # params.ok is False, which means we expect failure - continue validation
+                value = value.error or ""
 
         # Apply basic validations via u.chk() - pass parameters directly for type safety
         # Note: u.chk() doesn't support tuple types for is_/not_, handle separately
@@ -713,11 +746,12 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 has_items = [params.has]
             for item in has_items:
                 if not u.chk(value, contains=item):
+                    item_str: str = str(item)
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
                             container=value,
-                            item=item,
+                            item=item_str,
                         ),
                     )
 
@@ -729,11 +763,12 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 lacks_items = [params.lacks]
             for item in lacks_items:
                 if u.chk(value, contains=item):
+                    item_str: str = str(item)
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
                             container=value,
-                            item=item,
+                            item=item_str,
                         ),
                     )
 
@@ -1167,9 +1202,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
 
             # Create scope
             cfg: t.Types.ConfigurationDict = (
-                cast("t.Types.ConfigurationDict", dict(params.config))
-                if params.config
-                else cast("t.Types.ConfigurationDict", {})
+                dict(params.config) if params.config else {}
             )
             scope = m.Tests.Matcher.TestScope(
                 config=cfg,

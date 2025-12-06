@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from typing import cast
 
 from flext_tests.factories import tt
 from flext_tests.typings import t
@@ -93,7 +94,9 @@ class FlextTestsDomains:
             "cache_ttl": 300,
         }
         # Convert to ConfigurationDict - ensure all values are GeneralValueType compatible
-        base_config: t.Types.ConfigurationDict = dict(config_dict)
+        base_config: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict", dict(config_dict)
+        )
         base_config.update(overrides)
         return base_config
 
