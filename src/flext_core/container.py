@@ -33,7 +33,7 @@ FactoryT = TypeVar("FactoryT")
 ResourceT = TypeVar("ResourceT")
 
 
-class FlextContainer(p.Container.DI):
+class FlextContainer(FlextRuntime, p.Container.DI):
     """Singleton container that exposes DI registration and resolution helpers.
 
     Services and factories remain local to the container, keeping dispatcher and
@@ -103,13 +103,14 @@ class FlextContainer(p.Container.DI):
             self._di_services,
             self._di_resources,
         ) = FlextRuntime.DependencyIntegration.create_layered_bridge()
-        self._di_container = self._di_services
+        self._di_container = self.containers.DynamicContainer()
         self._config_provider = self._di_bridge.config
         self._base_config_provider = self.providers.Configuration()
         self._user_config_provider = self.providers.Configuration()
         # Layer providers to avoid manual merging while keeping overrides distinct
         self._config_provider.override(self._base_config_provider)
         self._config_provider.override(self._user_config_provider)
+        self._di_container.config = self._config_provider
         self._services: dict[str, m.Container.ServiceRegistration] = _services or {}
         self._factories: dict[str, m.Container.FactoryRegistration] = (
             _factories or {}
@@ -130,7 +131,27 @@ class FlextContainer(p.Container.DI):
 
     @property
     def provide(self) -> Callable[[str], object]:
-        """Return the dependency-injector Provide helper scoped to the bridge."""
+        """Return the dependency-injector Provide helper scoped to the bridge.
+
+        ``Provide`` is used alongside the ``@inject`` decorator to declare
+        dependencies without importing ``dependency-injector`` in higher layers.
+        It resolves registered providers (services, factories, resources,
+        configuration) by name and injects the resulting value into the
+        decorated callable. Example:
+
+        .. code-block:: python
+
+           from flext_core import FlextContainer, inject
+
+           container = FlextContainer.get_global()
+           container.register_factory("token_factory", lambda: {"token": "abc123"})
+
+           @inject
+           def consume(token=container.provide["token_factory"]):
+               return token["token"]
+
+           assert consume() == "abc123"
+        """
 
         return self._di_bridge.Provide
 
@@ -197,26 +218,32 @@ class FlextContainer(p.Container.DI):
         """Hydrate the dynamic container with current registrations."""
 
         for name, registration in self._services.items():
-            FlextRuntime.DependencyIntegration.register_object(
+            provider = FlextRuntime.DependencyIntegration.register_object(
                 self._di_services,
                 name,
                 registration.service,
             )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
 
         for name, registration in self._factories.items():
-            FlextRuntime.DependencyIntegration.register_factory(
+            provider = FlextRuntime.DependencyIntegration.register_factory(
                 self._di_services,
                 name,
                 registration.factory,
                 cache=self._global_config.enable_factory_caching,
             )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
 
         for name, registration in self._resources.items():
-            FlextRuntime.DependencyIntegration.register_resource(
+            provider = FlextRuntime.DependencyIntegration.register_resource(
                 self._di_resources,
                 name,
                 registration.factory,
             )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
 
     def configure(
         self,
@@ -270,7 +297,7 @@ class FlextContainer(p.Container.DI):
         """Wire modules/packages to the DI bridge for @inject/Provide usage."""
 
         FlextRuntime.DependencyIntegration.wire(
-            self._di_bridge,
+            self._di_container,
             modules=modules,
             packages=packages,
             classes=classes,
@@ -357,11 +384,13 @@ class FlextContainer(p.Container.DI):
                 service_type=type(service).__name__,
             )
             self._services[name] = registration
-            FlextRuntime.DependencyIntegration.register_object(
+            provider = FlextRuntime.DependencyIntegration.register_object(
                 self._di_services,
                 name,
                 service,
             )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
             return r[bool].ok(True)
         except Exception as e:
             return r[bool].fail(str(e))
@@ -389,12 +418,14 @@ class FlextContainer(p.Container.DI):
                 factory=factory,
             )
             self._factories[name] = registration
-            FlextRuntime.DependencyIntegration.register_factory(
+            provider = FlextRuntime.DependencyIntegration.register_factory(
                 self._di_services,
                 name,
                 factory,
                 cache=self._global_config.enable_factory_caching,
             )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
             return r[bool].ok(True)
         except Exception as e:
             return r[bool].fail(str(e))
@@ -416,11 +447,13 @@ class FlextContainer(p.Container.DI):
                 factory=factory,
             )
             self._resources[name] = registration
-            FlextRuntime.DependencyIntegration.register_resource(
+            provider = FlextRuntime.DependencyIntegration.register_resource(
                 self._di_resources,
                 name,
                 factory,
             )
+            setattr(self._di_bridge, name, provider)
+            setattr(self._di_container, name, provider)
             return r[bool].ok(True)
         except Exception as e:
             return r[bool].fail(str(e))
@@ -582,14 +615,22 @@ class FlextContainer(p.Container.DI):
         bridge, service_module, resource_module = (
             FlextRuntime.DependencyIntegration.create_layered_bridge()
         )
+        di_container = instance.containers.DynamicContainer()
         # Use object.__setattr__ for private attrs to bypass SLF001
         # (classmethod factory pattern - valid Python, false positive from ruff)
         setattr_ = object.__setattr__
         setattr_(instance, "_di_bridge", bridge)
         setattr_(instance, "_di_services", service_module)
         setattr_(instance, "_di_resources", resource_module)
-        setattr_(instance, "_di_container", service_module)
+        setattr_(instance, "_di_container", di_container)
         setattr_(instance, "_config_provider", bridge.config)
+        base_config_provider = instance.providers.Configuration()
+        user_config_provider = instance.providers.Configuration()
+        setattr_(instance, "_base_config_provider", base_config_provider)
+        setattr_(instance, "_user_config_provider", user_config_provider)
+        instance._config_provider.override(base_config_provider)
+        instance._config_provider.override(user_config_provider)
+        instance._di_container.config = instance._config_provider
         setattr_(instance, "_services", services)
         setattr_(instance, "_factories", factories)
         setattr_(instance, "_resources", resources)

@@ -1,12 +1,12 @@
 # FLEXT-Core
 
-FLEXT-Core is the dispatcher-centric foundation library for the FLEXT ecosystem. It provides railway-oriented programming primitives, an explicit dependency injection container, CQRS dispatching, and domain-driven design helpers for Python 3.13+.
+FLEXT-Core is the dispatcher-centric foundation library for the FLEXT ecosystem. It provides railway-oriented programming primitives, a layered dependency-injection bridge (runtime + container + handlers), CQRS dispatching, and domain-driven design helpers for Python 3.13+.
 
 ## Key Capabilities
 
 - **Railway-oriented results:** `FlextResult` models success and failure without raising exceptions in business code.
 - **Protocol-based architecture:** Extensive use of protocols following SOLID principles (Interface Segregation, Dependency Inversion) to eliminate circular imports and Pydantic forward reference issues.
-- **Dependency injection:** `FlextContainer` manages shared services with clear scopes (global or custom containers).
+- **Dependency injection:** `FlextContainer` manages shared services with clear scopes (global or custom containers) via the dependency-injector bridge (`Provide`/`inject`).
 - **CQRS dispatcher:** `FlextDispatcher` routes commands, queries, and domain events through registered handlers and middleware.
 - **Domain primitives:** `FlextModels`, `FlextService`, and mixins simplify entity/value modeling and domain service composition.
 - **Infrastructure helpers:** configuration loading, structured logging, and execution context propagation are bundled for consistent cross-cutting concerns.
@@ -92,6 +92,61 @@ def handle_create_user(message: CreateUser) -> FlextResult[str]:
 dispatcher.register_handler(CreateUser, handle_create_user)
 result = dispatcher.dispatch(CreateUser(email="user@example.com"))
 assert result.is_success
+```
+
+### Dependency injection with the new bridge
+
+Use the dependency-injector helpers exported by the runtime to declare and consume dependencies without importing the third-party library directly:
+
+```python
+from flext_core import FlextContainer, inject
+
+container = FlextContainer.get_global()
+container.register_resource("db", lambda: create_db_client())
+container.register_factory("token_factory", lambda: {"token": "abc123"})
+
+@inject
+def do_work(db=container.provide["db"], token_factory=container.provide["token_factory"]):
+    # Dependencies are resolved by the bridge; no manual lookups
+    return db, token_factory()
+
+db_client, tokens = do_work()
+```
+
+The layered bridge keeps dependency-injector usage isolated to the runtime (L0.5) and container (L2) while handlers (L3) use only the public `provide`/`inject` API. See [`docs/dependency_injector_prompt.md`](docs/dependency_injector_prompt.md) for the full pattern checklist.
+
+When you need a standalone DI container (for tests or auxiliary modules) without manual follow-up registration, use the parameterized factory helper:
+
+```python
+from flext_core import FlextRuntime
+
+di_container = FlextRuntime.DependencyIntegration.create_container(
+    config={"feature_flags": {"beta": True}},
+    services={"static_value": 123},
+    factories={"token_factory": lambda: {"token": "abc123"}},
+    resources={"api_client": lambda: connect_client()},
+    wire_modules=[my_module],
+    factory_cache=False,  # opt-in per-call factories instead of singletons
+)
+
+# Service runtimes can use the same automation
+# FlextService inherits FlextRuntime and bootstraps a scoped runtime with
+# optional overrides, registrations, and wiring hooks.
+
+class ReportingService(FlextService[r[str]]):
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> dict[str, object]:
+        return {
+            "config_overrides": {"app_name": "reports"},
+            "services": {"feature_flag": True},
+            "factories": {"token_factory": lambda: {"token": "svc"}},
+            "resources": {"api_client": lambda: connect_client()},
+            "wire_modules": [reporting_module],
+        }
+
+    def execute(self) -> r[str]:
+        token = self.container.get[dict]("token_factory").value["token"]
+        return r[str].ok(f"token: {token}")
 ```
 
 ## Type System Guidelines

@@ -23,6 +23,7 @@ from __future__ import annotations
 import dataclasses
 import logging
 from enum import StrEnum
+from types import ModuleType
 from typing import ClassVar, cast
 
 import pytest
@@ -30,6 +31,7 @@ import structlog
 from dependency_injector import containers, providers
 
 from flext_core import FlextContext, FlextRuntime, c, t
+from flext_core.mixins import FlextMixins
 
 
 class RuntimeOperationType(StrEnum):
@@ -62,6 +64,9 @@ class RuntimeOperationType(StrEnum):
     DEPENDENCY_CONTAINERS_MODULE = "dependency_containers_module"
     DEPENDENCY_WIRING_CONFIGURATION = "dependency_wiring_configuration"
     DEPENDENCY_WIRING_FACTORIES = "dependency_wiring_factories"
+    DEPENDENCY_WIRING_AUTOMATION = "dependency_wiring_automation"
+    SERVICE_RUNTIME_AUTOMATION = "service_runtime_automation"
+    MIXINS_RUNTIME_AUTOMATION = "mixins_runtime_automation"
     CONFIGURE_STRUCTLOG_DEFAULTS = "configure_structlog_defaults"
     CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL = "configure_structlog_custom_log_level"
     CONFIGURE_STRUCTLOG_JSON_RENDERER = "configure_structlog_json_renderer"
@@ -513,6 +518,18 @@ class RuntimeScenarios:
             "dependency_wiring_factories",
             RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES,
         ),
+        RuntimeTestCase(
+            "dependency_wiring_automation",
+            RuntimeOperationType.DEPENDENCY_WIRING_AUTOMATION,
+        ),
+        RuntimeTestCase(
+            "service_runtime_automation",
+            RuntimeOperationType.SERVICE_RUNTIME_AUTOMATION,
+        ),
+        RuntimeTestCase(
+            "mixins_runtime_automation",
+            RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION,
+        ),
     ]
 
     STRUCTLOG_CONFIG_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
@@ -802,6 +819,23 @@ class TestFlextRuntime:
             )
             assert isinstance(config_provider, providers.Configuration)
             assert di_container.config.database.dsn() == "sqlite://"
+
+            module = ModuleType("di_config_module")
+
+            @FlextRuntime.DependencyIntegration.inject
+            def read_config(
+                dsn=FlextRuntime.DependencyIntegration.Provide[
+                    "config.database.dsn"
+                ],
+            ) -> str:
+                return dsn
+
+            module.read_config = read_config
+            di_container.wire(modules=[module])
+            try:
+                assert module.read_config() == "sqlite://"
+            finally:
+                di_container.unwire()
         elif test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES:
             di_container = FlextRuntime.DependencyIntegration.create_container()
             factory_provider = FlextRuntime.DependencyIntegration.register_factory(
@@ -817,6 +851,135 @@ class TestFlextRuntime:
             assert isinstance(factory_provider, providers.Singleton)
             assert factory_provider() == {"token": "abc123"}
             assert object_provider() == 42
+
+            module = ModuleType("di_factory_module")
+
+            @FlextRuntime.DependencyIntegration.inject
+            def consume(
+                token=FlextRuntime.DependencyIntegration.Provide["token_factory"],
+                static=FlextRuntime.DependencyIntegration.Provide["static_value"],
+            ) -> tuple[dict[str, str], int]:
+                return token, static
+
+            module.consume = consume
+            di_container.wire(modules=[module])
+            try:
+                tokens, value = module.consume()
+                assert tokens == {"token": "abc123"}
+                assert value == 42
+            finally:
+                di_container.unwire()
+        elif test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_AUTOMATION:
+            counter = {"calls": 0}
+
+            def token_factory() -> dict[str, int]:
+                counter["calls"] += 1
+                return {"token": counter["calls"]}
+
+            module = ModuleType("di_automation_module")
+
+            @FlextRuntime.DependencyIntegration.inject
+            def consume(
+                static_value=FlextRuntime.DependencyIntegration.Provide[
+                    "static_value"
+                ],
+                token=FlextRuntime.DependencyIntegration.Provide["token_factory"],
+                config_flag=FlextRuntime.DependencyIntegration.Provide[
+                    "config.flags.enabled"
+                ],
+                resource=FlextRuntime.DependencyIntegration.Provide["api_client"],
+            ) -> tuple[int, dict[str, int], bool, dict[str, bool]]:
+                return static_value, token, config_flag, resource
+
+            module.consume = consume
+
+            di_container = FlextRuntime.DependencyIntegration.create_container(
+                config={"flags": {"enabled": True}},
+                services={"static_value": 7},
+                factories={"token_factory": token_factory},
+                resources={"api_client": lambda: {"connected": True}},
+                wire_modules=[module],
+                factory_cache=False,
+            )
+
+            try:
+                first_static, first_token, config_enabled, resource_value = (
+                    module.consume()
+                )
+                second_static, second_token, _, _ = module.consume()
+
+                assert first_static == second_static == 7
+                assert config_enabled is True
+                assert resource_value == {"connected": True}
+                assert first_token["token"] == 1
+                assert second_token["token"] == 2
+            finally:
+                di_container.unwire()
+        elif test_case.operation == RuntimeOperationType.SERVICE_RUNTIME_AUTOMATION:
+            counter = {"calls": 0}
+
+            def token_factory() -> dict[str, int]:
+                counter["calls"] += 1
+                return {"count": counter["calls"]}
+
+            module = ModuleType("service_runtime_module")
+
+            @FlextRuntime.DependencyIntegration.inject
+            def consume(
+                flag=FlextRuntime.DependencyIntegration.Provide["feature_flag"],
+                token=FlextRuntime.DependencyIntegration.Provide["token_factory"],
+                resource=FlextRuntime.DependencyIntegration.Provide["api_client"],
+            ) -> tuple[bool, dict[str, int], dict[str, bool]]:
+                return flag, token, resource
+
+            module.consume = consume
+
+            runtime = FlextRuntime.create_service_runtime(
+                config_overrides={"app_name": "runtime-service"},
+                services={"feature_flag": True},
+                factories={"token_factory": token_factory},
+                resources={"api_client": lambda: {"connected": True}},
+                wire_modules=[module],
+            )
+
+            try:
+                feature_flag, first_token, resource = module.consume()
+                _, second_token, _ = module.consume()
+
+                assert runtime.config.app_name == "runtime-service"
+                assert feature_flag is True
+                assert resource == {"connected": True}
+                assert first_token["count"] == 1
+                assert second_token["count"] == 2
+            finally:
+                runtime.container._di_bridge.unwire()
+        elif test_case.operation == RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION:
+
+            class RuntimeAwareComponent(FlextMixins):
+                @classmethod
+                def _runtime_bootstrap_options(cls) -> dict[str, object]:
+                    return {
+                        "config_overrides": {"app_name": "runtime-aware"},
+                        "services": {"preseed": {"enabled": True}},
+                        "factories": {"counter": lambda: {"count": 1}},
+                    }
+
+            component = RuntimeAwareComponent()
+
+            runtime_first = component._get_runtime()
+            runtime_second = component._get_runtime()
+
+            assert runtime_first is runtime_second
+            assert component.config.app_name == "runtime-aware"
+            assert component.context is runtime_first.context
+
+            service_result = component.container.get("preseed")
+            assert service_result.is_success
+            assert service_result.value == {"enabled": True}
+
+            factory_result = component.container.get("counter")
+            assert factory_result.is_success
+            assert factory_result.value == {"count": 1}
 
     @pytest.mark.parametrize(
         "test_case",
