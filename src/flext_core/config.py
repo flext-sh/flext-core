@@ -25,6 +25,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
 from flext_core.constants import c
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Namespace, T_Settings, t
 
 
@@ -54,7 +55,7 @@ def _resolve_env_file() -> str | None:
     return c.Platform.ENV_FILE_DEFAULT
 
 
-class FlextConfig(BaseSettings):
+class FlextConfig(BaseSettings, FlextRuntime):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)

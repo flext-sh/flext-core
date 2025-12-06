@@ -32,7 +32,7 @@ from flext_core.utilities import u
 # Use t.GeneralValueType directly - no aliases
 
 
-class FlextLogger:
+class FlextLogger(FlextRuntime):
     """Context-aware logger tuned for dispatcher-centric CQRS flows.
 
     FlextLogger layers structured logging on ``structlog`` with scoped contexts,

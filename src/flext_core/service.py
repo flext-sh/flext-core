@@ -41,9 +41,10 @@ class FlextService[TDomainResult](
     """Base class for domain services used in CQRS flows.
 
     Subclasses implement ``execute`` to run business logic and return
-    ``FlextResult`` values. The base provides validation hooks, dependency
-    injection, and context-aware logging while remaining protocol compliant via
-    structural typing.
+    ``FlextResult`` values. The base inherits :class:`FlextMixins` (which extends
+    :class:`FlextRuntime`) so services can reuse runtime automation for creating
+    scoped config/context/container triples via :meth:`create_service_runtime`
+    while remaining protocol compliant via structural typing.
     """
 
     model_config = ConfigDict(
@@ -184,43 +185,24 @@ class FlextService[TDomainResult](
     @classmethod
     def _create_initial_runtime(cls) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
-        base_context = FlextContext()
-        # Get the service-specific config type
         config_type = cls._get_service_config_type()
-
-        # If service specifies a specific config type, use it directly
-        # Otherwise, clone from global FlextConfig instance
-        if config_type is not FlextConfig:
-            # Service has specific config type - create instance directly
-            base_config = config_type()
-        else:
-            # Generic service - clone from global config
-            global_config = FlextConfig.get_global_instance()
-
-            class _ClonedConfig(FlextConfig):
-                """Lightweight clone to bypass FlextConfig singleton semantics."""
-
-                def __new__(
-                    cls,
-                    **_data: t.GeneralValueType,
-                ) -> Self:  # pragma: no cover - construction hook
-                    # Create raw instance using type-safe factory helper
-                    return FlextRuntime.create_instance(cls)
-
-            base_config = _ClonedConfig.model_construct(**global_config.model_dump())
-
-        # base_context is FlextContext which implements Context.Ctx structurally
-        # base_config is already FlextConfig (either config_type() or _ClonedConfig)
-        base_container = FlextContainer().scoped(
-            config=base_config,
-            context=base_context,
+        return cls.create_service_runtime(
+            config_type=config_type,
+            **cls._runtime_bootstrap_options(),
         )
 
-        return m.ServiceRuntime.model_construct(
-            config=base_config,
-            context=base_context,
-            container=base_container,
-        )
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> dict[str, object]:
+        """Hook for subclasses to parametrize runtime automation.
+
+        Subclasses can override this method to pass keyword arguments directly
+        to :meth:`FlextRuntime.create_service_runtime`, enabling opt-in
+        configuration overrides, scoped service registrations, factory/resource
+        wiring, and container configuration changes without duplicating
+        setup code in ``__init__``.
+        """
+
+        return {}
 
     def _clone_runtime(
         self,

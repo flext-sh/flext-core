@@ -16,6 +16,7 @@ Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first founda
 - **Guides:** [`guides/`](./guides/) for patterns such as railway execution, DI, DDD, error handling, configuration, testing, and troubleshooting
 - **Standards:** [`standards/`](./standards/) for code, documentation, and templates
 - **Contributing:** [`development/contributing.md`](./development/contributing.md)
+- **DI pattern prompt:** [`dependency_injector_prompt.md`](./dependency_injector_prompt.md) for the canonical dependency-injector bridge guidance
 
 ## Quick Start
 
@@ -35,12 +36,14 @@ PY
 2. **Dependency injection (`FlextContainer`)** — register and resolve shared collaborators explicitly; avoid implicit globals.
 3. **CQRS dispatcher (`FlextDispatcher`)** — route commands, queries, and domain events through handler registries with optional middleware.
 4. **Domain-driven design (`FlextModels`, `FlextService`)** — model entities/values and encapsulate domain services that return `FlextResult`.
+5. **Layered dependency-injector bridge** — isolate dependency-injector usage to the runtime/container while handlers use `provide`/`inject` only.
 
 ## Style Expectations
 
 - Prefer docstrings that follow PEP 257 sentence-style summaries and keep examples PEP 8 compliant.
 - Cross-reference the `docs/standards/documentation.md` templates when adding new material.
 - Avoid duplicated sections across guides; link to existing topics instead of restating them.
+- When documenting DI, align with the bridge/handler layering in [`dependency_injector_prompt.md`](./dependency_injector_prompt.md) and show examples using the re-exported `provide`/`inject` helpers.
 
 ## Support
 
