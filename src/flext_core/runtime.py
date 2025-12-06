@@ -56,12 +56,12 @@ import threading
 import typing
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import ClassVar, ParamSpec, TypeGuard, cast
+from typing import ClassVar, ParamSpec, TypeGuard, TypeVar, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
 from beartype.claw import beartype_package
-from dependency_injector import containers, providers
+from dependency_injector import containers, providers, wiring
 from structlog.typing import BindableLogger
 
 from flext_core.constants import c
@@ -69,6 +69,9 @@ from flext_core.protocols import p
 from flext_core.typings import t
 
 P_Processor = ParamSpec("P_Processor")
+T_Object = TypeVar("T_Object")
+T_Factory = TypeVar("T_Factory")
+T_Resource = TypeVar("T_Resource")
 
 
 class _AsyncLogWriter:
@@ -762,6 +765,154 @@ class FlextRuntime:
     def dependency_containers() -> ModuleType:
         """Return the dependency-injector containers module."""
         return containers
+
+    class DependencyIntegration:
+        """Centralize dependency-injector wiring with provider helpers.
+
+        This bridge keeps dependency-injector usage confined to L1 while
+        exposing a narrow API for higher layers. Factories and configuration
+        providers are materialized here to avoid duplicate dictionaries or
+        direct imports of ``dependency_injector`` outside the runtime module.
+        A small DeclarativeContainer captures config/resources so L3 callers
+        never import dependency-injector directly.
+        """
+
+        class BridgeContainer(containers.DeclarativeContainer):
+            """Declarative container grouping config and resource modules."""
+
+            config = providers.Configuration()
+            services = providers.DependenciesContainer()
+            resources = providers.DependenciesContainer()
+
+        Provide = wiring.Provide
+        inject = staticmethod(wiring.inject)
+
+        @classmethod
+        def create_layered_bridge(
+            cls,
+            config: t.Types.ConfigurationMapping | None = None,
+        ) -> tuple[
+            containers.DeclarativeContainer,
+            containers.DynamicContainer,
+            containers.DynamicContainer,
+        ]:
+            """Create a DeclarativeContainer bridged to dynamic modules.
+
+            Returns a tuple with the declarative bridge plus dynamic containers
+            for services and resources. The bridge isolates dependency-injector
+            usage to L1/L2 while allowing higher layers to work only with
+            FlextContainer's APIs.
+            """
+
+            bridge = cls.BridgeContainer()
+            service_module = containers.DynamicContainer()
+            resource_module = containers.DynamicContainer()
+            bridge.services.override(service_module)
+            bridge.resources.override(resource_module)
+            cls.bind_configuration_provider(bridge.config, config)
+            return bridge, service_module, resource_module
+
+        @staticmethod
+        def create_container() -> containers.DynamicContainer:
+            """Create a fresh DynamicContainer instance."""
+
+            return containers.DynamicContainer()
+
+        @staticmethod
+        def bind_configuration(
+            di_container: containers.DynamicContainer,
+            config: t.Types.ConfigurationMapping | None,
+        ) -> providers.Configuration:
+            """Bind configuration mapping to the DI container.
+
+            Uses ``providers.Configuration`` to expose values to downstream
+            providers without higher layers interacting with dependency-injector
+            directly.
+            """
+
+            configuration_provider = providers.Configuration()
+            if config:
+                configuration_provider.from_dict(dict(config))
+            di_container.config = configuration_provider
+            return configuration_provider
+
+        @staticmethod
+        def bind_configuration_provider(
+            configuration_provider: providers.Configuration,
+            config: t.Types.ConfigurationMapping | None,
+        ) -> providers.Configuration:
+            """Bind configuration directly to an existing provider."""
+
+            if config:
+                configuration_provider.from_dict(dict(config))
+            return configuration_provider
+
+        @staticmethod
+        def register_object(
+            di_container: containers.DynamicContainer,
+            name: str,
+            instance: T_Object,
+        ) -> providers.Provider[T_Object]:
+            """Register a concrete instance using ``providers.Object``."""
+
+            if hasattr(di_container, name):
+                msg = f"Provider '{name}' is already registered"
+                raise ValueError(msg)
+            provider: providers.Provider[T_Object] = providers.Object(instance)
+            setattr(di_container, name, provider)
+            return provider
+
+        @staticmethod
+        def register_factory(
+            di_container: containers.DynamicContainer,
+            name: str,
+            factory: Callable[[], T_Factory],
+            *,
+            cache: bool = True,
+        ) -> providers.Provider[T_Factory]:
+            """Register a factory using Singleton/Factory providers."""
+
+            if hasattr(di_container, name):
+                msg = f"Provider '{name}' is already registered"
+                raise ValueError(msg)
+            provider: providers.Provider[T_Factory] = (
+                providers.Singleton(factory)
+                if cache
+                else providers.Factory(factory)
+            )
+            setattr(di_container, name, provider)
+            return provider
+
+        @staticmethod
+        def register_resource(
+            di_container: containers.DynamicContainer,
+            name: str,
+            factory: Callable[[], T_Resource],
+        ) -> providers.Provider[T_Resource]:
+            """Register a resource provider for lifecycle-managed dependencies."""
+
+            if hasattr(di_container, name):
+                msg = f"Provider '{name}' is already registered"
+                raise ValueError(msg)
+            provider: providers.Provider[T_Resource] = providers.Resource(factory)
+            setattr(di_container, name, provider)
+            return provider
+
+        @staticmethod
+        def wire(
+            container: containers.DeclarativeContainer,
+            *,
+            modules: Sequence[ModuleType] | None = None,
+            packages: Sequence[str] | None = None,
+            classes: Sequence[type] | None = None,
+        ) -> None:
+            """Wire modules or packages to a DeclarativeContainer for @inject usage."""
+
+            container.wire(
+                modules=modules,
+                packages=packages,
+                classes=classes,
+            )
 
     @staticmethod
     def level_based_context_filter(
