@@ -53,13 +53,13 @@ class FlextService[TDomainResult](
         validate_assignment=True,
     )
 
-    @override
-    def model_dump(
+    @override  # pyright: ignore[reportIncompatibleMethodOverride] - Return type is more specific (ConfigurationDict vs dict[str, Any])
+    def model_dump(  # type: ignore[override]
         self,
         *,
         mode: str = "python",
-        include: t.Types.IncEx | None = None,  # type: ignore[override]
-        exclude: t.Types.IncEx | None = None,  # type: ignore[override]
+        include: t.Types.IncEx | None = None,  # type: ignore[assignment]
+        exclude: t.Types.IncEx | None = None,  # type: ignore[assignment]
         context: t.GeneralValueType | None = None,
         by_alias: bool | None = None,
         exclude_unset: bool = False,
@@ -229,11 +229,11 @@ class FlextService[TDomainResult](
 
     # Use PrivateAttr for private attributes (Pydantic v2 pattern)
     # PrivateAttr allows setting attributes without validation and bypasses __setattr__
-    # Type annotations are provided via type comments for pyright compatibility
-    _context = PrivateAttr(default=None)  # type: p.Context.Ctx | None
-    _config = PrivateAttr(default=None)  # type: FlextConfig | None
-    _container = PrivateAttr(default=None)  # type: p.Container.DI | None
-    _runtime = PrivateAttr(default=None)  # type: m.ServiceRuntime | None
+    # Type annotations using PrivateAttr with explicit type hints
+    _context: p.Context.Ctx | None = PrivateAttr(default=None)
+    _config: FlextConfig | None = PrivateAttr(default=None)
+    _container: p.Container.DI | None = PrivateAttr(default=None)
+    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _auto_result: TDomainResult | None = None
 
     @classmethod
@@ -486,6 +486,9 @@ class _ServiceAccess(m.ArbitraryTypesModel):
     Centralizes access to core FLEXT components (CQRS models, registry,
     configuration, result helpers, context, and container) and supports
     cloning of configuration plus nested execution scopes with isolated
+
+    Note: Accesses protected attributes of FlextService (_config, _runtime, etc.)
+    This is intentional as _ServiceAccess is an internal helper class.
     context.
     """
 
@@ -520,14 +523,20 @@ class _ServiceAccess(m.ArbitraryTypesModel):
     @computed_field
     def config(self) -> p.Configuration.Config:
         """Global configuration instance for the service."""
-        return require_initialized(self._service._config, "Config")
+        return require_initialized(
+            self._service._config,  # pyright: ignore[reportPrivateUsage]
+            "Config",
+        )
 
     @computed_field
     def runtime(
         self,
     ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
         """Protocol-backed runtime triple for the bound service."""
-        return require_initialized(self._service._runtime, "Runtime")
+        return require_initialized(
+            self._service._runtime,  # pyright: ignore[reportPrivateUsage]
+            "Runtime",
+        )
 
     @computed_field
     def result(
@@ -544,12 +553,18 @@ class _ServiceAccess(m.ArbitraryTypesModel):
     @computed_field
     def context(self) -> p.Context.Ctx:
         """Context manager for correlation and tracing."""
-        return require_initialized(self._service._context, "Context")
+        return require_initialized(
+            self._service._context,  # pyright: ignore[reportPrivateUsage]
+            "Context",
+        )
 
     @computed_field
     def container(self) -> p.Container.DI:
         """Dependency injection container bound to the service."""
-        return require_initialized(self._service._container, "Container")
+        return require_initialized(
+            self._service._container,  # pyright: ignore[reportPrivateUsage]
+            "Container",
+        )
 
     def container_scope(
         self,
@@ -583,10 +598,11 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         """Clone the service runtime triple using protocol-backed models."""
         # Access private attribute directly to avoid computed_field type issues
         # _clone_runtime accepts Context.Ctx - use directly
+        # pyright: ignore[reportPrivateUsage] - Internal helper class accessing protected attributes
         context_for_clone: p.Context.Ctx | None = (
-            context if context is not None else self._service._context
+            context if context is not None else self._service._context  # pyright: ignore[reportPrivateUsage]
         )
-        return self._service._clone_runtime(
+        return self._service._clone_runtime(  # pyright: ignore[reportPrivateUsage]
             config_overrides=config_overrides,
             context=context_for_clone,
             subproject=subproject,
@@ -604,8 +620,10 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             Configuration.Config: Cloned configuration instance with updates applied.
 
         """
+        # pyright: ignore[reportPrivateUsage] - Internal helper class accessing protected attributes
         config: p.Configuration.Config = require_initialized(
-            self._service._config, "Config"
+            self._service._config,  # pyright: ignore[reportPrivateUsage]
+            "Config",
         )
         return config.model_copy(update=overrides, deep=True)
 
@@ -627,8 +645,9 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         isolated from the parent, enabling containerized execution flows without
         mutating global state.
         """
+        # pyright: ignore[reportPrivateUsage] - Internal helper class accessing protected attributes
         base_runtime: m.ServiceRuntime = require_initialized(
-            self._service._runtime,
+            self._service._runtime,  # pyright: ignore[reportPrivateUsage]
             "Runtime",
         )
         # Type narrowing: base_runtime.context is FlextContext

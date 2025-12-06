@@ -1195,7 +1195,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         items_list = list(files_dict.items())
         # Explicit type annotation helps mypy infer the generic R parameter
         operation_fn: Callable[
-            [tuple[str, t.Tests.Files.FileContent]], Path | r[Path]
+            [tuple[str, t.Tests.Files.FileContent]],
+            Path | r[Path],
         ] = process_one
         batch_result_dict = u.Collection.batch(
             items_list,

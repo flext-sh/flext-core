@@ -836,7 +836,8 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             for i in range(count)
         ]
         return self.add(
-            "users", value=cast("t_test.Tests.Builders.BuilderValue", users)
+            "users",
+            value=cast("t_test.Tests.Builders.BuilderValue", users),
         )
 
     def with_configs(self, *, production: bool = False) -> Self:
@@ -1010,7 +1011,8 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             self._ensure_data_initialized()
             assert self._data is not None, "_data must be initialized"
             self._data = cast(
-                "t_test.Tests.Builders.BuilderDict", merge_result.unwrap()
+                "t_test.Tests.Builders.BuilderDict",
+                merge_result.unwrap(),
             )
         return self
 
@@ -1084,7 +1086,8 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
                 batch_data.append(r[t.GeneralValueType].fail(fail_error))
 
         builder_data[params.key] = cast(
-            "t_test.Tests.Builders.BuilderValue", batch_data
+            "t_test.Tests.Builders.BuilderValue",
+            batch_data,
         )
         # Update instance attribute after local modifications
         self._data = builder_data

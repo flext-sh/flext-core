@@ -116,40 +116,49 @@ class FlextTestsModels(FlextModelsBase):
                 )
                 # User-specific
                 model_id: str | None = Field(
-                    default=None, description="Model ID override"
+                    default=None,
+                    description="Model ID override",
                 )
                 name: str | None = Field(default=None, description="Name override")
                 email: str | None = Field(default=None, description="Email override")
                 active: bool | None = Field(
-                    default=None, description="Active status override"
+                    default=None,
+                    description="Active status override",
                 )
                 # Config-specific
                 service_type: str | None = Field(
-                    default=None, description="Service type override"
+                    default=None,
+                    description="Service type override",
                 )
                 environment: str | None = Field(
-                    default=None, description="Environment override"
+                    default=None,
+                    description="Environment override",
                 )
                 debug: bool | None = Field(default=None, description="Debug override")
                 log_level: str | None = Field(
-                    default=None, description="Log level override"
+                    default=None,
+                    description="Log level override",
                 )
                 timeout: int | None = Field(
-                    default=None, description="Timeout override"
+                    default=None,
+                    description="Timeout override",
                 )
                 max_retries: int | None = Field(
-                    default=None, description="Max retries override"
+                    default=None,
+                    description="Max retries override",
                 )
                 # Service-specific
                 status: str | None = Field(default=None, description="Status override")
                 # Entity-specific
                 value: t.GeneralValueType | None = Field(
-                    default=None, description="Value override"
+                    default=None,
+                    description="Value override",
                 )
                 # ValueObject-specific
                 data: str | None = Field(default=None, description="Data override")
                 value_count: int | None = Field(
-                    default=None, description="Value count override"
+                    default=None,
+                    description="Value count override",
                 )
                 # Generic overrides
                 overrides: Mapping[str, t.GeneralValueType] | None = Field(
@@ -691,7 +700,8 @@ class FlextTestsModels(FlextModelsBase):
                 """Result of batch file operations."""
 
                 succeeded: int = Field(
-                    ge=0, description="Number of successful operations"
+                    ge=0,
+                    description="Number of successful operations",
                 )
                 failed: int = Field(ge=0, description="Number of failed operations")
                 total: int = Field(ge=0, description="Total number of operations")
@@ -1289,10 +1299,12 @@ class FlextTestsModels(FlextModelsBase):
                 model_config = ConfigDict(populate_by_name=True)
 
                 eq: object | None = Field(
-                    default=None, description="Expected value (equality check)"
+                    default=None,
+                    description="Expected value (equality check)",
                 )
                 ne: object | None = Field(
-                    default=None, description="Value must not equal"
+                    default=None,
+                    description="Value must not equal",
                 )
                 is_: type[object] | tuple[type[object], ...] | None = Field(
                     default=None,
@@ -1308,14 +1320,17 @@ class FlextTestsModels(FlextModelsBase):
                     description="Empty check (True=must be empty, False=must not be empty)",
                 )
                 gt: float | int | None = Field(
-                    default=None, description="Greater than (numeric or length)"
+                    default=None,
+                    description="Greater than (numeric or length)",
                 )
                 gte: float | int | None = Field(
-                    default=None, description="Greater than or equal"
+                    default=None,
+                    description="Greater than or equal",
                 )
                 lt: float | int | None = Field(default=None, description="Less than")
                 lte: float | int | None = Field(
-                    default=None, description="Less than or equal"
+                    default=None,
+                    description="Less than or equal",
                 )
                 has: t.Tests.Matcher.ContainmentSpec | None = Field(
                     default=None,
@@ -1326,13 +1341,16 @@ class FlextTestsModels(FlextModelsBase):
                     description="Unified non-containment - value does NOT contain item(s) (replaces excludes)",
                 )
                 starts: str | None = Field(
-                    default=None, description="String starts with prefix"
+                    default=None,
+                    description="String starts with prefix",
                 )
                 ends: str | None = Field(
-                    default=None, description="String ends with suffix"
+                    default=None,
+                    description="String ends with suffix",
                 )
                 match: str | None = Field(
-                    default=None, description="Regex pattern (for strings)"
+                    default=None,
+                    description="Regex pattern (for strings)",
                 )
                 len: t.Tests.Matcher.LengthSpec | None = Field(
                     default=None,
@@ -1351,14 +1369,17 @@ class FlextTestsModels(FlextModelsBase):
                     description="Custom predicate function for validation",
                 )
                 msg: str | None = Field(
-                    default=None, description="Custom error message"
+                    default=None,
+                    description="Custom error message",
                 )
                 # Legacy parameters (deprecated)
                 contains: object | None = Field(
-                    default=None, description="Legacy: use has="
+                    default=None,
+                    description="Legacy: use has=",
                 )
                 excludes: object | None = Field(
-                    default=None, description="Legacy: use lacks="
+                    default=None,
+                    description="Legacy: use lacks=",
                 )
 
                 @model_validator(mode="before")
@@ -1384,7 +1405,8 @@ class FlextTestsModels(FlextModelsBase):
                 """Parameters for matcher fail() operations with Pydantic 2 validation."""
 
                 msg: str | None = Field(
-                    default=None, description="Custom error message"
+                    default=None,
+                    description="Custom error message",
                 )
                 has: t.Tests.Matcher.ExclusionSpec | None = Field(
                     default=None,
@@ -1395,13 +1417,16 @@ class FlextTestsModels(FlextModelsBase):
                     description="Unified non-containment - error does NOT contain substring(s) (replaces excludes)",
                 )
                 starts: str | None = Field(
-                    default=None, description="Error starts with prefix"
+                    default=None,
+                    description="Error starts with prefix",
                 )
                 ends: str | None = Field(
-                    default=None, description="Error ends with suffix"
+                    default=None,
+                    description="Error ends with suffix",
                 )
                 match: str | None = Field(
-                    default=None, description="Error matches regex"
+                    default=None,
+                    description="Error matches regex",
                 )
                 code: str | None = Field(default=None, description="Error code equals")
                 code_has: t.Tests.Matcher.ErrorCodeSpec | None = Field(
@@ -1415,10 +1440,12 @@ class FlextTestsModels(FlextModelsBase):
                 # Legacy parameters (deprecated)
                 error: str | None = Field(default=None, description="Legacy: use has=")
                 contains: str | Sequence[str] | None = Field(
-                    default=None, description="Legacy: use has="
+                    default=None,
+                    description="Legacy: use has=",
                 )
                 excludes: str | Sequence[str] | None = Field(
-                    default=None, description="Legacy: use lacks="
+                    default=None,
+                    description="Legacy: use lacks=",
                 )
 
                 @model_validator(mode="before")
@@ -1448,13 +1475,16 @@ class FlextTestsModels(FlextModelsBase):
                 model_config = ConfigDict(populate_by_name=True)
 
                 msg: str | None = Field(
-                    default=None, description="Custom error message"
+                    default=None,
+                    description="Custom error message",
                 )
                 eq: object | None = Field(
-                    default=None, description="Expected value (equality check)"
+                    default=None,
+                    description="Expected value (equality check)",
                 )
                 ne: object | None = Field(
-                    default=None, description="Value must not equal"
+                    default=None,
+                    description="Value must not equal",
                 )
                 is_: type[object] | tuple[type[object], ...] | None = Field(
                     default=None,
@@ -1475,14 +1505,17 @@ class FlextTestsModels(FlextModelsBase):
                     description="Empty check (True=must be empty, False=must not be empty)",
                 )
                 gt: float | int | None = Field(
-                    default=None, description="Greater than (numeric or length)"
+                    default=None,
+                    description="Greater than (numeric or length)",
                 )
                 gte: float | int | None = Field(
-                    default=None, description="Greater than or equal"
+                    default=None,
+                    description="Greater than or equal",
                 )
                 lt: float | int | None = Field(default=None, description="Less than")
                 lte: float | int | None = Field(
-                    default=None, description="Less than or equal"
+                    default=None,
+                    description="Less than or equal",
                 )
                 len: t.Tests.Matcher.LengthSpec | None = Field(
                     default=None,
@@ -1497,19 +1530,24 @@ class FlextTestsModels(FlextModelsBase):
                     description="Unified non-containment - value does NOT contain item(s) (replaces excludes)",
                 )
                 starts: str | None = Field(
-                    default=None, description="String starts with prefix"
+                    default=None,
+                    description="String starts with prefix",
                 )
                 ends: str | None = Field(
-                    default=None, description="String ends with suffix"
+                    default=None,
+                    description="String ends with suffix",
                 )
                 match: str | None = Field(
-                    default=None, description="Regex pattern (for strings)"
+                    default=None,
+                    description="Regex pattern (for strings)",
                 )
                 first: object | None = Field(
-                    default=None, description="Sequence first item equals"
+                    default=None,
+                    description="Sequence first item equals",
                 )
                 last: object | None = Field(
-                    default=None, description="Sequence last item equals"
+                    default=None,
+                    description="Sequence last item equals",
                 )
                 all_: t.Tests.Matcher.SequencePredicate | None = Field(
                     default=None,
@@ -1526,16 +1564,20 @@ class FlextTestsModels(FlextModelsBase):
                     description="Is sorted (True=ascending, or key function)",
                 )
                 unique: bool | None = Field(
-                    default=None, description="All items unique"
+                    default=None,
+                    description="All items unique",
                 )
                 keys: t.Tests.Matcher.KeySpec | None = Field(
-                    default=None, description="Mapping has all keys"
+                    default=None,
+                    description="Mapping has all keys",
                 )
                 lacks_keys: t.Tests.Matcher.KeySpec | None = Field(
-                    default=None, description="Mapping missing keys"
+                    default=None,
+                    description="Mapping missing keys",
                 )
                 values: Sequence[object] | None = Field(
-                    default=None, description="Mapping has all values"
+                    default=None,
+                    description="Mapping has all values",
                 )
                 kv: t.Tests.Matcher.KeyValueSpec | None = Field(
                     default=None,
@@ -1554,10 +1596,12 @@ class FlextTestsModels(FlextModelsBase):
                     description="Attribute equals (single tuple or mapping)",
                 )
                 ok: bool | None = Field(
-                    default=None, description="For FlextResult: assert success"
+                    default=None,
+                    description="For FlextResult: assert success",
                 )
                 error: str | Sequence[str] | None = Field(
-                    default=None, description="For FlextResult: error contains"
+                    default=None,
+                    description="For FlextResult: error contains",
                 )
                 deep: t.Tests.Matcher.DeepSpec | None = Field(
                     default=None,
@@ -1569,23 +1613,29 @@ class FlextTestsModels(FlextModelsBase):
                 )
                 # Legacy parameters (deprecated)
                 contains: object | None = Field(
-                    default=None, description="Legacy: use has="
+                    default=None,
+                    description="Legacy: use has=",
                 )
                 excludes: object | None = Field(
-                    default=None, description="Legacy: use lacks="
+                    default=None,
+                    description="Legacy: use lacks=",
                 )
                 length: int | None = Field(default=None, description="Legacy: use len=")
                 length_gt: int | None = Field(
-                    default=None, description="Legacy: use len=(min, max)"
+                    default=None,
+                    description="Legacy: use len=(min, max)",
                 )
                 length_gte: int | None = Field(
-                    default=None, description="Legacy: use len=(min, max)"
+                    default=None,
+                    description="Legacy: use len=(min, max)",
                 )
                 length_lt: int | None = Field(
-                    default=None, description="Legacy: use len=(min, max)"
+                    default=None,
+                    description="Legacy: use len=(min, max)",
                 )
                 length_lte: int | None = Field(
-                    default=None, description="Legacy: use len=(min, max)"
+                    default=None,
+                    description="Legacy: use len=(min, max)",
                 )
 
                 @model_validator(mode="before")
@@ -1612,10 +1662,12 @@ class FlextTestsModels(FlextModelsBase):
                             or "length_lte" in data
                         ):
                             min_len = data.pop(
-                                "length_gte", data.pop("length_gt", None)
+                                "length_gte",
+                                data.pop("length_gt", None),
                             )
                             max_len = data.pop(
-                                "length_lte", data.pop("length_lt", None)
+                                "length_lte",
+                                data.pop("length_lt", None),
                             )
                             if (
                                 min_len is not None or max_len is not None
@@ -1684,11 +1736,13 @@ class FlextTestsModels(FlextModelsBase):
                 path: str = Field(description="Path where match occurred or failed")
                 expected: object = Field(description="Expected value or predicate")
                 actual: object | None = Field(
-                    default=None, description="Actual value found"
+                    default=None,
+                    description="Actual value found",
                 )
                 matched: bool = Field(description="Whether match succeeded")
                 reason: str = Field(
-                    default="", description="Reason for match failure if matched=False"
+                    default="",
+                    description="Reason for match failure if matched=False",
                 )
 
             class Chain(FlextModelsBase.Value):

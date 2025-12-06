@@ -1053,7 +1053,8 @@ class TestFlextRuntime:
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
             service_result_raw: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]", component.container.get("preseed")
+                "r[t.GeneralValueType]",
+                component.container.get("preseed"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
             service_result: r[t.GeneralValueType] = service_result_raw
@@ -1066,7 +1067,8 @@ class TestFlextRuntime:
             # Mypy infers Result[Never] for generic methods without explicit type parameter
             # Annotate explicitly to help mypy
             factory_result_raw: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]", component.container.get("counter")
+                "r[t.GeneralValueType]",
+                component.container.get("counter"),
             )
             # Type narrowing: container.get returns r[T], cast to expected type
             factory_result: r[t.GeneralValueType] = factory_result_raw

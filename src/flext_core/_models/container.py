@@ -1,6 +1,7 @@
 """Container models - Dependency Injection registry models.
 
-TIER 0.5: Usa apenas stdlib + pydantic + _models/metadata.py (evita ciclos via __init__.py).
+TIER 0.5: Usa apenas stdlib + pydantic + _models/metadata.py
+(evita ciclos via __init__.py).
 
 This module contains Pydantic models for FlextContainer that implement
 ServiceRegistry and FactoryProvider Protocols.
@@ -25,7 +26,8 @@ from flext_core.utilities import u
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    # Re-export for external access - use centralized ValidationLevel from FlextConstants
+    # Re-export for external access - use centralized ValidationLevel
+    # from FlextConstants
     ValidationLevel = c.Cqrs.ValidationLevel
 
     class ServiceRegistration(BaseModel):
@@ -53,7 +55,9 @@ class FlextModelsContainer:
             t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
         ) = Field(
             ...,
-            description="Service instance (primitives, BaseModel, callable, or any object)",
+            description=(
+                "Service instance (primitives, BaseModel, callable, or any object)"
+            ),
         )
         registration_time: datetime = Field(
             default_factory=u.Generators.generate_datetime_utc,
@@ -80,7 +84,8 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
+            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
+            normalization.
             """
             return u.Model.normalize_to_metadata(v)
 
@@ -139,7 +144,8 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
+            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
+            normalization.
             """
             return u.Model.normalize_to_metadata(v)
 

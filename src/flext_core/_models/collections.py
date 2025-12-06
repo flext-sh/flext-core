@@ -72,9 +72,9 @@ def _normalize_to_general_value(val: object) -> t.GeneralValueType:
     if _is_dict_like(val):
         result: t.Types.ConfigurationDict = {}
         dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+        # Type guard ensures keys are str, so no isinstance check needed
         for k, v in dict_v.items():
-            if isinstance(k, str):
-                result[k] = _normalize_to_general_value(v)
+            result[k] = _normalize_to_general_value(v)
         return result
     # Handle list-like values recursively
     if _is_list_like(val):
@@ -115,6 +115,15 @@ class FlextModelsCollections:
             description="Map of category name to list of items",
         )
 
+        def __len__(self) -> int:
+            """Return total number of entries across all categories.
+
+            Returns:
+                int: Total number of entries
+
+            """
+            return sum(len(entries) for entries in self.categories.values())
+
         def get_entries(self, category: str) -> list[T]:
             """Get entries for a category, returns empty list if not found.
 
@@ -123,6 +132,34 @@ class FlextModelsCollections:
 
             """
             return self.categories.get(category, [])
+
+        def has_category(self, category: str) -> bool:
+            """Check if a category exists.
+
+            Args:
+                category: Category name to check
+
+            Returns:
+                bool: True if category exists, False otherwise
+
+            """
+            return category in self.categories
+
+        def get(self, category: str, default: list[T] | None = None) -> list[T]:
+            """Get entries for a category with optional default (dict-like interface).
+
+            Args:
+                category: Category name
+                default: Default value if category not found (None returns empty list)
+
+            Returns:
+                list[T]: List of entries for the category, or default/empty
+                list if not found.
+
+            """
+            if default is None:
+                return self.categories.get(category, [])
+            return self.categories.get(category, default)
 
         def add_entries(self, category: str, entries: Sequence[T]) -> None:
             """Add entries to a category.
@@ -178,6 +215,25 @@ class FlextModelsCollections:
 
             """
             return list(self.categories.keys())
+
+        @classmethod
+        def from_dict(
+            cls,
+            data: Mapping[str, Sequence[T]],
+        ) -> Self:
+            """Create Categories instance from dictionary.
+
+            Args:
+                data: Dictionary mapping category names to sequences of items
+
+            Returns:
+                Categories instance
+
+            """
+            instance = cls()
+            for category, entries in data.items():
+                instance.add_entries(category, entries)
+            return instance
 
         def to_dict(self) -> t.Types.StringSequenceGeneralValueDict:
             """Convert categories to dictionary representation.
@@ -294,7 +350,8 @@ class FlextModelsCollections:
                     else:
                         # Conflict resolution - delegate to helper method
                         result[key] = cls._resolve_aggregate_conflict(
-                            result[key], value
+                            result[key],
+                            value,
                         )
 
             # Normalize result dict to GeneralValueType
@@ -329,6 +386,72 @@ class FlextModelsCollections:
         """Base for results models (mutable)."""
 
         @classmethod
+        def _sum_numeric_values(
+            cls,
+            non_none: list[t.GeneralValueType],
+        ) -> int | float | None:
+            """Sum numeric values excluding booleans.
+
+            Args:
+                non_none: List of non-None values
+
+            Returns:
+                Sum of numeric values, or None if no numeric values found
+
+            """
+            numeric_values: list[int | float] = [
+                v
+                for v in non_none
+                if isinstance(v, (int, float)) and not isinstance(v, bool)
+            ]
+            return sum(numeric_values) if numeric_values else None
+
+        @classmethod
+        def _concatenate_lists(
+            cls,
+            non_none: list[t.GeneralValueType],
+        ) -> list[t.GeneralValueType]:
+            """Concatenate list-like values.
+
+            Args:
+                non_none: List of non-None values
+
+            Returns:
+                Combined list of normalized values
+
+            """
+            combined: list[t.GeneralValueType] = []
+            for v in non_none:
+                if _is_list_like(v):
+                    # Normalize each item to GeneralValueType
+                    for item in v:
+                        normalized = _normalize_to_general_value(item)
+                        combined.append(normalized)
+            return combined
+
+        @classmethod
+        def _merge_dicts(
+            cls,
+            non_none: list[t.GeneralValueType],
+        ) -> t.Types.ConfigurationDict:
+            """Merge dict-like values.
+
+            Args:
+                non_none: List of non-None values
+
+            Returns:
+                Merged dictionary
+
+            """
+            merged: t.Types.ConfigurationDict = {}
+            for v in non_none:
+                if _is_dict_like(v):
+                    # Type narrowing: v is Mapping[str, GeneralValueType]
+                    dict_v = dict(v.items()) if hasattr(v, "items") else dict(v)
+                    merged.update(dict_v)
+            return merged
+
+        @classmethod
         def _resolve_aggregate_conflict(
             cls,
             existing: t.GeneralValueType,
@@ -346,36 +469,28 @@ class FlextModelsCollections:
 
             """
             # Filter out None values for comparison
-            non_none = [v for v in [existing, value] if v is not None]
+            # Explicitly type as list to match helper method signatures
+            non_none: list[t.GeneralValueType] = [
+                v for v in [existing, value] if v is not None
+            ]
             if not non_none:
                 return None  # type: ignore[return-value]
 
             first_val = non_none[0]
-            # Sum numeric values
+            # Check for bool first - bool is a subclass of int in Python
+            # but we don't want to sum boolean values
+            if isinstance(first_val, bool):
+                return non_none[-1]
+            # Sum numeric values (but not bool)
             if isinstance(first_val, (int, float)):
-                numeric_values: list[int | float] = [
-                    v for v in non_none if isinstance(v, (int, float))
-                ]
-                return sum(numeric_values)
+                numeric_sum = cls._sum_numeric_values(non_none)
+                return numeric_sum if numeric_sum is not None else non_none[-1]
             # Concatenate lists
             if _is_list_like(first_val):
-                combined: list[t.GeneralValueType] = []
-                for v in non_none:
-                    if _is_list_like(v):
-                        # Normalize each item to GeneralValueType
-                        for item in v:
-                            normalized = _normalize_to_general_value(item)
-                            combined.append(normalized)
-                return combined
+                return cls._concatenate_lists(non_none)
             # Merge dicts
             if _is_dict_like(first_val):
-                merged: t.Types.ConfigurationDict = {}
-                for v in non_none:
-                    if _is_dict_like(v):
-                        # Type narrowing: v is Mapping[str, GeneralValueType]
-                        dict_v = dict(v.items()) if hasattr(v, "items") else dict(v)
-                        merged.update(dict_v)
-                return merged
+                return cls._merge_dicts(non_none)
             # Keep last for other types
             return non_none[-1]
 
@@ -431,7 +546,8 @@ class FlextModelsCollections:
                     else:
                         # Conflict resolution - delegate to helper method
                         result[key] = cls._resolve_aggregate_conflict(
-                            result[key], value
+                            result[key],
+                            value,
                         )
 
             # Normalize result dict to GeneralValueType
@@ -457,7 +573,7 @@ class FlextModelsCollections:
 
             Returns:
                 Resolved value (sum for numeric, concatenated for lists,
-                last for others)
+                last for others including booleans)
 
             """
             # Filter out None values for comparison
@@ -466,12 +582,18 @@ class FlextModelsCollections:
                 return None  # type: ignore[return-value]
 
             first_val = non_none[0]
-            # Sum numeric values
+            # Keep last for booleans (don't sum them - True + True = 2 which is invalid)
+            if isinstance(first_val, bool):
+                return non_none[-1]
+            # Sum numeric values (int, float only, not bool)
             if isinstance(first_val, (int, float)):
                 numeric_values: list[int | float] = [
-                    v for v in non_none if isinstance(v, (int, float))
+                    v
+                    for v in non_none
+                    if isinstance(v, (int, float)) and not isinstance(v, bool)
                 ]
-                return sum(numeric_values)
+                if numeric_values:
+                    return sum(numeric_values)
             # Concatenate lists
             if _is_list_like(first_val):
                 combined: list[t.GeneralValueType] = []
@@ -497,7 +619,7 @@ class FlextModelsCollections:
                 Merged options instance
 
             """
-            return self.merge_options(self, *options)
+            return self.__class__.merge_options(self, *options)
 
         @classmethod
         def merge_options(
@@ -546,6 +668,8 @@ class FlextModelsCollections:
 
         """
 
+        __hash__: None = None  # type: ignore[assignment]  # Explicitly mark as unhashable (mutable model)
+
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
             extra="forbid",
@@ -566,7 +690,8 @@ class FlextModelsCollections:
                 Config instance
 
             """
-            return cls(**mapping)
+            # Pydantic models accept **kwargs, but mypy needs help with type inference
+            return cls(**mapping)  # type: ignore[arg-type]
 
         def to_mapping(self) -> t.Types.ConfigurationMapping:
             """Convert Config to mapping.
@@ -577,11 +702,106 @@ class FlextModelsCollections:
             """
             return self.model_dump()
 
+        def to_dict(self) -> t.Types.ConfigurationDict:
+            """Convert Config to dictionary.
+
+            Returns:
+                ConfigurationDict: Dictionary representation
+
+            """
+            return self.model_dump()
+
+        @classmethod
+        def from_dict(
+            cls,
+            data: Mapping[str, t.GeneralValueType],
+        ) -> Self:
+            """Create Config instance from dictionary.
+
+            Args:
+                data: Dictionary with configuration data
+
+            Returns:
+                Config instance
+
+            """
+            # Pydantic models accept **kwargs, but mypy needs help with type inference
+            return cls(**data)  # type: ignore[arg-type]
+
+        def merge(self, other: Self) -> Self:
+            """Merge this config with another config.
+
+            Args:
+                other: Another config instance to merge with
+
+            Returns:
+                Merged config instance (other values override self)
+
+            """
+            self_dict = self.model_dump()
+            other_dict = other.model_dump()
+            merged_dict = {**self_dict, **other_dict}
+            return self.__class__(**merged_dict)
+
+        def diff(
+            self,
+            other: Self,
+        ) -> dict[str, tuple[t.GeneralValueType, t.GeneralValueType]]:
+            """Compute differences between this config and another.
+
+            Args:
+                other: Another config instance to compare with
+
+            Returns:
+                Dictionary mapping field names to (self_value, other_value) tuples
+                for fields that differ
+
+            """
+            self_dict = self.model_dump()
+            other_dict = other.model_dump()
+            differences: dict[str, tuple[t.GeneralValueType, t.GeneralValueType]] = {}
+            all_keys = set(self_dict.keys()) | set(other_dict.keys())
+            for key in all_keys:
+                self_val = self_dict.get(key)
+                other_val = other_dict.get(key)
+                if self_val != other_val:
+                    differences[key] = (self_val, other_val)
+            return differences
+
+        def with_updates(self, **updates: t.GeneralValueType) -> Self:
+            """Create a new config instance with updated values.
+
+            Args:
+                **updates: Field updates to apply
+
+            Returns:
+                New config instance with updates applied
+
+            """
+            current_dict = self.model_dump()
+            updated_dict = {**current_dict, **updates}
+            return self.__class__(**updated_dict)
+
+        def __eq__(self, other: object) -> bool:
+            """Compare configs by value.
+
+            Args:
+                other: Object to compare with
+
+            Returns:
+                True if configs are equal by value, False otherwise
+
+            """
+            if not isinstance(other, self.__class__):
+                return NotImplemented
+            return self.model_dump() == other.model_dump()
+
     class ParseOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options for string parsing operations."""
 
         strip: bool = Field(
-            default=True, description="Strip whitespace from components"
+            default=True,
+            description="Strip whitespace from components",
         )
         remove_empty: bool = Field(
             default=True,

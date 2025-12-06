@@ -958,7 +958,11 @@ class FlextRuntime:
                 str,
                 Callable[
                     [],
-                    (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
+                    (
+                        t.ScalarValue
+                        | Sequence[t.ScalarValue]
+                        | Mapping[str, t.ScalarValue]
+                    ),
                 ],
             ]
             | None = None,
@@ -1011,17 +1015,20 @@ class FlextRuntime:
                     )
 
             if resources:
-                for name, factory in resources.items():
+                for name, resource_factory in resources.items():
                     # register_resource is generic with TypeVar T
-                    # factory is Callable[[], t.GeneralValueType] from resources parameter
+                    # resource_factory is Callable[[], t.GeneralValueType] from resources parameter
                     # TypeVar T in register_resource can be inferred as t.GeneralValueType
-                    # Use explicit type annotation to help mypy infer the correct type
-                    factory_typed: Callable[[], t.GeneralValueType] = factory
-                    # Cast to satisfy generic signature - register_resource expects Callable[[], T]
-                    cls.register_resource(
+                    # mypy cannot infer generic type correctly for TypeVar T
+                    # t.GeneralValueType is compatible with T (TypeVar) at runtime
+                    # Use type: ignore for the generic type inference issue
+                    # Access via DependencyIntegration nested class
+                    # cls is DependencyIntegration class, register_resource is a staticmethod
+                    # Use cls directly since we're inside DependencyIntegration.create_container
+                    cls.register_resource(  # type: ignore[type-var]
                         di_container,
                         name,
-                        cast("Callable[[], t.GeneralValueType]", factory_typed),
+                        resource_factory,
                     )
 
             if wire_modules or wire_packages or wire_classes:

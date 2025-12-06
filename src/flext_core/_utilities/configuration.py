@@ -510,10 +510,12 @@ class FlextUtilitiesConfiguration:
         # Use getattr to help pyright infer types correctly
         if hasattr(singleton_class, "get_global_instance"):
             get_global_instance_attr = getattr(
-                singleton_class, "get_global_instance", None
+                singleton_class,
+                "get_global_instance",
+                None,
             )
             if get_global_instance_attr is not None and callable(
-                get_global_instance_attr
+                get_global_instance_attr,
             ):
                 get_global_instance_method: Callable[[], object] = cast(
                     "Callable[[], object]",

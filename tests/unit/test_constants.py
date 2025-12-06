@@ -26,6 +26,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core.constants import c
+from flext_tests import tm
 from flext_tests.utilities import FlextTestsUtilities
 
 
@@ -169,13 +170,13 @@ class TestFlextConstants:
         actual = FlextTestsUtilities.Tests.ConstantsHelpers.get_constant_by_path(
             scenario.path,
         )
-        assert actual == scenario.expected
+        tm.that(actual, eq=scenario.expected)
 
     @pytest.mark.parametrize("level", ConstantsScenarios.LOG_LEVELS)
     def test_core_logging_enum_levels(self, level: str) -> None:
         """Test logging level enum values."""
         actual = getattr(c.Settings.LogLevel, level)
-        assert actual == level
+        tm.that(actual, eq=level)
 
     @pytest.mark.parametrize(
         "scenario",
@@ -191,13 +192,19 @@ class TestFlextConstants:
             scenario.pattern_attr,
         )
         for valid_case in scenario.valid_cases:
-            assert compiled_pattern.match(valid_case) is not None, (
-                f"Expected '{valid_case}' to match pattern {scenario.pattern_attr}"
+            match_result = compiled_pattern.match(valid_case)
+            tm.that(
+                match_result,
+                none=False,
+                msg=f"Expected '{valid_case}' to match pattern {scenario.pattern_attr}",
             )
         for invalid_case in scenario.invalid_cases:
             pattern_name = scenario.pattern_attr
-            assert compiled_pattern.match(invalid_case) is None, (
-                f"Expected '{invalid_case}' to NOT match pattern {pattern_name}"
+            match_result = compiled_pattern.match(invalid_case)
+            tm.that(
+                match_result,
+                none=True,
+                msg=f"Expected '{invalid_case}' to NOT match pattern {pattern_name}",
             )
 
     @pytest.mark.parametrize(
@@ -213,30 +220,34 @@ class TestFlextConstants:
         expected_type: type,
     ) -> None:
         """Test that constants have correct types."""
-        assert isinstance(value, expected_type), (
-            f"Expected {value} to be {expected_type}"
+        tm.that(
+            value,
+            is_=expected_type,
+            msg=f"Expected {value} to be {expected_type}",
         )
 
     def test_type_safety_immutability(self) -> None:
         """Test that constants are effectively immutable."""
-        assert c.NAME == "FLEXT"
-        assert c.Platform.FLEXT_API_PORT == 8000
+        tm.that(c.NAME, eq="FLEXT")
+        tm.that(c.Platform.FLEXT_API_PORT, eq=8000)
 
     def test_type_safety_nested_access_patterns(self) -> None:
         """Test various nested access patterns work correctly."""
-        assert c.Errors.VALIDATION_ERROR == "VALIDATION_ERROR"
-        assert c.Reliability.DEFAULT_TIMEOUT_SECONDS == 30
-        assert c.Settings.LogLevel.ERROR == "ERROR"
+        tm.that(c.Errors.VALIDATION_ERROR, eq="VALIDATION_ERROR")
+        tm.that(c.Reliability.DEFAULT_TIMEOUT_SECONDS, eq=30)
+        tm.that(c.Settings.LogLevel.ERROR, eq="ERROR")
 
     @pytest.mark.parametrize("category", ConstantsScenarios.REQUIRED_CATEGORIES)
     def test_completeness_required_categories_exist(self, category: str) -> None:
         """Test that all required constant categories exist."""
-        assert hasattr(c, category), f"Missing category: {category}"
+        tm.that(hasattr(c, category), eq=True, msg=f"Missing category: {category}")
 
     def test_completeness_documentation_exists(self) -> None:
         """Test that constants have proper documentation."""
-        assert c.__doc__ is not None
-        assert "layer 0" in c.__doc__.lower()
+        tm.that(c.__doc__, none=False)
+        # Check for "layer 0" case-insensitively using match
+        doc_lower = c.__doc__.lower() if c.__doc__ else ""
+        tm.that("layer 0" in doc_lower, eq=True)
         documented_classes = [
             c.Network,
             c.Validation,
@@ -245,7 +256,11 @@ class TestFlextConstants:
             c.Logging,
         ]
         for cls in documented_classes:
-            assert cls.__doc__ is not None, f"Missing docstring for {cls.__name__}"
+            tm.that(
+                cls.__doc__,
+                none=False,
+                msg=f"Missing docstring for {cls.__name__}",
+            )
 
     def test_edge_cases_pattern_edge_cases(self) -> None:
         """Test regex patterns with edge cases."""
@@ -253,31 +268,34 @@ class TestFlextConstants:
             "Platform.PATTERN_EMAIL",
         )
         long_email = "a" * 64 + "@" + "b" * 63 + ".com"
-        assert len(long_email) <= c.Validation.MAX_EMAIL_LENGTH
-        assert email_pattern.match(long_email) is not None
+        tm.that(len(long_email), lte=c.Validation.MAX_EMAIL_LENGTH)
+        tm.that(email_pattern.match(long_email), none=False)
         phone_pattern = FlextTestsUtilities.Tests.ConstantsHelpers.compile_pattern(
             "Platform.PATTERN_PHONE_NUMBER",
         )
-        assert phone_pattern.match("+123456789012345") is not None
-        assert phone_pattern.match("+1234567890") is not None
+        tm.that(phone_pattern.match("+123456789012345"), none=False)
+        tm.that(phone_pattern.match("+1234567890"), none=False)
 
     def test_edge_cases_constant_ranges(self) -> None:
         """Test that numeric constants are in valid ranges."""
-        assert 0 <= c.Network.MIN_PORT <= c.Network.MAX_PORT <= 65535
-        assert c.Defaults.TIMEOUT > 0
-        assert c.Utilities.MAX_TIMEOUT_SECONDS > c.Defaults.TIMEOUT
-        assert 0 < c.Validation.MIN_NAME_LENGTH < c.Validation.MAX_NAME_LENGTH
+        tm.that(c.Network.MIN_PORT, gte=0)
+        tm.that(c.Network.MAX_PORT, lte=65535)
+        tm.that(c.Network.MIN_PORT, lte=c.Network.MAX_PORT)
+        tm.that(c.Defaults.TIMEOUT, gt=0)
+        tm.that(c.Utilities.MAX_TIMEOUT_SECONDS, gt=c.Defaults.TIMEOUT)
+        tm.that(c.Validation.MIN_NAME_LENGTH, gt=0)
+        tm.that(c.Validation.MIN_NAME_LENGTH, lt=c.Validation.MAX_NAME_LENGTH)
 
     def test_edge_cases_enum_completeness(self) -> None:
         """Test that enums contain all expected values."""
         for level in ConstantsScenarios.LOG_LEVELS:
-            assert hasattr(c.Settings.LogLevel, level)
-            assert getattr(c.Settings.LogLevel, level) == level
+            tm.that(hasattr(c.Settings.LogLevel, level), eq=True)
+            tm.that(getattr(c.Settings.LogLevel, level), eq=level)
 
     def test_integration_cross_category_consistency(self) -> None:
         """Test consistency across related constant categories."""
-        assert c.Defaults.TIMEOUT == c.Reliability.DEFAULT_TIMEOUT_SECONDS
-        assert c.Cqrs.DEFAULT_HANDLER_TYPE == c.Dispatcher.DEFAULT_HANDLER_MODE
+        tm.that(c.Defaults.TIMEOUT, eq=c.Reliability.DEFAULT_TIMEOUT_SECONDS)
+        tm.that(c.Cqrs.DEFAULT_HANDLER_TYPE, eq=c.Dispatcher.DEFAULT_HANDLER_MODE)
 
     def test_integration_pattern_and_validation_consistency(self) -> None:
         """Test that patterns work with validation constants."""
@@ -285,8 +303,8 @@ class TestFlextConstants:
             "Platform.PATTERN_EMAIL",
         )
         max_length_email = "a" * (c.Validation.MAX_EMAIL_LENGTH - 9) + "@test.com"
-        assert len(max_length_email) <= c.Validation.MAX_EMAIL_LENGTH
-        assert email_pattern.match(max_length_email) is not None
+        tm.that(len(max_length_email), lte=c.Validation.MAX_EMAIL_LENGTH)
+        tm.that(email_pattern.match(max_length_email), none=False)
 
 
 __all__ = ["TestFlextConstants"]

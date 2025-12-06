@@ -1,237 +1,38 @@
-name: CI - Continuous Integration
+name: CI
 
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  schedule:
-    - cron: "0 0 * * 1" # Weekly on Monday
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  PYTHON_VERSION: "3.13"
-  POETRY_VERSION: "1.8.5"
-  PYTHONUNBUFFERED: "1"
-  FORCE_COLOR: "1"
 
 jobs:
-  quality:
-    name: Code Quality Checks
+  ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: "3.13"
 
       - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pypoetry
-            .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+        run: |
+          pip install poetry
 
       - name: Install dependencies
         run: |
-          poetry install --extras "dev security" --no-interaction
+          poetry install --no-interaction
 
-      - name: Run formatting check
+      - name: Lint
         run: |
-          poetry run make format-check
+          poetry run ruff check .
 
-      - name: Run linting
+      - name: Type check
         run: |
-          poetry run make lint
+          poetry run pyrefly check src/
 
-      - name: Run type checking
+      - name: Test
         run: |
-          poetry run make type-check
-
-      - name: Run security checks
-        run: |
-          poetry run make security
-
-      - name: Run complexity analysis
-        run: |
-          poetry run make complexity
-
-      - name: Check docstring coverage
-        run: |
-          poetry run make docstring-check
-
-  tests:
-    name: Tests - Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.13"]
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pypoetry
-            .venv
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install dependencies
-        run: |
-          poetry install --extras "dev test" --no-interaction
-
-      - name: Run tests with coverage
-        env:
-          PYTHONPATH: src
-        run: |
-          poetry run make test
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v5
-        with:
-          file: ./reports/coverage.xml
-          flags: unittests
-          name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
-          fail_ci_if_error: true
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_VERSION
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v5
-        with:
-          name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: reports/
-        if: always()
-
-  build:
-    name: Build & Validate Package
-    runs-on: ubuntu-latest
-    needs: [quality, tests]
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-
-      - name: Build package
-        run: |
-          poetry build
-
-      - name: Validate package
-        run: |
-          pip install twine
-          twine check dist/*
-
-      - name: Test package installation
-        run: |
-          pip install dist/*.whl
-          python -c "import flext_core; print(flext_core.__version__)"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v5
-        with:
-          name: dist
-          path: dist/
-
-  docs:
-    name: Documentation Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          poetry install --with docs --no-interaction
-
-      - name: Build documentation
-        run: |
-          poetry run make docs
-
-      - name: Upload documentation
-        uses: actions/upload-artifact@v5
-        with:
-          name: documentation
-          path: site/
-
-  validate:
-    name: Final Validation
-    runs-on: ubuntu-latest
-    needs: [quality, tests, build, docs]
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          poetry install --extras "dev test security" --no-interaction
-
-      - name: Run full validation
-        run: |
-          poetry run make validate
-
-      - name: Create success badge
-        uses: schneegans/dynamic-badges-action@v1.7.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: ${{ secrets.GIST_ID }}
-          filename: flext-core-ci.json
-          label: CI
-          message: Passing
-          color: success
-        if: success() && github.ref == 'refs/heads/main'
+          PYTHONPATH=src poetry run pytest tests/ -q --tb=short

@@ -41,6 +41,8 @@ class FlextContainer(FlextRuntime, p.Container.DI):
 
     _global_instance: Self | None = None
     _global_lock: threading.RLock = threading.RLock()
+    # Instance attributes (initialized in __init__)
+    _context: p.Context.Ctx | None = None
 
     def __new__(
         cls,
@@ -166,15 +168,17 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         do not provide one during construction.
         """
         # Type narrowing: _context is initialized in initialize_registrations or here
-        # Check if _context exists and is not None
+        # _context is an instance attribute, initialized to None by default
+        # Check if _context is None (not initialized yet)
         if not hasattr(self, "_context") or self._context is None:
             context_created = FlextRuntime.create_context()
             # Type narrowing: create_context returns p.Context.Ctx
-            # Direct assignment is safe - _context is a regular instance attribute
+            # Direct assignment is safe - _context is class attribute
             self._context = context_created
             return context_created
         # Type narrowing: after check, _context is not None
-        return cast("p.Context.Ctx", self._context)
+        # Return the context value
+        return self._context
 
     def initialize_di_components(self) -> None:
         """Initialize DI components (bridge, services, resources, container).
@@ -199,8 +203,10 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         self._base_config_provider = base_config_provider
         self._user_config_provider = user_config_provider
         # Configure providers
-        self._config_provider.override(base_config_provider)
-        self._config_provider.override(user_config_provider)
+        # Type annotation: override accepts Configuration provider
+        # Call override for side effects (returns None)
+        _ = self._config_provider.override(base_config_provider)  # type: ignore[assignment]
+        _ = self._config_provider.override(user_config_provider)  # type: ignore[assignment]
         di_container.config = self._config_provider
 
     def initialize_registrations(
@@ -234,8 +240,9 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         )
         self._config = config_instance
         # Type narrowing: context can be None, but property handles None case
-        # Direct assignment is safe - _context is a regular instance attribute
+        # Direct assignment is safe - _context is an instance attribute
         # If context is None, property will create it lazily on first access
+        # _context is declared as p.Context.Ctx | None = None (instance attribute)
         self._context = context
 
     def _get_default_config(self) -> p.Configuration.Config:
@@ -269,10 +276,12 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         applied as separate providers to keep precedence explicit.
         """
         self._base_config_provider.from_dict(self._global_config.model_dump())
-        if self._user_overrides:
-            self._user_config_provider.from_dict(dict(self._user_overrides))
-        else:
-            self._user_config_provider.from_dict({})
+        # Type narrowing: _user_overrides is always ConfigurationDict after __init__
+        # (initialized as user_overrides or {}), so cast is safe
+        user_overrides_dict: t.Types.ConfigurationDict = (
+            self._user_overrides if self._user_overrides is not None else {}
+        )
+        self._user_config_provider.from_dict(dict(user_overrides_dict))
 
     def register_existing_providers(self) -> None:
         """Hydrate the dynamic container with current registrations."""
@@ -384,7 +393,12 @@ class FlextContainer(FlextRuntime, p.Container.DI):
                 "t.Types.ConfigurationDict", process_result.value
             )
             # Simple merge: override strategy - new values override existing ones
-            merged: t.Types.ConfigurationDict = dict(self._user_overrides)
+            # Type narrowing: _user_overrides is always ConfigurationDict after __init__
+            # Cast is safe because _user_overrides is initialized as user_overrides or {}
+            user_overrides_dict: t.Types.ConfigurationDict = cast(
+                "t.Types.ConfigurationDict", self._user_overrides or {}
+            )
+            merged: t.Types.ConfigurationDict = dict(user_overrides_dict)
             merged.update(processed_dict)
             self._user_overrides = merged
             # Sync validated overrides onto the container config model so
@@ -872,17 +886,31 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         # Structural typing - FlextContainer implements p.Container.DI
         # base_config already implements p.Configuration.Config protocol
         # cloned_services and cloned_factories contain ServiceRegistration/FactoryRegistration instances
+        # Type annotation: cloned_services is ServiceRegistrationDict (dict[str, object])
+        # but _create_scoped_instance expects dict[str, ServiceRegistration]
+        # Cast is safe because cloned_services contains ServiceRegistration instances
+        services_typed: dict[str, m.Container.ServiceRegistration] = cast(
+            "dict[str, m.Container.ServiceRegistration]", cloned_services
+        )
+        # Type annotation: cloned_factories is FactoryRegistrationDict (dict[str, object])
+        # but _create_scoped_instance expects dict[str, FactoryRegistration]
+        # Cast is safe because cloned_factories contains FactoryRegistration instances
+        factories_typed: dict[str, m.Container.FactoryRegistration] = cast(
+            "dict[str, m.Container.FactoryRegistration]", cloned_factories
+        )
+        # Type narrowing: _user_overrides is always ConfigurationDict after __init__
+        # Cast is safe because _user_overrides is initialized as user_overrides or {}
+        user_overrides_dict: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict", self._user_overrides or {}
+        )
+        user_overrides_copy: t.Types.ConfigurationDict = user_overrides_dict.copy()
         return FlextContainer._create_scoped_instance(
             config=base_config,
             context=scoped_context,
-            services=cast(
-                "dict[str, m.Container.ServiceRegistration]", cloned_services
-            ),
-            factories=cast(
-                "dict[str, m.Container.FactoryRegistration]", cloned_factories
-            ),
+            services=services_typed,
+            factories=factories_typed,
             resources=cloned_resources,
-            user_overrides=self._user_overrides.copy(),
+            user_overrides=user_overrides_copy,
             container_config=self._global_config.model_copy(deep=True),
         )
 

@@ -112,7 +112,8 @@ class FlextModelsBase:
             even if self is not used in the implementation.
 
             Returns:
-                str | None: ISO 8601 formatted timestamp string, or None if value is None.
+                str | None: ISO 8601 formatted timestamp string, or None if
+                    value is None.
 
             """
             return value.isoformat() if value else None

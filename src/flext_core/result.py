@@ -58,7 +58,9 @@ class FlextResult[T_co]:
         @staticmethod
         def alt(result: FlextResult[T], func: Callable[[str], str]) -> FlextResult[T]:
             """Apply alternative function on failure."""
-            return FlextResult[T](result.result.alt(func))
+            # Type annotation: alt returns Result[T, str]
+            alt_result: Result[T, str] = result.result.alt(func)
+            return FlextResult[T](alt_result)
 
         @staticmethod
         def lash(
@@ -71,7 +73,10 @@ class FlextResult[T_co]:
                 recovery = func(error)
                 return recovery.result
 
-            return FlextResult[T](result.result.lash(inner))
+            # Type annotation: lash returns Result[T, str]
+            # pyright: ignore[reportUnknownMemberType] - returns library method type inference
+            lash_result: Result[T, str] = result.result.lash(inner)  # type: ignore[assignment]
+            return FlextResult[T](lash_result)
 
     class Convert[T]:
         """Conversion operations: to/from Maybe, IO, IOResult."""
@@ -124,11 +129,13 @@ class FlextResult[T_co]:
                             ),
                         ):
                             unwrapped_value = cast(
-                                "t.GeneralValueType", unwrapped_value_raw
+                                "t.GeneralValueType",
+                                unwrapped_value_raw,
                             )
                         else:
                             unwrapped_value = cast(
-                                "t.GeneralValueType", str(unwrapped_value_raw)
+                                "t.GeneralValueType",
+                                str(unwrapped_value_raw),
                             )
                         return FlextResult[t.GeneralValueType].ok(unwrapped_value)
                     except Exception as unwrap_error:  # pragma: no cover
@@ -249,7 +256,13 @@ class FlextResult[T_co]:
                 return 42
 
         """
-        return FlextResult.Operations.safe(func)
+        # Type annotation: Operations.safe returns Callable[FlextResult[T]]
+        # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
+        safe_result = FlextResult.Operations.safe(func)  # type: ignore[assignment]
+        safe_wrapper: p.Utility.Callable[FlextResult[T]] = cast(
+            "p.Utility.Callable[FlextResult[T]]", safe_result
+        )
+        return safe_wrapper
 
     @property
     def is_success(self) -> bool:
@@ -359,7 +372,10 @@ class FlextResult[T_co]:
                 return Success(result.value)
             return Failure(result.error or "")
 
-        return FlextResult[U](self._result.bind(inner))
+        # Type annotation: bind returns Result[U, str]
+        # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
+        bind_result: Result[U, str] = self._result.bind(inner)  # type: ignore[assignment]
+        return FlextResult[U](bind_result)
 
     def map_error(self, func: Callable[[str], str]) -> Self:
         """Transform error message on failure.
@@ -463,7 +479,10 @@ class FlextResult[T_co]:
 
         """
         # Type narrowing: Monad.alt returns Self
-        return cast("Self", FlextResult.Monad.alt(self, func))
+        # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
+        alt_result_raw = FlextResult.Monad.alt(self, func)  # type: ignore[assignment]
+        alt_result: Self = cast("Self", alt_result_raw)
+        return alt_result
 
     def lash(self, func: Callable[[str], FlextResult[T_co]]) -> Self:
         """Apply recovery function on failure.
@@ -480,7 +499,10 @@ class FlextResult[T_co]:
 
         """
         # Type narrowing: Monad.lash returns Self
-        return cast("Self", FlextResult.Monad.lash(self, func))
+        # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
+        lash_result_raw = FlextResult.Monad.lash(self, func)  # type: ignore[assignment]
+        lash_result: Self = cast("Self", lash_result_raw)
+        return lash_result
 
     def to_io(self) -> IO[T_co]:
         """Convert to returns.io.IO.
@@ -495,7 +517,11 @@ class FlextResult[T_co]:
             e.ValidationError: If result is failure
 
         """
-        return FlextResult.Convert.to_io(self)
+        # Type annotation: Convert.to_io returns IO[T_co]
+        # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
+        io_result_raw = FlextResult.Convert.to_io(self)  # type: ignore[assignment]
+        io_result: IO[T_co] = cast("IO[T_co]", io_result_raw)
+        return io_result
 
     def to_io_result(self) -> IOResult[T_co, str]:
         """Convert to returns.io.IOResult."""
@@ -538,15 +564,23 @@ class FlextResult[T_co]:
     def accumulate_errors(cls, *results: FlextResult[U]) -> FlextResult[list[U]]:
         """Collect all successes, fail if any failure."""
         successes: list[U] = []
-        errors = []
+        errors: list[str] = []
         for result in results:
             if result.is_success:
-                successes.append(result.value)
+                # Type annotation: result.value is U when is_success
+                # pyright: ignore[reportUnknownMemberType] - result.value type inference limitation
+                value: U = cast("U", result.value)  # type: ignore[arg-type]
+                successes.append(value)  # type: ignore[arg-type]
             else:
-                errors.append(result.error or "Unknown error")
+                error_msg: str = result.error or "Unknown error"
+                errors.append(error_msg)
         if errors:
             return FlextResult[list[U]].fail("; ".join(errors))
-        return FlextResult[list[U]](Success(successes))
+        # Type annotation: Success constructor returns Result[list[U], str]
+        success_result: Result[list[U], str] = cast(
+            "Result[list[U], str]", Success(successes)
+        )
+        return FlextResult[list[U]](success_result)
 
     @classmethod
     def parallel_map[T, U](

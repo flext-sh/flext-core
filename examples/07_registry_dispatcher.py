@@ -164,7 +164,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(
-            dispatcher=cast("p.Application.CommandBus | None", dispatcher)
+            dispatcher=cast("p.Application.CommandBus | None", dispatcher),
         )
 
         # Register handlers
@@ -200,7 +200,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(
-            dispatcher=cast("p.Application.CommandBus | None", dispatcher)
+            dispatcher=cast("p.Application.CommandBus | None", dispatcher),
         )
 
         # Register handlers

@@ -234,7 +234,8 @@ class TestFlextExceptionsHierarchy:
             # The dict[str, MetadataAttributeValue] is compatible with **extra_kwargs: MetadataAttributeValue
             # Use type ignore for dict unpacking (runtime behavior is correct)
             metadata_typed: dict[str, t.MetadataAttributeValue] = cast(
-                "dict[str, t.MetadataAttributeValue]", metadata_kwargs
+                "dict[str, t.MetadataAttributeValue]",
+                metadata_kwargs,
             )
             error = scenario.exception_type(scenario.message, **metadata_typed)  # type: ignore[arg-type]
         else:
@@ -478,7 +479,8 @@ class TestExceptionFactory:
         # The dict[str, MetadataAttributeValue] is compatible with **kwargs: MetadataAttributeValue
         # Use type ignore for dict unpacking (runtime behavior is correct)
         kwargs_typed: dict[str, t.MetadataAttributeValue] = cast(
-            "dict[str, t.MetadataAttributeValue]", converted_kwargs
+            "dict[str, t.MetadataAttributeValue]",
+            converted_kwargs,
         )
         error = FlextExceptions.create(message, **kwargs_typed)  # type: ignore[arg-type]
         assert isinstance(error, expected_type)

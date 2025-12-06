@@ -305,7 +305,8 @@ class FlextUtilitiesValidation:
         if FlextRuntime.is_dict_like(component):
             return FlextUtilitiesValidation._normalize_dict_like(component, visited)
         if isinstance(component, (list, tuple)) and not isinstance(
-            component, (str, bytes)
+            component,
+            (str, bytes),
         ):
             # Use _normalize_sequence which returns dict with type marker
             return FlextUtilitiesValidation._normalize_sequence(component, visited)
@@ -2545,11 +2546,11 @@ class FlextUtilitiesValidation:
         if FlextRuntime.is_dict_like(value_typed):
             result_dict = (
                 r[t.Types.ConfigurationDict].ok(
-                    cast("t.Types.ConfigurationDict", value_typed)
+                    cast("t.Types.ConfigurationDict", value_typed),
                 )
                 if FlextUtilitiesGuards.is_type(value_typed, "dict_non_empty")
                 else r[t.Types.ConfigurationDict].fail(
-                    f"{error_template} non-empty dict"
+                    f"{error_template} non-empty dict",
                 )
             )
             # Cast to r[object] for return type compatibility
@@ -2559,11 +2560,11 @@ class FlextUtilitiesValidation:
         if FlextRuntime.is_list_like(value_typed):
             result_list = (
                 r[list[t.GeneralValueType]].ok(
-                    cast("list[t.GeneralValueType]", value_typed)
+                    cast("list[t.GeneralValueType]", value_typed),
                 )
                 if FlextUtilitiesGuards.is_type(value_typed, "list_non_empty")
                 else r[list[t.GeneralValueType]].fail(
-                    f"{error_template} non-empty list"
+                    f"{error_template} non-empty list",
                 )
             )
             # Cast to r[object] for return type compatibility
@@ -2633,7 +2634,7 @@ class FlextUtilitiesValidation:
             return cast("r[object]", result_fail)
 
         result_unknown = r[t.GeneralValueType].fail(
-            f"{context} unknown guard shortcut: {shortcut}"
+            f"{context} unknown guard shortcut: {shortcut}",
         )
         # Cast to r[object] for return type compatibility
         return cast("r[object]", result_unknown)

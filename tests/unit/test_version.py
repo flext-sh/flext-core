@@ -52,7 +52,9 @@ class TestFlextVersion:
         # If tuple has 2+ elements, minor should be int
         if len(version_info) >= 2 and isinstance(version_info[1], int):
             tm.that(
-                version_info[1], gt=-1, msg="Minor version must be non-negative integer"
+                version_info[1],
+                gt=-1,
+                msg="Minor version must be non-negative integer",
             )
 
     @pytest.mark.parametrize(
@@ -119,7 +121,9 @@ class TestFlextVersion:
             "url",
         ]
         tm.that(
-            info, has=required_keys, msg="Package info must contain all required keys"
+            info,
+            has=required_keys,
+            msg="Package info must contain all required keys",
         )
         # Validate key types (all should be strings)
         for key in required_keys:

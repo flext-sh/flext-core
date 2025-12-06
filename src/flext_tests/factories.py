@@ -233,10 +233,11 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 if params.overrides:
                     # Type narrowing: params.overrides is Mapping[str, GeneralValueType]
                     overrides_mapping = cast(
-                        "Mapping[str, t.Tests.TestResultValue]", params.overrides
+                        "Mapping[str, t.Tests.TestResultValue]",
+                        params.overrides,
                     )
                     overrides_dict: dict[str, t.Tests.TestResultValue] = dict(
-                        overrides_mapping
+                        overrides_mapping,
                     )
                     svc_data.update(overrides_dict)
                 # Create Service model using the proper test Service model
@@ -276,7 +277,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         if params.validate_fn and not params.validate_fn(instance):
             # FactoryModel is BaseModel, so cast is redundant
             return r[t.Tests.Factory.FactoryModel].fail(
-                c.Tests.Factory.ERROR_VALIDATION
+                c.Tests.Factory.ERROR_VALIDATION,
             )
 
         # Handle count > 1
@@ -314,7 +315,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                     result_dict[str(inst_id)] = inst
                 if params.as_result:
                     dict_result: r[dict[str, _BaseModel]] = r[dict[str, _BaseModel]].ok(
-                        result_dict
+                        result_dict,
                     )
                     return dict_result
                 return result_dict
@@ -349,7 +350,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 or u.Tests.Factory.generate_id()
             )
             single_result_dict: dict[str, _BaseModel] = {
-                str(inst_id): cast("_BaseModel", typed_instance)
+                str(inst_id): cast("_BaseModel", typed_instance),
             }
             if params.as_result:
                 single_dict_result: r[dict[str, _BaseModel]] = r[
@@ -362,7 +363,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         if params.as_mapping:
             key = params.as_mapping.get("0", "0")
             single_mapped_dict: dict[str, _BaseModel] = {
-                key: cast("_BaseModel", typed_instance)
+                key: cast("_BaseModel", typed_instance),
             }
             if params.as_result:
                 single_mapping_result: r[dict[str, _BaseModel]] = r[
@@ -830,7 +831,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         if params_result.is_failure:
             # Return validation error as FlextResult
             return r[builtins.list[T]].fail(
-                f"Invalid parameters: {params_result.error}"
+                f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
 
@@ -1119,7 +1120,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 except Exception as e:
                     if params.as_result:
                         return r[builtins.list[T]].fail(
-                            f"Failed to create instance: {e}"
+                            f"Failed to create instance: {e}",
                         )
                     raise
 
@@ -1846,11 +1847,13 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                     service_data["name"] = cast("t_core.GeneralValueType", name_value)
                 if amount_value is not None:
                     service_data["amount"] = cast(
-                        "t_core.GeneralValueType", amount_value
+                        "t_core.GeneralValueType",
+                        amount_value,
                     )
                 if enabled_value is not None:
                     service_data["enabled"] = cast(
-                        "t_core.GeneralValueType", enabled_value
+                        "t_core.GeneralValueType",
+                        enabled_value,
                     )
                 # Call parent with **service_data unpacking
                 # MyPy limitation: dict unpacking to **kwargs not fully supported for BaseModel.__init__
@@ -1864,7 +1867,8 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 # but _overrides expects dict[str, t.Tests.TestResultValue]
                 # Convert to TestResultValue type
                 self._overrides = cast(
-                    "dict[str, t.Tests.TestResultValue]", override_fields
+                    "dict[str, t.Tests.TestResultValue]",
+                    override_fields,
                 )
 
             def _validate_name_not_empty(self) -> r[bool]:

@@ -483,7 +483,8 @@ class TestFlextTestsFilesNewApi:
         # Type: dict[str, object] needs to be cast to ConfigurationMapping
         # create() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping", content_dict
+            "t_core.Types.ConfigurationMapping",
+            content_dict,
         )
 
         path = manager.create(content, "config.json")
@@ -499,7 +500,8 @@ class TestFlextTestsFilesNewApi:
         # Type: dict[str, object] needs to be cast to ConfigurationMapping
         # create() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping", content_dict
+            "t_core.Types.ConfigurationMapping",
+            content_dict,
         )
 
         path = manager.create(content, "config.yaml")
@@ -602,7 +604,8 @@ class TestFlextTestsFilesNewApi:
         # Type: dict[str, object] needs to be cast to ConfigurationMapping
         # create() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping", content_dict
+            "t_core.Types.ConfigurationMapping",
+            content_dict,
         )
         path = manager.create(content, "config.json")
 
@@ -618,7 +621,8 @@ class TestFlextTestsFilesNewApi:
         # Type: dict[str, object] needs to be cast to ConfigurationMapping
         # create() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping", content_dict
+            "t_core.Types.ConfigurationMapping",
+            content_dict,
         )
         path = manager.create(content, "config.yaml")
 
@@ -1436,7 +1440,8 @@ class TestCreateInStatic:
         # Type: dict[str, object] needs to be cast to ConfigurationMapping
         # create_in() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping", content_dict
+            "t_core.Types.ConfigurationMapping",
+            content_dict,
         )
         path = tf.create_in(content, "config.json", tmp_path, indent=4)
 

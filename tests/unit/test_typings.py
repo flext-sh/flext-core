@@ -103,7 +103,9 @@ class TestFlextTypings:
         """Test core TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var, none=False, msg=f"{test_case.name} must not be None"
+                test_case.type_var,
+                none=False,
+                msg=f"{test_case.name} must not be None",
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
@@ -120,7 +122,9 @@ class TestFlextTypings:
         """Test covariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var, none=False, msg=f"{test_case.name} must not be None"
+                test_case.type_var,
+                none=False,
+                msg=f"{test_case.name} must not be None",
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
@@ -143,7 +147,9 @@ class TestFlextTypings:
         """Test contravariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var, none=False, msg=f"{test_case.name} must not be None"
+                test_case.type_var,
+                none=False,
+                msg=f"{test_case.name} must not be None",
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
@@ -186,7 +192,9 @@ class TestFlextTypings:
         """Test ParamSpec is properly defined and exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var, none=False, msg=f"{test_case.name} must not be None"
+                test_case.type_var,
+                none=False,
+                msg=f"{test_case.name} must not be None",
             )
             tm.that(
                 isinstance(test_case.type_var, ParamSpec),

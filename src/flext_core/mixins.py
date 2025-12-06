@@ -133,7 +133,9 @@ class FlextMixins(FlextRuntime):
         is GeneralValueType to allow flexible error handling.
         """
         return r[t.GeneralValueType].fail(
-            error, error_code=error_code, error_data=error_data
+            error,
+            error_code=error_code,
+            error_data=error_data,
         )
 
     traverse = staticmethod(r.traverse)

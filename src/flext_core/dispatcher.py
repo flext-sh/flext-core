@@ -733,7 +733,7 @@ class FlextDispatcher(x):
         cb_result = self._apply_processor_circuit_breaker(name, processor)
         if cb_result.is_failure:
             return r[t.GeneralValueType].fail(
-                f"Processor '{name}' circuit breaker is open"
+                f"Processor '{name}' circuit breaker is open",
             )
 
         # Apply per-processor rate limiter
@@ -873,7 +873,7 @@ class FlextDispatcher(x):
             self._process_metrics["failed_processes"] += 1
             self._process_metrics["timeout_executions"] += 1
             return r[t.GeneralValueType].fail(
-                f"Processor '{name}' timeout after {timeout}s"
+                f"Processor '{name}' timeout after {timeout}s",
             )
 
     # ==================== LAYER 3: METRICS & AUDITING ====================
@@ -1045,16 +1045,18 @@ class FlextDispatcher(x):
                 # Type narrowing: extract handler from dict structure
                 # handler_entry is dict-like with "handler" key containing HandlerType
                 handler_entry_dict: t.Types.ConfigurationMapping = cast(
-                    "t.Types.ConfigurationMapping", handler_entry
+                    "t.Types.ConfigurationMapping",
+                    handler_entry,
                 )
                 extracted_handler: t.GeneralValueType = handler_entry_dict.get(
-                    "handler"
+                    "handler",
                 )
                 # Validate it's callable or BaseModel (valid HandlerType)
                 # HandlerType includes Callable and BaseModel instances
                 # Type narrowing: extracted_handler is HandlerType after validation
                 if callable(extracted_handler) or isinstance(
-                    extracted_handler, BaseModel
+                    extracted_handler,
+                    BaseModel,
                 ):
                     return cast("t.Handler.HandlerType", extracted_handler)
             # Return handler directly (it's already HandlerType)
@@ -1316,13 +1318,15 @@ class FlextDispatcher(x):
         enabled_raw = u.Mapper.get(middleware_config, "enabled", default=True)
         enabled_value = bool(enabled_raw) if enabled_raw is not None else False
 
+        # Convert middleware_id to string (handles None case)
+        # u.Mapper.get() without default returns GeneralValueType | None
+        # Type narrowing: middleware_id_value can be None or GeneralValueType
+        middleware_id_str: str = (
+            str(middleware_id_value) if middleware_id_value is not None else ""
+        )
+
         # Skip disabled middleware
         if not enabled_value:
-            # Fast fail: middleware_id must be str if provided
-            # u.Mapper.get() without default returns GeneralValueType | None, so check is necessary for runtime safety
-            middleware_id_str = (
-                "" if middleware_id_value is None else str(middleware_id_value)
-            )
             self.logger.debug(
                 "Skipping disabled middleware",
                 middleware_id=middleware_id_str,
@@ -1331,11 +1335,6 @@ class FlextDispatcher(x):
             return r[bool].ok(True)
 
         # Get actual middleware instance
-        # Fast fail: middleware_id must be str if provided
-        # u.Mapper.get() without default returns GeneralValueType | None, so check is necessary for runtime safety
-        middleware_id_str = (
-            str(middleware_id_value) if middleware_id_value is not None else ""
-        )
         middleware = self._middleware_instances.get(middleware_id_str)
         if middleware is None:
             return r[bool].ok(True)
@@ -3725,7 +3724,8 @@ class FlextDispatcher(x):
             # Type narrowing: attributes_value is dict-like, convert to ConfigurationMapping
             # ConfigurationMapping is compatible with dict and Mapping types
             attributes_dict: t.Types.ConfigurationMapping = cast(
-                "t.Types.ConfigurationMapping", attributes_value
+                "t.Types.ConfigurationMapping",
+                attributes_value,
             )
             return attributes_dict
 

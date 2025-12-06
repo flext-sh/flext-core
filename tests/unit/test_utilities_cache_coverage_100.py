@@ -304,7 +304,9 @@ class TestuCacheNormalizeComponent:
         result_tuple = cast("tuple[t.GeneralValueType, ...]", result)
         tm.that(len(result_tuple), eq=3, msg="Result tuple must have 3 items")
         tm.that(
-            set(result_tuple), eq={1, 2, 3}, msg="Result tuple must contain {1, 2, 3}"
+            set(result_tuple),
+            eq={1, 2, 3},
+            msg="Result tuple must contain {1, 2, 3}",
         )
 
     def test_normalize_set_with_nested_values(self) -> None:
