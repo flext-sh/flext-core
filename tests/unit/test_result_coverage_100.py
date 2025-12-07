@@ -23,12 +23,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from typing import cast
 
 import pytest
 from returns.io import IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 
-from flext_core import e, r, t
+from flext_core import e, p, r, t
 from flext_tests import u
 
 # =========================================================================
@@ -433,11 +434,18 @@ class TestrCoverage:
     def test_safe_decorator_success(self) -> None:
         """Test safe decorator wraps successful function."""
 
-        @r.safe
+        # Type annotation: safe accepts p.Utility.Callable[T], Callable[[], str] is compatible
+        # Cast to p.Utility.Callable[str] for type compatibility
         def success_func() -> str:
             return "success"
 
-        result: r[str] = success_func()
+        # Cast function to p.Utility.Callable[str] for type compatibility
+        success_func_typed: p.Utility.Callable[str] = cast(
+            "p.Utility.Callable[str]",
+            success_func,
+        )
+        wrapped_func = r.safe(success_func_typed)
+        result: r[str] = wrapped_func()
         u.Tests.Result.assert_success_with_value(
             result,
             "success",
@@ -447,11 +455,16 @@ class TestrCoverage:
         """Test safe decorator catches exceptions."""
         error_msg = "Function failed"
 
-        @r.safe
         def failing_func() -> str:
             raise ValueError(error_msg)
 
-        result: r[str] = failing_func()
+        # Cast function to p.Utility.Callable[str] for type compatibility
+        failing_func_typed: p.Utility.Callable[str] = cast(
+            "p.Utility.Callable[str]",
+            failing_func,
+        )
+        wrapped_func = r.safe(failing_func_typed)
+        result: r[str] = wrapped_func()
         u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and error_msg in result.error
 

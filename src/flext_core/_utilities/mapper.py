@@ -1855,10 +1855,12 @@ class FlextUtilitiesMapper:
             if isinstance(result, r) and result.is_success:
                 # Use .value directly - FlextResult never returns None on success
                 # Type annotation: result.value is T, but pyright needs explicit cast
-                result_value_attr_raw: object = result.value
+                # Type narrowing: result is r[T] and is_success is True, so value is T
+                # Use getattr to help pyright infer type
+                result_value_raw = getattr(result, "value", None)
                 result_value_attr: t.GeneralValueType = cast(
                     "t.GeneralValueType",
-                    result_value_attr_raw,
+                    result_value_raw,
                 )
                 result_value: T = cast("T", result_value_attr)
                 extracted: T | None = cast("T | None", result_value)
@@ -1967,15 +1969,16 @@ class FlextUtilitiesMapper:
                 )
                 # build_result is r[T], use .value if success
                 # Type annotation: build_result.value is T when success
-                # Use getattr to avoid pyright "unknown member type" error
-                build_result_value_attr_raw: object | None = (
-                    build_result.value
+                # Type narrowing: build_result is r[T] and is_success is True, so value is T
+                # Use getattr to help pyright infer type
+                build_result_value_raw = (
+                    getattr(build_result, "value", None)
                     if isinstance(build_result, r) and build_result.is_success
                     else None
                 )
                 build_result_value_attr: t.GeneralValueType | None = (
-                    cast("t.GeneralValueType", build_result_value_attr_raw)
-                    if build_result_value_attr_raw is not None
+                    cast("t.GeneralValueType", build_result_value_raw)
+                    if build_result_value_raw is not None
                     else None
                 )
                 build_result_value: T | None = (

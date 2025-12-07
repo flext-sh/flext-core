@@ -25,6 +25,7 @@ from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.mixins import x
 from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
 from flext_core.utilities import u
@@ -779,6 +780,120 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
 
         """
         return self.execute(input_data)
+
+    @staticmethod
+    def handler(
+        command: type[object],
+        *,
+        priority: int = c.Discovery.DEFAULT_PRIORITY,
+        timeout: float | None = c.Discovery.DEFAULT_TIMEOUT,
+        middleware: list[type[p.Application.Middleware]] | None = None,
+    ) -> t.Types.DecoratorType:
+        """Decorator to mark methods as handlers for commands.
+
+        Stores handler configuration as metadata on the decorated method,
+        enabling auto-discovery by FlextService and handler registries.
+
+        Args:
+            command: The command type this handler processes
+            priority: Handler priority (higher = processed first). Default: 0
+            timeout: Handler execution timeout in seconds. Default: None
+            middleware: List of middleware types to apply to this handler
+
+        Returns:
+            Decorator function for marking handler methods
+
+        Example:
+            >>> @FlextHandlers.handler(command=CreateUserCommand, priority=10)
+            ... def handle_create_user(self, cmd: CreateUserCommand) -> r[User]:
+            ...     return r[User].ok(self._create(cmd))
+
+        """
+
+        def decorator(func: t.Types.HandlerCallable) -> t.Types.HandlerCallable:
+            """Apply handler configuration metadata to function."""
+            config = m.Handler.DecoratorConfig(
+                command=command,
+                priority=priority,
+                timeout=timeout,
+                middleware=middleware or [],
+            )
+            setattr(func, c.Discovery.HANDLER_ATTR, config)
+            return func
+
+        return decorator
+
+    class Discovery:
+        """Auto-discovery mechanism for handler decorators.
+
+        Scans classes for methods decorated with @handler() and provides
+        utilities for finding and analyzing handler configurations.
+
+        This class enables zero-config handler registration in FlextService
+        by automatically discovering decorated methods at initialization time.
+        """
+
+        @staticmethod
+        def scan_class(
+            target_class: type,
+        ) -> list[tuple[str, m.Handler.DecoratorConfig]]:
+            """Scan class for methods decorated with @handler().
+
+            Introspects the class to find all methods with handler configuration
+            metadata, returning them sorted by priority (highest first).
+
+            Args:
+                target_class: Class to scan for handler decorators
+
+            Returns:
+                List of tuples (method_name, DecoratorConfig) sorted by priority
+
+            Example:
+                >>> handlers = FlextHandlers.Discovery.scan_class(MyService)
+                >>> for method_name, config in handlers:
+                ...     print(f"{method_name}: {config.command.__name__}")
+
+            """
+            handlers: list[tuple[str, m.Handler.DecoratorConfig]] = []
+            for name in dir(target_class):
+                method = getattr(target_class, name, None)
+                if hasattr(method, c.Discovery.HANDLER_ATTR):
+                    config: m.Handler.DecoratorConfig = getattr(
+                        method,
+                        c.Discovery.HANDLER_ATTR,
+                    )
+                    handlers.append((name, config))
+
+            # Sort by priority (descending)
+            return sorted(
+                handlers,
+                key=lambda x: x[1].priority,
+                reverse=True,
+            )
+
+        @staticmethod
+        def has_handlers(target_class: type) -> bool:
+            """Check if class has any handler-decorated methods.
+
+            Efficiently checks if a class contains any methods marked with
+            the @handler() decorator without scanning all methods.
+
+            Args:
+                target_class: Class to check for handlers
+
+            Returns:
+                True if class has at least one handler, False otherwise
+
+            Example:
+                >>> if FlextHandlers.Discovery.has_handlers(MyService):
+                ...     # Auto-setup dispatcher/registry
+                ...     service._setup_dispatcher()
+
+            """
+            return any(
+                hasattr(getattr(target_class, name, None), c.Discovery.HANDLER_ATTR)
+                for name in dir(target_class)
+            )
 
 
 # Alias for simplified usage

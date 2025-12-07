@@ -24,8 +24,8 @@ from pydantic import (
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.typings import t
-from flext_core.utilities import u
 
 
 class FlextModelsHandler:
@@ -141,6 +141,9 @@ class FlextModelsHandler:
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
             """Validate timestamp is in ISO 8601 format (using FlextUtilitiesValidation)."""
+            # Lazy import to avoid circular dependency
+            from flext_core.utilities import u  # noqa: PLC0415
+
             result = u.Validation.validate_iso8601_timestamp(
                 v,
                 allow_empty=True,
@@ -372,6 +375,64 @@ class FlextModelsHandler:
             # Use getattr to help pyright infer the type
             metrics_state_attr = getattr(self, "_metrics_state", None)
             return metrics_state_attr is not None and bool(metrics_state_attr)
+
+    class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
+        """Configuration extracted from @h.handler() decorator.
+
+        Used by handler discovery to auto-register handlers with FlextDispatcher.
+        Stores metadata about command binding, priority, timeout, and middleware chain.
+
+        Attributes:
+            command: The command type this handler processes.
+            priority: Handler priority (higher = processed first). Default: 0.
+            timeout: Handler execution timeout in seconds (None = no timeout).
+            middleware: List of middleware types to apply to this handler.
+
+        Examples:
+            >>> config = FlextModelsHandler.DecoratorConfig(
+            ...     command=CreateUserCommand,
+            ...     priority=10,
+            ...     timeout=30.0,
+            ...     middleware=[LoggingMiddleware, ValidationMiddleware],
+            ... )
+            >>> config.command
+            <class 'CreateUserCommand'>
+            >>> config.priority
+            10
+
+        """
+
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        command: Annotated[
+            type[object],
+            Field(
+                description="Command type this handler processes",
+            ),
+        ]
+        priority: Annotated[
+            int,
+            Field(
+                default=c.Discovery.DEFAULT_PRIORITY,
+                description="Handler priority (higher = processed first)",
+                ge=0,
+            ),
+        ] = c.Discovery.DEFAULT_PRIORITY
+        timeout: Annotated[
+            float | None,
+            Field(
+                default=c.Discovery.DEFAULT_TIMEOUT,
+                description="Handler execution timeout in seconds",
+                gt=0.0,
+            ),
+        ] = c.Discovery.DEFAULT_TIMEOUT
+        middleware: Annotated[
+            list[type[p.Application.Middleware]],
+            Field(
+                default_factory=list,
+                description="Middleware types to apply to this handler",
+            ),
+        ]
 
 
 __all__ = ["FlextModelsHandler"]

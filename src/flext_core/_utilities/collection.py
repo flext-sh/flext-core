@@ -308,9 +308,11 @@ class FlextUtilitiesCollection:
             if isinstance(items, dict):
                 items_dict: dict[str, T] = items
             else:
-                # Type annotation: dict() constructor from Mapping
-                # pyright: ignore[reportUnknownArgumentType,reportUnknownVariableType] - dict() from Mapping type inference limitation
-                items_dict = dict(items)  # type: ignore[arg-type,assignment]
+                # dict() constructor from Mapping[str, T] returns dict[str, T]
+                # Type narrowing: isinstance ensures items is Mapping[str, T]
+                # pyright: ignore[reportUnknownVariableType,reportUnknownArgumentType] - dict() from Mapping type inference limitation
+                items_dict_raw = dict(items.items())  # type: ignore[arg-type,assignment]
+                items_dict = cast("dict[str, T]", items_dict_raw)  # type: ignore[assignment]
             mapper_dict: Callable[[str, T], R] = cast("Callable[[str, T], R]", mapper)
             return FlextUtilitiesCollection._map_dict(items_dict, mapper_dict)
 
@@ -563,21 +565,22 @@ class FlextUtilitiesCollection:
 
         """
         if isinstance(items, (list, tuple)):
-            # Use explicit type annotation to help pyright
+            # Type narrowing: items is list[T] | tuple[T, ...], convert to list[object] for _filter_list
+            # _filter_list expects list[object] (invariant), so we need to cast
             # pyright: ignore[reportUnknownArgumentType] - list() from Sequence type inference limitation
-            list_items: list[object] = list(items)  # type: ignore[arg-type]
+            list_items: list[object] = cast("list[object]", list(items))  # type: ignore[arg-type]
             # Type narrowing: predicate and mapper need explicit types
             # _filter_list expects Callable[..., bool] (variadic), not Callable[[object], bool]
-            # No cast needed - predicate is already Callable[..., bool] | None
-            predicate_typed: Callable[..., bool] | None = predicate
+            # predicate is required (not None) for _filter_list
+            predicate_typed: Callable[..., bool] = predicate
             mapper_typed: Callable[..., object] | None = (
                 cast("Callable[..., object]", mapper) if mapper is not None else None
             )
             list_result = FlextUtilitiesCollection._filter_list(
                 list_items,
-                predicate_typed,  # type: ignore[arg-type]
+                predicate_typed,
                 mapper_typed,
-            )
+            )  # type: ignore[arg-type]
             return cast("list[T] | list[R]", list_result)
         if isinstance(items, (dict, Mapping)):
             # Convert to dict if needed - isinstance provides type narrowing
@@ -585,10 +588,10 @@ class FlextUtilitiesCollection:
             if isinstance(items, dict):
                 dict_items: dict[str, T] = items
             else:
-                # Type annotation: dict() constructor from Mapping
-                # pyright: ignore[reportUnknownArgumentType,reportUnknownVariableType] - dict() from Mapping type inference limitation
-                # Use cast to help type inference
-                dict_items_raw = dict(items)  # type: ignore[arg-type]
+                # dict() constructor from Mapping[str, T] returns dict[str, T]
+                # Type narrowing: isinstance ensures items is Mapping[str, T]
+                # pyright: ignore[reportUnknownVariableType,reportUnknownArgumentType] - dict() from Mapping type inference limitation
+                dict_items_raw = dict(items.items())  # type: ignore[arg-type,assignment]
                 dict_items = cast("dict[str, T]", dict_items_raw)  # type: ignore[assignment]
             # _filter_dict returns dict[str, T] | dict[str, R] based on mapper
             if mapper is not None:
@@ -733,7 +736,7 @@ class FlextUtilitiesCollection:
                 else None
             )
             # Type narrowing: items is Sequence[T], convert to list[T]
-            # Type annotation: list() constructor from Sequence
+            # list() constructor from Sequence[T] returns list[T]
             # pyright: ignore[reportUnknownArgumentType] - list() from Sequence type inference limitation
             items_list: list[T] = list(items)  # type: ignore[arg-type]
             # Type narrowing: processor and predicate need explicit types
@@ -759,11 +762,9 @@ class FlextUtilitiesCollection:
             if isinstance(items, dict):
                 items_dict: dict[str, T] = items
             else:
-                # Type annotation: dict() constructor from Mapping
-                # pyright: ignore[reportUnknownArgumentType,reportUnknownVariableType] - dict() from Mapping type inference limitation
-                # Use cast to help type inference
-                items_dict_raw = dict(items)  # type: ignore[arg-type]
-                items_dict = cast("dict[str, T]", items_dict_raw)  # type: ignore[assignment]
+                # dict() constructor from Mapping[str, T] returns dict[str, T]
+                # Type narrowing: isinstance ensures items is Mapping[str, T]
+                items_dict = dict(items.items())
             dict_processor: Callable[[str, T], R] = cast(
                 "Callable[[str, T], R]",
                 processor,

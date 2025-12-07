@@ -1031,7 +1031,6 @@ class FlextProtocols:
     StructlogLogger = Infrastructure.Logger.StructlogLogger
     Connection = Infrastructure.Connection
     Metadata = Infrastructure.Metadata
-    MetadataProtocol = Infrastructure.Metadata  # Backward compat alias
 
     # Utility protocols
     VariadicCallable = Utility.Callable

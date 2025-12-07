@@ -467,8 +467,18 @@ class DictValidators:
     @staticmethod
     def key_matches(key: str, validator: ValidatorSpec) -> Validator:
         """Validate dict key value matches validator."""
+        # Type annotation: validator is ValidatorSpec (Protocol), which is callable
+        # Pyright needs explicit cast to help with type inference in lambda
+        # ValidatorSpec implements __call__(value: object) -> bool
+        validator_callable: Callable[[object], bool] = cast(
+            "Callable[[object], bool]", validator
+        )
         return Validator(
-            predicate=lambda v: isinstance(v, dict) and key in v and validator(v[key]),
+            predicate=lambda v: (
+                isinstance(v, dict)
+                and key in v
+                and validator_callable(cast("object", v[key]))
+            ),
             description=f"dict.key_matches({key!r}, {getattr(validator, 'description', 'validator')})",
         )
 

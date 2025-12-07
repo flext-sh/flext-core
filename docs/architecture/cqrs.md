@@ -128,12 +128,12 @@ result = dispatcher.dispatch(CreateUserCommand(name="Alice", email="alice@exampl
 
 The dispatcher applies layered reliability controls:
 
-| Pattern          | Manager Class           | Configuration Source      |
-| ---------------- | ----------------------- | ------------------------- |
-| Circuit Breaker  | `CircuitBreakerManager` | `config.circuit_breaker_*`|
-| Rate Limiting    | `RateLimiterManager`    | `config.rate_limit_*`     |
-| Retry            | `RetryPolicy`           | `config.max_retry_*`      |
-| Timeout          | `TimeoutEnforcer`       | `config.enable_timeout_*` |
+| Pattern         | Manager Class           | Configuration Source       |
+| --------------- | ----------------------- | -------------------------- |
+| Circuit Breaker | `CircuitBreakerManager` | `config.circuit_breaker_*` |
+| Rate Limiting   | `RateLimiterManager`    | `config.rate_limit_*`      |
+| Retry           | `RetryPolicy`           | `config.max_retry_*`       |
+| Timeout         | `TimeoutEnforcer`       | `config.enable_timeout_*`  |
 
 ### Dispatch Flow
 
@@ -198,22 +198,22 @@ See [Service Patterns Guide](../guides/service-patterns.md) for service usage.
 
 ### Current State (V1)
 
-| Component       | Issue                         | Impact               |
-| --------------- | ----------------------------- | -------------------- |
-| FlextHandlers   | Manual `_metrics` dict        | Code duplication     |
-| FlextHandlers   | Manual `_context_stack`       | Not using FlextMixins|
-| FlextDispatcher | Managers hardcoded in `__init__`| No DI, hard to test |
+| Component       | Issue                            | Impact                |
+| --------------- | -------------------------------- | --------------------- |
+| FlextHandlers   | Manual `_metrics` dict           | Code duplication      |
+| FlextHandlers   | Manual `_context_stack`          | Not using FlextMixins |
+| FlextDispatcher | Managers hardcoded in `__init__` | No DI, hard to test   |
 
 ### Planned Phases
 
-| Phase | Focus                              | Status       | Target    |
-| ----- | ---------------------------------- | ------------ | --------- |
-| 0     | Document current stack             | ✅ Complete  | Nov 2025  |
-| 1     | `FlextMixins.CQRS` for metrics     | 🔴 Pending   | Dec 2025  |
-| 2     | Dispatcher DI via FlextContainer   | 🔴 Pending   | Jan 2026  |
-| 3     | Promote mixins to default usage    | 🔴 Pending   | Feb 2026  |
-| 4     | Align with `FlextResult.and_then`  | 🔴 Pending   | Mar 2026  |
-| 5     | Zero-ceremony handler scaffolding  | 🔴 Pending   | Apr 2026  |
+| Phase | Focus                             | Status      | Target   |
+| ----- | --------------------------------- | ----------- | -------- |
+| 0     | Document current stack            | ✅ Complete | Nov 2025 |
+| 1     | `FlextMixins.CQRS` for metrics    | 🔴 Pending  | Dec 2025 |
+| 2     | Dispatcher DI via FlextContainer  | 🔴 Pending  | Jan 2026 |
+| 3     | Promote mixins to default usage   | 🔴 Pending  | Feb 2026 |
+| 4     | Align with `FlextResult.and_then` | 🔴 Pending  | Mar 2026 |
+| 5     | Zero-ceremony handler scaffolding | 🔴 Pending  | Apr 2026 |
 
 ### Phase 1: FlextMixins.CQRS
 
@@ -299,15 +299,15 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
 
 ### Current State (V1) vs Target (V2)
 
-| Aspecto | V1 (Atual) | V2 (Target) |
-|---------|------------|-------------|
-| **Métricas** | `self._metrics` manual (50+ linhas) | `self.cqrs_metrics` via FlextMixins.CQRS |
-| **Contexto** | `self._context_stack` manual (30+ linhas) | `self.context` via FlextMixins.CQRS |
-| **Logging** | Inconsistente, pouco usado | `self.logger` automático |
-| **Tracking** | Manual ou inexistente | `self.track()` automático |
-| **Managers (Dispatcher)** | Hardcoded (700+ linhas) | Injetados via FlextContainer |
-| **Circuit Breaker** | `self._circuit_breaker` interno | `container.get("circuit_breaker")` |
-| **Rate Limiter** | `self._rate_limiter` interno | `container.get("rate_limiter")` |
+| Aspecto                   | V1 (Atual)                                | V2 (Target)                              |
+| ------------------------- | ----------------------------------------- | ---------------------------------------- |
+| **Métricas**              | `self._metrics` manual (50+ linhas)       | `self.cqrs_metrics` via FlextMixins.CQRS |
+| **Contexto**              | `self._context_stack` manual (30+ linhas) | `self.context` via FlextMixins.CQRS      |
+| **Logging**               | Inconsistente, pouco usado                | `self.logger` automático                 |
+| **Tracking**              | Manual ou inexistente                     | `self.track()` automático                |
+| **Managers (Dispatcher)** | Hardcoded (700+ linhas)                   | Injetados via FlextContainer             |
+| **Circuit Breaker**       | `self._circuit_breaker` interno           | `container.get("circuit_breaker")`       |
+| **Rate Limiter**          | `self._rate_limiter` interno              | `container.get("rate_limiter")`          |
 
 ### Timeline
 
@@ -377,12 +377,12 @@ V1 (Atual)           V2 Integration         V2 Complete
 
 > Esta seção rastreia as pendências de modernização do CQRS. Veja também os TODOs nos docstrings dos arquivos de código.
 
-| Item | Fase | Descrição | Referência |
-|------|------|-----------|------------|
-| Migrar handlers para `self.logger`, `self.track`, e `self.cqrs_metrics` | Phase 3 | Substituir métricas/contexto manuais por FlextMixins | `handlers.py` |
-| Forçar construção do dispatcher via container | Phase 2 | Uma vez que todos os call sites migrarem | `dispatcher.py` |
-| Atualizar `_dispatcher.reliability` para usar `FlextResult.and_then` | Phase 4 | Paridade de nomenclatura | `_dispatcher/reliability.py` |
-| Scaffolding CLI para handlers zero-ceremony | Phase 5 | Geração automática de handlers | CLI tools |
+| Item                                                                    | Fase    | Descrição                                            | Referência                   |
+| ----------------------------------------------------------------------- | ------- | ---------------------------------------------------- | ---------------------------- |
+| Migrar handlers para `self.logger`, `self.track`, e `self.cqrs_metrics` | Phase 3 | Substituir métricas/contexto manuais por FlextMixins | `handlers.py`                |
+| Forçar construção do dispatcher via container                           | Phase 2 | Uma vez que todos os call sites migrarem             | `dispatcher.py`              |
+| Atualizar `_dispatcher.reliability` para usar `FlextResult.and_then`    | Phase 4 | Paridade de nomenclatura                             | `_dispatcher/reliability.py` |
+| Scaffolding CLI para handlers zero-ceremony                             | Phase 5 | Geração automática de handlers                       | CLI tools                    |
 
 ---
 
@@ -422,23 +422,23 @@ Execute the full suite for accurate coverage metrics.
 
 Target metrics for CQRS components:
 
-| Component | Metric | Target |
-|-----------|--------|--------|
-| Handler throughput | ops/sec | > 50,000 |
-| Dispatcher avg latency | ms | < 1.0 |
-| Dispatcher P99 latency | ms | < 5.0 |
+| Component              | Metric  | Target   |
+| ---------------------- | ------- | -------- |
+| Handler throughput     | ops/sec | > 50,000 |
+| Dispatcher avg latency | ms      | < 1.0    |
+| Dispatcher P99 latency | ms      | < 5.0    |
 
 ### Success Metrics by Version
 
 > Tracking modernization progress from current state through V3.
 
-| Metric | Current | Target V2 | Target V3 |
-|--------|---------|-----------|-----------|
-| Lines in FlextHandlers | ~604 | ~500 | ~400 |
-| Lines in FlextDispatcher | ~1200 | ~900 | ~700 |
-| Code duplication % | ~30% | ~15% | ~5% |
-| Coverage handlers.py | 65% | 85% | 95% |
-| Coverage dispatcher.py | 60% | 80% | 90% |
+| Metric                   | Current | Target V2 | Target V3 |
+| ------------------------ | ------- | --------- | --------- |
+| Lines in FlextHandlers   | ~604    | ~500      | ~400      |
+| Lines in FlextDispatcher | ~1200   | ~900      | ~700      |
+| Code duplication %       | ~30%    | ~15%      | ~5%       |
+| Coverage handlers.py     | 65%     | 85%       | 95%       |
+| Coverage dispatcher.py   | 60%     | 80%       | 90%       |
 
 ---
 

@@ -240,10 +240,10 @@ class FlextConstants:
         >>> error_code = FlextConstants[error_path]
 
     5. Type-safe literal unions:
-        >>> handler_types: list[FlextConstants.HandlerType] = [
-        ...     FlextConstants.Cqrs.HandlerTypeLiteral.COMMAND,
-        ...     FlextConstants.Cqrs.HandlerTypeLiteral.QUERY,
-        ... ]
+        >>> handler_types: list[FlextConstants.Cqrs.HandlerType] = [
+            ...     FlextConstants.Cqrs.HandlerType.COMMAND,
+            ...     FlextConstants.Cqrs.HandlerType.QUERY,
+            ... ]
 
     6. Platform-specific constant selection:
         >>> if FlextConstants.Settings.Environment.DEVELOPMENT:
@@ -1753,46 +1753,38 @@ class FlextConstants:
         PATTERN_TUPLE_MAX_LENGTH: Final[int] = 3
         """Maximum length for tuple patterns in parsing operations."""
 
+    class Discovery:
+        """Constants for auto-discovery of handlers/factories.
+
+        Used by `@h.handler()` and `@d.factory()` decorators to mark methods
+        for automatic discovery and registration by FlextService and FlextContainer.
+
+        Attributes:
+            HANDLER_ATTR: Attribute name for storing handler decorator configuration.
+            FACTORY_ATTR: Attribute name for storing factory decorator configuration.
+            DEFAULT_PRIORITY: Default handler priority (higher = processed first).
+            DEFAULT_TIMEOUT: Default handler timeout (None = no timeout).
+
+        """
+
+        HANDLER_ATTR: Final[str] = "_flext_handler_config_"
+        """Attribute name for storing handler decorator configuration on methods."""
+
+        FACTORY_ATTR: Final[str] = "_flext_factory_config_"
+        """Attribute name for storing factory decorator configuration on functions."""
+
+        DEFAULT_PRIORITY: Final[int] = 0
+        """Default priority for handlers (0 = normal priority)."""
+
+        DEFAULT_TIMEOUT: Final[float | None] = None
+        """Default timeout for handlers (None = no timeout)."""
+
     # =========================================================================
-    # ROOT-LEVEL ALIASES (Minimize nesting for common constants)
-    # Usage: c.VALIDATION_ERROR instead of c.Errors.VALIDATION_ERROR
-    # Both access patterns work - aliases for convenience, namespaces for clarity
+    # NAMESPACE ACCESS
     # =========================================================================
-
-    # Error codes (most commonly used)
-    VALIDATION_ERROR = Errors.VALIDATION_ERROR
-    TYPE_ERROR = Errors.TYPE_ERROR
-    OPERATION_ERROR = Errors.OPERATION_ERROR
-    NOT_FOUND_ERROR = Errors.NOT_FOUND_ERROR
-    TIMEOUT_ERROR = Errors.TIMEOUT_ERROR
-    CONNECTION_ERROR = Errors.CONNECTION_ERROR
-    CONFIGURATION_ERROR = Errors.CONFIGURATION_ERROR
-    AUTHENTICATION_ERROR = Errors.AUTHENTICATION_ERROR
-    AUTHORIZATION_ERROR = Errors.AUTHORIZATION_ERROR
-    SERVICE_ERROR = Errors.SERVICE_ERROR
-
-    # Cqrs StrEnums (frequently used for typing)
-    HandlerType = Cqrs.HandlerType
-    CommonStatus = Cqrs.CommonStatus
-    HealthStatus = Cqrs.HealthStatus
-    ProcessingMode = Cqrs.ProcessingMode
-    ValidationLevel = Cqrs.ValidationLevel
-    OperationStatus = Cqrs.OperationStatus
-    SerializationFormat = Cqrs.SerializationFormat
-
-    # Settings StrEnums
-    LogLevel = Settings.LogLevel
-    Environment = Settings.Environment
-
-    # Domain StrEnums
-    DomainStatus = Domain.Status
-    Currency = Domain.Currency
-
-    # Reliability StrEnums
-    CircuitBreakerState = Reliability.CircuitBreakerState
-
-    # Exceptions StrEnums
-    FailureLevel = Exceptions.FailureLevel
+    # All constants are accessed via namespaces (e.g., FlextConstants.Errors.*)
+    # No aliases - use namespaces directly following FLEXT architecture patterns
+    # Example: FlextConstants.Errors.VALIDATION_ERROR (not FlextConstants.VALIDATION_ERROR)
 
 
 c = FlextConstants

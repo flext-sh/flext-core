@@ -35,7 +35,7 @@ class FlextModelsEntity:
     Uses FlextModelsBase for all base classes (Tier 0).
     """
 
-    class DomainEvent(
+    class DomainEvent(  # type: ignore[misc]
         FlextModelsBase.ArbitraryTypesModel,
         FlextModelsBase.IdentifiableMixin,
         FlextModelsBase.TimestampableMixin,
@@ -59,7 +59,7 @@ class FlextModelsEntity:
             description="Event metadata - maps to FieldMetadataMapping",
         )
 
-    class Core(
+    class Core(  # type: ignore[misc]
         FlextModelsBase.TimestampedModel,
         FlextModelsBase.IdentifiableMixin,
         FlextModelsBase.VersionableMixin,

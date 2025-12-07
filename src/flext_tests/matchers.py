@@ -633,10 +633,15 @@ class FlextTestsMatchers(FlextTestsUtilities):
                         or c.Tests.Matcher.ERR_OK_FAILED.format(error=value.error),
                     )
                 if not params.ok and value.is_success:
+                    # Type narrowing: value.is_success is True, so unwrap() returns T
+                    # Convert to string for format() to avoid type issues
+                    # Use cast to help pyright infer type
+                    unwrapped_value_error = value.unwrap()  # type: ignore[assignment]
+                    value_str: str = str(cast("object", unwrapped_value_error))
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(
-                            value=value.unwrap(),
+                            value=value_str,
                         ),
                     )
             # Legacy error parameter already converted to has by model validator

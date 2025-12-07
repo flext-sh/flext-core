@@ -8,11 +8,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from enum import StrEnum
 from functools import wraps
 from types import UnionType
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     Protocol,
     cast,
@@ -25,9 +25,6 @@ from pydantic import ConfigDict, validate_call
 
 from flext_core.result import r
 from flext_core.typings import P, R, t
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
 
 
 class FlextUtilitiesArgs:

@@ -53,6 +53,7 @@ def process_command(
 ```
 
 **Benefits**:
+
 - Eliminates circular import issues
 - Avoids Pydantic forward reference problems
 - Enables structural typing (duck typing)
@@ -99,6 +100,7 @@ assert result.is_success
 FLEXT-Core implements a layered dependency injection pattern following Clear Architecture principles, ensuring services are easily accessible via DI for downstream projects:
 
 **Architecture Layers**:
+
 - **L0.5 (Runtime Bridge)**: `FlextRuntime` is the single surface to access providers/containers/wiring (`Provide`, `inject`) and configuration helpers
 - **L1 (DI Integration)**: `FlextRuntime.DependencyIntegration` owns declarative containers, typed providers (Singleton/Factory/Resource), and `providers.Configuration`
 - **L1.5 (Service Runtime Bootstrap)**: `FlextRuntime.create_service_runtime` materializes config/context/container in one call with optional overrides, registrations, and wiring
@@ -106,6 +108,7 @@ FLEXT-Core implements a layered dependency injection pattern following Clear Arc
 - **L3 (Handlers/Dispatcher)**: Handlers are wired via `wire_modules`, and `@inject`/`Provide` decorators are re-exported by the runtime
 
 **Key Services Accessible via DI** (Auto-registered):
+
 - `FlextConfig`: Available as `"config"` - Configuration management with environment variables and validation
 - `FlextLogger`: Available as `"logger"` (factory) - Structured logging with context propagation
 - `FlextContext`: Available as `"context"` - Request/operation context and correlation IDs
@@ -252,6 +255,7 @@ TResult = TypeVar("TResult")  # FORBIDDEN - Use T from flext_core.typings
 ```
 
 **Available Type Aliases** (in `t.Types` namespace):
+
 - Configuration: `ConfigurationDict`, `ConfigurationMapping`, `StringConfigurationDictDict`
 - String mappings: `StringDict`, `StringIntDict`, `StringFloatDict`, `StringBoolDict`
 - Enum types: `StringStrEnumTypeDict`, `StringStrEnumInstanceDict`
@@ -262,6 +266,7 @@ TResult = TypeVar("TResult")  # FORBIDDEN - Use T from flext_core.typings
 - And many more... (see `typings.py` for complete list)
 
 **Available TypeVars** (from `flext_core.typings`):
+
 - Core generics: `T`, `T_co` (covariant), `T_contra` (contravariant)
 - Utilities: `U`, `R`, `E`
 - ParamSpec: `P` (for decorators)
@@ -294,12 +299,14 @@ def create_service(config: FlextConfig) -> FlextService[str]:  # AVOID
 ```
 
 **Protocol Rules**:
+
 - ✅ All protocol imports at top of file (no lazy imports)
 - ✅ No `TYPE_CHECKING` blocks for protocol imports
 - ✅ Use protocols for all interface type hints
 - ✅ Use concrete classes only for instantiation and inheritance
 
 **Type System Rules**:
+
 - ✅ Import: `from flext_core.typings import t, T, U` (NOT `from flext_core import typings as t`)
 - ✅ All `dict[str, ...]` patterns MUST use `t.Types.*` aliases
 - ✅ All TypeVars MUST be imported from `flext_core.typings` (no local definitions)
@@ -334,6 +341,7 @@ error_code = c.Errors.VALIDATION_ERROR
 ```
 
 **FlextResult Creation** (MANDATORY):
+
 ```python
 # ✅ CORRECT - Use r[T].ok() and r[T].fail() directly
 def process(value: str) -> r[str]:
@@ -375,14 +383,14 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 
 ### Quality Metrics
 
-| Category | Tool | Threshold | Status |
-|----------|------|-----------|--------|
-| **Coverage** | pytest-cov | 80% minimum | ✅ |
-| **Type Checking** | Pyrefly (Pyright-based) | ZERO errors | ✅ |
-| **Linting** | Ruff | ZERO violations | ✅ |
-| **Security** | Bandit + detect-secrets | ZERO high/medium issues | ✅ |
-| **Complexity** | Radon CC + MI | CC ≤ 10, MI ≥ A | ✅ |
-| **Docstrings** | interrogate | 80% coverage | ✅ |
+| Category          | Tool                    | Threshold               | Status |
+| ----------------- | ----------------------- | ----------------------- | ------ |
+| **Coverage**      | pytest-cov              | 80% minimum             | ✅     |
+| **Type Checking** | Pyrefly (Pyright-based) | ZERO errors             | ✅     |
+| **Linting**       | Ruff                    | ZERO violations         | ✅     |
+| **Security**      | Bandit + detect-secrets | ZERO high/medium issues | ✅     |
+| **Complexity**    | Radon CC + MI           | CC ≤ 10, MI ≥ A         | ✅     |
+| **Docstrings**    | interrogate             | 80% coverage            | ✅     |
 
 ### Detailed Quality Status
 
@@ -429,6 +437,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 ### Recent Improvements (January 2025)
 
 **Centralized Type System** ✅ **COMPLETED**:
+
 - ✅ All 66 Python files in `src/` using centralized types
 - ✅ All TypeVars imported from `flext_core.typings` (T, U, T_co, T_contra, E, R, P, etc.)
 - ✅ All complex types using `t.Types.*` aliases
@@ -436,11 +445,13 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 - ✅ Zero duplicate type definitions
 
 **Centralized Constants** ✅ **COMPLETED**:
+
 - ✅ `FlextConstants` fully organized with 20+ namespaces
 - ✅ All constants using `c.Namespace.CONSTANT` pattern
 - ✅ Zero duplication, fully typed with `Final`
 
 **flext_tests Module Standardization** ✅ **COMPLETED** (January 2025):
+
 - ✅ All modules follow FLEXT patterns with Python 3.13+ syntax
 - ✅ Short aliases work without lint complaints (`r`, `t`, `c`, `m`, `p`, `u`)
 - ✅ Result patterns work with protocols without casts
@@ -449,6 +460,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 - ✅ All 2561 tests passing with 81.40% coverage
 
 **Type Safety Improvements** ✅ **COMPLETED** (January 2025):
+
 - ✅ Pyrefly: 0 errors in `src/` and `tests/` (345 ignored - known limitations)
 - ✅ Pyright: 0 errors in core modules (`configuration.py`, `cache.py`, `domain.py`, `context.py`)
 - ✅ Fixed dynamic attribute access using `getattr` with `cast()`
@@ -457,6 +469,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 - ✅ Tests incrementally using `tt, tf, tb, tv, tm` from `flext_tests` for simplification
 
 **Key Patterns Established**:
+
 - ✅ Direct import: `from flext_core.typings import t, T, U` (required for MyPy)
 - ✅ All complex types use `t.Types.*` aliases
 - ✅ All TypeVars from `flext_core.typings` (no local definitions)

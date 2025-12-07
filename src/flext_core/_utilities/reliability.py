@@ -15,6 +15,7 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable
+from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -102,8 +103,12 @@ class FlextUtilitiesReliability:
         result_raw: r[TResult] | TResult,
     ) -> r[TResult]:
         """Convert operation result to FlextResult."""
-        if isinstance(result_raw, r):
-            return result_raw
+        # Check if result_raw is a FlextResult by checking for is_success/is_failure attributes
+        # isinstance doesn't work well with generic types, so use structural typing
+        if hasattr(result_raw, "is_success") and hasattr(result_raw, "is_failure"):
+            # Type narrowing: result_raw has FlextResult structure
+            # Cast to r[TResult] for type safety
+            return cast("r[TResult]", result_raw)
         # Type narrowing: result_raw is TResult (not a Result) at this point
         return r[TResult].ok(result_raw)
 
@@ -350,6 +355,8 @@ class FlextUtilitiesReliability:
         if not operations:
             return r[object].ok(value)
 
+        # Type annotation: current starts as object (value parameter)
+        # Will be updated through pipeline operations
         current: object = value
         for i, op in enumerate(operations):
             try:
@@ -364,9 +371,13 @@ class FlextUtilitiesReliability:
                                 f"Pipeline step {i} failed: {err_msg}",
                             )
                         # on_error == "skip": continue with previous value
+                        # Type narrowing: current remains unchanged (previous value)
                         continue
-                    current = result.value
+                    # Type narrowing: result is r[T] and is_success is True, so value is T
+                    # Type annotation: result.value is object-compatible (T extends object)
+                    current = cast("object", result.value)
                 else:
+                    # Type annotation: result is object (non-FlextResult return)
                     current = result
 
             except Exception as e:
@@ -438,7 +449,10 @@ class FlextUtilitiesReliability:
         current: object = value
         for op in ops:
             if isinstance(op, dict):
-                current = FlextUtilitiesMapper.build(current, ops=op)
+                # Type narrowing: op is dict, convert to ConfigurationDict for build()
+                # build() expects ops: t.Types.ConfigurationDict | None
+                op_dict = cast("t.Types.ConfigurationDict", op)
+                current = FlextUtilitiesMapper.build(current, ops=op_dict)
             elif callable(op):
                 current = op(current)
         return current
@@ -472,7 +486,8 @@ class FlextUtilitiesReliability:
 
             def piped(value: object) -> object:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
-                if isinstance(result, FlextResult):
+                # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
+                if isinstance(result, FlextResult):  # pyright: ignore[reportUnnecessaryIsInstance]
                     return result.value if result.is_success else result
                 return result
 

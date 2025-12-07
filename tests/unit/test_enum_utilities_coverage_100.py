@@ -22,6 +22,7 @@ from typing import ClassVar, cast
 import pytest
 
 from flext_core import t
+from flext_core.result import r
 from flext_tests import u
 
 
@@ -270,10 +271,16 @@ class TestuEnumParse:
                 "t.GeneralValueType",
                 scenario.expected_status,
             )
-            # Type ignore: mypy cannot infer TValue from StrEnum, but test is valid
-            u.Tests.Result.assert_success_with_value(
+            # Type annotation: mypy cannot infer TValue from StrEnum, specify explicitly
+            # Cast result to r[t.GeneralValueType] and expected_value to t.GeneralValueType
+            result_typed: r[t.GeneralValueType] = cast(
+                "r[t.GeneralValueType]",
                 result,
-                expected_status_cast,
+            )
+            expected_typed: t.GeneralValueType = expected_status_cast
+            u.Tests.Result.assert_success_with_value(
+                result_typed,
+                expected_typed,
             )
         else:
             u.Tests.Result.assert_result_failure(result)

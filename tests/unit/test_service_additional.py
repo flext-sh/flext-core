@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 
@@ -93,20 +93,30 @@ def test_clone_runtime_creates_isolated_scope() -> None:
     resolved_result: p.Foundation.Result[t.GeneralValueType] = cloned.container.get(
         "val",
     )
-    u.Tests.Result.assert_result_success(resolved_result)
+    # Type narrowing: assert_result_success accepts r[TResult], protocol Result is compatible
+    # Cast to r[t.GeneralValueType] for type compatibility
+    resolved_result_typed: r[t.GeneralValueType] = cast(
+        "r[t.GeneralValueType]",
+        resolved_result,
+    )
+    u.Tests.Result.assert_result_success(resolved_result_typed)
     assert resolved_result.value == "data"
 
 
 def test_access_facade_exposes_components() -> None:
     """Service access facade should expose registry/config/context/result."""
     service = RuntimeCloneService()
+    # Type narrowing: access returns _ServiceAccess, not Callable
+    # Access is a property that returns _ServiceAccess instance
     access = service.access
-
-    assert access.cqrs is not None
-    assert access.config is service.config
-    assert access.context is service.context
-    assert access.result is r
-    registry = access.registry
+    # Type annotation: access is _ServiceAccess (not Callable)
+    # Use type: ignore[attr-defined] because mypy doesn't recognize _ServiceAccess attributes
+    # but they exist at runtime (computed_field properties)
+    assert access.cqrs is not None  # type: ignore[attr-defined]
+    assert access.config is service.config  # type: ignore[attr-defined]
+    assert access.context is service.context  # type: ignore[attr-defined]
+    assert access.result is r  # type: ignore[attr-defined]
+    registry = access.registry  # type: ignore[attr-defined]
     assert registry is not None
     info: Mapping[str, t.FlexibleValue] = service.get_service_info()
     assert info["service_type"] == "RuntimeCloneService"

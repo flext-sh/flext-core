@@ -33,6 +33,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import c
 
+# Import models for deprecated RetryConfig alias (at module level to avoid E402)
+# This import is deferred to end of file to avoid circular dependency
+# TYPE_CHECKING guard not needed - this is a runtime import for backward compatibility
+
 # ============================================================================
 # Module-Level TypeVars - Used in flext-core src/
 # ============================================================================
@@ -134,7 +138,7 @@ class FlextTypes:
       (HandlerCallable, MiddlewareConfig, AcceptableMessageType, ConditionCallable,
       HandlerType)
 
-    - **Config**: Configuration models (RetryConfig BaseModel)
+    - **Config**: Configuration type aliases (RetryConfig deprecated - use m.Config.RetryConfiguration)
 
     - **Dispatcher**: Dispatcher type definitions for message dispatching
       (DispatcherConfig TypedDict)
@@ -442,56 +446,46 @@ class FlextTypes:
         )
 
     class Config:
-        """Configuration models for operational settings."""
+        """Configuration models for operational settings.
 
-        class RetryConfig(BaseModel):
-            """Configuration for retry operations with exponential backoff.
+        Note: BaseModel classes (like RetryConfig) have been moved to models.py
+        per FLEXT architecture standards. Use m.Config.RetryConfiguration instead.
+        This namespace now only contains type aliases, not model classes.
 
-            Business Rule: Defines retry behavior for operations that may fail and
-            need automatic retry with configurable backoff strategies. Uses Pydantic 2
-            BaseModel with frozen=True for immutability. All fields are validated at
-            model instantiation, ensuring valid retry configurations.
+        **Deprecated Types**:
+        - RetryConfig: Use m.Config.RetryConfiguration instead
+        """
 
-            Audit Implication: Retry configuration is immutable after creation, ensuring
-            consistent retry behavior throughout operation lifecycle. All retry attempts
-            are logged with configuration details for audit trail completeness. Used by
-            reliability systems for configurable retry patterns.
+        # Deprecated: RetryConfig moved to models.py
+        # This is a type alias that points to the correct model
+        # Use m.Config.RetryConfiguration in new code
+        # Lazy initialization via __getattr__ to avoid circular import
+        _retry_config_initialized: ClassVar[bool] = False
+        RetryConfig: ClassVar[type[BaseModel]]
+        """Deprecated: Use m.Config.RetryConfiguration instead.
 
-            Defines retry behavior for operations that may fail and need
-            automatic retry with configurable backoff strategies.
+        This type alias is provided for backward compatibility only.
+        All new code should use m.Config.RetryConfiguration from models.py.
+        Initialized lazily on first access to avoid circular imports.
+        """
+
+        @classmethod
+        def __getattr__(cls, name: str) -> type[BaseModel]:
+            """Lazy initialization of RetryConfig to avoid circular import.
+
+            Args:
+                name: Attribute name (should be "RetryConfig")
+
+            Returns:
+                RetryConfiguration class from models.py
+
             """
-
-            model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-
-            # Retry attempt limits
-            max_attempts: int = Field(
-                ge=c.Reliability.RETRY_COUNT_MIN,
-                description="Maximum retry attempts",
-            )
-
-            # Timing configuration
-            initial_delay_seconds: float = Field(
-                default=float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
-                gt=c.INITIAL_TIME,
-                description="Initial delay in seconds",
-            )
-            max_delay_seconds: float = Field(
-                gt=c.INITIAL_TIME,
-                description="Maximum delay in seconds",
-            )
-
-            # Backoff strategy configuration
-            exponential_backoff: bool = Field(description="Enable exponential backoff")
-            backoff_multiplier: float = Field(
-                default=c.Reliability.RETRY_BACKOFF_BASE,
-                gt=c.INITIAL_TIME,
-                description="Backoff multiplier",
-            )
-
-            # Exception handling configuration
-            retry_on_exceptions: list[type[Exception]] = Field(
-                description="Exception types to retry on",
-            )
+            if name == "RetryConfig" and not cls._retry_config_initialized:
+                _init_retry_config_alias()
+                cls._retry_config_initialized = True
+                return cls.RetryConfig
+            msg = f"'{cls.__name__}' object has no attribute '{name}'"
+            raise AttributeError(msg)
 
     class Dispatcher:
         """Dispatcher type definitions for message dispatching and processing."""
@@ -1075,3 +1069,18 @@ FlextTypes.Core.Handler = FlextTypes.Handler
 FlextTypes.Core.Config = FlextTypes.Config
 FlextTypes.Core.Dispatcher = FlextTypes.Dispatcher
 FlextTypes.Core.Types = FlextTypes.Types
+
+
+# Deprecated: RetryConfig moved to models.py
+# Assign RetryConfiguration from models.py for backward compatibility
+# This allows t.Config.RetryConfig to work but emits deprecation warning
+# Lazy initialization via __getattr__ in Config class to avoid circular import
+def _init_retry_config_alias() -> None:
+    """Initialize deprecated RetryConfig alias for backward compatibility.
+
+    This function is called lazily when RetryConfig is first accessed via __getattr__,
+    not at module import time, to avoid circular import issues.
+    """
+    from flext_core.models import m  # noqa: PLC0415
+
+    FlextTypes.Config.RetryConfig = m.Config.RetryConfiguration

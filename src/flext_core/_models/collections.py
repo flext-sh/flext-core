@@ -10,14 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Self, TypeGuard
+from typing import Self, TypeGuard
 
 from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelsBase
-
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 # Tier 0.5 - Helper functions inline (avoid FlextRuntime import)
@@ -279,7 +277,8 @@ class FlextModelsCollections:
             # Filter out None values for comparison
             non_none = [v for v in [existing, value] if v is not None]
             if not non_none:
-                return None  # type: ignore[return-value]
+                # None is part of GeneralValueType, so this is valid
+                return None
 
             first_val = non_none[0]
             # Sum numeric values
@@ -474,7 +473,8 @@ class FlextModelsCollections:
                 v for v in [existing, value] if v is not None
             ]
             if not non_none:
-                return None  # type: ignore[return-value]
+                # None is part of GeneralValueType, so this is valid
+                return None
 
             first_val = non_none[0]
             # Check for bool first - bool is a subclass of int in Python
@@ -579,7 +579,8 @@ class FlextModelsCollections:
             # Filter out None values for comparison
             non_none = [v for v in [existing, value] if v is not None]
             if not non_none:
-                return None  # type: ignore[return-value]
+                # None is part of GeneralValueType, so this is valid
+                return None
 
             first_val = non_none[0]
             # Keep last for booleans (don't sum them - True + True = 2 which is invalid)
@@ -690,23 +691,16 @@ class FlextModelsCollections:
                 Config instance
 
             """
-            # Pydantic models accept **kwargs, but mypy needs help with type inference
-            return cls(**mapping)  # type: ignore[arg-type]
+            # Pydantic v2: Use model_validate for type-safe creation from mapping
+            # Convert Mapping to dict for model_validate
+            mapping_dict = dict(mapping)
+            return cls.model_validate(mapping_dict)
 
         def to_mapping(self) -> t.Types.ConfigurationMapping:
             """Convert Config to mapping.
 
             Returns:
                 ConfigurationMapping: Mapping representation
-
-            """
-            return self.model_dump()
-
-        def to_dict(self) -> t.Types.ConfigurationDict:
-            """Convert Config to dictionary.
-
-            Returns:
-                ConfigurationDict: Dictionary representation
 
             """
             return self.model_dump()
@@ -725,8 +719,10 @@ class FlextModelsCollections:
                 Config instance
 
             """
-            # Pydantic models accept **kwargs, but mypy needs help with type inference
-            return cls(**data)  # type: ignore[arg-type]
+            # Pydantic v2: Use model_validate for type-safe creation from dict
+            # Convert Mapping to dict for model_validate
+            data_dict = dict(data)
+            return cls.model_validate(data_dict)
 
         def merge(self, other: Self) -> Self:
             """Merge this config with another config.

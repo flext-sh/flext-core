@@ -20,7 +20,22 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.typings import t
-from flext_core.utilities import u
+
+
+def _generate_datetime_utc() -> datetime:
+    """Generate UTC datetime using lazy import to avoid circular dependency."""
+    # Lazy import to avoid circular dependency
+    from flext_core.utilities import u  # noqa: PLC0415
+
+    return u.Generators.generate_datetime_utc()
+
+
+def _normalize_to_metadata(v: t.GeneralValueType) -> FlextModelsBase.Metadata:
+    """Normalize value to Metadata using lazy import to avoid circular dependency."""
+    # Lazy import to avoid circular dependency
+    from flext_core.utilities import u  # noqa: PLC0415
+
+    return u.Model.normalize_to_metadata(v)
 
 
 class FlextModelsContainer:
@@ -60,7 +75,7 @@ class FlextModelsContainer:
             ),
         )
         registration_time: datetime = Field(
-            default_factory=u.Generators.generate_datetime_utc,
+            default_factory=_generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
         metadata: FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None = (
@@ -87,7 +102,7 @@ class FlextModelsContainer:
             Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
             normalization.
             """
-            return u.Model.normalize_to_metadata(v)
+            return _normalize_to_metadata(v)
 
     class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
@@ -115,7 +130,7 @@ class FlextModelsContainer:
             description="Factory function that creates service instances",
         )
         registration_time: datetime = Field(
-            default_factory=u.Generators.generate_datetime_utc,
+            default_factory=_generate_datetime_utc,
             description="UTC timestamp when factory was registered",
         )
         is_singleton: bool = Field(
@@ -147,7 +162,7 @@ class FlextModelsContainer:
             Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
             normalization.
             """
-            return u.Model.normalize_to_metadata(v)
+            return _normalize_to_metadata(v)
 
     class ResourceRegistration(BaseModel):
         """Model for lifecycle-managed resource registrations.
@@ -172,7 +187,7 @@ class FlextModelsContainer:
             description="Factory returning the lifecycle-managed resource",
         )
         registration_time: datetime = Field(
-            default_factory=u.Generators.generate_datetime_utc,
+            default_factory=_generate_datetime_utc,
             description="UTC timestamp when resource was registered",
         )
         metadata: FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None = (
@@ -186,7 +201,7 @@ class FlextModelsContainer:
         @classmethod
         def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
             """Normalize resource metadata to Metadata model."""
-            return u.Model.normalize_to_metadata(v)
+            return _normalize_to_metadata(v)
 
     class ContainerConfig(BaseModel):
         """Model for container configuration.
@@ -235,6 +250,46 @@ class FlextModelsContainer:
         lazy_loading: bool = Field(
             default=True,
             description="Enable lazy loading of services",
+        )
+
+    class FactoryDecoratorConfig(BaseModel):
+        """Configuration extracted from @d.factory() decorator.
+
+        Used by factory discovery to auto-register factories with FlextContainer.
+        Stores metadata about factory name, singleton behavior, and lazy loading.
+
+        Attributes:
+            name: The name to register this factory under in the container.
+            singleton: Whether the factory creates singleton instances. Default: False.
+            lazy: Whether to defer factory invocation until first use. Default: True.
+
+        Examples:
+            >>> config = FlextModelsContainer.FactoryDecoratorConfig(
+            ...     name="database_service",
+            ...     singleton=True,
+            ...     lazy=False,
+            ... )
+            >>> config.name
+            'database_service'
+            >>> config.singleton
+            True
+
+        """
+
+        model_config = ConfigDict(frozen=True)
+
+        name: str = Field(
+            ...,
+            min_length=c.Reliability.RETRY_COUNT_MIN,
+            description="Name to register this factory under in the container",
+        )
+        singleton: bool = Field(
+            default=False,
+            description="Whether factory creates singleton instances",
+        )
+        lazy: bool = Field(
+            default=True,
+            description="Whether to defer factory invocation until first use",
         )
 
 

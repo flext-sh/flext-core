@@ -153,12 +153,19 @@ class DispatcherScenarios:
 # Helper function to create test dispatcher with default processors
 def create_test_dispatcher_with_defaults() -> FlextDispatcher:
     """Create test dispatcher with common processors using FlextTestsUtilities."""
-    processors: dict[str, p.Processor] = {
-        "double": cast("p.Processor", DoubleProcessor()),
-        "square": cast("p.Processor", SquareProcessor()),
-        "failing": cast("p.Processor", FailingProcessor()),
-        "callable": cast("p.Processor", CallableProcessor()),
+    # Type annotation: processors dict accepts any object implementing Processor protocol
+    # Use object type and cast to avoid mypy valid-type error with Protocol
+    processors_raw: dict[str, object] = {
+        "double": DoubleProcessor(),
+        "square": SquareProcessor(),
+        "failing": FailingProcessor(),
+        "callable": CallableProcessor(),
     }
+    # Cast to dict[str, p.Application.Processor] for type compatibility
+    processors: dict[str, p.Application.Processor] = cast(
+        "dict[str, p.Application.Processor]",
+        processors_raw,
+    )
     return u.Tests.DispatcherHelpers.create_test_dispatcher(
         processors,
     )

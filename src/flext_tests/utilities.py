@@ -908,7 +908,7 @@ class FlextTestsUtilities(FlextUtilities):
                     New FlextContext instance
 
                 """
-                return FlextContext()
+                return FlextContext.create()
 
             @staticmethod
             def assert_context_get_success(

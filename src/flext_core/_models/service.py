@@ -15,7 +15,8 @@ from pydantic import Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.validation import FlextUtilitiesValidation
+
+# Lazy import to avoid circular dependency - see usage below
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import t
@@ -65,6 +66,11 @@ class FlextModelsService:
         @classmethod
         def validate_timeout(cls, v: int) -> int:
             """Validate timeout is reasonable (using FlextUtilitiesValidation)."""
+            # Lazy import to avoid circular dependency
+            from flext_core._utilities.validation import (  # noqa: PLC0415
+                FlextUtilitiesValidation,
+            )
+
             max_timeout_seconds = c.Performance.MAX_TIMEOUT_SECONDS
             result = FlextUtilitiesValidation.validate_timeout(v, max_timeout_seconds)
             if result.is_failure:

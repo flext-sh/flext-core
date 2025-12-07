@@ -821,7 +821,7 @@ class FlextTestsModels(FlextModelsBase):
                     ge=1,
                     description="Number of items for factory generation",
                 )
-                model: Any | None = Field(
+                model: type[BaseModel] | None = Field(
                     default=None,
                     description="Pydantic model class to instantiate (type[BaseModel])",
                 )

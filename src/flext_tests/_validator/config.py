@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import tomllib
 from pathlib import Path
+from typing import cast
 
 from flext_core.result import r
 from flext_tests.constants import c
@@ -250,29 +251,41 @@ class FlextValidatorConfig:
         if not isinstance(tool_data, dict):
             return violations
         # Type annotations for .get() results to help pyright inference
-        ruff_config_raw: object = tool_data.get("ruff", {})
+        # tool_data.get() returns object, need type narrowing
+        ruff_config_raw = tool_data.get("ruff", {})
+        # Type narrowing: isinstance check ensures ruff_config_raw is dict
         if not isinstance(ruff_config_raw, dict):
             return violations
-        ruff_config: dict[str, object] = ruff_config_raw
-        lint_config_raw: object = ruff_config.get("lint", {})
+        # Type narrowing: ruff_config_raw is dict after isinstance check
+        # Use cast to help pyright infer type (dict[str, object] is compatible)
+        ruff_config: dict[str, object] = cast("dict[str, object]", ruff_config_raw)  # type: ignore[assignment]
+        lint_config_raw = ruff_config.get("lint", {})
         if not isinstance(lint_config_raw, dict):
             return violations
-        lint_config: dict[str, object] = lint_config_raw
+        # Type narrowing: lint_config_raw is dict after isinstance check
+        lint_config: dict[str, object] = cast("dict[str, object]", lint_config_raw)
 
         # Check for custom ignores beyond approved list
-        ignores = lint_config.get("ignore", [])
-        if isinstance(ignores, list):
+        ignores_raw = lint_config.get("ignore", [])
+        if isinstance(ignores_raw, list):
+            # Type narrowing: ignores_raw is list[object], need to check each item
             approved_ignores = c.Tests.Validator.Approved.RUFF_IGNORES
-            for ignore in ignores:
-                if ignore not in approved_ignores:
-                    line_num = u.Tests.Validator.find_line_number(lines, str(ignore))
+            # Type narrowing: ignores_raw is list after isinstance check
+            ignores_list: list[object] = cast("list[object]", ignores_raw)
+            for ignore_raw in ignores_list:
+                # Type narrowing: ignore_raw is object, convert to str for comparison
+                ignore_str: str = str(ignore_raw)
+                if ignore_str not in approved_ignores:
+                    line_num = u.Tests.Validator.find_line_number(lines, ignore_str)
                     violations.append(
                         cls._create_config_violation(
                             file_path,
                             line_num,
                             "CONFIG-002",
-                            f'"{ignore}"',
-                            c.Tests.Validator.Messages.CONFIG_RUFF.format(code=ignore),
+                            f'"{ignore_str}"',
+                            c.Tests.Validator.Messages.CONFIG_RUFF.format(
+                                code=ignore_str
+                            ),
                         ),
                     )
 
@@ -292,9 +305,16 @@ class FlextValidatorConfig:
         tool_data = data.get("tool", {})
         if not isinstance(tool_data, dict):
             return violations
-        pyright_config = tool_data.get("pyright", {})
-        if not isinstance(pyright_config, dict):
+        # Type narrowing: tool_data.get() returns object, need to check type
+        pyright_config_raw = tool_data.get("pyright", {})
+        # Type narrowing: isinstance check ensures pyright_config_raw is dict
+        if not isinstance(pyright_config_raw, dict):
             return violations
+        # Type narrowing: pyright_config_raw is dict after isinstance check
+        # Use cast to help pyright infer type (dict[str, object] is compatible)
+        pyright_config: dict[str, object] = cast(
+            "dict[str, object]", pyright_config_raw
+        )  # type: ignore[assignment]
 
         # Check reportPrivateUsage
         if (

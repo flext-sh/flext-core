@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Sequence, Sized
 from datetime import UTC, datetime
-from typing import overload
+from typing import cast, overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
@@ -531,8 +531,11 @@ class FlextUtilities:
         check_val: int | float
         if isinstance(value, (int, float)):
             check_val = value
-        elif hasattr(value, "__len__"):
-            check_val = len(value)
+        elif value is not None and hasattr(value, "__len__"):
+            # Type narrowing: value is not None and has __len__ method
+            # Cast to Sized for type checker
+            sized_value: Sized = cast("Sized", value)
+            check_val = len(sized_value)
         else:
             check_val = 0
 
@@ -568,9 +571,17 @@ class FlextUtilities:
         elif contains is not None:
             # Generic containment for sequences/dicts
             if isinstance(value, dict):
-                if contains not in value:
+                # Type narrowing: value is dict, contains can be any key type
+                # Type ignore needed because dict keys can be any hashable type
+                if contains not in value:  # type: ignore[operator]
                     return False
-            elif hasattr(value, "__contains__") and contains not in value:
+            elif (
+                value is not None
+                and hasattr(value, "__contains__")
+                and contains not in value  # type: ignore[operator]
+            ):
+                # Type narrowing: value is not None and has __contains__ method
+                # Type ignore needed because contains type may not match value's contained type
                 return False
 
         return True

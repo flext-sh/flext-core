@@ -13,22 +13,24 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
-from typing import Literal, Self, cast, override
+from types import ModuleType
+from typing import Self, cast
 
 from pydantic import BaseModel, ConfigDict, PrivateAttr, computed_field
 
 from flext_core.config import FlextConfig
 from flext_core.constants import c
+from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import e
+from flext_core.handlers import FlextHandlers
 from flext_core.mixins import require_initialized, x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 from flext_core.result import r
-from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
@@ -52,63 +54,6 @@ class FlextService[TDomainResult](
         use_enum_values=True,
         validate_assignment=True,
     )
-
-    @override  # pyright: ignore[reportIncompatibleMethodOverride] - Return type is more specific (ConfigurationDict vs dict[str, Any])
-    def model_dump(  # type: ignore[override]
-        self,
-        *,
-        mode: str = "python",
-        include: t.Types.IncEx | None = None,  # type: ignore[assignment]
-        exclude: t.Types.IncEx | None = None,  # type: ignore[assignment]
-        context: t.GeneralValueType | None = None,
-        by_alias: bool | None = None,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        exclude_computed_fields: bool = False,
-        round_trip: bool = False,
-        warnings: bool | Literal["none", "warn", "error"] = True,
-        fallback: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
-        serialize_as_any: bool = False,
-    ) -> t.Types.ConfigurationDict:
-        """Dump model to dict, excluding runtime if not initialized."""
-        # Exclude runtime from dump if not initialized to avoid RuntimeError
-        # Use exclude_computed_fields=True to avoid evaluating runtime if not initialized
-        exclude_set: t.Types.IncEx
-        if exclude is None:
-            exclude_set = {"runtime"}
-        elif isinstance(exclude, set):
-            # Type narrowing: exclude is set[str]
-            exclude_set = exclude | {"runtime"}
-        else:
-            # Type narrowing: exclude is dict[str, set[str] | bool]
-            exclude_dict: dict[str, set[str] | bool] = dict(exclude)
-            exclude_set = {**exclude_dict, "runtime": True}
-        # Always exclude computed fields to avoid RuntimeError when runtime is not initialized
-        # Unless runtime is explicitly included
-        should_exclude_computed = exclude_computed_fields
-        if include is None or (isinstance(include, set) and "runtime" not in include):
-            should_exclude_computed = True
-        # Pydantic model_dump returns dict[str, GeneralValueType-compatible values]
-        # Cast to ConfigurationDict for type safety - Pydantic serializes to GeneralValueType-compatible values
-        dumped_raw = super().model_dump(
-            exclude_computed_fields=should_exclude_computed,
-            mode=mode,
-            include=include,
-            exclude=exclude_set,
-            context=context,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            fallback=fallback,
-            serialize_as_any=serialize_as_any,
-        )
-        # Type assertion: Pydantic serializes to GeneralValueType-compatible values
-        # Pydantic returns dict[str, GeneralValueType-compatible values]
-        return cast("t.Types.ConfigurationDict", dumped_raw)
 
     def __new__(
         cls,
@@ -205,6 +150,10 @@ class FlextService[TDomainResult](
         passed through **data. Delegates to parent classes for proper
         initialization of mixins, models, and infrastructure components.
 
+        Auto-discovery of handler-decorated methods enables zero-config handler
+        registration: developers can mark methods with @h.handler() and they are
+        automatically discovered during initialization.
+
         Args:
             **data: Configuration parameters for service initialization
 
@@ -227,6 +176,15 @@ class FlextService[TDomainResult](
         self._container = runtime.container
         self._runtime = runtime
 
+        # Auto-discovery of handler-decorated methods for zero-config handler setup
+        # Discovers all methods marked with @h.handler() decorator
+        # Makes them available for dispatcher routing without explicit registration
+        self._discovered_handlers = (
+            FlextHandlers.Discovery.scan_class(self.__class__)
+            if FlextHandlers.Discovery.has_handlers(self.__class__)
+            else []
+        )
+
     # Use PrivateAttr for private attributes (Pydantic v2 pattern)
     # PrivateAttr allows setting attributes without validation and bypasses __setattr__
     # Type annotations using PrivateAttr with explicit type hints
@@ -234,6 +192,9 @@ class FlextService[TDomainResult](
     _config: FlextConfig | None = PrivateAttr(default=None)
     _container: p.Container.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
+    _discovered_handlers: list[tuple[str, m.Handler.DecoratorConfig]] = PrivateAttr(
+        default_factory=list
+    )
     _auto_result: TDomainResult | None = None
 
     @classmethod
@@ -250,13 +211,87 @@ class FlextService[TDomainResult](
         return FlextConfig  # Runtime return needs concrete class
 
     @classmethod
+    def _create_runtime(
+        cls,
+        *,
+        config_type: type[FlextConfig] | None = None,
+        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        context: p.Context.Ctx | None = None,
+        subproject: str | None = None,
+        services: Mapping[
+            str,
+            t.GeneralValueType | BaseModel | p.Utility.Callable[t.GeneralValueType],
+        ]
+        | None = None,
+        factories: Mapping[
+            str,
+            Callable[
+                [],
+                (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
+            ],
+        ]
+        | None = None,
+        resources: Mapping[str, Callable[[], t.GeneralValueType]] | None = None,
+        container_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        wire_modules: Sequence[ModuleType] | None = None,
+        wire_packages: Sequence[str] | None = None,
+        wire_classes: Sequence[type] | None = None,
+    ) -> m.ServiceRuntime:
+        """Materialize config, context, and container with DI wiring in one call.
+
+        This method provides the same parameterized automation previously found in
+        ``FlextRuntime.create_service_runtime`` but uses the factory methods of each
+        class directly (Clean Architecture - each class knows how to instantiate itself).
+
+        All parameters are optional and allow callers to:
+        - Clone or materialize configuration models with optional overrides.
+        - Seed containers with services/factories/resources without additional
+          registration calls.
+        - Apply container configuration overrides before wiring modules, packages,
+          or classes for ``@inject`` usage.
+        """
+        # Use factory methods - Clean Architecture pattern
+        config_cls = config_type or FlextConfig
+        runtime_config = config_cls.materialize(config_overrides=config_overrides)
+        runtime_context = context if context is not None else FlextContext.create()
+
+        # Cast config to protocol for container.scoped() compatibility
+        runtime_config_typed: p.Configuration.Config = cast(
+            "p.Configuration.Config",
+            runtime_config,
+        )
+        runtime_container = FlextContainer.create().scoped(
+            config=runtime_config_typed,
+            context=runtime_context,
+            subproject=subproject,
+            services=services,
+            factories=factories,
+            resources=resources,
+        )
+
+        if container_overrides:
+            runtime_container.configure(container_overrides)
+
+        if wire_modules or wire_packages or wire_classes:
+            runtime_container.wire_modules(
+                modules=wire_modules,
+                packages=wire_packages,
+                classes=wire_classes,
+            )
+
+        return m.ServiceRuntime.model_construct(
+            config=runtime_config,
+            context=runtime_context,
+            container=runtime_container,
+        )
+
+    @classmethod
     def _create_initial_runtime(cls) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
         config_type = cls._get_service_config_type()
         options = cls._runtime_bootstrap_options()
-        # Use RuntimeBootstrapOptions TypedDict for type safety
-        # TypedDict provides correct types, reducing need for casts
-        return FlextRuntime.create_service_runtime(
+        # Delegate to _create_runtime with options from _runtime_bootstrap_options
+        return cls._create_runtime(
             config_type=cast("type[FlextConfig] | None", options.get("config_type"))
             if "config_type" in options
             else config_type,
@@ -284,10 +319,9 @@ class FlextService[TDomainResult](
         """Hook for subclasses to parametrize runtime automation.
 
         Subclasses can override this method to pass keyword arguments directly
-        to :meth:`FlextRuntime.create_service_runtime`, enabling opt-in
-        configuration overrides, scoped service registrations, factory/resource
-        wiring, and container configuration changes without duplicating
-        setup code in ``__init__``.
+        to :meth:`_create_runtime`, enabling opt-in configuration overrides,
+        scoped service registrations, factory/resource wiring, and container
+        configuration changes without duplicating setup code in ``__init__``.
         """
         return {}
 
@@ -523,20 +557,20 @@ class _ServiceAccess(m.ArbitraryTypesModel):
     @computed_field
     def config(self) -> p.Configuration.Config:
         """Global configuration instance for the service."""
-        return require_initialized(
-            self._service._config,  # pyright: ignore[reportPrivateUsage]
-            "Config",
-        )
+        # Use public property instead of private attribute
+        return self._service.config
 
     @computed_field
     def runtime(
         self,
     ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
         """Protocol-backed runtime triple for the bound service."""
-        return require_initialized(
-            self._service._runtime,  # pyright: ignore[reportPrivateUsage]
-            "Runtime",
-        )
+        # Use public property instead of private attribute
+        # Type narrowing: self._service.runtime is @computed_field that returns m.ServiceRuntime
+        # Access directly - @computed_field behaves like a property at runtime
+        runtime_value = self._service.runtime
+        # Type assertion: runtime_value is m.ServiceRuntime from @computed_field
+        return cast("m.ServiceRuntime", runtime_value)
 
     @computed_field
     def result(
@@ -553,18 +587,14 @@ class _ServiceAccess(m.ArbitraryTypesModel):
     @computed_field
     def context(self) -> p.Context.Ctx:
         """Context manager for correlation and tracing."""
-        return require_initialized(
-            self._service._context,  # pyright: ignore[reportPrivateUsage]
-            "Context",
-        )
+        # Use public property instead of private attribute
+        return self._service.context
 
     @computed_field
     def container(self) -> p.Container.DI:
         """Dependency injection container bound to the service."""
-        return require_initialized(
-            self._service._container,  # pyright: ignore[reportPrivateUsage]
-            "Container",
-        )
+        # Use public property instead of private attribute
+        return self._service.container
 
     def container_scope(
         self,
@@ -596,18 +626,36 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> m.ServiceRuntime:
         """Clone the service runtime triple using protocol-backed models."""
-        # Access private attribute directly to avoid computed_field type issues
-        # _clone_runtime accepts Context.Ctx - use directly
-        # pyright: ignore[reportPrivateUsage] - Internal helper class accessing protected attributes
-        context_for_clone: p.Context.Ctx | None = (
-            context if context is not None else self._service._context  # pyright: ignore[reportPrivateUsage]
+        # Use public properties instead of private attributes
+        # Type narrowing: @computed_field and @property return actual types, not Callable
+        # Use cast to help mypy understand the types
+        config = cast("p.Configuration.Config", self.config)
+        ctx = cast("p.Context.Ctx", self.context)
+        container = cast("p.Container.DI", self.container)
+
+        # Clone config with overrides using Pydantic's model_copy
+        cloned_config = config.model_copy(
+            update=config_overrides or {},
+            deep=True,
         )
-        return self._service._clone_runtime(  # pyright: ignore[reportPrivateUsage]
-            config_overrides=config_overrides,
-            context=context_for_clone,
+
+        # Clone context - Context.Ctx implementations have clone() method
+        runtime_context = context.clone() if context is not None else ctx.clone()
+
+        # Create scoped container using public API
+        scoped_container = container.scoped(
+            config=cloned_config,
+            context=runtime_context,
             subproject=subproject,
-            container_services=container_services or services,
-            container_factories=container_factories or factories,
+            services=container_services or services,
+            factories=container_factories or factories,
+        )
+
+        # Construct ServiceRuntime using model_construct
+        return m.ServiceRuntime.model_construct(
+            config=cloned_config,
+            context=runtime_context,
+            container=scoped_container,
         )
 
     def clone_config(self, **overrides: t.FlexibleValue) -> p.Configuration.Config:
@@ -620,11 +668,10 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             Configuration.Config: Cloned configuration instance with updates applied.
 
         """
-        # pyright: ignore[reportPrivateUsage] - Internal helper class accessing protected attributes
-        config: p.Configuration.Config = require_initialized(
-            self._service._config,  # pyright: ignore[reportPrivateUsage]
-            "Config",
-        )
+        # Use public property instead of private attribute
+        # Type narrowing: @computed_field returns actual type, not Callable
+        # Use cast to help mypy understand the type
+        config = cast("p.Configuration.Config", self.config)
         return config.model_copy(update=overrides, deep=True)
 
     @contextmanager
@@ -645,11 +692,10 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         isolated from the parent, enabling containerized execution flows without
         mutating global state.
         """
-        # pyright: ignore[reportPrivateUsage] - Internal helper class accessing protected attributes
-        base_runtime: m.ServiceRuntime = require_initialized(
-            self._service._runtime,  # pyright: ignore[reportPrivateUsage]
-            "Runtime",
-        )
+        # Use public property instead of private attribute
+        # Type narrowing: @computed_field returns actual type, not Callable
+        # Use cast to help mypy understand the type
+        base_runtime = cast("m.ServiceRuntime", self.runtime)
         # Type narrowing: base_runtime.context is FlextContext
         base_context = cast("FlextContext", base_runtime.context)
         original_correlation = base_context.Correlation.get_correlation_id()

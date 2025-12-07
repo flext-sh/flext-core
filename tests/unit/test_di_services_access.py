@@ -47,8 +47,8 @@ class TestConfigServiceViaDI:
         assert isinstance(config1, FlextConfig)
 
     def test_config_via_service_runtime(self) -> None:
-        """Test FlextConfig accessible via create_service_runtime."""
-        runtime = FlextRuntime.create_service_runtime(
+        """Test FlextConfig accessible via FlextService._create_runtime."""
+        runtime = s._create_runtime(
             config_overrides={"app_name": "test_app"},
         )
         assert runtime.config is not None
@@ -140,15 +140,15 @@ class TestContextServiceViaDI:
     """Test FlextContext accessibility via DI."""
 
     def test_context_via_runtime_create(self) -> None:
-        """Test creating context via FlextRuntime.create_context()."""
-        context = FlextRuntime.create_context()
+        """Test creating context via FlextContext.create()."""
+        context = FlextContext.create()
         assert context is not None
         assert isinstance(context, FlextContext)
 
     def test_context_via_service_runtime(self) -> None:
-        """Test FlextContext accessible via create_service_runtime."""
-        custom_context = FlextContext()
-        runtime = FlextRuntime.create_service_runtime(context=custom_context)
+        """Test FlextContext accessible via FlextService._create_runtime."""
+        custom_context = FlextContext.create()
+        runtime = s._create_runtime(context=custom_context)
         assert runtime.context is not None
         assert isinstance(runtime.context, FlextContext)
         assert runtime.context is custom_context
@@ -179,9 +179,9 @@ class TestServicesIntegrationViaDI:
 
     def test_all_services_via_service_runtime(self) -> None:
         """Test all services accessible via single service runtime."""
-        custom_context = FlextContext()
+        custom_context = FlextContext.create()
 
-        runtime = FlextRuntime.create_service_runtime(
+        runtime = s._create_runtime(
             config_overrides={"app_name": "integrated_app"},
             context=custom_context,
         )
@@ -257,12 +257,21 @@ class TestServicesIntegrationViaDI:
         """Test injecting multiple services via @inject."""
         # Use DependencyIntegration to create container with config and services
         # This ensures config provider is properly configured
+        # Convert services to GeneralValueType-compatible dict for type compatibility
+        logger_instance = FlextLogger.create_module_logger("test")
+        context_instance = FlextContext()
+        services_raw: dict[str, object] = {
+            "logger": logger_instance,
+            "context": context_instance,
+        }
+        # Cast to GeneralValueType dict - services dict accepts any object
+        services: dict[str, t.GeneralValueType] = cast(
+            "dict[str, t.GeneralValueType]",
+            services_raw,
+        )
         di_container = FlextRuntime.DependencyIntegration.create_container(
             config={"app_name": "injected"},
-            services={
-                "logger": FlextLogger.create_module_logger("test"),
-                "context": FlextContext(),
-            },
+            services=services,
         )
 
         # Create module with injected function

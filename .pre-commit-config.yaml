@@ -153,10 +153,10 @@ ci:
       ruff-format,
       ruff-lint,
       isort,
-      bandit,  # Run via make security
+      bandit, # Run via make security
       vulture,
-      radon-cc,  # Run via make complexity
-      radon-mi,  # Run via make complexity
+      radon-cc, # Run via make complexity
+      radon-mi, # Run via make complexity
       commitizen,
     ]
   submodules: false

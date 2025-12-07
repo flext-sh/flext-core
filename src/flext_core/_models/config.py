@@ -20,7 +20,6 @@ from flext_core._models.collections import FlextModelsCollections
 from flext_core.constants import c
 from flext_core.result import r
 from flext_core.typings import t
-from flext_core.utilities import u
 
 if TYPE_CHECKING:
     from flext_core.protocols import p
@@ -32,6 +31,14 @@ def _get_log_level_from_config() -> int:
     # config.py -> runtime.py -> models.py -> _models/config.py -> config.py
     default_log_level = c.Logging.DEFAULT_LEVEL.upper()
     return getattr(logging, default_log_level, logging.INFO)
+
+
+def _generate_id() -> str:
+    """Generate unique ID using lazy import to avoid circular dependency."""
+    # Lazy import to avoid circular dependency
+    from flext_core.utilities import u  # noqa: PLC0415
+
+    return u.Generators.generate_id()
 
 
 class FlextModelsConfig:
@@ -51,7 +58,7 @@ class FlextModelsConfig:
         )
 
         operation_id: str = Field(
-            default_factory=u.Generators.generate_id,
+            default_factory=_generate_id,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
@@ -80,6 +87,9 @@ class FlextModelsConfig:
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """
+            # Lazy import to avoid circular dependency
+            from flext_core.utilities import u  # noqa: PLC0415
+
             return u.Generators.ensure_trace_context(
                 v,
                 include_correlation_id=True,
@@ -139,6 +149,9 @@ class FlextModelsConfig:
             # removed from flext-core per domain violation rules
             # Convert to list[object] for validation function (accepts object)
             codes_for_validation: list[object] = list(v)
+            # Lazy import to avoid circular dependency
+            from flext_core.utilities import u  # noqa: PLC0415
+
             result = u.Validation.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"

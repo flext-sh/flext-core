@@ -68,7 +68,7 @@ class TestDIBridgeRealExecution:
 
     def test_create_container_with_real_execution(self) -> None:
         """Test create_container with real registration and resolution."""
-        container = FlextRuntime.create_container()
+        container = FlextContainer.create()
 
         # Register a service using container
         register_result = container.register("test_service", "test_value")
@@ -366,7 +366,7 @@ class TestServiceBootstrapWithDI:
             return {"connected": True}
 
         # Create service runtime with resources
-        runtime = FlextRuntime.create_service_runtime(
+        runtime = s._create_runtime(
             resources={"database": db_factory},
         )
 
@@ -385,7 +385,7 @@ class TestServiceBootstrapWithDI:
 
     def test_create_service_runtime_with_wiring(self) -> None:
         """Test create_service_runtime with wire_modules."""
-        runtime = FlextRuntime.create_service_runtime(
+        runtime = s._create_runtime(
             services={"api_key": "test_key"},
             wire_modules=[__import__(__name__)],
         )
@@ -553,7 +553,8 @@ class TestRealWiringScenarios:
             api_call_attr = getattr(module, "api_call")
             # Type assertion: api_call_attr is the function we just assigned
             api_call_func: Callable[[], dict[str, str]] = cast(
-                "Callable[[], dict[str, str]]", api_call_attr
+                "Callable[[], dict[str, str]]",
+                api_call_attr,
             )
             result = api_call_func()
             assert "url" in result
@@ -626,7 +627,7 @@ class TestRealWiringScenarios:
             return {"connected": True}
 
         # Create service runtime with all options
-        runtime = FlextRuntime.create_service_runtime(
+        runtime = s._create_runtime(
             config_overrides={"app_name": "test_app"},
             services={"static_service": "static_value"},
             factories={"token_factory": factory},
@@ -706,7 +707,8 @@ class TestRealWiringScenarios:
             func_with_missing_attr = getattr(module, "func_with_missing")
             # Type assertion: func_with_missing_attr is the function we just assigned
             func_with_missing_wired: Callable[[], str] = cast(
-                "Callable[[], str]", func_with_missing_attr
+                "Callable[[], str]",
+                func_with_missing_attr,
             )
             # Function exists but dependency may be missing - this is expected
             assert callable(func_with_missing_wired)
