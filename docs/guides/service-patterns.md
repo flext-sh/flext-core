@@ -50,12 +50,14 @@ else:
 ```
 
 **Characteristics:**
+
 - ✅ Railway pattern explicit – full control over errors
 - ✅ Type-safe with `FlextResult[T]`
 - ✅ 100% backward compatible
 - ⚠️ Verbose (`.execute().unwrap()` on every use)
 
 **When to use:**
+
 - Existing codebases (32+ projects using this pattern)
 - When explicit error handling is critical
 - Railway composition with `.flat_map()`
@@ -77,6 +79,7 @@ except FlextExceptions.BaseError as e:
 ```
 
 **Characteristics:**
+
 - ✅ 68% reduction in code (7 chars vs 19)
 - ✅ Lazy evaluation (executes on first access)
 - ⚠️ Error handling via exceptions
@@ -103,6 +106,7 @@ print(f"Created user: {user.name}")
 ```
 
 **Characteristics:**
+
 - ✅ 95% reduction in code (4 chars vs 19)
 - ✅ Zero ceremony – just instantiate
 - ⚠️ Opt-in via `auto_execute = True`
@@ -115,12 +119,12 @@ print(f"Created user: {user.name}")
 FlextService inherits from `FlextMixins`, providing automatic access to
 infrastructure:
 
-| Property          | Type            | Description                    |
-| ----------------- | --------------- | ------------------------------ |
-| `self.config`     | `FlextConfig`   | Configuration singleton        |
-| `self.logger`     | `FlextLogger`   | Logger with context            |
-| `self.container`  | `FlextContainer`| Dependency injection container |
-| `self.context`    | `FlextContext`  | Execution context (task-local) |
+| Property         | Type             | Description                    |
+| ---------------- | ---------------- | ------------------------------ |
+| `self.config`    | `FlextConfig`    | Configuration singleton        |
+| `self.logger`    | `FlextLogger`    | Logger with context            |
+| `self.container` | `FlextContainer` | Dependency injection container |
+| `self.context`   | `FlextContext`   | Execution context (task-local) |
 
 All properties are **lazy-loaded** – no overhead if unused.
 

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import Annotated, Self, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -18,14 +18,14 @@ from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 def _generate_query_id() -> str:
-    """Generate query ID for Query model."""
+    """Generate query ID using lazy import to avoid circular dependency."""
+    # Lazy import to avoid circular dependency
+    from flext_core.utilities import u  # noqa: PLC0415
+
     return u.Generators.generate_query_id()
 
 
@@ -33,10 +33,11 @@ class FlextModelsCqrs:
     """CQRS pattern container class.
 
     This class acts as a namespace container for CQRS patterns.
-    All nested classes can be accessed via FlextModels.Cqrs.* (type aliases) or directly via FlextModelsCqrs.*
+    All nested classes can be accessed via FlextModels.Cqrs.* (type aliases) or
+    directly via FlextModelsCqrs.*
     """
 
-    class Command(
+    class Command(  # type: ignore[misc]
         FlextModelsBase.ArbitraryTypesModel,
         FlextModelsBase.IdentifiableMixin,
         FlextModelsBase.TimestampableMixin,
@@ -72,7 +73,9 @@ class FlextModelsCqrs:
         model_config = ConfigDict(
             json_schema_extra={
                 "title": "Pagination",
-                "description": "Pagination model for query results with computed fields",
+                "description": (
+                    "Pagination model for query results with computed fields"
+                ),
             },
         )
 
@@ -109,7 +112,8 @@ class FlextModelsCqrs:
     class Query(BaseModel):
         """Query model for CQRS query operations."""
 
-        # Use centralized constant from FlextConstants directly: c.MIN_QUALNAME_PARTS_FOR_WRAPPER
+        # Use centralized constant from FlextConstants directly:
+        # c.MIN_QUALNAME_PARTS_FOR_WRAPPER
 
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
@@ -143,7 +147,8 @@ class FlextModelsCqrs:
                 return FlextModelsCqrs.Pagination
             parts = cls.__qualname__.split(".")
             models_module = sys.modules.get("flext_core.models")
-            # Use constant value directly - attribute is on Pagination class, not on type
+            # Use constant value directly - attribute is on Pagination class,
+            # not on type
             if not models_module or len(parts) < c.MIN_QUALNAME_PARTS_FOR_WRAPPER:
                 return FlextModelsCqrs.Pagination
             obj: t.GeneralValueType | None = getattr(
@@ -172,6 +177,9 @@ class FlextModelsCqrs:
             pagination_cls: type[FlextModelsCqrs.Pagination],
         ) -> FlextModelsCqrs.Pagination:
             """Convert dict to Pagination instance."""
+            # Lazy import to avoid circular dependency
+            from flext_core.utilities import u  # noqa: PLC0415
+
             page = u.Parser.convert(
                 u.Mapper.get(v, "page", default=c.Pagination.DEFAULT_PAGE_NUMBER)
                 or c.Pagination.DEFAULT_PAGE_NUMBER,
@@ -203,8 +211,15 @@ class FlextModelsCqrs:
             # Convert dict to Pagination
             if FlextRuntime.is_dict_like(v):
                 # TypeGuard narrows v to Mapping[str, GeneralValueType]
-                v_dict: t.Types.ConfigurationMapping = v
-                # .get() returns GeneralValueType | None, pass directly (None is valid GeneralValueType)
+                v_dict: t.Types.ConfigurationMapping = cast(
+                    "t.Types.ConfigurationMapping",
+                    v,
+                )
+                # .get() returns GeneralValueType | None, pass directly
+                # (None is valid GeneralValueType)
+                # Lazy import to avoid circular dependency
+                from flext_core.utilities import u  # noqa: PLC0415
+
                 page = u.Parser.convert(
                     u.Mapper.get(
                         v_dict,
@@ -239,7 +254,8 @@ class FlextModelsCqrs:
             try:
                 # Fast fail: filters and pagination must be dict or None
                 filters_raw = query_payload.get("filters")
-                # TypeGuard narrows to Mapping[str, GeneralValueType] when is_dict_like is True
+                # TypeGuard narrows to Mapping[str, GeneralValueType] when
+                # is_dict_like is True
                 filters: t.Types.ConfigurationMapping = (
                     filters_raw if FlextRuntime.is_dict_like(filters_raw) else {}
                 )
@@ -251,6 +267,9 @@ class FlextModelsCqrs:
                 if FlextRuntime.is_dict_like(pagination_data):
                     pagination_dict = pagination_data
                     # Use Parser.convert() for concise type conversion
+                    # Lazy import to avoid circular dependency
+                    from flext_core.utilities import u  # noqa: PLC0415
+
                     page = u.Parser.convert(
                         u.Mapper.get(
                             pagination_dict,
@@ -279,6 +298,9 @@ class FlextModelsCqrs:
                     }
                 # Fast fail: query_id must be str or None
                 query_id_raw = query_payload.get("query_id")
+                # Lazy import to avoid circular dependency
+                from flext_core.utilities import u  # noqa: PLC0415
+
                 query_id: str = (
                     u.Generators.generate_query_id()
                     if query_id_raw is None
@@ -397,6 +419,9 @@ class FlextModelsCqrs:
             def __init__(self, handler_type: c.Cqrs.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
                 super().__init__()
+                # Lazy import to avoid circular dependency
+                from flext_core.utilities import u  # noqa: PLC0415
+
                 handler_short_id = u.Generators.generate_short_id(8)
                 self._data: t.Types.ConfigurationDict = {
                     "handler_type": handler_type,

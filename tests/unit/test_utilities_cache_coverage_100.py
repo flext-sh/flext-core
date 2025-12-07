@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import math
 from collections import UserDict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import ClassVar, cast
 
@@ -327,7 +328,13 @@ class TestuCacheNormalizeComponent:
 
     def test_normalize_sequence_with_nested_values(self) -> None:
         """Test normalize_component with Sequence containing nested values."""
-        component = [1, "test", {"nested": "dict"}, [1, 2, 3]]
+        component_raw: list[object] = [1, "test", {"nested": "dict"}, [1, 2, 3]]
+        # Convert list[object] to Sequence[GeneralValueType] for type compatibility
+        # ObjectList is Sequence[GeneralValueType], use that type directly
+        component: Sequence[t.GeneralValueType] = cast(
+            "Sequence[t.GeneralValueType]",
+            component_raw,
+        )
         result = u.Cache.normalize_component(component)
         tm.that(result, is_=list, none=False, msg="Result must be list")
         result_list = cast("list[t.GeneralValueType]", result)

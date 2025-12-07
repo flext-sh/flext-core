@@ -112,6 +112,65 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         # Auto-register core services for easy DI access
         self.register_core_services()
 
+    @classmethod
+    def create(cls, *, auto_register_factories: bool = False) -> Self:
+        """Factory method to create a new FlextContainer instance.
+
+        This is the preferred way to instantiate FlextContainer. It provides
+        a clean factory pattern that each class owns, respecting Clean
+        Architecture principles where higher layers create their own instances.
+
+        Auto-registration of factories discovers all functions marked with
+        @d.factory() decorator and registers them in the container automatically.
+        This enables zero-config factory discovery for services.
+
+        Note: FlextContainer uses a singleton pattern, so this method returns
+        the global instance on repeated calls unless explicitly reset.
+
+        Args:
+            auto_register_factories: If True, scan calling module for @factory()
+                decorated functions and auto-register them. Default: False.
+
+        Returns:
+            FlextContainer instance.
+
+        Example:
+            >>> container = FlextContainer.create(auto_register_factories=True)
+            >>> result = container.get("service_name")
+
+        """
+        instance = cls()
+
+        if auto_register_factories:
+            # Lazy import to avoid circular dependency
+            import inspect  # noqa: PLC0415
+
+            from flext_core.decorators import FlextDecorators  # noqa: PLC0415
+
+            # Get the caller's frame to discover factories in calling module
+            frame = inspect.currentframe()
+            if frame and frame.f_back:
+                caller_globals = frame.f_back.f_globals
+                # Get module name from globals
+                module_name = caller_globals.get("__name__", "__main__")
+                # Get module object from globals (usually available as __import__ or direct reference)
+                import sys  # noqa: PLC0415
+                caller_module = sys.modules.get(module_name)
+                if caller_module:
+                    # Scan module for factory-decorated functions
+                    factories = FlextDecorators.FactoryDiscovery.scan_module(caller_module)
+                    for factory_name, factory_config in factories:
+                        # Get actual factory function from module
+                        factory_func = getattr(caller_module, factory_name, None)
+                        if factory_func and callable(factory_func):
+                            # Register using the name from decorator config
+                            _ = instance.register_factory(
+                                factory_config.name,
+                                factory_func,
+                            )
+
+        return instance
+
     @property
     def provide(self) -> Callable[[str], object]:
         """Return the dependency-injector Provide helper scoped to the bridge.
@@ -171,8 +230,11 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         # _context is an instance attribute, initialized to None by default
         # Check if _context is None (not initialized yet)
         if not hasattr(self, "_context") or self._context is None:
-            context_created = FlextRuntime.create_context()
-            # Type narrowing: create_context returns p.Context.Ctx
+            # Lazy import to avoid circular dependency: container.py ↔ context.py
+            from flext_core.context import FlextContext  # noqa: PLC0415
+
+            context_created = FlextContext.create()
+            # Type narrowing: FlextContext.create() returns FlextContext (p.Context.Ctx)
             # Direct assignment is safe - _context is class attribute
             self._context = context_created
             return context_created
@@ -202,11 +264,11 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         user_config_provider = self.providers.Configuration()
         self._base_config_provider = base_config_provider
         self._user_config_provider = user_config_provider
-        # Configure providers
-        # Type annotation: override accepts Configuration provider
-        # Call override for side effects (returns None)
-        _ = self._config_provider.override(base_config_provider)  # type: ignore[assignment]
-        _ = self._config_provider.override(user_config_provider)  # type: ignore[assignment]
+        # Configure providers - override() returns OverridingContext for chaining
+        # We call it for side effects (configuring the provider), not for the return value
+        # override() may return None or OverridingContext - we don't need the return value
+        self._config_provider.override(base_config_provider)
+        self._config_provider.override(user_config_provider)
         di_container.config = self._config_provider
 
     def initialize_registrations(
@@ -276,10 +338,12 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         applied as separate providers to keep precedence explicit.
         """
         self._base_config_provider.from_dict(self._global_config.model_dump())
-        # Type narrowing: _user_overrides is always ConfigurationDict after __init__
-        # (initialized as user_overrides or {}), so cast is safe
-        user_overrides_dict: t.Types.ConfigurationDict = (
-            self._user_overrides if self._user_overrides is not None else {}
+        # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
+        # (initialized as user_overrides or {}), so it's never None after __init__
+        # Use type narrowing with explicit cast to help pyright
+        user_overrides_dict: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict",
+            self._user_overrides if self._user_overrides is not None else {},
         )
         self._user_config_provider.from_dict(dict(user_overrides_dict))
 
@@ -390,13 +454,16 @@ class FlextContainer(FlextRuntime, p.Container.DI):
             # process() returns dict[str, R] where R is FlexibleValue
             # and FlexibleValue is compatible with GeneralValueType (which ConfigurationDict uses)
             processed_dict: t.Types.ConfigurationDict = cast(
-                "t.Types.ConfigurationDict", process_result.value
+                "t.Types.ConfigurationDict",
+                process_result.value,
             )
             # Simple merge: override strategy - new values override existing ones
-            # Type narrowing: _user_overrides is always ConfigurationDict after __init__
-            # Cast is safe because _user_overrides is initialized as user_overrides or {}
+            # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
+            # (initialized as user_overrides or {}), so it's never None after __init__
+            # Use cast to help pyright understand the type
             user_overrides_dict: t.Types.ConfigurationDict = cast(
-                "t.Types.ConfigurationDict", self._user_overrides or {}
+                "t.Types.ConfigurationDict",
+                self._user_overrides if self._user_overrides is not None else {},
             )
             merged: t.Types.ConfigurationDict = dict(user_overrides_dict)
             merged.update(processed_dict)
@@ -479,7 +546,7 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         _ = self.register_resource(name, factory)
         return self
 
-    def register(self, name: str, service: T) -> r[bool]:
+    def register[T](self, name: str, service: T) -> r[bool]:  # pyright: ignore[reportInvalidTypeVarUse] - T used for type inference at call sites
         """Register a service instance for dependency resolution.
 
         Business Rule: The container accepts any object type for registration,
@@ -599,7 +666,7 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         except Exception as e:
             return r[bool].fail(str(e))
 
-    def get[T](self, name: str) -> r[T]:
+    def get[T](self, name: str) -> r[T]:  # pyright: ignore[reportInvalidTypeVarUse] - T used for return type inference
         """Resolve a registered service or factory by name.
 
         Business Rule: Type-safe resolution using generic type parameter T.
@@ -827,10 +894,16 @@ class FlextContainer(FlextRuntime, p.Container.DI):
             isolated state that inherits the global configuration by default.
 
         """
+        # Clone base config if not provided
         base_config = (
             config if config is not None else self.config.model_copy(deep=True)
         )
-        if subproject:
+        # Apply subproject suffix to app_name only when config is None
+        # If config was explicitly provided, respect it (don't modify)
+        # This allows explicit config to take precedence over subproject naming
+        if subproject and config is None:
+            # Only apply subproject when using global config (config is None)
+            # Explicit config parameter means user wants that exact config
             base_config = base_config.model_copy(
                 update={"app_name": f"{base_config.app_name}.{subproject}"},
                 deep=True,
@@ -886,22 +959,23 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         # Structural typing - FlextContainer implements p.Container.DI
         # base_config already implements p.Configuration.Config protocol
         # cloned_services and cloned_factories contain ServiceRegistration/FactoryRegistration instances
-        # Type annotation: cloned_services is ServiceRegistrationDict (dict[str, object])
-        # but _create_scoped_instance expects dict[str, ServiceRegistration]
-        # Cast is safe because cloned_services contains ServiceRegistration instances
-        services_typed: dict[str, m.Container.ServiceRegistration] = cast(
-            "dict[str, m.Container.ServiceRegistration]", cloned_services
-        )
+        # Type annotation: cloned_services is dict[str, ServiceRegistration]
+        # _create_scoped_instance expects dict[str, ServiceRegistration]
+        # No cast needed - cloned_services is already the correct type
+        services_typed: dict[str, m.Container.ServiceRegistration] = cloned_services
         # Type annotation: cloned_factories is FactoryRegistrationDict (dict[str, object])
         # but _create_scoped_instance expects dict[str, FactoryRegistration]
         # Cast is safe because cloned_factories contains FactoryRegistration instances
         factories_typed: dict[str, m.Container.FactoryRegistration] = cast(
-            "dict[str, m.Container.FactoryRegistration]", cloned_factories
+            "dict[str, m.Container.FactoryRegistration]",
+            cloned_factories,
         )
-        # Type narrowing: _user_overrides is always ConfigurationDict after __init__
-        # Cast is safe because _user_overrides is initialized as user_overrides or {}
+        # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
+        # (initialized as user_overrides or {}), so it's never None after __init__
+        # Use cast to help pyright understand the type
         user_overrides_dict: t.Types.ConfigurationDict = cast(
-            "t.Types.ConfigurationDict", self._user_overrides or {}
+            "t.Types.ConfigurationDict",
+            self._user_overrides if self._user_overrides is not None else {},
         )
         user_overrides_copy: t.Types.ConfigurationDict = user_overrides_dict.copy()
         return FlextContainer._create_scoped_instance(

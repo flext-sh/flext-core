@@ -13,11 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime
 from typing import Annotated
 
-from pydantic import Discriminator, Field
+from pydantic import Discriminator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
@@ -59,11 +57,14 @@ class FlextModels:
     class Value(FlextModelsEntity.Value):
         """Value object base class with real inheritance."""
 
-    class AggregateRoot(Entity, FlextModelsEntity.AggregateRoot):
+    class AggregateRoot(Entity, FlextModelsEntity.AggregateRoot):  # type: ignore[misc]
         """Aggregate root base class with real inheritance.
 
         Inherits from both Entity (for hierarchy) and FlextModelsEntity.AggregateRoot
         (for functionality) to maintain correct inheritance chain.
+
+        Note: type: ignore[misc] is required because mypy cannot determine type of
+        "model_config" in base classes with multiple inheritance (Pydantic v2 limitation).
         """
 
     class DomainEvent(FlextModelsEntity.DomainEvent):
@@ -419,147 +420,7 @@ class FlextModels:
     CollectionsResults = Collections.Results
     CollectionsOptions = Collections.Options
 
-    # =========================================================================
-    # PROJECT-SPECIFIC NAMESPACES (Python 3.13+ PEP 695 type organization)
-    # =========================================================================
-    # These namespaces are populated by their respective projects:
-    # - Ldif: Populated by flext-ldif (FlextLdifModels)
-    # - Ldap: Populated by flext-ldap (FlextLdapModels)
-    # - Cli: Populated by flext-cli (FlextCliModels)
-    # - Api: Populated by flext-api (FlextApiModels)
-    #
-    # Architecture:
-    # - Each namespace is a class that can be extended by its project
-    # - Projects populate their namespace by extending these classes
-    # - Allows cross-project access: flext-ldap can access flext-ldif via m.Ldif.*
-    # - Maintains backward compatibility with project-specific Models classes
-    # =========================================================================
-
-    class Ldif:
-        """LDIF project namespace - populated by flext-ldif.
-
-        This namespace contains all LDIF-specific models from flext-ldif.
-        Access via: m.Ldif.Entry, m.Ldif.SchemaAttribute, etc.
-
-        Populated by: flext-ldif/src/flext_ldif/models.py
-        Models are populated dynamically after FlextLdifModels is defined.
-        """
-
-    class Ldap:
-        """LDAP project namespace - populated by flext-ldap.
-
-        This namespace contains all LDAP-specific models from flext-ldap.
-        Access via: m.Ldap.ConnectionConfig, m.Ldap.SearchOptions, etc.
-
-        Populated by: flext-ldap/src/flext_ldap/models.py
-        Can access flext-ldif models via: m.Ldif.*
-        """
-
-    class Cli:
-        """CLI project namespace - populated by flext-cli.
-
-        This namespace contains all CLI-specific models from flext-cli.
-        Access via: m.Cli.CliCommand, m.Cli.CommandResult, etc.
-
-        Populated by: flext-cli/src/flext_cli/models.py
-        """
-
-    class Api:
-        """API project namespace - populated by flext-api.
-
-        This namespace contains all HTTP/API-specific models from flext-api.
-        Access via: m.Api.HttpRequest, m.Api.HttpResponse, etc.
-
-        Populated by: flext-api/src/flext_api/models.py
-        """
-
-
-# =============================================================================
-# Pydantic v2 Forward Reference Resolution
-# =============================================================================
-# When using 'from __future__ import annotations' with nested type aliases
-# (like t.Types.ConfigurationDict inside nested classes), Pydantic cannot
-# automatically resolve the forward references because 't' is not available
-# in the nested class's evaluation namespace.
-#
-# We explicitly call model_rebuild() with the proper types namespace to
-# ensure all models can be instantiated correctly.
-# =============================================================================
-
-_TYPES_NS = {
-    "t": t,
-    "p": p,
-    "Callable": Callable,
-    "Mapping": Mapping,
-    "Sequence": Sequence,
-    "datetime": datetime,
-    "Field": Field,
-    "FlextModelsBase": FlextModelsBase,
-}
-
-# Base models (must be rebuilt first as others depend on them)
-FlextModelsBase.Metadata.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Entity models
-FlextModelsEntity.Value.model_rebuild(_types_namespace=_TYPES_NS)
-# Note: Entity was renamed to Core - using Core for model_rebuild
-FlextModelsEntity.Core.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Context models (depend on Base.Metadata)
-FlextModelsContext.ContextData.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsContext.ContextExport.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsContext.ContextScopeData.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsContext.ContextStatistics.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsContext.StructlogProxyToken.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Config models
-FlextModelsConfig.ProcessingRequest.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsConfig.RetryConfiguration.model_rebuild(_types_namespace=_TYPES_NS)
-# Note: ErrorMappingConfiguration and TestServiceConfiguration may not exist
-# Only rebuild models that actually exist - verify before uncommenting
-# FlextModelsConfig.ErrorMappingConfiguration.model_rebuild(_types_namespace=_TYPES_NS)
-# FlextModelsConfig.TestServiceConfiguration.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Service models - only rebuild classes that actually exist
-FlextModelsService.OperationExecutionRequest.model_rebuild(_types_namespace=_TYPES_NS)
-# ServiceRuntime, DomainServiceRequest, DomainServiceResponse don't exist - commented out
-# FlextModelsService.ServiceRuntime.model_rebuild(_types_namespace=_TYPES_NS)
-# FlextModelsService.DomainServiceRequest.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Collections models - rebuild ParseOptions and PatternApplicationParams
-FlextModelsCollections.ParseOptions.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsCollections.PatternApplicationParams.model_rebuild(
-    _types_namespace=_TYPES_NS,
-)
-# FlextModelsService.DomainServiceResponse.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Handler models - using Registration (not HandlerRegistration)
-FlextModelsHandler.Registration.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Container models
-FlextModelsContainer.ServiceRegistration.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsContainer.FactoryRegistration.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsContainer.ContainerConfig.model_rebuild(_types_namespace=_TYPES_NS)
-
-# CQRS models
-FlextModelsCqrs.Command.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsCqrs.Query.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsCqrs.Pagination.model_rebuild(_types_namespace=_TYPES_NS)
-# Note: DomainEvent is aliased from FlextModelsEntity.DomainEvent, not FlextModelsCqrs
-# FlextModelsCqrs.DomainEvent.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Validation models
-# Note: Verify which Validation classes actually exist before rebuilding
-# Only rebuild models that actually exist - commented out for now
-# FlextModelsValidation.ValidationRule.model_rebuild(_types_namespace=_TYPES_NS)
-# FlextModelsValidation.ValidationResult.model_rebuild(_types_namespace=_TYPES_NS)
-
-# Collections models
-FlextModelsCollections.Config.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsCollections.Rules.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsCollections.Statistics.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsCollections.Results.model_rebuild(_types_namespace=_TYPES_NS)
-FlextModelsCollections.Options.model_rebuild(_types_namespace=_TYPES_NS)
 
 m = FlextModels
-__all__ = ["FlextModels", "FlextModelsCollections", "FlextModelsEntity", "m"]
+
+__all__ = ["FlextModels", "m"]

@@ -138,6 +138,9 @@ class FlextUtilitiesGuards:
         """
         if isinstance(val, (str, int, float, bool, type(None))):
             return val
+        # Lazy import to avoid circular dependency
+        from flext_core.runtime import FlextRuntime  # noqa: PLC0415
+
         if FlextRuntime.is_dict_like(val):
             # Convert to flat dict with ScalarValue values
             result_dict: dict[str, t.ScalarValue] = {}
@@ -149,6 +152,9 @@ class FlextUtilitiesGuards:
                     result_dict[k] = str(v)
             # Return as Mapping[str, ScalarValue] - compatible with MetadataAttributeValue
             return result_dict
+        # Lazy import to avoid circular dependency
+        from flext_core.runtime import FlextRuntime  # noqa: PLC0415
+
         if FlextRuntime.is_list_like(val):
             # Convert to list[t.MetadataAttributeValue]
             result_list: list[str | int | float | bool | None] = []
@@ -184,6 +190,9 @@ class FlextUtilitiesGuards:
             ...     name = config.app_name
 
         """
+        # Lazy import to avoid circular dependency
+        from flext_core.protocols import p  # noqa: PLC0415
+
         return isinstance(obj, p.Configuration.Config)
 
     @staticmethod
@@ -199,6 +208,9 @@ class FlextUtilitiesGuards:
             TypeGuard[p.Context.Ctx]: True if obj satisfies Ctx protocol
 
         """
+        # Lazy import to avoid circular dependency
+        from flext_core.protocols import p  # noqa: PLC0415
+
         return isinstance(obj, p.Context.Ctx)
 
     @staticmethod
@@ -214,6 +226,9 @@ class FlextUtilitiesGuards:
             TypeGuard[p.Container.DI]: True if obj satisfies DI protocol
 
         """
+        # Lazy import to avoid circular dependency
+        from flext_core.protocols import p  # noqa: PLC0415
+
         return isinstance(obj, p.Container.DI)
 
     @staticmethod
@@ -244,6 +259,11 @@ class FlextUtilitiesGuards:
             TypeGuard[p.Application.Handler]: True if obj satisfies Handler protocol
 
         """
+        # Lazy import to avoid circular dependency
+        from flext_core.protocols import p  # noqa: PLC0415
+
+        # Lazy import to avoid circular dependency
+
         return isinstance(obj, p.Application.Handler)
 
     @staticmethod
@@ -719,6 +739,10 @@ class FlextUtilitiesGuards:
                     return isinstance(value, type_spec)
                 except TypeError:
                     # Protocol runtime check failed, try specific protocol checks
+                    # Lazy import to avoid circular dependency:
+                    # guards.py -> protocols.py -> typings.py -> models.py -> ... -> exceptions.py -> guards.py
+                    from flext_core.protocols import p  # noqa: PLC0415
+
                     if type_spec == p.Configuration.Config:
                         return FlextUtilitiesGuards._is_config(value)
                     if type_spec == p.Context.Ctx:

@@ -68,8 +68,8 @@ class HandlerTypeScenario:
     """Handler type test scenario."""
 
     name: str
-    handler_type: str
-    handler_mode: str
+    handler_type: c.Cqrs.HandlerType
+    handler_mode: c.Cqrs.HandlerType
 
 
 class HandlerScenarios:
@@ -509,13 +509,13 @@ class TestFlextHandlers:
     )
     def test_handlers_validate_generic(
         self,
-        handler_type: str,
-        handler_mode: str,
+        handler_type: c.Cqrs.HandlerType,
+        handler_mode: c.Cqrs.HandlerType,
     ) -> None:
         """Test validate method for various handler types."""
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
-            f"test_validate_generic_{handler_type}",
-            f"Test Validate Generic {handler_type.title()}",
+            f"test_validate_generic_{handler_type.value}",
+            f"Test Validate Generic {handler_type.value.title()}",
             handler_type=handler_type,
             handler_mode=handler_mode,
         )

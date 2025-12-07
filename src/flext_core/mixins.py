@@ -277,31 +277,75 @@ class FlextMixins(FlextRuntime):
             "t.Types.RuntimeBootstrapOptions",
             options_raw if isinstance(options_raw, dict) else {},
         )
-        # Use RuntimeBootstrapOptions TypedDict for type safety
-        # TypedDict provides correct types, reducing need for casts
-        runtime = FlextRuntime.create_service_runtime(
-            config_type=cast("type[FlextConfig] | None", options.get("config_type"))
+        # Use factory methods directly - Clean Architecture pattern
+        # Each class knows how to instantiate itself
+        config_type = (
+            cast(
+                "type[FlextConfig] | None",
+                options.get("config_type"),
+            )
             if "config_type" in options
-            else None,
+            else None
+        )
+        config_cls = config_type or FlextConfig
+        runtime_config = config_cls.materialize(
             config_overrides=options.get("config_overrides"),
-            context=cast("p.Context.Ctx | None", options.get("context"))
+        )
+
+        context_option = (
+            cast(
+                "p.Context.Ctx | None",
+                options.get("context"),
+            )
             if "context" in options
-            else None,
-            subproject=options.get("subproject"),
-            services=cast(
+            else None
+        )
+        runtime_context = (
+            context_option if context_option is not None else FlextContext.create()
+        )
+
+        # Cast config to protocol for container.scoped() compatibility
+        runtime_config_typed: p.Configuration.Config = cast(
+            "p.Configuration.Config",
+            runtime_config,
+        )
+        services_option = (
+            cast(
                 "Mapping[str, t.GeneralValueType | BaseModel | p.Utility.Callable[t.GeneralValueType]] | None",
                 options.get("services"),
             )
             if "services" in options
-            else None,
+            else None
+        )
+
+        runtime_container = FlextContainer.create().scoped(
+            config=runtime_config_typed,
+            context=runtime_context,
+            subproject=options.get("subproject"),
+            services=services_option,
             factories=options.get("factories"),
             resources=options.get("resources"),
-            container_overrides=options.get("container_overrides"),
-            wire_modules=options.get("wire_modules"),
-            wire_packages=options.get("wire_packages"),
-            wire_classes=options.get("wire_classes"),
         )
-        # Use PrivateAttr for proper Pydantic v2 pattern
+
+        container_overrides = options.get("container_overrides")
+        if container_overrides:
+            runtime_container.configure(container_overrides)
+
+        wire_modules = options.get("wire_modules")
+        wire_packages = options.get("wire_packages")
+        wire_classes = options.get("wire_classes")
+        if wire_modules or wire_packages or wire_classes:
+            runtime_container.wire_modules(
+                modules=wire_modules,
+                packages=wire_packages,
+                classes=wire_classes,
+            )
+
+        runtime = m.ServiceRuntime.model_construct(
+            config=runtime_config,
+            context=runtime_context,
+            container=runtime_container,
+        )
         self._runtime = runtime
         return runtime
 
@@ -448,7 +492,7 @@ class FlextMixins(FlextRuntime):
 
         # Try to get from DI container
         try:
-            container = FlextContainer()
+            container = FlextContainer.create()
             logger_key = f"logger:{logger_name}"
 
             # Attempt to retrieve logger from container

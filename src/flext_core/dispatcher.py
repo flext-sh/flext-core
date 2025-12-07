@@ -317,14 +317,14 @@ class FlextDispatcher(x):
         if allow_callable and callable(obj):
             return r[bool].ok(True)
 
-        # method_names is list[str] | str, so isinstance checks are redundant
-        methods: list[str] = (
-            [str(m) for m in method_names]
-            if isinstance(method_names, list)
-            else [method_names]
-            if isinstance(method_names, str)
-            else []
-        )
+        # method_names is list[str] | str, convert to list[str]
+        methods: list[str]
+        if isinstance(method_names, list):
+            methods = [str(m) for m in method_names]
+        else:
+            # Type narrowing: if not list, must be str (or empty list fallback)
+            # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
+            methods = [method_names] if isinstance(method_names, str) else []  # pyright: ignore[reportUnnecessaryIsInstance]
         for method_name in methods:
             if hasattr(obj, method_name):
                 method = getattr(obj, method_name)
@@ -997,10 +997,11 @@ class FlextDispatcher(x):
         )
         # __members__ returns mappingproxy[str, HandlerType], cast to HandlerTypeDict
         # HandlerTypeDict is dict[str, HandlerType], which matches __members__ structure
+        # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
         handler_type_members: t.Types.HandlerTypeDict = cast(
             "t.Types.HandlerTypeDict",
             handler_type_members_raw
-            if isinstance(handler_type_members_raw, Mapping)
+            if isinstance(handler_type_members_raw, Mapping)  # pyright: ignore[reportUnnecessaryIsInstance]
             else {},
         )
         valid_modes = list(
@@ -1061,7 +1062,11 @@ class FlextDispatcher(x):
                     return cast("t.Handler.HandlerType", extracted_handler)
             # Return handler directly (it's already HandlerType)
             # Type narrowing: handler_entry is HandlerType from dict definition
-            return handler_entry
+            # Type annotation: handler_entry is HandlerType
+            handler_result: t.Handler.HandlerType = cast(
+                "t.Handler.HandlerType", handler_entry
+            )
+            return handler_result
 
         # Search auto-registered handlers (single-arg form)
         for handler in self._auto_handlers:
@@ -1192,7 +1197,18 @@ class FlextDispatcher(x):
 
         # Delegate to h.dispatch_message() for full CQRS support
         if isinstance(handler, h):
-            return handler.dispatch_message(command, operation=operation)
+            # Type narrowing: handler is h[MessageT_contra, ResultT]
+            # dispatch_message returns r[ResultT], but ResultT is unknown at runtime
+            # Since handler is generic and ResultT cannot be inferred, we cast the result
+            # to r[t.GeneralValueType] for compatibility with return type
+            # This is safe because GeneralValueType is the base type for all values
+            dispatch_result_raw = handler.dispatch_message(command, operation=operation)
+            # Cast to r[t.GeneralValueType] - safe because ResultT is always a GeneralValueType
+            dispatch_result: r[t.GeneralValueType] = cast(
+                "r[t.GeneralValueType]",
+                dispatch_result_raw,
+            )
+            return dispatch_result
 
         # Fallback for non-h: try handle() then execute()
         # Use u.has() + u.Mapper.get() for unified attribute access (DSL pattern)
@@ -1228,8 +1244,9 @@ class FlextDispatcher(x):
             result_raw = handle_method(command)
             # Ensure result is GeneralValueType - handlers should return GeneralValueType or FlextResult
             # Type narrowing: result_raw is GeneralValueType after isinstance check
+            # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
             result: t.GeneralValueType
-            if isinstance(
+            if isinstance(  # pyright: ignore[reportUnnecessaryIsInstance]
                 result_raw,
                 (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
             ):
@@ -1313,16 +1330,19 @@ class FlextDispatcher(x):
     ) -> r[bool]:
         """Process a single middleware instance."""
         # Extract configuration values from dict using get()
-        middleware_id_value = u.Mapper.get(middleware_config, "middleware_id")
+        # u.Mapper.get() without default returns GeneralValueType | None
+        middleware_id_value: t.GeneralValueType | None = u.Mapper.get(
+            middleware_config, "middleware_id"
+        )
         middleware_type_value = u.Mapper.get(middleware_config, "middleware_type")
         enabled_raw = u.Mapper.get(middleware_config, "enabled", default=True)
         enabled_value = bool(enabled_raw) if enabled_raw is not None else False
 
         # Convert middleware_id to string (handles None case)
-        # u.Mapper.get() without default returns GeneralValueType | None
         # Type narrowing: middleware_id_value can be None or GeneralValueType
+        # pyright: ignore[reportUnnecessaryComparison] - middleware_id_value can be None
         middleware_id_str: str = (
-            str(middleware_id_value) if middleware_id_value is not None else ""
+            str(middleware_id_value) if middleware_id_value is not None else ""  # pyright: ignore[reportUnnecessaryComparison]
         )
 
         # Skip disabled middleware
@@ -1378,8 +1398,9 @@ class FlextDispatcher(x):
             )
         result_raw = process_method(command, handler)
         # Ensure result is GeneralValueType or FlextResult
+        # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
         result: t.GeneralValueType | r[t.GeneralValueType]
-        if isinstance(
+        if isinstance(  # pyright: ignore[reportUnnecessaryIsInstance]
             result_raw,
             (
                 str,

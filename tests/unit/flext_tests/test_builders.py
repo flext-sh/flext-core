@@ -10,10 +10,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextResult as r
-from flext_tests import m
 from flext_tests.builders import FlextTestsBuilders, tb
 from flext_tests.typings import t as t_test
 
@@ -351,11 +350,12 @@ class TestFlextTestsBuilders:
         builder.add("count", 5)
         # validate_with is a special kwarg processed by BuildParams
         # Type ignore needed because validate_with is Callable, not GeneralValueType
-        build_result = builder.build(validate_with=lambda d: d["count"] > 0)  # type: ignore[arg-type]
+        # build() accepts **kwargs: object, validated by BuildParams
+        build_result = builder.build(validate_with=lambda d: d["count"] > 0)  # type: ignore[call-overload]  # validate_with is validated by BuildParams, not in overloads
         # Type narrowing: build() returns union, extract dict
         if isinstance(build_result, dict):
             data = build_result
-        elif isinstance(build_result, m.BaseModel):
+        elif isinstance(build_result, BaseModel):
             data = build_result.model_dump()
         else:
             msg = f"Expected dict, got {type(build_result)}"
@@ -381,8 +381,15 @@ class TestFlextTestsBuilders:
         """Test to_result() with success case."""
         builder = FlextTestsBuilders()
         builder.add("x", 1)
-        result_raw = builder.to_result()
-        # Type narrowing: to_result() returns union, extract r[BuilderDict]
+        # to_result() returns complex union: r[T] | r[BuilderDict] | r[BaseModel] | r[list[T]] | r[dict[str, T]] | T
+        # Default case returns r[BuilderDict]
+        # Type annotation matches actual return type from to_result()
+        # to_result() returns: r[T] | r[BuilderDict] | r[BaseModel] | r[list[T]] | r[dict[str, T]] | T
+        # Actual return type is more specific: r[BuilderDict] | r[BaseModel] | r[list[Never]] | r[dict[str, Never]]
+        # Use explicit type annotation with cast to handle type compatibility
+        result_raw: object = builder.to_result()
+        # Type narrowing: default to_result() returns r[BuilderDict]
+        # Cast to handle union type compatibility
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
             "r[t_test.Tests.Builders.BuilderDict]",
             result_raw,
@@ -394,7 +401,11 @@ class TestFlextTestsBuilders:
     def test_to_result_with_error(self) -> None:
         """Test to_result() with error parameter."""
         builder = FlextTestsBuilders()
-        result = builder.to_result(error="Failed", error_code="E001")
+        # to_result() returns r[BuilderDict] | BuilderDict (when unwrap=True)
+        result: r[t_test.Tests.Builders.BuilderDict] = cast(
+            "r[t_test.Tests.Builders.BuilderDict]",
+            builder.to_result(error="Failed", error_code="E001"),
+        )
         assert result.is_failure
         assert "Failed" in str(result.error)
 
@@ -402,7 +413,12 @@ class TestFlextTestsBuilders:
         """Test to_result() with unwrap parameter."""
         builder = FlextTestsBuilders()
         builder.add("x", 1)
-        result_raw = builder.to_result(unwrap=True)
+        # unwrap=True returns T directly (not wrapped in r[T])
+        # to_result() returns: r[T] | r[BuilderDict] | r[BaseModel] | r[list[T]] | r[dict[str, T]] | T
+        # Type annotation matches actual return type from to_result()
+        # unwrap=True returns T directly (not wrapped in r[T])
+        # Actual return type is more specific, use explicit type annotation with cast
+        result_raw: object = builder.to_result(unwrap=True)
         # Type narrowing: unwrap=True returns value directly (BuilderDict)
         data: t_test.Tests.Builders.BuilderDict = cast(
             "t_test.Tests.Builders.BuilderDict",
@@ -417,7 +433,10 @@ class TestFlextTestsBuilders:
         builder.add("count", 5)
         # validate is a special kwarg processed by ToResultParams
         # Type ignore needed because validate is Callable, not GeneralValueType
-        result_raw = builder.to_result(validate=lambda d: d["count"] > 0)  # type: ignore[call-overload]
+        # Type annotation matches actual return type from to_result()
+        # validate is Callable, validated by ToResultParams
+        # Actual return type is more specific, use explicit type annotation with cast
+        result_raw: object = builder.to_result(validate=lambda d: d["count"] > 0)  # type: ignore[call-overload]
         # Type narrowing: to_result() returns union, extract r[BuilderDict]
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
             "r[t_test.Tests.Builders.BuilderDict]",
@@ -511,9 +530,9 @@ class TestFlextTestsBuilders:
 
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
-        result_raw = tb.Tests.Result.fail("Error", code="E001")
-        # Type narrowing: Result.fail() returns r[T]
-        result: r[object] = cast("r[object]", result_raw)
+        # Result.fail() returns r[T] where T is inferred from context
+        result_raw: r[object] = tb.Tests.Result.fail("Error", code="E001")
+        result: r[object] = result_raw
         assert result.is_failure
 
     def test_tests_result_batch_ok(self) -> None:
@@ -577,15 +596,19 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("test_id", "case_1")
         # Empty parametrize_key should fail validation
+        # build() accepts **kwargs: object, validated by BuildParams
         with pytest.raises((ValueError, ValidationError)):
-            builder.build(as_parametrized=True, parametrize_key="")
+            builder.build(as_parametrized=True, parametrize_key="")  # type: ignore[call-overload]  # parametrize_key is validated by BuildParams
 
     def test_to_result_params_validation_error_code_with_error(self) -> None:
         """Test ToResultParams validates error_code is only with error."""
         builder = FlextTestsBuilders()
         # error_code without error should work (uses default)
-        result_raw = builder.to_result(error_code="E001")
-        # Type narrowing: to_result() returns union, extract r[BuilderDict]
+        # to_result() returns complex union
+        # Type annotation matches actual return type from to_result()
+        # Actual return type is more specific, use explicit type annotation with cast
+        result_raw: object = builder.to_result(error_code="E001")
+        # Type narrowing: default to_result() returns r[BuilderDict]
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
             "r[t_test.Tests.Builders.BuilderDict]",
             result_raw,
@@ -627,9 +650,22 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("x", 1)
         # build() uses u.Model.from_kwargs() internally
-        data_raw = builder.build(filter_none=True)
+        # build() returns complex union, but filter_none=True returns BuilderDict
+        # build() accepts **kwargs: object, validated by BuildParams
+        data_raw: (
+            t_test.Tests.Builders.BuilderDict
+            | BaseModel
+            | list[tuple[str, t_test.Tests.Builders.BuilderValue]]
+            | list[str]
+            | list[t_test.Tests.Builders.BuilderValue]
+            | list[t_test.Tests.Builders.ParametrizedCase]
+            | object
+        ) = builder.build(filter_none=True)  # type: ignore[call-overload]  # filter_none is validated by BuildParams, not in overloads
         # Type narrowing: filter_none=True returns BuilderDict
-        data: dict[str, object] = cast("dict[str, object]", data_raw)
+        data: t_test.Tests.Builders.BuilderDict = cast(
+            "t_test.Tests.Builders.BuilderDict",
+            data_raw,
+        )
         assert data["x"] == 1
 
     def test_to_result_uses_model_from_kwargs(self) -> None:
@@ -637,8 +673,11 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("x", 1)
         # to_result() uses u.Model.from_kwargs() internally
-        result_raw = builder.to_result(unwrap=False)
-        # Type narrowing: to_result() returns union, extract r[BuilderDict]
+        # to_result() returns complex union
+        # Type annotation matches actual return type from to_result()
+        # Actual return type is more specific, use explicit type annotation with cast
+        result_raw: object = builder.to_result(unwrap=False)
+        # Type narrowing: default to_result() returns r[BuilderDict]
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
             "r[t_test.Tests.Builders.BuilderDict]",
             result_raw,
@@ -684,9 +723,9 @@ class TestFlextTestsBuilders:
     def test_result_fail_delegates_to_tt_res(self) -> None:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
         # Result.fail() delegates to tt.res("fail", error=...)
-        result_raw = tb.Tests.Result.fail("Error")
-        # Type narrowing: Result.fail() returns r[T]
-        result: r[object] = cast("r[object]", result_raw)
+        # Result.fail() returns r[T] where T is inferred from context
+        result_raw: r[object] = tb.Tests.Result.fail("Error")
+        result: r[object] = result_raw
         assert result.is_failure
 
     def test_result_batch_ok_delegates_to_tt_results(self) -> None:

@@ -31,16 +31,13 @@ import pytest
 import structlog
 from dependency_injector import containers, providers
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, t
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, r, s, t
 from flext_core.mixins import FlextMixins
 
 
 class RuntimeOperationType(StrEnum):
     """Runtime operation types for parametrized testing."""
 
-    PHONE_VALID = "phone_valid"
-    PHONE_INVALID = "phone_invalid"
-    PHONE_NON_STRING = "phone_non_string"
     DICT_LIKE_VALID = "dict_like_valid"
     DICT_LIKE_INVALID = "dict_like_invalid"
     LIST_LIKE_VALID = "list_like_valid"
@@ -101,69 +98,6 @@ class RuntimeTestCase:
 
 class RuntimeScenarios:
     """Centralized runtime test scenarios using c."""
-
-    PHONE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
-        RuntimeTestCase(
-            "phone_valid_international",
-            RuntimeOperationType.PHONE_VALID,
-            "+5511987654321",
-            True,
-        ),
-        RuntimeTestCase(
-            "phone_valid_no_country",
-            RuntimeOperationType.PHONE_VALID,
-            "5511987654321",
-            True,
-        ),
-        RuntimeTestCase(
-            "phone_valid_us_format",
-            RuntimeOperationType.PHONE_VALID,
-            "+1234567890",
-            True,
-        ),
-        RuntimeTestCase(
-            "phone_valid_15_digits",
-            RuntimeOperationType.PHONE_VALID,
-            "123456789012345",
-            True,
-        ),
-        RuntimeTestCase(
-            "phone_invalid_too_short",
-            RuntimeOperationType.PHONE_INVALID,
-            "123",
-            False,
-        ),
-        RuntimeTestCase(
-            "phone_invalid_letters",
-            RuntimeOperationType.PHONE_INVALID,
-            "abc1234567890",
-            False,
-        ),
-        RuntimeTestCase(
-            "phone_invalid_country_letters",
-            RuntimeOperationType.PHONE_INVALID,
-            "+abc123",
-            False,
-        ),
-        RuntimeTestCase(
-            "phone_invalid_empty",
-            RuntimeOperationType.PHONE_INVALID,
-            "",
-            False,
-        ),
-        RuntimeTestCase(
-            "phone_non_string_int",
-            RuntimeOperationType.PHONE_NON_STRING,
-            5511987654321,
-            False,
-        ),
-        RuntimeTestCase(
-            "phone_non_string_none",
-            RuntimeOperationType.PHONE_NON_STRING,
-            None,
-            False,
-        ),
-    ]
 
     DICT_LIKE_SCENARIOS: ClassVar[list[RuntimeTestCase]] = [
         RuntimeTestCase(
@@ -621,22 +555,6 @@ class TestFlextRuntime:
 
     @pytest.mark.parametrize(
         "test_case",
-        RuntimeScenarios.PHONE_SCENARIOS,
-        ids=lambda c: c.name,
-    )
-    def test_phone_validation(self, test_case: RuntimeTestCase) -> None:
-        """Test phone number validation.
-
-        Business Rule: None is a valid test input - validates that is_valid_phone
-        correctly returns False for None values.
-        """
-        result = FlextRuntime.is_valid_phone(
-            cast("t.GeneralValueType", test_case.test_input),
-        )
-        assert result == test_case.expected_result
-
-    @pytest.mark.parametrize(
-        "test_case",
         RuntimeScenarios.DICT_LIKE_SCENARIOS,
         ids=lambda c: c.name,
     )
@@ -969,13 +887,15 @@ class TestFlextRuntime:
             # Type annotation for dynamic module attribute
             setattr(module, "consume", consume_service)
 
-            runtime = FlextRuntime.create_service_runtime(
+            runtime_raw = s._create_runtime(
                 config_overrides={"app_name": "runtime-service"},
                 services={"feature_flag": True},
                 factories={"token_factory": token_factory},
                 resources={"api_client": lambda: {"connected": True}},
                 wire_modules=[module],
             )
+            # Type narrowing: runtime is BaseModel, but is actually m.ServiceRuntime
+            runtime: m.ServiceRuntime = cast("m.ServiceRuntime", runtime_raw)
 
             try:
                 # Type narrowing: module has consume attribute after setattr
@@ -1135,7 +1055,7 @@ class TestFlextRuntime:
         """Test FlextRuntime integration scenarios."""
         if test_case.operation == RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS:
             assert hasattr(c.Platform, "PATTERN_PHONE_NUMBER")
-            assert FlextRuntime.is_valid_phone("+5511987654321")
+            assert FlextRuntime.is_valid_json('{"phone": "+5511987654321"}')
         elif test_case.operation == RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY:
             assert c is not None and FlextRuntime is not None
             assert c.Platform.PATTERN_EMAIL is not None

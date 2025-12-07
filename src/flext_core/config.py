@@ -404,6 +404,50 @@ class FlextConfig(BaseSettings, FlextRuntime):
         """Get the global singleton instance."""
         return cls()
 
+    @classmethod
+    def materialize(
+        cls,
+        *,
+        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+    ) -> Self:
+        """Factory method to create a config instance with optional overrides.
+
+        This is the preferred way to create a configuration instance for
+        services that need to apply runtime overrides. It respects Clean
+        Architecture principles where each class owns its own instantiation.
+
+        For FlextConfig (base class): clones from the global instance to
+        preserve environment-derived values while allowing overrides.
+        For subclasses: creates a new instance directly.
+
+        Args:
+            config_overrides: Optional mapping of field names to override values.
+
+        Returns:
+            New configuration instance with applied overrides.
+
+        Example:
+            >>> config = FlextConfig.materialize(config_overrides={"app_name": "myapp"})
+            >>> config.app_name
+            'myapp'
+
+        """
+        # For FlextConfig itself, clone from global instance
+        if cls is FlextConfig:
+            global_config = cls.get_global_instance()
+            # Use model_copy to clone the instance properly
+            # This ensures Pydantic internal state (__pydantic_fields_set__, etc.) is properly initialized
+            instance = global_config.model_copy(deep=True)
+        else:
+            # For subclasses, create directly
+            instance = cls()
+
+        # Apply overrides if provided
+        if config_overrides:
+            instance = instance.model_copy(update=config_overrides, deep=True)
+
+        return instance
+
     def get_di_config_provider(self) -> object:
         """Get dependency injection provider for this config.
 
@@ -564,6 +608,11 @@ class FlextConfig(BaseSettings, FlextRuntime):
 
         Enables `config.ldif` instead of `config.get_namespace("ldif", FlextLdifConfig)`.
 
+        CRITICAL: Must not intercept Pydantic internal attributes.
+        Pydantic v2 uses __pydantic_fields_set__, __pydantic_extra__, etc.
+        These must be handled by Pydantic's own __getattr__/__setattr__.
+        If we intercept them, Pydantic can't initialize its internal state.
+
         Args:
             name: Namespace name to resolve
 
@@ -578,11 +627,28 @@ class FlextConfig(BaseSettings, FlextRuntime):
             ldif_config = config.ldif  # Auto-resolves "ldif" namespace
 
         """
-        config_class = self._namespace_registry.get(name)
-        if config_class is not None:
-            return config_class()
-        msg = f"'{type(self).__name__}' object has no attribute '{name}'"
-        raise AttributeError(msg)
+        # CRITICAL: Don't intercept Pydantic internal attributes
+        # Pydantic v2 uses __pydantic_fields_set__, __pydantic_extra__, etc.
+        # These must be handled by Pydantic's own __getattr__/__setattr__
+        # If we intercept them, Pydantic can't initialize its internal state
+        # Use object.__getattribute__ to check if attribute exists without triggering __getattr__
+        try:
+            # Try to get attribute directly from object (bypasses __getattr__)
+            # This allows Pydantic to handle its own attributes
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            # Attribute doesn't exist - check if it's a Pydantic internal attribute
+            if name.startswith("__pydantic_"):
+                # Let Pydantic handle its own attributes - raise AttributeError
+                # so Python's normal attribute resolution can proceed
+                raise
+
+            # Not a Pydantic attribute - check namespace registry
+            config_class = self._namespace_registry.get(name)
+            if config_class is not None:
+                return config_class()
+            msg = f"'{type(self).__name__}' object has no attribute '{name}'"
+            raise AttributeError(msg) from None
 
     @classmethod
     def reset_global_instance(cls) -> None:

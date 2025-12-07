@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Iterator
+from typing import cast
 
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, t
 from flext_core.utilities import FlextUtilities
 from flext_tests import tm
 from tests.constants import TestsFlextConstants
@@ -25,7 +26,12 @@ class TestMapperMapDictKeys:
     def test_basic_key_mapping(self) -> None:
         """Test basic key mapping."""
         mc = TestsFlextConstants.Mapper
-        source = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
+        source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
+        # Convert dict[str, str] to ConfigurationDict for type compatibility
+        source: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict",
+            source_raw,
+        )
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
 
         result = FlextUtilities.Mapper.map_dict_keys(source, mapping)
@@ -35,7 +41,12 @@ class TestMapperMapDictKeys:
     def test_keep_unmapped_true(self) -> None:
         """Test keeping unmapped keys."""
         mc = TestsFlextConstants.Mapper
-        source = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
+        source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
+        # Convert dict[str, str] to ConfigurationDict for type compatibility
+        source: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict",
+            source_raw,
+        )
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
 
         result = FlextUtilities.Mapper.map_dict_keys(
@@ -49,7 +60,12 @@ class TestMapperMapDictKeys:
     def test_keep_unmapped_false(self) -> None:
         """Test discarding unmapped keys."""
         mc = TestsFlextConstants.Mapper
-        source = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
+        source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
+        # Convert dict[str, str] to ConfigurationDict for type compatibility
+        source: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict",
+            source_raw,
+        )
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
 
         result = FlextUtilities.Mapper.map_dict_keys(
@@ -71,7 +87,13 @@ class TestMapperMapDictKeys:
                 msg = "Bad dict items"
                 raise RuntimeError(msg)
 
-        result = FlextUtilities.Mapper.map_dict_keys(BadDict(), {})
+        # Convert BadDict to ConfigurationDict for type compatibility
+        bad_dict_instance = BadDict()
+        bad_dict_typed: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict",
+            bad_dict_instance,
+        )
+        result = FlextUtilities.Mapper.map_dict_keys(bad_dict_typed, {})
 
         tm.fail(result, contains="Failed to map dict keys")
 
@@ -125,7 +147,12 @@ class TestMapperBuildFlagsDict:
                 msg = "Bad list iteration"
                 raise RuntimeError(msg)
 
-        result = FlextUtilities.Mapper.build_flags_dict(BadList(), {})
+        # Pass BadList directly - build_flags_dict will handle the exception
+        # Don't convert to list[str] because that would raise the exception immediately
+        bad_list_instance = BadList()
+        # Type annotation: BadList is compatible with Sequence[str] expected by build_flags_dict
+        bad_list_typed: list[str] = cast("list[str]", bad_list_instance)
+        result = FlextUtilities.Mapper.build_flags_dict(bad_list_typed, {})
 
         assert result.is_failure
         assert "Failed to build flags dict" in str(result.error)
@@ -190,7 +217,12 @@ class TestMapperTransformValues:
     def test_basic_transform(self) -> None:
         """Test basic value transformation."""
         mc = TestsFlextConstants.Mapper
-        source = {mc.A: mc.HELLO, mc.B: mc.WORLD}
+        source_raw = {mc.A: mc.HELLO, mc.B: mc.WORLD}
+        # Convert dict[str, str] to ConfigurationDict for type compatibility
+        source: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict",
+            source_raw,
+        )
 
         result = FlextUtilities.Mapper.transform_values(
             source,
@@ -202,7 +234,12 @@ class TestMapperTransformValues:
     def test_numeric_transform(self) -> None:
         """Test numeric value transformation."""
         mc = TestsFlextConstants.Mapper
-        source = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
+        source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
+        # Convert dict[str, int] to ConfigurationDict for type compatibility
+        source: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict",
+            source_raw,
+        )
 
         result = FlextUtilities.Mapper.transform_values(
             source,
@@ -218,7 +255,12 @@ class TestMapperFilterDict:
     def test_basic_filter(self) -> None:
         """Test basic dict filtering."""
         mc = TestsFlextConstants.Mapper
-        source = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
+        source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
+        # Convert dict[str, int] to ConfigurationDict for type compatibility
+        source: t.Types.ConfigurationDict = cast(
+            "t.Types.ConfigurationDict",
+            source_raw,
+        )
 
         result = FlextUtilities.Mapper.filter_dict(
             source,

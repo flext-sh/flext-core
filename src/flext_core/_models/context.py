@@ -26,7 +26,8 @@ class FlextModelsContext:
     """Context management pattern container class.
 
     This class acts as a namespace container for context management patterns.
-    All nested classes can be accessed via FlextModels.* (type aliases) or directly via FlextModelsContext.*
+    All nested classes can be accessed via FlextModels.* (type aliases) or
+    directly via FlextModelsContext.*
     """
 
     @staticmethod
@@ -43,7 +44,8 @@ class FlextModelsContext:
         result: t.Types.ConfigurationDict = {}
         # Type narrowing: value is dict-like after is_dict_like check
         # Convert to dict for consistent iteration (handles both dict and Mapping)
-        # Use ConfigurationMapping for type safety - values will be normalized to GeneralValueType
+        # Use ConfigurationMapping for type safety - values will be normalized
+        # to GeneralValueType
         dict_value: t.Types.ConfigurationMapping = (
             cast("t.Types.ConfigurationMapping", dict(value.items()))
             if hasattr(value, "items")
@@ -176,7 +178,8 @@ class FlextModelsContext:
                 structlog.contextvars.unbind_contextvars(self._key)
 
             # Create token for reset functionality
-            # T is conceptually bounded to GeneralValueType at runtime (structlog context)
+            # T is conceptually bounded to GeneralValueType at runtime
+            # (structlog context)
             # Normalize value to ensure type safety
             if isinstance(
                 current_value,
@@ -362,7 +365,8 @@ class FlextModelsContext:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
+            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
+            normalization.
             """
             return FlextUtilitiesModel.normalize_to_metadata(v)
 
@@ -466,7 +470,8 @@ class FlextModelsContext:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
+            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
+            normalization.
             """
             return FlextUtilitiesModel.normalize_to_metadata(v)
 

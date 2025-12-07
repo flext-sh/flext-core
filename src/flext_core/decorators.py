@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 import time
 from collections.abc import Callable
 from contextlib import suppress
@@ -344,7 +345,7 @@ class FlextDecorators(FlextRuntime):
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 # Get container from self if available, otherwise use global singleton
-                container = FlextContainer()
+                container = FlextContainer.create()
 
                 # Inject dependencies that aren't already provided
                 for name, service_key in dependencies.items():
@@ -1498,6 +1499,116 @@ class FlextDecorators(FlextRuntime):
             return wrapper
 
         return decorator
+
+    @staticmethod
+    def factory(
+        name: str,
+        *,
+        singleton: bool = False,
+        lazy: bool = True,
+    ) -> t.Types.DecoratorType:
+        """Decorator to mark functions as factories for DI container.
+
+        Stores factory configuration as metadata on the decorated function,
+        enabling auto-discovery by FlextContainer and factory registries.
+
+        Args:
+            name: Name to register the factory under in the container
+            singleton: Whether factory creates singleton instances. Default: False
+            lazy: Whether to defer factory invocation until first use. Default: True
+
+        Returns:
+            Decorator function for marking factory functions
+
+        Example:
+            >>> @FlextDecorators.factory(name="user_service", singleton=True)
+            ... def create_user_service(config: FlextConfig) -> UserService:
+            ...     return UserService(config)
+
+        """
+
+        def decorator(func: t.Types.HandlerCallable) -> t.Types.HandlerCallable:
+            """Apply factory configuration metadata to function."""
+            config = m.Container.FactoryDecoratorConfig(
+                name=name,
+                singleton=singleton,
+                lazy=lazy,
+            )
+            setattr(func, c.Discovery.FACTORY_ATTR, config)
+            return func
+
+        return decorator
+
+    class FactoryDiscovery:
+        """Auto-discovery mechanism for factory decorators.
+
+        Scans modules and classes for functions decorated with @factory() and provides
+        utilities for finding and analyzing factory configurations.
+
+        This class enables zero-config factory registration in FlextContainer
+        by automatically discovering decorated functions at initialization time.
+        """
+
+        @staticmethod
+        def scan_module(
+            module: object,
+        ) -> list[tuple[str, m.Container.FactoryDecoratorConfig]]:
+            """Scan module for functions decorated with @factory().
+
+            Introspects the module to find all functions with factory configuration
+            metadata, returning them sorted by name for consistent ordering.
+
+            Args:
+                module: Module object to scan for factory decorators
+
+            Returns:
+                List of tuples (function_name, FactoryDecoratorConfig) sorted by name
+
+            Example:
+                >>> factories = FlextDecorators.FactoryDiscovery.scan_module(my_module)
+                >>> for func_name, config in factories:
+                ...     print(f"{func_name}: singleton={config.singleton}")
+
+            """
+            factories: list[tuple[str, m.Container.FactoryDecoratorConfig]] = []
+            for name in dir(module):
+                if name.startswith("_"):
+                    continue
+                func = getattr(module, name, None)
+                if callable(func) and hasattr(func, c.Discovery.FACTORY_ATTR):
+                    config: m.Container.FactoryDecoratorConfig = getattr(
+                        func,
+                        c.Discovery.FACTORY_ATTR,
+                    )
+                    factories.append((name, config))
+
+            # Sort by name for consistent ordering
+            return sorted(factories, key=operator.itemgetter(0))
+
+        @staticmethod
+        def has_factories(module: object) -> bool:
+            """Check if module has any factory-decorated functions.
+
+            Efficiently checks if a module contains any functions marked with
+            the @factory() decorator without scanning all items.
+
+            Args:
+                module: Module object to check for factories
+
+            Returns:
+                True if module has at least one factory, False otherwise
+
+            Example:
+                >>> if FlextDecorators.FactoryDiscovery.has_factories(my_module):
+                ...     # Auto-register factories in container
+                ...     container.auto_register_factories(my_module)
+
+            """
+            return any(
+                hasattr(getattr(module, name, None), c.Discovery.FACTORY_ATTR)
+                for name in dir(module)
+                if not name.startswith("_") and callable(getattr(module, name, None))
+            )
 
 
 d = FlextDecorators

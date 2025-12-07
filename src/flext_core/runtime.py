@@ -43,12 +43,10 @@ from __future__ import annotations
 
 import atexit
 import contextlib
-import importlib
 import inspect
 import json
 import logging
 import queue
-import re
 import secrets
 import string
 import sys
@@ -56,7 +54,7 @@ import threading
 import typing
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import ClassVar, Self, TypeGuard, cast
+from typing import ClassVar, TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -68,10 +66,6 @@ from structlog.typing import BindableLogger
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import T, t
-
-if typing.TYPE_CHECKING:  # pragma: no cover - import cycle guard for typing only
-    from flext_core.config import FlextConfig
-    from flext_core.models import m
 
 
 class _AsyncLogWriter:
@@ -232,38 +226,8 @@ class FlextRuntime:
     # NOTE: Use c.Settings.LogLevel directly - no aliases per FLEXT standards
 
     # =========================================================================
-    # TYPE GUARD UTILITIES (Uses regex patterns from c)
+    # TYPE-SAFE FACTORY UTILITIES
     # =========================================================================
-
-    @staticmethod
-    def is_valid_phone(
-        value: t.GeneralValueType,
-    ) -> TypeGuard[str]:
-        """Type guard to check if value is a valid phone number string.
-
-        Business Rule: Validates phone numbers using international format pattern
-        from c.Platform.PATTERN_PHONE_NUMBER. Uses regex compilation
-        for O(1) pattern matching. Returns TypeGuard[str] for type narrowing in
-        conditional blocks. Pattern supports international formats with optional
-        country codes and separators.
-
-        Audit Implication: Phone number validation ensures audit trail completeness
-        by validating contact information before storage. All phone numbers are
-        validated against international standards before being used in audit systems.
-
-        Uses international format pattern from c.Platform.PATTERN_PHONE_NUMBER.
-
-        Args:
-            value: Value to check
-
-        Returns:
-            True if value is a valid phone number string, False otherwise
-
-        """
-        if not isinstance(value, str):
-            return False
-        pattern = re.compile(c.Platform.PATTERN_PHONE_NUMBER)
-        return pattern.match(value) is not None
 
     @staticmethod
     def create_instance[T](class_type: type[T]) -> T:
@@ -310,194 +274,9 @@ class FlextRuntime:
             raise TypeError(msg)
         return instance
 
-    @staticmethod
-    def create_context() -> p.Context.Ctx:
-        """Factory for creating context instances using protocol-based import.
-
-        Business Rule: Creates context instances using dynamic import via importlib
-        to avoid circular dependencies at module import time. Uses protocol-based
-        typing (p.Context.Ctx) for type safety without inheritance.
-        This is NOT a lazy import - it's a factory pattern using importlib at runtime.
-
-        Audit Implication: Context creation enables audit trail completeness by
-        providing execution context for operations. All contexts are created through
-        this factory, ensuring consistent context initialization across FLEXT.
-
-        Uses dynamic import to avoid circular dependencies while maintaining
-        type safety through p.Context.Ctx.
-
-        Returns:
-            Context.Ctx instance
-
-        Example:
-            >>> context = FlextRuntime.create_context()
-            >>> result = context.set("key", "value")
-
-        """
-        # Dynamic import to avoid circular dependency at module import time
-        # This is NOT a lazy import - it's a factory pattern using importlib
-        context_module = importlib.import_module("flext_core.context")
-        context_class = context_module.FlextContext
-        return cast("p.Context.Ctx", context_class())
-
-    @staticmethod
-    def create_container() -> p.Container.DI:
-        """Factory for creating container instances using protocol-based import.
-
-        Business Rule: Creates container instances using dynamic import via importlib
-        to avoid circular dependencies at module import time. Uses protocol-based
-        typing (p.Container.DI) for type safety without inheritance.
-        This is NOT a lazy import - it's a factory pattern using importlib at runtime.
-
-        Audit Implication: Container creation enables dependency injection for audit
-        trail completeness. All containers are created through this factory, ensuring
-        consistent container initialization across FLEXT.
-
-        Uses dynamic import to avoid circular dependencies while maintaining
-        type safety through p.Container.DI.
-
-        Returns:
-            Container.DI instance
-
-        Example:
-            >>> container = FlextRuntime.create_container()
-            >>> result = container.get("service_name")
-
-        """
-        # Dynamic import to avoid circular dependency at module import time
-        # This is NOT a lazy import - it's a factory pattern using importlib
-        container_module = importlib.import_module("flext_core.container")
-        container_class = container_module.FlextContainer
-        return cast("p.Container.DI", container_class())
-
-    @classmethod
-    def create_service_runtime(
-        cls,
-        *,
-        config_type: type[FlextConfig] | None = None,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Context.Ctx | None = None,
-        subproject: str | None = None,
-        services: Mapping[
-            str,
-            t.GeneralValueType | BaseModel | p.Utility.Callable[t.GeneralValueType],
-        ]
-        | None = None,
-        factories: Mapping[
-            str,
-            Callable[
-                [],
-                (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
-            ],
-        ]
-        | None = None,
-        resources: Mapping[str, Callable[[], t.GeneralValueType]] | None = None,
-        container_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        wire_modules: Sequence[ModuleType] | None = None,
-        wire_packages: Sequence[str] | None = None,
-        wire_classes: Sequence[type] | None = None,
-    ) -> m.ServiceRuntime:
-        """Materialize config, context, and container with DI wiring in one call.
-
-        This helper provides the same parameterized automation used by
-        ``DependencyIntegration.create_container`` but returns a
-        :class:`~flext_core.models.m.ServiceRuntime` triple tailored for
-        services. It allows callers to:
-
-        - Clone or materialize configuration models with optional overrides.
-        - Seed containers with services/factories/resources without additional
-          registration calls.
-        - Apply container configuration overrides (e.g., factory caching)
-          before wiring modules, packages, or classes for ``@inject`` usage.
-
-        All imports are performed lazily to avoid circular dependencies at
-        module import time. The created container is a scoped
-        :class:`~flext_core.container.FlextContainer` instance so registry state
-        remains isolated per service runtime.
-        """
-        # Lazy imports to avoid circular dependencies
-
-        # runtime.py -> models.py -> _models/config.py -> config.py -> runtime.py
-        from flext_core import models as _models  # noqa: PLC0415
-        from flext_core.config import FlextConfig  # noqa: PLC0415
-        from flext_core.container import FlextContainer  # noqa: PLC0415
-        from flext_core.context import FlextContext  # noqa: PLC0415
-
-        runtime_config = cls._materialize_service_config(
-            config_type or FlextConfig,
-            config_overrides=config_overrides,
-        )
-        runtime_context = context if context is not None else FlextContext()
-
-        # Type narrowing: services/factories/resources are compatible with scoped() signature
-        # scoped() accepts Mapping[str, GeneralValueType | BaseModel | Callable] for services
-        # and Callable[[], FlexibleValue] for factories/resources which is compatible
-        # Types match exactly, no cast needed
-        runtime_container = FlextContainer().scoped(
-            config=runtime_config,
-            context=runtime_context,
-            subproject=subproject,
-            services=services,
-            factories=factories,
-            resources=resources,
-        )
-
-        if container_overrides:
-            runtime_container.configure(container_overrides)
-
-        if wire_modules or wire_packages or wire_classes:
-            runtime_container.wire_modules(
-                modules=wire_modules,
-                packages=wire_packages,
-                classes=wire_classes,
-            )
-
-        return _models.m.ServiceRuntime.model_construct(
-            config=runtime_config,
-            context=runtime_context,
-            container=runtime_container,
-        )
-
-    @staticmethod
-    def _materialize_service_config(
-        config_type: type[FlextConfig],
-        *,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-    ) -> FlextConfig:
-        """Create a configuration instance with optional overrides."""
-        # Lazy import to avoid circular dependencies
-
-        # runtime.py -> models.py -> _models/config.py -> config.py -> runtime.py
-        from flext_core.config import FlextConfig  # noqa: PLC0415
-
-        if config_type is FlextConfig:
-            global_config = FlextConfig.get_global_instance()
-
-            class _ClonedConfig(FlextConfig):
-                """Lightweight clone bypassing singleton semantics."""
-
-                def __new__(
-                    cls,
-                    **_data: t.GeneralValueType,
-                ) -> Self:
-                    return FlextRuntime.create_instance(cls)
-
-            cloned_config_instance = _ClonedConfig.model_construct(
-                **global_config.model_dump(),
-            )
-            # Type assertion: _ClonedConfig is a subclass of FlextConfig
-            config_instance: FlextConfig = cast("FlextConfig", cloned_config_instance)
-        else:
-            # Type narrowing: config_type() returns instance of config_type which is FlextConfig
-            config_instance = config_type()
-
-        if config_overrides:
-            config_instance = config_instance.model_copy(
-                update=config_overrides,
-                deep=True,
-            )
-
-        return config_instance
+    # =========================================================================
+    # TYPE GUARD UTILITIES
+    # =========================================================================
 
     @staticmethod
     def is_dict_like(
@@ -579,7 +358,10 @@ class FlextRuntime:
             # Returns dict that is compatible with Mapping interface for read-only access.
             result: t.Types.ConfigurationDict = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+            # Type narrowing: dict_v is dict[object, object] from dict() constructor
+            # We need to filter only str keys to build ConfigurationDict
             for k, v in dict_v.items():
+                # Type narrowing: isinstance check ensures k is str for ConfigurationDict
                 if isinstance(k, str):
                     result[k] = FlextRuntime.normalize_to_general_value(v)
             return result
@@ -629,7 +411,10 @@ class FlextRuntime:
             # Returns dict that is compatible with Mapping interface for read-only access.
             result: t.Types.MetadataAttributeDict = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+            # Type narrowing: dict_v is dict[object, object] from dict() constructor
+            # We need to filter only str keys to build MetadataAttributeDict
             for k, v in dict_v.items():
+                # Type narrowing: isinstance check ensures k is str for MetadataAttributeDict
                 if isinstance(k, str):
                     if isinstance(v, (str, int, float, bool, type(None))):
                         result[k] = v
@@ -826,7 +611,12 @@ class FlextRuntime:
 
             # Check __name__ for type aliases like StringList
             if hasattr(type_hint, "__name__"):
-                type_name = getattr(type_hint, "__name__", "")
+                # Type narrowing: hasattr ensures __name__ exists, getattr returns str | None
+                # Convert to str for type safety
+                type_name_attr = getattr(type_hint, "__name__", None)
+                type_name: str = (
+                    str(type_name_attr) if type_name_attr is not None else ""
+                )
                 # Common sequence type aliases
                 if type_name in {
                     "StringList",
@@ -939,6 +729,9 @@ class FlextRuntime:
             bridge = cls.BridgeContainer()
             service_module = containers.DynamicContainer()
             resource_module = containers.DynamicContainer()
+            # override() returns None or provider instance - we don't need the return value
+            # Type narrowing: bridge.services and bridge.resources are DependenciesContainer instances
+            # override() accepts DynamicContainer and returns None (void method)
             bridge.services.override(service_module)
             bridge.resources.override(resource_module)
             cls.bind_configuration_provider(bridge.config, config)
@@ -1019,16 +812,22 @@ class FlextRuntime:
                     # register_resource is generic with TypeVar T
                     # resource_factory is Callable[[], t.GeneralValueType] from resources parameter
                     # TypeVar T in register_resource can be inferred as t.GeneralValueType
-                    # mypy cannot infer generic type correctly for TypeVar T
                     # t.GeneralValueType is compatible with T (TypeVar) at runtime
-                    # Use type: ignore for the generic type inference issue
+                    # Cast resource_factory to Callable[[], T] for type compatibility
                     # Access via DependencyIntegration nested class
                     # cls is DependencyIntegration class, register_resource is a staticmethod
                     # Use cls directly since we're inside DependencyIntegration.create_container
-                    cls.register_resource(  # type: ignore[type-var]
+                    # register_resource expects Callable[[], T] but resource_factory is Callable[[], t.GeneralValueType]
+                    # This is safe because t.GeneralValueType is compatible with any T
+                    # Use cast to convert Callable[[], t.GeneralValueType] to Callable[[], T]
+                    resource_factory_typed: Callable[[], T] = cast(
+                        "Callable[[], T]",
+                        resource_factory,
+                    )
+                    cls.register_resource(
                         di_container,
                         name,
-                        resource_factory,
+                        resource_factory_typed,
                     )
 
             if wire_modules or wire_packages or wire_classes:
@@ -1617,7 +1416,9 @@ class FlextRuntime:
             return func()
 
     @staticmethod
-    def result_ok[T](value: T) -> p.Foundation.Result[T]:
+    def result_ok[T](
+        value: T,
+    ) -> p.Foundation.Result[T]:
         """Create a successful result - CORE IMPLEMENTATION.
 
         This is the core factory for creating success results.

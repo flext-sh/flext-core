@@ -74,7 +74,7 @@ class FlextResult[T_co]:
                 return recovery.result
 
             # Type annotation: lash returns Result[T, str]
-            # pyright: ignore[reportUnknownMemberType] - returns library method type inference
+            # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
             lash_result: Result[T, str] = result.result.lash(inner)  # type: ignore[assignment]
             return FlextResult[T](lash_result)
 
@@ -256,7 +256,7 @@ class FlextResult[T_co]:
                 return 42
 
         """
-        # Type annotation: Operations.safe returns Callable[FlextResult[T]]
+        # Operations.safe returns p.Utility.Callable[FlextResult[T]]
         # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
         safe_result = FlextResult.Operations.safe(func)  # type: ignore[assignment]
         safe_wrapper: p.Utility.Callable[FlextResult[T]] = cast(
@@ -501,7 +501,8 @@ class FlextResult[T_co]:
         # Type narrowing: Monad.lash returns Self
         # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
         lash_result_raw = FlextResult.Monad.lash(self, func)  # type: ignore[assignment]
-        lash_result: Self = cast("Self", lash_result_raw)
+        # Type annotation: lash_result_raw is FlextResult[T_co] which is Self
+        lash_result: Self = cast("Self", lash_result_raw)  # type: ignore[assignment]
         return lash_result
 
     def to_io(self) -> IO[T_co]:
@@ -518,9 +519,9 @@ class FlextResult[T_co]:
 
         """
         # Type annotation: Convert.to_io returns IO[T_co]
-        # pyright: ignore[reportUnknownMemberType] - returns library method type inference limitation
+        # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType] - returns library method type inference limitation
         io_result_raw = FlextResult.Convert.to_io(self)  # type: ignore[assignment]
-        io_result: IO[T_co] = cast("IO[T_co]", io_result_raw)
+        io_result: IO[T_co] = cast("IO[T_co]", io_result_raw)  # type: ignore[assignment]
         return io_result
 
     def to_io_result(self) -> IOResult[T_co, str]:
@@ -567,20 +568,18 @@ class FlextResult[T_co]:
         errors: list[str] = []
         for result in results:
             if result.is_success:
-                # Type annotation: result.value is U when is_success
-                # pyright: ignore[reportUnknownMemberType] - result.value type inference limitation
-                value: U = cast("U", result.value)  # type: ignore[arg-type]
-                successes.append(value)  # type: ignore[arg-type]
+                # Type narrowing: when is_success is True, result.value is U
+                # FlextCore never returns None on success, so value is guaranteed to be U
+                value = result.value
+                successes.append(value)
             else:
                 error_msg: str = result.error or "Unknown error"
                 errors.append(error_msg)
         if errors:
             return FlextResult[list[U]].fail("; ".join(errors))
-        # Type annotation: Success constructor returns Result[list[U], str]
-        success_result: Result[list[U], str] = cast(
-            "Result[list[U], str]", Success(successes)
-        )
-        return FlextResult[list[U]](success_result)
+        # Success constructor returns Result[list[U], str]
+        # Type narrowing: Success(successes) creates Result[list[U], str]
+        return FlextResult[list[U]](Success(successes))
 
     @classmethod
     def parallel_map[T, U](

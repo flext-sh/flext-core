@@ -53,6 +53,7 @@ from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core._utilities.validators import ValidatorSpec
 from flext_core.constants import c
+from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -628,6 +629,7 @@ class FlextUtilitiesValidation:
                 result = validator(value)
 
                 # FAST FAIL: If validator returns r, check if ok(True)
+                # isinstance check is necessary for type narrowing (result can be bool or r[bool])
                 if isinstance(result, r):
                     if result.is_failure:
                         return r[bool].fail(
@@ -1859,14 +1861,14 @@ class FlextUtilitiesValidation:
     @staticmethod
     def create_retry_config(
         retry_config: t.Types.ConfigurationDict | None,
-    ) -> r[t.Config.RetryConfig]:
+    ) -> r[m.Config.RetryConfiguration]:
         """Create and validate retry configuration using railway pattern.
 
         Args:
             retry_config: Raw retry configuration dictionary
 
         Returns:
-            r[t.Config.RetryConfig]: Validated retry configuration or error
+            r[m.Config.RetryConfiguration]: Validated retry configuration or error
 
         """
         if retry_config is None:
@@ -1875,7 +1877,7 @@ class FlextUtilitiesValidation:
             # Validate each parameter using railway pattern (DRY consolidation)
             result = FlextUtilitiesValidation._validate_max_attempts(retry_config)
             if result.is_failure:
-                return r[t.Config.RetryConfig].fail(
+                return r[m.Config.RetryConfiguration].fail(
                     result.error or "Max attempts validation failed",
                 )
 
@@ -1885,7 +1887,7 @@ class FlextUtilitiesValidation:
                 retry_config,
             )
             if delay_result.is_failure:
-                return r[t.Config.RetryConfig].fail(
+                return r[m.Config.RetryConfiguration].fail(
                     delay_result.error or "Initial delay validation failed",
                 )
 
@@ -1896,7 +1898,7 @@ class FlextUtilitiesValidation:
                 retry_config,
             )
             if max_delay_result.is_failure:
-                return r[t.Config.RetryConfig].fail(
+                return r[m.Config.RetryConfiguration].fail(
                     max_delay_result.error or "Max delay validation failed",
                 )
 
@@ -1907,15 +1909,15 @@ class FlextUtilitiesValidation:
                 retry_config,
             )
             if backoff_result.is_failure:
-                return r[t.Config.RetryConfig].fail(
+                return r[m.Config.RetryConfiguration].fail(
                     backoff_result.error or "Backoff multiplier validation failed",
                 )
 
             backoff_mult = backoff_result.value
             params_4 = (*params_3, backoff_mult)
 
-            return r[t.Config.RetryConfig].ok(
-                t.Config.RetryConfig(
+            return r[m.Config.RetryConfiguration].ok(
+                m.Config.RetryConfiguration(
                     max_attempts=params_4[0],
                     initial_delay_seconds=params_4[1],
                     max_delay_seconds=params_4[2],
@@ -1924,7 +1926,7 @@ class FlextUtilitiesValidation:
                     ),
                     retry_on_exceptions=(
                         cast(
-                            "list[type[Exception]]",
+                            "list[type[BaseException]]",
                             [
                                 exc_type
                                 for exc_type in cast(
@@ -1932,7 +1934,7 @@ class FlextUtilitiesValidation:
                                     retry_config["retry_on_exceptions"],
                                 )
                                 if isinstance(exc_type, type)
-                                and issubclass(exc_type, Exception)
+                                and issubclass(exc_type, BaseException)
                             ],
                         )
                         if "retry_on_exceptions" in retry_config
@@ -1941,14 +1943,14 @@ class FlextUtilitiesValidation:
                             retry_config["retry_on_exceptions"],
                             (list, tuple),
                         )
-                        else [Exception]
+                        else []
                     ),
                     backoff_multiplier=params_4[3],
                 ),
             )
 
         except (ValueError, TypeError) as e:
-            return r[t.Config.RetryConfig].fail(
+            return r[m.Config.RetryConfiguration].fail(
                 f"Invalid retry configuration: {e}",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
@@ -1956,7 +1958,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def is_exception_retryable(
         exception: Exception,
-        retry_on_exceptions: list[type[Exception]],
+        retry_on_exceptions: list[type[BaseException]],
     ) -> bool:
         """Check if exception should trigger retry.
 
@@ -2472,10 +2474,12 @@ class FlextUtilitiesValidation:
                 context_name,
                 error_msg,
             )
-        if isinstance(condition, tuple) and all(isinstance(c, type) for c in condition):
+        # Type narrowing: condition is tuple of types
+        # pyright: ignore[reportUnknownVariableType] - generator expression type inference limitation
+        if isinstance(condition, tuple) and all(isinstance(c, type) for c in condition):  # type: ignore[arg-type]
             return FlextUtilitiesValidation._guard_check_type(
                 value,
-                condition,
+                condition,  # type: ignore[arg-type]
                 context_name,
                 error_msg,
             )
@@ -2485,7 +2489,7 @@ class FlextUtilitiesValidation:
             validator_condition = cast("ValidatorSpec", condition)
             return FlextUtilitiesValidation._guard_check_validator(
                 value,
-                validator_condition,
+                validator_condition,  # type: ignore[arg-type]
                 context_name,
                 error_msg,
             )
@@ -2503,7 +2507,7 @@ class FlextUtilitiesValidation:
         if callable(condition):
             return FlextUtilitiesValidation._guard_check_predicate(
                 value,
-                condition,
+                condition,  # type: ignore[arg-type]
                 context_name,
                 error_msg,
             )
@@ -2851,7 +2855,10 @@ class FlextUtilitiesValidation:
             if isinstance(value, r):
                 if value.is_failure:
                     return cast("T", default)
-                return value.value
+                # Type narrowing: value is r[T] and is_success is True, so value.value is T
+                # Use direct access to .value property (unwrap() is deprecated)
+                # FlextResult never returns None in value if not failed
+                return cast("T", value.value)
             return value
 
         @staticmethod

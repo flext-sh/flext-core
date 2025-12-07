@@ -57,10 +57,12 @@ class FlextUtilitiesModel:
 
         """
         try:
+            # model_validate returns M (the model type)
             instance = model_cls.model_validate(data, strict=strict)
-            return r.ok(instance)
+            # Type narrowing: instance is M from model_validate return type
+            return r[M].ok(instance)
         except Exception as e:
-            return r.fail(f"Model validation failed: {e}")
+            return r[M].fail(f"Model validation failed: {e}")
 
     @staticmethod
     def from_kwargs[M: BaseModel](
@@ -89,10 +91,12 @@ class FlextUtilitiesModel:
         try:
             # Pydantic 2 model_validate() accepts any dict-like structure
             # field_validators in the model will handle type conversions automatically
+            # model_validate returns M (the model type)
             instance = model_cls.model_validate(kwargs)
-            return r.ok(instance)
+            # Type narrowing: instance is M from model_validate return type
+            return r[M].ok(instance)
         except Exception as e:
-            return r.fail(f"Model validation failed: {e}")
+            return r[M].fail(f"Model validation failed: {e}")
 
     @staticmethod
     def merge_defaults[M: BaseModel](
@@ -133,10 +137,12 @@ class FlextUtilitiesModel:
         try:
             # Use model_copy with update - modern Pydantic approach
             # This preserves the type M without needing casts or recreating
+            # model_copy returns M (same type as instance)
             updated_instance = instance.model_copy(update=updates)
-            return r.ok(updated_instance)
+            # Type narrowing: updated_instance is M from model_copy return type
+            return r[M].ok(updated_instance)
         except Exception as e:
-            return r.fail(f"Model update failed: {e}")
+            return r[M].fail(f"Model update failed: {e}")
 
     @staticmethod
     def to_dict(

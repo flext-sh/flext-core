@@ -260,12 +260,6 @@ class TestRuntimeTypeChecking:
         result = FlextRuntime.enable_runtime_checking()
         assert result is True
 
-    def test_is_valid_phone_non_string(self) -> None:
-        """Test is_valid_phone with non-string types."""
-        assert not FlextRuntime.is_valid_phone(123)
-        assert not FlextRuntime.is_valid_phone(None)
-        assert not FlextRuntime.is_valid_phone([])
-
     def test_is_valid_json_exception_path(self) -> None:
         """Test is_valid_json when json.loads raises exception."""
         # Invalid JSON that causes json.loads to raise

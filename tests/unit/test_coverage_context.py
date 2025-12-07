@@ -29,6 +29,7 @@ import pytest
 
 from flext_core import FlextContext, t
 from flext_core.models import m
+from flext_core.result import r
 from flext_tests import FlextTestsUtilities, u
 
 
@@ -228,7 +229,13 @@ class TestServiceDomain:
         test_service_obj: t.GeneralValueType = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
-        u.Tests.Result.assert_result_success(result)
+        # Type narrowing: assert_result_success accepts r[TResult], protocol Result is compatible
+        # Cast to r[t.GeneralValueType] for type compatibility
+        result_typed: r[t.GeneralValueType] = cast(
+            "r[t.GeneralValueType]",
+            result,
+        )
+        u.Tests.Result.assert_result_success(result_typed)
         assert result.unwrap() is test_service_obj
 
     def test_register_service(self) -> None:

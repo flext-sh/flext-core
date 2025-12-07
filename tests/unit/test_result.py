@@ -20,13 +20,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, Never, cast
 
 import pytest
-from returns.io import IO, IOFailure, IOSuccess
+from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Nothing, Some
 from returns.result import Success
 
@@ -160,10 +159,13 @@ class Testr:
             )
 
         elif op_type == ResultOperationType.CREATION_FAILURE:
-            failure_result: r[t.GeneralValueType] = (
-                u.Tests.Result.create_failure_result(
-                    str(value),
-                )
+            # create_failure_result returns r[object], cast to r[GeneralValueType]
+            failure_result_raw = u.Tests.Result.create_failure_result(
+                str(value),
+            )
+            failure_result: r[t.GeneralValueType] = cast(
+                "r[t.GeneralValueType]",
+                failure_result_raw,
             )
             u.Tests.Result.assert_failure_with_error(
                 failure_result,
@@ -172,13 +174,13 @@ class Testr:
 
         elif op_type == ResultOperationType.UNWRAP_OR:
             # value is already GeneralValueType from ResultScenario
-            unwrap_result: r[t.GeneralValueType] = (
-                u.Tests.Result.create_success_result(value)
-                if is_success
-                else u.Tests.Result.create_failure_result(
-                    str(value),
+            if is_success:
+                unwrap_result: r[t.GeneralValueType] = (
+                    u.Tests.Result.create_success_result(value)
                 )
-            )
+            else:
+                failure_raw = u.Tests.Result.create_failure_result(str(value))
+                unwrap_result = cast("r[t.GeneralValueType]", failure_raw)
             default = "default"
             assert unwrap_result.unwrap_or(default) == (
                 value if is_success else default
@@ -193,10 +195,10 @@ class Testr:
             )
 
         elif op_type == ResultOperationType.FLAT_MAP:
-            flat_map_result: r[t.GeneralValueType] = (
-                u.Tests.Result.create_failure_result(
-                    str(value),
-                )
+            failure_raw = u.Tests.Result.create_failure_result(str(value))
+            flat_map_result: r[t.GeneralValueType] = cast(
+                "r[t.GeneralValueType]",
+                failure_raw,
             )
             flat_mapped = flat_map_result.flat_map(
                 lambda x: r[str].ok(f"value_{x}"),
@@ -208,13 +210,13 @@ class Testr:
 
         elif op_type == ResultOperationType.ALT:
             # value is already GeneralValueType from ResultScenario
-            result_alt: r[t.GeneralValueType] = (
-                u.Tests.Result.create_success_result(value)
-                if is_success
-                else u.Tests.Result.create_failure_result(
-                    str(value),
+            if is_success:
+                result_alt: r[t.GeneralValueType] = (
+                    u.Tests.Result.create_success_result(value)
                 )
-            )
+            else:
+                failure_raw = u.Tests.Result.create_failure_result(str(value))
+                result_alt = cast("r[t.GeneralValueType]", failure_raw)
             alt_result = result_alt.alt(lambda e: f"alt_{e}")
             if is_success:
                 u.Tests.Result.assert_success_with_value(
@@ -249,13 +251,13 @@ class Testr:
 
         elif op_type == ResultOperationType.OR_OPERATOR:
             # value is already GeneralValueType from ResultScenario
-            result_or: r[t.GeneralValueType] = (
-                u.Tests.Result.create_success_result(value)
-                if is_success
-                else u.Tests.Result.create_failure_result(
-                    str(value),
+            if is_success:
+                result_or: r[t.GeneralValueType] = u.Tests.Result.create_success_result(
+                    value
                 )
-            )
+            else:
+                failure_raw = u.Tests.Result.create_failure_result(str(value))
+                result_or = cast("r[t.GeneralValueType]", failure_raw)
             default = "default"
             assert (result_or | default) == (value if is_success else default)
 
@@ -317,10 +319,15 @@ class Testr:
             res2 = res1.map(lambda v: v * 2)
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
-            # Use generic helper for chain validation with explicit sequence cast
-            # Cast required as r types vary (int → int → str)
+            # Use generic helper for chain validation with explicit list cast
+            # assert_result_chain expects list[r[Never]], not Sequence
+            result_list: list[r[Never]] = [
+                cast("r[Never]", res1),
+                cast("r[Never]", res2),
+                cast("r[Never]", res3),
+            ]
             FlextTestsUtilities.Tests.GenericHelpers.assert_result_chain(
-                cast("Sequence[r[Never]]", [res1, res2, res3]),
+                result_list,
                 expected_success_count=3,
                 expected_failure_count=0,
                 first_failure_index=None,
@@ -432,8 +439,12 @@ class Testr:
         failure_errors: list[str] = ["error1", "error2"]
         error_codes: list[str | None] = ["CODE1", None]
 
+        # Convert list[str] to list[GeneralValueType] for create_parametrized_cases
+        success_values_general: list[t.GeneralValueType] = [
+            cast("t.GeneralValueType", v) for v in success_values
+        ]
         cases = FlextTestsUtilities.Tests.GenericHelpers.create_parametrized_cases(
-            success_values,
+            success_values_general,
             failure_errors,
             error_codes=error_codes,
         )
@@ -527,7 +538,9 @@ class Testr:
             pass
 
         invalid_io = InvalidIOResult()
-        result = r.from_io_result(invalid_io)
+        # from_io_result expects IOResult[GeneralValueType, str]
+        # InvalidIOResult is not IOResult, but method handles it at runtime
+        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", invalid_io))  # type: ignore[arg-type]  # Runtime handles invalid types
         assert result.is_failure
         assert result.error is not None
         assert "Invalid IO result type" in str(result.error)
@@ -544,7 +557,9 @@ class Testr:
     def test_safe_decorator(self) -> None:
         """Test safe decorator wraps function in try/except."""
 
-        @r.safe
+        # safe expects p.Utility.Callable[T] which is Callable[..., T]
+        # divide is Callable[[int, int], int], compatible at runtime
+        @r.safe  # type: ignore[arg-type]  # Runtime compatible, type system limitation
         def divide(a: int, b: int) -> int:
             return a // b
 
@@ -741,8 +756,9 @@ class Testr:
         # Test normal IOSuccess path works
         io_value = IO("test_value")
         real_io = IOSuccess(io_value)
-        # Type ignore: IOSuccess[IO[str]] is compatible at runtime
-        result = r.from_io_result(real_io)
+        # from_io_result expects IOResult[GeneralValueType, str]
+        # IOSuccess[IO[str]] is compatible at runtime but type system doesn't know
+        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", real_io))  # type: ignore[arg-type]  # Runtime compatible
         assert result.is_success
 
         # The exception path (lines 106-107) is defensive code that catches
@@ -765,7 +781,9 @@ class Testr:
                 pass
 
         bad_io = BadIO()
-        result = r.from_io_result(bad_io)
+        # from_io_result expects IOResult[GeneralValueType, str]
+        # BadIO is not IOResult, but method handles it at runtime
+        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", bad_io))  # type: ignore[arg-type]  # Runtime handles invalid types
         assert result.is_failure
         error_msg = result.error
         assert error_msg is not None
@@ -838,11 +856,13 @@ class Testr:
 
     def test_ok_with_none_raises(self) -> None:
         """Test ok() raises ValueError for None value."""
+        # ok() rejects None values - this is correct behavior
+        # The test verifies that ValueError is raised
         with pytest.raises(
             ValueError,
             match="Cannot create success result with None value",
         ):
-            r[str].ok(None)
+            r[str].ok(None)  # type: ignore[arg-type]  # Intentionally passing None to test rejection
 
     def test_to_maybe_success(self) -> None:
         """Test to_maybe converts success to Some."""

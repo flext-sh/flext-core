@@ -12,6 +12,7 @@ Exercises edge/error paths not covered in the base suite:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import cast
 
 import pytest
@@ -120,11 +121,18 @@ def test_parallel_map_fail_fast_and_accumulate() -> None:
 
 def test_create_from_callable_and_repr() -> None:
     """Exercise callable None/exception branches and repr formatting."""
-    none_result = r[int].create_from_callable(lambda: None)
+    # Type annotation: create_from_callable expects Callable[[], T_co]
+    # lambda: None returns None, but we're testing the None handling path
+    # Cast to Callable[[], int] for type compatibility (test validates None handling)
+    none_callable: Callable[[], int] = cast("Callable[[], int]", lambda: None)
+    none_result = r[int].create_from_callable(none_callable)
     u.Tests.Result.assert_result_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
 
-    error_result = r[int].create_from_callable(lambda: 1 / 0)
+    # Type annotation: lambda: 1/0 returns float, but we're testing exception handling
+    # Cast to Callable[[], int] for type compatibility (test validates exception handling)
+    error_callable: Callable[[], int] = cast("Callable[[], int]", lambda: 1 / 0)
+    error_result = r[int].create_from_callable(error_callable)
     u.Tests.Result.assert_result_failure(error_result)
     assert "division" in (error_result.error or "")
 

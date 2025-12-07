@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
+from typing import cast
 
 import pytest
 
@@ -254,21 +255,27 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
-        data = {"user": {"name": "John", "age": 30}}
+        data_raw = {"user": {"name": "John", "age": 30}}
+        # Convert dict[str, dict[str, object]] to dict[str, object] for type compatibility
+        data: dict[str, object] = cast("dict[str, object]", data_raw)
         result = FlextResult[dict[str, object]].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
-        data = {"user": {"email": "test@example.com"}}
+        data_raw = {"user": {"email": "test@example.com"}}
+        # Convert dict[str, dict[str, str]] to dict[str, object] for type compatibility
+        data: dict[str, object] = cast("dict[str, object]", data_raw)
         result = FlextResult[dict[str, object]].ok(data)
         value = tm.ok(result, deep={"user.email": lambda e: "@" in str(e)})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
-        data = {"user": {"name": "John"}}
+        data_raw = {"user": {"name": "John"}}
+        # Convert dict[str, dict[str, str]] to dict[str, object] for type compatibility
+        data: dict[str, object] = cast("dict[str, object]", data_raw)
         result = FlextResult[dict[str, object]].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         # path extraction returns the extracted value, not the original

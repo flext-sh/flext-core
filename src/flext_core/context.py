@@ -16,7 +16,7 @@ import json
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Final, Self, cast
+from typing import Final, Self, cast, overload
 
 from pydantic import BaseModel
 
@@ -133,6 +133,95 @@ class FlextContext(FlextRuntime):
                 c.Context.SCOPE_GLOBAL,
                 context_data.data,
             )
+
+    @overload
+    @classmethod
+    def create(
+        cls,
+        initial_data: m.Context.ContextData | t.Types.ConfigurationDict | None = None,
+    ) -> Self: ...
+
+    @overload
+    @classmethod
+    def create(
+        cls,
+        *,
+        operation_id: str | None = None,
+        user_id: str | None = None,
+        metadata: t.Types.ConfigurationMapping | None = None,
+    ) -> p.Context.Ctx: ...
+
+    @classmethod
+    def create(
+        cls,
+        initial_data: m.Context.ContextData | t.Types.ConfigurationDict | None = None,
+        *,
+        operation_id: str | None = None,
+        user_id: str | None = None,
+        metadata: t.Types.ConfigurationMapping | None = None,
+        auto_correlation_id: bool = True,
+    ) -> Self | p.Context.Ctx:
+        """Factory method to create a new FlextContext instance.
+
+        This is the preferred way to instantiate FlextContext. It provides
+        a clean factory pattern that each class owns, respecting Clean
+        Architecture principles where higher layers create their own instances.
+
+        Supports two overloads:
+        1. Simple creation: create(initial_data=...)
+        2. Metadata-based creation: create(operation_id=..., user_id=..., metadata=...)
+
+        Auto-correlation_id generation enables zero-config context setup by
+        automatically generating a correlation ID when operation_id is not provided.
+
+        Args:
+            initial_data: Optional initial context data (dict or ContextData).
+            operation_id: Optional operation identifier (keyword-only).
+            user_id: Optional user identifier (keyword-only).
+            metadata: Optional additional metadata dictionary (keyword-only).
+            auto_correlation_id: If True, auto-generate operation_id if not provided.
+                Default: True (enables zero-config setup).
+
+        Returns:
+            New FlextContext instance.
+
+        Example:
+            >>> # Zero-config: auto-generates correlation_id
+            >>> context = FlextContext.create()
+            >>>
+            >>> # With custom operation_id: disables auto-generation
+            >>> context = FlextContext.create(operation_id="op-123", user_id="user-456")
+            >>>
+            >>> # Disable auto-correlation_id
+            >>> context = FlextContext.create(auto_correlation_id=False)
+
+        """
+        # Handle overload: if operation_id/user_id/metadata are provided, use metadata-based creation
+        if operation_id is not None or user_id is not None or metadata is not None:
+            initial_data_dict: t.Types.ConfigurationDict = {}
+            if operation_id is not None:
+                initial_data_dict[c.Context.KEY_OPERATION_ID] = operation_id
+            elif auto_correlation_id:
+                # Auto-generate correlation_id when not provided and auto_correlation_id=True
+                initial_data_dict[c.Context.KEY_OPERATION_ID] = u.Generators.generate_correlation_id()
+            if user_id is not None:
+                initial_data_dict[c.Context.KEY_USER_ID] = user_id
+            # Merge metadata into initial_data
+            if metadata is not None and isinstance(metadata, dict):
+                initial_data_dict.update(metadata)
+            return cls(initial_data=initial_data_dict)
+        # Default: use initial_data parameter
+        # Auto-generate correlation_id for zero-config setup
+        if auto_correlation_id and (initial_data is None or (isinstance(initial_data, dict) and not initial_data.get(c.Context.KEY_OPERATION_ID))):
+            # Convert initial_data to dict if needed
+            if isinstance(initial_data, dict):
+                initial_data_dict = initial_data.copy()
+            else:
+                initial_data_dict = {}
+            # Add auto-generated correlation_id
+            initial_data_dict[c.Context.KEY_OPERATION_ID] = u.Generators.generate_correlation_id()
+            return cls(initial_data=initial_data_dict)
+        return cls(initial_data=initial_data)
 
     # =========================================================================
     # PRIVATE HELPERS - Context variable management and FlextLogger delegation
@@ -681,12 +770,12 @@ class FlextContext(FlextRuntime):
         return json.dumps(all_data, default=str)
 
     @classmethod
-    def create(
+    def create_with_metadata(
         cls,
         operation_id: str | None = None,
         user_id: str | None = None,
         metadata: t.Types.ConfigurationMapping | None = None,
-    ) -> p.Context.Ctx:
+    ) -> Self:
         """Create context with operation and user metadata.
 
         Factory method for creating FlextContext instances with common metadata.
@@ -710,7 +799,7 @@ class FlextContext(FlextRuntime):
             merged: t.Types.ConfigurationDict = dict(initial_data)
             merged.update(metadata)
             initial_data = merged
-        return cls(initial_data=initial_data or None)
+        return cls.create(initial_data=initial_data or None)
 
     @classmethod
     def from_json(cls, json_str: str) -> p.Context.Ctx:
@@ -1133,7 +1222,10 @@ class FlextContext(FlextRuntime):
 
         """
         if cls._container is None:
-            cls._container = FlextRuntime.create_container()
+            # Lazy import to avoid circular dependency: context.py ↔ container.py
+            from flext_core.container import FlextContainer  # noqa: PLC0415
+
+            cls._container = FlextContainer.create()
         return cls._container
 
     # ==========================================================================

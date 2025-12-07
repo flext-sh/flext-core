@@ -62,18 +62,13 @@ def _convert_to_general_value(obj: object) -> t.GeneralValueType:
         # Recursively convert dict values
         return cast(
             "t.GeneralValueType",
-            {
-                str(k): _convert_to_general_value(v)
-                for k, v in obj.items()
-            },
+            {str(k): _convert_to_general_value(v) for k, v in obj.items()},
         )
     if isinstance(obj, (list, tuple)):
         # Recursively convert list items
         return cast(
             "t.GeneralValueType",
-            [
-                _convert_to_general_value(item) for item in obj
-            ],
+            [_convert_to_general_value(item) for item in obj],
         )
     # For other objects, convert to string
     return str(obj)

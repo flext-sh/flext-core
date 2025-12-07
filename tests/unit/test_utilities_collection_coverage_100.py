@@ -16,10 +16,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, Field
@@ -620,7 +620,8 @@ class CollectionUtilitiesScenarios:
         GroupScenario(
             name="group_by_len",
             items=["cat", "dog", "house"],
-            key=len,
+            # len is Callable[[Sized], int], but GroupScenario.key expects Callable[[object], object]
+            key=cast("Callable[[object], object]", len),
             expected_result={3: ["cat", "dog"], 5: ["house"]},
         ),
     ]
@@ -868,8 +869,11 @@ class TestuCollectionMap:
     )
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
+        # u.Collection.map expects r[T], but scenario.items is object
+        # Cast to r[object] to match expected type
+        items_result: r[object] = cast("r[object]", scenario.items)
         result = u.Collection.map(
-            scenario.items,
+            items_result,
             scenario.mapper,
             default_error=scenario.default_error,
         )
@@ -897,8 +901,16 @@ class TestuCollectionFind:
     )
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
+        # u.Collection.find expects list[T] | tuple[T, ...] | set[T] | frozenset[T]
+        # but scenario.items is object, cast to list[object]
+        items: list[object] | tuple[object, ...] | set[object] | frozenset[object] = (
+            cast(
+                "list[object] | tuple[object, ...] | set[object] | frozenset[object]",
+                scenario.items,
+            )
+        )
         result = u.Collection.find(
-            scenario.items,
+            items,
             scenario.predicate,
             return_key=scenario.return_key,
         )
@@ -915,8 +927,14 @@ class TestuCollectionFilter:
     )
     def test_filter(self, scenario: FilterScenario) -> None:
         """Test filter with various scenarios."""
-        result = u.Collection.filter(
+        # u.Collection.filter expects list[T] | tuple[T, ...]
+        # but scenario.items is object, cast to list[object]
+        items: list[object] | tuple[object, ...] = cast(
+            "list[object] | tuple[object, ...]",
             scenario.items,
+        )
+        result = u.Collection.filter(
+            items,
             scenario.predicate,
             mapper=scenario.mapper,
         )
@@ -933,8 +951,14 @@ class TestuCollectionCount:
     )
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
-        result = u.Collection.count(
+        # u.Collection.count expects list[T] | tuple[T, ...] | Iterable[T]
+        # but scenario.items is object, cast to Iterable[object]
+        items: list[object] | tuple[object, ...] | Iterable[object] = cast(
+            "list[object] | tuple[object, ...] | Iterable[object]",
             scenario.items,
+        )
+        result = u.Collection.count(
+            items,
             scenario.predicate,
         )
         assert result == scenario.expected_count
@@ -1062,7 +1086,17 @@ class TestuCollectionMerge:
         """Test deep merge."""
         base = {"a": 1, "b": {"x": 1}}
         other = {"b": {"y": 2}, "c": 3}
-        result = u.Collection.merge(base, other)
+        # u.Collection.merge expects t.Types.ConfigurationMapping
+        # but base and other are dict[str, object], cast to ConfigurationMapping
+        base_mapping: t.Types.ConfigurationMapping = cast(
+            "t.Types.ConfigurationMapping",
+            base,
+        )
+        other_mapping: t.Types.ConfigurationMapping = cast(
+            "t.Types.ConfigurationMapping",
+            other,
+        )
+        result = u.Collection.merge(base_mapping, other_mapping)
         assert result.is_success
         assert result.value == {"a": 1, "b": {"x": 1, "y": 2}, "c": 3}
 
@@ -1070,7 +1104,17 @@ class TestuCollectionMerge:
         """Test override merge."""
         base = {"a": 1, "b": {"x": 1}}
         other = {"b": {"y": 2}, "c": 3}
-        result = u.Collection.merge(base, other, strategy="override")
+        # u.Collection.merge expects t.Types.ConfigurationMapping
+        # but base and other are dict[str, object], cast to ConfigurationMapping
+        base_mapping: t.Types.ConfigurationMapping = cast(
+            "t.Types.ConfigurationMapping",
+            base,
+        )
+        other_mapping: t.Types.ConfigurationMapping = cast(
+            "t.Types.ConfigurationMapping",
+            other,
+        )
+        result = u.Collection.merge(base_mapping, other_mapping, strategy="override")
         assert result.is_success
         assert result.value == {"a": 1, "b": {"y": 2}, "c": 3}
 
