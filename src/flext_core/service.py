@@ -24,6 +24,7 @@ from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
+from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import e
 from flext_core.handlers import FlextHandlers
 from flext_core.mixins import require_initialized, x
@@ -279,10 +280,18 @@ class FlextService[TDomainResult](
                 classes=wire_classes,
             )
 
+        # Create dispatcher with auto-discovery enabled
+        runtime_dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
+
+        # Create registry with auto-discovery and deduplication enabled
+        runtime_registry = FlextRegistry.create(auto_discover_handlers=True)
+
         return m.ServiceRuntime.model_construct(
             config=runtime_config,
             context=runtime_context,
             container=runtime_container,
+            dispatcher=runtime_dispatcher,
+            registry=runtime_registry,
         )
 
     @classmethod
@@ -353,10 +362,18 @@ class FlextService[TDomainResult](
             factories=container_factories,
         )
 
+        # Create dispatcher with auto-discovery enabled
+        runtime_dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
+
+        # Create registry with auto-discovery and deduplication enabled
+        runtime_registry = FlextRegistry.create(auto_discover_handlers=True)
+
         return m.ServiceRuntime.model_construct(
             config=cloned_config,
             context=runtime_context,
             container=scoped_container,
+            dispatcher=runtime_dispatcher,
+            registry=runtime_registry,
         )
 
     @computed_field
@@ -389,6 +406,23 @@ class FlextService[TDomainResult](
         concrete service subclasses. It contains the actual domain operations,
         business rules, and result generation logic specific to each service.
 
+        Business Rule: Executes the domain service business logic and returns
+        a FlextResult indicating success or failure. This method is the primary
+        entry point for all domain service operations in the FLEXT ecosystem.
+        All business logic, domain rules, and operational workflows are executed
+        through this method. The method must follow railway-oriented programming
+        principles, returning ``r[TDomainResult]`` instead of raising exceptions,
+        ensuring predictable error handling and composable service pipelines.
+
+        Audit Implication: Service execution is a critical audit event that
+        represents the execution of business logic and domain operations. All
+        service executions should be logged with appropriate context and
+        correlation IDs. The FlextResult return type ensures audit trail
+        completeness by tracking both successful operations (with domain results)
+        and failed operations (with error details and error codes). Audit logs
+        should capture service identity, execution context, input parameters,
+        execution duration, and result status.
+
         The method should follow railway-oriented programming principles,
         returning ``r[T]`` for consistent error handling and success
         indication.
@@ -400,6 +434,9 @@ class FlextService[TDomainResult](
         Note:
             Implementations should focus on business logic only. Infrastructure
             concerns like validation and error handling are handled by the base class.
+
+        Raises:
+            None: Uses FlextResult for error handling instead of exceptions.
 
         """
         ...
@@ -739,6 +776,10 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         else:
             base_context.Correlation.set_correlation_id(original_correlation)
 
+
+# Rebuild ServiceRuntime model after FlextRegistry is imported
+# This resolves the forward reference for Pydantic v2
+m.ServiceRuntime.model_rebuild()
 
 s = FlextService
 

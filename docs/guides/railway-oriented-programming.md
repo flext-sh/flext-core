@@ -1,6 +1,6 @@
 # Railway-Oriented Programming with FlextResult[T]
 
-**Status**: Production Ready | **Version**: 0.9.9 | **Coverage**: 100% type-safe
+**Status**: Production Ready | **Version**: 0.10.0 | **Coverage**: 100% type-safe
 
 Railway-Oriented Programming (ROP) is a functional programming pattern that treats error handling as a first-class citizen. Instead of raising exceptions, operations return results that encapsulate either success or failure, enabling predictable error propagation through monadic composition.
 
@@ -724,6 +724,178 @@ if result.is_success:
     print(f"✅ {result.value}")
 ```
 
+## Decorator Composition with Railway Pattern
+
+FLEXT decorators integrate seamlessly with FlextResult for automated error handling, retries, and timeouts.
+
+### Combining @retry + @railway
+
+Automatically retry operations that return FlextResult:
+
+```python
+from flext_core import r, d
+
+@d.retry(max_attempts=3, delay_seconds=1.0, backoff_strategy="exponential")
+@d.railway(error_code="API_ERROR")
+def fetch_user_data(user_id: str) -> dict:
+    """Fetch user data with automatic retries on failure."""
+    # If this raises an exception, @railway converts to FlextResult.fail()
+    # @retry will automatically retry up to 3 times with exponential backoff
+    response = api_client.get(f"/users/{user_id}")
+    response.raise_for_status()
+    return response.json()
+
+# Usage - result is automatically wrapped in FlextResult
+result = fetch_user_data("user_123")
+if result.is_success:
+    user = result.value
+else:
+    print(f"Failed after retries: {result.error}")
+```
+
+### Combining @timeout + @railway
+
+Enforce timeouts on long-running operations:
+
+```python
+from flext_core import r, d
+
+@d.timeout(timeout_seconds=30.0)
+@d.railway(error_code="TIMEOUT_ERROR")
+def expensive_computation(data: list[float]) -> float:
+    """Compute result with timeout protection."""
+    # If computation exceeds 30 seconds, @timeout raises TimeoutError
+    # @railway converts it to FlextResult.fail("Operation timed out")
+    result = 0.0
+    for value in data:
+        result += complex_calculation(value)
+    return result
+
+# Usage - timeout protection automatic
+result = expensive_computation([1.0, 2.0, 3.0])
+if result.is_failure and "timed out" in result.error:
+    print("Operation exceeded timeout")
+```
+
+### Complete Decorator Composition: @retry + @timeout + @railway
+
+Combine multiple decorators for robust operations:
+
+```python
+from flext_core import r, d, FlextLogger
+
+logger = FlextLogger(__name__)
+
+@d.retry(max_attempts=5, delay_seconds=2.0, backoff_strategy="exponential")
+@d.timeout(timeout_seconds=60.0)
+@d.railway(error_code="NETWORK_ERROR")
+@d.log_operation("fetch_external_data")
+def fetch_external_data(api_url: str) -> dict:
+    """Fetch data with retry, timeout, and logging."""
+    # Decorator order (outermost to innermost):
+    # 1. @log_operation - logs operation start/completion
+    # 2. @railway - converts exceptions to FlextResult
+    # 3. @timeout - enforces 60-second timeout
+    # 4. @retry - retries up to 5 times with exponential backoff
+
+    response = requests.get(api_url, timeout=55)  # Slightly less than decorator timeout
+    response.raise_for_status()
+    return response.json()
+
+# Usage - all infrastructure automatic
+result = fetch_external_data("https://api.example.com/data")
+
+if result.is_success:
+    data = result.value
+    logger.info("Data fetched successfully", extra={"size": len(data)})
+else:
+    logger.error("Failed to fetch data", extra={"error": result.error})
+    # Error could be:
+    # - Network timeout (after retries)
+    # - API error (after retries)
+    # - TimeoutError (exceeded 60 seconds)
+```
+
+### Decorator Composition with @combined
+
+Use `@combined` for maximum automation:
+
+```python
+from flext_core import d, r
+
+@d.combined(
+    operation_name="process_order",
+    track_perf=True,
+    use_railway=True,
+    timeout_seconds=30.0,
+    retry_max_attempts=3,
+    retry_delay_seconds=1.0,
+    retry_backoff_strategy="exponential",
+)
+def process_order(order_data: dict) -> dict:
+    """Process order with all infrastructure automatic."""
+    # @combined automatically includes:
+    # - @railway (error handling)
+    # - @track_performance (metrics)
+    # - @log_operation (logging)
+    # - @timeout (timeout protection)
+    # - @retry (retry logic)
+    return order_processor.execute(order_data)
+
+# Usage - single decorator handles everything
+result = process_order({"order_id": "123", "items": [...]})
+if result.is_success:
+    print(f"Order processed: {result.value['order_id']}")
+```
+
+### Railway Pattern with Decorator Error Handling
+
+FlextResult integrates naturally with decorators:
+
+```python
+from flext_core import r, d
+
+@d.railway(error_code="VALIDATION_ERROR")
+def validate_order(order: dict) -> dict:
+    """Validate order - exceptions become FlextResult.fail()."""
+    if not order.get("items"):
+        raise ValueError("Order must have items")
+    if order.get("total", 0) <= 0:
+        raise ValueError("Order total must be positive")
+    return order
+
+@d.retry(max_attempts=3)
+@d.railway(error_code="PROCESSING_ERROR")
+def process_order(order: dict) -> dict:
+    """Process order - retries on failure."""
+    # If processing fails, @retry automatically retries
+    # @railway ensures result is always FlextResult[dict]
+    return order_service.save(order)
+
+# Chain with railway composition
+def create_and_process_order(order_data: dict) -> r[dict]:
+    """Complete order flow with railway + decorators."""
+    return (
+        r.ok(order_data)
+        .flat_map(validate_order)  # Returns FlextResult[dict] (from @railway)
+        .flat_map(process_order)    # Returns FlextResult[dict] (from @railway)
+        .map_error(lambda e: f"Order processing failed: {e}")
+    )
+
+# Usage
+result = create_and_process_order({"items": [...], "total": 100.0})
+if result.is_success:
+    print(f"✅ Order {result.value['id']} created")
+else:
+    print(f"❌ {result.error}")
+```
+
+### See Also
+
+- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Dispatcher reliability settings
+- [API Reference: FlextDecorators](../api-reference/application.md#flextdecorators)
+- [Service Patterns](./service-patterns.md) - Service-level decorator usage
+
 ## Best Practices
 
 ### 1. Always Return FlextResult from Operations
@@ -832,11 +1004,21 @@ except Exception:
 5. **No Exceptions**: Business logic errors use FlextResult, not exceptions
 6. **Foundation Pattern**: Used throughout 32+ FLEXT ecosystem projects
 
+## Next Steps
+
+1. **Advanced Patterns**: Explore [Dependency Injection Advanced](./dependency-injection-advanced.md) for service composition
+2. **Decorators**: See decorator composition examples above for automated error handling
+3. **Services**: Read [Service Patterns](./service-patterns.md) for domain service patterns
+4. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for detailed error patterns
+5. **API Reference**: Review [FlextResult API](../api-reference/foundation.md#flextresult) for all methods
+
 ## See Also
 
-- [Dependency Injection with FlextContainer](./dependency-injection.md)
-- [Error Handling Best Practices](./error-handling.md)
-- [API Reference: FlextResult](../api-reference/foundation.md#flextresult)
+- [Dependency Injection with FlextContainer](./dependency-injection-advanced.md) - DI patterns with FlextResult
+- [Error Handling Best Practices](./error-handling.md) - Comprehensive error handling patterns
+- [Service Patterns](./service-patterns.md) - Railway pattern in domain services
+- [API Reference: FlextResult](../api-reference/foundation.md#flextresult) - Complete API documentation
+- [API Reference: FlextDecorators](../api-reference/application.md#flextdecorators) - Decorator composition patterns
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ---

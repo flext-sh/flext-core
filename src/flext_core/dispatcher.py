@@ -5,11 +5,10 @@ reliability policies (circuit breaker, rate limiting, retry, timeout), and
 context-aware observability. The dispatcher is the application entry point for
 handler registration and execution in the current architecture.
 
-TODO(docs/architecture/cqrs.md#phase-2-dispatcher-di): Accept optional
-``container`` parameter in ``__init__`` to enable dependency injection of
-reliability managers (CircuitBreakerManager, RateLimiterManager, RetryPolicy,
-TimeoutEnforcer). This will improve testability and allow custom manager
-implementations per project.
+The dispatcher now supports dependency injection for reliability managers.
+Managers can be injected via constructor parameters or resolved from
+FlextContainer. See the ``__init__`` signature and ``_resolve_reliability_manager``
+for the implementation pattern.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,12 +19,13 @@ from __future__ import annotations
 
 import concurrent.futures
 import inspect
+import sys
 import threading
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import cast, override
+from typing import Self, cast, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -38,6 +38,7 @@ from flext_core._dispatcher import (
     TimeoutEnforcer,
 )
 from flext_core.constants import c
+from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.handlers import h
 from flext_core.mixins import x
@@ -66,17 +67,38 @@ class FlextDispatcher(x):
     @override
     def __init__(
         self,
+        *,
+        container: FlextContainer | None = None,
+        circuit_breaker: CircuitBreakerManager | None = None,
+        rate_limiter: RateLimiterManager | None = None,
+        timeout_enforcer: TimeoutEnforcer | None = None,
+        retry_policy: RetryPolicy | None = None,
     ) -> None:
         """Initialize dispatcher with configuration from FlextConfig singleton.
 
         Refactored to eliminate SOLID violations by delegating to specialized components.
         Configuration is accessed via x.config singleton.
 
+        Args:
+            container: Optional FlextContainer for dependency injection. If provided,
+                managers will be resolved from container if registered.
+            circuit_breaker: Optional CircuitBreakerManager. If not provided, will be
+                resolved from container or created with defaults.
+            rate_limiter: Optional RateLimiterManager. If not provided, will be
+                resolved from container or created with defaults.
+            timeout_enforcer: Optional TimeoutEnforcer. If not provided, will be
+                resolved from container or created with defaults.
+            retry_policy: Optional RetryPolicy. If not provided, will be
+                resolved from container or created with defaults.
+
         """
         super().__init__()
 
         # Initialize service infrastructure (DI, Context, Logging, Metrics)
         self._init_service("flext_dispatcher")
+
+        # Store container for manager resolution
+        self._container = container or FlextContainer.create()
 
         # Enrich context with dispatcher metadata for observability
         self._enrich_context(
@@ -90,29 +112,30 @@ class FlextDispatcher(x):
         # Access FlextConfig directly (no cast needed - mixins returns concrete type)
         config = self.config
 
-        # Initialize circuit breaker manager
-        self._circuit_breaker = CircuitBreakerManager(
-            threshold=config.circuit_breaker_threshold,
-            recovery_timeout=c.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
-            success_threshold=c.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
+        # Resolve or create circuit breaker manager
+        self._circuit_breaker = (
+            circuit_breaker
+            or self._resolve_or_create_circuit_breaker(
+                config,
+            )
         )
 
-        # Rate limiting - simplified sliding window implementation via manager
-        self._rate_limiter = RateLimiterManager(
-            max_requests=config.rate_limit_max_requests,
-            window_seconds=config.rate_limit_window_seconds,
+        # Resolve or create rate limiter manager
+        self._rate_limiter = rate_limiter or self._resolve_or_create_rate_limiter(
+            config,
         )
 
-        # Timeout enforcement and executor management via manager
-        self._timeout_enforcer = TimeoutEnforcer(
-            use_timeout_executor=config.enable_timeout_executor,
-            executor_workers=config.executor_workers,
+        # Resolve or create timeout enforcer
+        self._timeout_enforcer = (
+            timeout_enforcer
+            or self._resolve_or_create_timeout_enforcer(
+                config,
+            )
         )
 
-        # Retry policy management via manager
-        self._retry_policy = RetryPolicy(
-            max_attempts=config.max_retry_attempts,
-            retry_delay=config.retry_delay,
+        # Resolve or create retry policy
+        self._retry_policy = retry_policy or self._resolve_or_create_retry_policy(
+            config,
         )
 
         # ==================== LAYER 2.5: TIMEOUT CONTEXT PROPAGATION ====================
@@ -138,6 +161,103 @@ class FlextDispatcher(x):
         max_cache_size = c.Container.MAX_CACHE_SIZE
         self._cache: LRUCache[str, r[t.GeneralValueType]] = LRUCache(
             maxsize=max_cache_size,
+        )
+
+    def _resolve_or_create_circuit_breaker(
+        self,
+        config: p.Configuration.Config,
+    ) -> CircuitBreakerManager:
+        """Resolve circuit breaker from container or create with defaults.
+
+        Args:
+            config: Configuration instance for default values.
+
+        Returns:
+            CircuitBreakerManager instance from container or newly created.
+
+        """
+        # Try to resolve from container
+        result = self._container.get("circuit_breaker")
+        if result.is_success and isinstance(result.value, CircuitBreakerManager):
+            return result.value
+
+        # Create with defaults from config
+        return CircuitBreakerManager(
+            threshold=config.circuit_breaker_threshold,
+            recovery_timeout=c.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
+            success_threshold=c.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
+        )
+
+    def _resolve_or_create_rate_limiter(
+        self,
+        config: p.Configuration.Config,
+    ) -> RateLimiterManager:
+        """Resolve rate limiter from container or create with defaults.
+
+        Args:
+            config: Configuration instance for default values.
+
+        Returns:
+            RateLimiterManager instance from container or newly created.
+
+        """
+        # Try to resolve from container
+        result = self._container.get("rate_limiter")
+        if result.is_success and isinstance(result.value, RateLimiterManager):
+            return result.value
+
+        # Create with defaults from config
+        return RateLimiterManager(
+            max_requests=config.rate_limit_max_requests,
+            window_seconds=config.rate_limit_window_seconds,
+        )
+
+    def _resolve_or_create_timeout_enforcer(
+        self,
+        config: p.Configuration.Config,
+    ) -> TimeoutEnforcer:
+        """Resolve timeout enforcer from container or create with defaults.
+
+        Args:
+            config: Configuration instance for default values.
+
+        Returns:
+            TimeoutEnforcer instance from container or newly created.
+
+        """
+        # Try to resolve from container
+        result = self._container.get("timeout_enforcer")
+        if result.is_success and isinstance(result.value, TimeoutEnforcer):
+            return result.value
+
+        # Create with defaults from config
+        return TimeoutEnforcer(
+            use_timeout_executor=config.enable_timeout_executor,
+            executor_workers=config.executor_workers,
+        )
+
+    def _resolve_or_create_retry_policy(
+        self,
+        config: p.Configuration.Config,
+    ) -> RetryPolicy:
+        """Resolve retry policy from container or create with defaults.
+
+        Args:
+            config: Configuration instance for default values.
+
+        Returns:
+            RetryPolicy instance from container or newly created.
+
+        """
+        # Try to resolve from container
+        result = self._container.get("retry_policy")
+        if result.is_success and isinstance(result.value, RetryPolicy):
+            return result.value
+
+        # Create with defaults from config
+        return RetryPolicy(
+            max_attempts=config.max_retry_attempts,
+            retry_delay=config.retry_delay,
         )
 
         # Event subscribers (from FlextDispatcher event protocol)
@@ -2360,6 +2480,24 @@ class FlextDispatcher(x):
         Returns:
             r with registration details or error
 
+        Example:
+            >>> from dataclasses import dataclass
+            >>> from flext_core import FlextDispatcher, FlextResult
+            >>>
+            >>> @dataclass
+            ... class CreateUser:
+            ...     email: str
+            >>>
+            >>> def handle_create_user(message: CreateUser) -> FlextResult[str]:
+            ...     if "@" not in message.email:
+            ...         return FlextResult[str].fail("Invalid email")
+            ...     return FlextResult[str].ok(f"Created: {message.email}")
+            >>>
+            >>> dispatcher = FlextDispatcher()
+            >>> result = dispatcher.register_handler(CreateUser, handle_create_user)
+            >>> if result.is_success:
+            ...     print("Handler registered successfully")
+
         """
         if handler is not None:
             # Cast request and handler to HandlerType for layer1_register_handler
@@ -2449,11 +2587,11 @@ class FlextDispatcher(x):
         result = self.register_handler_with_request(
             cast("t.GeneralValueType", request),
         )
-        # Cast result from r[t.Types.ConfigurationDict] to r[GeneralValueType]
+        # Type narrowing: ConfigurationMapping is a subtype of GeneralValueType
+        # (ConfigurationMapping = Mapping[str, GeneralValueType], which is part of GeneralValueType union)
         if result.is_success:
-            return r[t.GeneralValueType].ok(
-                cast("t.GeneralValueType", result.value),
-            )
+            # result.value is ConfigurationMapping, which is already GeneralValueType
+            return r[t.GeneralValueType].ok(result.value)
         return r[t.GeneralValueType].fail(
             result.error or "Registration failed",
         )
@@ -2591,11 +2729,11 @@ class FlextDispatcher(x):
         result = self.register_handler_with_request(
             cast("t.GeneralValueType", request),
         )
-        # Cast result from r[t.Types.ConfigurationDict] to r[GeneralValueType]
+        # Type narrowing: ConfigurationMapping is a subtype of GeneralValueType
+        # (ConfigurationMapping = Mapping[str, GeneralValueType], which is part of GeneralValueType union)
         if result.is_success:
-            return r[t.GeneralValueType].ok(
-                cast("t.GeneralValueType", result.value),
-            )
+            # result.value is ConfigurationMapping, which is already GeneralValueType
+            return r[t.GeneralValueType].ok(result.value)
         return r[t.GeneralValueType].fail(
             result.error or "Registration failed",
         )
@@ -2975,6 +3113,24 @@ class FlextDispatcher(x):
 
         Returns:
             r with execution result or error
+
+        Example:
+            >>> from dataclasses import dataclass
+            >>> from flext_core import FlextDispatcher, FlextResult
+            >>>
+            >>> @dataclass
+            ... class CreateUser:
+            ...     email: str
+            >>>
+            >>> dispatcher = FlextDispatcher()
+            >>>
+            >>> def handle_create_user(message: CreateUser) -> FlextResult[str]:
+            ...     return FlextResult[str].ok(f"Created user: {message.email}")
+            >>>
+            >>> dispatcher.register_handler(CreateUser, handle_create_user)
+            >>> result = dispatcher.dispatch(CreateUser(email="user@example.com"))
+            >>> if result.is_success:
+            ...     print(result.value)
 
         """
         # Detect API pattern - (type, data) vs (object)
@@ -3847,6 +4003,61 @@ class FlextDispatcher(x):
     # ------------------------------------------------------------------
     # Factory methods
     # ------------------------------------------------------------------
+    @classmethod
+    def create(cls, *, auto_discover_handlers: bool = False) -> Self:
+        """Factory method to create a new FlextDispatcher instance.
+
+        This is the preferred way to instantiate FlextDispatcher. It provides
+        a clean factory pattern that each class owns, respecting Clean
+        Architecture principles where higher layers create their own instances.
+
+        Auto-discovery of handlers discovers all functions marked with
+        @h.handler() decorator in the calling module and registers them
+        automatically. This enables zero-config handler registration for services.
+
+        Args:
+            auto_discover_handlers: If True, scan calling module for @handler()
+                decorated functions and auto-register them. Default: False.
+
+        Returns:
+            FlextDispatcher instance.
+
+        Example:
+            >>> dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
+            >>> result = dispatcher.dispatch(CreateUserCommand(name="Alice"))
+
+        """
+        instance = cls()
+
+        if auto_discover_handlers:
+            # Get the caller's frame to discover handlers in calling module
+            frame = inspect.currentframe()
+            if frame and frame.f_back:
+                caller_globals = frame.f_back.f_globals
+                # Get module name from globals
+                module_name = caller_globals.get("__name__", "__main__")
+                # Get module object from globals (usually available as __import__ or direct reference)
+                caller_module = sys.modules.get(module_name)
+                if caller_module:
+                    # Scan module for handler-decorated functions
+                    handlers = h.Discovery.scan_module(caller_module)
+                    for _handler_name, handler_func, handler_config in handlers:
+                        # Get actual handler function from module
+                        if handler_func and callable(handler_func):
+                            # Register handler with dispatcher
+                            # Register under the handler command type name for routing
+                            command_type_name = (
+                                handler_config.command.__name__
+                                if hasattr(handler_config.command, "__name__")
+                                else str(handler_config.command)
+                            )
+                            _ = instance.register_handler(
+                                command_type_name,
+                                handler_func,
+                            )
+
+        return instance
+
     @classmethod
     def create_from_global_config(cls) -> r[FlextDispatcher]:
         """Create dispatcher using global FlextConfig instance.

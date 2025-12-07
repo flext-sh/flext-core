@@ -1,6 +1,6 @@
 # Anti-Patterns and Best Practices
 
-**Status**: Production Ready | **Version**: 0.9.9 | **Focus**: Common FLEXT-Core mistakes and solutions
+**Status**: Production Ready | **Version**: 0.10.0 | **Focus**: Common FLEXT-Core mistakes and solutions
 
 This guide documents common anti-patterns found in FLEXT ecosystem projects and their correct solutions. Every pattern includes code examples from the actual codebase.
 
@@ -789,13 +789,25 @@ except ValidationError as e:
 
 ---
 
+## Next Steps
+
+1. **Error Handling**: Review [Error Handling Guide](./error-handling.md) for correct error patterns
+2. **Testing**: See [Testing Guide](./testing.md) for testing best practices (no mocks policy)
+3. **Service Patterns**: Check [Service Patterns](./service-patterns.md) for service design patterns
+4. **Railway Patterns**: Explore [Railway-Oriented Programming](./railway-oriented-programming.md) for functional error handling
+5. **Configuration**: Review [Configuration Guide](./configuration.md) for configuration best practices
+
 ## See Also
 
-- [Railway-Oriented Programming](./railway-oriented-programming.md)
-- [Clean Architecture](../architecture/clean-architecture.md)
-- [Development Standards](../standards/development.md)
+- [Error Handling Guide](./error-handling.md) - Correct error handling patterns
+- [Testing Guide](./testing.md) - Testing best practices and no mocks policy
+- [Service Patterns](./service-patterns.md) - Service design patterns
+- [Railway-Oriented Programming](./railway-oriented-programming.md) - Functional error handling
+- [Configuration Guide](./configuration.md) - Configuration best practices
+- [Clean Architecture](../architecture/clean-architecture.md) - Architecture patterns
+- [Development Standards](../standards/development.md) - Development standards
 - **FLEXT CLAUDE.md**: Architecture principles and zero-tolerance standards
 
 ---
 
-**Updated**: 2025-10-21 | **Version**: 0.9.9 | **Based on**: Actual FLEXT ecosystem patterns and lessons learned
+**Updated**: 2025-12-07 | **Version**: 0.10.0 | **Based on**: Actual FLEXT ecosystem patterns and lessons learned

@@ -173,8 +173,9 @@ class FlextMixins(FlextRuntime):
                 # Use isinstance for type checking - returns dict or None
                 dict_result = normalized if u.is_type(normalized, dict) else None
                 if dict_result is not None:
-                    # Cast to correct type - dict is Mapping[str, GeneralValueType]
-                    return cast("t.Types.ContextMetadataMapping", dict_result)
+                    # Type narrowing: dict is a subtype of Mapping[str, GeneralValueType]
+                    # ConfigurationDict (dict[str, GeneralValueType]) is compatible with ContextMetadataMapping
+                    return dict_result
                 # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
                 return {"value": normalized}
             # For Mapping, use Collection.process() to normalize each value
@@ -184,8 +185,10 @@ class FlextMixins(FlextRuntime):
                 on_error="skip",
             )
             if process_result.is_success:
-                # Cast to ContextMetadataMapping - process returns t.Types.ConfigurationDict
-                return cast("t.Types.ContextMetadataMapping", process_result.value)
+                # Type narrowing: ConfigurationDict is dict[str, GeneralValueType]
+                # ContextMetadataMapping is Mapping[str, GeneralValueType]
+                # Since dict is a subtype of Mapping, ConfigurationDict is compatible with ContextMetadataMapping
+                return process_result.value
             return {}
 
     # =========================================================================

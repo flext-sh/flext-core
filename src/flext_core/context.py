@@ -203,7 +203,9 @@ class FlextContext(FlextRuntime):
                 initial_data_dict[c.Context.KEY_OPERATION_ID] = operation_id
             elif auto_correlation_id:
                 # Auto-generate correlation_id when not provided and auto_correlation_id=True
-                initial_data_dict[c.Context.KEY_OPERATION_ID] = u.Generators.generate_correlation_id()
+                initial_data_dict[c.Context.KEY_OPERATION_ID] = (
+                    u.Generators.generate_correlation_id()
+                )
             if user_id is not None:
                 initial_data_dict[c.Context.KEY_USER_ID] = user_id
             # Merge metadata into initial_data
@@ -212,14 +214,22 @@ class FlextContext(FlextRuntime):
             return cls(initial_data=initial_data_dict)
         # Default: use initial_data parameter
         # Auto-generate correlation_id for zero-config setup
-        if auto_correlation_id and (initial_data is None or (isinstance(initial_data, dict) and not initial_data.get(c.Context.KEY_OPERATION_ID))):
+        if auto_correlation_id and (
+            initial_data is None
+            or (
+                isinstance(initial_data, dict)
+                and not initial_data.get(c.Context.KEY_OPERATION_ID)
+            )
+        ):
             # Convert initial_data to dict if needed
             if isinstance(initial_data, dict):
                 initial_data_dict = initial_data.copy()
             else:
                 initial_data_dict = {}
             # Add auto-generated correlation_id
-            initial_data_dict[c.Context.KEY_OPERATION_ID] = u.Generators.generate_correlation_id()
+            initial_data_dict[c.Context.KEY_OPERATION_ID] = (
+                u.Generators.generate_correlation_id()
+            )
             return cls(initial_data=initial_data_dict)
         return cls(initial_data=initial_data)
 
@@ -1211,22 +1221,50 @@ class FlextContext(FlextRuntime):
 
     @classmethod
     def get_container(cls) -> p.Container.DI:
-        """Get global container with lazy initialization.
+        """Get global container instance.
+
+        The container must be set explicitly using `set_container()` before
+        calling this method. This breaks the circular dependency by requiring
+        explicit initialization.
 
         Returns:
             Global Container.DI instance for dependency injection
 
+        Raises:
+            RuntimeError: If container was not set via `set_container()`.
+
         Example:
+            >>> from flext_core import FlextContainer
+            >>> FlextContext.set_container(FlextContainer.get_global())
             >>> container = FlextContext.get_container()
             >>> result = container.get("service_name")
 
         """
         if cls._container is None:
-            # Lazy import to avoid circular dependency: context.py ↔ container.py
-            from flext_core.container import FlextContainer  # noqa: PLC0415
-
-            cls._container = FlextContainer.create()
+            msg = (
+                "Container not initialized. Call FlextContext.set_container(container) "
+                "before using get_container()."
+            )
+            raise RuntimeError(msg)
         return cls._container
+
+    @classmethod
+    def set_container(cls, container: p.Container.DI) -> None:
+        """Set the global container instance.
+
+        This method must be called before using `get_container()`. It breaks
+        the circular dependency by requiring explicit initialization.
+
+        Args:
+            container: Container instance to set as global.
+
+        Example:
+            >>> from flext_core import FlextContainer
+            >>> container = FlextContainer.get_global()
+            >>> FlextContext.set_container(container)
+
+        """
+        cls._container = container
 
     # ==========================================================================
     # Variables - Context Variables using structlog as Single Source of Truth

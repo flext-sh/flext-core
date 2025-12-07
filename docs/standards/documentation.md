@@ -293,12 +293,76 @@ Link to related content properly:
 
 See [Getting Started](../guides/getting-started.md) for installation.
 
-For advanced patterns, check [Architecture Patterns](./patterns.md).
+For advanced patterns, check [Architecture Patterns](../architecture/patterns.md).
 
 # ❌ WRONG
 
 See the getting started guide (file is located in docs/guides/)
 ```
+
+## Link Reference Standards
+
+**CRITICAL RULE**: Different link types for different contexts
+
+### Cross-Project References (Between FLEXT Projects)
+
+**Use GitHub URLs** for cross-project references:
+
+```markdown
+# ✅ CORRECT - GitHub URLs for cross-project
+See [flext-core Result Pattern](https://github.com/organization/flext/tree/main/flext-core/docs/guides/railway-oriented-programming.md)
+
+See [flext-ldif Architecture](https://github.com/organization/flext/tree/main/flext-ldif/docs/architecture.md)
+
+# ❌ WRONG - Relative paths for cross-project
+See [flext-core](../../flext-core/docs/guides/railway-oriented-programming.md)
+```
+
+**Rationale**:
+- GitHub URLs remain valid when viewing individual project repos
+- Works across different repository setups (monorepo, separate repos)
+- Consistent regardless of workspace organization
+
+### Internal References (Within Same Project)
+
+**Use relative paths** for same-project references:
+
+```markdown
+# ✅ CORRECT - Relative paths within project
+See [Getting Started](./guides/getting-started.md)
+See [Architecture Overview](../architecture/overview.md)
+See [API Reference](./api-reference/foundation.md)
+
+# ❌ WRONG - GitHub URLs within project
+See [Getting Started](https://github.com/organization/flext/tree/main/flext-core/docs/guides/getting-started.md)
+```
+
+**Rationale**:
+- Works in local development environment
+- Faster (no external HTTP requests)
+- Works offline
+- Survives repository moves/renames
+
+### Link Pattern Matrix
+
+| Reference Type | Link Format | Example |
+|----------------|-------------|---------|
+| **Same project** | Relative path | `./guides/getting-started.md` |
+| **Parent directory** | Relative path | `../architecture/overview.md` |
+| **Cross-project** | GitHub URL | `https://github.com/organization/flext/tree/main/flext-core/docs/api.md` |
+| **Workspace docs** | Relative from root | `../../docs/architecture/README.md` |
+| **External** | Full URL | `https://docs.python.org/3/` |
+
+### Link Validation Checklist
+
+Before publishing documentation:
+
+- [ ] All cross-project links use GitHub URLs
+- [ ] All internal links use relative paths
+- [ ] All links resolve correctly
+- [ ] No broken links (404 errors)
+- [ ] Anchor links (#sections) exist in target files
+- [ ] External links use HTTPS
 
 ## API Reference Format
 

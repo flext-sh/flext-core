@@ -1,6 +1,7 @@
-"""Utilities module - FlextUtilitiesEnum.
+"""Internal enum utilities - DO NOT IMPORT DIRECTLY.
 
-Extracted from flext_core.utilities for better modularity.
+This module provides enum utility functions following the generalized function pattern.
+All functionality should be accessed via the u facade in flext_core.utilities.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,13 +9,38 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
+import warnings
 from collections.abc import Callable
 from enum import StrEnum
-from typing import ClassVar, TypeGuard, cast
+from typing import ClassVar, Literal, TypeGuard, TypeIs, cast, overload
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.result import r
 from flext_core.typings import t
+
+# Approved modules that can import directly (for testing, internal use)
+_APPROVED_MODULES = frozenset({
+    "flext_core.utilities",
+    "flext_core._utilities",
+    "tests.",
+})
+
+
+def _check_direct_access() -> None:
+    """Warn if accessed from non-approved module."""
+    frame = inspect.currentframe()
+    if frame and frame.f_back and frame.f_back.f_back:
+        caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
+        if not any(
+            caller_module.startswith(approved) for approved in _APPROVED_MODULES
+        ):
+            warnings.warn(
+                "Direct import from _utilities.enum is deprecated. "
+                "Use 'from flext_core import u; u.enum(...)' instead.",
+                DeprecationWarning,
+                stacklevel=4,
+            )
 
 
 class FlextUtilitiesEnum:
@@ -291,6 +317,145 @@ class FlextUtilitiesEnum:
         return result
 
 
+# ─────────────────────────────────────────────────────────────
+# GENERALIZED PUBLIC FUNCTION PATTERN
+# ─────────────────────────────────────────────────────────────
+
+
+class _EnumUtilities:
+    """Internal implementation - all methods here are internal to this module."""
+
+    @staticmethod
+    def is_member_by_value[E: StrEnum](value: object, enum_cls: type[E]) -> TypeIs[E]:
+        """Check membership by value."""
+        if isinstance(value, enum_cls):
+            return True
+        if FlextUtilitiesGuards.is_type(value, str):
+            value_map = getattr(enum_cls, "_value2member_map_", {})
+            return value in value_map
+        return False
+
+    @staticmethod
+    def is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeIs[E]:
+        """Check membership by name."""
+        return name in getattr(enum_cls, "__members__", {})
+
+    @staticmethod
+    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
+        """Parse string to enum."""
+        if isinstance(value, enum_cls):
+            return r[E].ok(value)
+        try:
+            return r[E].ok(enum_cls(value))
+        except ValueError:
+            members_dict = getattr(enum_cls, "__members__", {})
+            enum_members = list(members_dict.values())
+            valid = ", ".join(m.value for m in enum_members)
+            enum_name = getattr(enum_cls, "__name__", "Enum")
+            return r[E].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+
+    @staticmethod
+    def coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
+        """Coerce value to enum (for Pydantic validators)."""
+        if isinstance(value, enum_cls):
+            return value
+        return enum_cls(value)
+
+
+# PUBLIC GENERALIZED METHOD - Single entry point with routing
+@overload
+def enum[E: StrEnum](
+    value: object,
+    enum_cls: type[E],
+    *,
+    mode: Literal["is_member"] = "is_member",
+    by_name: bool = False,
+) -> TypeIs[E]: ...
+
+
+@overload
+def enum[E: StrEnum](
+    value: object,
+    enum_cls: type[E],
+    *,
+    mode: Literal["is_name"],
+    by_name: bool = False,
+) -> TypeIs[E]: ...
+
+
+@overload
+def enum[E: StrEnum](
+    value: object,
+    enum_cls: type[E],
+    *,
+    mode: Literal["parse"],
+    by_name: bool = False,
+) -> r[E]: ...
+
+
+@overload
+def enum[E: StrEnum](
+    value: object,
+    enum_cls: type[E],
+    *,
+    mode: Literal["coerce"],
+    by_name: bool = False,
+) -> E: ...
+
+
+def enum[E: StrEnum](
+    value: object,
+    enum_cls: type[E],
+    *,
+    mode: str = "is_member",
+    by_name: bool = False,
+) -> TypeIs[E] | r[E] | E:
+    """Generalized enum utility function.
+
+    Args:
+        value: Value to check/parse/coerce
+        enum_cls: The StrEnum class
+        mode: Operation mode
+            - "is_member": Check if value is member (returns TypeIs[E])
+            - "is_name": Check if value is member by name (returns TypeIs[E])
+            - "parse": Parse value to enum (returns r[E])
+            - "coerce": Coerce value to enum (returns E, raises on failure)
+        by_name: For is_member, check by name instead of value
+
+    Returns:
+        Depends on mode - TypeIs[E], r[E], or E
+
+    """
+    _check_direct_access()
+
+    if mode == "is_member":
+        if by_name and isinstance(value, str):
+            return _EnumUtilities.is_member_by_name(value, enum_cls)
+        return _EnumUtilities.is_member_by_value(value, enum_cls)
+    if mode == "is_name":
+        return _EnumUtilities.is_member_by_name(str(value), enum_cls)
+    if mode == "parse":
+        # Type narrowing: value is object, but parse accepts str | E
+        # We handle this by checking if it's already an enum instance
+        if isinstance(value, enum_cls):
+            return _EnumUtilities.parse(enum_cls, value)
+        if isinstance(value, str):
+            return _EnumUtilities.parse(enum_cls, value)
+        # For other types, convert to string
+        return _EnumUtilities.parse(enum_cls, str(value))
+    if mode == "coerce":
+        # Type narrowing: value is object, but coerce accepts str | E
+        if isinstance(value, enum_cls):
+            return _EnumUtilities.coerce(enum_cls, value)
+        if isinstance(value, str):
+            return _EnumUtilities.coerce(enum_cls, value)
+        # For other types, convert to string
+        return _EnumUtilities.coerce(enum_cls, str(value))
+    error_msg = f"Unknown mode: {mode}"
+    raise ValueError(error_msg)
+
+
 __all__ = [
     "FlextUtilitiesEnum",
+    "enum",
 ]

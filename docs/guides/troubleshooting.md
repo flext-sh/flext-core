@@ -1,5 +1,7 @@
 # Troubleshooting Guide
 
+**Status**: Production Ready | **Version**: 0.10.0 | **Focus**: Common Issues and Solutions
+
 Systematic troubleshooting guide for common issues in FLEXT-Core applications.
 
 ## Import and Setup Issues
@@ -745,6 +747,22 @@ logger.debug("Debug logging enabled")
 | Config value None                     | Check file exists and value is in config   |
 | Tests fail together                   | Use fixtures to isolate state              |
 | Slow performance                      | Profile with `cProfile` to find bottleneck |
+
+## Next Steps
+
+1. **Error Handling**: See [Error Handling Guide](./error-handling.md) for comprehensive error patterns
+2. **Testing**: Check [Testing Guide](./testing.md) for debugging test failures
+3. **Configuration**: Review [Configuration Guide](./configuration.md) for configuration issues
+4. **API Reference**: Consult [API Reference](../api-reference/) for detailed API documentation
+
+## See Also
+
+- [Error Handling Guide](./error-handling.md) - Comprehensive error handling patterns
+- [Testing Guide](./testing.md) - Debugging and troubleshooting tests
+- [Configuration Guide](./configuration.md) - Configuration troubleshooting
+- [Getting Started](./getting-started.md) - Setup and installation
+- [API Reference](../api-reference/) - Complete API documentation
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ## Additional Resources
 

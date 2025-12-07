@@ -1,9 +1,7 @@
 # CQRS Architecture
 
-**Version:** 1.0 (2025-12-03)
-**Python:** 3.13+
-**Pydantic:** 2.x
-**Status:** V1 production baseline; V2 modernization in progress
+**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+**Python:** 3.13+ | **Pydantic:** 2.x
 
 This document describes the Command Query Responsibility Segregation (CQRS)
 implementation in flext-core, including the handler pipeline, dispatcher
@@ -351,38 +349,38 @@ V1 (Atual)           V2 Integration         V2 Complete
 
 **FlextMixins.CQRS (Phase 1):**
 
-1. Extrair métricas para `self.cqrs_metrics`
-2. Extrair contexto para `self.context`
-3. Integrar logging/tracking no pipeline
-4. Deprecar métodos manuais com grace period
+1. Extract metrics to `self.cqrs_metrics`
+2. Extract context to `self.context`
+3. Integrate logging/tracking in the pipeline
+4. Deprecate manual methods with grace period
 
 **FlextContainer DI (Phase 2):**
 
-1. Definir protocols para managers
-2. Extrair managers para módulo `_managers/`
-3. Refatorar `FlextDispatcher.__init__()` para aceitar container
-4. Registrar managers default no container
+1. Define protocols for managers
+2. Extract managers to `_managers/` module
+3. Refactor `FlextDispatcher.__init__()` to accept container
+4. Register default managers in container
 
 **Expected Benefits:**
 
-- ✅ **Zero ceremony** - infraestrutura automática
-- ✅ **Customização** - managers injetáveis via DI
-- ✅ **Consistência** - métricas/logging unificados
-- ✅ **Testabilidade** - mock de managers via container
-- ✅ **Observabilidade** - tracking automático
+- ✅ **Zero ceremony** - automatic infrastructure
+- ✅ **Customization** - injectable managers via DI
+- ✅ **Consistency** - unified metrics/logging
+- ✅ **Testability** - mock managers via container
+- ✅ **Observability** - automatic tracking
 
 ---
 
 ## TODO Backlog
 
-> Esta seção rastreia as pendências de modernização do CQRS. Veja também os TODOs nos docstrings dos arquivos de código.
+> This section tracks CQRS modernization backlog items. See also TODOs in code docstrings.
 
-| Item                                                                    | Fase    | Descrição                                            | Referência                   |
-| ----------------------------------------------------------------------- | ------- | ---------------------------------------------------- | ---------------------------- |
-| Migrar handlers para `self.logger`, `self.track`, e `self.cqrs_metrics` | Phase 3 | Substituir métricas/contexto manuais por FlextMixins | `handlers.py`                |
-| Forçar construção do dispatcher via container                           | Phase 2 | Uma vez que todos os call sites migrarem             | `dispatcher.py`              |
-| Atualizar `_dispatcher.reliability` para usar `FlextResult.and_then`    | Phase 4 | Paridade de nomenclatura                             | `_dispatcher/reliability.py` |
-| Scaffolding CLI para handlers zero-ceremony                             | Phase 5 | Geração automática de handlers                       | CLI tools                    |
+| Item                                                                     | Phase   | Description                                     | Reference                    |
+| ------------------------------------------------------------------------ | ------- | ----------------------------------------------- | ---------------------------- |
+| Migrate handlers to `self.logger`, `self.track`, and `self.cqrs_metrics` | Phase 3 | Replace manual metrics/context with FlextMixins | `handlers.py`                |
+| Force dispatcher construction via container                              | Phase 2 | Once all call sites migrate                     | `dispatcher.py`              |
+| Update `_dispatcher.reliability` to use `FlextResult.and_then`           | Phase 4 | Naming parity                                   | `_dispatcher/reliability.py` |
+| Scaffolding CLI for zero-ceremony handlers                               | Phase 5 | Automatic handler generation                    | CLI tools                    |
 
 ---
 
@@ -467,3 +465,21 @@ Target metrics for CQRS components:
 - [Microsoft - Circuit Breaker Pattern](https://docs.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker)
 - [Microsoft - Retry Pattern](https://docs.microsoft.com/en-us/azure/architecture/patterns/retry)
 - [Netflix Hystrix (Circuit Breaker)](https://github.com/Netflix/Hystrix/wiki)
+
+## Next Steps
+
+1. **Clean Architecture**: Review [Clean Architecture](./clean-architecture.md) for layer boundaries
+2. **Architecture Overview**: See [Architecture Overview](./overview.md) for layer topology
+3. **Service Patterns**: Check [Service Patterns Guide](../guides/service-patterns.md) for handler implementation
+4. **Dependency Injection**: See [Advanced DI Guide](../guides/dependency-injection-advanced.md) for dispatcher configuration
+5. **Railway Patterns**: Review [Railway-Oriented Programming](../guides/railway-oriented-programming.md) for result composition
+
+## See Also
+
+- [Clean Architecture](./clean-architecture.md) - Layer responsibilities and dependency rules
+- [Architecture Overview](./overview.md) - Visual layer layout and execution flows
+- [Architecture Patterns](./patterns.md) - Common CQRS and handler patterns
+- [Service Patterns Guide](../guides/service-patterns.md) - Handler and service implementation
+- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - Dispatcher reliability configuration
+- [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - Result composition patterns
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow

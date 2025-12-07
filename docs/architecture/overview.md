@@ -1,5 +1,7 @@
 # Architecture Overview
 
+**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+
 FLEXT-Core implements CQRS on top of a clean-architecture skeleton. The outline
 below mirrors the `src/flext_core` layout (Python 3.13+, Pydantic v2) and
 references [`clean-architecture.md`](./clean-architecture.md) for the
@@ -86,3 +88,21 @@ dependency rules and rationale.
 These flows keep orchestration decoupled from infrastructure concerns while
 preserving the unidirectional boundaries described in the clean-architecture
 guide.
+
+## Next Steps
+
+1. **Clean Architecture**: Deep dive into [Clean Architecture](./clean-architecture.md) for dependency rules
+2. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for handler and dispatcher patterns
+3. **Architecture Patterns**: See [Architecture Patterns](./patterns.md) for common patterns
+4. **Decision Records**: Review [Architecture Decisions](./decisions.md) for design rationale
+5. **Guides**: Check [Getting Started](../guides/getting-started.md) for practical usage
+
+## See Also
+
+- [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
+- [CQRS Architecture](./cqrs.md) - Handler pipeline and dispatcher orchestration
+- [Architecture Patterns](./patterns.md) - Common patterns and best practices
+- [Architecture Decisions](./decisions.md) - ADRs documenting design choices
+- [Getting Started Guide](../guides/getting-started.md) - Practical implementation guide
+- [Service Patterns](../guides/service-patterns.md) - Domain service patterns
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow

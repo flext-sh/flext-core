@@ -45,7 +45,7 @@
     name = "flext-core"
     readme = "README.md"
     requires-python = ">=3.13,<3.14"
-    version = "0.9.9"
+    version = "0.10.0"
 
     [[project.authors]]
         email = "team@flext.sh"
@@ -143,7 +143,7 @@
 
     [tool.poetry]
         name = "flext-core"
-        version = "0.9.9"
+        version = "0.10.0"
         description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
         authors = ["FLEXT Team <team@flext.sh>"]
         packages = [

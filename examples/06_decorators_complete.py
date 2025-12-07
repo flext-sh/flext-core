@@ -1,7 +1,16 @@
 """FlextDecorators comprehensive demonstration.
 
-Demonstrates inject, log_operation, railway, with_context, and combined
-decorators using Python 3.13+ strict patterns with PEP 695 type aliases.
+Demonstrates inject, log_operation, railway, with_context, retry, timeout,
+and combined decorators using Python 3.13+ strict patterns with PEP 695 type aliases.
+
+**Expected Output:**
+- Dependency injection examples
+- Structured logging demonstrations
+- Railway pattern error handling
+- Context management patterns
+- Retry logic with exponential backoff
+- Timeout enforcement
+- Combined decorator composition
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,6 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Sequence
 
 from pydantic import BaseModel
@@ -42,6 +52,7 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
             self._demonstrate_log_operation()
             self._demonstrate_railway()
             self._demonstrate_with_context()
+            self._demonstrate_retry_timeout()
             self._demonstrate_combined()
 
             return FlextResult[t.Types.ServiceMetadataMapping].ok({
@@ -50,14 +61,18 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
                     "log_operation",
                     "railway",
                     "with_context",
+                    "retry",
+                    "timeout",
                     "combined",
                 ],
-                "decorator_categories": 5,
+                "decorator_categories": 7,
                 "features": [
                     "dependency_injection",
                     "structured_logging",
                     "railway_pattern",
                     "context_management",
+                    "retry_logic",
+                    "timeout_enforcement",
                     "composition",
                 ],
             })
@@ -146,6 +161,56 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
         print(f"✅ Context operation: {result}")
 
     @staticmethod
+    def _demonstrate_retry_timeout() -> None:
+        """Show retry and timeout decorators with composition."""
+        print("\n=== Retry and Timeout Decorators ===")
+
+        # Retry decorator with exponential backoff
+        @FlextDecorators.retry(
+            max_attempts=3,
+            delay_seconds=0.1,
+            backoff_strategy="exponential",
+        )
+        @FlextDecorators.railway(error_code=FlextConstants.Errors.NETWORK_ERROR)
+        def unreliable_operation(attempt_count: list[int]) -> FlextResult[str]:
+            """Operation that may fail initially but succeeds on retry."""
+            attempt_count[0] += 1
+            if attempt_count[0] < 2:
+                return FlextResult[str].fail("Transient failure")
+            return FlextResult[str].ok(f"Success on attempt {attempt_count[0]}")
+
+        attempts = [0]
+        result = unreliable_operation(attempts)
+        if result.is_success:
+            print(f"✅ Retry succeeded: {result.unwrap()}")
+
+        # Timeout decorator
+        @FlextDecorators.timeout(timeout_seconds=0.5)
+        @FlextDecorators.railway(error_code=FlextConstants.Errors.TIMEOUT_ERROR)
+        def fast_operation() -> FlextResult[str]:
+            """Fast operation that completes within timeout."""
+            time.sleep(0.1)  # Quick operation
+            return FlextResult[str].ok("Operation completed")
+
+        result = fast_operation()
+        if result.is_success:
+            print(f"✅ Timeout protection: {result.unwrap()}")
+
+        # Composition: Retry + Timeout + Railway
+        @FlextDecorators.retry(max_attempts=2, delay_seconds=0.05)
+        @FlextDecorators.timeout(timeout_seconds=1.0)
+        @FlextDecorators.railway(error_code=FlextConstants.Errors.NETWORK_ERROR)
+        def robust_operation(value: int) -> FlextResult[int]:
+            """Operation with retry and timeout protection."""
+            if value < 0:
+                return FlextResult[int].fail("Value must be positive")
+            return FlextResult[int].ok(value * 2)
+
+        result = robust_operation(5)
+        if result.is_success:
+            print(f"✅ Retry + Timeout composition: {result.unwrap()}")
+
+    @staticmethod
     def _demonstrate_combined() -> None:
         """Show combined decorator."""
         print("\n=== Combined Decorator ===")
@@ -183,7 +248,7 @@ def main() -> None:
     """Main entry point."""
     print("=" * 60)
     print("FLEXT DECORATORS - COMPREHENSIVE DEMONSTRATION")
-    print("Inject, log_operation, railway, with_context, combined")
+    print("Inject, log_operation, railway, with_context, retry, timeout, combined")
     print("=" * 60)
 
     service = DecoratorsService()
@@ -201,9 +266,13 @@ def main() -> None:
         print(f"\n❌ Failed: {result.error}")
 
     print("\n" + "=" * 60)
-    print("🎯 Decorator Patterns: Inject, Log, Railway, Context, Combined")
-    print("🎯 Cross-Cutting Concerns: DI, Logging, Error Handling, Context")
-    print("🎯 Composition: Multiple decorators working together")
+    print(
+        "🎯 Decorator Patterns: Inject, Log, Railway, Context, Retry, Timeout, Combined"
+    )
+    print(
+        "🎯 Cross-Cutting Concerns: DI, Logging, Error Handling, Context, Reliability"
+    )
+    print("🎯 Composition: Retry + Timeout + Railway working together")
     print("🎯 Python 3.13+: PEP 695 type aliases, collections.abc")
     print("=" * 60)
 

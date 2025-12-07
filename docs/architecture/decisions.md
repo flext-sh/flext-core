@@ -1,5 +1,7 @@
 # Architecture Decision Records (ADRs)
 
+**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+
 Record of major architectural decisions made in FLEXT-Core development.
 
 ## ADR-001: 5-Layer Architecture
@@ -415,6 +417,23 @@ For new ADRs:
 - Multi-tenancy support patterns
 - Distributed tracing standards
 - Performance benchmarking targets
+
+## Next Steps
+
+1. **Architecture Overview**: See [Architecture Overview](./overview.md) for layer structure
+2. **Clean Architecture**: Review [Clean Architecture](./clean-architecture.md) for dependency rules
+3. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for implementation details
+4. **Architecture Patterns**: Check [Architecture Patterns](./patterns.md) for common patterns
+5. **Implementation Guides**: Review [Getting Started](../guides/getting-started.md) for practical usage
+
+## See Also
+
+- [Architecture Overview](./overview.md) - Visual layer topology
+- [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
+- [CQRS Architecture](./cqrs.md) - Handler and dispatcher implementation
+- [Architecture Patterns](./patterns.md) - Common implementation patterns
+- [Getting Started Guide](../guides/getting-started.md) - Practical implementation
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ## Viewing Decisions
 

@@ -363,8 +363,8 @@ Contributors who make significant improvements may be:
 ### Resources
 
 - **[Documentation](./)**: Complete documentation
-- **[Examples](../examples/)**: Working code examples
-- **[Tests](../tests/)**: Usage patterns and best practices
+- **[Examples](../../examples/)**: Working code examples
+- **[Tests](../../tests/)**: Usage patterns and best practices
 - **[Issues](https://github.com/flext-sh/flext-core/issues)**: Report bugs or ask questions
 - **[Discussions](https://github.com/flext-sh/flext-core/discussions)**: Community discussions
 

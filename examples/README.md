@@ -1,28 +1,105 @@
 # FLEXT-Core Examples
 
-Run examples with `python examples/<file>.py` from the project root (after `pip install -e .`).
+**Version**: 0.10.0 | **Status**: Production Ready
 
-## Foundation & Setup
+Comprehensive examples demonstrating FLEXT-Core patterns and best practices. All examples are self-contained and can be run independently.
 
-- **00_single_import_demo.py** — Minimal import/verification helper.
-- **01_basic_result.py** — Railway-oriented `FlextResult` patterns (map/and_then/fail paths).
-- **02_dependency_injection.py** — `FlextContainer` usage and logger resolution.
-- **03_models_basics.py** — Entities/Values/AggregateRoot basics with `FlextModels`.
-- **04_config_basics.py** — `FlextConfig` settings loading and validation.
+## Quick Start
 
-## Context, Utilities, and Logging
+```bash
+# Install FLEXT-Core in development mode
+pip install -e .
 
-- **09_context_management.py** — `FlextContext` request/user/operation scopes.
-- **12_utilities_comprehensive.py** — Validation/type-guard helpers from `_utilities`.
-- **logging_config_once_pattern.py** — Idempotent logging configuration helper.
+# Run an example
+python examples/01_basic_result.py
 
-## Application-Layer Patterns
+# Or from project root
+cd /path/to/flext-core
+python examples/01_basic_result.py
+```
 
+## Example Categories
+
+### 🚀 Foundation & Core Patterns
+
+**Basic Concepts**:
+
+- **00_single_import_demo.py** — Minimal import verification helper. Demonstrates basic package import.
+- **01_basic_result.py** — Railway-oriented `FlextResult` patterns (map, flat_map, fail paths). **Start here for ROP basics**.
+
+**Dependency Injection & Configuration**:
+
+- **02_dependency_injection.py** — `FlextContainer` usage, service registration, and logger resolution.
+- **04_config_basics.py** — `FlextConfig` settings loading, validation, and environment-specific configurations.
+
+**Domain Modeling**:
+
+- **03_models_basics.py** — Entities, Values, and AggregateRoot basics with `FlextModels`. Domain-driven design fundamentals.
+
+### 🔧 Advanced Patterns & Utilities
+
+**Context & Utilities**:
+
+- **09_context_management.py** — `FlextContext` request/user/operation scopes and correlation ID propagation.
+- **12_utilities_comprehensive.py** — Validation, type guards, and helper utilities from `_utilities` module.
+- **logging_config_once_pattern.py** — Idempotent logging configuration helper pattern.
+
+**Decorators & Automation**:
+
+- **05_utilities_advanced.py** — Advanced utility patterns and helper functions.
+- **06_decorators_complete.py** — Complete decorator showcase: `@inject`, `@log_operation`, `@railway`, `@with_context`, `@combined`.
+
+### 🏗️ Application Layer & Integration
+
+**Handlers & Dispatchers**:
+
+- **07_registry_dispatcher.py** — `FlextRegistry` and `FlextDispatcher` patterns for CQRS command/query routing.
 - **14_flext_handlers_complete.py** — Handler base class, validation hooks, and dispatcher-style execution.
-- **16_layer3_advanced_processing.py** — Dispatcher reliability knobs (timeouts, retries, caching) in action.
 
-## Cross-Cutting Automation
+**Advanced Processing**:
 
+- **08_integration_complete.py** — Complete integration example combining all FLEXT-Core patterns.
 - **15_automation_showcase.py** — Context enrichment helpers and tracing-friendly execution wrappers.
+- **16_layer3_advanced_processing.py** — Dispatcher reliability patterns (timeouts, retries, caching, circuit breakers).
 
-> Each script is self-contained; activate the project's virtual environment or install in editable mode before running.
+## Example Guide Mapping
+
+| Example File                 | Related Guide                                                                                                                          |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `01_basic_result.py`         | [Railway-Oriented Programming](../docs/guides/railway-oriented-programming.md)                                                         |
+| `02_dependency_injection.py` | [Advanced Dependency Injection](../docs/guides/dependency-injection-advanced.md)                                                       |
+| `03_models_basics.py`        | [Domain-Driven Design](../docs/guides/domain-driven-design.md)                                                                         |
+| `04_config_basics.py`        | [Configuration Management](../docs/guides/configuration.md)                                                                            |
+| `06_decorators_complete.py`  | [Railway-Oriented Programming - Decorators](../docs/guides/railway-oriented-programming.md#decorator-composition-with-railway-pattern) |
+| `07_registry_dispatcher.py`  | [Advanced Dependency Injection - Dispatcher](../docs/guides/dependency-injection-advanced.md#flextdispatcher-reliability-settings)     |
+| `09_context_management.py`   | [Advanced Dependency Injection - Context](../docs/guides/dependency-injection-advanced.md)                                             |
+
+## Expected Output
+
+Each example produces structured output demonstrating the patterns. Examples include:
+
+- ✅ Success indicators for successful operations
+- ❌ Error indicators for failure cases
+- 🔥 Exception handling demonstrations
+- 📊 Metrics and performance tracking
+- 🔗 Context propagation examples
+
+## Requirements
+
+- **Python**: 3.13+ (required)
+- **Installation**: `pip install -e .` from project root
+- **Dependencies**: All dependencies installed via `poetry install` or `pip install -e .`
+
+## Next Steps
+
+After running examples:
+
+1. **Read Guides**: Explore [Documentation Guides](../docs/guides/) for detailed explanations
+2. **API Reference**: Check [API Reference](../docs/api-reference/) for complete API documentation
+3. **Patterns**: Review [Service Patterns](../docs/guides/service-patterns.md) for production patterns
+
+## See Also
+
+- [Getting Started Guide](../docs/guides/getting-started.md) - Quick start with FLEXT-Core
+- [Documentation Index](../docs/INDEX.md) - Complete documentation navigation
+- [API Reference](../docs/api-reference/) - Full API documentation

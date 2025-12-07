@@ -12,16 +12,23 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Sequence, Sized
 from datetime import UTC, datetime
-from typing import cast, overload
+from enum import StrEnum
+from typing import TypeIs, cast, overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
+from flext_core._utilities.cast import FlextUtilitiesCast, cast_safe as _cast_safe_fn
 from flext_core._utilities.checker import FlextUtilitiesChecker
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
 from flext_core._utilities.context import FlextUtilitiesContext
+from flext_core._utilities.conversion import (
+    FlextUtilitiesConversion,
+    conversion as _conversion_fn,
+)
+from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
 from flext_core._utilities.domain import FlextUtilitiesDomain
-from flext_core._utilities.enum import FlextUtilitiesEnum
+from flext_core._utilities.enum import FlextUtilitiesEnum, enum as _enum_fn
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -73,14 +80,53 @@ class FlextUtilities:
     class Configuration(FlextUtilitiesConfiguration):
         """Configuration utility class - real inheritance."""
 
+    class Cast(FlextUtilitiesCast):
+        """Cast utility class - real inheritance."""
+
     class Context(FlextUtilitiesContext):
         """Context utility class - real inheritance."""
+
+    class Conversion(FlextUtilitiesConversion):
+        """Conversion utility class - real inheritance."""
+
+    class Deprecation(FlextUtilitiesDeprecation):
+        """Deprecation utility class - real inheritance."""
 
     class Domain(FlextUtilitiesDomain):
         """Domain utility class - real inheritance."""
 
     class Enum(FlextUtilitiesEnum):
         """Enum utility class - real inheritance."""
+
+    # Generalized public function aliases
+    enum = staticmethod(_enum_fn)
+    conversion = staticmethod(_conversion_fn)
+    cast_safe = staticmethod(_cast_safe_fn)
+
+    # Convenience shortcuts for common operations
+    @staticmethod
+    def is_enum_member[E: StrEnum](value: object, enum_cls: type[E]) -> TypeIs[E]:
+        """Check if value is enum member. Alias for enum(value, cls, mode='is_member')."""
+        return _enum_fn(value, enum_cls, mode="is_member")
+
+    @staticmethod
+    def parse_enum[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
+        """Parse value to enum. Alias for enum(value, cls, mode='parse')."""
+        return _enum_fn(value, enum_cls, mode="parse")
+
+    @staticmethod
+    def to_str(value: object, *, default: str | None = None) -> str:
+        """Convert value to string. Alias for conversion(value, mode='to_str')."""
+        return _conversion_fn(value, mode="to_str", default=default)
+
+    @staticmethod
+    def to_str_list(
+        value: object,
+        *,
+        default: list[str] | None = None,
+    ) -> list[str]:
+        """Convert value to list of strings. Alias for conversion(value, mode='to_str_list')."""
+        return _conversion_fn(value, mode="to_str_list", default=default)
 
     class Generators(FlextUtilitiesGenerators):
         """Generators utility class - real inheritance."""
@@ -572,17 +618,21 @@ class FlextUtilities:
             # Generic containment for sequences/dicts
             if isinstance(value, dict):
                 # Type narrowing: value is dict, contains can be any key type
-                # Type ignore needed because dict keys can be any hashable type
-                if contains not in value:  # type: ignore[operator]
+                # Use cast to handle dict key type checking
+                dict_value: dict[object, object] = cast("dict[object, object]", value)
+                if contains not in dict_value:
                     return False
-            elif (
-                value is not None
-                and hasattr(value, "__contains__")
-                and contains not in value  # type: ignore[operator]
-            ):
+            elif value is not None and hasattr(value, "__contains__"):
                 # Type narrowing: value is not None and has __contains__ method
-                # Type ignore needed because contains type may not match value's contained type
-                return False
+                # Check containment using getattr for type safety
+                contains_method = getattr(value, "__contains__", None)
+                if contains_method is not None:
+                    try:
+                        if not contains_method(contains):
+                            return False
+                    except (TypeError, ValueError):
+                        # If containment check fails due to type mismatch, consider it not contained
+                        return False
 
         return True
 
@@ -703,9 +753,11 @@ class FlextUtilities:
 
 
 u = FlextUtilities  # Runtime alias (not TypeAlias to avoid PYI042)
+u_core = FlextUtilities  # Runtime alias (not TypeAlias to avoid PYI042)
 
 __all__ = [
     "FlextUtilities",
     "ValidatorSpec",  # Export for flext-ldif and other projects
     "u",
+    "u_core",
 ]

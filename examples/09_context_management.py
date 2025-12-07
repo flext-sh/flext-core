@@ -5,6 +5,14 @@ monitoring using Python 3.13+ PEP 695 type aliases, FlextConstants centralized
 StrEnum/Literals, t composition, collections.abc advanced patterns,
 Pydantic 2 StrEnum, and strict Python 3.13+ only - no backward compatibility.
 
+**Expected Output:**
+- Request context creation and management
+- Correlation ID tracking across operations
+- Thread-local storage isolation
+- Performance tracking and metrics
+- Context propagation through service calls
+- Multi-threaded context safety
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

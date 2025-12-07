@@ -181,7 +181,8 @@ class MyService(FlextService[str]):
 
 The layered bridge keeps dependency-injector usage isolated to the runtime (L0.5) and container (L2) while handlers (L3) use only the public `Provide`/`inject` API. **Projects consuming flext-core should NEVER import `dependency-injector` directly** - always use the facades exposed by `FlextRuntime` and `FlextContainer`.
 
-See [`docs/dependency_injector_prompt.md`](docs/dependency_injector_prompt.md) for the complete pattern checklist and architectural rules.
+See [`docs/guides/dependency_injector_prompt.md`](docs/guides/dependency_injector_prompt.md) for the complete pattern checklist and architectural rules.
+
 
 When you need a standalone DI container (for tests or auxiliary modules) without manual follow-up registration, use the parameterized factory helper:
 
@@ -369,7 +370,7 @@ Full documentation lives in [`docs/`](./docs/) and follows the standards in [`do
 
 ## Project Status
 
-**Version**: 0.9.9 → 1.0.0 (December 2025)
+**Version**: 0.10.0 (December 2025)
 **Python**: 3.13+ only
 **Tests**: 2820 tests passing
 **Coverage**: 81.41% (above 80% minimum)

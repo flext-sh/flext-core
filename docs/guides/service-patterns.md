@@ -1,8 +1,10 @@
 # Service Patterns Guide
 
-**Version:** 1.0 (2025-12-03)
-**Python:** 3.13+
-**Pydantic:** 2.x
+**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Domain Services
+
+**Version:** 1.0 (2025-12-03)  
+**Python:** 3.13+  
+**Pydantic:** 2.x  
 **Status:** V1 stable; V2 patterns under validation
 
 This guide describes FlextService usage patterns and the evolution from
@@ -167,8 +169,7 @@ def process_user(name: str, email: str) -> FlextResult[User]:
     )
 ```
 
-> **TODO(flext_core/result.py::FlextResult):** Implement `.and_then()` helper
-> as alias for `.flat_map()` for naming parity with other railway libraries.
+**Note**: Use `.flat_map()` for chaining operations. This is the standard FLEXT pattern and works seamlessly with all FlextResult operations.
 
 ### Service Factories
 
@@ -295,10 +296,30 @@ except FlextExceptions.BaseError as e:
 
 ---
 
+## Next Steps
+
+1. **Domain-Driven Design**: Explore [DDD Patterns](./domain-driven-design.md) for entity and aggregate patterns
+2. **Dependency Injection**: See [Advanced DI](./dependency-injection-advanced.md) for service composition
+3. **Railway Patterns**: Review [Railway-Oriented Programming](./railway-oriented-programming.md) for result composition
+4. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for comprehensive error patterns
+5. **API Reference**: Review [FlextService API](../api-reference/domain.md#flextservice) for complete API
+
+## See Also
+
+- [Domain-Driven Design](./domain-driven-design.md) - DDD patterns with FlextModels
+- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Service composition with DI
+- [Railway-Oriented Programming](./railway-oriented-programming.md) - Result composition patterns
+- [Error Handling Guide](./error-handling.md) - Comprehensive error handling
+- [API Reference: FlextService](../api-reference/domain.md#flextservice) - Complete service API
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+
 ## References
 
 - `flext_core/service.py` – Service base class
 - `flext_core/mixins.py` – Infrastructure properties
 - `flext_core/result.py` – FlextResult monad
-- [Railway-Oriented Programming Guide](./railway-oriented-programming.md)
 - [CQRS Architecture](../architecture/cqrs.md)
+
+---
+
+**Example from FLEXT Ecosystem**: See `src/flext_tests/test_service.py` for comprehensive service pattern examples and test cases.

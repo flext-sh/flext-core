@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
+import sys
 import threading
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
@@ -18,6 +20,8 @@ from typing import Self, cast
 
 from pydantic import BaseModel
 
+from flext_core._decorators import FactoryDecoratorsDiscovery
+from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
@@ -120,6 +124,22 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         a clean factory pattern that each class owns, respecting Clean
         Architecture principles where higher layers create their own instances.
 
+        Business Rule: Creates a singleton FlextContainer instance with optional
+        factory auto-registration. The singleton pattern ensures consistent
+        container state across the application lifecycle. When
+        ``auto_register_factories=True``, the method scans the calling module
+        for functions decorated with ``@d.factory()`` and registers them
+        automatically, enabling zero-config factory discovery for services.
+        This factory method is the primary entry point for container creation
+        in the FLEXT ecosystem.
+
+        Audit Implication: Container creation is a critical infrastructure
+        operation that establishes the dependency injection foundation for all
+        downstream services. The singleton pattern ensures audit trail consistency
+        by maintaining a single container instance. Factory auto-registration
+        provides audit visibility into discovered services, enabling complete
+        tracking of all registered dependencies and their lifecycle.
+
         Auto-registration of factories discovers all functions marked with
         @d.factory() decorator and registers them in the container automatically.
         This enables zero-config factory discovery for services.
@@ -142,11 +162,6 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         instance = cls()
 
         if auto_register_factories:
-            # Lazy import to avoid circular dependency
-            import inspect  # noqa: PLC0415
-
-            from flext_core.decorators import FlextDecorators  # noqa: PLC0415
-
             # Get the caller's frame to discover factories in calling module
             frame = inspect.currentframe()
             if frame and frame.f_back:
@@ -154,11 +169,11 @@ class FlextContainer(FlextRuntime, p.Container.DI):
                 # Get module name from globals
                 module_name = caller_globals.get("__name__", "__main__")
                 # Get module object from globals (usually available as __import__ or direct reference)
-                import sys  # noqa: PLC0415
+
                 caller_module = sys.modules.get(module_name)
                 if caller_module:
                     # Scan module for factory-decorated functions
-                    factories = FlextDecorators.FactoryDiscovery.scan_module(caller_module)
+                    factories = FactoryDecoratorsDiscovery.scan_module(caller_module)
                     for factory_name, factory_config in factories:
                         # Get actual factory function from module
                         factory_func = getattr(caller_module, factory_name, None)
@@ -223,23 +238,25 @@ class FlextContainer(FlextRuntime, p.Container.DI):
     def context(self) -> p.Context.Ctx:
         """Return the execution context bound to this container.
 
-        A lazily created context is materialized on first access when callers
-        do not provide one during construction.
-        """
-        # Type narrowing: _context is initialized in initialize_registrations or here
-        # _context is an instance attribute, initialized to None by default
-        # Check if _context is None (not initialized yet)
-        if not hasattr(self, "_context") or self._context is None:
-            # Lazy import to avoid circular dependency: container.py ↔ context.py
-            from flext_core.context import FlextContext  # noqa: PLC0415
+        The context must be provided during container initialization via the
+        `_context` parameter in `__init__` or `get_global()`. If no context
+        was provided, this property will raise an error.
 
-            context_created = FlextContext.create()
-            # Type narrowing: FlextContext.create() returns FlextContext (p.Context.Ctx)
-            # Direct assignment is safe - _context is class attribute
-            self._context = context_created
-            return context_created
+        Raises:
+            RuntimeError: If context was not provided during initialization.
+
+        Example:
+            >>> container = FlextContainer.get_global(context=my_context)
+            >>> ctx = container.context  # Returns the provided context
+
+        """
+        if not hasattr(self, "_context") or self._context is None:
+            error_msg = (
+                "Context not initialized. Provide context during container creation: "
+                "FlextContainer.get_global(context=...) or FlextContainer(_context=...)"
+            )
+            raise RuntimeError(error_msg)
         # Type narrowing: after check, _context is not None
-        # Return the context value
         return self._context
 
     def initialize_di_components(self) -> None:
@@ -293,27 +310,19 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         self._resources = resources or {}
         self._global_config = global_config or self._create_container_config()
         self._user_overrides = user_overrides or {}
-        # Import here to avoid circular dependency
-        from flext_core.config import FlextConfig  # noqa: PLC0415
-
         # Type narrowing: config can be None, but property handles None case
         config_instance: p.Configuration.Config = (
             config if config is not None else FlextConfig.get_global_instance()
         )
         self._config = config_instance
-        # Type narrowing: context can be None, but property handles None case
+        # Type narrowing: context can be None, but property will raise error if accessed
         # Direct assignment is safe - _context is an instance attribute
-        # If context is None, property will create it lazily on first access
         # _context is declared as p.Context.Ctx | None = None (instance attribute)
+        # If context is None, property will raise RuntimeError on access (no lazy creation)
         self._context = context
 
     def _get_default_config(self) -> p.Configuration.Config:
         """Get default configuration instance."""
-        # Lazy import to avoid circular dependency
-
-        # container.py -> config.py -> runtime.py -> container.py
-        from flext_core.config import FlextConfig  # noqa: PLC0415
-
         return FlextConfig.get_global_instance()
 
     @staticmethod
@@ -330,14 +339,26 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         )
 
     def sync_config_to_di(self) -> None:
-        """Sync configuration values onto the dependency-injector container.
+        """Synchronize FlextConfig to DI providers.Configuration.
 
         Dependency Injector's layered ``providers.Configuration`` instances are
         used to avoid manual merges while still honoring validated defaults from
         ``FlextConfig`` and runtime overrides. Base config and user overrides are
         applied as separate providers to keep precedence explicit.
+
+        Also registers namespace configs as factories for easy DI access:
+        - "config.ldif" → FlextLdifConfig instance
+        - "config.ldap" → FlextLdapConfig instance
+        - etc.
         """
-        self._base_config_provider.from_dict(self._global_config.model_dump())
+        # L0: Base defaults from FlextConfig
+        config_dict = self._global_config.model_dump()
+        FlextRuntime.DependencyIntegration.bind_configuration(
+            self._di_container,
+            config_dict,
+        )
+
+        # Apply user overrides
         # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
         # (initialized as user_overrides or {}), so it's never None after __init__
         # Use type narrowing with explicit cast to help pyright
@@ -346,6 +367,34 @@ class FlextContainer(FlextRuntime, p.Container.DI):
             self._user_overrides if self._user_overrides is not None else {},
         )
         self._user_config_provider.from_dict(dict(user_overrides_dict))
+
+        # Register namespace configs as factories
+        # Access namespace registry via public method (get_namespace_config)
+        # We need to iterate over registered namespaces - use getattr to access registry
+        # Note: _namespace_registry is ClassVar, accessed via class, not instance
+        namespace_registry = getattr(
+            type(self._global_config),
+            "_namespace_registry",
+            {},
+        )
+        for namespace in namespace_registry:
+            factory_name = f"config.{namespace}"
+
+            # Get config class for this namespace
+            config_class = self._global_config.get_namespace_config(namespace)
+            if config_class is None:
+                continue
+
+            def _create_namespace_config(
+                ns: str = namespace,
+                config_cls: type[BaseModel] = config_class,
+            ) -> BaseModel:
+                """Factory for creating namespace config instance."""
+                return self._global_config.get_namespace(ns, config_cls)
+
+            # Only register if not already registered
+            if not self.has_service(factory_name):
+                _ = self.register_factory(factory_name, _create_namespace_config)
 
     def register_existing_providers(self) -> None:
         """Hydrate the dynamic container with current registrations."""
@@ -387,7 +436,13 @@ class FlextContainer(FlextRuntime, p.Container.DI):
             setattr(self._di_container, name, provider)
 
     def register_core_services(self) -> None:
-        """Register core FLEXT services for easy DI access.
+        """Auto-register core services for easy DI access.
+
+        Auto-registered services:
+        - "config" → FlextConfig singleton
+        - "logger" → FlextLogger factory (creates module logger)
+        - "context" → FlextContext singleton
+        - "container" → Self-reference for nested resolution
 
         Business Rule: Auto-registers FlextConfig, FlextLogger, and FlextContext
         with standard names ("config", "logger", "context") to enable easy
@@ -398,11 +453,13 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         - container.get("config") -> FlextConfig
         - container.get("logger") -> FlextLogger (factory)
         - container.get("context") -> FlextContext
+        - container.get("container") -> FlextContainer (self-reference)
 
         Services are registered as:
         - "config": Singleton instance (container.config property)
         - "logger": Factory that creates module logger
         - "context": Singleton instance (container.context property)
+        - "container": Self-reference for nested resolution
 
         Note: Uses has_service() which checks both dicts and DI container to avoid conflicts.
         """
@@ -422,9 +479,13 @@ class FlextContainer(FlextRuntime, p.Container.DI):
             _ = self.register_factory("logger", _create_logger)
 
         # Register context if not already registered
-        if not self.has_service("context"):
-            context_instance = self.context
-            _ = self.register("context", context_instance)
+        # Only register if context is initialized (may not be initialized during container creation)
+        if not self.has_service("context") and self._context is not None:
+            _ = self.register("context", self._context)
+
+        # Register container self-reference if not already registered
+        if not self.has_service("container"):
+            _ = self.register("container", self)
 
     def configure(
         self,
@@ -685,6 +746,18 @@ class FlextContainer(FlextRuntime, p.Container.DI):
         Returns:
             r[T]: Success with resolved service of type T, or failure
                 if service not found or factory raises exception.
+
+        Example:
+            >>> from flext_core import FlextContainer, FlextLogger
+            >>>
+            >>> container = FlextContainer.create()
+            >>> logger = FlextLogger(__name__)
+            >>> container.register("logger", logger, singleton=True)
+            >>>
+            >>> logger_result = container.get[FlextLogger]("logger")
+            >>> if logger_result.is_success:
+            ...     logger_instance = logger_result.value
+            ...     logger_instance.info("Service resolved successfully")
 
         """
         # Try service first

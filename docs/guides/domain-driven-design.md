@@ -1,6 +1,6 @@
 # Domain-Driven Design with FlextModels
 
-**Status**: Production Ready | **Version**: 0.9.9 | **Pattern**: Clean Architecture Foundation
+**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Clean Architecture Foundation
 
 FlextModels provides domain-driven design (DDD) patterns through semantic base classes for building rich domain models with proper entity and value object semantics.
 
@@ -970,11 +970,22 @@ def add_to_cart(cart, item):
 5. **Invariants**: Protect business rules in entity methods
 6. **FlextResult**: Use for operations that can fail
 
+## Next Steps
+
+1. **Service Patterns**: Explore [Service Patterns](./service-patterns.md) for domain service implementation
+2. **Dependency Injection**: See [Advanced DI](./dependency-injection-advanced.md) for service composition
+3. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for domain error patterns
+4. **Railway Patterns**: Review [Railway-Oriented Programming](./railway-oriented-programming.md) for result composition
+5. **Architecture**: Study [Clean Architecture](../architecture/clean-architecture.md) for layer organization
+
 ## See Also
 
-- [Railway-Oriented Programming](./railway-oriented-programming.md)
-- [Clean Architecture](../architecture/clean-architecture.md)
-- [API Reference: FlextModels](../api-reference/domain.md#flextmodels)
+- [Service Patterns](./service-patterns.md) - Domain services with FlextService
+- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Service composition patterns
+- [Railway-Oriented Programming](./railway-oriented-programming.md) - Result composition with FlextResult
+- [Error Handling Guide](./error-handling.md) - Domain error handling patterns
+- [Clean Architecture](../architecture/clean-architecture.md) - Architecture patterns and layers
+- [API Reference: FlextModels](../api-reference/domain.md#flextmodels) - Complete models API
 - **FLEXT CLAUDE.md**: Development patterns and standards
 
 ---

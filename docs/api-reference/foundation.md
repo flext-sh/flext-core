@@ -73,7 +73,7 @@ data = FlextRuntime.to_json_serializable(payload)
 
 ## Layer 1: Foundation (Core Primitives)
 
-### FlextResult[T] — Railway-Oriented Programming
+### FlextResult[T] — Railway-Oriented Programming {#flextresult}
 
 Monadic success/failure handling used across services, handlers, and decorators.
 
@@ -87,7 +87,7 @@ result = (
 )
 ```
 
-### FlextContainer — Dependency Injection
+### FlextContainer — Dependency Injection {#flextcontainer}
 
 Lightweight DI container with explicit lifecycles that works cleanly with dispatcher-driven handlers.
 
@@ -120,5 +120,71 @@ class ValidationException(FlextException):
             context={"field": field, "value": value},
         )
 ```
+
+## Short Alias Reference
+
+FLEXT-Core provides short aliases for frequently used types to keep code concise and readable:
+
+```python
+# ✅ CORRECT - Import short aliases from their modules
+from flext_core.result import r       # FlextResult alias
+from flext_core.typings import t      # FlextTypes alias
+from flext_core.constants import c    # FlextConstants alias
+from flext_core.models import m       # FlextModels alias
+from flext_core.protocols import p    # FlextProtocols alias
+from flext_core.utilities import u    # FlextUtilities alias
+from flext_core.exceptions import e   # FlextExceptions alias
+from flext_core.context import x      # FlextContext alias (via mixins)
+from flext_core.service import s      # FlextService alias
+from flext_core.decorators import d   # FlextDecorators alias
+from flext_core.handlers import h     # FlextHandlers alias
+```
+
+**Usage Examples**:
+
+```python
+# Result operations
+def process(value: str) -> r[str]:
+    if not value:
+        return r[str].fail("Empty value")
+    return r[str].ok(value.upper())
+
+# Type annotations
+config_dict: t.Types.ConfigurationDict = {"key": "value"}
+
+# Constants
+error_code = c.Errors.VALIDATION_ERROR
+
+# Models
+user = m.Entity(id="123", name="Alice")
+
+# Protocols
+if isinstance(service, p.Configuration.Config):
+    service.configure(config)
+
+# Utilities
+if u.chk().eq(value, expected):
+    process(value)
+```
+
+**Complete Alias Reference**:
+
+| Alias | Full Name         | Module       | Purpose                                      |
+| ----- | ----------------- | ------------ | -------------------------------------------- |
+| `r`   | `FlextResult`     | `result`     | Railway-oriented result type                 |
+| `t`   | `FlextTypes`      | `typings`    | Type aliases and TypeVars                    |
+| `c`   | `FlextConstants`  | `constants`  | Immutable constants and defaults             |
+| `m`   | `FlextModels`     | `models`     | Domain models (Entity, Value, AggregateRoot) |
+| `p`   | `FlextProtocols`  | `protocols`  | Runtime-checkable protocols                  |
+| `u`   | `FlextUtilities`  | `utilities`  | General-purpose utility functions            |
+| `e`   | `FlextExceptions` | `exceptions` | Exception hierarchy                          |
+| `x`   | `FlextMixins`     | `mixins`     | Reusable mixin behaviors (context access)    |
+| `s`   | `FlextService`    | `service`    | Domain service base class                    |
+| `d`   | `FlextDecorators` | `decorators` | Cross-cutting decorators                     |
+| `h`   | `FlextHandlers`   | `handlers`   | CQRS handler base class                      |
+
+See the [Type System Guidelines](../../README.md#type-system-guidelines) in the main README for detailed usage patterns.
+
+---
 
 The foundation layers provide stable, dependency-light building blocks for dispatcher orchestration, domain modeling, and infrastructure integration.

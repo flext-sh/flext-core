@@ -374,8 +374,8 @@ class FlextUtilitiesReliability:
                         # Type narrowing: current remains unchanged (previous value)
                         continue
                     # Type narrowing: result is r[T] and is_success is True, so value is T
-                    # Type annotation: result.value is object-compatible (T extends object)
-                    current = cast("object", result.value)
+                    # Since T extends object, result.value is already object-compatible
+                    current = result.value
                 else:
                     # Type annotation: result is object (non-FlextResult return)
                     current = result

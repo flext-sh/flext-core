@@ -1,7 +1,7 @@
 """Collection models for categorized data.
 
-TIER 0.5: Depende apenas de base.py (Tier 0).
-Usa verificações inline de tipo para evitar import de runtime.py.
+TIER 0.5: Depends only on base.py (Tier 0).
+Uses inline type checks to avoid importing runtime.py.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

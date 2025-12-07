@@ -1,7 +1,7 @@
 """Base Pydantic models - Foundation for FLEXT ecosystem.
 
-TIER 0: ZERO imports de flext_core (evita ciclos via __init__.py).
-Usa apenas: stdlib (uuid, datetime) + pydantic.
+TIER 0: ZERO imports from flext_core (avoids cycles via __init__.py).
+Uses only: stdlib (uuid, datetime) + pydantic.
 
 This module provides the fundamental base classes for all Pydantic models
 in the FLEXT ecosystem. All classes are nested inside FlextModelsBase
@@ -130,7 +130,7 @@ class FlextModelsBase:
             self.updated_at = datetime.now(UTC)
 
     class VersionableMixin(BaseModel):
-        """Mixin for versioning (usa constante inline, não c)."""
+        """Mixin for versioning (uses inline constant, not c)."""
 
         model_config = ConfigDict(
             arbitrary_types_allowed=True,

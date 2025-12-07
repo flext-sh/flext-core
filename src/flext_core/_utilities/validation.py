@@ -53,7 +53,6 @@ from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core._utilities.validators import ValidatorSpec
 from flext_core.constants import c
-from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -1861,23 +1860,26 @@ class FlextUtilitiesValidation:
     @staticmethod
     def create_retry_config(
         retry_config: t.Types.ConfigurationDict | None,
-    ) -> r[m.Config.RetryConfiguration]:
+    ) -> "r[m.Config.RetryConfiguration]":  # noqa: F821, UP037
         """Create and validate retry configuration using railway pattern.
 
         Args:
             retry_config: Raw retry configuration dictionary
 
         Returns:
-            r[m.Config.RetryConfiguration]: Validated retry configuration or error
+            r["m.Config.RetryConfiguration"]: Validated retry configuration or error
 
         """
+        # Lazy import to break circular dependency (last resort per plan)
+        from flext_core.models import m  # noqa: PLC0415
+
         if retry_config is None:
             retry_config = {}
         try:
             # Validate each parameter using railway pattern (DRY consolidation)
             result = FlextUtilitiesValidation._validate_max_attempts(retry_config)
             if result.is_failure:
-                return r[m.Config.RetryConfiguration].fail(
+                return r["m.Config.RetryConfiguration"].fail(
                     result.error or "Max attempts validation failed",
                 )
 
@@ -1887,7 +1889,7 @@ class FlextUtilitiesValidation:
                 retry_config,
             )
             if delay_result.is_failure:
-                return r[m.Config.RetryConfiguration].fail(
+                return r["m.Config.RetryConfiguration"].fail(
                     delay_result.error or "Initial delay validation failed",
                 )
 
@@ -1898,7 +1900,7 @@ class FlextUtilitiesValidation:
                 retry_config,
             )
             if max_delay_result.is_failure:
-                return r[m.Config.RetryConfiguration].fail(
+                return r["m.Config.RetryConfiguration"].fail(
                     max_delay_result.error or "Max delay validation failed",
                 )
 
@@ -1909,14 +1911,14 @@ class FlextUtilitiesValidation:
                 retry_config,
             )
             if backoff_result.is_failure:
-                return r[m.Config.RetryConfiguration].fail(
+                return r["m.Config.RetryConfiguration"].fail(
                     backoff_result.error or "Backoff multiplier validation failed",
                 )
 
             backoff_mult = backoff_result.value
             params_4 = (*params_3, backoff_mult)
 
-            return r[m.Config.RetryConfiguration].ok(
+            return r["m.Config.RetryConfiguration"].ok(
                 m.Config.RetryConfiguration(
                     max_attempts=params_4[0],
                     initial_delay_seconds=params_4[1],
@@ -1950,7 +1952,7 @@ class FlextUtilitiesValidation:
             )
 
         except (ValueError, TypeError) as e:
-            return r[m.Config.RetryConfiguration].fail(
+            return r["m.Config.RetryConfiguration"].fail(
                 f"Invalid retry configuration: {e}",
                 error_code=c.Errors.VALIDATION_ERROR,
             )

@@ -7,6 +7,15 @@ dependency injection, dispatcher CQRS, and comprehensive flext-core integration.
 Uses PEP 695 type aliases, advanced collections.abc patterns, Pydantic 2 with StrEnum,
 and strict Python 3.13+ only - no backward compatibility.
 
+**Expected Output:**
+- Single import demonstration of all FLEXT components
+- Railway-oriented programming patterns
+- Context management and correlation tracking
+- Domain-driven design with FlextModels
+- Dependency injection patterns
+- Validation and transformation utilities
+- Service orchestration examples
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

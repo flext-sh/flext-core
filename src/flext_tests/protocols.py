@@ -11,14 +11,13 @@ from __future__ import annotations
 
 import builtins
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel
 
 from flext_core import FlextProtocols, r
 
-if TYPE_CHECKING:
-    from flext_tests.typings import t
+# Note: t imported lazily below to break circular dependency with typings.py
 
 
 class FlextTestsProtocols(FlextProtocols):
@@ -422,16 +421,16 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def __call__(
                     self,
-                    kind: t.Tests.Factory.ModelKind = ...,
+                    kind: "t.Tests.Factory.ModelKind" = ...,
                     # All parameters via kwargs - validated by ModelFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: "t.Tests.TestResultValue",
                 ) -> (
-                    t.Tests.Factory.FactoryModel
-                    | t.Tests.Factory.FactoryModelList
-                    | t.Tests.Factory.FactoryModelDict
-                    | r[t.Tests.Factory.FactoryModel]
-                    | r[t.Tests.Factory.FactoryModelList]
-                    | r[t.Tests.Factory.FactoryModelDict]
+                    "t.Tests.Factory.FactoryModel"
+                    | "t.Tests.Factory.FactoryModelList"
+                    | "t.Tests.Factory.FactoryModelDict"
+                    | r["t.Tests.Factory.FactoryModel"]
+                    | r["t.Tests.Factory.FactoryModelList"]
+                    | r["t.Tests.Factory.FactoryModelDict"]
                 ):
                     """Create model instance(s) with optional transformations.
 
@@ -465,11 +464,13 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def __call__[TValue](
                     self,
-                    kind: t.Tests.Factory.ResultKind = "ok",
+                    kind: "t.Tests.Factory.ResultKind" = "ok",
                     value: TValue | None = None,
                     # All parameters via kwargs - validated by ResultFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
-                ) -> r[TValue] | list[r[TValue]]:
+                    **kwargs: "t.Tests.TestResultValue",
+                ) -> (
+                    FlextProtocols.Result[TValue] | list[FlextProtocols.Result[TValue]]
+                ):
                     """Create FlextResult instance(s) with full customization.
 
                     Args:
@@ -503,10 +504,10 @@ class FlextTestsProtocols(FlextProtocols):
                 def list[T](
                     self,
                     source: (
-                        Sequence[T] | Callable[[], T] | t.Tests.Factory.ModelKind
+                        Sequence[T] | Callable[[], T] | "t.Tests.Factory.ModelKind"
                     ) = "user",
                     # All parameters via kwargs - validated by ListFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: "t.Tests.TestResultValue",
                 ) -> list[T] | r[list[T]]:
                     """Create typed list from source.
 
@@ -530,10 +531,10 @@ class FlextTestsProtocols(FlextProtocols):
                     source: (
                         Mapping[K, V]
                         | Callable[[], tuple[K, V]]
-                        | t.Tests.Factory.ModelKind
+                        | "t.Tests.Factory.ModelKind"
                     ) = "user",
                     # All parameters via kwargs - validated by DictFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: "t.Tests.TestResultValue",
                 ) -> dict[K, V] | r[dict[K, V]]:
                     """Create typed dict from source.
 
@@ -565,7 +566,7 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     type_: type[T],
                     # All parameters via kwargs - validated by GenericFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: "t.Tests.TestResultValue",
                 ) -> T | list[T] | r[T] | r[list[T]]:
                     """Create instance(s) of any type with full type safety.
 
@@ -760,7 +761,7 @@ class FlextTestsProtocols(FlextProtocols):
                     name: str = ...,
                     directory: object = ...,
                     **kwargs: object,
-                ) -> FlextProtocols.Foundation.Result[object]:
+                ) -> FlextProtocols.Result[object]:
                     """Create file with auto-detection.
 
                     Returns:
@@ -775,7 +776,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     model_cls: type[object] | None = ...,
                     **kwargs: object,
-                ) -> FlextProtocols.Foundation.Result[object]:
+                ) -> FlextProtocols.Result[object]:
                     """Read file with optional model deserialization.
 
                     Returns:
@@ -791,7 +792,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     mode: str = ...,
                     **kwargs: object,
-                ) -> FlextProtocols.Foundation.Result[bool]:
+                ) -> FlextProtocols.Result[bool]:
                     """Compare two files.
 
                     Returns:
@@ -807,7 +808,7 @@ class FlextTestsProtocols(FlextProtocols):
                     compute_hash: bool = ...,
                     detect_fmt: bool = ...,
                     **kwargs: object,
-                ) -> FlextProtocols.Foundation.Result[object]:
+                ) -> FlextProtocols.Result[object]:
                     """Get comprehensive file information.
 
                     Returns:
@@ -825,7 +826,7 @@ class FlextTestsProtocols(FlextProtocols):
                     model: type[object] | None = ...,
                     on_error: str = ...,
                     **kwargs: object,
-                ) -> FlextProtocols.Foundation.Result[object]:
+                ) -> FlextProtocols.Result[object]:
                     """Batch file operations.
 
                     Returns:
@@ -852,8 +853,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def add(
                     self,
                     key: str,
-                    value: t.Tests.Builders.BuilderValue | None = ...,
-                    **kwargs: t.GeneralValueType,
+                    value: "t.Tests.Builders.BuilderValue" | None = ...,
+                    **kwargs: "t.GeneralValueType",
                 ) -> Self:
                     """Add data to builder.
 
@@ -912,15 +913,15 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def build(
                     self,
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: "t.GeneralValueType",
                 ) -> (
-                    t.Tests.Builders.BuilderDict
+                    "t.Tests.Builders.BuilderDict"
                     | BaseModel
-                    | list[tuple[str, t.Tests.Builders.BuilderValue]]
+                    | list[tuple[str, "t.Tests.Builders.BuilderValue"]]
                     | list[str]
-                    | list[t.Tests.Builders.BuilderValue]
-                    | list[t.Tests.Builders.ParametrizedCase]
-                    | t.GeneralValueType
+                    | list["t.Tests.Builders.BuilderValue"]
+                    | list["t.Tests.Builders.ParametrizedCase"]
+                    | "t.GeneralValueType"
                 ):
                     """Build the dataset with output type control.
 
@@ -935,10 +936,10 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def to_result[T](
                     self,
-                    **kwargs: t.GeneralValueType,
+                    **kwargs: "t.GeneralValueType",
                 ) -> (
                     r[T]
-                    | r[t.Tests.Builders.BuilderDict]
+                    | r["t.Tests.Builders.BuilderDict"]
                     | r[BaseModel]
                     | r[list[T]]
                     | r[dict[str, T]]
@@ -964,7 +965,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def fork(self, **updates: t.Tests.Builders.BuilderValue) -> Self:
+                def fork(self, **updates: "t.Tests.Builders.BuilderValue") -> Self:
                     """Copy and immediately add updates.
 
                     Args:
@@ -999,8 +1000,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def batch(
                     self,
                     key: str,
-                    scenarios: Sequence[tuple[str, t.GeneralValueType]],
-                    **kwargs: t.GeneralValueType,
+                    scenarios: Sequence[tuple[str, "t.GeneralValueType"]],
+                    **kwargs: "t.GeneralValueType",
                 ) -> Self:
                     """Build batch of test scenarios.
 
@@ -1017,8 +1018,8 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def scenarios(
                     self,
-                    *cases: tuple[str, dict[str, t.Tests.Builders.BuilderValue]],
-                ) -> list[t.Tests.Builders.ParametrizedCase]:
+                    *cases: tuple[str, dict[str, "t.Tests.Builders.BuilderValue"]],
+                ) -> list["t.Tests.Builders.ParametrizedCase"]:
                     """Build pytest.mark.parametrize compatible scenarios.
 
                     Args:

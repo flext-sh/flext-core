@@ -296,14 +296,25 @@ class FlextModels:
         class ExecutionContext(FlextModelsHandler.ExecutionContext):
             """Handler execution context - real inheritance."""
 
+        class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
+            """Decorator configuration - real inheritance."""
+
     # Domain Service Models - Real inheritance classes
     # ServiceRuntime needs to stay as class due to protocol fields
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
-        """Runtime triple (config, context, container) for services."""
+        """Runtime quintuple (config, context, container, dispatcher, registry) for services.
+
+        Represents the complete application runtime with configuration, context,
+        dependency injection container, command bus dispatcher, and handler registry.
+        Supports zero-config initialization via auto-discovery factories in
+        FlextDispatcher.create() and FlextRegistry.create().
+        """
 
         config: p.Configuration.Config
         context: p.Context.Ctx
         container: p.Container.DI
+        dispatcher: p.Application.CommandBus
+        registry: p.Application.Registry
 
     class Service:
         """Service namespace with real inheritance classes."""
@@ -422,5 +433,6 @@ class FlextModels:
 
 
 m = FlextModels
+m_core = FlextModels
 
-__all__ = ["FlextModels", "m"]
+__all__ = ["FlextModels", "m", "m_core"]

@@ -1,7 +1,7 @@
 """Entity and DDD patterns for FLEXT ecosystem.
 
-TIER 1: Usa base.py (Tier 0) + pode usar result, exceptions, runtime.
-Importa FlextModelsBase e adiciona apenas classes DDD específicas.
+TIER 1: Uses base.py (Tier 0) + can use result, exceptions, runtime.
+Imports FlextModelsBase and adds only DDD-specific classes.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

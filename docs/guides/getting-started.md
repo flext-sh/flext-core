@@ -1,6 +1,6 @@
 # Getting Started with FLEXT-Core
 
-Quick start guide for using FLEXT-Core v0.9.9 - the foundation library providing railway-oriented programming, dependency injection, and domain-driven design patterns with Python 3.13+.
+Quick start guide for using FLEXT-Core v0.10.0 - the foundation library providing railway-oriented programming, dependency injection, and domain-driven design patterns with Python 3.13+.
 
 ## Prerequisites
 

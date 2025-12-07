@@ -512,40 +512,155 @@ class TestUserAgeValidation:
         assert result.is_failure
 ```
 
-## Mocking and Patching
+## FLEXT Testing Policy: NO MOCKS
 
-### Mocking External Services
+**CRITICAL POLICY**: FLEXT ecosystem follows a **zero-tolerance policy for mocks** in tests. All tests must use real implementations.
+
+### Why No Mocks
+
+1. **Real Behavior**: Mocks hide real implementation issues and false positives
+2. **Integration Testing**: Tests verify actual system behavior, not mocked behavior
+3. **Type Safety**: Real implementations ensure type checking works correctly
+4. **Pattern Validation**: Tests validate FLEXT patterns (FlextResult, DI, etc.) with real code
+
+### Using Real Implementations
+
+Instead of mocking, use real implementations with test-friendly configurations:
 
 ```python
 import pytest
-from unittest.mock import Mock, patch
+from flext_core import r, FlextContainer, FlextLogger, FlextResult
 
 class TestExternalServiceIntegration:
-    """Test with mocked external services."""
+    """Test with real service implementations."""
 
-    @patch('requests.get')
-    def test_api_call_success(self, mock_get):
-        """Test successful API call."""
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {"id": 1, "name": "Test"}
+    @pytest.fixture
+    def container(self):
+        """Provide container with real services."""
+        container = FlextContainer.get_global()
+        container.clear()
 
+        # Register real logger
+        logger = FlextLogger("test")
+        container.register("logger", logger)
+
+        # Register real service (not a mock)
         service = ExternalApiService()
+        container.register("api_service", service)
+
+        return container
+
+    def test_api_call_success(self, container):
+        """Test successful API call with real service."""
+        service_result = container.get("api_service")
+        assert service_result.is_success
+
+        service = service_result.unwrap()
         result = service.get_user(1)
 
         assert result.is_success
-        assert result.unwrap()["name"] == "Test"
+        assert "id" in result.value
 
-    def test_with_mock_dependency(self):
-        """Test with mock dependency injection."""
-        mock_email_service = Mock()
-        mock_email_service.send.return_value = FlextResult[str].ok("Sent")
+    def test_with_real_dependencies(self, container):
+        """Test with real dependency injection."""
+        # Register real email service
+        email_service = EmailService()
+        container.register("email_service", email_service)
 
-        service = UserService(email_service=mock_email_service)
-        result = service.register_and_email_user("1", "Alice")
+        # Create service with real dependencies
+        user_service_result = container.get("user_service")
+        if user_service_result.is_failure:
+            # Create service if not registered
+            user_service = UserService()
+            user_service.email_service = email_service
+            container.register("user_service", user_service)
+            user_service_result = container.get("user_service")
+
+        user_service = user_service_result.unwrap()
+        result = user_service.register_and_email_user("1", "Alice")
 
         assert result.is_success
-        mock_email_service.send.assert_called_once()
+        # Verify real behavior, not mocked calls
 ```
+
+### Test-Friendly Services
+
+Design services to be testable with real implementations:
+
+```python
+from flext_core import r, FlextService
+
+class UserService(FlextService):
+    """User service designed for real testing."""
+
+    def __init__(self, email_service: EmailService | None = None):
+        super().__init__()
+        # Accept real service instance for testing
+        self.email_service = email_service or EmailService()
+
+    def register_user(self, user_id: str, email: str) -> FlextResult[dict]:
+        """Register user with real email service."""
+        # Real implementation - no mocks needed
+        user_result = self._create_user(user_id, email)
+        if user_result.is_failure:
+            return user_result
+
+        # Use real email service
+        email_result = self.email_service.send_welcome(email)
+        return email_result.flat_map(lambda _: user_result)
+```
+
+### When Real Services Are Expensive
+
+For expensive operations (database, network), use test doubles with real interfaces:
+
+```python
+from flext_core import r
+
+class InMemoryDatabase:
+    """Test double with real interface (not a mock)."""
+
+    def __init__(self):
+        self.data: dict[str, dict] = {}
+
+    def save_user(self, user: dict) -> FlextResult[dict]:
+        """Real implementation of database interface."""
+        self.data[user["id"]] = user
+        return r.ok(user)
+
+    def get_user(self, user_id: str) -> FlextResult[dict]:
+        """Real implementation of database interface."""
+        if user_id in self.data:
+            return r.ok(self.data[user_id])
+        return r.fail(f"User {user_id} not found")
+
+# In tests
+@pytest.fixture
+def test_database():
+    """Real test double, not a mock."""
+    return InMemoryDatabase()
+
+def test_user_service_with_test_database(test_database):
+    """Test with real test double."""
+    service = UserService(database=test_database)
+    result = service.create_user("1", "Alice")
+    assert result.is_success
+
+    # Verify real behavior
+    get_result = test_database.get_user("1")
+    assert get_result.is_success
+    assert get_result.value["name"] == "Alice"
+```
+
+### Summary: NO MOCKS Policy
+
+- ✅ **DO**: Use real implementations
+- ✅ **DO**: Use test-friendly service design
+- ✅ **DO**: Use test doubles (real classes with simple implementations)
+- ❌ **DON'T**: Use unittest.mock.Mock
+- ❌ **DON'T**: Use unittest.mock.patch
+- ❌ **DON'T**: Use pytest monkeypatch for mocking
+- ❌ **DON'T**: Mock FlextResult, FlextContainer, or core FLEXT components
 
 ## Coverage and Quality
 

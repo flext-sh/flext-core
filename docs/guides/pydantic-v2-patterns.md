@@ -1,6 +1,6 @@
 # Pydantic v2 Patterns for FLEXT Ecosystem
 
-**Status**: Production Ready | **Version**: 0.9.9 | **Target**: flext-core and dependent projects
+**Status**: Production Ready | **Version**: 0.10.0 | **Target**: flext-core and dependent projects
 
 This guide documents essential Pydantic v2 patterns used throughout the FLEXT ecosystem, with examples from the codebase.
 
@@ -645,4 +645,4 @@ else:
 
 **Example from FLEXT**: See `src/flext_core/config.py` (423 lines) for comprehensive Pydantic v2 usage patterns in production code.
 
-**Updated**: 2025-10-21 | **Version**: 0.9.9 | **Pydantic**: v2.12.3+
+**Updated**: 2025-12-07 | **Version**: 0.10.0 | **Pydantic**: v2.12.3+

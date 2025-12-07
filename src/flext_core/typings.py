@@ -33,10 +33,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import c
 
-# Import models for deprecated RetryConfig alias (at module level to avoid E402)
-# This import is deferred to end of file to avoid circular dependency
-# TYPE_CHECKING guard not needed - this is a runtime import for backward compatibility
-
 # ============================================================================
 # Module-Level TypeVars - Used in flext-core src/
 # ============================================================================
@@ -138,7 +134,7 @@ class FlextTypes:
       (HandlerCallable, MiddlewareConfig, AcceptableMessageType, ConditionCallable,
       HandlerType)
 
-    - **Config**: Configuration type aliases (RetryConfig deprecated - use m.Config.RetryConfiguration)
+    - **Config**: Configuration type aliases (use m.Config.* for model classes)
 
     - **Dispatcher**: Dispatcher type definitions for message dispatching
       (DispatcherConfig TypedDict)
@@ -448,44 +444,10 @@ class FlextTypes:
     class Config:
         """Configuration models for operational settings.
 
-        Note: BaseModel classes (like RetryConfig) have been moved to models.py
-        per FLEXT architecture standards. Use m.Config.RetryConfiguration instead.
+        Note: BaseModel classes have been moved to models.py
+        per FLEXT architecture standards. Use m.Config.* instead.
         This namespace now only contains type aliases, not model classes.
-
-        **Deprecated Types**:
-        - RetryConfig: Use m.Config.RetryConfiguration instead
         """
-
-        # Deprecated: RetryConfig moved to models.py
-        # This is a type alias that points to the correct model
-        # Use m.Config.RetryConfiguration in new code
-        # Lazy initialization via __getattr__ to avoid circular import
-        _retry_config_initialized: ClassVar[bool] = False
-        RetryConfig: ClassVar[type[BaseModel]]
-        """Deprecated: Use m.Config.RetryConfiguration instead.
-
-        This type alias is provided for backward compatibility only.
-        All new code should use m.Config.RetryConfiguration from models.py.
-        Initialized lazily on first access to avoid circular imports.
-        """
-
-        @classmethod
-        def __getattr__(cls, name: str) -> type[BaseModel]:
-            """Lazy initialization of RetryConfig to avoid circular import.
-
-            Args:
-                name: Attribute name (should be "RetryConfig")
-
-            Returns:
-                RetryConfiguration class from models.py
-
-            """
-            if name == "RetryConfig" and not cls._retry_config_initialized:
-                _init_retry_config_alias()
-                cls._retry_config_initialized = True
-                return cls.RetryConfig
-            msg = f"'{cls.__name__}' object has no attribute '{name}'"
-            raise AttributeError(msg)
 
     class Dispatcher:
         """Dispatcher type definitions for message dispatching and processing."""
@@ -1027,16 +989,18 @@ class FlextTypes:
     BatchResultDict = Types.BatchResultDict
     ContainerConfigDict = Types.ContainerConfigDict
 
-    # Core namespace access to nested classes (assigned after class definition)
-    # This enables t.Core.Utility, t.Core.Validation, etc. for consistency
-    # Note: These are assigned via __setattr__ after class definition to avoid
-    # forward reference issues during class construction
+    # ClassVar annotations in Core class ensure proper type checking
+    Core.Utility = Utility
+    Core.Validation = Validation
+    Core.Json = Json
+    Core.Handler = Handler
+    Core.Config = Config
+    Core.Dispatcher = Dispatcher
+    Core.Types = Types
 
 
-# NOTE: All TypeVars are defined at module level
-# All complex types are defined in t class only (no loose module-level aliases)
-# Use t.ScalarValue, t.GeneralValueType, t.ConstantValue directly
-
+t = FlextTypes
+t_core = FlextTypes
 
 __all__ = [
     "E",
@@ -1053,34 +1017,5 @@ __all__ = [
     "T_contra",
     "U",
     "t",
+    "t_core",
 ]
-
-# Alias for simplified usage
-t = FlextTypes
-
-# Enable Core namespace access to nested classes for consistency
-# This allows t.Core.Utility, t.Core.Validation, etc. following the
-# same pattern as other projects (e.g., t.Ldif. in flext-ldap)
-# ClassVar annotations in Core class ensure proper type checking
-FlextTypes.Core.Utility = FlextTypes.Utility
-FlextTypes.Core.Validation = FlextTypes.Validation
-FlextTypes.Core.Json = FlextTypes.Json
-FlextTypes.Core.Handler = FlextTypes.Handler
-FlextTypes.Core.Config = FlextTypes.Config
-FlextTypes.Core.Dispatcher = FlextTypes.Dispatcher
-FlextTypes.Core.Types = FlextTypes.Types
-
-
-# Deprecated: RetryConfig moved to models.py
-# Assign RetryConfiguration from models.py for backward compatibility
-# This allows t.Config.RetryConfig to work but emits deprecation warning
-# Lazy initialization via __getattr__ in Config class to avoid circular import
-def _init_retry_config_alias() -> None:
-    """Initialize deprecated RetryConfig alias for backward compatibility.
-
-    This function is called lazily when RetryConfig is first accessed via __getattr__,
-    not at module import time, to avoid circular import issues.
-    """
-    from flext_core.models import m  # noqa: PLC0415
-
-    FlextTypes.Config.RetryConfig = m.Config.RetryConfiguration

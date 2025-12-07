@@ -6,6 +6,14 @@ Demonstrates global singleton, validation patterns, and railway-oriented program
 Uses advanced Python 3.13+ features: PEP 695 type aliases, StrEnum, collections.abc,
 Pydantic 2 validation, and type-safe configuration management.
 
+**Expected Output:**
+- Configuration loading from TOML/YAML/ENV files
+- Environment-specific configuration overrides
+- Type-safe configuration access with defaults
+- Validation with Pydantic models
+- Environment variable substitution
+- Configuration section retrieval
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
