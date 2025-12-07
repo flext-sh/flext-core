@@ -454,7 +454,7 @@ def test_container_singleton():
 
 ## 🔗 Related Documentation
 
-- **[README.md](./README.md)**: Project overview and quick start
+- **[README.md](../../README.md)**: Project overview and quick start
 - **[Getting Started](../guides/getting-started.md)**: Installation and basic usage
 - **[Architecture Overview](../architecture/overview.md)**: Complete architecture guide
 - **[API Reference](../api-reference/)**: Complete API documentation

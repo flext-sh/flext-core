@@ -8,7 +8,7 @@
 
 **FLEXT-Core** is the foundation library for 32+ dependent projects in the FLEXT ecosystem. Every change here has massive impact - ZERO TOLERANCE for breaking changes.
 
-**Version**: 0.9.9 → 1.0.0 (December 2025)
+**Version**: 0.10.0 (December 2025)
 **Coverage**: 81.41% (above 73% minimum)
 **Python**: 3.13+ only
 **Tests**: 2820 tests passing
@@ -496,7 +496,7 @@ def my_handler(
 - Honor inherited configuration contracts: defaults via `providers.Configuration` and user overrides applied by `configure(...)`
 - If you need new capabilities (e.g., a new provider), add it to the flext-core bridge and re-export it before using it in the dependent project
 
-See [`docs/dependency_injector_prompt.md`](../docs/dependency_injector_prompt.md) for complete pattern checklist.
+See [`docs/guides/dependency_injector_prompt.md`](../docs/guides/dependency_injector_prompt.md) for complete pattern checklist.
 
 #### 8. Dependency Injection (Global Container Singleton - Legacy Pattern)
 

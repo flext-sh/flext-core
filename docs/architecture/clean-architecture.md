@@ -1,5 +1,7 @@
 # Clean Architecture
 
+**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+
 FLEXT-Core keeps CQRS orchestration, domain modeling, and infrastructure
 aligned through unidirectional dependencies. Each layer maps directly to
 modules in `src/flext_core` and remains intentionally small so contracts stay
@@ -82,3 +84,21 @@ from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.p
 
 Keeping documentation, examples, and code aligned with these boundaries prevents
 circular dependencies and keeps FLEXT-Core safe for reuse across services.
+
+## Next Steps
+
+1. **Architecture Overview**: See [Architecture Overview](./overview.md) for visual layer layout
+2. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for application layer patterns
+3. **Domain-Driven Design**: Review [DDD Guide](../guides/domain-driven-design.md) for domain patterns
+4. **Dependency Injection**: Check [Advanced DI Guide](../guides/dependency-injection-advanced.md) for DI patterns
+5. **Service Patterns**: See [Service Patterns](../guides/service-patterns.md) for domain services
+
+## See Also
+
+- [Architecture Overview](./overview.md) - Visual layer topology and execution flows
+- [CQRS Architecture](./cqrs.md) - Application layer orchestration patterns
+- [Architecture Patterns](./patterns.md) - Implementation patterns
+- [Domain-Driven Design Guide](../guides/domain-driven-design.md) - DDD patterns with FlextModels
+- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - DI container usage
+- [Service Patterns Guide](../guides/service-patterns.md) - Domain service implementation
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow

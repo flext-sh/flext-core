@@ -4,12 +4,14 @@ Demonstrates context enrichment, FlextResult advanced methods, and automation
 patterns using Python 3.13+ PEP 695 type aliases, collections.abc patterns,
 Pydantic 2 with StrEnum, and strict type safety - no backward compatibility.
 
-KEY FEATURES:
+**Expected Output:**
 - Automatic context enrichment in FlextService
 - Correlation ID generation for distributed tracing
 - User context enrichment for audit trails
 - Operation context tracking
 - FlextResult advanced methods: from_callable, flow_through, lash, alt
+- Service execution with automatic context propagation
+- Error recovery and fallback patterns
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

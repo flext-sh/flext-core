@@ -4,6 +4,15 @@ Demonstrates integration of all flext-core components: Result, Container,
 Context, Logger, Config, Models, Decorators, Registry, Dispatcher, and
 Utilities using Python 3.13+ strict patterns with PEP 695 type aliases.
 
+**Expected Output:**
+- Complete workflow integration across all FLEXT components
+- Service orchestration with dependency injection
+- End-to-end request processing with context propagation
+- Error handling with railway patterns
+- Logging and monitoring integration
+- Configuration-driven behavior
+- CQRS command/query patterns in practice
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

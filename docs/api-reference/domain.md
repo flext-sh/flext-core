@@ -6,7 +6,7 @@ This section covers **Layer 2 (Domain)** classes that implement Domain-Driven De
 
 ## Domain Models
 
-### FlextModels — DDD Base Classes
+### FlextModels — DDD Base Classes {#flextmodels}
 
 Base classes for entities, value objects, and aggregate roots implemented with Pydantic v2.
 

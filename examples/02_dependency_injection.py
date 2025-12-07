@@ -3,6 +3,14 @@
 Shows complete DI patterns with type-safe service registration and resolution.
 Uses railway-oriented error handling and SOLID principles.
 
+**Expected Output:**
+- Container creation and configuration
+- Service registration (singleton, transient, scoped)
+- Dependency resolution with type safety
+- Logger injection and resolution
+- Configuration injection patterns
+- Service composition examples
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

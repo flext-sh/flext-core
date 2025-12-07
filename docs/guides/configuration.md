@@ -1,5 +1,7 @@
 # Configuration Management Guide
 
+**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Layered Configuration
+
 Comprehensive guide to managing application configuration with FlextConfig in FLEXT-Core.
 
 ## Overview
@@ -513,3 +515,24 @@ FlextConfig provides:
 - ✅ Production-ready error handling
 
 Use FlextConfig to manage all application configuration with confidence and safety.
+
+## Next Steps
+
+1. **Dependency Injection**: See [Advanced Dependency Injection](./dependency-injection-advanced.md) for registering config in container
+2. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for configuration error patterns
+3. **Testing**: Review [Testing Guide](./testing.md) for configuration testing strategies
+4. **Troubleshooting**: See [Troubleshooting Guide](./troubleshooting.md) for configuration debugging
+5. **API Reference**: Consult [API Reference: FlextConfig](../api-reference/infrastructure.md#flextconfig) for complete API
+
+## See Also
+
+- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Registering configuration in container
+- [Error Handling Guide](./error-handling.md) - Handling configuration errors
+- [Testing Guide](./testing.md) - Testing with configuration
+- [Troubleshooting Guide](./troubleshooting.md) - Configuration troubleshooting
+- [API Reference: FlextConfig](../api-reference/infrastructure.md#flextconfig) - Complete configuration API
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+
+---
+
+**Example from FLEXT Ecosystem**: See `src/flext_tests/test_config.py` for comprehensive configuration testing examples.

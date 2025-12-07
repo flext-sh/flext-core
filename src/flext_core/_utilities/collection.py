@@ -886,10 +886,11 @@ class FlextUtilitiesCollection:
                     if on_error == "collect":
                         errors.append((idx, error_msg))
                     return None
-                # Type narrowing: result_raw is r[R], return value
-                # Use explicit type annotation to help pyright
-                result: r[object] = cast("r[object]", result_raw)
-                return cast("R", result.value)
+                # Type narrowing: result_raw is r[R] and is_success is True (implicitly, since we access .value)
+                # After is_success check, result.value is R, but type checker needs help with generic type
+                # Note: Generic type erasure at runtime means we can't fully eliminate this cast
+                result_typed: r[R] = cast("r[R]", result_raw)
+                return result_typed.value
             # Type narrowing: result_raw is R (not r)
             result_value: R = cast("R", result_raw)
             return result_value

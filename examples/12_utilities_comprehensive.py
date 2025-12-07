@@ -4,6 +4,16 @@ Demonstrates validation, ID generation, type conversion, caching, reliability,
 string parsing, collection operations, and type checking using flext-core's
 comprehensive utility toolkit with PEP 695 type aliases and collections.abc.
 
+**Expected Output:**
+- Validation utilities (email, length, pattern, numeric)
+- ID generation (UUID, correlation IDs, entity IDs)
+- Type conversion and casting utilities
+- Object caching and cache management
+- Reliability patterns (retry, timeout)
+- String parsing and manipulation
+- Collection operations (mapping, filtering)
+- Type checking and guards
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

@@ -4,6 +4,16 @@ Demonstrates Args, Enum, Model, Text, Guards, Mapper,
 Domain, Pagination, and Configuration utilities using Python 3.13+ strict
 patterns with PEP 695 type aliases and collections.abc.
 
+**Expected Output:**
+- Argument parsing and validation utilities
+- Enum utilities and transformations
+- Model utilities for Pydantic integration
+- Text manipulation and formatting
+- Type guards and runtime type checking
+- Data mapping and transformation
+- Domain utilities for business logic
+- Pagination helper functions
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

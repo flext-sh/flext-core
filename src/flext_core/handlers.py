@@ -811,14 +811,21 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         """
 
         def decorator(func: t.Types.HandlerCallable) -> t.Types.HandlerCallable:
-            """Apply handler configuration metadata to function."""
-            config = m.Handler.DecoratorConfig(
-                command=command,
-                priority=priority,
-                timeout=timeout,
-                middleware=middleware or [],
-            )
-            setattr(func, c.Discovery.HANDLER_ATTR, config)
+            """Apply handler configuration metadata to function.
+
+            Only sets the attribute if not already set - innermost decorator wins.
+            When multiple @h.handler() decorators are stacked, the first (innermost)
+            one to run takes precedence.
+            """
+            # Only set if not already set (innermost decorator wins)
+            if not hasattr(func, c.Discovery.HANDLER_ATTR):
+                config = m.Handler.DecoratorConfig(
+                    command=command,
+                    priority=priority,
+                    timeout=timeout,
+                    middleware=middleware or [],
+                )
+                setattr(func, c.Discovery.HANDLER_ATTR, config)
             return func
 
         return decorator
@@ -893,6 +900,72 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             return any(
                 hasattr(getattr(target_class, name, None), c.Discovery.HANDLER_ATTR)
                 for name in dir(target_class)
+            )
+
+        @staticmethod
+        def scan_module(
+            module: object,
+        ) -> list[tuple[str, t.Types.HandlerCallable, m.Handler.DecoratorConfig]]:
+            """Scan module for functions decorated with @handler().
+
+            Introspects the module to find all functions with handler configuration
+            metadata, returning them sorted by priority for consistent ordering.
+
+            Args:
+                module: Module object to scan for handler decorators
+
+            Returns:
+                List of tuples (function_name, function, DecoratorConfig) sorted by priority
+
+            Example:
+                >>> handlers = FlextHandlers.Discovery.scan_module(my_module)
+                >>> for func_name, func, config in handlers:
+                ...     print(f"{func_name}: {config.command.__name__}")
+
+            """
+            handlers: list[
+                tuple[str, t.Types.HandlerCallable, m.Handler.DecoratorConfig]
+            ] = []
+            for name in dir(module):
+                if name.startswith("_"):
+                    continue
+                func = getattr(module, name, None)
+                if callable(func) and hasattr(func, c.Discovery.HANDLER_ATTR):
+                    config: m.Handler.DecoratorConfig = getattr(
+                        func,
+                        c.Discovery.HANDLER_ATTR,
+                    )
+                    handlers.append((name, func, config))
+
+            # Sort by priority (descending), then by name for stability
+            return sorted(
+                handlers,
+                key=lambda x: (-x[2].priority, x[0]),
+            )
+
+        @staticmethod
+        def has_handlers_module(module: object) -> bool:
+            """Check if module has any handler-decorated functions.
+
+            Efficiently checks if a module contains any functions marked with
+            the @handler() decorator without scanning all items.
+
+            Args:
+                module: Module object to check for handlers
+
+            Returns:
+                True if module has at least one handler, False otherwise
+
+            Example:
+                >>> if FlextHandlers.Discovery.has_handlers_module(my_module):
+                ...     # Auto-register handlers from module
+                ...     dispatcher.auto_register_handlers_from_module(my_module)
+
+            """
+            return any(
+                hasattr(getattr(module, name, None), c.Discovery.HANDLER_ATTR)
+                for name in dir(module)
+                if not name.startswith("_") and callable(getattr(module, name, None))
             )
 
 

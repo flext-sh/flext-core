@@ -70,239 +70,107 @@ _DEFAULT_HOUR_IN_SECONDS: Final[int] = 3600
 
 
 class FlextConstants:
-    """Namespace-organized constants for configuration and validation.
+    """Immutable constants organized in namespaces for the FLEXT ecosystem.
 
-    Architecture: Layer 0 (Pure Constants - No Layer 1+ Imports)
-    ============================================================
-    Provides immutable constants organized in namespaces for configuration,
-    validation, error handling, and system defaults. All constants use
-    typing.Final for immutability and serve as the single source of truth
-    throughout the FLEXT ecosystem.
+    Provides namespace-organized constants (Final[Type]) for configuration,
+    validation, error handling, and system defaults. Satisfies p.Constants
+    protocol via structural typing.
 
-    **Structural Typing and Protocol Compliance**:
-    This class satisfies p.Constants through structural typing
-    (duck typing) via the following protocol-compliant interface:
-    - 40+ nested namespace classes providing organized constant access
-    - typing.Final type annotations for immutability guarantees
-    - Hierarchical access patterns (FlextConstants.Namespace.CONSTANT)
-    - Compile-time constant verification via strict type checking
+    Organization:
+    - Nested namespace classes (Errors, Validation, Network, etc.)
+    - Hierarchical access: FlextConstants.Namespace.CONSTANT
+    - Dynamic access: FlextConstants["Namespace.CONSTANT"]
 
-    **Core Features**:
-    1. **Immutable Constants**: All constants wrapped with typing.Final
-    2. **Namespace Organization**: 30+ nested classes for logical grouping
-    3. **Type Safety**: Complete type annotations (no Any, no implicit types)
-    4. **Hierarchical Access**: Multi-level namespace access patterns
-    5. **Ecosystem Single Source of Truth**: Centralized configuration
-    7. **Integration Ready**: Seamless use throughout 32+ FLEXT projects
-    8. **Error Code Registry**: 50+ error codes with reserved purposes
-    9. **Literal Type Definitions**: Type-safe literal types for annotations
-    10. **StrEnum Integration**: Platform and configuration StrEnums
-
-    **Namespace Organization**:
-    - **Core**: Basic identifiers and version information
-    - **Network**: Network-related defaults, timeouts, connection pools
-    - **Validation**: Input validation limits and patterns
-    - **Errors**: 50+ error codes with purpose documentation
-    - **Messages**: User-facing message templates
-    - **Entities**: Entity-specific constants
-    - **Defaults**: Default values for common operations
-    - **Limits**: Upper bounds for resource usage
-    - **Utilities**: Utility constants (encoding, batch sizes)
-    - **Patterns**: Regex patterns for validation
-    - **Config**: Configuration defaults and StrEnum types
-    - **Enums**: Shared enumeration types (FieldType, WorkspaceStatus)
-    - **Platform**: HTTP, database, file type, MIME type constants
-    - **Observability**: Logging and monitoring defaults
-    - **Performance**: Performance thresholds, connection limits, batch sizes
-    - **Reliability**: Retry, circuit breaker, rate limiting constants
-    - **Security**: JWT, authentication, session management constants
-    - **Logging**: Log levels, output formats, context inclusion
-    - **Cqrs**: CQRS patterns, handler types, timeout/retry settings
-    - **Context**: Context scope, correlation ID, export formats
-    - **Container**: Dependency injection container constants
-    - **Dispatcher**: Message dispatcher modes and settings
-    - **Pagination**: Pagination configuration constants
-    - **Mixins**: Field names, status constants, default states
-    - **Web**: Web application timeouts
-    - **Batch**: Batch processing size constants
-    - **Processing**: Processing pipeline constants
-
-    **Error Code Registry** (50+ codes with explicit purposes):
-    - **Core errors**: VALIDATION_ERROR, TYPE_ERROR, ATTRIBUTE_ERROR (active)
-    - **FlextResult operations**: MAP_ERROR, BIND_ERROR, CHAIN_ERROR, UNWRAP_ERROR
-    - **Business logic**: OPERATION_ERROR, SERVICE_ERROR, BUSINESS_RULE_VIOLATION
-    - **CRUD/Resource**: NOT_FOUND_ERROR, ALREADY_EXISTS, RESOURCE_NOT_FOUND
-    - **CQRS**: COMMAND_BUS_ERROR, COMMAND_HANDLER_NOT_FOUND, DOMAIN_EVENT_ERROR
-    - **Infrastructure**: TIMEOUT_ERROR, CONNECTION_ERROR, CONFIGURATION_ERROR
-    - **Security**: PERMISSION_ERROR, AUTHENTICATION_ERROR
-    - **System**: EXCEPTION_ERROR, CRITICAL_ERROR, NONEXISTENT_ERROR
-
-    **Constants Organization Standards (FLEXT Standardization Plan)**:
-    All FLEXT projects MUST follow these patterns for constants organization:
-
-    1. **Constants Organization**:
-       - ALL constants MUST be inside the main constants class
-         (no module-level constants)
-       - Use nested classes for logical grouping (e.g., class Errors:)
-       - Layer 0 purity: Only constants, no functions or behavior
-
-    2. **Inheritance Pattern**:
-       - All domain constants MUST extend FlextConstants directly
-       - Use composition for domain relationships: Reference other domain constants
-       - Example: class FlextLdapConstants(FlextConstants):
-           with LdifConstants = FlextLdifConstants
-
-    3. **Declaration Style**:
-       - Use Final[Type] for ALL immutable constants
-       - Use ClassVar[Type] only for special cases (rare)
-       - Always specify explicit types - no implicit typing
-       - Use StrEnum for string enumerations
-
-    4. **Composition Pattern**:
-       - Reference core constants via composition when extending functionality
-       - Example: CoreErrors = FlextConstants.Errors for easy access
-       - Use inheritance for domain-specific extensions
-
-    5. **Import Pattern**:
-       - Import only FlextConstants from flext_core
-       - Additional imports only for StrEnum, Literal, etc.
-       - NO wildcard imports
-
-    6. **Documentation Pattern**:
-       - Comprehensive class docstrings with usage examples
-       - Section headers for different constant groups
-       - Type hints in comments where helpful
-
-    **Usage Patterns**:
-
-    1. Direct namespace access:
+    Example:
         >>> from flext_core import FlextConstants
         >>> error = FlextConstants.Errors.VALIDATION_ERROR
-        >>> timeout = FlextConstants.Settings.DEFAULT_TIMEOUT
-
-    2. Dynamic access via __getitem__:
-        >>> const = FlextConstants["Errors.VALIDATION_ERROR"]
-        >>> port = FlextConstants["Platform.FLEXT_API_PORT"]
-
-    3. Literal type annotations:
-        >>> from flext_core import FlextConstants
-        >>> def process_error(code: FlextConstants.ErrorCategory) -> None: ...
-
-    4. StrEnum access for configuration:
-        >>> env = FlextConstants.Settings.Environment.PRODUCTION
-        >>> log_level = FlextConstants.Settings.LogLevel.INFO
-
-    5. Error code patterns:
-        >>> validation_errors = [
-        ...     FlextConstants.Errors.VALIDATION_ERROR,
-        ...     FlextConstants.Errors.TYPE_ERROR,
-        ... ]
-
-    6. Network and timeout constants:
-        >>> timeout_sec = FlextConstants.Network.DEFAULT_TIMEOUT
-        >>> pool_size = FlextConstants.Network.DEFAULT_CONNECTION_POOL_SIZE
-
-    7. Performance thresholds:
-        >>> batch_size = FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE
-        >>> max_retries = FlextConstants.Reliability.MAX_RETRY_ATTEMPTS
-
-    8. Security and authentication:
-        >>> jwt_algo = FlextConstants.Security.JWT_DEFAULT_ALGORITHM
-        >>> bcrypt_rounds = FlextConstants.Security.CREDENTIAL_BCRYPT_ROUNDS
-
-    9. Platform constants:
-        >>> api_port = FlextConstants.Platform.FLEXT_API_PORT
-        >>> json_mime = FlextConstants.Platform.MIME_TYPE_JSON
-        >>> email_pattern = FlextConstants.Platform.PATTERN_EMAIL
-
-    10. Logging configuration:
-        >>> log_level = FlextConstants.Logging.DEFAULT_LEVEL
-        >>> include_context = FlextConstants.Logging.INCLUDE_CONTEXT
-
-    **Advanced Patterns**:
-
-    1. Error code grouping for handling:
-        >>> business_errors = [
-        ...     FlextConstants.Errors.BUSINESS_RULE_VIOLATION,
-        ...     FlextConstants.Errors.BUSINESS_RULE_ERROR,
-        ... ]
-
-    2. Configuration profile constants:
-        >>> if env == FlextConstants.Settings.Environment.PRODUCTION:
-        ...     timeout = FlextConstants.Reliability.DEFAULT_TIMEOUT_SECONDS
-
-    3. Validation limit application:
-        >>> if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
-        ...     return r[str].fail(FlextConstants.Errors.VALIDATION_ERROR)
-
-    4. Dynamic constant path resolution:
-        >>> error_path = "Errors.VALIDATION_ERROR"
-        >>> error_code = FlextConstants[error_path]
-
-    5. Type-safe literal unions:
-        >>> handler_types: list[FlextConstants.Cqrs.HandlerType] = [
-            ...     FlextConstants.Cqrs.HandlerType.COMMAND,
-            ...     FlextConstants.Cqrs.HandlerType.QUERY,
-            ... ]
-
-    6. Platform-specific constant selection:
-        >>> if FlextConstants.Settings.Environment.DEVELOPMENT:
-        ...     log_level = FlextConstants.Logging.DEFAULT_LEVEL_DEVELOPMENT
-        ... else:
-        ...     log_level = FlextConstants.Logging.DEFAULT_LEVEL_PRODUCTION
-
-    7. Performance threshold application:
-        >>> if elapsed_ms > FlextConstants.Performance.CLI_PERFORMANCE_CRITICAL_MS:
-        ...     logger.warning("Critical performance threshold exceeded")
-
-    8. Circuit breaker initialization:
-        >>> circuit_breaker = CircuitBreaker(
-        ...     failure_threshold=FlextConstants.Reliability.DEFAULT_FAILURE_THRESHOLD,
-        ...     recovery_timeout=FlextConstants.Reliability.DEFAULT_RECOVERY_TIMEOUT,
-        ... )
-
-    **Complete Usage Example**:
-            >>> from flext_core.result import r
-        >>>
-        >>> def validate_input(name: str) -> r[str]:
-        ...     if len(name) < FlextConstants.Validation.MIN_NAME_LENGTH:
-        ...         error = FlextConstants.Errors.VALIDATION_ERROR
-        ...         return r[str].fail(error)
-        ...
-        ...     if len(name) > FlextConstants.Validation.MAX_NAME_LENGTH:
-        ...         error = FlextConstants.Errors.VALIDATION_ERROR
-        ...         return r[str].fail(error)
-        ...
-        ...     return r[str].ok(name)
-        >>>
-        >>> # Use in configuration
         >>> timeout = FlextConstants.Network.DEFAULT_TIMEOUT
-        >>> env = FlextConstants.Settings.Environment.PRODUCTION
-        >>>
-        >>> # Use in error handling
-        >>> if result.error == FlextConstants.Errors.VALIDATION_ERROR:
-        ...     handle_validation_error(result)
 
-    **Thread Safety**:
-    All constants are immutable (typing.Final). Access is thread-safe as
-    there is no mutable state in this module.
-
-    **Performance Characteristics**:
-    - O(1) constant access via namespace attributes
-    - O(1) constant access via __getitem__ (dict-like lookup)
-    - No runtime compilation or validation overhead
-    - Constants are resolved at import time
-
-    **Integration with FLEXT Ecosystem**:
-    - **FlextResult**: Uses error codes from Errors namespace
-    - **FlextConfig**: References Config and Platform constants
-    - **FlextLogger**: Uses Logging constants for configuration
-    - **FlextDispatcher**: Uses Cqrs constants for handler types
-    - **FlextContext**: Uses Context constants for scope management
-    - **FlextContainer**: Uses Container constants for lifecycle
-    - **Domain Services**: Reference validation and business error codes
-    - **All 32+ projects**: Depend on this centralized constant registry
     """
+
+    # =========================================================================
+    # DRY PATTERN FOR STRENUM VALUES
+    # =========================================================================
+    # Due to Python's scoping rules, nested classes cannot access outer class
+    # attributes during their definition. The solution is to:
+    # 1. Define StrEnum first with string literals (single source of truth)
+    # 2. Define base string constants AFTER the StrEnum that reference the
+    #    StrEnum values (derived from StrEnum, not the other way around)
+    # 3. Other StrEnums can reference these base strings if they share values
+    #
+    # This pattern maintains DRY while working within Python's limitations.
+
+    # =========================================================================
+    # SHARED BASE STRENUMS (Single Source of Truth for Common Values)
+    # =========================================================================
+    # These base StrEnums define common values used across multiple domains.
+    # Other StrEnums should match these values where applicable (documented in
+    # their docstrings). StrEnum is the single source of truth - no base strings needed.
+
+    class _Base:
+        """Shared base StrEnums for common values across all domains.
+
+        These StrEnums serve as the single source of truth for common values
+        like status, actions, formats, etc. Other StrEnums reference these
+        values via base string constants to avoid duplication.
+        """
+
+        class CommonStatus(StrEnum):
+            """Base status enumeration - single source of truth for common status values.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use CommonStatus.ACTIVE.value
+                or CommonStatus.ACTIVE directly - no base strings needed.
+            """
+
+            ACTIVE = "active"
+            INACTIVE = "inactive"
+            PENDING = "pending"
+            RUNNING = "running"
+            COMPLETED = "completed"
+            FAILED = "failed"
+            CANCELLED = "cancelled"
+            COMPENSATING = "compensating"
+            ARCHIVED = "archived"
+
+        class CommonAction(StrEnum):
+            """Base action enumeration - single source of truth for common action values.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use CommonAction.GET.value
+                or CommonAction.GET directly - no base strings needed.
+            """
+
+            GET = "get"
+            CREATE = "create"
+            UPDATE = "update"
+            DELETE = "delete"
+            LIST = "list"
+
+        class CommonFormat(StrEnum):
+            """Base format enumeration - single source of truth for common format values.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use CommonFormat.JSON.value
+                or CommonFormat.JSON directly - no base strings needed.
+            """
+
+            JSON = "json"
+            YAML = "yaml"
+            TOML = "toml"
+            XML = "xml"
+
+        class CommonLevel(StrEnum):
+            """Base level enumeration - single source of truth for common level values.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use CommonLevel.NONE.value
+                or CommonLevel.NONE directly - no base strings needed.
+            """
+
+            NONE = "none"
+            WARN = "warn"
+            ERROR = "error"
 
     # Core identifiers
     NAME: Final[str] = "FLEXT"
@@ -473,13 +341,43 @@ class FlextConstants:
         """Exception handling configuration."""
 
         class FailureLevel(StrEnum):
-            """Exception failure levels."""
+            """Exception failure levels.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use FailureLevel.STRICT.value
+                or FailureLevel.STRICT directly - no base strings needed.
+            """
 
             STRICT = "strict"
             WARN = "warn"
             PERMISSIVE = "permissive"
 
         FAILURE_LEVEL_DEFAULT: Final[FailureLevel] = FailureLevel.PERMISSIVE
+
+        class ErrorType(StrEnum):
+            """Error type enumeration for error categorization.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ErrorType.VALIDATION.value
+                or ErrorType.VALIDATION directly - no base strings needed.
+            """
+
+            VALIDATION = "validation"
+            CONFIGURATION = "configuration"
+            OPERATION = "operation"
+            CONNECTION = "connection"
+            TIMEOUT = "timeout"
+            AUTHORIZATION = "authorization"
+            AUTHENTICATION = "authentication"
+            NOT_FOUND = "not_found"
+            ATTRIBUTE_ACCESS = "attribute_access"
+            CONFLICT = "conflict"
+            RATE_LIMIT = "rate_limit"
+            CIRCUIT_BREAKER = "circuit_breaker"
+            TYPE_ERROR = "type_error"
+            VALUE_ERROR = "value_error"
+            RUNTIME_ERROR = "runtime_error"
+            SYSTEM_ERROR = "system_error"
 
     class Messages:
         """User-facing message templates."""
@@ -546,7 +444,12 @@ class FlextConstants:
         DEFAULT_TRACE_MODE: Final[bool] = False
 
         class LogLevel(StrEnum):
-            """Standard log levels."""
+            """Standard log levels.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use LogLevel.DEBUG.value
+                or LogLevel.DEBUG directly - no base strings needed.
+            """
 
             DEBUG = "DEBUG"
             INFO = "INFO"
@@ -555,7 +458,12 @@ class FlextConstants:
             CRITICAL = "CRITICAL"
 
         class Environment(StrEnum):
-            """Environment types."""
+            """Environment types.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Environment.DEVELOPMENT.value
+                or Environment.DEVELOPMENT directly - no base strings needed.
+            """
 
             DEVELOPMENT = "development"
             STAGING = "staging"
@@ -703,7 +611,12 @@ class FlextConstants:
         DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD: Final[int] = 3
 
         class CircuitBreakerState(StrEnum):
-            """Circuit breaker states."""
+            """Circuit breaker states.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use CircuitBreakerState.CLOSED.value
+                or CircuitBreakerState.CLOSED directly - no base strings needed.
+            """
 
             CLOSED = "closed"
             OPEN = "open"
@@ -724,6 +637,13 @@ class FlextConstants:
         """Logging configuration."""
 
         # Log level constants - direct access for referencing
+        # DRY Compliance: These values MUST match Settings.LogLevel StrEnum members
+        # - DEBUG must equal Settings.LogLevel.DEBUG
+        # - INFO must equal Settings.LogLevel.INFO
+        # - WARNING must equal Settings.LogLevel.WARNING
+        # - ERROR must equal Settings.LogLevel.ERROR
+        # - CRITICAL must equal Settings.LogLevel.CRITICAL
+        # If Settings.LogLevel values change, these constants must be updated accordingly.
         DEBUG: Final[str] = "DEBUG"
         INFO: Final[str] = "INFO"
         WARNING: Final[str] = "WARNING"
@@ -769,14 +689,19 @@ class FlextConstants:
         ASYNC_BLOCK_ON_FULL: Final[bool] = False
 
         class ContextOperation(StrEnum):
-            """Context operation types enumeration (single source of truth)."""
+            """Context operation types enumeration (single source of truth).
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ContextOperation.BIND.value
+                or ContextOperation.BIND directly - no base strings needed.
+            """
 
             BIND = "bind"
             UNBIND = "unbind"
             CLEAR = "clear"
             GET = "get"
 
-        # Type aliases derived from ContextOperation StrEnum (NÃO DUPLICA!)
+        # Type aliases derived from ContextOperation StrEnum (NO DUPLICATION!)
         type ContextOperationGetLiteral = Literal[ContextOperation.GET]
         type ContextOperationModifyLiteral = Literal[
             ContextOperation.BIND,
@@ -799,7 +724,7 @@ class FlextConstants:
         """
 
         # Log level literal (references Settings.LogLevel StrEnum members)
-        # NÃO duplica strings - referencia o enum member!
+        # Does not duplicate strings - references the enum member!
         type LogLevelLiteral = Literal[
             FlextConstants.Settings.LogLevel.DEBUG,
             FlextConstants.Settings.LogLevel.INFO,
@@ -809,7 +734,7 @@ class FlextConstants:
         ]
 
         # Environment literal (references Settings.Environment StrEnum members)
-        # NÃO duplica strings - referencia o enum member!
+        # Does not duplicate strings - references the enum member!
         type EnvironmentLiteral = Literal[
             FlextConstants.Settings.Environment.DEVELOPMENT,
             FlextConstants.Settings.Environment.STAGING,
@@ -847,7 +772,7 @@ class FlextConstants:
         ]
 
         # Action literal (references Cqrs.Action StrEnum members)
-        # NÃO duplica strings - referencia o enum member!
+        # Does not duplicate strings - references the enum member!
         type ActionLiteral = Literal[
             FlextConstants.Cqrs.Action.GET,
             FlextConstants.Cqrs.Action.CREATE,
@@ -1061,51 +986,54 @@ class FlextConstants:
             FlextConstants.Cqrs.Mode.SERIALIZATION,
         ]
 
-        # Error type literal (for error categorization)
+        # Error type literal - references Exceptions.ErrorType StrEnum members
+        # Does not duplicate strings - references the enum member!
         type ErrorTypeLiteral = Literal[
-            "validation",
-            "configuration",
-            "operation",
-            "connection",
-            "timeout",
-            "authorization",
-            "authentication",
-            "not_found",
-            "attribute_access",
-            "conflict",
-            "rate_limit",
-            "circuit_breaker",
-            "type_error",
-            "value_error",
-            "runtime_error",
-            "system_error",
+            FlextConstants.Exceptions.ErrorType.VALIDATION,
+            FlextConstants.Exceptions.ErrorType.CONFIGURATION,
+            FlextConstants.Exceptions.ErrorType.OPERATION,
+            FlextConstants.Exceptions.ErrorType.CONNECTION,
+            FlextConstants.Exceptions.ErrorType.TIMEOUT,
+            FlextConstants.Exceptions.ErrorType.AUTHORIZATION,
+            FlextConstants.Exceptions.ErrorType.AUTHENTICATION,
+            FlextConstants.Exceptions.ErrorType.NOT_FOUND,
+            FlextConstants.Exceptions.ErrorType.ATTRIBUTE_ACCESS,
+            FlextConstants.Exceptions.ErrorType.CONFLICT,
+            FlextConstants.Exceptions.ErrorType.RATE_LIMIT,
+            FlextConstants.Exceptions.ErrorType.CIRCUIT_BREAKER,
+            FlextConstants.Exceptions.ErrorType.TYPE_ERROR,
+            FlextConstants.Exceptions.ErrorType.VALUE_ERROR,
+            FlextConstants.Exceptions.ErrorType.RUNTIME_ERROR,
+            FlextConstants.Exceptions.ErrorType.SYSTEM_ERROR,
         ]
         """Error type literals for error categorization and type-safe error handling."""
 
     # ═══════════════════════════════════════════════════════════════════
-    # STRENUM + PYDANTIC 2: PADRÃO DEFINITIVO
+    # STRENUM + PYDANTIC 2: DEFINITIVE PATTERN
     # ═══════════════════════════════════════════════════════════════════
 
     class Domain:
         """Domain-specific constants using StrEnum + Pydantic 2.
 
-        PRINCÍPIO FUNDAMENTAL:
+        FUNDAMENTAL PRINCIPLE:
         ─────────────────────
-        StrEnum + Pydantic 2 = Validação Automática!
+        StrEnum + Pydantic 2 = Automatic Validation!
 
-        - NÃO precisa criar Literal separado para validação
-        - NÃO precisa criar frozenset para validação
-        - NÃO precisa criar AfterValidator
-        - Pydantic valida automaticamente contra o StrEnum
+        - No need to create separate Literal for validation
+        - No need to create frozenset for validation
+        - No need to create AfterValidator
+        - Pydantic automatically validates against StrEnum
+
+        DRY Pattern:
+            Status StrEnum references _Base.CommonStatus base strings to avoid duplication.
 
         SUBSETS:
-        ────────
-        Use Literal[Status.MEMBER] para aceitar apenas ALGUNS valores.
-        Isso referencia o enum member, não duplica strings!
+            Use Literal[Status.MEMBER] to accept only SOME values.
+            This references the enum member, does not duplicate strings!
         """
 
         # ─────────────────────────────────────────────────────────────────
-        # STRENUM: Única declaração necessária
+        # STRENUM: Single declaration needed
         # ─────────────────────────────────────────────────────────────────
         class Status(StrEnum):
             """Status values - used directly in Pydantic and methods.
@@ -1114,10 +1042,14 @@ class FlextConstants:
                  model_config = ConfigDict(use_enum_values=True)
                  status: FlextConstants.Domain.Status
 
-            Resultado:
-                 - Aceita "active" or Status.ACTIVE
-                 - Serializa como "active" (string)
-                 - Valida automaticamente (rejeita valores inválidos)
+            Result:
+                 - Accepts "active" or Status.ACTIVE
+                 - Serializes as "active" (string)
+                 - Automatically validates (rejects invalid values)
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Status.ACTIVE.value
+                or Status.ACTIVE directly - no base strings needed.
             """
 
             ACTIVE = "active"
@@ -1127,7 +1059,12 @@ class FlextConstants:
             FAILED = "failed"
 
         class Currency(StrEnum):
-            """Currency enumeration for monetary operations."""
+            """Currency enumeration for monetary operations.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Currency.USD.value
+                or Currency.USD directly - no base strings needed.
+            """
 
             USD = "USD"
             EUR = "EUR"
@@ -1135,13 +1072,18 @@ class FlextConstants:
             BRL = "BRL"
 
         class OrderStatus(StrEnum):
-            """Order status enumeration for order lifecycle."""
+            """Order status enumeration for order lifecycle.
 
-            PENDING = "pending"
-            CONFIRMED = "confirmed"
-            SHIPPED = "shipped"
-            DELIVERED = "delivered"
-            CANCELLED = "cancelled"
+            DRY Pattern:
+                Values match _Base.CommonStatus where applicable.
+                These StrEnum values are the single source of truth.
+            """
+
+            PENDING = "pending"  # Matches _Base.CommonStatus.PENDING
+            CONFIRMED = "confirmed"  # Domain-specific, not in _Base
+            SHIPPED = "shipped"  # Domain-specific, not in _Base
+            DELIVERED = "delivered"  # Domain-specific, not in _Base
+            CANCELLED = "cancelled"  # Matches _Base.CommonStatus.CANCELLED
 
         # Model config for domain classes
         DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
@@ -1155,10 +1097,10 @@ class FlextConstants:
         )
 
         # ─────────────────────────────────────────────────────────────────
-        # SUBSETS: Literal referenciando membros do StrEnum
+        # SUBSETS: Literal referencing StrEnum members
         # ─────────────────────────────────────────────────────────────────
-        # Use para aceitar apenas ALGUNS valores do enum em métodos
-        # Isso NÃO duplica strings - referencia o enum member!
+        # Use to accept only SOME enum values in methods
+        # This does not duplicate strings - references the enum member!
 
         type ActiveStates = Literal[
             FlextConstants.Domain.Status.ACTIVE,
@@ -1201,13 +1143,13 @@ class FlextConstants:
         ]
 
         # ─────────────────────────────────────────────────────────────────
-        # EXEMPLOS DE USO EM MÉTODOS
+        # USAGE EXAMPLES IN METHODS
         # ─────────────────────────────────────────────────────────────────
 
-        # 1. Aceitar qualquer valor do StrEnum:
+        # 1. Accept any value from StrEnum:
         #    def get_by_status(self, status: Status) -> r[list[Entry]]: ...
 
-        # 2. Aceitar apenas subset do StrEnum:
+        # 2. Accept only subset of StrEnum:
         #    def process_active(self, status: ActiveStates) -> r[bool]: ...
         #    def finalize(self, status: TerminalStates) -> r[bool]: ...
 
@@ -1222,21 +1164,31 @@ class FlextConstants:
         in this domain, without creating aliases.
         """
 
-        # Apenas referências, não aliases
+        # Only references, not aliases
         # Use FlextConstants.Cqrs.Status directly in code
 
     class Cqrs:
         """CQRS pattern constants."""
 
         class Status(StrEnum):
-            """CQRS status enumeration."""
+            """CQRS status enumeration.
 
-            RUNNING = "running"
-            STOPPED = "stopped"
-            FAILED = "failed"
+            DRY Pattern:
+                Values match _Base.CommonStatus where applicable.
+                These StrEnum values are the single source of truth.
+            """
+
+            RUNNING = "running"  # Matches CommonStatus.RUNNING
+            STOPPED = "stopped"  # CQRS-specific, not in CommonStatus
+            FAILED = "failed"  # Matches CommonStatus.FAILED
 
         class HandlerType(StrEnum):
-            """CQRS handler types enumeration."""
+            """CQRS handler types enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use HandlerType.COMMAND.value
+                or HandlerType.COMMAND directly - no base strings needed.
+            """
 
             COMMAND = "command"
             QUERY = "query"
@@ -1247,7 +1199,7 @@ class FlextConstants:
         # Type aliases for message type discrimination
         # (Python 3.13+ PEP 695 best practices)
         # Using PEP 695 type keyword for better type checking and IDE support
-        # These Literals reference HandlerType StrEnum members - NÃO duplica strings!
+        # These Literals reference HandlerType StrEnum members - NO string duplication!
         type CommandMessageTypeLiteral = Literal[HandlerType.COMMAND]
         type QueryMessageTypeLiteral = Literal[HandlerType.QUERY]
         type EventMessageTypeLiteral = Literal[HandlerType.EVENT]
@@ -1268,6 +1220,10 @@ class FlextConstants:
             All specialized status Literals (ProcessingStatusLiteral, NotificationStatusLiteral, etc.)
             use Literal type aliases derived from these values and SpecialStatus to prevent duplication.
             This follows DRY and SOLID principles without losing semantic meaning.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use CommonStatus.PENDING.value
+                or CommonStatus.PENDING directly - no base strings needed.
             """
 
             PENDING = "pending"
@@ -1278,7 +1234,12 @@ class FlextConstants:
             COMPENSATING = "compensating"
 
         class MetricType(StrEnum):
-            """Service metric types enumeration - single source of truth (FLEXT standard)."""
+            """Service metric types enumeration - single source of truth (FLEXT standard).
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use MetricType.COUNTER.value
+                or MetricType.COUNTER directly - no base strings needed.
+            """
 
             COUNTER = "counter"
             GAUGE = "gauge"
@@ -1293,7 +1254,12 @@ class FlextConstants:
         ]
 
         class ServiceMetricCategory(StrEnum):
-            """Service metric categories enumeration."""
+            """Service metric categories enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ServiceMetricCategory.PERFORMANCE.value
+                or ServiceMetricCategory.PERFORMANCE directly - no base strings needed.
+            """
 
             PERFORMANCE = "performance"
             ERRORS = "errors"
@@ -1314,7 +1280,12 @@ class FlextConstants:
         )
 
         class ProcessingMode(StrEnum):
-            """CQRS processing modes enumeration."""
+            """CQRS processing modes enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ProcessingMode.BATCH.value
+                or ProcessingMode.BATCH directly - no base strings needed.
+            """
 
             BATCH = "batch"
             STREAM = "stream"
@@ -1340,14 +1311,24 @@ class FlextConstants:
         ]
 
         class ValidationLevel(StrEnum):
-            """CQRS validation levels enumeration."""
+            """CQRS validation levels enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ValidationLevel.STRICT.value
+                or ValidationLevel.STRICT directly - no base strings needed.
+            """
 
             STRICT = "strict"
             LENIENT = "lenient"
             STANDARD = "standard"
 
         class ProcessingPhase(StrEnum):
-            """CQRS processing phases enumeration."""
+            """CQRS processing phases enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use ProcessingPhase.PREPARE.value
+                or ProcessingPhase.PREPARE directly - no base strings needed.
+            """
 
             PREPARE = "prepare"
             EXECUTE = "execute"
@@ -1355,34 +1336,59 @@ class FlextConstants:
             COMPLETE = "complete"
 
         class BindType(StrEnum):
-            """CQRS binding types enumeration."""
+            """CQRS binding types enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use BindType.TEMPORARY.value
+                or BindType.TEMPORARY directly - no base strings needed.
+            """
 
             TEMPORARY = "temporary"
             PERMANENT = "permanent"
 
         class MergeStrategy(StrEnum):
-            """CQRS merge strategies enumeration."""
+            """CQRS merge strategies enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use MergeStrategy.REPLACE.value
+                or MergeStrategy.REPLACE directly - no base strings needed.
+            """
 
             REPLACE = "replace"
             UPDATE = "update"
             MERGE_DEEP = "merge_deep"
 
         class HealthStatus(StrEnum):
-            """CQRS health status enumeration."""
+            """CQRS health status enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use HealthStatus.HEALTHY.value
+                or HealthStatus.HEALTHY directly - no base strings needed.
+            """
 
             HEALTHY = "healthy"
             DEGRADED = "degraded"
             UNHEALTHY = "unhealthy"
 
         class SpecialStatus(StrEnum):
-            """Special status values not in CommonStatus - single source of truth for unique status values."""
+            """Special status values not in CommonStatus - single source of truth for unique status values.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SpecialStatus.SENT.value
+                or SpecialStatus.SENT directly - no base strings needed.
+            """
 
             SENT = "sent"  # Unique to notifications
             IDLE = "idle"  # Unique to circuit breaker
             PROCESSING = "processing"  # Similar to RUNNING but with specific semantics for batch/export
 
         class TokenType(StrEnum):
-            """CQRS token types enumeration."""
+            """CQRS token types enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use TokenType.BEARER.value
+                or TokenType.BEARER directly - no base strings needed.
+            """
 
             BEARER = "bearer"
             API_KEY = "api_key"
@@ -1421,14 +1427,24 @@ class FlextConstants:
         ]
 
         class OperationStatus(StrEnum):
-            """CQRS operation status enumeration."""
+            """CQRS operation status enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use OperationStatus.SUCCESS.value
+                or OperationStatus.SUCCESS directly - no base strings needed.
+            """
 
             SUCCESS = "success"
             FAILURE = "failure"
             PARTIAL = "partial"
 
         class SerializationFormat(StrEnum):
-            """CQRS serialization formats enumeration."""
+            """CQRS serialization formats enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use SerializationFormat.JSON.value
+                or SerializationFormat.JSON directly - no base strings needed.
+            """
 
             JSON = "json"
             YAML = "yaml"
@@ -1436,7 +1452,12 @@ class FlextConstants:
             MSGPACK = "msgpack"
 
         class Compression(StrEnum):
-            """CQRS compression formats enumeration."""
+            """CQRS compression formats enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Compression.NONE.value
+                or Compression.NONE directly - no base strings needed.
+            """
 
             NONE = "none"
             GZIP = "gzip"
@@ -1444,7 +1465,12 @@ class FlextConstants:
             LZ4 = "lz4"
 
         class Aggregation(StrEnum):
-            """CQRS aggregation functions enumeration."""
+            """CQRS aggregation functions enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Aggregation.SUM.value
+                or Aggregation.SUM directly - no base strings needed.
+            """
 
             SUM = "sum"
             AVG = "avg"
@@ -1453,7 +1479,12 @@ class FlextConstants:
             COUNT = "count"
 
         class Action(StrEnum):
-            """CQRS action types enumeration."""
+            """CQRS action types enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Action.GET.value
+                or Action.GET directly - no base strings needed.
+            """
 
             GET = "get"
             CREATE = "create"
@@ -1462,43 +1493,73 @@ class FlextConstants:
             LIST = "list"
 
         class PersistenceLevel(StrEnum):
-            """CQRS persistence levels enumeration."""
+            """CQRS persistence levels enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use PersistenceLevel.MEMORY.value
+                or PersistenceLevel.MEMORY directly - no base strings needed.
+            """
 
             MEMORY = "memory"
             DISK = "disk"
             DISTRIBUTED = "distributed"
 
         class TargetFormat(StrEnum):
-            """CQRS target formats enumeration."""
+            """CQRS target formats enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use TargetFormat.FULL.value
+                or TargetFormat.FULL directly - no base strings needed.
+            """
 
             FULL = "full"
             COMPACT = "compact"
             MINIMAL = "minimal"
 
         class WarningLevel(StrEnum):
-            """CQRS warning levels enumeration."""
+            """CQRS warning levels enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use WarningLevel.NONE.value
+                or WarningLevel.NONE directly - no base strings needed.
+            """
 
             NONE = "none"
             WARN = "warn"
             ERROR = "error"
 
         class OutputFormat(StrEnum):
-            """CQRS output formats enumeration."""
+            """CQRS output formats enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use OutputFormat.DICT.value
+                or OutputFormat.DICT directly - no base strings needed.
+            """
 
             DICT = "dict"
             JSON = "json"
 
         class Mode(StrEnum):
-            """CQRS operation modes enumeration."""
+            """CQRS operation modes enumeration.
+
+            DRY Pattern:
+                StrEnum is the single source of truth. Use Mode.VALIDATION.value
+                or Mode.VALIDATION directly - no base strings needed.
+            """
 
             VALIDATION = "validation"
             SERIALIZATION = "serialization"
 
         class RegistrationStatus(StrEnum):
-            """CQRS registration status enumeration."""
+            """CQRS registration status enumeration.
 
-            ACTIVE = "active"
-            INACTIVE = "inactive"
+            DRY Pattern:
+                Values match _Base.CommonStatus. These StrEnum values are the
+                single source of truth.
+            """
+
+            ACTIVE = "active"  # Matches _Base.CommonStatus.ACTIVE
+            INACTIVE = "inactive"  # Matches _Base.CommonStatus.INACTIVE
 
         DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"
         DEFAULT_TIMESTAMP: Final[str] = ""
@@ -1627,9 +1688,15 @@ class FlextConstants:
             "registration_id must be non-empty string"
         )
         ERROR_INVALID_REQUEST_ID: Final[str] = "request_id must be non-empty string"
+        # Registration status constants - DRY pattern
+        # StrEnum is the single source of truth: Cqrs.RegistrationStatus.ACTIVE
+        # These constants match StrEnum values (documented, not code-referenced due to Python scoping)
         REGISTRATION_STATUS_ACTIVE: Final[str] = "active"
+        """Registration status: active (matches Cqrs.RegistrationStatus.ACTIVE.value)."""
         REGISTRATION_STATUS_INACTIVE: Final[str] = "inactive"
+        """Registration status: inactive (matches Cqrs.RegistrationStatus.INACTIVE.value)."""
         REGISTRATION_STATUS_ERROR: Final[str] = "error"
+        """Registration status: error (not part of RegistrationStatus StrEnum)."""
         VALID_REGISTRATION_STATUSES: Final[tuple[str, ...]] = (
             REGISTRATION_STATUS_ACTIVE,
             REGISTRATION_STATUS_INACTIVE,
@@ -1670,8 +1737,13 @@ class FlextConstants:
         FIELD_EVENT_NAME: Final[str] = "event_name"
         FIELD_AGGREGATE_ID: Final[str] = "aggregate_id"
         FIELD_OCCURRED_AT: Final[str] = "occurred_at"
+        # State constants - DRY pattern
+        # StrEnum is the single source of truth: Domain.Status.ACTIVE
+        # These constants match StrEnum values (documented, not code-referenced due to Python scoping)
         STATE_ACTIVE: Final[str] = "active"
+        """State: active (matches Domain.Status.ACTIVE.value)."""
         STATE_INACTIVE: Final[str] = "inactive"
+        """State: inactive (matches Domain.Status.INACTIVE.value)."""
         # STATE_* constants removed - use c.Cqrs.CommonStatus StrEnum instead
         # STATE_PENDING -> c.Cqrs.CommonStatus.PENDING
         # STATE_COMPLETED -> c.Cqrs.CommonStatus.COMPLETED
@@ -1780,13 +1852,58 @@ class FlextConstants:
         """Default timeout for handlers (None = no timeout)."""
 
     # =========================================================================
+    # ROOT-LEVEL ALIASES (Most Commonly Used Constants)
+    # =========================================================================
+    # These aliases provide direct access to commonly used constants without
+    # requiring nested namespace traversal. Both access patterns work:
+    #   - c.TIMEOUT (root-level alias)
+    #   - c.Network.DEFAULT_TIMEOUT (domain-level access)
+    #
+    # NOTE: After ecosystem migration (Phase B), we will audit actual usage
+    # and may add more root-level aliases for frequently used constants.
+
+    # Common timeout and network constants
+    TIMEOUT: Final[int] = Network.DEFAULT_TIMEOUT
+    """Default timeout in seconds (alias for Network.DEFAULT_TIMEOUT)."""
+
+    # Common error codes
+    VALIDATION_ERROR: Final[str] = Errors.VALIDATION_ERROR
+    """Validation error code (alias for Errors.VALIDATION_ERROR)."""
+
+    NOT_FOUND: Final[str] = Errors.NOT_FOUND
+    """Not found error code (alias for Errors.NOT_FOUND)."""
+
+    # Common encoding and utilities
+    ENCODING: Final[str] = Utilities.DEFAULT_ENCODING
+    """Default encoding (alias for Utilities.DEFAULT_ENCODING)."""
+
+    # Common pagination and batch constants
+    PAGE_SIZE: Final[int] = Pagination.DEFAULT_PAGE_SIZE
+    """Default page size (alias for Pagination.DEFAULT_PAGE_SIZE)."""
+
+    # Common retry constants
+    MAX_RETRIES: Final[int] = Reliability.MAX_RETRY_ATTEMPTS
+    """Maximum retry attempts (alias for Reliability.MAX_RETRY_ATTEMPTS)."""
+
+    # =========================================================================
     # NAMESPACE ACCESS
     # =========================================================================
     # All constants are accessed via namespaces (e.g., FlextConstants.Errors.*)
-    # No aliases - use namespaces directly following FLEXT architecture patterns
-    # Example: FlextConstants.Errors.VALIDATION_ERROR (not FlextConstants.VALIDATION_ERROR)
+    # Root-level aliases above provide convenience access for commonly used constants
+    # Example: FlextConstants.Errors.VALIDATION_ERROR (domain-level)
+    #          FlextConstants.VALIDATION_ERROR (root-level alias)
 
 
 c = FlextConstants
+c_core = FlextConstants
 
-__all__ = ["FlextConstants", "c"]
+# DRY Compliance Note:
+# The following constants match StrEnum values (DRY pattern at documentation level):
+# - Dispatcher.REGISTRATION_STATUS_ACTIVE matches Cqrs.RegistrationStatus.ACTIVE.value
+# - Dispatcher.REGISTRATION_STATUS_INACTIVE matches Cqrs.RegistrationStatus.INACTIVE.value
+# - Mixins.STATE_ACTIVE matches Domain.Status.ACTIVE.value
+# - Mixins.STATE_INACTIVE matches Domain.Status.INACTIVE.value
+# StrEnum is the single source of truth. These constants are kept for backward compatibility
+# and must match StrEnum values (documented, not code-referenced due to Python scoping limitations).
+
+__all__ = ["FlextConstants", "c", "c_core"]

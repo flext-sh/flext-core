@@ -3,6 +3,15 @@
 Shows complete railway-oriented programming with advanced type safety.
 Demonstrates all r patterns using Python 3.13+ features.
 
+**Expected Output:**
+- Factory methods demonstration (ok, fail, create_from_callable)
+- Value extraction patterns (unwrap, unwrap_or, value property)
+- Railway operations (map, flat_map, flow_through)
+- Error recovery (alt, lash)
+- Advanced combinators (traverse, filter)
+- Validation patterns with u.Validation
+- Exception integration with structured errors
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

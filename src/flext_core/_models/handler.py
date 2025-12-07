@@ -26,6 +26,7 @@ from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextModelsHandler:
@@ -141,9 +142,6 @@ class FlextModelsHandler:
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
             """Validate timestamp is in ISO 8601 format (using FlextUtilitiesValidation)."""
-            # Lazy import to avoid circular dependency
-            from flext_core.utilities import u  # noqa: PLC0415
-
             result = u.Validation.validate_iso8601_timestamp(
                 v,
                 allow_empty=True,

@@ -1,7 +1,7 @@
 """Container models - Dependency Injection registry models.
 
-TIER 0.5: Usa apenas stdlib + pydantic + _models/metadata.py
-(evita ciclos via __init__.py).
+TIER 0.5: Uses only stdlib + pydantic + _models/metadata.py
+(avoids cycles via __init__.py).
 
 This module contains Pydantic models for FlextContainer that implement
 ServiceRegistry and FactoryProvider Protocols.
@@ -20,21 +20,16 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.typings import t
+from flext_core.utilities import u
 
 
 def _generate_datetime_utc() -> datetime:
-    """Generate UTC datetime using lazy import to avoid circular dependency."""
-    # Lazy import to avoid circular dependency
-    from flext_core.utilities import u  # noqa: PLC0415
-
+    """Generate UTC datetime."""
     return u.Generators.generate_datetime_utc()
 
 
 def _normalize_to_metadata(v: t.GeneralValueType) -> FlextModelsBase.Metadata:
-    """Normalize value to Metadata using lazy import to avoid circular dependency."""
-    # Lazy import to avoid circular dependency
-    from flext_core.utilities import u  # noqa: PLC0415
-
+    """Normalize value to Metadata."""
     return u.Model.normalize_to_metadata(v)
 
 

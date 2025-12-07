@@ -3,6 +3,14 @@
 Complete domain-driven design with Value Objects, Entities, Aggregate Roots.
 Uses advanced Python 3.13+ patterns, StrEnum validation, railway-oriented programming.
 
+**Expected Output:**
+- Value Object creation and immutability demonstrations
+- Entity identity and business logic patterns
+- Aggregate Root consistency enforcement
+- Domain event patterns
+- Validation with Pydantic Field constraints
+- Railway pattern integration with domain models
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

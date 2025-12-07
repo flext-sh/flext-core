@@ -17,6 +17,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import c
 from flext_core.result import r
 from flext_core.typings import t
@@ -34,11 +36,8 @@ def _get_log_level_from_config() -> int:
 
 
 def _generate_id() -> str:
-    """Generate unique ID using lazy import to avoid circular dependency."""
-    # Lazy import to avoid circular dependency
-    from flext_core.utilities import u  # noqa: PLC0415
-
-    return u.Generators.generate_id()
+    """Generate unique ID."""
+    return FlextUtilitiesGenerators.generate_id()
 
 
 class FlextModelsConfig:
@@ -87,10 +86,7 @@ class FlextModelsConfig:
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """
-            # Lazy import to avoid circular dependency
-            from flext_core.utilities import u  # noqa: PLC0415
-
-            return u.Generators.ensure_trace_context(
+            return FlextUtilitiesGenerators.ensure_trace_context(
                 v,
                 include_correlation_id=True,
                 include_timestamp=True,
@@ -149,10 +145,9 @@ class FlextModelsConfig:
             # removed from flext-core per domain violation rules
             # Convert to list[object] for validation function (accepts object)
             codes_for_validation: list[object] = list(v)
-            # Lazy import to avoid circular dependency
-            from flext_core.utilities import u  # noqa: PLC0415
-
-            result = u.Validation.validate_http_status_codes(codes_for_validation)
+            result = FlextUtilitiesValidation.validate_http_status_codes(
+                codes_for_validation,
+            )
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
                 error_msg = (

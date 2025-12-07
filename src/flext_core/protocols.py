@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from types import ModuleType
+from types import ModuleType, TracebackType
 from typing import ParamSpec, Protocol, runtime_checkable
 
 from pydantic import BaseModel
@@ -81,7 +81,7 @@ class FlextProtocols:
     from flext_core.protocols import p
 
     # Foundation protocols
-    result: p.Foundation.Result[str]
+    result: p.Foundation.FlextProtocols.Result[str]
     model: p.Foundation.HasModelDump
 
     # Domain protocols
@@ -117,11 +117,17 @@ class FlextProtocols:
 
             Used extensively for all operations that can fail. Provides
             structural typing interface for FlextResult without circular imports.
+            Fully compatible with FlextResult and FlextRuntime usage patterns.
             """
 
             @property
             def value(self) -> T:
-                """Result value (available on success)."""
+                """Result value (available on success, never None)."""
+                ...
+
+            @property
+            def data(self) -> T:
+                """Alias for value (backward compatibility)."""
                 ...
 
             @property
@@ -136,7 +142,7 @@ class FlextProtocols:
 
             @property
             def error(self) -> str | None:
-                """Error message (available on failure)."""
+                """Error message (available on failure, None on success)."""
                 ...
 
             @property
@@ -144,8 +150,178 @@ class FlextProtocols:
                 """Error code for categorization."""
                 ...
 
+            @property
+            def error_data(
+                self,
+            ) -> t.Types.ConfigurationMapping | None:
+                """Error metadata (optional)."""
+                ...
+
+            @property
+            def result(self) -> object:
+                """Access internal Result for advanced operations."""
+                ...
+
             def unwrap(self) -> T:
                 """Unwrap success value (raises on failure)."""
+                ...
+
+            def unwrap_or(self, default: T) -> T:
+                """Unwrap success value or return default on failure."""
+                ...
+
+            def map[U](self, func: Callable[[T], U]) -> FlextProtocols.Result[U]:
+                """Transform success value using function."""
+                ...
+
+            def flat_map[U](
+                self,
+                func: Callable[[T], FlextProtocols.Result[U]],
+            ) -> FlextProtocols.Result[U]:
+                """Chain operations returning Result."""
+                ...
+
+            def map_error(self, func: Callable[[str], str]) -> FlextProtocols.Result[T]:
+                """Transform error message on failure.
+
+                Returns self on success, new Result with transformed error on failure.
+                """
+                ...
+
+            def filter(
+                self,
+                predicate: Callable[[T], bool],
+            ) -> FlextProtocols.Result[T]:
+                """Filter success value using predicate.
+
+                Returns self if predicate passes or result is failure,
+                new failed Result if predicate fails.
+                """
+                ...
+
+            def flow_through[U](
+                self,
+                *funcs: Callable[[T | U], FlextProtocols.Result[U]],
+            ) -> FlextProtocols.Result[U]:
+                """Chain multiple operations in a pipeline."""
+                ...
+
+            def alt(
+                self,
+                func: Callable[[str], str],
+            ) -> FlextProtocols.Result[T]:
+                """Apply alternative function on failure."""
+                ...
+
+            def lash(
+                self,
+                func: Callable[[str], FlextProtocols.Result[T]],
+            ) -> FlextProtocols.Result[T]:
+                """Apply recovery function on failure."""
+                ...
+
+            def to_maybe(self) -> object:
+                """Convert to returns.maybe.Maybe."""
+                ...
+
+            def to_io(self) -> object:
+                """Convert to returns.io.IO."""
+                ...
+
+            def to_io_result(self) -> object:
+                """Convert to returns.io.IOResult.
+
+                Returns IOFlextProtocols.Result[T, str] - success wraps value, failure wraps error.
+                """
+                ...
+
+            @classmethod
+            def from_io_result(
+                cls,
+                io_result: object,
+            ) -> FlextProtocols.Result[t.GeneralValueType]:
+                """Create Result from returns.io.IOResult."""
+                ...
+
+            @classmethod
+            def from_maybe(
+                cls,
+                maybe: object,
+                error: str = "Value is Nothing",
+            ) -> FlextProtocols.Result[T]:
+                """Create Result from returns.maybe.Maybe."""
+                ...
+
+            @classmethod
+            def create_from_callable(
+                cls,
+                func: Callable[[], T],
+                error_code: str | None = None,
+            ) -> FlextProtocols.Result[T]:
+                """Create result from callable, catching exceptions."""
+                ...
+
+            @classmethod
+            def traverse[TItem, UResult](
+                cls,
+                items: Sequence[TItem],
+                func: Callable[[TItem], FlextProtocols.Result[UResult]],
+            ) -> FlextProtocols.Result[list[UResult]]:
+                """Map over sequence with failure propagation."""
+                ...
+
+            @classmethod
+            def accumulate_errors(
+                cls,
+                *results: FlextProtocols.Result[t.GeneralValueType],
+            ) -> FlextProtocols.Result[list[t.GeneralValueType]]:
+                """Collect all successes, fail if any failure."""
+                ...
+
+            @classmethod
+            def parallel_map[TItem, UResult](
+                cls,
+                items: Sequence[TItem],
+                func: Callable[[TItem], FlextProtocols.Result[UResult]],
+                *,
+                fail_fast: bool = True,
+            ) -> FlextProtocols.Result[list[UResult]]:
+                """Map with parallel processing and configurable failure handling."""
+                ...
+
+            @classmethod
+            def with_resource[TResource](
+                cls,
+                factory: Callable[[], TResource],
+                op: Callable[[TResource], FlextProtocols.Result[T]],
+                cleanup: Callable[[TResource], None] | None = None,
+            ) -> FlextProtocols.Result[T]:
+                """Resource management with automatic cleanup."""
+                ...
+
+            def __enter__(self) -> FlextProtocols.Result[T]:
+                """Context manager entry."""
+                ...
+
+            def __exit__(
+                self,
+                exc_type: type[BaseException] | None,
+                exc_val: BaseException | None,
+                exc_tb: TracebackType | None,
+            ) -> None:
+                """Context manager exit."""
+                ...
+
+            def __repr__(self) -> str:
+                """String representation."""
+                ...
+
+            def __or__(self, default: T) -> T:
+                """Operator overload for default values."""
+                ...
+
+            def __bool__(self) -> bool:
+                """Boolean conversion based on success state."""
                 ...
 
         @runtime_checkable
@@ -218,7 +394,7 @@ class FlextProtocols:
                 """Dump model data to dictionary."""
                 ...
 
-            def validate(self) -> FlextProtocols.Foundation.Result[bool]:
+            def validate(self) -> FlextProtocols.Result[bool]:
                 """Validate model."""
                 ...
 
@@ -283,7 +459,7 @@ class FlextProtocols:
                 key: str,
                 value: t.GeneralValueType,
                 scope: str = ...,
-            ) -> FlextProtocols.Foundation.Result[bool]:
+            ) -> FlextProtocols.Result[bool]:
                 """Set a context value."""
                 ...
 
@@ -291,7 +467,7 @@ class FlextProtocols:
                 self,
                 key: str,
                 scope: str = ...,
-            ) -> FlextProtocols.Foundation.Result[t.GeneralValueType]:
+            ) -> FlextProtocols.Result[t.GeneralValueType]:
                 """Get a context value."""
                 ...
 
@@ -374,7 +550,7 @@ class FlextProtocols:
                 self,
                 name: str,
                 service: t.FlexibleValue,
-            ) -> FlextProtocols.Foundation.Result[bool]:
+            ) -> FlextProtocols.Result[bool]:
                 """Register a service instance."""
                 ...
 
@@ -382,7 +558,7 @@ class FlextProtocols:
                 self,
                 name: str,
                 factory: Callable[[], t.GeneralValueType],
-            ) -> FlextProtocols.Foundation.Result[bool]:
+            ) -> FlextProtocols.Result[bool]:
                 """Register a service factory."""
                 ...
 
@@ -402,7 +578,7 @@ class FlextProtocols:
                 """Fluent interface for factory registration."""
                 ...
 
-            def get[T](self, name: str) -> FlextProtocols.Foundation.Result[T]:
+            def get[T](self, name: str) -> FlextProtocols.Result[T]:
                 """Get service by name with type safety.
 
                 Reflects real implementations like FlextContainer which uses
@@ -415,7 +591,7 @@ class FlextProtocols:
                 self,
                 name: str,
                 type_cls: type[T],
-            ) -> FlextProtocols.Foundation.Result[T]:
+            ) -> FlextProtocols.Result[T]:
                 """Get service with type safety and runtime validation.
 
                 Reflects real implementations like FlextContainer.get_typed()
@@ -447,7 +623,7 @@ class FlextProtocols:
             self-contained with their own configuration).
             """
 
-            def execute(self) -> FlextProtocols.Foundation.Result[T]:
+            def execute(self) -> FlextProtocols.Result[T]:
                 """Execute domain service logic.
 
                 Reflects real implementations like FlextService which don't
@@ -456,7 +632,7 @@ class FlextProtocols:
                 """
                 ...
 
-            def validate_business_rules(self) -> FlextProtocols.Foundation.Result[bool]:
+            def validate_business_rules(self) -> FlextProtocols.Result[bool]:
                 """Validate business rules with extensible validation pipeline.
 
                 Reflects real implementations like FlextService which perform
@@ -487,27 +663,27 @@ class FlextProtocols:
             def get_by_id(
                 self,
                 entity_id: str,
-            ) -> FlextProtocols.Foundation.Result[T]:
+            ) -> FlextProtocols.Result[T]:
                 """Get entity by ID."""
                 ...
 
             def save(
                 self,
                 entity: T,
-            ) -> FlextProtocols.Foundation.Result[T]:
+            ) -> FlextProtocols.Result[T]:
                 """Save entity."""
                 ...
 
             def delete(
                 self,
                 entity_id: str,
-            ) -> FlextProtocols.Foundation.Result[bool]:
+            ) -> FlextProtocols.Result[bool]:
                 """Delete entity."""
                 ...
 
             def find_all(
                 self,
-            ) -> FlextProtocols.Foundation.Result[Sequence[T]]:
+            ) -> FlextProtocols.Result[Sequence[T]]:
                 """Find all entities."""
                 ...
 
@@ -520,7 +696,7 @@ class FlextProtocols:
 
                 Reflects real implementations like FlextModelsEntity.AggregateRoot
                 which checks invariants and raises exceptions on violation rather
-                than returning Result[bool].
+                than returning FlextProtocols.Result[bool].
                 """
 
                 def check_invariants(self) -> None:
@@ -549,7 +725,7 @@ class FlextProtocols:
             def handle(
                 self,
                 message: t.FlexibleValue,
-            ) -> FlextProtocols.Foundation.Result[t.GeneralValueType]:
+            ) -> FlextProtocols.Result[t.GeneralValueType]:
                 """Handle message - core business logic method.
 
                 Reflects real implementations like FlextHandlers.handle() which
@@ -560,7 +736,7 @@ class FlextProtocols:
             def validate(
                 self,
                 data: t.FlexibleValue,
-            ) -> FlextProtocols.Foundation.Result[bool]:
+            ) -> FlextProtocols.Result[bool]:
                 """Validate input data using extensible validation pipeline.
 
                 Reflects real implementations like FlextHandlers.validate() which
@@ -571,7 +747,7 @@ class FlextProtocols:
             def validate_command(
                 self,
                 command: t.FlexibleValue,
-            ) -> FlextProtocols.Foundation.Result[bool]:
+            ) -> FlextProtocols.Result[bool]:
                 """Validate command message with command-specific rules.
 
                 Reflects real implementations like FlextHandlers.validate_command()
@@ -582,7 +758,7 @@ class FlextProtocols:
             def validate_query(
                 self,
                 query: t.FlexibleValue,
-            ) -> FlextProtocols.Foundation.Result[bool]:
+            ) -> FlextProtocols.Result[bool]:
                 """Validate query message with query-specific rules.
 
                 Reflects real implementations like FlextHandlers.validate_query()
@@ -611,7 +787,7 @@ class FlextProtocols:
                 self,
                 request: t.GeneralValueType | BaseModel,
                 handler: t.GeneralValueType | None = None,
-            ) -> FlextProtocols.Foundation.Result[t.Types.ConfigurationMapping]:
+            ) -> FlextProtocols.Result[t.Types.ConfigurationMapping]:
                 """Register handler dynamically.
 
                 Reflects real implementations like FlextDispatcher that accept
@@ -626,7 +802,7 @@ class FlextProtocols:
                 handler: t.GeneralValueType,
                 *,
                 handler_config: Mapping[str, t.FlexibleValue] | None = None,
-            ) -> FlextProtocols.Foundation.Result[t.GeneralValueType]:
+            ) -> FlextProtocols.Result[t.GeneralValueType]:
                 """Register command handler."""
                 ...
 
@@ -635,14 +811,14 @@ class FlextProtocols:
                 handler_func: Callable[P_HandlerFunc, t.GeneralValueType],
                 handler_config: Mapping[str, t.FlexibleValue] | None = None,
                 mode: str = ...,
-            ) -> FlextProtocols.Foundation.Result[FlextProtocols.Application.Handler]:
+            ) -> FlextProtocols.Result[FlextProtocols.Application.Handler]:
                 """Create handler from function (static method)."""
                 ...
 
             def execute(
                 self,
                 command: t.FlexibleValue,
-            ) -> FlextProtocols.Foundation.Result[T_co]:
+            ) -> FlextProtocols.Result[T_co]:
                 """Execute command."""
                 ...
 
@@ -655,11 +831,67 @@ class FlextProtocols:
                 metadata: t.GeneralValueType | None = None,
                 correlation_id: str | None = None,
                 timeout_override: int | None = None,
-            ) -> FlextProtocols.Foundation.Result[t.GeneralValueType]:
+            ) -> FlextProtocols.Result[t.GeneralValueType]:
                 """Dispatch message (primary method for real implementations).
 
                 Reflects real implementations like FlextDispatcher which provides
                 flexible dispatch accepting message objects or (type, data) tuples.
+                """
+                ...
+
+        @runtime_checkable
+        class Registry(Protocol):
+            """Handler registry protocol for CQRS handler registration.
+
+            Reflects real implementations like FlextRegistry which provides
+            handler registration, batch operations, and idempotent tracking
+            for CQRS handlers.
+            """
+
+            def register_handler(
+                self,
+                handler: t.GeneralValueType | None,
+            ) -> FlextProtocols.Result[t.GeneralValueType]:
+                """Register a handler instance.
+
+                Reflects real implementations like FlextRegistry.register_handler()
+                which registers handlers with idempotent tracking.
+                """
+                ...
+
+            def register_handlers(
+                self,
+                handlers: Sequence[t.GeneralValueType],
+            ) -> FlextProtocols.Result[t.GeneralValueType]:
+                """Register multiple handlers in batch.
+
+                Reflects real implementations like FlextRegistry.register_handlers()
+                which provides batch registration with summary reporting.
+                """
+                ...
+
+            def register_bindings(
+                self,
+                bindings: Mapping[type[t.GeneralValueType], t.GeneralValueType],
+            ) -> FlextProtocols.Result[t.GeneralValueType]:
+                """Register message-to-handler bindings.
+
+                Reflects real implementations like FlextRegistry.register_bindings()
+                which maps message types to handlers.
+                """
+                ...
+
+            @classmethod
+            def create(
+                cls,
+                dispatcher: FlextProtocols.Application.CommandBus | None = None,
+                *,
+                auto_discover_handlers: bool = False,
+            ) -> FlextProtocols.Application.Registry:
+                """Factory method to create a registry instance.
+
+                Reflects real implementations like FlextRegistry.create()
+                which provides zero-config handler registration with auto-discovery.
                 """
                 ...
 
@@ -672,9 +904,9 @@ class FlextProtocols:
                 command: t.FlexibleValue,
                 next_handler: Callable[
                     [t.FlexibleValue],
-                    FlextProtocols.Foundation.Result[TResult],
+                    FlextProtocols.Result[TResult],
                 ],
-            ) -> FlextProtocols.Foundation.Result[TResult]:
+            ) -> FlextProtocols.Result[TResult]:
                 """Process command."""
                 ...
 
@@ -698,12 +930,12 @@ class FlextProtocols:
                 data: (
                     t.GeneralValueType
                     | BaseModel
-                    | FlextProtocols.Foundation.Result[t.GeneralValueType]
+                    | FlextProtocols.Result[t.GeneralValueType]
                 ),
             ) -> (
                 t.GeneralValueType
                 | BaseModel
-                | FlextProtocols.Foundation.Result[t.GeneralValueType]
+                | FlextProtocols.Result[t.GeneralValueType]
             ):
                 """Process data and return result.
 
@@ -743,7 +975,7 @@ class FlextProtocols:
                     *args: t.FlexibleValue,
                     return_result: bool = False,
                     **context: t.FlexibleValue,
-                ) -> FlextProtocols.Foundation.Result[bool] | None:
+                ) -> FlextProtocols.Result[bool] | None:
                     """Debug log."""
                     ...
 
@@ -753,7 +985,7 @@ class FlextProtocols:
                     *args: t.FlexibleValue,
                     return_result: bool = False,
                     **context: t.FlexibleValue,
-                ) -> FlextProtocols.Foundation.Result[bool] | None:
+                ) -> FlextProtocols.Result[bool] | None:
                     """Info log."""
                     ...
 
@@ -763,7 +995,7 @@ class FlextProtocols:
                     *args: t.FlexibleValue,
                     return_result: bool = False,
                     **context: t.FlexibleValue,
-                ) -> FlextProtocols.Foundation.Result[bool] | None:
+                ) -> FlextProtocols.Result[bool] | None:
                     """Warning log."""
                     ...
 
@@ -773,7 +1005,7 @@ class FlextProtocols:
                     *args: t.FlexibleValue,
                     return_result: bool = False,
                     **context: t.FlexibleValue,
-                ) -> FlextProtocols.Foundation.Result[bool] | None:
+                ) -> FlextProtocols.Result[bool] | None:
                     """Error log."""
                     ...
 
@@ -785,7 +1017,7 @@ class FlextProtocols:
                     exc_info: bool = True,
                     return_result: bool = False,
                     **kwargs: t.FlexibleValue,
-                ) -> FlextProtocols.Foundation.Result[bool] | None:
+                ) -> FlextProtocols.Result[bool] | None:
                     """Exception log."""
                     ...
 
@@ -870,7 +1102,7 @@ class FlextProtocols:
 
             def test_connection(
                 self,
-            ) -> FlextProtocols.Foundation.Result[bool]:
+            ) -> FlextProtocols.Result[bool]:
                 """Test connection."""
                 ...
 
@@ -991,59 +1223,42 @@ class FlextProtocols:
                     ...
 
     # =========================================================================
-    # ROOT-LEVEL ALIASES (Minimize nesting for common protocols)
+    # ROOT-LEVEL ALIASES (Exhaustive - simple aliases to all definitions)
     # =========================================================================
-    # These aliases provide direct access to commonly used protocols without
-    # requiring nested namespace traversal. Both access patterns work:
-    #   - p.Result[T]  (new, concise)
-    #   - p.Foundation.Result[T]  (old, still works for backward compatibility)
+    # These aliases provide direct access to all protocols without requiring
+    # nested namespace traversal. Both access patterns work:
+    #   - p.FlextProtocols.Result[T]  (new, concise)
+    #   - p.Foundation.FlextProtocols.Result[T]  (old, still works for backward compatibility)
+    #
+    # NOTE: After ecosystem migration (Phase B) and usage audit (Phase C),
+    # unused aliases have been removed (Phase D). Only aliases with 1+ usages
+    # are kept at root level. Unused protocols are still accessible via full
+    # namespace path (e.g., p.Foundation.ResultLike, p.Infrastructure.Log).
 
-    # Foundation protocols (most commonly used)
+    # Foundation protocols
     Result = Foundation.Result
-    ResultLike = Foundation.ResultLike
-    HasModelDump = Foundation.HasModelDump
-    HasModelFields = Foundation.HasModelFields
     Model = Foundation.Model
 
     # Configuration protocols
-    Configurable = Configuration.Configurable
     Config = Configuration.Config
 
-    # Context protocols
-    Ctx = Context.Ctx
-
-    # Container protocols
-    DI = Container.DI
+    # Context and Container protocols
+    # (Ctx and DI removed - 0 usages found in audit)
 
     # Domain protocols
     Service = Domain.Service
     Repository = Domain.Repository
-    HasInvariants = Domain.Validation.HasInvariants
 
     # Application protocols
     Handler = Application.Handler
-    CommandBus = Application.CommandBus
-    Middleware = Application.Middleware
-    Processor = Application.Processor
 
     # Infrastructure protocols
-    Log = Infrastructure.Logger.Log
-    StructlogLogger = Infrastructure.Logger.StructlogLogger
-    Connection = Infrastructure.Connection
     Metadata = Infrastructure.Metadata
-
-    # Utility protocols
-    VariadicCallable = Utility.Callable
 
     # Specialized protocols
     Entry = Specialized.Entry.Base
-    MutableEntry = Specialized.Entry.Mutable
 
 
-# Alias for simplified usage
 p = FlextProtocols
-
-__all__ = [
-    "FlextProtocols",
-    "p",
-]
+p_core = FlextProtocols
+__all__ = ["FlextProtocols", "p", "p_core"]

@@ -1,6 +1,8 @@
 # Error Handling Guide
 
-Comprehensive guide to error handling strategies in FLEXT-Core using the railway-oriented programming pattern.
+**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Railway-Oriented Programming
+
+Comprehensive guide to error handling strategies in FLEXT-Core using the railway-oriented programming pattern with FlextResult[T].
 
 ## Overview
 
@@ -558,3 +560,24 @@ Error handling in FLEXT-Core:
 - ✅ Never use exceptions for normal control flow
 
 This approach makes error handling explicit, composable, and maintainable.
+
+## Next Steps
+
+1. **Railway Patterns**: Deep dive into [Railway-Oriented Programming](./railway-oriented-programming.md) for advanced composition
+2. **Decorators**: Learn about [Error Handling with Decorators](./railway-oriented-programming.md#decorator-composition-with-railway-pattern) for automatic error recovery
+3. **Testing**: See [Testing Guide](./testing.md) for testing error scenarios without mocks
+4. **Services**: Check [Service Patterns](./service-patterns.md) for service-level error handling
+5. **API Reference**: Review [FlextResult API](../api-reference/foundation.md#flextresult) for complete method reference
+
+## See Also
+
+- [Railway-Oriented Programming](./railway-oriented-programming.md) - Complete ROP patterns and composition
+- [Testing Guide](./testing.md) - Testing error scenarios with real implementations
+- [Service Patterns](./service-patterns.md) - Error handling in domain services
+- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Error handling with DI
+- [API Reference: FlextResult](../api-reference/foundation.md#flextresult) - Complete API documentation
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+
+---
+
+**Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for comprehensive test cases demonstrating all error handling patterns.

@@ -43,7 +43,7 @@ class FlextModelsValidation:
             *rules: Business rule validation functions
 
         Returns:
-            Foundation.Result: Validated model or accumulated errors
+            r[t.GeneralValueType]: Validated model or accumulated errors
 
         Example:
             ```python
@@ -86,7 +86,7 @@ class FlextModelsValidation:
             field_validators: Field name to validator mapping
 
         Returns:
-            Foundation.Result: Validated model or accumulated errors
+            r[t.GeneralValueType]: Validated model or accumulated errors
 
         Example:
             ```python

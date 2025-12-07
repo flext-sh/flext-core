@@ -4,6 +4,14 @@ Demonstrates handler registration, batch operations, dispatcher patterns,
 and CQRS integration using Python 3.13+ strict patterns with PEP 695
 type aliases and collections.abc.
 
+**Expected Output:**
+- Handler registration (single and batch)
+- Command dispatch with handler resolution
+- Query dispatch patterns
+- Protocol-based handler compatibility
+- CQRS pattern implementation
+- Registry and dispatcher integration
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

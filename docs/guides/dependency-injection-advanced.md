@@ -1,6 +1,6 @@
 # Advanced Dependency Injection with FlextContainer
 
-**Status**: Production Ready | **Version**: 0.9.9 | **Type-Safety**: Full Generic Support
+**Status**: Production Ready | **Version**: 0.10.0 | **Type-Safety**: Full Generic Support
 
 FlextContainer is FLEXT's type-safe dependency injection container providing centralized service management, singleton pattern enforcement, and advanced DI features integrated with the FlextResult railway pattern.
 
@@ -37,7 +37,7 @@ container2 = FlextContainer.get_global()
 assert container1 is container2  # True - same instance
 ```
 
-### Type-Safe Resolution (v0.9.9+)
+### Type-Safe Resolution (v0.10.0+)
 
 Modern FLEXT provides **generic type preservation** for safe service retrieval:
 
@@ -636,6 +636,231 @@ result: FlextResult[FlextLogger] = container.get_typed("logger", FlextLogger)
 result: FlextResult[object] = container.get("logger")
 ```
 
+## FlextDispatcher Reliability Settings
+
+FlextDispatcher provides configurable reliability patterns including circuit breaker, rate limiting, retry policies, and timeout enforcement. These settings are configured via FlextConfig and apply to all dispatcher operations.
+
+### Configuration via FlextConfig
+
+```python
+from flext_core import FlextConfig, FlextDispatcher
+
+# Configure dispatcher reliability settings
+class AppConfig(FlextConfig):
+    """Application configuration with dispatcher reliability settings."""
+
+    # Circuit Breaker Settings
+    circuit_breaker_threshold: int = 5  # Failures before opening circuit
+    circuit_breaker_recovery_timeout: float = 60.0  # Seconds before retry
+    circuit_breaker_success_threshold: int = 2  # Successes to close circuit
+
+    # Rate Limiting Settings
+    rate_limit_max_requests: int = 100  # Max requests per window
+    rate_limit_window_seconds: float = 60.0  # Time window in seconds
+
+    # Retry Policy Settings
+    max_retry_attempts: int = 3  # Maximum retry attempts
+    retry_delay: float = 1.0  # Base delay between retries (seconds)
+
+    # Timeout Settings
+    dispatcher_timeout_seconds: float = 30.0  # Default operation timeout
+    enable_timeout_executor: bool = True  # Use executor for timeout enforcement
+    executor_workers: int = 4  # Thread pool workers for timeout executor
+
+# Initialize dispatcher with configuration
+config = AppConfig()
+dispatcher = FlextDispatcher()  # Uses config via FlextConfig singleton
+```
+
+### Circuit Breaker Configuration
+
+Circuit breaker prevents cascading failures by temporarily blocking requests when failures exceed threshold:
+
+```python
+from flext_core import FlextConfig, FlextDispatcher, r
+
+class ConfigWithCircuitBreaker(FlextConfig):
+    """Configuration with circuit breaker protection."""
+    circuit_breaker_threshold: int = 5  # Open circuit after 5 failures
+    circuit_breaker_recovery_timeout: float = 60.0  # Wait 60s before retry
+    circuit_breaker_success_threshold: int = 2  # Close after 2 successes
+
+config = ConfigWithCircuitBreaker()
+dispatcher = FlextDispatcher()
+
+# Dispatcher automatically applies circuit breaker to all operations
+result = dispatcher.dispatch(CreateUserCommand(name="Alice"))
+if result.is_failure and "circuit breaker" in result.error.lower():
+    print("Circuit breaker is open - service temporarily unavailable")
+```
+
+### Rate Limiting Configuration
+
+Rate limiting prevents overload by restricting requests per time window:
+
+```python
+from flext_core import FlextConfig, FlextDispatcher
+
+class ConfigWithRateLimiting(FlextConfig):
+    """Configuration with rate limiting."""
+    rate_limit_max_requests: int = 100  # Max 100 requests
+    rate_limit_window_seconds: float = 60.0  # Per 60 seconds
+
+config = ConfigWithRateLimiting()
+dispatcher = FlextDispatcher()
+
+# Dispatcher enforces rate limits automatically
+for i in range(150):  # More than rate limit
+    result = dispatcher.dispatch(GetUserQuery(user_id=str(i)))
+    if result.is_failure and "rate limit" in result.error.lower():
+        print(f"Rate limit exceeded at request {i}")
+        break
+```
+
+### Retry Policy Configuration
+
+Retry policy automatically retries failed operations with configurable backoff:
+
+```python
+from flext_core import FlextConfig, FlextDispatcher
+
+class ConfigWithRetry(FlextConfig):
+    """Configuration with retry policy."""
+    max_retry_attempts: int = 3  # Retry up to 3 times
+    retry_delay: float = 1.0  # 1 second delay between retries
+
+config = ConfigWithRetry()
+dispatcher = FlextDispatcher()
+
+# Dispatcher automatically retries on failure
+result = dispatcher.dispatch(ProcessOrderCommand(order_id="123"))
+# If first attempt fails, dispatcher automatically retries up to 3 times
+# with 1 second delay between attempts
+```
+
+### Timeout Configuration
+
+Timeout enforcement prevents operations from hanging indefinitely:
+
+```python
+from flext_core import FlextConfig, FlextDispatcher
+
+class ConfigWithTimeout(FlextConfig):
+    """Configuration with timeout enforcement."""
+    dispatcher_timeout_seconds: float = 30.0  # 30 second timeout
+    enable_timeout_executor: bool = True  # Use executor for timeout
+    executor_workers: int = 4  # Thread pool size
+
+config = ConfigWithTimeout()
+dispatcher = FlextDispatcher()
+
+# Dispatcher enforces timeout on all operations
+result = dispatcher.dispatch(LongRunningCommand(data=large_data))
+if result.is_failure and "timeout" in result.error.lower():
+    print("Operation exceeded timeout limit")
+
+# Per-operation timeout override
+result = dispatcher.dispatch(
+    LongRunningCommand(data=large_data),
+    timeout_override=60  # Override default timeout for this operation
+)
+```
+
+### Complete Reliability Configuration Example
+
+```python
+from flext_core import FlextConfig, FlextDispatcher, r
+
+class ProductionConfig(FlextConfig):
+    """Production configuration with comprehensive reliability settings."""
+
+    # Circuit Breaker: Fail fast on repeated failures
+    circuit_breaker_threshold: int = 10
+    circuit_breaker_recovery_timeout: float = 120.0
+    circuit_breaker_success_threshold: int = 3
+
+    # Rate Limiting: Prevent overload
+    rate_limit_max_requests: int = 1000
+    rate_limit_window_seconds: float = 60.0
+
+    # Retry Policy: Automatic recovery
+    max_retry_attempts: int = 5
+    retry_delay: float = 2.0
+
+    # Timeout: Prevent hanging operations
+    dispatcher_timeout_seconds: float = 45.0
+    enable_timeout_executor: bool = True
+    executor_workers: int = 8
+
+# Initialize with production settings
+config = ProductionConfig()
+dispatcher = FlextDispatcher()
+
+# All operations use these reliability settings
+def process_with_reliability(command):
+    """Process command with full reliability protection."""
+    return dispatcher.dispatch(command)
+    # Automatically includes:
+    # - Circuit breaker (opens after 10 failures)
+    # - Rate limiting (max 1000 requests/minute)
+    # - Retry policy (up to 5 attempts with 2s delay)
+    # - Timeout enforcement (45s limit)
+```
+
+### Environment-Based Configuration
+
+Configure reliability settings per environment:
+
+```python
+from flext_core import FlextConfig
+import os
+
+class Config(FlextConfig):
+    """Environment-aware configuration."""
+
+    @property
+    def circuit_breaker_threshold(self) -> int:
+        """Different thresholds per environment."""
+        env = os.getenv("ENVIRONMENT", "development")
+        if env == "production":
+            return 10
+        elif env == "staging":
+            return 5
+        else:
+            return 2  # Development: fail fast
+
+    @property
+    def max_retry_attempts(self) -> int:
+        """Different retry counts per environment."""
+        env = os.getenv("ENVIRONMENT", "development")
+        if env == "production":
+            return 5
+        else:
+            return 2  # Development: fewer retries
+```
+
+### Monitoring Reliability Metrics
+
+Access dispatcher metrics to monitor reliability patterns:
+
+```python
+from flext_core import FlextDispatcher
+
+dispatcher = FlextDispatcher()
+
+# Execute operations
+for _ in range(100):
+    dispatcher.dispatch(SomeCommand())
+
+# Check metrics
+metrics = dispatcher.get_metrics()
+print(f"Total executions: {metrics.get('total_executions', 0)}")
+print(f"Circuit breaker opens: {metrics.get('circuit_breaker_opens', 0)}")
+print(f"Rate limit hits: {metrics.get('rate_limit_hits', 0)}")
+print(f"Retry attempts: {metrics.get('retry_attempts', 0)}")
+print(f"Timeout executions: {metrics.get('timeout_executions', 0)}")
+```
+
 ## Architecture Integration
 
 **Layer**: Layer 1 (Foundation)
@@ -664,11 +889,20 @@ Layer 0: FlextConstants, t
 5. **Lifecycle Management**: Can manage service initialization and cleanup
 6. **Testable**: Easy to substitute mock services for testing
 
+## Next Steps
+
+1. **Reliability Settings**: Review dispatcher reliability configuration above
+2. **Service Patterns**: Explore [Service Patterns](./service-patterns.md) for service-level DI
+3. **Railway Pattern**: See [Railway-Oriented Programming](./railway-oriented-programming.md) for result handling
+4. **Dispatcher**: Check [API Reference: FlextDispatcher](../api-reference/application.md#flextdispatcher) for complete API
+
 ## See Also
 
-- [Railway-Oriented Programming](./railway-oriented-programming.md)
-- [Architecture Overview](../architecture/overview.md)
-- [API Reference: FlextContainer](../api-reference/foundation.md#flextcontainer)
+- [Railway-Oriented Programming](./railway-oriented-programming.md) - Result handling with DI
+- [Service Patterns](./service-patterns.md) - Service-level dependency injection
+- [Architecture Overview](../architecture/overview.md) - System architecture
+- [API Reference: FlextContainer](../api-reference/foundation.md#flextcontainer) - Complete container API
+- [API Reference: FlextDispatcher](../api-reference/application.md#flextdispatcher) - Dispatcher reliability API
 - **FLEXT CLAUDE.md**: Development workflow and patterns
 
 ---

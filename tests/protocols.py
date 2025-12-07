@@ -44,6 +44,10 @@ class TestsFlextProtocols(FlextTestsProtocols):
     # Flext-core-specific protocols can be added here if needed.
 
 
+# Runtime alias for simplified usage
+p = TestsFlextProtocols
+
 __all__ = [
     "TestsFlextProtocols",
+    "p",
 ]

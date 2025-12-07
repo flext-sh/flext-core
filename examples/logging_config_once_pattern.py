@@ -3,9 +3,14 @@
 Demonstrates how to log configuration ONCE without it repeating
 in all subsequent log messages.
 
+**Expected Output:**
+- Initial configuration logging demonstration
+- Subsequent log messages without repeated configuration
+- Idempotent logging configuration pattern
+- Context-aware logging setup
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations

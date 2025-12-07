@@ -3,6 +3,14 @@
 Shows command and query handlers with type safety and pipeline execution.
 Uses configuration-based architecture and error handling patterns.
 
+**Expected Output:**
+- Handler base class implementation patterns
+- Command handler registration and execution
+- Query handler patterns and response handling
+- Validation hooks and preprocessing
+- Pipeline execution with error handling
+- Handler-to-dispatcher integration
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

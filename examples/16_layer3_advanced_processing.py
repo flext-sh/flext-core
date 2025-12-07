@@ -4,6 +4,22 @@ Showcases the dispatcher processor API for batch, parallel, timeout-aware,
 and fallback-driven execution built on top of the CQRS dispatcher pipeline.
 Each operation returns ``FlextResult`` to keep flows composable and explicit
 about failures.
+
+**Expected Output:**
+- Basic processor registration and execution
+- Batch processing with configurable batch sizes
+- Parallel processing with worker pools
+- Timeout enforcement for long-running operations
+- Fallback chains for reliability
+- Circuit breaker patterns (via FlextConfig)
+- Rate limiting demonstrations (via FlextConfig)
+
+**Reliability Configuration:**
+Dispatcher reliability (circuit breaker, rate limiting, retry, timeout) is configured
+via FlextConfig. See dependency-injection-advanced.md guide for configuration examples.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

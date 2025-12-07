@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextTypes
 from flext_core.result import r
-from flext_tests.protocols import p
+
 
 TTestResult = TypeVar("TTestResult")
 TTestModel = TypeVar("TTestModel")

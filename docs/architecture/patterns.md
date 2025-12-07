@@ -1,5 +1,7 @@
 # Architecture Patterns
 
+**Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
+
 Common architectural patterns used in FLEXT-Core and best practices for applying them.
 
 ## Railway-Oriented Programming
@@ -423,3 +425,39 @@ Key patterns in FLEXT-Core:
 - ✅ **Factory/Adapter**: Object creation and adaptation
 
 Use these patterns to build maintainable, scalable FLEXT-Core applications.
+
+## Next Steps
+
+1. **Architecture Overview**: See [Architecture Overview](./overview.md) for layer structure
+2. **Clean Architecture**: Review [Clean Architecture](./clean-architecture.md) for dependency rules
+3. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for handler patterns
+4. **Railway Patterns**: Check [Railway-Oriented Programming Guide](../guides/railway-oriented-programming.md) for detailed examples
+5. **Service Patterns**: Review [Service Patterns Guide](../guides/service-patterns.md) for domain services
+
+## See Also
+
+- [Architecture Overview](./overview.md) - Visual layer topology and execution flows
+- [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
+- [CQRS Architecture](./cqrs.md) - Handler and dispatcher patterns
+- [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - Result composition patterns
+- [Service Patterns Guide](../guides/service-patterns.md) - Domain service implementation
+- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - DI container patterns
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+
+## Next Steps
+
+1. **Architecture Overview**: See [Architecture Overview](./overview.md) for layer structure
+2. **Clean Architecture**: Review [Clean Architecture](./clean-architecture.md) for dependency rules
+3. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for handler patterns
+4. **Railway Patterns**: Check [Railway-Oriented Programming Guide](../guides/railway-oriented-programming.md) for detailed examples
+5. **Service Patterns**: Review [Service Patterns Guide](../guides/service-patterns.md) for domain services
+
+## See Also
+
+- [Architecture Overview](./overview.md) - Visual layer topology and execution flows
+- [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
+- [CQRS Architecture](./cqrs.md) - Handler and dispatcher patterns
+- [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - Result composition patterns
+- [Service Patterns Guide](../guides/service-patterns.md) - Domain service implementation
+- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - DI container patterns
+- **FLEXT CLAUDE.md**: Architecture principles and development workflow

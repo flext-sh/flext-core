@@ -10,8 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
+import sys
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Annotated, cast
+from typing import Annotated, Self, cast
 
 from pydantic import Field, computed_field
 
@@ -201,6 +203,65 @@ class FlextRegistry(x):
             idempotent_registration=True,
         )
         self._registered_keys: set[str] = set()
+
+    # ------------------------------------------------------------------
+    # Factory Method with Auto-Discovery
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def create(
+        cls,
+        dispatcher: p.Application.CommandBus | None = None,
+        *,
+        auto_discover_handlers: bool = False,
+    ) -> Self:
+        """Factory method to create a new FlextRegistry instance.
+
+        This is the preferred way to instantiate FlextRegistry. It provides
+        a clean factory pattern that each class owns, respecting Clean
+        Architecture principles where higher layers create their own instances.
+
+        Auto-discovery of handlers discovers all functions marked with
+        @h.handler() decorator in the calling module and auto-registers them
+        with built-in deduplication. This enables zero-config handler
+        registration for services with idempotent tracking.
+
+        Args:
+            dispatcher: Optional CommandBus instance (defaults to FlextDispatcher)
+            auto_discover_handlers: If True, scan calling module for @handler()
+                decorated functions and auto-register them with deduplication.
+                Default: False.
+
+        Returns:
+            FlextRegistry instance with auto-discovered handlers if enabled.
+
+        Example:
+            >>> registry = FlextRegistry.create(auto_discover_handlers=True)
+            >>> result = registry.register_handler(create_user_handler)
+
+        """
+        instance = cls(dispatcher)
+
+        if auto_discover_handlers:
+            # Get the caller's frame to discover handlers in calling module
+            frame = inspect.currentframe()
+            if frame and frame.f_back:
+                caller_globals = frame.f_back.f_globals
+                # Get module name from globals
+                module_name = caller_globals.get("__name__", "__main__")
+                # Get module object from globals
+                caller_module = sys.modules.get(module_name)
+                if caller_module:
+                    # Scan module for handler-decorated functions
+                    handlers = h.Discovery.scan_module(caller_module)
+                    for _handler_name, handler_func, _handler_config in handlers:
+                        # Get actual handler from module
+                        if handler_func and callable(handler_func):
+                            # Register handler with deduplication built-in
+                            # Deduplication happens in register_handler() via _registered_keys
+                            _ = instance.register_handler(handler_func)
+
+        return instance
 
     @staticmethod
     def _safe_get_handler_mode(

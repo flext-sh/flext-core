@@ -19,13 +19,11 @@ from flext_core.constants import c
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+from flext_core.utilities import u
 
 
 def _generate_query_id() -> str:
-    """Generate query ID using lazy import to avoid circular dependency."""
-    # Lazy import to avoid circular dependency
-    from flext_core.utilities import u  # noqa: PLC0415
-
+    """Generate query ID."""
     return u.Generators.generate_query_id()
 
 
@@ -177,9 +175,6 @@ class FlextModelsCqrs:
             pagination_cls: type[FlextModelsCqrs.Pagination],
         ) -> FlextModelsCqrs.Pagination:
             """Convert dict to Pagination instance."""
-            # Lazy import to avoid circular dependency
-            from flext_core.utilities import u  # noqa: PLC0415
-
             page = u.Parser.convert(
                 u.Mapper.get(v, "page", default=c.Pagination.DEFAULT_PAGE_NUMBER)
                 or c.Pagination.DEFAULT_PAGE_NUMBER,
@@ -217,9 +212,6 @@ class FlextModelsCqrs:
                 )
                 # .get() returns GeneralValueType | None, pass directly
                 # (None is valid GeneralValueType)
-                # Lazy import to avoid circular dependency
-                from flext_core.utilities import u  # noqa: PLC0415
-
                 page = u.Parser.convert(
                     u.Mapper.get(
                         v_dict,
@@ -267,9 +259,6 @@ class FlextModelsCqrs:
                 if FlextRuntime.is_dict_like(pagination_data):
                     pagination_dict = pagination_data
                     # Use Parser.convert() for concise type conversion
-                    # Lazy import to avoid circular dependency
-                    from flext_core.utilities import u  # noqa: PLC0415
-
                     page = u.Parser.convert(
                         u.Mapper.get(
                             pagination_dict,
@@ -298,9 +287,6 @@ class FlextModelsCqrs:
                     }
                 # Fast fail: query_id must be str or None
                 query_id_raw = query_payload.get("query_id")
-                # Lazy import to avoid circular dependency
-                from flext_core.utilities import u  # noqa: PLC0415
-
                 query_id: str = (
                     u.Generators.generate_query_id()
                     if query_id_raw is None
@@ -419,9 +405,6 @@ class FlextModelsCqrs:
             def __init__(self, handler_type: c.Cqrs.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
                 super().__init__()
-                # Lazy import to avoid circular dependency
-                from flext_core.utilities import u  # noqa: PLC0415
-
                 handler_short_id = u.Generators.generate_short_id(8)
                 self._data: t.Types.ConfigurationDict = {
                     "handler_type": handler_type,
