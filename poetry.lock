@@ -2690,15 +2690,15 @@ files = [
 
 [[package]]
 name = "types-docker"
-version = "7.1.0.20251125"
+version = "7.1.0.20251202"
 description = "Typing stubs for docker"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"typings\""
 files = [
-    {file = "types_docker-7.1.0.20251125-py3-none-any.whl", hash = "sha256:1c0ca37ce0d3d7a08afdb8912fc5473f87b4b22d5e5c241aab4c569b3fba5385"},
-    {file = "types_docker-7.1.0.20251125.tar.gz", hash = "sha256:54c0665f25f40e2040d1cd6b3349fe12440465493569b2b94400b5cd77d35f59"},
+    {file = "types_docker-7.1.0.20251202-py3-none-any.whl", hash = "sha256:f8295e284b31319afe0457b768b5c26508c61ddedab4adcb754dfbb1d23433a1"},
+    {file = "types_docker-7.1.0.20251202.tar.gz", hash = "sha256:eeaead73e4b1de072f812a1fa70bfbe0cce23004e660b764d1a57cf22f6e1d00"},
 ]
 
 [package.dependencies]
