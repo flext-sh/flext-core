@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import os
 import threading
-import warnings
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, Self
@@ -535,18 +534,11 @@ class FlextConfig(BaseSettings, FlextRuntime):
 
         def decorator(cls: type[T_Settings]) -> type[T_Settings]:
             """Register the configuration class while preserving type."""
-            # Validate env_file usage (warning, not error)
-            if hasattr(cls, "model_config"):
-                mc = cls.model_config
-                env_file_value = mc.get("env_file")
-                if env_file_value == ".env":
-                    # Use getattr to safely access __name__ attribute
-                    cls_name: str = getattr(cls, "__name__", "Unknown")
-                    warnings.warn(
-                        f"{cls_name} uses hardcoded '.env'. Consider using FlextConfig.resolve_env_file().",
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
+            # Note: Previous validation for env_file=".env" was removed because
+            # it cannot distinguish between:
+            # 1. Hardcoded ".env" (incorrect)
+            # 2. FlextConfig.resolve_env_file() returning ".env" (correct)
+            # The documentation warns about proper usage of resolve_env_file().
             # Register in namespace registry (namespace stored in registry key, not on class)
             FlextConfig._namespace_registry[namespace] = cls
             return cls

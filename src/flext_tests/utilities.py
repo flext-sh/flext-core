@@ -1864,13 +1864,13 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def is_any_type(node: ast.expr) -> bool:
-                """Check if an annotation node represents Any type.
+                """Check if an annotation node represents the typing.Any type.
 
                 Args:
                     node: AST annotation node
 
                 Returns:
-                    True if node represents Any type
+                    True if node represents typing.Any type annotation
 
                 """
                 return (

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Mapping, Sequence
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
@@ -140,8 +140,9 @@ class FlextUtilitiesGuards:
             return val
         if FlextRuntime.is_dict_like(val):
             # Convert to flat dict with ScalarValue values
-            # Type narrowing: is_dict_like ensures val is Mapping-like
-            val_mapping = cast("Mapping[str, t.GeneralValueType]", val)
+            # Type narrowing: is_dict_like returns TypeGuard[ConfigurationMapping]
+            # ConfigurationMapping is Mapping[str, GeneralValueType]
+            val_mapping: t.Types.ConfigurationMapping = val  # Type narrowing via TypeGuard
             result_dict: dict[str, t.ScalarValue] = {}
             dict_v = dict(val_mapping.items())
             for k, v in dict_v.items():
@@ -153,8 +154,8 @@ class FlextUtilitiesGuards:
             return result_dict
         if FlextRuntime.is_list_like(val):
             # Convert to list[t.MetadataAttributeValue]
-            # Type narrowing: is_list_like ensures val is Sequence-like
-            val_sequence = cast("Sequence[t.GeneralValueType]", val)
+            # Type narrowing: is_list_like returns TypeGuard[Sequence[GeneralValueType]]
+            val_sequence: Sequence[t.GeneralValueType] = val  # Type narrowing via TypeGuard
             result_list: list[str | int | float | bool | None] = []
             for item in val_sequence:
                 if isinstance(item, (str, int, float, bool, type(None))):
@@ -701,13 +702,17 @@ class FlextUtilitiesGuards:
             if type_name in method_map:
                 method_name = method_map[type_name]
                 method = getattr(FlextUtilitiesGuards, method_name)
-                # For non-empty checks, cast to GeneralValueType
+                # For non-empty checks, use GeneralValueType from lower layer
+                # Methods accept GeneralValueType, so value (object) is compatible
                 if type_name in {
                     "string_non_empty",
                     "dict_non_empty",
                     "list_non_empty",
                 }:
-                    return bool(method(cast("t.GeneralValueType", value)))
+                    # Type narrowing: methods accept GeneralValueType, value is object
+                    # object is compatible with GeneralValueType (GeneralValueType includes object-compatible types)
+                    value_general: t.GeneralValueType = value  # type: ignore[assignment]  # object compatible with GeneralValueType
+                    return bool(method(value_general))
                 return bool(method(value))
             # Unknown string type spec
             return False

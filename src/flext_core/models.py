@@ -160,6 +160,17 @@ class FlextModels:
     class Config:
         """Configuration namespace with real inheritance classes."""
 
+        # Domain model configuration - moved from constants.py
+        # constants.py cannot import ConfigDict, so this belongs here
+        DOMAIN_MODEL_CONFIG = FlextModelsConfig.DOMAIN_MODEL_CONFIG
+        """Domain model configuration defaults.
+        
+        Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because
+        constants.py cannot import ConfigDict from pydantic.
+        
+        Use m.Config.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
+        """
+
         class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
             """Processing request config - real inheritance."""
 

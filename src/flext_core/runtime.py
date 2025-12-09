@@ -351,7 +351,7 @@ class FlextRuntime:
         This is the central conversion function for type safety.
 
         Args:
-            val: Any value to normalize (accepts object for flexibility with generics)
+            val: Value to normalize (accepts object for flexibility with generics)
 
         Returns:
             Normalized value compatible with GeneralValueType

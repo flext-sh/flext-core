@@ -1,11 +1,12 @@
 """Models for flext-core tests.
 
-Provides TestsFlextModels, extending FlextTestsModels with flext-core-specific models.
+Provides TestsFlextModels using composition with FlextTestsModels and FlextModels.
 All generic test models come from flext_tests.
 
 Architecture:
 - FlextTestsModels (flext_tests) = Generic models for all FLEXT projects
-- TestsFlextModels (tests/) = flext-core-specific models extending FlextTestsModels
+- FlextModels (flext_core) = Core domain models
+- TestsFlextModels (tests/) = flext-core-specific models using composition
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,22 +21,32 @@ from flext_core import FlextModels, FlextProtocols, FlextTypes
 from flext_tests.models import FlextTestsModels
 
 
-class TestsFlextModels(FlextTestsModels):
-    """Models for flext-core tests - extends FlextTestsModels.
+class TestsFlextModels:
+    """Models for flext-core tests - uses composition with FlextTestsModels.
 
-    Architecture: Extends FlextTestsModels with flext-core-specific model definitions.
-    All generic models from FlextTestsModels are available through inheritance.
+    Architecture: Uses composition (not inheritance) with FlextTestsModels and FlextModels
+    for flext-core-specific model definitions.
+
+    Access patterns:
+    - TestsFlextModels.Tests.* = flext_tests test models (via composition)
+    - TestsFlextModels.Core.* = flext-core-specific test models
+    - TestsFlextModels.Entity, .Value, etc. = FlextModels domain models (via composition)
 
     Rules:
-    - NEVER redeclare models from FlextTestsModels
-    - Only flext-core-specific models allowed
-    - All generic models come from FlextTestsModels
+    - Use composition, not inheritance (FlextTestsModels deprecates subclassing)
+    - flext-core-specific models go in Core namespace
+    - Generic models accessed via Tests namespace
     """
 
-    # NOTE: FlextTestsModels extends FlextModels and exposes:
-    # - Entity, Value, AggregateRoot, DomainEvent, Collections
-    # - Docker namespace with ContainerInfo, ContainerConfig, ContainerState, ComposeConfig
-    # These are available through inheritance.
+    # Composition: expose FlextTestsModels namespaces
+    Tests = FlextTestsModels.Tests
+
+    # Composition: expose FlextModels domain model classes
+    Entity = FlextModels.Entity
+    Value = FlextModels.Value
+    AggregateRoot = FlextModels.AggregateRoot
+    DomainEvent = FlextModels.DomainEvent
+    Collections = FlextModels.Collections
 
     # Type aliases for domain test input
     type DomainInputValue = (
@@ -46,85 +57,101 @@ class TestsFlextModels(FlextTestsModels):
         FlextTypes.GeneralValueType | type[FlextTypes.GeneralValueType]
     )
 
-    class DomainTestEntity(FlextModels.Entity):
-        """Test entity for domain tests."""
+    class Core:
+        """flext-core-specific test models namespace."""
 
-        name: str
-        value: int
+        class DomainTestEntity(FlextModels.Entity):
+            """Test entity for domain tests."""
 
-    class DomainTestValue(FlextModels.Value):
-        """Test value object for domain tests."""
+            name: str
+            value: int
 
-        data: str
-        count: int
+        class DomainTestValue(FlextModels.Value):
+            """Test value object for domain tests."""
 
-    class CustomEntity:
-        """Custom entity with configurable ID attribute."""
+            data: str
+            count: int
 
-        def __init__(self, custom_id: str | None = None) -> None:
-            """Initialize custom entity with ID."""
-            self.custom_id = custom_id
+        class CustomEntity:
+            """Custom entity with configurable ID attribute."""
 
-    class SimpleValue:
-        """Simple value object without model_dump."""
+            def __init__(self, custom_id: str | None = None) -> None:
+                """Initialize custom entity with ID."""
+                self.custom_id = custom_id
 
-        def __init__(self, data: str) -> None:
-            """Initialize simple value object."""
-            self.data = data
+        class SimpleValue:
+            """Simple value object without model_dump."""
 
-    class ComplexValue:
-        """Value object with non-hashable attributes."""
+            def __init__(self, data: str) -> None:
+                """Initialize simple value object."""
+                self.data = data
 
-        def __init__(self, data: str, items: list[str]) -> None:
-            """Initialize complex value with non-hashable items."""
-            self.data = data
-            self.items = items  # list is not hashable
+        class ComplexValue:
+            """Value object with non-hashable attributes."""
 
-    class NoDict:
-        """Object without __dict__, using __slots__."""
+            def __init__(self, data: str, items: list[str]) -> None:
+                """Initialize complex value with non-hashable items."""
+                self.data = data
+                self.items = items  # list is not hashable
 
-        __slots__ = ("value",)
+        class NoDict:
+            """Object without __dict__, using __slots__."""
 
-        def __init__(self, value: int) -> None:
-            """Initialize object without __dict__."""
-            object.__setattr__(self, "value", value)
+            __slots__ = ("value",)
 
-        def __repr__(self) -> str:
-            """Return string representation."""
-            return f"NoDict({getattr(self, 'value', None)})"
+            def __init__(self, value: int) -> None:
+                """Initialize object without __dict__."""
+                object.__setattr__(self, "value", value)
 
-    class MutableObj:
-        """Mutable object for immutability testing."""
+            def __repr__(self) -> str:
+                """Return string representation."""
+                return f"NoDict({getattr(self, 'value', None)})"
 
-        def __init__(self, value: int) -> None:
-            """Initialize mutable object."""
-            self.value = value
+        class MutableObj:
+            """Mutable object for immutability testing."""
 
-    class ImmutableObj:
-        """Immutable object with custom __setattr__."""
+            def __init__(self, value: int) -> None:
+                """Initialize mutable object."""
+                self.value = value
 
-        _frozen: bool = True
+        class ImmutableObj:
+            """Immutable object with custom __setattr__."""
 
-        def __init__(self, value: int) -> None:
-            """Initialize immutable object."""
-            object.__setattr__(self, "value", value)
+            _frozen: bool = True
 
-        def __setattr__(self, name: str, value: object) -> None:
-            """Prevent attribute setting if frozen."""
-            if self._frozen:
-                msg = "Object is frozen"
-                raise AttributeError(msg)
-            object.__setattr__(self, name, value)
+            def __init__(self, value: int) -> None:
+                """Initialize immutable object."""
+                object.__setattr__(self, "value", value)
 
-    class NoConfigNoSetattr:
-        """Object without model_config or __setattr__."""
+            def __setattr__(self, name: str, value: object) -> None:
+                """Prevent attribute setting if frozen."""
+                if self._frozen:
+                    msg = "Object is frozen"
+                    raise AttributeError(msg)
+                object.__setattr__(self, name, value)
 
-    class NoSetattr:
-        """Object without __setattr__."""
+        class NoConfigNoSetattr:
+            """Object without model_config or __setattr__."""
 
-    # ParseOptions reference for string parser tests
-    class ParseOptions(FlextModels.Collections.ParseOptions):
-        """Parse options - real inheritance."""
+        class NoSetattr:
+            """Object without __setattr__."""
+
+        # ParseOptions reference for string parser tests
+        class ParseOptions(FlextModels.Collections.ParseOptions):
+            """Parse options - real inheritance."""
+
+    # Backward compatibility: expose Core classes at root level
+    DomainTestEntity = Core.DomainTestEntity
+    DomainTestValue = Core.DomainTestValue
+    CustomEntity = Core.CustomEntity
+    SimpleValue = Core.SimpleValue
+    ComplexValue = Core.ComplexValue
+    NoDict = Core.NoDict
+    MutableObj = Core.MutableObj
+    ImmutableObj = Core.ImmutableObj
+    NoConfigNoSetattr = Core.NoConfigNoSetattr
+    NoSetattr = Core.NoSetattr
+    ParseOptions = Core.ParseOptions
 
     @dataclass(frozen=True, slots=True)
     class ParseDelimitedCase:

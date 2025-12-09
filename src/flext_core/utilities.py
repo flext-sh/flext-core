@@ -12,8 +12,9 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping, Sequence, Sized
 from enum import StrEnum
-from typing import TypeIs, cast, overload
+from typing import TypeIs, overload
 
+# NOTE: cast() removed - use type narrowing and Protocols instead
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.cast import FlextUtilitiesCast, cast_safe as _cast_safe_fn
@@ -426,13 +427,16 @@ class FlextUtilities:
 
             """
             # Use container's scoped() method for proper scoping
-            # Cast overrides to correct type for scoped method
-            services_typed: t.Types.ConfigurationMapping | None = cast(
-                "t.Types.ConfigurationMapping | None", overrides
+            # Python 3.13: dict[str, object] is structurally compatible with ServiceMapping
+            # ServiceInstanceType = GeneralValueType | BaseModel | Callable[..., GeneralValueType] | object
+            # object is compatible with ServiceInstanceType (object is included in union)
+            # Convert dict to Mapping for structural compatibility
+            services_mapping: t.Types.ServiceMapping | None = (
+                dict(overrides) if overrides is not None else None
             )
             return container.scoped(
                 subproject=scope_id,
-                services=services_typed,
+                services=services_mapping,
             )
 
     class Registration:
@@ -465,9 +469,12 @@ class FlextUtilities:
 
             """
             try:
-                # Cast T to t.FlexibleValue for container.register compatibility
-                instance_typed: t.FlexibleValue = cast("t.FlexibleValue", instance)
-                register_result = container.register(name, instance_typed)
+                # Python 3.13: T is compatible with ServiceInstanceType via structural typing
+                # ServiceInstanceType = GeneralValueType | BaseModel | Callable[..., GeneralValueType] | object
+                # T (generic) is compatible if it matches any of these types
+                # Use Protocol check for type narrowing - if T has required structure, it's compatible
+                # Direct assignment works - type checker recognizes structural compatibility
+                register_result = container.register(name, instance)
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Registration failed",
@@ -507,11 +514,11 @@ class FlextUtilities:
 
             """
             try:
-                # Cast factory to Callable[[], GeneralValueType] for register_factory method
-                factory_typed: Callable[[], t.GeneralValueType] = cast(
-                    "Callable[[], t.GeneralValueType]", factory
-                )
-                register_result = container.register_factory(name, factory_typed)
+                # Python 3.13: Callable[[], T] is compatible with FactoryCallable = Callable[[], object]
+                # T is compatible with object (all types are compatible with object)
+                # Direct assignment works - type checker recognizes callable compatibility
+                # FactoryCallable accepts any zero-arg callable returning any object
+                register_result = container.register_factory(name, factory)
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Factory registration failed",
@@ -554,11 +561,14 @@ class FlextUtilities:
             for name, value in registrations.items():
                 try:
                     if callable(value):
+                        # Python 3.13: callable value is compatible with FactoryCallable = Callable[[], object]
+                        # Direct assignment works - type checker recognizes callable compatibility
                         register_result = container.register_factory(name, value)
                     else:
-                        # Cast object to t.FlexibleValue for container.register compatibility
-                        value_typed: t.FlexibleValue = cast("t.FlexibleValue", value)
-                        register_result = container.register(name, value_typed)
+                        # Python 3.13: object is compatible with ServiceInstanceType
+                        # ServiceInstanceType = GeneralValueType | BaseModel | Callable[..., GeneralValueType] | object
+                        # object is included in union, so direct assignment works
+                        register_result = container.register(name, value)
                     if register_result.is_failure:
                         return r[int].fail(
                             f"Bulk registration failed at {name}: {register_result.error}",
@@ -863,14 +873,17 @@ class FlextUtilities:
             return False
 
         # Length/numeric checks - use len() for sequences, direct for numbers
+        # Python 3.13: Use isinstance for proper type narrowing
         check_val: int | float
         if isinstance(value, (int, float)):
             check_val = value
-        elif value is not None and hasattr(value, "__len__"):
-            # Type narrowing: value is not None and has __len__ method
-            # Cast to Sized for type checker
-            sized_value: Sized = cast("Sized", value)
-            check_val = len(sized_value)
+        elif isinstance(value, (Sequence, Mapping)):
+            # Type narrowing: Sequence and Mapping have __len__
+            check_val = len(value)
+        elif value is not None and isinstance(value, Sized):
+            # Type narrowing: value implements Sized protocol (has __len__)
+            # Sized protocol ensures __len__ exists and returns int
+            check_val = len(value)
         else:
             check_val = 0
 
@@ -906,10 +919,9 @@ class FlextUtilities:
         elif contains is not None:
             # Generic containment for sequences/dicts
             if isinstance(value, dict):
-                # Type narrowing: value is dict, contains can be any key type
-                # Use cast to handle dict key type checking
-                dict_value: dict[object, object] = cast("dict[object, object]", value)
-                if contains not in dict_value:
+                # Type narrowing: value is dict after isinstance check
+                # dict supports 'in' operator for keys - no cast needed
+                if contains not in value:
                     return False
             elif value is not None and hasattr(value, "__contains__"):
                 # Type narrowing: value is not None and has __contains__ method

@@ -22,7 +22,7 @@ import operator
 import time
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel
@@ -317,10 +317,7 @@ class TestValidateMethod:
 
     def test_validate_no_validators_returns_ok(self) -> None:
         """Empty validators list returns Ok with original value."""
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate("hello"),
-        )
+        result = u.Validation.validate("hello")
         FlextTestsMatchers.Tests.Result.assert_success(result)
         assert result.value == "hello"
 
@@ -338,10 +335,7 @@ class TestValidateMethod:
         # Business Rule: validate accepts ValidatorSpec, wrap Callable[[object], bool] in Validator
         # Implication: Validator wrapper makes callable compatible with ValidatorSpec protocol
         validator_spec = u.V.custom(predicate=validator, description=description)
-        result: FlextResult[object] = cast(
-            "FlextResult[object]",
-            u.Validation.validate(value, validator_spec),
-        )
+        result = u.Validation.validate(value, validator_spec)
         FlextTestsMatchers.Tests.Result.assert_success(
             result,
             f"{description} should pass",
@@ -363,10 +357,7 @@ class TestValidateMethod:
         # Business Rule: validate accepts ValidatorSpec, wrap Callable[[object], bool] in Validator
         # Implication: Validator wrapper makes callable compatible with ValidatorSpec protocol
         validator_spec = u.V.custom(predicate=validator, description=description)
-        result: FlextResult[object] = cast(
-            "FlextResult[object]",
-            u.Validation.validate(value, validator_spec),
-        )
+        result = u.Validation.validate(value, validator_spec)
         error = FlextTestsMatchers.Tests.Result.assert_failure(result)
         assert error_contains in error, (
             f"{description}: expected '{error_contains}' in error"
@@ -374,40 +365,31 @@ class TestValidateMethod:
 
     def test_validate_multiple_all_pass(self) -> None:
         """All validators pass returns Ok."""
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate(
-                "hello@test.com",
-                V.string.non_empty,
-                V.string.email,
-            ),
+        result = u.Validation.validate(
+            "hello@test.com",
+            V.string.non_empty,
+            V.string.email,
         )
         FlextTestsMatchers.Tests.Result.assert_success(result)
 
     def test_validate_multiple_first_fails(self) -> None:
         """First validator fails returns Fail (fail_fast)."""
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate(
-                "",
-                V.string.non_empty,
-                V.string.email,
-            ),
+        result = u.Validation.validate(
+            "",
+            V.string.non_empty,
+            V.string.email,
         )
         error = FlextTestsMatchers.Tests.Result.assert_failure(result)
         assert "non_empty" in error
 
     def test_validate_collect_errors(self) -> None:
         """collect_errors=True gathers all errors."""
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate(
-                "",
-                V.string.non_empty,
-                V.string.min_length(5),
-                fail_fast=True,
-                collect_errors=True,
-            ),
+        result = u.Validation.validate(
+            "",
+            V.string.non_empty,
+            V.string.min_length(5),
+            fail_fast=True,
+            collect_errors=True,
         )
         error = FlextTestsMatchers.Tests.Result.assert_failure(result)
         assert "non_empty" in error
@@ -424,14 +406,11 @@ class TestValidateMethod:
         expected_success: bool,
     ) -> None:
         """mode='any' validation tests."""
-        result: FlextResult[object] = cast(
-            "FlextResult[object]",
-            u.Validation.validate(
-                value,
-                V.string.email,
-                V.string.url,
-                mode="any",
-            ),
+        result = u.Validation.validate(
+            value,
+            V.string.email,
+            V.string.url,
+            mode="any",
         )
         if expected_success:
             FlextTestsMatchers.Tests.Result.assert_success(
@@ -443,13 +422,10 @@ class TestValidateMethod:
 
     def test_validate_with_field_name(self) -> None:
         """field_name adds context to error message."""
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate(
-                "",
-                V.string.non_empty,
-                field_name="user.email",
-            ),
+        result = u.Validation.validate(
+            "",
+            V.string.non_empty,
+            field_name="user.email",
         )
         error = FlextTestsMatchers.Tests.Result.assert_failure(result)
         assert "user.email:" in error
@@ -457,28 +433,19 @@ class TestValidateMethod:
     def test_validate_and_operator(self) -> None:
         """AND operator composition."""
         validator = V.string.non_empty & V.string.max_length(10)
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate("hello", validator),
-        )
+        result = u.Validation.validate("hello", validator)
         FlextTestsMatchers.Tests.Result.assert_success(result)
 
     def test_validate_or_operator(self) -> None:
         """OR operator composition."""
         validator = V.string.email | V.string.url
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate("test@example.com", validator),
-        )
+        result = u.Validation.validate("test@example.com", validator)
         FlextTestsMatchers.Tests.Result.assert_success(result)
 
     def test_validate_not_operator(self) -> None:
         """NOT operator negates validator."""
         validator = ~V.string.non_empty
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate("", validator),
-        )
+        result = u.Validation.validate("", validator)
         FlextTestsMatchers.Tests.Result.assert_success(result)
 
     def test_validate_complex_expression(self) -> None:
@@ -488,10 +455,7 @@ class TestValidateMethod:
             & V.string.min_length(3)
             & (V.string.email | V.string.url)
         )
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Validation.validate("test@example.com", validator),
-        )
+        result = u.Validation.validate("test@example.com", validator)
         FlextTestsMatchers.Tests.Result.assert_success(result)
 
 
@@ -746,10 +710,9 @@ class TestParseMethod:
         expected: object,
     ) -> None:
         """Test parsing primitive types."""
-        result: FlextResult[object] = cast(
-            "FlextResult[object]",
-            u.Parser.parse(value, target_type),
-        )
+        # Use type narrowing - parse() returns FlextResult[T] where T is target_type
+        result = u.Parser.parse(value, target_type)
+        # Type narrowing: result is FlextResult[target_type] after successful parse
         parsed = FlextTestsMatchers.Tests.Result.assert_success(
             result,
             f"{description} failed",
@@ -768,14 +731,13 @@ class TestParseMethod:
         expected_member: Status,
     ) -> None:
         """Test parsing enum values."""
-        result: FlextResult[Status] = cast(
-            "FlextResult[Status]",
-            u.Parser.parse(
-                value,
-                Status,
-                case_insensitive=case_insensitive,
-            ),
+        # Use type narrowing - parse() returns FlextResult[T] where T is Status
+        result = u.Parser.parse(
+            value,
+            Status,
+            case_insensitive=case_insensitive,
         )
+        # Type narrowing: result is FlextResult[Status] after successful parse
         parsed: Status = FlextTestsMatchers.Tests.Result.assert_success(
             result,
             f"{description} failed",
@@ -784,66 +746,45 @@ class TestParseMethod:
 
     def test_parse_enum_case_insensitive(self) -> None:
         """Test case-insensitive enum parsing."""
-        result: FlextResult[Status] = cast(
-            "FlextResult[Status]",
-            u.Parser.parse("active", Status, case_insensitive=True),
-        )
-        parsed: Status = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse("active", Status, case_insensitive=True)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == Status.ACTIVE
 
     def test_parse_enum_invalid_fails(self) -> None:
         """Test that invalid enum value fails."""
-        result: FlextResult[Status] = cast(
-            "FlextResult[Status]",
-            u.Parser.parse("invalid", Status),
-        )
+        result = u.Parser.parse("invalid", Status)
         FlextTestsMatchers.Tests.Result.assert_failure(result)
 
     def test_parse_with_default(self) -> None:
         """Test parsing with default value on failure."""
-        result: FlextResult[int] = cast(
-            "FlextResult[int]",
-            u.Parser.parse("not_a_number", int, default=42),
-        )
-        parsed: int = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse("not_a_number", int, default=42)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == 42
 
     def test_parse_with_default_factory(self) -> None:
         """Test parsing with default factory on failure."""
-        result: FlextResult[int] = cast(
-            "FlextResult[int]",
-            u.Parser.parse("invalid", int, default_factory=lambda: 99),
-        )
-        parsed: int = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse("invalid", int, default_factory=lambda: 99)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == 99
 
     def test_parse_str_to_int_coerce(self) -> None:
         """Test string to int coercion."""
-        result: FlextResult[int] = cast(
-            "FlextResult[int]",
-            u.Parser.parse("123", int, coerce=True),
-        )
-        parsed: int = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse("123", int, coerce=True)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == 123
         assert isinstance(parsed, int)
 
     def test_parse_int_to_str_coerce(self) -> None:
         """Test int to string coercion."""
-        result: FlextResult[str] = cast(
-            "FlextResult[str]",
-            u.Parser.parse(456, str, coerce=True),
-        )
-        parsed: str = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse(456, str, coerce=True)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == "456"
         assert isinstance(parsed, str)
 
     def test_parse_float_to_int_coerce(self) -> None:
         """Test float to int coercion."""
-        result: FlextResult[int] = cast(
-            "FlextResult[int]",
-            u.Parser.parse(math.pi, int, coerce=True),
-        )
-        parsed: int = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse(math.pi, int, coerce=True)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == 3
         assert isinstance(parsed, int)
 
@@ -851,42 +792,27 @@ class TestParseMethod:
         """Test strict mode still allows direct target(value) coercion."""
         # strict=True only skips primitive coercion helpers like _coerce_primitive
         # but int("123") works directly via target(value) fallback
-        result: FlextResult[int] = cast(
-            "FlextResult[int]",
-            u.Parser.parse("123", int, strict=True),
-        )
-        parsed: int = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse("123", int, strict=True)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == 123
 
     def test_parse_strict_mode_passes_on_exact_type(self) -> None:
         """Test strict mode accepts exact type match."""
-        result: FlextResult[int] = cast(
-            "FlextResult[int]",
-            u.Parser.parse(123, int, strict=True),
-        )
-        parsed: int = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse(123, int, strict=True)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == 123
 
     def test_parse_bool_values(self) -> None:
         """Test parsing boolean values."""
-        result_true: FlextResult[bool] = cast(
-            "FlextResult[bool]",
-            u.Parser.parse(True, bool),
-        )
-        result_false: FlextResult[bool] = cast(
-            "FlextResult[bool]",
-            u.Parser.parse(False, bool),
-        )
+        result_true = u.Parser.parse(True, bool)
+        result_false = u.Parser.parse(False, bool)
         assert FlextTestsMatchers.Tests.Result.assert_success(result_true) is True
         assert FlextTestsMatchers.Tests.Result.assert_success(result_false) is False
 
     def test_parse_none_with_default(self) -> None:
         """Test parsing None with default value."""
-        result: FlextResult[int] = cast(
-            "FlextResult[int]",
-            u.Parser.parse(None, int, default=0),
-        )
-        parsed: int = FlextTestsMatchers.Tests.Result.assert_success(result)
+        result = u.Parser.parse(None, int, default=0)
+        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert parsed == 0
 
 
@@ -1048,7 +974,7 @@ class TestPipeMethod:
 
     def test_pipe_single_operation(self) -> None:
         """Single operation transforms value."""
-        result = u.pipe("hello", cast("Callable[[object], object]", str.upper))
+        result = u.pipe("hello", str.upper)
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value == "HELLO"
 
@@ -1056,8 +982,8 @@ class TestPipeMethod:
         """Multiple operations chain correctly."""
         result = u.pipe(
             "  hello  ",
-            cast("Callable[[object], object]", str.strip),
-            cast("Callable[[object], object]", str.upper),
+            str.strip,
+            str.upper,
             lambda s: f"[{s}]",
         )
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
@@ -1067,9 +993,9 @@ class TestPipeMethod:
         """Lambdas work in pipeline."""
         result = u.pipe(
             5,
-            lambda x: cast("int", x) * 2,
-            lambda x: cast("int", x) + 3,
-            lambda x: cast("int", x) * cast("int", x),
+            lambda x: x * 2,
+            lambda x: x + 3,
+            lambda x: x * x,
         )
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         # (5 * 2) + 3 = 13, 13 * 13 = 169
@@ -1079,9 +1005,9 @@ class TestPipeMethod:
         """Operations can change types through chain."""
         result = u.pipe(
             "42",
-            cast("Callable[[object], object]", int),
-            lambda x: cast("int", x) * 2,
-            cast("Callable[[object], object]", str),
+            int,
+            lambda x: x * 2,
+            str,
             lambda s: f"Result: {s}",
         )
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
@@ -1095,8 +1021,8 @@ class TestPipeMethod:
         """Exception in operation returns Fail (on_error=stop)."""
         result = u.pipe(
             "not-a-number",
-            cast("Callable[[object], object]", int),  # Will raise ValueError
-            lambda x: cast("int", x) * 2,
+            int,  # Will raise ValueError
+            lambda x: x * 2,
         )
         error = FlextTestsMatchers.Tests.Result.assert_failure(result)
         assert (
@@ -1110,11 +1036,8 @@ class TestPipeMethod:
         # When an operation fails with skip, it uses previous value
         result = u.pipe(
             "test",
-            cast("Callable[[object], object]", str.upper),
-            cast(
-                "Callable[[object], object]",
-                int,
-            ),  # Will fail - "TEST" is not a number
+            str.upper,
+            int,  # Will fail - "TEST" is not a number
             lambda x: f"final: {x}",
             on_error="skip",
         )
@@ -1126,7 +1049,7 @@ class TestPipeMethod:
         """First operation failing returns Fail."""
         result = u.pipe(
             "abc",
-            cast("Callable[[object], object]", int),  # Fails immediately
+            int,  # Fails immediately
         )
         FlextTestsMatchers.Tests.Result.assert_failure(result)
 
@@ -1134,9 +1057,9 @@ class TestPipeMethod:
         """Middle operation failing stops chain."""
         result = u.pipe(
             10,
-            lambda x: cast("int", x) + 5,
-            lambda x: 1 / (cast("int", x) - 15),  # Division by zero when x=15
-            lambda x: cast("float", x) * 100,
+            lambda x: x + 5,
+            lambda x: 1 / (x - 15),  # Division by zero when x=15
+            lambda x: x * 100,
         )
         FlextTestsMatchers.Tests.Result.assert_failure(result)
 
@@ -1148,7 +1071,7 @@ class TestPipeMethod:
         """FlextResult.ok values are auto-unwrapped."""
         result = u.pipe(
             "test",
-            lambda s: FlextResult[str].ok(cast("str", s).upper()),
+            lambda s: FlextResult[str].ok(s.upper()),
             lambda s: f"[{s}]",
         )
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
@@ -1159,7 +1082,7 @@ class TestPipeMethod:
         result = u.pipe(
             "test",
             lambda s: FlextResult[str].fail("validation error"),
-            lambda s: cast("str", s).upper(),  # Should not execute
+            lambda s: s.upper(),  # Should not execute
         )
         error = FlextTestsMatchers.Tests.Result.assert_failure(result)
         assert "validation" in error.lower()
@@ -1168,9 +1091,9 @@ class TestPipeMethod:
         """Mix of FlextResult and plain returns works."""
         result = u.pipe(
             5,
-            lambda x: cast("int", x) * 2,  # Plain: 10
-            lambda x: FlextResult[int].ok(cast("int", x) + 5),  # Result: ok(15)
-            lambda x: cast("int", x) * 3,  # Plain: 45
+            lambda x: x * 2,  # Plain: 10
+            lambda x: FlextResult[int].ok(x + 5),  # Result: ok(15)
+            lambda x: x * 3,  # Plain: 45
         )
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value == 45
@@ -1193,8 +1116,8 @@ class TestPipeMethod:
         """Empty string piped correctly."""
         result = u.pipe(
             "",
-            cast("Callable[[object], object]", len),
-            lambda n: cast("int", n) == 0,
+            len,
+            lambda n: n == 0,
         )
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value is True
@@ -1204,10 +1127,10 @@ class TestPipeMethod:
         result = u.pipe(
             {"name": "john"},
             lambda d: {
-                **cast("dict[str, str]", d),
-                "upper_name": cast("dict[str, str]", d)["name"].upper(),
+                **d,
+                "upper_name": d["name"].upper(),
             },
-            cast("Callable[[object], object]", operator.itemgetter("upper_name")),
+            operator.itemgetter("upper_name"),
         )
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value == "JOHN"
@@ -1216,9 +1139,9 @@ class TestPipeMethod:
         """List operations in pipe."""
         result = u.pipe(
             [3, 1, 4, 1, 5],
-            cast("Callable[[object], object]", sorted),
-            cast("Callable[[object], object]", operator.itemgetter(slice(3))),
-            cast("Callable[[object], object]", sum),
+            sorted,
+            operator.itemgetter(slice(3)),
+            sum,
         )
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value == 5  # sorted: [1,1,3,4,5], first 3: [1,1,3], sum: 5
@@ -1310,10 +1233,9 @@ class TestMergeMethod:
         # Convert Mapping to dict for type compatibility
         d1_dict = dict(d1) if isinstance(d1, Mapping) else d1
         d2_dict = dict(d2) if isinstance(d2, Mapping) else d2
-        # Cast nested dicts to GeneralValueType for type compatibility
-        d1_cast = cast("dict[str, t.GeneralValueType]", d1_dict)
-        d2_cast = cast("dict[str, t.GeneralValueType]", d2_dict)
-        result = u.merge(d1_cast, d2_cast, strategy="deep")
+        # Type narrowing: d1_dict and d2_dict are dict[str, t.GeneralValueType] compatible
+        # u.merge accepts dict[str, t.GeneralValueType] so no cast needed
+        result = u.merge(d1_dict, d2_dict, strategy="deep")
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value == {"l1": {"l2": {"l3": {"a": 1, "b": 2}}}}
 

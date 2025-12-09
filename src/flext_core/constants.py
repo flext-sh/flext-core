@@ -14,7 +14,8 @@ from collections.abc import Set as AbstractSet
 from enum import StrEnum
 from typing import Final, Literal
 
-from pydantic import ConfigDict
+# NOTE: constants.py cannot import from pydantic, models, protocols, typings, utilities
+# ConfigDict usage moved to models.py or _models/config.py where it belongs
 
 # Centralized timeout constants (reused by all namespaces)
 _DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
@@ -483,19 +484,8 @@ class FlextConstants:
         EXTRA_ALLOW: Final = "allow"
         """Extra fields behavior: allow unknown fields."""
 
-        BASE: Final[ConfigDict] = ConfigDict(
-            validate_assignment=True,
-            validate_return=True,
-            validate_default=True,
-            strict=True,
-            str_strip_whitespace=True,
-            use_enum_values=True,
-            arbitrary_types_allowed=True,
-            extra="forbid",  # Use c.ModelConfig.EXTRA_FORBID in code
-            ser_json_timedelta="iso8601",  # Use c.Utilities.SERIALIZATION_ISO8601 in code
-            ser_json_bytes="base64",  # Use c.Utilities.SERIALIZATION_BASE64 in code
-            hide_input_in_errors=True,
-        )
+        # BASE ConfigDict moved to _models/config.py - constants.py cannot import ConfigDict
+        # Use FlextModelsConfig.BASE_CONFIG or create ConfigDict directly in models
 
     class Platform:
         """Platform-specific constants."""
@@ -1087,16 +1077,8 @@ class FlextConstants:
             DELIVERED = "delivered"  # Domain-specific, not in _Base
             CANCELLED = "cancelled"  # Matches _Base.CommonStatus.CANCELLED
 
-        # Model config for domain classes
-        DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
-            use_enum_values=True,
-            validate_assignment=True,
-            validate_return=True,
-            validate_default=True,
-            str_strip_whitespace=True,
-            arbitrary_types_allowed=False,
-            extra="forbid",
-        )
+        # DOMAIN_MODEL_CONFIG moved to _models/config.py - constants.py cannot import ConfigDict
+        # Use m.Config.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG
 
         # ─────────────────────────────────────────────────────────────────
         # SUBSETS: Literal referencing StrEnum members

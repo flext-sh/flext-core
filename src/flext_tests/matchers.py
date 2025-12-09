@@ -596,7 +596,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
             match: Regex pattern (for strings)
             first, last: Sequence first/last item equals
             all_: All items match type or predicate
-            any_: Any item matches type or predicate
+            any_: At least one item matches type or predicate
             sorted: Is sorted (True=ascending, or key function)
             unique: All items unique
             keys: Mapping has all keys

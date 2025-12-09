@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time as time_module
 from collections.abc import Callable
-from typing import Annotated, Self, cast
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
@@ -23,10 +23,12 @@ from pydantic import (
 )
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import t
-from flext_core.utilities import u
+
+# NOTE: models.py cannot import utilities - use direct imports from _utilities/* instead
 
 
 class FlextModelsHandler:
@@ -142,7 +144,7 @@ class FlextModelsHandler:
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
             """Validate timestamp is in ISO 8601 format (using FlextUtilitiesValidation)."""
-            result = u.Validation.validate_iso8601_timestamp(
+            result = FlextUtilitiesValidation.validate_iso8601_timestamp(
                 v,
                 allow_empty=True,
             )
@@ -248,11 +250,8 @@ class FlextModelsHandler:
                 return 0.0
 
             # Type narrowing: _start_time is not None after check, so it's float
-            # Use getattr to help pyright infer the type
-            start_time_attr = getattr(self, "_start_time", None)
-            if start_time_attr is None:
-                return 0.0
-            start_time: float = cast("float", start_time_attr)
+            # PrivateAttr type narrowing works after None check
+            start_time: float = self._start_time
             elapsed: float = time_module.time() - start_time
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
 
@@ -277,17 +276,11 @@ class FlextModelsHandler:
                 empty_dict: t.Types.ConfigurationDict = {}
                 self._metrics_state = empty_dict
             # Type narrowing: _metrics_state is not None after initialization above
-            # Use getattr to help pyright infer the type
-            metrics_state_attr = getattr(self, "_metrics_state", None)
-            if metrics_state_attr is None:
-                return {}
-            # ConfigurationDict is a dict, which is compatible with ConfigurationMapping (Mapping)
-            # Cast to ConfigurationMapping - dict is compatible with Mapping
-            metrics_state: t.Types.ConfigurationDict = cast(
-                "t.Types.ConfigurationDict",
-                metrics_state_attr,
-            )
-            return cast("t.Types.ConfigurationMapping", metrics_state)
+            # PrivateAttr type narrowing works after None check and initialization
+            metrics_state: t.Types.ConfigurationDict = self._metrics_state
+            # ConfigurationDict (dict) is compatible with ConfigurationMapping (Mapping)
+            # dict implements Mapping, so direct return works without cast
+            return metrics_state
 
         def set_metrics_state(
             self,
@@ -363,16 +356,14 @@ class FlextModelsHandler:
         @computed_field
         def is_running(self) -> bool:
             """Check if execution is currently running."""
-            # Use getattr to help pyright infer the type
-            start_time_attr = getattr(self, "_start_time", None)
-            return start_time_attr is not None
+            # Type narrowing: PrivateAttr type narrowing works directly
+            return self._start_time is not None
 
         @computed_field
         def has_metrics(self) -> bool:
             """Check if metrics have been recorded."""
-            # Use getattr to help pyright infer the type
-            metrics_state_attr = getattr(self, "_metrics_state", None)
-            return metrics_state_attr is not None and bool(metrics_state_attr)
+            # Type narrowing: PrivateAttr type narrowing works directly
+            return self._metrics_state is not None and bool(self._metrics_state)
 
     class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
         """Configuration extracted from @h.handler() decorator.
