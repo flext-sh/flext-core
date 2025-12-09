@@ -22,7 +22,6 @@ from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -40,14 +39,14 @@ class FlextUtilitiesGenerators:
 
         @staticmethod
         def generate_short_id(length: int = c.Utilities.SHORT_UUID_LENGTH) -> str:
-            """Generate a short random ID."""
+            """Generate a short random ID (public API for backward compatibility)."""
             alphabet = string.ascii_letters + string.digits
             return "".join(secrets.choice(alphabet) for _ in range(length))
 
     # NOTE: create_dynamic_type_subclass is available as static method - no nested Type class needed
 
     @staticmethod
-    def generate_prefixed_id(
+    def _generate_prefixed_id(
         prefix: str,
         *parts: t.GeneralValueType,
         length: int = c.Utilities.SHORT_UUID_LENGTH,
@@ -80,8 +79,8 @@ class FlextUtilitiesGenerators:
         return f"{prefix}_{uuid_part}"
 
     @staticmethod
-    def generate_id() -> str:
-        """Generate a unique ID using UUID4."""
+    def _generate_id() -> str:
+        """Generate a unique ID using UUID4 (private helper)."""
         return str(uuid.uuid4())
 
     @staticmethod
@@ -113,113 +112,7 @@ class FlextUtilitiesGenerators:
         return datetime.now(UTC)
 
     @staticmethod
-    def generate_correlation_id() -> str:
-        """Generate a correlation ID for tracking."""
-        return FlextUtilitiesGenerators.generate_prefixed_id("corr")
-
-    @staticmethod
-    def generate_short_id(length: int = c.Utilities.SHORT_UUID_LENGTH) -> str:
-        """Generate a short random ID (delegates to Random.generate_short_id)."""
-        return FlextUtilitiesGenerators.Random.generate_short_id(length)
-
-    @staticmethod
-    def generate_entity_id() -> str:
-        """Generate a unique entity ID for domain entities.
-
-        Returns:
-            A unique entity identifier with 'ent' prefix suitable for domain entities
-
-        """
-        return FlextUtilitiesGenerators.generate_prefixed_id("ent")
-
-    @staticmethod
-    def generate_correlation_id_with_context(context: str) -> str:
-        """Generate a correlation ID with context prefix."""
-        return FlextUtilitiesGenerators.generate_prefixed_id(context)
-
-    @staticmethod
-    def generate_batch_id(batch_size: int) -> str:
-        """Generate a batch ID with size information."""
-        return FlextUtilitiesGenerators.generate_prefixed_id(
-            c.Cqrs.ProcessingMode.BATCH,
-            batch_size,
-        )
-
-    @staticmethod
-    def generate_transaction_id() -> str:
-        """Generate a transaction ID for distributed transactions."""
-        return FlextUtilitiesGenerators.generate_prefixed_id(
-            "txn",
-            length=c.Utilities.LONG_UUID_LENGTH,
-        )
-
-    @staticmethod
-    def generate_saga_id() -> str:
-        """Generate a saga ID for distributed transaction patterns."""
-        return FlextUtilitiesGenerators.generate_prefixed_id(
-            "saga",
-            length=c.Utilities.LONG_UUID_LENGTH,
-        )
-
-    @staticmethod
-    def generate_event_id() -> str:
-        """Generate an event ID for domain events."""
-        return FlextUtilitiesGenerators.generate_prefixed_id(
-            "evt",
-            length=c.Utilities.LONG_UUID_LENGTH,
-        )
-
-    @staticmethod
-    def generate_command_id() -> str:
-        """Generate a command ID for CQRS patterns."""
-        return FlextUtilitiesGenerators.generate_prefixed_id(
-            "cmd",
-            length=c.Utilities.LONG_UUID_LENGTH,
-        )
-
-    @staticmethod
-    def generate_query_id() -> str:
-        """Generate a query ID for CQRS patterns."""
-        return FlextUtilitiesGenerators.generate_prefixed_id(
-            "qry",
-            length=c.Utilities.LONG_UUID_LENGTH,
-        )
-
-    @staticmethod
-    def generate_aggregate_id(aggregate_type: str) -> str:
-        """Generate an aggregate ID with type prefix."""
-        return FlextUtilitiesGenerators.generate_prefixed_id(
-            aggregate_type,
-            length=c.Utilities.LONG_UUID_LENGTH,
-        )
-
-    @staticmethod
-    def generate_entity_version() -> int:
-        """Generate an entity version number using c.Context."""
-        return (
-            int(
-                FlextUtilitiesGenerators.generate_datetime_utc().timestamp()
-                * c.Context.MILLISECONDS_PER_SECOND,
-            )
-            % c.Utilities.VERSION_MODULO
-        ) + 1
-
-    @staticmethod
-    def ensure_id(obj: p.Foundation.HasModelDump) -> None:
-        """Ensure object has an ID using u and c.
-
-        Args:
-            obj: Object to ensure ID for
-
-        """
-        if hasattr(obj, c.Mixins.FIELD_ID):
-            id_value = getattr(obj, c.Mixins.FIELD_ID, None)
-            if not id_value:
-                new_id = FlextUtilitiesGenerators.generate_id()
-                setattr(obj, c.Mixins.FIELD_ID, new_id)
-
-    @staticmethod
-    def normalize_context_to_dict(
+    def _normalize_context_to_dict(
         context: t.Types.ConfigurationDict | object,
     ) -> t.Types.ConfigurationDict:
         """Normalize context to dict - fast fail validation.
@@ -235,11 +128,8 @@ class FlextUtilitiesGenerators:
 
         """
         if isinstance(context, dict):
-            # Type narrowing: context is dict, cast to ConfigurationDict
-            context_dict_result: t.Types.ConfigurationDict = cast(
-                "t.Types.ConfigurationDict",
-                context,
-            )
+            # Type narrowing: context is dict, isinstance provides type narrowing to ConfigurationDict
+            context_dict_result: t.Types.ConfigurationDict = context
             return context_dict_result
         if isinstance(context, Mapping):
             try:
@@ -273,7 +163,7 @@ class FlextUtilitiesGenerators:
         raise TypeError(msg)
 
     @staticmethod
-    def enrich_context_fields(
+    def _enrich_context_fields(
         context_dict: t.Types.StringDict,
         *,
         include_correlation_id: bool = False,
@@ -288,13 +178,13 @@ class FlextUtilitiesGenerators:
 
         """
         if "trace_id" not in context_dict:
-            context_dict["trace_id"] = FlextUtilitiesGenerators.generate_id()
+            context_dict["trace_id"] = FlextUtilitiesGenerators._generate_id()
         if "span_id" not in context_dict:
-            context_dict["span_id"] = FlextUtilitiesGenerators.generate_id()
+            context_dict["span_id"] = FlextUtilitiesGenerators._generate_id()
 
         # Optionally ensure correlation_id
         if include_correlation_id and "correlation_id" not in context_dict:
-            context_dict["correlation_id"] = FlextUtilitiesGenerators.generate_id()
+            context_dict["correlation_id"] = FlextUtilitiesGenerators._generate_id()
 
         # Optionally ensure timestamp (ISO 8601 format)
         if include_timestamp and "timestamp" not in context_dict:
@@ -327,7 +217,7 @@ class FlextUtilitiesGenerators:
             t.Types.StringDict: Enriched context with requested fields (all string values)
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> # Basic: trace_id + span_id
             >>> ctx = u.Generators.ensure_trace_context({})
             >>> "trace_id" in ctx and "span_id" in ctx
@@ -346,12 +236,12 @@ class FlextUtilitiesGenerators:
             'abc'
 
         """
-        normalized_dict = FlextUtilitiesGenerators.normalize_context_to_dict(context)
+        normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
         # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
         context_dict: t.Types.StringDict = {
             k: v if isinstance(v, str) else str(v) for k, v in normalized_dict.items()
         }
-        FlextUtilitiesGenerators.enrich_context_fields(
+        FlextUtilitiesGenerators._enrich_context_fields(
             context_dict,
             include_correlation_id=include_correlation_id,
             include_timestamp=include_timestamp,
@@ -388,7 +278,7 @@ class FlextUtilitiesGenerators:
             TypeError: If value is None (and no default) or cannot be converted
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> u.Generators.ensure_dict({"a": 1})
             {'a': 1}
             >>> u.Generators.ensure_dict(None, default={})
@@ -457,6 +347,130 @@ class FlextUtilitiesGenerators:
         raise TypeError(msg)
 
     @staticmethod
+    def _determine_prefix(kind: str | None, prefix: str | None) -> str | None:
+        """Determine actual prefix from kind or custom prefix.
+
+        Args:
+            kind: ID kind string.
+            prefix: Custom prefix (overrides kind).
+
+        Returns:
+            Actual prefix string or None.
+
+        """
+        if prefix is not None:
+            return prefix
+
+        if kind is None:
+            return None
+
+        kind_prefix_map: t.Types.StringDict = {
+            "correlation": "corr",
+            "entity": "ent",
+            "batch": c.Cqrs.ProcessingMode.BATCH,
+            "transaction": "txn",
+            "saga": "saga",
+            "event": "evt",
+            "command": "cmd",
+            "query": "qry",
+            # "aggregate": None,  # Requires prefix parameter - removed to avoid dict type error
+        }
+        return kind_prefix_map.get(kind)
+
+    @staticmethod
+    def _should_generate_uuid(kind: str | None, actual_prefix: str | None) -> bool:
+        """Check if UUID generation should be used.
+
+        Args:
+            kind: ID kind string.
+            actual_prefix: Determined prefix or None.
+
+        Returns:
+            True if UUID should be generated.
+
+        """
+        return kind == "uuid" or (kind is None and actual_prefix is None)
+
+    @staticmethod
+    def generate(
+        kind: str | None = None,
+        *,
+        prefix: str | None = None,
+        parts: tuple[t.GeneralValueType, ...] | None = None,
+        length: int | None = None,
+        include_timestamp: bool = False,
+        separator: str = "_",
+    ) -> str:
+        """Generate ID by kind or custom prefix.
+
+        This is the ONLY public method for ID generation. All other generate* methods
+        are private helpers used internally.
+
+        Args:
+            kind: ID kind ("uuid", "correlation", "entity", "batch", "transaction",
+                "saga", "event", "command", "query", "aggregate", "ulid", "id").
+                If None, generates UUID.
+            prefix: Custom prefix (overrides kind prefix if provided).
+            parts: Additional parts to include in ID (e.g., batch_size, aggregate_type).
+            length: Custom length for generated ID (only for ulid/short IDs or LONG UUID).
+            include_timestamp: Include timestamp in ID.
+            separator: Separator between prefix, parts, and ID (default: "_").
+
+        Returns:
+            Generated ID string.
+
+        """
+        actual_prefix = FlextUtilitiesGenerators._determine_prefix(kind, prefix)
+
+        # Handle UUID/ULID/id special cases
+        if FlextUtilitiesGenerators._should_generate_uuid(kind, actual_prefix):
+            return FlextUtilitiesGenerators._generate_id()
+
+        if kind == "ulid":
+            ulid_length = (
+                length if length is not None else c.Utilities.SHORT_UUID_LENGTH
+            )
+            return FlextUtilitiesGenerators.Random.generate_short_id(ulid_length)
+
+        if kind == "id" and actual_prefix is None:
+            return FlextUtilitiesGenerators._generate_id()
+
+        # Generate prefixed ID
+        if actual_prefix is not None:
+            # Build parts list
+            all_parts: list[t.GeneralValueType] = []
+            if include_timestamp:
+                timestamp = int(datetime.now(UTC).timestamp())
+                all_parts.append(timestamp)
+            if parts:
+                all_parts.extend(parts)
+
+            id_length = length if length is not None else c.Utilities.SHORT_UUID_LENGTH
+
+            # Custom separator requires manual construction
+            if separator != "_" or include_timestamp:
+                uuid_part = str(uuid.uuid4())[:id_length]
+                if all_parts:
+                    middle = str(separator).join(str(p) for p in all_parts)
+                    return f"{actual_prefix}{separator}{middle}{separator}{uuid_part}"
+                return f"{actual_prefix}{separator}{uuid_part}"
+
+            # Standard prefixed ID generation (separator is "_")
+            if all_parts:
+                return FlextUtilitiesGenerators._generate_prefixed_id(
+                    actual_prefix,
+                    *all_parts,
+                    length=id_length,
+                )
+            return FlextUtilitiesGenerators._generate_prefixed_id(
+                actual_prefix,
+                length=id_length,
+            )
+
+        # Fallback: UUID
+        return FlextUtilitiesGenerators._generate_id()
+
+    @staticmethod
     def generate_operation_id(message_type: str, message: t.GeneralValueType) -> str:
         """Generate unique operation ID for dispatch operations.
 
@@ -504,12 +518,11 @@ class FlextUtilitiesGenerators:
             raise TypeError(msg)
         # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
         # Convert to dict for type() call
-        attributes_dict: dict[str, t.GeneralValueType] = dict(attributes)
+        attributes_dict: t.Types.ConfigurationDict = dict(attributes)
         base_type: type = base_class
         return type(name, (base_type,), attributes_dict)
 
 
 __all__ = [
-    "FlextUtilitiesGenerators",
     "FlextUtilitiesGenerators",
 ]

@@ -313,7 +313,7 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
 V1 (Atual)           V2 Integration         V2 Complete
     │                      │                      │
     │  Manual metrics      │  FlextMixins.CQRS    │  Full observability
-    │  Manual context      │  Container DI        │  Auto-discovery
+    │  Manual context      │  DI        │  Auto-discovery
     │  Hardcoded managers  │  Protocol-based      │  Zero ceremony
 ────┼──────────────────────┼──────────────────────┼─────────────────→
     │                      │                      │
@@ -354,7 +354,7 @@ V1 (Atual)           V2 Integration         V2 Complete
 3. Integrate logging/tracking in the pipeline
 4. Deprecate manual methods with grace period
 
-**FlextContainer DI (Phase 2):**
+**FlextDI (Phase 2):**
 
 1. Define protocols for managers
 2. Extract managers to `_managers/` module

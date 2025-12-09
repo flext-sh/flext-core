@@ -210,7 +210,7 @@ class FlextRuntime:
     - Pattern-based validation using c (single source of truth)
     """
 
-    _structlog_configured: bool = False
+    _structlog_configured: ClassVar[bool] = False
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
     @classmethod
@@ -222,6 +222,25 @@ class FlextRuntime:
 
         """
         return cls._structlog_configured
+
+    @classmethod
+    def ensure_structlog_configured(cls) -> None:
+        """Ensure structlog is configured (called automatically on first use).
+
+        This method provides lazy configuration of structlog. It checks if structlog
+        has already been configured, and if not, configures it with default settings.
+        This ensures structlog is ready for use without requiring explicit configuration
+        at application startup.
+
+        Example:
+            >>> # Automatic configuration on first logger creation
+            >>> logger = FlextLogger.create_module_logger(__name__)
+            >>> # structlog is now configured automatically
+
+        """
+        if not cls._structlog_configured:
+            cls.configure_structlog()
+            cls._structlog_configured = True
 
     # NOTE: Use c.Settings.LogLevel directly - no aliases per FLEXT standards
 
@@ -356,12 +375,13 @@ class FlextRuntime:
             # Audit Implication: Normalizes nested data structures for type safety.
             # Used throughout FLEXT for converting arbitrary data to GeneralValueType.
             # Returns dict that is compatible with Mapping interface for read-only access.
-            result: t.Types.ConfigurationDict = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             # Type narrowing: dict_v is dict[object, object] from dict() constructor
             # We need to filter only str keys to build ConfigurationDict
+            # Use direct dict comprehension to avoid circular dependency with mapper
+            result: t.Types.ConfigurationDict = {}
             for k, v in dict_v.items():
-                # Type narrowing: isinstance check ensures k is str for ConfigurationDict
+                # Type narrowing: k is object from dict.items(), check if str for ConfigurationDict
                 if isinstance(k, str):
                     result[k] = FlextRuntime.normalize_to_general_value(v)
             return result
@@ -409,12 +429,13 @@ class FlextRuntime:
             # Audit Implication: Normalizes nested structures to flat metadata format.
             # Used for metadata attribute values that must be JSON-serializable.
             # Returns dict that is compatible with Mapping interface for read-only access.
-            result: t.Types.MetadataAttributeDict = {}
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             # Type narrowing: dict_v is dict[object, object] from dict() constructor
             # We need to filter only str keys to build MetadataAttributeDict
+            # Use direct dict comprehension to avoid circular dependency with mapper
+            result: t.Types.MetadataAttributeDict = {}
             for k, v in dict_v.items():
-                # Type narrowing: isinstance check ensures k is str for MetadataAttributeDict
+                # Type narrowing: k is object from dict.items(), check if str for MetadataAttributeDict
                 if isinstance(k, str):
                     if isinstance(v, (str, int, float, bool, type(None))):
                         result[k] = v
@@ -646,7 +667,7 @@ class FlextRuntime:
     @staticmethod
     def get_logger(
         name: str | None = None,
-    ) -> p.Infrastructure.Logger.StructlogLogger:
+    ) -> p.Log.StructlogLogger:
         """Get structlog logger instance - same structure/config used by FlextLogger.
 
         Returns the exact same structlog logger instance that FlextLogger uses internally.
@@ -669,10 +690,10 @@ class FlextRuntime:
                 name = frame.f_back.f_globals.get("__name__", __name__)
             else:
                 name = __name__
-        # structlog.get_logger returns BoundLoggerLazyProxy which implements p.Infrastructure.Logger.StructlogLogger protocol
-        # All methods (debug, info, warning, error, etc.) are available via __getattr__ at runtime
-        # p.Infrastructure.Logger.StructlogLogger protocol is compatible with structlog's return type via structural typing
-        logger: p.Infrastructure.Logger.StructlogLogger = structlog.get_logger(name)
+        # structlog.get_logger returns BoundLoggerLazyProxy which implements p.Log.StructlogLogger protocol
+        # All methods (debug, info, warning, error, etc.) are available directly from structlog logger
+        # p.Log.StructlogLogger protocol is compatible with structlog's return type via structural typing
+        logger: p.Log.StructlogLogger = structlog.get_logger(name)
         return logger
 
     @staticmethod
@@ -744,7 +765,7 @@ class FlextRuntime:
             config: t.Types.ConfigurationMapping | None = None,
             services: Mapping[
                 str,
-                t.GeneralValueType | BaseModel | p.Utility.Callable[t.GeneralValueType],
+                t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType],
             ]
             | None = None,
             factories: Mapping[
@@ -954,7 +975,7 @@ class FlextRuntime:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: p.Infrastructure.Logger.Log,
+        _logger: p.Log,
         method_name: str,
         event_dict: t.Types.ConfigurationMapping,
     ) -> t.Types.ConfigurationMapping:
@@ -1332,16 +1353,26 @@ class FlextRuntime:
     # =========================================================================
     # ARCHITECTURE: runtime.py is Tier 0.5, result.py is Tier 1.
     # FlextResult MUST import from runtime, NOT the other way around.
-    # RuntimeResult is a lightweight Foundation.Result implementation that
+    # RuntimeResult is a lightweight Result implementation that
     # can be used by higher layers without circular imports.
     # =========================================================================
 
     class RuntimeResult[T]:
-        """Lightweight Foundation.Result implementation for Tier 0.5.
+        """Lightweight Result implementation for Tier 0.5.
 
-        This class implements p.Foundation.Result without depending
+        This class implements p.Result without depending
         on FlextResult, allowing runtime.py to create results that can be used
         by higher layers. FlextResult can wrap or extend this as needed.
+
+        **Type Compatibility**:
+        - Implements p.Result[T] protocol (structural typing)
+        - Compatible with FlextResult[T] for mypy type checking
+        - Both types can be used interchangeably where p.Result[T] is expected
+
+        **Mypy Recognition**:
+        - RuntimeResult[T] is recognized by mypy as compatible with p.Result[T]
+        - Functions accepting p.Result[T] will accept both RuntimeResult[T] and FlextResult[T]
+        - Use p.Result[T] in function signatures to accept both types
         """
 
         __slots__ = ("_error", "_error_code", "_error_data", "_is_success", "_value")
@@ -1364,15 +1395,36 @@ class FlextRuntime:
 
         @property
         def value(self) -> T:
-            """Get the success value."""
+            """Get the success value.
+
+            ARCHITECTURAL NOTE: FlextCore never returns None on success, so this
+            property always returns a valid value when is_success is True.
+
+            Raises:
+                RuntimeError: If result is failure (consistent with FlextResult)
+
+            """
             if not self._is_success:
-                msg = f"Cannot get value from failed result: {self._error}"
-                raise ValueError(msg)
+                msg = f"Cannot access value of failed result: {self._error}"
+                raise RuntimeError(msg)
             # Type narrowing: if is_success is True, _value is guaranteed to be T
-            if self._value is None:
-                msg = "Success result cannot have None value"
-                raise ValueError(msg)
-            return self._value
+            # Allow None for r[None] type compatibility
+            # Cast to T for type checker (runtime guarantees T when is_success is True)
+            return cast("T", self._value)
+
+        @property
+        def data(self) -> T:
+            """Alias for value - backward compatibility with older API."""
+            return self.value
+
+        @property
+        def result(self) -> object:
+            """Access internal result for protocol compatibility.
+
+            RuntimeResult doesn't use an internal Result wrapper like FlextResult,
+            so this returns self for protocol compatibility.
+            """
+            return self
 
         @property
         def is_success(self) -> bool:
@@ -1400,71 +1452,230 @@ class FlextRuntime:
             return self._error_data
 
         def unwrap(self) -> T:
-            """Unwrap the success value or raise."""
+            """Unwrap the success value or raise RuntimeError."""
+            if not self._is_success:
+                msg = f"Cannot unwrap failed result: {self._error}"
+                raise RuntimeError(msg)
             return self.value
 
         def unwrap_or(self, default: T) -> T:
             """Return the success value or the default if failed."""
-            if self._is_success and self._value is not None:
-                return self._value
+            if self.is_success:
+                return self.value
             return default
 
         def unwrap_or_else(self, func: Callable[[], T]) -> T:
             """Return the success value or call func if failed."""
-            if self._is_success and self._value is not None:
-                return self._value
+            if self.is_success:
+                return self.value
             return func()
 
-    @staticmethod
-    def result_ok[T](
-        value: T,
-    ) -> p.Foundation.Result[T]:
-        """Create a successful result - CORE IMPLEMENTATION.
+        def map[U](self, func: Callable[[T], U]) -> FlextRuntime.RuntimeResult[U]:
+            """Transform success value using function."""
+            if self.is_success:
+                try:
+                    return FlextRuntime.RuntimeResult(
+                        value=func(self.value), is_success=True
+                    )
+                except Exception as e:
+                    return FlextRuntime.RuntimeResult(error=str(e), is_success=False)
+            return FlextRuntime.RuntimeResult(
+                error=self._error or "",
+                error_code=self._error_code,
+                error_data=self._error_data,
+                is_success=False,
+            )
 
-        This is the core factory for creating success results.
-        Uses RuntimeResult to avoid circular imports with FlextResult.
+        def flat_map[U](
+            self, func: Callable[[T], FlextRuntime.RuntimeResult[U]]
+        ) -> FlextRuntime.RuntimeResult[U]:
+            """Chain operations returning RuntimeResult."""
+            if self.is_success:
+                return func(self.value)
+            return FlextRuntime.RuntimeResult(
+                error=self._error or "",
+                error_code=self._error_code,
+                error_data=self._error_data,
+                is_success=False,
+            )
 
-        Args:
-            value: The success value (cannot be None)
+        def and_then[U](
+            self, func: Callable[[T], FlextRuntime.RuntimeResult[U]]
+        ) -> FlextRuntime.RuntimeResult[U]:
+            """RFC-compliant alias for flat_map."""
+            return self.flat_map(func)
 
-        Returns:
-            RuntimeResult[T] instance with success state (as Foundation.Result)
+        def fold[U](
+            self,
+            on_failure: Callable[[str], U],
+            on_success: Callable[[T], U],
+        ) -> U:
+            """Fold result into single value (catamorphism)."""
+            if self.is_success:
+                return on_success(self.value)
+            return on_failure(self._error or "")
 
-        Raises:
-            ValueError: If value is None
+        def tap(self, func: Callable[[T], None]) -> FlextRuntime.RuntimeResult[T]:
+            """Apply side effect to success value, return unchanged."""
+            if self._is_success and self._value is not None:
+                func(self._value)
+            return self
 
-        """
-        if value is None:
-            msg = "Cannot create success result with None value"
-            raise ValueError(msg)
-        return FlextRuntime.RuntimeResult(value=value, is_success=True)
+        def tap_error(
+            self, func: Callable[[str], None]
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Apply side effect to error, return unchanged."""
+            if not self._is_success:
+                func(self._error or "")
+            return self
 
-    @staticmethod
-    def result_fail[T](
-        error: str,
-        error_code: str | None = None,
-        error_data: t.Types.ConfigurationMapping | None = None,
-    ) -> p.Foundation.Result[T]:
-        """Create a failed result - CORE IMPLEMENTATION.
+        def map_error(
+            self, func: Callable[[str], str]
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Transform error message."""
+            if not self._is_success:
+                return FlextRuntime.RuntimeResult(
+                    error=func(self._error or ""),
+                    error_code=self._error_code,
+                    error_data=self._error_data,
+                    is_success=False,
+                )
+            return self
 
-        This is the core factory for creating failure results.
-        Uses RuntimeResult to avoid circular imports with FlextResult.
+        def filter(
+            self, predicate: Callable[[T], bool]
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Filter success value using predicate."""
+            if self.is_success and not predicate(self.value):
+                return FlextRuntime.RuntimeResult(
+                    error="Filter predicate failed",
+                    is_success=False,
+                )
+            return self
 
-        Args:
-            error: The error message
-            error_code: Optional error code for categorization
-            error_data: Optional metadata about the error
+        def alt(self, func: Callable[[str], str]) -> FlextRuntime.RuntimeResult[T]:
+            """Apply alternative function on failure."""
+            if not self._is_success:
+                return FlextRuntime.RuntimeResult(
+                    error=func(self._error or ""),
+                    error_code=self._error_code,
+                    error_data=self._error_data,
+                    is_success=False,
+                )
+            return self
 
-        Returns:
-            RuntimeResult[T] instance with failure state (as Foundation.Result)
+        def lash(
+            self, func: Callable[[str], FlextRuntime.RuntimeResult[T]]
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Apply recovery function on failure."""
+            if not self._is_success:
+                return func(self._error or "")
+            return self
 
-        """
-        return FlextRuntime.RuntimeResult(
-            error=error,
-            error_code=error_code,
-            error_data=error_data,
-            is_success=False,
-        )
+        def recover(self, func: Callable[[str], T]) -> FlextRuntime.RuntimeResult[T]:
+            """Recover from failure with fallback value."""
+            if not self._is_success:
+                fallback_value = func(self._error or "")
+                return FlextRuntime.RuntimeResult(value=fallback_value, is_success=True)
+            return self
+
+        def flow_through[U](
+            self,
+            *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]],
+        ) -> FlextRuntime.RuntimeResult[U]:
+            """Chain multiple operations in sequence."""
+            # Start with self (RuntimeResult[T])
+            current: FlextRuntime.RuntimeResult[T] | FlextRuntime.RuntimeResult[U] = (
+                self
+            )
+            for func in funcs:
+                if current.is_success:
+                    # Use value property - guaranteed to be T | U when is_success is True
+                    result_value = current.value
+                    if result_value is not None:
+                        # func returns RuntimeResult[U]
+                        current = func(result_value)
+                    else:
+                        break
+                else:
+                    break
+            # Final type narrowing: current is now RuntimeResult[U] after all transformations
+            return cast("FlextRuntime.RuntimeResult[U]", current)
+
+        def __or__(self, default: T) -> T:
+            """Operator overload for default values."""
+            return self.unwrap_or(default)
+
+        def __bool__(self) -> bool:
+            """Boolean conversion based on success state."""
+            return self.is_success
+
+        def __repr__(self) -> str:
+            """String representation using short alias 'r' for brevity."""
+            if self.is_success:
+                return f"r.ok({self.value!r})"
+            return f"r.fail({self.error!r})"
+
+        def __enter__(self) -> FlextRuntime.RuntimeResult[T]:
+            """Context manager entry."""
+            return self
+
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: object,
+        ) -> None:
+            """Context manager exit."""
+
+        @classmethod
+        def ok(cls, value: T) -> FlextRuntime.RuntimeResult[T]:
+            """Create successful result wrapping data.
+
+            Business Rule: Creates successful RuntimeResult wrapping value. For None values,
+            creates a result with value=None and is_success=True (special case for r[None]).
+            This matches the API of FlextResult.ok() for compatibility, but allows None
+            when T is None type.
+
+            Args:
+                value: Value to wrap in success result (None allowed for r[None] type)
+
+            Returns:
+                Successful RuntimeResult instance
+
+            """
+            # Allow None values for r[None] type compatibility
+            return cls(value=value, is_success=True)
+
+        @classmethod
+        def fail(
+            cls,
+            error: str | None,
+            error_code: str | None = None,
+            error_data: t.Types.ConfigurationMapping | None = None,
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Create failed result with error message.
+
+            Business Rule: Creates failed RuntimeResult with error message, optional error
+            code, and optional error metadata. Converts None error to empty string for
+            consistency. This matches the API of FlextResult.fail() for compatibility.
+
+            Args:
+                error: Error message (None will be converted to empty string)
+                error_code: Optional error code for categorization
+                error_data: Optional error metadata
+
+            Returns:
+                Failed RuntimeResult instance
+
+            """
+            error_msg = error if error is not None else ""
+            return cls(
+                error=error_msg,
+                error_code=error_code,
+                error_data=error_data,
+                is_success=False,
+            )
 
     # =========================================================================
     # APPLICATION LAYER INTEGRATION (Using structlog directly - Layer 0.5)
@@ -1611,6 +1822,34 @@ class FlextRuntime:
                 service_version=service_version,
                 correlation_enabled=enable_context_correlation,
             )
+
+    class Bootstrap:
+        """Bootstrap utility for creating instances via object.__new__.
+
+        Provides convenient access to FlextRuntime.create_instance() method
+        for type-safe instance creation without calling __init__.
+        """
+
+        @staticmethod
+        def create_instance[T](class_type: type[T]) -> T:
+            """Type-safe factory for creating instances via object.__new__.
+
+            Args:
+                class_type: The class to instantiate
+
+            Returns:
+                An instance of type T
+
+            Raises:
+                TypeError: If object.__new__() does not return instance of
+                    expected type
+
+            Example:
+                >>> instance = FlextRuntime.Bootstrap.create_instance(MyClass)
+                >>> # instance is properly typed as MyClass
+
+            """
+            return FlextRuntime.create_instance(class_type)
 
 
 __all__ = ["FlextRuntime"]

@@ -11,7 +11,7 @@ from __future__ import annotations
 import inspect
 import warnings
 from collections.abc import Sequence
-from typing import Literal, overload
+from typing import Literal, cast, overload
 
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -93,8 +93,9 @@ class FlextUtilitiesConversion:
             return [value]
         if isinstance(value, (list, tuple, set, frozenset)):
             return [str(item) for item in value if item is not None]
-        value_typed: t.GeneralValueType = value
-        if FlextRuntime.is_list_like(value_typed):
+        # Cast to GeneralValueType to help type checker
+        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+        if FlextRuntime.is_list_like(value_typed) and isinstance(value_typed, Sequence):
             return [str(item) for item in value_typed if item is not None]
         return [str(value)]
 
@@ -182,7 +183,7 @@ def conversion(
 
 @overload
 def conversion(
-    values: Sequence[str],
+    value: Sequence[str],
     *,
     mode: Literal["join"],
     default: str | None = None,
@@ -219,9 +220,17 @@ def conversion(
     _check_direct_access()
 
     if mode == "to_str":
-        return FlextUtilitiesConversion.to_str(value, default=default)
+        # Type narrowing: default should be str | None for to_str
+        default_str: str | None = (
+            default if isinstance(default, (str, type(None))) else None
+        )
+        return FlextUtilitiesConversion.to_str(value, default=default_str)
     if mode == "to_str_list":
-        return FlextUtilitiesConversion.to_str_list(value, default=default)
+        # Type narrowing: default should be list[str] | None for to_str_list
+        default_list: list[str] | None = (
+            default if isinstance(default, (list, type(None))) else None
+        )
+        return FlextUtilitiesConversion.to_str_list(value, default=default_list)
     if mode == "normalize":
         return FlextUtilitiesConversion.normalize(value, case=case)
     if mode == "join":

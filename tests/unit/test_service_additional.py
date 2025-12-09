@@ -90,7 +90,7 @@ def test_clone_runtime_creates_isolated_scope() -> None:
     assert cloned.config.app_name == "cloned"
     assert cloned.config.app_name != base_app_name
     # Ensure new container resolves injected service
-    resolved_result: p.Foundation.Result[t.GeneralValueType] = cloned.container.get(
+    resolved_result: p.Result[t.GeneralValueType] = cloned.container.get(
         "val",
     )
     # Type narrowing: assert_result_success accepts r[TResult], protocol Result is compatible
@@ -112,11 +112,11 @@ def test_access_facade_exposes_components() -> None:
     # Type annotation: access is _ServiceAccess (not Callable)
     # Use type: ignore[attr-defined] because mypy doesn't recognize _ServiceAccess attributes
     # but they exist at runtime (computed_field properties)
-    assert access.cqrs is not None  # type: ignore[attr-defined]
-    assert access.config is service.config  # type: ignore[attr-defined]
-    assert access.context is service.context  # type: ignore[attr-defined]
-    assert access.result is r  # type: ignore[attr-defined]
-    registry = access.registry  # type: ignore[attr-defined]
+    assert access.cqrs is not None
+    assert access.config is service.config
+    assert access.context is service.context
+    assert access.result is r
+    registry = access.registry
     assert registry is not None
     info: Mapping[str, t.FlexibleValue] = service.get_service_info()
     assert info["service_type"] == "RuntimeCloneService"

@@ -159,7 +159,7 @@ error_code = c.Errors.VALIDATION_ERROR
 user = m.Entity(id="123", name="Alice")
 
 # Protocols
-if isinstance(service, p.Configuration.Config):
+if isinstance(service, p.Config):
     service.configure(config)
 
 # Utilities
@@ -188,3 +188,17 @@ See the [Type System Guidelines](../../README.md#type-system-guidelines) in the 
 ---
 
 The foundation layers provide stable, dependency-light building blocks for dispatcher orchestration, domain modeling, and infrastructure integration.
+
+## Related Documentation
+
+**Within Project**:
+- [Getting Started](../guides/getting-started.md) - Installation and basic usage
+- [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - FlextResult pattern
+- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - FlextContainer usage
+- [Architecture Overview](../architecture/README.md) - System architecture and layering
+- [Domain API Reference](./domain.md) - Domain layer APIs
+- [Application API Reference](./application.md) - Application layer APIs
+
+**External Resources**:
+- [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
+- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)

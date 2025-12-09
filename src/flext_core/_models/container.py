@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -117,10 +117,8 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Factory identifier/name",
         )
-        factory: Callable[
-            [],
-            (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
-        ] = Field(
+        # Factory returns 'object' to support BaseModel, protocols, loggers, etc.
+        factory: Callable[[], object] = Field(
             ...,
             description="Factory function that creates service instances",
         )
@@ -177,7 +175,8 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Resource identifier/name",
         )
-        factory: Callable[[], t.GeneralValueType] = Field(
+        # Factory returns 'object' to support any resource type (connections, pools, etc.)
+        factory: Callable[[], object] = Field(
             ...,
             description="Factory returning the lifecycle-managed resource",
         )

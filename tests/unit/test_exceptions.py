@@ -28,8 +28,7 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import c, e, m, p, t
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, c, e, m, p, t
 from flext_tests import u
 
 
@@ -716,7 +715,7 @@ class Teste:
             12345,  # int is GeneralValueType but not Mapping/Metadata
             {},
         )
-        assert isinstance(result, p.Metadata)
+        assert isinstance(result, p.Log.Metadata)
         # Assuming fallback behavior normalizes single value to "value" key
         # or similar default behavior in normalize_metadata
         # Check attributes exist
@@ -729,7 +728,7 @@ class Teste:
         # Cast merged_kwargs to MetadataAttributeValue for type compatibility
         merged_kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", merged_kwargs)
         result = e.BaseError._normalize_metadata(metadata, merged_kwargs_cast)
-        assert isinstance(result, p.Metadata)
+        assert isinstance(result, p.Log.Metadata)
         assert result.attributes["key1"] == "value1"
         assert result.attributes["key2"] == "value2"
 
@@ -825,7 +824,7 @@ class Teste:
             "correlation_id": "test-correlation-id",
             "metadata": cast(
                 "t.MetadataAttributeValue", metadata_obj
-            ),  # m.Metadata is compatible with p.Infrastructure.Metadata which is in MetadataAttributeValue union
+            ),  # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
             "auto_log": True,
             "auto_correlation": True,
         }
@@ -1042,7 +1041,7 @@ class Teste:
         }
         error = e.ConflictError(
             "Conflict",
-            **extra_kwargs,  # type: ignore[arg-type]  # Mypy limitation: **kwargs unpacking
+            **extra_kwargs,
         )
         assert error.metadata is not None
         assert "custom" in error.metadata.attributes
@@ -1123,7 +1122,7 @@ class Teste:
         result = e.TypeError._normalize_type(
             None,
             type_map,
-            extra_kwargs,  # type: ignore[arg-type]  # Runtime accepts type objects, type system doesn't
+            extra_kwargs,
             "expected_type",
         )
         assert result is str
@@ -1142,7 +1141,7 @@ class Teste:
         result = e.TypeError._normalize_type(
             None,
             type_map,
-            extra_kwargs_type,  # type: ignore[arg-type]  # Runtime accepts type objects, type system doesn't
+            extra_kwargs_type,
             "expected_type",
         )
         assert result is int
@@ -1330,7 +1329,7 @@ class Teste:
         """Test create with metadata as Metadata object - tests lines 1369-1371."""
         metadata_obj = m.Metadata(attributes={"key1": "value1"})
         # create accepts **kwargs: t.MetadataAttributeValue
-        # m.Metadata is compatible with p.Infrastructure.Metadata which is in MetadataAttributeValue union
+        # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
         error = e.create(
             "Test message",
             field="test_field",
@@ -1469,7 +1468,7 @@ class Teste:
         kwargs: t.Types.MetadataAttributeDict = {}
         for k, v in kwargs_raw.items():
             if isinstance(v, m.Metadata):
-                # m.Metadata is compatible with p.Infrastructure.Metadata which is in MetadataAttributeValue union
+                # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
                 kwargs[k] = cast("t.MetadataAttributeValue", v)
             elif isinstance(v, (str, int, float, bool, type(None), list, dict)):
                 # These are already t.GeneralValueType

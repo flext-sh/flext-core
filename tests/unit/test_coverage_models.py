@@ -22,12 +22,11 @@ from __future__ import annotations
 
 import math
 from datetime import datetime
-from typing import Any
 
 import pytest
 from pydantic import ValidationError, field_validator
 
-from flext_core import m
+from flext_core import m, t
 
 
 class ModelScenarios:
@@ -546,7 +545,7 @@ class TestModelSerialization:
         class ShoppingCart(m.AggregateRoot):
             """Shopping cart aggregate."""
 
-            items: list[dict[str, Any]]
+            items: list[dict[str, t.GeneralValueType]]
             total: float
 
         cart = ShoppingCart(

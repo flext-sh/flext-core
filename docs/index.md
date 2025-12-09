@@ -4,7 +4,7 @@ Concise navigation for FLEXT-Core reference materials. All documents follow the 
 
 ## Quick Navigation
 
-- **Onboarding:** [`QUICK_START.md`](./QUICK_START.md)
+- **Onboarding:** [`quick-start.md`](./quick-start.md)
 - **Architecture overview:** [`architecture/overview.md`](./architecture/overview.md)
 - **CQRS architecture:** [`architecture/cqrs.md`](./architecture/cqrs.md)
 - **Clean architecture details:** [`architecture/clean-architecture.md`](./architecture/clean-architecture.md)
@@ -19,7 +19,7 @@ Concise navigation for FLEXT-Core reference materials. All documents follow the 
 ```
 docs/
 ├── INDEX.md              # This file
-├── QUICK_START.md        # Five-minute introduction
+├── quick-start.md        # Five-minute introduction
 ├── api-reference/        # Layered API reference
 ├── architecture/         # System and pattern descriptions
 ├── development/          # Contribution workflow

@@ -212,7 +212,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         # items_map is a special kwarg processed by AddParams
         # Type ignore needed because items_map is Callable, not GeneralValueType
-        builder.add("doubled", items=[1, 2, 3], items_map=lambda x: x * 2)  # type: ignore[arg-type]
+        builder.add("doubled", items=[1, 2, 3], items_map=lambda x: x * 2)
         data = builder.build()
         doubled = cast("list[int]", data["doubled"])
         assert doubled == [2, 4, 6]
@@ -225,7 +225,7 @@ class TestFlextTestsBuilders:
         builder.add(
             "filtered",
             entries={"a": 1, "b": 2, "c": 3},
-            entries_filter={"a", "c"},  # type: ignore[arg-type]
+            entries_filter={"a", "c"},
         )
         data = builder.build()
         filtered = cast("dict[str, int]", data["filtered"])
@@ -308,7 +308,7 @@ class TestFlextTestsBuilders:
         builder.set("a.b.c", 42)
         # flatten is a special kwarg processed by BuildParams
         # Type ignore needed because mypy can't match overload for bool parameter
-        flattened_raw = builder.build(flatten=True)  # type: ignore[call-overload]
+        flattened_raw = builder.build(flatten=True)
         # Type narrowing: flatten=True returns BuilderDict
         flattened: dict[str, object] = cast("dict[str, object]", flattened_raw)
         assert isinstance(flattened, dict)
@@ -321,7 +321,7 @@ class TestFlextTestsBuilders:
         builder.add("a", 1).add("b", None).add("c", 3)
         # filter_none is a special kwarg processed by BuildParams
         # Type ignore needed because mypy can't match overload for bool parameter
-        filtered_raw = builder.build(filter_none=True)  # type: ignore[call-overload]
+        filtered_raw = builder.build(filter_none=True)
         # Type narrowing: filter_none=True returns BuilderDict
         filtered: dict[str, object] = cast("dict[str, object]", filtered_raw)
         assert "a" in filtered
@@ -351,7 +351,7 @@ class TestFlextTestsBuilders:
         # validate_with is a special kwarg processed by BuildParams
         # Type ignore needed because validate_with is Callable, not GeneralValueType
         # build() accepts **kwargs: object, validated by BuildParams
-        build_result = builder.build(validate_with=lambda d: d["count"] > 0)  # type: ignore[call-overload]  # validate_with is validated by BuildParams, not in overloads
+        build_result = builder.build(validate_with=lambda d: d["count"] > 0)
         # Type narrowing: build() returns union, extract dict
         if isinstance(build_result, dict):
             data = build_result
@@ -368,7 +368,7 @@ class TestFlextTestsBuilders:
         builder.add("x", 1)
         # map_result is a special kwarg processed by BuildParams
         # Type ignore needed because map_result is Callable, not GeneralValueType
-        build_result = builder.build(map_result=lambda d: d["x"] * 2)  # type: ignore[call-overload]
+        build_result = builder.build(map_result=lambda d: d["x"] * 2)
         # Type narrowing: map_result returns transformed value (int in this case)
         doubled: int = cast("int", build_result)
         assert doubled == 2
@@ -436,7 +436,7 @@ class TestFlextTestsBuilders:
         # Type annotation matches actual return type from to_result()
         # validate is Callable, validated by ToResultParams
         # Actual return type is more specific, use explicit type annotation with cast
-        result_raw: object = builder.to_result(validate=lambda d: d["count"] > 0)  # type: ignore[call-overload]
+        result_raw: object = builder.to_result(validate=lambda d: d["count"] > 0)
         # Type narrowing: to_result() returns union, extract r[BuilderDict]
         result: r[t_test.Tests.Builders.BuilderDict] = cast(
             "r[t_test.Tests.Builders.BuilderDict]",
@@ -598,7 +598,7 @@ class TestFlextTestsBuilders:
         # Empty parametrize_key should fail validation
         # build() accepts **kwargs: object, validated by BuildParams
         with pytest.raises((ValueError, ValidationError)):
-            builder.build(as_parametrized=True, parametrize_key="")  # type: ignore[call-overload]  # parametrize_key is validated by BuildParams
+            builder.build(as_parametrized=True, parametrize_key="")
 
     def test_to_result_params_validation_error_code_with_error(self) -> None:
         """Test ToResultParams validates error_code is only with error."""
@@ -660,7 +660,7 @@ class TestFlextTestsBuilders:
             | list[t_test.Tests.Builders.BuilderValue]
             | list[t_test.Tests.Builders.ParametrizedCase]
             | object
-        ) = builder.build(filter_none=True)  # type: ignore[call-overload]  # filter_none is validated by BuildParams, not in overloads
+        ) = builder.build(filter_none=True)
         # Type narrowing: filter_none=True returns BuilderDict
         data: t_test.Tests.Builders.BuilderDict = cast(
             "t_test.Tests.Builders.BuilderDict",

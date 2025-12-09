@@ -29,7 +29,7 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import FlextContext, m, t
+from flext_core import FlextContainer, FlextContext, m, t
 from flext_tests import FlextTestsUtilities, u
 
 
@@ -240,7 +240,7 @@ class TestFlextContext:
         context.set("key1", "value1").unwrap()
         context.set("key2", "value2").unwrap()
         cloned_raw = context.clone()
-        # clone() returns p.Context.Ctx, but assert_context_get_success expects FlextContext
+        # clone() returns p.Ctx, but assert_context_get_success expects FlextContext
         cloned: FlextContext = cast("FlextContext", cloned_raw)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             cloned,
@@ -268,7 +268,7 @@ class TestFlextContext:
         json_str = context.to_json()
         assert isinstance(json_str, str) and "string_value" in json_str
         restored_raw = FlextContext.from_json(json_str)
-        # from_json() returns p.Context.Ctx, but assert_context_get_success expects FlextContext
+        # from_json() returns p.Ctx, but assert_context_get_success expects FlextContext
         restored: FlextContext = cast("FlextContext", restored_raw)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             restored,
@@ -647,6 +647,9 @@ class TestFlextContext:
 
     def test_service_register_and_get_service(self) -> None:
         """Test Service.register_service and get_service."""
+        # Set up container before using FlextContext.Service methods
+        container = FlextContainer(_context=FlextContext())
+        FlextContext.set_container(container)
         service_instance = {"service": "instance"}
         FlextContext.Service.register_service("test-service", service_instance)
         result = FlextContext.Service.get_service("test-service")
@@ -705,7 +708,7 @@ class TestFlextContext:
         context1 = test_context
         context1.set("key1", "value1").unwrap()
         context2_raw = context1.clone()
-        # clone() returns p.Context.Ctx, but has() is on FlextContext
+        # clone() returns p.Ctx, but has() is on FlextContext
         context2: FlextContext = cast("FlextContext", context2_raw)
         context1.clear()
         assert context1.has("key1") is False
@@ -774,7 +777,7 @@ class TestFlextContext:
         context1 = test_context
         context1.set("key1", "value1").unwrap()
         context2_raw = context1.clone()
-        # clone() returns p.Context.Ctx, but assert_context_get_success and has() expect FlextContext
+        # clone() returns p.Ctx, but assert_context_get_success and has() expect FlextContext
         context2: FlextContext = cast("FlextContext", context2_raw)
         context2.set("key1", "value2").unwrap()
         context2.set("key3", "value3").unwrap()
@@ -819,7 +822,7 @@ class TestFlextContext:
         context1.set("key2", 42).unwrap()
         json_str = context1.to_json()
         context2_raw = FlextContext.from_json(json_str)
-        # from_json() returns p.Context.Ctx, but assert_context_get_success expects FlextContext
+        # from_json() returns p.Ctx, but assert_context_get_success expects FlextContext
         context2: FlextContext = cast("FlextContext", context2_raw)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context2,

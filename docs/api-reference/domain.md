@@ -57,7 +57,7 @@ class Order(FlextModels.AggregateRoot):
         return FlextResult[None].ok(None)
 ```
 
-### FlextService — Domain Service Base
+### FlextService — Service Base
 
 Base class for domain services that encapsulate business logic, domain events, and CQRS handlers.
 

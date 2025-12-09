@@ -49,11 +49,6 @@ from flext_core.typings import (
 )
 from flext_core.utilities import FlextUtilities, u
 
-# Alias for singular form (backwards compatibility and singular usage)
-FlextHandler = FlextHandlers
-Provide = FlextRuntime.DependencyIntegration.Provide
-inject = FlextRuntime.DependencyIntegration.inject
-
 # =============================================================================
 # RUNTIME TYPE CHECKING - Python 3.13 Strict Typing Enforcement
 # =============================================================================
@@ -87,7 +82,6 @@ __all__ = [
     "FlextDecorators",
     "FlextDispatcher",
     "FlextExceptions",
-    "FlextHandler",
     "FlextHandlers",
     "FlextLogger",
     "FlextMixins",
@@ -101,7 +95,6 @@ __all__ = [
     "FlextUtilities",
     "MessageT_contra",
     "P",
-    "Provide",
     "R",
     "ResultT",
     "T",
@@ -117,7 +110,6 @@ __all__ = [
     "d",
     "e",
     "h",
-    "inject",
     "m",
     "p",
     "r",

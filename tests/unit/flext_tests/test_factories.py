@@ -178,9 +178,9 @@ class TestFlextTestsFactoriesModernAPI:
         assert hasattr(user, "id")
         assert hasattr(user, "name")
         assert hasattr(user, "email")
-        assert user.id == "custom-123"  # type: ignore[attr-defined]
-        assert user.name == "Custom User"  # type: ignore[attr-defined]
-        assert user.email == "custom@test.com"  # type: ignore[attr-defined]
+        assert user.id == "custom-123"
+        assert user.name == "Custom User"
+        assert user.email == "custom@test.com"
 
     def test_model_user_with_overrides(self) -> None:
         """Test tt.model('user') with overrides."""
@@ -579,7 +579,7 @@ class TestsFlextTestsFactoriesModel:
         user_result = tt.model(
             "user",
             name="Original",
-            transform=lambda u: User(  # type: ignore[arg-type]
+            transform=lambda u: User(
                 id=u.id,
                 name="Transformed",
                 email=u.email,
@@ -596,7 +596,7 @@ class TestsFlextTestsFactoriesModel:
         """Test model creation with validation."""
         # validate is a special kwarg processed by ModelFactoryParams
         # Type ignore needed because validate is Callable, not TestResultValue
-        user_result = tt.model("user", active=True, validate=lambda u: u.active)  # type: ignore[arg-type]
+        user_result = tt.model("user", active=True, validate=lambda u: u.active)
         # Type narrowing: extract BaseModel from union type
         user = _extract_model(user_result)
         # Type narrowing: user is BaseModel, cast to User for attribute access
@@ -609,7 +609,7 @@ class TestsFlextTestsFactoriesModel:
         result_raw = tt.model(
             "user",
             active=False,
-            validate=lambda u: u.active,  # type: ignore[arg-type]
+            validate=lambda u: u.active,
             as_result=True,
         )
         # Type narrowing: as_result=True returns r[BaseModel] | BaseModel | list | dict
@@ -638,9 +638,7 @@ class TestsFlextTestsFactoriesRes:
         result_raw: r[int] | list[r[int]] = tt.res("ok", value=42)
         # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
         # For single result, it's r[TValue]
-        result: r[int] = (
-            result_raw if isinstance(result_raw, r) else result_raw[0]  # type: ignore[index]
-        )
+        result: r[int] = result_raw if isinstance(result_raw, r) else result_raw[0]
         assert isinstance(result, FlextResult)
         assert result.is_success
         assert result.value == 42
@@ -650,9 +648,7 @@ class TestsFlextTestsFactoriesRes:
         result_raw: r[object] | list[r[object]] = tt.res("fail", error="Error message")
         # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
         # For single result, it's r[TValue]
-        result: r[object] = (
-            result_raw if isinstance(result_raw, r) else result_raw[0]  # type: ignore[index]
-        )
+        result: r[object] = result_raw if isinstance(result_raw, r) else result_raw[0]
         assert isinstance(result, FlextResult)
         assert result.is_failure
         assert result.error == "Error message"
@@ -666,9 +662,7 @@ class TestsFlextTestsFactoriesRes:
         )
         # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
         # For single result, it's r[TValue]
-        result: r[object] = (
-            result_raw if isinstance(result_raw, r) else result_raw[0]  # type: ignore[index]
-        )
+        result: r[object] = result_raw if isinstance(result_raw, r) else result_raw[0]
         assert result.is_failure
         assert result.error == "Error message"
         # Note: error_code may be stored in result metadata
@@ -678,9 +672,7 @@ class TestsFlextTestsFactoriesRes:
         result_raw: r[int] | list[r[int]] = tt.res("from_value", value=42)
         # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
         # For single result, it's r[TValue]
-        result: r[int] = (
-            result_raw if isinstance(result_raw, r) else result_raw[0]  # type: ignore[index]
-        )
+        result: r[int] = result_raw if isinstance(result_raw, r) else result_raw[0]
         assert result.is_success
         assert result.value == 42
 
@@ -693,9 +685,7 @@ class TestsFlextTestsFactoriesRes:
         )
         # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
         # For single result, it's r[TValue]
-        result: r[object] = (
-            result_raw if isinstance(result_raw, r) else result_raw[0]  # type: ignore[index]
-        )
+        result: r[object] = result_raw if isinstance(result_raw, r) else result_raw[0]
         assert result.is_failure
         error_msg = result.error or ""
         assert "required" in error_msg.lower()
@@ -705,7 +695,7 @@ class TestsFlextTestsFactoriesRes:
         results_raw: r[int] | list[r[int]] = tt.res("ok", values=[1, 2, 3])
         # Type narrowing: tt.res() with values returns list[r[TValue]]
         results: list[r[int]] = (
-            results_raw if isinstance(results_raw, list) else [results_raw]  # type: ignore[list-item]
+            results_raw if isinstance(results_raw, list) else [results_raw]
         )
         assert isinstance(results, list)
         assert len(results) == 3
@@ -720,7 +710,7 @@ class TestsFlextTestsFactoriesRes:
         )
         # Type narrowing: tt.res() with errors returns list[r[TValue]]
         results: list[r[object]] = (
-            results_raw if isinstance(results_raw, list) else [results_raw]  # type: ignore[list-item]
+            results_raw if isinstance(results_raw, list) else [results_raw]
         )
         assert isinstance(results, list)
         assert len(results) == 2
@@ -736,7 +726,7 @@ class TestsFlextTestsFactoriesRes:
         )
         # Type narrowing: tt.res() with mix_pattern returns list[r[TValue]]
         results: list[r[int]] = (
-            results_raw if isinstance(results_raw, list) else [results_raw]  # type: ignore[list-item]
+            results_raw if isinstance(results_raw, list) else [results_raw]
         )
         assert len(results) == 4
         assert results[0].is_success and results[0].value == 1
@@ -751,13 +741,11 @@ class TestsFlextTestsFactoriesRes:
         result_raw: r[int] | list[r[int]] = tt.res(
             "ok",
             value=5,
-            transform=lambda x: x * 2,  # type: ignore[arg-type]
+            transform=lambda x: x * 2,
         )
         # Type narrowing: tt.res() returns r[TValue] | list[r[TValue]]
         # For single result, it's r[TValue]
-        result: r[int] = (
-            result_raw if isinstance(result_raw, r) else result_raw[0]  # type: ignore[index]
-        )
+        result: r[int] = result_raw if isinstance(result_raw, r) else result_raw[0]
         assert result.is_success
         assert result.value == 10
 
@@ -793,7 +781,7 @@ class TestsFlextTestsFactoriesList:
         # Type ignore needed because transform is Callable, not TestResultValue
         doubled_raw: list[int] | r[list[int]] = tt.list(
             [1, 2, 3],
-            transform=lambda x: x * 2,  # type: ignore[arg-type]
+            transform=lambda x: x * 2,
         )
         # Type narrowing: extract list from union
         doubled: list[int] = (
@@ -807,7 +795,7 @@ class TestsFlextTestsFactoriesList:
         # Type ignore needed because filter_ is Callable, not TestResultValue
         evens_raw: list[int] | r[list[int]] = tt.list(
             [1, 2, 3, 4, 5],
-            filter_=lambda x: x % 2 == 0,  # type: ignore[arg-type]
+            filter_=lambda x: x % 2 == 0,
         )
         # Type narrowing: extract list from union
         evens: list[int] = (
@@ -837,7 +825,7 @@ class TestsFlextTestsFactoriesList:
         result: r[list[User]] = (
             cast("r[list[User]]", result_raw)
             if isinstance(result_raw, r)
-            else result_raw  # type: ignore[assignment]
+            else result_raw
         )
         assert isinstance(result, FlextResult)
         assert result.is_success
@@ -869,7 +857,7 @@ class TestsFlextTestsFactoriesDict:
         users_raw: dict[str, User] | r[dict[str, User]] = tt.dict_factory(
             "user",
             count=3,
-            key_factory=lambda i: f"user_{i}",  # type: ignore[arg-type]
+            key_factory=lambda i: f"user_{i}",
         )
         # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
         # For as_result=False, it's dict[K, V]
@@ -889,7 +877,7 @@ class TestsFlextTestsFactoriesDict:
         users_raw: dict[str, User] | r[dict[str, User]] = tt.dict_factory(
             "user",
             count=2,
-            value_factory=value_factory,  # type: ignore[arg-type]
+            value_factory=value_factory,
         )
         # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
         # For as_result=False, it's dict[K, V]
@@ -923,7 +911,7 @@ class TestsFlextTestsFactoriesDict:
         result: r[dict[str, User]] = (
             cast("r[dict[str, User]]", result_raw)
             if isinstance(result_raw, r)
-            else result_raw  # type: ignore[assignment]
+            else result_raw
         )
         assert isinstance(result, FlextResult)
         assert result.is_success
@@ -959,7 +947,7 @@ class TestsFlextTestsFactoriesGeneric:
         if isinstance(obj_result, r):
             obj = obj_result.unwrap()
         elif isinstance(obj_result, list):
-            obj = obj_result[0]  # type: ignore[index]
+            obj = obj_result[0]
         else:
             obj = obj_result
         # Type narrowing: obj is ArgsClass
@@ -994,14 +982,14 @@ class TestsFlextTestsFactoriesGeneric:
         obj_result = tt.generic(
             ValidatedClass,
             kwargs={"age": 25},
-            validate=lambda o: o.age >= 18,  # type: ignore[arg-type]
+            validate=lambda o: o.age >= 18,
         )
         # Type narrowing: tt.generic() returns T | list[T] | r[T] | r[list[T]]
         # For single instance, it's T
         if isinstance(obj_result, r):
             obj = obj_result.unwrap()
         elif isinstance(obj_result, list):
-            obj = obj_result[0]  # type: ignore[index]
+            obj = obj_result[0]
         else:
             obj = obj_result
         # Type narrowing: obj is ValidatedClass
@@ -1015,7 +1003,7 @@ class TestsFlextTestsFactoriesGeneric:
             tt.generic(
                 ValidatedClass,
                 kwargs={"age": 15},
-                validate=lambda o: o.age >= 18,  # type: ignore[arg-type]
+                validate=lambda o: o.age >= 18,
             )
 
     def test_generic_as_result(self) -> None:

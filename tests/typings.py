@@ -37,7 +37,7 @@ class TestsFlextTypes(FlextTestsTypes):
     - All generic types come from FlextTestsTypes
     """
 
-    class Core:
+    class Core(FlextTestsTypes.Core):
         """Flext-core-specific type definitions for testing.
 
         Uses composition of core_t for type safety and consistency.
@@ -55,27 +55,6 @@ class TestsFlextTypes(FlextTestsTypes):
             core_t.GeneralValueType | Sequence[str] | Mapping[str, str] | None,
         ]
         """Handler configuration mapping specific to flext-core handlers."""
-
-    class Utility(core_t.Utility):
-        """Utility type definitions for tests - real inheritance."""
-
-    class Validation(core_t.Validation):
-        """Domain validation types for tests - real inheritance."""
-
-    class Json(core_t.Json):
-        """JSON serialization types for tests - real inheritance."""
-
-    class HandlerAliases(core_t.Handler):
-        """Handler and middleware type aliases for tests - real inheritance."""
-
-    class Config(core_t.Config):
-        """Configuration models for tests - real inheritance."""
-
-    class Dispatcher(core_t.Dispatcher):
-        """Dispatcher type definitions for tests - real inheritance."""
-
-    class Types(core_t.Types):
-        """Type aliases for structured mappings for tests - real inheritance."""
 
     class Fixtures:
         """TypedDict definitions for test fixtures."""

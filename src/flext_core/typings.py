@@ -13,7 +13,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import socket
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
@@ -21,17 +20,14 @@ from pathlib import Path
 from re import Pattern
 from types import ModuleType
 from typing import (
-    Annotated,
     ClassVar,
     ParamSpec,
     TypedDict,
     TypeVar,
 )
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from flext_core.constants import c
 
 # ============================================================================
 # Module-Level TypeVars - Used in flext-core src/
@@ -190,8 +186,12 @@ class FlextTypes:
     # Supports JSON-serializable values: primitives, sequences, and mappings
     # Note: Recursive type uses forward reference (managed by __future__ annotations)
     # Reuses ScalarValue defined above
+    # PEP 695 recursive types work with __future__ annotations
+    # Use string forward reference for recursive types to avoid pyrefly errors
     type GeneralValueType = (
-        ScalarValue | Sequence[GeneralValueType] | Mapping[str, GeneralValueType]
+        ScalarValue
+        | Sequence[FlextTypes.GeneralValueType]
+        | Mapping[str, FlextTypes.GeneralValueType]
     )
 
     # Constant value type - all possible constant types in FlextConstants
@@ -216,11 +216,15 @@ class FlextTypes:
 
     # Object list type - sequence of general value types for batch operations
     # Reuses t.GeneralValueType (forward reference managed by __future__ annotations)
-    type ObjectList = Sequence[GeneralValueType]
+    type ObjectList = Sequence[FlextTypes.GeneralValueType]
 
     # Sortable object type - types that can be sorted (str, int, float, Mapping)
     # Note: Uses t.ScalarValue but excludes bool/None for sorting compatibility
-    type SortableObjectType = str | int | float | Mapping[str, SortableObjectType]
+    # PEP 695 recursive types work with __future__ annotations
+    # Use string forward reference for recursive types to avoid pyrefly errors
+    type SortableObjectType = (
+        str | int | float | Mapping[str, FlextTypes.SortableObjectType]
+    )
 
     # Metadata-compatible attribute value type - composed for strict
     # validation
@@ -297,87 +301,6 @@ class FlextTypes:
             | Callable[[t.GeneralValueType], t.GeneralValueType]
         )
 
-    class Validation:
-        """Domain validation types using Pydantic Field annotations."""
-
-        # Network validation types
-        # NOTE: Field() requires literal values, so we use constants directly
-        # These constants are centralized in FlextConstants for reuse
-        type PortNumber = Annotated[
-            int,
-            Field(
-                ge=c.Network.MIN_PORT,
-                le=c.Network.MAX_PORT,
-                description="Network port",
-            ),
-        ]
-        type TimeoutSeconds = Annotated[
-            float,
-            Field(
-                gt=c.ZERO,
-                le=int(c.Network.DEFAULT_TIMEOUT),
-                description="Timeout in seconds",
-            ),
-        ]
-        type RetryCount = Annotated[
-            int,
-            Field(
-                ge=c.ZERO,
-                le=c.Validation.RETRY_COUNT_MAX,
-                description="Retry attempts",
-            ),
-        ]
-
-        # String validation types
-        type NonEmptyStr = Annotated[
-            str,
-            Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
-                description="Non-empty string",
-            ),
-        ]
-
-        @staticmethod
-        def _validate_hostname(value: str) -> str:
-            """Validate hostname by attempting DNS resolution.
-
-            Business Rule: Validates hostname strings by attempting DNS resolution
-            using socket.gethostbyname(). Ensures hostnames are resolvable before
-            being used in network configurations. Raises ValueError if hostname cannot
-            be resolved, preventing invalid network configurations.
-
-            Audit Implication: Hostname validation ensures network configurations
-            are valid before being used in production systems. Failed validations
-            are logged with error messages for audit trail completeness. Used by
-            Pydantic 2 AfterValidator for type-safe hostname validation.
-
-            Args:
-                value: Hostname string to validate
-
-            Returns:
-                Validated hostname string (same as input if valid)
-
-            Raises:
-                ValueError: If hostname cannot be resolved via DNS
-
-            """
-            try:
-                _ = socket.gethostbyname(value)
-                return value
-            except socket.gaierror as e:
-                msg = f"Cannot resolve hostname '{value}': {e}"
-                raise ValueError(msg) from e
-
-        type HostName = Annotated[
-            str,
-            Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
-                max_length=c.Network.MAX_HOSTNAME_LENGTH,
-                description="Valid hostname",
-            ),
-            AfterValidator(_validate_hostname),
-        ]
-
     class Json:
         """JSON serialization types for API and data exchange."""
 
@@ -408,7 +331,7 @@ class FlextTypes:
 
         # Handler type for registry - union of all possible handler types
         # This includes callables, objects with handle() method, and handler instances
-        # Note: Handler protocol is defined in p.Application.Handler for proper protocol organization
+        # Note: Handler protocol is defined in p.Handler for proper protocol organization
 
         # Middleware configuration type
         type MiddlewareConfig = t.Types.ConfigurationMapping
@@ -426,13 +349,13 @@ class FlextTypes:
         # Reuses t.GeneralValueType from parent t class (forward reference)
         type ConditionCallable = Callable[[t.GeneralValueType], bool]
 
-        # Variadic callable protocol is defined in p.Utility.Callable
+        # Variadic callable protocol is defined in p.VariadicCallable
         # Use that instead of redeclaring here
 
         # Handler type union - all possible handler representations
         # This is used for handler registries where handlers can be callables,
         # handler instances, or configuration dicts
-        # Note: Handler and Utility.Callable protocols are defined in p
+        # Note: Handler and VariadicCallable protocols are defined in p
         # but cannot be imported here due to circular dependency. For type checking,
         # we use HandlerCallable which covers most use cases.
         # Reuses t.GeneralValueType from parent t class (no duplication)
@@ -641,6 +564,15 @@ class FlextTypes:
         type GeneralValueDict = dict[str, t.GeneralValueType]
         """Mutable dict for general value types (alias for ConfigurationDict)."""
 
+        # Handler and decorator types
+        type HandlerCallable = t.Handler.HandlerCallable
+        """Callable type for handlers - alias to t.Handler.HandlerCallable."""
+
+        type DecoratorType = Callable[
+            [t.Handler.HandlerCallable], t.Handler.HandlerCallable
+        ]
+        """Type for decorators that wrap handler callables."""
+
         type FloatListDict = dict[str, list[float]]
         """Mutable dict for string-to-float-list associations (e.g., execution times)."""
 
@@ -710,6 +642,65 @@ class FlextTypes:
         """Mutable dict for string-to-(GeneralValueType, GeneralValueType)-tuple mappings (e.g., differences)."""
 
         # Container-specific types (forward references to avoid circular imports)
+        # Service instance type - union of all types accepted by container.register()
+        # Uses 'object' as base to accept any service type (protocols, config, context, etc.)
+        type ServiceInstanceType = (
+            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
+        )
+        """Type for service instances accepted by FlextContainer.register().
+
+        Includes:
+        - GeneralValueType: Primitives, sequences, mappings
+        - BaseModel: Pydantic models
+        - Callable[..., GeneralValueType]: Callable services (variadic signature)
+        - object: Any arbitrary object (protocols, loggers, configs, contexts, etc.)
+
+        Note: Using 'object' allows registration of protocol instances (p.Config,
+        p.Ctx, etc.) and other arbitrary services.
+        """
+
+        # Factory callable type - zero-argument factory returning any object
+        # Uses 'object' to support factories returning BaseModel, protocols, etc.
+        type FactoryCallable = Callable[[], object]
+        """Callable type for container factories.
+
+        Zero-argument callable that returns any object.
+        Used by FlextContainer.register_factory() and with_factory().
+        Supports factories returning BaseModel, protocols, loggers, etc.
+        """
+
+        # Resource callable type - same as factory but for lifecycle-managed resources
+        type ResourceCallable = Callable[[], object]
+        """Callable type for container resources.
+
+        Zero-argument callable that returns any object.
+        Used by FlextContainer.register_resource() and with_resource().
+        """
+
+        # Factory registration callable - type used by m.Container.FactoryRegistration
+        # More restricted than FactoryCallable (non-recursive scalar types)
+        type FactoryRegistrationCallable = Callable[
+            [],
+            t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue],
+        ]
+        """Callable type for factory registrations in m.Container.FactoryRegistration.
+
+        Zero-argument callable returning non-recursive scalar types.
+        More restricted than FactoryCallable for Pydantic serialization compatibility.
+        """
+
+        # Service mapping type - for scoped container services parameter
+        type ServiceMapping = Mapping[str, ServiceInstanceType]
+        """Mapping type for service registrations in scoped container creation."""
+
+        # Factory mapping type - for scoped container factories parameter
+        type FactoryMapping = Mapping[str, FactoryRegistrationCallable]
+        """Mapping type for factory registrations in scoped container creation."""
+
+        # Resource mapping type - for scoped container resources parameter
+        type ResourceMapping = Mapping[str, ResourceCallable]
+        """Mapping type for resource registrations in scoped container creation."""
+
         type ServiceRegistrationDict = dict[str, object]
         """Mutable dict for service registration mappings.
 
@@ -863,10 +854,10 @@ class FlextTypes:
             """Configuration overrides to apply to the config instance."""
 
             context: object
-            """Context instance (p.Context.Ctx) for service runtime.
+            """Context instance (p.Ctx) for service runtime.
 
             Note: Uses object to avoid circular import with protocols.py.
-            Actual type is p.Context.Ctx, but protocols cannot be imported here.
+            Actual type is p.Ctx, but protocols cannot be imported here.
             """
 
             subproject: str
@@ -878,7 +869,7 @@ class FlextTypes:
             ]
             """Service registrations for container.
 
-            Note: Uses object for p.Utility.Callable[t.GeneralValueType] to avoid
+            Note: Uses object for p.VariadicCallable[t.GeneralValueType] to avoid
             circular import with protocols.py. Actual type includes callables.
             """
 
@@ -941,7 +932,7 @@ class FlextTypes:
         # These are assigned after class definition to avoid forward reference issues
         # Note: With from __future__ import annotations, these are automatically strings
         Utility: ClassVar[type[FlextTypes.Utility]]
-        Validation: ClassVar[type[FlextTypes.Validation]]
+        # Validation moved to models.py (Tier 1) - access via FlextModels.Validation
         Json: ClassVar[type[FlextTypes.Json]]
         Handler: ClassVar[type[FlextTypes.Handler]]
         Config: ClassVar[type[FlextTypes.Config]]
@@ -960,12 +951,9 @@ class FlextTypes:
     # Both access patterns work - aliases for convenience, namespaces for clarity
     # =========================================================================
 
-    # Validation aliases (most commonly used)
-    PortNumber = Validation.PortNumber
-    TimeoutSeconds = Validation.TimeoutSeconds
-    RetryCount = Validation.RetryCount
-    NonEmptyStr = Validation.NonEmptyStr
-    HostName = Validation.HostName
+    # Validation types moved to models.py (Tier 1)
+    # Access via: m.Validation.PortNumber, m.Validation.TimeoutSeconds, etc.
+    # See: flext_core.models.FlextModels.Validation for complete validation types
 
     # Json aliases
     JsonPrimitive = Json.JsonPrimitive
@@ -991,7 +979,7 @@ class FlextTypes:
 
     # ClassVar annotations in Core class ensure proper type checking
     Core.Utility = Utility
-    Core.Validation = Validation
+    # Core.Validation moved to models.py (Tier 1) - access via FlextModels.Validation
     Core.Json = Json
     Core.Handler = Handler
     Core.Config = Config
@@ -1001,6 +989,16 @@ class FlextTypes:
 
 t = FlextTypes
 t_core = FlextTypes
+
+# ============================================================================
+# TYPE COMPATIBILITY ALIASES (for mypy type checking)
+# ============================================================================
+# These aliases help mypy recognize that RuntimeResult and FlextResult
+# are compatible types that both implement p.Result protocol
+#
+# Note: ResultType was previously defined here but moved to avoid circular imports.
+# Use p.Result[T] in function signatures to accept any Result implementation.
+# Both RuntimeResult[T] and FlextResult[T] satisfy the p.Result protocol.
 
 __all__ = [
     "E",

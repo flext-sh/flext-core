@@ -97,12 +97,17 @@ guide.
 4. **Decision Records**: Review [Architecture Decisions](./decisions.md) for design rationale
 5. **Guides**: Check [Getting Started](../guides/getting-started.md) for practical usage
 
-## See Also
+## Related Documentation
 
+**Within Project**:
 - [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
 - [CQRS Architecture](./cqrs.md) - Handler pipeline and dispatcher orchestration
 - [Architecture Patterns](./patterns.md) - Common patterns and best practices
 - [Architecture Decisions](./decisions.md) - ADRs documenting design choices
 - [Getting Started Guide](../guides/getting-started.md) - Practical implementation guide
 - [Service Patterns](../guides/service-patterns.md) - Domain service patterns
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- [API Reference](../api-reference/foundation.md) - Foundation layer APIs
+
+**External Resources**:
+- [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
+- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)

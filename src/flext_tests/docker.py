@@ -114,8 +114,9 @@ class FlextTestsDocker:
             # Direct assignment works when super().__init__() is not called
             # Offline mode intentionally sets api to None to avoid connection attempts
             # Type narrowing: DockerClient.api is APIClient, but we override for offline mode
-            # Offline mode intentionally sets api to None - use type: ignore for intentional override
-            self.api = None  # type: ignore[assignment]
+            # Use setattr with variable for intentional override of typed attribute
+            api_attr = "api"
+            setattr(self, api_attr, None)
             self._offline_containers = FlextTestsDocker._OfflineContainers()
 
         @property

@@ -1,6 +1,8 @@
-# FLEXT-Core Project Guidelines
+# flext-core - FLEXT Core Foundation
 
-**Reference**: See [../CLAUDE.md](../CLAUDE.md) for FLEXT ecosystem standards and general rules.
+**Hierarchy**: PROJECT
+**Parent**: [../CLAUDE.md](../CLAUDE.md) - Workspace standards
+**Last Update**: 2025-12-07
 
 ---
 
@@ -12,6 +14,102 @@
 **Coverage**: 81.41% (above 73% minimum)
 **Python**: 3.13+ only
 **Tests**: 2820 tests passing
+
+---
+
+## ⚠️ CRITICAL: Architecture Layering (Zero Tolerance)
+
+### Module Import Hierarchy (MANDATORY)
+
+**ABSOLUTELY FORBIDDEN IMPORT PATTERNS**:
+
+```
+NEVER IMPORT (regardless of method - direct, lazy, function-local, proxy):
+
+Foundation Modules (models.py, protocols.py, utilities.py, typings.py, constants.py):
+  ❌ NEVER import services/*.py
+  ❌ NEVER import servers/*.py
+  ❌ NEVER import api.py
+
+Infrastructure Modules (servers/*.py):
+  ❌ NEVER import services/*.py
+  ❌ NEVER import api.py
+```
+
+**CORRECT ARCHITECTURE LAYERING**:
+
+```
+Tier 0 - Foundation (ZERO internal dependencies):
+  ├── constants.py    # Only StrEnum, Final, Literal - NO functions
+  ├── typings.py      # Type aliases, TypeVars
+  └── protocols.py    # Interface definitions (Protocol classes)
+
+Tier 1 - Domain Foundation:
+  ├── models.py       # Pydantic models → constants, typings, protocols
+  └── utilities.py    # Helper functions → constants, typings, protocols, models
+
+Tier 2 - Infrastructure:
+  └── servers/*.py    # Server implementations → Tier 0, Tier 1 only
+                      # NEVER import services/, api.py
+
+Tier 3 - Application (Top Layer):
+  ├── services/*.py   # Business logic → All lower tiers
+  └── api.py          # Facade/API → All lower tiers
+```
+
+**WHY THIS MATTERS**:
+- Circular imports cause runtime failures
+- Lazy imports are a band-aid, not a solution
+- Proper layering ensures testability and maintainability
+- Each tier only depends on lower tiers, NEVER on higher tiers
+
+---
+
+## Unified Ecosystem Standards
+
+**CRITICAL**: These standards apply to ALL projects in the FLEXT ecosystem (flext-core, flext-cli, flext-ldif, flext-ldap, etc.). They ensure consistency, maintainability, and type safety across the entire ecosystem.
+
+### Critical Rules (Zero Tolerance)
+
+1. **TYPE_CHECKING**: ❌ **PROHIBITED completely** - Remove ALL instances and refactor architecture to eliminate circular dependencies using forward references with `from __future__ import annotations` or by reorganizing dependencies
+2. **# type: ignore**: ❌ **PROHIBITED completely** - Zero tolerance, no exceptions (including Pydantic Field defaults). Refactor code to not need type ignores
+3. **__getattr__**: ❌ **PROHIBITED completely** - Remove ALL instances, refactor to use full namespace or explicit methods
+4. **Any**: ❌ **PROHIBITED completely** - Replace ALL instances, including in docstrings/comments, with specific types (Models, Protocols, TypeVars, `t.Types.GeneralValueType`)
+5. **Namespace Complete**: ✅ **MANDATORY always** - Always use full namespace (ex: `p.Foundation.Result`, `c.Core.VALIDATION`, `t.Types.StringDict`). No root aliases allowed
+6. **cast()**: ⚠️ **MINIMIZE aggressively** - Replace with Models/Protocols/TypeGuards where possible, document intentional ones that remain
+
+### Pattern Corrections
+
+- **TYPE_CHECKING**: Use forward reference strings with `from __future__ import annotations` or reorganize dependencies
+- **# type: ignore**: Fix type hints using Protocols, forward references, or code refactoring
+- **__getattr__**: Refactor to explicit methods or full namespace access
+- **cast()**: Replace with Models/Protocols/TypeGuards, improve generic type hints, or document intentional usage
+- **Any**: Replace with specific types (Models, Protocols, TypeVars, `t.Types.GeneralValueType`)
+- **Root aliases**: Replace with full namespace (ex: `p.Result` → `p.Foundation.Result`, `t.StringDict` → `t.Types.StringDict`)
+
+### Architecture Violation Quick Check
+
+**Run before committing:**
+```bash
+# Quick check for this project
+grep -rEn "(from flext_.*\.(services|api) import)" \
+  src/*/models.py src/*/protocols.py src/*/utilities.py \
+  src/*/constants.py src/*/typings.py src/*/servers/*.py 2>/dev/null
+
+# Expected: ZERO results
+# If violations found: Do NOT commit, fix architecture first
+```
+
+**See [Ecosystem Standards](../CLAUDE.md) for complete prohibited patterns and remediation examples.**
+
+### Reference Documentation
+
+- **Plans**: See `~/.cursor/plans/` for detailed pattern correction plans
+- **Standards**: See `docs/standards/` for coding standards and templates
+- **Guides**: See `docs/guides/` for pattern guides and best practices
+- **Anti-patterns**: See `docs/guides/anti-patterns-best-practices.md` for common mistakes and solutions
+
+---
 
 ### Current Status (December 2025)
 
@@ -100,71 +198,63 @@ Tier 3 (Application Layer):
 
 **CRITICAL**: Protocols are used EXTENSIVELY throughout `src/` to avoid circular imports, Pydantic forward reference issues, and to follow SOLID principles.
 
-**Protocol Organization** (hierarchical namespaces + ROOT ALIASES):
+**Protocol Organization** (hierarchical namespaces - FULL NAMESPACE REQUIRED):
 ```python
 from flext_core.protocols import p  # FlextProtocols
 
 # =====================================================
-# ROOT-LEVEL ALIASES (PREFERRED - CONCISE)
+# FULL NAMESPACE ACCESS (MANDATORY)
 # =====================================================
 # Foundation
-p.Result[T]              # → p.Foundation.Result[T]
-p.ResultLike[T_co]       # → p.Foundation.ResultLike[T_co]
-p.Model                  # → p.Foundation.Model
-p.HasModelDump           # → p.Foundation.HasModelDump
+p.Foundation.Result[T]
+p.Foundation.ResultLike[T_co]
+p.Foundation.Model
+p.Foundation.HasModelDump
 
 # Configuration
-p.Config                 # → p.Configuration.Config
-p.Configurable           # → p.Configuration.Configurable
+p.Configuration.Config
+p.Configuration.Configurable
 
 # Context
-p.Ctx                    # → p.Context.Ctx
+p.Context.Ctx
 
 # Container
-p.DI                     # → p.Container.DI
+p.Container.DI
 
 # Domain
-p.Service[T]             # → p.Domain.Service[T]
-p.Repository[T]          # → p.Domain.Repository[T]
-p.HasInvariants          # → p.Domain.Validation.HasInvariants
+p.Domain.Service[T]
+p.Domain.Repository[T]
+p.Domain.Validation.HasInvariants
 
 # Application
-p.Handler                # → p.Application.Handler
-p.CommandBus             # → p.Application.CommandBus
-p.Processor              # → p.Application.Processor
-p.Middleware             # → p.Application.Middleware
+p.Application.Handler
+p.Application.CommandBus
+p.Application.Processor
+p.Application.Middleware
 
 # Infrastructure
-p.Log                    # → p.Infrastructure.Logger.Log
-p.StructlogLogger        # → p.Infrastructure.Logger.StructlogLogger
-p.Connection             # → p.Infrastructure.Connection
-p.Metadata               # → p.Infrastructure.Metadata
-p.MetadataProtocol       # → p.Infrastructure.Metadata (backward compat)
-
-# =====================================================
-# FULL HIERARCHICAL ACCESS (STILL SUPPORTED)
-# =====================================================
-# All nested namespaces remain available for backward compatibility:
-# p.Foundation.Result[T], p.Domain.Service[T], etc.
+p.Infrastructure.Logger.Log
+p.Infrastructure.Logger.StructlogLogger
+p.Infrastructure.Connection
+p.Infrastructure.Metadata
 ```
 
 **Usage Pattern** (MANDATORY for interfaces):
 ```python
-# ✅ PREFERRED - Use root-level aliases (concise)
-def execute_service(service: p.Service[str]) -> p.Result[str]:
-    """Accept any service implementation via protocol."""
-    return service.execute()
-
-# ✅ ALSO CORRECT - Full hierarchical path (backward compat)
+# ✅ CORRECT - Use full namespace (MANDATORY)
 def execute_service(service: p.Domain.Service[str]) -> p.Foundation.Result[str]:
     """Accept any service implementation via protocol."""
     return service.execute()
 
 # ✅ CORRECT - Use protocols in return types for abstractions
-def get_container() -> p.DI:
+def get_container() -> p.Container.DI:
     """Return container via protocol interface."""
     container = FlextContainer()
-    return cast("p.DI", container)
+    return cast("p.Container.DI", container)
+
+# ❌ FORBIDDEN - Root aliases (p.Result, p.Service, etc.)
+def execute_service(service: p.Service[str]) -> p.Result[str]:  # FORBIDDEN
+    pass
 
 # ❌ FORBIDDEN - Direct class references in interface signatures
 def execute_service(service: FlextService[str]) -> FlextResult[str]:  # FORBIDDEN
@@ -179,9 +269,10 @@ def execute_service(service: FlextService[str]) -> FlextResult[str]:  # FORBIDDE
 - ✅ Interfaces well-defined and testable
 
 **NO TYPE_CHECKING or Lazy Imports**:
-- ❌ **FORBIDDEN**: `TYPE_CHECKING` blocks for protocol imports
+- ❌ **FORBIDDEN**: `TYPE_CHECKING` blocks for protocol imports (ZERO TOLERANCE)
 - ❌ **FORBIDDEN**: Lazy imports (imports inside functions)
 - ✅ **REQUIRED**: All imports at top of file, use protocols directly
+- ✅ **REQUIRED**: Use forward references with `from __future__ import annotations` to avoid circular dependencies
 
 #### 2. Single Class Per Module (OBLIGATORY)
 Every module exports exactly ONE main public class with `Flext` prefix:
@@ -236,27 +327,26 @@ TResult = TypeVar("TResult")  # FORBIDDEN - Use T from flext_core.typings
 TValue = TypeVar("TValue")     # FORBIDDEN - Use T or U from flext_core.typings
 ```
 
-**Type Alias Usage** (MANDATORY):
+**Type Alias Usage** (MANDATORY - FULL NAMESPACE REQUIRED):
 ```python
 from flext_core.typings import t, T, U
 
 # =====================================================
-# ROOT-LEVEL ALIASES (PREFERRED - CONCISE)
+# FULL NAMESPACE ACCESS (MANDATORY)
 # =====================================================
-# t.PortNumber          → t.Validation.PortNumber
-# t.StringDict          → t.Types.StringDict
-# t.ConfigurationDict   → t.Types.ConfigurationDict
-# t.GeneralValueType    → t.Types.GeneralValueType
-# t.ScalarValue         → t.Types.ScalarValue
+# t.Validation.PortNumber
+# t.Types.StringDict
+# t.Types.ConfigurationDict
+# t.Types.GeneralValueType
+# t.Types.ScalarValue
 
-# ✅ PREFERRED - Use root-level aliases
-def process_config(config: t.ConfigurationDict) -> t.StringDict:
-    """Use root-level type aliases."""
+# ✅ CORRECT - Use full namespace (MANDATORY)
+def process_config(config: t.Types.ConfigurationDict) -> t.Types.StringDict:
+    """Use full namespace type aliases."""
     pass
 
-# ✅ ALSO CORRECT - Full hierarchical path
-def process_config(config: t.Types.ConfigurationDict) -> t.Types.StringDict:
-    """Use full path type aliases."""
+# ❌ FORBIDDEN - Root aliases (t.StringDict, t.ConfigurationDict, etc.)
+def process_config(config: t.ConfigurationDict) -> t.StringDict:  # FORBIDDEN
     pass
 
 # ✅ CORRECT - Use centralized TypeVars
@@ -341,20 +431,29 @@ from flext_core.decorators import d   # FlextDecorators alias
 from flext_core.context import x      # FlextContext alias
 
 # =====================================================
-# ALL MODULES NOW HAVE ROOT-LEVEL ALIASES
+# FULL NAMESPACE REQUIRED (NO ROOT ALIASES)
 # =====================================================
-# protocols.py: p.Result, p.Service, p.Handler, p.Middleware, etc.
-# models.py: m.Command, m.Query, m.Value, m.Entity, etc.
-# constants.py: c.VALIDATION_ERROR, c.HandlerType, c.CommonStatus, etc.
-# typings.py: t.StringDict, t.PortNumber, t.GeneralValueType, etc.
+# protocols.py: p.Foundation.Result, p.Domain.Service, p.Application.Handler, etc.
+# models.py: m.Cqrs.Command, m.Cqrs.Query, m.Entity.Value, m.Entity.Entity, etc.
+# constants.py: c.Core.VALIDATION_ERROR, c.Core.HandlerType, c.Core.CommonStatus, etc.
+# typings.py: t.Types.StringDict, t.Validation.PortNumber, t.Types.GeneralValueType, etc.
 
 # ❌ FORBIDDEN - Full class names in type hints
 def process(result: FlextResult[str]) -> FlextResult[bool]:  # FORBIDDEN
     pass
 
-# ✅ CORRECT - Short aliases in type hints
+# ✅ CORRECT - Short aliases (r, t, c, p, m, u, e) for concrete classes
 def process(result: r[str]) -> r[bool]:
     return r[bool].ok(True) if result.is_success else r[bool].fail("Error")
+
+# ✅ CORRECT - Full namespace for Protocols, Types, Constants, Models
+def process_service(service: p.Domain.Service[str]) -> p.Foundation.Result[str]:
+    """Use full namespace for protocols."""
+    pass
+
+def process_config(config: t.Types.ConfigurationDict) -> t.Types.StringDict:
+    """Use full namespace for types."""
+    pass
 ```
 
 **Lint Configuration**: The `PYI042` rule is ignored in `ruff-shared.toml` to allow short aliases without type annotations.
@@ -522,40 +621,283 @@ from flext_core import FlextModels
 from flext_core.models import m  # Short alias
 
 # =====================================================
-# ROOT-LEVEL ALIASES (PREFERRED - CONCISE)
+# FULL NAMESPACE REQUIRED (MANDATORY)
 # =====================================================
-# m.Command     → m.Cqrs.Command
-# m.Query       → m.Cqrs.Query
-# m.Pagination  → m.Cqrs.Pagination
-# m.Value       → m.Entity.Value
-# m.Entity      → m.Entity.Entity
-# m.AggregateRoot → m.Entity.AggregateRoot
-# m.Metadata    → m.Base.Metadata
-# m.ProcessingRequest → m.Config.ProcessingRequest
-# m.RetryConfiguration → m.Config.RetryConfiguration
+# m.Cqrs.Command
+# m.Cqrs.Query
+# m.Cqrs.Pagination
+# m.Entity.Value
+# m.Entity.Entity
+# m.Entity.AggregateRoot
+# m.Base.Metadata
+# m.Config.ProcessingRequest
+# m.Config.RetryConfiguration
 
 # Value Object - immutable, compared by value
-class Email(m.Value):  # ✅ PREFERRED: root alias
-    address: str
-
-class EmailOld(FlextModels.Entity.Value):  # ✅ ALSO CORRECT: full path
+class Email(m.Entity.Value):  # ✅ CORRECT: full namespace
     address: str
 
 # Entity - has identity
-class User(m.Entity):
+class User(m.Entity.Entity):
     name: str
     email: Email
 
 # Aggregate Root - consistency boundary
-class Account(m.AggregateRoot):
+class Account(m.Entity.AggregateRoot):
     owner: User
     balance: Decimal
 
 # CQRS Command
-class CreateUserCommand(m.Command):
+class CreateUserCommand(m.Cqrs.Command):
     username: str
     email: str
 ```
+
+---
+
+## 📦 Import and Namespace Guidelines (Critical Architecture)
+
+This section defines **mandatory patterns** for imports, namespaces, and module aggregation across the FLEXT ecosystem. These rules prevent circular imports and ensure maintainability.
+
+### 1. Runtime Import Access (Short Aliases)
+
+**MANDATORY**: Use short aliases at runtime for type annotations and class instantiation:
+
+```python
+# ✅ CORRECT - Runtime short aliases (src/ and tests/)
+from flext_core.result import r       # FlextResult
+from flext_core.typings import t      # FlextTypes
+from flext_core.constants import c    # FlextConstants
+from flext_core.models import m       # FlextModels
+from flext_core.protocols import p    # FlextProtocols
+from flext_core.utilities import u    # FlextUtilities
+from flext_core.exceptions import e   # FlextExceptions
+from flext_core.decorators import d   # FlextDecorators
+from flext_core.context import x      # FlextContext
+from flext_core.mixins import mx      # FlextMixins
+
+# Usage with full namespace (MANDATORY)
+result: r[str] = r[str].ok("value")
+config: t.Types.ConfigurationDict = {}
+status: c.Core.CommonStatus = c.Core.CommonStatus.OK
+entry: m.Ldif.Entry = m.Ldif.Entry(dn="cn=test")
+service: p.Domain.Service[str] = my_service
+
+# ❌ FORBIDDEN - Root aliases
+status: c.CommonStatus  # WRONG - must use c.Core.CommonStatus
+entry: m.Entry          # WRONG - must use m.Ldif.Entry
+```
+
+### 2. Module Aggregation Rules (Facades)
+
+**Facade modules** (models.py, utilities.py, protocols.py) aggregate internal submodules:
+
+```python
+# =========================================================
+# models.py (Facade) - Aggregates _models/*.py
+# =========================================================
+from flext_core._models.base import FlextBaseModel
+from flext_core._models.entity import FlextEntity
+from flext_core._models.cqrs import FlextCommand, FlextQuery
+
+class FlextModels:
+    """Facade aggregating all model classes."""
+
+    class Base:
+        Model = FlextBaseModel
+
+    class Entity:
+        Entity = FlextEntity
+
+    class Cqrs:
+        Command = FlextCommand
+        Query = FlextQuery
+
+# Short alias for runtime access
+m = FlextModels
+
+# =========================================================
+# IMPORT RULES FOR AGGREGATION
+# =========================================================
+
+# ✅ CORRECT - Internal modules (_models/) can import from:
+#   - Other _models/* modules
+#   - Tier 0 modules (constants, typings, protocols)
+#   - NOT from services/, servers/, api.py
+
+# ✅ CORRECT - Facade (models.py) imports from:
+#   - All internal _models/* modules
+#   - Tier 0 modules
+
+# ❌ FORBIDDEN - Internal modules importing from higher tiers
+# _models/base.py importing services/api.py = ARCHITECTURE VIOLATION
+```
+
+### 3. Circular Import Avoidance Strategies
+
+**Strategy 1: Forward References with `from __future__ import annotations`**
+```python
+from __future__ import annotations
+from typing import Self
+
+class FlextService:
+    def clone(self) -> Self:
+        """Self reference works with forward annotations."""
+        return type(self)()
+
+    def create_entry(self) -> FlextEntry:  # String not needed - forward ref
+        """Forward reference to FlextEntry class defined later."""
+        return FlextEntry()
+
+class FlextEntry:
+    """Defined after FlextService but can be referenced above."""
+    pass
+```
+
+**Strategy 2: Protocol-Based Decoupling**
+```python
+# protocols.py (Tier 0 - no internal imports)
+from typing import Protocol
+
+class ServiceProtocol(Protocol):
+    def execute(self) -> bool: ...
+
+# services/my_service.py (Tier 3 - can import protocols)
+from flext_core.protocols import p
+
+class MyService:
+    def process(self, service: p.Domain.Service[str]) -> p.Foundation.Result[str]:
+        """Use protocol types to avoid importing concrete classes."""
+        return service.execute()
+```
+
+**Strategy 3: Dependency Injection**
+```python
+# Instead of importing services directly, inject them
+from flext_core import FlextContainer
+
+class MyHandler:
+    def __init__(self, container: FlextContainer) -> None:
+        self._container = container
+
+    def process(self) -> None:
+        # Get service at runtime instead of importing
+        service_result = self._container.get("my_service")
+        if service_result.is_success:
+            service_result.value.execute()
+```
+
+### 4. When Modules Can Import Submodules Directly
+
+**ALLOWED**: Base modules importing from internal submodules to avoid circulars:
+
+```python
+# =========================================================
+# EXCEPTION: _utilities/builders.py importing from _models/
+# =========================================================
+
+# _utilities/builders.py
+from flext_ldif._models.config import ProcessConfig  # ✅ ALLOWED
+
+# WHY: _utilities and _models are both Tier 1
+# Both are below services/ and api.py
+# No circular dependency created
+
+# =========================================================
+# EXCEPTION: Base classes importing helpers
+# =========================================================
+
+# _models/base.py can import from _models/helpers.py
+from flext_core._models.helpers import validate_field  # ✅ ALLOWED
+
+# WHY: Same tier, both internal modules
+```
+
+**FORBIDDEN**: Higher tier importing lower tier that imports back:
+
+```python
+# ❌ FORBIDDEN PATTERN - Creates circular import
+# api.py
+from flext_ldif.services.parser import ParserService
+
+# services/parser.py
+from flext_ldif.api import FlextLdif  # CIRCULAR!
+
+# ✅ CORRECT - Use protocols or injection
+# services/parser.py
+from flext_ldif.protocols import p
+
+def parse_with_facade(facade: p.Application.Facade) -> None:
+    """Accept protocol, not concrete class."""
+    pass
+```
+
+### 5. Test Import Patterns
+
+**Tests have special privileges but must follow patterns:**
+
+```python
+# tests/unit/test_my_module.py
+
+# ✅ CORRECT - Import from package root
+from flext_ldif import FlextLdif
+from flext_ldif.models import m
+from flext_ldif.constants import c
+
+# ✅ CORRECT - Import test helpers
+from tests import tm, tf  # TestsFlextLdifMatchers, TestsFlextLdifFixtures
+
+# ✅ ALLOWED - Tests can import internal modules for testing
+from flext_ldif._utilities.builders import ProcessConfigBuilder
+
+# ✅ CORRECT - Use pytest fixtures
+@pytest.fixture
+def ldif_client() -> FlextLdif:
+    return FlextLdif()
+
+# ❌ FORBIDDEN - Don't use TYPE_CHECKING in tests
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:  # FORBIDDEN even in tests
+    from flext_ldif import FlextLdif
+```
+
+### 6. Complete Import Hierarchy Reference
+
+```
+Tier 0 - Foundation (ZERO internal imports):
+├── constants.py    → imports: NOTHING from flext_*
+├── typings.py      → imports: NOTHING from flext_*
+└── protocols.py    → imports: constants, typings (Tier 0 only)
+
+Tier 1 - Domain Foundation:
+├── _models/*.py    → imports: constants, typings, protocols
+├── models.py       → imports: _models/*, constants, typings, protocols
+├── _utilities/*.py → imports: _models/*, constants, typings, protocols
+└── utilities.py    → imports: _utilities/*, models, constants, typings, protocols
+
+Tier 2 - Infrastructure:
+└── servers/*.py    → imports: Tier 0, Tier 1
+                    → NEVER: services/, api.py
+
+Tier 3 - Application:
+├── services/*.py   → imports: ALL lower tiers
+└── api.py          → imports: ALL lower tiers (Facade for external use)
+```
+
+### 7. Module-Specific Import Rules
+
+| Source Module | Can Import From | Cannot Import From |
+|---------------|-----------------|-------------------|
+| constants.py | nothing | everything |
+| typings.py | nothing | everything |
+| protocols.py | constants, typings | everything else |
+| _models/*.py | Tier 0, other _models/* | _utilities/*, services/, servers/, api.py |
+| models.py | _models/*, Tier 0 | services/, servers/, api.py |
+| _utilities/*.py | _models/*, Tier 0, models | services/, servers/, api.py |
+| utilities.py | _utilities/*, models, Tier 0 | services/, servers/, api.py |
+| servers/*.py | Tier 0, Tier 1 | services/, api.py |
+| services/*.py | ALL lower tiers | NOTHING prohibited |
+| api.py | ALL lower tiers | NOTHING prohibited |
 
 ---
 
@@ -828,12 +1170,16 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 
 **Architecture**:
 - **Circular Dependencies**: ZERO (verified by import tests) ✅
-- **Type Ignore Comments**: ZERO `# type: ignore` ✅
-- **Any Types**: ZERO `Any` type annotations ✅
+- **TYPE_CHECKING Blocks**: ZERO (prohibited, use forward references) ✅
+- **Type Ignore Comments**: ZERO `# type: ignore` (prohibited, refactor code) ✅
+- **__getattr__ Methods**: ZERO (prohibited, use explicit methods) ✅
+- **Any Types**: ZERO `Any` type annotations (prohibited, use specific types) ✅
+- **Root Aliases**: ZERO (prohibited, use full namespace) ✅
 - **Centralized Types**: All complex types use `t.Types.*` aliases ✅
 - **Centralized TypeVars**: All TypeVars imported from `flext_core.typings` ✅
 - **Centralized Constants**: All constants use `c.Namespace.CONSTANT` pattern ✅
-- **Short Aliases**: All work without lint complaints (`r, t, c, p, m, u, e, s, x, d, h`) ✅
+- **Short Aliases**: Concrete classes use short aliases (`r, t, c, p, m, u, e, s, x, d, h`) ✅
+- **Full Namespace**: Protocols, Types, Constants, Models use full namespace ✅
 
 ### Lint Configuration Patterns
 
@@ -850,7 +1196,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 
 **Rationale**: Framework code (dispatchers, handlers, containers, utilities) executes user-provided callbacks and must wrap any exception into `FlextResult.fail()` to maintain the railway pattern.
 
-**Pyrefly Configuration**: Handles known limitations with recursive types and complex generics:
+**Pyrefly Configuration**: Search path configured for proper module resolution:
 
 ```toml
 # In pyproject.toml
@@ -862,21 +1208,6 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
         "examples",
         "scripts",
     ]
-
-[tool.pyrefly.errors]
-    unknown-name = false         # Recursive type aliases (PEP 695)
-    bad-return = false           # Complex generic type inference
-    bad-assignment = false       # Union type inference
-    no-matching-overload = false # Generic overload resolution
-    bad-argument-type = false    # Complex argument typing
-    not-iterable = false         # StrEnum iteration (valid Python 3.11+)
-    unsupported-operation = false  # pyrefly doesn't understand 'not in' operator
-    not-a-type = false           # Union return types with generics
-    bad-specialization = false   # LRUCache generic parameterization
-    missing-attribute = false    # Docker/files model attribute access
-    index-error = false          # Docker container.image.tags indexing
-    read-only = false            # Pydantic frozen model validators (use model_validator)
-    redundant-cast = false       # Intentional casts for type narrowing
 ```
 
 **Pyright Type Corrections** (January 2025):
@@ -890,9 +1221,9 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 
 ### Type Cast Patterns
 
-**Status**: Zero `# type: ignore` comments ✅ | ~156 intentional `cast()` usages ✅
+**Status**: Zero `# type: ignore` comments ✅ | Minimizing `cast()` usage aggressively ✅
 
-**Principle**: Eliminate all `cast()` where possible, but some are intentional by design.
+**Principle**: Minimize `cast()` aggressively - replace with Models/Protocols/TypeGuards where possible. Document intentional ones that remain.
 
 **Eliminated Cast Patterns**:
 ```python
@@ -974,4 +1305,8 @@ done
 
 ---
 
-**Additional Resources**: [../CLAUDE.md](../CLAUDE.md) (workspace), [README.md](README.md) (overview), [~/.claude/commands/flext.md](~/.claude/commands/flext.md) (MCP workflows)
+**See Also**:
+- [Workspace Standards](../CLAUDE.md)
+- [flext-ldif Patterns](../flext-ldif/CLAUDE.md)
+- [flext-cli Patterns](../flext-cli/CLAUDE.md)
+- [Additional Resources](~/.claude/commands/flext.md) (MCP workflows)

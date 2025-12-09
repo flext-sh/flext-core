@@ -202,7 +202,7 @@ class TestFlextTestsFiles:
     def test_create_file_set_custom_extension(self, tmp_path: Path) -> None:
         """Test creating file set with custom extension."""
         files_dict = {"file1": "content1"}
-        # Type: dict[str, str] is compatible with dict[str, str | bytes | ...]
+
         # Cast to satisfy mypy's invariant dict type checking
         files: dict[
             str,
@@ -361,7 +361,7 @@ class TestFlextTestsFiles:
             "file1": "content1",
             "file2": "content2",
         }
-        # Type: dict[str, str] is compatible with dict[str, str | bytes | ...]
+
         # Cast to satisfy mypy's invariant dict type checking
         files: dict[
             str,
@@ -389,7 +389,7 @@ class TestFlextTestsFiles:
     def test_temporary_files_custom_extension(self) -> None:
         """Test files with custom extension."""
         files_dict = {"file1": "content1"}
-        # Type: dict[str, str] is compatible with dict[str, str | bytes | ...]
+
         # Cast to satisfy mypy's invariant dict type checking
         files: dict[
             str,
@@ -410,7 +410,7 @@ class TestFlextTestsFiles:
         """Test creating files in nested directory."""
         nested_dir = tmp_path / "nested" / "subdir"
         files_dict = {"file1": "content1"}
-        # Type: dict[str, str] is compatible with dict[str, str | bytes | ...]
+
         # Cast to satisfy mypy's invariant dict type checking
         files: dict[
             str,
@@ -480,7 +480,7 @@ class TestFlextTestsFilesNewApi:
         """Test create() auto-detects JSON from dict content."""
         manager = FlextTestsFiles(base_dir=tmp_path)
         content_dict = {"key": "value", "number": 42}
-        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+
         # create() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
             "t_core.Types.ConfigurationMapping",
@@ -497,7 +497,7 @@ class TestFlextTestsFilesNewApi:
         """Test create() auto-detects YAML from .yaml extension."""
         manager = FlextTestsFiles(base_dir=tmp_path)
         content_dict = {"name": "test", "enabled": True}
-        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+
         # create() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
             "t_core.Types.ConfigurationMapping",
@@ -601,7 +601,7 @@ class TestFlextTestsFilesNewApi:
         """Test read() returns dict content for .json files."""
         manager = FlextTestsFiles(base_dir=tmp_path)
         content_dict = {"key": "value", "number": 42}
-        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+
         # create() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
             "t_core.Types.ConfigurationMapping",
@@ -618,7 +618,7 @@ class TestFlextTestsFilesNewApi:
         """Test read() returns dict content for .yaml files."""
         manager = FlextTestsFiles(base_dir=tmp_path)
         content_dict = {"name": "test", "enabled": True}
-        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+
         # create() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
             "t_core.Types.ConfigurationMapping",
@@ -1326,7 +1326,7 @@ class TestBatchOperations:
         batch_result = result.unwrap()
         # success_count is a computed_field property, not a callable
         # Access it as an attribute, not a method
-        assert batch_result.success_count >= 1  # type: ignore[operator]
+        assert batch_result.success_count >= 1
 
     def test_batch_result_model_structure(self, tmp_path: Path) -> None:
         """Test BatchResult model has correct structure."""
@@ -1437,7 +1437,7 @@ class TestCreateInStatic:
     def test_create_in_json_indent(self, tmp_path: Path) -> None:
         """Test create_in() with custom JSON indentation."""
         content_dict = {"key": "value", "nested": {"a": 1}}
-        # Type: dict[str, object] needs to be cast to ConfigurationMapping
+
         # create_in() accepts ConfigurationMapping which is compatible
         content: t_core.Types.ConfigurationMapping = cast(
             "t_core.Types.ConfigurationMapping",

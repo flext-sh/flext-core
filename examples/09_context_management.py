@@ -67,12 +67,12 @@ class ContextManagementService(
         with FlextContext.Request.request_context(
             operation_name="demonstrate_context",
             user_id="demo-user",
-            request_id=u.Generators.generate_correlation_id(),
+            request_id=u.generate("correlation"),
         ):
             correlation_id = (
                 FlextContext.Variables.Correlation.CORRELATION_ID.get()
                 or FlextConstants.Context.CORRELATION_ID_PREFIX
-                + u.Generators.generate_correlation_id()[
+                + u.generate("correlation")[
                     : FlextConstants.Context.CORRELATION_ID_LENGTH
                 ]
             )
@@ -97,7 +97,7 @@ class ContextManagementService(
         """Demonstrate request context management with performance tracking."""
         print("\n=== Request Context ===")
 
-        request_id = u.Generators.generate_correlation_id()
+        request_id = u.generate("correlation")
         operation_name = "process_request"
 
         # Combine multiple with statements (SIM117)
@@ -226,7 +226,7 @@ class ContextManagementService(
         """Demonstrate correlation ID tracking across service boundaries."""
         print("\n=== Correlation Tracking ===")
 
-        correlation_id = u.Generators.generate_correlation_id()
+        correlation_id = u.generate("correlation")
 
         with FlextContext.Request.request_context(
             operation_name="correlation_demo",

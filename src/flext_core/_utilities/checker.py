@@ -27,12 +27,13 @@ class FlextUtilitiesChecker:
     """
 
     @property
-    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
+    def logger(self) -> p.Log.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
+        # get_logger returns StructlogLogger per runtime.pyi stub
         return FlextRuntime.get_logger(__name__)
 
     @classmethod
@@ -84,7 +85,7 @@ class FlextUtilitiesChecker:
             # Check by name to avoid circular import
             # Note: origin is FlextHandlers class, not the alias 'h'
             if origin and origin.__name__ in {"h", "FlextHandlers"}:
-                # Use FlextRuntime.extract_generic_args() from Layer 0.5
+                # Use FlextRuntime.extract_generic_args() from Layer 0.5 (defined in runtime.pyi stub)
                 args = FlextRuntime.extract_generic_args(base)
                 # Accept all type forms: plain types, generic aliases (e.g., t.Types.ConfigurationDict),
                 # and string type references. The _evaluate_type_compatibility method

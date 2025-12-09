@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import os
 import threading
+import warnings
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, Self
@@ -60,7 +61,7 @@ class FlextConfig(BaseSettings, FlextRuntime):
     Architecture: Layer 0.5 (Configuration Foundation)
     Provides enterprise-grade configuration management for the FLEXT ecosystem
     through Pydantic v2 BaseSettings, implementing structural typing via
-    p.Configuration.Configurable (duck typing - no inheritance required).
+    p.Configurable (duck typing - no inheritance required).
 
     Core Features:
     - Pydantic v2 BaseSettings with type-safe configuration
@@ -502,6 +503,7 @@ class FlextConfig(BaseSettings, FlextRuntime):
     # auto-registration pattern. Used by @auto_register decorator to map namespace
     # strings to configuration classes.
     _namespace_registry: ClassVar[t.Types.StringBaseSettingsTypeDict] = {}
+    _context_overrides: ClassVar[dict[str, dict[str, t.FlexibleValue]]] = {}
 
     @staticmethod
     def auto_register(
@@ -514,6 +516,10 @@ class FlextConfig(BaseSettings, FlextRuntime):
         the decorator, ensuring type checkers (pyright/mypy) see the specific class type,
         not BaseSettings. Registers class in _namespace_registry for dynamic namespace
         resolution.
+
+        WARNING: Registered classes should use FlextConfig.resolve_env_file()
+        in their model_config.env_file to respect FLEXT_ENV_FILE environment variable.
+        Hardcoded '.env' values will trigger a deprecation warning.
 
         Audit Implication: Auto-registration enables dynamic namespace configuration
         resolution, ensuring audit trail completeness for namespace-based configurations.
@@ -529,6 +535,18 @@ class FlextConfig(BaseSettings, FlextRuntime):
 
         def decorator(cls: type[T_Settings]) -> type[T_Settings]:
             """Register the configuration class while preserving type."""
+            # Validate env_file usage (warning, not error)
+            if hasattr(cls, "model_config"):
+                mc = cls.model_config
+                env_file_value = mc.get("env_file")
+                if env_file_value == ".env":
+                    # Use getattr to safely access __name__ attribute
+                    cls_name: str = getattr(cls, "__name__", "Unknown")
+                    warnings.warn(
+                        f"{cls_name} uses hardcoded '.env'. Consider using FlextConfig.resolve_env_file().",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
             # Register in namespace registry (namespace stored in registry key, not on class)
             FlextConfig._namespace_registry[namespace] = cls
             return cls
@@ -603,57 +621,73 @@ class FlextConfig(BaseSettings, FlextRuntime):
         config_class: type[T_Namespace] = config_class_raw
         return config_class()
 
-    def __getattr__(self, name: str) -> BaseSettings:
-        """Auto-resolve registered namespaces via attribute access.
+    # __getattr__ removed - use get_namespace() method explicitly
+    # Example: config.get_namespace("ldif", FlextLdifConfig) instead of config.ldif
 
-        Enables `config.ldif` instead of `config.get_namespace("ldif", FlextLdifConfig)`.
+    @classmethod
+    def for_context(
+        cls,
+        context_id: str,
+        **overrides: t.FlexibleValue,
+    ) -> Self:
+        """Get configuration instance with context-specific overrides.
 
-        CRITICAL: Must not intercept Pydantic internal attributes.
-        Pydantic v2 uses __pydantic_fields_set__, __pydantic_extra__, etc.
-        These must be handled by Pydantic's own __getattr__/__setattr__.
-        If we intercept them, Pydantic can't initialize its internal state.
+        Creates a configuration instance with overrides specific to the given
+        context. Context overrides are applied on top of the base configuration.
 
         Args:
-            name: Namespace name to resolve
+            context_id: Unique identifier for the execution context.
+            **overrides: Configuration field overrides for this context.
 
         Returns:
-            Configuration instance for the namespace
-
-        Raises:
-            AttributeError: If namespace not registered
+            Self: Configuration instance with context overrides applied.
 
         Example:
-            config = FlextConfig.get_global_instance()
-            ldif_config = config.ldif  # Auto-resolves "ldif" namespace
+            >>> config = FlextConfig.for_context(
+            ...     "worker_1", log_level="DEBUG", timeout=60
+            ... )
 
         """
-        # CRITICAL: Don't intercept Pydantic internal attributes
-        # Pydantic v2 uses __pydantic_fields_set__, __pydantic_extra__, etc.
-        # These must be handled by Pydantic's own __getattr__/__setattr__
-        # If we intercept them, Pydantic can't initialize its internal state
-        # Use object.__getattribute__ to check if attribute exists without triggering __getattr__
-        try:
-            # Try to get attribute directly from object (bypasses __getattr__)
-            # This allows Pydantic to handle its own attributes
-            return object.__getattribute__(self, name)
-        except AttributeError:
-            # Attribute doesn't exist - check if it's a Pydantic internal attribute
-            if name.startswith("__pydantic_"):
-                # Let Pydantic handle its own attributes - raise AttributeError
-                # so Python's normal attribute resolution can proceed
-                raise
+        # Get base instance
+        base = cls.get_global_instance()
+        # Apply context overrides
+        context_overrides = cls._context_overrides.get(context_id, {})
+        all_overrides = {**context_overrides, **overrides}
+        if all_overrides:
+            return base.model_copy(update=all_overrides)
+        return base
 
-            # Not a Pydantic attribute - check namespace registry
-            config_class = self._namespace_registry.get(name)
-            if config_class is not None:
-                return config_class()
-            msg = f"'{type(self).__name__}' object has no attribute '{name}'"
-            raise AttributeError(msg) from None
+    @classmethod
+    def register_context_overrides(
+        cls,
+        context_id: str,
+        **overrides: t.FlexibleValue,
+    ) -> None:
+        """Register context-specific configuration overrides.
+
+        Registers overrides that will be automatically applied when using
+        `for_context()` with the same context_id.
+
+        Args:
+            context_id: Unique identifier for the execution context.
+            **overrides: Configuration field overrides to register.
+
+        Example:
+            >>> FlextConfig.register_context_overrides(
+            ...     "worker_1", log_level="DEBUG", timeout=60
+            ... )
+            >>> config = FlextConfig.for_context("worker_1")
+
+        """
+        if context_id not in cls._context_overrides:
+            cls._context_overrides[context_id] = {}
+        cls._context_overrides[context_id].update(overrides)
 
     @classmethod
     def reset_global_instance(cls) -> None:
         """Reset the global singleton instance for testing."""
         cls._instances.clear()
+        cls._context_overrides.clear()
 
 
 __all__ = ["FlextConfig"]

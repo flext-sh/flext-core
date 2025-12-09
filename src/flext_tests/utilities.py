@@ -14,7 +14,7 @@ import csv
 import hashlib
 import os
 import re
-from collections.abc import Callable, Generator, Mapping, Sized
+from collections.abc import Callable, Generator, Mapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
@@ -30,6 +30,8 @@ from flext_core import (
     r,
     t,
 )
+from flext_core.models import FlextModels as FlextModelsBase
+from flext_core.utilities import u as u_core
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.protocols import p
@@ -56,7 +58,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_success[TResult](
-                result: r[TResult],
+                result: p.Result[TResult],
                 error_msg: str | None = None,
             ) -> TResult:
                 """Assert result is success and return unwrapped value.
@@ -81,7 +83,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_failure[TResult](
-                result: r[TResult],
+                result: p.Result[TResult],
                 expected_error: str | None = None,
             ) -> str:
                 """Assert result is failure and return error message.
@@ -113,7 +115,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_success_with_value[T](
-                result: r[T],
+                result: p.Result[T],
                 expected_value: T,
             ) -> None:
                 """Assert result is success and has expected value.
@@ -133,7 +135,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_failure_with_error[T](
-                result: r[T],
+                result: p.Result[T],
                 expected_error: str | None = None,
             ) -> None:
                 """Assert result is failure and has expected error.
@@ -369,7 +371,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_complex_service(
-                validation_result: r[bool],
+                validation_result: p.Result[bool],
             ) -> r[t.GeneralValueType]:
                 """Execute complex service operation.
 
@@ -405,17 +407,17 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def generate_id() -> str:
-                """Generate unique ID using FlextUtilities.
+                """Generate unique ID using u.generate().
 
                 Returns:
                     Generated UUID string.
 
                 """
-                return FlextUtilities.generate()
+                return u_core.generate()
 
             @staticmethod
             def generate_short_id(length: int = 8) -> str:
-                """Generate short unique ID.
+                """Generate short unique ID using u.generate('ulid', length=...).
 
                 Args:
                     length: Length of ID (default: 8)
@@ -424,7 +426,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Generated short ID string.
 
                 """
-                return FlextUtilities.generate("ulid", length=length)
+                return u_core.generate("ulid", length=length)
 
         # Compatibility aliases for existing test code
         class TestUtilities:
@@ -432,14 +434,14 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_success[TResult](
-                result: r[TResult],
+                result: p.Result[TResult],
             ) -> None:
                 """Assert result is success - compatibility method."""
                 _ = FlextTestsUtilities.Tests.Result.assert_success(result)
 
             @staticmethod
             def assert_result_failure[TResult](
-                result: r[TResult],
+                result: p.Result[TResult],
             ) -> None:
                 """Assert result is failure - compatibility method."""
                 _ = FlextTestsUtilities.Tests.Result.assert_failure(result)
@@ -475,7 +477,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_success_with_value[T](
-                result: r[T],
+                result: p.Result[T],
                 expected_value: T,
             ) -> None:
                 """Assert result is success with expected value (compat)."""
@@ -486,7 +488,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_failure_with_error[T](
-                result: r[T],
+                result: p.Result[T],
                 expected_error: str | None = None,
             ) -> None:
                 """Assert result is failure with expected error (compat)."""
@@ -496,7 +498,9 @@ class FlextTestsUtilities(FlextUtilities):
                 )
 
             @staticmethod
-            def assert_result_success_and_unwrap[T](result: r[T]) -> T:
+            def assert_result_success_and_unwrap[T](
+                result: p.Result[T],
+            ) -> T:
                 """Assert result is success and return unwrapped value.
 
                 Args:
@@ -514,7 +518,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_failure_with_error[T](
-                result: r[T],
+                result: p.Result[T],
                 expected_error: str,
             ) -> None:
                 """Assert result failure with error (compat alias).
@@ -534,7 +538,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_success_and_type[T](
-                result: r[T],
+                result: p.Result[T],
                 expected_type: str | type[object] | None = None,
             ) -> T:
                 """Assert result is success and return unwrapped value (type-safe).
@@ -553,7 +557,9 @@ class FlextTestsUtilities(FlextUtilities):
                 return FlextTestsUtilities.Tests.Result.assert_success(result)
 
             @staticmethod
-            def assert_result_success_and_unwrap_string(result: r[str]) -> str:
+            def assert_result_success_and_unwrap_string(
+                result: p.Result[str],
+            ) -> str:
                 """Assert result is success and return unwrapped string.
 
                 Args:
@@ -569,7 +575,9 @@ class FlextTestsUtilities(FlextUtilities):
                 return FlextTestsUtilities.Tests.Result.assert_success(result)
 
             @staticmethod
-            def assert_result_success_and_unwrap_list[T](result: r[list[T]]) -> list[T]:
+            def assert_result_success_and_unwrap_list[T](
+                result: p.Result[list[T]],
+            ) -> list[T]:
                 """Assert result is success and return unwrapped list.
 
                 Args:
@@ -686,7 +694,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_chain[T](
-                results: list[r[T]],
+                results: list[p.Result[T]],
                 expected_successes: int | None = None,
                 expected_failures: int | None = None,
                 expected_success_count: int | None = None,
@@ -746,7 +754,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def normalize_dict_values_to_lists(
-                data: dict[str, str | None] | None,
+                data: dict[str, str | list[str] | tuple[str, ...] | set[str] | None]
+                | None,
             ) -> dict[str, list[str]]:
                 """Normalize dictionary values to lists.
 
@@ -765,12 +774,22 @@ class FlextTestsUtilities(FlextUtilities):
 
                 result: dict[str, list[str]] = {}
                 for key, value in data.items():
+                    # Type narrowing: value is from data.items(), which is dict[str, str | None]
+                    # But runtime checks may reveal other types (set, list, etc.), so check first
                     if value is None:
                         result[key] = []
-                    elif u.is_type(value, "list_or_tuple") or isinstance(value, set):
-                        result[key] = [str(v) for v in value]
+                    elif isinstance(value, (list, tuple)):
+                        # Type narrowing: value is list or tuple after isinstance check
+                        value_seq: Sequence[str] = value
+                        result[key] = [str(v) for v in value_seq]
+                    elif isinstance(value, set):
+                        # Type narrowing: value is set after isinstance check
+                        value_set: set[str] = value
+                        result[key] = [str(v) for v in value_set]
                     else:
-                        result[key] = [str(value)]
+                        # value is str (after None and iterable checks above)
+                        value_str: str = value
+                        result[key] = [value_str]
 
                 return result
 
@@ -997,7 +1016,7 @@ class FlextTestsUtilities(FlextUtilities):
                 handler_mode: c.Cqrs.HandlerType | None = None,
                 command_timeout: int | None = None,
                 max_command_retries: int | None = None,
-                metadata: m.Metadata | None = None,
+                metadata: FlextModelsBase.Metadata | None = None,
             ) -> m.Cqrs.Handler:
                 """Create a handler configuration model.
 
@@ -1034,7 +1053,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_dispatcher(
-                processors: dict[str, p.Application.Processor] | None = None,
+                processors: dict[str, p.Processor] | None = None,
             ) -> FlextDispatcher:
                 """Create a test dispatcher instance with optional processors.
 
@@ -1053,7 +1072,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_processor_result(
-                result: r[t.GeneralValueType],
+                result: p.Result[t.GeneralValueType],
                 *,
                 expected_success: bool = True,
                 expected_value: t.GeneralValueType | None = None,
@@ -1421,16 +1440,22 @@ class FlextTestsUtilities(FlextUtilities):
             class BadConfig:
                 """Config object that raises on attribute access."""
 
-                def __getattr__(self, name: str) -> t.GeneralValueType:
-                    """Raise error on attribute access."""
+                def __getattribute__(self, name: str) -> t.GeneralValueType:
+                    """Raise error on attribute access - test helper for error testing."""
+                    # Skip __class__ and other special attributes
+                    if name.startswith("__") and name.endswith("__"):
+                        return super().__getattribute__(name)
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
 
             class BadConfigTypeError:
                 """Config object that raises TypeError on attribute access."""
 
-                def __getattr__(self, name: str) -> t.GeneralValueType:
-                    """Raise TypeError on attribute access."""
+                def __getattribute__(self, name: str) -> t.GeneralValueType:
+                    """Raise TypeError on attribute access - test helper for error testing."""
+                    # Skip __class__ and other special attributes
+                    if name.startswith("__") and name.endswith("__"):
+                        return super().__getattribute__(name)
                     msg = f"Bad config type: {name}"
                     raise TypeError(msg)
 
@@ -1476,7 +1501,7 @@ class FlextTestsUtilities(FlextUtilities):
             """Common assertion helpers for tests."""
 
             @staticmethod
-            def assert_result_success(result: r[T]) -> T:
+            def assert_result_success(result: p.Result[T]) -> T:
                 """Assert result is success and return value.
 
                 Args:
@@ -1496,7 +1521,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_failure(
-                result: r[T],
+                result: p.Result[T],
                 expected_error: str | None = None,
             ) -> str:
                 """Assert result is failure and optionally check error message.
@@ -1524,7 +1549,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_failure_with_error(
-                result: r[T],
+                result: p.Result[T],
                 expected_error: str,
             ) -> None:
                 """Assert result is failure with specific error message.

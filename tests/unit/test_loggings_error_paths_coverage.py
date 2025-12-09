@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, p
+from flext_core import FlextLogger, FlextRuntime, p
 from flext_core.constants import c
 
 LoggerClass = FlextLogger
@@ -25,7 +25,8 @@ class TestLoggingsErrorPaths:
         """Test _execute_context_op with unknown operation (covers line 131)."""
         result = LoggerClass._execute_context_op("unknown_operation", {})
         # Type narrowing: unknown operation returns ResultProtocol[bool], not dict
-        assert isinstance(result, p.Foundation.Result)
+        # RuntimeResult implements p.Result protocol
+        assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
         assert result.is_failure
         assert result.error is not None
         assert "Unknown operation" in result.error
@@ -38,7 +39,8 @@ class TestLoggingsErrorPaths:
             {"keys": 42},  # int is not Sequence
         )
         # Type narrowing: UNBIND operation returns ResultProtocol[bool], not dict
-        assert isinstance(result, p.Foundation.Result)
+        # RuntimeResult implements p.Result protocol
+        assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
         assert result.is_success  # Still succeeds, just skips unbind
 
     def test_handle_context_error_get_operation(self) -> None:
@@ -59,7 +61,8 @@ class TestLoggingsErrorPaths:
             RuntimeError("Test error"),
         )
         # Type narrowing: non-GET operations return ResultProtocol[bool], not dict
-        assert isinstance(result, p.Foundation.Result)
+        # RuntimeResult implements p.Result protocol
+        assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
         assert result.is_failure
         assert result.error is not None
         assert "Failed to bind global context" in result.error

@@ -85,7 +85,7 @@ class FlextUtilitiesConfiguration:
     """
 
     @staticmethod
-    def _get_logger() -> p.Infrastructure.Logger.StructlogLogger:
+    def _get_logger() -> p.Log.StructlogLogger:
         """Get logger instance using FlextRuntime.
 
         Business Rule: Logger access through FlextRuntime avoids circular
@@ -157,7 +157,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_attr(
-        obj: t.GeneralValueType | p.Foundation.HasModelDump,
+        obj: t.GeneralValueType | p.HasModelDump,
         parameter: str,
     ) -> tuple[bool, t.GeneralValueType | None]:
         """Try to get attribute value from object via hasattr/getattr.
@@ -188,7 +188,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_model_dump(
-        obj: p.Foundation.HasModelDump,
+        obj: p.HasModelDump,
         parameter: str,
     ) -> tuple[bool, t.GeneralValueType | None]:
         """Try to get parameter from HasModelDump protocol object.
@@ -256,13 +256,16 @@ class FlextUtilitiesConfiguration:
             (True, value) if key exists, (False, None) if not dict-like or missing
 
         """
-        if FlextRuntime.is_dict_like(obj) and parameter in obj:
-            return (True, obj[parameter])
+        if FlextRuntime.is_dict_like(obj):
+            # Type narrowing: is_dict_like ensures obj is Mapping-like
+            obj_mapping = cast("Mapping[str, t.GeneralValueType]", obj)
+            if parameter in obj_mapping:
+                return (True, obj_mapping[parameter])
         return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: t.GeneralValueType | p.Foundation.HasModelDump,
+        obj: t.GeneralValueType | p.HasModelDump,
         parameter: str,
     ) -> tuple[bool, t.GeneralValueType | None]:
         """Try to get parameter via duck-typed model_dump method.
@@ -316,7 +319,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_parameter(
-        obj: t.GeneralValueType | p.Foundation.HasModelDump,
+        obj: t.GeneralValueType | p.HasModelDump,
         parameter: str,
     ) -> t.GeneralValueType:
         """Get parameter value from a configuration object.
@@ -364,7 +367,7 @@ class FlextUtilitiesConfiguration:
 
         """
         # Strategy 1: HasModelDump protocol
-        if isinstance(obj, p.Foundation.HasModelDump):
+        if isinstance(obj, p.HasModelDump):
             found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
                 obj,
                 parameter,
@@ -404,7 +407,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def set_parameter(
-        obj: t.GeneralValueType | p.Foundation.HasModelDump,
+        obj: t.GeneralValueType | p.HasModelDump,
         parameter: str,
         value: t.GeneralValueType,
     ) -> bool:
@@ -448,7 +451,7 @@ class FlextUtilitiesConfiguration:
         """
         try:
             # Check if parameter exists in model fields for Pydantic objects
-            if isinstance(obj, p.Foundation.HasModelFields):
+            if isinstance(obj, p.HasModelFields):
                 # Access model_fields from class, not instance (Pydantic 2.11+ compatibility)
                 model_fields_dict = getattr(type(obj), "model_fields", {})
                 if (
@@ -522,9 +525,9 @@ class FlextUtilitiesConfiguration:
                     get_global_instance_attr,
                 )
                 instance = get_global_instance_method()
-                if isinstance(instance, p.Foundation.HasModelDump):
+                if isinstance(instance, p.HasModelDump):
                     # Type narrowing: instance is HasModelDump
-                    has_model_dump_instance: p.Foundation.HasModelDump = instance
+                    has_model_dump_instance: p.HasModelDump = instance
                     return FlextUtilitiesConfiguration.get_parameter(
                         has_model_dump_instance,
                         parameter,
@@ -540,7 +543,7 @@ class FlextUtilitiesConfiguration:
         singleton_class: type,
         parameter: str,
         value: t.GeneralValueType,
-    ) -> r[bool]:
+    ) -> FlextRuntime.RuntimeResult[bool]:
         """Set parameter on a singleton configuration instance with validation.
 
         Business Rule: Railway-Oriented Singleton Mutation
@@ -591,13 +594,13 @@ class FlextUtilitiesConfiguration:
         )
 
         instance = get_global_instance_method()
-        if not isinstance(instance, p.Foundation.HasModelDump):
+        if not isinstance(instance, p.HasModelDump):
             return r[bool].fail(
                 "Instance does not implement HasModelDump protocol",
             )
 
         # Type narrowing: instance is HasModelDump
-        has_model_dump_instance: p.Foundation.HasModelDump = instance
+        has_model_dump_instance: p.HasModelDump = instance
         success = FlextUtilitiesConfiguration.set_parameter(
             has_model_dump_instance,
             parameter,
@@ -720,7 +723,7 @@ class FlextUtilitiesConfiguration:
         explicit_options: T_Model | None,
         default_factory: Callable[[], T_Model],
         **kwargs: t.GeneralValueType,
-    ) -> r[T_Model]:
+    ) -> FlextRuntime.RuntimeResult[T_Model]:
         """Build Pydantic options model from explicit options or kwargs.
 
         Business Rule: Options+Config+kwargs Pattern (FLEXT Convention)
@@ -762,15 +765,30 @@ class FlextUtilitiesConfiguration:
                 entries: list[Entry],
                 format_options: WriteFormatOptions | None = None,
                 **format_kwargs: t.GeneralValueType,
-            ) -> r[str]:
+            ) -> "FlextRuntime.RuntimeResult[str]":
+                # Get ldif config using get_namespace_config (no __getattr__)
+                def get_ldif_config_default() -> WriteFormatOptions:
+                    \"\"\"Get default options from ldif config namespace.\"\"\"
+                    config_class = self.config.get_namespace_config("ldif")
+                    if config_class is None:
+                        msg = "ldif namespace not registered in config"
+                        raise ValueError(msg)
+                    ldif_config = config_class()
+                    # Use getattr for known method - config classes have to_write_options()
+                    to_write_options = getattr(ldif_config, "to_write_options", None)
+                    if to_write_options is None:
+                        msg = "ldif config does not have to_write_options() method"
+                        raise AttributeError(msg)
+                    return to_write_options()
+
                 options_result = u.Configuration.build_options_from_kwargs(
                     model_class=WriteFormatOptions,
                     explicit_options=format_options,
-                    default_factory=lambda: self.config.ldif.to_write_options(),
+                    default_factory=get_ldif_config_default,
                     **format_kwargs,
                 )
                 if options_result.is_failure:
-                    return r[str].fail(options_result.error or "Failed to get options")
+                    return r[T_Model].fail(options_result.error or "Failed to get options")
                 # Use .value directly - FlextResult never returns None on success
                 options = options_result.value
 

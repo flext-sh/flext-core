@@ -217,8 +217,8 @@ class TestFlextMixinsNestedClasses:
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPAGATE:
             service._propagate_context("test_operation")
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_CORRELATION:
-            service._set_correlation_id("test-123")
-            assert service._get_correlation_id() == "test-123"
+            FlextContext.Correlation.set_correlation_id("test-123")
+            assert FlextContext.Correlation.get_correlation_id() == "test-123"
         elif scenario.scenario_type == ServiceMixinScenarioType.LOGGING_WITH_CONTEXT:
             service._log_with_context("info", "Test message", extra_data="value")
         elif scenario.scenario_type == ServiceMixinScenarioType.METRICS_TRACK:

@@ -671,7 +671,7 @@ class FlextUtilitiesParser:
             String key for object (comparable, hashable)
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
         from flext_core.protocols import p
             >>> parser = u.Parser()
             >>> # Class/Type
@@ -1660,9 +1660,14 @@ class FlextUtilitiesParser:
             bool: True if normalized value in normalized items
 
         """
-        items_list: list[str] = (
-            list(items.keys()) if isinstance(items, (dict, Mapping)) else items
-        )
+        # Type narrowing: items can be Mapping[str, T] | list[str]
+        if FlextUtilitiesGuards.is_type(items, "mapping"):
+            # items is Mapping[str, T], convert keys to list
+            items_mapping: Mapping[str, object] = cast("Mapping[str, object]", items)
+            items_list: list[str] = list(items_mapping.keys())
+        else:
+            # items is list[str]
+            items_list = cast("list[str]", items)
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = FlextUtilitiesParser.norm_list(
             items_list,

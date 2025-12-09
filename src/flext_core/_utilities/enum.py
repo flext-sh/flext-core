@@ -409,29 +409,31 @@ def enum[E: StrEnum](
     *,
     mode: str = "is_member",
     by_name: bool = False,
-) -> TypeIs[E] | r[E] | E:
+) -> bool | r[E] | E:
     """Generalized enum utility function.
 
     Args:
         value: Value to check/parse/coerce
         enum_cls: The StrEnum class
         mode: Operation mode
-            - "is_member": Check if value is member (returns TypeIs[E])
-            - "is_name": Check if value is member by name (returns TypeIs[E])
+            - "is_member": Check if value is member (returns bool, acts as TypeIs[E])
+            - "is_name": Check if value is member by name (returns bool, acts as TypeIs[E])
             - "parse": Parse value to enum (returns r[E])
             - "coerce": Coerce value to enum (returns E, raises on failure)
         by_name: For is_member, check by name instead of value
 
     Returns:
-        Depends on mode - TypeIs[E], r[E], or E
+        Depends on mode - bool (for is_member/is_name), r[E] (for parse), or E (for coerce)
 
     """
     _check_direct_access()
 
     if mode == "is_member":
         if by_name and isinstance(value, str):
-            return _EnumUtilities.is_member_by_name(value, enum_cls)
-        return _EnumUtilities.is_member_by_value(value, enum_cls)
+            is_member_result: bool = _EnumUtilities.is_member_by_name(value, enum_cls)
+            return is_member_result
+        result_bool: bool = _EnumUtilities.is_member_by_value(value, enum_cls)
+        return result_bool
     if mode == "is_name":
         return _EnumUtilities.is_member_by_name(str(value), enum_cls)
     if mode == "parse":
@@ -445,12 +447,21 @@ def enum[E: StrEnum](
         return _EnumUtilities.parse(enum_cls, str(value))
     if mode == "coerce":
         # Type narrowing: value is object, but coerce accepts str | E
+        # coerce always returns E (raises on failure)
+        # Explicit type narrowing for type checker
         if isinstance(value, enum_cls):
-            return _EnumUtilities.coerce(enum_cls, value)
+            # Type narrowing: isinstance check ensures value is E
+            # Direct return after isinstance narrowing
+            return value
         if isinstance(value, str):
-            return _EnumUtilities.coerce(enum_cls, value)
+            # Type narrowing: isinstance check ensures value is str
+            coerced: E = _EnumUtilities.coerce(enum_cls, value)
+            return coerced
         # For other types, convert to string
-        return _EnumUtilities.coerce(enum_cls, str(value))
+        # Type narrowing: str(value) is str, which is valid for coerce
+        value_str: str = str(value)
+        coerced_str: E = _EnumUtilities.coerce(enum_cls, value_str)
+        return coerced_str
     error_msg = f"Unknown mode: {mode}"
     raise ValueError(error_msg)
 

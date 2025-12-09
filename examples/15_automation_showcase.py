@@ -27,6 +27,7 @@ from flext_core import (
     FlextService,
     t,
 )
+from flext_core.context import FlextContext
 from flext_core.utilities import u
 
 # =============================================================================
@@ -100,8 +101,11 @@ class PaymentService(FlextService[t.Types.ServiceMetadataMapping]):
         3. Operation context for tracking
         """
         # Generate correlation ID for distributed tracing
-        correlation_id = self._get_correlation_id() or f"payment_{payment_id}_{user_id}"
-        self._set_correlation_id(correlation_id)
+        correlation_id = (
+            FlextContext.Correlation.get_correlation_id()
+            or f"payment_{payment_id}_{user_id}"
+        )
+        FlextContext.Correlation.set_correlation_id(correlation_id)
 
         # Set user context for audit trail
         self._enrich_context(
@@ -192,7 +196,7 @@ class OrderService(FlextService[t.Types.ServiceMetadataMapping]):
         order_data_dict["customer_id"] = customer_id
 
         correlation = correlation_id or f"order_{order_id}_{customer_id}"
-        self._set_correlation_id(correlation)
+        FlextContext.Correlation.set_correlation_id(correlation)
         self._enrich_context(
             user_id=customer_id,
             order_id=order_id,

@@ -143,24 +143,24 @@ class FlextDecorators(FlextRuntime):
     **Usage Patterns**:
 
     1. Simple dependency injection:
-        >>> from flext_core import FlextDecorators, FlextResult
+        >>> from flext_core import FlextDecorators, r
         >>>
         >>> class UserService:
         ...     @FlextDecorators.inject(repo=UserRepository)
-        ...     def get_user(self, user_id: str, *, repo) -> FlextResult[User]:
+        ...     def get_user(self, user_id: str, *, repo) -> r[User]:
         ...         return repo.find_by_id(user_id)
 
     2. Automatic operation logging:
         >>> class OrderService:
         ...     @FlextDecorators.log_operation("create_order")
-        ...     def create_order(self, order_data: dict) -> FlextResult[Order]:
+        ...     def create_order(self, order_data: dict) -> r[Order]:
         ...         # Start/completion/failure automatically logged
         ...         return self._process_order(order_data)
 
     3. Performance tracking:
         >>> class ReportService:
         ...     @FlextDecorators.track_performance("generate_report")
-        ...     def generate_report(self, params: dict) -> FlextResult[Report]:
+        ...     def generate_report(self, params: dict) -> r[Report]:
         ...         # Duration and metrics automatically tracked
         ...         return self._generate(params)
 
@@ -188,14 +188,14 @@ class FlextDecorators(FlextRuntime):
     6. Operation timeout enforcement:
         >>> class LongRunningService:
         ...     @FlextDecorators.timeout(timeout_seconds=30.0)
-        ...     def expensive_operation(self, data: list) -> FlextResult[float]:
+        ...     def expensive_operation(self, data: list) -> r[float]:
         ...         # Raises TimeoutError if exceeds 30 seconds
         ...         return self._expensive_computation(data)
 
     7. Correlation ID management:
         >>> class PaymentService:
         ...     @FlextDecorators.with_correlation()
-        ...     def process_payment(self, payment_id: str) -> FlextResult[str]:
+        ...     def process_payment(self, payment_id: str) -> r[str]:
         ...         # Correlation ID automatically ensured
         ...         # All logs include correlation_id
         ...         return self._charge(payment_id)
@@ -210,7 +210,7 @@ class FlextDecorators(FlextRuntime):
         ...     )
         ...     def create_order(
         ...         self, order_data: dict, *, repo, validator
-        ...     ) -> FlextResult[Order]:
+        ...     ) -> r[Order]:
         ...         # All infrastructure automatic:
         ...         # - DI injection
         return func(*args, **kwargs)
@@ -223,7 +223,7 @@ class FlextDecorators(FlextRuntime):
         ...     @FlextDecorators.with_context(
         ...         tenant_id="tenant-123", user_id="user-456"
         ...     )
-        ...     def process_tenant_data(self) -> FlextResult[dict]:
+        ...     def process_tenant_data(self) -> r[dict]:
         ...         # tenant_id and user_id bound to context
         ...         # All logs include these values
         ...         return self._process()
@@ -233,7 +233,7 @@ class FlextDecorators(FlextRuntime):
         ...     @FlextDecorators.track_operation(
         ...         operation_name="critical_process", track_correlation=True
         ...     )
-        ...     def critical_process(self) -> FlextResult[str]:
+        ...     def critical_process(self) -> r[str]:
         ...         # Automatic correlation ID + logging + performance
         ...         return self._critical_work()
 
@@ -279,9 +279,7 @@ class FlextDecorators(FlextRuntime):
         ...         track_perf=True,
         ...         use_railway=True,
         ...     )
-        ...     def create_product(
-        ...         self, product_data: dict, *, repo
-        ...     ) -> FlextResult[Product]:
+        ...     def create_product(self, product_data: dict, *, repo) -> r[Product]:
         ...         # Automatic infrastructure:
         ...         # - Dependency injection
         ...         # - Structured logging
@@ -291,16 +289,16 @@ class FlextDecorators(FlextRuntime):
         ...         # - Context propagation
         ...
         ...         return (
-        ...             FlextResult[dict]
+        ...             r[dict]
         ...             .ok(product_data)
         ...             .flat_map(self._validate)
         ...             .flat_map(repo.save)
         ...         )
         ...
-        ...     def _validate(self, data: dict) -> FlextResult[dict]:
+        ...     def _validate(self, data: dict) -> r[dict]:
         ...         if "name" not in data:
-        ...             return FlextResult[dict].fail("Name required")
-        ...         return FlextResult[dict].ok(data)
+        ...             return r[dict].fail("Name required")
+        ...         return r[dict].ok(data)
     """
 
     @staticmethod
@@ -327,9 +325,7 @@ class FlextDecorators(FlextRuntime):
 
             class MyService:
                 @FlextDecorators.inject(repo=MyRepository, logger=FlextLogger)
-                def process_data(
-                    self, data: dict, *, repo, logger
-                ) -> FlextResult[dict]:
+                def process_data(self, data: dict, *, repo, logger) -> r[dict]:
                     # repo and logger are automatically injected!
                     logger.info("processing_data", data_keys=list(data.keys()))
                     return repo.save(data)
@@ -351,7 +347,8 @@ class FlextDecorators(FlextRuntime):
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         # Get from container using the service key
-                        result: r[object] = container.get(service_key)
+                        result_raw: p.Result[object] = container.get(service_key)
+                        result: r[object] = cast("r[object]", result_raw)
                         if result.is_success:
                             # Use .value directly - FlextResult never returns None on success
                             kwargs[name] = result.value
@@ -392,13 +389,13 @@ class FlextDecorators(FlextRuntime):
 
             class MyService:
                 @FlextDecorators.log_operation("process_user_data")
-                def process(self, user_id: str) -> FlextResult[dict]:
+                def process(self, user_id: str) -> r[dict]:
                     # Automatic logging of start/complete/failure
                     # Automatic context propagation
                     return self._do_processing(user_id)
 
                 @FlextDecorators.log_operation("heavy_task", track_perf=True)
-                def heavy(self) -> FlextResult[dict]:
+                def heavy(self) -> r[dict]:
                     # Also includes duration_ms and duration_seconds
                     return self._compute()
             ```
@@ -587,7 +584,7 @@ class FlextDecorators(FlextRuntime):
 
             class MyService:
                 @FlextDecorators.track_performance("heavy_computation")
-                def compute(self, data: list) -> FlextResult[float]:
+                def compute(self, data: list) -> r[float]:
                     # Automatic timing and performance logging
                     return self._expensive_calculation(data)
             ```
@@ -688,7 +685,7 @@ class FlextDecorators(FlextRuntime):
             error_code: Optional error code for failures
 
         Returns:
-            Decorated function that returns FlextResult[T]
+            Decorated function that returns r[T]
 
         Example:
             ```python
@@ -706,7 +703,7 @@ class FlextDecorators(FlextRuntime):
                 return email.lower()
 
 
-            # Returns FlextResult[str] automatically
+            # Returns r[str] automatically
             result = process_user_email("user@example.com")
             assert result.is_success
             ```
@@ -860,16 +857,16 @@ class FlextDecorators(FlextRuntime):
     def _resolve_logger(
         args: tuple[object, ...],
         func: Callable[P, R],
-    ) -> p.Infrastructure.Logger.StructlogLogger:
+    ) -> p.Log.StructlogLogger:
         """Resolve logger from first argument or create module logger."""
         first_arg = args[0] if args else None
         potential_logger: object | None = (
             getattr(first_arg, "logger", None) if first_arg is not None else None
         )
         if potential_logger is not None and isinstance(potential_logger, FlextLogger):
-            return cast("p.Infrastructure.Logger.StructlogLogger", potential_logger)
+            return cast("p.Log.StructlogLogger", potential_logger)
         return cast(
-            "p.Infrastructure.Logger.StructlogLogger",
+            "p.Log.StructlogLogger",
             FlextLogger(func.__module__),
         )
 
@@ -881,7 +878,7 @@ class FlextDecorators(FlextRuntime):
             str,
             object,
         ],  # Function kwargs can contain any type (ParamSpec compatibility)
-        logger: p.Infrastructure.Logger.StructlogLogger,
+        logger: p.Log.StructlogLogger,
         *,
         retry_config: m.Config.RetryConfiguration | None = None,
     ) -> R | Exception:
@@ -974,7 +971,7 @@ class FlextDecorators(FlextRuntime):
         func: Callable[P, R],
         attempts: int,
         error_code: str | None,
-        logger: p.Infrastructure.Logger.StructlogLogger,
+        logger: p.Log.StructlogLogger,
     ) -> None:
         """Handle retry exhaustion and raise appropriate exception."""
         # All retries exhausted
@@ -1017,7 +1014,7 @@ class FlextDecorators(FlextRuntime):
     def _bind_operation_context(
         *,
         operation: str,
-        logger: p.Infrastructure.Logger.StructlogLogger,
+        logger: p.Log.StructlogLogger,
         function_name: str,
         ensure_correlation: bool,
     ) -> str | None:
@@ -1053,7 +1050,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def _clear_operation_scope(
         *,
-        logger: p.Infrastructure.Logger.StructlogLogger,
+        logger: p.Log.StructlogLogger,
         function_name: str,
         operation: str,
     ) -> None:
@@ -1076,8 +1073,8 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def _handle_log_result(
         *,
-        result: r[bool],
-        logger: p.Infrastructure.Logger.StructlogLogger,
+        result: p.Result[bool] | FlextRuntime.RuntimeResult[bool],
+        logger: p.Log.StructlogLogger,
         fallback_message: str,
         kwargs: t.Types.ConfigurationMapping,
     ) -> None:
@@ -1140,7 +1137,7 @@ class FlextDecorators(FlextRuntime):
             thread-based timeouts, use threading.Timer or asyncio.
 
         """
-        # Use FlextConstants.Defaults for default
+        # Use c.Reliability for default
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None
@@ -1245,7 +1242,7 @@ class FlextDecorators(FlextRuntime):
                 )
                 def create_order(
                     self, order_data: dict, *, repo, validator
-                ) -> FlextResult[Order]:
+                ) -> r[Order]:
                     # All infrastructure automatic:
                     # - DI injection
                     # - Logging
@@ -1307,7 +1304,7 @@ class FlextDecorators(FlextRuntime):
 
             class OrderService:
                 @FlextDecorators.with_correlation()
-                def process_order(self, order_id: str) -> FlextResult[dict]:
+                def process_order(self, order_id: str) -> r[dict]:
                     # Correlation ID automatically ensured in context
                     # All logs will include correlation_id
                     return self._process(order_id)
@@ -1356,7 +1353,7 @@ class FlextDecorators(FlextRuntime):
                 @FlextDecorators.with_context(
                     service_name="payment_service", service_version="1.0.0"
                 )
-                def process_payment(self, amount: float) -> FlextResult[str]:
+                def process_payment(self, amount: float) -> r[str]:
                     # service_name and service_version automatically in context
                     # All logs will include these values
                     return self._charge(amount)
@@ -1439,7 +1436,7 @@ class FlextDecorators(FlextRuntime):
 
             class UserService:
                 @FlextDecorators.track_operation("create_user")
-                def create_user(self, user_data: dict) -> FlextResult[User]:
+                def create_user(self, user_data: dict) -> r[User]:
                     # Automatic tracking:
                     # - Correlation ID ensured
                     # - Operation name bound to context

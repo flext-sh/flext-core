@@ -23,7 +23,7 @@ class FlextUtilitiesText:
     """Low-level text normalization helpers for CQRS utilities."""
 
     @property
-    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
+    def logger(self) -> p.Log.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).

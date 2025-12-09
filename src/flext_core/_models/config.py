@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -20,11 +20,10 @@ from flext_core._models.collections import FlextModelsCollections
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
+from flext_core.utilities import u
 
 
 def _get_log_level_from_config() -> int:
@@ -33,11 +32,6 @@ def _get_log_level_from_config() -> int:
     # config.py -> runtime.py -> models.py -> _models/config.py -> config.py
     default_log_level = c.Logging.DEFAULT_LEVEL.upper()
     return getattr(logging, default_log_level, logging.INFO)
-
-
-def _generate_id() -> str:
-    """Generate unique ID."""
-    return FlextUtilitiesGenerators.generate_id()
 
 
 class FlextModelsConfig:
@@ -56,8 +50,10 @@ class FlextModelsConfig:
             arbitrary_types_allowed=True,
         )
 
+        # Note: default_factory requires a callable that returns a value
+        # Using lambda is necessary here as Pydantic calls the factory function
         operation_id: str = Field(
-            default_factory=_generate_id,
+            default_factory=lambda: u.generate(),  # noqa: PLW0108
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
@@ -128,11 +124,11 @@ class FlextModelsConfig:
             description="Backoff multiplier for exponential backoff",
         )
         retry_on_exceptions: list[type[BaseException]] = Field(
-            default_factory=lambda: list[type[BaseException]](),  # noqa: PLW0108
+            default_factory=list,
             description="Exception types to retry on",
         )
         retry_on_status_codes: list[int] = Field(
-            default_factory=lambda: list[int](),  # noqa: PLW0108
+            default_factory=list,
             max_length=c.Validation.MAX_RETRY_STATUS_CODES,
             description="HTTP status codes to retry on",
         )
@@ -394,14 +390,14 @@ class FlextModelsConfig:
             description="Use console renderer (True) or JSON renderer (False)",
         )
         additional_processors: list[Callable[..., object]] = Field(
-            default_factory=lambda: list[Callable[..., object]](),  # noqa: PLW0108
+            default_factory=list,
             description="Optional extra processors after standard FLEXT processors",
         )
         wrapper_class_factory: Callable[[], type] | None = Field(
             default=None,
             description="Custom wrapper factory for structlog",
         )
-        logger_factory: p.Utility.Callable[t.GeneralValueType] | None = Field(
+        logger_factory: p.VariadicCallable[t.GeneralValueType] | None = Field(
             default=None,
             description="Custom logger factory for structlog",
         )
@@ -497,7 +493,7 @@ class FlextModelsConfig:
             default=None,
             description="Optional configuration overrides",
         )
-        context: p.Context.Ctx | None = Field(
+        context: p.Ctx | None = Field(
             default=None,
             description="Optional context protocol instance",
         )
@@ -900,7 +896,7 @@ class FlextModelsConfig:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
 
-        func: p.Utility.Callable[t.GeneralValueType] = Field(
+        func: p.VariadicCallable[t.GeneralValueType] = Field(
             description="Function to execute",
         )
         args: tuple[t.GeneralValueType, ...] = Field(

@@ -83,7 +83,7 @@ class FlextContext(FlextRuntime):
             # Simple dict normalization - no transform available yet
             normalized_data = {
                 str(k): FlextRuntime.normalize_to_general_value(v)
-                for k, v in initial_dict.items()
+                for k, v in u.mapper().to_dict(initial_dict).items()
             }
             context_data = m.Context.ContextData(data=normalized_data)
         elif isinstance(initial_data, m.Context.ContextData):
@@ -149,7 +149,7 @@ class FlextContext(FlextRuntime):
         operation_id: str | None = None,
         user_id: str | None = None,
         metadata: t.Types.ConfigurationMapping | None = None,
-    ) -> p.Context.Ctx: ...
+    ) -> p.Ctx: ...
 
     @classmethod
     def create(
@@ -160,7 +160,7 @@ class FlextContext(FlextRuntime):
         user_id: str | None = None,
         metadata: t.Types.ConfigurationMapping | None = None,
         auto_correlation_id: bool = True,
-    ) -> Self | p.Context.Ctx:
+    ) -> Self | p.Ctx:
         """Factory method to create a new FlextContext instance.
 
         This is the preferred way to instantiate FlextContext. It provides
@@ -203,8 +203,8 @@ class FlextContext(FlextRuntime):
                 initial_data_dict[c.Context.KEY_OPERATION_ID] = operation_id
             elif auto_correlation_id:
                 # Auto-generate correlation_id when not provided and auto_correlation_id=True
-                initial_data_dict[c.Context.KEY_OPERATION_ID] = (
-                    u.Generators.generate_correlation_id()
+                initial_data_dict[c.Context.KEY_OPERATION_ID] = u.generate(
+                    "correlation"
                 )
             if user_id is not None:
                 initial_data_dict[c.Context.KEY_USER_ID] = user_id
@@ -218,7 +218,7 @@ class FlextContext(FlextRuntime):
             initial_data is None
             or (
                 isinstance(initial_data, dict)
-                and not initial_data.get(c.Context.KEY_OPERATION_ID)
+                and not u.mapper().get(initial_data, c.Context.KEY_OPERATION_ID)
             )
         ):
             # Convert initial_data to dict if needed
@@ -227,9 +227,7 @@ class FlextContext(FlextRuntime):
             else:
                 initial_data_dict = {}
             # Add auto-generated correlation_id
-            initial_data_dict[c.Context.KEY_OPERATION_ID] = (
-                u.Generators.generate_correlation_id()
-            )
+            initial_data_dict[c.Context.KEY_OPERATION_ID] = u.generate("correlation")
             return cls(initial_data=initial_data_dict)
         return cls(initial_data=initial_data)
 
@@ -312,20 +310,15 @@ class FlextContext(FlextRuntime):
         counter_attr = f"{operation}s"
         if hasattr(self._statistics, counter_attr):
             current_value = getattr(self._statistics, counter_attr, 0)
-            guard_result = u.Validation.guard(current_value, int)
-            if isinstance(guard_result, r) and guard_result.is_success:
+            # Direct increment if current_value is int (statistics fields are always int)
+            if isinstance(current_value, int):
                 setattr(self._statistics, counter_attr, current_value + 1)
 
         # Update operations dict if exists
         if operation in self._statistics.operations:
             value = self._statistics.operations[operation]
-            guard_result = u.Validation.guard(value, int)
-            # Type narrowing: value is int after guard check
-            if (
-                isinstance(guard_result, r)
-                and guard_result.is_success
-                and isinstance(value, int)
-            ):
+            # Direct increment if value is int
+            if isinstance(value, int):
                 self._statistics.operations[operation] = value + 1
 
     def _add_hook(
@@ -648,7 +641,7 @@ class FlextContext(FlextRuntime):
 
     def merge(
         self,
-        other: p.Context.Ctx | t.Types.ConfigurationDict,
+        other: p.Ctx | t.Types.ConfigurationDict,
     ) -> Self:
         """Merge another context or dictionary into this context.
 
@@ -709,7 +702,7 @@ class FlextContext(FlextRuntime):
 
         return self
 
-    def clone(self) -> p.Context.Ctx:
+    def clone(self) -> p.Ctx:
         """Create a clone of this context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -730,7 +723,8 @@ class FlextContext(FlextRuntime):
         cloned._metadata = self._metadata.model_copy()
         cloned._statistics = self._statistics.model_copy()
 
-        return cloned
+        # Cast to Ctx protocol for type checker
+        return cast("p.Ctx", cloned)
 
     def validate(self) -> r[bool]:
         """Validate the context data.
@@ -812,7 +806,7 @@ class FlextContext(FlextRuntime):
         return cls.create(initial_data=initial_data or None)
 
     @classmethod
-    def from_json(cls, json_str: str) -> p.Context.Ctx:
+    def from_json(cls, json_str: str) -> p.Ctx:
         """Create context from JSON string.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -843,7 +837,9 @@ class FlextContext(FlextRuntime):
                 transformer=normalize_value,
             )
             context_data = m.Context.ContextData(data=normalized_data)
-            return cls(initial_data=context_data)
+            context_instance = cls(initial_data=context_data)
+            # Cast to Ctx protocol for type checker
+            return cast("p.Ctx", context_instance)
         except json.JSONDecodeError as e:
             msg = f"Invalid JSON string: {e}"
             raise ValueError(msg) from e
@@ -958,7 +954,7 @@ class FlextContext(FlextRuntime):
 
         return m.Context.ContextExport(
             data=all_data,
-            metadata=m.Metadata(attributes=metadata_general)
+            metadata=m.Base.Metadata(attributes=metadata_general)
             if metadata_general
             else None,
             statistics=statistics_mapping,
@@ -1207,7 +1203,7 @@ class FlextContext(FlextRuntime):
         statistics_mapping: t.Types.ContextMetadataMapping = stats_dict or {}
         return m.Context.ContextExport(
             data=all_data,
-            metadata=m.Metadata(attributes=metadata_general)
+            metadata=m.Base.Metadata(attributes=metadata_general)
             if metadata_general
             else None,
             statistics=statistics_mapping,
@@ -1217,10 +1213,10 @@ class FlextContext(FlextRuntime):
     # Container integration for dependency injection
     # =========================================================================
 
-    _container: p.Container.DI | None = None
+    _container: p.DI | None = None
 
     @classmethod
-    def get_container(cls) -> p.Container.DI:
+    def get_container(cls) -> p.DI:
         """Get global container instance.
 
         The container must be set explicitly using `set_container()` before
@@ -1228,7 +1224,7 @@ class FlextContext(FlextRuntime):
         explicit initialization.
 
         Returns:
-            Global Container.DI instance for dependency injection
+            Global DI instance for dependency injection
 
         Raises:
             RuntimeError: If container was not set via `set_container()`.
@@ -1249,7 +1245,7 @@ class FlextContext(FlextRuntime):
         return cls._container
 
     @classmethod
-    def set_container(cls, container: p.Container.DI) -> None:
+    def set_container(cls, container: p.DI) -> None:
         """Set the global container instance.
 
         This method must be called before using `get_container()`. It breaks
@@ -1395,10 +1391,10 @@ class FlextContext(FlextRuntime):
         def generate_correlation_id() -> str:
             """Generate unique correlation ID.
 
-            Note: Uses u.Generators.generate_correlation_id() for ID generation.
+            Note: Uses u.generate("correlation") for ID generation.
             Sets the correlation ID in context variables (via FlextModels.StructlogProxyContextVar).
             """
-            correlation_id = u.Generators.generate_correlation_id()
+            correlation_id = u.generate("correlation")
             _ = FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
             return correlation_id
 
@@ -1425,7 +1421,7 @@ class FlextContext(FlextRuntime):
             """
             # Generate correlation ID if not provided using u
             if correlation_id is None:
-                correlation_id = u.Generators.generate_correlation_id()
+                correlation_id = u.generate("correlation")
 
             # Save current context
             current_correlation = (
@@ -1516,7 +1512,7 @@ class FlextContext(FlextRuntime):
         @staticmethod
         def get_service(
             service_name: str,
-        ) -> p.Foundation.Result[t.GeneralValueType]:
+        ) -> p.Result[t.GeneralValueType]:
             """Resolve service from global container using FlextResult.
 
             Provides unified service resolution pattern across the ecosystem
@@ -1537,7 +1533,7 @@ class FlextContext(FlextRuntime):
             """
             # get_container is a classmethod on FlextContext, access via class
             container = FlextContext.get_container()
-            # Returns Foundation.Result[T] protocol for compatibility
+            # Returns Result[T] protocol for compatibility
             return container.get(service_name)
 
         @staticmethod
@@ -1944,7 +1940,10 @@ class FlextContext(FlextRuntime):
             )
             if u.is_type(correlation_id_value, str) and correlation_id_value:
                 return correlation_id_value
-            return FlextContext.Correlation.generate_correlation_id()
+            # Generate new correlation_id and set it in context
+            new_correlation_id = u.generate("correlation")
+            FlextContext.Correlation.set_correlation_id(new_correlation_id)
+            return new_correlation_id
 
         @staticmethod
         def has_correlation_id() -> bool:

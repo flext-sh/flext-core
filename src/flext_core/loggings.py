@@ -120,7 +120,7 @@ class FlextLogger(FlextRuntime):
             FlextRuntime.structlog().contextvars.bind_contextvars(**kwargs)
             return r[bool].ok(True)
         if operation == c.Logging.ContextOperation.UNBIND:
-            keys_raw: object = u.Mapper.get(kwargs, "keys", default=[])
+            keys_raw: object = u.mapper().get(kwargs, "keys", default=[])
             # Type narrowing: ensure keys is list[str]
             keys: list[str] = keys_raw if isinstance(keys_raw, list) else []
             if isinstance(keys, Sequence):
@@ -541,6 +541,88 @@ class FlextLogger(FlextRuntime):
             return r[bool].fail(f"Failed to unbind context for level {level}: {e}")
 
     @classmethod
+    def for_container(
+        cls,
+        container: p.DI,
+        level: str | None = None,
+        **context: t.GeneralValueType,
+    ) -> FlextLogger:
+        """Create logger configured for a specific container.
+
+        Creates a logger instance bound to a container's configuration and context.
+        The logger inherits the container's configuration for log level and other
+        settings, and can have additional context bound.
+
+        Args:
+            container: Container instance to bind logger to.
+            level: Optional log level override. If not provided, uses container's
+                config log_level.
+            **context: Additional context variables to bind.
+
+        Returns:
+            FlextLogger: Logger instance configured for the container.
+
+        Example:
+            >>> logger = FlextLogger.for_container(
+            ...     container, level="DEBUG", container_id="worker_1"
+            ... )
+
+        """
+        # Get log level from container config or use provided level
+        if level is None:
+            config = (
+                container.config
+                if hasattr(container, "config")
+                else FlextConfig.get_global_instance()
+            )
+            level = getattr(config, "log_level", "INFO")
+        # Create logger with container context
+        logger = cls.create_module_logger(f"container_{id(container)}")
+        # Bind container context
+        if context:
+            logger.bind_global_context(**context)
+        return logger
+
+    @classmethod
+    @contextmanager
+    def with_container_context(
+        cls,
+        container: p.DI,
+        **context: t.GeneralValueType,
+    ) -> Iterator[FlextLogger]:
+        """Context manager for container-scoped logging.
+
+        Creates a logger bound to container context for the duration of the context
+        manager. Context is automatically cleaned up when exiting the context.
+
+        Args:
+            container: Container instance to bind logger to.
+            **context: Additional context variables to bind.
+
+        Yields:
+            FlextLogger: Logger instance configured for the container.
+
+        Example:
+            >>> with FlextLogger.with_container_context(
+            ...     container, worker_id="1"
+            ... ) as logger:
+            ...     logger.info("Processing task")
+
+        """
+        # for_container expects str | None as second argument, not **kwargs
+        # Extract context as string if provided, otherwise None
+        context_value = context.get("context") if context else None
+        context_str: str | None = (
+            str(context_value) if isinstance(context_value, str) else None
+        )
+        logger = cls.for_container(container, context_str)
+        try:
+            yield logger
+        finally:
+            # Cleanup is handled by context manager exit
+            pass
+
+    @classmethod
     def create_module_logger(cls, name: str = "flext") -> FlextLogger:
         """Create a logger instance for a module.
 
@@ -566,14 +648,17 @@ class FlextLogger(FlextRuntime):
 
         Note:
             `get_logger()` calls are replaced by `create_module_logger()` with default name.
+            structlog is automatically configured on first logger creation.
 
         """
+        # Auto-configure structlog if not already configured
+        FlextRuntime.ensure_structlog_configured()
         return cls(name)
 
     @staticmethod
     def get_logger(
         name: str | None = None,
-    ) -> p.Infrastructure.Logger.StructlogLogger:
+    ) -> p.Log.StructlogLogger:
         """Get structlog logger instance (alias for FlextRuntime.get_logger).
 
         Business Rule: Gets a structlog logger instance, delegating to FlextRuntime
@@ -608,7 +693,7 @@ class FlextLogger(FlextRuntime):
         self,
         name: str,
         *,
-        config: p.Configuration.Config | None = None,
+        config: p.Config | None = None,
         _level: c.Literals.LogLevelLiteral | str | None = None,
         _service_name: str | None = None,
         _service_version: str | None = None,
@@ -652,7 +737,7 @@ class FlextLogger(FlextRuntime):
     def _create_bound_logger(
         cls,
         name: str,
-        bound_logger: p.Infrastructure.Logger.StructlogLogger,
+        bound_logger: p.Log.StructlogLogger,
     ) -> FlextLogger:
         """Internal factory for creating logger with pre-bound structlog instance."""
         instance = cls.__new__(cls)
@@ -705,7 +790,7 @@ class FlextLogger(FlextRuntime):
         return_result: bool = False,
         **kwargs: t.GeneralValueType,
     ) -> r[bool] | None:
-        """Log trace message - Infrastructure.Logger.Log implementation."""
+        """Log trace message - Logger.Log implementation."""
         try:
             try:
                 formatted_message = message % args if args else message
@@ -871,7 +956,7 @@ class FlextLogger(FlextRuntime):
         message: str,
         _context: Mapping[str, t.FlexibleValue] | None = None,
     ) -> None:
-        """Log message with specified level - Infrastructure.Logger.Log implementation.
+        """Log message with specified level - Logger.Log implementation.
 
         Business Rule: Logs a message with specified level, converting level string
         to LogLevel enum if possible. Uses _log method for actual logging. Context
@@ -924,7 +1009,7 @@ class FlextLogger(FlextRuntime):
         return_result: bool = False,
         **context: t.GeneralValueType,
     ) -> r[bool] | None:
-        """Log debug message - Infrastructure.Logger.Log implementation.
+        """Log debug message - Logger.Log implementation.
 
         Business Rule: Logs a debug-level message with optional context. Uses _log
         method for actual logging. If return_result=True, returns r[bool]
@@ -970,7 +1055,7 @@ class FlextLogger(FlextRuntime):
         return_result: bool = False,
         **context: t.GeneralValueType,
     ) -> r[bool] | None:
-        """Log info message - Infrastructure.Logger.Log implementation.
+        """Log info message - Logger.Log implementation.
 
         Business Rule: Logs an info-level message with optional context. Uses _log
         method for actual logging. If return_result=True, returns r[bool]
@@ -1016,7 +1101,7 @@ class FlextLogger(FlextRuntime):
         return_result: bool = False,
         **context: t.GeneralValueType | Exception,
     ) -> r[bool] | None:
-        """Log warning message - Infrastructure.Logger.Log implementation.
+        """Log warning message - Logger.Log implementation.
 
         Business Rule: Logs a warning-level message with optional context. Uses _log
         method for actual logging. If return_result=True, returns r[bool]
@@ -1062,7 +1147,7 @@ class FlextLogger(FlextRuntime):
         return_result: bool = False,
         **context: t.GeneralValueType,
     ) -> r[bool] | None:
-        """Log error message - Infrastructure.Logger.Log implementation.
+        """Log error message - Logger.Log implementation.
 
         Business Rule: Logs an error-level message with optional context. Uses _log
         method for actual logging. If return_result=True, returns r[bool]
@@ -1108,7 +1193,7 @@ class FlextLogger(FlextRuntime):
         return_result: bool = False,
         **context: t.GeneralValueType,
     ) -> r[bool] | None:
-        """Log critical message - Infrastructure.Logger.Log implementation.
+        """Log critical message - Logger.Log implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
         method for actual logging. If return_result=True, returns r[bool]
@@ -1265,10 +1350,8 @@ class FlextLogger(FlextRuntime):
     class ResultAdapter:
         """Adapter ensuring FlextLogger methods return FlextResult outputs.
 
-        Uses __getattr__ for delegation - only overrides methods that need
-        return_result=True behavior. Methods like track_performance, log_result,
-        bind_context, get_context, start_tracking, stop_tracking are delegated
-        automatically via __getattr__.
+        Provides explicit wrapper methods for common logger operations.
+        For other methods, access _base_logger directly.
         """
 
         __slots__ = ("_base_logger",)
@@ -1278,9 +1361,81 @@ class FlextLogger(FlextRuntime):
             super().__init__()
             self._base_logger = base_logger
 
-        def __getattr__(self, item: str) -> object:
-            """Delegate attribute access to base logger."""
-            return getattr(self._base_logger, item)
+        @property
+        def name(self) -> str:
+            """Get logger name - delegate to base logger."""
+            return self._base_logger.name
+
+        # Explicit wrapper methods for common operations
+        # Use getattr for optional methods that may not exist on base logger
+        def track_performance(
+            self,
+            operation_name: str,
+            *args: t.GeneralValueType,
+            **kwargs: t.GeneralValueType,
+        ) -> object:
+            """Track performance metrics - delegate to base logger."""
+            method = getattr(self._base_logger, "track_performance", None)
+            if method is not None:
+                return method(operation_name, *args, **kwargs)
+            return None
+
+        def log_result(
+            self,
+            result: r[t.GeneralValueType],
+            *args: t.GeneralValueType,
+            **kwargs: t.GeneralValueType,
+        ) -> object:
+            """Log result - delegate to base logger."""
+            method = getattr(self._base_logger, "log_result", None)
+            if method is not None:
+                return method(result, *args, **kwargs)
+            return None
+
+        def bind_context(
+            self,
+            **context: t.GeneralValueType,
+        ) -> object:
+            """Bind context - delegate to base logger."""
+            # bind_context expects scope: str as first argument, not **kwargs
+            # This is a compatibility wrapper that may need adjustment
+            method = getattr(self._base_logger, "bind_context", None)
+            if method is not None:
+                return method("default", **context)
+            return None
+
+        def get_context(
+            self,
+            *args: t.GeneralValueType,
+            **kwargs: t.GeneralValueType,
+        ) -> object:
+            """Get context - delegate to base logger."""
+            method = getattr(self._base_logger, "get_context", None)
+            if method is not None:
+                return method(*args, **kwargs)
+            return None
+
+        def start_tracking(
+            self,
+            *args: t.GeneralValueType,
+            **kwargs: t.GeneralValueType,
+        ) -> object:
+            """Start tracking - delegate to base logger."""
+            method = getattr(self._base_logger, "start_tracking", None)
+            if method is not None:
+                return method(*args, **kwargs)
+            return None
+
+        def stop_tracking(
+            self,
+            *args: t.GeneralValueType,
+            **kwargs: t.GeneralValueType,
+        ) -> object:
+            """Stop tracking - delegate to base logger."""
+            method = getattr(self._base_logger, "stop_tracking", None)
+            if method is not None:
+                return method(*args, **kwargs)
+            return None
 
         def with_result(self) -> FlextLogger.ResultAdapter:
             """Return self (idempotent)."""

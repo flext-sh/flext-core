@@ -220,7 +220,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class BadConfig:
             """Config object that raises on attribute access."""
 
-            def __getattr__(self, name: str) -> core_t.GeneralValueType:
+            def get_attribute(self, name: str) -> core_t.GeneralValueType:
                 """Raise error on attribute access."""
                 msg = f"Bad config: {name}"
                 raise AttributeError(msg)

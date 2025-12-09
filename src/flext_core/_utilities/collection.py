@@ -158,14 +158,14 @@ class FlextUtilitiesCollection:
         """
 
         def _coerce(value: t.FlexibleValue) -> dict[str, E]:
-            if not FlextUtilitiesGuards.is_type(value, dict):
+            # Use isinstance for type narrowing
+            if not isinstance(value, dict):
                 msg = f"Expected dict, got {type(value).__name__}"
                 raise TypeError(msg)
 
-            value_dict: dict[str, t.ScalarValue] = cast(
-                "dict[str, t.ScalarValue]",
-                value,
-            )
+            # Type narrowing: value is dict after isinstance check
+            # Type inference: isinstance provides type narrowing to dict[str, t.ScalarValue]
+            value_dict: dict[str, t.ScalarValue] = value
             result: dict[str, E] = {}
             for key, val in value_dict.items():
                 if isinstance(val, enum_cls):
@@ -265,12 +265,15 @@ class FlextUtilitiesCollection:
         default_error: str,
     ) -> list[R] | set[R] | frozenset[R] | dict[str, R] | r[R]:
         """Internal implementation for map - handles all cases."""
+        # Check for result-like objects - check is_success first to avoid accessing .value on failed results
+        # Use isinstance for proper type narrowing
         if isinstance(items, r):
-            # Type narrowing: mapper is Callable[[T], R] for result
-            # Use explicit type annotation to help pyright
-            mapper_result: Callable[[object], R] = cast("Callable[[object], R]", mapper)
-            # Type narrowing: items is r[T], cast to help pyright
-            items_result: r[T] = cast("r[T]", items)
+            # Type narrowing: items is r[T] after isinstance check
+            items_result: r[T] = items
+            # Type assertion: mapper can be Callable[[T], R] or Callable[[str, T], R]
+            # For r[T] case, we use Callable[[T], R] variant
+            # Use cast to narrow union type based on context (r[T] requires Callable[[T], R])
+            mapper_result: Callable[[T], R] = cast("Callable[[T], R]", mapper)
             return FlextUtilitiesCollection._map_result(
                 items_result,
                 mapper_result,
@@ -298,11 +301,11 @@ class FlextUtilitiesCollection:
             # Type narrowing: mapper is Callable[[T], R] for set
             # Use explicit type annotation to help pyright
             mapper_set: Callable[[object], R] = cast("Callable[[object], R]", mapper)
-            # Type narrowing: items is set[T] | frozenset[T], cast to help pyright
-            items_set: set[T] | frozenset[T] = cast("set[T] | frozenset[T]", items)
+            # Type narrowing: items is set[T] | frozenset[T] after isinstance check
+            items_set: set[T] | frozenset[T] = items
             return FlextUtilitiesCollection._map_set(items_set, mapper_set)
 
-        if isinstance(items, (dict, Mapping)):
+        if FlextUtilitiesGuards.is_type(items, "mapping"):
             # Type narrowing: mapper is Callable[[str, T], R] for dict
             # items is dict[str, T] | Mapping[str, T], convert to dict[str, T] for processing
             if isinstance(items, dict):
@@ -310,9 +313,8 @@ class FlextUtilitiesCollection:
             else:
                 # dict() constructor from Mapping[str, T] returns dict[str, T]
                 # Type narrowing: isinstance ensures items is Mapping[str, T]
-                # pyright: ignore[reportUnknownVariableType,reportUnknownArgumentType] - dict() from Mapping type inference limitation
-                items_dict_raw = dict(items.items())  # type: ignore[arg-type,assignment]
-                items_dict = cast("dict[str, T]", items_dict_raw)  # type: ignore[assignment]
+                items_mapping: Mapping[str, T] = cast("Mapping[str, T]", items)
+                items_dict = dict(items_mapping.items())
             mapper_dict: Callable[[str, T], R] = cast("Callable[[str, T], R]", mapper)
             return FlextUtilitiesCollection._map_dict(items_dict, mapper_dict)
 
@@ -330,11 +332,11 @@ class FlextUtilitiesCollection:
         if items.is_success:
             # Type narrowing: items.value is T when is_success is True
             mapped: R = mapper(items.value)
-            return r[R].ok(mapped)
+            return r.ok(mapped)
         # When is_failure is True, error is never None (fail() converts None to "")
         # Use error or default_error as fallback
         error_msg = items.error or default_error
-        return r[R].fail(error_msg)
+        return r.fail(error_msg)
 
     @staticmethod
     def _map_sequence[T, R](
@@ -567,8 +569,8 @@ class FlextUtilitiesCollection:
         if isinstance(items, (list, tuple)):
             # Type narrowing: items is list[T] | tuple[T, ...], convert to list[object] for _filter_list
             # _filter_list expects list[object] (invariant), so we need to cast
-            # pyright: ignore[reportUnknownArgumentType] - list() from Sequence type inference limitation
-            list_items: list[object] = cast("list[object]", list(items))  # type: ignore[arg-type]
+
+            list_items: list[object] = cast("list[object]", list(items))
             # Type narrowing: predicate and mapper need explicit types
             # _filter_list expects Callable[..., bool] (variadic), not Callable[[object], bool]
             # predicate is required (not None) for _filter_list
@@ -580,9 +582,9 @@ class FlextUtilitiesCollection:
                 list_items,
                 predicate_typed,
                 mapper_typed,
-            )  # type: ignore[arg-type]
+            )
             return cast("list[T] | list[R]", list_result)
-        if isinstance(items, (dict, Mapping)):
+        if FlextUtilitiesGuards.is_type(items, "mapping"):
             # Convert to dict if needed - isinstance provides type narrowing
             # items is dict[str, T] | Mapping[str, T], convert to dict[str, T] for processing
             if isinstance(items, dict):
@@ -590,9 +592,8 @@ class FlextUtilitiesCollection:
             else:
                 # dict() constructor from Mapping[str, T] returns dict[str, T]
                 # Type narrowing: isinstance ensures items is Mapping[str, T]
-                # pyright: ignore[reportUnknownVariableType,reportUnknownArgumentType] - dict() from Mapping type inference limitation
-                dict_items_raw = dict(items.items())  # type: ignore[arg-type,assignment]
-                dict_items = cast("dict[str, T]", dict_items_raw)  # type: ignore[assignment]
+                items_mapping: Mapping[str, T] = cast("Mapping[str, T]", items)
+                dict_items = dict(items_mapping.items())
             # _filter_dict returns dict[str, T] | dict[str, R] based on mapper
             if mapper is not None:
                 # With mapper, result is dict[str, R]
@@ -696,7 +697,7 @@ class FlextUtilitiesCollection:
             return r[list[R] | dict[str, R]].fail(
                 f"Processing errors: {', '.join(dict_errors)}",
             )
-        return r[list[R] | dict[str, R]].ok(dict_result)
+        return r.ok(dict_result)
 
     @staticmethod
     def process[T, R](
@@ -737,8 +738,8 @@ class FlextUtilitiesCollection:
             )
             # Type narrowing: items is Sequence[T], convert to list[T]
             # list() constructor from Sequence[T] returns list[T]
-            # pyright: ignore[reportUnknownArgumentType] - list() from Sequence type inference limitation
-            items_list: list[T] = list(items)  # type: ignore[arg-type]
+
+            items_list: list[T] = list(items)
             # Type narrowing: processor and predicate need explicit types
             processor_typed: Callable[[object], R] = cast(
                 "Callable[[object], R]",
@@ -756,7 +757,7 @@ class FlextUtilitiesCollection:
                 on_error=on_error,
             )
 
-        if isinstance(items, (dict, Mapping)):
+        if FlextUtilitiesGuards.is_type(items, "mapping"):
             # Type narrowing: processor is Callable for dict items
             # items is dict[str, T] | Mapping[str, T], convert to dict[str, T] for processing
             if isinstance(items, dict):
@@ -764,7 +765,8 @@ class FlextUtilitiesCollection:
             else:
                 # dict() constructor from Mapping[str, T] returns dict[str, T]
                 # Type narrowing: isinstance ensures items is Mapping[str, T]
-                items_dict = dict(items.items())
+                items_mapping: Mapping[str, T] = cast("Mapping[str, T]", items)
+                items_dict = dict(items_mapping.items())
             dict_processor: Callable[[str, T], R] = cast(
                 "Callable[[str, T], R]",
                 processor,
@@ -783,18 +785,28 @@ class FlextUtilitiesCollection:
                 on_error=on_error,
             )
 
-        single_processor = cast("Callable[[T], R]", processor)
-        single_predicate = (
+        # Type narrowing: processor and predicate need explicit types
+        # _process_list_items expects Callable[[T], R] but processor can be Callable[[T], R] | Callable[[str, T], R]
+        # For single item processing, we need Callable[[T], R]
+        # Runtime validates compatibility - cast to help type checker
+        # Wrap items in list and cast to help type checker understand T is the item type
+        items_wrapped: list[T] = cast("list[T]", [items])
+        single_processor: Callable[[T], R] = cast("Callable[[T], R]", processor)
+        single_predicate: Callable[[T], bool] | None = (
             cast("Callable[[T], bool] | None", predicate)
             if predicate is not None
             else None
         )
-        return FlextUtilitiesCollection._process_list_items(
-            [items],
-            single_processor,
-            predicate=single_predicate,
-            on_error=on_error,
+        # Call with explicit type annotation to help type checker
+        result: r[list[R] | dict[str, R]] = (
+            FlextUtilitiesCollection._process_list_items(
+                items_wrapped,
+                single_processor,
+                predicate=single_predicate,
+                on_error=on_error,
+            )
         )
+        return result
 
     # ─────────────────────────────────────────────────────────────
     # GROUP/CHUNK METHODS
@@ -836,7 +848,15 @@ class FlextUtilitiesCollection:
         result: dict[object, list[T]] = {}
         items_list = list(items)
         for item in items_list:
-            k: object = key(item) if callable(key) else getattr(item, key, None)
+            if callable(key):
+                k: object = key(item)
+            # Type narrowing: key is str here (not callable)
+            # Use isinstance for proper type narrowing
+            elif isinstance(key, str):
+                k = getattr(item, key, None)
+            else:
+                # Fallback: should not happen due to overloads, but type checker needs this
+                k = None
             if k not in result:
                 result[k] = []
             result[k].append(item)
@@ -875,25 +895,24 @@ class FlextUtilitiesCollection:
         try:
             # Type narrowing: operation is Callable, result type is unknown
             result_raw = operation(item)
+            # Use isinstance for proper type narrowing
             if isinstance(result_raw, r):
+                # Type narrowing: result_raw is r[R] after isinstance check
                 if result_raw.is_failure:
                     # When is_failure is True, error is never None (fail() converts None to "")
                     # Use error or fallback message
                     error_msg = result_raw.error or "Unknown error"
                     error_text = f"Item {idx} failed: {error_msg}"
                     if on_error == "fail":
-                        return r[t.Types.BatchResultDict].fail(error_text)
+                        return r.fail(error_text)
                     if on_error == "collect":
                         errors.append((idx, error_msg))
                     return None
                 # Type narrowing: result_raw is r[R] and is_success is True (implicitly, since we access .value)
-                # After is_success check, result.value is R, but type checker needs help with generic type
-                # Note: Generic type erasure at runtime means we can't fully eliminate this cast
-                result_typed: r[R] = cast("r[R]", result_raw)
-                return result_typed.value
+                # After is_success check, result.value is R
+                return result_raw.value
             # Type narrowing: result_raw is R (not r)
-            result_value: R = cast("R", result_raw)
-            return result_value
+            return result_raw
         except Exception as e:
             error_msg = str(e)
             error_text = f"Item {idx} failed: {error_msg}"
@@ -984,7 +1003,7 @@ class FlextUtilitiesCollection:
         processed_results: list[R] = []
 
         for idx, item in enumerate(items_to_process):
-            # Type narrowing: process_result is R | r[t.Types.BatchResultDict] | None
+            # Type narrowing: process_result is R | "r[t.Types.BatchResultDict]" | None
             process_result_raw = FlextUtilitiesCollection._batch_process_single_item(
                 item,
                 idx,
@@ -994,16 +1013,22 @@ class FlextUtilitiesCollection:
             )
             if process_result_raw is None:
                 continue  # Item skipped
-            if isinstance(process_result_raw, r):
-                # Type narrowing: process_result_raw is r[t.Types.BatchResultDict]
-                process_result_error: r[t.Types.BatchResultDict] = cast(
-                    "r[t.Types.BatchResultDict]",
-                    process_result_raw,
+            # Check is_success first to avoid accessing .value on failed results
+            # Use getattr with default to avoid triggering property access
+            if hasattr(process_result_raw, "is_success"):
+                is_failure = getattr(process_result_raw, "is_failure", False)
+                if is_failure:
+                    # Type narrowing: process_result_raw is r[t.Types.BatchResultDict]
+                    return cast(
+                        "r[t.Types.BatchResultDict]", process_result_raw
+                    )  # Fail mode returned error
+                # Type narrowing: process_result_raw is r[R] and is_success is True
+                # Extract value from result
+                process_result_raw = getattr(
+                    process_result_raw, "value", process_result_raw
                 )
-                return process_result_error  # Fail mode returned error
             # Type narrowing: process_result_raw is R (not r, not None)
-            process_result: R = cast("R", process_result_raw)
-            processed_results.append(process_result)
+            processed_results.append(cast("R", process_result_raw))
 
             # Call progress callback if provided
             if progress is not None and idx % _progress_interval == 0:
@@ -1037,7 +1062,7 @@ class FlextUtilitiesCollection:
             "success_count": len(flattened_results),
             "error_count": len(errors),
         }
-        return r[t.Types.BatchResultDict].ok(batch_result)
+        return r.ok(batch_result)
 
     @staticmethod
     def count[T](
@@ -1103,7 +1128,7 @@ class FlextUtilitiesCollection:
 
             if strategy == c.Mixins.OPERATION_OVERRIDE:
                 merged.update(other_dict)
-                return r[t.Types.ConfigurationDict].ok(merged)
+                return r.ok(merged)
 
             # Helper for deep merge
             def _deep_merge(
@@ -1111,7 +1136,9 @@ class FlextUtilitiesCollection:
                 source: t.Types.ConfigurationDict,
                 mode: str,
             ) -> None:
-                for key, value in source.items():
+                for key, value_raw in source.items():
+                    # Type narrowing: value from ConfigurationDict is GeneralValueType
+                    value: t.GeneralValueType = value_raw
                     # Filter logic
                     if mode in {"filter_none", "filter_both"} and value is None:
                         continue
@@ -1158,9 +1185,9 @@ class FlextUtilitiesCollection:
                         target[key] = value
 
             _deep_merge(merged, other_dict, strategy)
-            return r[t.Types.ConfigurationDict].ok(merged)
+            return r.ok(merged)
         except Exception as e:
-            return r[t.Types.ConfigurationDict].fail(f"Merge failed: {e}")
+            return r.fail(f"Merge failed: {e}")
 
 
 __all__ = [

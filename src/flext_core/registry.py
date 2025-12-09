@@ -35,7 +35,7 @@ class FlextRegistry(x):
     The registry pairs message types with handlers, enforces idempotent
     registration, and exposes batch operations that return ``r``
     summaries. It delegates to ``FlextDispatcher`` (which implements
-    ``p.Application.CommandBus``) for actual handler registration and execution.
+    ``p.CommandBus``) for actual handler registration and execution.
     """
 
     class Summary(m.Value):
@@ -174,7 +174,7 @@ class FlextRegistry(x):
             """
             return not self.errors
 
-    def __init__(self, dispatcher: p.Application.CommandBus | None = None) -> None:
+    def __init__(self, dispatcher: p.CommandBus | None = None) -> None:
         """Initialize the registry with a CommandBus protocol instance.
 
         Args:
@@ -186,14 +186,14 @@ class FlextRegistry(x):
         # Initialize service infrastructure (DI, Context, Logging, Metrics)
         self._init_service("flext_registry")
 
-        # Structural typing - FlextDispatcher implements p.Application.CommandBus
+        # Structural typing - FlextDispatcher implements p.CommandBus
         # Create dispatcher instance if not provided
-        actual_dispatcher: p.Application.CommandBus = (
+        actual_dispatcher: p.CommandBus = (
             dispatcher
             if dispatcher is not None
-            else cast("p.Application.CommandBus", FlextDispatcher())
+            else cast("p.CommandBus", FlextDispatcher())
         )
-        self._dispatcher: p.Application.CommandBus = actual_dispatcher
+        self._dispatcher: p.CommandBus = actual_dispatcher
 
         # Enrich context with registry metadata for observability
         self._enrich_context(
@@ -211,7 +211,7 @@ class FlextRegistry(x):
     @classmethod
     def create(
         cls,
-        dispatcher: p.Application.CommandBus | None = None,
+        dispatcher: p.CommandBus | None = None,
         *,
         auto_discover_handlers: bool = False,
     ) -> Self:
@@ -256,10 +256,19 @@ class FlextRegistry(x):
                     handlers = h.Discovery.scan_module(caller_module)
                     for _handler_name, handler_func, _handler_config in handlers:
                         # Get actual handler from module
-                        if handler_func and callable(handler_func):
+                        # Check if handler_func is not None before checking callable
+                        if handler_func is not None and callable(handler_func):
                             # Register handler with deduplication built-in
                             # Deduplication happens in register_handler() via _registered_keys
-                            _ = instance.register_handler(handler_func)
+                            # Cast handler_func to expected type for register_handler
+                            # register_handler expects h[T, R] | None where h is from flext_core.handlers
+                            handler_typed: (
+                                h[t.GeneralValueType, t.GeneralValueType] | None
+                            ) = cast(
+                                "h[t.GeneralValueType, t.GeneralValueType] | None",
+                                handler_func,
+                            )
+                            _ = instance.register_handler(handler_typed)
 
         return instance
 
@@ -695,7 +704,7 @@ class FlextRegistry(x):
                 summary.skipped.append(key)
                 continue
 
-            # Structural typing - handler is h which implements p.Application.Handler
+            # Structural typing - handler is h which implements p.Handler
             # Cast to GeneralValueType for protocol compatibility
             registration = self._dispatcher.register_command(
                 message_type,
@@ -713,18 +722,22 @@ class FlextRegistry(x):
             self._registered_keys.add(key)
             # Type narrowing: registration.value can be various types, ensure it's dict
             reg_data_raw = registration.value
-            if isinstance(reg_data_raw, (dict, Mapping)):
-                # Type narrowing: reg_data_raw is Mapping after isinstance check
-                reg_data_dict: t.Types.ConfigurationMapping = (
-                    reg_data_raw
-                    if isinstance(reg_data_raw, dict)
-                    else dict(reg_data_raw.items())
+            if isinstance(reg_data_raw, dict):
+                # Type narrowing: reg_data_raw is dict, use directly
+                reg_data_dict: t.Types.ConfigurationMapping = reg_data_raw
+                reg_details = self._create_registration_details(
+                    reg_data_dict,
+                    key,
                 )
+            elif isinstance(reg_data_raw, Mapping):
+                # Type narrowing: reg_data_raw is Mapping (but not dict), convert to dict
+                reg_data_dict = u.mapper().to_dict(reg_data_raw)
                 reg_details = self._create_registration_details(
                     reg_data_dict,
                     key,
                 )
             else:
+                # Not a mapping, create basic details
                 reg_details = m.Handler.RegistrationDetails(
                     registration_id=key,
                     handler_mode=c.Cqrs.HandlerType.COMMAND,
@@ -790,10 +803,15 @@ class FlextRegistry(x):
                     handler_elem, config_elem = tuple_result
                     # Type narrowing: handler_elem should be HandlerCallableType
                     if isinstance(handler_elem, type) or callable(handler_elem):
+                        # Cast handler_elem to HandlerCallable for type safety
+                        handler_typed: t.Handler.HandlerCallable = cast(
+                            "t.Handler.HandlerCallable",
+                            handler_elem,
+                        )
                         tuple_entry: tuple[
                             t.Handler.HandlerCallable,
                             t.GeneralValueType | r[t.GeneralValueType],
-                        ] = (handler_elem, config_elem)
+                        ] = (handler_typed, config_elem)
                         result = self._register_tuple_entry(tuple_entry, key)
                     else:
                         result = FlextRegistry._register_other_entry(key)
@@ -983,7 +1001,7 @@ class FlextRegistry(x):
         self,
         name: str,
         service: t.GeneralValueType,
-        metadata: t.GeneralValueType | m.Metadata | None = None,
+        metadata: t.GeneralValueType | m.Base.Metadata | None = None,
     ) -> r[bool]:
         """Register a service component with optional metadata.
 
@@ -993,7 +1011,7 @@ class FlextRegistry(x):
         Args:
             name: Service name for later retrieval
             service: Service instance to register
-            metadata: Optional metadata (dict or m.Metadata)
+            metadata: Optional metadata (dict or m.Base.Metadata)
 
         Returns:
             r[bool]: Success (True) if registered or failure with error details.
@@ -1003,21 +1021,26 @@ class FlextRegistry(x):
         validated_metadata: t.GeneralValueType | None = None
         if metadata is not None:
             # Handle Metadata model first
-            if isinstance(metadata, m.Metadata):
+            if isinstance(metadata, m.Base.Metadata):
                 validated_metadata = metadata.attributes
             else:
                 # Cast to GeneralValueType for is_dict_like check
                 metadata_as_general = cast("t.GeneralValueType", metadata)
                 if FlextRuntime.is_dict_like(metadata_as_general):
                     # Type guard ensures metadata_as_general is t.Types.ConfigurationMapping
-                    validated_metadata = dict(metadata_as_general.items())
+                    # Cast to Mapping[str, T] for to_dict() call
+                    metadata_mapping: t.Types.ConfigurationMapping = cast(
+                        "t.Types.ConfigurationMapping", metadata_as_general
+                    )
+                    validated_metadata = u.mapper().to_dict(metadata_mapping)
                 else:
                     return r[bool].fail(
-                        f"metadata must be dict or m.Metadata, got {type(metadata).__name__}",
+                        f"metadata must be dict or m.Base.Metadata, got {type(metadata).__name__}",
                     )
 
         # Store metadata if provided (for future use)
-        if validated_metadata and FlextRuntime.is_dict_like(validated_metadata):
+        if isinstance(validated_metadata, Mapping):
+            # Type narrowing: validated_metadata is Mapping after isinstance check
             # Log metadata with service name for observability
             # Use guard with return_value=True and default for concise dict conversion
             metadata_dict_raw = u.Validation.guard(
@@ -1049,12 +1072,9 @@ class FlextRegistry(x):
         # Delegate to container (x.container returns FlextContainer)
         # Use with_service for fluent API compatibility (returns Self)
         try:
-            # Cast service to GeneralValueType | BaseModel | Callable for type compatibility
-            # with_service accepts GeneralValueType | BaseModel | Callable[..., GeneralValueType]
-            # Cast to GeneralValueType for protocol compatibility (container handles BaseModel/Callable at runtime)
-            service_typed: t.GeneralValueType = cast("t.GeneralValueType", service)
+            # service is already t.GeneralValueType (from method signature)
             # with_service returns Self for fluent chaining, but we don't need the return value
-            _ = self.container.with_service(name, service_typed)
+            _ = self.container.with_service(name, service)
             return r[bool].ok(True)
         except ValueError as e:
             error_str = str(e)

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict as UserDictBase
-from typing import Any, cast
+from typing import cast
 
 import pytest
 from pydantic import BaseModel
@@ -598,7 +598,7 @@ class TestContext100Coverage:
     def test_context_data_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextData.validate_dict_serializable with non-dict."""
         # Test with non-dict value for metadata (which uses validate_metadata)
-        invalid_metadata: Any = 123
+        invalid_metadata: object = 123
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
@@ -616,7 +616,7 @@ class TestContext100Coverage:
                 super().__init__()
                 self[123] = "value"
 
-        bad_dict: Any = BadDict()
+        bad_dict: object = BadDict()
         # Pydantic validates before custom validation, so it raises ValidationError
         with pytest.raises(
             Exception,  # Can be ValidationError from Pydantic or TypeError from custom validation
@@ -629,7 +629,7 @@ class TestContext100Coverage:
     ) -> None:
         """Test ContextData.validate_dict_serializable with non-serializable value."""
         # Test with dict containing non-serializable value (e.g., set)
-        bad_dict: Any = {"key": {1, 2, 3}}  # set is not JSON-serializable
+        bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set is not JSON-serializable
         with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
             m.Context.ContextData(data=bad_dict)
 
@@ -640,7 +640,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         # Test with Pydantic model (should convert via model_dump)
-        model: Any = TestModel()
+        model: TestModel = TestModel()
         export = m.Context.ContextExport(data=model)
         assert isinstance(export.data, dict)
         assert "field" in export.data
@@ -648,7 +648,7 @@ class TestContext100Coverage:
     def test_context_export_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-dict."""
         # Test with non-dict value (should raise TypeError via Pydantic validation)
-        invalid_data: Any = 123
+        invalid_data: object = 123
         with pytest.raises(
             TypeError,
             match=r".*must be a dict or Pydantic model.*",
@@ -658,7 +658,7 @@ class TestContext100Coverage:
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-string key."""
         # Create dict with non-string key (will fail validation)
-        bad_data: Any = {123: "value"}  # Non-string key
+        bad_data: dict[object, str] = {123: "value"}  # Non-string key
 
         # Pydantic validates before custom validation, so it raises ValidationError
         with pytest.raises(
@@ -672,7 +672,7 @@ class TestContext100Coverage:
     ) -> None:
         """Test ContextExport.validate_dict_serializable with non-serializable value."""
         # Test with dict containing non-serializable value (e.g., set)
-        bad_dict: Any = {"key": {1, 2, 3}}  # set is not JSON-serializable
+        bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set is not JSON-serializable
         with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
             m.Context.ContextExport(data=bad_dict)
 
@@ -712,7 +712,7 @@ class TestContext100Coverage:
         class TestModel(BaseModel):
             field: str = "value"
 
-        model: Any = TestModel()
+        model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
         scope_data = m.Context.ContextScopeData(data=model)
         assert isinstance(scope_data.data, dict)
@@ -731,7 +731,7 @@ class TestContext100Coverage:
         class TestModel(BaseModel):
             field: str = "value"
 
-        model: Any = TestModel()
+        model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
         scope_data = m.Context.ContextScopeData(metadata=model)
         assert isinstance(scope_data.metadata, dict)
@@ -750,7 +750,7 @@ class TestContext100Coverage:
         class TestModel(BaseModel):
             field: str = "value"
 
-        model: Any = TestModel()
+        model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
         stats = m.Context.ContextStatistics(operations=model)
         assert isinstance(stats.operations, dict)
@@ -759,7 +759,7 @@ class TestContext100Coverage:
     def test_context_statistics_validate_operations_with_none(self) -> None:
         """Test ContextStatistics._validate_operations with None."""
         # Create instance with None - validator will convert to {}
-        none_operations: Any = None
+        none_operations: object | None = None
         stats = m.Context.ContextStatistics(operations=none_operations)
         assert isinstance(stats.operations, dict)
         assert stats.operations == {}
@@ -770,7 +770,7 @@ class TestContext100Coverage:
         class TestModel(BaseModel):
             field: str = "value"
 
-        model: Any = TestModel()
+        model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
         metadata = m.Context.ContextMetadata(custom_fields=model)
         assert isinstance(metadata.custom_fields, dict)
@@ -779,7 +779,7 @@ class TestContext100Coverage:
     def test_context_metadata_validate_custom_fields_with_none(self) -> None:
         """Test ContextMetadata._validate_custom_fields with None."""
         # Create instance with None - validator will convert to {}
-        none_custom_fields: Any = None
+        none_custom_fields: object | None = None
         metadata = m.Context.ContextMetadata(custom_fields=none_custom_fields)
         assert isinstance(metadata.custom_fields, dict)
         assert metadata.custom_fields == {}

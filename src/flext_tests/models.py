@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 from pydantic import (
     AliasChoices,
@@ -24,7 +24,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import r
+from flext_core import r, u as flext_u
 from flext_core.models import FlextModels as FlextModelsBase
 from flext_tests.constants import ContainerStatus, c
 from flext_tests.typings import t
@@ -33,6 +33,14 @@ from flext_tests.typings import t
 # Create FlextTestsModels that extends FlextModels with Tests.Factory namespace
 class FlextTestsModels(FlextModelsBase):
     """Test models extending FlextModels with test-specific factory models."""
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Warn when FlextTestsModels is subclassed directly."""
+        super().__init_subclass__(**kwargs)
+        flext_u.Deprecation.warn_once(
+            f"subclass:{cls.__name__}",
+            "Subclassing FlextTestsModels is deprecated. Use FlextModels directly with composition instead.",
+        )
 
     class Tests:
         """Test-specific models namespace."""
@@ -898,7 +906,7 @@ class FlextTestsModels(FlextModelsBase):
                 # Generic class instantiation
                 cls: type[object] | None = Field(
                     default=None,
-                    description="Any class to instantiate",
+                    description="Class type to instantiate",
                 )
                 cls_args: tuple[t.GeneralValueType, ...] | None = Field(
                     default=None,
@@ -1172,7 +1180,7 @@ class FlextTestsModels(FlextModelsBase):
                 )
                 as_cls: type | None = Field(
                     default=None,
-                    description="Any class to instantiate",
+                    description="Class type to instantiate",
                 )
                 cls_args: tuple[t.GeneralValueType, ...] | None = Field(
                     default=None,
@@ -1557,7 +1565,7 @@ class FlextTestsModels(FlextModelsBase):
                 any_: t.Tests.Matcher.SequencePredicate | None = Field(
                     default=None,
                     validation_alias=AliasChoices("any_", "any"),
-                    description="Any item matches type or predicate",
+                    description="Item matches type or predicate (any item in sequence)",
                 )
                 sorted: t.Tests.Matcher.SortKey | None = Field(
                     default=None,
@@ -1690,7 +1698,8 @@ class FlextTestsModels(FlextModelsBase):
                                 data["len"] = (min_val, max_val)
                         return data
                     # If data is ThatParams, convert to dict
-                    if isinstance(data, FlextTestsModels.Tests.Matcher.ThatParams):
+                    # Use string literal to avoid forward reference issue during class definition
+                    if isinstance(data, cls):
                         return data.model_dump()
                     return cast("dict[str, object]", data)
 
@@ -1748,7 +1757,9 @@ class FlextTestsModels(FlextModelsBase):
             class Chain(FlextModelsBase.Value):
                 """Chain matcher configuration for railway pattern assertions."""
 
-                result: r[Any] = Field(description="FlextResult being chained")
+                result: r[t.GeneralValueType] = Field(
+                    description="FlextResult being chained"
+                )
 
             class TestScope(FlextModelsBase.Value):
                 """Test scope configuration for isolated test execution."""

@@ -16,9 +16,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
-from flext_core.models import FlextModels
-from flext_core.protocols import FlextProtocols
-from flext_core.typings import FlextTypes
+from flext_core import FlextModels, FlextProtocols, FlextTypes
 from flext_tests.models import FlextTestsModels
 
 
@@ -41,7 +39,7 @@ class TestsFlextModels(FlextTestsModels):
 
     # Type aliases for domain test input
     type DomainInputValue = (
-        FlextTypes.GeneralValueType | FlextProtocols.Foundation.HasModelDump | object
+        FlextTypes.GeneralValueType | FlextProtocols.HasModelDump | object
     )
     type DomainInputMapping = Mapping[str, DomainInputValue]
     type DomainExpectedResult = (
@@ -125,7 +123,8 @@ class TestsFlextModels(FlextTestsModels):
         """Object without __setattr__."""
 
     # ParseOptions reference for string parser tests
-    ParseOptions = FlextModels.Collections.ParseOptions
+    class ParseOptions(FlextModels.Collections.ParseOptions):
+        """Parse options - real inheritance."""
 
     @dataclass(frozen=True, slots=True)
     class ParseDelimitedCase:

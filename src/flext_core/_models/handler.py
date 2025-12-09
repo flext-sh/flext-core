@@ -425,7 +425,7 @@ class FlextModelsHandler:
             ),
         ] = c.Discovery.DEFAULT_TIMEOUT
         middleware: Annotated[
-            list[type[p.Application.Middleware]],
+            list[type[p.Middleware]],
             Field(
                 default_factory=list,
                 description="Middleware types to apply to this handler",

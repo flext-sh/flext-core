@@ -157,9 +157,7 @@ class FlextModelsService:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Operation name",
         )
-        operation_callable: p.Utility.Callable[
-            p.Foundation.ResultLike[t.GeneralValueType]
-        ]
+        operation_callable: p.VariadicCallable[p.ResultLike[t.GeneralValueType]]
         arguments: t.Types.ConfigurationDict = Field(default_factory=dict)
         keyword_arguments: t.Types.ConfigurationDict = Field(
             default_factory=dict,
@@ -178,14 +176,14 @@ class FlextModelsService:
         @classmethod
         def validate_operation_callable(
             cls,
-            v: p.Utility.Callable[p.Foundation.ResultLike[t.GeneralValueType]],
-        ) -> p.Utility.Callable[p.Foundation.ResultLike[t.GeneralValueType]]:
+            v: p.VariadicCallable[p.ResultLike[t.GeneralValueType]],
+        ) -> p.VariadicCallable[p.ResultLike[t.GeneralValueType]]:
             """Validate operation is callable.
 
-            With mode="after", Pydantic has already validated v as Utility.Callable type.
+            With mode="after", Pydantic has already validated v as VariadicCallable type.
             Protocol types are always callable, so no additional check needed.
             """
-            # v is already validated as Utility.Callable by Pydantic
+            # v is already validated as VariadicCallable by Pydantic
             # Protocol types guarantee callable interface
             return v
 

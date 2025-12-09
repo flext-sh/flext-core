@@ -55,7 +55,7 @@ class FlextDispatcher(x):
 
     The dispatcher exposes CQRS routing, handler registration, and execution
     with layered reliability controls. It leans on structural typing to satisfy
-    ``p.Application.CommandBus`` without inheritance while providing context
+    ``p.CommandBus`` without inheritance while providing context
     propagation, metrics, and audit logging aligned to the current architecture.
 
     Basic usage:
@@ -163,103 +163,6 @@ class FlextDispatcher(x):
             maxsize=max_cache_size,
         )
 
-    def _resolve_or_create_circuit_breaker(
-        self,
-        config: p.Configuration.Config,
-    ) -> CircuitBreakerManager:
-        """Resolve circuit breaker from container or create with defaults.
-
-        Args:
-            config: Configuration instance for default values.
-
-        Returns:
-            CircuitBreakerManager instance from container or newly created.
-
-        """
-        # Try to resolve from container
-        result = self._container.get("circuit_breaker")
-        if result.is_success and isinstance(result.value, CircuitBreakerManager):
-            return result.value
-
-        # Create with defaults from config
-        return CircuitBreakerManager(
-            threshold=config.circuit_breaker_threshold,
-            recovery_timeout=c.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
-            success_threshold=c.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
-        )
-
-    def _resolve_or_create_rate_limiter(
-        self,
-        config: p.Configuration.Config,
-    ) -> RateLimiterManager:
-        """Resolve rate limiter from container or create with defaults.
-
-        Args:
-            config: Configuration instance for default values.
-
-        Returns:
-            RateLimiterManager instance from container or newly created.
-
-        """
-        # Try to resolve from container
-        result = self._container.get("rate_limiter")
-        if result.is_success and isinstance(result.value, RateLimiterManager):
-            return result.value
-
-        # Create with defaults from config
-        return RateLimiterManager(
-            max_requests=config.rate_limit_max_requests,
-            window_seconds=config.rate_limit_window_seconds,
-        )
-
-    def _resolve_or_create_timeout_enforcer(
-        self,
-        config: p.Configuration.Config,
-    ) -> TimeoutEnforcer:
-        """Resolve timeout enforcer from container or create with defaults.
-
-        Args:
-            config: Configuration instance for default values.
-
-        Returns:
-            TimeoutEnforcer instance from container or newly created.
-
-        """
-        # Try to resolve from container
-        result = self._container.get("timeout_enforcer")
-        if result.is_success and isinstance(result.value, TimeoutEnforcer):
-            return result.value
-
-        # Create with defaults from config
-        return TimeoutEnforcer(
-            use_timeout_executor=config.enable_timeout_executor,
-            executor_workers=config.executor_workers,
-        )
-
-    def _resolve_or_create_retry_policy(
-        self,
-        config: p.Configuration.Config,
-    ) -> RetryPolicy:
-        """Resolve retry policy from container or create with defaults.
-
-        Args:
-            config: Configuration instance for default values.
-
-        Returns:
-            RetryPolicy instance from container or newly created.
-
-        """
-        # Try to resolve from container
-        result = self._container.get("retry_policy")
-        if result.is_success and isinstance(result.value, RetryPolicy):
-            return result.value
-
-        # Create with defaults from config
-        return RetryPolicy(
-            max_attempts=config.max_retry_attempts,
-            retry_delay=config.retry_delay,
-        )
-
         # Event subscribers (from FlextDispatcher event protocol)
         self._event_subscribers: t.Types.StringListDict = {}  # event_type → handlers
 
@@ -272,8 +175,8 @@ class FlextDispatcher(x):
         self._processors: dict[
             str,
             t.Handler.HandlerCallable
-            | p.Utility.Callable[t.GeneralValueType]
-            | p.Application.Processor,
+            | p.VariadicCallable[t.GeneralValueType]
+            | p.Processor,
         ] = {}  # name → processor function
         self._processor_configs: dict[
             str,
@@ -330,6 +233,136 @@ class FlextDispatcher(x):
         self._performance_metrics: t.Types.ConfigurationDict = {}  # Timing and throughput
         self._processor_execution_times: t.Types.FloatListDict = {}  # Per-processor times
 
+    def _resolve_or_create_circuit_breaker(
+        self,
+        config: p.Config,
+    ) -> CircuitBreakerManager:
+        """Resolve circuit breaker from container or create with defaults.
+
+        Args:
+            config: Configuration instance for default values.
+
+        Returns:
+            CircuitBreakerManager instance from container or newly created.
+
+        """
+        # Try to resolve from container
+        result_raw: p.Result[object] = self._container.get("circuit_breaker")
+        # Type narrowing: container.get returns p.Result[T], cast to r[object] for internal use
+        result: r[object] = cast("r[object]", result_raw)
+        if result.is_success and isinstance(result.value, CircuitBreakerManager):
+            return result.value
+
+        # Create with defaults from config
+        # Use getattr to safely access attributes that may not exist in protocol
+        threshold_raw = getattr(config, "circuit_breaker_threshold", None)
+        threshold: int = threshold_raw if isinstance(threshold_raw, int) else 5
+        return CircuitBreakerManager(
+            threshold=threshold,
+            recovery_timeout=c.Reliability.DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT,
+            success_threshold=c.Reliability.DEFAULT_CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
+        )
+
+    def _resolve_or_create_rate_limiter(
+        self,
+        config: p.Config,
+    ) -> RateLimiterManager:
+        """Resolve rate limiter from container or create with defaults.
+
+        Args:
+            config: Configuration instance for default values.
+
+        Returns:
+            RateLimiterManager instance from container or newly created.
+
+        """
+        # Try to resolve from container
+        result_raw: p.Result[object] = self._container.get("rate_limiter")
+        # Type narrowing: container.get returns p.Result[T], cast to r[object] for internal use
+        result: r[object] = cast("r[object]", result_raw)
+        if result.is_success and isinstance(result.value, RateLimiterManager):
+            return result.value
+
+        # Create with defaults from config
+        # Use getattr to safely access attributes that may not exist in protocol
+        max_requests_raw = getattr(config, "rate_limit_max_requests", None)
+        max_requests: int = (
+            max_requests_raw if isinstance(max_requests_raw, int) else 100
+        )
+        window_seconds_raw = getattr(config, "rate_limit_window_seconds", None)
+        window_seconds: float = (
+            window_seconds_raw if isinstance(window_seconds_raw, (int, float)) else 60.0
+        )
+        return RateLimiterManager(
+            max_requests=max_requests,
+            window_seconds=window_seconds,
+        )
+
+    def _resolve_or_create_timeout_enforcer(
+        self,
+        config: p.Config,
+    ) -> TimeoutEnforcer:
+        """Resolve timeout enforcer from container or create with defaults.
+
+        Args:
+            config: Configuration instance for default values.
+
+        Returns:
+            TimeoutEnforcer instance from container or newly created.
+
+        """
+        # Try to resolve from container
+        result_raw: p.Result[object] = self._container.get("timeout_enforcer")
+        # Type narrowing: container.get returns p.Result[T], cast to r[object] for internal use
+        result: r[object] = cast("r[object]", result_raw)
+        if result.is_success and isinstance(result.value, TimeoutEnforcer):
+            return result.value
+
+        # Create with defaults from config
+        # Use getattr to safely access attributes that may not exist in protocol
+        use_timeout_executor = getattr(config, "enable_timeout_executor", False)
+        executor_workers_raw = getattr(config, "executor_workers", None)
+        executor_workers: int = (
+            executor_workers_raw if isinstance(executor_workers_raw, int) else 4
+        )
+        return TimeoutEnforcer(
+            use_timeout_executor=use_timeout_executor,
+            executor_workers=executor_workers,
+        )
+
+    def _resolve_or_create_retry_policy(
+        self,
+        config: p.Config,
+    ) -> RetryPolicy:
+        """Resolve retry policy from container or create with defaults.
+
+        Args:
+            config: Configuration instance for default values.
+
+        Returns:
+            RetryPolicy instance from container or newly created.
+
+        """
+        # Try to resolve from container
+        result_raw: p.Result[object] = self._container.get("retry_policy")
+        # Type narrowing: container.get returns p.Result[T], cast to r[object] for internal use
+        result: r[object] = cast("r[object]", result_raw)
+        if result.is_success and isinstance(result.value, RetryPolicy):
+            return result.value
+
+        # Create with defaults from config
+        # Use getattr to safely access attributes that may not exist in protocol
+        max_attempts_raw = getattr(config, "max_retry_attempts", None)
+        max_attempts: int = max_attempts_raw if isinstance(max_attempts_raw, int) else 3
+        retry_delay_raw = getattr(config, "retry_delay", None)
+        retry_delay: float = (
+            retry_delay_raw if isinstance(retry_delay_raw, (int, float)) else 1.0
+        )
+        return RetryPolicy(
+            max_attempts=max_attempts,
+            retry_delay=retry_delay,
+        )
+
     @property
     def dispatcher_config(self) -> DispatcherConfig:
         """Access the dispatcher configuration."""
@@ -338,67 +371,67 @@ class FlextDispatcher(x):
         # No need to check isinstance - dict always implements Mapping
         # Construct DispatcherConfig TypedDict from config values
         return DispatcherConfig(
-            dispatcher_timeout_seconds=u.Mapper.get(
+            dispatcher_timeout_seconds=u.mapper().get(
                 config_dict,
                 "dispatcher_timeout_seconds",
                 default=float(c.Defaults.TIMEOUT),
             )
             or float(c.Defaults.TIMEOUT),
-            executor_workers=u.Mapper.get(
+            executor_workers=u.mapper().get(
                 config_dict,
                 "executor_workers",
                 default=c.Container.DEFAULT_WORKERS,
             )
             or c.Container.DEFAULT_WORKERS,
-            circuit_breaker_threshold=u.Mapper.get(
+            circuit_breaker_threshold=u.mapper().get(
                 config_dict,
                 "circuit_breaker_threshold",
                 default=c.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
             )
             or c.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
-            rate_limit_max_requests=u.Mapper.get(
+            rate_limit_max_requests=u.mapper().get(
                 config_dict,
                 "rate_limit_max_requests",
                 default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
             )
             or c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
-            rate_limit_window_seconds=u.Mapper.get(
+            rate_limit_window_seconds=u.mapper().get(
                 config_dict,
                 "rate_limit_window_seconds",
                 default=float(c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS),
             )
             or float(c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS),
-            max_retry_attempts=u.Mapper.get(
+            max_retry_attempts=u.mapper().get(
                 config_dict,
                 "max_retry_attempts",
                 default=c.Reliability.MAX_RETRY_ATTEMPTS,
             )
             or c.Reliability.MAX_RETRY_ATTEMPTS,
-            retry_delay=u.Mapper.get(
+            retry_delay=u.mapper().get(
                 config_dict,
                 "retry_delay",
                 default=float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
             )
             or float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
-            enable_timeout_executor=u.Mapper.get(
+            enable_timeout_executor=u.mapper().get(
                 config_dict,
                 "enable_timeout_executor",
                 default=True,
             )
             or True,
-            dispatcher_enable_logging=u.Mapper.get(
+            dispatcher_enable_logging=u.mapper().get(
                 config_dict,
                 "dispatcher_enable_logging",
                 default=True,
             )
             or True,
-            dispatcher_auto_context=u.Mapper.get(
+            dispatcher_auto_context=u.mapper().get(
                 config_dict,
                 "dispatcher_auto_context",
                 default=True,
             )
             or True,
-            dispatcher_enable_metrics=u.Mapper.get(
+            dispatcher_enable_metrics=u.mapper().get(
                 config_dict,
                 "dispatcher_enable_metrics",
                 default=True,
@@ -414,8 +447,8 @@ class FlextDispatcher(x):
             t.GeneralValueType
             | t.Handler.HandlerType
             | BaseModel
-            | p.Utility.Callable[t.GeneralValueType]
-            | p.Application.Processor
+            | p.VariadicCallable[t.GeneralValueType]
+            | p.Processor
         ),
         method_names: list[str] | str,
         context: str,
@@ -443,8 +476,8 @@ class FlextDispatcher(x):
             methods = [str(m) for m in method_names]
         else:
             # Type narrowing: if not list, must be str (or empty list fallback)
-            # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
-            methods = [method_names] if isinstance(method_names, str) else []  # pyright: ignore[reportUnnecessaryIsInstance]
+
+            methods = [method_names] if isinstance(method_names, str) else []
         for method_name in methods:
             if hasattr(obj, method_name):
                 method = getattr(obj, method_name)
@@ -457,8 +490,8 @@ class FlextDispatcher(x):
     def _validate_processor_interface(
         self,
         processor: t.Handler.HandlerCallable
-        | p.Utility.Callable[t.GeneralValueType]
-        | p.Application.Processor,
+        | p.VariadicCallable[t.GeneralValueType]
+        | p.Processor,
         processor_context: str = "processor",
     ) -> r[bool]:
         """Validate that processor has required interface (callable or process method)."""
@@ -474,8 +507,8 @@ class FlextDispatcher(x):
         processor_name: str,
     ) -> (
         t.Handler.HandlerCallable
-        | p.Utility.Callable[t.GeneralValueType]
-        | p.Application.Processor
+        | p.VariadicCallable[t.GeneralValueType]
+        | p.Processor
         | None
     ):
         """Locate registered processor by name.
@@ -493,8 +526,8 @@ class FlextDispatcher(x):
         self,
         _processor_name: str,
         processor: t.Handler.HandlerCallable
-        | p.Utility.Callable[t.GeneralValueType]
-        | p.Application.Processor,
+        | p.VariadicCallable[t.GeneralValueType]
+        | p.Processor,
     ) -> r[t.GeneralValueType]:
         """Apply per-processor circuit breaker pattern.
 
@@ -540,8 +573,8 @@ class FlextDispatcher(x):
         self,
         processor_name: str,
         processor: t.Handler.HandlerCallable
-        | p.Utility.Callable[t.GeneralValueType]
-        | p.Application.Processor,
+        | p.VariadicCallable[t.GeneralValueType]
+        | p.Processor,
         data: t.GeneralValueType,
     ) -> r[t.GeneralValueType]:
         """Execute processor and collect metrics.
@@ -607,7 +640,10 @@ class FlextDispatcher(x):
 
             # Convert to r if needed
             # Ensure result is wrapped in r using consolidated helper
-            result_wrapped = x.ResultHandling.ensure_result(processor_result)
+            # Type narrowing: processor_result is t.GeneralValueType, ensure_result accepts T | r[T]
+            result_wrapped = x.ResultHandling.ensure_result(
+                cast("t.GeneralValueType | r[t.GeneralValueType]", processor_result)
+            )
 
             # Update metrics
             execution_time = time.time() - start_time
@@ -685,7 +721,10 @@ class FlextDispatcher(x):
                     results.append(result.value)
                 else:
                     # Use u.err() for unified error extraction (DSL pattern)
-                    error_msg = u.err(result, default="Unknown error in processor")
+                    error_msg = u.err(
+                        cast("p.Result[t.GeneralValueType]", result),
+                        default="Unknown error in processor",
+                    )
                     return r[list[t.GeneralValueType]].fail(
                         error_msg,
                     )
@@ -745,7 +784,10 @@ class FlextDispatcher(x):
                         results.append(result.value)
                     else:
                         # Use u.err() for unified error extraction (DSL pattern)
-                        error_msg = u.err(result, default="Unknown error in processor")
+                        error_msg = u.err(
+                            cast("p.Result[t.GeneralValueType]", result),
+                            default="Unknown error in processor",
+                        )
                         return r[list[t.GeneralValueType]].fail(
                             error_msg,
                         )
@@ -761,7 +803,7 @@ class FlextDispatcher(x):
         handler: (
             t.Handler.HandlerType
             | t.Handler.HandlerCallable
-            | p.Utility.Callable[t.GeneralValueType]
+            | p.VariadicCallable[t.GeneralValueType]
             | BaseModel
         ),
         handler_context: str = "registry handler",
@@ -779,8 +821,8 @@ class FlextDispatcher(x):
         self,
         name: str,
         processor: t.Handler.HandlerCallable
-        | p.Utility.Callable[t.GeneralValueType]
-        | p.Application.Processor,
+        | p.VariadicCallable[t.GeneralValueType]
+        | p.Processor,
         config: t.Types.ConfigurationMapping | None = None,
     ) -> r[bool]:
         """Register processor for advanced processing.
@@ -805,8 +847,8 @@ class FlextDispatcher(x):
         # Register processor and configuration
         self._processors[name] = processor
         if config is not None:
-            # Convert Mapping to dict for mutability - use dict() constructor directly
-            self._processor_configs[name] = dict(config.items())
+            # Convert Mapping to dict for mutability - use mapper.to_dict()
+            self._processor_configs[name] = u.mapper().to_dict(config)
         else:
             self._processor_configs[name] = {}
 
@@ -860,7 +902,9 @@ class FlextDispatcher(x):
         rate_limit_result = FlextDispatcher._apply_processor_rate_limiter(name)
         if rate_limit_result.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
-            error_msg = u.err(rate_limit_result, default="Rate limit exceeded")
+            error_msg = u.err(
+                cast("p.Result[bool]", rate_limit_result), default="Rate limit exceeded"
+            )
             return r[t.GeneralValueType].fail(error_msg)
 
         # Execute processor with metrics collection
@@ -1085,9 +1129,9 @@ class FlextDispatcher(x):
 
         """
         # Fast fail: __name__ should always exist on types, but handle gracefully
-        # Use u.has() + u.Mapper.get() for unified attribute access (DSL pattern)
+        # Use u.has() + u.mapper().get() for unified attribute access (DSL pattern)
         if u.has(command_type_obj, "__name__"):
-            name_attr = u.Mapper.get(command_type_obj, "__name__", default=None)
+            name_attr = u.mapper().get(command_type_obj, "__name__", default=None)
             if name_attr is not None:
                 return str(name_attr)
         return str(command_type_obj)
@@ -1107,21 +1151,21 @@ class FlextDispatcher(x):
             return r[bool].ok(True)
 
         # Type hint: HandlerType is StrEnum class, so __members__ exists
-        # Use u.Mapper.get() for unified attribute access (DSL pattern)
+        # Use u.mapper().get() for unified attribute access (DSL pattern)
         # __members__ returns mappingproxy[str, HandlerType], which is compatible with HandlerTypeDict
         handler_type_members_raw: (
             Mapping[str, t.Handler.HandlerType] | dict[str, t.Handler.HandlerType]
         ) = cast(
             "Mapping[str, t.Handler.HandlerType] | dict[str, t.Handler.HandlerType]",
-            u.Mapper.get(c.Cqrs.HandlerType, "__members__", default={}) or {},
+            u.mapper().get(c.Cqrs.HandlerType, "__members__", default={}) or {},
         )
         # __members__ returns mappingproxy[str, HandlerType], cast to HandlerTypeDict
         # HandlerTypeDict is dict[str, HandlerType], which matches __members__ structure
-        # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
+
         handler_type_members: t.Types.HandlerTypeDict = cast(
             "t.Types.HandlerTypeDict",
             handler_type_members_raw
-            if isinstance(handler_type_members_raw, Mapping)  # pyright: ignore[reportUnnecessaryIsInstance]
+            if isinstance(handler_type_members_raw, Mapping)
             else {},
         )
         valid_modes = list(
@@ -1159,17 +1203,11 @@ class FlextDispatcher(x):
             handler_entry = self._handlers[command_name]
             # handler_entry is always HandlerType based on _handlers type definition
             # Check if it's a dict-like structure with "handler" key (legacy support)
-            if (
-                isinstance(handler_entry, (dict, Mapping))
-                and "handler" in handler_entry
-            ):
-                # Type narrowing: extract handler from dict structure
+            if isinstance(handler_entry, Mapping) and "handler" in handler_entry:
+                # Type narrowing: isinstance check above narrows handler_entry to Mapping
                 # handler_entry is dict-like with "handler" key containing HandlerType
-                handler_entry_dict: t.Types.ConfigurationMapping = cast(
-                    "t.Types.ConfigurationMapping",
+                extracted_handler: t.GeneralValueType | None = u.mapper().get(
                     handler_entry,
-                )
-                extracted_handler: t.GeneralValueType = handler_entry_dict.get(
                     "handler",
                 )
                 # Validate it's callable or BaseModel (valid HandlerType)
@@ -1180,13 +1218,8 @@ class FlextDispatcher(x):
                     BaseModel,
                 ):
                     return cast("t.Handler.HandlerType", extracted_handler)
-            # Return handler directly (it's already HandlerType)
-            # Type narrowing: handler_entry is HandlerType from dict definition
-            # Type annotation: handler_entry is HandlerType
-            handler_result: t.Handler.HandlerType = cast(
-                "t.Handler.HandlerType", handler_entry
-            )
-            return handler_result
+            # Return handler directly (it's already HandlerType from dict definition)
+            return handler_entry
 
         # Search auto-registered handlers (single-arg form)
         for handler in self._auto_handlers:
@@ -1305,8 +1338,10 @@ class FlextDispatcher(x):
 
         """
         handler_class = type(handler)
-        # Use u.Mapper.get() for unified attribute access (DSL pattern)
-        handler_class_name = u.Mapper.get(handler_class, "__name__", default="Unknown")
+        # Use u.mapper().get() for unified attribute access (DSL pattern)
+        handler_class_name = u.mapper().get(
+            handler_class, "__name__", default="Unknown"
+        )
         self.logger.debug(
             "Delegating to handler",
             operation="execute_handler",
@@ -1331,10 +1366,12 @@ class FlextDispatcher(x):
             return dispatch_result
 
         # Fallback for non-h: try handle() then execute()
-        # Use u.has() + u.Mapper.get() for unified attribute access (DSL pattern)
+        # Use u.has() + u.mapper().get() for unified attribute access (DSL pattern)
         method_name = None
         if u.has(handler, c.Mixins.METHOD_HANDLE):
-            handle_method = u.Mapper.get(handler, c.Mixins.METHOD_HANDLE, default=None)
+            handle_method = u.mapper().get(
+                handler, c.Mixins.METHOD_HANDLE, default=None
+            )
             if callable(handle_method):
                 method_name = c.Mixins.METHOD_HANDLE
         elif u.has(handler, c.Mixins.METHOD_EXECUTE):
@@ -1351,8 +1388,8 @@ class FlextDispatcher(x):
                 f"Handler must have '{c.Mixins.METHOD_HANDLE}' or '{c.Mixins.METHOD_EXECUTE}' method",
                 error_code=c.Errors.COMMAND_BUS_ERROR,
             )
-        # Use u.Mapper.get() for unified attribute access (DSL pattern)
-        handle_method = u.Mapper.get(handler, method_name, default=None)
+        # Use u.mapper().get() for unified attribute access (DSL pattern)
+        handle_method = u.mapper().get(handler, method_name, default=None)
         if not callable(handle_method):
             error_msg = f"Handler '{method_name}' must be callable"
             return r[t.GeneralValueType].fail(
@@ -1364,9 +1401,9 @@ class FlextDispatcher(x):
             result_raw = handle_method(command)
             # Ensure result is GeneralValueType - handlers should return GeneralValueType or FlextResult
             # Type narrowing: result_raw is GeneralValueType after isinstance check
-            # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
+
             result: t.GeneralValueType
-            if isinstance(  # pyright: ignore[reportUnnecessaryIsInstance]
+            if isinstance(
                 result_raw,
                 (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
             ):
@@ -1455,14 +1492,14 @@ class FlextDispatcher(x):
             middleware_config, "middleware_id"
         )
         middleware_type_value = u.Mapper.get(middleware_config, "middleware_type")
-        enabled_raw = u.Mapper.get(middleware_config, "enabled", default=True)
+        enabled_raw = u.mapper().get(middleware_config, "enabled", default=True)
         enabled_value = bool(enabled_raw) if enabled_raw is not None else False
 
         # Convert middleware_id to string (handles None case)
         # Type narrowing: middleware_id_value can be None or GeneralValueType
-        # pyright: ignore[reportUnnecessaryComparison] - middleware_id_value can be None
+
         middleware_id_str: str = (
-            str(middleware_id_value) if middleware_id_value is not None else ""  # pyright: ignore[reportUnnecessaryComparison]
+            str(middleware_id_value) if middleware_id_value is not None else ""
         )
 
         # Skip disabled middleware
@@ -1509,8 +1546,8 @@ class FlextDispatcher(x):
 
         Fast fail: Middleware must have process() method. No fallback to callable.
         """
-        # Use u.Mapper.get() for unified attribute access (DSL pattern)
-        process_method = u.Mapper.get(middleware, "process", default=None)
+        # Use u.mapper().get() for unified attribute access (DSL pattern)
+        process_method = u.mapper().get(middleware, "process", default=None)
         if not callable(process_method):
             return r[bool].fail(
                 "Middleware must have callable 'process' method",
@@ -1518,9 +1555,9 @@ class FlextDispatcher(x):
             )
         result_raw = process_method(command, handler)
         # Ensure result is GeneralValueType or FlextResult
-        # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
+
         result: t.GeneralValueType | r[t.GeneralValueType]
-        if isinstance(  # pyright: ignore[reportUnnecessaryIsInstance]
+        if isinstance(
             result_raw,
             (
                 str,
@@ -1551,7 +1588,7 @@ class FlextDispatcher(x):
         """Handle middleware execution result."""
         if isinstance(result, r) and result.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
-            error_msg = u.err(result, default="Unknown error")
+            error_msg = u.err(cast("p.Result[bool]", result), default="Unknown error")
             self.logger.warning(
                 "Middleware rejected command - command processing stopped",
                 operation="execute_middleware",
@@ -1595,11 +1632,11 @@ class FlextDispatcher(x):
                 "Executing command",
                 operation=c.Mixins.METHOD_EXECUTE,
                 command_type=command_type.__name__,
-                # Use u.Mapper.get() for unified attribute access (DSL pattern)
+                # Use u.mapper().get() for unified attribute access (DSL pattern)
                 command_id=u.Mapper.get(
                     command,
                     "command_id",
-                    default=u.Mapper.get(command, "id", default="unknown"),
+                    default=u.mapper().get(command, "id", default="unknown"),
                 ),
                 execution_count=self._execution_count,
                 source="flext-core/src/flext_core/dispatcher.py",
@@ -1768,26 +1805,68 @@ class FlextDispatcher(x):
         self._auto_handlers.append(handler)
 
         handler_id = getattr(handler, "handler_id", None)
+        handler_name = getattr(
+            handler.__class__,
+            "__name__",
+            str(type(handler)),
+        )
+
+        # Register handler as factory in container for DI access
+        # Use handler class name or handler_id for factory name
         if handler_id is not None:
+            factory_name = f"handler.{handler_id!s}"
             self._handlers[str(handler_id)] = handler
+        else:
+            # Use handler class name for factory name
+            factory_name = f"handler.{handler_name.lower()}"
+            # Also register with class name for easier access
+            self._handlers[handler_name] = handler
+
+        # Register handler class as factory in container
+        # Factory will create new handler instances when resolved
+        # Only instantiable classes (not functions) can be used as factories
+        handler_cls: type[object] | None = None
+        if inspect.isclass(handler):
+            handler_cls = handler
+        elif hasattr(handler, "__class__") and inspect.isclass(handler.__class__):
+            handler_cls = handler.__class__
+
+        if handler_cls is not None and self._container:
+            try:
+                # Create factory function that instantiates handler class
+                # Capture in closure - type[object] is always callable
+                cls_ref: type[object] = handler_cls
+
+                def _create_handler() -> object:
+                    """Factory function to create handler instance."""
+                    return cls_ref()
+
+                self._container.register_factory(factory_name, _create_handler)
+                self.logger.debug(
+                    "Handler registered as factory in container",
+                    factory_name=factory_name,
+                    handler_type=handler_name,
+                )
+            except Exception as exc:
+                # Log but don't fail registration if container registration fails
+                self.logger.debug(
+                    "Failed to register handler factory in container",
+                    factory_name=factory_name,
+                    handler_type=handler_name,
+                    error=str(exc),
+                )
+
+        if handler_id is not None:
             self.logger.info(
                 "Handler registered",
-                handler_type=getattr(
-                    handler.__class__,
-                    "__name__",
-                    str(type(handler)),
-                ),
+                handler_type=handler_name,
                 handler_id=str(handler_id),
                 total_handlers=len(self._handlers),
             )
         else:
             self.logger.info(
                 "Handler registered for auto-discovery",
-                handler_type=getattr(
-                    handler.__class__,
-                    "__name__",
-                    str(type(handler)),
-                ),
+                handler_type=handler_name,
                 total_handlers=len(self._auto_handlers),
             )
 
@@ -1813,7 +1892,9 @@ class FlextDispatcher(x):
                 "Invalid arguments: command_type and handler are required",
             )
 
-        if isinstance(command_type_obj, str) and not command_type_obj.strip():
+        if u.Guards.is_type(command_type_obj, str) and not u.Guards.is_string_non_empty(
+            command_type_obj
+        ):
             return r[bool].fail("Command type cannot be empty")
 
         # handler is already HandlerType from method signature
@@ -1827,10 +1908,50 @@ class FlextDispatcher(x):
         self._wire_handler_dependencies(handler)
         key = self._normalize_command_key(command_type_obj)
         self._handlers[key] = handler
+
+        # Register handler as factory in container for DI access
+        # Use normalized command key for factory name (e.g., "handler.user.get")
+        factory_name = f"handler.{key}"
+        handler_name = getattr(handler.__class__, "__name__", str(type(handler)))
+
+        # Register handler class as factory in container
+        # Factory will create new handler instances when resolved
+        # Only instantiable classes (not functions) can be used as factories
+        handler_cls: type[object] | None = None
+        if inspect.isclass(handler):
+            handler_cls = handler
+        elif hasattr(handler, "__class__") and inspect.isclass(handler.__class__):
+            handler_cls = handler.__class__
+
+        if handler_cls is not None and self._container:
+            try:
+                # Create factory function that instantiates handler class
+                # Capture in closure - type[object] is always callable
+                cls_ref: type[object] = handler_cls
+
+                def _create_handler() -> object:
+                    """Factory function to create handler instance."""
+                    return cls_ref()
+
+                self._container.register_factory(factory_name, _create_handler)
+                self.logger.debug(
+                    "Handler registered as factory in container",
+                    factory_name=factory_name,
+                    handler_type=handler_name,
+                )
+            except Exception as exc:
+                # Log but don't fail registration if container registration fails
+                self.logger.debug(
+                    "Failed to register handler factory in container",
+                    factory_name=factory_name,
+                    handler_type=handler_name,
+                    error=str(exc),
+                )
+
         self.logger.info(
             "Handler registered for command type",
             command_type=key,
-            handler_type=getattr(handler.__class__, "__name__", str(type(handler))),
+            handler_type=handler_name,
             total_handlers=len(self._handlers),
         )
 
@@ -1852,8 +1973,13 @@ class FlextDispatcher(x):
 
         """
         # Resolve middleware_id
-        if middleware_config and middleware_config.get("middleware_id"):
-            middleware_id_str = str(middleware_config.get("middleware_id"))
+        middleware_id_raw = (
+            u.mapper().get(middleware_config, "middleware_id")
+            if middleware_config
+            else None
+        )
+        if middleware_config and middleware_id_raw:
+            middleware_id_str = str(middleware_id_raw)
         else:
             middleware_id_str = getattr(
                 middleware,
@@ -1862,9 +1988,14 @@ class FlextDispatcher(x):
             )
 
         # Resolve middleware type
+        middleware_type_raw = (
+            u.mapper().get(middleware_config, "middleware_type")
+            if middleware_config
+            else None
+        )
         middleware_type_str = (
-            str(middleware_config.get("middleware_type"))
-            if middleware_config and middleware_config.get("middleware_type")
+            str(middleware_type_raw)
+            if middleware_type_raw is not None
             else type(middleware).__name__
         )
 
@@ -1872,13 +2003,17 @@ class FlextDispatcher(x):
         # Extract enabled value safely
         enabled_value: bool = True
         if middleware_config:
-            enabled_raw = middleware_config.get("enabled", True)
+            enabled_raw = u.mapper().get(middleware_config, "enabled", default=True)
             enabled_value = bool(enabled_raw) if enabled_raw is not None else True
 
         # Extract order value safely
         order_value: int = len(self._middleware_configs)
         if middleware_config:
-            order_raw = middleware_config.get("order", len(self._middleware_configs))
+            order_raw = u.mapper().get(
+                middleware_config,
+                "order",
+                default=len(self._middleware_configs),
+            )
             if isinstance(order_raw, int):
                 order_value = order_raw
             elif isinstance(order_raw, (str, float)):
@@ -1899,7 +2034,7 @@ class FlextDispatcher(x):
         self.logger.info(
             "Middleware added to pipeline",
             operation="add_middleware",
-            middleware_type=final_config.get("middleware_type"),
+            middleware_type=u.mapper().get(final_config, "middleware_type"),
             middleware_id=middleware_id_str,
             total_middleware=len(self._middleware_configs),
             source="flext-core/src/flext_core/dispatcher.py",
@@ -2106,7 +2241,7 @@ class FlextDispatcher(x):
         # Try extract for dict-like objects first
         if u.is_type(obj, "mapping"):
             path_str = ".".join(path)
-            result = u.Mapper.extract(obj, path_str, default=None, required=False)
+            result = u.mapper().extract(obj, path_str, default=None, required=False)
             # Use .value directly - FlextResult never returns None on success
             if result.is_success:
                 return result.value
@@ -2136,7 +2271,7 @@ class FlextDispatcher(x):
 
         """
         # Try extract for dict-like request first
-        handler_name_result = u.Mapper.extract(
+        handler_name_result = u.mapper().extract(
             request_dict,
             "handler_name",
             default="",
@@ -2190,9 +2325,9 @@ class FlextDispatcher(x):
             normalized = FlextRuntime.normalize_to_general_value(dumped)
             request_dict = cast(
                 "t.Types.ConfigurationDict",
-                (normalized if u.is_type(normalized, dict) else {}),
+                (normalized if isinstance(normalized, Mapping) else {}),
             )
-        elif u.is_type(request, dict):
+        elif isinstance(request, Mapping):
             # Preserve handler objects directly (don't normalize them to strings)
             # Handler normalization would convert handler instances to string repr
             handler_keys = {"handler", "handlers", "processor", "processors"}
@@ -2244,10 +2379,10 @@ class FlextDispatcher(x):
         handler_typed: (
             t.Handler.HandlerType
             | t.Handler.HandlerCallable
-            | p.Utility.Callable[t.GeneralValueType]
+            | p.VariadicCallable[t.GeneralValueType]
             | BaseModel
         ) = cast(
-            "t.Handler.HandlerType | t.Handler.HandlerCallable | p.Utility.Callable[t.GeneralValueType] | BaseModel",
+            "t.Handler.HandlerType | t.Handler.HandlerCallable | p.VariadicCallable[t.GeneralValueType] | BaseModel",
             handler_raw,
         )
 
@@ -2482,16 +2617,16 @@ class FlextDispatcher(x):
 
         Example:
             >>> from dataclasses import dataclass
-            >>> from flext_core import FlextDispatcher, FlextResult
+            >>> from flext_core import FlextDispatcher, r
             >>>
             >>> @dataclass
             ... class CreateUser:
             ...     email: str
             >>>
-            >>> def handle_create_user(message: CreateUser) -> FlextResult[str]:
+            >>> def handle_create_user(message: CreateUser) -> r[str]:
             ...     if "@" not in message.email:
-            ...         return FlextResult[str].fail("Invalid email")
-            ...     return FlextResult[str].ok(f"Created: {message.email}")
+            ...         return r[str].fail("Invalid email")
+            ...     return r[str].ok(f"Created: {message.email}")
             >>>
             >>> dispatcher = FlextDispatcher()
             >>> result = dispatcher.register_handler(CreateUser, handle_create_user)
@@ -2878,13 +3013,11 @@ class FlextDispatcher(x):
         """
         # Convert Pydantic model to dict if needed
         # Validate request type and convert using consolidated helper
-        if not isinstance(request, BaseModel) and not FlextRuntime.is_dict_like(
-            request,
-        ):
+        if not isinstance(request, (BaseModel, Mapping)):
             return r[t.GeneralValueType].fail(
                 "Request must be dict or Pydantic model",
             )
-        # Normalize request to GeneralValueType dict using ModelConversion helper
+        # isinstance check above narrows request to BaseModel | Mapping for mypy
         request_dict = x.ModelConversion.to_dict(request)
 
         # Propagate context for distributed tracing
@@ -3116,7 +3249,7 @@ class FlextDispatcher(x):
 
         Example:
             >>> from dataclasses import dataclass
-            >>> from flext_core import FlextDispatcher, FlextResult
+            >>> from flext_core import FlextDispatcher, r
             >>>
             >>> @dataclass
             ... class CreateUser:
@@ -3124,8 +3257,8 @@ class FlextDispatcher(x):
             >>>
             >>> dispatcher = FlextDispatcher()
             >>>
-            >>> def handle_create_user(message: CreateUser) -> FlextResult[str]:
-            ...     return FlextResult[str].ok(f"Created user: {message.email}")
+            >>> def handle_create_user(message: CreateUser) -> r[str]:
+            ...     return r[str].ok(f"Created user: {message.email}")
             >>>
             >>> dispatcher.register_handler(CreateUser, handle_create_user)
             >>> result = dispatcher.dispatch(CreateUser(email="user@example.com"))
@@ -3205,8 +3338,8 @@ class FlextDispatcher(x):
     @staticmethod
     def _convert_metadata_to_model(
         metadata: t.GeneralValueType | None,
-    ) -> m.Metadata | None:
-        """Convert metadata from GeneralValueType to m.Metadata model.
+    ) -> m.Base.Metadata | None:
+        """Convert metadata from GeneralValueType to m.Base.Metadata model.
 
         Args:
             metadata: Optional metadata value of various types
@@ -3217,10 +3350,10 @@ class FlextDispatcher(x):
         """
         if metadata is None:
             return None
-        if isinstance(metadata, m.Metadata):
+        if isinstance(metadata, m.Base.Metadata):
             return metadata
         # Use guard and process_dict for concise metadata conversion
-        if isinstance(metadata, (dict, Mapping)):
+        if u.Guards.is_type(metadata, "mapping"):
 
             def convert_metadata_value(
                 v: t.GeneralValueType,
@@ -3235,7 +3368,7 @@ class FlextDispatcher(x):
                         else str(item)
                         for item in v
                     ]
-                if isinstance(v, (dict, Mapping)):
+                if u.Guards.is_type(v, "mapping"):
                     # Use process() for concise dict conversion (transform values and convert keys)
                     transform_result = u.Collection.process(
                         v,
@@ -3271,9 +3404,9 @@ class FlextDispatcher(x):
                 "t.Types.ConfigurationDict",
                 attributes_dict,
             )
-            return m.Metadata(attributes=attributes_general)
+            return m.Base.Metadata(attributes=attributes_general)
         # Convert other types to Metadata via dict with string value
-        return m.Metadata(attributes={"value": str(metadata)})
+        return m.Base.Metadata(attributes={"value": str(metadata)})
 
     @staticmethod
     def _build_dispatch_config_from_args(
@@ -3411,17 +3544,17 @@ class FlextDispatcher(x):
             validated_metadata: t.GeneralValueType
             if metadata is None:
                 validated_metadata = {}
-            elif FlextRuntime.is_dict_like(metadata):
+            elif isinstance(metadata, Mapping):
                 validated_metadata = dict(metadata)
-            elif isinstance(metadata, m.Metadata):
-                # m.Metadata - extract attributes dict
+            elif isinstance(metadata, m.Base.Metadata):
+                # m.Base.Metadata - extract attributes dict
                 validated_metadata = metadata.attributes
             else:
-                # Fast fail: metadata must be dict, m.Metadata, or None
+                # Fast fail: metadata must be dict, m.Base.Metadata, or None
                 # Type checker may think this is unreachable, but it's reachable at runtime
                 msg = (
                     f"Invalid metadata type: {type(metadata).__name__}. "
-                    "Expected object | m.Metadata | None"
+                    "Expected object | m.Base.Metadata | None"
                 )
                 return r[t.GeneralValueType].fail(msg)
 
@@ -3475,11 +3608,11 @@ class FlextDispatcher(x):
             )
 
             # Fast fail: dispatch_config must be dict-like for unpacking
-            if not FlextRuntime.is_dict_like(dispatch_config):
+            if not isinstance(dispatch_config, Mapping):
                 return r[t.GeneralValueType].fail(
                     f"dispatch_config must be dict-like, got {type(dispatch_config).__name__}",
                 )
-            # dispatch_config is dict-like at this point - convert to dict
+            # isinstance check above narrows dispatch_config to Mapping for mypy
             dispatch_config_dict: t.Types.ConfigurationMapping = dict(dispatch_config)
 
             context: t.Types.ConfigurationMapping = {
@@ -3502,11 +3635,10 @@ class FlextDispatcher(x):
     ) -> r[t.GeneralValueType]:
         """Validate pre-dispatch conditions (circuit breaker + rate limiting)."""
         # Fast fail: context must be dict-like to access message_type
-        if not FlextRuntime.is_dict_like(context):
+        if not isinstance(context, Mapping):
             msg = f"Context must be dict-like, got {type(context).__name__}"
             return r[t.GeneralValueType].fail(msg)
-        # Fast fail: message_type must be str (created by _normalize_dispatch_message)
-        # Type narrowing: context is dict-like (checked above), which implements Mapping
+        # Type narrowing: isinstance check above narrows context to Mapping for mypy
         message_type_raw = context.get("message_type")
         if not isinstance(message_type_raw, str):
             msg = f"Invalid message_type in context: {type(message_type_raw).__name__}, expected str"
@@ -3518,7 +3650,7 @@ class FlextDispatcher(x):
         if conditions_check.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
             error_msg = u.err(
-                conditions_check,
+                cast("p.Result[bool]", conditions_check),
                 default="Pre-dispatch conditions check failed",
             )
             return r[t.GeneralValueType].fail(
@@ -3535,11 +3667,10 @@ class FlextDispatcher(x):
     ) -> r[t.GeneralValueType]:
         """Execute dispatch with retry policy using u."""
         # Fast fail: context must be dict-like to access values
-        if not FlextRuntime.is_dict_like(context):
+        if not isinstance(context, Mapping):
             msg = f"Context must be dict-like, got {type(context).__name__}"
             return r[t.GeneralValueType].fail(msg)
-        # Fast fail: validate context values (created by _prepare_dispatch_context)
-        # Type narrowing: context is dict-like (checked above), which implements Mapping
+        # Type narrowing: isinstance check above narrows context to Mapping for mypy
         message = context.get("message")
         message_type_raw = context.get("message_type")
         if not isinstance(message_type_raw, str):
@@ -3582,12 +3713,14 @@ class FlextDispatcher(x):
             timeout_override=timeout_override,
             operation_id=operation_id,
         )
-        return u.Reliability.with_retry(
+        retry_result = u.Reliability.with_retry(
             lambda: self._execute_dispatch_attempt(message, options),
             max_attempts=self._retry_policy.get_max_attempts(),
             should_retry_func=self._should_retry_on_error,
             cleanup_func=lambda: self._cleanup_timeout_context(operation_id),
         )
+        # with_retry returns RuntimeResult, cast to FlextResult for compatibility
+        return cast("r[t.GeneralValueType]", retry_result)
 
     @staticmethod
     def _normalize_dispatch_message(
@@ -3734,8 +3867,12 @@ class FlextDispatcher(x):
             # Create structured request
             if options.metadata and u.is_type(options.metadata, "mapping"):
                 # Use process() for concise conversion (transform values)
+                # Type narrowing: options.metadata is mapping, cast to Mapping[str, t.GeneralValueType]
+                metadata_mapping = cast(
+                    "Mapping[str, t.GeneralValueType]", options.metadata
+                )
                 transform_result = u.Collection.process(
-                    options.metadata,
+                    metadata_mapping,
                     lambda _k, v: str(v),
                     on_error="collect",
                 )
@@ -3756,7 +3893,7 @@ class FlextDispatcher(x):
                     "t.Types.ConfigurationDict",
                     metadata_attrs,
                 )
-                _ = m.Metadata(attributes=metadata_attrs_general)
+                _ = m.Base.Metadata(attributes=metadata_attrs_general)
 
             timeout_seconds = self._get_timeout_seconds(options.timeout_override)
             _ = self._track_timeout_context(options.operation_id, timeout_seconds)
@@ -3816,10 +3953,10 @@ class FlextDispatcher(x):
 
         Fast fail: Direct validation without helpers.
         """
-        if isinstance(metadata, m.Metadata):
+        if isinstance(metadata, m.Base.Metadata):
             return FlextDispatcher._extract_from_flext_metadata(metadata)
-        # Fast fail: type narrowing instead of cast
-        if isinstance(metadata, (dict, Mapping)):
+        # Fast fail: type narrowing with isinstance for mypy
+        if isinstance(metadata, Mapping):
             return metadata
 
         # Handle Pydantic models directly - use model_dump() (Pydantic v2 pattern)
@@ -3847,9 +3984,9 @@ class FlextDispatcher(x):
 
     @staticmethod
     def _extract_from_flext_metadata(
-        metadata: m.Metadata,
+        metadata: m.Base.Metadata,
     ) -> t.Types.ConfigurationMapping | None:
-        """Extract metadata mapping from m.Metadata."""
+        """Extract metadata mapping from m.Base.Metadata."""
         attributes = metadata.attributes
         # metadata.attributes is t.Types.ConfigurationDict
         # Use guard() with lambda for concise non-empty validation
@@ -3871,7 +4008,7 @@ class FlextDispatcher(x):
             dumped = metadata.model_dump()
         except Exception as e:
             # Fast fail: model_dump() failure indicates invalid model
-            msg = f"Failed to dump m.Metadata: {type(e).__name__}: {e}"
+            msg = f"Failed to dump m.Base.Metadata: {type(e).__name__}: {e}"
             raise TypeError(msg) from e
 
         # Fast fail: dumped must be dict (Pydantic guarantees this)
@@ -3884,12 +4021,13 @@ class FlextDispatcher(x):
 
         # Extract attributes section if present - fast fail: must be dict or None
         attributes_section_raw = dumped.get("attributes")
-        if attributes_section_raw is not None and FlextRuntime.is_dict_like(
-            attributes_section_raw,
+        if attributes_section_raw is not None and isinstance(
+            attributes_section_raw, Mapping
         ):
-            return attributes_section_raw
+            # dumped.get("attributes") returns Any, cast to ConfigurationMapping after isinstance check
+            return cast("t.Types.ConfigurationMapping", attributes_section_raw)
         # Return full dump if no attributes section
-        return dumped
+        return cast("t.Types.ConfigurationMapping", dumped)
 
     @staticmethod
     def _extract_from_object_attributes(
@@ -3897,7 +4035,9 @@ class FlextDispatcher(x):
     ) -> t.Types.ConfigurationMapping | None:
         """Extract metadata mapping from object's attributes."""
         attributes_value = getattr(metadata, "attributes", None)
-        if isinstance(attributes_value, (dict, Mapping)) and attributes_value:
+        if u.Guards.is_type(attributes_value, "mapping") and u.Guards.is_dict_non_empty(
+            attributes_value
+        ):
             # Type narrowing: attributes_value is dict-like, convert to ConfigurationMapping
             # ConfigurationMapping is compatible with dict and Mapping types
             attributes_dict: t.Types.ConfigurationMapping = cast(
@@ -3918,17 +4058,15 @@ class FlextDispatcher(x):
                 raise TypeError(msg) from e
 
             # Fast fail: dumped must be dict (Pydantic guarantees this)
-            # Cast to GeneralValueType for is_dict_like check
-            dumped_as_general = cast("t.GeneralValueType", dumped)
-            if not FlextRuntime.is_dict_like(dumped_as_general):
+            if not isinstance(dumped, Mapping):
                 # Type checker may think this is unreachable, but it's reachable at runtime
                 msg = (
                     f"metadata.model_dump() returned {type(dumped).__name__}, "
                     "expected dict"
                 )
                 raise TypeError(msg)
-            # Safe cast: model_dump() returns t.Types.ConfigurationDict, which is compatible with GeneralValueType
-            return dumped_as_general
+            # model_dump() returns dict, which implements Mapping[str, GeneralValueType]
+            return cast("t.Types.ConfigurationMapping", dumped)
 
         return None
 
@@ -3980,9 +4118,7 @@ class FlextDispatcher(x):
             # Use provided correlation ID or generate one if needed
             effective_correlation_id = correlation_id
             if effective_correlation_id is None:
-                effective_correlation_id = (
-                    FlextContext.Correlation.generate_correlation_id()
-                )
+                effective_correlation_id = u.generate("correlation")
 
             if self.config.dispatcher_enable_logging:
                 self._log_with_context(
@@ -4043,7 +4179,8 @@ class FlextDispatcher(x):
                     handlers = h.Discovery.scan_module(caller_module)
                     for _handler_name, handler_func, handler_config in handlers:
                         # Get actual handler function from module
-                        if handler_func and callable(handler_func):
+                        # Check if handler_func is not None before checking callable
+                        if handler_func is not None and callable(handler_func):
                             # Register handler with dispatcher
                             # Register under the handler command type name for routing
                             command_type_name = (
@@ -4051,9 +4188,13 @@ class FlextDispatcher(x):
                                 if hasattr(handler_config.command, "__name__")
                                 else str(handler_config.command)
                             )
+                            # Cast handler_func to expected type for register_handler
+                            handler_typed: t.GeneralValueType = cast(
+                                "t.GeneralValueType", handler_func
+                            )
                             _ = instance.register_handler(
                                 command_type_name,
-                                handler_func,
+                                handler_typed,
                             )
 
         return instance

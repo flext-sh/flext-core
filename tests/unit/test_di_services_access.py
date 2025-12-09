@@ -57,7 +57,7 @@ class TestConfigServiceViaDI:
 
     def test_config_via_container_scoped(self) -> None:
         """Test FlextConfig accessible via scoped container."""
-        container = FlextContainer()
+        container = FlextContainer(_context=FlextContext())
         scoped = container.scoped(config=FlextConfig(app_name="scoped_config"))
         assert scoped.config is not None
         assert isinstance(scoped.config, FlextConfig)
@@ -155,9 +155,10 @@ class TestContextServiceViaDI:
 
     def test_context_registration_in_container(self) -> None:
         """Test registering FlextContext in container for DI."""
-        container = FlextContainer()
+        # Context must be provided during container creation for auto-registration
+        container = FlextContainer(_context=FlextContext())
 
-        # Context is auto-registered by default, so we can retrieve it directly
+        # Context is auto-registered when provided, so we can retrieve it directly
         context_result: r[FlextContext] = container.get("context")
         assert context_result.is_success
         assert isinstance(context_result.value, FlextContext)

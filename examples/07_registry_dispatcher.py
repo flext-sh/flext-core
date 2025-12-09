@@ -59,7 +59,7 @@ class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
 
     def handle(self, message: CreateUserCommand) -> FlextResult[UserCreatedEvent]:
         """Handle create user command."""
-        user_id = u.Generators.generate_entity_id()
+        user_id = u.generate("entity")
         return FlextResult[UserCreatedEvent].ok(
             UserCreatedEvent(
                 aggregate_id=user_id,
@@ -172,7 +172,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(
-            dispatcher=cast("p.Application.CommandBus | None", dispatcher),
+            dispatcher=cast("p.CommandBus | None", dispatcher),
         )
 
         # Register handlers
@@ -208,7 +208,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         dispatcher = FlextDispatcher()
         registry = FlextRegistry(
-            dispatcher=cast("p.Application.CommandBus | None", dispatcher),
+            dispatcher=cast("p.CommandBus | None", dispatcher),
         )
 
         # Register handlers

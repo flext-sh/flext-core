@@ -151,7 +151,7 @@ class TestCompleteFlextSystemIntegration:
     def _test_utilities(self) -> None:
         """Test utilities and helper functions."""
         # Geração de ID usando método unificado
-        generated_id = u.Generators.generate_id()
+        generated_id = u.generate()
         assert isinstance(generated_id, str)
         assert len(generated_id) == 36  # Formato padrão UUID
 
@@ -230,7 +230,7 @@ class TestCompleteFlextSystemIntegration:
 
             # u.Validation was completely removed - using direct validation
             for key, value in dados.items():
-                if len(value.strip()) == 0:
+                if not u.Guards.is_string_non_empty(value):
                     return FlextResult[dict[str, str]].fail(
                         f"Campo '{key}' não pode estar vazio",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,

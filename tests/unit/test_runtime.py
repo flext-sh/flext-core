@@ -760,7 +760,7 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has read_config attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                read_func = getattr(module, "read_config")  # type: ignore[attr-defined]
+                read_func = getattr(module, "read_config")
                 assert callable(read_func)
                 result = read_func()
                 assert result == "sqlite://"
@@ -801,7 +801,7 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")  # type: ignore[attr-defined]
+                consume_func = getattr(module, "consume")
                 assert callable(consume_func)
                 tokens, value = consume_func()
                 assert tokens == {"token": "abc123"}
@@ -849,7 +849,7 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")  # type: ignore[attr-defined]
+                consume_func = getattr(module, "consume")
                 assert callable(consume_func)
                 first_static, first_token, config_enabled, resource_value = (
                     consume_func()
@@ -900,7 +900,7 @@ class TestFlextRuntime:
             try:
                 # Type narrowing: module has consume attribute after setattr
                 # Mypy limitation: can't infer dynamic module attributes
-                consume_func = getattr(module, "consume")  # type: ignore[attr-defined]
+                consume_func = getattr(module, "consume")
                 assert callable(consume_func)
                 feature_flag, first_token, resource = consume_func()
                 _, second_token, _ = consume_func()
@@ -911,7 +911,7 @@ class TestFlextRuntime:
                 assert first_token["count"] == 1
                 assert second_token["count"] == 2
             finally:
-                # Type narrowing: runtime.container is p.Container.DI protocol
+                # Type narrowing: runtime.container is p.DI protocol
                 # Cast to FlextContainer to access private _di_bridge attribute
                 container = cast("FlextContainer", runtime.container)
                 container._di_bridge.unwire()
@@ -925,7 +925,6 @@ class TestFlextRuntime:
                     def counter_factory() -> t.GeneralValueType:
                         return {"count": 1}
 
-                    # Type: factories expects Callable[[], ScalarValue | Sequence | Mapping]
                     # counter_factory returns dict[str, int] which is Mapping[str, ScalarValue]
                     # Cast to satisfy type checker
                     counter_factory_typed: Callable[

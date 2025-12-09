@@ -20,7 +20,6 @@ import os
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 import pytest
 import yaml
@@ -40,8 +39,8 @@ class ConfigTestCase:
     """Factory for configuration test cases."""
 
     test_name: str
-    config_data: dict[str, Any]
-    expected_values: dict[str, Any] = field(default_factory=dict)
+    config_data: dict[str, t.GeneralValueType]
+    expected_values: dict[str, t.GeneralValueType] = field(default_factory=dict)
     file_format: str = "json"
     env_vars: dict[str, str] = field(default_factory=dict)
     description: str = field(default="", compare=False)

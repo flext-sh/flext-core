@@ -15,6 +15,7 @@ from types import UnionType
 from typing import (
     Annotated,
     Protocol,
+    TypeVar,
     cast,
     get_args,
     get_origin,
@@ -24,7 +25,15 @@ from typing import (
 from pydantic import ConfigDict, validate_call
 
 from flext_core.result import r
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, t
+
+# TypeVar for validated_with_result: constrained to r or RuntimeResult
+_ValidatedResultT = TypeVar(
+    "_ValidatedResultT",
+    r[t.GeneralValueType],
+    FlextRuntime.RuntimeResult[t.GeneralValueType],
+)
 
 
 class FlextUtilitiesArgs:
@@ -87,8 +96,8 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def validated_with_result(
-        func: Callable[P, r[R]],
-    ) -> Callable[P, r[R]]:
+        func: Callable[P, _ValidatedResultT],
+    ) -> Callable[P, _ValidatedResultT]:
         """Decorator that converts ValidationError to r.fail().
 
         USE WHEN:
@@ -98,7 +107,7 @@ class FlextUtilitiesArgs:
 
         Example:
              @FlextUtilitiesArgs.validated_with_result
-             def process(self, status: Status) -> r[bool]:
+             def process(self, status: Status) -> "r[bool]":
                  # If status invalid → returns r.fail()
                  # If status valid → executes normally
                  return r.ok(True)
@@ -113,13 +122,18 @@ class FlextUtilitiesArgs:
         )(func)
 
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> r[R]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> _ValidatedResultT:
             try:
+                # Type narrowing: validated_func returns _ValidatedResultT
                 return validated_func(*args, **kwargs)
             except Exception as e:
-                return r[R].fail(str(e))
+                fail_result: _ValidatedResultT = cast(
+                    "_ValidatedResultT",
+                    r[t.GeneralValueType].fail(str(e)),
+                )
+                return fail_result
 
-        return cast("Callable[P, r[R]]", wrapper)
+        return cast("Callable[P, _ValidatedResultT]", wrapper)
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 2: Parse kwargs to typed dict

@@ -434,14 +434,14 @@ class TestrCoverage:
     def test_safe_decorator_success(self) -> None:
         """Test safe decorator wraps successful function."""
 
-        # Type annotation: safe accepts p.Utility.Callable[T], Callable[[], str] is compatible
-        # Cast to p.Utility.Callable[str] for type compatibility
+        # Type annotation: safe accepts p.VariadicCallable[T], Callable[[], str] is compatible
+        # Cast to p.VariadicCallable[str] for type compatibility
         def success_func() -> str:
             return "success"
 
-        # Cast function to p.Utility.Callable[str] for type compatibility
-        success_func_typed: p.Utility.Callable[str] = cast(
-            "p.Utility.Callable[str]",
+        # Cast function to p.VariadicCallable[str] for type compatibility
+        success_func_typed: p.VariadicCallable[str] = cast(
+            "p.VariadicCallable[str]",
             success_func,
         )
         wrapped_func = r.safe(success_func_typed)
@@ -458,9 +458,9 @@ class TestrCoverage:
         def failing_func() -> str:
             raise ValueError(error_msg)
 
-        # Cast function to p.Utility.Callable[str] for type compatibility
-        failing_func_typed: p.Utility.Callable[str] = cast(
-            "p.Utility.Callable[str]",
+        # Cast function to p.VariadicCallable[str] for type compatibility
+        failing_func_typed: p.VariadicCallable[str] = cast(
+            "p.VariadicCallable[str]",
             failing_func,
         )
         wrapped_func = r.safe(failing_func_typed)

@@ -9,7 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Self, override
+from collections.abc import Callable, Mapping, Sequence
+from typing import ClassVar, Self, override
 
 from pydantic import Field
 
@@ -17,15 +18,13 @@ from flext_core._models.base import FlextModelsBase
 from flext_core._models.validation import FlextModelsValidation
 from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
 
 
 class FlextModelsEntity:
@@ -35,7 +34,7 @@ class FlextModelsEntity:
     Uses FlextModelsBase for all base classes (Tier 0).
     """
 
-    class DomainEvent(  # type: ignore[misc]
+    class DomainEvent(
         FlextModelsBase.ArbitraryTypesModel,
         FlextModelsBase.IdentifiableMixin,
         FlextModelsBase.TimestampableMixin,
@@ -59,12 +58,12 @@ class FlextModelsEntity:
             description="Event metadata - maps to FieldMetadataMapping",
         )
 
-    class Core(  # type: ignore[misc]
+    class Entry(
         FlextModelsBase.TimestampedModel,
         FlextModelsBase.IdentifiableMixin,
         FlextModelsBase.VersionableMixin,
     ):
-        """Core Entity implementation - base class for domain entities with identity.
+        """Entryity implementation - base class for domain entities with identity.
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
         - unique_id: Unique identifier (from IdentifiableMixin)
@@ -85,8 +84,9 @@ class FlextModelsEntity:
             return self.unique_id
 
         @property
-        def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
+        def logger(self) -> p.Log.StructlogLogger:
             """Get logger instance."""
+            # FlextRuntime.get_logger returns StructlogLogger directly
             return FlextRuntime.get_logger(__name__)
 
         @override
@@ -105,7 +105,7 @@ class FlextModelsEntity:
 
             """
             # Type narrowing: other must implement HasModelDump protocol for comparison
-            if not isinstance(other, p.Foundation.HasModelDump):
+            if not isinstance(other, p.HasModelDump):
                 return NotImplemented
             return FlextUtilitiesDomain.compare_entities_by_id(self, other)
 
@@ -192,9 +192,14 @@ class FlextModelsEntity:
             """Execute event handler if available."""
             # Fast fail: event_type must be str
             event_type: str = ""
-            if FlextRuntime.is_dict_like(data):
-                # Type narrowing: is_dict_like ensures data is Mapping-like
-                event_type_raw = data.get("event_type")
+            if (
+                data is not None
+                and FlextRuntime.is_dict_like(data)
+                and isinstance(data, Mapping)
+            ):
+                # Type narrowing: is_dict_like + isinstance ensures data is ConfigurationMapping
+                data_mapping: t.Types.ConfigurationMapping = data
+                event_type_raw = FlextUtilitiesMapper().get(data_mapping, "event_type")
                 event_type = "" if event_type_raw is None else str(event_type_raw)
             if event_type:
                 handler_method_name = f"_apply_{str(event_type).lower()}"
@@ -253,6 +258,7 @@ class FlextModelsEntity:
             # Add event and track
             self.domain_events.append(domain_event)
 
+            # Access Integration nested class directly (defined in runtime.pyi stub)
             FlextRuntime.Integration.track_domain_event(
                 event_name=event_name,
                 aggregate_id=self.unique_id,
@@ -477,7 +483,7 @@ class FlextModelsEntity:
                 return r[bool].ok(True)
 
             # Validate and collect events
-            validated_result = FlextModelsEntity.Core.validate_and_collect_events(
+            validated_result = FlextModelsEntity.Entry.validate_and_collect_events(
                 events,
             )
             if validated_result.is_failure:
@@ -524,7 +530,7 @@ class FlextModelsEntity:
         @override
         def __eq__(self: Self, other: object) -> bool:
             """Compare by value (using FlextUtilitiesDomain)."""
-            if not isinstance(other, p.Foundation.HasModelDump):
+            if not isinstance(other, p.HasModelDump):
                 return NotImplemented
             return FlextUtilitiesDomain.compare_value_objects_by_value(self, other)
 
@@ -532,7 +538,7 @@ class FlextModelsEntity:
             """Hash based on values for use in sets/dicts (using FlextUtilitiesDomain)."""
             return FlextUtilitiesDomain.hash_value_object_by_value(self)
 
-    class AggregateRoot(Core):
+    class AggregateRoot(Entry):
         """Base class for aggregate roots - consistency boundaries."""
 
         _invariants: ClassVar[list[Callable[[], bool]]] = []

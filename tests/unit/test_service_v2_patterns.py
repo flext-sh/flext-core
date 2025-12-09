@@ -667,7 +667,7 @@ class TestsV2Patterns:
             )
             user = user_service.result
             assert isinstance(user, m.Entity)
-            # Type narrowing: user is m.Entity.Core, access unique_id via getattr
+            # Type narrowing: user is m.Entity.Entry, access unique_id via getattr
             user_id = getattr(user, "unique_id", None)
             assert user_id == "123"
             # User entity may not have name attribute directly, check via getattr

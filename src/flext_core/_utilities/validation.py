@@ -20,7 +20,8 @@ This module CORRECTLY imports and uses r[T]. This is NOT a circular import.
 - Therefore: NO CIRCULAR DEPENDENCY exists
 
 **For Other Agents**:
-- DO NOT remove `from flext_core.result import r`
+- DO NOT remove `# Removed: from flext_core.result import r
+# Use string literals for type annotations and lazy import for runtime to break circular import`
 - DO NOT change r[T] returns to plain T or exceptions
 - DO NOT refactor this to "break circular imports" - THERE IS NO CIRCULAR
 
@@ -45,9 +46,13 @@ import socket
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields as get_dataclass_fields, is_dataclass
 from datetime import datetime
-from typing import ClassVar, TypeGuard, cast
+from typing import ClassVar, Never, TypeGuard, cast
 
 import orjson
+from pydantic import (
+    TypeAdapter as PydanticTypeAdapter,
+    ValidationError as PydanticValidationError,
+)
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -87,7 +92,7 @@ class FlextUtilitiesValidation:
             uri: str | None,
             allowed_schemes: list[str] | None = None,
             context: str = "URI",
-        ) -> r[str]:
+        ) -> FlextRuntime.RuntimeResult[str]:
             """Validate URI format."""
             return FlextUtilitiesValidation.validate_uri(uri, allowed_schemes, context)
 
@@ -95,7 +100,7 @@ class FlextUtilitiesValidation:
         def validate_port_number(
             port: int | None,
             context: str = "Port",
-        ) -> r[int]:
+        ) -> FlextRuntime.RuntimeResult[int]:
             """Validate port number (1-65535)."""
             return FlextUtilitiesValidation.validate_port_number(port, context)
 
@@ -104,7 +109,7 @@ class FlextUtilitiesValidation:
             hostname: str,
             *,
             perform_dns_lookup: bool = True,
-        ) -> r[str]:
+        ) -> FlextRuntime.RuntimeResult[str]:
             """Validate hostname format."""
             return FlextUtilitiesValidation.validate_hostname(
                 hostname,
@@ -118,7 +123,7 @@ class FlextUtilitiesValidation:
         def validate_required_string(
             value: str | None,
             context: str = "Field",
-        ) -> r[str]:
+        ) -> FlextRuntime.RuntimeResult[str]:
             """Validate non-empty string (wraps to r)."""
             try:
                 result = FlextUtilitiesValidation.validate_required_string(
@@ -136,7 +141,7 @@ class FlextUtilitiesValidation:
             context: str = "Value",
             *,
             case_sensitive: bool = False,
-        ) -> r[str]:
+        ) -> FlextRuntime.RuntimeResult[str]:
             """Validate value is in allowed choices."""
             return FlextUtilitiesValidation.validate_choice(
                 value,
@@ -151,7 +156,7 @@ class FlextUtilitiesValidation:
             min_length: int | None = None,
             max_length: int | None = None,
             context: str = "Value",
-        ) -> r[str]:
+        ) -> FlextRuntime.RuntimeResult[str]:
             """Validate string/sequence length."""
             return FlextUtilitiesValidation.validate_length(
                 value,
@@ -165,7 +170,7 @@ class FlextUtilitiesValidation:
             value: str,
             pattern: str,
             context: str = "Value",
-        ) -> r[str]:
+        ) -> FlextRuntime.RuntimeResult[str]:
             """Validate string matches regex pattern."""
             return FlextUtilitiesValidation.validate_pattern(value, pattern, context)
 
@@ -176,7 +181,7 @@ class FlextUtilitiesValidation:
         def validate_non_negative(
             value: int | None,
             context: str = "Value",
-        ) -> r[int]:
+        ) -> FlextRuntime.RuntimeResult[int]:
             """Validate value >= 0."""
             return FlextUtilitiesValidation.validate_non_negative(value, context)
 
@@ -184,7 +189,7 @@ class FlextUtilitiesValidation:
         def validate_positive(
             value: int | None,
             context: str = "Value",
-        ) -> r[int]:
+        ) -> FlextRuntime.RuntimeResult[int]:
             """Validate value > 0."""
             return FlextUtilitiesValidation.validate_positive(value, context)
 
@@ -194,7 +199,7 @@ class FlextUtilitiesValidation:
             min_value: int | None = None,
             max_value: int | None = None,
             context: str = "Value",
-        ) -> r[int]:
+        ) -> FlextRuntime.RuntimeResult[int]:
             """Validate numeric range."""
             return FlextUtilitiesValidation.validate_range(
                 value,
@@ -302,7 +307,7 @@ class FlextUtilitiesValidation:
         if isinstance(component, (str, int, float, bool, type(None))):
             return component
 
-        if FlextRuntime.is_dict_like(component):
+        if FlextRuntime.is_dict_like(component) and isinstance(component, Mapping):
             return FlextUtilitiesValidation._normalize_dict_like(component, visited)
         if isinstance(component, (list, tuple)) and not isinstance(
             component,
@@ -331,7 +336,12 @@ class FlextUtilitiesValidation:
             return dict(items_result)
 
         if FlextUtilitiesGuards.is_type(items_result, "mapping"):
-            return dict(items_result)
+            # Convert Mapping to dict explicitly for type safety
+            mapping_result: t.Types.ConfigurationMapping = cast(
+                "t.Types.ConfigurationMapping",
+                items_result,
+            )
+            return FlextUtilitiesMapper.to_dict(mapping_result)
 
         if not hasattr(items_result, "__iter__"):
             result_type = type(items_result)
@@ -353,7 +363,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _extract_dict_from_component(
-        component: t.Types.ConfigurationMapping | p.Foundation.HasModelDump,
+        component: t.Types.ConfigurationMapping | p.HasModelDump,
         _visited: set[int] | None = None,
     ) -> t.Types.ConfigurationMapping:
         """Extract dict-like structure from component."""
@@ -432,7 +442,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _convert_to_mapping(
-        component: t.Types.ConfigurationMapping | p.Foundation.HasModelDump,
+        component: t.Types.ConfigurationMapping | p.HasModelDump,
     ) -> t.Types.ConfigurationMapping:
         """Convert object to Mapping (helper for _normalize_dict_like).
 
@@ -478,7 +488,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_dict_like(
-        component: t.Types.ConfigurationMapping | p.Foundation.HasModelDump,
+        component: t.Types.ConfigurationMapping | p.HasModelDump,
         visited: set[int] | None = None,
     ) -> t.Types.ConfigurationDict:
         """Normalize dict-like objects.
@@ -528,9 +538,14 @@ class FlextUtilitiesValidation:
         if isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes)):
             # Type narrowing: tuple is valid t.GeneralValueType
             return tuple(value)
-        if isinstance(value, (dict, Mapping)):
+        if FlextUtilitiesGuards.is_type(value, "mapping"):
             # Type narrowing: dict is valid t.GeneralValueType
-            return dict(value) if isinstance(value, dict) else dict(value.items())
+            if isinstance(value, dict):
+                return value
+            if isinstance(value, Mapping):
+                return FlextUtilitiesMapper.to_dict(value)
+            # Fallback for non-mapping types
+            return {str(value): value}
         # Fallback: convert to string (string is valid t.GeneralValueType)
         return str(value)
 
@@ -586,10 +601,10 @@ class FlextUtilitiesValidation:
     ) -> t.GeneralValueType:
         """Sort dict keys for consistent representation (internal recursive)."""
         # Type narrowing: GeneralValueType includes Mapping[str, GeneralValueType]
-        if isinstance(data, (dict, Mapping)):
+        if FlextUtilitiesGuards.is_type(data, "mapping") and isinstance(data, Mapping):
             # data is Mapping[str, GeneralValueType], which is valid GeneralValueType
             data_dict: t.Types.ConfigurationMapping = (
-                data if isinstance(data, dict) else dict(data.items())
+                data if isinstance(data, dict) else FlextUtilitiesMapper.to_dict(data)
             )
             return {
                 str(k): FlextUtilitiesValidation._sort_dict_keys(data_dict[k])
@@ -605,7 +620,7 @@ class FlextUtilitiesValidation:
     def validate_pipeline(
         value: str,
         validators: list[Callable[[str], r[bool]]],
-    ) -> r[bool]:
+    ) -> FlextRuntime.RuntimeResult[bool]:
         """Validate using a pipeline of validators and surface the first failure.
 
         Returns:
@@ -628,11 +643,18 @@ class FlextUtilitiesValidation:
                 result = validator(value)
 
                 # FAST FAIL: If validator returns r, check if ok(True)
-                # isinstance check is necessary for type narrowing (result can be bool or r[bool])
-                if isinstance(result, r):
+                # Use structural typing check (hasattr) instead of isinstance for generic types
+                if (
+                    hasattr(result, "is_success")
+                    and hasattr(result, "is_failure")
+                    and hasattr(result, "value")
+                ):
+                    # Type narrowing: result has RuntimeResult structure
                     if result.is_failure:
+                        # Use getattr for safe attribute access on object type
+                        error_msg = getattr(result, "error", "Unknown error")
                         return r[bool].fail(
-                            f"Validator failed: {result.error}",
+                            f"Validator failed: {error_msg}",
                             error_code=c.Errors.VALIDATION_ERROR,
                         )
                     if result.value is not True:
@@ -732,7 +754,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_pydantic_value(
-        value: p.Foundation.HasModelDump,
+        value: p.HasModelDump,
     ) -> t.GeneralValueType:
         """Normalize Pydantic model to cache-friendly structure."""
         # Fast fail: model_dump() must succeed for valid Pydantic models
@@ -860,7 +882,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _generate_key_pydantic(
-        command: p.Foundation.HasModelDump,
+        command: p.HasModelDump,
         command_type: type[t.GeneralValueType],
     ) -> str | None:
         """Generate cache key from Pydantic model."""
@@ -925,7 +947,7 @@ class FlextUtilitiesValidation:
 
         """
         # Try Pydantic model
-        if isinstance(command, p.Foundation.HasModelDump):
+        if isinstance(command, p.HasModelDump):
             key = FlextUtilitiesValidation._generate_key_pydantic(command, command_type)
             if key is not None:
                 return key
@@ -952,7 +974,14 @@ class FlextUtilitiesValidation:
             command,
             "mapping",
         ):
-            key = FlextUtilitiesValidation._generate_key_dict(command, command_type)
+            # Type narrowing: command is dict-like, cast to ConfigurationMapping
+            command_dict: t.Types.ConfigurationMapping = cast(
+                "t.Types.ConfigurationMapping",
+                command,
+            )
+            key = FlextUtilitiesValidation._generate_key_dict(
+                command_dict, command_type
+            )
             if key is not None:
                 return key
 
@@ -979,10 +1008,10 @@ class FlextUtilitiesValidation:
 
         """
         # Type narrowing: obj can be Mapping (which is GeneralValueType)
-        if isinstance(obj, (dict, Mapping)):
+        if FlextUtilitiesGuards.is_type(obj, "mapping") and isinstance(obj, Mapping):
             # obj is Mapping[str, GeneralValueType]
             dict_obj: t.Types.ConfigurationMapping = (
-                obj if isinstance(obj, dict) else dict(obj.items())
+                obj if isinstance(obj, dict) else FlextUtilitiesMapper.to_dict(obj)
             )
             # Convert items() view to list for sorting
             items_list: list[tuple[str, t.GeneralValueType]] = list(
@@ -1070,7 +1099,7 @@ class FlextUtilitiesValidation:
         context: str = "Value",
         *,
         case_sensitive: bool = False,
-    ) -> r[str]:
+    ) -> FlextRuntime.RuntimeResult[str]:
         """Validate value is in set of valid choices (enum validation).
 
         Common pattern in flext-ldap (scope, operation), flext-meltano (plugin type),
@@ -1107,7 +1136,7 @@ class FlextUtilitiesValidation:
         min_length: int | None = None,
         max_length: int | None = None,
         context: str = "Value",
-    ) -> r[str]:
+    ) -> FlextRuntime.RuntimeResult[str]:
         """Validate string length within bounds.
 
         This pattern is repeated 6+ times across flext-ldap (passwords, DN, etc),
@@ -1139,7 +1168,7 @@ class FlextUtilitiesValidation:
         value: str,
         pattern: str,
         context: str = "Value",
-    ) -> r[str]:
+    ) -> FlextRuntime.RuntimeResult[str]:
         r"""Validate value matches regex pattern.
 
         **PYDANTIC 2 ALTERNATIVE**: For new code, use Pydantic's Field(pattern=...)
@@ -1184,7 +1213,7 @@ class FlextUtilitiesValidation:
         uri: str | None,
         allowed_schemes: list[str] | None = None,
         context: str = "URI",
-    ) -> r[str]:
+    ) -> FlextRuntime.RuntimeResult[str]:
         """Validate URI format and optionally check scheme.
 
         **PYDANTIC 2 ALTERNATIVE**: For new code, consider using Pydantic's
@@ -1418,7 +1447,7 @@ class FlextUtilitiesValidation:
         value: t.GeneralValueType,
         error_message: str = "Value must be callable",
         error_code: str = c.Errors.TYPE_ERROR,
-    ) -> r[bool]:
+    ) -> FlextRuntime.RuntimeResult[bool]:
         """Validate that value is callable (generic helper for field validators).
 
         This generic helper consolidates duplicate callable validation logic
@@ -1433,7 +1462,7 @@ class FlextUtilitiesValidation:
             r[bool]: Success with True if callable, failure otherwise
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> result = u.Validation.validate_callable(lambda x: x + 1)
             >>> result.is_success
             True
@@ -1458,7 +1487,7 @@ class FlextUtilitiesValidation:
         max_timeout: float,
         error_message: str | None = None,
         error_code: str = c.Errors.VALIDATION_ERROR,
-    ) -> r[float | int]:
+    ) -> FlextRuntime.RuntimeResult[float | int]:
         """Validate that timeout does not exceed maximum (generic helper).
 
         This generic helper consolidates duplicate timeout validation logic
@@ -1474,7 +1503,7 @@ class FlextUtilitiesValidation:
             r: Success with timeout if valid, failure if exceeds max or negative
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> result = u.Validation.validate_timeout(5.0, 300.0)
             >>> result.is_success
             True
@@ -1508,7 +1537,7 @@ class FlextUtilitiesValidation:
         codes: list[object],
         min_code: int = c.Network.HTTP_STATUS_MIN,
         max_code: int = c.Network.HTTP_STATUS_MAX,
-    ) -> r[list[int]]:
+    ) -> FlextRuntime.RuntimeResult[list[int]]:
         """Validate and normalize HTTP status codes (generic helper).
 
         This generic helper consolidates duplicate HTTP status code validation
@@ -1523,7 +1552,7 @@ class FlextUtilitiesValidation:
             r[list[int]]: Success with normalized int codes, failure otherwise
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> result = u.Validation.validate_http_status_codes([
             ...     200,
             ...     "404",
@@ -1571,7 +1600,7 @@ class FlextUtilitiesValidation:
         timestamp: str,
         *,
         allow_empty: bool = True,
-    ) -> r[str]:
+    ) -> FlextRuntime.RuntimeResult[str]:
         """Validate ISO 8601 timestamp format (generic helper).
 
         This generic helper consolidates duplicate ISO 8601 timestamp validation
@@ -1585,7 +1614,7 @@ class FlextUtilitiesValidation:
             r[str]: Success with normalized timestamp, failure otherwise
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> result = u.Validation.validate_iso8601_timestamp("2025-01-01T00:00:00Z")
             >>> result.is_success
             True
@@ -1621,7 +1650,7 @@ class FlextUtilitiesValidation:
         hostname: str,
         *,
         perform_dns_lookup: bool = True,
-    ) -> r[str]:
+    ) -> FlextRuntime.RuntimeResult[str]:
         """Validate hostname format and optionally perform DNS resolution.
 
         This generic helper consolidates hostname validation logic from typings.py
@@ -1636,7 +1665,7 @@ class FlextUtilitiesValidation:
             r[str]: Success with hostname if valid, failure otherwise
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> result = u.Validation.validate_hostname("localhost")
             >>> result.is_success
             True
@@ -1706,7 +1735,7 @@ class FlextUtilitiesValidation:
         allow_empty: bool = False,
         strip: bool = True,
         error_message: str | None = None,
-    ) -> r[str]:
+    ) -> FlextRuntime.RuntimeResult[str]:
         """Validate and normalize identifier/name with customizable pattern.
 
         This generic helper consolidates identifier validation logic from
@@ -1731,7 +1760,7 @@ class FlextUtilitiesValidation:
             r[str]: Success with normalized name or failure with error
 
         Example:
-            >>> from flext_core.utilities import u
+            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> # Service name validation
             >>> result = u.Validation.validate_identifier("logger:app")
             >>> result.is_success
@@ -1774,188 +1803,6 @@ class FlextUtilitiesValidation:
             )
 
         return r[str].ok(normalized_name)
-
-    @staticmethod
-    def _validate_max_attempts(
-        retry_config: t.Types.ConfigurationDict | None,
-    ) -> r[int]:
-        """Validate max_attempts parameter."""
-        if retry_config is None:
-            retry_config = {}
-        max_attempts_raw = retry_config.get("max_attempts", 1)
-        if isinstance(max_attempts_raw, (int, str)):
-            max_attempts = int(max_attempts_raw)
-        else:
-            max_attempts = 1
-        if max_attempts < 1:
-            return r[int].fail(
-                "max_attempts must be >= 1",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
-        return r[int].ok(max_attempts)
-
-    @staticmethod
-    def _validate_initial_delay(
-        retry_config: t.Types.ConfigurationDict | None,
-    ) -> r[float]:
-        """Validate initial_delay_seconds parameter."""
-        if retry_config is None:
-            retry_config = {}
-        initial_delay_raw = retry_config.get("initial_delay_seconds", 0.1)
-        if isinstance(initial_delay_raw, (int, float, str)):
-            initial_delay = float(initial_delay_raw)
-        else:
-            initial_delay = 0.1
-        if initial_delay <= 0:
-            return r[float].fail(
-                "initial_delay_seconds must be > 0",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
-        return r[float].ok(initial_delay)
-
-    @staticmethod
-    def _validate_max_delay(
-        retry_config: t.Types.ConfigurationDict | None,
-    ) -> r[float]:
-        """Validate max_delay_seconds parameter."""
-        if retry_config is None:
-            retry_config = {}
-        max_delay_raw = retry_config.get("max_delay_seconds", 60.0)
-        if isinstance(max_delay_raw, (int, float, str)):
-            max_delay = float(max_delay_raw)
-        else:
-            max_delay = 60.0
-        if max_delay <= 0:
-            return r[float].fail(
-                "max_delay_seconds must be > 0",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
-        return r[float].ok(max_delay)
-
-    @staticmethod
-    def _validate_backoff_multiplier(
-        retry_config: t.Types.ConfigurationDict | None,
-    ) -> r[float]:
-        """Validate backoff_multiplier parameter."""
-        if retry_config is None:
-            return r[float].ok(
-                c.DEFAULT_BACKOFF_MULTIPLIER,
-            )
-        backoff_multiplier = retry_config.get("backoff_multiplier")
-        if backoff_multiplier is not None and isinstance(
-            backoff_multiplier,
-            (int, float, str),
-        ):
-            backoff_mult = float(backoff_multiplier)
-            if backoff_mult < 1.0:
-                return r[float].fail(
-                    "backoff_multiplier must be >= 1.0",
-                    error_code=c.Errors.VALIDATION_ERROR,
-                )
-            return r[float].ok(backoff_mult)
-        return r[float].ok(
-            c.DEFAULT_BACKOFF_MULTIPLIER,
-        )
-
-    @staticmethod
-    def create_retry_config(
-        retry_config: t.Types.ConfigurationDict | None,
-    ) -> "r[m.Config.RetryConfiguration]":  # noqa: F821, UP037
-        """Create and validate retry configuration using railway pattern.
-
-        Args:
-            retry_config: Raw retry configuration dictionary
-
-        Returns:
-            r["m.Config.RetryConfiguration"]: Validated retry configuration or error
-
-        """
-        # Lazy import to break circular dependency (last resort per plan)
-        from flext_core.models import m  # noqa: PLC0415
-
-        if retry_config is None:
-            retry_config = {}
-        try:
-            # Validate each parameter using railway pattern (DRY consolidation)
-            result = FlextUtilitiesValidation._validate_max_attempts(retry_config)
-            if result.is_failure:
-                return r["m.Config.RetryConfiguration"].fail(
-                    result.error or "Max attempts validation failed",
-                )
-
-            max_attempts = result.value
-
-            delay_result = FlextUtilitiesValidation._validate_initial_delay(
-                retry_config,
-            )
-            if delay_result.is_failure:
-                return r["m.Config.RetryConfiguration"].fail(
-                    delay_result.error or "Initial delay validation failed",
-                )
-
-            initial_delay = delay_result.value
-            params_2 = (max_attempts, initial_delay)
-
-            max_delay_result = FlextUtilitiesValidation._validate_max_delay(
-                retry_config,
-            )
-            if max_delay_result.is_failure:
-                return r["m.Config.RetryConfiguration"].fail(
-                    max_delay_result.error or "Max delay validation failed",
-                )
-
-            max_delay = max_delay_result.value
-            params_3 = (*params_2, max_delay)
-
-            backoff_result = FlextUtilitiesValidation._validate_backoff_multiplier(
-                retry_config,
-            )
-            if backoff_result.is_failure:
-                return r["m.Config.RetryConfiguration"].fail(
-                    backoff_result.error or "Backoff multiplier validation failed",
-                )
-
-            backoff_mult = backoff_result.value
-            params_4 = (*params_3, backoff_mult)
-
-            return r["m.Config.RetryConfiguration"].ok(
-                m.Config.RetryConfiguration(
-                    max_attempts=params_4[0],
-                    initial_delay_seconds=params_4[1],
-                    max_delay_seconds=params_4[2],
-                    exponential_backoff=bool(
-                        retry_config.get("exponential_backoff"),
-                    ),
-                    retry_on_exceptions=(
-                        cast(
-                            "list[type[BaseException]]",
-                            [
-                                exc_type
-                                for exc_type in cast(
-                                    "Sequence[t.GeneralValueType]",
-                                    retry_config["retry_on_exceptions"],
-                                )
-                                if isinstance(exc_type, type)
-                                and issubclass(exc_type, BaseException)
-                            ],
-                        )
-                        if "retry_on_exceptions" in retry_config
-                        and retry_config["retry_on_exceptions"] is not None
-                        and isinstance(
-                            retry_config["retry_on_exceptions"],
-                            (list, tuple),
-                        )
-                        else []
-                    ),
-                    backoff_multiplier=params_4[3],
-                ),
-            )
-
-        except (ValueError, TypeError) as e:
-            return r["m.Config.RetryConfiguration"].fail(
-                f"Invalid retry configuration: {e}",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
 
     @staticmethod
     def is_exception_retryable(
@@ -2002,7 +1849,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_batch_services(
         services: t.Types.ConfigurationMapping,
-    ) -> r[t.Types.ConfigurationMapping]:
+    ) -> FlextRuntime.RuntimeResult[t.Types.ConfigurationMapping]:
         """Validate batch services dictionary for container registration.
 
         Args:
@@ -2074,7 +1921,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_dispatch_config(
         config: t.Types.ConfigurationMapping | None,
-    ) -> r[t.Types.ConfigurationMapping]:
+    ) -> FlextRuntime.RuntimeResult[t.Types.ConfigurationMapping]:
         """Validate dispatch configuration dictionary.
 
         Args:
@@ -2130,8 +1977,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _validate_event_structure(
-        event: p.Foundation.HasModelDump | None,
-    ) -> r[bool]:
+        event: p.HasModelDump | None,
+    ) -> FlextRuntime.RuntimeResult[bool]:
         """Validate event is not None and has required attributes."""
         if event is None:
             return r[bool].fail(
@@ -2154,8 +2001,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _validate_event_fields(
-        event: p.Foundation.HasModelDump,
-    ) -> r[bool]:
+        event: p.HasModelDump,
+    ) -> FlextRuntime.RuntimeResult[bool]:
         """Validate event field types and values."""
         # Validate event_type is non-empty string
         event_type = getattr(event, "event_type", "")
@@ -2185,8 +2032,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_domain_event(
-        event: p.Foundation.HasModelDump | None,
-    ) -> r[bool]:
+        event: p.HasModelDump | None,
+    ) -> FlextRuntime.RuntimeResult[bool]:
         """Enhanced domain event validation with comprehensive checks.
 
         Validates domain events for proper structure, required fields,
@@ -2242,7 +2089,7 @@ class FlextUtilitiesValidation:
         value: T,
         validators: tuple[ValidatorSpec, ...],
         field_prefix: str,
-    ) -> r[T]:
+    ) -> FlextRuntime.RuntimeResult[T]:
         """Check if any validator passes (helper for validate)."""
         for validator in validators:
             if validator(value):
@@ -2262,7 +2109,7 @@ class FlextUtilitiesValidation:
         *,
         fail_fast: bool,
         collect_errors: bool,
-    ) -> r[T]:
+    ) -> FlextRuntime.RuntimeResult[T]:
         """Check if all validators pass (helper for validate)."""
 
         def validator_failed(v: ValidatorSpec) -> bool:
@@ -2296,7 +2143,7 @@ class FlextUtilitiesValidation:
         fail_fast: bool = True,
         collect_errors: bool = False,
         field_name: str | None = None,
-    ) -> r[T]:
+    ) -> FlextRuntime.RuntimeResult[T]:
         """Validate value against one or more validators.
 
         Business Rule: Composes validators using AND (all) or OR (any) logic.
@@ -2424,8 +2271,10 @@ class FlextUtilitiesValidation:
         if shortcut_result.is_failure:
             # Use ResultHelpers.err for unified error extraction
             default_err = "Guard check failed"
+            # Cast to help type checker understand Result protocol compatibility
+            result_protocol = cast("p.Result[Never]", shortcut_result)
             return error_msg or FlextUtilitiesValidation.ResultHelpers.err(
-                shortcut_result,
+                result_protocol,
                 default=default_err,
             )
         return None
@@ -2477,11 +2326,11 @@ class FlextUtilitiesValidation:
                 error_msg,
             )
         # Type narrowing: condition is tuple of types
-        # pyright: ignore[reportUnknownVariableType] - generator expression type inference limitation
-        if isinstance(condition, tuple) and all(isinstance(c, type) for c in condition):  # type: ignore[arg-type]
+
+        if isinstance(condition, tuple) and all(isinstance(c, type) for c in condition):
             return FlextUtilitiesValidation._guard_check_type(
                 value,
-                condition,  # type: ignore[arg-type]
+                condition,
                 context_name,
                 error_msg,
             )
@@ -2491,7 +2340,7 @@ class FlextUtilitiesValidation:
             validator_condition = cast("ValidatorSpec", condition)
             return FlextUtilitiesValidation._guard_check_validator(
                 value,
-                validator_condition,  # type: ignore[arg-type]
+                validator_condition,
                 context_name,
                 error_msg,
             )
@@ -2509,7 +2358,7 @@ class FlextUtilitiesValidation:
         if callable(condition):
             return FlextUtilitiesValidation._guard_check_predicate(
                 value,
-                condition,  # type: ignore[arg-type]
+                condition,
                 context_name,
                 error_msg,
             )
@@ -2523,7 +2372,7 @@ class FlextUtilitiesValidation:
         *,
         return_value: bool,
         default: T | None,
-    ) -> r[T] | T | None:
+    ) -> FlextRuntime.RuntimeResult[T] | T | None:
         """Helper: Handle guard failure with return_value and default logic."""
         if return_value:
             # Use ResultHelpers.or_ for default fallback
@@ -2533,7 +2382,9 @@ class FlextUtilitiesValidation:
         return r[T].fail(error_message)
 
     @staticmethod
-    def _guard_non_empty(value: object, error_template: str) -> r[object]:
+    def _guard_non_empty(
+        value: object, error_template: str
+    ) -> FlextRuntime.RuntimeResult[object]:
         """Internal helper for non-empty validation."""
         # Use pattern matching for type-specific validation
         value_typed = cast("t.GeneralValueType", value)
@@ -2616,7 +2467,7 @@ class FlextUtilitiesValidation:
         value: object,
         shortcut: str,
         context: str,
-    ) -> r[object]:
+    ) -> FlextRuntime.RuntimeResult[object]:
         """Handle string shortcuts for common guard patterns via table lookup."""
         # Use lower() instead of u.normalize to avoid dependency
         shortcut_lower = shortcut.lower()
@@ -2635,15 +2486,15 @@ class FlextUtilitiesValidation:
                 result_ok = r[t.GeneralValueType].ok(cast("t.GeneralValueType", value))
                 # Cast to r[object] for return type compatibility
                 return cast("r[object]", result_ok)
-            result_fail = r[t.GeneralValueType].fail(f"{error_template} {type_desc}")
-            # Cast to r[object] for return type compatibility
-            return cast("r[object]", result_fail)
+            result_fail: r[object] = r[t.GeneralValueType].fail(
+                f"{error_template} {type_desc}"
+            )
+            return result_fail
 
-        result_unknown = r[t.GeneralValueType].fail(
+        result_unknown: r[object] = r[t.GeneralValueType].fail(
             f"{context} unknown guard shortcut: {shortcut}",
         )
-        # Cast to r[object] for return type compatibility
-        return cast("r[object]", result_unknown)
+        return result_unknown
 
     @staticmethod
     def guard[T](
@@ -2655,7 +2506,7 @@ class FlextUtilitiesValidation:
         context: str | None = None,
         default: T | None = None,
         return_value: bool = False,
-    ) -> r[T] | T | None:
+    ) -> FlextRuntime.RuntimeResult[T] | T | None:
         """Advanced guard method unifying type guards and validations.
 
         Business Rule: Provides unified interface for type checking, validation,
@@ -2683,7 +2534,7 @@ class FlextUtilitiesValidation:
 
         Returns:
             r[T] | T | None:
-                - If return_value=False: p.Foundation.Result[T] (Ok(value) or Fail)
+                - If return_value=False: p.Result[T] (Ok(value) or Fail)
                 - If return_value=True and default=None: T | None (value on success, None on failure)
                 - If return_value=True and default provided: T (value on success, default on failure)
 
@@ -2752,10 +2603,10 @@ class FlextUtilitiesValidation:
         """
 
         @staticmethod
-        def ok[T](value: T) -> r[T]:
+        def ok[T](value: T) -> FlextRuntime.RuntimeResult[T]:
             """Create success result (mnemonic: ok = success).
 
-            Generic replacement for: p.Foundation.Result[T].ok(value)
+            Generic replacement for: p.Result[T].ok(value)
 
             Args:
                 value: Value to wrap
@@ -2771,7 +2622,7 @@ class FlextUtilitiesValidation:
             return r[T].ok(value)
 
         @staticmethod
-        def fail(error: str) -> r[object]:
+        def fail(error: str) -> FlextRuntime.RuntimeResult[object]:
             """Create failure result (mnemonic: fail = failure).
 
             Business Rule: Failures don't carry a value, only an error message.
@@ -2784,14 +2635,14 @@ class FlextUtilitiesValidation:
                 r[object] with failure
 
             Example:
-                result: p.Foundation.Result[Entry] = ResultHelpers.fail("Operation failed")
+                result: p.Result[Entry] = ResultHelpers.fail("Operation failed")
 
             """
             return r[object].fail(error)
 
         @staticmethod
         def err[T](
-            result: p.Foundation.Result[T],
+            result: p.Result[T],
             *,
             default: str = "Unknown error",
         ) -> str:
@@ -2816,7 +2667,7 @@ class FlextUtilitiesValidation:
 
         @staticmethod
         def val[T](
-            result: p.Foundation.Result[T],
+            result: p.Result[T],
             *,
             default: T | None = None,
         ) -> T | None:
@@ -2860,7 +2711,8 @@ class FlextUtilitiesValidation:
                 # Type narrowing: value is r[T] and is_success is True, so value.value is T
                 # Use direct access to .value property (unwrap() is deprecated)
                 # FlextResult never returns None in value if not failed
-                return cast("T", value.value)
+                # Type inference: value.value is already T when is_success is True
+                return value.value
             return value
 
         @staticmethod
@@ -2883,7 +2735,12 @@ class FlextUtilitiesValidation:
 
             """
             rh = FlextUtilitiesValidation.ResultHelpers
-            items_dict = rh.val(items, default={}) if isinstance(items, r) else items
+            # Cast r[T] to p.Result[T] for protocol compatibility
+            items_dict = (
+                rh.val(cast("p.Result[dict[str, T]]", items), default={})
+                if isinstance(items, r)
+                else items
+            )
             if items_dict:
                 return list(items_dict.values())
             result = rh.or_(default, default=[])
@@ -2904,7 +2761,10 @@ class FlextUtilitiesValidation:
                 First non-None value or default
 
             Example:
-                port = ResultHelpers.or_(config.get("port"), default=c.Platform.DEFAULT_HTTP_PORT)
+                port = ResultHelpers.or_(
+                    FlextUtilitiesMapper.get(config, "port"),
+                    default=c.Platform.DEFAULT_HTTP_PORT,
+                )
 
             """
             for value in values:
@@ -2965,11 +2825,12 @@ class FlextUtilitiesValidation:
             """
             if source is None:
                 return default
-            m = FlextUtilitiesMapper
             if as_type is not None:
-                taken = m.take(source, key, as_type=as_type, default=default)
+                taken = FlextUtilitiesMapper.take(
+                    source, key, as_type=as_type, default=default
+                )
                 return taken if taken is not None else default
-            gotten = m.get(source, key, default=default)
+            gotten = FlextUtilitiesMapper.get(source, key, default=default)
             return gotten if gotten is not None else default
 
         @staticmethod
@@ -2977,7 +2838,7 @@ class FlextUtilitiesValidation:
             value: T | None,
             *,
             name: str = "value",
-        ) -> r[T]:
+        ) -> FlextRuntime.RuntimeResult[T]:
             """Require non-None value (mnemonic: req = required).
 
             Args:
@@ -2999,9 +2860,9 @@ class FlextUtilitiesValidation:
 
         @staticmethod
         def then[T, R2](
-            result: p.Foundation.Result[T],
+            result: p.Result[T],
             func: Callable[[T], r[R2]],
-        ) -> r[R2]:
+        ) -> FlextRuntime.RuntimeResult[R2]:
             """Chain operations (mnemonic: then = flat_map).
 
             Args:
@@ -3016,7 +2877,7 @@ class FlextUtilitiesValidation:
 
             """
             # Convert protocol to concrete type for method access
-            # Protocol p.Foundation.Result doesn't have flat_map, need to use concrete r
+            # Protocol p.Result doesn't have flat_map, need to use concrete r
             if result.is_success:
                 value = result.value
                 return func(value)
@@ -3360,17 +3221,19 @@ class FlextUtilitiesValidation:
             str_value = ensure(value, target_type="str", default="")
 
         """
-        m = FlextUtilitiesMapper
-
         # Handle string conversions first
         if target_type == "str":
             str_default = cast("str", default) if default is not None else ""
-            return cast("T", m.ensure_str(value, default=str_default))
+            return cast(
+                "T", FlextUtilitiesMapper.ensure_str(value, default=str_default)
+            )
         if target_type == "str_list":
             str_list_default = (
                 cast("list[str]", default) if isinstance(default, list) else None
             )
-            return cast("list[T]", m.ensure(value, default=str_list_default))
+            return cast(
+                "list[T]", FlextUtilitiesMapper.ensure(value, default=str_list_default)
+            )
         if target_type == "dict":
             dict_default_typed: t.Types.ConfigurationDict | None
             if isinstance(default, dict):
@@ -3395,6 +3258,109 @@ class FlextUtilitiesValidation:
             list_default_fallback,
         )
         return cast("T", list_result)
+
+    # ═══════════════════════════════════════════════════════════════════
+    # TYPEADAPTER UTILITIES (Pydantic v2 dynamic validation)
+    # ═══════════════════════════════════════════════════════════════════
+
+    class TypeAdapter:
+        """Pydantic TypeAdapter utilities for dynamic validation.
+
+        Provides utilities for dynamic validation and serialization
+        using Pydantic v2 TypeAdapter, enabling runtime type validation
+        without requiring pre-defined model classes.
+        """
+
+        @staticmethod
+        def validate[T](data: object, type_: type[T]) -> FlextRuntime.RuntimeResult[T]:
+            """Validate data against type using TypeAdapter.
+
+            Args:
+                data: Data to validate.
+                type_: Type to validate against.
+
+            Returns:
+                r[T]: Success with validated data, or failure with validation errors.
+
+            Example:
+                >>> result = u.Validation.TypeAdapter.validate(
+                ...     {"name": "John", "age": 30}, UserModel
+                ... )
+                >>> if result.is_success:
+                ...     user = result.value
+
+            """
+            adapter = PydanticTypeAdapter(type_)
+            try:
+                validated = adapter.validate_python(data)
+                return r[T].ok(validated)
+            except PydanticValidationError as e:
+                error_msg = "; ".join(
+                    f"{err['loc']}: {err['msg']}" for err in e.errors()
+                )
+                return r[T].fail(f"Validation failed: {error_msg}")
+
+        @staticmethod
+        def serialize[T](value: T, type_: type[T]) -> r[Mapping[str, object]]:
+            """Serialize value using TypeAdapter.
+
+            Args:
+                value: Value to serialize.
+                type_: Type of the value.
+
+            Returns:
+                r[Mapping[str, object]]: Success with serialized data as dict,
+                    or failure with serialization errors.
+
+            Example:
+                >>> result = u.Validation.TypeAdapter.serialize(user, UserModel)
+                >>> if result.is_success:
+                ...     data = result.value
+
+            """
+            adapter = PydanticTypeAdapter(type_)
+            try:
+                serialized = adapter.dump_python(value, mode="json")
+                return r[Mapping[str, object]].ok(
+                    serialized
+                    if isinstance(serialized, dict)
+                    else {"value": serialized}
+                )
+            except Exception as e:
+                return r[Mapping[str, object]].fail(f"Serialization failed: {e}")
+
+        @staticmethod
+        def parse_json[T](
+            json_str: str, type_: type[T]
+        ) -> FlextRuntime.RuntimeResult[T]:
+            """Parse JSON string into typed model.
+
+            Args:
+                json_str: JSON string to parse.
+                type_: Type to parse into.
+
+            Returns:
+                r[T]: Success with parsed model, or failure with parsing errors.
+
+            Example:
+                >>> result = u.Validation.TypeAdapter.parse_json(
+                ...     '{"name": "John"}', UserModel
+                ... )
+                >>> if result.is_success:
+                ...     user = result.value
+
+            """
+            adapter = PydanticTypeAdapter(type_)
+            try:
+                validated = adapter.validate_json(json_str)
+                return r[T].ok(validated)
+            except PydanticValidationError as e:
+                error_msg = "; ".join(
+                    f"{err['loc']}: {err['msg']}" for err in e.errors()
+                )
+                return r[T].fail(f"JSON parsing failed: {error_msg}")
+            except Exception as e:
+                return r[T].fail(f"JSON parsing failed: {e}")
 
 
 __all__ = [

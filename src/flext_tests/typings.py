@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
 from typing import Literal, TypeVar
 
 from pydantic import BaseModel
@@ -18,6 +17,8 @@ from pydantic import BaseModel
 from flext_core import FlextTypes
 from flext_core.result import r
 
+# Note: p.Tests.* protocols are defined in flext_tests.protocols
+# Use forward reference strings "FlextTestsProtocols" in type hints if needed
 
 TTestResult = TypeVar("TTestResult")
 TTestModel = TypeVar("TTestModel")
@@ -42,54 +43,32 @@ class FlextTestsTypes(FlextTypes):
         Use specific types instead of GeneralValueType where possible.
         """
 
-        type ContainerPortMapping = Mapping[str, str]
+        # Reuse StringMapping from flext_core.typings - no duplication
+        type ContainerPortMapping = t.Types.StringMapping
         """Mapping of container port names to host port bindings."""
 
-        type ContainerConfigMapping = Mapping[
-            str,
-            str | int | float | bool | Sequence[str | int | float | bool] | None,
-        ]
+        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        type ContainerConfigMapping = t.Types.ConfigurationMapping
         """Mapping for container configuration data with specific value types."""
 
-        type DockerComposeServiceMapping = Mapping[
-            str,
-            str
-            | int
-            | float
-            | bool
-            | Sequence[str | int | float | bool]
-            | Mapping[str, str | int | float | bool]
-            | None,
-        ]
+        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        type DockerComposeServiceMapping = t.Types.ConfigurationMapping
         """Mapping for docker-compose service configuration with specific types."""
 
-        type ContainerStateMapping = Mapping[
-            str,
-            str | int | float | bool | Sequence[str] | Mapping[str, str | int] | None,
-        ]
+        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        type ContainerStateMapping = t.Types.ConfigurationMapping
         """Mapping for container state information with specific value types."""
 
-        type TestDataMapping = Mapping[
-            str,
-            str | int | float | bool | Sequence[str | int | float | bool] | None,
-        ]
+        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        type TestDataMapping = t.Types.ConfigurationMapping
         """Mapping for test data with specific value types."""
 
-        type TestConfigMapping = Mapping[
-            str,
-            str | int | float | bool | Sequence[str] | Mapping[str, str | int] | None,
-        ]
+        # Reuse ConfigurationMapping from flext_core.typings - no duplication
+        type TestConfigMapping = t.Types.ConfigurationMapping
         """Mapping for test configuration with specific value types."""
 
-        type TestResultValue = (
-            str
-            | int
-            | float
-            | bool
-            | Sequence[str | int | float | bool]
-            | Mapping[str, str | int | float | bool]
-            | None
-        )
+        # Reuse GeneralValueType from flext_core.typings - no duplication
+        type TestResultValue = t.GeneralValueType
         """Type for test result values with specific constraints."""
 
         # Note: Generic callables can't use module TypeVars in type aliases
@@ -98,40 +77,26 @@ class FlextTestsTypes(FlextTypes):
         class Docker:
             """Docker-specific type definitions with specific types."""
 
-            type ContainerPorts = Mapping[str, str]
+            # Reuse StringMapping from flext_core.typings - no duplication
+            type ContainerPorts = t.Types.StringMapping
             """Container port mappings (container_port -> host:port)."""
 
-            type ContainerLabels = Mapping[str, str]
+            type ContainerLabels = t.Types.StringMapping
             """Container labels mapping."""
 
             type ContainerEnvironment = Sequence[str]
             """Container environment variables as sequence."""
 
-            type ComposeFileConfig = Mapping[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | Sequence[str | int | float | bool]
-                | Mapping[str, str | int | float | bool]
-                | None,
-            ]
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            type ComposeFileConfig = t.Types.ConfigurationMapping
             """Docker compose file configuration structure with specific types."""
 
-            type VolumeMapping = Mapping[str, str]
+            # Reuse StringMapping from flext_core.typings - no duplication
+            type VolumeMapping = t.Types.StringMapping
             """Volume mappings (host_path -> container_path)."""
 
-            type NetworkMapping = Mapping[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | Sequence[str]
-                | Mapping[str, str | int]
-                | None,
-            ]
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            type NetworkMapping = t.Types.ConfigurationMapping
             """Network configuration mapping with specific types."""
 
             type ContainerHealthStatus = str
@@ -140,41 +105,27 @@ class FlextTestsTypes(FlextTypes):
             type ContainerHealthStatusLiteral = str  # Future: Literal health values
             """Type-safe literal for container health status."""
 
-            type ContainerOperationResult = Mapping[
-                str,
-                str | int | bool | Sequence[str] | None,
-            ]
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            type ContainerOperationResult = t.Types.ConfigurationMapping
             """Result type for container operations with specific fields."""
 
         class Test:
             """Test-specific type definitions."""
 
-            type TestCaseData = Mapping[
-                str,
-                str | int | float | bool | Sequence[str | int | float | bool] | None,
-            ]
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            type TestCaseData = t.Types.ConfigurationMapping
             """Test case data structure with specific value types."""
 
-            type TestFixtureData = Mapping[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | Path
-                | Sequence[str | int | float | bool]
-                | Mapping[str, str | int | float | bool]
-                | None,
-            ]
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # Note: Path is included in GeneralValueType via object compatibility
+            type TestFixtureData = t.Types.ConfigurationMapping
             """Test fixture data structure with specific value types."""
 
             type TestAssertionResult = Mapping[str, str | bool | int | None]
             """Test assertion result structure."""
 
-            type TestExecutionContext = Mapping[
-                str,
-                str | int | float | bool | Sequence[str] | Mapping[str, str] | None,
-            ]
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            type TestExecutionContext = t.Types.ConfigurationMapping
             """Test execution context with specific metadata types."""
 
         class Factory:
@@ -267,27 +218,22 @@ class FlextTestsTypes(FlextTypes):
             """Source type for dict() factory method."""
 
             # Generic factory types
+            # Reuse types from flext_core.typings - no duplication
             type GenericArgs = Sequence[t.GeneralValueType]
             """Positional arguments for generic type instantiation."""
 
-            type GenericKwargs = Mapping[str, t.GeneralValueType]
+            type GenericKwargs = t.Types.ConfigurationMapping
             """Keyword arguments for generic type instantiation."""
 
         class Files:
             """File-specific type definitions for test file operations (tf)."""
 
-            type ScalarValue = str | int | float | bool | None
+            # Reuse ScalarValue from flext_core.typings - no duplication
+            type ScalarValue = t.ScalarValue
             """Scalar values that can be serialized directly."""
 
-            type SerializableValue = (
-                str
-                | int
-                | float
-                | bool
-                | Sequence[str | int | float | bool | None]
-                | Mapping[str, str | int | float | bool | None]
-                | None
-            )
+            # Reuse JsonValue from flext_core.typings - no duplication
+            type SerializableValue = t.Json.JsonValue
             """Values that can be serialized to JSON/YAML."""
 
             type FileContentValue = (
@@ -298,15 +244,8 @@ class FlextTestsTypes(FlextTypes):
             )
             """Unified file content type for read/write operations."""
 
-            type JsonValue = (
-                str
-                | int
-                | float
-                | bool
-                | Sequence[str | int | float | bool | None]
-                | Mapping[str, str | int | float | bool | None]
-                | None
-            )
+            # Reuse JsonValue from flext_core.typings - no duplication
+            type JsonValue = t.Json.JsonValue
             """JSON-compatible value type."""
 
             type CsvRow = Sequence[str]
@@ -325,6 +264,7 @@ class FlextTestsTypes(FlextTypes):
 
             # Enhanced type aliases for batch operations and content handling
             # Following plan: includes BaseModel support for Pydantic models
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
             type FileContent = (
                 str
                 | bytes
@@ -339,7 +279,8 @@ class FlextTestsTypes(FlextTypes):
             )
             """Batch file operations input type."""
 
-            type PathMapping = Mapping[str, Path]
+            # Use StringPathDict from flext_core.typings - no duplication
+            type PathMapping = t.Types.StringPathDict
             """Mapping of names to file paths."""
 
             type ReadResult[T] = (
@@ -388,7 +329,8 @@ class FlextTestsTypes(FlextTypes):
             type BuilderDict = dict[str, BuilderValue]
             """Type for builder internal data structure."""
 
-            type BuilderMapping = Mapping[str, BuilderValue]
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            type BuilderMapping = t.Types.ConfigurationMapping
             """Type for builder mappings."""
 
             type BuilderSequence = Sequence[BuilderValue]
@@ -397,10 +339,12 @@ class FlextTestsTypes(FlextTypes):
             type ParametrizedCase = tuple[str, BuilderDict]
             """Type for parametrized test cases (test_id, data)."""
 
-            type TransformFunc = Callable[[t.GeneralValueType], t.GeneralValueType]
+            # Reuse HandlerCallable from flext_core.typings - no duplication
+            type TransformFunc = t.Handler.HandlerCallable
             """Type for transformation functions."""
 
-            type ValidateFunc = Callable[[t.GeneralValueType], bool]
+            # Reuse ConditionCallable from flext_core.typings - no duplication
+            type ValidateFunc = t.Handler.ConditionCallable
             """Type for validation functions."""
 
             type ResultBuilder[T] = Callable[[], r[T]]
@@ -533,7 +477,8 @@ class FlextTestsTypes(FlextTypes):
                 all_=lambda x: x > 0        # All items pass predicate
             """
 
-            type SortKey = bool | Callable[[object], p.Tests.Support.SupportsLessThan]
+            # Use object for runtime compatibility - protocol is only for type checking
+            type SortKey = bool | Callable[[object], object]
             """Sort key specification: boolean or key function.
 
             Used for sorted parameter.
@@ -610,7 +555,8 @@ class FlextTestsTypes(FlextTypes):
                 code_has=["VALID", "ERROR"]          # Contains codes
             """
 
-            type ErrorDataSpec = Mapping[str, object]
+            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            type ErrorDataSpec = t.Types.ConfigurationMapping
             """Error data specification: key-value pairs.
 
             Used for data parameter in tm.fail() to validate error metadata.
@@ -632,7 +578,8 @@ class FlextTestsTypes(FlextTypes):
                 cleanup=[lambda: resource.cleanup(), lambda: db.close()]
             """
 
-            type EnvironmentSpec = Mapping[str, str]
+            # Reuse StringMapping from flext_core.typings - no duplication
+            type EnvironmentSpec = t.Types.StringMapping
             """Environment specification: mapping of env var names to values.
 
             Used for env parameter in tm.scope().

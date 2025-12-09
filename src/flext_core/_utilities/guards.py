@@ -13,14 +13,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable, Mapping, Sequence
-from typing import TypeGuard, TypeVar, cast
+from typing import TypeGuard, cast
 
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-T = TypeVar("T")
 
 
 class FlextUtilitiesGuards:
@@ -38,7 +37,7 @@ class FlextUtilitiesGuards:
     """
 
     @staticmethod
-    def _is_string_non_empty(value: t.GeneralValueType) -> bool:
+    def is_string_non_empty(value: t.GeneralValueType) -> bool:
         """Check if value is a non-empty string using duck typing.
 
         Validates that the provided value is a string type and contains
@@ -63,7 +62,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def _is_dict_non_empty(value: t.GeneralValueType) -> bool:
+    def is_dict_non_empty(value: t.GeneralValueType) -> bool:
         """Check if value is a non-empty dictionary using duck typing.
 
         Validates that the provided value behaves like a dictionary
@@ -88,7 +87,7 @@ class FlextUtilitiesGuards:
         return FlextRuntime.is_dict_like(value) and bool(value)
 
     @staticmethod
-    def _is_list_non_empty(value: t.GeneralValueType) -> bool:
+    def is_list_non_empty(value: t.GeneralValueType) -> bool:
         """Check if value is a non-empty list using duck typing.
 
         Validates that the provided value behaves like a list
@@ -128,11 +127,12 @@ class FlextUtilitiesGuards:
             t.MetadataAttributeValue: Normalized value compatible with Metadata attributes
 
         Example:
-            >>> FlextUtilitiesGuards.normalize_to_metadata_value("test")
+            >>> from flext_core.utilities import u
+            >>> u.Guards.normalize_to_metadata_value("test")
             'test'
-            >>> FlextUtilitiesGuards.normalize_to_metadata_value({"key": "value"})
+            >>> u.Guards.normalize_to_metadata_value({"key": "value"})
             {'key': 'value'}
-            >>> FlextUtilitiesGuards.normalize_to_metadata_value([1, 2, 3])
+            >>> u.Guards.normalize_to_metadata_value([1, 2, 3])
             [1, 2, 3]
 
         """
@@ -140,8 +140,10 @@ class FlextUtilitiesGuards:
             return val
         if FlextRuntime.is_dict_like(val):
             # Convert to flat dict with ScalarValue values
+            # Type narrowing: is_dict_like ensures val is Mapping-like
+            val_mapping = cast("Mapping[str, t.GeneralValueType]", val)
             result_dict: dict[str, t.ScalarValue] = {}
-            dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+            dict_v = dict(val_mapping.items())
             for k, v in dict_v.items():
                 if isinstance(v, (str, int, float, bool, type(None))):
                     result_dict[k] = v
@@ -151,8 +153,10 @@ class FlextUtilitiesGuards:
             return result_dict
         if FlextRuntime.is_list_like(val):
             # Convert to list[t.MetadataAttributeValue]
+            # Type narrowing: is_list_like ensures val is Sequence-like
+            val_sequence = cast("Sequence[t.GeneralValueType]", val)
             result_list: list[str | int | float | bool | None] = []
-            for item in val:
+            for item in val_sequence:
                 if isinstance(item, (str, int, float, bool, type(None))):
                     result_list.append(item)
                 else:
@@ -166,7 +170,7 @@ class FlextUtilitiesGuards:
     # These functions enable type narrowing without cast() - zero tolerance typing
 
     @staticmethod
-    def _is_config(obj: object) -> TypeGuard[p.Configuration.Config]:
+    def _is_config(obj: object) -> TypeGuard[p.Config]:
         """Check if object satisfies the Config protocol.
 
         Enables type narrowing for configuration objects without cast().
@@ -175,19 +179,19 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Configuration.Config]: True if obj satisfies Config protocol
+            TypeGuard[p.Config]: True if obj satisfies Config protocol
 
         Example:
             >>> from flext_core.utilities import u
             >>> if u.is_type(config, "config"):
-            ...     # config is now typed as p.Configuration.Config
+            ...     # config is now typed as p.Config
             ...     name = config.app_name
 
         """
-        return isinstance(obj, p.Configuration.Config)
+        return isinstance(obj, p.Config)
 
     @staticmethod
-    def _is_context(obj: object) -> TypeGuard[p.Context.Ctx]:
+    def _is_context(obj: object) -> TypeGuard[p.Ctx]:
         """Check if object satisfies the Context protocol.
 
         Enables type narrowing for context objects without cast().
@@ -196,14 +200,14 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Context.Ctx]: True if obj satisfies Ctx protocol
+            TypeGuard[p.Ctx]: True if obj satisfies Ctx protocol
 
         """
-        return isinstance(obj, p.Context.Ctx)
+        return isinstance(obj, p.Ctx)
 
     @staticmethod
-    def _is_container(obj: object) -> TypeGuard[p.Container.DI]:
-        """Check if object satisfies the Container DI protocol.
+    def _is_container(obj: object) -> TypeGuard[p.DI]:
+        """Check if object satisfies the DI protocol.
 
         Enables type narrowing for container objects without cast().
 
@@ -211,13 +215,13 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Container.DI]: True if obj satisfies DI protocol
+            TypeGuard[p.DI]: True if obj satisfies DI protocol
 
         """
-        return isinstance(obj, p.Container.DI)
+        return isinstance(obj, p.DI)
 
     @staticmethod
-    def _is_command_bus(obj: object) -> TypeGuard[p.Application.CommandBus]:
+    def _is_command_bus(obj: object) -> TypeGuard[p.CommandBus]:
         """Check if object satisfies the CommandBus protocol.
 
         Enables type narrowing for dispatcher/command bus without cast().
@@ -226,13 +230,13 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Application.CommandBus]: True if obj satisfies CommandBus
+            TypeGuard[p.CommandBus]: True if obj satisfies CommandBus
 
         """
-        return isinstance(obj, p.Application.CommandBus)
+        return isinstance(obj, p.CommandBus)
 
     @staticmethod
-    def _is_handler(obj: object) -> TypeGuard[p.Application.Handler]:
+    def _is_handler(obj: object) -> TypeGuard[p.Handler]:
         """Check if object satisfies the Handler protocol.
 
         Enables type narrowing for handler objects without cast().
@@ -241,13 +245,13 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Application.Handler]: True if obj satisfies Handler protocol
+            TypeGuard[p.Handler]: True if obj satisfies Handler protocol
 
         """
-        return isinstance(obj, p.Application.Handler)
+        return isinstance(obj, p.Handler)
 
     @staticmethod
-    def _is_logger(obj: object) -> TypeGuard[p.Infrastructure.Logger.StructlogLogger]:
+    def _is_logger(obj: object) -> TypeGuard[p.Log.StructlogLogger]:
         """Check if object satisfies the StructlogLogger protocol.
 
         Enables type narrowing for logger objects without cast().
@@ -256,13 +260,13 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Infrastructure.Logger.StructlogLogger]: True if satisfies protocol
+            TypeGuard[p.Log.StructlogLogger]: True if satisfies protocol
 
         """
-        return isinstance(obj, p.Infrastructure.Logger.StructlogLogger)
+        return isinstance(obj, p.Log.StructlogLogger)
 
     @staticmethod
-    def _is_result(obj: object) -> TypeGuard[p.Foundation.Result[t.GeneralValueType]]:
+    def _is_result(obj: object) -> TypeGuard[p.Result[t.GeneralValueType]]:
         """Check if object satisfies the Result protocol.
 
         Enables type narrowing for result objects without cast().
@@ -271,13 +275,13 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Foundation.Result]: True if obj satisfies Result protocol
+            TypeGuard[p.Result]: True if obj satisfies Result protocol
 
         """
-        return isinstance(obj, p.Foundation.Result)
+        return isinstance(obj, p.Result)
 
     @staticmethod
-    def _is_service(obj: object) -> TypeGuard[p.Domain.Service[t.GeneralValueType]]:
+    def _is_service(obj: object) -> TypeGuard[p.Service[t.GeneralValueType]]:
         """Check if object satisfies the Service protocol.
 
         Enables type narrowing for service objects without cast().
@@ -286,13 +290,13 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Domain.Service]: True if obj satisfies Service protocol
+            TypeGuard[p.Service]: True if obj satisfies Service protocol
 
         """
-        return isinstance(obj, p.Domain.Service)
+        return isinstance(obj, p.Service)
 
     @staticmethod
-    def _is_middleware(obj: object) -> TypeGuard[p.Application.Middleware]:
+    def _is_middleware(obj: object) -> TypeGuard[p.Middleware]:
         """Check if object satisfies the Middleware protocol.
 
         Enables type narrowing for middleware objects without cast().
@@ -301,10 +305,10 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Application.Middleware]: True if obj satisfies Middleware
+            TypeGuard[p.Middleware]: True if obj satisfies Middleware
 
         """
-        return isinstance(obj, p.Application.Middleware)
+        return isinstance(obj, p.Middleware)
 
     # =========================================================================
     # Generic Type Guards for Collections and Sequences
@@ -418,6 +422,68 @@ class FlextUtilitiesGuards:
         return isinstance(value, str)
 
     @staticmethod
+    def _is_dict(value: object) -> TypeGuard[t.Types.ConfigurationDict]:
+        """Check if value is dict[str, object].
+
+        Type guard for dictionary types. Returns ConfigurationDict for type safety.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[ConfigurationDict]: True if value is dict
+
+        Example:
+            >>> if FlextUtilitiesGuards._is_dict(items):
+            ...     # items is now typed as ConfigurationDict
+            ...     value = items.get("key")
+
+        """
+        return isinstance(value, dict)
+
+    @staticmethod
+    def _is_int(value: object) -> TypeGuard[int]:
+        """Check if value is int.
+
+        Type guard for integer types.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[int]: True if value is int
+
+        Example:
+            >>> if FlextUtilitiesGuards._is_int(index):
+            ...     # index is now typed as int
+            ...     value = items[index]
+
+        """
+        return isinstance(value, int)
+
+    @staticmethod
+    def _is_list_or_tuple(
+        value: object,
+    ) -> TypeGuard[list[object] | tuple[object, ...]]:
+        """Check if value is list or tuple.
+
+        Type guard for list and tuple types.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[list[object] | tuple[object, ...]]: True if value is list or tuple
+
+        Example:
+            >>> if FlextUtilitiesGuards._is_list_or_tuple(items):
+            ...     # items is now typed as list[object] | tuple[object, ...]
+            ...     value = items[0]
+
+        """
+        return isinstance(value, (list, tuple))
+
+    @staticmethod
     def _is_sized(value: object) -> TypeGuard[object]:
         """Check if value has __len__ (str, bytes, Sequence, Mapping).
 
@@ -438,48 +504,6 @@ class FlextUtilitiesGuards:
         return isinstance(value, (str, bytes, Sequence, Mapping))
 
     @staticmethod
-    def _is_list_or_tuple(
-        value: object,
-    ) -> TypeGuard[list[object] | tuple[object, ...]]:
-        """Check if value is list or tuple.
-
-        Type guard for list/tuple types.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[list[object] | tuple[object, ...]]: True if value is list or tuple
-
-        Example:
-            >>> if FlextUtilitiesGuards.is_list_or_tuple(value):
-            ...     # value is list or tuple
-            ...     first = value[0]
-
-        """
-        return isinstance(value, (list, tuple))
-
-    @staticmethod
-    def _is_dict(value: object) -> TypeGuard[t.Types.ConfigurationDict]:
-        """Check if value is dict.
-
-        Type guard for dict types. Returns ConfigurationDict for type safety.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[ConfigurationDict]: True if value is dict
-
-        Example:
-            >>> if FlextUtilitiesGuards.is_dict(value):
-            ...     # value is ConfigurationDict
-            ...     keys = list(value.keys())
-
-        """
-        return isinstance(value, dict)
-
-    @staticmethod
     def _is_list(value: object) -> TypeGuard[list[object]]:
         """Check if value is list.
 
@@ -498,21 +522,6 @@ class FlextUtilitiesGuards:
 
         """
         return isinstance(value, list)
-
-    @staticmethod
-    def _is_int(value: object) -> TypeGuard[int]:
-        """Check if value is int.
-
-        Type guard for integer types.
-
-        Args:
-            value: Object to check
-
-        Returns:
-            TypeGuard[int]: True if value is int
-
-        """
-        return isinstance(value, int)
 
     @staticmethod
     def _is_float(value: object) -> TypeGuard[float]:
@@ -624,7 +633,7 @@ class FlextUtilitiesGuards:
                   "mapping", "callable", "sized", "list_or_tuple", "sequence_not_str",
                   "string_non_empty", "dict_non_empty", "list_non_empty"
                 - Type/class: str, dict, list, tuple, Sequence, Mapping, etc.
-                - Protocol: p.Configuration.Config, p.Context.Ctx, etc.
+                - Protocol: p.Config, p.Ctx, etc.
 
         Returns:
             bool: True if value matches the type specification
@@ -647,15 +656,15 @@ class FlextUtilitiesGuards:
             >>> u.is_type(obj, (str, bytes))
 
             >>> # Protocol checks
-            >>> u.is_type(obj, p.Configuration.Config)
-            >>> u.is_type(obj, p.Context.Ctx)
+            >>> u.is_type(obj, p.Config)
+            >>> u.is_type(obj, p.Ctx)
 
         """
         # String-based type names (delegate to specific guard functions)
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
             # Map string names to private method names
-            method_map: dict[str, str] = {
+            method_map: t.Types.StringDict = {
                 # Protocol checks
                 "config": "_is_config",
                 "context": "_is_context",
@@ -685,9 +694,9 @@ class FlextUtilitiesGuards:
                 "bool": "_is_bool",
                 "none": "_is_none",
                 # Non-empty checks
-                "string_non_empty": "_is_string_non_empty",
-                "dict_non_empty": "_is_dict_non_empty",
-                "list_non_empty": "_is_list_non_empty",
+                "string_non_empty": "is_string_non_empty",
+                "dict_non_empty": "is_dict_non_empty",
+                "list_non_empty": "is_list_non_empty",
             }
             if type_name in method_map:
                 method_name = method_map[type_name]
@@ -719,23 +728,23 @@ class FlextUtilitiesGuards:
                     return isinstance(value, type_spec)
                 except TypeError:
                     # Protocol runtime check failed, try specific protocol checks
-                    if type_spec == p.Configuration.Config:
+                    if type_spec == p.Config:
                         return FlextUtilitiesGuards._is_config(value)
-                    if type_spec == p.Context.Ctx:
+                    if type_spec == p.Ctx:
                         return FlextUtilitiesGuards._is_context(value)
-                    if type_spec == p.Container.DI:
+                    if type_spec == p.DI:
                         return FlextUtilitiesGuards._is_container(value)
-                    if type_spec == p.Application.CommandBus:
+                    if type_spec == p.CommandBus:
                         return FlextUtilitiesGuards._is_command_bus(value)
-                    if type_spec == p.Application.Handler:
+                    if type_spec == p.Handler:
                         return FlextUtilitiesGuards._is_handler(value)
-                    if type_spec == p.Infrastructure.Logger.StructlogLogger:
+                    if type_spec == p.Log.StructlogLogger:
                         return FlextUtilitiesGuards._is_logger(value)
-                    if type_spec == p.Foundation.Result:
+                    if type_spec == p.Result:
                         return FlextUtilitiesGuards._is_result(value)
-                    if type_spec == p.Domain.Service:
+                    if type_spec == p.Service:
                         return FlextUtilitiesGuards._is_service(value)
-                    if type_spec == p.Application.Middleware:
+                    if type_spec == p.Middleware:
                         return FlextUtilitiesGuards._is_middleware(value)
                     return False
             # Regular type check
@@ -746,6 +755,47 @@ class FlextUtilitiesGuards:
             return isinstance(value, type_spec)
         except TypeError:
             return False
+
+    def __getattribute__(self, name: str) -> object:
+        """Intercept attribute access to warn about direct usage.
+
+        Emits DeprecationWarning when public methods are accessed directly
+        instead of through u.guard() or u.Guards.*.
+
+        Args:
+            name: Attribute name being accessed
+
+        Returns:
+            object: The requested attribute
+
+        """
+        # Allow access to private methods and special attributes
+        if name.startswith("_") or name in {
+            "__class__",
+            "__dict__",
+            "__module__",
+            "__qualname__",
+            "__name__",
+            "__doc__",
+            "__annotations__",
+            "__init__",
+            "__new__",
+            "__subclasshook__",
+            "__instancecheck__",
+            "__subclasscheck__",
+        }:
+            return super().__getattribute__(name)
+
+        # Check if this is a public method that should be accessed via u.Guards
+        if hasattr(FlextUtilitiesGuards, name):
+            warnings.warn(
+                f"Direct access to FlextUtilitiesGuards.{name} is deprecated. "
+                f"Use u.guard() or u.Guards.{name} instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        return super().__getattribute__(name)
 
 
 __all__ = [

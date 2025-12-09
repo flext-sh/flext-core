@@ -636,7 +636,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                     # Type narrowing: value.is_success is True, so unwrap() returns T
                     # Convert to string for format() to avoid type issues
                     # Use cast to help pyright infer type
-                    unwrapped_value_error = value.unwrap()  # type: ignore[assignment]
+                    unwrapped_value_error = value.unwrap()
                     value_str: str = str(cast("object", unwrapped_value_error))
                     raise AssertionError(
                         params.msg
@@ -958,9 +958,14 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 elif callable(sorted_param):
                     # callable() builtin narrows type for pyrefly/mypy
                     # sorted() runtime accepts any callable as key
-
-                    # The callable is validated at runtime, type checker may not understand
-                    sorted_list = sorted(value_list, key=sorted_param)
+                    # Type narrowing: sorted_param is callable, use overload pattern
+                    # Cast both value_list and key_func for type checker compatibility
+                    # sorted() expects iterable and key function - use explicit types
+                    # Use overload-compatible type for key function (str | int | float for comparison)
+                    key_func: Callable[[object], str | int | float] = cast(
+                        "Callable[[object], str | int | float]", sorted_param
+                    )
+                    sorted_list = sorted(value_list, key=key_func)
                     if value_list != sorted_list:
                         raise AssertionError(
                             params.msg or "Sequence is not sorted by key function",
@@ -1115,7 +1120,9 @@ class FlextTestsMatchers(FlextTestsUtilities):
     @staticmethod
     def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain:
         """Start chained assertions on result (railway pattern)."""
-        return m.Tests.Matcher.Chain(result=result)
+        # Cast r[TResult] to r[GeneralValueType] for Chain compatibility
+        result_typed: r[t.GeneralValueType] = cast("r[t.GeneralValueType]", result)
+        return m.Tests.Matcher.Chain(result=result_typed)
 
     # =========================================================================
     # NEW GENERALIST METHODS

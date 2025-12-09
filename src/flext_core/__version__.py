@@ -17,10 +17,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextVersion:

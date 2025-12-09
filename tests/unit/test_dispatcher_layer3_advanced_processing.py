@@ -37,10 +37,8 @@ class DoubleProcessor:
 
     def process(
         self,
-        data: (
-            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
-        ),
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: (t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Double the input number."""
         if not isinstance(data, int):
             return FlextResult[t.GeneralValueType].fail(
@@ -54,10 +52,8 @@ class SquareProcessor:
 
     def process(
         self,
-        data: (
-            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
-        ),
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: (t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Square the input number."""
         if not isinstance(data, int):
             return FlextResult[t.GeneralValueType].fail(
@@ -71,10 +67,8 @@ class FailingProcessor:
 
     def process(
         self,
-        data: (
-            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
-        ),
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: (t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Always return failure."""
         return FlextResult[t.GeneralValueType].fail("Processor intentionally failed")
 
@@ -88,10 +82,8 @@ class SlowProcessor:
 
     def process(
         self,
-        data: (
-            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
-        ),
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: (t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Sleep then return result."""
         time.sleep(self.delay_seconds)
         # Cast data to GeneralValueType for FlextResult.ok()
@@ -107,8 +99,8 @@ class CallableProcessor:
 
     def process(
         self,
-        data: t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType],
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType],
+    ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Process data and return result."""
         if isinstance(data, int):
             return FlextResult[t.GeneralValueType].ok(data + 10)
@@ -161,9 +153,9 @@ def create_test_dispatcher_with_defaults() -> FlextDispatcher:
         "failing": FailingProcessor(),
         "callable": CallableProcessor(),
     }
-    # Cast to dict[str, p.Application.Processor] for type compatibility
-    processors: dict[str, p.Application.Processor] = cast(
-        "dict[str, p.Application.Processor]",
+    # Cast to dict[str, p.Processor] for type compatibility
+    processors: dict[str, p.Processor] = cast(
+        "dict[str, p.Processor]",
         processors_raw,
     )
     return u.Tests.DispatcherHelpers.create_test_dispatcher(

@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Sequence, Sized
-from datetime import UTC, datetime
+from collections.abc import Callable, Mapping, Sequence, Sized
 from enum import StrEnum
 from typing import TypeIs, cast, overload
 
@@ -40,6 +39,7 @@ from flext_core._utilities.text import FlextUtilitiesText
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core._utilities.validators import ValidatorDSL, ValidatorSpec
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
 
@@ -128,11 +128,101 @@ class FlextUtilities:
         """Convert value to list of strings. Alias for conversion(value, mode='to_str_list')."""
         return _conversion_fn(value, mode="to_str_list", default=default)
 
+    @staticmethod
+    def mapper() -> FlextUtilitiesMapper:
+        """Get FlextUtilitiesMapper instance.
+
+        Preferred access method for mapper utilities.
+        Use u.mapper() instead of u.Mapper for better encapsulation.
+
+        Returns:
+            FlextUtilitiesMapper instance
+
+        Example:
+            >>> from flext_core.utilities import u
+            >>> mapper = u.mapper()
+            >>> result = mapper.get(data, "key", default="")
+            >>> extracted = mapper.extract(config, "database.port")
+
+        """
+        return FlextUtilitiesMapper()
+
     class Generators(FlextUtilitiesGenerators):
         """Generators utility class - real inheritance."""
 
     class Guards(FlextUtilitiesGuards):
-        """Guards utility class - real inheritance."""
+        """Guards utility class - real inheritance.
+
+        Provides public access to type guard methods. All methods delegate
+        to private methods in FlextUtilitiesGuards to enforce proper API usage.
+        """
+
+        @staticmethod
+        def normalize_to_metadata_value(
+            val: t.GeneralValueType,
+        ) -> t.MetadataAttributeValue:
+            """Normalize any value to MetadataAttributeValue.
+
+            Public wrapper for normalize_to_metadata_value().
+
+            Args:
+                val: Value to normalize
+
+            Returns:
+                t.MetadataAttributeValue: Normalized value compatible with Metadata attributes
+
+            Example:
+                >>> from flext_core.utilities import u
+                >>> u.Guards.normalize_to_metadata_value("test")
+                'test'
+
+            """
+            return FlextUtilitiesGuards.normalize_to_metadata_value(val)
+
+        @staticmethod
+        def is_string_non_empty(value: t.GeneralValueType) -> bool:
+            """Check if value is a non-empty string.
+
+            Public wrapper for is_string_non_empty().
+
+            Args:
+                value: Object to check
+
+            Returns:
+                bool: True if value is non-empty string
+
+            """
+            return FlextUtilitiesGuards.is_string_non_empty(value)
+
+        @staticmethod
+        def is_dict_non_empty(value: t.GeneralValueType) -> bool:
+            """Check if value is a non-empty dictionary.
+
+            Public wrapper for is_dict_non_empty().
+
+            Args:
+                value: Object to check
+
+            Returns:
+                bool: True if value is non-empty dict-like
+
+            """
+            return FlextUtilitiesGuards.is_dict_non_empty(value)
+
+        @staticmethod
+        def is_list_non_empty(value: t.GeneralValueType) -> bool:
+            """Check if value is a non-empty list.
+
+            Public wrapper for is_list_non_empty().
+
+            Args:
+                value: Object to check
+
+            Returns:
+                bool: True if value is non-empty list-like
+
+            """
+            return FlextUtilitiesGuards.is_list_non_empty(value)
 
     class Mapper(FlextUtilitiesMapper):
         """Mapper utility class - real inheritance."""
@@ -161,29 +251,324 @@ class FlextUtilities:
     class V(ValidatorDSL):
         """V utility class - alias for Validators - real inheritance."""
 
-    # === PROJECT NAMESPACES ===
-    # Base class for project-specific utility namespaces (e.g., .Ldif., .Ldap.)
-    # Projects should extend this class to create their own namespaces
-    class ProjectNamespaces:
-        """Base class for project-specific utility namespaces.
+    class Pipeline:
+        """Pipeline utility for chaining operations with FlextResult.
 
-        This class provides a foundation for project-specific utility namespaces
-        that can be accessed via u.ProjectName.* pattern. Projects should extend
-        this class and add their utilities as nested classes or static methods.
-
-        Example:
-            # In flext-ldif
-            class Ldif(FlextUtilities.ProjectNamespaces):
-                class DN:
-                    @staticmethod
-                    def parse(dn: str) -> r[Entry]:
-                        ...
-
-            # Usage
-            from flext_ldif.utilities import u
-            result = u.Ldif.DN.parse("cn=test,dc=example")
-
+        Provides convenient access to FlextResult pipeline methods for
+        composing operations in a functional style.
         """
+
+        @staticmethod
+        def flow_through[T, U](
+            result: r[T],
+            *funcs: Callable[[T | U], r[U]],
+        ) -> r[U]:
+            """Chain multiple operations in a pipeline.
+
+            Args:
+                result: Initial FlextResult to start the pipeline
+                *funcs: Functions to apply in sequence
+
+            Returns:
+                Final FlextResult after all transformations
+
+            Example:
+                >>> result = r[int].ok(5)
+                >>> final = Pipeline.flow_through(
+                ...     result, lambda x: r[int].ok(x * 2), lambda x: r[str].ok(str(x))
+                ... )
+
+            """
+            return result.flow_through(*funcs)
+
+        @staticmethod
+        def and_then[T, U](
+            result: r[T],
+            func: Callable[[T], r[U]],
+        ) -> r[U]:
+            """Chain a single operation.
+
+            Args:
+                result: Initial FlextResult
+                func: Function to apply
+
+            Returns:
+                Result after transformation
+
+            """
+            return result.and_then(func)
+
+        @staticmethod
+        def fold[T, U](
+            result: r[T],
+            on_failure: Callable[[str], U],
+            on_success: Callable[[T], U],
+        ) -> U:
+            """Fold result into a single value.
+
+            Args:
+                result: FlextResult to fold
+                on_failure: Function to call on failure
+                on_success: Function to call on success
+
+            Returns:
+                Folded value
+
+            """
+            return result.fold(on_failure, on_success)
+
+        @staticmethod
+        def tap[T](
+            result: r[T],
+            func: Callable[[T], None],
+        ) -> r[T]:
+            """Execute side effect without changing result.
+
+            Args:
+                result: FlextResult
+                func: Side effect function
+
+            Returns:
+                Same result (for chaining)
+
+            """
+            return result.tap(func)
+
+    class Cloning:
+        """Cloning utility for runtime and container instances.
+
+        Provides convenient access to cloning operations using protocols
+        to avoid circular imports.
+        """
+
+        @staticmethod
+        def clone_runtime[T](
+            runtime: T,
+            *,
+            context: p.Ctx | None = None,
+            config_overrides: dict[str, object] | None = None,
+        ) -> T:
+            """Clone runtime with optional overrides.
+
+            Creates a new runtime instance with the same dispatcher and registry,
+            but with optional context and config overrides.
+
+            Args:
+                runtime: Runtime instance to clone (must implement Runtime protocol).
+                context: Optional new context. If not provided, uses runtime's context.
+                config_overrides: Optional config field overrides.
+
+            Returns:
+                T: Cloned runtime instance.
+
+            Example:
+                >>> new_runtime = FlextUtilities.Cloning.clone_runtime(
+                ...     existing_runtime,
+                ...     context=new_context,
+                ...     config_overrides={"log_level": "DEBUG"},
+                ... )
+
+            """
+            # Create new instance without calling __init__
+            cloned: T = runtime.__class__.__new__(runtime.__class__)
+            # Copy dispatcher and registry via protocol attributes
+            # Note: Accessing private attributes is necessary for cloning runtime instances
+            # that implement the Runtime protocol. These attributes are part of the
+            # internal implementation and are accessed during cloning operations.
+            # Use setattr with variables to avoid type checker errors for private attributes
+            if hasattr(runtime, "_dispatcher"):
+                dispatcher_attr = "_dispatcher"
+                setattr(cloned, dispatcher_attr, getattr(runtime, dispatcher_attr))
+            if hasattr(runtime, "_registry"):
+                registry_attr = "_registry"
+                setattr(cloned, registry_attr, getattr(runtime, registry_attr))
+            # Use new context or copy existing
+            if hasattr(runtime, "_context"):
+                context_attr = "_context"
+                cloned_context = context or getattr(runtime, context_attr)
+                setattr(cloned, context_attr, cloned_context)
+            # Clone config with overrides
+            if hasattr(runtime, "_config"):
+                config_attr = "_config"
+                runtime_config = getattr(runtime, config_attr)
+                if config_overrides:
+                    cloned_config = runtime_config.model_copy(update=config_overrides)
+                    setattr(cloned, config_attr, cloned_config)
+                else:
+                    setattr(cloned, config_attr, runtime_config)
+            return cloned
+
+        @staticmethod
+        def clone_container(
+            container: p.DI,
+            *,
+            scope_id: str | None = None,
+            overrides: dict[str, object] | None = None,
+        ) -> p.DI:
+            """Clone container with scoping.
+
+            Creates a scoped container instance with optional service overrides.
+
+            Args:
+                container: Container instance to clone (must implement DI protocol).
+                scope_id: Optional scope identifier.
+                overrides: Optional service overrides.
+
+            Returns:
+                p.DI: Scoped container instance.
+
+            Example:
+                >>> scoped = FlextUtilities.Cloning.clone_container(
+                ...     global_container,
+                ...     scope_id="worker_1",
+                ...     overrides={"logger": custom_logger},
+                ... )
+
+            """
+            # Use container's scoped() method for proper scoping
+            # Cast overrides to correct type for scoped method
+            services_typed: t.Types.ConfigurationMapping | None = cast(
+                "t.Types.ConfigurationMapping | None", overrides
+            )
+            return container.scoped(
+                subproject=scope_id,
+                services=services_typed,
+            )
+
+    class Registration:
+        """Registration utility for container services.
+
+        Provides convenient access to registration operations using protocols
+        to avoid circular imports.
+        """
+
+        @staticmethod
+        def register_singleton[T](
+            container: p.DI,
+            name: str,
+            instance: T,
+        ) -> r[None]:
+            """Register singleton with standard error handling.
+
+            Args:
+                container: Container to register in (must implement DI protocol).
+                name: Service name.
+                instance: Service instance to register.
+
+            Returns:
+                r[None]: Success if registration succeeds, failure otherwise.
+
+            Example:
+                >>> result = FlextUtilities.Registration.register_singleton(
+                ...     container, "db", DatabaseService()
+                ... )
+
+            """
+            try:
+                # Cast T to t.FlexibleValue for container.register compatibility
+                instance_typed: t.FlexibleValue = cast("t.FlexibleValue", instance)
+                register_result = container.register(name, instance_typed)
+                if register_result.is_failure:
+                    return r[None].fail(
+                        register_result.error or "Registration failed",
+                    )
+                # For None values, we need to create directly since ok() doesn't accept None
+                return r[None].ok(None)
+            except Exception as e:
+                return r[None].fail(f"Registration failed for {name}: {e}")
+
+        @staticmethod
+        def register_factory[T](
+            container: p.DI,
+            name: str,
+            factory: Callable[[], T],
+            *,
+            _cache: bool = False,
+        ) -> r[None]:
+            """Register factory with optional caching.
+
+            Args:
+                container: Container to register in (must implement DI protocol).
+                name: Factory name.
+                factory: Factory function to register.
+                _cache: Reserved for future implementation of cached factory pattern.
+
+            Returns:
+                r[None]: Success if registration succeeds, failure otherwise.
+
+            Note:
+                The _cache parameter is reserved for future implementation of
+                cached factory pattern.
+
+            Example:
+                >>> result = FlextUtilities.Registration.register_factory(
+                ...     container, "logger", create_logger, _cache=True
+                ... )
+
+            """
+            try:
+                # Cast factory to Callable[[], GeneralValueType] for register_factory method
+                factory_typed: Callable[[], t.GeneralValueType] = cast(
+                    "Callable[[], t.GeneralValueType]", factory
+                )
+                register_result = container.register_factory(name, factory_typed)
+                if register_result.is_failure:
+                    return r[None].fail(
+                        register_result.error or "Factory registration failed",
+                    )
+                # For None values, we need to create directly since ok() doesn't accept None
+                return r[None].ok(None)
+            except Exception as e:
+                return r[None].fail(
+                    f"Factory registration failed for {name}: {e}",
+                )
+
+        @staticmethod
+        def bulk_register(
+            container: p.DI,
+            registrations: Mapping[
+                str,
+                object | Callable[[], t.GeneralValueType],
+            ],
+        ) -> r[int]:
+            """Register multiple services at once.
+
+            Args:
+                container: Container to register in (must implement DI protocol).
+                registrations: Mapping of name to service instance or factory.
+
+            Returns:
+                r[int]: Success with count of registered services, or failure.
+
+            Example:
+                >>> result = FlextUtilities.Registration.bulk_register(
+                ...     container,
+                ...     {
+                ...         "db": DatabaseService(),
+                ...         "logger": create_logger,
+                ...     },
+                ... )
+
+            """
+            count = 0
+            for name, value in registrations.items():
+                try:
+                    if callable(value):
+                        register_result = container.register_factory(name, value)
+                    else:
+                        # Cast object to t.FlexibleValue for container.register compatibility
+                        value_typed: t.FlexibleValue = cast("t.FlexibleValue", value)
+                        register_result = container.register(name, value_typed)
+                    if register_result.is_failure:
+                        return r[int].fail(
+                            f"Bulk registration failed at {name}: {register_result.error}",
+                        )
+                    count += 1
+                except Exception as e:
+                    return r[int].fail(
+                        f"Bulk registration failed at {name}: {e}",
+                    )
+            return r[int].ok(count)
 
     # === UTILITY METHODS ===
     # These are convenience methods that delegate to specialized classes.
@@ -205,7 +590,7 @@ class FlextUtilities:
                   "string_non_empty", "dict_non_empty", "list_non_empty"
                 - Type/class: str, dict, list, tuple, Sequence, Mapping, etc.
                 - Tuple of types: (int, float), (str, bytes), etc.
-                - Protocol: p.Configuration.Config, p.Context.Ctx, etc.
+                - Protocol: p.Config, p.Ctx, etc.
 
         Returns:
             bool: True if value matches the type specification
@@ -227,8 +612,8 @@ class FlextUtilities:
             >>> u.is_type(obj, (str, bytes))
 
             >>> # Protocol checks
-            >>> u.is_type(obj, p.Configuration.Config)
-            >>> u.is_type(obj, p.Context.Ctx)
+            >>> u.is_type(obj, p.Config)
+            >>> u.is_type(obj, p.Ctx)
 
         """
         return FlextUtilitiesGuards.is_type(value, type_spec)
@@ -284,26 +669,33 @@ class FlextUtilities:
 
     # Result helpers - FlextResult DSL methods
     @staticmethod
-    def val[T](result: r[T], default: T) -> T:
-        """Extract value from FlextResult with default fallback."""
-        # Use .value directly - FlextResult never returns None on success
+    def val[T](result: p.Result[T], default: T) -> T:
+        """Extract value from FlextResult or RuntimeResult with default fallback.
+
+        Accepts both FlextResult[T] and RuntimeResult[T] from flext-core bootstrap layer.
+        Both implement p.Result[T] protocol interface.
+        """
+        # Use .value directly - FlextResult/RuntimeResult never return None on success
         return result.value if result.is_success else default
 
     @staticmethod
-    def result_val[T](result: r[T], default: T) -> T:
-        """Extract value from FlextResult with default fallback (alias for val)."""
-        return FlextUtilities.val(result, default)
+    def result_val[T](result: p.Result[T], default: T) -> T:
+        """Extract value from FlextResult or RuntimeResult with default fallback (alias for val)."""
+        return u.val(result, default)
 
     @staticmethod
-    def vals[T](results: Sequence[r[T]]) -> list[T]:
-        """Extract values from collection of results, skipping failures."""
-        # Use .value directly - FlextResult never returns None on success
+    def vals[T](results: Sequence[p.Result[T]]) -> list[T]:
+        """Extract values from collection of FlextResult or RuntimeResult objects, skipping failures."""
+        # Use .value directly - FlextResult/RuntimeResult never return None on success
         return [r.value for r in results if r.is_success]
 
     @staticmethod
-    def err[T](result: r[T], default: str = "") -> str:
-        """Get error message from FlextResult."""
-        # When is_failure is True, error is never None (fail() converts None to "")
+    def err[T](result: p.Result[T], default: str = "") -> str:
+        """Get error message from FlextResult or RuntimeResult.
+
+        Accepts both FlextResult[T] and RuntimeResult[T] from flext-core bootstrap layer.
+        When is_failure is True, error is never None (fail() converts None to "").
+        """
         if result.is_failure:
             return result.error or default
         return default
@@ -313,6 +705,7 @@ class FlextUtilities:
         kind: str | None = None,
         *,
         prefix: str | None = None,
+        parts: tuple[t.GeneralValueType, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",
@@ -321,11 +714,13 @@ class FlextUtilities:
 
         Args:
             kind: ID kind ("uuid", "correlation", "entity", "batch", "transaction",
-                "event", "command", "query", "ulid", "id"). If None, generates UUID.
+                "saga", "event", "command", "query", "aggregate", "ulid", "id").
+                If None, generates UUID.
             prefix: Custom prefix (overrides kind prefix if provided).
+            parts: Additional parts to include in ID (e.g., batch_size, aggregate_type).
             length: Custom length for generated ID (only for ulid/short IDs).
-            include_timestamp: Include timestamp in ID (not currently implemented).
-            separator: Separator between prefix and ID (default: "_").
+            include_timestamp: Include timestamp in ID.
+            separator: Separator between prefix, parts, and ID (default: "_").
 
         Returns:
             Generated ID string.
@@ -335,126 +730,20 @@ class FlextUtilities:
             >>> u.generate("uuid")  # UUID (36 chars)
             >>> u.generate("correlation")  # corr_...
             >>> u.generate("entity", prefix="user")  # user_...
+            >>> u.generate("batch", parts=(100,))  # batch_100_...
+            >>> u.generate("aggregate", prefix="user")  # user_...
             >>> u.generate("ulid", length=16)  # Short ID with 16 chars
 
         """
-        actual_prefix = FlextUtilities._determine_prefix(kind, prefix)
-
-        # Handle UUID/ULID/id special cases
-        if FlextUtilities._should_generate_uuid(kind, actual_prefix):
-            return FlextUtilitiesGenerators.generate_id()
-
-        if kind == "ulid":
-            ulid_length = length if length is not None else 8
-            return FlextUtilitiesGenerators.Random.generate_short_id(ulid_length)
-
-        if kind == "id" and actual_prefix is None:
-            return FlextUtilitiesGenerators.generate_id()
-
-        # Generate prefixed ID
-        if actual_prefix is not None:
-            return FlextUtilities._generate_prefixed_id(
-                actual_prefix,
-                length,
-                include_timestamp=include_timestamp,
-                separator=separator,
-            )
-
-        # Fallback: UUID
-        return FlextUtilitiesGenerators.generate_id()
-
-    @staticmethod
-    def _determine_prefix(kind: str | None, prefix: str | None) -> str | None:
-        """Determine actual prefix from kind or custom prefix.
-
-        Args:
-            kind: ID kind string.
-            prefix: Custom prefix (overrides kind).
-
-        Returns:
-            Actual prefix string or None.
-
-        """
-        if prefix is not None:
-            return prefix
-
-        if kind is None:
-            return None
-
-        kind_prefix_map: t.Types.StringDict = {
-            "correlation": "corr",
-            "entity": "ent",
-            "batch": c.Cqrs.ProcessingMode.BATCH,
-            "transaction": "txn",
-            "event": "evt",
-            "command": "cmd",
-            "query": "qry",
-        }
-        return kind_prefix_map.get(kind)
-
-    @staticmethod
-    def _should_generate_uuid(kind: str | None, actual_prefix: str | None) -> bool:
-        """Check if UUID generation should be used.
-
-        Args:
-            kind: ID kind string.
-            actual_prefix: Determined prefix or None.
-
-        Returns:
-            True if UUID should be generated.
-
-        """
-        return kind == "uuid" or (kind is None and actual_prefix is None)
-
-    @staticmethod
-    def _generate_prefixed_id(
-        prefix: str,
-        length: int | None,
-        *,
-        include_timestamp: bool,
-        separator: str = "_",
-    ) -> str:
-        """Generate prefixed ID with optional timestamp and custom separator/length.
-
-        Args:
-            prefix: Prefix string.
-            length: Custom length for ID part.
-            include_timestamp: Whether to include timestamp.
-            separator: Separator between prefix and ID.
-
-        Returns:
-            Generated prefixed ID string.
-
-        """
-        parts: list[t.GeneralValueType] = []
-
-        if include_timestamp:
-            timestamp = int(datetime.now(UTC).timestamp())
-            parts.append(timestamp)
-
-        # Custom separator or length requires manual construction
-        if separator != "_" or length is not None:
-            uuid_length = length if length is not None else 8
-            uuid_part = str(FlextUtilitiesGenerators.generate_id())[:uuid_length]
-            if parts:
-                middle = str(separator).join(str(p) for p in parts)
-                return f"{prefix}{separator}{middle}{separator}{uuid_part}"
-            return f"{prefix}{separator}{uuid_part}"
-
-        # Standard prefixed ID generation
-        if parts:
-            if length is not None:
-                return FlextUtilitiesGenerators.generate_prefixed_id(
-                    prefix,
-                    *parts,
-                    length=length,
-                )
-            return FlextUtilitiesGenerators.generate_prefixed_id(prefix, *parts)
-
-        if length is not None:
-            return FlextUtilitiesGenerators.generate_prefixed_id(prefix, length=length)
-
-        return FlextUtilitiesGenerators.generate_prefixed_id(prefix)
+        # Delegate to generators.py - all logic is there
+        return FlextUtilitiesGenerators.generate(
+            kind=kind,
+            prefix=prefix,
+            parts=parts,
+            length=length,
+            include_timestamp=include_timestamp,
+            separator=separator,
+        )
 
     @staticmethod
     def extract[T](
@@ -647,7 +936,7 @@ class FlextUtilities:
         )
         # Use .value directly - FlextResult never returns None on success
         normalized = result.value if result.is_success else text
-        return normalized if FlextUtilities.is_type(normalized, str) else text
+        return normalized if u.is_type(normalized, str) else text
 
     # Power methods - convenience delegates
     @staticmethod
@@ -740,16 +1029,6 @@ class FlextUtilities:
     ) -> T | None:
         """Get value from dict/object - delegates to FlextUtilitiesMapper.get."""
         return FlextUtilitiesMapper.get(data, key, default=default)
-
-    @staticmethod
-    def generate_id() -> str:
-        """Generate unique ID - delegates to FlextUtilitiesGenerators.generate_id."""
-        return FlextUtilitiesGenerators.generate_id()
-
-    @staticmethod
-    def generate_short_id(length: int = 8) -> str:
-        """Generate short random ID - delegates to FlextUtilitiesGenerators.generate_short_id."""
-        return FlextUtilitiesGenerators.generate_short_id(length)
 
 
 u = FlextUtilities  # Runtime alias (not TypeAlias to avoid PYI042)

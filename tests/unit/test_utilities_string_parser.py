@@ -24,7 +24,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, cast
+from typing import cast
 
 import pytest
 
@@ -489,7 +489,7 @@ class TestuStringParser:
                 return parser.parse_delimited(case.text, case.delimiter)
 
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
-                cast("Callable[[], r[Any]]", operation),
+                cast("Callable[[], r[object]]", operation),
                 expected_value=case.expected,
                 expected_error=case.expected_error,
                 description=case.description,
@@ -525,7 +525,7 @@ class TestuStringParser:
             """Test split_on_char_with_escape with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[Any]]",
+                    "Callable[[], r[object]]",
                     lambda: parser.split_on_char_with_escape(
                         case.text,
                         case.split_char,
@@ -571,7 +571,7 @@ class TestuStringParser:
             """Test normalize_whitespace with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[Any]]",
+                    "Callable[[], r[object]]",
                     lambda: parser.normalize_whitespace(
                         case.text,
                         pattern=case.pattern,
@@ -610,7 +610,7 @@ class TestuStringParser:
             """Test apply_regex_pipeline with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[Any]]",
+                    "Callable[[], r[object]]",
                     lambda: parser.apply_regex_pipeline(case.text, case.patterns),
                 ),
                 expected_value=case.expected,
@@ -654,7 +654,7 @@ class TestuStringParser:
             text = cast("str", None)
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[Any]]",
+                    "Callable[[], r[object]]",
                     lambda: parser.apply_regex_pipeline(
                         text,  # Runtime: None, triggers error handling
                         [
@@ -676,7 +676,7 @@ class TestuStringParser:
             text = cast("str", 123)
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[Any]]",
+                    "Callable[[], r[object]]",
                     lambda: parser.apply_regex_pipeline(
                         text,  # Runtime: 123, triggers error handling
                         [

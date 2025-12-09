@@ -21,8 +21,7 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import Field
 
-from flext_core import m, t
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime, m, t
 from flext_tests import u
 
 # Use actual classes, not type aliases, for inheritance

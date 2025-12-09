@@ -9,20 +9,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import socket
 import time as time_module
+from collections.abc import Callable, Mapping
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import AfterValidator, BaseModel, Field
 
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class FlextModelsValidation:
@@ -137,7 +136,7 @@ class FlextModelsValidation:
             max_validation_time_ms: Maximum validation time in milliseconds
 
         Returns:
-            Foundation.Result: Validated model or performance error
+            Result: Validated model or performance error
 
         Example:
             ```python
@@ -199,7 +198,7 @@ class FlextModelsValidation:
             fail_fast: Stop on first failure or accumulate all errors
 
         Returns:
-            Foundation.Result: All validated models or first failure
+            Result: All validated models or first failure
 
         Example:
             ```python
@@ -290,7 +289,7 @@ class FlextModelsValidation:
             invariants: List of domain invariant validation functions
 
         Returns:
-            Foundation.Result: Validated model or first invariant violation
+            Result: Validated model or first invariant violation
 
         Example:
             ```python
@@ -330,7 +329,7 @@ class FlextModelsValidation:
             consistency_rules: Dictionary of consistency rule validators
 
         Returns:
-            Foundation.Result: Validated aggregate or consistency violation
+            Result: Validated aggregate or consistency violation
 
         Example:
             ```python
@@ -375,7 +374,7 @@ class FlextModelsValidation:
             event_validators: Dictionary of event-specific validators
 
         Returns:
-            Foundation.Result: Validated event or validation failure
+            Result: Validated event or validation failure
 
         Example:
             ```python
@@ -431,7 +430,7 @@ class FlextModelsValidation:
             validators: List of pattern-specific validators
 
         Returns:
-            Foundation.Result: Validated command/query or validation failure
+            Result: Validated command/query or validation failure
 
         Example:
             ```python
@@ -490,7 +489,11 @@ class FlextModelsValidation:
             for attr in required_attrs
             if not (
                 hasattr(event, attr)
-                or (FlextRuntime.is_dict_like(event) and attr in event)
+                or (
+                    FlextRuntime.is_dict_like(event)
+                    and isinstance(event, Mapping)
+                    and attr in event
+                )
             )
         ]
         if missing_attrs:
@@ -563,7 +566,7 @@ class FlextModelsValidation:
             event: The domain event to validate
 
         Returns:
-            Foundation.Result[bool]: Success with True if valid, failure with details
+            Result[bool]: Success with True if valid, failure with details
 
         """
         # Validate structure
@@ -580,8 +583,8 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_aggregate_consistency(
-        aggregate: t.GeneralValueType | p.Domain.Validation.HasInvariants,
-    ) -> r[t.GeneralValueType | p.Domain.Validation.HasInvariants]:
+        aggregate: t.GeneralValueType | p.Validation.HasInvariants,
+    ) -> r[t.GeneralValueType | p.Validation.HasInvariants]:
         """Validate aggregate consistency and business invariants.
 
         Ensures aggregates maintain consistency boundaries and invariants
@@ -591,17 +594,17 @@ class FlextModelsValidation:
             aggregate: The aggregate root to validate
 
         Returns:
-            Foundation.Result: Validated aggregate or failure with details
+            Result: Validated aggregate or failure with details
 
         """
         if aggregate is None:
-            return r[t.GeneralValueType | p.Domain.Validation.HasInvariants].fail(
+            return r[t.GeneralValueType | p.Validation.HasInvariants].fail(
                 "Aggregate cannot be None",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
 
         # Check invariants if the aggregate supports them
-        if isinstance(aggregate, p.Domain.Validation.HasInvariants):
+        if isinstance(aggregate, p.Validation.HasInvariants):
             try:
                 aggregate.check_invariants()  # Returns None, just call for side effects
             except (
@@ -611,7 +614,7 @@ class FlextModelsValidation:
                 RuntimeError,
                 KeyError,
             ) as e:
-                return r[t.GeneralValueType | p.Domain.Validation.HasInvariants].fail(
+                return r[t.GeneralValueType | p.Validation.HasInvariants].fail(
                     f"Aggregate invariant violation: {e}",
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
@@ -626,12 +629,12 @@ class FlextModelsValidation:
                     f"Too many uncommitted domain events: {event_count} "
                     f"(max: {max_events})"
                 )
-                return r[t.GeneralValueType | p.Domain.Validation.HasInvariants].fail(
+                return r[t.GeneralValueType | p.Validation.HasInvariants].fail(
                     error_msg,
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
 
-        return r[t.GeneralValueType | p.Domain.Validation.HasInvariants].ok(aggregate)
+        return r[t.GeneralValueType | p.Validation.HasInvariants].ok(aggregate)
 
     @staticmethod
     def validate_entity_relationships(
@@ -646,7 +649,7 @@ class FlextModelsValidation:
             entity: The entity to validate (accepts any object with attributes)
 
         Returns:
-            Foundation.Result[object]: Validated entity or failure with details
+            Result[object]: Validated entity or failure with details
 
         """
         if entity is None:
@@ -679,6 +682,93 @@ class FlextModelsValidation:
 
         # Return validated entity
         return r[object].ok(entity)
+
+    # =========================================================================
+    # VALIDATION TYPE ALIASES (Tier 1 - can import constants)
+    # =========================================================================
+    # Moved from typings.py (Tier 0) to here (Tier 1) because Field validators
+    # require actual constant values which cannot be imported in Tier 0 modules
+
+    class Validation:
+        """Domain validation types using Pydantic Field annotations."""
+
+        # Network validation types
+        # NOTE: Field() requires literal values, so we use constants directly
+        # These constants are centralized in FlextConstants for reuse
+        type PortNumber = Annotated[
+            int,
+            Field(
+                ge=c.Network.MIN_PORT,
+                le=c.Network.MAX_PORT,
+                description="Network port",
+            ),
+        ]
+        type TimeoutSeconds = Annotated[
+            float,
+            Field(
+                gt=c.ZERO,
+                le=int(c.Network.DEFAULT_TIMEOUT),
+                description="Timeout in seconds",
+            ),
+        ]
+        type RetryCount = Annotated[
+            int,
+            Field(
+                ge=c.ZERO,
+                le=c.Validation.RETRY_COUNT_MAX,
+                description="Retry attempts",
+            ),
+        ]
+
+        # String validation types
+        type NonEmptyStr = Annotated[
+            str,
+            Field(
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Non-empty string",
+            ),
+        ]
+
+        @staticmethod
+        def _validate_hostname(value: str) -> str:
+            """Validate hostname by attempting DNS resolution.
+
+            Business Rule: Validates hostname strings by attempting DNS resolution
+            using socket.gethostbyname(). Ensures hostnames are resolvable before
+            being used in network configurations. Raises ValueError if hostname cannot
+            be resolved, preventing invalid network configurations.
+
+            Audit Implication: Hostname validation ensures network configurations
+            are valid before being used in production systems. Failed validations
+            are logged with error messages for audit trail completeness. Used by
+            Pydantic 2 AfterValidator for type-safe hostname validation.
+
+            Args:
+                value: Hostname string to validate
+
+            Returns:
+                Validated hostname string (same as input if valid)
+
+            Raises:
+                ValueError: If hostname cannot be resolved via DNS
+
+            """
+            try:
+                _ = socket.gethostbyname(value)
+                return value
+            except socket.gaierror as e:
+                msg = f"Cannot resolve hostname '{value}': {e}"
+                raise ValueError(msg) from e
+
+        type HostName = Annotated[
+            str,
+            Field(
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                max_length=c.Network.MAX_HOSTNAME_LENGTH,
+                description="Valid hostname",
+            ),
+            AfterValidator(_validate_hostname),
+        ]
 
 
 __all__ = ["FlextModelsValidation"]

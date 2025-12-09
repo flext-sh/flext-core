@@ -129,7 +129,7 @@ address = Address(street="123 Main St", city="Springfield", zip_code="12345")
 print(f"User: {user.name} ({user.email})")
 ```
 
-### 4. Domain Services (FlextService)
+### 4. Services (FlextService)
 
 Encapsulate business logic in domain services:
 
@@ -442,6 +442,19 @@ pytest tests/unit/test_result.py::TestFlextResult::test_ok -v
 - **Issues**: Report issues on GitHub
 - **Examples**: Check `examples/` for working examples
 - **Tests**: Look at `tests/` for usage patterns
+
+## Related Documentation
+
+**Within Project**:
+- [Railway-Oriented Programming](./railway-oriented-programming.md) - FlextResult pattern and error handling
+- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Service composition and DI patterns
+- [Service Patterns](./service-patterns.md) - Domain service implementation patterns
+- [API Reference](../api-reference/foundation.md) - Complete API documentation
+- [Architecture Overview](../architecture/README.md) - System architecture and design patterns
+
+**External Resources**:
+- [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
+- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 
 ---
 

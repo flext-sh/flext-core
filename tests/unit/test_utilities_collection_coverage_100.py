@@ -24,7 +24,7 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import r, t
+from flext_core import FlextRuntime, r, t
 from flext_tests import u
 
 
@@ -879,12 +879,14 @@ class TestuCollectionMap:
         )
 
         if scenario.expected_failure:
-            assert isinstance(result, r)
+            # collection.py returns RuntimeResult, check for both types
+            assert isinstance(result, (r, FlextRuntime.RuntimeResult))
             assert result.is_failure
             if scenario.error_contains:
                 assert scenario.error_contains in str(result.error)
-        elif isinstance(scenario.expected_result, r):
-            assert isinstance(result, r)
+        elif isinstance(scenario.expected_result, (r, FlextRuntime.RuntimeResult)):
+            # collection.py returns RuntimeResult, check for both types
+            assert isinstance(result, (r, FlextRuntime.RuntimeResult))
             assert result.is_success
             assert result.value == scenario.expected_result.value
         else:

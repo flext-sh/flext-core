@@ -27,7 +27,7 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import FlextContext, t
+from flext_core import FlextContainer, FlextContext, t
 from flext_core.models import m
 from flext_core.result import r
 from flext_tests import FlextTestsUtilities, u
@@ -226,6 +226,9 @@ class TestServiceDomain:
 
     def test_get_service_from_container(self) -> None:
         """Test retrieving service from container via FlextContext."""
+        # Set up container before using FlextContext.Service methods
+        container = FlextContainer(_context=FlextContext())
+        FlextContext.set_container(container)
         test_service_obj: t.GeneralValueType = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
@@ -240,12 +243,18 @@ class TestServiceDomain:
 
     def test_register_service(self) -> None:
         """Test registering service in container via FlextContext."""
+        # Set up container before using FlextContext.Service methods
+        container = FlextContainer(_context=FlextContext())
+        FlextContext.set_container(container)
         service_obj = {"name": "test_service", "version": "1.0"}
         result = FlextContext.Service.register_service("my_service", service_obj)
         u.Tests.Result.assert_result_success(result)
 
     def test_get_nonexistent_service(self) -> None:
         """Test retrieving nonexistent service returns failure."""
+        # Set up container before using FlextContext.Service methods
+        container = FlextContainer(_context=FlextContext())
+        FlextContext.set_container(container)
         result = FlextContext.Service.get_service("nonexistent_service_xyz")
         assert result.is_failure or result.is_success
 
