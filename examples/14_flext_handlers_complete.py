@@ -133,22 +133,20 @@ class HandlersService(FlextService[t.Types.ServiceMetadataMapping]):
         self._demonstrate_pipeline_execution()
         self._demonstrate_error_handling()
 
-        return FlextResult[t.Types.ServiceMetadataMapping].ok(
-            {
-                "handlers_demonstrated": [
-                    FlextConstants.Cqrs.HandlerType.COMMAND,
-                    FlextConstants.Cqrs.HandlerType.QUERY,
-                    "pipeline",
-                    "error_handling",
-                ],
-                "cqrs_patterns": [
-                    "separation_of_concerns",
-                    "type_safety",
-                    "result_patterns",
-                ],
-                "handler_types": 2,
-            }
-        )
+        return FlextResult[t.Types.ServiceMetadataMapping].ok({
+            "handlers_demonstrated": [
+                FlextConstants.Cqrs.HandlerType.COMMAND,
+                FlextConstants.Cqrs.HandlerType.QUERY,
+                "pipeline",
+                "error_handling",
+            ],
+            "cqrs_patterns": [
+                "separation_of_concerns",
+                "type_safety",
+                "result_patterns",
+            ],
+            "handler_types": 2,
+        })
 
     @staticmethod
     def _demonstrate_command_handlers() -> None:

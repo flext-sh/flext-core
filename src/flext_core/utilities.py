@@ -479,7 +479,7 @@ class FlextUtilities:
             )
             return container.scoped(
                 subproject=scope_id,
-                services=services_mapping,  # type: ignore[arg-type]
+                services=services_mapping,
             )
 
     class Registration:
@@ -517,7 +517,7 @@ class FlextUtilities:
                 # T (generic) is compatible if it matches any of these types
                 # Use Protocol check for type narrowing - if T has required structure, it's compatible
                 # Direct assignment works - type checker recognizes structural compatibility
-                register_result = container.register(name, instance)  # type: ignore[arg-type]
+                register_result = container.register(name, instance)
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Registration failed",
@@ -561,7 +561,7 @@ class FlextUtilities:
                 # T is compatible with object (all types are compatible with object)
                 # Direct assignment works - type checker recognizes callable compatibility
                 # FactoryCallable accepts any zero-arg callable returning any object
-                register_result = container.register_factory(name, factory)  # type: ignore[arg-type]
+                register_result = container.register_factory(name, factory)
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Factory registration failed",
@@ -611,7 +611,7 @@ class FlextUtilities:
                         # Python 3.13: object is compatible with ServiceInstanceType
                         # ServiceInstanceType = GeneralValueType | BaseModel | Callable[..., GeneralValueType] | object
                         # object is included in union, so direct assignment works
-                        register_result = container.register(name, value)  # type: ignore[arg-type]
+                        register_result = container.register(name, value)
                     if register_result.is_failure:
                         return r[int].fail(
                             f"Bulk registration failed at {name}: {register_result.error}",

@@ -109,12 +109,10 @@ class MigrationService(s[dict[str, t.GeneralValueType]]):
         self.logger.info("Processing batch 2 of 10")
         # Config does NOT repeat in these logs!
 
-        return r[dict[str, t.GeneralValueType]].ok(
-            {
-                "migrated": 1000,
-                "failed": 0,
-            }
-        )
+        return r[dict[str, t.GeneralValueType]].ok({
+            "migrated": 1000,
+            "failed": 0,
+        })
 
 
 def main() -> None:

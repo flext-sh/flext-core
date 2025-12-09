@@ -491,7 +491,7 @@ class FlextProtocols:
             """Fluent interface for factory registration."""
             ...
 
-        def get[T](self, name: str) -> FlextProtocols.Result[T]:  # pyright: ignore[reportInvalidTypeVarUse]
+        def get[T](self, name: str) -> FlextProtocols.Result[T]:
             """Get service by name with type safety.
 
             Reflects real implementations like FlextContainer which uses

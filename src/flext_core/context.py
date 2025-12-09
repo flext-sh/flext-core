@@ -737,7 +737,7 @@ class FlextContext(FlextRuntime):
 
         # Type narrowing: cloned is FlextContext which implements p.Ctx protocol
         # FlextContext structurally implements p.Ctx, so no cast needed
-        return cloned  # type: ignore[return-value]
+        return cloned
 
     def validate(self) -> r[bool]:
         """Validate the context data.
@@ -948,7 +948,7 @@ class FlextContext(FlextRuntime):
         if isinstance(normalized_metadata, dict) and all(
             isinstance(k, str) for k in normalized_metadata
         ):
-            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata  # type: ignore[assignment]
+            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata
         else:
             metadata_general = None
 
@@ -1198,7 +1198,7 @@ class FlextContext(FlextRuntime):
         if isinstance(normalized_metadata, dict) and all(
             isinstance(k, str) for k in normalized_metadata
         ):
-            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata  # type: ignore[assignment]
+            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata
         else:
             metadata_general = None
 
@@ -1559,7 +1559,7 @@ class FlextContext(FlextRuntime):
                 # Use container.with_service for fluent API (accepts GeneralValueType | BaseModel | Callable)
                 # Type narrowing: service is GeneralValueType | BaseModel | Callable, protocol accepts GeneralValueType
                 # BaseModel and Callable are subtypes of GeneralValueType (object), so direct assignment works
-                service_typed: t.GeneralValueType = service  # type: ignore[assignment]
+                service_typed: t.GeneralValueType = service
                 # with_service returns Self for fluent chaining, but we don't need the return value
                 _ = container.with_service(service_name, service_typed)
                 return r[bool].ok(True)

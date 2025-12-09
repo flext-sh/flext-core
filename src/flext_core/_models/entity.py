@@ -199,7 +199,9 @@ class FlextModelsEntity:
             ):
                 # Type narrowing: is_dict_like + isinstance ensures data is ConfigurationMapping
                 data_mapping: t.Types.ConfigurationMapping = data
-                event_type_raw = FlextUtilitiesMapper().get(data_mapping, "event_type")
+                event_type_raw: object | None = FlextUtilitiesMapper().get(
+                    data_mapping, "event_type"
+                )
                 event_type = "" if event_type_raw is None else str(event_type_raw)
             if event_type:
                 handler_method_name = f"_apply_{str(event_type).lower()}"

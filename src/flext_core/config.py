@@ -372,13 +372,11 @@ class FlextConfig(BaseSettings, FlextRuntime):
 
         """
         # Check database URL scheme if provided
-        if self.database_url and not self.database_url.startswith(
-            (
-                "postgresql://",
-                "mysql://",
-                "sqlite://",
-            )
-        ):
+        if self.database_url and not self.database_url.startswith((
+            "postgresql://",
+            "mysql://",
+            "sqlite://",
+        )):
             msg = "Invalid database URL scheme"
             raise ValueError(msg)
 

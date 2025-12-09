@@ -54,7 +54,7 @@ class FlextModelsConfig:
         # Note: default_factory requires a callable that returns a value
         # Using lambda is necessary here as Pydantic calls the factory function
         operation_id: str = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate(),  # noqa: PLW0108
+            default_factory=FlextUtilitiesGenerators.generate,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
@@ -942,10 +942,10 @@ class FlextModelsConfig:
         extra="forbid",
     )
     """Domain model configuration defaults.
-    
+
     Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because
     constants.py cannot import ConfigDict from pydantic.
-    
+
     Use m.Config.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
     """
 

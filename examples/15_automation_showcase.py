@@ -237,11 +237,9 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         **_kwargs: t.GeneralValueType,
     ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Required abstract method implementation."""
-        return FlextResult[t.Types.ServiceMetadataMapping].ok(
-            {
-                "status": "automation_ready",
-            }
-        )
+        return FlextResult[t.Types.ServiceMetadataMapping].ok({
+            "status": "automation_ready",
+        })
 
     @staticmethod
     def demonstrate_new_flextresult_methods() -> None:
@@ -364,12 +362,10 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
             return FlextResult[t.Types.ServiceMetadataMapping].fail("Cache unavailable")
 
         def get_default() -> FlextResult[t.Types.ServiceMetadataMapping]:
-            return FlextResult[t.Types.ServiceMetadataMapping].ok(
-                {
-                    "automation_mode": FlextConstants.Cqrs.ProcessingMode.SEQUENTIAL.value,
-                    "batch_size": FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
-                }
-            )
+            return FlextResult[t.Types.ServiceMetadataMapping].ok({
+                "automation_mode": FlextConstants.Cqrs.ProcessingMode.SEQUENTIAL.value,
+                "batch_size": FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+            })
 
         cached = get_cached()
         config_result = get_default() if cached.is_failure else cached
@@ -435,12 +431,10 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         print("\n--- Data Pipeline with Error Recovery ---")
 
         def extract() -> FlextResult[list[t.Types.ConfigurationDict]]:
-            return FlextResult[list[t.Types.ConfigurationDict]].ok(
-                [
-                    {"id": 1, "name": "Item A", "value": 100},
-                    {"id": 2, "name": "Item B", "value": 200},
-                ]
-            )
+            return FlextResult[list[t.Types.ConfigurationDict]].ok([
+                {"id": 1, "name": "Item A", "value": 100},
+                {"id": 2, "name": "Item B", "value": 200},
+            ])
 
         def transform(
             data: list[t.Types.ConfigurationDict],
@@ -494,12 +488,10 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         def load_config() -> t.Types.ConfigurationMapping:
             if not cache:
                 print("   📄 Loading configuration from file...")
-                cache.update(
-                    {
-                        "database_url": "postgresql://localhost:5432/testdb",
-                        "cache_ttl": FlextConstants.Defaults.DEFAULT_CACHE_TTL,
-                    }
-                )
+                cache.update({
+                    "database_url": "postgresql://localhost:5432/testdb",
+                    "cache_ttl": FlextConstants.Defaults.DEFAULT_CACHE_TTL,
+                })
             return cache
 
         fail_attempt = FlextResult[t.Types.ConfigurationMapping].fail(

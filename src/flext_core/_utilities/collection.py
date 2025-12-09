@@ -55,9 +55,9 @@ class FlextUtilitiesCollection:
         """
         # Use TypeGuard for proper type narrowing - eliminates need for isinstance
         # Access private methods for TypeGuard return type (needed for type narrowing)
-        if FlextUtilitiesGuards._is_list(value):  # noqa: SLF001
+        if FlextUtilitiesGuards._is_list(value):
             return value  # Type narrowing via TypeGuard
-        if FlextUtilitiesGuards._is_list_or_tuple(value):  # noqa: SLF001
+        if FlextUtilitiesGuards._is_list_or_tuple(value):
             return list(value)  # Convert tuple to list
         error_msg = f"Cannot narrow {type(value)} to list[object]"
         raise TypeError(error_msg)
@@ -201,7 +201,7 @@ class FlextUtilitiesCollection:
         def _coerce(value: t.FlexibleValue) -> dict[str, E]:
             # Use TypeGuard for proper type narrowing - eliminates need for isinstance
             # Access private methods for TypeGuard return type (needed for type narrowing)
-            if not FlextUtilitiesGuards._is_dict(value):  # noqa: SLF001
+            if not FlextUtilitiesGuards._is_dict(value):
                 msg = f"Expected dict, got {type(value).__name__}"
                 raise TypeError(msg)
 
@@ -218,7 +218,7 @@ class FlextUtilitiesCollection:
             for key, val in value_dict.items():
                 if isinstance(val, enum_cls):
                     result[key] = val
-                elif FlextUtilitiesGuards._is_str(val):  # noqa: SLF001
+                elif FlextUtilitiesGuards._is_str(val):
                     try:
                         result[key] = enum_cls(val)
                     except ValueError as err:
@@ -327,18 +327,18 @@ class FlextUtilitiesCollection:
             # Type narrowing: Protocol check ensures r[T] structure
             # Python 3.13: Structural typing - r[T] uses Callable[[T], R]
             return FlextUtilitiesCollection._map_result(
-                items,  # type: ignore[arg-type]  # Protocol check ensures r[T]
-                mapper,  # type: ignore[arg-type]  # Structural contract: Callable[[T], R]
+                items,
+                mapper,
                 default_error,
             )
 
         # Sequence case - TypeGuard for list/tuple
-        if FlextUtilitiesGuards._is_list_or_tuple(items):  # noqa: SLF001
+        if FlextUtilitiesGuards._is_list_or_tuple(items):
             # Type narrowing: TypeGuard ensures list[T] | tuple[T, ...]
             # Python 3.13: Structural typing - sequences use Callable[[T], R]
             return FlextUtilitiesCollection._map_sequence(
                 items,  # TypeGuard ensures sequence
-                mapper,  # type: ignore[arg-type]  # Union type compatible with Callable[[T], R]
+                mapper,
             )
 
         # Set case - isinstance needed for runtime behavior (set vs frozenset)
@@ -347,26 +347,26 @@ class FlextUtilitiesCollection:
             # Python 3.13: Structural typing - sets use Callable[[T], R]
             return FlextUtilitiesCollection._map_set(
                 items,  # isinstance ensures set
-                mapper,  # type: ignore[arg-type]  # Union type compatible with Callable[[T], R]
+                mapper,
             )
 
         # Mapping case - TypeGuard for dict/Mapping
-        if FlextUtilitiesGuards._is_mapping(items):  # noqa: SLF001
+        if FlextUtilitiesGuards._is_mapping(items):
             # Type narrowing: TypeGuard ensures Mapping[str, T]
             # Python 3.13: Structural typing - mappings use Callable[[str, T], R]
             items_dict: dict[str, T] = (
-                dict(items) if not isinstance(items, dict) else items  # type: ignore[arg-type]
+                dict(items) if not isinstance(items, dict) else items
             )
             return FlextUtilitiesCollection._map_dict(
                 items_dict,
-                mapper,  # type: ignore[arg-type]  # Structural contract: Callable[[str, T], R]
+                mapper,
             )
 
         # Single item case - mapper is Callable[[T], R] or Callable[[object], R]
         # Python 3.13: Single item uses Callable[[object], R] for maximum compatibility
         return FlextUtilitiesCollection._map_single(
             items,
-            mapper,  # type: ignore[arg-type]  # Single item: Callable[[object], R]
+            mapper,
         )
 
     @staticmethod
@@ -491,8 +491,8 @@ class FlextUtilitiesCollection:
 
         """
         # Check for sequence types using TypeGuard (avoids isinstance when possible)
-        if FlextUtilitiesGuards._is_list_or_tuple(items):  # noqa: SLF001
-            items_sequence: list[T] | tuple[T, ...] = items  # type: ignore[assignment]
+        if FlextUtilitiesGuards._is_list_or_tuple(items):
+            items_sequence: list[T] | tuple[T, ...] = items
             for item in items_sequence:
                 if predicate(item):
                     return item
@@ -508,11 +508,11 @@ class FlextUtilitiesCollection:
             return None
 
         # Check if items is dict-like using TypeGuard (avoids isinstance when possible)
-        if FlextUtilitiesGuards._is_mapping(items):  # noqa: SLF001
+        if FlextUtilitiesGuards._is_mapping(items):
             # items is Mapping[str, T] after TypeGuard check
             # dict() constructor works for both dict and Mapping
             # Type narrowing: TypeGuard provides type narrowing, dict() returns dict[str, T]
-            items_mapping: Mapping[str, T] = items  # type: ignore[assignment]
+            items_mapping: Mapping[str, T] = items
             mapping_items: dict[str, T] = (
                 dict(items_mapping)
                 if not isinstance(items_mapping, dict)
@@ -537,13 +537,13 @@ class FlextUtilitiesCollection:
         """Filter a list with optional mapping."""
         if mapper is not None:
             # Type narrowing: mapper is Callable[[T], R] for list items
-            mapper_typed: Callable[[T], R] = mapper  # type: ignore[assignment]  # Callable[..., object] compatible with Callable[[T], R]
+            mapper_typed: Callable[[T], R] = mapper
             mapped_raw = FlextUtilitiesCollection.map(items_list, mapper_typed)
             # Type narrowing: map() on list[T] returns list[R]
             mapped_list: list[R] = mapped_raw if isinstance(mapped_raw, list) else []
             # Type narrowing: predicate is Callable[[R], bool] for mapped items
             # Python 3.13: Callable[..., bool] is compatible with Callable[[R], bool] via structural typing
-            predicate_mapped: Callable[[R], bool] = predicate  # type: ignore[assignment]  # Structural compatibility
+            predicate_mapped: Callable[[R], bool] = predicate
             return [item for item in mapped_list if predicate_mapped(item)]
         # Type narrowing: predicate is Callable[[T], bool] for original items
         # Python 3.13: Callable[..., bool] is compatible with Callable[[T], bool] via structural typing
@@ -560,8 +560,10 @@ class FlextUtilitiesCollection:
         # Convert to dict for processing
         # Use TypeGuard for proper type narrowing - eliminates need for isinstance
         items_dict_filtered: dict[str, T]
-        if FlextUtilitiesGuards._is_dict(items_dict):  # noqa: SLF001
-            items_dict_filtered = items_dict  # type: ignore[assignment]  # TypeGuard narrows Mapping to dict
+        if isinstance(items_dict, dict):
+            items_dict_filtered = (
+                items_dict  # isinstance narrows Mapping[str, T] to dict[str, T]
+            )
         else:
             # items_dict is Mapping[str, T], convert to dict
             items_mapping: Mapping[str, T] = items_dict
@@ -654,12 +656,10 @@ class FlextUtilitiesCollection:
             # → [2, 3]
 
         """
-        # Check for sequence types using TypeGuard (avoids isinstance when possible)
-        if FlextUtilitiesGuards._is_list_or_tuple(items):  # noqa: SLF001
-            # Type narrowing: items is list[T] | tuple[T, ...] after TypeGuard check
-            # _filter_list accepts list[T] and Callable[[T], bool] | Callable[..., bool]
-            # Convert list[object] to list[T] using type narrowing
-            items_sequence: list[T] | tuple[T, ...] = items  # type: ignore[assignment]
+        # Check for sequence types using isinstance for proper type narrowing
+        if isinstance(items, (list, tuple)):
+            # Type narrowing: isinstance narrows T to list[T] | tuple[T, ...]
+            items_sequence: list[T] | tuple[T, ...] = items
             items_list_typed: list[T] = list(
                 items_sequence
             )  # list[T] | tuple[T, ...] -> list[T]
@@ -669,10 +669,10 @@ class FlextUtilitiesCollection:
                 mapper,  # Callable[..., R] | None compatible with Callable[[T], R] | Callable[..., object] | None
             )
         # Check for mapping types using TypeGuard (avoids isinstance when possible)
-        if FlextUtilitiesGuards._is_mapping(items):  # noqa: SLF001
+        if FlextUtilitiesGuards._is_mapping(items):
             # Type narrowing: items is Mapping[str, T] after TypeGuard check
             # Convert to dict[str, T] for processing
-            items_mapping: Mapping[str, T] = items  # type: ignore[assignment]
+            items_mapping: Mapping[str, T] = items
             # isinstance only when necessary for conversion optimization
             items_dict_filtered: dict[str, T]
             if isinstance(items_mapping, dict):
@@ -690,7 +690,7 @@ class FlextUtilitiesCollection:
         # Single item case
         # Python 3.13: _filter_single returns list[object], convert to expected return type
         # Type narrowing: single item filter returns list[T] (wrapped single item)
-        return FlextUtilitiesCollection._filter_single(  # type: ignore[return-value]
+        return FlextUtilitiesCollection._filter_single(
             items,
             predicate,
             mapper,
@@ -803,14 +803,14 @@ class FlextUtilitiesCollection:
 
         """
         # Check for sequence types using TypeGuard (avoids isinstance when possible)
-        if FlextUtilitiesGuards._is_list_or_tuple(items):  # noqa: SLF001
+        if FlextUtilitiesGuards._is_list_or_tuple(items):
             # Type narrowing: items is list[T] | tuple[T, ...] after TypeGuard check
             # For sequences, processor is Callable[[T], R] (narrowed by context)
-            items_sequence: list[T] | tuple[T, ...] = items  # type: ignore[assignment]
+            items_sequence: list[T] | tuple[T, ...] = items
             items_list: list[T] = list(items_sequence)
-            list_processor: Callable[[T], R] = processor  # type: ignore[assignment]
+            list_processor: Callable[[T], R] = processor
             list_predicate: Callable[[T], bool] | None = (
-                predicate if predicate is not None else None  # type: ignore[assignment]
+                predicate if predicate is not None else None
             )
             # Type narrowing: _process_list_items accepts Callable[[T], R] and Callable[[T], bool] | None
             # list_processor is Callable[[T], R] and list_predicate is Callable[[T], bool] | None
@@ -823,10 +823,10 @@ class FlextUtilitiesCollection:
             )
 
         # Check for mapping types using TypeGuard (avoids isinstance when possible)
-        if FlextUtilitiesGuards._is_mapping(items):  # noqa: SLF001
+        if FlextUtilitiesGuards._is_mapping(items):
             # Type narrowing: items is Mapping[str, T] after TypeGuard check
             # For mappings, processor is Callable[[str, T], R] (narrowed by context)
-            items_mapping: Mapping[str, T] = items  # type: ignore[assignment]
+            items_mapping: Mapping[str, T] = items
             # isinstance only when necessary for conversion optimization
             items_dict_processed: dict[str, T]
             if isinstance(items_mapping, dict):
@@ -837,9 +837,9 @@ class FlextUtilitiesCollection:
             # Type narrowing: _process_dict_items accepts Callable[[str, T], R] and Callable[[str, T], bool] | None
             # processor is Callable[[str, T], R] | Callable[[T], R], predicate is Callable[[str, T], bool] | Callable[[T], bool] | None
             # For mappings, processor must be Callable[[str, T], R] by structural contract
-            dict_processor: Callable[[str, T], R] = processor  # type: ignore[assignment]  # Structural contract: mappings use Callable[[str, T], R]
+            dict_processor: Callable[[str, T], R] = processor
             dict_predicate: Callable[[str, T], bool] | None = (
-                predicate if predicate is not None else None  # type: ignore[assignment]  # Structural contract: mappings use Callable[[str, T], bool]
+                predicate if predicate is not None else None
             )
             return FlextUtilitiesCollection._process_dict_items(
                 items_dict_processed,
@@ -852,10 +852,10 @@ class FlextUtilitiesCollection:
 
         # Single item case - wrap in list and process
         # Type narrowing: for single item, processor is Callable[[T], R] by structural contract
-        items_wrapped: list[T] = [items]  # type: ignore[list-item]  # T -> list[T] wrapping
-        single_processor: Callable[[T], R] = processor  # type: ignore[assignment]  # Structural contract: single item uses Callable[[T], R]
+        items_wrapped: list[T] = [items]
+        single_processor: Callable[[T], R] = processor
         single_predicate: Callable[[T], bool] | None = (
-            predicate if predicate is not None else None  # type: ignore[assignment]  # Structural contract: single item uses Callable[[T], bool]
+            predicate if predicate is not None else None
         )
         return FlextUtilitiesCollection._process_list_items(
             items_wrapped,
@@ -909,7 +909,7 @@ class FlextUtilitiesCollection:
             # Type narrowing: key is str here (not callable)
             # Use TypeGuard for proper type narrowing - eliminates need for isinstance
             # Access private methods for TypeGuard return type (needed for type narrowing)
-            elif FlextUtilitiesGuards._is_str(key):  # noqa: SLF001
+            elif FlextUtilitiesGuards._is_str(key):
                 k = getattr(item, key, None)
             else:
                 # Fallback: should not happen due to overloads, but type checker needs this
@@ -960,14 +960,14 @@ class FlextUtilitiesCollection:
                 and hasattr(result_raw, "error")
             ):
                 # Type narrowing: result_raw has result-like structure (r[R])
-                result_typed: r[R] = result_raw  # type: ignore[assignment]
+                result_typed: r[R] = result_raw
                 if result_typed.is_failure:
                     # When is_failure is True, error is never None (fail() converts None to "")
                     # Use error or fallback message
                     error_msg = result_typed.error or "Unknown error"
                     error_text = f"Item {idx} failed: {error_msg}"
                     if on_error == "fail":
-                        return r.fail(error_text)
+                        return r[t.Types.BatchResultDict].fail(error_text)
                     if on_error == "collect":
                         errors.append((idx, error_msg))
                     return None
@@ -1003,7 +1003,7 @@ class FlextUtilitiesCollection:
             validated_results, is_list_or_tuple
         )
         nested: list[list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]] = (
-            nested_filtered  # type: ignore[assignment]
+            nested_filtered
         )
         if not nested:
             return validated_results
@@ -1084,14 +1084,14 @@ class FlextUtilitiesCollection:
                 is_failure = getattr(process_result_raw, "is_failure", False)
                 if is_failure:
                     # Type narrowing: process_result_raw is r[t.Types.BatchResultDict]
-                    return process_result_raw  # type: ignore[return-value]  # Fail mode returned error
+                    return process_result_raw
                 # Type narrowing: process_result_raw is r[R] and is_success is True
                 # Extract value from result
                 process_result_raw = getattr(
                     process_result_raw, "value", process_result_raw
                 )
             # Type narrowing: process_result_raw is R (not r, not None)
-            processed_results.append(process_result_raw)  # type: ignore[arg-type]
+            processed_results.append(process_result_raw)
 
             # Call progress callback if provided
             if progress is not None and idx % _progress_interval == 0:
@@ -1101,9 +1101,9 @@ class FlextUtilitiesCollection:
         def to_general_value(item: object) -> t.GeneralValueType:
             """Convert item to GeneralValueType."""
             # GeneralValueType is Union of many types, so any object is compatible
-            return item  # type: ignore[return-value]
+            return item
 
-        validated_results_raw_list: list[object] = processed_results  # type: ignore[assignment]
+        validated_results_raw_list: list[object] = processed_results
         validated_results = FlextUtilitiesCollection.map(
             validated_results_raw_list,
             to_general_value,
@@ -1197,11 +1197,11 @@ class FlextUtilitiesCollection:
             # Helper to check if value is an empty container
             def _is_empty_container(value: t.GeneralValueType) -> bool:
                 """Check if value is an empty container (string, list, dict, tuple, set)."""
-                if FlextUtilitiesGuards._is_str(value):  # noqa: SLF001
+                if FlextUtilitiesGuards._is_str(value):
                     return len(value) == 0
-                if FlextUtilitiesGuards._is_list(value):  # noqa: SLF001
+                if FlextUtilitiesGuards._is_list(value):
                     return len(value) == 0
-                if FlextUtilitiesGuards._is_dict(value):  # noqa: SLF001
+                if FlextUtilitiesGuards._is_dict(value):
                     return len(value) == 0
                 if isinstance(value, (tuple, set)):
                     return len(value) == 0
@@ -1238,7 +1238,7 @@ class FlextUtilitiesCollection:
                         # Access private methods for TypeGuard return type (needed for type narrowing)
                         if FlextUtilitiesGuards._is_dict(
                             target_val
-                        ) and FlextUtilitiesGuards._is_dict(value):  # noqa: SLF001
+                        ) and FlextUtilitiesGuards._is_dict(value):
                             # Type narrowing: TypeGuard ensures both are dict
                             # No cast needed - TypeGuard provides type narrowing
                             target_dict: t.Types.ConfigurationDict = target_val
@@ -1255,14 +1255,14 @@ class FlextUtilitiesCollection:
                         # Access private methods for TypeGuard return type (needed for type narrowing)
                         if (
                             mode == "append"
-                            and FlextUtilitiesGuards._is_list(target_val)  # noqa: SLF001
-                            and FlextUtilitiesGuards._is_list(value)  # noqa: SLF001
+                            and FlextUtilitiesGuards._is_list(target_val)
+                            and FlextUtilitiesGuards._is_list(value)
                         ):
                             # Python 3.13: Type narrowing - TypeGuard ensures both are list
                             # TypeGuard narrows to list, but we need list[GeneralValueType]
                             # Use type narrowing with runtime validation
-                            target_list: list[t.GeneralValueType] = list(target_val)  # type: ignore[arg-type]  # list[object] compatible with list[GeneralValueType]
-                            value_list: list[t.GeneralValueType] = list(value)  # type: ignore[arg-type]  # list[object] compatible with list[GeneralValueType]
+                            target_list: list[t.GeneralValueType] = list(target_val)
+                            value_list: list[t.GeneralValueType] = list(value)
                             # Append elements from source list to target list
                             # Create new list to avoid mutating original objects if they were refs
                             target[key] = (
@@ -1276,11 +1276,11 @@ class FlextUtilitiesCollection:
                     # Access private methods for TypeGuard return type (needed for type narrowing)
                     if FlextUtilitiesGuards._is_dict(
                         value
-                    ) or FlextUtilitiesGuards._is_list(value):  # noqa: SLF001
+                    ) or FlextUtilitiesGuards._is_list(value):
                         # Type narrowing: value is dict[str, GeneralValueType] | list[GeneralValueType]
                         # deepcopy preserves type, so result is GeneralValueType compatible
                         copied_value = copy.deepcopy(value)
-                        target[key] = copied_value  # type: ignore[assignment]  # dict[str, GeneralValueType] | list[GeneralValueType] compatible with GeneralValueType
+                        target[key] = copied_value
                     else:
                         # Type narrowing: value is GeneralValueType (scalar or other types)
                         target[key] = value  # GeneralValueType compatible

@@ -907,85 +907,77 @@ class FlextTestsConstants(FlextConstants):
                 )
 
                 # Approved ruff ignores (CONFIG-002) - from ruff-shared.toml
-                RUFF_IGNORES: Final[frozenset[str]] = frozenset(
-                    {
-                        "BLE001",
-                        "COM812",
-                        "CPY001",
-                        "D203",
-                        "D213",
-                        "D401",
-                        "D417",
-                        "DOC201",
-                        "DOC202",
-                        "DOC402",
-                        "DOC501",
-                        "DOC502",
-                        "E501",
-                        "ERA001",
-                        "FBT003",
-                        "G004",
-                        "N813",
-                        "N816",
-                        "PLR0904",
-                        "PLR0911",
-                        "PLR0912",
-                        "PLR0913",
-                        "PLR0914",
-                        "PLR0915",
-                        "PLR0917",
-                        "PLR6301",
-                        "PYI042",
-                        "Q000",
-                        "RUF001",
-                        "RUF002",
-                        "RUF003",
-                        "RUF005",
-                        "S608",
-                        "TC001",
-                        "TC002",
-                        "TC003",
-                        "TRY003",
-                        "TRY300",
-                        "TRY301",
-                        "UP007",
-                        "UP040",
-                        "W293",
-                    }
-                )
+                RUFF_IGNORES: Final[frozenset[str]] = frozenset({
+                    "BLE001",
+                    "COM812",
+                    "CPY001",
+                    "D203",
+                    "D213",
+                    "D401",
+                    "D417",
+                    "DOC201",
+                    "DOC202",
+                    "DOC402",
+                    "DOC501",
+                    "DOC502",
+                    "E501",
+                    "ERA001",
+                    "FBT003",
+                    "G004",
+                    "N813",
+                    "N816",
+                    "PLR0904",
+                    "PLR0911",
+                    "PLR0912",
+                    "PLR0913",
+                    "PLR0914",
+                    "PLR0915",
+                    "PLR0917",
+                    "PLR6301",
+                    "PYI042",
+                    "Q000",
+                    "RUF001",
+                    "RUF002",
+                    "RUF003",
+                    "RUF005",
+                    "S608",
+                    "TC001",
+                    "TC002",
+                    "TC003",
+                    "TRY003",
+                    "TRY300",
+                    "TRY301",
+                    "UP007",
+                    "UP040",
+                    "W293",
+                })
 
                 # Direct technology imports that should use facades (IMPORT-005)
-                TECH_IMPORTS: Final[frozenset[str]] = frozenset(
-                    {
-                        "ldap3",
-                        "oracledb",
-                        "cx_Oracle",
-                        "click",
-                        "rich",
-                        "typer",
-                    }
-                )
+                TECH_IMPORTS: Final[frozenset[str]] = frozenset({
+                    "ldap3",
+                    "oracledb",
+                    "cx_Oracle",
+                    "click",
+                    "rich",
+                    "typer",
+                })
 
                 # Mock patterns to detect (TEST-002)
-                MOCK_NAMES: Final[frozenset[str]] = frozenset(
-                    {
-                        "Mock",
-                        "MagicMock",
-                        "AsyncMock",
-                        "PropertyMock",
-                    }
-                )
+                MOCK_NAMES: Final[frozenset[str]] = frozenset({
+                    "Mock",
+                    "MagicMock",
+                    "AsyncMock",
+                    "PropertyMock",
+                })
 
                 # FLEXT packages for root import checks (IMPORT-006)
-                FLEXT_PACKAGES: Final[frozenset[str]] = frozenset(
-                    {
-                        "flext_core",
-                        "flext_cli",
-                        "flext_ldap",
-                        "flext_ldif",
-                        "flext_tests",
-                    }
-                )
+                FLEXT_PACKAGES: Final[frozenset[str]] = frozenset({
+                    "flext_core",
+                    "flext_cli",
+                    "flext_ldap",
+                    "flext_ldif",
+                    "flext_tests",
+                })
 
                 # Approved internal import patterns (IMPORT-006)
                 # __init__.py in internal packages can import siblings

@@ -246,7 +246,9 @@ class FlextModelsCqrs:
             try:
                 # Fast fail: filters and pagination must be dict or None
                 # mapper().get() without default returns T | None directly
-                filters_raw = FlextUtilitiesMapper().get(query_payload, "filters")
+                filters_raw: object | None = FlextUtilitiesMapper().get(
+                    query_payload, "filters"
+                )
                 # TypeGuard narrows to Mapping[str, GeneralValueType] when
                 # is_dict_like is True
                 if filters_raw is not None and FlextRuntime.is_dict_like(filters_raw):
@@ -258,7 +260,9 @@ class FlextModelsCqrs:
                         filters = {}
                 else:
                     filters = {}
-                pagination_raw = FlextUtilitiesMapper().get(query_payload, "pagination")
+                pagination_raw: object | None = FlextUtilitiesMapper().get(
+                    query_payload, "pagination"
+                )
                 # TypeGuard narrows to Mapping[str, GeneralValueType] when is_dict_like is True
                 if pagination_raw is not None and FlextRuntime.is_dict_like(
                     pagination_raw
@@ -302,7 +306,9 @@ class FlextModelsCqrs:
                     }
                 # Fast fail: query_id must be str or None
                 # mapper().get() without default returns T | None directly
-                query_id_raw = FlextUtilitiesMapper().get(query_payload, "query_id")
+                query_id_raw: object | None = FlextUtilitiesMapper().get(
+                    query_payload, "query_id"
+                )
                 query_id: str = (
                     FlextUtilitiesGenerators().generate("query")
                     if query_id_raw is None

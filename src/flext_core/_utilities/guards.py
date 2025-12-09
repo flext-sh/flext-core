@@ -717,7 +717,7 @@ class FlextUtilitiesGuards:
                 }:
                     # Type narrowing: methods accept GeneralValueType, value is object
                     # object is compatible with GeneralValueType (GeneralValueType includes object-compatible types)
-                    value_general: t.GeneralValueType = value  # type: ignore[assignment]  # object compatible with GeneralValueType
+                    value_general: t.GeneralValueType = value
                     return bool(method(value_general))
                 return bool(method(value))
             # Unknown string type spec

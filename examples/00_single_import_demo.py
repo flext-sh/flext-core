@@ -148,12 +148,10 @@ class UserService:
         data: t.Types.ConfigurationDict,
     ) -> r[bool]:
         """Validate input data using u (DRY) - no None types."""
-        required_fields: AbstractSet[str] = frozenset(
-            {
-                "name",
-                "email",
-            }
-        )  # Advanced collections.abc Set
+        required_fields: AbstractSet[str] = frozenset({
+            "name",
+            "email",
+        })  # Advanced collections.abc Set
         present_fields: AbstractSet[str] = frozenset(data.keys())
 
         if not required_fields <= present_fields:
@@ -217,13 +215,11 @@ def demonstrate_utilities() -> None:
         r.traverse(validation_results, lambda r: r)
         .flat_map(lambda _: cache_result)
         .map(
-            lambda cache_cleared: "\n".join(
-                [
-                    f"Cache cleared: {cache_cleared}",
-                    f"Generated ID: {correlation_id[:12]}",
-                    f"All validations passed: {len(validation_results)} checks",
-                ]
-            ),
+            lambda cache_cleared: "\n".join([
+                f"Cache cleared: {cache_cleared}",
+                f"Generated ID: {correlation_id[:12]}",
+                f"All validations passed: {len(validation_results)} checks",
+            ]),
         )
     )
 
