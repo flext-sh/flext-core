@@ -175,7 +175,7 @@ class FlextUtilitiesConfiguration:
         - Returns sentinel tuple to distinguish "not found" from "None value"
 
         Args:
-            obj: Any object that might have the parameter as attribute
+            obj: Object instance that might have the parameter as attribute
             parameter: Attribute name to retrieve
 
         Returns:

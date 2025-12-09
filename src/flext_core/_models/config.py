@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
-from typing import Annotated, Self
+from typing import Annotated, Final, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -23,7 +23,8 @@ from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
-from flext_core.utilities import u
+
+# NOTE: models.py cannot import utilities - use direct imports from _utilities/* instead
 
 
 def _get_log_level_from_config() -> int:
@@ -53,7 +54,7 @@ class FlextModelsConfig:
         # Note: default_factory requires a callable that returns a value
         # Using lambda is necessary here as Pydantic calls the factory function
         operation_id: str = Field(
-            default_factory=lambda: u.generate(),  # noqa: PLW0108
+            default_factory=lambda: FlextUtilitiesGenerators.generate(),  # noqa: PLW0108
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
@@ -928,6 +929,25 @@ class FlextModelsConfig:
                 "(used if retry_config is None)"
             ),
         )
+
+    # Domain model configuration - moved from constants.py
+    # constants.py cannot import ConfigDict, so this belongs here
+    DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
+        use_enum_values=True,
+        validate_assignment=True,
+        validate_return=True,
+        validate_default=True,
+        str_strip_whitespace=True,
+        arbitrary_types_allowed=False,
+        extra="forbid",
+    )
+    """Domain model configuration defaults.
+    
+    Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because
+    constants.py cannot import ConfigDict from pydantic.
+    
+    Use m.Config.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
+    """
 
 
 __all__ = ["FlextModelsConfig"]

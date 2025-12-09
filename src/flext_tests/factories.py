@@ -1176,7 +1176,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
             svc = ComplexSvc(name="test", amount=100)
 
         """
-        return cls.create_test_service(kind, **overrides)
+        return cls._create_test_service_impl(kind, **overrides)
 
     # ==========================================================================
     # DEPRECATED NESTED FACTORY CLASSES - Use tt.model(), tt.res(), tt.op(), tt.batch()
@@ -1780,11 +1780,15 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
     # ==========================================================================
 
     @staticmethod
-    def create_test_service(
+    def _create_test_service_impl(
         service_type: str = "test",
         **overrides: t.Tests.TestResultValue,
     ) -> type:
-        """Create a test service class.
+        """Internal implementation for creating test service classes.
+
+        This is the actual implementation used by both svc() and
+        create_test_service(). The public create_test_service() method
+        emits a deprecation warning before calling this.
 
         Args:
             service_type: Type of service to create
@@ -1794,12 +1798,6 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
             Test service class
 
         """
-        warnings.warn(
-            c.Tests.Factory.DEPRECATION_CREATE_TEST_SERVICE,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
         # Capture overrides in local variable for use in nested class
         captured_overrides: dict[str, t.Tests.TestResultValue] = dict(overrides)
 
@@ -1951,6 +1949,33 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 return r[bool].ok(True)
 
         return TestService
+
+    @staticmethod
+    def create_test_service(
+        service_type: str = "test",
+        **overrides: t.Tests.TestResultValue,
+    ) -> type:
+        """Create a test service class.
+
+        .. deprecated::
+            Use tt.svc() instead. This method will be removed in a future version.
+
+        Args:
+            service_type: Type of service to create
+            **overrides: Additional attributes for the service
+
+        Returns:
+            Test service class
+
+        """
+        warnings.warn(
+            c.Tests.Factory.DEPRECATION_CREATE_TEST_SERVICE,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return FlextTestsFactories._create_test_service_impl(
+            service_type, **overrides
+        )
 
     # ==========================================================================
     # FLEXTSERVICE INTERFACE IMPLEMENTATION

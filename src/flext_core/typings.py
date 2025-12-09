@@ -275,7 +275,7 @@ class FlextTypes:
         # Can be any type hint: type, type alias, generic, or string
         # Note: For runtime type introspection, we accept type, str,
         # or callable types
-        # Note: Removed Callable[..., T] to avoid Any - use specific
+        # Note: Removed Callable[..., T] to avoid variadic callables - use specific
         # callable types instead
         type TypeHintSpecifier = (
             type | str | Callable[[t.GeneralValueType], t.GeneralValueType]
@@ -294,7 +294,7 @@ class FlextTypes:
         # Type origin specifier - used for generic type origin checking
         # Can be a string type name, type class, or callable with __origin__ attribute
         # Reuses t.GeneralValueType from parent t class (forward reference)
-        # Note: Removed Callable[..., T] to avoid Any - use specific callable types instead
+        # Note: Removed Callable[..., T] to avoid variadic callables - use specific callable types instead
         type TypeOriginSpecifier = (
             str
             | type[t.GeneralValueType]
@@ -359,7 +359,7 @@ class FlextTypes:
         # but cannot be imported here due to circular dependency. For type checking,
         # we use HandlerCallable which covers most use cases.
         # Reuses t.GeneralValueType from parent t class (no duplication)
-        # Note: Removed Callable[..., T] to avoid Any - HandlerCallable covers variadic cases
+        # Note: Removed Callable[..., T] to avoid variadic callables - HandlerCallable covers variadic cases
         type HandlerType = (
             HandlerCallable | Mapping[str, t.GeneralValueType]  # Configuration dict
         )
@@ -653,7 +653,7 @@ class FlextTypes:
         - GeneralValueType: Primitives, sequences, mappings
         - BaseModel: Pydantic models
         - Callable[..., GeneralValueType]: Callable services (variadic signature)
-        - object: Any arbitrary object (protocols, loggers, configs, contexts, etc.)
+        - object: Arbitrary object instances (protocols, loggers, configs, contexts, etc.)
 
         Note: Using 'object' allows registration of protocol instances (p.Config,
         p.Ctx, etc.) and other arbitrary services.

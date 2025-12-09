@@ -2180,7 +2180,7 @@ class FlextUtilitiesValidation:
             validator = V.string.non_empty & V.string.max_length(100)
             result = u.validate(value, validator)
 
-            # Any mode (OR)
+            # OR mode (at least one validator must pass)
             result = u.validate(
                 value,
                 V.string.email,

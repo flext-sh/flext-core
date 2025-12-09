@@ -30,6 +30,7 @@ from flext_core import (
     T_co,
     T_contra,
     U,
+    m,
     t,
 )
 from flext_tests.matchers import tm
@@ -207,9 +208,9 @@ class TestFlextTypings:
         tm.that(t, none=False, msg="FlextTypes (t) must be accessible")
         # Verify actual nested classes in FlextTypes
         # Note: Handler (not HandlerAliases), Dispatcher (not Processor)
+        # Validation moved to m.Validation (FlextModels.Validation)
         # Factory, Bus, Logging, Cqrs exist in other modules (constants, models)
         required_attrs = [
-            "Validation",
             "Json",
             "Handler",
             "Dispatcher",
@@ -267,7 +268,9 @@ class TestFlextTypings:
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
         # Test with a valid hostname (localhost should always resolve)
-        result = t.Validation._validate_hostname("localhost")
+        # Validation moved to m.Validation namespace (FlextModels.Validation)
+        # _validate_hostname is in m.Validation.Validation nested class
+        result = m.Validation.Validation._validate_hostname("localhost")
         tm.that(result, eq="localhost", msg="localhost must resolve correctly")
         tm.that(
             result,
@@ -278,7 +281,7 @@ class TestFlextTypings:
         )
 
         # Test with a valid IP address (should also work)
-        result = t.Validation._validate_hostname("127.0.0.1")
+        result = m.Validation.Validation._validate_hostname("127.0.0.1")
         tm.that(result, eq="127.0.0.1", msg="IP address must resolve correctly")
         tm.that(
             result,
@@ -290,8 +293,8 @@ class TestFlextTypings:
 
     def test_hostname_validation_error(self) -> None:
         """Test hostname validation error path with real validation."""
-        # Access the validator via t.Validation namespace
-        # The validator is a static method in t.Validation class
+        # Access the validator via m.Validation namespace (FlextModels.Validation)
+        # The validator is a static method in m.Validation class
         invalid_hostname = "this-hostname-definitely-does-not-exist-12345.invalid"
         tm.that(
             invalid_hostname,
@@ -302,8 +305,10 @@ class TestFlextTypings:
         )
 
         # Test that invalid hostname raises ValueError with specific message
+        # Validation moved to m.Validation namespace (FlextModels.Validation)
+        # _validate_hostname is in m.Validation.Validation nested class
         with pytest.raises(ValueError, match="Cannot resolve hostname"):
-            t.Validation._validate_hostname(invalid_hostname)
+            m.Validation.Validation._validate_hostname(invalid_hostname)
 
 
 __all__ = ["TestFlextTypings"]

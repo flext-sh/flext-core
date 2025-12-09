@@ -187,7 +187,11 @@ class FlextService[TDomainResult](
         """
         runtime = self._create_initial_runtime()
         # Type narrowing: runtime.context is FlextContext
-        context = cast("FlextContext", runtime.context)
+        # Use isinstance check for type narrowing since FlextContext is concrete class
+        if not isinstance(runtime.context, FlextContext):
+            msg = f"Expected FlextContext, got {type(runtime.context).__name__}"
+            raise TypeError(msg)
+        context = runtime.context
 
         with context.Service.service_context(
             self.__class__.__name__,
@@ -199,7 +203,11 @@ class FlextService[TDomainResult](
         self._context = runtime.context
         # Type narrowing: runtime.config is p.Config, but we need FlextConfig
         # All implementations of p.Config in FLEXT are FlextConfig or subclasses
-        self._config = cast("FlextConfig", runtime.config)
+        # Use isinstance check for type narrowing since FlextConfig is concrete class
+        if not isinstance(runtime.config, FlextConfig):
+            msg = f"Expected FlextConfig, got {type(runtime.config).__name__}"
+            raise TypeError(msg)
+        self._config = runtime.config
         self._container = runtime.container
         self._runtime = runtime
 
@@ -296,15 +304,13 @@ class FlextService[TDomainResult](
         if context is not None:
             runtime_context = context
         else:
-            # FlextContext implements Ctx protocol, cast for type checker
-            runtime_context = cast("p.Ctx", FlextContext.create())
+            # FlextContext implements Ctx protocol structurally, no cast needed
+            runtime_context: p.Ctx = FlextContext.create()
 
         # 3. Container creation with registrations
-        # Cast config to protocol for container.scoped() compatibility
-        runtime_config_typed: p.Config = cast(
-            "p.Config",
-            runtime_config,
-        )
+        # runtime_config is FlextConfig which implements p.Config structurally
+        # No cast needed - FlextConfig implements p.Config protocol
+        runtime_config_typed: p.Config = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
             context=runtime_context,
@@ -692,13 +698,11 @@ class FlextService[TDomainResult](
         # Direct access - GeneralValueType covers all domain results
         # Type narrowing: self is FlextService[TDomainResult], compatible with FlextService[t.GeneralValueType]
         # TDomainResult is a subtype of GeneralValueType, so this is safe
-        # Cast needed because mypy doesn't infer that TDomainResult <: GeneralValueType
         # Type narrowing: self is FlextService[TDomainResult] which implements s[t.GeneralValueType]
-        # s is type alias for FlextService (defined at end of file), cast for type checker
+        # s is type alias for FlextService (defined at end of file)
         # _ServiceAccess.__init__ expects s[t.GeneralValueType], which FlextService implements structurally
-        service_typed: FlextService[t.GeneralValueType] = cast(
-            "FlextService[t.GeneralValueType]", self
-        )
+        # No cast needed - TDomainResult is a subtype of t.GeneralValueType
+        service_typed: FlextService[t.GeneralValueType] = self  # type: ignore[assignment]
         # _ServiceAccess(service_typed) already returns _ServiceAccess instance
         return _ServiceAccess(service_typed)
 
@@ -744,9 +748,9 @@ class FlextService[TDomainResult](
         parent_context = parent.context
         if context_overrides and isinstance(parent_context, FlextContext):
             # Type narrowing: parent_context is FlextContext, which has model_copy
-            # Assign to typed variable for explicit type narrowing
+            # isinstance check already narrows type to FlextContext
             # FlextContext is a Pydantic model (inherits from FlextRuntime which inherits from BaseModel)
-            flext_context_var = cast("FlextContext", parent_context)
+            flext_context_var = parent_context
             # Use getattr for model_copy to avoid type checker issues with protocol intersection
             model_copy_method = getattr(flext_context_var, "model_copy", None)
             if model_copy_method is not None:
@@ -754,24 +758,21 @@ class FlextService[TDomainResult](
             else:
                 # Fallback if model_copy not available
                 merged_context_pydantic = flext_context_var
-            merged_context: p.Ctx = cast("p.Ctx", merged_context_pydantic)
+            # merged_context_pydantic is FlextContext which implements p.Ctx structurally
+            merged_context: p.Ctx = merged_context_pydantic
         else:
             merged_context = parent_context
 
         # Create child with inherited infrastructure
         # Type narrowing: cls is FlextService subclass, merged_config is FlextConfig
         # Pass as **kwargs since __init__ accepts **data: t.GeneralValueType
-        # Cast values to GeneralValueType for type compatibility
-        return cls(
-            **cast(
-                "dict[str, t.GeneralValueType]",
-                {
-                    "config": merged_config,
-                    "context": merged_context,
-                    "container": parent.container,
-                },
-            ),
-        )
+        # Type narrowing: dict values are compatible with t.GeneralValueType
+        merged_data: dict[str, t.GeneralValueType] = {
+            "config": merged_config,
+            "context": merged_context,
+            "container": parent.container,
+        }
+        return cls(**merged_data)
 
 
 class _ServiceExecutionScope(m.ArbitraryTypesModel):
@@ -860,9 +861,13 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             raise RuntimeError(msg)
         # Use require_initialized to get runtime (same as FlextService.runtime)
         # This ensures consistent behavior and proper error handling
-        # Cast the result to m.ServiceRuntime since require_initialized returns generic T
-        result: object = require_initialized(runtime_attr, "Runtime")
-        return cast("m.ServiceRuntime", result)
+        # Type narrowing: runtime_attr is m.ServiceRuntime after require_initialized
+        result = require_initialized(runtime_attr, "Runtime")
+        # Type narrowing: result is m.ServiceRuntime (runtime_attr type after require_initialized)
+        if not isinstance(result, m.ServiceRuntime):
+            msg = f"Expected m.ServiceRuntime, got {type(result).__name__}"
+            raise TypeError(msg)
+        return result
 
     @computed_field
     def result(

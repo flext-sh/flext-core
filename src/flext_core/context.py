@@ -16,10 +16,11 @@ import json
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Final, Self, cast, overload
+from typing import Final, Self, overload
 
 from pydantic import BaseModel
 
+from flext_core._models.context import FlextModelsContext
 from flext_core.constants import c
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
@@ -44,6 +45,19 @@ class FlextContext(FlextRuntime):
     - Timing utilities that feed metrics and structured logging
     - Serialization helpers for propagating context via headers or payloads
     """
+
+    @staticmethod
+    def _narrow_contextvar_to_configuration_dict(
+        ctx_value: object,
+    ) -> t.Types.ConfigurationDict:
+        """Safely narrow contextvar value to ConfigurationDict with runtime validation."""
+        # Use type narrowing: u.is_type() checks if value is dict, then narrow to ConfigurationDict
+        ctx_value_raw = ctx_value if u.is_type(ctx_value, dict) else {}
+        # Type narrowing: ctx_value_raw is dict after u.is_type check
+        # Use isinstance to narrow to ConfigurationDict (dict[str, GeneralValueType])
+        if isinstance(ctx_value_raw, dict) and all(isinstance(k, str) for k in ctx_value_raw):
+            return ctx_value_raw
+        return {}
 
     # =========================================================================
     # HELPER METHODS (moved from module level for SRP compliance)
@@ -281,10 +295,8 @@ class FlextContext(FlextRuntime):
     ) -> None:
         """Set multiple values in contextvar scope."""
         ctx_var = self._get_or_create_scope_var(scope)
-        current = cast(
-            "t.Types.ConfigurationDict",
-            (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
-        )
+        # Use helper for type narrowing to ConfigurationDict
+        current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         _ = ctx_var.set({**current, **data})
         if scope == c.Context.SCOPE_GLOBAL:
             _ = FlextLogger.bind_global_context(**data)
@@ -377,7 +389,7 @@ class FlextContext(FlextRuntime):
         for hook in hooks:
             if callable(hook):
                 # Note: Hooks should not raise exceptions
-                # Any exception indicates a programming error in hook implementation
+                # All exceptions indicate a programming error in hook implementation
                 _ = hook(event_data)
 
     @staticmethod
@@ -702,7 +714,7 @@ class FlextContext(FlextRuntime):
 
         return self
 
-    def clone(self) -> p.Ctx:
+    def clone(self) -> Self:
         """Create a clone of this context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -713,18 +725,17 @@ class FlextContext(FlextRuntime):
         """
         cloned = FlextContext()
         for scope_name, ctx_var in self._scope_vars.items():
-            scope_dict = cast(
-                "t.Types.ConfigurationDict",
-                (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
-            )
+            # Use helper for type narrowing to ConfigurationDict
+            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
                 _ = cloned._get_or_create_scope_var(scope_name).set(scope_dict.copy())
         # Clone metadata and statistics
         cloned._metadata = self._metadata.model_copy()
         cloned._statistics = self._statistics.model_copy()
 
-        # Cast to Ctx protocol for type checker
-        return cast("p.Ctx", cloned)
+        # Type narrowing: cloned is FlextContext which implements p.Ctx protocol
+        # FlextContext structurally implements p.Ctx, so no cast needed
+        return cloned
 
     def validate(self) -> r[bool]:
         """Validate the context data.
@@ -806,7 +817,7 @@ class FlextContext(FlextRuntime):
         return cls.create(initial_data=initial_data or None)
 
     @classmethod
-    def from_json(cls, json_str: str) -> p.Ctx:
+    def from_json(cls, json_str: str) -> Self:
         """Create context from JSON string.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -837,9 +848,9 @@ class FlextContext(FlextRuntime):
                 transformer=normalize_value,
             )
             context_data = m.Context.ContextData(data=normalized_data)
-            context_instance = cls(initial_data=context_data)
-            # Cast to Ctx protocol for type checker
-            return cast("p.Ctx", context_instance)
+            # Type narrowing: cls(initial_data=context_data) returns FlextContext which implements p.Ctx protocol
+            # FlextContext structurally implements p.Ctx, so no cast needed
+            return cls(initial_data=context_data)
         except json.JSONDecodeError as e:
             msg = f"Invalid JSON string: {e}"
             raise ValueError(msg) from e
@@ -883,10 +894,8 @@ class FlextContext(FlextRuntime):
             return []
         all_items: list[tuple[str, t.GeneralValueType]] = []
         for ctx_var in self._scope_vars.values():
-            scope_dict = cast(
-                "t.Types.ConfigurationDict",
-                (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
-            )
+            # Use helper for type narrowing to ConfigurationDict
+            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_items.extend(scope_dict.items())
         return all_items
 
@@ -933,11 +942,11 @@ class FlextContext(FlextRuntime):
             }
 
         # Type narrowing: normalized_metadata is dict after normalization
-        metadata_general: t.Types.ConfigurationDict | None = (
-            cast("t.Types.ConfigurationDict", normalized_metadata)
-            if isinstance(normalized_metadata, dict)
-            else None
-        )
+        # Use isinstance to narrow to ConfigurationDict (dict[str, GeneralValueType])
+        if isinstance(normalized_metadata, dict) and all(isinstance(k, str) for k in normalized_metadata):
+            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata
+        else:
+            metadata_general = None
 
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, GeneralValueType])
@@ -973,10 +982,8 @@ class FlextContext(FlextRuntime):
             return []
         all_values: list[t.GeneralValueType] = []
         for ctx_var in self._scope_vars.values():
-            scope_dict = cast(
-                "t.Types.ConfigurationDict",
-                (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
-            )
+            # Use helper for type narrowing to ConfigurationDict
+            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
         return all_values
 
@@ -1105,10 +1112,8 @@ class FlextContext(FlextRuntime):
         """
         all_data: t.Types.ConfigurationDict = {}
         for ctx_var in self._scope_vars.values():
-            scope_dict = cast(
-                "t.Types.ConfigurationDict",
-                (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
-            )
+            # Use helper for type narrowing to ConfigurationDict
+            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_data.update(scope_dict)
         return all_data
 
@@ -1155,10 +1160,8 @@ class FlextContext(FlextRuntime):
             return {}
         scopes: t.Types.StringConfigurationDictDict = {}
         for scope_name, ctx_var in self._scope_vars.items():
-            scope_dict = cast(
-                "t.Types.ConfigurationDict",
-                (ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}),
-            )
+            # Use helper for type narrowing to ConfigurationDict
+            scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
                 scopes[scope_name] = scope_dict
         return scopes
@@ -1187,11 +1190,11 @@ class FlextContext(FlextRuntime):
                 normalized_metadata[k] = FlextRuntime.normalize_to_metadata_value(v)
 
         # Type narrowing: normalized_metadata is dict after normalization
-        metadata_general: t.Types.ConfigurationDict | None = (
-            cast("t.Types.ConfigurationDict", normalized_metadata)
-            if isinstance(normalized_metadata, dict)
-            else None
-        )
+        # Use isinstance to narrow to ConfigurationDict (dict[str, GeneralValueType])
+        if isinstance(normalized_metadata, dict) and all(isinstance(k, str) for k in normalized_metadata):
+            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata
+        else:
+            metadata_general = None
 
         # Get statistics as dict
         stats_dict: t.Types.ConfigurationDict = {}
@@ -1272,92 +1275,74 @@ class FlextContext(FlextRuntime):
         class Correlation:
             """Correlation variables for distributed tracing."""
 
-            CORRELATION_ID: Final[m.Context.StructlogProxyContextVar[str]] = cast(
-                "m.Context.StructlogProxyContextVar[str]",
+            CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     c.Context.KEY_CORRELATION_ID,
                     default=None,
-                ),
+                )
             )
-            PARENT_CORRELATION_ID: Final[m.Context.StructlogProxyContextVar[str]] = (
-                cast(
-                    "m.Context.StructlogProxyContextVar[str]",
-                    u.Context.create_str_proxy(
-                        c.Context.KEY_PARENT_CORRELATION_ID,
-                        default=None,
-                    ),
+            PARENT_CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
+                u.Context.create_str_proxy(
+                    c.Context.KEY_PARENT_CORRELATION_ID,
+                    default=None,
                 )
             )
 
         class Service:
             """Service context variables for identification."""
 
-            SERVICE_NAME: Final[m.Context.StructlogProxyContextVar[str]] = cast(
-                "m.Context.StructlogProxyContextVar[str]",
+            SERVICE_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     c.Context.KEY_SERVICE_NAME,
                     default=None,
-                ),
+                )
             )
-            SERVICE_VERSION: Final[m.Context.StructlogProxyContextVar[str]] = cast(
-                "m.Context.StructlogProxyContextVar[str]",
+            SERVICE_VERSION: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     "service_version",
                     default=None,
-                ),
+                )
             )
 
         class Request:
             """Request context variables for metadata."""
 
-            USER_ID: Final[m.Context.StructlogProxyContextVar[str]] = cast(
-                "m.Context.StructlogProxyContextVar[str]",
+            USER_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     c.Context.KEY_USER_ID,
                     default=None,
-                ),
+                )
             )
-            REQUEST_ID: Final[m.Context.StructlogProxyContextVar[str]] = cast(
-                "m.Context.StructlogProxyContextVar[str]",
+            REQUEST_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     "request_id",
                     default=None,
-                ),
+                )
             )
-            REQUEST_TIMESTAMP: Final[m.Context.StructlogProxyContextVar[datetime]] = (
-                cast(
-                    "m.Context.StructlogProxyContextVar[datetime]",
-                    u.Context.create_datetime_proxy(
-                        "request_timestamp",
-                        default=None,
-                    ),
+            REQUEST_TIMESTAMP: Final[FlextModelsContext.StructlogProxyContextVar[datetime]] = (
+                u.Context.create_datetime_proxy(
+                    "request_timestamp",
+                    default=None,
                 )
             )
 
         class Performance:
             """Performance context variables for timing."""
 
-            OPERATION_NAME: Final[m.Context.StructlogProxyContextVar[str]] = cast(
-                "m.Context.StructlogProxyContextVar[str]",
+            OPERATION_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     c.Context.KEY_OPERATION_NAME,
                     default=None,
-                ),
+                )
             )
             OPERATION_START_TIME: Final[
-                m.Context.StructlogProxyContextVar[datetime]
-            ] = cast(
-                "m.Context.StructlogProxyContextVar[datetime]",
-                u.Context.create_datetime_proxy("operation_start_time", default=None),
-            )
+                FlextModelsContext.StructlogProxyContextVar[datetime]
+            ] = u.Context.create_datetime_proxy("operation_start_time", default=None)
             OPERATION_METADATA: Final[
-                m.Context.StructlogProxyContextVar[t.Types.ConfigurationDict]
-            ] = cast(
-                "m.Context.StructlogProxyContextVar[t.Types.ConfigurationDict]",
-                u.Context.create_dict_proxy(
-                    "operation_metadata",
-                    default=None,
-                ),
+                FlextModelsContext.StructlogProxyContextVar[t.Types.ConfigurationDict]
+            ] = u.Context.create_dict_proxy(
+                "operation_metadata",
+                default=None,
             )
 
     # =========================================================================
@@ -1566,9 +1551,9 @@ class FlextContext(FlextRuntime):
             container = FlextContext.get_container()
             try:
                 # Use container.with_service for fluent API (accepts GeneralValueType | BaseModel | Callable)
-                # Cast service to GeneralValueType for protocol compatibility
-                # The actual implementation accepts BaseModel and Callable too, but protocol specifies GeneralValueType
-                service_typed: t.GeneralValueType = cast("t.GeneralValueType", service)
+                # Type narrowing: service is GeneralValueType | BaseModel | Callable, protocol accepts GeneralValueType
+                # BaseModel and Callable are subtypes of GeneralValueType (object), so direct assignment works
+                service_typed: t.GeneralValueType = service  # type: ignore[assignment]
                 # with_service returns Self for fluent chaining, but we don't need the return value
                 _ = container.with_service(service_name, service_typed)
                 return r[bool].ok(True)

@@ -216,9 +216,9 @@ class TestServiceResultProperty:
         """Computed fields behavior in model_dump."""
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
-        # Exclude access to avoid Pydantic warnings when runtime not initialized
-        # The runtime field raises RuntimeError if not initialized, so we exclude access entirely
-        dump = service.model_dump(exclude={"access"})
+        # Exclude runtime-related fields to avoid Pydantic serialization warnings
+        # when runtime not initialized (_runtime contains ModelPrivateAttr instead of ServiceRuntime)
+        dump = service.model_dump(exclude={"access", "runtime"})
         assert "user_id" in dump
 
         user = service.result
@@ -237,8 +237,9 @@ class TestServiceResultProperty:
 
         assert hasattr(service, "result")
 
-        # Exclude access to avoid Pydantic warnings when runtime not initialized
-        dump = service.model_dump(exclude={"access"})
+        # Exclude runtime-related fields to avoid Pydantic serialization warnings
+        # when runtime not initialized (_runtime contains ModelPrivateAttr instead of ServiceRuntime)
+        dump = service.model_dump(exclude={"access", "runtime"})
         assert isinstance(dump, dict)
         assert "user_id" in dump
 

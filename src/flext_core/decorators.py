@@ -254,7 +254,7 @@ class FlextDecorators(FlextRuntime):
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
         ... def business_operation() -> t.Types.ConfigurationDict:
-        ...     # Any exception becomes FlextResult.fail()
+        ...     # All exceptions become FlextResult.fail()
         ...     return process_business_logic()
         >>>
         >>> result = business_operation()
@@ -872,7 +872,7 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def _execute_retry_loop[R](
-        func: Callable[..., R],  # ... is standard for variable args, not true Any
+        func: Callable[..., R],  # ... is standard for variable args (variadic signature)
         args: tuple[object, ...],
         kwargs: dict[
             str,

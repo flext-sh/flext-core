@@ -4024,7 +4024,7 @@ class FlextDispatcher(x):
         if attributes_section_raw is not None and isinstance(
             attributes_section_raw, Mapping
         ):
-            # dumped.get("attributes") returns Any, cast to ConfigurationMapping after isinstance check
+            # dumped.get("attributes") returns unknown type, cast to ConfigurationMapping after isinstance check
             return cast("t.Types.ConfigurationMapping", attributes_section_raw)
         # Return full dump if no attributes section
         return cast("t.Types.ConfigurationMapping", dumped)

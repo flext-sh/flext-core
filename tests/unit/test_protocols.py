@@ -181,28 +181,16 @@ class TestFlextProtocols:
         scenario: ProtocolAvailabilityScenario,
     ) -> None:
         """Test that protocols are available by category with real validation."""
-        category_mapping = {
-            ProtocolCategoryType.FOUNDATION: p.Foundation,
-            ProtocolCategoryType.DOMAIN: p.Domain,
-            ProtocolCategoryType.INFRASTRUCTURE: p.Configuration,
-            ProtocolCategoryType.APPLICATION: p.Application,
-            ProtocolCategoryType.COMMANDS: p.Application,
-            ProtocolCategoryType.EXTENSIONS: p.Application,
-        }
-        category_class = category_mapping.get(scenario.category, p)
-        tm.that(
-            category_class,
-            none=False,
-            msg=f"Category class for {scenario.category} must exist",
-        )
+        # Protocols are directly in p (FlextProtocols), not in nested namespaces
+        # All protocols are accessible directly from p
         for proto_name in scenario.protocol_names:
             tm.that(
-                hasattr(category_class, proto_name),
+                hasattr(p, proto_name),
                 eq=True,
-                msg=f"Protocol {proto_name} must be found in {category_class.__name__}",
+                msg=f"Protocol {proto_name} must be found in p (FlextProtocols)",
             )
             # Validate protocol is not None
-            protocol = getattr(category_class, proto_name)
+            protocol = getattr(p, proto_name)
             tm.that(protocol, none=False, msg=f"Protocol {proto_name} must not be None")
 
     def test_result_protocol_implementation(self) -> None:
