@@ -935,11 +935,13 @@ class TestFlextTestsFilesNewApi:
 
     def test_files_context_manager_mixed_types(self) -> None:
         """Test files() handles mixed content types."""
-        with FlextTestsFiles.files({
-            "text": "plain text",
-            "json": {"key": "value"},
-            "csv": [["a", "b"], ["1", "2"]],
-        }) as paths:
+        with FlextTestsFiles.files(
+            {
+                "text": "plain text",
+                "json": {"key": "value"},
+                "csv": [["a", "b"], ["1", "2"]],
+            }
+        ) as paths:
             assert paths["text"].read_text() == "plain text"
             assert json.loads(paths["json"].read_text()) == {"key": "value"}
             assert len(paths["csv"].read_text().strip().split("\n")) == 2

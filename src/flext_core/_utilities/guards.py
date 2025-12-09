@@ -142,26 +142,32 @@ class FlextUtilitiesGuards:
             # Convert to flat dict with ScalarValue values
             # Type narrowing: is_dict_like returns TypeGuard[ConfigurationMapping]
             # ConfigurationMapping is Mapping[str, GeneralValueType]
-            val_mapping: t.Types.ConfigurationMapping = val  # Type narrowing via TypeGuard
+            val_mapping = val  # type narrowing via TypeGuard
             result_dict: dict[str, t.ScalarValue] = {}
-            dict_v = dict(val_mapping.items())
-            for k, v in dict_v.items():
-                if isinstance(v, (str, int, float, bool, type(None))):
-                    result_dict[k] = v
-                else:
-                    result_dict[k] = str(v)
+            # Before accessing .items(), narrow the type
+            if isinstance(val_mapping, Mapping):
+                dict_v = dict(val_mapping.items())
+                for k, v in dict_v.items():
+                    if isinstance(v, (str, int, float, bool, type(None))):
+                        result_dict[k] = v
+                    else:
+                        result_dict[k] = str(v)
             # Return as Mapping[str, ScalarValue] - compatible with MetadataAttributeValue
             return result_dict
         if FlextRuntime.is_list_like(val):
             # Convert to list[t.MetadataAttributeValue]
             # Type narrowing: is_list_like returns TypeGuard[Sequence[GeneralValueType]]
-            val_sequence: Sequence[t.GeneralValueType] = val  # Type narrowing via TypeGuard
+            val_sequence = val  # type narrowing via TypeGuard
             result_list: list[str | int | float | bool | None] = []
-            for item in val_sequence:
-                if isinstance(item, (str, int, float, bool, type(None))):
-                    result_list.append(item)
-                else:
-                    result_list.append(str(item))
+            # Before iterating, narrow the type
+            if isinstance(val_sequence, Sequence) and not isinstance(
+                val_sequence, (str, bytes)
+            ):
+                for item in val_sequence:
+                    if isinstance(item, (str, int, float, bool, type(None))):
+                        result_list.append(item)
+                    else:
+                        result_list.append(str(item))
             return result_list
         return str(val)
 

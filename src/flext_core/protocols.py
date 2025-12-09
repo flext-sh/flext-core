@@ -1,27 +1,7 @@
-"""Runtime-checkable protocols that describe FLEXT public contracts.
-
-Define ``p`` as the structural typing surface for dispatcher
-handlers, services, results, and utilities. All protocols are
-``@runtime_checkable`` so integration points can be verified without
-inheritance, keeping layers decoupled while remaining type-safe.
-
-Organized in hierarchical namespaces following SOLID principles:
-- Foundation: Core protocols (Result, Model)
-- Configuration: Config protocols
-- Context: Context management protocols
-- Container: Dependency injection protocols
-- Domain: Domain-specific protocols (Service, Repository, Validation)
-- Application: Application layer protocols (Handler, CommandBus, Processor)
-- Infrastructure: Infrastructure protocols (Logger, Connection, Metadata)
-- Utility: Utility protocols (Callable)
-- Specialized: Specialized domain protocols (Entry for LDIF)
-
-All protocols use types from t (flext_core.typings) to maintain
-single source of truth.
+"""Runtime-checkable structural typing protocols for FLEXT framework.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -40,69 +20,7 @@ P_HandlerFunc = ParamSpec("P_HandlerFunc")
 
 
 class FlextProtocols:
-    """Hierarchical protocol definitions organized by SOLID principles.
-
-    All protocols are organized in namespaces following the Interface
-    Segregation Principle, allowing clients to depend only on the protocols
-    they actually need.
-
-    **Namespace Structure:**
-
-    - **Foundation**: Core protocols used throughout the system
-      (Result, Model)
-
-    - **Configuration**: Configuration and component setup protocols
-      (Config, Configurable)
-
-    - **Context**: Context management and execution context protocols
-      (Context)
-
-    - **Container**: Dependency injection container protocols
-      (Container)
-
-    - **Domain**: Domain-specific business logic protocols
-      (Service, Repository, Validation)
-
-    - **Application**: Application layer protocols for handlers and processing
-      (Handler, CommandBus, Middleware, Processor)
-
-    - **Infrastructure**: Infrastructure protocols for external systems
-      (Logger, Connection, Metadata)
-
-    - **Utility**: Utility protocols for common patterns
-      (Callable)
-
-    - **Specialized**: Specialized domain protocols
-      (Entry for LDIF processing)
-
-    **Usage:**
-
-    ```python
-    from flext_core.protocols import p
-
-    # Foundation protocols
-    result: p.Result[str]
-    model: p.HasModelDump
-
-    # Domain protocols
-    service: p.Service[str]
-    repository: p.Repository[Entity]
-
-    # Application protocols
-    handler: p.Handler
-    command_bus: p.CommandBus
-    ```
-
-    **Composition:**
-
-    Protocols are designed to be composed:
-    - DI extends Configurable
-    - Model extends HasModelDump
-    - Logger.StructlogLogger extends BindableLogger
-
-    This follows the Interface Segregation Principle, keeping protocols
-    focused and composable.
-    """
+    """Hierarchical protocol namespace organized by Interface Segregation Principle."""
 
     # =========================================================================
     # CORE RESULT PROTOCOL (Root Level for Self-Reference)
@@ -442,7 +360,11 @@ class FlextProtocols:
 
     @runtime_checkable
     class Ctx(Protocol):
-        """Execution context protocol with cloning semantics."""
+        """Execution context protocol with cloning semantics.
+
+        Uses ResultLike (covariant) for return types to allow implementations
+        to return FlextResult while protocol defines the interface.
+        """
 
         def clone(self) -> Self:
             """Clone context for isolated execution."""
@@ -453,7 +375,7 @@ class FlextProtocols:
             key: str,
             value: t.GeneralValueType,
             scope: str = ...,
-        ) -> FlextProtocols.Result[bool]:
+        ) -> FlextProtocols.ResultLike[bool]:
             """Set a context value."""
             ...
 
@@ -461,7 +383,7 @@ class FlextProtocols:
             self,
             key: str,
             scope: str = ...,
-        ) -> FlextProtocols.Result[t.GeneralValueType]:
+        ) -> FlextProtocols.ResultLike[t.GeneralValueType]:
             """Get a context value."""
             ...
 

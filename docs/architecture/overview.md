@@ -100,6 +100,7 @@ guide.
 ## Related Documentation
 
 **Within Project**:
+
 - [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
 - [CQRS Architecture](./cqrs.md) - Handler pipeline and dispatcher orchestration
 - [Architecture Patterns](./patterns.md) - Common patterns and best practices
@@ -109,5 +110,6 @@ guide.
 - [API Reference](../api-reference/foundation.md) - Foundation layer APIs
 
 **External Resources**:
+
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)

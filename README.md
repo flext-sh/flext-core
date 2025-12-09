@@ -188,7 +188,6 @@ The layered bridge keeps dependency-injector usage isolated to the runtime (L0.5
 
 See [`docs/guides/dependency_injector_prompt.md`](docs/guides/dependency_injector_prompt.md) for the complete pattern checklist and architectural rules.
 
-
 When you need a standalone DI container (for tests or auxiliary modules) without manual follow-up registration, use the parameterized factory helper:
 
 ```python
@@ -424,7 +423,6 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 ```
 
 **Rationale**: Framework code (dispatchers, handlers, containers, utilities) executes user-provided callbacks and must wrap any exception into `FlextResult.fail()` to maintain the railway pattern.
-
 
 **PYI042**: Ignored globally to allow short alias names (`r`, `t`, `c`, `m`, `p`, `u`) without type annotations.
 

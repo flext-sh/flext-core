@@ -96,10 +96,12 @@ class ComplexV1Service(s[t.Types.ConfigurationMapping]):
         if not self.items:
             return r.fail("Items cannot be empty")
 
-        return r.ok({
-            "count": len(self.items) * self.multiplier,
-            "items": self.items,
-        })
+        return r.ok(
+            {
+                "count": len(self.items) * self.multiplier,
+                "items": self.items,
+            }
+        )
 
 
 class ComplexV2Service(s[t.Types.ConfigurationMapping]):
@@ -113,10 +115,12 @@ class ComplexV2Service(s[t.Types.ConfigurationMapping]):
         if not self.items:
             return r.fail("Items cannot be empty")
 
-        return r.ok({
-            "count": len(self.items) * self.multiplier,
-            "items": self.items,
-        })
+        return r.ok(
+            {
+                "count": len(self.items) * self.multiplier,
+                "items": self.items,
+            }
+        )
 
 
 class BoolService(s[bool]):

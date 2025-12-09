@@ -196,7 +196,7 @@ class UserHandler:
             request_id=request_id,
             user_id=user_id
         )
-        
+
         try:
             self.logger.info("Request started")
             # ... process request ...
@@ -225,4 +225,3 @@ For custom configuration, you can still call `FlextRuntime.configure_structlog()
 - [Service Patterns Guide](./service-patterns.md) - Using logging in services
 - [Error Handling Guide](./error-handling.md) - Logging errors and exceptions
 - [Testing Guide](./testing.md) - Testing with structured logging
-

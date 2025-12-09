@@ -240,10 +240,12 @@ class TestFlextProtocols:
             """Repository for user entities."""
 
             def find_by_id(self, entity_id: str) -> r[t.Types.ConfigurationMapping]:
-                return r[t.Types.ConfigurationMapping].ok({
-                    "id": entity_id,
-                    "name": "Test",
-                })
+                return r[t.Types.ConfigurationMapping].ok(
+                    {
+                        "id": entity_id,
+                        "name": "Test",
+                    }
+                )
 
             def save(
                 self,

@@ -749,7 +749,7 @@ class FlextUtilitiesParser:
             replacement = str(pattern_tuple[1])
             # Type narrowing: third element exists and is int based on tuple type annotation
             # Use type narrowing: when tuple_len == 3, pattern_tuple is tuple[str, str, int]
-            flags_raw = pattern_tuple[2]  # type: ignore[index]  # Type checker doesn't narrow tuple union by length
+            flags_raw = pattern_tuple[2]  # type: ignore[misc]  # Type checker doesn't narrow tuple union by length
             flags = flags_raw if isinstance(flags_raw, int) else 0
         else:
             return r[tuple[str, str, int]].fail(
@@ -1015,12 +1015,16 @@ class FlextUtilitiesParser:
         if case_insensitive:
             # _parse_get_attr returns object, need to narrow to ConfigurationDict
             # StrEnum.__members__ returns a mappingproxy, not a dict
-            members_raw = FlextUtilitiesParser._parse_get_attr(enum_type, "__members__", {})
+            members_raw = FlextUtilitiesParser._parse_get_attr(
+                enum_type, "__members__", {}
+            )
             # Use Mapping for type narrowing - __members__ returns mappingproxy which is a Mapping
-            if isinstance(members_raw, Mapping) and all(isinstance(k, str) for k in members_raw):
-                members_dict: t.Types.ConfigurationDict = dict(members_raw)  # type: ignore[assignment]
+            if isinstance(members_raw, Mapping) and all(
+                isinstance(k, str) for k in members_raw
+            ):
+                members_dict: t.Types.ConfigurationDict = dict(members_raw)
             else:
-                members_dict: t.Types.ConfigurationDict = {}  # type: ignore[assignment]
+                members_dict = {}
             members_list = list(members_dict.values())
 
             def match_member(member: object) -> bool:
@@ -1125,7 +1129,7 @@ class FlextUtilitiesParser:
             return float_result if float_result is not None else None  # type: ignore[return-value]
         if target is str:
             # Type narrowing: when target is str, T is str, so r[str] is r[T]
-            return r[str].ok(str(value))  # type: ignore[return-value]
+            return r[str].ok(str(value))  # type: ignore[arg-type]
         if target is bool:
             bool_result = FlextUtilitiesParser._coerce_to_bool(value)
             # Type narrowing: when target is bool, T is bool, so r[bool] is r[T]
@@ -1226,10 +1230,10 @@ class FlextUtilitiesParser:
             # When target is type[T], calling target(value) returns T
             # This is a legitimate generic conversion case - type checker cannot infer T from object
             # But we can use type narrowing: target(value) returns T when target is type[T]
-            parsed_raw: object = target(value)  # type: ignore[call-overload]
+            parsed_raw = target(value)  # type: ignore[call-arg]
             # Type narrowing: parsed_raw is T after successful call to type[T]
             # This is a mandatory conversion case where type checker cannot infer T from object
-            parsed_typed: T = parsed_raw  # type: ignore[assignment]  # target(value) returns T
+            parsed_typed: T = parsed_raw  # target(value) returns T
             return r[T].ok(parsed_typed)
         except Exception as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
@@ -1411,8 +1415,8 @@ class FlextUtilitiesParser:
             except ValueError:
                 return default
         if isinstance(value, float):
-            converted: int = int(value)
-            return converted if isinstance(default, int) else default  # type: ignore[return-value]
+            converted_int: int = int(value)
+            return converted_int if isinstance(default, int) else default  # type: ignore[return-value]
         return default
 
     @staticmethod
@@ -1481,8 +1485,8 @@ class FlextUtilitiesParser:
             converted: bool = normalized in {"true", "1", "yes", "on"}
             return converted if isinstance(default, bool) else default  # type: ignore[return-value]
         if isinstance(value, (int, float)):
-            converted: bool = bool(value)
-            return converted if isinstance(default, bool) else default  # type: ignore[return-value]
+            converted_bool: bool = bool(value)
+            return converted_bool if isinstance(default, bool) else default  # type: ignore[return-value]
         return default
 
     @staticmethod
@@ -1727,19 +1731,20 @@ class FlextUtilitiesParser:
 
         """
         # Type narrowing: items can be Mapping[str, T] | list[str]
+        items_to_check: list[str]
         if isinstance(items, Mapping):
             # items is Mapping[str, T], convert keys to list
             # Use isinstance for proper type narrowing
-            items_mapping: Mapping[str, object] = items  # type: ignore[assignment]
-            items_list: list[str] = [str(k) for k in items_mapping if isinstance(k, str)]
+            items_mapping: Mapping[str, object] = items
+            items_to_check = [str(k) for k in items_mapping if isinstance(k, str)]
         elif isinstance(items, list):
             # items is list[str] - use isinstance for proper type narrowing
-            items_list: list[str] = [str(item) for item in items if isinstance(item, str)]
+            items_to_check = [str(item) for item in items if isinstance(item, str)]
         else:
-            items_list: list[str] = []
+            items_to_check = []
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = FlextUtilitiesParser.norm_list(
-            items_list,
+            items_to_check,
             case=case or "lower",
         )
         if isinstance(normalized_result, (list, set)):

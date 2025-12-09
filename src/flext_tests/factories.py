@@ -1973,9 +1973,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
             DeprecationWarning,
             stacklevel=2,
         )
-        return FlextTestsFactories._create_test_service_impl(
-            service_type, **overrides
-        )
+        return FlextTestsFactories._create_test_service_impl(service_type, **overrides)
 
     # ==========================================================================
     # FLEXTSERVICE INTERFACE IMPLEMENTATION

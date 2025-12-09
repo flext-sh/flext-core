@@ -872,7 +872,9 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def _execute_retry_loop[R](
-        func: Callable[..., R],  # ... is standard for variable args (variadic signature)
+        func: Callable[
+            ..., R
+        ],  # ... is standard for variable args (variadic signature)
         args: tuple[object, ...],
         kwargs: dict[
             str,

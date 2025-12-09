@@ -300,12 +300,14 @@ class FlextService[TDomainResult](
         runtime_config = config_cls.materialize(config_overrides=config_overrides)
 
         # 2. Context creation with initial data
-        runtime_context: p.Ctx | None
+        # FlextContext implements Ctx protocol structurally
+        # Assign to p.Ctx type - mypy verifies protocol conformance
+        runtime_context_typed: p.Ctx
         if context is not None:
-            runtime_context = context
+            runtime_context_typed = context
         else:
-            # FlextContext implements Ctx protocol structurally, no cast needed
-            runtime_context: p.Ctx = FlextContext.create()
+            # FlextContext.create() returns FlextContext which implements p.Ctx
+            runtime_context_typed = FlextContext.create()
 
         # 3. Container creation with registrations
         # runtime_config is FlextConfig which implements p.Config structurally
@@ -313,7 +315,7 @@ class FlextService[TDomainResult](
         runtime_config_typed: p.Config = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
-            context=runtime_context,
+            context=runtime_context_typed,
             subproject=subproject,
             services=services,
             factories=factories,
@@ -338,7 +340,7 @@ class FlextService[TDomainResult](
 
         return m.ServiceRuntime.model_construct(
             config=runtime_config,
-            context=runtime_context,
+            context=runtime_context_typed,
             container=runtime_container,
             dispatcher=runtime_dispatcher,
             registry=runtime_registry,
@@ -768,9 +770,9 @@ class FlextService[TDomainResult](
         # Pass as **kwargs since __init__ accepts **data: t.GeneralValueType
         # Type narrowing: dict values are compatible with t.GeneralValueType
         merged_data: dict[str, t.GeneralValueType] = {
-            "config": merged_config,
-            "context": merged_context,
-            "container": parent.container,
+            "config": merged_config,  # type: ignore[dict-item]
+            "context": merged_context,  # type: ignore[dict-item]
+            "container": parent.container,  # type: ignore[dict-item]
         }
         return cls(**merged_data)
 

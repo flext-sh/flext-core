@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import inspect
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from enum import StrEnum
 from typing import ClassVar, Literal, TypeGuard, TypeIs, cast, overload
 
@@ -20,11 +20,13 @@ from flext_core.result import r
 from flext_core.typings import t
 
 # Approved modules that can import directly (for testing, internal use)
-_APPROVED_MODULES = frozenset({
-    "flext_core.utilities",
-    "flext_core._utilities",
-    "tests.",
-})
+_APPROVED_MODULES = frozenset(
+    {
+        "flext_core.utilities",
+        "flext_core._utilities",
+        "tests.",
+    }
+)
 
 
 def _check_direct_access() -> None:
@@ -315,6 +317,99 @@ class FlextUtilitiesEnum:
         # Cache result - store as frozenset[StrEnum] for compatibility
         FlextUtilitiesEnum._members_cache[enum_cls] = cast("frozenset[StrEnum]", result)
         return result
+
+    # ─────────────────────────────────────────────────────────────
+    # ADVANCED ENUM VALIDATION - Python 3.13+ discriminated union patterns
+    # ─────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def get_enum_values(enum_class: type[StrEnum]) -> Sequence[str]:
+        """Get all values from StrEnum class.
+
+        Returns immutable sequence for safe iteration.
+        Python 3.13+ collections.abc.Sequence pattern.
+        Uses enum.__members__ for compatibility with all type checkers.
+
+        Args:
+            enum_class: StrEnum class to extract values from
+
+        Returns:
+            Immutable sequence of enum string values
+
+        """
+        return tuple(member.value for member in enum_class.__members__.values())
+
+    @staticmethod
+    def create_discriminated_union(
+        _discriminator_field: str,
+        *enum_classes: type[StrEnum],
+    ) -> dict[str, type[StrEnum]]:
+        """Create discriminated union mapping for Pydantic models.
+
+        Advanced pattern for discriminated unions with multiple enums.
+        Enables efficient validation with Field(discriminator=discriminator_field).
+        Python 3.13+ discriminated union best practice.
+
+        This is a generic utility that extends FlextConstants.create_discriminated_union
+        with discriminator field support for Pydantic models.
+
+        Args:
+            discriminator_field: Field name used as discriminator
+            *enum_classes: StrEnum classes to include in union
+
+        Returns:
+            Mapping of discriminator values to enum classes
+
+        """
+        union_map: dict[str, type[StrEnum]] = {}
+        for enum_class in enum_classes:
+            for member in enum_class.__members__.values():
+                union_map[member.value] = enum_class
+        return union_map
+
+    # ─────────────────────────────────────────────────────────────
+    # DRY UTILITIES: Reduce constant declarations
+    # ─────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def auto_value(name: str) -> str:
+        """Generate lowercase value from enum member name.
+
+        Use in StrEnum with `_generate_next_value_` override.
+
+        Example:
+            >>> class Status(StrEnum):
+            ...     @staticmethod
+            ...     def _generate_next_value_(name, *_):
+            ...         return FlextUtilitiesEnum.auto_value(name)
+            ...
+            ...     PENDING = auto()
+            ...     RUNNING = auto()
+            >>> Status.PENDING.value
+            'pending'
+
+        """
+        return name.lower()
+
+    @staticmethod
+    def bi_map[K, V](data: dict[K, V]) -> tuple[dict[K, V], dict[V, K]]:
+        """Create bidirectional mapping from dict.
+
+        Returns (forward, inverse) tuple of dicts.
+        Use for replacing paired Mapping declarations.
+
+        Example:
+            >>> PHASE_MAP = {"1": "schema", "2": "hierarchy"}
+            >>> forward, inverse = FlextUtilitiesEnum.bi_map(PHASE_MAP)
+            >>> forward["1"]
+            'schema'
+            >>> inverse["schema"]
+            '1'
+
+        """
+        forward = dict(data)
+        inverse = {v: k for k, v in data.items()}
+        return forward, inverse
 
 
 # ─────────────────────────────────────────────────────────────

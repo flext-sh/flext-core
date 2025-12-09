@@ -56,10 +56,12 @@ class UserService(s[t.Types.ConfigurationMapping]):
 
     def execute(self) -> r[t.Types.ConfigurationMapping]:
         """Execute service and return data."""
-        return r[t.Types.ConfigurationMapping].ok({
-            "user_id": 1,
-            "name": "test_user",
-        })
+        return r[t.Types.ConfigurationMapping].ok(
+            {
+                "user_id": 1,
+                "name": "test_user",
+            }
+        )
 
 
 class ComplexService(s[str]):

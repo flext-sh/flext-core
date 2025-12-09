@@ -1190,12 +1190,14 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             services: list[dict[str, str]] = []
             for i in range(count):
                 service = tt.create_service(name=f"service_{i}")
-                services.append({
-                    "id": service.id,
-                    "name": service.name,
-                    "type": service.type,
-                    "status": service.status,
-                })
+                services.append(
+                    {
+                        "id": service.id,
+                        "name": service.name,
+                        "type": service.type,
+                        "status": service.status,
+                    }
+                )
             return services
 
         if factory == "results":
