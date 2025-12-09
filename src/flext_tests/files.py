@@ -1169,7 +1169,24 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         if isinstance(content, (Path, str))
                         else Path(name)
                     )
-                    read_result = self.read(path, model_cls=params.model)
+                    # Type narrowing: params.model is type[BaseModel] | None
+                    # Handle None case explicitly to match overloads
+                    if params.model is None:
+                        read_result: r[
+                            str | bytes | t.Types.ConfigurationMapping | list[list[str]]
+                        ] = self.read(path, model_cls=None)
+                    else:
+                        # params.model is type[BaseModel], cast to type[TModel] for overload
+                        model_cls_typed = cast("type[TModel]", params.model)
+                        # When model_cls is provided, result is r[TModel], but we only need success check
+                        read_result_typed: r[TModel] = self.read(
+                            path, model_cls=model_cls_typed
+                        )
+                        # Cast to union type for compatibility with None case
+                        read_result = cast(
+                            "r[str | bytes | t.Types.ConfigurationMapping | list[list[str]]]",
+                            read_result_typed,
+                        )
                     if read_result.is_success:
                         # Return the path, not the content (BatchResult expects Path)
                         return r[Path].ok(path)
@@ -1353,7 +1370,17 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         with manager:
             paths: dict[str, Path] = {}
             default_ext = ext or c.Tests.Files.DEFAULT_EXTENSION
-            for name, data in content.items():
+            for name, data_raw in content.items():
+                # Type narrowing: data_raw is from content.items()
+                # content type is: str | bytes | ConfigurationMapping | Sequence[Sequence[str]] | BaseModel
+                # data_raw already has the correct type, no cast needed
+                data: (
+                    str
+                    | bytes
+                    | t.Types.ConfigurationMapping
+                    | Sequence[Sequence[str]]
+                    | BaseModel
+                ) = data_raw
                 filename = name if "." in name else f"{name}{default_ext}"
                 # Determine if we need to adjust extension based on content type
                 if "." not in name and (
@@ -1397,8 +1424,25 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                             f"Failed to create default kwargs: {default_result.error}",
                         )
                 # Pass validated parameters explicitly to create() for type safety
-                path = manager.create(
+                # Type narrowing: data is already narrowed above, but create() also accepts r[...]
+                # create() accepts: str | bytes | Mapping | Sequence[Sequence[str]] | BaseModel | r[...]
+                content_data: (
+                    str
+                    | bytes
+                    | t.Types.ConfigurationMapping
+                    | Sequence[Sequence[str]]
+                    | BaseModel
+                    | r[str]
+                    | r[bytes]
+                    | r[t.Types.ConfigurationMapping]
+                    | r[Sequence[Sequence[str]]]
+                    | r[BaseModel]
+                ) = cast(
+                    "str | bytes | t.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel | r[str] | r[bytes] | r[t.Types.ConfigurationMapping] | r[Sequence[Sequence[str]]] | r[BaseModel]",
                     data,
+                )
+                path = manager.create(
+                    content_data,
                     filename,
                     directory=validated_kwargs.directory,
                     fmt=validated_kwargs.fmt,

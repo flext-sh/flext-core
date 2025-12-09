@@ -379,7 +379,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_pydantic_model_invalid_dump(self) -> None:
             """Test get_parameter handles invalid model_dump return."""
             config = cast(
-                "t.GeneralValueType | p.Foundation.HasModelDump",
+                "t.GeneralValueType | p.HasModelDump",
                 InvalidModelForTest(),
             )
             result = u.Configuration.get_parameter(
@@ -411,7 +411,7 @@ class TestFlextUtilitiesConfiguration:
                 name=TestConfigConstants.TestValues.TEST_NAME,
                 value=TestConfigConstants.TestValues.TEST_VALUE,
             )
-            config_cast = cast("t.GeneralValueType | p.Foundation.HasModelDump", config)
+            config_cast = cast("t.GeneralValueType | p.HasModelDump", config)
             result = u.Configuration.get_parameter(config_cast, param_name)
             assert result == expected_value
 
@@ -420,7 +420,7 @@ class TestFlextUtilitiesConfiguration:
             config = DataclassConfigForTest(
                 name=TestConfigConstants.TestValues.TEST_NAME,
             )
-            config_cast = cast("t.GeneralValueType | p.Foundation.HasModelDump", config)
+            config_cast = cast("t.GeneralValueType | p.HasModelDump", config)
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
                 u.Configuration.get_parameter(
                     config_cast,
@@ -529,7 +529,7 @@ class TestFlextUtilitiesConfiguration:
                 name=TestConfigConstants.TestValues.TEST_NAME,
                 value=TestConfigConstants.TestValues.TEST_VALUE,
             )
-            config_cast = cast("t.GeneralValueType | p.Foundation.HasModelDump", config)
+            config_cast = cast("t.GeneralValueType | p.HasModelDump", config)
             result = u.Configuration.set_parameter(
                 config_cast,
                 TestConfigConstants.ParameterNames.VALUE.value,

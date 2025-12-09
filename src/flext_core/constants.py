@@ -72,6 +72,8 @@ _DEFAULT_HOUR_IN_SECONDS: Final[int] = 3600
 class FlextConstants:
     """Immutable constants organized in namespaces for the FLEXT ecosystem.
 
+    Layer 0 module: Pure foundation with ZERO imports from flext_core.
+
     Provides namespace-organized constants (Final[Type]) for configuration,
     validation, error handling, and system defaults. Satisfies p.Constants
     protocol via structural typing.
@@ -624,7 +626,7 @@ class FlextConstants:
 
         # Valid circuit breaker states derived from CircuitBreakerState StrEnum
         VALID_CIRCUIT_BREAKER_STATES: Final[frozenset[str]] = frozenset(
-            member.value for member in CircuitBreakerState
+            member.value for member in CircuitBreakerState.__members__.values()
         )
 
     class Security:
@@ -1276,7 +1278,7 @@ class FlextConstants:
 
         # Valid handler modes derived from HandlerType StrEnum (single source of truth)
         VALID_HANDLER_MODES: Final[frozenset[str]] = frozenset(
-            member.value for member in HandlerType
+            member.value for member in HandlerType.__members__.values()
         )
 
         class ProcessingMode(StrEnum):

@@ -217,8 +217,8 @@ class TestCoveragePush75Percent:
 
     def test_utilities_id(self) -> None:
         """Test ID generation."""
-        id1 = u.Generators.generate_id()
-        id2 = u.Generators.generate_id()
+        id1 = u.generate()
+        id2 = u.generate()
         assert id1 != id2
         assert len(id1) == 36
 
@@ -276,8 +276,8 @@ class TestCoveragePush75Percent:
             return a // b
 
         # Cast function to match protocol signature before applying decorator
-        divide_func = cast("p.Utility.Callable[int]", divide)
-        divide_wrapped: p.Utility.Callable[FlextResult[int]] = FlextResult.safe(
+        divide_func = cast("p.VariadicCallable[int]", divide)
+        divide_wrapped: p.VariadicCallable[FlextResult[int]] = FlextResult.safe(
             divide_func,
         )
 

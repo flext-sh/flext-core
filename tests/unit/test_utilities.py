@@ -63,14 +63,17 @@ class UtilityScenarios:
         ],
     }
 
-    GENERATOR_METHODS: ClassVar[list[str]] = [
-        "generate_id",
-        "generate_iso_timestamp",
-        "generate_correlation_id",
-        "generate_entity_id",
-        "generate_transaction_id",
-        "generate_saga_id",
-        "generate_event_id",
+    GENERATOR_METHODS: ClassVar[list[tuple[str, str | None]]] = [
+        ("generate_id", None),
+        (
+            "generate_iso_timestamp",
+            "iso_timestamp",
+        ),  # Special case - uses u.Generators.generate_iso_timestamp()
+        ("generate_correlation_id", "correlation"),
+        ("generate_entity_id", "entity"),
+        ("generate_transaction_id", "transaction"),
+        ("generate_saga_id", "saga"),
+        ("generate_event_id", "event"),
     ]
 
     SHORT_ID_LENGTHS: ClassVar[list[tuple[int | None, int]]] = [
@@ -146,7 +149,7 @@ class UtilityScenarios:
         def factory_func(**kw: object) -> TestModel:
             return TestModel(name="test", value=42, **kw)
 
-        factory_method = cast("p.Utility.Callable[TestModel]", factory_func)
+        factory_method = cast("p.VariadicCallable[TestModel]", factory_func)
         return FlextTestsUtilities.Tests.ModelTestHelpers.assert_model_creation_success(
             factory_method=factory_method,
             expected_attrs={"name": "test", "value": 42},
@@ -206,11 +209,22 @@ class Testu:
     # Generators Tests - Parametrized
     # =====================================================================
 
-    @pytest.mark.parametrize("method_name", UtilityScenarios.GENERATOR_METHODS)
-    def test_generators_operations(self, method_name: str) -> None:
+    @pytest.mark.parametrize(
+        ("method_name", "kind"),
+        UtilityScenarios.GENERATOR_METHODS,
+    )
+    def test_generators_operations(
+        self,
+        method_name: str,
+        kind: str | None,
+    ) -> None:
         """Test ID and timestamp generation operations."""
-        method = getattr(u.Generators, method_name)
-        result = method()
+        if method_name == "generate_iso_timestamp":
+            # Special case - this method still exists
+            result = u.Generators.generate_iso_timestamp()
+        else:
+            # Use unified generate() method
+            result = u.generate(kind) if kind else u.generate()
         assert isinstance(result, str) and len(result) > 0
 
     @pytest.mark.parametrize(
@@ -224,30 +238,28 @@ class Testu:
     ) -> None:
         """Test short ID generation with various lengths."""
         short_id = (
-            u.Generators.generate_short_id(length=length)
+            u.generate("ulid", length=length)
             if length is not None
-            else u.Generators.generate_short_id()
+            else u.generate("ulid")
         )
         assert len(short_id) == expected_length
 
     def test_generators_batch_id(self) -> None:
         """Test batch ID generation."""
-        batch_id = u.Generators.generate_batch_id(
-            c.Performance.BatchProcessing.DEFAULT_SIZE,
+        batch_id = u.generate(
+            "batch", parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,)
         )
         assert isinstance(batch_id, str) and len(batch_id) > 0
 
     def test_generators_correlation_id_with_context(self) -> None:
         """Test correlation ID with context."""
-        corr_id = u.Generators.generate_correlation_id_with_context(
-            "test_ctx",
-        )
+        corr_id = u.generate("correlation", prefix="test_ctx")
         assert isinstance(corr_id, str) and "test_ctx" in corr_id
 
     def test_generators_uniqueness(self) -> None:
         """Test generator uniqueness."""
-        id1 = u.Generators.generate_id()
-        id2 = u.Generators.generate_id()
+        id1 = u.generate()
+        id2 = u.generate()
         assert id1 != id2
 
     # =====================================================================

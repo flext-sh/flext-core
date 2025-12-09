@@ -13,13 +13,10 @@ from __future__ import annotations
 
 import secrets
 import time
-from typing import TYPE_CHECKING
 
 from flext_core.constants import c
 from flext_core.result import r
-
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class CircuitBreakerManager:

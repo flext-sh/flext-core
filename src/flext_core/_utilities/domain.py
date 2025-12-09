@@ -22,7 +22,7 @@ class FlextUtilitiesDomain:
     """Reusable DDD helpers for dispatcher-driven domain workflows."""
 
     @property
-    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
+    def logger(self) -> p.Log.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -32,8 +32,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: p.Foundation.HasModelDump,
-        entity_b: p.Foundation.HasModelDump,
+        entity_a: p.HasModelDump,
+        entity_b: p.HasModelDump,
         id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Compare two entities by their unique ID attribute.
@@ -65,7 +65,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def hash_entity_by_id(
-        entity: p.Foundation.HasModelDump,
+        entity: p.HasModelDump,
         id_attr: str = c.Mixins.FIELD_ID,
     ) -> int:
         """Generate hash for entity based on unique ID and type.
@@ -115,9 +115,9 @@ class FlextUtilitiesDomain:
             return False
 
         # Try Pydantic model_dump first (using protocol for type safety)
-        if isinstance(obj_a, p.Foundation.HasModelDump) and isinstance(
+        if isinstance(obj_a, p.HasModelDump) and isinstance(
             obj_b,
-            p.Foundation.HasModelDump,
+            p.HasModelDump,
         ):
             try:
                 dump_a = obj_a.model_dump()
@@ -151,7 +151,7 @@ class FlextUtilitiesDomain:
 
         """
         # Try Pydantic model_dump first (using protocol for type safety)
-        if isinstance(obj, p.Foundation.HasModelDump):
+        if isinstance(obj, p.HasModelDump):
             try:
                 data = obj.model_dump()
                 # Convert to hashable tuple of items

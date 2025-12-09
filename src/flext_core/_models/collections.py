@@ -19,14 +19,14 @@ from flext_core.typings import t
 
 
 # Tier 0.5 - Helper functions inline (avoid FlextRuntime import)
-def _is_list_like(value: object) -> TypeGuard[Sequence[t.GeneralValueType]]:
+def _is_list_like(value: object) -> TypeGuard[t.ObjectList]:
     """Check if value is list-like (but not string/bytes) with type narrowing.
 
     Args:
-        value: Any object to check
+        value: Object to check
 
     Returns:
-        TypeGuard[Sequence[t.GeneralValueType]]: True if value is Sequence
+        TypeGuard[t.ObjectList]: True if value is Sequence
         and not str/bytes.
 
     """
@@ -36,14 +36,14 @@ def _is_list_like(value: object) -> TypeGuard[Sequence[t.GeneralValueType]]:
 
 def _is_dict_like(
     value: object,
-) -> TypeGuard[Mapping[str, t.GeneralValueType]]:
+) -> TypeGuard[t.Types.ConfigurationMapping]:
     """Check if value is dict-like with type narrowing.
 
     Args:
-        value: Any object to check
+        value: Object to check
 
     Returns:
-        TypeGuard[Mapping[str, t.GeneralValueType]]: True if value is Mapping.
+        TypeGuard[t.Types.ConfigurationMapping]: True if value is Mapping.
 
     """
     # Inline type check to avoid circular import with guards.py -> runtime.py
@@ -57,7 +57,7 @@ def _normalize_to_general_value(val: object) -> t.GeneralValueType:
     to avoid circular import. Collections.py is Tier 0.5 and cannot import runtime.py.
 
     Args:
-        val: Any value to normalize
+        val: Value to normalize (object)
 
     Returns:
         Normalized value compatible with GeneralValueType
@@ -303,7 +303,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: Mapping[str, t.GeneralValueType],
+            data: t.Types.ConfigurationMapping,
         ) -> Self:
             """Create Statistics instance from dictionary.
 
@@ -376,7 +376,7 @@ class FlextModelsCollections:
                 Merged rules instance
 
             """
-            merged_data: dict[str, t.GeneralValueType] = {}
+            merged_data: t.Types.ConfigurationDict = {}
             for rule in rules:
                 merged_data.update(rule.model_dump())
             return cls(**merged_data)
@@ -508,7 +508,7 @@ class FlextModelsCollections:
                 Combined results instance
 
             """
-            combined_data: dict[str, t.GeneralValueType] = {}
+            combined_data: t.Types.ConfigurationDict = {}
             for result in results:
                 combined_data.update(result.model_dump())
             return cls(**combined_data)
@@ -537,7 +537,7 @@ class FlextModelsCollections:
                 return {}
 
             # Start with first result as base
-            result: dict[str, t.GeneralValueType] = {}
+            result: t.Types.ConfigurationDict = {}
             for res in results_list:
                 res_dict = res.model_dump()
                 for key, value in res_dict.items():
@@ -644,7 +644,7 @@ class FlextModelsCollections:
                 return cls()
 
             # Start with first options as base
-            result: dict[str, t.GeneralValueType] = {}
+            result: t.Types.ConfigurationDict = {}
             for opt in options:
                 opt_dict = opt.model_dump()
                 for key, value in opt_dict.items():
@@ -661,15 +661,14 @@ class FlextModelsCollections:
             # Create new instance from normalized dict
             return cls(**normalized_result)
 
-    class Config(FlextModelsBase.ArbitraryTypesModel):
+    class Config(FlextModelsBase.ArbitraryTypesModel):  # noqa: PLW1641
         """Base for configuration models - mutable Pydantic v2 model.
 
         Pydantic v2 models are not hashable by default when not frozen.
-        Explicitly set __hash__ = None to make this clear to type checkers.
+        Type checkers understand that non-frozen models are not hashable.
+        This is intentional - Config models are mutable and should not be hashable.
 
         """
-
-        __hash__: None = None  # type: ignore[assignment]  # Explicitly mark as unhashable (mutable model)
 
         model_config = ConfigDict(
             arbitrary_types_allowed=True,
@@ -680,7 +679,7 @@ class FlextModelsCollections:
         @classmethod
         def from_mapping(
             cls,
-            mapping: Mapping[str, t.GeneralValueType],
+            mapping: t.Types.ConfigurationMapping,
         ) -> Self:
             """Create Config instance from mapping.
 
@@ -708,7 +707,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: Mapping[str, t.GeneralValueType],
+            data: t.Types.ConfigurationMapping,
         ) -> Self:
             """Create Config instance from dictionary.
 

@@ -22,11 +22,12 @@ from __future__ import annotations
 import builtins
 import warnings
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, Never, TypeVar, cast
+from typing import Never, TypeVar, cast
 
 from pydantic import BaseModel as _BaseModel
 
 from flext_core import FlextResult, r
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import t as t_core
 from flext_tests.base import s
 from flext_tests.constants import c
@@ -624,13 +625,17 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         if kind == "result_ok":
 
             def result_ok_op() -> r[t.Tests.TestResultValue]:
-                return r[t.Tests.TestResultValue].ok(result_value)
+                return FlextRuntime.RuntimeResult[t.Tests.TestResultValue].ok(
+                    result_value
+                )
 
             return result_ok_op
 
         # kind == "result_fail"
         def result_fail_op() -> r[t.Tests.TestResultValue]:
-            return r[t.Tests.TestResultValue].fail(error_message)
+            return FlextRuntime.RuntimeResult[t.Tests.TestResultValue].fail(
+                error_message
+            )
 
         return result_fail_op
 
@@ -1859,8 +1864,10 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 # MyPy limitation: dict unpacking to **kwargs not fully supported for BaseModel.__init__
                 # The dict is compatible at runtime, but MyPy can't infer the type compatibility
                 # Solution: Use cast to help MyPy understand the type compatibility
-                # BaseModel.__init__ accepts **data: Any, so this is safe
-                super().__init__(**cast("dict[str, Any]", service_data))
+                # BaseModel.__init__ accepts **data: GeneralValueType, so this is safe
+                super().__init__(
+                    **cast("dict[str, t_core.GeneralValueType]", service_data)
+                )
                 # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
                 # Initialize mutable attribute in __init__ to avoid ClassVar requirement
                 # Type narrowing: override_fields is dict[str, t_core.GeneralValueType]
@@ -1919,7 +1926,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                     if self._overrides is not None:
                         merged_overrides.update(self._overrides)
                     return u.Tests.Factory.execute_user_service(
-                        cast("t.Types.ConfigurationDict", merged_overrides),
+                        merged_overrides,
                     )
                 if service_type == "complex":
                     return u.Tests.Factory.execute_complex_service(

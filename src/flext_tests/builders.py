@@ -22,9 +22,10 @@ from flext_core import (
     FlextTypes as t,
     FlextUtilities as u,
 )
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import T
 from flext_tests.base import s
-from flext_tests.constants import FlextTestsConstants as tc, c
+from flext_tests.constants import c
 from flext_tests.factories import FlextTestsFactories as tt
 from flext_tests.models import FlextTestsModels as m
 from flext_tests.typings import FlextTestsTypes as t_test
@@ -183,7 +184,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             error_code_val = params.result_code or c.Errors.VALIDATION_ERROR
             resolved_value = cast(
                 "t_test.Tests.Builders.BuilderValue",
-                r[t.GeneralValueType].ok(params.result_ok),
+                FlextRuntime.RuntimeResult[t.GeneralValueType].ok(params.result_ok),
             )
 
         # Priority 3: Create failure result
@@ -191,7 +192,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             error_code_val = params.result_code or c.Errors.VALIDATION_ERROR
             resolved_value = cast(
                 "t_test.Tests.Builders.BuilderValue",
-                r[t.GeneralValueType].fail(
+                FlextRuntime.RuntimeResult[t.GeneralValueType].fail(
                     params.result_fail,
                     error_code=error_code_val,
                 ),
@@ -311,7 +312,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         elif params.factory is not None:
             resolved_value = self._generate_from_factory(
                 params.factory,
-                params.count or tc.Tests.Factory.DEFAULT_BATCH_COUNT,
+                params.count or c.Tests.Factory.DEFAULT_BATCH_COUNT,
             )
 
         # Priority 11: Model instantiation
@@ -1636,7 +1637,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
 
             @staticmethod
             def batch_users(
-                count: int = tc.Tests.Factory.DEFAULT_BATCH_COUNT,
+                count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
             ) -> list[m.Tests.Factory.User]:
                 """Create batch users - DELEGATES to tt.batch()."""
                 return cast("list[m.Tests.Factory.User]", tt.batch("user", count=count))

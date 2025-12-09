@@ -124,24 +124,24 @@ def create_compare_entities_cases() -> list[dict[str, t.GeneralValueType]]:
 
     # Pass objects directly (domain methods expect real objects, not dicts)
     input_data_same_id: t.Types.ConfigurationDict = {
-        "entity_a": alice_entity,  # type: ignore[dict-item]
-        "entity_b": alice_entity,  # type: ignore[dict-item]
+        "entity_a": alice_entity,
+        "entity_b": alice_entity,
     }
     input_data_different_id: t.Types.ConfigurationDict = {
-        "entity_a": alice_entity,  # type: ignore[dict-item]
-        "entity_b": bob_entity,  # type: ignore[dict-item]
+        "entity_a": alice_entity,
+        "entity_b": bob_entity,
     }
     input_data_different_type: t.Types.ConfigurationDict = {
-        "entity_a": alice_entity,  # type: ignore[dict-item]
-        "entity_b": value_obj,  # type: ignore[dict-item]
+        "entity_a": alice_entity,
+        "entity_b": value_obj,
     }
     input_data_no_id: t.Types.ConfigurationDict = {
-        "entity_a": alice_no_id,  # type: ignore[dict-item]
-        "entity_b": bob_entity,  # type: ignore[dict-item]
+        "entity_a": alice_no_id,
+        "entity_b": bob_entity,
     }
     input_data_custom: t.Types.ConfigurationDict = {
-        "entity_a": custom1,  # type: ignore[dict-item]
-        "entity_b": custom2,  # type: ignore[dict-item]
+        "entity_a": custom1,
+        "entity_b": custom2,
     }
 
     return cast(
@@ -207,13 +207,13 @@ def create_hash_entity_cases() -> list[dict[str, t.GeneralValueType]]:
 
     # Pass objects directly (domain methods expect real objects, not dicts)
     input_data_with_id: t.Types.ConfigurationDict = {
-        "entity": alice_entity,  # type: ignore[dict-item]
+        "entity": alice_entity,
     }
     input_data_no_id: t.Types.ConfigurationDict = {
-        "entity": alice_no_id,  # type: ignore[dict-item]
+        "entity": alice_no_id,
     }
     input_data_custom: t.Types.ConfigurationDict = {
-        "entity": custom,  # type: ignore[dict-item]
+        "entity": custom,
     }
 
     return cast(
@@ -275,28 +275,28 @@ def create_compare_value_objects_cases() -> list[dict[str, t.GeneralValueType]]:
     # Pass objects directly (domain methods expect real objects, not dicts)
     input_data_list: list[t.Types.ConfigurationDict] = [
         {
-            "obj_a": value1,  # type: ignore[dict-item]
-            "obj_b": value1,  # type: ignore[dict-item]
+            "obj_a": value1,
+            "obj_b": value1,
         },
         {
-            "obj_a": value1,  # type: ignore[dict-item]
-            "obj_b": value2,  # type: ignore[dict-item]
+            "obj_a": value1,
+            "obj_b": value2,
         },
         {
-            "obj_a": value1,  # type: ignore[dict-item]
-            "obj_b": alice_entity,  # type: ignore[dict-item]
+            "obj_a": value1,
+            "obj_b": alice_entity,
         },
         {
-            "obj_a": simple1,  # type: ignore[dict-item]
-            "obj_b": simple2,  # type: ignore[dict-item]
+            "obj_a": simple1,
+            "obj_b": simple2,
         },
         {
-            "obj_a": bad1,  # type: ignore[dict-item]
-            "obj_b": bad2,  # type: ignore[dict-item]
+            "obj_a": bad1,
+            "obj_b": bad2,
         },
         {
-            "obj_a": no_dict1,  # type: ignore[dict-item]
-            "obj_b": no_dict2,  # type: ignore[dict-item]
+            "obj_a": no_dict1,
+            "obj_b": no_dict2,
         },
     ]
 
@@ -345,11 +345,11 @@ def create_hash_value_object_cases() -> list[dict[str, t.GeneralValueType]]:
 
     # Pass objects directly (domain methods expect real objects, not dicts)
     input_data_list_hash: list[t.Types.ConfigurationDict] = [
-        {"obj": value_obj},  # type: ignore[dict-item]
-        {"obj": simple_obj},  # type: ignore[dict-item]
-        {"obj": bad_obj},  # type: ignore[dict-item]
-        {"obj": complex_obj},  # type: ignore[dict-item]
-        {"obj": no_dict_obj},  # type: ignore[dict-item]
+        {"obj": value_obj},
+        {"obj": simple_obj},
+        {"obj": bad_obj},
+        {"obj": complex_obj},
+        {"obj": no_dict_obj},
     ]
 
     return u.Tests.TestCaseHelpers.create_batch_operation_test_cases(
@@ -393,13 +393,13 @@ def create_validate_entity_has_id_cases() -> list[dict[str, t.GeneralValueType]]
 
     # Pass objects directly (domain methods expect real objects, not dicts)
     input_data_has_id: t.Types.ConfigurationDict = {
-        "entity": alice_entity,  # type: ignore[dict-item]
+        "entity": alice_entity,
     }
     input_data_no_id_validate: t.Types.ConfigurationDict = {
-        "entity": alice_no_id,  # type: ignore[dict-item]
+        "entity": alice_no_id,
     }
     input_data_custom_validate: t.Types.ConfigurationDict = {
-        "entity": custom,  # type: ignore[dict-item]
+        "entity": custom,
     }
 
     return cast(
@@ -458,12 +458,12 @@ def create_validate_value_object_immutable_cases() -> list[
             "no_setattr",
         ],
         input_data_list=[
-            {"obj": value_obj},  # type: ignore[dict-item]
-            {"obj": mutable_obj},  # type: ignore[dict-item]
-            {"obj": immutable_obj},  # type: ignore[dict-item]
-            {"obj": bad_config_obj},  # type: ignore[dict-item]
-            {"obj": no_config_obj},  # type: ignore[dict-item]
-            {"obj": no_setattr_obj},  # type: ignore[dict-item]
+            {"obj": value_obj},
+            {"obj": mutable_obj},
+            {"obj": immutable_obj},
+            {"obj": bad_config_obj},
+            {"obj": no_config_obj},
+            {"obj": no_setattr_obj},
         ],
         expected_results=[
             True,

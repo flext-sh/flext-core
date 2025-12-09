@@ -167,7 +167,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def normalize_to_metadata(
         value: t.GeneralValueType | FlextModelsBase.Metadata | None,
-    ) -> FlextModelsBase.Metadata:
+    ) -> FlextModelsBase.Metadata:  # Returns m.Base.Metadata at runtime
         """Normalize any value to FlextModelsBase.Metadata.
 
         Business Rule: Always returns Metadata, never None.
@@ -204,7 +204,7 @@ class FlextUtilitiesModel:
 
         # Handle dict-like values using FlextRuntime guards
         # TypeGuard ensures value is t.Types.ConfigurationMapping after is_dict_like check
-        if FlextRuntime.is_dict_like(value):
+        if FlextRuntime.is_dict_like(value) and isinstance(value, dict):
             # Normalize each value using FlextRuntime.normalize_to_metadata_value
             attributes: dict[str, t.MetadataAttributeValue] = {}
             for key, val in value.items():

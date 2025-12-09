@@ -23,8 +23,7 @@ from typing import ParamSpec, TypeVar, cast
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextTypes, FlextUtilities
 from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings
@@ -46,7 +45,7 @@ def mark_test_pattern(
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
         # Use setattr for dynamic attribute setting to avoid type checker issues
         # Type ignore needed because Callable doesn't have _test_pattern attribute
-        setattr(func, "_test_pattern", pattern)  # type: ignore[attr-defined]
+        setattr(func, "_test_pattern", pattern)
         return func
 
     return decorator
@@ -67,11 +66,11 @@ class MockScenario:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
-        self.given = data.get("given", {})
-        self.when = data.get("when", {})
-        self.then = data.get("then", {})
-        self.tags = data.get("tags", [])
-        self.priority = data.get("priority", "normal")
+        self.given = FlextUtilities.mapper().get(data, "given", default={})
+        self.when = FlextUtilities.mapper().get(data, "when", default={})
+        self.then = FlextUtilities.mapper().get(data, "then", default={})
+        self.tags = FlextUtilities.mapper().get(data, "tags", default=[])
+        self.priority = FlextUtilities.mapper().get(data, "priority", default="normal")
 
 
 class GivenWhenThenBuilder:

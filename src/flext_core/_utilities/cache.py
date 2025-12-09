@@ -40,8 +40,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Sequence
-from typing import cast
+from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel
 
@@ -76,7 +75,7 @@ class FlextUtilitiesCache:
     """
 
     @property
-    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
+    def logger(self) -> p.Log.StructlogLogger:
         """Get logger instance using FlextRuntime.
 
         Business Rule: Logger access through FlextRuntime avoids circular
@@ -125,14 +124,10 @@ class FlextUtilitiesCache:
             }
         # component is already GeneralValueType (not BaseModel)
         # Check if dict-like
-        if FlextRuntime.is_dict_like(component):
-            # Type guard ensures component is Mapping[str, GeneralValueType]
+        if FlextRuntime.is_dict_like(component) and isinstance(component, Mapping):
+            # Type narrowing: component is now Mapping[str, GeneralValueType]
             # Convert to dict for consistent iteration
-            dict_component: dict[str, t.GeneralValueType] = (
-                dict(component.items())
-                if hasattr(component, "items")
-                else dict(component)
-            )
+            dict_component: dict[str, t.GeneralValueType] = dict(component.items())
             # Type narrowing: dict_component is dict[str, t.GeneralValueType]
             # so v is t.GeneralValueType
             return {
@@ -144,25 +139,13 @@ class FlextUtilitiesCache:
             return component
         # Handle collections
         if isinstance(component, set):
-            # Type narrowing: component is set, so item is t.GeneralValueType
-            # Use explicit type annotation to help pyright
-            component_set: set[t.GeneralValueType] = cast(
-                "set[t.GeneralValueType]",
-                component,
-            )
+            # Type narrowing: component is set, so items are t.GeneralValueType
             return tuple(
-                FlextUtilitiesCache.normalize_component(item) for item in component_set
+                FlextUtilitiesCache.normalize_component(item) for item in component
             )
         if isinstance(component, Sequence):
-            # Type narrowing: component is Sequence, so item is t.GeneralValueType
-            # Use explicit type annotation to help pyright
-            component_seq: Sequence[t.GeneralValueType] = cast(
-                "Sequence[t.GeneralValueType]",
-                component,
-            )
-            return [
-                FlextUtilitiesCache.normalize_component(item) for item in component_seq
-            ]
+            # Type narrowing: component is Sequence, so items are t.GeneralValueType
+            return [FlextUtilitiesCache.normalize_component(item) for item in component]
         # For other types, convert to string as fallback
         return str(component)
 
@@ -190,7 +173,7 @@ class FlextUtilitiesCache:
         - Deterministic across Python runs
 
         Args:
-            key: Any sortable object (usually dict key)
+            key: Sortable object (str, int, tuple, etc. - usually dict key)
 
         Returns:
             Tuple for sorted() key function
@@ -229,17 +212,17 @@ class FlextUtilitiesCache:
         - Preserves GeneralValueType contract
 
         Args:
-            data: Any GeneralValueType value
+            data: GeneralValueType value
 
         Returns:
             Sorted dict if input is dict-like, unchanged otherwise
 
         """
-        if FlextRuntime.is_dict_like(data):
-            data_dict = data
+        if FlextRuntime.is_dict_like(data) and isinstance(data, Mapping):
+            # Type narrowing: data is now Mapping[str, GeneralValueType]
             result: t.Types.ConfigurationDict = {}
-            for k in sorted(data_dict.keys(), key=FlextUtilitiesCache.sort_key):
-                value = data_dict[k]
+            for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
+                value = data[k]
                 # Handle None values - convert to empty dict for consistency
                 if value is None:
                     result[k] = {}
@@ -321,7 +304,7 @@ class FlextUtilitiesCache:
         Useful for deciding whether to attempt cache clearing.
 
         Args:
-            obj: Any GeneralValueType object
+            obj: GeneralValueType object
 
         Returns:
             True if any known cache attribute exists, False otherwise

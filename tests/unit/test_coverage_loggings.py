@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConfig, FlextLogger, FlextResult, p
+from flext_core import FlextConfig, FlextLogger, FlextResult, FlextRuntime, p
 from flext_core.constants import c
 
 
@@ -114,7 +114,8 @@ class TestGlobalContextManagement:
         # For unknown operations, it returns ResultProtocol[bool] via result_fail
         result = FlextLogger._execute_context_op("unknown_operation", {})
         # Type narrowing: unknown operation returns ResultProtocol[bool], not dict
-        assert isinstance(result, p.Foundation.Result)
+        # RuntimeResult implements p.Result protocol
+        assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
         assert result.is_failure
         assert result.error is not None
         assert (
@@ -313,7 +314,8 @@ class TestInstanceCreation:
 
     def test_logger_init_with_service_context(self) -> None:
         """Test initializing logger with service context."""
-        logger = make_result_logger(
+        # Use FlextLogger directly to access name property (ResultAdapter doesn't expose it)
+        logger = FlextLogger(
             "service_logger",
             _service_name="my-service",
             _service_version="1.0.0",
@@ -322,7 +324,8 @@ class TestInstanceCreation:
 
     def test_logger_name_property(self) -> None:
         """Test logger name property."""
-        logger = make_result_logger("test")
+        # Use FlextLogger directly to access name property (ResultAdapter doesn't expose it)
+        logger = FlextLogger("test")
         assert logger.name == "test"
 
     def test_bind_creates_new_instance(self) -> None:

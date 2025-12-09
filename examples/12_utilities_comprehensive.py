@@ -141,7 +141,7 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         print("\n=== ID Generation ===")
 
         # Correlation ID using u
-        correlation_id = u.Generators.generate_correlation_id()
+        correlation_id = u.generate("correlation")
         print(
             f"✅ Correlation ID: {correlation_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
         )
@@ -153,15 +153,15 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
         )
 
         # Entity ID
-        entity_id = u.Generators.generate_entity_id()
+        entity_id = u.generate("entity")
         print(f"✅ Entity ID: {entity_id[:16]}...")
 
         # Batch ID
-        batch_id = u.Generators.generate_batch_id(100)
+        batch_id = u.generate("batch", parts=(100,))
         print(f"✅ Batch ID: {batch_id[:20]}...")
 
         # Transaction ID
-        transaction_id = u.Generators.generate_transaction_id()
+        transaction_id = u.generate("transaction")
         print(f"✅ Transaction ID: {transaction_id[:20]}...")
 
     @staticmethod

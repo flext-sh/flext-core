@@ -1,6 +1,6 @@
 # Service Patterns Guide
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Domain Services
+**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Services
 
 **Version:** 1.0 (2025-12-03)  
 **Python:** 3.13+  

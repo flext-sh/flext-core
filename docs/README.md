@@ -10,7 +10,7 @@ Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first founda
 
 ## Navigation
 
-- **Quick start:** [`QUICK_START.md`](./QUICK_START.md)
+- **Quick start:** [`quick-start.md`](./quick-start.md)
 - **Architecture:** [`architecture/overview.md`](./architecture/overview.md) and [`architecture/clean-architecture.md`](./architecture/clean-architecture.md)
 - **API reference:** [`api-reference/`](./api-reference/) grouped by layer (foundation, domain, application, infrastructure)
 - **Guides:** [`guides/`](./guides/) for patterns such as railway execution, DI, DDD, error handling, configuration, testing, and troubleshooting

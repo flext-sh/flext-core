@@ -590,7 +590,7 @@ class TestFlextContainer:
         container = FlextContainer()
         config = container.config
         tm.that(config, none=False, msg="Container config property must not be None")
-        # config property returns p.Configuration.Config, not dict
+        # config property returns p.Config, not dict
         # Use isinstance check for protocol compatibility
         tm.that(
             hasattr(config, "app_name") or hasattr(config, "enable_singleton"),

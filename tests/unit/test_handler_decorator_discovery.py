@@ -217,7 +217,7 @@ class TestHandlerDecoratorMetadata:
 
     def test_decorator_with_middleware_list(self) -> None:
         """Decorator should store middleware list."""
-        middleware_types: list[type[p.Application.Middleware]] = []
+        middleware_types: list[type[p.Middleware]] = []
 
         class TestService:
             @h.handler(

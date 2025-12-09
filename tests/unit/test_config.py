@@ -33,6 +33,7 @@ from pydantic_settings import BaseSettings
 from flext_core import FlextConfig
 from flext_core.constants import c
 from flext_core.typings import t
+from flext_core.utilities import u
 from flext_tests import tm
 from flext_tests.utilities import FlextTestsUtilities
 
@@ -83,7 +84,7 @@ class TestFlextConfig:
     @pytest.mark.parametrize(
         "config_data",
         ConfigScenarios.INIT_CASES,
-        ids=lambda d: str(d.get("app_name", "default")),
+        ids=lambda d: str(u.mapper().get(d, "app_name", default="default")),
     )
     def test_config_initialization(self, config_data: dict[str, object]) -> None:
         """Test config initialization with various values."""
@@ -312,7 +313,7 @@ class TestFlextConfig:
     @pytest.mark.parametrize(
         "debug_trace",
         ConfigScenarios.DEBUG_TRACE_CASES,
-        ids=lambda d: f"debug_{d.get('debug')}_trace_{d.get('trace', False)}",
+        ids=lambda d: f"debug_{u.mapper().get(d, 'debug')}_trace_{u.mapper().get(d, 'trace', default=False)}",
     )
     def test_config_debug_enabled(self, debug_trace: dict[str, object]) -> None:
         """Test debug enabled checking using direct fields."""
@@ -714,14 +715,8 @@ class TestFlextConfigPydantic:
         # Cleanup
         del FlextConfig._namespace_registry["test_type"]
 
-    def test_getattr_namespace_not_found(self) -> None:
-        """Test __getattr__ raises AttributeError for unregistered namespace."""
-        config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
-        with pytest.raises(AttributeError, match="has no attribute 'nonexistent'"):
-            _ = config.nonexistent
-
-    def test_getattr_namespace_found(self) -> None:
-        """Test __getattr__ returns namespace config when registered."""
+    def test_get_namespace_found(self) -> None:
+        """Test get_namespace returns namespace config when registered."""
 
         class TestConfig(BaseSettings):
             test_field: str = "default"
@@ -729,8 +724,8 @@ class TestFlextConfigPydantic:
         FlextConfig.register_namespace("test_attr", TestConfig)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config()
 
-        # Test __getattr__ access
-        instance = config.test_attr
+        # Test get_namespace() access (replaces __getattr__)
+        instance = config.get_namespace("test_attr", TestConfig)
         assert isinstance(instance, TestConfig)
 
         # Cleanup

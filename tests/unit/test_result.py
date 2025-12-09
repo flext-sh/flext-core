@@ -540,7 +540,7 @@ class Testr:
         invalid_io = InvalidIOResult()
         # from_io_result expects IOResult[GeneralValueType, str]
         # InvalidIOResult is not IOResult, but method handles it at runtime
-        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", invalid_io))  # type: ignore[arg-type]  # Runtime handles invalid types
+        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", invalid_io))
         assert result.is_failure
         assert result.error is not None
         assert "Invalid IO result type" in str(result.error)
@@ -557,9 +557,9 @@ class Testr:
     def test_safe_decorator(self) -> None:
         """Test safe decorator wraps function in try/except."""
 
-        # safe expects p.Utility.Callable[T] which is Callable[..., T]
+        # safe expects p.VariadicCallable[T] which is Callable[..., T]
         # divide is Callable[[int, int], int], compatible at runtime
-        @r.safe  # type: ignore[arg-type]  # Runtime compatible, type system limitation
+        @r.safe
         def divide(a: int, b: int) -> int:
             return a // b
 
@@ -758,7 +758,7 @@ class Testr:
         real_io = IOSuccess(io_value)
         # from_io_result expects IOResult[GeneralValueType, str]
         # IOSuccess[IO[str]] is compatible at runtime but type system doesn't know
-        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", real_io))  # type: ignore[arg-type]  # Runtime compatible
+        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", real_io))
         assert result.is_success
 
         # The exception path (lines 106-107) is defensive code that catches
@@ -783,7 +783,7 @@ class Testr:
         bad_io = BadIO()
         # from_io_result expects IOResult[GeneralValueType, str]
         # BadIO is not IOResult, but method handles it at runtime
-        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", bad_io))  # type: ignore[arg-type]  # Runtime handles invalid types
+        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", bad_io))
         assert result.is_failure
         error_msg = result.error
         assert error_msg is not None
@@ -862,7 +862,7 @@ class Testr:
             ValueError,
             match="Cannot create success result with None value",
         ):
-            r[str].ok(None)  # type: ignore[arg-type]  # Intentionally passing None to test rejection
+            r[str].ok(None)
 
     def test_to_maybe_success(self) -> None:
         """Test to_maybe converts success to Some."""

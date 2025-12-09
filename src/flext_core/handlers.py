@@ -23,7 +23,7 @@ from typing import ClassVar, cast
 
 from flext_core.constants import c
 from flext_core.exceptions import e
-from flext_core.mixins import x
+from flext_core.mixins import FlextMixins, x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -68,11 +68,16 @@ def _handler_type_to_literal(
             return c.Cqrs.HandlerType.OPERATION
 
 
-class FlextHandlers[MessageT_contra, ResultT](x, ABC):
+class FlextHandlers[MessageT_contra, ResultT](
+    FlextMixins.CQRS.MetricsTracker,
+    FlextMixins.CQRS.ContextStack,
+    x,
+    ABC,
+):
     """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
-    (CQRS) handlers, implementing structural typing via p.Application.Handler[MessageT_contra]
+    (CQRS) handlers, implementing structural typing via p.Handler[MessageT_contra]
     through duck typing (no inheritance required). This class serves as the foundation
     for implementing command, query, and event handlers with comprehensive validation,
     execution pipelines, metrics collection, and configuration management.
@@ -176,10 +181,9 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        # NOTE: Manual state will be replaced with FlextMixins.CQRS.ContextStack and FlextMixins.CQRS.MetricsTracker
-        # See: docs/architecture/cqrs.md#phase-1-flextmixinscqrs
-        self._context_stack: list[t.Types.ConfigurationDict] = []
-        self._metrics: t.Types.ConfigurationDict = {}
+        # Metrics and context stack are now provided by FlextMixins.CQRS mixins
+        # MetricsTracker provides _metrics and record_metric()/get_metrics()
+        # ContextStack provides _stack and push_context()/pop_context()/current_context()
 
     @property
     def handler_name(self) -> str:
@@ -291,7 +295,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
 
         # Use get() for concise attribute extraction
         resolved_name: str = handler_name or str(
-            u.Mapper.get(handler_callable, "__name__", default="unknown_handler")
+            u.mapper().get(handler_callable, "__name__", default="unknown_handler")
             or "unknown_handler",
         )
 
@@ -519,63 +523,10 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         """
         return self._config_model.handler_mode
 
-    def push_context(
-        self,
-        context: t.Types.ConfigurationDict,
-    ) -> r[bool]:
-        """Push execution context onto the stack.
-
-        Args:
-            context: Context dictionary to push onto the stack
-
-        Returns:
-            r[bool]: Success if context was pushed
-
-        """
-        self._context_stack.append(context)
-        return r[bool].ok(True)
-
-    def pop_context(self) -> r[t.Types.ConfigurationDict]:
-        """Pop execution context from the stack.
-
-        Returns:
-            r[t.Types.ConfigurationDict]: Success with popped context or empty dict
-
-        """
-        if self._context_stack:
-            return r[t.Types.ConfigurationDict].ok(
-                self._context_stack.pop(),
-            )
-        return r[t.Types.ConfigurationDict].ok({})
-
-    def get_metrics(self) -> r[t.Types.ConfigurationDict]:
-        """Get current metrics dictionary.
-
-        Returns:
-            r[t.Types.ConfigurationDict]: Success with metrics collection
-
-        """
-        return r[t.Types.ConfigurationDict].ok(
-            self._metrics.copy(),
-        )
-
-    def record_metric(
-        self,
-        name: str,
-        value: t.GeneralValueType,
-    ) -> r[bool]:
-        """Record a metric value.
-
-        Args:
-            name: Metric name
-            value: Metric value to record
-
-        Returns:
-            r[bool]: Success if metric was recorded
-
-        """
-        self._metrics[name] = value
-        return r[bool].ok(True)
+    # Metrics and context methods are now inherited from FlextMixins.CQRS mixins:
+    # - MetricsTracker: record_metric(), get_metrics()
+    # - ContextStack: push_context(), pop_context(), current_context()
+    # These methods are available via multiple inheritance from the mixin classes
 
     @staticmethod
     def _extract_message_id(message: t.GeneralValueType) -> str | None:
@@ -614,10 +565,10 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
             )
         # Use get() for concise attribute extraction
         if hasattr(message, "command_id"):
-            cmd_id = u.Mapper.get(message, "command_id", default="") or ""
+            cmd_id = u.mapper().get(message, "command_id", default="") or ""
             return str(cmd_id) if cmd_id else None
         if hasattr(message, "message_id"):
-            msg_id = u.Mapper.get(message, "message_id", default="") or ""
+            msg_id = u.mapper().get(message, "message_id", default="") or ""
             return str(msg_id) if msg_id else None
         return None
 
@@ -706,21 +657,9 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         # Start execution timing
         self._execution_context.start_execution()
 
-        # Extract message ID if available using helper to avoid type narrowing
-        message_for_extraction: t.GeneralValueType = cast(
-            "t.GeneralValueType",
-            message,
-        )
-        message_id: str | None = FlextHandlers._extract_message_id(
-            message_for_extraction,
-        )
-
-        # Push execution context
-        _ = self.push_context({
-            "operation": operation,
-            "message_id": message_id,
-            "handler_name": self._config_model.handler_name,
-        })
+        # Push execution context using ExecutionContext from mixin
+        # Mixin push_context expects m.Handler.ExecutionContext, use existing _execution_context
+        self.push_context(self._execution_context)
 
         try:
             # Execute handler
@@ -750,16 +689,17 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         exec_time: float = (
             exec_time_value if isinstance(exec_time_value, float) else 0.0
         )
-        _ = self.record_metric(
+        # Mixin record_metric() returns None (not r[bool])
+        self.record_metric(
             "execution_time_ms",
             cast("t.GeneralValueType", exec_time),
         )
-        _ = self.record_metric(
+        self.record_metric(
             "success",
             cast("t.GeneralValueType", success),
         )
         if error is not None:
-            _ = self.record_metric("error", cast("t.GeneralValueType", error))
+            self.record_metric("error", cast("t.GeneralValueType", error))
 
     def __call__(self, input_data: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless integration with dispatchers.
@@ -787,7 +727,7 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
         *,
         priority: int = c.Discovery.DEFAULT_PRIORITY,
         timeout: float | None = c.Discovery.DEFAULT_TIMEOUT,
-        middleware: list[type[p.Application.Middleware]] | None = None,
+        middleware: list[type[p.Middleware]] | None = None,
     ) -> t.Types.DecoratorType:
         """Decorator to mark methods as handlers for commands.
 
@@ -935,7 +875,9 @@ class FlextHandlers[MessageT_contra, ResultT](x, ABC):
                         func,
                         c.Discovery.HANDLER_ATTR,
                     )
-                    handlers.append((name, func, config))
+                    # Type narrowing: func is callable, cast to HandlerCallable
+                    func_typed = cast("t.Types.HandlerCallable", func)
+                    handlers.append((name, func_typed, config))
 
             # Sort by priority (descending), then by name for stability
             return sorted(

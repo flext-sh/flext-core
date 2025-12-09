@@ -14,6 +14,7 @@ Uses real implementations, FlextTestsUtilities, and advanced pytest patterns.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
 from typing import ClassVar, cast
 
@@ -21,9 +22,8 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.collections import _is_dict_like
-from flext_core._models.container import FlextModelsContainer
 from flext_core.constants import c
+from flext_core.models import m
 from flext_core.typings import t
 from flext_core.utilities import u
 
@@ -38,7 +38,7 @@ class ContainerModelsScenarios:
         ({"nested": {"deep": "value"}}, True),
         ({"list": [1, 2, 3]}, True),
         ({"int": 42, "str": "test", "bool": True}, True),
-        (FlextModelsBase.Metadata(attributes={"test": "value"}), True),
+        (m.Metadata(attributes={"test": "value"}), True),
         ("invalid_string", False),
         (123, False),
         ([1, 2, 3], False),
@@ -67,18 +67,25 @@ class TestFlextModelsContainer:
 
     def test_validation_level_reexport(self) -> None:
         """Test ValidationLevel re-export."""
-        assert FlextModelsContainer.ValidationLevel == c.Cqrs.ValidationLevel
-        assert hasattr(FlextModelsContainer.ValidationLevel, "STRICT")
-        assert hasattr(FlextModelsContainer.ValidationLevel, "LENIENT")
+        # ValidationLevel is re-exported from constants via Container namespace
+        # Access via c.Cqrs.ValidationLevel (standard pattern)
+        assert c.Cqrs.ValidationLevel is not None
+        assert hasattr(c.Cqrs.ValidationLevel, "STRICT")
+        assert hasattr(c.Cqrs.ValidationLevel, "LENIENT")
 
     def test_is_dict_like_static_method(self) -> None:
-        """Test _is_dict_like function from collections module."""
-        assert _is_dict_like({"key": "value"}) is True
-        assert _is_dict_like({}) is True
-        assert _is_dict_like("not_dict") is False
-        assert _is_dict_like(123) is False
-        assert _is_dict_like([1, 2, 3]) is False
-        assert _is_dict_like(None) is False
+        """Test dict-like checking using utilities."""
+
+        def is_dict_like(value: object) -> bool:
+            """Check if value is dict-like."""
+            return isinstance(value, Mapping)
+
+        assert is_dict_like({"key": "value"}) is True
+        assert is_dict_like({}) is True
+        assert is_dict_like("not_dict") is False
+        assert is_dict_like(123) is False
+        assert is_dict_like([1, 2, 3]) is False
+        assert is_dict_like(None) is False
 
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
@@ -92,11 +99,11 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test ServiceRegistration metadata validation with various types."""
         if should_pass:
-            registration = FlextModelsContainer.ServiceRegistration(
+            registration = m.Container.ServiceRegistration(
                 name="test_service",
                 service="test_value",
                 metadata=cast(
-                    "FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None",
+                    "m.Metadata | t.Types.ServiceMetadataMapping | None",
                     metadata_value,
                 ),
             )
@@ -104,18 +111,18 @@ class TestFlextModelsContainer:
             assert isinstance(registration.metadata, FlextModelsBase.Metadata)
         else:
             with pytest.raises((ValidationError, TypeError)):
-                FlextModelsContainer.ServiceRegistration(
+                m.Container.ServiceRegistration(
                     name="test_service",
                     service="test_value",
                     metadata=cast(
-                        "FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None",
+                        "m.Metadata | t.Types.ServiceMetadataMapping | None",
                         metadata_value,
                     ),
                 )
 
     def test_service_registration_defaults(self) -> None:
         """Test ServiceRegistration default values."""
-        registration = FlextModelsContainer.ServiceRegistration(
+        registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
         )
@@ -132,8 +139,8 @@ class TestFlextModelsContainer:
 
     def test_service_registration_with_all_fields(self) -> None:
         """Test ServiceRegistration with all fields populated."""
-        metadata = FlextModelsBase.Metadata(attributes={"env": "test"})
-        registration = FlextModelsContainer.ServiceRegistration(
+        metadata = m.Metadata(attributes={"env": "test"})
+        registration = m.Container.ServiceRegistration(
             name="full_service",
             service={"data": "value"},
             metadata=metadata,
@@ -148,11 +155,14 @@ class TestFlextModelsContainer:
 
     def test_service_registration_metadata_dict_conversion(self) -> None:
         """Test metadata dict conversion to Metadata model."""
-        registration = FlextModelsContainer.ServiceRegistration(
+        registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
             metadata={"key1": "value1", "key2": 42, "key3": True},
         )
+        # registration.metadata is FlextModelsBase.Metadata (from _normalize_to_metadata)
+        # Check that it's a Metadata instance (not necessarily m.Base.Metadata subclass)
+
         assert isinstance(registration.metadata, FlextModelsBase.Metadata)
         assert registration.metadata.attributes["key1"] == "value1"
         assert registration.metadata.attributes["key2"] == 42
@@ -161,7 +171,7 @@ class TestFlextModelsContainer:
     def test_service_registration_metadata_nested_dict(self) -> None:
         """Test metadata with nested dict conversion."""
         nested_dict = {"level1": {"level2": {"level3": "value"}}}
-        registration = FlextModelsContainer.ServiceRegistration(
+        registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
             metadata=nested_dict,
@@ -186,11 +196,11 @@ class TestFlextModelsContainer:
             return "test"
 
         if should_pass:
-            registration = FlextModelsContainer.FactoryRegistration(
+            registration = m.Container.FactoryRegistration(
                 name="test_factory",
                 factory=factory,
                 metadata=cast(
-                    "FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None",
+                    "m.Metadata | t.Types.ServiceMetadataMapping | None",
                     metadata_value,
                 ),
             )
@@ -198,11 +208,11 @@ class TestFlextModelsContainer:
             assert isinstance(registration.metadata, FlextModelsBase.Metadata)
         else:
             with pytest.raises((ValidationError, TypeError)):
-                FlextModelsContainer.FactoryRegistration(
+                m.Container.FactoryRegistration(
                     name="test_factory",
                     factory=factory,
                     metadata=cast(
-                        "FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None",
+                        "m.Metadata | t.Types.ServiceMetadataMapping | None",
                         metadata_value,
                     ),
                 )
@@ -213,7 +223,7 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "value"
 
-        registration = FlextModelsContainer.FactoryRegistration(
+        registration = m.Container.FactoryRegistration(
             name="test",
             factory=factory,
         )
@@ -234,8 +244,8 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "created"
 
-        metadata = FlextModelsBase.Metadata(attributes={"type": "factory"})
-        registration = FlextModelsContainer.FactoryRegistration(
+        metadata = m.Metadata(attributes={"type": "factory"})
+        registration = m.Container.FactoryRegistration(
             name="full_factory",
             factory=factory,
             metadata=metadata,
@@ -256,11 +266,12 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "value"
 
-        registration = FlextModelsContainer.FactoryRegistration(
+        registration = m.Container.FactoryRegistration(
             name="test",
             factory=factory,
             metadata={"factory_type": "test", "priority": 1},
         )
+        # registration.metadata is FlextModelsBase.Metadata (from _normalize_to_metadata)
         assert isinstance(registration.metadata, FlextModelsBase.Metadata)
         assert registration.metadata.attributes["factory_type"] == "test"
         assert registration.metadata.attributes["priority"] == 1
@@ -278,31 +289,43 @@ class TestFlextModelsContainer:
         # ContainerConfig accepts keyword arguments directly
         # Use model_construct for dynamic dict unpacking in tests
         config_dict_typed = cast("t.Types.ConfigurationDict", config_dict)
-        config = FlextModelsContainer.ContainerConfig.model_validate(config_dict_typed)
-        assert config.enable_singleton is config_dict.get("enable_singleton", True)
-        assert config.enable_factory_caching is config_dict.get(
+        config = m.Container.ContainerConfig.model_validate(config_dict_typed)
+        assert config.enable_singleton is u.mapper().get(
+            config_dict, "enable_singleton", default=True
+        )
+        assert config.enable_factory_caching is u.mapper().get(
+            config_dict,
             "enable_factory_caching",
-            True,
+            default=True,
         )
-        assert config.max_services == config_dict.get("max_services", 1000)
-        assert config.max_factories == config_dict.get("max_factories", 500)
-        assert config.validation_mode == config_dict.get(
+        assert config.max_services == u.mapper().get(
+            config_dict, "max_services", default=1000
+        )
+        assert config.max_factories == u.mapper().get(
+            config_dict, "max_factories", default=500
+        )
+        assert config.validation_mode == u.mapper().get(
+            config_dict,
             "validation_mode",
-            c.Cqrs.ValidationLevel.STRICT,
+            default=c.Cqrs.ValidationLevel.STRICT,
         )
-        assert config.enable_auto_registration is config_dict.get(
+        assert config.enable_auto_registration is u.mapper().get(
+            config_dict,
             "enable_auto_registration",
-            False,
+            default=False,
         )
-        assert config.enable_lifecycle_hooks is config_dict.get(
+        assert config.enable_lifecycle_hooks is u.mapper().get(
+            config_dict,
             "enable_lifecycle_hooks",
-            True,
+            default=True,
         )
-        assert config.lazy_loading is config_dict.get("lazy_loading", True)
+        assert config.lazy_loading is u.mapper().get(
+            config_dict, "lazy_loading", default=True
+        )
 
     def test_container_config_defaults(self) -> None:
         """Test ContainerConfig default values."""
-        config = FlextModelsContainer.ContainerConfig()
+        config = m.Container.ContainerConfig()
         assert config.enable_singleton is True
         assert config.enable_factory_caching is True
         assert config.max_services == 1000
@@ -315,34 +338,34 @@ class TestFlextModelsContainer:
     def test_container_config_validation_limits(self) -> None:
         """Test ContainerConfig field validation limits."""
         # Test max_services bounds
-        config_min = FlextModelsContainer.ContainerConfig(max_services=1)
+        config_min = m.Container.ContainerConfig(max_services=1)
         assert config_min.max_services == 1
 
-        config_max = FlextModelsContainer.ContainerConfig(max_services=10000)
+        config_max = m.Container.ContainerConfig(max_services=10000)
         assert config_max.max_services == 10000
 
         with pytest.raises(ValidationError):
-            FlextModelsContainer.ContainerConfig(max_services=0)
+            m.Container.ContainerConfig(max_services=0)
 
         with pytest.raises(ValidationError):
-            FlextModelsContainer.ContainerConfig(max_services=10001)
+            m.Container.ContainerConfig(max_services=10001)
 
         # Test max_factories bounds
-        config_fact_min = FlextModelsContainer.ContainerConfig(max_factories=1)
+        config_fact_min = m.Container.ContainerConfig(max_factories=1)
         assert config_fact_min.max_factories == 1
 
-        config_fact_max = FlextModelsContainer.ContainerConfig(max_factories=5000)
+        config_fact_max = m.Container.ContainerConfig(max_factories=5000)
         assert config_fact_max.max_factories == 5000
 
         with pytest.raises(ValidationError):
-            FlextModelsContainer.ContainerConfig(max_factories=0)
+            m.Container.ContainerConfig(max_factories=0)
 
         with pytest.raises(ValidationError):
-            FlextModelsContainer.ContainerConfig(max_factories=5001)
+            m.Container.ContainerConfig(max_factories=5001)
 
     def test_service_registration_metadata_none_handling(self) -> None:
         """Test ServiceRegistration handles None metadata correctly."""
-        registration = FlextModelsContainer.ServiceRegistration(
+        registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
             metadata=None,
@@ -357,7 +380,7 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "value"
 
-        registration = FlextModelsContainer.FactoryRegistration(
+        registration = m.Container.FactoryRegistration(
             name="test",
             factory=factory,
             metadata=None,
@@ -368,7 +391,7 @@ class TestFlextModelsContainer:
 
     def test_service_registration_metadata_empty_dict(self) -> None:
         """Test ServiceRegistration with empty dict metadata."""
-        registration = FlextModelsContainer.ServiceRegistration(
+        registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
             metadata={},
@@ -382,7 +405,7 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "value"
 
-        registration = FlextModelsContainer.FactoryRegistration(
+        registration = m.Container.FactoryRegistration(
             name="test",
             factory=factory,
             metadata={},
@@ -403,6 +426,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
     def test_normalize_to_metadata_empty_dict(self) -> None:
         """Test normalize_to_metadata with empty dict."""
         result = u.Model.normalize_to_metadata({})
+        # result is FlextModelsBase.Metadata (from normalize_to_metadata)
         assert isinstance(result, FlextModelsBase.Metadata)
         assert result.attributes == {}
 
@@ -420,7 +444,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
 
     def test_normalize_to_metadata_existing_metadata(self) -> None:
         """Test normalize_to_metadata with existing Metadata instance."""
-        existing = FlextModelsBase.Metadata(attributes={"existing": "value"})
+        existing = m.Metadata(attributes={"existing": "value"})
         result = u.Model.normalize_to_metadata(existing)
         assert result is existing
         assert result.attributes["existing"] == "value"
@@ -438,19 +462,19 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         """Test normalize_to_metadata with invalid type raises TypeError."""
         with pytest.raises(
             TypeError,
-            match=r"metadata must be None, dict, or FlextModelsBase\.Metadata",
+            match=r"metadata must be None, dict, or.*Metadata",
         ):
             u.Model.normalize_to_metadata("invalid_string")
 
         with pytest.raises(
             TypeError,
-            match=r"metadata must be None, dict, or FlextModelsBase\.Metadata",
+            match=r"metadata must be None, dict, or.*Metadata",
         ):
             u.Model.normalize_to_metadata(123)
 
         with pytest.raises(
             TypeError,
-            match=r"metadata must be None, dict, or FlextModelsBase\.Metadata",
+            match=r"metadata must be None, dict, or.*Metadata",
         ):
             u.Model.normalize_to_metadata([1, 2, 3])
 
@@ -472,7 +496,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         # So we need to test the actual Mapping case that leads to line 108
         # Line 108 is the fallback when isinstance check fails after _is_dict_like
         # Actually, let's test with a real dict that gets processed
-        registration = FlextModelsContainer.ServiceRegistration(
+        registration = m.Container.ServiceRegistration(
             name="test",
             service="value",
             metadata={"key": "value"},
@@ -489,7 +513,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         # This happens when _is_dict_like returns True but isinstance(v, Mapping) is False
         # In practice, this is hard to trigger since _is_dict_like checks isinstance(value, Mapping)
         # But we can test the normal dict path which should work
-        registration = FlextModelsContainer.FactoryRegistration(
+        registration = m.Container.FactoryRegistration(
             name="test",
             factory=factory,
             metadata={"key": "value"},

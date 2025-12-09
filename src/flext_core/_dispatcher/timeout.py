@@ -12,12 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import concurrent.futures
-from typing import TYPE_CHECKING
 
 from flext_core.constants import c
-
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class TimeoutEnforcer:

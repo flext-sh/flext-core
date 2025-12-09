@@ -88,7 +88,7 @@ def validate_transform_user(
     ).flat_map(
         lambda _: r.ok(
             UserProfile(
-                unique_id=u.Generators.generate_correlation_id(),
+                unique_id=u.generate("correlation"),
                 name=name.upper(),
                 email=email.lower(),
                 status=c.Domain.Status.ACTIVE,
@@ -194,7 +194,7 @@ class UserService:
 def demonstrate_utilities() -> None:
     """Advanced utilities demonstration using comprehensive flext-core patterns - direct functional composition."""
     # Create test data and perform operations with railway pattern (DRY + SRP)
-    correlation_id = u.Generators.generate_correlation_id()
+    correlation_id = u.generate("correlation")
     test_obj: t.Types.ConfigurationDict = {
         "unique_id": correlation_id,
         "test": True,

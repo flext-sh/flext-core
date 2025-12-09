@@ -258,7 +258,7 @@ class FlextValidatorConfig:
             return violations
         # Type narrowing: ruff_config_raw is dict after isinstance check
         # Use cast to help pyright infer type (dict[str, object] is compatible)
-        ruff_config: dict[str, object] = cast("dict[str, object]", ruff_config_raw)  # type: ignore[assignment]
+        ruff_config: dict[str, object] = cast("dict[str, object]", ruff_config_raw)
         lint_config_raw = ruff_config.get("lint", {})
         if not isinstance(lint_config_raw, dict):
             return violations
@@ -314,7 +314,7 @@ class FlextValidatorConfig:
         # Use cast to help pyright infer type (dict[str, object] is compatible)
         pyright_config: dict[str, object] = cast(
             "dict[str, object]", pyright_config_raw
-        )  # type: ignore[assignment]
+        )
 
         # Check reportPrivateUsage
         if (

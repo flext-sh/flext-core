@@ -11,12 +11,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import TYPE_CHECKING, Final, Literal
+from typing import Final, Literal
 
 from flext_core.constants import FlextConstants
 
-if TYPE_CHECKING:
-    from flext_tests.typings import t
+# Import t at runtime - no circular dependency since typings.py doesn't import constants
+from flext_tests.typings import t
 
 
 class FlextTestsConstants(FlextConstants):

@@ -171,7 +171,7 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
             delay_seconds=0.1,
             backoff_strategy="exponential",
         )
-        @FlextDecorators.railway(error_code=FlextConstants.Errors.NETWORK_ERROR)
+        @FlextDecorators.railway(error_code=FlextConstants.Errors.CONNECTION_ERROR)
         def unreliable_operation(attempt_count: list[int]) -> FlextResult[str]:
             """Operation that may fail initially but succeeds on retry."""
             attempt_count[0] += 1
@@ -199,7 +199,7 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
         # Composition: Retry + Timeout + Railway
         @FlextDecorators.retry(max_attempts=2, delay_seconds=0.05)
         @FlextDecorators.timeout(timeout_seconds=1.0)
-        @FlextDecorators.railway(error_code=FlextConstants.Errors.NETWORK_ERROR)
+        @FlextDecorators.railway(error_code=FlextConstants.Errors.CONNECTION_ERROR)
         def robust_operation(value: int) -> FlextResult[int]:
             """Operation with retry and timeout protection."""
             if value < 0:

@@ -136,7 +136,7 @@ class UtilityScenarios:
         (
             "generate_iso_timestamp",
             None,
-        ),  # Returns full ISO timestamp, no simple prefix
+        ),  # Returns full ISO timestamp, no simple prefix - uses u.Generators.generate_iso_timestamp()
         ("generate_correlation_id", "corr_"),
         ("generate_entity_id", None),
         ("generate_saga_id", None),
@@ -153,7 +153,7 @@ class UtilityScenarios:
     @staticmethod
     def create_mock_config(
         **kwargs: t.GeneralValueType,
-    ) -> p.Foundation.HasModelDump:
+    ) -> p.HasModelDump:
         """Create mock config object."""
 
         class TestConfig:
@@ -176,7 +176,7 @@ class UtilityScenarios:
         # Type assertion: TestConfig structurally implements HasModelDump
         # The model_dump() method signature is compatible with the protocol
         # Use cast to help type checker understand structural typing
-        return cast("p.Foundation.HasModelDump", TestConfig())
+        return cast("p.HasModelDump", TestConfig())
 
     @staticmethod
     def create_mock_cached_object() -> object:
@@ -286,8 +286,8 @@ class Testu:
 
     def test_generate_id_uniqueness(self) -> None:
         """Test ID generation produces unique values."""
-        id1 = u.Generators.generate_id()
-        id2 = u.Generators.generate_id()
+        id1 = u.generate()
+        id2 = u.generate()
         assert isinstance(id1, str)
         assert len(id1) > 0
         assert id1 != id2
@@ -298,8 +298,26 @@ class Testu:
     )
     def test_generators(self, method_name: str, prefix: str | None) -> None:
         """Test various ID and timestamp generators."""
-        method = getattr(u.Generators, method_name)
-        result = method()
+        if method_name == "generate_iso_timestamp":
+            # Special case - this method still exists
+            result = u.Generators.generate_iso_timestamp()
+        elif method_name == "generate_id":
+            # Use unified generate() without kind
+            result = u.generate()
+        elif method_name == "generate_correlation_id":
+            result = u.generate("correlation")
+        elif method_name == "generate_entity_id":
+            result = u.generate("entity")
+        elif method_name == "generate_saga_id":
+            result = u.generate("saga")
+        elif method_name == "generate_event_id":
+            result = u.generate("event")
+        else:
+            # Fallback for any other methods
+            method = getattr(u.Generators, method_name, None)
+            if method is None:
+                pytest.skip(f"Method {method_name} not available")
+            result = method()
         assert isinstance(result, str)
         assert len(result) > 0
         if prefix:
@@ -307,7 +325,7 @@ class Testu:
 
     def test_generate_short_id_length(self) -> None:
         """Test short ID generation with specific length."""
-        short_id = u.Generators.generate_short_id(8)
+        short_id = u.generate("ulid", length=8)
         assert isinstance(short_id, str)
         assert len(short_id) == 8
 

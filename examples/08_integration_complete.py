@@ -188,14 +188,14 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
         print("\n=== FlextModels Integration ===")
 
         user = User(
-            unique_id=u.Generators.generate_entity_id(),
+            unique_id=u.generate("entity"),
             name="Integration User",
             email="integration@example.com",
         )
         print(f"✅ Entity created: {user.name}")
 
         order = Order(
-            unique_id=u.Generators.generate_entity_id(),
+            unique_id=u.generate("entity"),
             customer_id=user.entity_id,
         )
         print(f"✅ Aggregate created: {order.status.value}")
@@ -220,7 +220,7 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
 
         dispatcher = FlextDispatcher()
         _registry = FlextRegistry(
-            dispatcher=cast("p.Application.CommandBus | None", dispatcher),
+            dispatcher=cast("p.CommandBus | None", dispatcher),
         )
         print("✅ Registry/Dispatcher initialized")
 
@@ -239,7 +239,7 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
             print("✅ Validation utility")
 
         # ID generation
-        correlation_id = u.Generators.generate_correlation_id()
+        correlation_id = u.generate("correlation")
         print(f"✅ ID generation: {correlation_id[:12]}...")
 
         # Text processing

@@ -51,13 +51,13 @@ class FlextModels:
     """
 
     # Entity & DDD Patterns - Real inheritance classes
-    class Entity(FlextModelsEntity.Core):
+    class Entity(FlextModelsEntity.Entry):
         """Entity base class with real inheritance."""
 
     class Value(FlextModelsEntity.Value):
         """Value object base class with real inheritance."""
 
-    class AggregateRoot(Entity, FlextModelsEntity.AggregateRoot):  # type: ignore[misc]
+    class AggregateRoot(Entity, FlextModelsEntity.AggregateRoot):
         """Aggregate root base class with real inheritance.
 
         Inherits from both Entity (for hierarchy) and FlextModelsEntity.AggregateRoot
@@ -73,6 +73,13 @@ class FlextModels:
     # Direct base class - real inheritance
     class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):
         """Base model with arbitrary types support - real inheritance."""
+
+    # Base namespace - Real inheritance classes
+    class Base:
+        """Base namespace with real inheritance classes."""
+
+        class Metadata(FlextModelsBase.Metadata):
+            """Standard metadata model - real inheritance."""
 
     # Base Models - Real inheritance classes
     class FrozenStrictModel(FlextModelsBase.FrozenStrictModel):
@@ -299,7 +306,7 @@ class FlextModels:
         class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
             """Decorator configuration - real inheritance."""
 
-    # Domain Service Models - Real inheritance classes
+    # Service Models - Real inheritance classes
     # ServiceRuntime needs to stay as class due to protocol fields
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
         """Runtime quintuple (config, context, container, dispatcher, registry) for services.
@@ -310,11 +317,11 @@ class FlextModels:
         FlextDispatcher.create() and FlextRegistry.create().
         """
 
-        config: p.Configuration.Config
-        context: p.Context.Ctx
-        container: p.Container.DI
-        dispatcher: p.Application.CommandBus
-        registry: p.Application.Registry
+        config: p.Config
+        context: p.Ctx
+        container: p.DI
+        dispatcher: p.CommandBus
+        registry: p.Registry
 
     class Service:
         """Service namespace with real inheritance classes."""
@@ -353,6 +360,9 @@ class FlextModels:
         class FactoryRegistration(FlextModelsContainer.FactoryRegistration):
             """Factory registration - real inheritance."""
 
+        class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
+            """Factory decorator config - real inheritance."""
+
         class ResourceRegistration(FlextModelsContainer.ResourceRegistration):
             """Resource registration - real inheritance."""
 
@@ -371,65 +381,19 @@ class FlextModels:
         """Validation namespace with real inheritance.
 
         All validation methods are available through inheritance from
-        FlextModelsValidation. Methods return Foundation.Result[T] for various T.
+        FlextModelsValidation. Methods return Result[T] for various T.
         """
 
     # =========================================================================
-    # ROOT-LEVEL ALIASES (Minimize nesting for common models)
-    # Usage: m.Command instead of m.Cqrs.Command
-    # Both access patterns work - aliases for convenience, namespaces for clarity
+    # ROOT-LEVEL ALIASES REMOVED
+    # Use full namespace paths: m.Cqrs.Command instead of m.Command
+    # Use m.Config.ProcessingRequest instead of m.ProcessingRequest
+    # Use m.Context.ContextData instead of m.ContextData
+    # Use m.Handler.Registration instead of m.HandlerRegistration
+    # Use m.Service.DomainServiceExecutionRequest instead of m.DomainServiceExecutionRequest
+    # Use m.Container.ServiceRegistration instead of m.ServiceRegistration
+    # Use m.Collections.Config instead of m.CollectionsConfig
     # =========================================================================
-
-    # CQRS aliases (most common)
-    Command = Cqrs.Command
-    Query = Cqrs.Query
-    Pagination = Cqrs.Pagination
-    CqrsBus = Cqrs.Bus
-    CqrsHandler = Cqrs.Handler
-
-    # Config aliases (frequently used)
-    ProcessingRequest = Config.ProcessingRequest
-    RetryConfiguration = Config.RetryConfiguration
-    BatchProcessingConfig = Config.BatchProcessingConfig
-    DispatchConfig = Config.DispatchConfig
-    MiddlewareConfig = Config.MiddlewareConfig
-    ExceptionConfig = Config.ExceptionConfig
-    ValidationConfiguration = Config.ValidationConfiguration
-    HandlerExecutionConfig = Config.HandlerExecutionConfig
-    NestedExecutionOptions = Config.NestedExecutionOptions
-    RuntimeScopeOptions = Config.RuntimeScopeOptions
-
-    # Context aliases
-    ContextData = Context.ContextData
-    ContextExport = Context.ContextExport
-    ContextScopeData = Context.ContextScopeData
-    ContextStatistics = Context.ContextStatistics
-    ContextMetadata = Context.ContextMetadata
-    Token = Context.Token
-
-    # Handler aliases
-    HandlerRegistration = Handler.Registration
-    HandlerRegistrationDetails = Handler.RegistrationDetails
-    HandlerExecutionContext = Handler.ExecutionContext
-
-    # Service aliases
-    DomainServiceExecutionRequest = Service.DomainServiceExecutionRequest
-    DomainServiceBatchRequest = Service.DomainServiceBatchRequest
-    OperationExecutionRequest = Service.OperationExecutionRequest
-    AclResponse = Service.AclResponse
-
-    # Container aliases
-    ServiceRegistration = Container.ServiceRegistration
-    FactoryRegistration = Container.FactoryRegistration
-    ResourceRegistration = Container.ResourceRegistration
-    ContainerConfig = Container.ContainerConfig
-
-    # Collections aliases
-    CollectionsConfig = Collections.Config
-    CollectionsRules = Collections.Rules
-    CollectionsStatistics = Collections.Statistics
-    CollectionsResults = Collections.Results
-    CollectionsOptions = Collections.Options
 
 
 m = FlextModels

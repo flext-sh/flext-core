@@ -25,7 +25,7 @@ from __future__ import annotations
 import dataclasses
 import time
 from enum import StrEnum
-from typing import Any, ClassVar
+from typing import ClassVar
 
 import pytest
 
@@ -306,8 +306,8 @@ class TestFlextDecorators:
             class TestServiceTyped:
                 value: str
 
-            # Cast dataclass instance to Any for type compatibility with container
-            service_instance: Any = TestServiceTyped("from_container")
+            # Cast dataclass instance for type compatibility with container
+            service_instance: TestServiceTyped = TestServiceTyped("from_container")
             container.with_service("service", service_instance)
 
             @FlextDecorators.inject(service="service")

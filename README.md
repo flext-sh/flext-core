@@ -1,5 +1,10 @@
 # FLEXT-Core
 
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Version](https://img.shields.io/badge/version-0.10.0-brightgreen.svg)](https://github.com/flext/flext-core)
+[![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 FLEXT-Core is the dispatcher-centric foundation library for the FLEXT ecosystem. It provides railway-oriented programming primitives, a layered dependency-injection bridge (runtime + container + handlers), CQRS dispatching, and domain-driven design helpers for Python 3.13+.
 
 ## Key Capabilities
@@ -44,10 +49,10 @@ from flext_core.protocols import p  # FlextProtocols
 
 # Use protocols in interfaces (Dependency Inversion Principle)
 def process_command(
-    dispatcher: p.Application.CommandBus,
-    config: p.Configuration.Config,
-    logger: p.Infrastructure.Logger.StructlogLogger,
-) -> p.Foundation.Result[str]:
+    dispatcher: p.CommandBus,
+    config: p.Config,
+    logger: p.Logger.StructlogLogger,
+) -> p.Result[str]:
     """All interfaces use protocols for flexibility and testability."""
     pass
 ```
@@ -284,15 +289,15 @@ TResult = TypeVar("TResult")  # FORBIDDEN - Use T from flext_core.typings
 from flext_core.protocols import p
 
 # ✅ CORRECT - Protocols in interface signatures
-def create_service(config: p.Configuration.Config) -> p.Domain.Service[str]:
+def create_service(config: p.Config) -> p.Service[str]:
     """Use protocols, not concrete classes."""
     pass
 
 # ✅ CORRECT - Protocols in return types
-def get_logger() -> p.Infrastructure.Logger.StructlogLogger:
+def get_logger() -> p.Logger.StructlogLogger:
     """Return protocol type, not concrete class."""
     logger = FlextLogger(__name__)
-    return cast("p.Infrastructure.Logger.StructlogLogger", logger)
+    return cast("p.Logger.StructlogLogger", logger)
 
 # ❌ FORBIDDEN - Direct class references in interfaces
 def create_service(config: FlextConfig) -> FlextService[str]:  # AVOID
@@ -420,18 +425,6 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 
 **Rationale**: Framework code (dispatchers, handlers, containers, utilities) executes user-provided callbacks and must wrap any exception into `FlextResult.fail()` to maintain the railway pattern.
 
-**Pyrefly Configuration**: Handles known limitations with recursive types and complex generics:
-
-```toml
-# In pyproject.toml
-[tool.pyrefly.errors]
-    unknown-name = false         # Recursive type aliases (PEP 695)
-    bad-return = false           # Complex generic type inference
-    bad-assignment = false       # Union type inference
-    no-matching-overload = false # Generic overload resolution
-    bad-argument-type = false    # Complex argument typing
-    not-iterable = false         # StrEnum iteration (valid Python 3.11+)
-```
 
 **PYI042**: Ignored globally to allow short alias names (`r`, `t`, `c`, `m`, `p`, `u`) without type annotations.
 

@@ -6,7 +6,7 @@ Scope: Real execution of DI methods to validate bridge, container, and wiring
 Tests DI functionality with real code execution:
 - Bridge methods (dependency_providers, dependency_containers, create_container)
 - DependencyIntegration methods (create_layered_bridge, register_object, register_factory, register_resource)
-- Container DI methods (wire_modules, scoped with resources)
+- DI methods (wire_modules, scoped with resources)
 - Service bootstrap with DI (create_service_runtime)
 - Real wiring with @inject and Provide decorators
 - Resource lifecycle management
@@ -24,14 +24,17 @@ from typing import cast
 from flext_core import (
     FlextConfig,
     FlextContainer,
+    FlextContext,
     FlextRuntime,
-    Provide,
-    inject,
     r,
     s,
     t,
 )
 from flext_tests import u
+
+# DI decorators from Runtime
+Provide = FlextRuntime.DependencyIntegration.Provide
+inject = FlextRuntime.DependencyIntegration.inject
 
 
 class TestDIBridgeRealExecution:
@@ -98,7 +101,9 @@ class TestDIBridgeRealExecution:
         # Access config via provider call
         config_dict = bridge.config()
         assert isinstance(config_dict, dict)
-        assert config_dict.get("database", {}).get("dsn") == "sqlite://test.db"
+        assert (
+            u.mapper().extract(config_dict, "database.dsn").value == "sqlite://test.db"
+        )
 
 
 class TestDependencyIntegrationRealExecution:
@@ -246,7 +251,7 @@ class TestDependencyIntegrationRealExecution:
 
 
 class TestContainerDIRealExecution:
-    """Test FlextContainer DI methods with real execution."""
+    """Test FlextDI methods with real execution."""
 
     def test_wire_modules_real_execution(self) -> None:
         """Test container.wire_modules with real code."""
@@ -288,7 +293,7 @@ class TestContainerDIRealExecution:
 
     def test_scoped_with_resources_real_execution(self) -> None:
         """Test container.scoped with resources real execution."""
-        container = FlextContainer()
+        container = FlextContainer(_context=FlextContext())
 
         # Track lifecycle
         lifecycle = {"created": False, "closed": False}
@@ -313,7 +318,7 @@ class TestContainerDIRealExecution:
 
     def test_scoped_with_services_and_factories(self) -> None:
         """Test scoped container with services and factories."""
-        container = FlextContainer()
+        container = FlextContainer(_context=FlextContext())
 
         # Create scoped container with services and factories
         scoped = container.scoped(
@@ -342,7 +347,7 @@ class TestContainerDIRealExecution:
 
     def test_scoped_with_config_override(self) -> None:
         """Test scoped container with config override."""
-        container = FlextContainer()
+        container = FlextContainer(_context=FlextContext())
 
         # Create scoped container with config
         config_override = FlextConfig(app_name="scoped_app")
@@ -595,7 +600,7 @@ class TestRealWiringScenarios:
 
     def test_scoped_container_with_wiring(self) -> None:
         """Test scoped container preserves wiring."""
-        container = FlextContainer()
+        container = FlextContainer(_context=FlextContext())
         container.register("global_service", "global_value")
 
         # Create scoped container
@@ -717,7 +722,7 @@ class TestRealWiringScenarios:
 
     def test_resource_teardown_with_scoped_container(self) -> None:
         """Test resource teardown when scoped container is destroyed."""
-        container = FlextContainer()
+        container = FlextContainer(_context=FlextContext())
 
         lifecycle = {"created": False, "destroyed": False}
 
@@ -741,7 +746,7 @@ class TestRealWiringScenarios:
 
     def test_multiple_scoped_containers_isolation(self) -> None:
         """Test that multiple scoped containers are isolated."""
-        container = FlextContainer()
+        container = FlextContainer(_context=FlextContext())
 
         # Create two scoped containers with different services
         scoped1 = container.scoped(services={"service": "value1"})

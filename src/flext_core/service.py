@@ -2,7 +2,7 @@
 
 FlextService[T] supplies validation, dependency injection, and railway-style
 result handling for domain services that participate in CQRS flows. It relies
-on structural typing to satisfy ``p.Domain.Service`` and aligns with the
+on structural typing to satisfy ``p.Service`` and aligns with the
 dispatcher-centric architecture.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,11 +15,19 @@ import inspect
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from datetime import datetime
 from types import ModuleType
-from typing import Self, cast
+from typing import Self, cast, override
 
-from pydantic import BaseModel, ConfigDict, PrivateAttr, computed_field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    PrivateAttr,
+    computed_field,
+)
+from pydantic.fields import ModelPrivateAttr
 
+from flext_core._dispatcher import CircuitBreakerManager, RateLimiterManager
 from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.container import FlextContainer
@@ -27,12 +35,14 @@ from flext_core.context import FlextContext
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import e
 from flext_core.handlers import FlextHandlers
+from flext_core.loggings import FlextLogger
 from flext_core.mixins import require_initialized, x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 from flext_core.result import r
 from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextService[TDomainResult](
@@ -47,6 +57,21 @@ class FlextService[TDomainResult](
     :class:`FlextRuntime`) so services can reuse runtime automation for creating
     scoped config/context/container triples via :meth:`create_service_runtime`
     while remaining protocol compliant via structural typing.
+
+    **V2 Auto-Execute Pattern**:
+    Services can use the auto-execute pattern by setting ``auto_execute = True``
+    as a class variable. When enabled, instantiating the service automatically
+    executes it and returns the domain result directly instead of the service instance.
+
+    Example:
+        class UserService(FlextService[User]):
+            auto_execute = True  # Returns User directly, not service instance
+
+            def execute(self) -> r[User]:
+                return r.ok(User(id="123", name="Alice"))
+
+        # Usage: user = UserService()  # Returns User object directly
+
     """
 
     model_config = ConfigDict(
@@ -141,6 +166,7 @@ class FlextService[TDomainResult](
         # On failure, raise exception
         raise e.BaseError(result.error or "Service execution failed")
 
+    @override
     def __init__(
         self,
         **data: t.GeneralValueType,
@@ -171,8 +197,8 @@ class FlextService[TDomainResult](
 
         # Set attributes directly - PrivateAttr allows assignment without validation
         self._context = runtime.context
-        # Type narrowing: runtime.config is p.Configuration.Config, but we need FlextConfig
-        # All implementations of p.Configuration.Config in FLEXT are FlextConfig or subclasses
+        # Type narrowing: runtime.config is p.Config, but we need FlextConfig
+        # All implementations of p.Config in FLEXT are FlextConfig or subclasses
         self._config = cast("FlextConfig", runtime.config)
         self._container = runtime.container
         self._runtime = runtime
@@ -189,9 +215,9 @@ class FlextService[TDomainResult](
     # Use PrivateAttr for private attributes (Pydantic v2 pattern)
     # PrivateAttr allows setting attributes without validation and bypasses __setattr__
     # Type annotations using PrivateAttr with explicit type hints
-    _context: p.Context.Ctx | None = PrivateAttr(default=None)
+    _context: p.Ctx | None = PrivateAttr(default=None)
     _config: FlextConfig | None = PrivateAttr(default=None)
-    _container: p.Container.DI | None = PrivateAttr(default=None)
+    _container: p.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _discovered_handlers: list[tuple[str, m.Handler.DecoratorConfig]] = PrivateAttr(
         default_factory=list
@@ -217,11 +243,11 @@ class FlextService[TDomainResult](
         *,
         config_type: type[FlextConfig] | None = None,
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Context.Ctx | None = None,
+        context: p.Ctx | None = None,
         subproject: str | None = None,
         services: Mapping[
             str,
-            t.GeneralValueType | BaseModel | p.Utility.Callable[t.GeneralValueType],
+            t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType],
         ]
         | None = None,
         factories: Mapping[
@@ -244,21 +270,39 @@ class FlextService[TDomainResult](
         ``FlextRuntime.create_service_runtime`` but uses the factory methods of each
         class directly (Clean Architecture - each class knows how to instantiate itself).
 
+        All runtime components are created via the bootstrap options pattern:
+        1. Config materialization with overrides
+        2. Context creation with initial data
+        3. Container creation with registrations
+        4. Dispatcher creation with auto-discovery
+        5. Registry creation
+
         All parameters are optional and allow callers to:
         - Clone or materialize configuration models with optional overrides.
         - Seed containers with services/factories/resources without additional
           registration calls.
         - Apply container configuration overrides before wiring modules, packages,
           or classes for ``@inject`` usage.
+
+        This method is called by :meth:`_create_initial_runtime` which uses
+        :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
-        # Use factory methods - Clean Architecture pattern
+        # 1. Config materialization with overrides
         config_cls = config_type or FlextConfig
         runtime_config = config_cls.materialize(config_overrides=config_overrides)
-        runtime_context = context if context is not None else FlextContext.create()
 
+        # 2. Context creation with initial data
+        runtime_context: p.Ctx | None
+        if context is not None:
+            runtime_context = context
+        else:
+            # FlextContext implements Ctx protocol, cast for type checker
+            runtime_context = cast("p.Ctx", FlextContext.create())
+
+        # 3. Container creation with registrations
         # Cast config to protocol for container.scoped() compatibility
-        runtime_config_typed: p.Configuration.Config = cast(
-            "p.Configuration.Config",
+        runtime_config_typed: p.Config = cast(
+            "p.Config",
             runtime_config,
         )
         runtime_container = FlextContainer.create().scoped(
@@ -280,10 +324,10 @@ class FlextService[TDomainResult](
                 classes=wire_classes,
             )
 
-        # Create dispatcher with auto-discovery enabled
+        # 4. Dispatcher creation with auto-discovery
         runtime_dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
 
-        # Create registry with auto-discovery and deduplication enabled
+        # 5. Registry creation
         runtime_registry = FlextRegistry.create(auto_discover_handlers=True)
 
         return m.ServiceRuntime.model_construct(
@@ -300,37 +344,152 @@ class FlextService[TDomainResult](
         config_type = cls._get_service_config_type()
         options = cls._runtime_bootstrap_options()
         # Delegate to _create_runtime with options from _runtime_bootstrap_options
-        return cls._create_runtime(
-            config_type=cast("type[FlextConfig] | None", options.get("config_type"))
-            if "config_type" in options
-            else config_type,
-            config_overrides=options.get("config_overrides"),
-            context=cast("p.Context.Ctx | None", options.get("context"))
-            if "context" in options
-            else None,
-            subproject=options.get("subproject"),
-            services=cast(
-                "Mapping[str, t.GeneralValueType | BaseModel | p.Utility.Callable[t.GeneralValueType]] | None",
-                options.get("services"),
+        # Extract values from options using u.mapper()
+        config_type_raw = (
+            u.mapper().get(options, "config_type") if "config_type" in options else None
+        )
+        config_type_val = (
+            cast("type[FlextConfig] | None", config_type_raw)
+            if config_type_raw is not None and isinstance(config_type_raw, type)
+            else config_type
+        )
+
+        config_overrides_raw = u.mapper().get(options, "config_overrides")
+        config_overrides_val = (
+            cast(
+                "Mapping[str, str | int | float | bool | datetime | Sequence[str | int | float | bool | datetime | None] | Mapping[str, str | int | float | bool | datetime | None] | None] | None",
+                config_overrides_raw,
             )
-            if "services" in options
-            else None,
-            factories=options.get("factories"),
-            resources=options.get("resources"),
-            container_overrides=options.get("container_overrides"),
-            wire_modules=options.get("wire_modules"),
-            wire_packages=options.get("wire_packages"),
-            wire_classes=options.get("wire_classes"),
+            if config_overrides_raw is not None
+            and isinstance(config_overrides_raw, (dict, Mapping))
+            else None
+        )
+
+        context_raw = (
+            u.mapper().get(options, "context") if "context" in options else None
+        )
+        context_val = (
+            cast("p.Ctx | None", context_raw) if context_raw is not None else None
+        )
+
+        subproject_val: str | None = u.mapper().get(options, "subproject")
+
+        services_raw = (
+            u.mapper().get(options, "services") if "services" in options else None
+        )
+        services_val = (
+            cast(
+                "Mapping[str, t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType]] | None",
+                services_raw,
+            )
+            if services_raw is not None and isinstance(services_raw, (dict, Mapping))
+            else None
+        )
+
+        factories_raw = u.mapper().get(options, "factories")
+        factories_val = (
+            cast(
+                "Mapping[str, Callable[[], str | int | float | bool | datetime | Sequence[str | int | float | bool | datetime | None] | Mapping[str, str | int | float | bool | datetime | None] | None]] | None",
+                factories_raw,
+            )
+            if factories_raw is not None and isinstance(factories_raw, (dict, Mapping))
+            else None
+        )
+
+        resources_raw = u.mapper().get(options, "resources")
+        resources_val = (
+            cast(
+                "Mapping[str, Callable[[], t.GeneralValueType]] | None",
+                resources_raw,
+            )
+            if resources_raw is not None and isinstance(resources_raw, (dict, Mapping))
+            else None
+        )
+
+        container_overrides_raw = u.mapper().get(options, "container_overrides")
+        container_overrides_val = (
+            cast(
+                "Mapping[str, t.FlexibleValue] | None",
+                container_overrides_raw,
+            )
+            if container_overrides_raw is not None
+            and isinstance(container_overrides_raw, (dict, Mapping))
+            else None
+        )
+
+        wire_modules_raw = u.mapper().get(options, "wire_modules")
+        wire_modules_val = (
+            cast(
+                "Sequence[ModuleType] | None",
+                wire_modules_raw,
+            )
+            if wire_modules_raw is not None
+            and isinstance(wire_modules_raw, (list, tuple, Sequence))
+            else None
+        )
+
+        wire_packages_raw = u.mapper().get(options, "wire_packages")
+        wire_packages_val = (
+            cast(
+                "Sequence[str] | None",
+                wire_packages_raw,
+            )
+            if wire_packages_raw is not None
+            and isinstance(wire_packages_raw, (list, tuple, Sequence))
+            else None
+        )
+
+        wire_classes_raw = u.mapper().get(options, "wire_classes")
+        wire_classes_val = (
+            cast(
+                "Sequence[type] | None",
+                wire_classes_raw,
+            )
+            if wire_classes_raw is not None
+            and isinstance(wire_classes_raw, (list, tuple, Sequence))
+            else None
+        )
+
+        return cls._create_runtime(
+            config_type=config_type_val,
+            config_overrides=config_overrides_val,
+            context=context_val,
+            subproject=subproject_val,
+            services=services_val,
+            factories=factories_val,
+            resources=resources_val,
+            container_overrides=container_overrides_val,
+            wire_modules=wire_modules_val,
+            wire_packages=wire_packages_val,
+            wire_classes=wire_classes_val,
         )
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
         """Hook for subclasses to parametrize runtime automation.
 
+        Override to customize:
+        - config_overrides: Dict of config values to override
+        - services: Dict[str, object] to register as singletons
+        - factories: Dict[str, Callable] to register as factories
+        - resources: Dict[str, Callable] to register as resources
+        - wire_modules: List of modules to wire for @inject
+        - wire_packages: List of packages to wire
+        - wire_classes: List of classes to wire
+
         Subclasses can override this method to pass keyword arguments directly
         to :meth:`_create_runtime`, enabling opt-in configuration overrides,
         scoped service registrations, factory/resource wiring, and container
         configuration changes without duplicating setup code in ``__init__``.
+
+        Example:
+            @classmethod
+            def _runtime_bootstrap_options(cls):
+                return {
+                    "config_overrides": {"app_name": "MyApp"},
+                    "services": {"db": my_db_service},
+                }
+
         """
         return {}
 
@@ -338,22 +497,22 @@ class FlextService[TDomainResult](
         self,
         *,
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Context.Ctx | None = None,
+        context: p.Ctx | None = None,
         subproject: str | None = None,
         container_services: Mapping[str, t.FlexibleValue] | None = None,
         container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> m.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
         config: FlextConfig = require_initialized(self._config, "Config")
-        ctx: p.Context.Ctx = require_initialized(self._context, "Context")
-        container: p.Container.DI = require_initialized(self._container, "Container")
+        ctx: p.Ctx = require_initialized(self._context, "Context")
+        container: p.DI = require_initialized(self._container, "Container")
         cloned_config = config.model_copy(
             update=config_overrides or {},
             deep=True,
         )
-        # Clone context - Context.Ctx implementations have clone() method
+        # Clone context - Ctx implementations have clone() method
         runtime_context = context.clone() if context is not None else ctx.clone()
-        # runtime_context implements Context.Ctx structurally
+        # runtime_context implements Ctx structurally
         scoped_container = container.scoped(
             config=cloned_config,
             context=runtime_context,
@@ -384,7 +543,7 @@ class FlextService[TDomainResult](
         return require_initialized(self._runtime, "Runtime")
 
     @property
-    def context(self) -> p.Context.Ctx:
+    def context(self) -> p.Ctx:
         """Service-scoped execution context."""
         return require_initialized(self._context, "Context")
 
@@ -394,7 +553,7 @@ class FlextService[TDomainResult](
         return require_initialized(self._config, "Config")
 
     @property
-    def container(self) -> p.Container.DI:
+    def container(self) -> p.DI:
         """Container bound to the service context/config."""
         return require_initialized(self._container, "Container")
 
@@ -534,7 +693,85 @@ class FlextService[TDomainResult](
         # Type narrowing: self is FlextService[TDomainResult], compatible with FlextService[t.GeneralValueType]
         # TDomainResult is a subtype of GeneralValueType, so this is safe
         # Cast needed because mypy doesn't infer that TDomainResult <: GeneralValueType
-        return _ServiceAccess(cast("s[t.GeneralValueType]", self))
+        # Type narrowing: self is FlextService[TDomainResult] which implements s[t.GeneralValueType]
+        # s is type alias for FlextService (defined at end of file), cast for type checker
+        # _ServiceAccess.__init__ expects s[t.GeneralValueType], which FlextService implements structurally
+        service_typed: FlextService[t.GeneralValueType] = cast(
+            "FlextService[t.GeneralValueType]", self
+        )
+        # _ServiceAccess(service_typed) already returns _ServiceAccess instance
+        return _ServiceAccess(service_typed)
+
+    @classmethod
+    def from_parent(
+        cls,
+        parent: FlextService[t.GeneralValueType],
+        *,
+        config_overrides: dict[str, object] | None = None,
+        context_overrides: dict[str, object] | None = None,
+    ) -> Self:
+        """Create child service inheriting parent's infrastructure.
+
+        Enables service composition by creating a new service instance that
+        inherits the parent's config, context, and container with optional
+        overrides. Useful for orchestrating multiple services in a workflow.
+
+        Args:
+            parent: Parent service to inherit from.
+            config_overrides: Optional configuration overrides.
+            context_overrides: Optional context data overrides.
+
+        Returns:
+            T: New service instance inheriting parent's infrastructure.
+
+        Example:
+            >>> parent = OrderService()
+            >>> child = PaymentService.from_parent(
+            ...     parent,
+            ...     config_overrides={"timeout": 30},
+            ... )
+            >>> # child inherits parent's container, context, etc.
+
+        """
+        # Build config with overrides
+        parent_config = parent.config
+        if config_overrides:
+            merged_config = parent_config.model_copy(update=config_overrides)
+        else:
+            merged_config = parent_config
+
+        # Build context with overrides
+        parent_context = parent.context
+        if context_overrides and isinstance(parent_context, FlextContext):
+            # Type narrowing: parent_context is FlextContext, which has model_copy
+            # Assign to typed variable for explicit type narrowing
+            # FlextContext is a Pydantic model (inherits from FlextRuntime which inherits from BaseModel)
+            flext_context_var = cast("FlextContext", parent_context)
+            # Use getattr for model_copy to avoid type checker issues with protocol intersection
+            model_copy_method = getattr(flext_context_var, "model_copy", None)
+            if model_copy_method is not None:
+                merged_context_pydantic = model_copy_method(update=context_overrides)
+            else:
+                # Fallback if model_copy not available
+                merged_context_pydantic = flext_context_var
+            merged_context: p.Ctx = cast("p.Ctx", merged_context_pydantic)
+        else:
+            merged_context = parent_context
+
+        # Create child with inherited infrastructure
+        # Type narrowing: cls is FlextService subclass, merged_config is FlextConfig
+        # Pass as **kwargs since __init__ accepts **data: t.GeneralValueType
+        # Cast values to GeneralValueType for type compatibility
+        return cls(
+            **cast(
+                "dict[str, t.GeneralValueType]",
+                {
+                    "config": merged_config,
+                    "context": merged_context,
+                    "container": parent.container,
+                },
+            ),
+        )
 
 
 class _ServiceExecutionScope(m.ArbitraryTypesModel):
@@ -544,9 +781,9 @@ class _ServiceExecutionScope(m.ArbitraryTypesModel):
 
     cqrs: type[m.Cqrs]
     registry: FlextRegistry
-    config: p.Configuration.Config
+    config: p.Config
     result: type
-    context: p.Context.Ctx
+    context: p.Ctx
     runtime: m.ServiceRuntime
     service_data: t.Types.ConfigurationMapping
 
@@ -563,13 +800,23 @@ class _ServiceAccess(m.ArbitraryTypesModel):
     context.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    # ConfigDict is a TypedDict - use explicit type annotation to help type checker
+    # ConfigDict works correctly at runtime, type annotation helps with overload resolution
+    # Match ArbitraryTypesModel pattern: direct assignment, not ClassVar
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        # Suppress Pydantic warnings for runtime field during serialization
+        # Runtime may be ModelPrivateAttr if not initialized, which causes warnings
+        # This is expected behavior - runtime is only available after create_service_runtime()
+        # Note: repr parameter removed - not supported in Pydantic v2 ConfigDict
+    )
 
     # Use class attributes (not PrivateAttr) for consistency with FlextService
     _registry: FlextRegistry | None = None
-    _service: s[t.GeneralValueType]
+    # s is defined at end of file, use FlextService directly to avoid forward reference issue
+    _service: FlextService[t.GeneralValueType]
 
-    def __init__(self, service: s[t.GeneralValueType]) -> None:
+    def __init__(self, service: FlextService[t.GeneralValueType]) -> None:
         super().__init__()
         # Accept any FlextService instance - GeneralValueType covers all domain results
         # Set attributes directly (no PrivateAttr needed)
@@ -592,7 +839,7 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         return require_initialized(self._registry, "Registry")
 
     @computed_field
-    def config(self) -> p.Configuration.Config:
+    def config(self) -> p.Config:
         """Global configuration instance for the service."""
         # Use public property instead of private attribute
         return self._service.config
@@ -602,12 +849,20 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         self,
     ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
         """Protocol-backed runtime triple for the bound service."""
-        # Use public property instead of private attribute
-        # Type narrowing: self._service.runtime is @computed_field that returns m.ServiceRuntime
-        # Access directly - @computed_field behaves like a property at runtime
-        runtime_value = self._service.runtime
-        # Type assertion: runtime_value is m.ServiceRuntime from @computed_field
-        return cast("m.ServiceRuntime", runtime_value)
+        # Check if runtime is initialized before accessing
+        # During Pydantic serialization, _runtime may be ModelPrivateAttr
+        # Access _runtime directly to check initialization status
+        runtime_attr = getattr(self._service, "_runtime", None)
+        if runtime_attr is None or isinstance(runtime_attr, ModelPrivateAttr):
+            # Runtime not initialized - raise error to prevent Pydantic from serializing ModelPrivateAttr
+            # This prevents the warning about unexpected value type
+            msg = "Runtime not initialized. Call create_service_runtime() first."
+            raise RuntimeError(msg)
+        # Use require_initialized to get runtime (same as FlextService.runtime)
+        # This ensures consistent behavior and proper error handling
+        # Cast the result to m.ServiceRuntime since require_initialized returns generic T
+        result: object = require_initialized(runtime_attr, "Runtime")
+        return cast("m.ServiceRuntime", result)
 
     @computed_field
     def result(
@@ -622,26 +877,123 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         return r
 
     @computed_field
-    def context(self) -> p.Context.Ctx:
+    def context(self) -> p.Ctx:
         """Context manager for correlation and tracing."""
         # Use public property instead of private attribute
         return self._service.context
 
     @computed_field
-    def container(self) -> p.Container.DI:
+    def container(self) -> p.DI:
         """Dependency injection container bound to the service."""
         # Use public property instead of private attribute
         return self._service.container
+
+    @computed_field
+    def logger(self) -> FlextLogger:
+        """Scoped logger for this service.
+
+        Returns a logger instance bound to the service's container and context,
+        enabling container-scoped logging configuration and context propagation.
+
+        Returns:
+            FlextLogger: Logger instance bound to service container.
+
+        """
+        # Create logger scoped to service module
+        service_name = self._service.__class__.__name__
+        return FlextLogger.create_module_logger(
+            f"{self._service.__class__.__module__}.{service_name}",
+        )
+
+    @property
+    def metrics(self) -> FlextDispatcher:
+        """Metrics collector for this service.
+
+        Returns the MetricsTracker from the service's dispatcher runtime,
+        enabling metrics collection for service operations.
+
+        Returns:
+            FlextDispatcher: Dispatcher instance which inherits from MetricsTracker mixin.
+
+        Note:
+            The dispatcher inherits from FlextMixins.CQRS.MetricsTracker, so it
+            can be used directly for metrics collection.
+
+        """
+        # Access dispatcher from runtime through service
+        # _ServiceAccess accesses protected attributes of FlextService
+        # Use getattr with cast to access protected attribute safely
+        runtime = cast(
+            "m.ServiceRuntime | ModelPrivateAttr | None",
+            getattr(self._service, "_runtime", None),
+        )
+        if runtime is None or isinstance(runtime, ModelPrivateAttr):
+            msg = "Runtime not initialized. Call create_service_runtime() first."
+            raise TypeError(msg)
+        return cast("FlextDispatcher", runtime.dispatcher)
+        # Dispatcher inherits from FlextMixins.CQRS.MetricsTracker
+
+    @property
+    def rate_limiter(self) -> RateLimiterManager:
+        """Rate limiter manager for this service.
+
+        Returns the RateLimiterManager from the service's dispatcher runtime,
+        enabling rate limiting for service operations.
+
+        Returns:
+            RateLimiterManager: Rate limiter manager instance from dispatcher.
+
+        """
+        # Access dispatcher from runtime through service
+        # _ServiceAccess accesses protected attributes of FlextService
+        # Use getattr with cast to access protected attribute safely
+        runtime = cast(
+            "m.ServiceRuntime | ModelPrivateAttr | None",
+            getattr(self._service, "_runtime", None),
+        )
+        if runtime is None or isinstance(runtime, ModelPrivateAttr):
+            msg = "Runtime not initialized. Call create_service_runtime() first."
+            raise TypeError(msg)
+        dispatcher = cast("FlextDispatcher", runtime.dispatcher)
+        # Access private attribute (dispatcher._rate_limiter is private)
+        # Type assertion: dispatcher has _rate_limiter attribute
+        return dispatcher._rate_limiter
+
+    @property
+    def circuit_breaker(self) -> CircuitBreakerManager:
+        """Circuit breaker manager for this service.
+
+        Returns the CircuitBreakerManager from the service's dispatcher runtime,
+        enabling circuit breaking for service operations.
+
+        Returns:
+            CircuitBreakerManager: Circuit breaker manager instance from dispatcher.
+
+        """
+        # Access dispatcher from runtime through service
+        # _ServiceAccess accesses protected attributes of FlextService
+        # Use getattr with cast to access protected attribute safely
+        runtime = cast(
+            "m.ServiceRuntime | ModelPrivateAttr | None",
+            getattr(self._service, "_runtime", None),
+        )
+        if runtime is None or isinstance(runtime, ModelPrivateAttr):
+            msg = "Runtime not initialized. Call create_service_runtime() first."
+            raise TypeError(msg)
+        dispatcher = cast("FlextDispatcher", runtime.dispatcher)
+        # Access private attribute (dispatcher._circuit_breaker is private)
+        # Type assertion: dispatcher has _circuit_breaker attribute
+        return dispatcher._circuit_breaker
 
     def container_scope(
         self,
         *,
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Context.Ctx | None = None,
+        context: p.Ctx | None = None,
         subproject: str | None = None,
         services: Mapping[str, t.FlexibleValue] | None = None,
         factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
-    ) -> p.Container.DI:
+    ) -> p.DI:
         """Create a container scope with cloned config and optional overrides."""
         return self.runtime_scope(
             config_overrides=config_overrides,
@@ -655,7 +1007,7 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         self,
         *,
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Context.Ctx | None = None,
+        context: p.Ctx | None = None,
         subproject: str | None = None,
         services: Mapping[str, t.FlexibleValue] | None = None,
         factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
@@ -666,9 +1018,9 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         # Use public properties instead of private attributes
         # Type narrowing: @computed_field and @property return actual types, not Callable
         # Use cast to help mypy understand the types
-        config = cast("p.Configuration.Config", self.config)
-        ctx = cast("p.Context.Ctx", self.context)
-        container = cast("p.Container.DI", self.container)
+        config = cast("p.Config", self.config)
+        ctx = cast("p.Ctx", self.context)
+        container = cast("p.DI", self.container)
 
         # Clone config with overrides using Pydantic's model_copy
         cloned_config = config.model_copy(
@@ -676,7 +1028,7 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             deep=True,
         )
 
-        # Clone context - Context.Ctx implementations have clone() method
+        # Clone context - Ctx implementations have clone() method
         runtime_context = context.clone() if context is not None else ctx.clone()
 
         # Create scoped container using public API
@@ -695,20 +1047,20 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             container=scoped_container,
         )
 
-    def clone_config(self, **overrides: t.FlexibleValue) -> p.Configuration.Config:
+    def clone_config(self, **overrides: t.FlexibleValue) -> p.Config:
         """Create a deep copy of the service configuration with overrides.
 
         Args:
             **overrides: Field overrides applied to the cloned configuration.
 
         Returns:
-            Configuration.Config: Cloned configuration instance with updates applied.
+            Config: Cloned configuration instance with updates applied.
 
         """
         # Use public property instead of private attribute
         # Type narrowing: @computed_field returns actual type, not Callable
         # Use cast to help mypy understand the type
-        config = cast("p.Configuration.Config", self.config)
+        config = cast("p.Config", self.config)
         return config.model_copy(update=overrides, deep=True)
 
     @contextmanager
@@ -737,10 +1089,10 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         base_context = cast("FlextContext", base_runtime.context)
         original_correlation = base_context.Correlation.get_correlation_id()
 
-        # base_context implements Context.Ctx structurally - use directly
+        # base_context implements Ctx structurally - cast to protocol type
         runtime = self.runtime_scope(
             config_overrides=config_overrides,
-            context=base_context,
+            context=cast("p.Ctx | None", base_context),
             container_services=container_services,
             container_factories=container_factories,
         )
@@ -776,10 +1128,6 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         else:
             base_context.Correlation.set_correlation_id(original_correlation)
 
-
-# Rebuild ServiceRuntime model after FlextRegistry is imported
-# This resolves the forward reference for Pydantic v2
-m.ServiceRuntime.model_rebuild()
 
 s = FlextService
 

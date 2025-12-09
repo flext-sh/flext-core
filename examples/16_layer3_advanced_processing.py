@@ -25,6 +25,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from typing import cast
 
 from pydantic import BaseModel
 
@@ -47,14 +48,18 @@ class DataDoubler:
 
     def process(
         self,
-        data: (
-            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
-        ),
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: (t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Double the input value."""
         if not isinstance(data, int):
-            return FlextResult[int].fail(f"Expected int, got {type(data)}")
-        return FlextResult[int].ok(data * 2)
+            return cast(
+                "t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]",
+                FlextResult[int].fail(f"Expected int, got {type(data)}"),
+            )
+        return cast(
+            "t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]",
+            FlextResult[int].ok(data * 2),
+        )
 
 
 class DataSquarer:
@@ -65,14 +70,18 @@ class DataSquarer:
 
     @staticmethod
     def process(
-        data: (
-            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
-        ),
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: (t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Square the input value."""
         if not isinstance(data, int):
-            return FlextResult[int].fail(f"Expected int, got {type(data)}")
-        return FlextResult[int].ok(data * data)
+            return cast(
+                "t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]",
+                FlextResult[int].fail(f"Expected int, got {type(data)}"),
+            )
+        return cast(
+            "t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]",
+            FlextResult[int].ok(data * data),
+        )
 
 
 class SlowProcessor:
@@ -85,15 +94,19 @@ class SlowProcessor:
 
     def process(
         self,
-        data: (
-            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
-        ),
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: (t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]),
+    ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Simulate slow operation then return result."""
         if not isinstance(data, int):
-            return FlextResult[int].fail(f"Expected int, got {type(data)}")
+            return cast(
+                "t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]",
+                FlextResult[int].fail(f"Expected int, got {type(data)}"),
+            )
         time.sleep(self.delay)
-        return FlextResult[int].ok(data)
+        return cast(
+            "t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]",
+            FlextResult[int].ok(data),
+        )
 
 
 class DataValidator:
@@ -104,16 +117,24 @@ class DataValidator:
 
     @staticmethod
     def process(
-        data: (
-            t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]
-        ),
-    ) -> t.GeneralValueType | BaseModel | p.Foundation.Result[t.GeneralValueType]:
+        data: (t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]),
+    ) -> (
+        t.GeneralValueType
+        | BaseModel
+        | p.Result[t.GeneralValueType]
+        | FlextResult[t.GeneralValueType]
+    ):
         """Validate data is positive."""
+        # Return FlextResult which implements p.Result protocol structurally
+        # FlextResult satisfies the protocol, so it's compatible with p.Result
         if not isinstance(data, int):
-            return FlextResult[int].fail(f"Expected int, got {type(data)}")
+            return FlextResult[t.GeneralValueType].fail(
+                f"Expected int, got {type(data)}"
+            )
         if data < 0:
-            return FlextResult[int].fail("Data must be positive")
-        return FlextResult[int].ok(data)
+            return FlextResult[t.GeneralValueType].fail("Data must be positive")
+        # int is part of GeneralValueType, so int can be used as t.GeneralValueType
+        return FlextResult[t.GeneralValueType].ok(data)
 
 
 # ==================== EXAMPLE 1: BASIC PROCESSOR REGISTRATION ====================

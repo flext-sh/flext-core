@@ -250,26 +250,6 @@
             "scripts",
         ]
 
-    [tool.pyrefly.errors]
-        # Known pyrefly limitations documented in CLAUDE.md
-        unknown-name = false         # Recursive type aliases (PEP 695)
-        bad-return = false           # Complex generic type inference
-        bad-assignment = false       # Union type inference
-        no-matching-overload = false # Generic overload resolution
-        bad-argument-type = false    # Complex argument typing
-        bad-override = false         # Valid override with compatible return type (ConfigurationDict extends dict[str, Any])
-        not-iterable = false         # StrEnum iteration (valid Python 3.11+)
-        unsupported-operation = false  # pyrefly doesn't understand 'not in' operator
-        not-a-type = false           # Union return types with generics
-        bad-specialization = false   # LRUCache generic parameterization
-        missing-attribute = false    # Docker/files model attribute access
-        index-error = false          # Docker container.image.tags indexing
-        read-only = false            # Pydantic frozen model validators (use model_validator)
-        redundant-cast = false       # Intentional casts for type narrowing
-
-    # Note: Type checking uses Pyrefly only (Pyright-based)
-    # MyPy configuration removed - single type checker strategy
-
     [tool.ruff]
         extend = "../ruff-shared.toml"
 

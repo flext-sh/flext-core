@@ -1,7 +1,7 @@
 """Reliability helpers aligned with dispatcher-centric CQRS flows.
 
 Utilities extracted from ``flext_core.utilities`` to keep retry and
-timeout behaviors modular. All helpers return ``FlextResult`` so
+timeout behaviors modular. All helpers return ``FlextRuntime.RuntimeResult`` so
 dispatcher handlers can compose reliability policies without raising
 exceptions or leaking thread-local state.
 
@@ -21,7 +21,7 @@ from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.result import FlextResult, r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -30,7 +30,7 @@ class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
     @property
-    def logger(self) -> p.Infrastructure.Logger.StructlogLogger:
+    def logger(self) -> p.Log.StructlogLogger:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
@@ -102,15 +102,26 @@ class FlextUtilitiesReliability:
     def _normalize_operation_result[TResult](
         result_raw: r[TResult] | TResult,
     ) -> r[TResult]:
-        """Convert operation result to FlextResult."""
-        # Check if result_raw is a FlextResult by checking for is_success/is_failure attributes
+        """Convert operation result to RuntimeResult."""
+        # Check if result_raw is a RuntimeResult by checking for is_success/is_failure attributes
         # isinstance doesn't work well with generic types, so use structural typing
-        if hasattr(result_raw, "is_success") and hasattr(result_raw, "is_failure"):
-            # Type narrowing: result_raw has FlextResult structure
-            # Cast to r[TResult] for type safety
-            return cast("r[TResult]", result_raw)
+        # TypeGuard for proper type narrowing
+        is_result = (
+            hasattr(result_raw, "is_success")
+            and hasattr(result_raw, "is_failure")
+            and callable(getattr(result_raw, "unwrap", None))
+        )
+        if is_result:
+            # Type narrowing: result_raw has RuntimeResult structure
+            # Cast to r[TResult] for type safety (structural check confirms it's a Result)
+            result_typed: r[TResult] = cast("r[TResult]", result_raw)
+            return result_typed
         # Type narrowing: result_raw is TResult (not a Result) at this point
-        return r[TResult].ok(result_raw)
+        # Explicit type narrowing: after checking for RuntimeResult attributes, result_raw must be TResult
+        # Type checker needs explicit narrowing - create typed variable
+        # After the if check, result_raw is guaranteed to be TResult (but needs cast for mypy)
+        value: TResult = cast("TResult", result_raw)
+        return r[TResult].ok(value)
 
     @staticmethod
     def retry[TResult](
@@ -124,7 +135,7 @@ class FlextUtilitiesReliability:
         """Execute an operation with retry logic using railway patterns.
 
         Args:
-            operation: Operation to execute. Can return FlextResult or direct value.
+            operation: Operation to execute. Can return RuntimeResult or direct value.
             max_attempts: Maximum number of attempts
             delay: Delay between retries in seconds (alias for delay_seconds)
             delay_seconds: Delay between retries in seconds
@@ -274,11 +285,11 @@ class FlextUtilitiesReliability:
         max_attempts: int = c.Reliability.MAX_RETRY_ATTEMPTS,
         should_retry_func: Callable[[int, str | None], bool] | None = None,
         cleanup_func: Callable[[], None] | None = None,
-    ) -> r[TResult]:
+    ) -> FlextRuntime.RuntimeResult[TResult]:
         """Execute operation with retry logic using railway patterns.
 
         Args:
-            operation: Operation to execute (should return FlextResult)
+            operation: Operation to execute (should return RuntimeResult)
             max_attempts: Maximum number of attempts
             should_retry_func: Function to determine if retry should happen
             cleanup_func: Function to call for cleanup after each attempt
@@ -362,11 +373,17 @@ class FlextUtilitiesReliability:
             try:
                 result = op(current)
 
-                # Unwrap r if returned
-                if isinstance(result, r):
-                    if result.is_failure:
+                # Unwrap r if returned - use structural typing check
+                if (
+                    hasattr(result, "is_success")
+                    and hasattr(result, "is_failure")
+                    and hasattr(result, "value")
+                ):
+                    # Type narrowing: result has RuntimeResult structure
+                    result_typed: r[object] = cast("r[object]", result)
+                    if result_typed.is_failure:
                         if on_error == "stop":
-                            err_msg = result.error or "Unknown error"
+                            err_msg = result_typed.error or "Unknown error"
                             return r[object].fail(
                                 f"Pipeline step {i} failed: {err_msg}",
                             )
@@ -375,9 +392,9 @@ class FlextUtilitiesReliability:
                         continue
                     # Type narrowing: result is r[T] and is_success is True, so value is T
                     # Since T extends object, result.value is already object-compatible
-                    current = result.value
+                    current = result_typed.value
                 else:
-                    # Type annotation: result is object (non-FlextResult return)
+                    # Type annotation: result is object (non-RuntimeResult return)
                     current = result
 
             except Exception as e:
@@ -449,9 +466,9 @@ class FlextUtilitiesReliability:
         current: object = value
         for op in ops:
             if isinstance(op, dict):
-                # Type narrowing: op is dict, convert to ConfigurationDict for build()
+                # Type narrowing: op is dict, isinstance provides type narrowing to ConfigurationDict
                 # build() expects ops: t.Types.ConfigurationDict | None
-                op_dict = cast("t.Types.ConfigurationDict", op)
+                op_dict: t.Types.ConfigurationDict = op
                 current = FlextUtilitiesMapper.build(current, ops=op_dict)
             elif callable(op):
                 current = op(current)
@@ -486,25 +503,18 @@ class FlextUtilitiesReliability:
 
             def piped(value: object) -> object:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
-                # pyright: ignore[reportUnnecessaryIsInstance] - isinstance check for type narrowing
-                if isinstance(result, FlextResult):  # pyright: ignore[reportUnnecessaryIsInstance]
+
+                if hasattr(result, "is_success") and hasattr(result, "is_failure"):
                     return result.value if result.is_success else result
                 return result
 
             return piped
 
         if mode == "chain":
-
-            def chained(value: object) -> object:
-                return FlextUtilitiesReliability.chain(value, *funcs)
-
-            return chained
+            return lambda value: FlextUtilitiesReliability.chain(value, *funcs)
 
         # mode == "flow"
-        def flowed(value: object) -> object:
-            return FlextUtilitiesReliability.flow(value, *funcs)
-
-        return flowed
+        return lambda value: FlextUtilitiesReliability.flow(value, *funcs)
 
 
 __all__ = ["FlextUtilitiesReliability"]

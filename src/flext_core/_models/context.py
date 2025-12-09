@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Annotated, cast
 
 import structlog.contextvars
@@ -41,16 +42,14 @@ class FlextModelsContext:
         """
         if not FlextRuntime.is_dict_like(value):
             return {}
+        if not isinstance(value, Mapping):
+            return {}
         result: t.Types.ConfigurationDict = {}
-        # Type narrowing: value is dict-like after is_dict_like check
+        # Type narrowing: value is now Mapping after isinstance check
         # Convert to dict for consistent iteration (handles both dict and Mapping)
         # Use ConfigurationMapping for type safety - values will be normalized
         # to GeneralValueType
-        dict_value: t.Types.ConfigurationMapping = (
-            cast("t.Types.ConfigurationMapping", dict(value.items()))
-            if hasattr(value, "items")
-            else cast("t.Types.ConfigurationMapping", dict(value))
-        )
+        dict_value: t.Types.ConfigurationMapping = dict(value.items())
         for k, v in dict_value.items():
             dict_key: str = str(k)
             # Normalize value to GeneralValueType
@@ -315,17 +314,21 @@ class FlextModelsContext:
             """
             if isinstance(val, (str, int, float, bool, type(None))):
                 return val
-            if FlextRuntime.is_dict_like(val):
-                # Type narrowing: is_dict_like ensures dict-like
+            if FlextRuntime.is_dict_like(val) and isinstance(val, Mapping):
+                # Type narrowing: is_dict_like ensures dict-like, isinstance ensures Mapping
                 # Convert to ConfigurationDict recursively
                 result: t.Types.ConfigurationDict = {}
-                dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+                dict_v = dict(val.items())
                 for k, v in dict_v.items():
                     result[k] = (
                         FlextModelsContext.ContextData.normalize_to_general_value(v)
                     )
                 return result
-            if FlextRuntime.is_list_like(val):
+            if (
+                FlextRuntime.is_list_like(val)
+                and isinstance(val, Sequence)
+                and not isinstance(val, (str, bytes))
+            ):
                 # Convert to list[t.GeneralValueType] recursively
                 return [
                     FlextModelsContext.ContextData.normalize_to_general_value(item)
@@ -343,12 +346,16 @@ class FlextModelsContext:
             """Recursively check if object is JSON-serializable."""
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
-            if FlextRuntime.is_dict_like(obj):
+            if FlextRuntime.is_dict_like(obj) and isinstance(obj, Mapping):
                 for key, val in obj.items():
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return  # All dict items validated successfully
-            if FlextRuntime.is_list_like(obj):
+            if (
+                FlextRuntime.is_list_like(obj)
+                and isinstance(obj, Sequence)
+                and not isinstance(obj, (str, bytes))
+            ):
                 for i, item in enumerate(obj):
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(item, f"{path}[{i}]")
@@ -484,14 +491,18 @@ class FlextModelsContext:
             """Recursively check if object is JSON-serializable."""
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
-            if FlextRuntime.is_dict_like(obj):
+            if FlextRuntime.is_dict_like(obj) and isinstance(obj, Mapping):
                 for key, val in obj.items():
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(
                         val,
                         f"{path}.{key}",
                     )
-            elif FlextRuntime.is_list_like(obj):
+            elif (
+                FlextRuntime.is_list_like(obj)
+                and isinstance(obj, Sequence)
+                and not isinstance(obj, (str, bytes))
+            ):
                 for i, item in enumerate(obj):
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(
@@ -515,7 +526,7 @@ class FlextModelsContext:
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
-            # Handle m.Metadata specially - extract only attributes dict
+            # Handle m.Base.Metadata specially - extract only attributes dict
             # (excludes datetime fields which aren't JSON-serializable)
             if isinstance(v, FlextModelsBase.Metadata):
                 v = v.attributes
@@ -536,7 +547,8 @@ class FlextModelsContext:
             FlextModelsContext.ContextExport.check_json_serializable(v)
             # Type assertion: runtime validation ensures correct type
             # Convert to dict explicitly (is_dict_like ensures dict-like)
-            return dict(v)
+            # Cast to Mapping for dict() constructor
+            return dict(cast("Mapping[str, t.GeneralValueType]", v))
 
         @computed_field
         def total_data_items(self) -> int:
@@ -603,7 +615,8 @@ class FlextModelsContext:
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
                 # Convert to dict explicitly (is_dict_like ensures dict-like)
-                return dict(v)
+                # Cast to Mapping for dict() constructor
+                return dict(cast("Mapping[str, t.GeneralValueType]", v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -621,7 +634,8 @@ class FlextModelsContext:
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
                 # Convert to dict explicitly (is_dict_like ensures dict-like)
-                return dict(v)
+                # Cast to Mapping for dict() constructor
+                return dict(cast("Mapping[str, t.GeneralValueType]", v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -691,7 +705,8 @@ class FlextModelsContext:
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
                 # Convert to dict explicitly (is_dict_like ensures dict-like)
-                return dict(v)
+                # Cast to Mapping for dict() constructor
+                return dict(cast("Mapping[str, t.GeneralValueType]", v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -798,7 +813,8 @@ class FlextModelsContext:
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
                 # Convert to dict explicitly (is_dict_like ensures dict-like)
-                return dict(v)
+                # Cast to Mapping for dict() constructor
+                return dict(cast("Mapping[str, t.GeneralValueType]", v))
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:

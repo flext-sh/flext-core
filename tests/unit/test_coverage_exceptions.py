@@ -237,7 +237,7 @@ class TestFlextExceptionsHierarchy:
                 "dict[str, t.MetadataAttributeValue]",
                 metadata_kwargs,
             )
-            error = scenario.exception_type(scenario.message, **metadata_typed)  # type: ignore[arg-type]
+            error = scenario.exception_type(scenario.message, **metadata_typed)
         else:
             error = scenario.exception_type(scenario.message)
         assert scenario.message in str(error)
@@ -482,7 +482,7 @@ class TestExceptionFactory:
             "dict[str, t.MetadataAttributeValue]",
             converted_kwargs,
         )
-        error = FlextExceptions.create(message, **kwargs_typed)  # type: ignore[arg-type]
+        error = FlextExceptions.create(message, **kwargs_typed)
         assert isinstance(error, expected_type)
 
 

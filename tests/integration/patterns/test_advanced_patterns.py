@@ -14,11 +14,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, cast
+from typing import cast
 
 import pytest
 
-from flext_core import FlextResult
+from flext_core import FlextResult, u
 from tests.typings import TestsFlextTypes
 
 # TypedDict definitions from consolidated test typings
@@ -45,7 +45,7 @@ def mark_test_pattern(pattern: str) -> Callable[[object], object]:
 
         """
         # Use cast to allow dynamic attribute assignment
-        func_obj = cast("Any", func)
+        func_obj = cast("object", func)
         func_obj._test_pattern = pattern
         return func
 
@@ -150,15 +150,37 @@ class GivenWhenThenBuilder:
                 return int(value)
             return str(value)
 
-        given_converted: dict[str, str | int | bool] = {
-            str(k): convert_dict_value(v) for k, v in self._given.items()
-        }
-        when_converted: dict[str, str | int | bool] = {
-            str(k): convert_dict_value(v) for k, v in self._when.items()
-        }
-        then_converted: dict[str, str | int | bool] = {
-            str(k): convert_dict_value(v) for k, v in self._then.items()
-        }
+        # Use mapper to transform dict values and convert keys to strings
+        given_converted: dict[str, str | int | bool] = u.mapper().transform_values(
+            u.mapper()
+            .map_dict_keys(
+                self._given, {k: str(k) for k in self._given}, keep_unmapped=True
+            )
+            .value
+            if isinstance(self._given, dict)
+            else {},
+            convert_dict_value,
+        )
+        when_converted: dict[str, str | int | bool] = u.mapper().transform_values(
+            u.mapper()
+            .map_dict_keys(
+                self._when, {k: str(k) for k in self._when}, keep_unmapped=True
+            )
+            .value
+            if isinstance(self._when, dict)
+            else {},
+            convert_dict_value,
+        )
+        then_converted: dict[str, str | int | bool] = u.mapper().transform_values(
+            u.mapper()
+            .map_dict_keys(
+                self._then, {k: str(k) for k in self._then}, keep_unmapped=True
+            )
+            .value
+            if isinstance(self._then, dict)
+            else {},
+            convert_dict_value,
+        )
 
         scenario_data: MockScenarioData = {
             "given": given_converted,

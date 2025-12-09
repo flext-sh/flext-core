@@ -14,44 +14,19 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Protocol, Self, cast, runtime_checkable
+from typing import Self, cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.typings import t
 
 # ============================================================================
 # VALIDATOR SPEC PROTOCOL - Core interface for all validators
 # ============================================================================
-
-
-@runtime_checkable
-class ValidatorSpec(Protocol):
-    """Protocol for validator specifications with operator composition.
-
-    Validators implement __call__ to validate values and support composition
-    via __and__ (both must pass), __or__ (either passes), and __invert__ (negation).
-
-    Example:
-        validator = V.string.non_empty & V.string.max_length(100)
-        is_valid = validator("hello")  # True
-
-    """
-
-    def __call__(self, value: object) -> bool:
-        """Validate value, return True if valid."""
-        ...
-
-    def __and__(self, other: ValidatorSpec) -> ValidatorSpec:
-        """Compose with AND - both validators must pass."""
-        ...
-
-    def __or__(self, other: ValidatorSpec) -> ValidatorSpec:
-        """Compose with OR - at least one validator must pass."""
-        ...
-
-    def __invert__(self) -> ValidatorSpec:
-        """Negate validator - passes when original fails."""
-        ...
+# ValidatorSpec is now defined in flext_core.protocols (p.ValidatorSpec)
+# Re-export for backward compatibility
+ValidatorSpec = p.ValidatorSpec
 
 
 # ============================================================================
@@ -80,14 +55,14 @@ class Validator:
         """Execute validation predicate."""
         return self.predicate(value)
 
-    def __and__(self, other: ValidatorSpec) -> Validator:
+    def __and__(self, other: ValidatorSpec | Validator) -> Validator:
         """Compose with AND - both validators must pass."""
         return Validator(
             predicate=lambda v: self(v) and other(v),
             description=f"({self.description} AND {getattr(other, 'description', 'validator')})",
         )
 
-    def __or__(self, other: ValidatorSpec) -> Validator:
+    def __or__(self, other: ValidatorSpec | Validator) -> Validator:
         """Compose with OR - at least one validator must pass."""
         return Validator(
             predicate=lambda v: self(v) or other(v),
@@ -120,7 +95,9 @@ class StringValidators:
 
     # Class-level validators (no args needed)
     non_empty: Validator = Validator(
-        predicate=lambda v: isinstance(v, str) and bool(v.strip()),
+        predicate=lambda v: FlextUtilitiesGuards.is_string_non_empty(
+            cast("t.GeneralValueType", v)
+        ),
         description="string.non_empty",
     )
 
@@ -403,12 +380,12 @@ class CollectionValidators:
         )
 
     @staticmethod
-    def all_match(validator: ValidatorSpec) -> Validator:
+    def all_match(validator: ValidatorSpec | Validator) -> Validator:
         """Validate all items in collection match validator."""
         return Validator(
             predicate=lambda v: isinstance(v, (list, tuple, set))
             and all(
-                validator(cast("object", item))
+                validator(item)
                 for item in cast("list[object] | tuple[object, ...] | set[object]", v)
             ),
             description=f"collection.all_match({getattr(validator, 'description', 'validator')})",
@@ -420,7 +397,7 @@ class CollectionValidators:
         return Validator(
             predicate=lambda v: isinstance(v, (list, tuple, set))
             and any(
-                validator(cast("object", item))
+                validator(item)
                 for item in cast("list[object] | tuple[object, ...] | set[object]", v)
             ),
             description=f"collection.any_match({getattr(validator, 'description', 'validator')})",
@@ -487,9 +464,7 @@ class DictValidators:
         """Validate all dict keys match validator."""
         return Validator(
             predicate=lambda v: isinstance(v, dict)
-            and all(
-                validator(cast("object", k)) for k in cast("dict[object, object]", v)
-            ),
+            and all(validator(k) for k in cast("dict[object, object]", v)),
             description=f"dict.all_keys_match({getattr(validator, 'description', 'validator')})",
         )
 
@@ -498,10 +473,7 @@ class DictValidators:
         """Validate all dict values match validator."""
         return Validator(
             predicate=lambda v: isinstance(v, dict)
-            and all(
-                validator(cast("object", val))
-                for val in cast("dict[object, object]", v).values()
-            ),
+            and all(validator(val) for val in cast("dict[object, object]", v).values()),
             description=f"dict.all_values_match({getattr(validator, 'description', 'validator')})",
         )
 
