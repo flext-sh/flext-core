@@ -17,6 +17,10 @@
 
 ---
 
+## Rule 0 — Cross-Project Alignment
+- This file mirrors the root `../CLAUDE.md` standards. Any rule change must be written in the root first and then propagated to this file and to `flext-cli/`, `flext-ldap/`, `flext-ldif/`, and `client-a-oud-mig/` `CLAUDE.md` files.
+- All agents accept cross-project changes and resolve conflicts in the root `CLAUDE.md` before coding.
+
 ## ⚠️ CRITICAL: Architecture Layering (Zero Tolerance)
 
 ### Module Import Hierarchy (MANDATORY)
@@ -71,21 +75,15 @@ Tier 3 - Application (Top Layer):
 
 ### Critical Rules (Zero Tolerance)
 
-1. **TYPE_CHECKING**: ❌ **PROHIBITED completely** - Remove ALL instances and refactor architecture to eliminate circular dependencies using forward references with `from __future__ import annotations` or by reorganizing dependencies
-2. **# type: ignore**: ❌ **PROHIBITED completely** - Zero tolerance, no exceptions (including Pydantic Field defaults). Refactor code to not need type ignores
-3. **__getattr__**: ❌ **PROHIBITED completely** - Remove ALL instances, refactor to use full namespace or explicit methods
-4. **Any**: ❌ **PROHIBITED completely** - Replace ALL instances, including in docstrings/comments, with specific types (Models, Protocols, TypeVars, `t.Types.GeneralValueType`)
-5. **Namespace Complete**: ✅ **MANDATORY always** - Always use full namespace (ex: `p.Foundation.Result`, `c.Core.VALIDATION`, `t.Types.StringDict`). No root aliases allowed
-6. **cast()**: ⚠️ **MINIMIZE aggressively** - Replace with Models/Protocols/TypeGuards where possible, document intentional ones that remain
-
-### Pattern Corrections
-
-- **TYPE_CHECKING**: Use forward reference strings with `from __future__ import annotations` or reorganize dependencies
-- **# type: ignore**: Fix type hints using Protocols, forward references, or code refactoring
-- **__getattr__**: Refactor to explicit methods or full namespace access
-- **cast()**: Replace with Models/Protocols/TypeGuards, improve generic type hints, or document intentional usage
-- **Any**: Replace with specific types (Models, Protocols, TypeVars, `t.Types.GeneralValueType`)
-- **Root aliases**: Replace with full namespace (ex: `p.Result` → `p.Foundation.Result`, `t.StringDict` → `t.Types.StringDict`)
+1. **TYPE_CHECKING**: ❌ PROHIBITED completely — refactor architecture instead.
+2. **# type: ignore**: ❌ PROHIBITED completely — fix types properly.
+3. **cast()**: ❌ PROHIBITED completely — replace with Models/Protocols/TypeGuards and correct typing.
+4. **Any**: ❌ PROHIBITED completely — including docstrings/comments.
+5. **Metaclasses/__getattr__/dynamic assignments**: ❌ PROHIBITED — use explicit methods and full namespaces.
+6. **Constants**: ❌ No functions/logic in constants.py — only StrEnum/Final/Literal.
+7. **Namespace**: ✅ Full namespace always; no root aliases or lazy imports/ImportError fallbacks.
+8. **Architecture layering**: ✅ Enforced; lower tiers never import higher tiers (see hierarchy above).
+9. **Testing**: ✅ Real implementations only (no mocks/monkeypatch), real data/fixtures, 100% coverage expectation, no functionality loss.
 
 ### Architecture Violation Quick Check
 
