@@ -157,7 +157,7 @@
 		        click = "^8.3.0"
 		        docker = "^7.1.0"
 		        hypothesis = "^6.148.7"
-		        pyrefly = "^0.34.0"
+		        pyrefly = "^0.45.0"
 		        pytest = "^8.4.0"
 		        pytest-cov = "^7.0.0"
 		        python-on-whales = "^0.78.0"
