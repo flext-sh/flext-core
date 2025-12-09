@@ -55,7 +55,9 @@ class FlextContext(FlextRuntime):
         ctx_value_raw = ctx_value if u.is_type(ctx_value, dict) else {}
         # Type narrowing: ctx_value_raw is dict after u.is_type check
         # Use isinstance to narrow to ConfigurationDict (dict[str, GeneralValueType])
-        if isinstance(ctx_value_raw, dict) and all(isinstance(k, str) for k in ctx_value_raw):
+        if isinstance(ctx_value_raw, dict) and all(
+            isinstance(k, str) for k in ctx_value_raw
+        ):
             return ctx_value_raw
         return {}
 
@@ -735,7 +737,7 @@ class FlextContext(FlextRuntime):
 
         # Type narrowing: cloned is FlextContext which implements p.Ctx protocol
         # FlextContext structurally implements p.Ctx, so no cast needed
-        return cloned
+        return cloned  # type: ignore[return-value]
 
     def validate(self) -> r[bool]:
         """Validate the context data.
@@ -943,8 +945,10 @@ class FlextContext(FlextRuntime):
 
         # Type narrowing: normalized_metadata is dict after normalization
         # Use isinstance to narrow to ConfigurationDict (dict[str, GeneralValueType])
-        if isinstance(normalized_metadata, dict) and all(isinstance(k, str) for k in normalized_metadata):
-            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata
+        if isinstance(normalized_metadata, dict) and all(
+            isinstance(k, str) for k in normalized_metadata
+        ):
+            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata  # type: ignore[assignment]
         else:
             metadata_general = None
 
@@ -1191,8 +1195,10 @@ class FlextContext(FlextRuntime):
 
         # Type narrowing: normalized_metadata is dict after normalization
         # Use isinstance to narrow to ConfigurationDict (dict[str, GeneralValueType])
-        if isinstance(normalized_metadata, dict) and all(isinstance(k, str) for k in normalized_metadata):
-            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata
+        if isinstance(normalized_metadata, dict) and all(
+            isinstance(k, str) for k in normalized_metadata
+        ):
+            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata  # type: ignore[assignment]
         else:
             metadata_general = None
 
@@ -1281,11 +1287,11 @@ class FlextContext(FlextRuntime):
                     default=None,
                 )
             )
-            PARENT_CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
-                    c.Context.KEY_PARENT_CORRELATION_ID,
-                    default=None,
-                )
+            PARENT_CORRELATION_ID: Final[
+                FlextModelsContext.StructlogProxyContextVar[str]
+            ] = u.Context.create_str_proxy(
+                c.Context.KEY_PARENT_CORRELATION_ID,
+                default=None,
             )
 
         class Service:
@@ -1319,11 +1325,11 @@ class FlextContext(FlextRuntime):
                     default=None,
                 )
             )
-            REQUEST_TIMESTAMP: Final[FlextModelsContext.StructlogProxyContextVar[datetime]] = (
-                u.Context.create_datetime_proxy(
-                    "request_timestamp",
-                    default=None,
-                )
+            REQUEST_TIMESTAMP: Final[
+                FlextModelsContext.StructlogProxyContextVar[datetime]
+            ] = u.Context.create_datetime_proxy(
+                "request_timestamp",
+                default=None,
             )
 
         class Performance:

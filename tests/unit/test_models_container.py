@@ -432,11 +432,13 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
 
     def test_normalize_to_metadata_with_values(self) -> None:
         """Test normalize_to_metadata with dict containing values."""
-        result = u.Model.normalize_to_metadata({
-            "key1": "value1",
-            "key2": 42,
-            "key3": True,
-        })
+        result = u.Model.normalize_to_metadata(
+            {
+                "key1": "value1",
+                "key2": 42,
+                "key3": True,
+            }
+        )
         assert isinstance(result, FlextModelsBase.Metadata)
         assert result.attributes["key1"] == "value1"
         assert result.attributes["key2"] == 42
@@ -451,9 +453,11 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
 
     def test_normalize_to_metadata_nested_dict(self) -> None:
         """Test normalize_to_metadata with nested dict values."""
-        result = u.Model.normalize_to_metadata({
-            "nested": {"level1": {"level2": "value"}},
-        })
+        result = u.Model.normalize_to_metadata(
+            {
+                "nested": {"level1": {"level2": "value"}},
+            }
+        )
         assert isinstance(result, FlextModelsBase.Metadata)
         # Nested dicts are normalized to GeneralValueType
         assert "nested" in result.attributes

@@ -116,6 +116,49 @@ class FlextUtilities:
         return _enum_fn(value, enum_cls, mode="parse")
 
     @staticmethod
+    def get_enum_values(enum_class: type[StrEnum]) -> Sequence[str]:
+        """Get all values from StrEnum class.
+
+        Returns immutable sequence for safe iteration.
+        Python 3.13+ collections.abc.Sequence pattern.
+        Uses enum.__members__ for compatibility with all type checkers.
+
+        Args:
+            enum_class: StrEnum class to extract values from
+
+        Returns:
+            Immutable sequence of enum string values
+
+        """
+        return FlextUtilitiesEnum.get_enum_values(enum_class)
+
+    @staticmethod
+    def create_discriminated_union(
+        discriminator_field: str,
+        *enum_classes: type[StrEnum],
+    ) -> dict[str, type[StrEnum]]:
+        """Create discriminated union mapping for Pydantic models.
+
+        Advanced pattern for discriminated unions with multiple enums.
+        Enables efficient validation with Field(discriminator=discriminator_field).
+        Python 3.13+ discriminated union best practice.
+
+        This is a generic utility that extends FlextConstants.create_discriminated_union
+        with discriminator field support for Pydantic models.
+
+        Args:
+            discriminator_field: Field name used as discriminator
+            *enum_classes: StrEnum classes to include in union
+
+        Returns:
+            Mapping of discriminator values to enum classes
+
+        """
+        return FlextUtilitiesEnum.create_discriminated_union(
+            discriminator_field, *enum_classes
+        )
+
+    @staticmethod
     def to_str(value: object, *, default: str | None = None) -> str:
         """Convert value to string. Alias for conversion(value, mode='to_str')."""
         return _conversion_fn(value, mode="to_str", default=default)
@@ -436,7 +479,7 @@ class FlextUtilities:
             )
             return container.scoped(
                 subproject=scope_id,
-                services=services_mapping,
+                services=services_mapping,  # type: ignore[arg-type]
             )
 
     class Registration:
@@ -474,7 +517,7 @@ class FlextUtilities:
                 # T (generic) is compatible if it matches any of these types
                 # Use Protocol check for type narrowing - if T has required structure, it's compatible
                 # Direct assignment works - type checker recognizes structural compatibility
-                register_result = container.register(name, instance)
+                register_result = container.register(name, instance)  # type: ignore[arg-type]
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Registration failed",
@@ -518,7 +561,7 @@ class FlextUtilities:
                 # T is compatible with object (all types are compatible with object)
                 # Direct assignment works - type checker recognizes callable compatibility
                 # FactoryCallable accepts any zero-arg callable returning any object
-                register_result = container.register_factory(name, factory)
+                register_result = container.register_factory(name, factory)  # type: ignore[arg-type]
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Factory registration failed",
@@ -568,7 +611,7 @@ class FlextUtilities:
                         # Python 3.13: object is compatible with ServiceInstanceType
                         # ServiceInstanceType = GeneralValueType | BaseModel | Callable[..., GeneralValueType] | object
                         # object is included in union, so direct assignment works
-                        register_result = container.register(name, value)
+                        register_result = container.register(name, value)  # type: ignore[arg-type]
                     if register_result.is_failure:
                         return r[int].fail(
                             f"Bulk registration failed at {name}: {register_result.error}",

@@ -284,7 +284,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             # Handle both HandlerType enum and string (HandlerType is StrEnum, so values are strings)
             if isinstance(mode, c.Cqrs.HandlerType):
                 resolved_type = mode
-            elif mode not in c.Cqrs.VALID_HANDLER_MODES:
+            elif mode not in u.Enum.values(c.Cqrs.HandlerType):
                 error_msg = f"Invalid handler mode: {mode}"
                 raise e.ValidationError(error_msg)
             else:

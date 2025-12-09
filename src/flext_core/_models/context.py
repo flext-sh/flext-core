@@ -214,9 +214,11 @@ class FlextModelsContext:
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
-                _ = structlog.contextvars.bind_contextvars(**{
-                    token.key: token.previous_value,
-                })
+                _ = structlog.contextvars.bind_contextvars(
+                    **{
+                        token.key: token.previous_value,
+                    }
+                )
 
     class Token(FlextModelsEntity.Value):
         """Token for context variable reset operations.

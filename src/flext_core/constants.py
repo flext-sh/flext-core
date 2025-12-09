@@ -614,11 +614,6 @@ class FlextConstants:
             OPEN = "open"
             HALF_OPEN = "half_open"
 
-        # Valid circuit breaker states derived from CircuitBreakerState StrEnum
-        VALID_CIRCUIT_BREAKER_STATES: Final[frozenset[str]] = frozenset(
-            member.value for member in CircuitBreakerState.__members__.values()
-        )
-
     class Security:
         """Security constants."""
 
@@ -626,37 +621,29 @@ class FlextConstants:
         CREDENTIAL_BCRYPT_ROUNDS: Final[int] = 12
 
     class Logging:
-        """Logging configuration."""
+        """Logging configuration.
 
-        # Log level constants - direct access for referencing
-        # DRY Compliance: These values MUST match Settings.LogLevel StrEnum members
-        # - DEBUG must equal Settings.LogLevel.DEBUG
-        # - INFO must equal Settings.LogLevel.INFO
-        # - WARNING must equal Settings.LogLevel.WARNING
-        # - ERROR must equal Settings.LogLevel.ERROR
-        # - CRITICAL must equal Settings.LogLevel.CRITICAL
-        # If Settings.LogLevel values change, these constants must be updated accordingly.
-        DEBUG: Final[str] = "DEBUG"
-        INFO: Final[str] = "INFO"
-        WARNING: Final[str] = "WARNING"
-        ERROR: Final[str] = "ERROR"
-        CRITICAL: Final[str] = "CRITICAL"
+        DRY Pattern:
+            Settings.LogLevel StrEnum is the SINGLE SOURCE OF TRUTH for log levels.
+            For runtime validation, use u.Enum.values(c.Core.Settings.LogLevel).
+            The defaults below are strings matching StrEnum member values.
+        """
 
-        # Log levels tuple and set
+        # Default log levels - strings matching Settings.LogLevel StrEnum values
+        DEFAULT_LEVEL: Final[str] = "INFO"
+        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = "DEBUG"
+        DEFAULT_LEVEL_PRODUCTION: Final[str] = "WARNING"
+        DEFAULT_LEVEL_TESTING: Final[str] = "INFO"
+
+        # Valid log levels tuple - for backward compatibility
+        # DRY: Prefer u.Enum.values(c.Core.Settings.LogLevel) for runtime validation
         VALID_LEVELS: Final[tuple[str, ...]] = (
-            DEBUG,
-            INFO,
-            WARNING,
-            ERROR,
-            CRITICAL,
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
         )
-        VALID_LEVELS_SET: Final[frozenset[str]] = frozenset(VALID_LEVELS)
-
-        # Default log level references
-        DEFAULT_LEVEL: Final[str] = INFO
-        DEFAULT_LEVEL_DEVELOPMENT: Final[str] = DEBUG
-        DEFAULT_LEVEL_PRODUCTION: Final[str] = WARNING
-        DEFAULT_LEVEL_TESTING: Final[str] = INFO
 
         JSON_OUTPUT_DEFAULT: Final[bool] = False
         DEFAULT_FORMAT: Final[str] = (
@@ -1258,11 +1245,6 @@ class FlextConstants:
 
         DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
 
-        # Valid handler modes derived from HandlerType StrEnum (single source of truth)
-        VALID_HANDLER_MODES: Final[frozenset[str]] = frozenset(
-            member.value for member in HandlerType.__members__.values()
-        )
-
         class ProcessingMode(StrEnum):
             """CQRS processing modes enumeration.
 
@@ -1585,13 +1567,15 @@ class FlextConstants:
         MILLISECONDS_PER_SECOND: Final[int] = 1000
         EXPORT_FORMAT_JSON: Final[str] = "json"
         EXPORT_FORMAT_DICT: Final[str] = "dict"
-        METADATA_FIELDS: Final[AbstractSet[str]] = frozenset({
-            "user_id",
-            "correlation_id",
-            "request_id",
-            "session_id",
-            "tenant_id",
-        })
+        METADATA_FIELDS: Final[AbstractSet[str]] = frozenset(
+            {
+                "user_id",
+                "correlation_id",
+                "request_id",
+                "session_id",
+                "tenant_id",
+            }
+        )
         # Context operation names for statistics
         OPERATION_SET: Final[str] = "set"
         OPERATION_GET: Final[str] = "get"
@@ -1769,20 +1753,24 @@ class FlextConstants:
         # DEFAULT_ENCODING removed - use c.Utilities.DEFAULT_ENCODING instead
         DEFAULT_SORT_KEYS: Final[bool] = False
         DEFAULT_ENSURE_ASCII: Final[bool] = False
-        BOOL_TRUE_STRINGS: Final[AbstractSet[str]] = frozenset({
-            "true",
-            "1",
-            "yes",
-            "on",
-            "enabled",
-        })
-        BOOL_FALSE_STRINGS: Final[AbstractSet[str]] = frozenset({
-            "false",
-            "0",
-            "no",
-            "off",
-            "disabled",
-        })
+        BOOL_TRUE_STRINGS: Final[AbstractSet[str]] = frozenset(
+            {
+                "true",
+                "1",
+                "yes",
+                "on",
+                "enabled",
+            }
+        )
+        BOOL_FALSE_STRINGS: Final[AbstractSet[str]] = frozenset(
+            {
+                "false",
+                "0",
+                "no",
+                "off",
+                "disabled",
+            }
+        )
         STRING_TRUE: Final[str] = "true"
         STRING_FALSE: Final[str] = "false"
         DEFAULT_USE_UTC: Final[bool] = True

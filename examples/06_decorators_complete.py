@@ -55,27 +55,29 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
             self._demonstrate_retry_timeout()
             self._demonstrate_combined()
 
-            return FlextResult[t.Types.ServiceMetadataMapping].ok({
-                "decorators_demonstrated": [
-                    "inject",
-                    "log_operation",
-                    "railway",
-                    "with_context",
-                    "retry",
-                    "timeout",
-                    "combined",
-                ],
-                "decorator_categories": 7,
-                "features": [
-                    "dependency_injection",
-                    "structured_logging",
-                    "railway_pattern",
-                    "context_management",
-                    "retry_logic",
-                    "timeout_enforcement",
-                    "composition",
-                ],
-            })
+            return FlextResult[t.Types.ServiceMetadataMapping].ok(
+                {
+                    "decorators_demonstrated": [
+                        "inject",
+                        "log_operation",
+                        "railway",
+                        "with_context",
+                        "retry",
+                        "timeout",
+                        "combined",
+                    ],
+                    "decorator_categories": 7,
+                    "features": [
+                        "dependency_injection",
+                        "structured_logging",
+                        "railway_pattern",
+                        "context_management",
+                        "retry_logic",
+                        "timeout_enforcement",
+                        "composition",
+                    ],
+                }
+            )
 
         except Exception as e:
             error_msg = f"Decorators demonstration failed: {e}"

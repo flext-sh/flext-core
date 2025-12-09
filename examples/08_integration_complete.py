@@ -88,32 +88,34 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
             self._demonstrate_registry_dispatcher_integration()
             self._demonstrate_utilities_integration()
 
-            return FlextResult[t.Types.ServiceMetadataMapping].ok({
-                "components_integrated": [
-                    "FlextResult",
-                    "FlextContainer",
-                    "FlextContext",
-                    "FlextLogger",
-                    "FlextConfig",
-                    "FlextModels",
-                    "FlextDecorators",
-                    "FlextRegistry",
-                    "FlextDispatcher",
-                    "u",
-                ],
-                "integration_patterns": [
-                    "railway_oriented",
-                    "dependency_injection",
-                    "context_propagation",
-                    "structured_logging",
-                    "configuration_management",
-                    "domain_modeling",
-                    "decorator_composition",
-                    "cqrs_patterns",
-                    "utility_functions",
-                ],
-                "total_components": 10,
-            })
+            return FlextResult[t.Types.ServiceMetadataMapping].ok(
+                {
+                    "components_integrated": [
+                        "FlextResult",
+                        "FlextContainer",
+                        "FlextContext",
+                        "FlextLogger",
+                        "FlextConfig",
+                        "FlextModels",
+                        "FlextDecorators",
+                        "FlextRegistry",
+                        "FlextDispatcher",
+                        "u",
+                    ],
+                    "integration_patterns": [
+                        "railway_oriented",
+                        "dependency_injection",
+                        "context_propagation",
+                        "structured_logging",
+                        "configuration_management",
+                        "domain_modeling",
+                        "decorator_composition",
+                        "cqrs_patterns",
+                        "utility_functions",
+                    ],
+                    "total_components": 10,
+                }
+            )
 
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"

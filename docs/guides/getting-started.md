@@ -446,6 +446,7 @@ pytest tests/unit/test_result.py::TestFlextResult::test_ok -v
 ## Related Documentation
 
 **Within Project**:
+
 - [Railway-Oriented Programming](./railway-oriented-programming.md) - FlextResult pattern and error handling
 - [Dependency Injection Advanced](./dependency-injection-advanced.md) - Service composition and DI patterns
 - [Service Patterns](./service-patterns.md) - Domain service implementation patterns
@@ -453,6 +454,7 @@ pytest tests/unit/test_result.py::TestFlextResult::test_ok -v
 - [Architecture Overview](../architecture/README.md) - System architecture and design patterns
 
 **External Resources**:
+
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
 

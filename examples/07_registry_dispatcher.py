@@ -82,11 +82,13 @@ class GetUserHandler(h[GetUserQuery, t.Types.ServiceMetadataMapping]):
         message: GetUserQuery,
     ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Handle get user query."""
-        return FlextResult[t.Types.ServiceMetadataMapping].ok({
-            "user_id": message.user_id,
-            "name": "Demo User",
-            "email": "demo@example.com",
-        })
+        return FlextResult[t.Types.ServiceMetadataMapping].ok(
+            {
+                "user_id": message.user_id,
+                "name": "Demo User",
+                "email": "demo@example.com",
+            }
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -108,25 +110,27 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
             self._demonstrate_dispatcher()
             self._demonstrate_integration()
 
-            return FlextResult[t.Types.ServiceMetadataMapping].ok({
-                "patterns_demonstrated": [
-                    "handler_registration",
-                    "batch_registration",
-                    "command_dispatch",
-                    "query_dispatch",
-                    "registry_integration",
-                ],
-                "handler_types": [
-                    FlextConstants.Cqrs.HandlerType.COMMAND.value,
-                    FlextConstants.Cqrs.HandlerType.QUERY.value,
-                ],
-                "features": [
-                    "idempotent_registration",
-                    "batch_operations",
-                    "dispatcher_integration",
-                    "cqrs_patterns",
-                ],
-            })
+            return FlextResult[t.Types.ServiceMetadataMapping].ok(
+                {
+                    "patterns_demonstrated": [
+                        "handler_registration",
+                        "batch_registration",
+                        "command_dispatch",
+                        "query_dispatch",
+                        "registry_integration",
+                    ],
+                    "handler_types": [
+                        FlextConstants.Cqrs.HandlerType.COMMAND.value,
+                        FlextConstants.Cqrs.HandlerType.QUERY.value,
+                    ],
+                    "features": [
+                        "idempotent_registration",
+                        "batch_operations",
+                        "dispatcher_integration",
+                        "cqrs_patterns",
+                    ],
+                }
+            )
 
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"

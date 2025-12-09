@@ -192,6 +192,7 @@ The foundation layers provide stable, dependency-light building blocks for dispa
 ## Related Documentation
 
 **Within Project**:
+
 - [Getting Started](../guides/getting-started.md) - Installation and basic usage
 - [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - FlextResult pattern
 - [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - FlextContainer usage
@@ -200,5 +201,6 @@ The foundation layers provide stable, dependency-light building blocks for dispa
 - [Application API Reference](./application.md) - Application layer APIs
 
 **External Resources**:
+
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)

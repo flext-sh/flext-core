@@ -694,7 +694,7 @@ class FlextLogger(FlextRuntime):
         name: str,
         *,
         config: p.Config | None = None,
-        _level: c.Literals.LogLevelLiteral | str | None = None,
+        _level: c.Settings.LogLevel | str | None = None,
         _service_name: str | None = None,
         _service_version: str | None = None,
         _correlation_id: str | None = None,
