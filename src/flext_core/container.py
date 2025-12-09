@@ -769,7 +769,7 @@ class FlextContainer(FlextRuntime, p.DI):
     def get[T](
         self,
         name: str,
-    ) -> p.Result[T]:  # pyright: ignore[reportInvalidTypeVarUse]
+    ) -> p.Result[T]:
         """Resolve a registered service or factory by name.
 
         Business Rule: Type-safe resolution using generic type parameter T.

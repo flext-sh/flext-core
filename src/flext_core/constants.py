@@ -1567,15 +1567,13 @@ class FlextConstants:
         MILLISECONDS_PER_SECOND: Final[int] = 1000
         EXPORT_FORMAT_JSON: Final[str] = "json"
         EXPORT_FORMAT_DICT: Final[str] = "dict"
-        METADATA_FIELDS: Final[AbstractSet[str]] = frozenset(
-            {
-                "user_id",
-                "correlation_id",
-                "request_id",
-                "session_id",
-                "tenant_id",
-            }
-        )
+        METADATA_FIELDS: Final[AbstractSet[str]] = frozenset({
+            "user_id",
+            "correlation_id",
+            "request_id",
+            "session_id",
+            "tenant_id",
+        })
         # Context operation names for statistics
         OPERATION_SET: Final[str] = "set"
         OPERATION_GET: Final[str] = "get"
@@ -1753,24 +1751,20 @@ class FlextConstants:
         # DEFAULT_ENCODING removed - use c.Utilities.DEFAULT_ENCODING instead
         DEFAULT_SORT_KEYS: Final[bool] = False
         DEFAULT_ENSURE_ASCII: Final[bool] = False
-        BOOL_TRUE_STRINGS: Final[AbstractSet[str]] = frozenset(
-            {
-                "true",
-                "1",
-                "yes",
-                "on",
-                "enabled",
-            }
-        )
-        BOOL_FALSE_STRINGS: Final[AbstractSet[str]] = frozenset(
-            {
-                "false",
-                "0",
-                "no",
-                "off",
-                "disabled",
-            }
-        )
+        BOOL_TRUE_STRINGS: Final[AbstractSet[str]] = frozenset({
+            "true",
+            "1",
+            "yes",
+            "on",
+            "enabled",
+        })
+        BOOL_FALSE_STRINGS: Final[AbstractSet[str]] = frozenset({
+            "false",
+            "0",
+            "no",
+            "off",
+            "disabled",
+        })
         STRING_TRUE: Final[str] = "true"
         STRING_FALSE: Final[str] = "false"
         DEFAULT_USE_UTC: Final[bool] = True

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Self, cast
+from typing import Self, cast, override
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -415,6 +415,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             func(self.value)
         return self
 
+    @override
     def flow_through[U](
         self,
         *funcs: Callable[[T_co | U], FlextRuntime.RuntimeResult[U]],
@@ -423,29 +424,16 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         Overrides RuntimeResult.flow_through to return FlextResult for type consistency.
         """
-        current: FlextResult[T_co] | FlextResult[U] = self
-        for func in funcs:
-            if current.is_success:
-                result_value = current.value
-                if result_value is not None:
-                    result = func(result_value)
-                    # Convert RuntimeResult to FlextResult
-                    if isinstance(result, FlextResult):
-                        current = result
-                    # Convert RuntimeResult to FlextResult
-                    elif result.is_success:
-                        current = FlextResult[U].ok(result.value)
-                    else:
-                        current = FlextResult[U].fail(
-                            result.error or "",
-                            error_code=getattr(result, "error_code", None),
-                            error_data=getattr(result, "error_data", None),
-                        )
-                else:
-                    break
-            else:
-                break
-        return cast("FlextResult[U]", current)
+        # Call parent method and convert result to FlextResult
+        parent_result: FlextRuntime.RuntimeResult[U] = super().flow_through(*funcs)
+        if parent_result.is_success:
+            value: U = parent_result.value  # parent_result.value is U when is_success
+            return FlextResult[U].ok(value)
+        return FlextResult[U].fail(
+            parent_result.error or "",
+            error_code=getattr(parent_result, "error_code", None),
+            error_data=getattr(parent_result, "error_data", None),
+        )
 
     @classmethod
     def create_from_callable(

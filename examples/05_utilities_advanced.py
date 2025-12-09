@@ -95,33 +95,31 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
             self._demonstrate_pagination()
             self._demonstrate_configuration()
 
-            return FlextResult[t.Types.ServiceMetadataMapping].ok(
-                {
-                    "utilities_demonstrated": [
-                        "args_validation",
-                        "enum_utilities",
-                        "model_utilities",
-                        "text_processing",
-                        "guards",
-                        "data_mapping",
-                        "domain_utilities",
-                        "pagination",
-                        "configuration",
-                    ],
-                    "utility_categories": 9,
-                    "advanced_features": [
-                        "decorator_validation",
-                        "strenum_parsing",
-                        "model_creation",
-                        "text_normalization",
-                        "type_narrowing",
-                        "data_transformation",
-                        "entity_comparison",
-                        "api_pagination",
-                        "parameter_access",
-                    ],
-                }
-            )
+            return FlextResult[t.Types.ServiceMetadataMapping].ok({
+                "utilities_demonstrated": [
+                    "args_validation",
+                    "enum_utilities",
+                    "model_utilities",
+                    "text_processing",
+                    "guards",
+                    "data_mapping",
+                    "domain_utilities",
+                    "pagination",
+                    "configuration",
+                ],
+                "utility_categories": 9,
+                "advanced_features": [
+                    "decorator_validation",
+                    "strenum_parsing",
+                    "model_creation",
+                    "text_normalization",
+                    "type_narrowing",
+                    "data_transformation",
+                    "entity_comparison",
+                    "api_pagination",
+                    "parameter_access",
+                ],
+            })
 
         except Exception as e:
             error_msg = f"Advanced utilities demonstration failed: {e}"

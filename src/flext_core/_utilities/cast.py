@@ -14,13 +14,11 @@ from collections.abc import Callable
 from typing import Literal, cast, overload
 
 # Approved modules that can import directly (for testing, internal use)
-_APPROVED_MODULES = frozenset(
-    {
-        "flext_core.utilities",
-        "flext_core._utilities",
-        "tests.",
-    }
-)
+_APPROVED_MODULES = frozenset({
+    "flext_core.utilities",
+    "flext_core._utilities",
+    "tests.",
+})
 
 
 def _check_direct_access() -> None:

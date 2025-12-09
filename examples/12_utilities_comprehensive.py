@@ -72,27 +72,25 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
             self._demonstrate_collection_operations()
             self._demonstrate_type_checking()
 
-            return FlextResult[t.Types.ServiceMetadataMapping].ok(
-                {
-                    "utilities_demonstrated": [
-                        "validation",
-                        "id_generation",
-                        "conversions",
-                        "caching",
-                        "reliability",
-                        "string_parsing",
-                        "collection",
-                        "type_checking",
-                    ],
-                    "utility_categories": 8,
-                    "flext_utilities_features": [
-                        "type_safety",
-                        "error_handling",
-                        "performance",
-                        "reliability",
-                    ],
-                }
-            )
+            return FlextResult[t.Types.ServiceMetadataMapping].ok({
+                "utilities_demonstrated": [
+                    "validation",
+                    "id_generation",
+                    "conversions",
+                    "caching",
+                    "reliability",
+                    "string_parsing",
+                    "collection",
+                    "type_checking",
+                ],
+                "utility_categories": 8,
+                "flext_utilities_features": [
+                    "type_safety",
+                    "error_handling",
+                    "performance",
+                    "reliability",
+                ],
+            })
 
         except Exception as e:
             error_msg = f"Utilities demonstration failed: {e}"

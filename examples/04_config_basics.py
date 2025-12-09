@@ -136,24 +136,22 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
         patterns: tuple[str, ...],
     ) -> FlextResult[t.Types.ServiceMetadataMapping]:
         """Create success metadata from demonstrated patterns."""
-        return FlextResult[t.Types.ServiceMetadataMapping].ok(
-            {
-                "patterns_demonstrated": list(patterns),
-                "config_features": [
-                    "pydantic_settings",
-                    "env_vars",
-                    "validation",
-                    "singleton",
-                    "railway_pattern",
-                ],
-                "environment_support": ["development", "production", "testing"],
-                "advanced_features": [
-                    "pep695_types",
-                    "strenum_validation",
-                    "after_validator",
-                ],
-            }
-        )
+        return FlextResult[t.Types.ServiceMetadataMapping].ok({
+            "patterns_demonstrated": list(patterns),
+            "config_features": [
+                "pydantic_settings",
+                "env_vars",
+                "validation",
+                "singleton",
+                "railway_pattern",
+            ],
+            "environment_support": ["development", "production", "testing"],
+            "advanced_features": [
+                "pep695_types",
+                "strenum_validation",
+                "after_validator",
+            ],
+        })
 
     @staticmethod
     def _handle_execution_error(

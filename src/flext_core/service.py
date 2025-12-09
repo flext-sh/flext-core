@@ -704,7 +704,7 @@ class FlextService[TDomainResult](
         # s is type alias for FlextService (defined at end of file)
         # _ServiceAccess.__init__ expects s[t.GeneralValueType], which FlextService implements structurally
         # No cast needed - TDomainResult is a subtype of t.GeneralValueType
-        service_typed: FlextService[t.GeneralValueType] = self  # type: ignore[assignment]
+        service_typed: FlextService[t.GeneralValueType] = self
         # _ServiceAccess(service_typed) already returns _ServiceAccess instance
         return _ServiceAccess(service_typed)
 
@@ -770,9 +770,9 @@ class FlextService[TDomainResult](
         # Pass as **kwargs since __init__ accepts **data: t.GeneralValueType
         # Type narrowing: dict values are compatible with t.GeneralValueType
         merged_data: dict[str, t.GeneralValueType] = {
-            "config": merged_config,  # type: ignore[dict-item]
-            "context": merged_context,  # type: ignore[dict-item]
-            "container": parent.container,  # type: ignore[dict-item]
+            "config": merged_config,
+            "context": merged_context,
+            "container": parent.container,
         }
         return cls(**merged_data)
 

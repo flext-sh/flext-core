@@ -2467,13 +2467,11 @@ class FlextDispatcher(x):
         if handler_typed not in self._auto_handlers:
             self._auto_handlers.append(handler_typed)
 
-        return r[t.Types.ConfigurationMapping].ok(
-            {
-                "handler_name": handler_name,
-                "status": "registered",
-                "mode": "auto_discovery",
-            }
-        )
+        return r[t.Types.ConfigurationMapping].ok({
+            "handler_name": handler_name,
+            "status": "registered",
+            "mode": "auto_discovery",
+        })
 
     def _register_explicit_handler(
         self,
@@ -2512,14 +2510,12 @@ class FlextDispatcher(x):
         )
         self._handlers[message_type_name] = handler_typed
 
-        return r[t.Types.ConfigurationMapping].ok(
-            {
-                "handler_name": handler_name,
-                "message_type": message_type_name,
-                "status": "registered",
-                "mode": "explicit",
-            }
-        )
+        return r[t.Types.ConfigurationMapping].ok({
+            "handler_name": handler_name,
+            "message_type": message_type_name,
+            "status": "registered",
+            "mode": "explicit",
+        })
 
     def register_handler_with_request(
         self,
@@ -2580,13 +2576,11 @@ class FlextDispatcher(x):
             # Auto-discovery mode
             if handler not in self._auto_handlers:
                 self._auto_handlers.append(handler)
-            return r[t.Types.ConfigurationMapping].ok(
-                {
-                    "handler_name": handler_name,
-                    "status": "registered",
-                    "mode": "auto_discovery",
-                }
-            )
+            return r[t.Types.ConfigurationMapping].ok({
+                "handler_name": handler_name,
+                "status": "registered",
+                "mode": "auto_discovery",
+            })
 
         # Explicit registration requires message_type
         message_type = request_dict.get("message_type")
@@ -2600,14 +2594,12 @@ class FlextDispatcher(x):
         message_type_name = name_attr if name_attr is not None else str(message_type)
         self._handlers[message_type_name] = handler
 
-        return r[t.Types.ConfigurationMapping].ok(
-            {
-                "handler_name": handler_name,
-                "message_type": message_type_name,
-                "status": "registered",
-                "mode": "explicit",
-            }
-        )
+        return r[t.Types.ConfigurationMapping].ok({
+            "handler_name": handler_name,
+            "message_type": message_type_name,
+            "status": "registered",
+            "mode": "explicit",
+        })
 
     def register_handler(
         self,
@@ -2659,13 +2651,11 @@ class FlextDispatcher(x):
                 )
             # Convert to dict format for consistency
             handler_name: str = request if isinstance(request, str) else "unknown"
-            return r[t.Types.ConfigurationMapping].ok(
-                {
-                    "handler_name": handler_name,
-                    "status": "registered",
-                    "mode": "explicit",
-                }
-            )
+            return r[t.Types.ConfigurationMapping].ok({
+                "handler_name": handler_name,
+                "status": "registered",
+                "mode": "explicit",
+            })
 
         # Single-arg mode: register_handler(dict_or_model_or_handler)
         if isinstance(request, BaseModel) or FlextRuntime.is_dict_like(request):
@@ -2690,13 +2680,11 @@ class FlextDispatcher(x):
             )
         # Convert to dict format for consistency
         handler_name = getattr(request, "__class__", type(request)).__name__
-        return r[t.Types.ConfigurationMapping].ok(
-            {
-                "handler_name": handler_name,
-                "status": "registered",
-                "mode": "auto_discovery",
-            }
-        )
+        return r[t.Types.ConfigurationMapping].ok({
+            "handler_name": handler_name,
+            "status": "registered",
+            "mode": "auto_discovery",
+        })
 
     def _register_handler[TMessage, TResult](
         self,
@@ -2829,12 +2817,10 @@ class FlextDispatcher(x):
             # Access __name__ attribute safely - type objects have this attribute
             handler_key = getattr(message_type, "__name__", str(message_type))
             self._handlers[handler_key] = handler_func_typed
-            return r[t.GeneralValueType].ok(
-                {
-                    "status": "registered",
-                    "mode": mode,
-                }
-            )
+            return r[t.GeneralValueType].ok({
+                "status": "registered",
+                "mode": mode,
+            })
 
         # Create handler from function
         # Wrap generic handler_func to match HandlerCallableType signature
