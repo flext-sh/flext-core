@@ -26,8 +26,7 @@ from typing import Never, TypeVar, cast
 
 from pydantic import BaseModel as _BaseModel
 
-from flext_core import FlextResult, r
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextProtocols as p, FlextResult, r
 from flext_core.typings import t as t_core
 from flext_tests.base import s
 from flext_tests.constants import c
@@ -233,10 +232,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 # Convert overrides to compatible dict
                 if params.overrides:
                     # Type narrowing: params.overrides is Mapping[str, GeneralValueType]
-                    overrides_mapping = cast(
-                        "Mapping[str, t.Tests.TestResultValue]",
-                        params.overrides,
-                    )
+                    overrides_mapping = params.overrides
                     overrides_dict: dict[str, t.Tests.TestResultValue] = dict(
                         overrides_mapping,
                     )
@@ -339,7 +335,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 cast("_BaseModel", inst) for inst in instances
             ]
             if params.as_result:
-                return r[list[_BaseModel]].ok(typed_instances)
+                return cast("r[list[_BaseModel]]", r.ok(typed_instances))
             return typed_instances
 
         # Single instance - handle as_dict
@@ -375,8 +371,8 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
 
         # Return single instance
         if params.as_result:
-            # FactoryModel is BaseModel, so cast is redundant
-            return r[t.Tests.Factory.FactoryModel].ok(typed_instance)
+            # Cast to _BaseModel to match return type
+            return r[_BaseModel].ok(cast("_BaseModel", typed_instance))
         return typed_instance
 
     @classmethod
@@ -625,17 +621,13 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         if kind == "result_ok":
 
             def result_ok_op() -> r[t.Tests.TestResultValue]:
-                return FlextRuntime.RuntimeResult[t.Tests.TestResultValue].ok(
-                    result_value
-                )
+                return r[t.Tests.TestResultValue].ok(result_value)
 
             return result_ok_op
 
         # kind == "result_fail"
         def result_fail_op() -> r[t.Tests.TestResultValue]:
-            return FlextRuntime.RuntimeResult[t.Tests.TestResultValue].fail(
-                error_message
-            )
+            return r[t.Tests.TestResultValue].fail(error_message)
 
         return result_fail_op
 
@@ -1765,7 +1757,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
             ),
         }
         # Cast to expected return type (GeneralValueType is superset)
-        operations = cast("dict[str, Callable[..., t.Tests.TestResultValue]]", ops)
+        operations = ops
 
         if operation_type in operations:
             return operations[operation_type]
@@ -1831,15 +1823,16 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
 
                 # Use captured_overrides from outer scope (closure)
                 for key, value in {**captured_overrides, **data}.items():
-                    cast_value = cast("t_core.GeneralValueType", value)
+                    # value is already GeneralValueType from dict iteration
+                    gv: t_core.GeneralValueType = value
                     if key == "name":
-                        name_value = cast_value
+                        name_value = gv
                     elif key == "amount":
-                        amount_value = cast_value
+                        amount_value = gv
                     elif key == "enabled":
-                        enabled_value = cast_value
+                        enabled_value = gv
                     else:
-                        override_fields[key] = cast_value
+                        override_fields[key] = gv
 
                 # Call parent with **data dict (FlextService.__init__ accepts **data: t.GeneralValueType)
                 # Build service data dict with only non-None values
@@ -1863,18 +1856,13 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 # The dict is compatible at runtime, but MyPy can't infer the type compatibility
                 # Solution: Use cast to help MyPy understand the type compatibility
                 # BaseModel.__init__ accepts **data: GeneralValueType, so this is safe
-                super().__init__(
-                    **cast("dict[str, t_core.GeneralValueType]", service_data)
-                )
+                super().__init__(**service_data)
                 # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
                 # Initialize mutable attribute in __init__ to avoid ClassVar requirement
                 # Type narrowing: override_fields is dict[str, t_core.GeneralValueType]
                 # but _overrides expects dict[str, t.Tests.TestResultValue]
                 # Convert to TestResultValue type
-                self._overrides = cast(
-                    "dict[str, t.Tests.TestResultValue]",
-                    override_fields,
-                )
+                self._overrides = override_fields
 
             def _validate_name_not_empty(self) -> r[bool]:
                 """Validate name is not empty (only if name is provided)."""
@@ -1928,7 +1916,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                     )
                 if service_type == "complex":
                     return u.Tests.Factory.execute_complex_service(
-                        self._validate_business_rules_complex(),
+                        cast("p.Result[bool]", self._validate_business_rules_complex()),
                     )
                 return u.Tests.Factory.execute_default_service(service_type)
 

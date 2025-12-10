@@ -12,9 +12,10 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping, Sequence, Sized
 from enum import StrEnum
-from typing import TypeIs, overload
+from typing import TypeIs, cast, overload
 
-# NOTE: cast() removed - use type narrowing and Protocols instead
+from pydantic import BaseModel
+
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.cast import FlextUtilitiesCast, cast_safe as _cast_safe_fn
@@ -477,9 +478,13 @@ class FlextUtilities:
             services_mapping: t.Types.ServiceMapping | None = (
                 dict(overrides) if overrides is not None else None
             )
+            # Cast needed: ServiceMapping includes 'object' but scoped() expects narrower type
             return container.scoped(
                 subproject=scope_id,
-                services=services_mapping,
+                services=cast(
+                    "Mapping[str, t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]] | None",
+                    services_mapping,
+                ),
             )
 
     class Registration:
@@ -513,11 +518,16 @@ class FlextUtilities:
             """
             try:
                 # Python 3.13: T is compatible with ServiceInstanceType via structural typing
-                # ServiceInstanceType = GeneralValueType | BaseModel | Callable[..., GeneralValueType] | object
-                # T (generic) is compatible if it matches any of these types
-                # Use Protocol check for type narrowing - if T has required structure, it's compatible
-                # Direct assignment works - type checker recognizes structural compatibility
-                register_result = container.register(name, instance)
+                # Protocol's register() expects FlexibleValue, but implementation accepts T
+                # Cast instance to match protocol's signature for type checking
+                # FlexibleValue = str | int | float | bool | datetime | None | Sequence | Mapping
+                register_result = container.register(
+                    name,
+                    cast(
+                        "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None] | None",
+                        instance,
+                    ),
+                )
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Registration failed",
@@ -557,11 +567,11 @@ class FlextUtilities:
 
             """
             try:
-                # Python 3.13: Callable[[], T] is compatible with FactoryCallable = Callable[[], object]
-                # T is compatible with object (all types are compatible with object)
-                # Direct assignment works - type checker recognizes callable compatibility
-                # FactoryCallable accepts any zero-arg callable returning any object
-                register_result = container.register_factory(name, factory)
+                # Python 3.13: Callable[[], T] is compatible with FactoryCallable = Callable[[], GeneralValueType]
+                # Cast needed: T might be wider than GeneralValueType, but protocol expects GeneralValueType
+                register_result = container.register_factory(
+                    name, cast("Callable[[], t.GeneralValueType]", factory)
+                )
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Factory registration failed",
@@ -608,10 +618,15 @@ class FlextUtilities:
                         # Direct assignment works - type checker recognizes callable compatibility
                         register_result = container.register_factory(name, value)
                     else:
-                        # Python 3.13: object is compatible with ServiceInstanceType
-                        # ServiceInstanceType = GeneralValueType | BaseModel | Callable[..., GeneralValueType] | object
-                        # object is included in union, so direct assignment works
-                        register_result = container.register(name, value)
+                        # Cast needed: value is object from registrations mapping, but protocol expects FlexibleValue
+                        # FlexibleValue = str | int | float | bool | datetime | None | Sequence | Mapping
+                        register_result = container.register(
+                            name,
+                            cast(
+                                "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None] | None",
+                                value,
+                            ),
+                        )
                     if register_result.is_failure:
                         return r[int].fail(
                             f"Bulk registration failed at {name}: {register_result.error}",

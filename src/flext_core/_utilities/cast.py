@@ -163,7 +163,7 @@ class FlextUtilitiesCast:
         if isinstance(value, target_type):
             return value
         # callable() check is sufficient - isinstance(value, Callable) is redundant
-        if callable(value) and isinstance(target_type, type):
+        if callable(value):
             # For callable types, try to instantiate
             # Use cast() for dynamic instantiation - type checker can't verify constructor signature
             # This is a casting utility, so dynamic calls are expected

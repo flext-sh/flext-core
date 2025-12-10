@@ -169,9 +169,9 @@ class FlextModelsConfig:
     class ValidationConfiguration(FlextModelsBase.ArbitraryTypesModel):
         """Validation configuration."""
 
-        enable_strict_mode: bool = Field(default_factory=lambda: True)
+        enable_strict_mode: bool = Field(default=True)
         max_validation_errors: int = Field(
-            default_factory=lambda: c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
+            default=c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
             ge=c.Reliability.RETRY_COUNT_MIN,
             le=c.Validation.MAX_RETRY_STATUS_CODES,
             description="Maximum validation errors",

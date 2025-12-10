@@ -54,18 +54,18 @@ def _handler_type_to_literal(
     # Use match to ensure type narrowing for both mypy and pyright
     match handler_type:
         case c.Cqrs.HandlerType.COMMAND:
-            return c.Cqrs.HandlerType.COMMAND
+            return "command"
         case c.Cqrs.HandlerType.QUERY:
-            return c.Cqrs.HandlerType.QUERY
+            return "query"
         case c.Cqrs.HandlerType.EVENT:
-            return c.Cqrs.HandlerType.EVENT
+            return "event"
         case c.Cqrs.HandlerType.OPERATION:
-            return c.Cqrs.HandlerType.OPERATION
+            return "operation"
         case c.Cqrs.HandlerType.SAGA:
-            return c.Cqrs.HandlerType.SAGA
+            return "saga"
         case _:
             # Should never reach here as all HandlerType values are covered
-            return c.Cqrs.HandlerType.OPERATION
+            return "operation"
 
 
 class FlextHandlers[MessageT_contra, ResultT](

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self, TypeGuard
+from typing import ClassVar, Self, TypeGuard, cast
 
 from pydantic import ConfigDict, Field
 
@@ -675,6 +675,8 @@ class FlextModelsCollections:
             extra="forbid",
             validate_assignment=True,
         )
+        # Note: Pydantic v2 automatically makes non-frozen models unhashable
+        # No need to explicitly set __hash__ = None
 
         @classmethod
         def from_mapping(

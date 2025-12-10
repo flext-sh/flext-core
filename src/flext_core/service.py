@@ -380,11 +380,12 @@ class FlextService[TDomainResult](
             cast("p.Ctx | None", context_raw) if context_raw is not None else None
         )
 
-        subproject_val: str | None = u.mapper().get(options, "subproject")
-
-        services_raw = (
-            u.mapper().get(options, "services") if "services" in options else None
+        # Cast needed: mapper().get() returns GeneralValueType, narrow to str | None
+        subproject_val: str | None = cast(
+            "str | None", u.mapper().get(options, "subproject")
         )
+
+        services_raw = options.get("services") if "services" in options else None
         services_val = (
             cast(
                 "Mapping[str, t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType]] | None",
@@ -394,7 +395,7 @@ class FlextService[TDomainResult](
             else None
         )
 
-        factories_raw = u.mapper().get(options, "factories")
+        factories_raw = options.get("factories")
         factories_val = (
             cast(
                 "Mapping[str, Callable[[], str | int | float | bool | datetime | Sequence[str | int | float | bool | datetime | None] | Mapping[str, str | int | float | bool | datetime | None] | None]] | None",
@@ -699,12 +700,11 @@ class FlextService[TDomainResult](
         """
         # Direct access - GeneralValueType covers all domain results
         # Type narrowing: self is FlextService[TDomainResult], compatible with FlextService[t.GeneralValueType]
-        # TDomainResult is a subtype of GeneralValueType, so this is safe
-        # Type narrowing: self is FlextService[TDomainResult] which implements s[t.GeneralValueType]
-        # s is type alias for FlextService (defined at end of file)
-        # _ServiceAccess.__init__ expects s[t.GeneralValueType], which FlextService implements structurally
-        # No cast needed - TDomainResult is a subtype of t.GeneralValueType
-        service_typed: FlextService[t.GeneralValueType] = self
+        # TDomainResult is a TypeVar (not a concrete type), so mypy needs explicit cast
+        # Cast: FlextService[TDomainResult] → FlextService[t.GeneralValueType] (TypeVar variance)
+        service_typed: FlextService[t.GeneralValueType] = cast(
+            "FlextService[t.GeneralValueType]", self
+        )
         # _ServiceAccess(service_typed) already returns _ServiceAccess instance
         return _ServiceAccess(service_typed)
 
@@ -768,13 +768,14 @@ class FlextService[TDomainResult](
         # Create child with inherited infrastructure
         # Type narrowing: cls is FlextService subclass, merged_config is FlextConfig
         # Pass as **kwargs since __init__ accepts **data: t.GeneralValueType
-        # Type narrowing: dict values are compatible with t.GeneralValueType
-        merged_data: dict[str, t.GeneralValueType] = {
+        # Cast needed: Infrastructure objects (FlextConfig, FlextContext, FlextContainer) are not GeneralValueType
+        # But __init__ accepts them via protocol dispatch
+        merged_data: dict[str, t.GeneralValueType | object] = {
             "config": merged_config,
             "context": merged_context,
             "container": parent.container,
         }
-        return cls(**merged_data)
+        return cls(**cast("dict[str, t.GeneralValueType]", merged_data))
 
 
 class _ServiceExecutionScope(m.ArbitraryTypesModel):

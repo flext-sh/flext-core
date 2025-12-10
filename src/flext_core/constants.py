@@ -680,16 +680,6 @@ class FlextConstants:
             CLEAR = "clear"
             GET = "get"
 
-        # Type aliases derived from ContextOperation StrEnum (NO DUPLICATION!)
-        type ContextOperationGetLiteral = Literal[ContextOperation.GET]
-        type ContextOperationModifyLiteral = Literal[
-            ContextOperation.BIND,
-            ContextOperation.UNBIND,
-            ContextOperation.CLEAR,
-        ]
-        type ReturnResultTrueLiteral = Literal[True]
-        type ReturnResultFalseLiteral = Literal[False]
-
     class Literals:
         """Literal type aliases for type-safe annotations.
 
@@ -736,7 +726,6 @@ class FlextConstants:
         type StateLiteral = Literal[
             FlextConstants.Domain.Status.ACTIVE,
             FlextConstants.Domain.Status.INACTIVE,
-            FlextConstants.Domain.Status.PENDING,
             FlextConstants.Cqrs.CommonStatus.COMPLETED,
             FlextConstants.Cqrs.CommonStatus.FAILED,
             FlextConstants.Cqrs.CommonStatus.RUNNING,
@@ -987,6 +976,46 @@ class FlextConstants:
         ]
         """Error type literals for error categorization and type-safe error handling."""
 
+        # Context operation literals (references Logging.ContextOperation StrEnum)
+        type ContextOperationGetLiteral = Literal["get"]
+        type ContextOperationModifyLiteral = Literal[
+            "bind",
+            "unbind",
+            "clear",
+        ]
+        type ReturnResultTrueLiteral = Literal[True]
+        type ReturnResultFalseLiteral = Literal[False]
+
+        # Order status literals for type-safe operations
+        type OrderStatusLiteral = Literal[
+            FlextConstants.Domain.OrderStatus.PENDING,
+            FlextConstants.Domain.OrderStatus.CONFIRMED,
+            FlextConstants.Domain.OrderStatus.SHIPPED,
+            FlextConstants.Domain.OrderStatus.DELIVERED,
+            FlextConstants.Domain.OrderStatus.CANCELLED,
+        ]
+
+        # Active order statuses
+        type ActiveOrderStatusLiteral = Literal[
+            FlextConstants.Domain.OrderStatus.PENDING,
+            FlextConstants.Domain.OrderStatus.CONFIRMED,
+            FlextConstants.Domain.OrderStatus.SHIPPED,
+        ]
+
+        # Terminal order statuses
+        type TerminalOrderStatusLiteral = Literal[
+            FlextConstants.Domain.OrderStatus.DELIVERED,
+            FlextConstants.Domain.OrderStatus.CANCELLED,
+        ]
+
+        # Currency literal for type-safe monetary operations
+        type CurrencyLiteral = Literal[
+            FlextConstants.Domain.Currency.USD,
+            FlextConstants.Domain.Currency.EUR,
+            FlextConstants.Domain.Currency.GBP,
+            FlextConstants.Domain.Currency.BRL,
+        ]
+
     # ═══════════════════════════════════════════════════════════════════
     # STRENUM + PYDANTIC 2: DEFINITIVE PATTERN
     # ═══════════════════════════════════════════════════════════════════
@@ -1033,16 +1062,14 @@ class FlextConstants:
 
             ACTIVE = "active"
             INACTIVE = "inactive"
-            PENDING = "pending"
             ARCHIVED = "archived"
-            FAILED = "failed"
 
         class Currency(StrEnum):
             """Currency enumeration for monetary operations.
 
             DRY Pattern:
-                StrEnum is the single source of truth. Use Currency.USD.value
-                or Currency.USD directly - no base strings needed.
+                StrEnum is the single source of truth. Use "usd".value
+                or "usd" directly - no base strings needed.
             """
 
             USD = "USD"
@@ -1076,42 +1103,8 @@ class FlextConstants:
         type ActiveStates = Literal[
             FlextConstants.Domain.Status.ACTIVE,
             FlextConstants.Domain.Status.INACTIVE,
-            FlextConstants.Domain.Status.PENDING,
         ]
-        type TerminalStates = Literal[
-            FlextConstants.Domain.Status.ARCHIVED,
-            FlextConstants.Domain.Status.FAILED,
-        ]
-
-        # Order status literals for type-safe operations
-        type OrderStatusLiteral = Literal[
-            OrderStatus.PENDING,
-            OrderStatus.CONFIRMED,
-            OrderStatus.SHIPPED,
-            OrderStatus.DELIVERED,
-            OrderStatus.CANCELLED,
-        ]
-
-        # Active order statuses
-        type ActiveOrderStatusLiteral = Literal[
-            OrderStatus.PENDING,
-            OrderStatus.CONFIRMED,
-            OrderStatus.SHIPPED,
-        ]
-
-        # Terminal order statuses
-        type TerminalOrderStatusLiteral = Literal[
-            OrderStatus.DELIVERED,
-            OrderStatus.CANCELLED,
-        ]
-
-        # Currency literal for type-safe monetary operations
-        type CurrencyLiteral = Literal[
-            Currency.USD,
-            Currency.EUR,
-            Currency.GBP,
-            Currency.BRL,
-        ]
+        type TerminalStates = Literal[FlextConstants.Domain.Status.ARCHIVED,]
 
         # ─────────────────────────────────────────────────────────────────
         # USAGE EXAMPLES IN METHODS
@@ -1145,20 +1138,18 @@ class FlextConstants:
             """CQRS status enumeration.
 
             DRY Pattern:
-                Values match _Base.CommonStatus where applicable.
-                These StrEnum values are the single source of truth.
+                Only CQRS-specific values. Common values use _Base.CommonStatus.
+                These StrEnum values are the single source of truth for CQRS-specific statuses.
             """
 
-            RUNNING = "running"  # Matches CommonStatus.RUNNING
             STOPPED = "stopped"  # CQRS-specific, not in CommonStatus
-            FAILED = "failed"  # Matches CommonStatus.FAILED
 
         class HandlerType(StrEnum):
             """CQRS handler types enumeration.
 
             DRY Pattern:
-                StrEnum is the single source of truth. Use HandlerType.COMMAND.value
-                or HandlerType.COMMAND directly - no base strings needed.
+                StrEnum is the single source of truth. Use "command".value
+                or "command" directly - no base strings needed.
             """
 
             COMMAND = "command"
@@ -1171,38 +1162,35 @@ class FlextConstants:
         # (Python 3.13+ PEP 695 best practices)
         # Using PEP 695 type keyword for better type checking and IDE support
         # These Literals reference HandlerType StrEnum members - NO string duplication!
-        type CommandMessageTypeLiteral = Literal[HandlerType.COMMAND]
-        type QueryMessageTypeLiteral = Literal[HandlerType.QUERY]
-        type EventMessageTypeLiteral = Literal[HandlerType.EVENT]
+        type CommandMessageTypeLiteral = Literal["command"]
+        type QueryMessageTypeLiteral = Literal["query"]
+        type EventMessageTypeLiteral = Literal["event"]
         # HandlerTypeLiteral references HandlerType StrEnum members
         type HandlerTypeLiteral = Literal[
-            HandlerType.COMMAND,
-            HandlerType.QUERY,
-            HandlerType.EVENT,
-            HandlerType.OPERATION,
-            HandlerType.SAGA,
+            "command",
+            "query",
+            "event",
+            "operation",
+            "saga",
         ]
 
-        # CONSOLIDATED STATUS ENUM - Single Source of Truth (DRY)
-        # All other status enums derive specialized Literals from this
         class CommonStatus(StrEnum):
-            """Base status enumeration - single source of truth for all status types (FLEXT standard).
-
-            All specialized status Literals (ProcessingStatusLiteral, NotificationStatusLiteral, etc.)
-            use Literal type aliases derived from these values and SpecialStatus to prevent duplication.
-            This follows DRY and SOLID principles without losing semantic meaning.
+            """CQRS common status enumeration - references _Base.CommonStatus values.
 
             DRY Pattern:
-                StrEnum is the single source of truth. Use CommonStatus.PENDING.value
-                or CommonStatus.PENDING directly - no base strings needed.
+                References _Base.CommonStatus values to avoid duplication.
+                These are the common status values used across CQRS patterns.
             """
 
+            ACTIVE = "active"
+            INACTIVE = "inactive"
             PENDING = "pending"
             RUNNING = "running"
             COMPLETED = "completed"
             FAILED = "failed"
             CANCELLED = "cancelled"
             COMPENSATING = "compensating"
+            ARCHIVED = "archived"
 
         class MetricType(StrEnum):
             """Service metric types enumeration - single source of truth (FLEXT standard).
@@ -1218,10 +1206,10 @@ class FlextConstants:
             SUMMARY = "summary"
 
         type ServiceMetricTypeLiteral = Literal[
-            MetricType.COUNTER,
-            MetricType.GAUGE,
-            MetricType.HISTOGRAM,
-            MetricType.SUMMARY,
+            FlextConstants.Cqrs.MetricType.COUNTER,
+            FlextConstants.Cqrs.MetricType.GAUGE,
+            FlextConstants.Cqrs.MetricType.HISTOGRAM,
+            FlextConstants.Cqrs.MetricType.SUMMARY,
         ]
 
         class ServiceMetricCategory(StrEnum):
@@ -1262,18 +1250,18 @@ class FlextConstants:
         # These reference CommonStatus StrEnum members directly - NO string duplication!
         # Note: CommonStatus must be defined before these type aliases
         type ProcessingStatusLiteral = Literal[
-            CommonStatus.PENDING,
-            CommonStatus.RUNNING,
-            CommonStatus.COMPLETED,
-            CommonStatus.FAILED,
-            CommonStatus.CANCELLED,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.CANCELLED,
         ]
         type SagaStatusLiteral = Literal[
-            CommonStatus.PENDING,
-            CommonStatus.RUNNING,
-            CommonStatus.COMPLETED,
-            CommonStatus.FAILED,
-            CommonStatus.COMPENSATING,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.COMPENSATING,
         ]
 
         class ValidationLevel(StrEnum):
@@ -1363,33 +1351,33 @@ class FlextConstants:
         # More specialized status literals from CommonStatus and SpecialStatus
         # All Literals reference StrEnum members directly - NO string duplication!
         type NotificationStatusLiteral = Literal[
-            CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
             SpecialStatus.SENT,
-            CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
         type TokenStatusLiteral = Literal[
-            CommonStatus.PENDING,
-            CommonStatus.RUNNING,
-            CommonStatus.COMPLETED,
-            CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
         type CircuitBreakerStatusLiteral = Literal[
             SpecialStatus.IDLE,
-            CommonStatus.RUNNING,
-            CommonStatus.COMPLETED,
-            CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.RUNNING,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
         type BatchStatusLiteral = Literal[
-            CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
             SpecialStatus.PROCESSING,
-            CommonStatus.COMPLETED,
-            CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
         type ExportStatusLiteral = Literal[
-            CommonStatus.PENDING,
+            FlextConstants.Cqrs.CommonStatus.PENDING,
             SpecialStatus.PROCESSING,
-            CommonStatus.COMPLETED,
-            CommonStatus.FAILED,
+            FlextConstants.Cqrs.CommonStatus.COMPLETED,
+            FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
 
         class OperationStatus(StrEnum):

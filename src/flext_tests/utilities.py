@@ -24,6 +24,7 @@ from flext_core import (
     FlextConfig,
     FlextContext,
     FlextDispatcher,
+    FlextProtocols as p,
     FlextRegistry,
     FlextUtilities,
     T,
@@ -34,7 +35,6 @@ from flext_core.models import FlextModels as FlextModelsBase
 from flext_core.utilities import u as u_core
 from flext_tests.constants import c
 from flext_tests.models import m
-from flext_tests.protocols import p
 
 # Type alias for model factory methods
 ModelFactory = Callable[..., T]
@@ -1444,7 +1444,7 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise error on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return super().__getattribute__(name)
+                        return cast("t.GeneralValueType", super().__getattribute__(name))
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
 
@@ -1455,7 +1455,7 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise TypeError on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return super().__getattribute__(name)
+                        return cast("t.GeneralValueType", super().__getattribute__(name))
                     msg = f"Bad config type: {name}"
                     raise TypeError(msg)
 

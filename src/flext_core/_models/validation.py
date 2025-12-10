@@ -15,7 +15,8 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import BaseModel, Field
+from pydantic.functional_validators import AfterValidator
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -730,7 +731,7 @@ class FlextModelsValidation:
         ]
 
         @staticmethod
-        def _validate_hostname(value: str) -> str:
+        def validate_hostname(value: str) -> str:
             """Validate hostname by attempting DNS resolution.
 
             Business Rule: Validates hostname strings by attempting DNS resolution
@@ -760,6 +761,8 @@ class FlextModelsValidation:
                 msg = f"Cannot resolve hostname '{value}': {e}"
                 raise ValueError(msg) from e
 
+        # HostName type defined below after validate_hostname method
+
         type HostName = Annotated[
             str,
             Field(
@@ -767,7 +770,7 @@ class FlextModelsValidation:
                 max_length=c.Network.MAX_HOSTNAME_LENGTH,
                 description="Valid hostname",
             ),
-            AfterValidator(_validate_hostname),
+            AfterValidator(FlextModelsValidation.Validation.validate_hostname),
         ]
 
 

@@ -1140,7 +1140,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         elif isinstance(params.files, Sequence):
             # BatchFiles is Sequence[tuple[str, FileContent]] - convert to dict
-            files_dict = dict(params.files)
+            # Cast sequence to proper tuple format for dict constructor
+            files_list = cast("Sequence[tuple[str, t.Tests.Files.FileContent]]", params.files)
+            files_dict = dict(files_list)
         else:
             # Invalid type - should not happen due to BatchParams validation
             return r[m.Tests.Files.BatchResult].fail(

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, override
+from typing import Any, ClassVar, Self, cast, override
 
 from pydantic import Field
 
@@ -24,7 +24,7 @@ from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import LaxStr, t
 
 
 class FlextModelsEntity:
@@ -42,7 +42,7 @@ class FlextModelsEntity:
         """Base class for domain events."""
 
         message_type: c.Cqrs.EventMessageTypeLiteral = Field(
-            default=c.Cqrs.HandlerType.EVENT,
+            default="event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
         )
@@ -199,9 +199,7 @@ class FlextModelsEntity:
             ):
                 # Type narrowing: is_dict_like + isinstance ensures data is ConfigurationMapping
                 data_mapping: t.Types.ConfigurationMapping = data
-                event_type_raw: object | None = FlextUtilitiesMapper().get(
-                    data_mapping, "event_type"
-                )
+                event_type_raw = FlextUtilitiesMapper().get(data_mapping, "event_type")
                 event_type = "" if event_type_raw is None else str(event_type_raw)
             if event_type:
                 handler_method_name = f"_apply_{str(event_type).lower()}"
@@ -386,7 +384,11 @@ class FlextModelsEntity:
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
 
-            for i, event_item in enumerate(events):
+            # Cast to help pyrefly with type narrowing
+            events_typed = cast(
+                "list[tuple[str, t.Types.EventDataMapping | None]]", events
+            )
+            for i, event_item in enumerate(events_typed):
                 event_tuple_size = c.EVENT_TUPLE_SIZE
                 if len(event_item) != event_tuple_size:
                     return r[list[tuple[str, t.Types.EventDataMapping]]].fail(
@@ -433,6 +435,7 @@ class FlextModelsEntity:
             """
             try:
                 for event_name, data in validated_events:
+                    # EventDataMapping is already Mapping[str, GeneralValueType]
                     domain_event = FlextModelsEntity.DomainEvent(
                         event_type=event_name,
                         aggregate_id=self.unique_id,

@@ -269,8 +269,8 @@ class TestFlextTypings:
         """Test hostname validation success path with real validation."""
         # Test with a valid hostname (localhost should always resolve)
         # Validation moved to m.Validation namespace (FlextModels.Validation)
-        # _validate_hostname is in m.Validation.Validation nested class
-        result = m.Validation.Validation._validate_hostname("localhost")
+        # validate_hostname is in m.Validation.Validation nested class
+        result = m.Validation.Validation.validate_hostname("localhost")
         tm.that(result, eq="localhost", msg="localhost must resolve correctly")
         tm.that(
             result,
@@ -281,7 +281,7 @@ class TestFlextTypings:
         )
 
         # Test with a valid IP address (should also work)
-        result = m.Validation.Validation._validate_hostname("127.0.0.1")
+        result = m.Validation.Validation.validate_hostname("127.0.0.1")
         tm.that(result, eq="127.0.0.1", msg="IP address must resolve correctly")
         tm.that(
             result,
@@ -306,9 +306,9 @@ class TestFlextTypings:
 
         # Test that invalid hostname raises ValueError with specific message
         # Validation moved to m.Validation namespace (FlextModels.Validation)
-        # _validate_hostname is in m.Validation.Validation nested class
+        # validate_hostname is in m.Validation.Validation nested class
         with pytest.raises(ValueError, match="Cannot resolve hostname"):
-            m.Validation.Validation._validate_hostname(invalid_hostname)
+            m.Validation.Validation.validate_hostname(invalid_hostname)
 
 
 __all__ = ["TestFlextTypings"]

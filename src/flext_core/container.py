@@ -1051,7 +1051,8 @@ class FlextContainer(FlextRuntime, p.DI):
                 service=service,
                 service_type=type(service).__name__,
             )
-        for name, factory in u.mapper().to_dict(factories or {}).items():
+        factories_dict = u.mapper().to_dict(factories or {})
+        for name, factory in factories_dict.items():
             cloned_factories[name] = m.Container.FactoryRegistration(
                 name=name,
                 factory=factory,

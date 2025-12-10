@@ -22,12 +22,17 @@ from types import ModuleType
 from typing import (
     ClassVar,
     ParamSpec,
+    TypeAlias,
     TypedDict,
     TypeVar,
+    Union,
 )
 
 from pydantic import BaseModel, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# LaxStr compatibility for external integrations (LDAP, etc.)
+LaxStr: TypeAlias = str | bytes | bytearray
 
 # ============================================================================
 # Module-Level TypeVars - Used in flext-core src/
@@ -188,11 +193,11 @@ class FlextTypes:
     # Reuses ScalarValue defined above
     # PEP 695 recursive types work with __future__ annotations
     # Use string forward reference for recursive types to avoid pyrefly errors
-    type GeneralValueType = (
-        ScalarValue
-        | Sequence[FlextTypes.GeneralValueType]
-        | Mapping[str, FlextTypes.GeneralValueType]
-    )
+    type GeneralValueType = Union[
+        str | int | float | bool | datetime | None,
+        Sequence[FlextTypes.GeneralValueType],
+        Mapping[str, FlextTypes.GeneralValueType],
+    ]
 
     # Constant value type - all possible constant types in FlextConstants
     # Used for type-safe constant access via __getitem__ method
@@ -230,9 +235,11 @@ class FlextTypes:
     # validation
     # Reuses t.ScalarValue defined above (forward reference managed by
     # __future__ annotations)
-    type MetadataAttributeValue = (
-        ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]
-    )
+    type MetadataAttributeValue = Union[
+        str | int | float | bool | datetime | None,
+        Sequence[str | int | float | bool | datetime | None],
+        Mapping[str, str | int | float | bool | datetime | None],
+    ]
 
     # Generic metadata dictionary type - read-only interface for metadata containers
     type Metadata = Mapping[str, MetadataAttributeValue]
@@ -245,7 +252,11 @@ class FlextTypes:
 
     # Flexible value type for protocol methods - contains scalars,
     # sequences, or mappings
-    type FlexibleValue = ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]
+    type FlexibleValue = Union[
+        str | int | float | bool | datetime | None,
+        Sequence[str | int | float | bool | datetime | None],
+        Mapping[str, str | int | float | bool | datetime | None],
+    ]
 
     # Mapping of string keys to flexible values
     type FlexibleMapping = Mapping[str, FlexibleValue]
@@ -258,8 +269,8 @@ class FlextTypes:
         | int
         | float
         | bool
-        | Sequence[GeneralValueType]
-        | Mapping[str, GeneralValueType]
+        | Sequence[FlextTypes.GeneralValueType]
+        | Mapping[str, FlextTypes.GeneralValueType]
         | None
     )
 
@@ -310,11 +321,11 @@ class FlextTypes:
         # Complex JSON types using recursive t.GeneralValueType
         # Reuses t.GeneralValueType from parent t class (no duplication)
         type JsonValue = (
-            JsonPrimitive
-            | Sequence[t.GeneralValueType]
-            | Mapping[str, t.GeneralValueType]
+            FlextTypes.Json.JsonPrimitive
+            | Sequence[FlextTypes.GeneralValueType]
+            | Mapping[str, FlextTypes.GeneralValueType]
         )
-        type JsonList = Sequence[JsonValue]
+        type JsonList = Sequence[FlextTypes.Json.JsonValue]
         type JsonDict = Mapping[str, t.GeneralValueType]
 
     class Handler:
@@ -361,7 +372,8 @@ class FlextTypes:
         # Reuses t.GeneralValueType from parent t class (no duplication)
         # Note: Removed Callable[..., T] to avoid variadic callables - HandlerCallable covers variadic cases
         type HandlerType = (
-            HandlerCallable | Mapping[str, t.GeneralValueType]  # Configuration dict
+            FlextTypes.Handler.HandlerCallable
+            | Mapping[str, t.GeneralValueType]  # Configuration dict
         )
 
     class Config:
@@ -690,15 +702,15 @@ class FlextTypes:
         """
 
         # Service mapping type - for scoped container services parameter
-        type ServiceMapping = Mapping[str, ServiceInstanceType]
+        type ServiceMapping = Mapping[str, FlextTypes.Types.ServiceInstanceType]
         """Mapping type for service registrations in scoped container creation."""
 
         # Factory mapping type - for scoped container factories parameter
-        type FactoryMapping = Mapping[str, FactoryRegistrationCallable]
+        type FactoryMapping = Mapping[str, FlextTypes.Types.FactoryRegistrationCallable]
         """Mapping type for factory registrations in scoped container creation."""
 
         # Resource mapping type - for scoped container resources parameter
-        type ResourceMapping = Mapping[str, ResourceCallable]
+        type ResourceMapping = Mapping[str, FlextTypes.Types.ResourceCallable]
         """Mapping type for resource registrations in scoped container creation."""
 
         type ServiceRegistrationDict = dict[str, object]
@@ -774,7 +786,7 @@ class FlextTypes:
         # =====================================================================
         # TYPEDDICT CLASSES (Python 3.13+ PEP 695)
         # =====================================================================
-        class _BatchResultDictBase(TypedDict, total=True):
+        class BatchResultDictBase(TypedDict, total=True):
             """Base TypedDict for batch processing operations.
 
             Business Rule: TypedDict uses dict[str, ...] for field types because
@@ -826,7 +838,7 @@ class FlextTypes:
 
         # Public type alias for batch result (avoids SLF001 violation)
         # Use PEP 695 type alias for proper type checking support
-        type BatchResultDict = _BatchResultDictBase
+        type BatchResultDict = FlextTypes.Types.BatchResultDictBase
 
         # Note: TypedDict cannot be generic, so BatchResultDict is used directly
         # Type narrowing for results: list[T] is done at usage site based on operation return type

@@ -208,7 +208,7 @@ class FlextMixins(FlextRuntime):
             # Use type guard for proper type narrowing
             if isinstance(value, r):
                 # Type narrowing: value is r[T] after isinstance check
-                return cast("r[T]", value)
+                return value
             # Wrap non-result value in r.ok()
             # Type narrowing: value is T after isinstance check (not a Result)
             return r[T].ok(value)
@@ -336,16 +336,19 @@ class FlextMixins(FlextRuntime):
             if isinstance(runtime_context, FlextContext)
             else runtime_context
         )
+        factories_raw = options.get("factories")
+
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
             context=context_typed,
-            subproject=u.mapper().get(options, "subproject"),
+            # Cast needed: mapper().get() returns GeneralValueType, narrow to str | None
+            subproject=cast("str | None", u.mapper().get(options, "subproject")),
             services=services_option,
             factories=cast(
                 "Mapping[str, Callable[[], str | int | float | bool | datetime | Sequence[str | int | float | bool | datetime | None] | Mapping[str, str | int | float | bool | datetime | None] | None]] | None",
-                u.mapper().get(options, "factories"),
+                factories_raw,
             )
-            if isinstance(u.mapper().get(options, "factories"), (dict, Mapping))
+            if isinstance(factories_raw, (dict, Mapping))
             else None,
             resources=cast(
                 "Mapping[str, Callable[[], t.GeneralValueType]] | None",

@@ -16,7 +16,7 @@ import json
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Final, Self, overload
+from typing import Final, Self, cast, overload
 
 from pydantic import BaseModel
 
@@ -725,7 +725,7 @@ class FlextContext(FlextRuntime):
             A new FlextContext with the same data
 
         """
-        cloned = FlextContext()
+        cloned: Self = cast("Self", FlextContext())
         for scope_name, ctx_var in self._scope_vars.items():
             # Use helper for type narrowing to ConfigurationDict
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -948,7 +948,10 @@ class FlextContext(FlextRuntime):
         if isinstance(normalized_metadata, dict) and all(
             isinstance(k, str) for k in normalized_metadata
         ):
-            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata
+            # Cast: MetadataAttributeDict widens to ConfigurationDict (invariant dict variance)
+            metadata_general: t.Types.ConfigurationDict | None = cast(
+                "t.Types.ConfigurationDict | None", normalized_metadata
+            )
         else:
             metadata_general = None
 
@@ -1198,7 +1201,10 @@ class FlextContext(FlextRuntime):
         if isinstance(normalized_metadata, dict) and all(
             isinstance(k, str) for k in normalized_metadata
         ):
-            metadata_general: t.Types.ConfigurationDict | None = normalized_metadata
+            # Cast: MetadataAttributeDict widens to ConfigurationDict (invariant dict variance)
+            metadata_general: t.Types.ConfigurationDict | None = cast(
+                "t.Types.ConfigurationDict | None", normalized_metadata
+            )
         else:
             metadata_general = None
 
@@ -1558,8 +1564,11 @@ class FlextContext(FlextRuntime):
             try:
                 # Use container.with_service for fluent API (accepts GeneralValueType | BaseModel | Callable)
                 # Type narrowing: service is GeneralValueType | BaseModel | Callable, protocol accepts GeneralValueType
-                # BaseModel and Callable are subtypes of GeneralValueType (object), so direct assignment works
-                service_typed: t.GeneralValueType = service
+                # BaseModel and Callable are NOT subtypes of GeneralValueType in mypy's type system
+                # Cast is needed: with_service signature accepts broader type including BaseModel/Callable
+                service_typed: t.GeneralValueType = cast(
+                    "t.GeneralValueType", service
+                )
                 # with_service returns Self for fluent chaining, but we don't need the return value
                 _ = container.with_service(service_name, service_typed)
                 return r[bool].ok(True)
