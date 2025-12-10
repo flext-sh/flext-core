@@ -1150,6 +1150,27 @@ class FlextProtocols:
                 """Remove attribute, returning self for chaining."""
                 ...
 
+    # =========================================================================
+    # MAPPER PROTOCOLS (For Collection Operations)
+    # =========================================================================
+
+    @runtime_checkable
+    class SingleValueMapper[T, R](Protocol):
+        """Protocol for mappers that transform single values."""
+
+        def __call__(self, value: T) -> R:
+            """Map a single value to a result."""
+            ...
+
+    @runtime_checkable
+    class KeyValueMapper[T, R](Protocol):
+        """Protocol for mappers that transform key-value pairs."""
+
+        def __call__(self, key: str, value: T) -> R:
+            """Map a key-value pair to a result."""
+            ...
+
 
 p = FlextProtocols
-__all__ = ["FlextProtocols", "p"]
+fc = FlextProtocols
+__all__ = ["FlextProtocols", "fc"]

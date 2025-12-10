@@ -396,14 +396,16 @@ class FlextModels:
         """
 
     # =========================================================================
-    # ROOT-LEVEL ALIASES REMOVED
-    # Use full namespace paths: m.Cqrs.Command instead of m.Command
-    # Use m.Config.ProcessingRequest instead of m.ProcessingRequest
-    # Use m.Context.ContextData instead of m.ContextData
-    # Use m.Handler.Registration instead of m.HandlerRegistration
-    # Use m.Service.DomainServiceExecutionRequest instead of m.DomainServiceExecutionRequest
-    # Use m.Container.ServiceRegistration instead of m.ServiceRegistration
-    # Use m.Collections.Config instead of m.CollectionsConfig
+    # NAMESPACE HIERARCHY - PADRAO CORRETO
+    # =========================================================================
+    # Todos os projetos devem usar namespace hierárquico completo
+    # SEM duplicação de declarações ou aliases de raiz
+    #
+    # CORRETO: m.Cqrs.Command, m.Config.ProcessingRequest, m.Context.ContextData
+    # ERRADO:  m.Command, m.ProcessingRequest, m.ContextData (PROIBIDO)
+    #
+    # Herança real, não aliases - todas as classes herdam diretamente
+    # Sem quebra de código - mantém compatibilidade backward
     # =========================================================================
 
 

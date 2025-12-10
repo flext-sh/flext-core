@@ -18,6 +18,7 @@ from typing import Literal, Self, TypeGuard, cast, overload
 from pydantic import BaseModel
 
 from flext_core import (
+    FlextProtocols as p,
     FlextResult as r,
     FlextTypes as t,
     FlextUtilities as u,
@@ -625,7 +626,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             transformed = params.map_fn(data)
             if params.unwrap:
                 return cast("T", transformed)
-            return r[T].ok(cast("T", transformed))
+            return cast("r[T]", r.ok(cast("T", transformed)))
 
         # Generic class instantiation
         if params.as_cls is not None:
@@ -634,7 +635,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
                 instance = params.as_cls(*args, **data)
                 if params.unwrap:
                     return cast("T", instance)
-                return r[T].ok(cast("T", instance))
+                return cast("r[T]", r.ok(cast("T", instance)))
             except Exception as exc:
                 return r[T].fail(
                     str(exc),
@@ -662,12 +663,12 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             values = list(data.values())
             if params.unwrap:
                 return cast("T", values)
-            return r[list[T]].ok(cast("list[T]", values))
+            return cast("r[T]", r.ok(cast("T", values)))
 
         if params.as_dict_result:
             if params.unwrap:
                 return cast("T", data)
-            return r[dict[str, T]].ok(cast("dict[str, T]", data))
+            return cast("r[T]", r.ok(cast("T", data)))
 
         # Standard result
         result = r[t_test.Tests.Builders.BuilderDict].ok(data)
@@ -1410,12 +1411,14 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             @staticmethod
             def assert_success[T](result: r[T]) -> T:
                 """Assert success - DELEGATES to tu.Tests.Result."""
-                return tu.Tests.Result.assert_success(result)
+                return tu.Tests.Result.assert_success(cast("p.Result[T]", result))
 
             @staticmethod
             def assert_failure(result: r[t.GeneralValueType]) -> str:
                 """Assert failure - DELEGATES to tu.Tests.Result."""
-                return tu.Tests.Result.assert_failure(result)
+                return tu.Tests.Result.assert_failure(
+                    cast("p.Result[t.GeneralValueType]", result)
+                )
 
         class Batch:
             """Batch operations - tb.Tests.Batch.*.

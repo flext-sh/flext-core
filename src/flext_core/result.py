@@ -141,7 +141,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 return recovery.result
 
             # Type annotation: lash returns Result[T, str]
-
             lash_result: Result[T, str] = result.result.lash(inner)
             return FlextResult[T](lash_result)
 
@@ -208,8 +207,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                     except Exception as unwrap_error:  # pragma: no cover
                         # Defensive exception handling - hard to test without complex mocking
                         # since IOSuccess is immutable
-                        return FlextResult[t.GeneralValueType].fail(
-                            f"Error processing IO result: {unwrap_error}",
+                        return cast(
+                            "FlextResult[t.GeneralValueType]",
+                            FlextResult.fail(
+                                f"Error processing IO result: {unwrap_error}",
+                            ),
                         )
                 if isinstance(io_result, IOFailure):
                     # IOFailure stores error in _inner_value attribute
@@ -276,6 +278,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return FlextResult[T](Success(value))
 
     @classmethod
+    @override
     def fail[T](
         cls,
         error: str | None,
@@ -307,9 +310,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         error_msg = error if error is not None else ""
-        return FlextResult[T](
-            Failure(error_msg), error_code=error_code, error_data=error_data
-        )
+        result = Failure(error_msg)
+        return FlextResult[T](result, error_code=error_code, error_data=error_data)
 
     @staticmethod
     def safe[T](
@@ -416,7 +418,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self
 
     @override
-    def flow_through[U](
+    def flow_through[U](  # pyrefly: ignore[bad-override]
         self,
         *funcs: Callable[[T_co | U], FlextRuntime.RuntimeResult[U]],
     ) -> FlextResult[U]:
@@ -429,10 +431,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if parent_result.is_success:
             value: U = parent_result.value  # parent_result.value is U when is_success
             return FlextResult[U].ok(value)
-        return FlextResult[U].fail(
-            parent_result.error or "",
-            error_code=getattr(parent_result, "error_code", None),
-            error_data=getattr(parent_result, "error_data", None),
+        return cast(
+            "FlextResult[U]",
+            FlextResult.fail(
+                parent_result.error or "",
+                error_code=getattr(parent_result, "error_code", None),
+                error_data=getattr(parent_result, "error_data", None),
+            ),
         )
 
     @classmethod
@@ -490,9 +495,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return cast("FlextResult[T]", result)
         except Exception as e:
             # Extract error message from Pydantic ValidationError if available
-            if hasattr(e, "errors"):
+            if hasattr(e, "errors") and callable(getattr(e, "errors", None)):
                 error_msg = "; ".join(
-                    f"{err.get('loc', [])}: {err.get('msg', '')}" for err in e.errors()
+                    f"{err.get('loc', [])}: {err.get('msg', '')}"
+                    for err in getattr(e, "errors")()
                 )
             else:
                 error_msg = str(e)

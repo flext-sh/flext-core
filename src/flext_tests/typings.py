@@ -189,10 +189,12 @@ class FlextTestsTypes(FlextTypes):
             type FactoryModel = BaseModel
             """Base type for all factory model types (Pydantic BaseModel)."""
 
-            type FactoryModelList = list[FactoryModel]
+            type FactoryModelList = list[FlextTestsTypes.Tests.Factory.FactoryModel]
             """List of factory models."""
 
-            type FactoryModelDict = dict[str, FactoryModel]
+            type FactoryModelDict = dict[
+                str, FlextTestsTypes.Tests.Factory.FactoryModel
+            ]
             """Dictionary of factory models keyed by string ID."""
 
             # Result types
@@ -236,35 +238,7 @@ class FlextTestsTypes(FlextTypes):
             type SerializableValue = t.Json.JsonValue
             """Values that can be serialized to JSON/YAML."""
 
-            type FileContentValue = (
-                str
-                | bytes
-                | Mapping[str, str | int | float | bool | Sequence[str] | None]
-                | Sequence[Sequence[str]]
-            )
-            """Unified file content type for read/write operations."""
-
-            # Reuse JsonValue from flext_core.typings - no duplication
-            type JsonValue = t.Json.JsonValue
-            """JSON-compatible value type."""
-
-            type CsvRow = Sequence[str]
-            """Single CSV row as sequence of strings."""
-
-            type CsvData = Sequence[Sequence[str]]
-            """CSV data as sequence of rows."""
-
-            type FileResultValue = (
-                str
-                | bytes
-                | Mapping[str, str | int | float | bool | Sequence[str] | None]
-                | Sequence[Sequence[str]]
-            )
-            """Union type for file read results."""
-
-            # Enhanced type aliases for batch operations and content handling
-            # Following plan: includes BaseModel support for Pydantic models
-            # Reuse ConfigurationMapping from flext_core.typings - no duplication
+            # File operation type definitions
             type FileContent = (
                 str
                 | bytes
@@ -273,15 +247,6 @@ class FlextTestsTypes(FlextTypes):
                 | BaseModel
             )
             """File content type supporting all serializable formats including Pydantic models."""
-
-            type BatchFiles = (
-                Mapping[str, FileContent] | Sequence[tuple[str, FileContent]]
-            )
-            """Batch file operations input type."""
-
-            # Use StringPathDict from flext_core.typings - no duplication
-            type PathMapping = t.Types.StringPathDict
-            """Mapping of names to file paths."""
 
             type ReadResult[T] = (
                 T
@@ -310,6 +275,12 @@ class FlextTestsTypes(FlextTypes):
             - collect: Collect all errors, return BatchResult with failures
             """
 
+            type BatchFiles = (
+                Mapping[str, FileContent]
+                | Sequence[FileContent]
+            )
+            """Type for batch file operations - Mapping or Sequence of files."""
+
         class Builders:
             """Builder-specific type definitions for test data construction (tb).
 
@@ -326,17 +297,19 @@ class FlextTestsTypes(FlextTypes):
             )
             """Type for values that can be added to builder."""
 
-            type BuilderDict = dict[str, BuilderValue]
+            type BuilderDict = dict[str, FlextTestsTypes.Tests.Builders.BuilderValue]
             """Type for builder internal data structure."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
             type BuilderMapping = t.Types.ConfigurationMapping
             """Type for builder mappings."""
 
-            type BuilderSequence = Sequence[BuilderValue]
+            type BuilderSequence = Sequence[FlextTestsTypes.Tests.Builders.BuilderValue]
             """Type for builder sequences."""
 
-            type ParametrizedCase = tuple[str, BuilderDict]
+            type ParametrizedCase = tuple[
+                str, FlextTestsTypes.Tests.Builders.BuilderDict
+            ]
             """Type for parametrized test cases (test_id, data)."""
 
             # Reuse HandlerCallable from flext_core.typings - no duplication

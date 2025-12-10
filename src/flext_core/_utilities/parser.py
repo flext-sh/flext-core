@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import overload
+from typing import cast, overload
 
 import structlog
 from pydantic import BaseModel
@@ -741,15 +741,13 @@ class FlextUtilitiesParser:
             replacement: str = pattern_tuple[1]
             flags: int = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
-            # Type narrowing: tuple[str, str, int] - use type narrowing via length check
+            # Type narrowing: tuple[str, str, int] - use cast for mypy to understand
             # pattern_tuple is tuple[str, str] | tuple[str, str, int]
-            # After length check (PATTERN_TUPLE_MAX_LENGTH = 3), we know it's tuple[str, str, int]
-            # Access elements directly - type checker understands tuple indexing
-            pattern = str(pattern_tuple[0])
-            replacement = str(pattern_tuple[1])
-            # Type narrowing: third element exists and is int based on tuple type annotation
-            # Use type narrowing: when tuple_len == 3, pattern_tuple is tuple[str, str, int]
-            flags_raw = pattern_tuple[2]
+            pattern_tuple_3 = cast("tuple[str, str, int]", pattern_tuple)
+            pattern = str(pattern_tuple_3[0])
+            replacement = str(pattern_tuple_3[1])
+            # Access third element with type safety
+            flags_raw = pattern_tuple_3[2]
             flags = flags_raw if isinstance(flags_raw, int) else 0
         else:
             return r[tuple[str, str, int]].fail(
@@ -1049,7 +1047,7 @@ class FlextUtilitiesParser:
                 # This is a legitimate generic conversion case - cast() may be required
                 # But we can use type narrowing: members_list contains StrEnum instances
                 # and T extends StrEnum, so found is T-compatible
-                found_enum: T = found
+                found_enum: T = cast("T", found)
                 return r[T].ok(found_enum)
         result = FlextUtilitiesEnum.parse(target, value)
         if result.is_success:
@@ -1122,18 +1120,20 @@ class FlextUtilitiesParser:
         if target is int:
             int_result = FlextUtilitiesParser._coerce_to_int(value)
             # Type narrowing: when target is int, T is int, so r[int] is r[T]
-            return int_result if int_result is not None else None
+            return cast("r[T] | None", int_result if int_result is not None else None)
         if target is float:
             float_result = FlextUtilitiesParser._coerce_to_float(value)
             # Type narrowing: when target is float, T is float, so r[float] is r[T]
-            return float_result if float_result is not None else None
+            return cast(
+                "r[T] | None", float_result if float_result is not None else None
+            )
         if target is str:
             # Type narrowing: when target is str, T is str, so r[str] is r[T]
-            return r[str].ok(str(value))
+            return cast("r[T]", r[str].ok(str(value)))
         if target is bool:
             bool_result = FlextUtilitiesParser._coerce_to_bool(value)
             # Type narrowing: when target is bool, T is bool, so r[bool] is r[T]
-            return bool_result if bool_result is not None else None
+            return cast("r[T] | None", bool_result if bool_result is not None else None)
         return None
 
     @staticmethod
@@ -1230,7 +1230,8 @@ class FlextUtilitiesParser:
             # When target is type[T], calling target(value) returns T
             # This is a legitimate generic conversion case - type checker cannot infer T from object
             # But we can use type narrowing: target(value) returns T when target is type[T]
-            parsed_raw = target(value)
+            # Cast target to Callable to avoid "too many arguments" error
+            parsed_raw = cast("Callable[[object], T]", target)(value)
             # Type narrowing: parsed_raw is T after successful call to type[T]
             # This is a mandatory conversion case where type checker cannot infer T from object
             parsed_typed: T = parsed_raw  # target(value) returns T
@@ -1407,16 +1408,16 @@ class FlextUtilitiesParser:
         # Use ScalarValue from lower layer - int is part of ScalarValue
         if isinstance(value, int) and not isinstance(value, bool):
             # Type narrowing: value is int, and when default is int, T is int
-            return value if isinstance(default, int) else default
+            return cast("T", value) if isinstance(default, int) else default
         if isinstance(value, str):
             try:
                 converted: int = int(value)
-                return converted if isinstance(default, int) else default
+                return cast("T", converted) if isinstance(default, int) else default
             except ValueError:
                 return default
         if isinstance(value, float):
             converted_int: int = int(value)
-            return converted_int if isinstance(default, int) else default
+            return cast("T", converted_int) if isinstance(default, int) else default
         return default
 
     @staticmethod
@@ -1433,11 +1434,11 @@ class FlextUtilitiesParser:
         # Use ScalarValue from lower layer - float is part of ScalarValue
         if isinstance(value, float):
             # Type narrowing: value is float, and when default is float, T is float
-            return value if isinstance(default, float) else default
+            return cast("T", value) if isinstance(default, float) else default
         if isinstance(value, (int, str)):
             try:
                 converted: float = float(value)
-                return converted if isinstance(default, float) else default
+                return cast("T", converted) if isinstance(default, float) else default
             except (ValueError, TypeError):
                 return default
         return default
@@ -1456,12 +1457,12 @@ class FlextUtilitiesParser:
         # Use ScalarValue from lower layer - str is part of ScalarValue
         if isinstance(value, str):
             # Type narrowing: value is str, and when default is str, T is str
-            return value if isinstance(default, str) else default
+            return cast("T", value) if isinstance(default, str) else default
         if value is None:
             return default
         try:
             converted: str = str(value)
-            return converted if isinstance(default, str) else default
+            return cast("T", converted) if isinstance(default, str) else default
         except (ValueError, TypeError):
             return default
 
@@ -1479,14 +1480,14 @@ class FlextUtilitiesParser:
         # Use ScalarValue from lower layer - bool is part of ScalarValue
         if isinstance(value, bool):
             # Type narrowing: value is bool, and when default is bool, T is bool
-            return value if isinstance(default, bool) else default
+            return cast("T", value) if isinstance(default, bool) else default
         if isinstance(value, str):
             normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
             converted: bool = normalized in {"true", "1", "yes", "on"}
-            return converted if isinstance(default, bool) else default
+            return cast("T", converted) if isinstance(default, bool) else default
         if isinstance(value, (int, float)):
             converted_bool: bool = bool(value)
-            return converted_bool if isinstance(default, bool) else default
+            return cast("T", converted_bool) if isinstance(default, bool) else default
         return default
 
     @staticmethod
@@ -1596,7 +1597,7 @@ class FlextUtilitiesParser:
         """
         # Use GeneralValueType from lower layer for type compatibility
         # Narrow object to GeneralValueType - object is compatible with GeneralValueType
-        value_typed: t.GeneralValueType = value
+        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
         result = FlextUtilitiesParser.conv_str_list(value_typed, default=default)
         return [v for v in result if v]
 
@@ -1617,7 +1618,7 @@ class FlextUtilitiesParser:
             return []
         # Use GeneralValueType from lower layer for type compatibility
         # Narrow object to GeneralValueType - object is compatible with GeneralValueType
-        value_typed: t.GeneralValueType = value
+        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
         return FlextUtilitiesParser.conv_str_list(value_typed, default=[])
 
     # =========================================================================

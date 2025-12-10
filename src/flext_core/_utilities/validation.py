@@ -333,7 +333,7 @@ class FlextUtilitiesValidation:
     ) -> t.Types.ConfigurationDict:
         """Convert items() result to dict with normalization."""
         if isinstance(items_result, (list, tuple)):
-            return dict(items_result)
+            return dict(cast("Sequence[tuple[str, t.GeneralValueType]]", items_result))
 
         if FlextUtilitiesGuards.is_type(items_result, "mapping"):
             # Convert Mapping to dict explicitly for type safety
@@ -410,7 +410,7 @@ class FlextUtilitiesValidation:
         """
         if isinstance(items_result, (list, tuple)):
             # items() returned list/tuple of pairs - convert to dict
-            return dict(items_result)
+            return dict(cast("Sequence[tuple[str, t.GeneralValueType]]", items_result))
 
         # items() returned something else - try to iterate
         if not hasattr(items_result, "__iter__"):

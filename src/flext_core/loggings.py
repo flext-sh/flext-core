@@ -19,12 +19,12 @@ import types
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Self, overload
+from typing import ClassVar, Self, cast, overload
 
 from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.result import FlextResult, r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import u
@@ -84,7 +84,7 @@ class FlextLogger(FlextRuntime):
     @overload
     def _context_operation(
         cls,
-        operation: c.Logging.ContextOperationGetLiteral,
+        operation: c.Literals.ContextOperationGetLiteral,
         **kwargs: t.GeneralValueType,
     ) -> t.Types.ContextMetadataMapping: ...
 
@@ -92,7 +92,7 @@ class FlextLogger(FlextRuntime):
     @overload
     def _context_operation(
         cls,
-        operation: c.Logging.ContextOperationModifyLiteral,
+        operation: c.Literals.ContextOperationModifyLiteral,
         **kwargs: t.GeneralValueType,
     ) -> r[bool]: ...
 
@@ -178,7 +178,7 @@ class FlextLogger(FlextRuntime):
 
         """
         return cls._context_operation(
-            c.Logging.ContextOperation.BIND,
+            c.Logging.ContextOperation.BIND.value,
             **context,
         )
 
@@ -203,7 +203,7 @@ class FlextLogger(FlextRuntime):
             >>> # All global context cleared
 
         """
-        return cls._context_operation(c.Logging.ContextOperation.CLEAR)
+        return cls._context_operation(c.Logging.ContextOperation.CLEAR.value)
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> r[bool]:
@@ -239,7 +239,7 @@ class FlextLogger(FlextRuntime):
     @classmethod
     def _get_global_context(cls) -> t.Types.ContextMetadataMapping:
         """Get current global context (internal use only)."""
-        return cls._context_operation(c.Logging.ContextOperation.GET)
+        return cls._context_operation(c.Logging.ContextOperation.GET.value)
 
     # =========================================================================
     # SCOPED CONTEXT MANAGEMENT - Three-tier context system
@@ -770,7 +770,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultTrueLiteral,
+        return_result: c.Literals.ReturnResultTrueLiteral,
         **kwargs: t.GeneralValueType,
     ) -> r[bool]: ...
 
@@ -779,7 +779,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultFalseLiteral = False,
+        return_result: c.Literals.ReturnResultFalseLiteral = False,
         **kwargs: t.GeneralValueType,
     ) -> None: ...
 
@@ -989,7 +989,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultTrueLiteral,
+        return_result: c.Literals.ReturnResultTrueLiteral,
         **context: t.GeneralValueType,
     ) -> r[bool]: ...
 
@@ -998,7 +998,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultFalseLiteral = False,
+        return_result: c.Literals.ReturnResultFalseLiteral = False,
         **context: t.GeneralValueType,
     ) -> None: ...
 
@@ -1035,7 +1035,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultTrueLiteral,
+        return_result: c.Literals.ReturnResultTrueLiteral,
         **context: t.GeneralValueType,
     ) -> r[bool]: ...
 
@@ -1044,7 +1044,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultFalseLiteral = False,
+        return_result: c.Literals.ReturnResultFalseLiteral = False,
         **context: t.GeneralValueType,
     ) -> None: ...
 
@@ -1081,7 +1081,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultTrueLiteral,
+        return_result: c.Literals.ReturnResultTrueLiteral,
         **context: t.GeneralValueType | Exception,
     ) -> r[bool]: ...
 
@@ -1090,7 +1090,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultFalseLiteral = False,
+        return_result: c.Literals.ReturnResultFalseLiteral = False,
         **context: t.GeneralValueType | Exception,
     ) -> None: ...
 
@@ -1127,7 +1127,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultTrueLiteral,
+        return_result: c.Literals.ReturnResultTrueLiteral,
         **context: t.GeneralValueType,
     ) -> r[bool]: ...
 
@@ -1136,7 +1136,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultFalseLiteral = False,
+        return_result: c.Literals.ReturnResultFalseLiteral = False,
         **context: t.GeneralValueType,
     ) -> None: ...
 
@@ -1173,7 +1173,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultTrueLiteral,
+        return_result: c.Literals.ReturnResultTrueLiteral,
         **context: t.GeneralValueType,
     ) -> r[bool]: ...
 
@@ -1182,7 +1182,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Logging.ReturnResultFalseLiteral = False,
+        return_result: c.Literals.ReturnResultFalseLiteral = False,
         **context: t.GeneralValueType,
     ) -> None: ...
 
@@ -1221,7 +1221,7 @@ class FlextLogger(FlextRuntime):
         *,
         exception: BaseException | None = None,
         exc_info: bool = True,
-        return_result: c.Logging.ReturnResultTrueLiteral,
+        return_result: c.Literals.ReturnResultTrueLiteral,
         **kwargs: t.GeneralValueType,
     ) -> r[bool]: ...
 
@@ -1232,7 +1232,7 @@ class FlextLogger(FlextRuntime):
         *,
         exception: BaseException | None = None,
         exc_info: bool = True,
-        return_result: c.Logging.ReturnResultFalseLiteral = False,
+        return_result: c.Literals.ReturnResultFalseLiteral = False,
         **kwargs: t.GeneralValueType,
     ) -> None: ...
 

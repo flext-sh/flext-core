@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
 from typing import TypeGuard
 
 from flext_core.protocols import p
@@ -175,6 +176,42 @@ class FlextUtilitiesGuards:
     # TypeGuard Functions for FLEXT Core Types
     # =========================================================================
     # These functions enable type narrowing without cast() - zero tolerance typing
+
+    @staticmethod
+    def is_general_value_type(value: object) -> TypeGuard[t.GeneralValueType]:
+        """Check if value is a valid GeneralValueType.
+
+        GeneralValueType = ScalarValue | Sequence[GeneralValueType] | Mapping[str, GeneralValueType]
+        ScalarValue = str | int | float | bool | datetime | None
+
+        This TypeGuard enables type narrowing without cast() for GeneralValueType.
+        Uses structural typing to validate at runtime.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[t.GeneralValueType]: True if value matches GeneralValueType structure
+
+        """
+        # Check scalar types first (most common case)
+        if isinstance(value, (str, int, float, bool, type(None), datetime)):
+            return True
+        # Check for bool before int (bool is subclass of int in Python)
+        if value is True or value is False:
+            return True
+        # Check sequence types (list/tuple can never be str/bytes)
+        if isinstance(value, (list, tuple)):
+            return all(
+                FlextUtilitiesGuards.is_general_value_type(item) for item in value
+            )
+        # Check mapping types
+        if isinstance(value, Mapping):
+            return all(
+                isinstance(k, str) and FlextUtilitiesGuards.is_general_value_type(v)
+                for k, v in value.items()
+            )
+        return False
 
     @staticmethod
     def _is_config(obj: object) -> TypeGuard[p.Config]:
@@ -511,7 +548,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, (str, bytes, Sequence, Mapping))
 
     @staticmethod
-    def _is_list(value: object) -> TypeGuard[list[object]]:
+    def is_list(value: object) -> TypeGuard[list[object]]:
         """Check if value is list.
 
         Type guard for list types.
@@ -685,7 +722,7 @@ class FlextUtilitiesGuards:
                 # Collection checks
                 "str": "_is_str",
                 "dict": "_is_dict",
-                "list": "_is_list",
+                "list": "is_list",
                 "tuple": "_is_tuple",
                 "sequence": "_is_sequence",
                 "mapping": "_is_mapping",
@@ -709,16 +746,17 @@ class FlextUtilitiesGuards:
                 method_name = method_map[type_name]
                 method = getattr(FlextUtilitiesGuards, method_name)
                 # For non-empty checks, use GeneralValueType from lower layer
-                # Methods accept GeneralValueType, so value (object) is compatible
+                # Methods accept GeneralValueType, so use TypeGuard for type narrowing
                 if type_name in {
                     "string_non_empty",
                     "dict_non_empty",
                     "list_non_empty",
                 }:
-                    # Type narrowing: methods accept GeneralValueType, value is object
-                    # object is compatible with GeneralValueType (GeneralValueType includes object-compatible types)
-                    value_general: t.GeneralValueType = value
-                    return bool(method(value_general))
+                    # TypeGuard-based type narrowing for GeneralValueType
+                    if FlextUtilitiesGuards.is_general_value_type(value):
+                        return bool(method(value))
+                    # Value is not GeneralValueType, return False
+                    return False
                 return bool(method(value))
             # Unknown string type spec
             return False
@@ -800,8 +838,10 @@ class FlextUtilitiesGuards:
         # Check if this is a public method that should be accessed via u.Guards
         if hasattr(FlextUtilitiesGuards, name):
             warnings.warn(
-                f"Direct access to FlextUtilitiesGuards.{name} is deprecated. "
-                f"Use u.guard() or u.Guards.{name} instead.",
+                (
+                    f"Direct access to FlextUtilitiesGuards.{name} is deprecated. "
+                    f"Use u.guard() or u.Guards.{name} instead."
+                ),
                 DeprecationWarning,
                 stacklevel=2,
             )

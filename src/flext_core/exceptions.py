@@ -340,9 +340,7 @@ class FlextExceptions:
                         )
                         new_attrs[k] = normalized_general
                     # new_attrs is already t.Types.ConfigurationDict from loop
-                    return _Metadata(
-                        attributes=new_attrs,
-                    )
+                    return _Metadata(attributes=new_attrs)
                 return metadata
 
             if FlextRuntime.is_dict_like(cast("t.GeneralValueType", metadata)):

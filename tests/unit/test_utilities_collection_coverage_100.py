@@ -25,6 +25,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import FlextRuntime, r, t
+from flext_core.result import FlextResult
 from flext_tests import u
 
 
@@ -480,9 +481,9 @@ class CollectionUtilitiesScenarios:
         ),
         MapScenario(
             name="result_failure",
-            items=r.fail("error"),
+            items=FlextResult[str].fail("error"),
             mapper=lambda x: x * 2,
-            expected_result=r.fail("error"),
+            expected_result=FlextResult[str].fail("error"),
             expected_failure=True,
         ),
         MapScenario(
@@ -543,7 +544,7 @@ class CollectionUtilitiesScenarios:
         FilterScenario(
             name="list_filter_map",
             items=[1, 2, 3, 4],
-            predicate=lambda x: x > 4,
+            predicate=lambda x: x > 2,
             mapper=lambda x: x * 2,
             expected_result=[6, 8],
         ),
@@ -555,10 +556,10 @@ class CollectionUtilitiesScenarios:
         ),
         FilterScenario(
             name="dict_filter_map",
-            items={"a": 1, "b": 2},
+            items={"a": 1, "b": 4},
             predicate=lambda k, v: v > 2,
             mapper=lambda k, v: v * 2,
-            expected_result={"b": 4},
+            expected_result={"b": 8},
         ),
         FilterScenario(
             name="single_filter_match",

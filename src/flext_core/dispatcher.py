@@ -1357,13 +1357,8 @@ class FlextDispatcher(x):
             # Since handler is generic and ResultT cannot be inferred, we cast the result
             # to r[t.GeneralValueType] for compatibility with return type
             # This is safe because GeneralValueType is the base type for all values
-            dispatch_result_raw = handler.dispatch_message(command, operation=operation)
-            # Cast to r[t.GeneralValueType] - safe because ResultT is always a GeneralValueType
-            dispatch_result: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]",
-                dispatch_result_raw,
-            )
-            return dispatch_result
+            return handler.dispatch_message(command, operation=operation)
+            # Type is already r[t.GeneralValueType] - no cast needed
 
         # Fallback for non-h: try handle() then execute()
         # Use u.has() + u.mapper().get() for unified attribute access (DSL pattern)

@@ -140,8 +140,9 @@ class FlextUtilitiesCache:
         # Handle collections
         if isinstance(component, set):
             # Type narrowing: component is set, so items are t.GeneralValueType
+            items: set[t.GeneralValueType] = component
             return tuple(
-                FlextUtilitiesCache.normalize_component(item) for item in component
+                FlextUtilitiesCache.normalize_component(item) for item in items
             )
         if isinstance(component, Sequence):
             # Type narrowing: component is Sequence, so items are t.GeneralValueType

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
-from typing import Annotated, Self
+from typing import Annotated, Any, Self, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -22,7 +22,7 @@ from flext_core._utilities.parser import FlextUtilitiesParser
 from flext_core.constants import c
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import LaxStr, t
 
 
 class FlextModelsCqrs:
@@ -41,7 +41,7 @@ class FlextModelsCqrs:
         """Base class for CQRS commands with validation."""
 
         message_type: c.Cqrs.CommandMessageTypeLiteral = Field(
-            default=c.Cqrs.HandlerType.COMMAND,
+            default="command",
             frozen=True,
             description="Message type discriminator (always 'command')",
         )
@@ -120,7 +120,7 @@ class FlextModelsCqrs:
         )
 
         message_type: c.Cqrs.QueryMessageTypeLiteral = Field(
-            default=c.Cqrs.HandlerType.QUERY,
+            default="query",
             frozen=True,
             description="Message type discriminator",
         )
@@ -246,9 +246,7 @@ class FlextModelsCqrs:
             try:
                 # Fast fail: filters and pagination must be dict or None
                 # mapper().get() without default returns T | None directly
-                filters_raw: object | None = FlextUtilitiesMapper().get(
-                    query_payload, "filters"
-                )
+                filters_raw = FlextUtilitiesMapper().get(query_payload, "filters")
                 # TypeGuard narrows to Mapping[str, GeneralValueType] when
                 # is_dict_like is True
                 if filters_raw is not None and FlextRuntime.is_dict_like(filters_raw):
@@ -260,9 +258,7 @@ class FlextModelsCqrs:
                         filters = {}
                 else:
                     filters = {}
-                pagination_raw: object | None = FlextUtilitiesMapper().get(
-                    query_payload, "pagination"
-                )
+                pagination_raw = FlextUtilitiesMapper().get(query_payload, "pagination")
                 # TypeGuard narrows to Mapping[str, GeneralValueType] when is_dict_like is True
                 if pagination_raw is not None and FlextRuntime.is_dict_like(
                     pagination_raw
@@ -306,9 +302,7 @@ class FlextModelsCqrs:
                     }
                 # Fast fail: query_id must be str or None
                 # mapper().get() without default returns T | None directly
-                query_id_raw: object | None = FlextUtilitiesMapper().get(
-                    query_payload, "query_id"
-                )
+                query_id_raw = FlextUtilitiesMapper().get(query_payload, "query_id")
                 query_id: str = (
                     FlextUtilitiesGenerators().generate("query")
                     if query_id_raw is None

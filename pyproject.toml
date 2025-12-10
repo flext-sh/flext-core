@@ -72,6 +72,7 @@
             "detect-secrets>=1.5.0",
             "interrogate>=1.7.0",
             "isort>=6.0.1",
+            "mypy>=1.18.2",
             "pre-commit>=4.0.1",
             "pylint>=3.3.0",
             "pyupgrade>=3.19.0",
