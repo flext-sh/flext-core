@@ -1044,7 +1044,7 @@ class FlextUtilitiesParser:
             if found is not None:
                 # Type narrowing: found is StrEnum member from members_list
                 # Since target is type[T] and T extends StrEnum, found is compatible with T
-                # This is a legitimate generic conversion case - cast() may be required
+                # This is a legitimate generic conversion case -  may be required
                 # But we can use type narrowing: members_list contains StrEnum instances
                 # and T extends StrEnum, so found is T-compatible
                 found_enum: T = cast("T", found)
@@ -1597,7 +1597,7 @@ class FlextUtilitiesParser:
         """
         # Use GeneralValueType from lower layer for type compatibility
         # Narrow object to GeneralValueType - object is compatible with GeneralValueType
-        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+        value_typed: t.GeneralValueType = value
         result = FlextUtilitiesParser.conv_str_list(value_typed, default=default)
         return [v for v in result if v]
 
@@ -1618,7 +1618,7 @@ class FlextUtilitiesParser:
             return []
         # Use GeneralValueType from lower layer for type compatibility
         # Narrow object to GeneralValueType - object is compatible with GeneralValueType
-        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
+        value_typed: t.GeneralValueType = value
         return FlextUtilitiesParser.conv_str_list(value_typed, default=[])
 
     # =========================================================================

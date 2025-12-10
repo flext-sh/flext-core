@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
-from typing import Annotated, Any, Self, cast
+from typing import Annotated, Self, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -22,7 +22,7 @@ from flext_core._utilities.parser import FlextUtilitiesParser
 from flext_core.constants import c
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import LaxStr, t
+from flext_core.typings import t
 
 
 class FlextModelsCqrs:
@@ -253,7 +253,9 @@ class FlextModelsCqrs:
                     # Type narrowing: is_dict_like ensures filters_raw is ConfigurationMapping
                     # Explicit type assertion after type guard
                     if isinstance(filters_raw, Mapping):
-                        filters: t.Types.ConfigurationMapping = filters_raw
+                        filters: t.Types.ConfigurationMapping = cast(
+                            "t.Types.ConfigurationMapping", filters_raw
+                        )
                     else:
                         filters = {}
                 else:

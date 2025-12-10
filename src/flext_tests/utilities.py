@@ -79,7 +79,7 @@ class FlextTestsUtilities(FlextUtilities):
                         error_msg or f"Expected success but got failure: {result.error}"
                     )
                     raise AssertionError(msg)
-                return result.unwrap()
+                return result.value
 
             @staticmethod
             def assert_failure[TResult](
@@ -100,7 +100,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 if result.is_success:
-                    msg = f"Expected failure but got success: {result.unwrap()}"
+                    msg = f"Expected failure but got success: {result.value}"
                     raise AssertionError(msg)
                 error = result.error
                 if error is None:
@@ -514,7 +514,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 _ = FlextTestsUtilities.Tests.Result.assert_success(result)
-                return result.unwrap()
+                return result.value
 
             @staticmethod
             def assert_result_failure_with_error[T](
@@ -1444,7 +1444,9 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise error on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return cast("t.GeneralValueType", super().__getattribute__(name))
+                        return cast(
+                            "t.GeneralValueType", super().__getattribute__(name)
+                        )
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
 
@@ -1455,7 +1457,9 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise TypeError on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return cast("t.GeneralValueType", super().__getattribute__(name))
+                        return cast(
+                            "t.GeneralValueType", super().__getattribute__(name)
+                        )
                     msg = f"Bad config type: {name}"
                     raise TypeError(msg)
 
@@ -2051,7 +2055,7 @@ class FlextTestsUtilities(FlextUtilities):
                             reason=f"Path not found: {path}",
                         )
 
-                    actual = result.unwrap()
+                    actual = result.value
                     if callable(expected):
                         if not expected(actual):
                             return m.Tests.Matcher.DeepMatchResult(

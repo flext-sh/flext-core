@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, ClassVar, Self, cast, override
+from typing import ClassVar, Self, cast, override
 
 from pydantic import Field
 
@@ -24,7 +24,7 @@ from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import LaxStr, t
+from flext_core.typings import t
 
 
 class FlextModelsEntity:
@@ -161,7 +161,7 @@ class FlextModelsEntity:
                 domain_event = FlextModelsEntity.DomainEvent(
                     event_type=event_name,
                     aggregate_id=self.unique_id,
-                    data=event_data,
+                    data=cast("t.Types.EventDataMapping", event_data),
                 )
 
                 # Validate domain event using FlextModelsValidation
@@ -439,7 +439,7 @@ class FlextModelsEntity:
                     domain_event = FlextModelsEntity.DomainEvent(
                         event_type=event_name,
                         aggregate_id=self.unique_id,
-                        data=data,
+                        data=cast("t.Types.EventDataMapping", data),
                     )
                     self.domain_events.append(domain_event)
                     self.increment_version()

@@ -41,7 +41,7 @@ import yaml
 from pydantic import BaseModel
 
 from flext_core import r
-from flext_tests.base import s
+from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t
@@ -51,10 +51,10 @@ from flext_tests.utilities import u
 TModel = TypeVar("TModel", bound=BaseModel)
 
 
-class FlextTestsFiles(s[t.Tests.TestResultValue]):
+class FlextTestsFiles(su[t.Tests.TestResultValue]):
     """Manages test files for FLEXT ecosystem testing.
 
-    Extends FlextTestsServiceBase for consistent service patterns.
+    Extends FlextTestsUtilityBase for consistent service patterns.
 
     Provides generalist file operations with powerful optional parameters:
     - `create()`: Create any file type with auto-detection
@@ -371,7 +371,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 raise ValueError(
                     f"Cannot create file from failed FlextResult: {error_msg}",
                 )
-            content_to_validate = content_result.unwrap()
+            content_to_validate = content_result.value
 
         # Validate and compute parameters using CreateParams model with u.Model.from_kwargs()
         # All parameters validated via Pydantic 2 Field constraints (ge, min_length, max_length) - no manual validation
@@ -588,23 +588,23 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             # Read text
             result = tf().read(path)
             if result.is_success:
-                text = result.unwrap()
+                text = result.value
 
             # Read JSON
             result = tf().read(Path("config.json"))
-            data = result.unwrap()  # dict
+            data = result.value  # dict
 
             # Read JSON into Pydantic model
             result = tf().read(Path("user.json"), model_cls=UserModel)
-            user = result.unwrap()  # UserModel instance
+            user = result.value  # UserModel instance
 
             # Read YAML into Pydantic model
             result = tf().read(Path("config.yaml"), model_cls=ConfigModel)
-            config = result.unwrap()  # ConfigModel instance
+            config = result.value  # ConfigModel instance
 
             # Read CSV
             result = tf().read(Path("data.csv"))
-            rows = result.unwrap()  # list[list[str]]
+            rows = result.value  # list[list[str]]
 
         """
         # Validate and compute parameters using ReadParams model with u.Model.from_kwargs()
@@ -957,7 +957,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         Examples:
             result = tf().info(path)
             if result.is_success:
-                info = result.unwrap()
+                info = result.value
                 print(f"Size: {info.size_human}")
                 print(f"Format: {info.fmt}")
 
@@ -1141,7 +1141,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         elif isinstance(params.files, Sequence):
             # BatchFiles is Sequence[tuple[str, FileContent]] - convert to dict
             # Cast sequence to proper tuple format for dict constructor
-            files_list = cast("Sequence[tuple[str, t.Tests.Files.FileContent]]", params.files)
+            files_list = cast(
+                "Sequence[tuple[str, t.Tests.Files.FileContent]]", params.files
+            )
             files_dict = dict(files_list)
         else:
             # Invalid type - should not happen due to BatchParams validation
@@ -1235,7 +1237,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         # - results: list[R] (direct values, not Results - unwrapped automatically)
         # - errors: list[tuple[int, str]] (index, error_message)
         # - total, success_count, error_count
-        batch_data = batch_result_dict.unwrap()
+        batch_data = batch_result_dict.value
         results = batch_data.get("results", [])
         errors = batch_data.get("errors", [])
         total = batch_data.get("total", len(files_dict))
@@ -1257,7 +1259,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 elif u.is_type(result, "result"):
                     result_typed = cast("r[Path]", result)
                     if result_typed.is_success:
-                        results_dict[name] = r[object].ok(result_typed.unwrap())
+                        results_dict[name] = r[object].ok(result_typed.value)
                     else:
                         failed_dict[name] = result_typed.error or "Unknown error"
                 else:
@@ -1610,7 +1612,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         )
         result = self.info(file_path)
         if result.is_success:
-            return result.unwrap()
+            return result.value
         return m.Tests.Files.FileInfo(exists=False)
 
     @classmethod
@@ -1712,7 +1714,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             # Use unwrap() for extraction - type is narrowed
             # The return type matches FileContent union type
             # unwrapped is already FileContent type from r[FileContent]
-            return content_result.unwrap()
+            return content_result.value
         # Content is already FileContent type (not wrapped in Result)
         return cast("t.Tests.Files.FileContent", content)
 

@@ -1114,7 +1114,7 @@ class FlextUtilitiesMapper:
     ) -> T | None:
         """Type conversion with guard (mnemonic: as_ = convert to type).
 
-        Generic replacement for: isinstance() + cast() patterns
+        Generic replacement for: isinstance() +  patterns
 
         Args:
             value: Value to convert
@@ -1368,7 +1368,9 @@ class FlextUtilitiesMapper:
         if filter_pred_raw is None:
             return current
         # Cast the callable to proper filter predicate type
-        filter_pred: Callable[[object], bool] = cast("Callable[[object], bool]", filter_pred_raw)
+        filter_pred: Callable[[object], bool] = cast(
+            "Callable[[object], bool]", filter_pred_raw
+        )
         # Handle collections
         if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence[object], x is GeneralValueType

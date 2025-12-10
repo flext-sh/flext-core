@@ -129,7 +129,7 @@ def main() -> None:
     result = db_service.execute()
 
     if result.is_success:
-        print(f"✅ Database query successful: {result.unwrap()}")
+        print(f"✅ Database query successful: {result.value}")
 
     print("\n=== Example 2: Migration Service ===")
     migration_service = MigrationService(
@@ -141,7 +141,7 @@ def main() -> None:
     result = migration_service.execute()
 
     if result.is_success:
-        print(f"✅ Migration successful: {result.unwrap()}")
+        print(f"✅ Migration successful: {result.value}")
 
     print("\n=== Key Observations ===")
     print("1. Config logged ONCE when service initialized")

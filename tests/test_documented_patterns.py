@@ -5,7 +5,7 @@ factories, and helpers to reduce code size while maintaining and expanding funct
 with minimal code duplication through unified class architecture and reusable test factories.
 
 Patterns tested:
-- Pattern 1: V1 Explícito (.execute().unwrap())
+- Pattern 1: V1 Explícito (.execute().value)
 - Pattern 2: V2 Property (.result)
 - Pattern 3: V2 Auto (auto_execute = True)
 - Pattern 4: Railway Pattern em V1
@@ -307,12 +307,12 @@ class MultiOperationService(FlextService[t.Types.ConfigurationMapping]):
 
 
 # ============================================================================
-# Pattern 1: V1 Explícito (.execute().unwrap())
+# Pattern 1: V1 Explícito (.execute().value)
 # ============================================================================
 
 
 class TestPattern1V1Explicit:
-    """Test Pattern 1: V1 Explícito (.execute().unwrap())."""
+    """Test Pattern 1: V1 Explícito (.execute().value)."""
 
     @pytest.mark.parametrize("case", TestFactories.success_cases())
     def test_v1_explicit_success(self, case: ServiceTestCase) -> None:
@@ -321,7 +321,7 @@ class TestPattern1V1Explicit:
         result = service.execute()
 
         assert result.is_success
-        user = result.unwrap()
+        user = result.value
 
         assert isinstance(user, User)
         assert user.unique_id == case.user_id
@@ -346,7 +346,7 @@ class TestPattern1V1Explicit:
         result = case.create_user_service().execute()
 
         if result.is_success:
-            user = result.unwrap()
+            user = result.value
             assert isinstance(user, User)
             assert user.unique_id == case.user_id
         else:
@@ -386,7 +386,7 @@ class TestPattern2V2Property:
         result = case.create_user_service().execute()
 
         assert result.is_success
-        user = result.unwrap()
+        user = result.value
         assert isinstance(user, User)
         assert user.unique_id == case.user_id
 
@@ -447,14 +447,14 @@ class TestPattern4RailwayV1:
         assert result.is_success
         # Verify pipeline executed all expected steps
         if "get_status" in case.operations:
-            assert result.unwrap() == "sent"
+            assert result.value == "sent"
         elif "get_email" in case.operations:
-            unwrapped = result.unwrap()
+            unwrapped = result.value
             email: str = str(unwrapped) if not isinstance(unwrapped, str) else unwrapped
             assert isinstance(email, str)
             assert "@" in email
         else:
-            assert isinstance(result.unwrap(), User)
+            assert isinstance(result.value, User)
 
 
 # ============================================================================
@@ -480,7 +480,7 @@ class TestPattern5RailwayV2Property:
         result = GetUserService(user_id="123").execute().map(lambda u: u.email)
 
         assert result.is_success
-        assert result.unwrap() == "user123@example.com"
+        assert result.value == "user123@example.com"
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_railway_chaining(self, case: RailwayTestCase) -> None:
@@ -495,7 +495,7 @@ class TestPattern5RailwayV2Property:
         )
 
         assert pipeline.is_success
-        message_id: str = pipeline.unwrap()
+        message_id: str = pipeline.value
         assert message_id.startswith("msg-")
 
 
@@ -530,7 +530,7 @@ class TestPattern6RailwayV2Auto:
         result = service.execute().map(lambda u: u.email)
 
         assert result.is_success
-        assert result.unwrap() == "test@example.com"
+        assert result.value == "test@example.com"
 
 
 # ============================================================================
@@ -547,7 +547,7 @@ class TestPattern7MonadicComposition:
             GetUserService(user_id="123").execute().map(lambda user: user.name.upper())
         )
 
-        assert result.unwrap() == "USER 123"
+        assert result.value == "USER 123"
 
     def test_monadic_flat_map(self) -> None:
         """Monadic: flat_map chains operations (also known as and_then)."""
@@ -594,7 +594,7 @@ class TestPattern7MonadicComposition:
         )
 
         assert pipeline.is_success
-        assert pipeline.unwrap() == "sent"
+        assert pipeline.value == "sent"
 
 
 # ============================================================================
@@ -737,7 +737,7 @@ class TestPattern10MultipleOperations:
 
         assert pipeline.is_success
         # (5 * 2) ** 2 = 100
-        assert pipeline.unwrap() == 100
+        assert pipeline.value == 100
 
 
 # ============================================================================
@@ -766,7 +766,7 @@ class TestAllPatternsIntegration:
         assert auto_user.unique_id == "789"
 
         # All return same type
-        assert isinstance(v1_result.unwrap(), User)
+        assert isinstance(v1_result.value, User)
         assert isinstance(v2_user_result, User)
         assert isinstance(auto_user, User)
 
@@ -807,7 +807,7 @@ class TestAllPatternsIntegration:
         )
 
         assert email_result.is_success
-        message_id: str = email_result.unwrap()
+        message_id: str = email_result.value
         assert message_id.startswith("msg-")
 
         # Step 3: Multiple operations (V2 Property)

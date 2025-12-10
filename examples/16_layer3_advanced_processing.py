@@ -158,10 +158,10 @@ def example_1_basic_registration() -> None:
     if process_result.is_failure:
         print(f"❌ Failed to process: {process_result.error}")
         return
-    if process_result.unwrap() != 10:
-        print(f"❌ Expected 10, got {process_result.unwrap()}")
+    if process_result.value != 10:
+        print(f"❌ Expected 10, got {process_result.value}")
         return
-    print(f"✅ Processed 5 → {process_result.unwrap()}")
+    print(f"✅ Processed 5 → {process_result.value}")
 
 
 # ==================== EXAMPLE 2: BATCH PROCESSING ====================
@@ -185,7 +185,7 @@ def example_2_batch_processing() -> None:
     if result.is_failure:
         print(f"❌ Failed to process batch: {result.error}")
         return
-    processed = result.unwrap()
+    processed = result.value
     if processed != [2, 4, 6, 8, 10]:
         print(f"❌ Expected [2, 4, 6, 8, 10], got {processed}")
         return
@@ -219,7 +219,7 @@ def example_3_parallel_processing() -> None:
     if result.is_failure:
         print(f"❌ Failed to process in parallel: {result.error}")
         return
-    processed = result.unwrap()
+    processed = result.value
     print(f"✅ Parallel processed {data_list}")
     print(f"✅ Result: {processed}")
     print(f"✅ Time: {elapsed:.3f}s with 4 workers")
@@ -289,10 +289,10 @@ def example_5_fallback_chains() -> None:
     if result.is_failure:
         print(f"❌ Fallback chain failed: {result.error}")
         return
-    if result.unwrap() != 10:
-        print(f"❌ Expected 10 from doubler, got {result.unwrap()}")
+    if result.value != 10:
+        print(f"❌ Expected 10 from doubler, got {result.value}")
         return
-    print(f"✅ Primary processor succeeded: 5 → {result.unwrap()}")
+    print(f"✅ Primary processor succeeded: 5 → {result.value}")
 
     # Now test with validator that fails - falls back
     validator = DataValidator()
@@ -306,11 +306,11 @@ def example_5_fallback_chains() -> None:
     if result.is_failure:
         print(f"❌ Fallback chain failed: {result.error}")
         return
-    if result.unwrap() != -10:
-        print(f"❌ Expected -10 from fallback, got {result.unwrap()}")
+    if result.value != -10:
+        print(f"❌ Expected -10 from fallback, got {result.value}")
         return
     print(
-        f"✅ Fallback executed: validator failed, doubler succeeded: -5 → {result.unwrap()}",
+        f"✅ Fallback executed: validator failed, doubler succeeded: -5 → {result.value}",
     )
 
 
@@ -346,7 +346,7 @@ def example_6_metrics_auditing() -> None:
     if analytics_result.is_failure:
         print(f"❌ Failed to get analytics: {analytics_result.error}")
         return
-    analytics = analytics_result.unwrap()
+    analytics = analytics_result.value
     if isinstance(analytics, dict):
         analytics_dict: dict[str, t.GeneralValueType] = analytics
         print(f"✅ Analytics keys: {list(analytics_dict.keys())}")
@@ -358,7 +358,7 @@ def example_6_metrics_auditing() -> None:
     if audit_result.is_failure:
         print(f"❌ Failed to get audit log: {audit_result.error}")
         return
-    audit_log = audit_result.unwrap()
+    audit_log = audit_result.value
     print(f"✅ Audit log entries: {len(audit_log)}")
 
 
@@ -389,7 +389,7 @@ def example_7_integrated_workflow() -> None:
     if batch_result.is_failure:
         print(f"❌ Batch processing failed: {batch_result.error}")
         return
-    batch_processed = batch_result.unwrap()
+    batch_processed = batch_result.value
     print(f"✅ Batch doubled: {batch_processed}")
 
     # Step 3: Process with parallel squarer
@@ -401,7 +401,7 @@ def example_7_integrated_workflow() -> None:
     if parallel_result.is_failure:
         print(f"❌ Parallel processing failed: {parallel_result.error}")
         return
-    parallel_processed = parallel_result.unwrap()
+    parallel_processed = parallel_result.value
     print(f"✅ Parallel squared: {parallel_processed}")
 
     # Step 4: Fallback pattern
@@ -412,12 +412,12 @@ def example_7_integrated_workflow() -> None:
     if fallback_result.is_failure:
         print(f"❌ Fallback execution failed: {fallback_result.error}")
         return
-    print(f"✅ Fallback execution: 10 → {fallback_result.unwrap()}")
+    print(f"✅ Fallback execution: 10 → {fallback_result.value}")
 
     # Step 5: View comprehensive metrics
     analytics_result = dispatcher.get_performance_analytics()
     if analytics_result.is_success:
-        analytics = analytics_result.unwrap()
+        analytics = analytics_result.value
         print("\n✅ Final Analytics:")
         if isinstance(analytics, dict):
             print(f"   Global metrics: {analytics.get('global_metrics', 'N/A')}")

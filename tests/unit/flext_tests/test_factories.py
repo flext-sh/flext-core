@@ -47,7 +47,7 @@ def _extract_model(
 
     """
     if isinstance(result, FlextResult):
-        unwrapped = result.unwrap()
+        unwrapped = result.value
         if isinstance(unwrapped, _BaseModel):
             return unwrapped
         msg = f"Expected BaseModel, got {type(unwrapped)}"
@@ -169,7 +169,7 @@ class TestFlextTestsFactoriesModernAPI:
         # Type narrowing: tt.model() can return union, but for single model it's BaseModel
         # Extract BaseModel from union or FlextResult
         if isinstance(user_result, FlextResult):
-            user = user_result.unwrap()
+            user = user_result.value
         else:
             user = user_result
         # Type narrowing: user is BaseModel, but we need to verify it's User
@@ -289,7 +289,7 @@ class TestFlextTestsFactoriesModernAPI:
         if isinstance(users_result, list):
             users = users_result
         elif isinstance(users_result, FlextResult):
-            users = users_result.unwrap()
+            users = users_result.value
             assert isinstance(users, list)
         else:
             msg = f"Expected list, got {type(users_result)}"
@@ -759,7 +759,7 @@ class TestsFlextTestsFactoriesList:
         # Type narrowing: tt.list() returns list[T] | r[list[T]]
         # For as_result=False, it's list[T]
         users: list[User] = (
-            users_raw if isinstance(users_raw, list) else users_raw.unwrap()
+            users_raw if isinstance(users_raw, list) else users_raw.value
         )
         assert isinstance(users, list)
         assert len(users) == 3
@@ -771,7 +771,7 @@ class TestsFlextTestsFactoriesList:
         # Type narrowing: tt.list() returns list[T] | r[list[T]]
         # For as_result=False, it's list[T]
         numbers: list[int] = (
-            numbers_raw if isinstance(numbers_raw, list) else numbers_raw.unwrap()
+            numbers_raw if isinstance(numbers_raw, list) else numbers_raw.value
         )
         assert numbers == [42, 42, 42, 42, 42]
 
@@ -785,7 +785,7 @@ class TestsFlextTestsFactoriesList:
         )
         # Type narrowing: extract list from union
         doubled: list[int] = (
-            doubled_raw if isinstance(doubled_raw, list) else doubled_raw.unwrap()
+            doubled_raw if isinstance(doubled_raw, list) else doubled_raw.value
         )
         assert doubled == [2, 4, 6]
 
@@ -798,9 +798,7 @@ class TestsFlextTestsFactoriesList:
             filter_=lambda x: x % 2 == 0,
         )
         # Type narrowing: extract list from union
-        evens: list[int] = (
-            evens_raw if isinstance(evens_raw, list) else evens_raw.unwrap()
-        )
+        evens: list[int] = evens_raw if isinstance(evens_raw, list) else evens_raw.value
         assert evens == [2, 4]
 
     def test_list_with_unique(self) -> None:
@@ -808,9 +806,7 @@ class TestsFlextTestsFactoriesList:
         # Create list with duplicates
         items_raw: list[int] | r[list[int]] = tt.list([1, 2, 2, 3, 3, 3], unique=True)
         # Type narrowing: extract list from union
-        items: list[int] = (
-            items_raw if isinstance(items_raw, list) else items_raw.unwrap()
-        )
+        items: list[int] = items_raw if isinstance(items_raw, list) else items_raw.value
         assert len(items) == 3
         assert set(items) == {1, 2, 3}
 
@@ -844,7 +840,7 @@ class TestsFlextTestsFactoriesDict:
         # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
         # For as_result=False, it's dict[K, V]
         users: dict[str, User] = (
-            users_raw if isinstance(users_raw, dict) else users_raw.unwrap()
+            users_raw if isinstance(users_raw, dict) else users_raw.value
         )
         assert isinstance(users, dict)
         assert len(users) == 3
@@ -862,7 +858,7 @@ class TestsFlextTestsFactoriesDict:
         # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
         # For as_result=False, it's dict[K, V]
         users: dict[str, User] = (
-            users_raw if isinstance(users_raw, dict) else users_raw.unwrap()
+            users_raw if isinstance(users_raw, dict) else users_raw.value
         )
         assert set(users.keys()) == {"user_0", "user_1", "user_2"}
 
@@ -882,7 +878,7 @@ class TestsFlextTestsFactoriesDict:
         # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
         # For as_result=False, it's dict[K, V]
         users: dict[str, User] = (
-            users_raw if isinstance(users_raw, dict) else users_raw.unwrap()
+            users_raw if isinstance(users_raw, dict) else users_raw.value
         )
         assert len(users) == 2
 
@@ -896,7 +892,7 @@ class TestsFlextTestsFactoriesDict:
         # Type narrowing: tt.dict_factory() returns dict[K, V] | r[dict[K, V]]
         # For as_result=False, it's dict[K, V]
         merged: dict[str, int] = (
-            merged_raw if isinstance(merged_raw, dict) else merged_raw.unwrap()
+            merged_raw if isinstance(merged_raw, dict) else merged_raw.value
         )
         assert merged == {"a": 1, "b": 2, "c": 3}
 
@@ -945,7 +941,7 @@ class TestsFlextTestsFactoriesGeneric:
         # Type narrowing: tt.generic() returns T | list[T] | r[T] | r[list[T]]
         # For single instance, it's T
         if isinstance(obj_result, r):
-            obj = obj_result.unwrap()
+            obj = obj_result.value
         elif isinstance(obj_result, list):
             obj = obj_result[0]
         else:
@@ -987,7 +983,7 @@ class TestsFlextTestsFactoriesGeneric:
         # Type narrowing: tt.generic() returns T | list[T] | r[T] | r[list[T]]
         # For single instance, it's T
         if isinstance(obj_result, r):
-            obj = obj_result.unwrap()
+            obj = obj_result.value
         elif isinstance(obj_result, list):
             obj = obj_result[0]
         else:

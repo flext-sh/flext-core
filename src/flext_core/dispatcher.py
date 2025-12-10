@@ -249,7 +249,7 @@ class FlextDispatcher(x):
         # Try to resolve from container
         result_raw: p.Result[object] = self._container.get("circuit_breaker")
         # Type narrowing: container.get returns p.Result[T], cast to r[object] for internal use
-        result: r[object] = cast("r[object]", result_raw)
+        result: r[object] = result_raw
         if result.is_success and isinstance(result.value, CircuitBreakerManager):
             return result.value
 
@@ -279,7 +279,7 @@ class FlextDispatcher(x):
         # Try to resolve from container
         result_raw: p.Result[object] = self._container.get("rate_limiter")
         # Type narrowing: container.get returns p.Result[T], cast to r[object] for internal use
-        result: r[object] = cast("r[object]", result_raw)
+        result: r[object] = result_raw
         if result.is_success and isinstance(result.value, RateLimiterManager):
             return result.value
 
@@ -314,7 +314,7 @@ class FlextDispatcher(x):
         # Try to resolve from container
         result_raw: p.Result[object] = self._container.get("timeout_enforcer")
         # Type narrowing: container.get returns p.Result[T], cast to r[object] for internal use
-        result: r[object] = cast("r[object]", result_raw)
+        result: r[object] = result_raw
         if result.is_success and isinstance(result.value, TimeoutEnforcer):
             return result.value
 
@@ -346,7 +346,7 @@ class FlextDispatcher(x):
         # Try to resolve from container
         result_raw: p.Result[object] = self._container.get("retry_policy")
         # Type narrowing: container.get returns p.Result[T], cast to r[object] for internal use
-        result: r[object] = cast("r[object]", result_raw)
+        result: r[object] = result_raw
         if result.is_success and isinstance(result.value, RetryPolicy):
             return result.value
 
@@ -2708,14 +2708,14 @@ class FlextDispatcher(x):
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
         request: t.Types.ConfigurationDict = {
-            "handler": cast("t.GeneralValueType", handler),
+            "handler": handler,
             "message_type": message_type_name,
             "handler_mode": handler_mode,
             "handler_config": handler_config,
         }
 
         result = self.register_handler_with_request(
-            cast("t.GeneralValueType", request),
+            request,
         )
         # Type narrowing: ConfigurationMapping is a subtype of GeneralValueType
         # (ConfigurationMapping = Mapping[str, GeneralValueType], which is part of GeneralValueType union)
@@ -2831,7 +2831,7 @@ class FlextDispatcher(x):
                 result_raw,
                 (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
             ):
-                return cast("t.GeneralValueType", result_raw)
+                return result_raw
             return str(result_raw)
 
         handler_result = self.create_handler_from_function(
@@ -2850,14 +2850,14 @@ class FlextDispatcher(x):
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
         request: t.Types.ConfigurationDict = {
-            "handler": cast("t.GeneralValueType", handler_result.value),
+            "handler": handler_result.value,
             "message_type": message_type_name,
             "handler_mode": mode,
             "handler_config": handler_config,
         }
 
         result = self.register_handler_with_request(
-            cast("t.GeneralValueType", request),
+            request,
         )
         # Type narrowing: ConfigurationMapping is a subtype of GeneralValueType
         # (ConfigurationMapping = Mapping[str, GeneralValueType], which is part of GeneralValueType union)
@@ -3770,8 +3770,7 @@ class FlextDispatcher(x):
                 return str(self.data)
 
         # Cast MessageWrapper to GeneralValueType
-        wrapper_instance = MessageWrapper(data=data, message_type=message_type)
-        return cast("t.GeneralValueType", wrapper_instance)
+        return MessageWrapper(data=data, message_type=message_type)
 
     def _get_timeout_seconds(self, timeout_override: int | None) -> float:
         """Get timeout seconds from config or override.
@@ -3815,7 +3814,7 @@ class FlextDispatcher(x):
                 if timeout_override is not None:
                     context_metadata["timeout_override"] = timeout_override
                 with self._context_scope(
-                    cast("t.GeneralValueType", context_metadata),
+                    context_metadata,
                     correlation_id,
                 ):
                     return self.execute(message)
@@ -4082,9 +4081,9 @@ class FlextDispatcher(x):
             yield
             return
 
-        metadata_var = FlextContext.Variables.Performance.OPERATION_METADATA
-        correlation_var = FlextContext.Variables.Correlation.CORRELATION_ID
-        parent_var = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID
+        metadata_var = FlextContext.Variables.OperationMetadata
+        correlation_var = FlextContext.Variables.CorrelationId
+        parent_var = FlextContext.Variables.ParentCorrelationId
 
         # Store current context values for restoration
         current_parent_value = parent_var.get()

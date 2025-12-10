@@ -162,7 +162,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
         )
         batch_result = registry.register_handlers([handler_for_registry])
         if batch_result.is_success:
-            summary = batch_result.unwrap()
+            summary = batch_result.value
             print(f"✅ Batch registration: {summary.successful_registrations} handlers")
 
     @staticmethod
@@ -195,7 +195,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
         command_for_dispatch = cast("t.GeneralValueType", command)
         dispatch_result = dispatcher.dispatch(command_for_dispatch)
         if dispatch_result.is_success:
-            event_value = dispatch_result.unwrap()
+            event_value = dispatch_result.value
             if isinstance(event_value, UserCreatedEvent):
                 print(f"✅ Command dispatched: {event_value.aggregate_id}")
             else:
@@ -247,7 +247,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
         query_for_dispatch = cast("t.GeneralValueType", query)
         query_result = dispatcher.dispatch(query_for_dispatch)
         if query_result.is_success:
-            user_data = query_result.unwrap()
+            user_data = query_result.value
             if isinstance(user_data, dict):
                 print(f"✅ Query dispatched: {user_data.get('name')}")
 
@@ -263,7 +263,7 @@ def main() -> None:
     result = service.execute()
 
     if result.is_success:
-        data = result.unwrap()
+        data = result.value
         patterns = data["patterns_demonstrated"]
         if isinstance(patterns, Sequence):
             patterns_list = list(patterns)

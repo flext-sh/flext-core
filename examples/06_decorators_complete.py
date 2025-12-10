@@ -141,7 +141,7 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
 
         success_result = railway_operation(5)
         if success_result.is_success:
-            print(f"✅ Railway success: {success_result.unwrap()}")
+            print(f"✅ Railway success: {success_result.value}")
 
         failure_result = railway_operation(-1)
         if failure_result.is_failure:
@@ -182,7 +182,7 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
         attempts = [0]
         result = unreliable_operation(attempts)
         if result.is_success:
-            print(f"✅ Retry succeeded: {result.unwrap()}")
+            print(f"✅ Retry succeeded: {result.value}")
 
         # Timeout decorator
         @FlextDecorators.timeout(timeout_seconds=0.5)
@@ -194,7 +194,7 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
 
         result = fast_operation()
         if result.is_success:
-            print(f"✅ Timeout protection: {result.unwrap()}")
+            print(f"✅ Timeout protection: {result.value}")
 
         # Composition: Retry + Timeout + Railway
         @FlextDecorators.retry(max_attempts=2, delay_seconds=0.05)
@@ -208,7 +208,7 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
 
         result = robust_operation(5)
         if result.is_success:
-            print(f"✅ Retry + Timeout composition: {result.unwrap()}")
+            print(f"✅ Retry + Timeout composition: {result.value}")
 
     @staticmethod
     def _demonstrate_combined() -> None:
@@ -241,7 +241,7 @@ class DecoratorsService(FlextService[t.Types.ServiceMetadataMapping]):
 
         result = combined_operation(6)
         if result.is_success:
-            print(f"✅ Combined decorator: {result.unwrap()}")
+            print(f"✅ Combined decorator: {result.value}")
 
 
 def main() -> None:
@@ -255,7 +255,7 @@ def main() -> None:
     result = service.execute()
 
     if result.is_success:
-        data = result.unwrap()
+        data = result.value
         decorators = data["decorators_demonstrated"]
         categories = data["decorator_categories"]
         if isinstance(decorators, Sequence) and isinstance(categories, int):

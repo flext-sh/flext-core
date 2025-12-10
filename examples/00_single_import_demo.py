@@ -298,7 +298,7 @@ def execute_service_operations(
     """Execute service operations - SRP focused on service interaction."""
     result = service.create_user(user_data)
     if result.is_success:
-        user = result.unwrap()
+        user = result.value
         print(f"Service: SUCCESS - {user.name}")
     else:
         print(f"Service: FAILED - {result.error}")

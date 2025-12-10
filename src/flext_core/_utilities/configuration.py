@@ -183,7 +183,7 @@ class FlextUtilitiesConfiguration:
 
         """
         if hasattr(obj, parameter):
-            return (True, cast("t.GeneralValueType", getattr(obj, parameter)))
+            return (True, getattr(obj, parameter))
         return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
@@ -220,7 +220,7 @@ class FlextUtilitiesConfiguration:
         try:
             obj_dict = obj.model_dump()
             if FlextUtilitiesGuards.is_type(obj_dict, dict) and parameter in obj_dict:
-                return (True, cast("t.GeneralValueType", obj_dict[parameter]))
+                return (True, obj_dict[parameter])
         except (AttributeError, TypeError, ValueError):
             pass
         return FlextUtilitiesConfiguration._NOT_FOUND
@@ -378,7 +378,7 @@ class FlextUtilitiesConfiguration:
 
         # Strategy 2: Dict-like GeneralValueType
         if isinstance(obj, (str, int, float, bool, type(None), Sequence, Mapping)):
-            obj_general = cast("t.GeneralValueType", obj)
+            obj_general = obj
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
                 obj_general,
                 parameter,

@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests.base import FlextTestsServiceBase, s
+from flext_tests.base import FlextTestsServiceBase, FlextTestsUtilityBase, s, su
 from flext_tests.builders import FlextTestsBuilders, tb
 from flext_tests.constants import FlextTestsConstants, c
 from flext_tests.docker import FlextTestsDocker
@@ -43,6 +43,7 @@ __all__ = [
     "FlextTestsServiceBase",
     "FlextTestsTypes",
     "FlextTestsUtilities",
+    "FlextTestsUtilityBase",
     "FlextTestsValidator",
     "ModelFactory",
     "c",
@@ -50,6 +51,7 @@ __all__ = [
     "m",
     "p",
     "s",
+    "su",
     "t",
     "tb",
     "tf",

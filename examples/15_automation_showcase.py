@@ -286,7 +286,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
             risky_automation_task,
         )
         if result.is_success:
-            data = result.unwrap()
+            data = result.value
             print(f"✅ Automation successful: {data.get('task_type', 'N/A')}")
             print(f"   Records: {data.get('records_processed', 0)}")
         else:
@@ -327,7 +327,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         )
 
         if pipeline_result.is_success:
-            data = pipeline_result.unwrap()
+            data = pipeline_result.value
             task_type = data.get("task_type", "")
             duration = data.get("duration_ms", 0)
             print(f"✅ Pipeline complete: {task_type}")
@@ -349,7 +349,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
 
         result = primary().lash(fallback)
         if result.is_success:
-            print(f"✅ Automation successful: {result.unwrap()}")
+            print(f"✅ Automation successful: {result.value}")
         else:
             print(f"❌ All strategies failed: {result.error}")
 
@@ -370,7 +370,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         cached = get_cached()
         config_result = get_default() if cached.is_failure else cached
         if config_result.is_success:
-            config = config_result.unwrap()
+            config = config_result.value
             mode = config.get("automation_mode", "unknown")
             batch_size = config.get("batch_size", 0)
             print(f"✅ Config acquired: {mode}")
@@ -394,7 +394,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         fail_result = FlextResult[t.Types.ServiceMetadataMapping].fail(
             "No existing engine",
         )
-        engine = create_engine() if fail_result.is_failure else fail_result.unwrap()
+        engine = create_engine() if fail_result.is_failure else fail_result.value
         engine_id = str(engine.get("engine_id", "unknown"))
         worker_count_val = engine.get("worker_count", 0)
         worker_count = (
@@ -408,9 +408,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
             "worker_count": FlextConstants.Container.DEFAULT_WORKERS,
         }
         success_result = FlextResult[t.Types.ServiceMetadataMapping].ok(existing)
-        cached = (
-            success_result.unwrap() if success_result.is_success else create_engine()
-        )
+        cached = success_result.value if success_result.is_success else create_engine()
         cached_id = str(cached.get("engine_id", "unknown"))
         print(f"✅ Existing engine used: {cached_id}")
 
@@ -453,7 +451,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
 
         result = extract().flow_through(transform, load)
         if result.is_success:
-            print(f"✅ ETL Pipeline: {result.unwrap()}")
+            print(f"✅ ETL Pipeline: {result.value}")
         else:
             print(f"❌ ETL Pipeline failed: {result.error}")
 
@@ -474,7 +472,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
 
         result = start_a().flow_through(lambda _: start_b()).lash(start_backup)
         if result.is_success:
-            print(f"✅ Service Orchestration: {result.unwrap()}")
+            print(f"✅ Service Orchestration: {result.value}")
         else:
             print(f"❌ Service Orchestration failed: {result.error}")
 
@@ -497,7 +495,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         fail_attempt = FlextResult[t.Types.ConfigurationMapping].fail(
             "No cached config",
         )
-        config = load_config() if fail_attempt.is_failure else fail_attempt.unwrap()
+        config = load_config() if fail_attempt.is_failure else fail_attempt.value
         config_count = len(config)
         print(f"✅ Config loaded: {config_count} settings")
 

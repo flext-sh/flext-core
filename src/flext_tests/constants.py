@@ -743,7 +743,7 @@ class FlextTestsConstants(FlextConstants):
                     "# type: ignore comment",
                 )
                 TYPE_002: Final[tuple[str, str]] = ("CRITICAL", "Any type annotation")
-                TYPE_003: Final[tuple[str, str]] = ("MEDIUM", "Unapproved cast() usage")
+                TYPE_003: Final[tuple[str, str]] = ("MEDIUM", "Unapproved  usage")
 
                 # Test rules (TEST-001 to TEST-003)
                 TEST_001: Final[tuple[str, str]] = (
@@ -895,7 +895,7 @@ class FlextTestsConstants(FlextConstants):
             class Approved:
                 """Approved patterns and exceptions for validators."""
 
-                # Approved cast() file patterns (TYPE-003)
+                # Approved  file patterns (TYPE-003)
                 CAST_PATTERNS: Final[tuple[str, ...]] = (
                     r"service\.py$",  # Protocol-to-concrete for nested classes
                     r"container\.py$",  # DI resolution casts

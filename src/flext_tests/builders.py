@@ -25,7 +25,7 @@ from flext_core import (
 )
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T
-from flext_tests.base import s
+from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.factories import FlextTestsFactories as tt
 from flext_tests.models import FlextTestsModels as m
@@ -33,7 +33,7 @@ from flext_tests.typings import FlextTestsTypes as t_test
 from flext_tests.utilities import FlextTestsUtilities as tu
 
 
-class FlextTestsBuilders(s[t.GeneralValueType]):
+class FlextTestsBuilders(su[t.GeneralValueType]):
     """Ultra-powerful test data builder with fluent interface.
 
     Provides minimal public methods that handle almost everything:
@@ -104,7 +104,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         self._ensure_data_initialized()
         data = self.build()
         # Cast to GeneralValueType for proper return
-        return r[t.GeneralValueType].ok(cast("t.GeneralValueType", data))
+        return r[t.GeneralValueType].ok(data)
 
     # =========================================================================
     # CORE PUBLIC METHODS - Minimal and Powerful
@@ -172,7 +172,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         if params_result.is_failure:
             error_msg = f"Invalid add() parameters: {params_result.error}"
             raise ValueError(error_msg)
-        params = params_result.unwrap()
+        params = params_result.value
 
         resolved_value: t_test.Tests.Builders.BuilderValue = None
 
@@ -396,7 +396,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
                 # Transform expects GeneralValueType, but BuilderValue is wider
                 # Cast to GeneralValueType for transform, then back to BuilderValue
                 transformed = params.transform(
-                    cast("t.GeneralValueType", resolved_value),
+                    resolved_value,
                 )
                 resolved_value = cast("t_test.Tests.Builders.BuilderValue", transformed)
 
@@ -404,7 +404,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         if (
             params.validate_func is not None
             and resolved_value is not None
-            and not params.validate_func(cast("t.GeneralValueType", resolved_value))
+            and not params.validate_func(resolved_value)
         ):
             error_msg = (
                 f"Validation failed for key '{params.key}' with value: {resolved_value}"
@@ -429,7 +429,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
                 if merge_result.is_success:
                     resolved_value = cast(
                         "t_test.Tests.Builders.BuilderValue",
-                        merge_result.unwrap(),
+                        merge_result.value,
                     )
             else:
                 builder_data[params.key] = resolved_value
@@ -522,7 +522,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
 
         # BuilderValue is wider than GeneralValueType, but ConfigurationDict accepts it
         # Cast to GeneralValueType for assignment
-        current[parts[-1]] = cast("t.GeneralValueType", final_value)
+        current[parts[-1]] = final_value
         return self
 
     def get(
@@ -545,7 +545,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current: t.GeneralValueType = cast("t.GeneralValueType", self._data)
+        current: t.GeneralValueType = self._data
 
         for part in parts:
             if not u.is_type(current, "mapping"):
@@ -601,7 +601,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         if params_result.is_failure:
             error_msg = f"Invalid to_result() parameters: {params_result.error}"
             raise ValueError(error_msg)
-        params = params_result.unwrap()
+        params = params_result.value
 
         if params.error is not None:
             return r[t_test.Tests.Builders.BuilderDict].fail(
@@ -613,7 +613,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         data = self.build()
 
         if params.validate_func is not None and not params.validate_func(
-            cast("t.GeneralValueType", data),
+            data,
         ):
             return r[t_test.Tests.Builders.BuilderDict].fail(
                 "Validation failed",
@@ -676,7 +676,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             if result.is_failure:
                 msg = params.unwrap_msg or f"Failed to unwrap result: {result.error}"
                 raise ValueError(msg)
-            return cast("T", result.unwrap())
+            return cast("T", result.value)
         return result
 
     @overload
@@ -753,7 +753,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         if params_result.is_failure:
             error_msg = f"Invalid build() parameters: {params_result.error}"
             raise ValueError(error_msg)
-        params = params_result.unwrap()
+        params = params_result.value
 
         self._ensure_data_initialized()
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
@@ -989,7 +989,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         if params_result.is_failure:
             error_msg = f"Invalid merge_from() parameters: {params_result.error}"
             raise ValueError(error_msg)
-        params = params_result.unwrap()
+        params = params_result.value
 
         self._ensure_data_initialized()
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
@@ -1014,7 +1014,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
             assert self._data is not None, "_data must be initialized"
             self._data = cast(
                 "t_test.Tests.Builders.BuilderDict",
-                merge_result.unwrap(),
+                merge_result.value,
             )
         return self
 
@@ -1070,7 +1070,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         if params_result.is_failure:
             error_msg = f"Invalid batch() parameters: {params_result.error}"
             raise ValueError(error_msg)
-        params = params_result.unwrap()
+        params = params_result.value
 
         self._ensure_data_initialized()
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
@@ -1245,7 +1245,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
         # Type narrowing: tt.model() returns union type, extract BaseModel
         # Extract BaseModel from union type (single model case)
         if isinstance(config_result, r):
-            config_unwrapped = config_result.unwrap()
+            config_unwrapped = config_result.value
             if isinstance(config_unwrapped, BaseModel):
                 config = config_unwrapped
             else:
@@ -1404,7 +1404,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
                 results: Sequence[r[T]],
             ) -> tuple[list[T], list[str]]:
                 """Partition results into successes and errors."""
-                successes = [res.unwrap() for res in results if res.is_success]
+                successes = [res.value for res in results if res.is_success]
                 errors = [str(res.error) for res in results if res.is_failure]
                 return successes, errors
 
@@ -1501,7 +1501,7 @@ class FlextTestsBuilders(s[t.GeneralValueType]):
                 for d in dicts:
                     merge_result = u.merge(result, dict(d))
                     if merge_result.is_success:
-                        result = merge_result.unwrap()
+                        result = merge_result.value
                 return result
 
             @staticmethod

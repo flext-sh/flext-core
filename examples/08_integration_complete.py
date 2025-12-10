@@ -133,7 +133,7 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
         # Railway pattern
         result = FlextResult[str].ok("initial").map(to_upper).flat_map(add_processed)
         if result.is_success:
-            print(f"✅ Railway pattern: {result.unwrap()}")
+            print(f"✅ Railway pattern: {result.value}")
 
     @staticmethod
     def _demonstrate_container_integration() -> None:
@@ -258,7 +258,7 @@ def main() -> None:
     result = service.execute()
 
     if result.is_success:
-        data = result.unwrap()
+        data = result.value
         components = data["components_integrated"]
         total = data["total_components"]
         if isinstance(components, Sequence) and isinstance(total, int):

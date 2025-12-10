@@ -4,7 +4,7 @@ The utilities provide runtime type checking functions that use structural typing
 to keep handler and service checks lightweight while staying compatible with
 duck-typed inputs used throughout the CQRS pipeline.
 
-TypeGuard functions enable type narrowing without cast() - the preferred pattern
+TypeGuard functions enable type narrowing without  - the preferred pattern
 for FLEXT codebase to achieve zero-tolerance typing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -175,7 +175,7 @@ class FlextUtilitiesGuards:
     # =========================================================================
     # TypeGuard Functions for FLEXT Core Types
     # =========================================================================
-    # These functions enable type narrowing without cast() - zero tolerance typing
+    # These functions enable type narrowing without  - zero tolerance typing
 
     @staticmethod
     def is_general_value_type(value: object) -> TypeGuard[t.GeneralValueType]:
@@ -184,7 +184,7 @@ class FlextUtilitiesGuards:
         GeneralValueType = ScalarValue | Sequence[GeneralValueType] | Mapping[str, GeneralValueType]
         ScalarValue = str | int | float | bool | datetime | None
 
-        This TypeGuard enables type narrowing without cast() for GeneralValueType.
+        This TypeGuard enables type narrowing without  for GeneralValueType.
         Uses structural typing to validate at runtime.
 
         Args:
@@ -217,7 +217,7 @@ class FlextUtilitiesGuards:
     def _is_config(obj: object) -> TypeGuard[p.Config]:
         """Check if object satisfies the Config protocol.
 
-        Enables type narrowing for configuration objects without cast().
+        Enables type narrowing for configuration objects without .
 
         Args:
             obj: Object to check
@@ -238,7 +238,7 @@ class FlextUtilitiesGuards:
     def _is_context(obj: object) -> TypeGuard[p.Ctx]:
         """Check if object satisfies the Context protocol.
 
-        Enables type narrowing for context objects without cast().
+        Enables type narrowing for context objects without .
 
         Args:
             obj: Object to check
@@ -253,7 +253,7 @@ class FlextUtilitiesGuards:
     def _is_container(obj: object) -> TypeGuard[p.DI]:
         """Check if object satisfies the DI protocol.
 
-        Enables type narrowing for container objects without cast().
+        Enables type narrowing for container objects without .
 
         Args:
             obj: Object to check
@@ -268,7 +268,7 @@ class FlextUtilitiesGuards:
     def _is_command_bus(obj: object) -> TypeGuard[p.CommandBus]:
         """Check if object satisfies the CommandBus protocol.
 
-        Enables type narrowing for dispatcher/command bus without cast().
+        Enables type narrowing for dispatcher/command bus without .
 
         Args:
             obj: Object to check
@@ -283,7 +283,7 @@ class FlextUtilitiesGuards:
     def _is_handler(obj: object) -> TypeGuard[p.Handler]:
         """Check if object satisfies the Handler protocol.
 
-        Enables type narrowing for handler objects without cast().
+        Enables type narrowing for handler objects without .
 
         Args:
             obj: Object to check
@@ -298,7 +298,7 @@ class FlextUtilitiesGuards:
     def _is_logger(obj: object) -> TypeGuard[p.Log.StructlogLogger]:
         """Check if object satisfies the StructlogLogger protocol.
 
-        Enables type narrowing for logger objects without cast().
+        Enables type narrowing for logger objects without .
 
         Args:
             obj: Object to check
@@ -313,7 +313,7 @@ class FlextUtilitiesGuards:
     def _is_result(obj: object) -> TypeGuard[p.Result[t.GeneralValueType]]:
         """Check if object satisfies the Result protocol.
 
-        Enables type narrowing for result objects without cast().
+        Enables type narrowing for result objects without .
 
         Args:
             obj: Object to check
@@ -328,7 +328,7 @@ class FlextUtilitiesGuards:
     def _is_service(obj: object) -> TypeGuard[p.Service[t.GeneralValueType]]:
         """Check if object satisfies the Service protocol.
 
-        Enables type narrowing for service objects without cast().
+        Enables type narrowing for service objects without .
 
         Args:
             obj: Object to check
@@ -343,7 +343,7 @@ class FlextUtilitiesGuards:
     def _is_middleware(obj: object) -> TypeGuard[p.Middleware]:
         """Check if object satisfies the Middleware protocol.
 
-        Enables type narrowing for middleware objects without cast().
+        Enables type narrowing for middleware objects without .
 
         Args:
             obj: Object to check

@@ -16,7 +16,6 @@ import time
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import cast
 
 from pydantic import BaseModel
 
@@ -309,8 +308,8 @@ class FlextUtilitiesGenerators:
                     # Type narrowing: normalize_to_general_value on dict returns dict
                     # Runtime check: normalized is GeneralValueType, but we know it's dict from input
                     if FlextUtilitiesGuards.is_type(normalized, dict):
-                        # Cast to ConfigurationDict - we know it's a dict from is_type check
-                        return cast("t.Types.ConfigurationDict", normalized)
+                        # Type narrowing: normalized is dict after is_type check
+                        return normalized  # type: ignore[return-value]
                     # Fallback: if normalization changed type, return empty dict
                     return {}
                 return {}

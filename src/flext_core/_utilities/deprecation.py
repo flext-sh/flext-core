@@ -14,7 +14,7 @@ import functools
 import pathlib
 import warnings
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core.typings import P, R
 
@@ -166,8 +166,9 @@ class FlextUtilitiesDeprecation:
                 )
                 # Call original __init__ method - original_init is bound to the class
                 # Type narrowing: original_init is guaranteed to be callable after None check
-                init_func = cast("Callable[..., None]", original_init)
-                init_func(self, *args, **kwargs)
+                init_func = original_init
+                if init_func is not None:
+                    init_func(self, *args, **kwargs)
 
             # Set __init__ on the class for decorator pattern
             # Accessing __init__ on class is necessary for decorator pattern

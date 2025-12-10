@@ -191,7 +191,7 @@ class FlextModelsContext:
                 )
             else:
                 # Convert to string for type safety
-                prev_value = cast("t.GeneralValueType", str(current_value))
+                prev_value = str(current_value)
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key,
                 previous_value=prev_value,

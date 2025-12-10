@@ -275,10 +275,7 @@ class FlextTestsTypes(FlextTypes):
             - collect: Collect all errors, return BatchResult with failures
             """
 
-            type BatchFiles = (
-                Mapping[str, FileContent]
-                | Sequence[FileContent]
-            )
+            type BatchFiles = Mapping[str, "FlextTestsTypes.Tests.FileContent"] | Sequence["FlextTestsTypes.Tests.FileContent"]
             """Type for batch file operations - Mapping or Sequence of files."""
 
         class Builders:

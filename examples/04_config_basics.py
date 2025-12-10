@@ -185,7 +185,7 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
                 log_level=FlextConstants.Settings.LogLevel.INFO,
             ),
         )
-        print_config(result.unwrap())
+        print_config(result.value)
         return FlextResult[bool].ok(True)
 
     @staticmethod

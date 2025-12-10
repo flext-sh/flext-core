@@ -231,7 +231,7 @@ class TestFlextProtocols:
         tm.that(container.is_success, eq=True, msg="Container must be success")
         tm.that(container.is_failure, eq=False, msg="Container must not be failure")
         tm.that(container.error, none=True, msg="Success container must have no error")
-        tm.that(container.unwrap(), eq="test", msg="Unwrap must return value")
+        tm.that(container.value, eq="test", msg="Unwrap must return value")
 
     def test_repository_implementation(self) -> None:
         """Test that a class can implement Repository protocol."""

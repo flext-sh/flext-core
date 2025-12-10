@@ -254,7 +254,7 @@ class FlextUtilitiesValidation:
             try:
                 dump_result = model_dump_attr()
                 if FlextUtilitiesGuards.is_type(dump_result, dict):
-                    return cast("t.GeneralValueType", dump_result)
+                    return dump_result
                 return str(component)
             except Exception:
                 return str(component)
@@ -323,7 +323,7 @@ class FlextUtilitiesValidation:
 
         # Ensure valid GeneralValueType for primitives
         return FlextUtilitiesValidation._ensure_general_value_type(
-            cast("t.GeneralValueType", component),
+            component,
         )
 
     @staticmethod
@@ -2387,7 +2387,7 @@ class FlextUtilitiesValidation:
     ) -> FlextRuntime.RuntimeResult[object]:
         """Internal helper for non-empty validation."""
         # Use pattern matching for type-specific validation
-        value_typed = cast("t.GeneralValueType", value)
+        value_typed = value
 
         # String validation
         if FlextUtilitiesGuards.is_type(value, str):
@@ -2446,11 +2446,11 @@ class FlextUtilitiesValidation:
         ),
         # Type shortcuts
         "dict": (
-            lambda v: FlextRuntime.is_dict_like(cast("t.GeneralValueType", v)),
+            FlextRuntime.is_dict_like,
             "dict-like",
         ),
         "list": (
-            lambda v: FlextRuntime.is_list_like(cast("t.GeneralValueType", v)),
+            FlextRuntime.is_list_like,
             "list-like",
         ),
         "string": (lambda v: isinstance(v, str), "string"),
@@ -2483,7 +2483,7 @@ class FlextUtilitiesValidation:
                 shortcut_lower
             ]
             if check_fn(value):
-                result_ok = r[t.GeneralValueType].ok(cast("t.GeneralValueType", value))
+                result_ok = r[t.GeneralValueType].ok(value)
                 # Cast to r[object] for return type compatibility
                 return cast("r[object]", result_ok)
             result_fail: r[object] = r[t.GeneralValueType].fail(
@@ -2685,35 +2685,6 @@ class FlextUtilitiesValidation:
 
             """
             return result.value if result.is_success else default
-
-        @staticmethod
-        def unwrap[T](
-            value: T | r[T],
-            *,
-            default: T | None = None,
-        ) -> T:
-            """Unwrap r or return value (mnemonic: unwrap = extract value).
-
-            Args:
-                value: Value or r
-                default: Default if result is failure
-
-            Returns:
-                Unwrapped value or default
-
-            Example:
-                data = ResultHelpers.unwrap(fields_result)
-
-            """
-            if isinstance(value, r):
-                if value.is_failure:
-                    return cast("T", default)
-                # Type narrowing: value is r[T] and is_success is True, so value.value is T
-                # Use direct access to .value property (unwrap() is deprecated)
-                # FlextResult never returns None in value if not failed
-                # Type inference: value.value is already T when is_success is True
-                return value.value
-            return value
 
         @staticmethod
         def vals[T](
