@@ -275,7 +275,7 @@ class Testr:
         if op_type == ResultOperationType.UNWRAP:
             assert isinstance(value, int)
             result = r[int].ok(value)
-            assert result.unwrap() == value
+            assert result.value == value
 
         elif op_type == ResultOperationType.MAP:
             assert isinstance(value, int)
@@ -734,8 +734,8 @@ class Testr:
         result = r[str].ok("value")
         io_result = result.to_io_result()
         assert isinstance(io_result, IOSuccess)
-        # IOSuccess.unwrap() returns IO, not the direct value
-        unwrapped = io_result.unwrap()
+        # IOSuccess.value returns IO, not the direct value
+        unwrapped = io_result.value
         assert isinstance(unwrapped, IO)
         assert unwrapped._inner_value == "value"
 
@@ -827,7 +827,7 @@ class Testr:
         """Test unwrap raises RuntimeError on failure."""
         result = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot unwrap failed result"):
-            result.unwrap()
+            result.value
 
     def test_flat_map_inner_failure(self) -> None:
         """Test flat_map inner function returns Failure."""
@@ -869,7 +869,7 @@ class Testr:
         result = r[str].ok("value")
         maybe = result.to_maybe()
         assert isinstance(maybe, Some)
-        assert maybe.unwrap() == "value"
+        assert maybe.value == "value"
 
     def test_to_maybe_failure(self) -> None:
         """Test to_maybe converts failure to Nothing."""

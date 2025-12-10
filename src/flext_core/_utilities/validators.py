@@ -19,7 +19,6 @@ from typing import Self, cast
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.typings import t
 
 # ============================================================================
 # VALIDATOR SPEC PROTOCOL - Core interface for all validators
@@ -95,9 +94,7 @@ class StringValidators:
 
     # Class-level validators (no args needed)
     non_empty: Validator = Validator(
-        predicate=lambda v: FlextUtilitiesGuards.is_string_non_empty(
-            cast("t.GeneralValueType", v)
-        ),
+        predicate=FlextUtilitiesGuards.is_string_non_empty,
         description="string.non_empty",
     )
 

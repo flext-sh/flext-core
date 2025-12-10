@@ -465,7 +465,7 @@ class TestFlextDispatcherLayer3Docker:
 
             assert result.is_success or result.is_failure
             if result.is_success:
-                data = result.unwrap()
+                data = result.value
                 assert isinstance(data, dict)
                 assert "result" in data or "mocked" in data
                 assert postgres_service.query_count > 0
@@ -580,7 +580,7 @@ class TestFlextDispatcherLayer3Docker:
             elapsed = time.time() - start_time
 
             assert result.is_success
-            items = result.unwrap()
+            items = result.value
             assert len(items) == expected_count
             if data_count > 0:
                 assert elapsed >= TestDispatcherConstants.TestValues.LATENCY_DEFAULT
@@ -637,7 +637,7 @@ class TestFlextDispatcherLayer3Docker:
             elapsed = time.time() - start_time
 
             assert result.is_success
-            items = result.unwrap()
+            items = result.value
             assert len(items) == expected_count
             if data_count == 4:
                 assert (
@@ -1011,6 +1011,6 @@ class TestFlextDispatcherLayer3Docker:
 
             analytics_result = dispatcher.get_performance_analytics()
             assert analytics_result.is_success
-            analytics = analytics_result.unwrap()
+            analytics = analytics_result.value
             assert isinstance(analytics, dict)
             assert "global_metrics" in analytics or "metrics" in analytics

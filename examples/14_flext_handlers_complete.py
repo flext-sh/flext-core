@@ -162,7 +162,7 @@ class HandlersService(FlextService[t.Types.ServiceMetadataMapping]):
         )
         result = handler.handle(command)
         if result.is_success:
-            print(f"✅ Command executed: {result.unwrap()}")
+            print(f"✅ Command executed: {result.value}")
 
         invalid_command = CreateUserCommand(
             user_id="user-456",
@@ -183,7 +183,7 @@ class HandlersService(FlextService[t.Types.ServiceMetadataMapping]):
         query = GetUserQuery(user_id="user-123")
         result = handler.handle(query)
         if result.is_success:
-            user = result.unwrap()
+            user = result.value
             print(f"✅ Query result: {user.name} ({user.email})")
 
         not_found_query = GetUserQuery(user_id="not-found")
@@ -249,7 +249,7 @@ def main() -> None:
     result = service.execute()
 
     if result.is_success:
-        data = result.unwrap()
+        data = result.value
         handlers = data.get("handlers_demonstrated", [])
         patterns = data.get("cqrs_patterns", [])
         handler_count = len(handlers) if isinstance(handlers, Sequence) else 0

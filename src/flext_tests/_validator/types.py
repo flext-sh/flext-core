@@ -1,6 +1,6 @@
 """Type validation for FLEXT architecture.
 
-Detects type violations: type:ignore comments, Any types, unapproved cast() usage.
+Detects type violations: type:ignore comments, Any types, unapproved  usage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -83,7 +83,7 @@ class FlextValidatorTypes:
         # Check for Any type annotations
         violations.extend(cls._check_any_types(file_path, tree, lines, approved))
 
-        # Check for unapproved cast() usage
+        # Check for unapproved  usage
         violations.extend(cls._check_cast_usage(file_path, tree, lines, approved))
 
         return violations
@@ -178,7 +178,7 @@ class FlextValidatorTypes:
         lines: list[str],
         approved: dict[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
-        """Detect unapproved cast() usage."""
+        """Detect unapproved  usage."""
         # Check both custom approved patterns and defaults
         patterns = list(approved.get("TYPE-003", [])) + list(
             c.Tests.Validator.Approved.CAST_PATTERNS,
@@ -192,7 +192,7 @@ class FlextValidatorTypes:
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
-            # Check for cast() call
+            # Check for  call
             is_cast_name = isinstance(node.func, ast.Name) and node.func.id == "cast"
             is_cast_typing = (
                 isinstance(node.func, ast.Attribute)

@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import cast, get_origin, get_type_hints
+from typing import get_origin, get_type_hints
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -143,18 +143,18 @@ class FlextUtilitiesChecker:
             if isinstance(hint, str):
                 return hint
             if isinstance(hint, type):
-                # Cast type to type[GeneralValueType] for MessageTypeSpecifier
-                # MessageTypeSpecifier = str | type[GeneralValueType]
-                return cast("t.Utility.MessageTypeSpecifier", hint)
+                # Type narrowing: hint is type after isinstance check
+                # MessageTypeSpecifier = str | type[GeneralValueType], so type is valid
+                return hint
             # For other types (Sequence, Mapping), convert to string
             # string is valid MessageTypeSpecifier
             return str(hint)
 
         annotation = parameter.annotation
         if annotation is not inspect.Signature.empty:
-            # Cast annotation to MessageTypeSpecifier (str | type[GeneralValueType])
-            # annotation can be any type annotation, we cast it for type safety
-            return cast("t.Utility.MessageTypeSpecifier", annotation)
+            # Type narrowing: annotation exists and is not empty
+            # MessageTypeSpecifier = str | type[GeneralValueType], annotation fits
+            return annotation
 
         return None
 

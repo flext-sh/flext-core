@@ -214,10 +214,10 @@ class RailwayService(s[DemonstrationResult]):
 
         # Value extraction patterns
         user_data = success.value
-        print(f".unwrap() success: {user_data[c.Mixins.FIELD_NAME]}")
+        print(f".value success: {user_data[c.Mixins.FIELD_NAME]}")
         print(f".unwrap_or() failure: {failure.unwrap_or('default')}")
         print(f".value property: {user_data['email']}")
-        print(f".unwrap(): {success.unwrap()}")
+        print(f".value: {success.value}")
 
     @staticmethod
     def _demonstrate_railway_operations() -> None:
@@ -231,7 +231,7 @@ class RailwayService(s[DemonstrationResult]):
         # Map transformation
         input_value = "hello"
         mapped = r.ok(input_value).map(to_upper)
-        print(f".map(to_upper): {mapped.unwrap()}")
+        print(f".map(to_upper): {mapped.value}")
 
         # FlatMap chaining with u validation (DRY)
         test_value = "test"
@@ -243,7 +243,7 @@ class RailwayService(s[DemonstrationResult]):
             )
 
         chained = r.ok(test_value).flat_map(validate_length).map(to_upper)
-        print(f".flat_map chain: {chained.unwrap()}")
+        print(f".flat_map chain: {chained.value}")
 
         # Flow through pipeline with advanced composition using u (DRY)
         def add_prefix(value: str) -> r[str]:
@@ -257,7 +257,7 @@ class RailwayService(s[DemonstrationResult]):
             add_prefix,
             add_exclamation,
         )
-        print(f".flow_through pipeline: {pipeline.unwrap()}")
+        print(f".flow_through pipeline: {pipeline.value}")
 
     @staticmethod
     def _demonstrate_error_recovery() -> None:
@@ -278,7 +278,7 @@ class RailwayService(s[DemonstrationResult]):
             return r.ok("Fallback value")
 
         fallback = failure.lash(provide_fallback)
-        print(f".lash() recovery: {fallback.unwrap()}")
+        print(f".lash() recovery: {fallback.value}")
 
     @staticmethod
     def _demonstrate_advanced_combinators() -> None:
@@ -293,7 +293,7 @@ class RailwayService(s[DemonstrationResult]):
         ]
 
         traversed = r.traverse(results, lambda r: r)
-        print(f".traverse(): {len(traversed.unwrap())} results")
+        print(f".traverse(): {len(traversed.value)} results")
 
         # Filter with predicate using c threshold
         test_value = c.Validation.FILTER_THRESHOLD + c.Validation.MIN_AGE  # 10

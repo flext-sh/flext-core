@@ -136,7 +136,7 @@ class TestPhase2FinalCoveragePush:
     def test_flext_result_unwrap_safe_operations(self) -> None:
         """Test FlextResult unwrap and value operations."""
         success_result = FlextResult[str].ok("success_value")
-        assert success_result.unwrap() == "success_value"
+        assert success_result.value == "success_value"
         assert success_result.value == "success_value"
         assert success_result.value == "success_value"
 

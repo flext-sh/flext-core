@@ -163,14 +163,14 @@ class FlextTestsMatchers(FlextTestsUtilities):
         params_result = u.Model.from_kwargs(m.Tests.Matcher.OkParams, **kwargs)
         if params_result.is_failure:
             raise ValueError(f"Parameter validation failed: {params_result.error}")
-        params = params_result.unwrap()
+        params = params_result.value
 
         if not result.is_success:
             raise AssertionError(
                 params.msg or c.Tests.Matcher.ERR_OK_FAILED.format(error=result.error),
             )
         # Type as object since path extraction may change type; cast to TResult at return
-        value: object = result.unwrap()
+        value: object = result.value
 
         # Path extraction first (if specified)
         if params.path is not None:
@@ -189,7 +189,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                         error=extracted.error,
                     ),
                 )
-            value = extracted.unwrap()
+            value = extracted.value
 
         # Validate value with u.chk() - pass parameters directly for type safety
         # Note: u.chk() doesn't support tuple types for is_/not_, handle separately
@@ -404,12 +404,12 @@ class FlextTestsMatchers(FlextTestsUtilities):
         params_result = u.Model.from_kwargs(m.Tests.Matcher.FailParams, **kwargs)
         if params_result.is_failure:
             raise ValueError(f"Parameter validation failed: {params_result.error}")
-        params = params_result.unwrap()
+        params = params_result.value
 
         if result.is_success:
             raise AssertionError(
                 params.msg
-                or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(value=result.unwrap()),
+                or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(value=result.value),
             )
         err = result.error or ""
 
@@ -622,7 +622,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
         params_result = u.Model.from_kwargs(m.Tests.Matcher.ThatParams, **kwargs)
         if params_result.is_failure:
             raise ValueError(f"Parameter validation failed: {params_result.error}")
-        params = params_result.unwrap()
+        params = params_result.value
 
         # FlextResult auto-detection and handling
         if isinstance(value, r):
@@ -636,7 +636,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                     # Type narrowing: value.is_success is True, so unwrap() returns T
                     # Convert to string for format() to avoid type issues
                     # Use cast to help pyright infer type
-                    unwrapped_value_error = value.unwrap()
+                    unwrapped_value_error = value.value
                     value_str: str = str(cast("object", unwrapped_value_error))
                     raise AssertionError(
                         params.msg
@@ -653,7 +653,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 # Type narrowing: unwrap() returns the value type
                 unwrapped_value: t.GeneralValueType = cast(
                     "t.GeneralValueType",
-                    value.unwrap(),
+                    value.value,
                 )
                 actual_value = unwrapped_value
             # If result is failure, check if we're validating the error
@@ -1261,7 +1261,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
         params_result = u.Model.from_kwargs(m.Tests.Matcher.ScopeParams, **kwargs)
         if params_result.is_failure:
             raise ValueError(f"Parameter validation failed: {params_result.error}")
-        params = params_result.unwrap()
+        params = params_result.value
 
         # Save original environment and working directory
         original_env: dict[str, str | None] = {}

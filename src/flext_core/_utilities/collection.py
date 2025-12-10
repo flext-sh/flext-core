@@ -321,10 +321,10 @@ class FlextUtilitiesCollection:
         """Internal implementation for map - handles all cases.
 
         Python 3.13: Uses match/case with type narrowing for precise dispatch.
-        Eliminates need for cast() or type: ignore through proper type narrowing.
+        Eliminates need for  or type: ignore through proper type narrowing.
         """
         # Result case - isinstance check for FlextResult structure
-        # Note: Use isinstance for proper type narrowing without cast()
+        # Note: Use isinstance for proper type narrowing without
         if isinstance(items, FlextResult):
             # Type narrowing: isinstance ensures items is r[T]
             # For FlextResult, mapper is always Callable[[T], R] (single argument)
@@ -530,7 +530,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _filter_list_no_mapper[T](
         items_list: list[T],
-        predicate: Callable[[T], bool] | Callable[..., bool],
+        predicate: Callable[[T], bool],
     ) -> list[T]:
         """Filter a list without mapping."""
         return [item for item in items_list if predicate(item)]
@@ -538,8 +538,8 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _filter_list_with_mapper[T, R](
         items_list: list[T],
-        predicate: Callable[[T], bool] | Callable[..., bool],
-        mapper: Callable[[T], R] | Callable[..., R],
+        predicate: Callable[[T], bool],
+        mapper: Callable[[T], R],
     ) -> list[R]:
         """Filter a list with mapping - filter original items, then map."""
         filtered_items = []
@@ -686,7 +686,7 @@ class FlextUtilitiesCollection:
                     cast("Callable[[str, T], R]", mapper),
                 )
             return FlextUtilitiesCollection._filter_dict(
-                items_dict_filtered,
+                cast("dict[str, T] | Mapping[str, T]", items_dict_filtered),
                 predicate,
             )
         # Single item case
@@ -917,7 +917,7 @@ class FlextUtilitiesCollection:
             # Use TypeGuard for proper type narrowing - eliminates need for isinstance
             # Access private methods for TypeGuard return type (needed for type narrowing)
             else:
-                k = getattr(item, key, None)
+                k = cast("object", getattr(item, key, None))
             if k not in result:
                 result[k] = []
             result[k].append(item)
@@ -951,7 +951,7 @@ class FlextUtilitiesCollection:
         operation: Callable[[T], R | r[R]],
         errors: list[tuple[int, str]],
         on_error: str,
-    ) -> R | r[t.Types.BatchResultDict] | None:
+    ) -> R | r[R] | r[t.Types.BatchResultDict] | None:
         """Helper: Process a single batch item."""
         try:
             # Type narrowing: operation is Callable, result type is unknown
@@ -1097,7 +1097,7 @@ class FlextUtilitiesCollection:
                 )
                 process_result_raw = cast("R", extracted_value)
             # Type narrowing: process_result_raw is R (not r, not None)
-            processed_results.append(process_result_raw)
+            processed_results.append(cast("R", process_result_raw))
 
             # Call progress callback if provided
             if progress is not None and idx % _progress_interval == 0:
@@ -1107,7 +1107,7 @@ class FlextUtilitiesCollection:
         def to_general_value(item: R) -> t.GeneralValueType:
             """Convert item to GeneralValueType."""
             # Cast to GeneralValueType - R is known to be a valid GeneralValueType
-            return cast("t.GeneralValueType", item)
+            return item
 
         validated_results_raw_list: list[R] = processed_results
         validated_results = FlextUtilitiesCollection.map(

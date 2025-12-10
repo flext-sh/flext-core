@@ -239,7 +239,7 @@ class TestServiceDomain:
             result,
         )
         u.Tests.Result.assert_result_success(result_typed)
-        assert result.unwrap() is test_service_obj
+        assert result.value is test_service_obj
 
     def test_register_service(self) -> None:
         """Test registering service in container via FlextContext."""
@@ -586,10 +586,10 @@ class TestContextDataModel:
         context = FlextContext(context_data)
         result1 = context.get("key1")
         assert result1.is_success
-        assert result1.unwrap() == "value1"
+        assert result1.value == "value1"
         result2 = context.get("key2")
         assert result2.is_success
-        assert result2.unwrap() == "value2"
+        assert result2.value == "value2"
 
     def test_context_export_snapshot(self) -> None:
         """Test exporting context as ContextExport model."""
@@ -657,7 +657,7 @@ class TestContextIntegration:
         restored_context = FlextContext.from_json(json_str)
         result = restored_context.get("basic_key")
         assert result.is_success
-        assert result.unwrap() == "basic_value"
+        assert result.value == "basic_value"
 
 
 __all__ = [

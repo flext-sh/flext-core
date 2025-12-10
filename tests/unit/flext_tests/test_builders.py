@@ -196,7 +196,7 @@ class TestFlextTestsBuilders:
         data = builder.build()
         result = cast("r[int]", data["result"])
         assert result.is_success
-        assert result.unwrap() == 42
+        assert result.value == 42
 
     def test_add_with_result_fail(self) -> None:
         """Test add() with result_fail parameter."""
@@ -395,7 +395,7 @@ class TestFlextTestsBuilders:
             result_raw,
         )
         assert result.is_success
-        data = result.unwrap()
+        data = result.value
         assert data["x"] == 1
 
     def test_to_result_with_error(self) -> None:
@@ -526,7 +526,7 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.ok()."""
         result = tb.Tests.Result.ok(42)
         assert result.is_success
-        assert result.unwrap() == 42
+        assert result.value == 42
 
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
@@ -718,7 +718,7 @@ class TestFlextTestsBuilders:
         # Result.ok() delegates to tt.res("ok", value=...)
         result = tb.Tests.Result.ok(42)
         assert result.is_success
-        assert result.unwrap() == 42
+        assert result.value == 42
 
     def test_result_fail_delegates_to_tt_res(self) -> None:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""

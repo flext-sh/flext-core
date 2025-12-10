@@ -19,12 +19,12 @@ import types
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Self, cast, overload
+from typing import ClassVar, Self, overload
 
 from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.result import FlextResult, r
+from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import u

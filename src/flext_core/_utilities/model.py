@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -210,10 +210,8 @@ class FlextUtilitiesModel:
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
             # attributes contains t.MetadataAttributeValue (subset of GeneralValueType)
-            # Safe cast: MetadataAttributeValue is a subset of GeneralValueType
-            return FlextModelsBase.Metadata(
-                attributes=cast("t.Types.ConfigurationDict", attributes)
-            )
+            # Type: attributes is dict[str, t.MetadataAttributeValue] which is compatible
+            return FlextModelsBase.Metadata(attributes=attributes)
 
         # Invalid type - raise TypeError
         msg = (

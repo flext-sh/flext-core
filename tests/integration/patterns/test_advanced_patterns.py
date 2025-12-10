@@ -617,12 +617,12 @@ class TestAdvancedPatterns:
         # Test successful processing state
         result1 = service.process("data1")
         assert result1.is_success
-        assert result1.unwrap()["status"] == "processing"
+        assert result1.value["status"] == "processing"
 
         # Test completed state
         result2 = service.process("data2")
         assert result2.is_success
-        assert result2.unwrap()["status"] == "completed"
+        assert result2.value["status"] == "completed"
 
         # Verify call count
         assert service.call_count == 2

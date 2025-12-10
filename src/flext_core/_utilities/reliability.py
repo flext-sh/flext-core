@@ -380,7 +380,7 @@ class FlextUtilitiesReliability:
                     and hasattr(result, "value")
                 ):
                     # Type narrowing: result has RuntimeResult structure
-                    result_typed: r[object] = cast("r[object]", result)
+                    result_typed: r[object] = result
                     if result_typed.is_failure:
                         if on_error == "stop":
                             err_msg = result_typed.error or "Unknown error"

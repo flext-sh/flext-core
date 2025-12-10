@@ -547,7 +547,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     ) -> FlextResult[T_co]:
         """Create from returns.maybe.Maybe."""
         if isinstance(maybe, Some):
-            return cls.ok(maybe.unwrap())
+            value = maybe.value
+            if value is not None:
+                return cls.ok(value)
         return cls.fail(error)
 
     # alt and lash are inherited from RuntimeResult

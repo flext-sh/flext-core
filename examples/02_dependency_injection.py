@@ -296,7 +296,7 @@ class DependencyInjectionService(s[t.Types.ConfigurationDict]):
                 container.get(service_name)
             )
             if result.is_success:
-                service = result.unwrap()
+                service = result.value
                 if service_name == "database" and isinstance(service, DatabaseService):
                     test_result = test_database(service)
                 elif service_name == "cache" and isinstance(service, CacheService):
@@ -316,7 +316,7 @@ class DependencyInjectionService(s[t.Types.ConfigurationDict]):
 
         service_names = ["database", "cache", "email"]
         services: dict[str, DatabaseService | CacheService | EmailService] = {
-            name: container.get(name).unwrap()
+            name: container.get(name).value
             for name in service_names
             if container.get(name).is_success
         }
@@ -338,7 +338,7 @@ class DependencyInjectionService(s[t.Types.ConfigurationDict]):
             container.get("database")
         )
         if db_result.is_success:
-            db_service = db_result.unwrap()
+            db_service = db_result.value
             if isinstance(db_service, DatabaseService):
                 invalid_query = db_service.query("INVALID QUERY")
                 print(
@@ -357,7 +357,7 @@ def main() -> None:
     result = service.execute()
 
     if result.is_success:
-        data = result.unwrap()
+        data = result.value
         print(f"✅ Completed {data['patterns_demonstrated']} DI patterns")
     else:
         print(f"❌ Failed: {result.error}")

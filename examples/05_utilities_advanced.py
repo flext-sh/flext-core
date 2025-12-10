@@ -147,7 +147,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
         status_enum_pending = StatusEnum.PENDING
         result_obj = process_with_result(status_enum_pending)
         if result_obj.is_success:
-            print(f"✅ Validated with result: {result_obj.unwrap()}")
+            print(f"✅ Validated with result: {result_obj.value}")
 
     @staticmethod
     def _demonstrate_enum_utilities() -> None:
@@ -157,7 +157,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
         # Parse enum from string
         parse_result = u.Enum.parse(StatusEnum, "active")
         if parse_result.is_success:
-            status = parse_result.unwrap()
+            status = parse_result.value
             print(f"✅ Enum parsing: {status.value}")
 
         # Type guard for enum membership
@@ -187,7 +187,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
         }
         model_result = u.Model.from_dict(UserModel, user_data)
         if model_result.is_success:
-            user = model_result.unwrap()
+            user = model_result.value
             status_value = (
                 user.status.value
                 if u.Validation.guard(user.status, StatusEnum, return_value=True)
@@ -204,7 +204,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
             age=30,
         )
         if kwargs_result.is_success:
-            user = kwargs_result.unwrap()
+            user = kwargs_result.value
             status_value = (
                 user.status.value
                 if u.Validation.guard(user.status, StatusEnum, return_value=True)
@@ -221,7 +221,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
         overrides: Mapping[str, t.FlexibleValue] = {"name": "Charlie"}
         merge_result = u.Model.merge_defaults(UserModel, defaults, overrides)
         if merge_result.is_success:
-            user = merge_result.unwrap()
+            user = merge_result.value
             status_value = (
                 user.status.value
                 if u.Validation.guard(user.status, StatusEnum, return_value=True)
@@ -244,7 +244,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
         long_text = str(TEST_DATA["long_text"])
         truncate_result = u.Text.truncate_text(long_text, max_length=50)
         if truncate_result.is_success:
-            truncated = truncate_result.unwrap()
+            truncated = truncate_result.value
             print(f"✅ Text truncation: {len(truncated)} chars")
 
         # Safe string validation
@@ -306,7 +306,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
                 }
                 map_result = u.Mapper.map_dict_keys(source_dict, key_mapping)
         if map_result.is_success:
-            mapped = map_result.unwrap()
+            mapped = map_result.value
             print(f"✅ Key mapping: {list(mapped.keys())}")
 
         # Convert to int safe using parse()
@@ -323,7 +323,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
         }
         flags_result = u.Mapper.build_flags_dict(flags, flag_mapping)
         if flags_result.is_success:
-            flags_dict = flags_result.unwrap()
+            flags_dict = flags_result.value
             print(f"✅ Flags dict: {list(flags_dict.keys())}")
 
     @staticmethod
@@ -357,7 +357,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
             max_page_size=FlextConstants.Pagination.MAX_PAGE_SIZE,
         )
         if page_result.is_success:
-            page, page_size = page_result.unwrap()
+            page, page_size = page_result.value
             print(f"✅ Page params: page={page}, size={page_size}")
 
         # Validate pagination params
@@ -367,7 +367,7 @@ class AdvancedUtilitiesService(s[t.Types.ServiceMetadataMapping]):
             max_page_size=FlextConstants.Pagination.MAX_PAGE_SIZE,
         )
         if validate_result.is_success:
-            params = validate_result.unwrap()
+            params = validate_result.value
             print(f"✅ Validated params: {params}")
 
     @staticmethod
@@ -406,7 +406,7 @@ def main() -> None:
     result = service.execute()
 
     if result.is_success:
-        data = result.unwrap()
+        data = result.value
         utilities = data["utilities_demonstrated"]
         categories = data["utility_categories"]
         if isinstance(utilities, Sequence) and isinstance(categories, int):

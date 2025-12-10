@@ -348,7 +348,7 @@ class FlextDecorators(FlextRuntime):
                     if name not in kwargs:
                         # Get from container using the service key
                         result_raw: p.Result[object] = container.get(service_key)
-                        result: r[object] = cast("r[object]", result_raw)
+                        result: r[object] = result_raw
                         if result.is_success:
                             # Use .value directly - FlextResult never returns None on success
                             kwargs[name] = result.value
@@ -441,7 +441,7 @@ class FlextDecorators(FlextRuntime):
                     log_start_result = result_logger.debug(
                         "%s_started",
                         op_name,
-                        extra=cast("t.GeneralValueType", start_extra),
+                        extra=start_extra,
                     )
                     FlextDecorators._handle_log_result(
                         result=log_start_result,
@@ -475,7 +475,7 @@ class FlextDecorators(FlextRuntime):
                     log_completion_result = result_logger.debug(
                         "%s_completed",
                         op_name,
-                        extra=cast("t.GeneralValueType", completion_extra),
+                        extra=completion_extra,
                     )
                     FlextDecorators._handle_log_result(
                         result=log_completion_result,
@@ -630,7 +630,7 @@ class FlextDecorators(FlextRuntime):
                         success_extra["correlation_id"] = correlation_id
                     logger.info(
                         "operation_completed",
-                        extra=cast("t.GeneralValueType", success_extra),
+                        extra=success_extra,
                     )
                     return result
                 except (
@@ -654,7 +654,7 @@ class FlextDecorators(FlextRuntime):
                         failure_extra["correlation_id"] = correlation_id
                     logger.exception(
                         "operation_failed",
-                        extra=cast("t.GeneralValueType", failure_extra),
+                        extra=failure_extra,
                     )
                     raise
                 finally:
@@ -1025,7 +1025,7 @@ class FlextDecorators(FlextRuntime):
         if ensure_correlation:
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
         else:
-            current_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            current_id = FlextContext.Variables.CorrelationId.get()
             if u.is_type(current_id, str) and current_id:
                 correlation_id = current_id
 

@@ -34,7 +34,7 @@ class TestContext100Coverage:
     def test_remove_success(self) -> None:
         """Test remove successfully removes key."""
         context = FlextContext()
-        context.set("test_key", "test_value").unwrap()
+        context.set("test_key", "test_value").value
 
         # Remove the key
         context.remove("test_key")
@@ -57,8 +57,8 @@ class TestContext100Coverage:
     def test_clear_removes_all_data(self) -> None:
         """Test clear removes all data."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
-        context.set("key2", "value2").unwrap()
+        context.set("key1", "value1").value
+        context.set("key2", "value2").value
 
         # Clear all data
         context.clear()
@@ -72,7 +72,7 @@ class TestContext100Coverage:
     def test_merge_with_dict(self) -> None:
         """Test merge with dictionary."""
         context1 = FlextContext()
-        context1.set("key1", "value1").unwrap()
+        context1.set("key1", "value1").value
 
         merge_data: dict[str, object] = {"key2": "value2", "key3": "value3"}
         # Convert dict[str, object] to dict[str, GeneralValueType]
@@ -94,10 +94,10 @@ class TestContext100Coverage:
     def test_merge_with_context(self) -> None:
         """Test merge with another context."""
         context1 = FlextContext()
-        context1.set("key1", "value1").unwrap()
+        context1.set("key1", "value1").value
 
         context2 = FlextContext()
-        context2.set("key2", "value2").unwrap()
+        context2.set("key2", "value2").value
 
         merged = context1.merge(context2)
         assert isinstance(merged, FlextContext)
@@ -111,7 +111,7 @@ class TestContext100Coverage:
     def test_clone_creates_independent_copy(self) -> None:
         """Test clone creates independent copy."""
         context1 = FlextContext()
-        context1.set("key1", "value1").unwrap()
+        context1.set("key1", "value1").value
 
         cloned = context1.clone()
         assert isinstance(cloned, FlextContext)
@@ -124,7 +124,7 @@ class TestContext100Coverage:
         )
 
         # Modify original - clone should be independent
-        context1.set("key1", "modified").unwrap()
+        context1.set("key1", "modified").value
         cloned_result = cloned.get("key1")
         u.Tests.Result.assert_success_with_value(
             cast("r[str]", cloned_result),
@@ -134,7 +134,7 @@ class TestContext100Coverage:
     def test_validate_success(self) -> None:
         """Test validate with valid context."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
 
         result = context.validate()
         u.Tests.Result.assert_result_success(result)
@@ -142,7 +142,7 @@ class TestContext100Coverage:
     def test_suspend_resume(self) -> None:
         """Test suspend and resume functionality."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
 
         # Suspend context
         context._suspend()
@@ -155,7 +155,7 @@ class TestContext100Coverage:
     def test_destroy_deactivates_context(self) -> None:
         """Test destroy deactivates context."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
 
         # Destroy context
         context._destroy()
@@ -170,8 +170,8 @@ class TestContext100Coverage:
     def test_export_returns_dict(self) -> None:
         """Test export returns dictionary with scoped data."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
-        context.set("key2", "value2").unwrap()
+        context.set("key1", "value1").value
+        context.set("key2", "value2").value
 
         exported = context.export()
         # export() returns {scope: {key: value}} structure
@@ -186,7 +186,7 @@ class TestContext100Coverage:
     def test_export_snapshot_returns_typed_model(self) -> None:
         """Test export_snapshot returns typed model."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
 
         snapshot = context._export_snapshot()
         assert isinstance(snapshot, m.Context.ContextExport)
@@ -215,7 +215,7 @@ class TestContext100Coverage:
     def test_import_empty_data(self) -> None:
         """Test import_data with empty dict."""
         context = FlextContext()
-        context.set("existing", "value").unwrap()
+        context.set("existing", "value").value
 
         context._import_data({})
 
@@ -228,7 +228,7 @@ class TestContext100Coverage:
         context = FlextContext()
         # Set a key to None (if possible) or test the None handling path
         # Since set() validates None, we'll test the get() None handling
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
 
         # Manually set None in contextvar to test None handling
         scope_var = context._scope_vars[FlextConstants.Context.SCOPE_GLOBAL]
@@ -339,8 +339,8 @@ class TestContext100Coverage:
     def test_get_with_different_scope(self) -> None:
         """Test get with different scope."""
         context = FlextContext()
-        context.set("global_key", "global_value").unwrap()
-        context.set("user_key", "user_value", scope="user").unwrap()
+        context.set("global_key", "global_value").value
+        context.set("user_key", "user_value", scope="user").value
 
         # Get from global scope
         global_result = context.get(
@@ -388,7 +388,7 @@ class TestContext100Coverage:
     def test_remove_from_specific_scope(self) -> None:
         """Test remove from specific scope."""
         context = FlextContext()
-        context.set("key1", "value1", scope="user").unwrap()
+        context.set("key1", "value1", scope="user").value
 
         # Remove from user scope
         context.remove("key1", scope="user")
@@ -400,7 +400,7 @@ class TestContext100Coverage:
     def test_has_with_different_scope(self) -> None:
         """Test has with different scope."""
         context = FlextContext()
-        context.set("key1", "value1", scope="user").unwrap()
+        context.set("key1", "value1", scope="user").value
 
         # Check in user scope
         has_user = context.has("key1", scope="user")
@@ -413,8 +413,8 @@ class TestContext100Coverage:
     def test_keys_returns_all_keys(self) -> None:
         """Test keys returns all keys."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
-        context.set("key2", "value2").unwrap()
+        context.set("key1", "value1").value
+        context.set("key2", "value2").value
 
         keys = context.keys()
         assert "key1" in keys
@@ -423,8 +423,8 @@ class TestContext100Coverage:
     def test_values_returns_all_values(self) -> None:
         """Test values returns all values."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
-        context.set("key2", "value2").unwrap()
+        context.set("key1", "value1").value
+        context.set("key2", "value2").value
 
         values = context.values()
         assert "value1" in values
@@ -433,8 +433,8 @@ class TestContext100Coverage:
     def test_items_returns_all_items(self) -> None:
         """Test items returns all items."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
-        context.set("key2", "value2").unwrap()
+        context.set("key1", "value1").value
+        context.set("key2", "value2").value
 
         items = context.items()
         assert ("key1", "value1") in items
@@ -443,8 +443,8 @@ class TestContext100Coverage:
     def test_get_all_scopes_returns_dict(self) -> None:
         """Test get_all_scopes returns dictionary."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
-        context.set("key2", "value2", scope="user").unwrap()
+        context.set("key1", "value1").value
+        context.set("key2", "value2", scope="user").value
 
         all_scopes = context._get_all_scopes()
         assert isinstance(all_scopes, dict)
@@ -454,7 +454,7 @@ class TestContext100Coverage:
     def test_get_statistics_returns_model(self) -> None:
         """Test get_statistics returns statistics model."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
         context.get("key1")
 
         stats = context._get_statistics()
@@ -463,7 +463,7 @@ class TestContext100Coverage:
     def test_statistics_access(self) -> None:
         """Test statistics access via get_statistics."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
 
         stats = context._get_statistics()
         assert isinstance(stats, m.Context.ContextStatistics)
@@ -472,7 +472,7 @@ class TestContext100Coverage:
     def test_to_json_returns_string(self) -> None:
         """Test to_json returns JSON string."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
 
         json_str = context.to_json()
         assert isinstance(json_str, str)
@@ -481,8 +481,8 @@ class TestContext100Coverage:
     def test_serialization_round_trip(self) -> None:
         """Test serialization round trip."""
         context1 = FlextContext()
-        context1.set("key1", "value1").unwrap()
-        context1.set("key2", "value2").unwrap()
+        context1.set("key1", "value1").value
+        context1.set("key2", "value2").value
 
         # Export returns {scope: {key: value}}, import expects flat {key: value}
         exported = context1.export()
@@ -511,7 +511,7 @@ class TestContext100Coverage:
     def test_export_after_clear(self) -> None:
         """Test export after clear."""
         context = FlextContext()
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
         context.clear()
 
         exported = context.export()
@@ -529,7 +529,7 @@ class TestContext100Coverage:
     def test_remove_from_specific_scope_direct(self) -> None:
         """Test remove from specific scope using remove method."""
         context = FlextContext()
-        context.set("key1", "value1", scope="user").unwrap()
+        context.set("key1", "value1", scope="user").value
 
         # Remove from user scope
         context.remove("key1", scope="user")
@@ -544,7 +544,7 @@ class TestContext100Coverage:
 
         # Hooks are executed internally during set/get operations
         # Test that operations trigger hooks
-        context.set("key1", "value1").unwrap()
+        context.set("key1", "value1").value
         context.get("key1")
 
         # Verify hooks were executed (via statistics or internal state)
@@ -567,8 +567,8 @@ class TestContext100Coverage:
     def test_export_import_round_trip(self) -> None:
         """Test export/import round trip."""
         context1 = FlextContext()
-        context1.set("key1", "value1").unwrap()
-        context1.set("key2", "value2").unwrap()
+        context1.set("key1", "value1").value
+        context1.set("key2", "value2").value
 
         # Export returns {scope: {key: value}}, import expects flat {key: value}
         exported = context1.export()

@@ -730,10 +730,10 @@ class FlextContext(FlextRuntime):
             # Use helper for type narrowing to ConfigurationDict
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
-                _ = cloned._get_or_create_scope_var(scope_name).set(scope_dict.copy())
+                _ = cloned._get_or_create_scope_var(scope_name).set(scope_dict.copy())  # noqa: SLF001
         # Clone metadata and statistics
-        cloned._metadata = self._metadata.model_copy()
-        cloned._statistics = self._statistics.model_copy()
+        cloned._metadata = self._metadata.model_copy()  # noqa: SLF001
+        cloned._statistics = self._statistics.model_copy()  # noqa: SLF001
 
         # Type narrowing: cloned is FlextContext which implements p.Ctx protocol
         # FlextContext structurally implements p.Ctx, so no cast needed
@@ -1357,6 +1357,23 @@ class FlextContext(FlextRuntime):
                 default=None,
             )
 
+        # =====================================================================
+        # Convenience Aliases - Flat access to nested context variables
+        # =====================================================================
+        # These aliases provide flat access (Variables.CorrelationId) to the
+        # nested structure (Variables.Correlation.CORRELATION_ID) for ergonomic
+        # API usage in FlextContext methods.
+        CorrelationId = Correlation.CORRELATION_ID
+        ParentCorrelationId = Correlation.PARENT_CORRELATION_ID
+        ServiceName = Service.SERVICE_NAME
+        ServiceVersion = Service.SERVICE_VERSION
+        UserId = Request.USER_ID
+        RequestId = Request.REQUEST_ID
+        RequestTimestamp = Request.REQUEST_TIMESTAMP
+        OperationName = Performance.OPERATION_NAME
+        OperationStartTime = Performance.OPERATION_START_TIME
+        OperationMetadata = Performance.OPERATION_METADATA
+
     # =========================================================================
     # Correlation Domain - Distributed tracing and correlation ID management
     # =========================================================================
@@ -1367,7 +1384,7 @@ class FlextContext(FlextRuntime):
         @staticmethod
         def get_correlation_id() -> str | None:
             """Get current correlation ID."""
-            value = FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            value = FlextContext.Variables.CorrelationId.get()
             return value if u.is_type(value, str) else None
 
         @staticmethod
@@ -1377,12 +1394,12 @@ class FlextContext(FlextRuntime):
             Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             Accepts ``None`` to explicitly clear the active correlation when needed.
             """
-            _ = FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
+            _ = FlextContext.Variables.CorrelationId.set(correlation_id)
 
         @staticmethod
         def reset_correlation_id() -> None:
             """Clear correlation ID from context variables."""
-            _ = FlextContext.Variables.Correlation.CORRELATION_ID.set(None)
+            _ = FlextContext.Variables.CorrelationId.set(None)
 
         @staticmethod
         def generate_correlation_id() -> str:
@@ -1392,19 +1409,19 @@ class FlextContext(FlextRuntime):
             Sets the correlation ID in context variables (via FlextModels.StructlogProxyContextVar).
             """
             correlation_id = u.generate("correlation")
-            _ = FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
+            _ = FlextContext.Variables.CorrelationId.set(correlation_id)
             return correlation_id
 
         @staticmethod
         def get_parent_correlation_id() -> str | None:
             """Get parent correlation ID."""
-            value = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.get()
+            value = FlextContext.Variables.ParentCorrelationId.get()
             return value if u.is_type(value, str) else None
 
         @staticmethod
         def set_parent_correlation_id(parent_id: str) -> None:
             """Set parent correlation ID."""
-            _ = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.set(parent_id)
+            _ = FlextContext.Variables.ParentCorrelationId.set(parent_id)
 
         @staticmethod
         @contextmanager
@@ -1421,40 +1438,34 @@ class FlextContext(FlextRuntime):
                 correlation_id = u.generate("correlation")
 
             # Save current context
-            current_correlation = (
-                FlextContext.Variables.Correlation.CORRELATION_ID.get()
-            )
+            current_correlation = FlextContext.Variables.CorrelationId.get()
 
             # Set new context
-            correlation_token = FlextContext.Variables.Correlation.CORRELATION_ID.set(
+            correlation_token = FlextContext.Variables.CorrelationId.set(
                 correlation_id,
             )
 
             # Set parent context
             parent_token = None
             if parent_id:
-                parent_token = (
-                    FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.set(
-                        parent_id,
-                    )
+                parent_token = FlextContext.Variables.ParentCorrelationId.set(
+                    parent_id,
                 )
             elif current_correlation:
                 # Current correlation becomes parent
-                parent_token = (
-                    FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.set(
-                        current_correlation,
-                    )
+                parent_token = FlextContext.Variables.ParentCorrelationId.set(
+                    current_correlation,
                 )
 
             try:
                 yield correlation_id
             finally:
                 # Restore previous context
-                FlextContext.Variables.Correlation.CORRELATION_ID.reset(
+                FlextContext.Variables.CorrelationId.reset(
                     correlation_token,
                 )
                 if parent_token:
-                    FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.reset(
+                    FlextContext.Variables.ParentCorrelationId.reset(
                         parent_token,
                     )
 
@@ -1462,7 +1473,7 @@ class FlextContext(FlextRuntime):
         @contextmanager
         def inherit_correlation() -> Generator[str | None]:
             """Inherit or create correlation ID."""
-            existing_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            existing_id = FlextContext.Variables.CorrelationId.get()
             if u.is_type(existing_id, str):
                 # Use existing correlation
                 yield existing_id
@@ -1481,7 +1492,7 @@ class FlextContext(FlextRuntime):
         @staticmethod
         def get_service_name() -> str | None:
             """Get current service name."""
-            value = FlextContext.Variables.Service.SERVICE_NAME.get()
+            value = FlextContext.Variables.ServiceName.get()
             return value if u.is_type(value, str) else None
 
         @staticmethod
@@ -1490,12 +1501,12 @@ class FlextContext(FlextRuntime):
 
             Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
-            _ = FlextContext.Variables.Service.SERVICE_NAME.set(service_name)
+            _ = FlextContext.Variables.ServiceName.set(service_name)
 
         @staticmethod
         def get_service_version() -> str | None:
             """Get current service version."""
-            value = FlextContext.Variables.Service.SERVICE_VERSION.get()
+            value = FlextContext.Variables.ServiceVersion.get()
             return value if u.is_type(value, str) else None
 
         @staticmethod
@@ -1504,7 +1515,7 @@ class FlextContext(FlextRuntime):
 
             Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
-            _ = FlextContext.Variables.Service.SERVICE_VERSION.set(version)
+            _ = FlextContext.Variables.ServiceVersion.set(version)
 
         @staticmethod
         def get_service(
@@ -1566,9 +1577,7 @@ class FlextContext(FlextRuntime):
                 # Type narrowing: service is GeneralValueType | BaseModel | Callable, protocol accepts GeneralValueType
                 # BaseModel and Callable are NOT subtypes of GeneralValueType in mypy's type system
                 # Cast is needed: with_service signature accepts broader type including BaseModel/Callable
-                service_typed: t.GeneralValueType = cast(
-                    "t.GeneralValueType", service
-                )
+                service_typed: t.GeneralValueType = service
                 # with_service returns Self for fluent chaining, but we don't need the return value
                 _ = container.with_service(service_name, service_typed)
                 return r[bool].ok(True)
@@ -1583,14 +1592,14 @@ class FlextContext(FlextRuntime):
         ) -> Generator[None]:
             """Create service context scope."""
             # Save current context (for potential future use in logging/debugging)
-            _ = FlextContext.Variables.Service.SERVICE_NAME.get()
-            _ = FlextContext.Variables.Service.SERVICE_VERSION.get()
+            _ = FlextContext.Variables.ServiceName.get()
+            _ = FlextContext.Variables.ServiceVersion.get()
 
             # Set new context
-            name_token = FlextContext.Variables.Service.SERVICE_NAME.set(service_name)
+            name_token = FlextContext.Variables.ServiceName.set(service_name)
             version_token = None
             if version:
-                version_token = FlextContext.Variables.Service.SERVICE_VERSION.set(
+                version_token = FlextContext.Variables.ServiceVersion.set(
                     version,
                 )
 
@@ -1598,9 +1607,9 @@ class FlextContext(FlextRuntime):
                 yield
             finally:
                 # Restore previous context
-                FlextContext.Variables.Service.SERVICE_NAME.reset(name_token)
+                FlextContext.Variables.ServiceName.reset(name_token)
                 if version_token:
-                    FlextContext.Variables.Service.SERVICE_VERSION.reset(version_token)
+                    FlextContext.Variables.ServiceVersion.reset(version_token)
 
     # =========================================================================
     # Request Domain - User and request metadata management
@@ -1612,7 +1621,7 @@ class FlextContext(FlextRuntime):
         @staticmethod
         def get_user_id() -> str | None:
             """Get current user ID."""
-            return FlextContext.Variables.Request.USER_ID.get()
+            return FlextContext.Variables.UserId.get()
 
         @staticmethod
         def set_user_id(user_id: str) -> None:
@@ -1620,12 +1629,12 @@ class FlextContext(FlextRuntime):
 
             Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
-            _ = FlextContext.Variables.Request.USER_ID.set(user_id)
+            _ = FlextContext.Variables.UserId.set(user_id)
 
         @staticmethod
         def get_operation_name() -> str | None:
             """Get the current operation name from context."""
-            value = FlextContext.Variables.Performance.OPERATION_NAME.get()
+            value = FlextContext.Variables.OperationName.get()
             if value is None or u.is_type(value, str):
                 return value
             return str(value)
@@ -1636,12 +1645,12 @@ class FlextContext(FlextRuntime):
 
             Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
-            _ = FlextContext.Variables.Performance.OPERATION_NAME.set(operation_name)
+            _ = FlextContext.Variables.OperationName.set(operation_name)
 
         @staticmethod
         def get_request_id() -> str | None:
             """Get current request ID from context."""
-            value = FlextContext.Variables.Request.REQUEST_ID.get()
+            value = FlextContext.Variables.RequestId.get()
             if value is None or u.is_type(value, str):
                 return value
             return str(value)
@@ -1652,7 +1661,7 @@ class FlextContext(FlextRuntime):
 
             Note: Uses structlog as single source of truth (via FlextModels.StructlogProxyContextVar).
             """
-            _ = FlextContext.Variables.Request.REQUEST_ID.set(request_id)
+            _ = FlextContext.Variables.RequestId.set(request_id)
 
         @staticmethod
         @contextmanager
@@ -1665,27 +1674,23 @@ class FlextContext(FlextRuntime):
         ) -> Generator[None]:
             """Create request metadata context scope with automatic cleanup."""
             # Save current context (for potential future use in logging/debugging)
-            _ = FlextContext.Variables.Request.USER_ID.get()
-            _ = FlextContext.Variables.Performance.OPERATION_NAME.get()
-            _ = FlextContext.Variables.Request.REQUEST_ID.get()
-            _ = FlextContext.Variables.Performance.OPERATION_METADATA.get()
+            _ = FlextContext.Variables.UserId.get()
+            _ = FlextContext.Variables.OperationName.get()
+            _ = FlextContext.Variables.RequestId.get()
+            _ = FlextContext.Variables.OperationMetadata.get()
 
             # Set new context
-            user_token = (
-                FlextContext.Variables.Request.USER_ID.set(user_id) if user_id else None
-            )
+            user_token = FlextContext.Variables.UserId.set(user_id) if user_id else None
             operation_token = (
-                FlextContext.Variables.Performance.OPERATION_NAME.set(operation_name)
+                FlextContext.Variables.OperationName.set(operation_name)
                 if operation_name
                 else None
             )
             request_token = (
-                FlextContext.Variables.Request.REQUEST_ID.set(request_id)
-                if request_id
-                else None
+                FlextContext.Variables.RequestId.set(request_id) if request_id else None
             )
             metadata_token = (
-                FlextContext.Variables.Performance.OPERATION_METADATA.set(metadata)
+                FlextContext.Variables.OperationMetadata.set(metadata)
                 if metadata
                 else None
             )
@@ -1695,15 +1700,15 @@ class FlextContext(FlextRuntime):
             finally:
                 # Restore previous context
                 if user_token is not None:
-                    FlextContext.Variables.Request.USER_ID.reset(user_token)
+                    FlextContext.Variables.UserId.reset(user_token)
                 if operation_token is not None:
-                    FlextContext.Variables.Performance.OPERATION_NAME.reset(
+                    FlextContext.Variables.OperationName.reset(
                         operation_token,
                     )
                 if request_token is not None:
-                    FlextContext.Variables.Request.REQUEST_ID.reset(request_token)
+                    FlextContext.Variables.RequestId.reset(request_token)
                 if metadata_token is not None:
-                    FlextContext.Variables.Performance.OPERATION_METADATA.reset(
+                    FlextContext.Variables.OperationMetadata.reset(
                         metadata_token,
                     )
 
@@ -1718,7 +1723,7 @@ class FlextContext(FlextRuntime):
         def get_operation_start_time() -> datetime | None:
             """Get operation start time from context."""
             # OPERATION_START_TIME.get() returns datetime | None, so isinstance is redundant
-            return FlextContext.Variables.Performance.OPERATION_START_TIME.get()
+            return FlextContext.Variables.OperationStartTime.get()
 
         @staticmethod
         def set_operation_start_time(
@@ -1727,12 +1732,12 @@ class FlextContext(FlextRuntime):
             """Set operation start time in context."""
             if start_time is None:
                 start_time = u.Generators.generate_datetime_utc()
-            _ = FlextContext.Variables.Performance.OPERATION_START_TIME.set(start_time)
+            _ = FlextContext.Variables.OperationStartTime.set(start_time)
 
         @staticmethod
         def get_operation_metadata() -> t.Types.ConfigurationDict | None:
             """Get operation metadata from context."""
-            value = FlextContext.Variables.Performance.OPERATION_METADATA.get()
+            value = FlextContext.Variables.OperationMetadata.get()
             if value is None:
                 return None
             if u.is_type(value, dict):
@@ -1744,7 +1749,7 @@ class FlextContext(FlextRuntime):
             metadata: t.Types.ConfigurationDict,
         ) -> None:
             """Set operation metadata in context."""
-            _ = FlextContext.Variables.Performance.OPERATION_METADATA.set(metadata)
+            _ = FlextContext.Variables.OperationMetadata.set(metadata)
 
         @staticmethod
         def add_operation_metadata(
@@ -1752,12 +1757,12 @@ class FlextContext(FlextRuntime):
             value: t.GeneralValueType,
         ) -> None:
             """Add single metadata entry to operation context."""
-            metadata_value = FlextContext.Variables.Performance.OPERATION_METADATA.get()
+            metadata_value = FlextContext.Variables.OperationMetadata.get()
             current_metadata: t.Types.ConfigurationDict = (
                 metadata_value if isinstance(metadata_value, dict) else {}
             )
             current_metadata[key] = value
-            _ = FlextContext.Variables.Performance.OPERATION_METADATA.set(
+            _ = FlextContext.Variables.OperationMetadata.set(
                 current_metadata,
             )
 
@@ -1774,20 +1779,20 @@ class FlextContext(FlextRuntime):
             }
 
             # Save current context (for potential future use in logging/debugging)
-            _ = FlextContext.Variables.Performance.OPERATION_START_TIME.get()
-            _ = FlextContext.Variables.Performance.OPERATION_METADATA.get()
-            _ = FlextContext.Variables.Performance.OPERATION_NAME.get()
+            _ = FlextContext.Variables.OperationStartTime.get()
+            _ = FlextContext.Variables.OperationMetadata.get()
+            _ = FlextContext.Variables.OperationName.get()
 
             # Set new context
-            start_token = FlextContext.Variables.Performance.OPERATION_START_TIME.set(
+            start_token = FlextContext.Variables.OperationStartTime.set(
                 start_time,
             )
-            metadata_token = FlextContext.Variables.Performance.OPERATION_METADATA.set(
+            metadata_token = FlextContext.Variables.OperationMetadata.set(
                 operation_metadata,
             )
             operation_token = None
             if operation_name:
-                operation_token = FlextContext.Variables.Performance.OPERATION_NAME.set(
+                operation_token = FlextContext.Variables.OperationName.set(
                     operation_name,
                 )
 
@@ -1805,14 +1810,14 @@ class FlextContext(FlextRuntime):
                 )
 
                 # Restore previous context
-                FlextContext.Variables.Performance.OPERATION_START_TIME.reset(
+                FlextContext.Variables.OperationStartTime.reset(
                     start_token,
                 )
-                FlextContext.Variables.Performance.OPERATION_METADATA.reset(
+                FlextContext.Variables.OperationMetadata.reset(
                     metadata_token,
                 )
                 if operation_token:
-                    FlextContext.Variables.Performance.OPERATION_NAME.reset(
+                    FlextContext.Variables.OperationName.reset(
                         operation_token,
                     )
 
@@ -1848,15 +1853,15 @@ class FlextContext(FlextRuntime):
             """Get correlation context for cross-service propagation."""
             context: t.Types.StringDict = {}
 
-            correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            correlation_id = FlextContext.Variables.CorrelationId.get()
             if correlation_id:
                 context[c.Context.HEADER_CORRELATION_ID] = str(correlation_id)
 
-            parent_id = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.get()
+            parent_id = FlextContext.Variables.ParentCorrelationId.get()
             if parent_id:
                 context[c.Context.HEADER_PARENT_CORRELATION_ID] = str(parent_id)
 
-            service_name = FlextContext.Variables.Service.SERVICE_NAME.get()
+            service_name = FlextContext.Variables.ServiceName.get()
             if service_name:
                 context[c.Context.HEADER_SERVICE_NAME] = str(service_name)
 
@@ -1875,7 +1880,7 @@ class FlextContext(FlextRuntime):
                 correlation_id_value,
                 str,
             ):
-                _ = FlextContext.Variables.Correlation.CORRELATION_ID.set(
+                _ = FlextContext.Variables.CorrelationId.set(
                     correlation_id_value,
                 )
 
@@ -1883,7 +1888,7 @@ class FlextContext(FlextRuntime):
             if parent_id_value is None:
                 parent_id_value = context.get(c.Context.KEY_PARENT_CORRELATION_ID)
             if parent_id_value is not None and isinstance(parent_id_value, str):
-                _ = FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.set(
+                _ = FlextContext.Variables.ParentCorrelationId.set(
                     parent_id_value,
                 )
 
@@ -1891,13 +1896,13 @@ class FlextContext(FlextRuntime):
             if service_name_value is None:
                 service_name_value = context.get(c.Context.KEY_SERVICE_NAME)
             if service_name_value is not None and isinstance(service_name_value, str):
-                _ = FlextContext.Variables.Service.SERVICE_NAME.set(service_name_value)
+                _ = FlextContext.Variables.ServiceName.set(service_name_value)
 
             user_id_value = context.get(c.Context.HEADER_USER_ID)
             if user_id_value is None:
                 user_id_value = context.get(c.Context.KEY_USER_ID)
             if user_id_value is not None and isinstance(user_id_value, str):
-                _ = FlextContext.Variables.Request.USER_ID.set(user_id_value)
+                _ = FlextContext.Variables.UserId.set(user_id_value)
 
     # =========================================================================
     # Utilities Domain - Context utility methods and helpers
@@ -1915,29 +1920,27 @@ class FlextContext(FlextRuntime):
             """
             # Clear string context variables
             for context_var in [
-                FlextContext.Variables.Correlation.CORRELATION_ID,
-                FlextContext.Variables.Correlation.PARENT_CORRELATION_ID,
-                FlextContext.Variables.Service.SERVICE_NAME,
-                FlextContext.Variables.Service.SERVICE_VERSION,
-                FlextContext.Variables.Request.USER_ID,
-                FlextContext.Variables.Request.REQUEST_ID,
-                FlextContext.Variables.Performance.OPERATION_NAME,
+                FlextContext.Variables.CorrelationId,
+                FlextContext.Variables.ParentCorrelationId,
+                FlextContext.Variables.ServiceName,
+                FlextContext.Variables.ServiceVersion,
+                FlextContext.Variables.UserId,
+                FlextContext.Variables.RequestId,
+                FlextContext.Variables.OperationName,
             ]:
                 _ = context_var.set(None)
 
             # Clear typed context variables
-            _ = FlextContext.Variables.Performance.OPERATION_START_TIME.set(None)
-            _ = FlextContext.Variables.Performance.OPERATION_METADATA.set(None)
-            _ = FlextContext.Variables.Request.REQUEST_TIMESTAMP.set(None)
+            _ = FlextContext.Variables.OperationStartTime.set(None)
+            _ = FlextContext.Variables.OperationMetadata.set(None)
+            _ = FlextContext.Variables.RequestTimestamp.set(None)
 
             # Note: All variables use structlog as single source (via FlextModels.StructlogProxyContextVar)
 
         @staticmethod
         def ensure_correlation_id() -> str:
             """Ensure correlation ID exists, creating one if needed."""
-            correlation_id_value = (
-                FlextContext.Variables.Correlation.CORRELATION_ID.get()
-            )
+            correlation_id_value = FlextContext.Variables.CorrelationId.get()
             if u.is_type(correlation_id_value, str) and correlation_id_value:
                 return correlation_id_value
             # Generate new correlation_id and set it in context
@@ -1948,7 +1951,7 @@ class FlextContext(FlextRuntime):
         @staticmethod
         def has_correlation_id() -> bool:
             """Check if correlation ID is set in context."""
-            return FlextContext.Variables.Correlation.CORRELATION_ID.get() is not None
+            return FlextContext.Variables.CorrelationId.get() is not None
 
         @staticmethod
         def get_context_summary() -> str:

@@ -134,7 +134,7 @@ class TestServiceResultProperty:
         assert isinstance(result, FlextResult)
         assert result.is_success
 
-        user = result.unwrap()
+        user = result.value
         assert isinstance(user, User)
         assert user.user_id == case.input_value
 
@@ -160,7 +160,7 @@ class TestServiceResultProperty:
         )
 
         assert result.is_success
-        greeting = result.unwrap()
+        greeting = result.value
         assert greeting == f"Hello, USER {case.input_value}!"
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
@@ -172,7 +172,7 @@ class TestServiceResultProperty:
         assert isinstance(service2, GetUserService)
 
         user_v2 = service1.result
-        user_v1 = service2.execute().unwrap()
+        user_v1 = service2.execute().value
 
         assert user_v2.user_id == user_v1.user_id
         assert user_v2.name == user_v1.name
@@ -182,7 +182,7 @@ class TestServiceResultProperty:
         """Test V1 compatibility edge cases."""
         v1_result = ValidatingService(value_input="hello").execute()
         assert v1_result.is_success
-        assert v1_result.unwrap() == "HELLO"
+        assert v1_result.value == "HELLO"
 
         fail_result = FailingService(error_message="V1 fail").execute()
         assert fail_result.is_failure

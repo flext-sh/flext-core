@@ -692,14 +692,14 @@ class FlextHandlers[MessageT_contra, ResultT](
         # Mixin record_metric() returns None (not r[bool])
         self.record_metric(
             "execution_time_ms",
-            cast("t.GeneralValueType", exec_time),
+            exec_time,
         )
         self.record_metric(
             "success",
-            cast("t.GeneralValueType", success),
+            success,
         )
         if error is not None:
-            self.record_metric("error", cast("t.GeneralValueType", error))
+            self.record_metric("error", error)
 
     def __call__(self, input_data: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless integration with dispatchers.

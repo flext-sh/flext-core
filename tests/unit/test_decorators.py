@@ -511,10 +511,10 @@ class TestFlextDecorators:
         result = returns_result()
         assert isinstance(result, FlextResult)
         u.Tests.Result.assert_result_success(result)
-        unwrapped = result.unwrap()
+        unwrapped = result.value
         # Railway decorator may unwrap nested FlextResult or keep it
         if isinstance(unwrapped, FlextResult):
-            assert unwrapped.unwrap() == "already_wrapped"
+            assert unwrapped.value == "already_wrapped"
         else:
             assert unwrapped == "already_wrapped"
 

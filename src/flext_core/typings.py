@@ -32,7 +32,6 @@ from pydantic import BaseModel, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # LaxStr compatibility for external integrations (LDAP, etc.)
-LaxStr: TypeAlias = str | bytes | bytearray
 
 # ============================================================================
 # Module-Level TypeVars - Used in flext-core src/
@@ -111,73 +110,10 @@ class FlextTypes:
     All complex types (type aliases, TypedDict classes) are organized in nested
     namespaces within this class. TypeVars are defined at module level (see above).
 
-    **Architecture Principles:**
-    - TypeVars: Defined at module level (Python limitation)
-    - Complex types: All in FlextTypes nested namespaces
-    - No loose types: All type aliases must be in appropriate namespaces
-    - Extension: Other projects extend via composition, not modification
-
-    **Namespace Structure:**
-
-    - **Top-level types**: Core scalar and value types (ScalarValue, GeneralValueType,
-      ConstantValue, ObjectList, SortableObjectType, MetadataAttributeValue, Metadata,
-      FlexibleValue, FlexibleMapping, JsonValue, JsonDict)
-
-    - **Utility**: Type introspection helpers (TypeHintSpecifier, GenericTypeArgument,
-      MessageTypeSpecifier, TypeOriginSpecifier)
-
-    - **Validation**: Domain validation types with Pydantic Field annotations
-      (PortNumber, TimeoutSeconds, RetryCount, NonEmptyStr, HostName)
-
-    - **Json**: JSON serialization types (JsonPrimitive, JsonValue, JsonList, JsonDict)
-
-    - **Handler**: Handler and middleware type definitions for CQRS patterns
-      (HandlerCallable, MiddlewareConfig, AcceptableMessageType, ConditionCallable,
-      HandlerType)
-
-    - **Config**: Configuration type aliases (use m.Config.* for model classes)
-
-    - **Dispatcher**: Dispatcher type definitions for message dispatching
-      (DispatcherConfig TypedDict)
-
-    - **Types**: TypedDict classes and mapping type aliases
-      - Mapping aliases: ServiceMetadataMapping, FieldMetadataMapping,
-        SummaryDataMapping, CategoryGroupsMapping, SharedContainersMapping,
-        EventDataMapping, ContextMetadataMapping, ConfigurationMapping,
-        FieldValidatorMapping, ConsistencyRuleMapping,
-        EventValidatorMapping, ErrorTypeMapping, ExceptionKwargsType
-      - TypedDict classes: ContainerConfigDict, BatchResultDict
-
-
-    **Guidelines for Adding New Types:**
-
-    1. **TypeVars**: Add at module level with clear category comments
-    2. **Domain validation types**: Add to Validation namespace
-    3. **JSON types**: Add to Json namespace
-    4. **Handler types**: Add to Handler namespace
-    5. **Configuration types**: Add to Config namespace (BaseModel) or Types namespace (TypedDict)
-    6. **Dispatcher types**: Add to Dispatcher namespace
-    7. **TypedDict classes**: Add to Types namespace
-    8. **Mapping type aliases**: Add to Types namespace
-
-    **Extending FlextTypes in Other Projects:**
-
-    Other FLEXT projects should extend FlextTypes via composition, not modification:
-
-    ```python
-    from flext_core.typings import t
-
-
-    class MyProjectTypes:
-        # Extend via composition
-        type MyCustomType = t.GeneralValueType | MySpecificType
-        # Use base types from t
-        type MyConfig = t.Types.ConfigurationMapping
-    ```
-
-    Do NOT modify FlextTypes directly. Instead, create project-specific type namespaces
-    that reference FlextTypes types via composition.
+    LaxStr compatibility for ldap3 integration
     """
+
+    LaxStr: TypeAlias = str | bytes | bytearray
 
     # =====================================================================
     # COMPLEX TYPE ALIASES (Python 3.13+ PEP 695 strict)

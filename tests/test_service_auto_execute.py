@@ -153,10 +153,10 @@ class TestServiceAutoExecute:
 
     @pytest.mark.parametrize("user_id", ["1", "101", "201"])
     def test_auto_vs_manual_result_equivalence(self, user_id: str) -> None:
-        """Auto result matches manual .execute().unwrap()."""
+        """Auto result matches manual .execute().value."""
         # V2 Auto pattern: returns result directly
         auto_result = GetUserServiceAuto(user_id=user_id)
-        manual_result = GetUserService(user_id=user_id).execute().unwrap()
+        manual_result = GetUserService(user_id=user_id).execute().value
 
         assert isinstance(auto_result, User)
         assert auto_result.user_id == manual_result.user_id

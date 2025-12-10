@@ -127,7 +127,7 @@ class TestMigrationScenario2:
             "test_migration_service"
         )
         assert resolution_result.is_success
-        service = resolution_result.unwrap()
+        service = resolution_result.value
         assert isinstance(service, TestService)
         assert service.name == "test"
 
@@ -220,7 +220,7 @@ class TestBackwardCompatibility:
         assert not success.is_failure
         assert success.error is None
         assert success.value == "test_value"
-        assert success.unwrap() == "test_value"
+        assert success.value == "test_value"
         assert success.unwrap_or("default") == "test_value"
 
         # Create failure result

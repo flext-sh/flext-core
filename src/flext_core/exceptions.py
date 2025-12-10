@@ -74,7 +74,7 @@ def _get(
 ) -> t.GeneralValueType | None:
     """Get value from dict-like object - replaces u.mapper().get()."""
     # Cast to GeneralValueType for is_dict_like check
-    data_typed = cast("t.GeneralValueType", data)
+    data_typed = data
     if not FlextRuntime.is_dict_like(data_typed):
         return default
     # Type narrowing: is_dict_like ensures data is Mapping-like
@@ -343,7 +343,7 @@ class FlextExceptions:
                     return _Metadata(attributes=new_attrs)
                 return metadata
 
-            if FlextRuntime.is_dict_like(cast("t.GeneralValueType", metadata)):
+            if FlextRuntime.is_dict_like(metadata):
                 # After is_dict_like type guard, metadata is Mapping[str, GeneralValueType]
                 metadata_mapping = cast("t.Types.ConfigurationMapping", metadata)
                 return e.BaseError._normalize_metadata_from_dict(

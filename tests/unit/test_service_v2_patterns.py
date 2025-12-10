@@ -422,18 +422,18 @@ class TestsV2Patterns:
         op = test_case.operation
 
         if op == ServiceOperationType.V1_EXPLICIT_EXECUTE_UNWRAP:
-            assert SimpleV1Service(message="test").execute().unwrap() == "V1: test"
+            assert SimpleV1Service(message="test").execute().value == "V1: test"
 
         elif op == ServiceOperationType.V2_PROPERTY_DIRECT_RESULT:
             assert SimpleV2PropertyService(message="test").result == "V2 Property: test"
 
         elif op == ServiceOperationType.V1_AND_V2_SAME_RESULT:
-            assert SimpleV1Service(message="test").execute().unwrap() == "V1: test"
+            assert SimpleV1Service(message="test").execute().value == "V1: test"
             assert SimpleV2PropertyService(message="test").result == "V2 Property: test"
 
         elif op == ServiceOperationType.V2_MAINTAINS_EXECUTE_ACCESS:
             svc = SimpleV2PropertyService(message="test")
-            assert svc.result == svc.execute().unwrap()
+            assert svc.result == svc.execute().value
 
         elif op == ServiceOperationType.V1_VALIDATION_FAILURE:
             assert ValidationService(value=-1).execute().is_failure
@@ -447,7 +447,7 @@ class TestsV2Patterns:
 
         elif op == ServiceOperationType.V1_VALIDATION_SUCCESS:
             res = ValidationService(value=10).execute()
-            assert res.is_success and res.unwrap()["value"] == 10
+            assert res.is_success and res.value["value"] == 10
 
         elif op == ServiceOperationType.V2_VALIDATION_SUCCESS:
             val = ValidationService(value=10).result
@@ -455,7 +455,7 @@ class TestsV2Patterns:
 
         elif op == ServiceOperationType.V1_COMPLEX_WITH_ITEMS:
             res = ComplexV1Service(items=["a", "b", "c"], multiplier=2).execute()
-            assert res.is_success and res.unwrap()["count"] == 6
+            assert res.is_success and res.value["count"] == 6
 
         elif op == ServiceOperationType.V2_COMPLEX_WITH_ITEMS:
             val = ComplexV2Service(items=["a", "b", "c"], multiplier=2).result
@@ -592,12 +592,12 @@ class TestsV2Patterns:
             service = SimpleV1Service(message="test")
             result = service.execute()
             assert result.is_success
-            assert result.unwrap() == "V1: test"
+            assert result.value == "V1: test"
 
         elif test_case.operation == ServiceOperationType.V2_DOESNT_BREAK_V1:
             v1 = SimpleV1Service(message="works")
             v2 = SimpleV2PropertyService(message="also_works")
-            assert v1.execute().unwrap() == "V1: works"
+            assert v1.execute().value == "V1: works"
             assert v2.result == "V2 Property: also_works"
 
         elif test_case.operation == ServiceOperationType.AUTO_EXECUTE_FALSE:
@@ -613,7 +613,7 @@ class TestsV2Patterns:
             no_auto_service: s[str] = NoAutoService()
             assert isinstance(no_auto_service, s)
             result = no_auto_service.execute()
-            assert result.unwrap() == "no_auto"
+            assert result.value == "no_auto"
 
         elif test_case.operation == ServiceOperationType.NO_AUTO_EXECUTE_ATTRIBUTE:
 
@@ -691,7 +691,7 @@ class TestsV2Patterns:
             validation_service_instance = ValidationService(value=10)
             validation_result = validation_service_instance.execute()
             if validation_result.is_success:
-                validation_value_raw = validation_result.unwrap()
+                validation_value_raw = validation_result.value
                 assert isinstance(validation_value_raw, dict)
                 validation_value: dict[str, int] = {
                     k: int(v) if isinstance(v, (int, float)) else 0

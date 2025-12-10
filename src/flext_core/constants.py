@@ -10,12 +10,101 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Set as AbstractSet
-from enum import StrEnum
+from enum import (
+    StrEnum,
+)
+from types import MappingProxyType
 from typing import Final, Literal
 
 # NOTE: constants.py cannot import from pydantic, models, protocols, typings, utilities
 # ConfigDict usage moved to models.py or _models/config.py where it belongs
+
+# =============================================================================
+# UTILITY CLASSES FOR CONSTANTS
+# =============================================================================
+
+
+class AutoStrEnum(StrEnum):
+    """StrEnum that automatically generates lowercase values from member names.
+
+    This provides a DRY way to define StrEnums where the value equals the
+    lowercased member name, eliminating redundant value assignments.
+
+    Example:
+        >>> class ProcessingStage(AutoStrEnum):
+        ...     QUEUED = auto()
+        ...     PROCESSING = auto()
+        ...     COMPLETED = auto()
+        >>> ProcessingStage.QUEUED.value
+        'queued'
+        >>> ProcessingStage.PROCESSING.value
+        'processing'
+
+    """
+
+    @staticmethod
+    def _generate_next_value_(
+        name: str,
+        start: int,  # noqa: ARG004
+        count: int,  # noqa: ARG004
+        last_values: list[str],  # noqa: ARG004
+    ) -> str:
+        """Generate the next value as the lowercased member name."""
+        return name.lower()
+
+
+class BiMapping[K, V]:
+    """Bidirectional immutable mapping for constants that need inverse lookup.
+
+    Provides efficient lookup in both directions without maintaining two
+    separate dictionaries. Both forward and inverse views are immutable.
+
+    Example:
+        >>> PHASE_MAP = BiMapping({"1": "schema", "2": "hierarchy", "3": "data"})
+        >>> PHASE_MAP.forward["1"]
+        'schema'
+        >>> PHASE_MAP.inverse["schema"]
+        '1'
+        >>> list(PHASE_MAP.forward.keys())
+        ['1', '2', '3']
+        >>> list(PHASE_MAP.inverse.keys())
+        ['schema', 'hierarchy', 'data']
+
+    Note:
+        Values must be unique for inverse lookup to work correctly.
+        If values are not unique, later keys will overwrite earlier ones
+        in the inverse mapping.
+
+    """
+
+    __slots__ = ("_forward", "_inverse")
+
+    def __init__(self, data: dict[K, V]) -> None:
+        """Initialize with a dictionary of key-value pairs.
+
+        Args:
+            data: Dictionary to create bidirectional mapping from.
+
+        """
+        self._forward: MappingProxyType[K, V] = MappingProxyType(dict(data))
+        self._inverse: MappingProxyType[V, K] = MappingProxyType({
+            v: k for k, v in data.items()
+        })
+
+    @property
+    def forward(self) -> MappingProxyType[K, V]:
+        """Get the forward mapping (key → value)."""
+        return self._forward
+
+    @property
+    def inverse(self) -> MappingProxyType[V, K]:
+        """Get the inverse mapping (value → key)."""
+        return self._inverse
+
+    def __repr__(self) -> str:
+        """Return string representation of the mapping."""
+        return f"BiMapping({dict(self._forward)})"
+
 
 # Centralized timeout constants (reused by all namespaces)
 _DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
@@ -1352,7 +1441,7 @@ class FlextConstants:
         # All Literals reference StrEnum members directly - NO string duplication!
         type NotificationStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
-            SpecialStatus.SENT,
+            FlextConstants.Cqrs.SpecialStatus.SENT,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
         type TokenStatusLiteral = Literal[
@@ -1362,20 +1451,20 @@ class FlextConstants:
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
         type CircuitBreakerStatusLiteral = Literal[
-            SpecialStatus.IDLE,
+            FlextConstants.Cqrs.SpecialStatus.IDLE,
             FlextConstants.Cqrs.CommonStatus.RUNNING,
             FlextConstants.Cqrs.CommonStatus.COMPLETED,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
         type BatchStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
-            SpecialStatus.PROCESSING,
+            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
             FlextConstants.Cqrs.CommonStatus.COMPLETED,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
         type ExportStatusLiteral = Literal[
             FlextConstants.Cqrs.CommonStatus.PENDING,
-            SpecialStatus.PROCESSING,
+            FlextConstants.Cqrs.SpecialStatus.PROCESSING,
             FlextConstants.Cqrs.CommonStatus.COMPLETED,
             FlextConstants.Cqrs.CommonStatus.FAILED,
         ]
@@ -1555,13 +1644,16 @@ class FlextConstants:
         MILLISECONDS_PER_SECOND: Final[int] = 1000
         EXPORT_FORMAT_JSON: Final[str] = "json"
         EXPORT_FORMAT_DICT: Final[str] = "dict"
-        METADATA_FIELDS: Final[AbstractSet[str]] = frozenset({
-            "user_id",
-            "correlation_id",
-            "request_id",
-            "session_id",
-            "tenant_id",
-        })
+
+        class MetadataField(StrEnum):
+            """Metadata field names used in context operations."""
+
+            USER_ID = "user_id"
+            CORRELATION_ID = "correlation_id"
+            REQUEST_ID = "request_id"
+            SESSION_ID = "session_id"
+            TENANT_ID = "tenant_id"
+
         # Context operation names for statistics
         OPERATION_SET: Final[str] = "set"
         OPERATION_GET: Final[str] = "get"
@@ -1739,20 +1831,25 @@ class FlextConstants:
         # DEFAULT_ENCODING removed - use c.Utilities.DEFAULT_ENCODING instead
         DEFAULT_SORT_KEYS: Final[bool] = False
         DEFAULT_ENSURE_ASCII: Final[bool] = False
-        BOOL_TRUE_STRINGS: Final[AbstractSet[str]] = frozenset({
-            "true",
-            "1",
-            "yes",
-            "on",
-            "enabled",
-        })
-        BOOL_FALSE_STRINGS: Final[AbstractSet[str]] = frozenset({
-            "false",
-            "0",
-            "no",
-            "off",
-            "disabled",
-        })
+
+        class BoolTrueValue(StrEnum):
+            """String representations of boolean true values."""
+
+            TRUE = "true"
+            ONE = "1"
+            YES = "yes"
+            ON = "on"
+            ENABLED = "enabled"
+
+        class BoolFalseValue(StrEnum):
+            """String representations of boolean false values."""
+
+            FALSE = "false"
+            ZERO = "0"
+            NO = "no"
+            OFF = "off"
+            DISABLED = "disabled"
+
         STRING_TRUE: Final[str] = "true"
         STRING_FALSE: Final[str] = "false"
         DEFAULT_USE_UTC: Final[bool] = True

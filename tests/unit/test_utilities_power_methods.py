@@ -1318,7 +1318,7 @@ class TestMergeMethod:
         d3: dict[str, t.GeneralValueType] = {"c": 3, "a": 10}
         # Merge first two, then merge result with third
         result1 = u.merge(d1, d2)
-        result = u.merge(result1.unwrap(), d3)
+        result = u.merge(result1.value, d3)
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value == {"a": 10, "b": 2, "c": 3}
 
@@ -1334,7 +1334,7 @@ class TestMergeMethod:
         # Merge all dicts sequentially
         result = u.merge(dicts[0], dicts[1])
         for d in dicts[2:]:
-            result = u.merge(result.unwrap(), d)
+            result = u.merge(result.value, d)
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value == {"key": 5}  # Last one wins
 
@@ -1345,7 +1345,7 @@ class TestMergeMethod:
     def test_merge_empty_dicts(self) -> None:
         """Empty dicts merge to empty."""
         result = u.merge({}, {})
-        result = u.merge(result.unwrap(), {})
+        result = u.merge(result.value, {})
         value = FlextTestsMatchers.Tests.Result.assert_success(result)
         assert value == {}
 
@@ -1768,7 +1768,7 @@ class TestBatchMethod:
         """Batch processing empty items returns empty results."""
         result = u.batch([], lambda x: x * 2)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == []
         assert batch_result["total"] == 0
 
@@ -1776,7 +1776,7 @@ class TestBatchMethod:
         """Batch processing single item works correctly."""
         result = u.batch([5], lambda x: x * 2)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == [10]
         assert batch_result["total"] == 1
         assert batch_result["success_count"] == 1
@@ -1786,7 +1786,7 @@ class TestBatchMethod:
         """Batch processing multiple items transforms all."""
         result = u.batch([1, 2, 3, 4, 5], lambda x: x * 2)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == [2, 4, 6, 8, 10]
         assert batch_result["total"] == 5
         assert batch_result["success_count"] == 5
@@ -1795,7 +1795,7 @@ class TestBatchMethod:
         """Batch processes string items."""
         result = u.batch(["hello", "world"], lambda s: s.upper())
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == ["HELLO", "WORLD"]
 
     def test_batch_dict_items(self) -> None:
@@ -1803,7 +1803,7 @@ class TestBatchMethod:
         items = [{"a": 1}, {"a": 2}, {"a": 3}]
         result = u.batch(items, lambda d: d["a"] * 2)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == [2, 4, 6]
 
     # =========================================================================
@@ -1821,7 +1821,7 @@ class TestBatchMethod:
 
         result = u.batch([1, 2, 3, 4, 5], operation, on_error="collect")
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == [2, 4, 8, 10]  # 3 is skipped
         assert batch_result["error_count"] == 1
         assert len(batch_result["errors"]) == 1
@@ -1837,7 +1837,7 @@ class TestBatchMethod:
 
         result = u.batch([1, 2, 3, 4, 5], operation, on_error="skip")
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == [1, 3, 5]
         # Skip mode doesn't collect errors
         assert batch_result["error_count"] == 0
@@ -1866,7 +1866,7 @@ class TestBatchMethod:
 
         result = u.batch([1, 2, 3], always_fail, on_error="collect")
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == []
         assert batch_result["error_count"] == 3
         assert batch_result["success_count"] == 0
@@ -1879,7 +1879,7 @@ class TestBatchMethod:
         """Batch handles None values in items."""
         result = u.batch([1, None, 3], lambda x: x or 0)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == [1, 0, 3]
 
     def test_batch_large_list(self) -> None:
@@ -1887,7 +1887,7 @@ class TestBatchMethod:
         items = list(range(100))
         result = u.batch(items, lambda x: x + 1)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["total"] == 100
         assert batch_result["success_count"] == 100
         assert batch_result["results"] == list(range(1, 101))
@@ -1897,7 +1897,7 @@ class TestBatchMethod:
         items = [1, 2, 3]
         result = u.batch(items, lambda x: x)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == items
 
     def test_batch_complex_transformation(self) -> None:
@@ -1908,7 +1908,7 @@ class TestBatchMethod:
             lambda d: {"name": d["name"].upper(), "processed": True},
         )
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == [
             {"name": "ALICE", "processed": True},
             {"name": "BOB", "processed": True},
@@ -1925,7 +1925,7 @@ class TestBatchMethod:
 
         result = u.batch([1, 2, 3, 4, 5], alternate, on_error="collect")
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        batch_result = result.unwrap()
+        batch_result = result.value
         assert batch_result["results"] == [10, 30, 50]
         assert batch_result["success_count"] == 3
         assert batch_result["error_count"] == 2
@@ -1942,7 +1942,7 @@ class TestRetryMethod:
         """Retry succeeds on first attempt."""
         result = u.retry(lambda: 42, max_attempts=3)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        assert result.unwrap() == 42
+        assert result.value == 42
 
     def test_retry_succeeds_after_failures(self) -> None:
         """Retry succeeds after initial failures."""
@@ -1957,7 +1957,7 @@ class TestRetryMethod:
 
         result = u.retry(flaky, max_attempts=5, delay=0.01)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        assert result.unwrap() == 100
+        assert result.value == 100
         assert attempts[0] == 3
 
     def test_retry_exhausts_max_attempts(self) -> None:
@@ -2042,7 +2042,7 @@ class TestRetryMethod:
 
         result = u.retry(fail_twice, max_attempts=5, delay=0)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        assert result.unwrap() == 99
+        assert result.value == 99
 
     def test_retry_with_small_delay(self) -> None:
         """Retry with small delay works."""
@@ -2057,7 +2057,7 @@ class TestRetryMethod:
 
         result = u.retry(fail_once, max_attempts=3, delay=0.001)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        assert result.unwrap() == "success"
+        assert result.value == "success"
 
     # =========================================================================
     # Return value types
@@ -2067,19 +2067,19 @@ class TestRetryMethod:
         """Retry can return string value."""
         result = u.retry(lambda: "hello", max_attempts=1)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        assert result.unwrap() == "hello"
+        assert result.value == "hello"
 
     def test_retry_returns_dict(self) -> None:
         """Retry can return dict value."""
         result = u.retry(lambda: {"key": "value"}, max_attempts=1)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        assert result.unwrap() == {"key": "value"}
+        assert result.value == {"key": "value"}
 
     def test_retry_returns_list(self) -> None:
         """Retry can return list value."""
         result = u.retry(lambda: [1, 2, 3], max_attempts=1)
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        assert result.unwrap() == [1, 2, 3]
+        assert result.value == [1, 2, 3]
 
     # =========================================================================
     # Edge cases
@@ -2102,7 +2102,7 @@ class TestRetryMethod:
             delay=0.01,
         )
         FlextTestsMatchers.Tests.Result.assert_success(result)
-        assert result.unwrap() == 4
+        assert result.value == 4
         assert state["count"] == 4
 
     def test_retry_immediate_success_no_delay(self) -> None:

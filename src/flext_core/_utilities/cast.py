@@ -112,7 +112,7 @@ class FlextUtilitiesCast:
         # For GeneralValueType, try to convert
         # Dispatch based on target_type identity
         # The overloads ensure correct return types for str, int, float, bool
-        # Use cast() for type narrowing - type checker can't infer from identity checks
+        # Use  for type narrowing - type checker can't infer from identity checks
         if target_type is str:
             str_result: str = str(value)
             return cast("T", str_result)
@@ -165,7 +165,7 @@ class FlextUtilitiesCast:
         # callable() check is sufficient - isinstance(value, Callable) is redundant
         if callable(value):
             # For callable types, try to instantiate
-            # Use cast() for dynamic instantiation - type checker can't verify constructor signature
+            # Use  for dynamic instantiation - type checker can't verify constructor signature
             # This is a casting utility, so dynamic calls are expected
             try:
                 # Dynamic instantiation: target_type is type[T] but constructor signature unknown

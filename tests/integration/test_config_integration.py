@@ -186,7 +186,7 @@ class TestFlextConfigSingletonIntegration:
         config_result: FlextResult[t.GeneralValueType] = container.get("config")
         if config_result.is_success:
             # Identity check - cast to Any for type compatibility
-            retrieved_config: object = config_result.unwrap()
+            retrieved_config: object = config_result.value
             assert retrieved_config is global_config
 
     def test_environment_variable_override(self) -> None:

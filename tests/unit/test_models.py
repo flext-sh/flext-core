@@ -700,7 +700,7 @@ class TestFlextModels:
         result = aggregate.mark_events_as_committed()
         u.Tests.Result.assert_result_success(result)
         assert len(aggregate.domain_events) == 0
-        committed_events = result.unwrap()
+        committed_events = result.value
         assert len(committed_events) == 2
 
     def test_aggregate_root_mark_events_empty(self) -> None:
@@ -712,7 +712,7 @@ class TestFlextModels:
         aggregate = TestAggregate(name="test")
         result = aggregate.mark_events_as_committed()
         u.Tests.Result.assert_result_success(result)
-        committed_events = result.unwrap()
+        committed_events = result.value
         assert len(committed_events) == 0
 
     def test_aggregate_root_bulk_domain_events(self) -> None:

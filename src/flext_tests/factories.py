@@ -28,7 +28,7 @@ from pydantic import BaseModel as _BaseModel
 
 from flext_core import FlextProtocols as p, FlextResult, r
 from flext_core.typings import t as t_core
-from flext_tests.base import s
+from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t
@@ -38,7 +38,7 @@ TModel = TypeVar("TModel")
 TValue = TypeVar("TValue")
 
 
-class FlextTestsFactories(s[t_core.GeneralValueType]):
+class FlextTestsFactories(su[t_core.GeneralValueType]):
     """Comprehensive test data factories extending FlextService.
 
     Provides factory methods for creating test objects, services, and domain
@@ -849,7 +849,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 elif isinstance(model_result, FlextResult):
                     # isinstance() narrows to FlextResult[...], has is_success and unwrap()
                     if model_result.is_success:
-                        raw_item = model_result.unwrap()
+                        raw_item = model_result.value
                     else:
                         continue  # Skip failed results
                 else:
@@ -995,7 +995,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
                 elif isinstance(model_result, FlextResult):
                     # isinstance() narrows to FlextResult[...], has is_success and unwrap()
                     if model_result.is_success:
-                        raw_value = model_result.unwrap()
+                        raw_value = model_result.value
                     else:
                         continue  # Skip failed results
                 else:
@@ -1129,7 +1129,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         try:
             instance = _create_instance()
             if params.as_result:
-                return r[T].ok(instance)
+                return r[T].ok(cast("T", instance))
             return instance
         except Exception as e:
             if params.as_result:
@@ -1793,7 +1793,7 @@ class FlextTestsFactories(s[t_core.GeneralValueType]):
         # Capture overrides in local variable for use in nested class
         captured_overrides: dict[str, t.Tests.TestResultValue] = dict(overrides)
 
-        class TestService(s[t_core.GeneralValueType]):
+        class TestService(su[t_core.GeneralValueType]):
             """Generic test service."""
 
             name: str | None = None

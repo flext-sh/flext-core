@@ -7,7 +7,7 @@ Usage:
 
     # Validate imports
     result = tv.imports(Path("src"))
-    assert result.is_success and result.unwrap().passed
+    assert result.is_success and result.value.passed
 
     # Validate types
     result = tv.types(Path("src"))
@@ -37,17 +37,17 @@ from flext_tests._validator import (
     FlextValidatorTests,
     FlextValidatorTypes,
 )
-from flext_tests.base import s
+from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.models import m
 
 
-class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
+class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
     """FLEXT Architecture Validator - detects code violations.
 
     Provides methods to validate:
     - imports: lazy imports, TYPE_CHECKING, ImportError handling
-    - types: type:ignore, Any types, unapproved cast()
+    - types: type:ignore, Any types, unapproved
     - tests: monkeypatch, mocks, @patch
     - config: pyproject.toml deviations
     - bypass: noqa, pragma, exception swallowing
@@ -111,7 +111,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
         Detects:
         - TYPE-001: # type: ignore comments
         - TYPE-002: Any type annotations
-        - TYPE-003: Unapproved cast() usage
+        - TYPE-003: Unapproved  usage
 
         Args:
             path: Directory or file to scan
@@ -279,7 +279,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
                 return r[m.Tests.Validator.ScanResult].fail(
                     f"Validator '{name}' failed: {result.error}",
                 )
-            scan_result = result.unwrap()
+            scan_result = result.value
             all_violations.extend(scan_result.violations)
             total_files = max(total_files, scan_result.files_scanned)
 
