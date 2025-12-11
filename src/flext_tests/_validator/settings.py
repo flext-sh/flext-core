@@ -18,7 +18,7 @@ from flext_tests.models import m
 from flext_tests.utilities import u
 
 
-class FlextValidatorConfig:
+class FlextValidatorSettings:
     """Config validation methods for FlextTestsValidator.
 
     Uses c.Tests.Validator for constants and m.Tests.Validator for models.
@@ -334,4 +334,4 @@ class FlextValidatorConfig:
         return violations
 
 
-__all__ = ["FlextValidatorConfig"]
+__all__ = ["FlextValidatorSettings"]

@@ -51,12 +51,12 @@ class ServiceScenario:
     service_kwargs: Mapping[str, t.ScalarValue] | None = None
 
 
-class UserService(s[t.Types.ConfigurationMapping]):
+class UserService(s[t.ConfigurationMapping]):
     """Basic user service for standard testing."""
 
-    def execute(self) -> r[t.Types.ConfigurationMapping]:
+    def execute(self) -> r[t.ConfigurationMapping]:
         """Execute service and return data."""
-        return r[t.Types.ConfigurationMapping].ok({
+        return r[t.ConfigurationMapping].ok({
             "user_id": 1,
             "name": "test_user",
         })
@@ -145,7 +145,7 @@ class ServiceScenarios:
     @staticmethod
     def create_service(
         scenario: ServiceScenario,
-    ) -> s[t.Types.ConfigurationMapping] | s[str] | s[bool]:
+    ) -> s[t.ConfigurationMapping] | s[str] | s[bool]:
         """Create service instance for scenario."""
         kwargs_raw: Mapping[str, t.ScalarValue] = scenario.service_kwargs or {}
 

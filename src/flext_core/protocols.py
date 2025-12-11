@@ -71,7 +71,7 @@ class FlextProtocols:
         @property
         def error_data(
             self,
-        ) -> t.Types.ConfigurationMapping | None:
+        ) -> t.ConfigurationMapping | None:
             """Error metadata (optional)."""
             ...
 
@@ -332,7 +332,7 @@ class FlextProtocols:
     class Config(Protocol):
         """Configuration object protocol based on Pydantic BaseSettings pattern.
 
-        Reflects real implementations like FlextConfig which uses Pydantic BaseSettings.
+        Reflects real implementations like FlextSettings which uses Pydantic BaseSettings.
         Configuration objects use direct field access (Pydantic standard) rather than
         explicit get/set methods. Supports cloning via model_copy() and optional
         override methods.
@@ -451,7 +451,7 @@ class FlextProtocols:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
-        def get_config(self) -> t.Types.ConfigurationMapping:
+        def get_config(self) -> t.ConfigurationMapping:
             """Return the merged configuration exposed by this container."""
             ...
 
@@ -694,7 +694,7 @@ class FlextProtocols:
             self,
             request: t.GeneralValueType | BaseModel,
             handler: t.GeneralValueType | None = None,
-        ) -> FlextProtocols.Result[t.Types.ConfigurationMapping]:
+        ) -> FlextProtocols.Result[t.ConfigurationMapping]:
             """Register handler dynamically.
 
             Reflects real implementations like FlextDispatcher that accept
@@ -727,7 +727,7 @@ class FlextProtocols:
             command: t.FlexibleValue,
         ) -> FlextProtocols.Result[
             t.GeneralValueType
-        ]:  # Use GeneralValueType instead of T_co
+        ]:  # Use t.GeneralValueType instead of T_co
             """Execute command."""
             ...
 
@@ -825,7 +825,7 @@ class FlextProtocols:
 
         Processors can be objects with a process() method that takes data
         and returns a result (which will be normalized to Result).
-        Accepts GeneralValueType, BaseModel, or Result for processing.
+        Accepts t.GeneralValueType, BaseModel, or Result for processing.
 
         The return type is flexible to support:
         - Direct values (t.GeneralValueType)
@@ -1033,7 +1033,7 @@ class FlextProtocols:
                 ...
 
             @property
-            def attributes(self) -> t.Types.ConfigurationMapping:
+            def attributes(self) -> t.ConfigurationMapping:
                 """Metadata attributes."""
                 ...
 

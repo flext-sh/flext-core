@@ -42,16 +42,16 @@ class CircuitBreakerManager:
 
         """
         super().__init__()
-        self._failures: t.Types.StringIntDict = {}
-        self._states: t.Types.StringDict = {}
-        self._opened_at: t.Types.StringFloatDict = {}
-        self._success_counts: t.Types.StringIntDict = {}
+        self._failures: t.StringIntDict = {}
+        self._states: t.StringDict = {}
+        self._opened_at: t.StringFloatDict = {}
+        self._success_counts: t.StringIntDict = {}
         self._threshold = threshold
         self._recovery_timeout = recovery_timeout
         self._success_threshold = success_threshold
-        self._recovery_successes: t.Types.StringIntDict = {}
-        self._recovery_failures: t.Types.StringIntDict = {}
-        self._total_successes: t.Types.StringIntDict = {}
+        self._recovery_successes: t.StringIntDict = {}
+        self._recovery_failures: t.StringIntDict = {}
+        self._total_successes: t.StringIntDict = {}
 
     def get_state(self, message_type: str) -> str:
         """Get current state for message type.
@@ -207,7 +207,7 @@ class CircuitBreakerManager:
         self._recovery_failures.clear()
         self._total_successes.clear()
 
-    def get_metrics(self) -> t.Types.ConfigurationDict:
+    def get_metrics(self) -> t.ConfigurationDict:
         """Collect circuit breaker metrics, including recovery statistics.
 
         Returns:
@@ -277,7 +277,7 @@ class RateLimiterManager:
         self._max_requests = max_requests
         self._window_seconds = window_seconds
         self._jitter_factor = max(0.0, min(jitter_factor, 1.0))
-        self._windows: t.Types.StringTupleFloatIntDict = {}
+        self._windows: t.StringTupleFloatIntDict = {}
 
     def _apply_jitter(self, base_delay: float) -> float:
         """Apply jitter variance to a delay value.
@@ -363,7 +363,7 @@ class RetryPolicy:
         super().__init__()
         self._max_attempts = max(max_attempts, c.Reliability.RETRY_COUNT_MIN)
         self._base_delay = max(retry_delay, c.INITIAL_TIME)
-        self._attempts: t.Types.StringIntDict = {}
+        self._attempts: t.StringIntDict = {}
         self._exponential_factor = 2.0
         self._max_delay = c.Reliability.DEFAULT_MAX_DELAY_SECONDS
 

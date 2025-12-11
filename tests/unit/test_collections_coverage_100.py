@@ -25,10 +25,10 @@ from flext_core import FlextRuntime, m, t
 from flext_tests import u
 
 # Use actual classes, not type aliases, for inheritance
-Statistics = m.Collections.Statistics
-Config = m.Collections.Config
-Results = m.Collections.Results
-Options = m.Collections.Options
+Statistics = m.CollectionsStatistics
+Config = m.CollectionsConfig
+Results = m.CollectionsResults
+Options = m.CollectionsOptions
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,13 +58,13 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_initialization(self) -> None:
         """Test Categories initialization."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         assert categories.categories == {}
         assert len(categories) == 0
 
     def test_categories_get_entries_empty(self) -> None:
         """Test get_entries with empty category."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         assert categories.get_entries("nonexistent") == []
 
     @pytest.mark.parametrize(
@@ -74,7 +74,7 @@ class TestFlextModelsCollectionsCategories:
     )
     def test_categories_operations(self, scenario: CategoryOperationScenario) -> None:
         """Test category operations with various scenarios."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         if scenario.operation == "add":
             categories.add_entries(scenario.category, scenario.entries)
             assert categories.get_entries(scenario.category) == scenario.entries
@@ -90,14 +90,14 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_add_entries_existing_category(self) -> None:
         """Test add_entries with existing category."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         categories.add_entries("users", ["user1"])
         categories.add_entries("users", ["user2", "user3"])
         assert categories.get_entries("users") == ["user1", "user2", "user3"]
 
     def test_categories_has_category(self) -> None:
         """Test has_category via categories dict."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         # Categories doesn't have has_category method, check via categories dict
         assert "users" not in categories.categories
         categories.add_entries("users", ["user1"])
@@ -105,12 +105,12 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_remove_category_nonexistent(self) -> None:
         """Test remove_category with nonexistent category."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         categories.remove_category("nonexistent")
 
     def test_categories_category_names(self) -> None:
         """Test category_names method."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         categories.add_entries("users", ["user1"])
         categories.add_entries("groups", ["group1"])
         names = categories.category_names
@@ -119,14 +119,14 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_total_entries(self) -> None:
         """Test total_entries computed field."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
         assert categories.total_entries == 3
 
     def test_categories_summary(self) -> None:
         """Test summary computed field."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
         # Categories doesn't have a summary property, but we can compute it from categories dict
@@ -138,7 +138,7 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_dict_like_operations(self) -> None:
         """Test dict-like operations."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         categories.add_entries("users", ["user1"])
         # Categories uses .categories dict for dict-like operations
         assert ("users", ["user1"]) in categories.categories.items()
@@ -153,22 +153,22 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_get_with_default(self) -> None:
         """Test get method with default."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         assert categories.get("nonexistent", ["default"]) == ["default"]
         assert categories.get("nonexistent") == []
 
     def test_categories_from_dict(self) -> None:
         """Test from_dict class method."""
         data = {"users": ["user1"], "groups": ["group1"]}
-        # Cast to m.Collections.Categories for type compatibility
-        categories_raw = m.Collections.Categories[str].from_dict(data)
-        categories = cast("m.Collections.Categories[str]", categories_raw)
+        # Cast to m.Categories for type compatibility
+        categories_raw = m.Categories[str].from_dict(data)
+        categories = cast("m.Categories[str]", categories_raw)
         assert categories.get_entries("users") == ["user1"]
         assert categories.get_entries("groups") == ["group1"]
 
     def test_categories_to_dict(self) -> None:
         """Test to_dict method."""
-        categories: m.Collections.Categories[str] = m.Collections.Categories[str]()
+        categories: m.Categories[str] = m.Categories[str]()
         categories.add_entries("users", ["user1"])
         assert categories.to_dict() == {"users": ["user1"]}
 
@@ -263,7 +263,7 @@ class TestFlextModelsCollectionsStatistics:
         assert result_dict.get("name") == "first"
 
 
-class TestFlextModelsCollectionsConfig:
+class TestFlextModelsCollectionsSettings:
     """Real tests for m.Config using FlextTestsUtilities."""
 
     def test_config_merge(self) -> None:
@@ -286,7 +286,7 @@ class TestFlextModelsCollectionsConfig:
             timeout: int = 30
 
         data = {"timeout": 60}
-        # Convert dict[str, object] to dict[str, GeneralValueType] for type compatibility
+        # Convert dict[str, object] to dict[str, t.GeneralValueType] for type compatibility
         converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -382,9 +382,9 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10)
         result2 = TestResult(processed=20)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns GeneralValueType, but we know it's a dict
+        # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.Types.ConfigurationDict", aggregated_raw)
+        aggregated = cast("t.ConfigurationDict", aggregated_raw)
         assert aggregated["processed"] == 30
 
     def test_results_aggregate_lists(self) -> None:
@@ -396,9 +396,9 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(errors=["error1"])
         result2 = TestResult(errors=["error2"])
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns GeneralValueType, but we know it's a dict
+        # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.Types.ConfigurationDict", aggregated_raw)
+        aggregated = cast("t.ConfigurationDict", aggregated_raw)
         assert aggregated["errors"] == ["error1", "error2"]
 
     def test_results_aggregate_dicts(self) -> None:
@@ -410,9 +410,9 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(metadata={"key1": "value1"})
         result2 = TestResult(metadata={"key2": "value2"})
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns GeneralValueType, but we know it's a dict
+        # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.Types.ConfigurationDict", aggregated_raw)
+        aggregated = cast("t.ConfigurationDict", aggregated_raw)
         assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
 
     def test_results_aggregate_mixed(self) -> None:
@@ -426,9 +426,9 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, errors=["a"], status="ok")
         result2 = TestResult(processed=20, errors=["b"], status="done")
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns GeneralValueType, but we know it's a dict
+        # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.Types.ConfigurationDict", aggregated_raw)
+        aggregated = cast("t.ConfigurationDict", aggregated_raw)
         assert aggregated["processed"] == 30
         assert aggregated["errors"] == ["a", "b"]
         assert aggregated["status"] == "done"
@@ -443,9 +443,9 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, status="ok")
         result2 = TestResult(processed=None, status=None)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        # Type narrowing: aggregate returns GeneralValueType, but we know it's a dict
+        # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.Types.ConfigurationDict", aggregated_raw)
+        aggregated = cast("t.ConfigurationDict", aggregated_raw)
         assert aggregated["processed"] == 10
         assert aggregated["status"] == "ok"
 
@@ -482,8 +482,8 @@ class TestFlextModelsCollectionsOptions:
 
 __all__ = [
     "TestFlextModelsCollectionsCategories",
-    "TestFlextModelsCollectionsConfig",
     "TestFlextModelsCollectionsOptions",
     "TestFlextModelsCollectionsResults",
+    "TestFlextModelsCollectionsSettings",
     "TestFlextModelsCollectionsStatistics",
 ]

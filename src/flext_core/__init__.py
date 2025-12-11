@@ -15,7 +15,6 @@ from __future__ import annotations
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.__version__ import __version__, __version_info__
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants, c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
@@ -31,6 +30,7 @@ from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult, r
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService, s
+from flext_core.settings import FlextSettings
 from flext_core.typings import (
     E,
     FlextTypes,
@@ -75,7 +75,6 @@ BEARTYPE_CONF = BeartypeConf(
 __all__ = [
     "BEARTYPE_CONF",
     "E",
-    "FlextConfig",
     "FlextConstants",
     "FlextContainer",
     "FlextContext",
@@ -91,6 +90,7 @@ __all__ = [
     "FlextResult",
     "FlextRuntime",
     "FlextService",
+    "FlextSettings",
     "FlextTypes",
     "FlextUtilities",
     "MessageT_contra",

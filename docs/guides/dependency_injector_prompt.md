@@ -14,7 +14,7 @@ Architectural context
 
 Implementation rules
 - Prefer `providers.Resource` for external clients (DB/HTTP/queues), guaranteeing teardown/close and removing manual lifecycle boilerplate.
-- Use `providers.Configuration` to synchronize defaults/overrides validated by `FlextConfig`; avoid manual merges and preserve override precedence.
+- Use `providers.Configuration` to synchronize defaults/overrides validated by `FlextSettings`; avoid manual merges and preserve override precedence.
 - Prefer the parameterized `DependencyIntegration.create_container` helper when instantiating DI containers directly; it can bind configuration, register providers, and wire modules in one call, with caching controlled via parameters.
 - Service classes should reuse the runtime automation by overriding `_runtime_bootstrap_options` on `FlextService` to feed parameters into `FlextRuntime.create_service_runtime` (config overrides, service/factory/resource seeding, wiring targets). Avoid duplicating container/context/config creation in constructors.
 - Registrations must use typed providers (Generic[T]) to keep type-safety; avoid extra casts.

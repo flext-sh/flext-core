@@ -320,7 +320,7 @@ def test_chained_operations():
 
 ## Next Steps
 
-- **Configuration**: [Configuration Guide](guides/configuration.md) - Learn FlextConfig patterns
+- **Configuration**: [Configuration Guide](guides/configuration.md) - Learn FlextSettings patterns
 - **Error Handling**: [Error Handling Guide](guides/error-handling.md) - Deep dive into railway patterns
 - **Testing**: [Testing Guide](guides/testing.md) - Testing with pytest and fixtures
 - **Architecture**: [Clean Architecture](architecture/clean-architecture.md) - 5-layer patterns

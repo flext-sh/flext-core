@@ -157,22 +157,22 @@ class UtilityScenarios:
         """Create mock config object."""
 
         class TestConfig:
-            def model_dump(self) -> t.Types.ConfigurationMapping:
+            def model_dump(self) -> t.ConfigurationMapping:
                 # Convert kwargs to proper ConfigurationMapping type
                 # HasModelDump expects Mapping[str, FlexibleValue]
-                # ConfigurationMapping = Mapping[str, GeneralValueType]
+                # ConfigurationMapping = Mapping[str, t.GeneralValueType]
                 # For test purposes, we return ConfigurationMapping which is compatible
                 result: dict[str, t.GeneralValueType] = {}
                 for key, value in kwargs.items():
                     result[str(key)] = value
-                # dict[str, GeneralValueType] is compatible with Mapping[str, GeneralValueType]
+                # dict[str, t.GeneralValueType] is compatible with Mapping[str, t.GeneralValueType]
                 return result
 
         # TestConfig implements HasModelDump protocol via structural typing
         # model_dump() returns ConfigurationMapping which satisfies the protocol
-        # ConfigurationMapping = Mapping[str, GeneralValueType]
+        # ConfigurationMapping = Mapping[str, t.GeneralValueType]
         # HasModelDump expects Mapping[str, FlexibleValue]
-        # GeneralValueType is compatible with FlexibleValue at runtime
+        # t.GeneralValueType is compatible with FlexibleValue at runtime
         # Type assertion: TestConfig structurally implements HasModelDump
         # The model_dump() method signature is compatible with the protocol
         # Use cast to help type checker understand structural typing
@@ -184,7 +184,7 @@ class UtilityScenarios:
 
         class TestCachedObject:
             def __init__(self) -> None:
-                self._cache: t.Types.ConfigurationMapping = {"key": "value"}
+                self._cache: t.ConfigurationMapping = {"key": "value"}
                 self._simple_cache: str = "cached_value"
 
         return TestCachedObject()
@@ -397,7 +397,7 @@ class Testu:
     def test_cache_clear_object(self) -> None:
         """Test clearing object cache."""
         obj = UtilityScenarios.create_mock_cached_object()
-        # Type narrowing: obj is object, but clear_object_cache expects GeneralValueType
+        # Type narrowing: obj is object, but clear_object_cache expects t.GeneralValueType
         # Since obj has model_dump, it's compatible
         if isinstance(obj, BaseModel):
             result = u.Cache.clear_object_cache(obj)
@@ -421,7 +421,7 @@ class Testu:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        # Cast to GeneralValueType for type checker
+        # Cast to t.GeneralValueType for type checker
         obj_typed: t.GeneralValueType = cast("t.GeneralValueType", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is True
 
@@ -429,7 +429,7 @@ class Testu:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
         # has_cache_attributes expects an object with attributes, not a converted value
-        # Cast to GeneralValueType for type checker
+        # Cast to t.GeneralValueType for type checker
         obj_typed: t.GeneralValueType = cast("t.GeneralValueType", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is False
 
@@ -483,9 +483,9 @@ class Testu:
 
     def test_type_checker_object_accepts_all(self) -> None:
         """Test type checking with object (accepts all)."""
-        # MessageTypeSpecifier = str | type[GeneralValueType]
+        # MessageTypeSpecifier = str | type[t.GeneralValueType]
         # object is not a valid MessageTypeSpecifier, use str instead
-        accepted: tuple[t.Utility.MessageTypeSpecifier, ...] = (str,)
+        accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
         assert u.Checker.can_handle_message_type(accepted, str) is True
 
     def test_type_checker_specific_type_match(self) -> None:
@@ -500,7 +500,7 @@ class Testu:
 
     def test_type_checker_empty_accepted(self) -> None:
         """Test type checking with no accepted types."""
-        accepted: tuple[t.Utility.MessageTypeSpecifier, ...] = ()
+        accepted: tuple[t.MessageTypeSpecifier, ...] = ()
         assert u.Checker.can_handle_message_type(accepted, str) is False
 
     # =====================================================================
@@ -561,7 +561,7 @@ class Testu:
 
     def test_validation_sort_key_number(self) -> None:
         """Test sort_key with number - returns tuple[str, str]."""
-        # sort_key expects GeneralValueType, numbers are compatible
+        # sort_key expects t.GeneralValueType, numbers are compatible
         key = u.Validation.sort_key(42)
         assert isinstance(key, tuple)
         assert len(key) == 2
@@ -569,8 +569,8 @@ class Testu:
     def test_validation_sort_key_custom_object(self) -> None:
         """Test sort_key with custom object - returns tuple[str, str]."""
         obj = UtilityScenarios.create_custom_object()
-        # Type narrowing: sort_key expects GeneralValueType
-        # Convert object to GeneralValueType compatible value
+        # Type narrowing: sort_key expects t.GeneralValueType
+        # Convert object to t.GeneralValueType compatible value
         obj_value: t.GeneralValueType = (
             obj
             if isinstance(obj, (str, int, float, bool, type(None), list, dict))

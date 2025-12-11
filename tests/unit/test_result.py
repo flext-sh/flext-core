@@ -152,14 +152,14 @@ class Testr:
                     error_on_none="Value cannot be None",
                 )
             )
-            # value is already GeneralValueType from ResultScenario
+            # value is already t.GeneralValueType from ResultScenario
             u.Tests.Result.assert_success_with_value(
                 creation_result,
                 value,
             )
 
         elif op_type == ResultOperationType.CREATION_FAILURE:
-            # create_failure_result returns r[object], cast to r[GeneralValueType]
+            # create_failure_result returns r[object], cast to r[t.GeneralValueType]
             failure_result_raw = u.Tests.Result.create_failure_result(
                 str(value),
             )
@@ -173,7 +173,7 @@ class Testr:
             )
 
         elif op_type == ResultOperationType.UNWRAP_OR:
-            # value is already GeneralValueType from ResultScenario
+            # value is already t.GeneralValueType from ResultScenario
             if is_success:
                 unwrap_result: r[t.GeneralValueType] = (
                     u.Tests.Result.create_success_result(value)
@@ -209,7 +209,7 @@ class Testr:
             )
 
         elif op_type == ResultOperationType.ALT:
-            # value is already GeneralValueType from ResultScenario
+            # value is already t.GeneralValueType from ResultScenario
             if is_success:
                 result_alt: r[t.GeneralValueType] = (
                     u.Tests.Result.create_success_result(value)
@@ -250,7 +250,7 @@ class Testr:
                 )
 
         elif op_type == ResultOperationType.OR_OPERATOR:
-            # value is already GeneralValueType from ResultScenario
+            # value is already t.GeneralValueType from ResultScenario
             if is_success:
                 result_or: r[t.GeneralValueType] = u.Tests.Result.create_success_result(
                     value
@@ -439,7 +439,7 @@ class Testr:
         failure_errors: list[str] = ["error1", "error2"]
         error_codes: list[str | None] = ["CODE1", None]
 
-        # Convert list[str] to list[GeneralValueType] for create_parametrized_cases
+        # Convert list[str] to list[t.GeneralValueType] for create_parametrized_cases
         success_values_general: list[t.GeneralValueType] = [
             cast("t.GeneralValueType", v) for v in success_values
         ]
@@ -538,7 +538,7 @@ class Testr:
             pass
 
         invalid_io = InvalidIOResult()
-        # from_io_result expects IOResult[GeneralValueType, str]
+        # from_io_result expects IOResult[t.GeneralValueType, str]
         # InvalidIOResult is not IOResult, but method handles it at runtime
         result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", invalid_io))
         assert result.is_failure
@@ -734,10 +734,8 @@ class Testr:
         result = r[str].ok("value")
         io_result = result.to_io_result()
         assert isinstance(io_result, IOSuccess)
-        # IOSuccess.value returns IO, not the direct value
-        unwrapped = io_result.value
-        assert isinstance(unwrapped, IO)
-        assert unwrapped._inner_value == "value"
+        # IOSuccess contains a Success with the value
+        assert io_result._inner_value._inner_value == "value"
 
     def test_to_io_result_failure(self) -> None:
         """Test to_io_result for failure."""
@@ -756,7 +754,7 @@ class Testr:
         # Test normal IOSuccess path works
         io_value = IO("test_value")
         real_io = IOSuccess(io_value)
-        # from_io_result expects IOResult[GeneralValueType, str]
+        # from_io_result expects IOResult[t.GeneralValueType, str]
         # IOSuccess[IO[str]] is compatible at runtime but type system doesn't know
         result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", real_io))
         assert result.is_success
@@ -781,7 +779,7 @@ class Testr:
                 pass
 
         bad_io = BadIO()
-        # from_io_result expects IOResult[GeneralValueType, str]
+        # from_io_result expects IOResult[t.GeneralValueType, str]
         # BadIO is not IOResult, but method handles it at runtime
         result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", bad_io))
         assert result.is_failure
@@ -826,7 +824,7 @@ class Testr:
     def test_unwrap_failure(self) -> None:
         """Test unwrap raises RuntimeError on failure."""
         result = r[str].fail("error")
-        with pytest.raises(RuntimeError, match="Cannot unwrap failed result"):
+        with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             result.value
 
     def test_flat_map_inner_failure(self) -> None:
@@ -869,7 +867,7 @@ class Testr:
         result = r[str].ok("value")
         maybe = result.to_maybe()
         assert isinstance(maybe, Some)
-        assert maybe.value == "value"
+        assert maybe.unwrap() == "value"
 
     def test_to_maybe_failure(self) -> None:
         """Test to_maybe converts failure to Nothing."""

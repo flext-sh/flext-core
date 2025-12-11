@@ -481,7 +481,7 @@ class TestuPaginationBuildPaginationResponse:
 
         result = u.Pagination.build_pagination_response(pagination_data)
 
-        # Should still succeed - dict is valid GeneralValueType
+        # Should still succeed - dict is valid t.GeneralValueType
         u.Tests.Result.assert_result_success(result)
         response = result.value
         assert "data" in response
@@ -505,7 +505,7 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 500
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to GeneralValueType
+        # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
         config_cast = cast("t.GeneralValueType", config)
         result = u.Pagination.extract_pagination_config(config_cast)
 
@@ -519,7 +519,7 @@ class TestuPaginationExtractPaginationConfig:
             default_page_size = 30
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to GeneralValueType
+        # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
         config_cast = cast("t.GeneralValueType", config)
         result = u.Pagination.extract_pagination_config(config_cast)
 
@@ -534,7 +534,7 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 0
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to GeneralValueType
+        # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
         config_cast = cast("t.GeneralValueType", config)
         result = u.Pagination.extract_pagination_config(config_cast)
 
@@ -551,7 +551,7 @@ class TestuPaginationExtractPaginationConfig:
                 self.max_page_size = 600
 
         config = Config()
-        # extract_pagination_config accepts object with attributes, cast to GeneralValueType
+        # extract_pagination_config accepts object with attributes, cast to t.GeneralValueType
         config_cast = cast("t.GeneralValueType", config)
         result = u.Pagination.extract_pagination_config(config_cast)
 

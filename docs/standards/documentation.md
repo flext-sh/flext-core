@@ -84,7 +84,7 @@ from flext_core import FlextResult
 # ❌ WRONG - Unnecessary imports
 from flext_core import (
     FlextDispatcher,
-    FlextConfig,
+    FlextSettings,
     FlextConstants,
     FlextContainer,
     FlextContext,

@@ -74,7 +74,7 @@ user2 = User.model_validate({"user_id": "...", ...})
 user3 = User.model_validate_json('{"user_id": "..."}')
 ```
 
-**From FLEXT**: `src/flext_core/config.py` - FlextConfig uses this pattern extensively.
+**From FLEXT**: `src/flext_core/config.py` - FlextSettings uses this pattern extensively.
 
 ## Pattern 2: ConfigDict for Model Settings
 

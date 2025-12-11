@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from flext_core._models.context import FlextModelsContext
+from flext_core.models import m
 from flext_core.typings import t
 
 
@@ -23,7 +23,7 @@ class FlextUtilitiesContext:
     def create_str_proxy(
         key: str,
         default: str | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[str]:
+    ) -> m.StructlogProxyContextVar[str]:
         """Create StructlogProxyContextVar[str] instance.
 
         Helper factory for creating string-typed context variables with structlog
@@ -42,13 +42,13 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns "abc-123"
 
         """
-        return FlextModelsContext.StructlogProxyContextVar[str](key, default=default)
+        return m.StructlogProxyContextVar[str](key, default=default)
 
     @staticmethod
     def create_datetime_proxy(
         key: str,
         default: datetime | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[datetime]:
+    ) -> m.StructlogProxyContextVar[datetime]:
         """Create StructlogProxyContextVar[datetime] instance.
 
         Helper factory for creating datetime-typed context variables with structlog
@@ -68,7 +68,7 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns datetime instance
 
         """
-        return FlextModelsContext.StructlogProxyContextVar[datetime](
+        return m.StructlogProxyContextVar[datetime](
             key,
             default=default,
         )
@@ -76,8 +76,8 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: t.Types.ConfigurationDict | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[t.Types.ConfigurationDict]:
+        default: t.ConfigurationDict | None = None,
+    ) -> m.StructlogProxyContextVar[t.ConfigurationDict]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -88,7 +88,7 @@ class FlextUtilitiesContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[t.Types.ConfigurationDict] instance
+            StructlogProxyContextVar[t.ConfigurationDict] instance
 
         Example:
             >>> var = uContext.create_dict_proxy("metadata")
@@ -96,7 +96,7 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns dict
 
         """
-        return FlextModelsContext.StructlogProxyContextVar[t.Types.ConfigurationDict](
+        return m.StructlogProxyContextVar[t.ConfigurationDict](
             key,
             default=default,
         )

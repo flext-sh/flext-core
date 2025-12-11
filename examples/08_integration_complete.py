@@ -25,7 +25,6 @@ from typing import cast
 from pydantic import BaseModel, Field
 
 from flext_core import (
-    FlextConfig,
     FlextConstants,
     FlextContainer,
     FlextContext,
@@ -35,6 +34,7 @@ from flext_core import (
     FlextModels,
     FlextRegistry,
     FlextResult,
+    FlextSettings,
     s,
     t,
     u,
@@ -68,12 +68,12 @@ class Order(FlextModels.AggregateRoot):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class IntegrationService(s[t.Types.ServiceMetadataMapping]):
+class IntegrationService(s[t.ServiceMetadataMapping]):
     """Service demonstrating complete flext-core integration."""
 
     def execute(
         self,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Execute complete integration demonstration."""
         print("Starting complete integration demonstration")
 
@@ -88,13 +88,13 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
             self._demonstrate_registry_dispatcher_integration()
             self._demonstrate_utilities_integration()
 
-            return FlextResult[t.Types.ServiceMetadataMapping].ok({
+            return FlextResult[t.ServiceMetadataMapping].ok({
                 "components_integrated": [
                     "FlextResult",
                     "FlextContainer",
                     "FlextContext",
                     "FlextLogger",
-                    "FlextConfig",
+                    "FlextSettings",
                     "FlextModels",
                     "FlextDecorators",
                     "FlextRegistry",
@@ -117,7 +117,7 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"
-            return FlextResult[t.Types.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.ServiceMetadataMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_result_patterns() -> None:
@@ -175,10 +175,10 @@ class IntegrationService(s[t.Types.ServiceMetadataMapping]):
 
     @staticmethod
     def _demonstrate_config_integration() -> None:
-        """Show FlextConfig integration."""
-        print("\n=== FlextConfig Integration ===")
+        """Show FlextSettings integration."""
+        print("\n=== FlextSettings Integration ===")
 
-        config = FlextConfig.get_global_instance()
+        config = FlextSettings.get_global_instance()
         log_level = config.log_level
         print(f"✅ Config access: log_level={log_level}")
 

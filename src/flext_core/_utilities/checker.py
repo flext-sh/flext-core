@@ -40,7 +40,7 @@ class FlextUtilitiesChecker:
     def compute_accepted_message_types(
         cls,
         handler_class: type,
-    ) -> tuple[t.Utility.MessageTypeSpecifier, ...]:
+    ) -> tuple[t.MessageTypeSpecifier, ...]:
         """Compute message types accepted by a handler using cached introspection.
 
         Args:
@@ -50,13 +50,13 @@ class FlextUtilitiesChecker:
             Tuple of accepted message types
 
         """
-        message_types: list[t.Utility.MessageTypeSpecifier] = []
+        message_types: list[t.MessageTypeSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
         # Extend with extracted generic types
         message_types.extend(generic_types)
 
         if not message_types:
-            explicit_type: t.Utility.MessageTypeSpecifier | None = (
+            explicit_type: t.MessageTypeSpecifier | None = (
                 cls._extract_message_type_from_handle(handler_class)
             )
             if explicit_type is not None:
@@ -68,7 +68,7 @@ class FlextUtilitiesChecker:
     def _extract_generic_message_types(
         cls,
         handler_class: type,
-    ) -> list[t.Utility.MessageTypeSpecifier]:
+    ) -> list[t.MessageTypeSpecifier]:
         """Extract message types from generic base annotations.
 
         Args:
@@ -78,7 +78,7 @@ class FlextUtilitiesChecker:
             List of message types from generic annotations
 
         """
-        message_types: list[t.Utility.MessageTypeSpecifier] = []
+        message_types: list[t.MessageTypeSpecifier] = []
         for base in getattr(handler_class, "__orig_bases__", ()) or ():
             # Layer 0.5: Use FlextRuntime for type introspection
             origin = get_origin(base)
@@ -87,7 +87,7 @@ class FlextUtilitiesChecker:
             if origin and origin.__name__ in {"h", "FlextHandlers"}:
                 # Use FlextRuntime.extract_generic_args() from Layer 0.5 (defined in runtime.pyi stub)
                 args = FlextRuntime.extract_generic_args(base)
-                # Accept all type forms: plain types, generic aliases (e.g., t.Types.ConfigurationDict),
+                # Accept all type forms: plain types, generic aliases (e.g., t.ConfigurationDict),
                 # and string type references. The _evaluate_type_compatibility method
                 # handles all these forms correctly.
                 # args[0] is never None - extract_generic_args returns tuple of types/strings
@@ -98,7 +98,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_method_signature(
         cls,
-        handle_method: t.Handler.HandlerCallable,
+        handle_method: t.HandlerCallable,
     ) -> inspect.Signature | None:
         """Extract signature from handle method."""
         try:
@@ -111,9 +111,9 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: t.Handler.HandlerCallable,
+        handle_method: t.HandlerCallable,
         handler_class: type,
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(
@@ -128,15 +128,15 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: t.Types.ConfigurationDict,
+        type_hints: t.ConfigurationDict,
         param_name: str,
-    ) -> t.Utility.MessageTypeSpecifier | None:
+    ) -> t.MessageTypeSpecifier | None:
         """Extract message type from parameter hints or annotation."""
         if param_name in type_hints:
             # Return the type hint directly (plain types, generic aliases, etc.)
             hint = type_hints[param_name]
-            # Type narrowing: MessageTypeSpecifier = str | type[GeneralValueType]
-            # hint is GeneralValueType, but we need to check if it's a valid MessageTypeSpecifier
+            # Type narrowing: MessageTypeSpecifier = str | type[t.GeneralValueType]
+            # hint is t.GeneralValueType, but we need to check if it's a valid MessageTypeSpecifier
             if hint is None:
                 return None
             # If hint is a string or a type, it's valid MessageTypeSpecifier
@@ -144,7 +144,7 @@ class FlextUtilitiesChecker:
                 return hint
             if isinstance(hint, type):
                 # Type narrowing: hint is type after isinstance check
-                # MessageTypeSpecifier = str | type[GeneralValueType], so type is valid
+                # MessageTypeSpecifier = str | type[t.GeneralValueType], so type is valid
                 return hint
             # For other types (Sequence, Mapping), convert to string
             # string is valid MessageTypeSpecifier
@@ -153,7 +153,7 @@ class FlextUtilitiesChecker:
         annotation = parameter.annotation
         if annotation is not inspect.Signature.empty:
             # Type narrowing: annotation exists and is not empty
-            # MessageTypeSpecifier = str | type[GeneralValueType], annotation fits
+            # MessageTypeSpecifier = str | type[t.GeneralValueType], annotation fits
             return annotation
 
         return None
@@ -162,7 +162,7 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_handle(
         cls,
         handler_class: type,
-    ) -> t.Utility.MessageTypeSpecifier | None:
+    ) -> t.MessageTypeSpecifier | None:
         """Extract message type from handle method annotations when generics are absent.
 
         Args:
@@ -193,8 +193,8 @@ class FlextUtilitiesChecker:
     @classmethod
     def can_handle_message_type(
         cls,
-        accepted_types: tuple[t.Utility.MessageTypeSpecifier, ...],
-        message_type: t.Utility.MessageTypeSpecifier,
+        accepted_types: tuple[t.MessageTypeSpecifier, ...],
+        message_type: t.MessageTypeSpecifier,
     ) -> bool:
         """Check if handler can process this message type.
 
@@ -217,7 +217,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _check_object_type_compatibility(
         cls,
-        expected_type: t.Utility.TypeOriginSpecifier,
+        expected_type: t.TypeOriginSpecifier,
     ) -> bool | None:
         """Check if expected type is object (universal compatibility).
 
@@ -244,10 +244,10 @@ class FlextUtilitiesChecker:
     @classmethod
     def _check_dict_compatibility(
         cls,
-        expected_type: t.Utility.TypeOriginSpecifier,
-        message_type: t.Utility.MessageTypeSpecifier,
-        origin_type: t.Utility.TypeOriginSpecifier,
-        message_origin: t.Utility.TypeOriginSpecifier,
+        expected_type: t.TypeOriginSpecifier,
+        message_type: t.MessageTypeSpecifier,
+        origin_type: t.TypeOriginSpecifier,
+        message_origin: t.TypeOriginSpecifier,
     ) -> bool | None:
         """Check dict type compatibility.
 
@@ -261,15 +261,15 @@ class FlextUtilitiesChecker:
             True if dict compatible, None if not dict types
 
         """
-        # Handle dict/t.Types.ConfigurationDict compatibility
-        # If expected is dict or t.Types.ConfigurationDict, accept dict instances
+        # Handle dict/t.ConfigurationDict compatibility
+        # If expected is dict or t.ConfigurationDict, accept dict instances
         if origin_type is dict and (
             message_origin is dict
             or (isinstance(message_type, type) and issubclass(message_type, dict))
         ):
             return True
 
-        # If message is dict or t.Types.ConfigurationDict, and expected is also dict-like
+        # If message is dict or t.ConfigurationDict, and expected is also dict-like
         if (
             isinstance(message_type, type)
             and issubclass(message_type, dict)
@@ -285,8 +285,8 @@ class FlextUtilitiesChecker:
     @classmethod
     def _evaluate_type_compatibility(
         cls,
-        expected_type: t.Utility.TypeOriginSpecifier,
-        message_type: t.Utility.MessageTypeSpecifier,
+        expected_type: t.TypeOriginSpecifier,
+        message_type: t.MessageTypeSpecifier,
     ) -> bool:
         """Evaluate compatibility between expected and actual message types.
 
@@ -332,10 +332,10 @@ class FlextUtilitiesChecker:
     @classmethod
     def _handle_type_or_origin_check(
         cls,
-        expected_type: t.Utility.TypeOriginSpecifier,
-        message_type: t.Utility.TypeOriginSpecifier,
-        origin_type: t.Utility.TypeOriginSpecifier,
-        message_origin: t.Utility.TypeOriginSpecifier,
+        expected_type: t.TypeOriginSpecifier,
+        message_type: t.TypeOriginSpecifier,
+        origin_type: t.TypeOriginSpecifier,
+        message_origin: t.TypeOriginSpecifier,
     ) -> bool:
         """Handle type checking for types or objects with __origin__.
 
@@ -361,8 +361,8 @@ class FlextUtilitiesChecker:
     @classmethod
     def _handle_instance_check(
         cls,
-        message_type: t.Utility.TypeOriginSpecifier,
-        origin_type: t.Utility.TypeOriginSpecifier,
+        message_type: t.TypeOriginSpecifier,
+        origin_type: t.TypeOriginSpecifier,
     ) -> bool:
         """Handle instance checking for non-type objects.
 

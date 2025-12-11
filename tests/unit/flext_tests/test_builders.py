@@ -211,7 +211,7 @@ class TestFlextTestsBuilders:
         """Test add() with items and items_map."""
         builder = FlextTestsBuilders()
         # items_map is a special kwarg processed by AddParams
-        # Type ignore needed because items_map is Callable, not GeneralValueType
+        # Type ignore needed because items_map is Callable, not t.GeneralValueType
         builder.add("doubled", items=[1, 2, 3], items_map=lambda x: x * 2)
         data = builder.build()
         doubled = cast("list[int]", data["doubled"])
@@ -221,7 +221,7 @@ class TestFlextTestsBuilders:
         """Test add() with entries and entries_filter."""
         builder = FlextTestsBuilders()
         # entries_filter is a special kwarg processed by AddParams
-        # Type ignore needed because entries_filter is set[str], not GeneralValueType
+        # Type ignore needed because entries_filter is set[str], not t.GeneralValueType
         builder.add(
             "filtered",
             entries={"a": 1, "b": 2, "c": 3},
@@ -349,7 +349,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("count", 5)
         # validate_with is a special kwarg processed by BuildParams
-        # Type ignore needed because validate_with is Callable, not GeneralValueType
+        # Type ignore needed because validate_with is Callable, not t.GeneralValueType
         # build() accepts **kwargs: object, validated by BuildParams
         build_result = builder.build(validate_with=lambda d: d["count"] > 0)
         # Type narrowing: build() returns union, extract dict
@@ -367,7 +367,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("x", 1)
         # map_result is a special kwarg processed by BuildParams
-        # Type ignore needed because map_result is Callable, not GeneralValueType
+        # Type ignore needed because map_result is Callable, not t.GeneralValueType
         build_result = builder.build(map_result=lambda d: d["x"] * 2)
         # Type narrowing: map_result returns transformed value (int in this case)
         doubled: int = cast("int", build_result)
@@ -432,7 +432,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("count", 5)
         # validate is a special kwarg processed by ToResultParams
-        # Type ignore needed because validate is Callable, not GeneralValueType
+        # Type ignore needed because validate is Callable, not t.GeneralValueType
         # Type annotation matches actual return type from to_result()
         # validate is Callable, validated by ToResultParams
         # Actual return type is more specific, use explicit type annotation with cast
@@ -770,9 +770,9 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.assert_failure() delegates to tu.Tests.Result."""
         # Result.assert_failure() delegates to tu.Tests.Result.assert_failure()
         result: r[int] = r[int].fail("Error")
-        # Type narrowing: assert_failure accepts r[GeneralValueType], r[int] is compatible
+        # Type narrowing: assert_failure accepts r[t.GeneralValueType], r[int] is compatible
         error: str = tb.Tests.Result.assert_failure(
-            cast("r[t_test.GeneralValueType]", result),
+            cast("r[t_test.t.GeneralValueType]", result),
         )
         assert "Error" in error
 

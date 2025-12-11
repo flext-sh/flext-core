@@ -281,7 +281,7 @@ from flext_core.result import FlextResult  # config is higher than result
 
 # result.py
 # ❌ ANTI-PATTERN - Imports from lower layer
-from flext_core.config import FlextConfig  # result is lower than config
+from flext_core.settings import FlextSettings  # result is lower than config
 ```
 
 **Why it's wrong**:
@@ -299,7 +299,7 @@ Layer 0.5: FlextRuntime (imports Layer 0 only)
 Layer 1: FlextResult, FlextContainer (imports Layer 0, 0.5 only)
 Layer 2: FlextModels, FlextService (imports Layer 0-1 only)
 Layer 3: h, FlextDispatcher (imports Layer 0-2 only)
-Layer 4: FlextConfig, FlextLogger (imports all lower layers)
+Layer 4: FlextSettings, FlextLogger (imports all lower layers)
 ```
 
 ```python
@@ -651,7 +651,7 @@ def connect_database():
 
 ```python
 # ✅ CORRECT - Configuration from environment
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class DatabaseConfig(BaseSettings):
@@ -708,7 +708,7 @@ time.sleep(config["timeout"])  # TypeError: float argument required
 
 ```python
 # ✅ CORRECT - Validated configuration
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from pydantic import BaseSettings, Field, field_validator
 
 class AppConfig(BaseSettings):

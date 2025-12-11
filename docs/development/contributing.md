@@ -274,7 +274,7 @@ src/flext_core/
 ```python
 # ✅ Good - Direct imports
 from flext_core import FlextDispatcher
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from flext_core import FlextConstants
 from flext_core import FlextContainer
 from flext_core import FlextContext

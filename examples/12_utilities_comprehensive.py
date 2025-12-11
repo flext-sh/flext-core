@@ -36,7 +36,7 @@ from flext_core import (
 # SAMPLE DATA
 # ═══════════════════════════════════════════════════════════════════
 
-TEST_DATA: t.Types.ConfigurationMapping = {
+TEST_DATA: t.ConfigurationMapping = {
     "email": "test@example.com",
     "invalid_email": "invalid-email",
     "number_str": "42",
@@ -53,12 +53,12 @@ TEST_DATA: t.Types.ConfigurationMapping = {
 # ═══════════════════════════════════════════════════════════════════
 
 
-class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
+class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
     """Service demonstrating u comprehensive toolkit."""
 
     def execute(
         self,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Execute comprehensive utilities demonstrations."""
         print("Starting utilities demonstration")
 
@@ -72,7 +72,7 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
             self._demonstrate_collection_operations()
             self._demonstrate_type_checking()
 
-            return FlextResult[t.Types.ServiceMetadataMapping].ok({
+            return FlextResult[t.ServiceMetadataMapping].ok({
                 "utilities_demonstrated": [
                     "validation",
                     "id_generation",
@@ -94,7 +94,7 @@ class UtilitiesService(FlextService[t.Types.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Utilities demonstration failed: {e}"
-            return FlextResult[t.Types.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.ServiceMetadataMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_validation() -> None:
@@ -298,7 +298,7 @@ def main() -> None:
     result = service.execute()
 
     # Railway pattern for result handling (DRY)
-    def handle_success(data: t.Types.ServiceMetadataMapping) -> None:
+    def handle_success(data: t.ServiceMetadataMapping) -> None:
         """Handle successful result."""
         categories = data.get("utility_categories", 0)
         utilities = data.get("utilities_demonstrated", [])

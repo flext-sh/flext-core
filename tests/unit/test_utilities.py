@@ -27,7 +27,7 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextConfig, p, r, t
+from flext_core import FlextSettings, p, r, t
 from flext_core.constants import c
 from flext_tests import FlextTestsUtilities, u
 
@@ -329,7 +329,7 @@ class Testu:
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
-        data: t.Types.ConfigurationMapping = {"z": 1, "a": 2, "m": 3}
+        data: t.ConfigurationMapping = {"z": 1, "a": 2, "m": 3}
         result = u.Cache.sort_dict_keys(data)
         assert isinstance(result, dict)
         assert list(result.keys()) == ["a", "m", "z"]
@@ -347,7 +347,7 @@ class Testu:
 
     def test_cache_clear_object_cache(self) -> None:
         """Test clearing object cache."""
-        cache_data: t.Types.ConfigurationMapping = {"test": "data"}
+        cache_data: t.ConfigurationMapping = {"test": "data"}
         result = u.Cache.clear_object_cache(cache_data)
         u.Tests.Result.assert_result_success(result)
 
@@ -363,10 +363,10 @@ class Testu:
         if has_cache:
 
             class TestWithCache:
-                _cache: ClassVar[t.Types.ConfigurationMapping] = {}
+                _cache: ClassVar[t.ConfigurationMapping] = {}
 
             cache_obj = TestWithCache()
-            # Cast to GeneralValueType for type checker - test class is valid object
+            # Cast to t.GeneralValueType for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(cast("t.GeneralValueType", cache_obj))
             assert result is expected
         else:
@@ -375,7 +375,7 @@ class Testu:
                 pass
 
             no_cache_obj = TestNoCache()
-            # Cast to GeneralValueType for type checker - test class is valid object
+            # Cast to t.GeneralValueType for type checker - test class is valid object
             result = u.Cache.has_cache_attributes(
                 cast("t.GeneralValueType", no_cache_obj),
             )
@@ -466,8 +466,8 @@ class Testu:
     def test_validation_normalize_component_pydantic(self) -> None:
         """Test normalize_component with Pydantic model."""
         model = UtilityScenarios.create_test_model()
-        # normalize_component accepts GeneralValueType
-        # Convert BaseModel to dict (GeneralValueType) to match signature
+        # normalize_component accepts t.GeneralValueType
+        # Convert BaseModel to dict (t.GeneralValueType) to match signature
         model_dict: t.GeneralValueType = model.model_dump()
         result: t.GeneralValueType = u.Validation.normalize_component(model_dict)
         assert result is not None
@@ -511,15 +511,15 @@ class Testu:
             age: int
 
         person = Person(name="Alice", age=30)
-        # normalize_component accepts GeneralValueType
-        # Convert dataclass to dict (GeneralValueType) via dataclasses.asdict
+        # normalize_component accepts t.GeneralValueType
+        # Convert dataclass to dict (t.GeneralValueType) via dataclasses.asdict
         person_dict: t.GeneralValueType = asdict(person)
         result: t.GeneralValueType = u.Validation.normalize_component(person_dict)
         assert result is not None
 
     def test_validation_sort_key_with_dict(self) -> None:
         """Test sort_key with dictionary."""
-        dict_a: t.Types.ConfigurationMapping = {"z": 1, "a": 2}
+        dict_a: t.ConfigurationMapping = {"z": 1, "a": 2}
         key = u.Validation.sort_key(dict_a)
         assert isinstance(key, (str, tuple)) and len(key) > 0
 
@@ -529,13 +529,13 @@ class Testu:
 
     def test_configuration_get_parameter(self) -> None:
         """Test getting configuration parameter."""
-        config = FlextConfig.get_global_instance()
+        config = FlextSettings.get_global_instance()
         value = u.Configuration.get_parameter(config, "app_name")
         assert value is not None
 
     def test_configuration_set_parameter(self) -> None:
         """Test setting configuration parameter."""
-        config = FlextConfig.get_global_instance()
+        config = FlextSettings.get_global_instance()
         result = u.Configuration.set_parameter(
             config,
             "test_param",
@@ -545,7 +545,7 @@ class Testu:
 
     def test_configuration_get_singleton(self) -> None:
         """Test getting singleton configuration."""
-        value = u.Configuration.get_singleton(FlextConfig, "app_name")
+        value = u.Configuration.get_singleton(FlextSettings, "app_name")
         assert value is not None
 
     # =====================================================================

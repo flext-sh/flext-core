@@ -182,7 +182,7 @@ class NotificationService(FlextService[str]):
 
 
 # Use the actual class, not the type alias
-class ServiceConfig(m.Collections.Config):
+class ServiceConfig(m.CollectionsConfig):
     """Service configuration model with required fields."""
 
     name: str

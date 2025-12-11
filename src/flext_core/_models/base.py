@@ -179,7 +179,7 @@ class FlextModelsBase:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        attributes: t.Types.ConfigurationDict = Field(default_factory=dict)
+        attributes: t.ConfigurationDict = Field(default_factory=dict)
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

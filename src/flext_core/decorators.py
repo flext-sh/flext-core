@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+import warnings
 from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
@@ -29,6 +30,66 @@ from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T, t
 from flext_core.utilities import u
+
+
+def deprecated(message: str) -> Callable:
+    """Decorator to mark functions/variables as deprecated.
+
+    Emits DeprecationWarning when decorated function is called.
+    Used during v0.10 → v0.11 refactoring for constants migration.
+
+    Architecture: Cross-Cutting Concern (Tier 3)
+    ============================================
+    Provides simple deprecation warnings for functions, methods, and constants
+    being replaced during the constants refactoring phase. Warnings guide users
+    to use new APIs before deprecated code is removed.
+
+    Args:
+        message: Deprecation message explaining what to use instead
+
+    Returns:
+        Decorator function that wraps the target callable
+
+    Example:
+        >>> @deprecated("Use FlextConstants.Errors.VALIDATION_ERROR instead")
+        ... def old_validation_error():
+        ...     return "validation_error"
+
+        >>> # When called:
+        >>> result = old_validation_error()  # DeprecationWarning emitted
+        >>> assert result == "validation_error"  # Still works
+
+    Note:
+        This decorator is intended for v0.10 → v0.11 transition period.
+        After deprecation cycle completes, remove decorator and aliases.
+        Part of comprehensive constants refactoring (PASSO 3-7).
+
+    """
+
+    def decorator(func_or_value: Callable | object) -> Callable | object:
+        """Apply deprecation warning to callable."""
+        if callable(func_or_value):
+            # Callable (function/method)
+            @wraps(func_or_value)
+            def wrapper(*args, **kwargs):  # type: ignore
+                """Wrapper that emits warning before execution."""
+                warnings.warn(
+                    message,
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                return func_or_value(*args, **kwargs)  # type: ignore
+
+            return wrapper
+        # Value (constant, variable)
+        warnings.warn(
+            message,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return func_or_value
+
+    return decorator
 
 
 class FlextDecorators(FlextRuntime):
@@ -181,7 +242,7 @@ class FlextDecorators(FlextRuntime):
         ...         delay_seconds=1.0,
         ...         backoff_strategy="exponential",
         ...     )
-        ...     def call_external_api(self, endpoint: str) -> t.Types.ConfigurationDict:
+        ...     def call_external_api(self, endpoint: str) -> t.ConfigurationDict:
         ...         # Automatically retries on failure with backoff
         ...         return requests.get(endpoint).json()
 
@@ -253,7 +314,7 @@ class FlextDecorators(FlextRuntime):
 
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
-        ... def business_operation() -> t.Types.ConfigurationDict:
+        ... def business_operation() -> t.ConfigurationDict:
         ...     # All exceptions become FlextResult.fail()
         ...     return process_business_logic()
         >>>
@@ -347,8 +408,7 @@ class FlextDecorators(FlextRuntime):
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         # Get from container using the service key
-                        result_raw: p.Result[object] = container.get(service_key)
-                        result: r[object] = result_raw
+                        result: p.Result[object] = container.get(service_key)
                         if result.is_success:
                             # Use .value directly - FlextResult never returns None on success
                             kwargs[name] = result.value
@@ -431,7 +491,7 @@ class FlextDecorators(FlextRuntime):
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: t.Types.ConfigurationDict = {
+                    start_extra: t.ConfigurationDict = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -457,7 +517,7 @@ class FlextDecorators(FlextRuntime):
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: t.Types.ConfigurationDict = {
+                    completion_extra: t.ConfigurationDict = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -496,7 +556,7 @@ class FlextDecorators(FlextRuntime):
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: t.Types.ConfigurationDict = {
+                    failure_extra: t.ConfigurationDict = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
@@ -620,7 +680,7 @@ class FlextDecorators(FlextRuntime):
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
-                    success_extra: t.Types.ConfigurationDict = {
+                    success_extra: t.ConfigurationDict = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -642,7 +702,7 @@ class FlextDecorators(FlextRuntime):
                 ) as e:
                     duration = time.perf_counter() - start_time
 
-                    failure_extra: t.Types.ConfigurationDict = {
+                    failure_extra: t.ConfigurationDict = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -784,7 +844,7 @@ class FlextDecorators(FlextRuntime):
                     delay_seconds=2.0,
                     backoff_strategy=c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
                 )
-                def unreliable_operation(self) -> t.Types.ConfigurationDict:
+                def unreliable_operation(self) -> t.ConfigurationDict:
                     # Automatically retries on failure with exponential backoff
                     return self._make_api_call()
             ```
@@ -816,7 +876,7 @@ class FlextDecorators(FlextRuntime):
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 logger = FlextDecorators._resolve_logger(args, func)
                 # Create retry config from parameters
-                retry_config = m.Config.RetryConfiguration(
+                retry_config = m.RetryConfiguration(
                     max_attempts=attempts,
                     initial_delay_seconds=delay,
                     exponential_backoff=(
@@ -882,7 +942,7 @@ class FlextDecorators(FlextRuntime):
         ],  # Function kwargs can contain any type (ParamSpec compatibility)
         logger: p.Log.StructlogLogger,
         *,
-        retry_config: m.Config.RetryConfiguration | None = None,
+        retry_config: m.RetryConfiguration | None = None,
     ) -> R | Exception:
         """Execute retry loop and return last exception.
 
@@ -901,7 +961,7 @@ class FlextDecorators(FlextRuntime):
         """
         # Use default config if none provided
         if retry_config is None:
-            retry_config = m.Config.RetryConfiguration()
+            retry_config = m.RetryConfiguration()
 
         attempts = retry_config.max_attempts
         delay = retry_config.initial_delay_seconds
@@ -1078,7 +1138,7 @@ class FlextDecorators(FlextRuntime):
         result: p.Result[bool] | FlextRuntime.RuntimeResult[bool],
         logger: p.Log.StructlogLogger,
         fallback_message: str,
-        kwargs: t.Types.ConfigurationMapping,
+        kwargs: t.ConfigurationMapping,
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
@@ -1090,7 +1150,7 @@ class FlextDecorators(FlextRuntime):
             extra_payload_raw = fallback_kwargs["extra"]
             # Type narrowing: object to ConfigurationDict for is_dict_like
             if isinstance(extra_payload_raw, dict):
-                extra_payload: t.Types.ConfigurationDict = extra_payload_raw
+                extra_payload: t.ConfigurationDict = extra_payload_raw
             else:
                 extra_payload = {}
             if FlextRuntime.is_dict_like(extra_payload):
@@ -1129,7 +1189,7 @@ class FlextDecorators(FlextRuntime):
 
             class MyService:
                 @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> t.Types.ConfigurationDict:
+                def long_running_operation(self) -> t.ConfigurationDict:
                     # Automatically raises TimeoutError if exceeds 30 seconds
                     return self._process_data()
             ```
@@ -1206,7 +1266,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def combined(
         *,
-        inject_deps: t.Types.StringMapping | None = None,
+        inject_deps: t.StringMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: bool = False,
@@ -1505,7 +1565,7 @@ class FlextDecorators(FlextRuntime):
         *,
         singleton: bool = False,
         lazy: bool = True,
-    ) -> t.Types.DecoratorType:
+    ) -> t.DecoratorType:
         """Decorator to mark functions as factories for DI container.
 
         Stores factory configuration as metadata on the decorated function,
@@ -1521,14 +1581,14 @@ class FlextDecorators(FlextRuntime):
 
         Example:
             >>> @FlextDecorators.factory(name="user_service", singleton=True)
-            ... def create_user_service(config: FlextConfig) -> UserService:
+            ... def create_user_service(config: FlextSettings) -> UserService:
             ...     return UserService(config)
 
         """
 
-        def decorator(func: t.Types.HandlerCallable) -> t.Types.HandlerCallable:
+        def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
             """Apply factory configuration metadata to function."""
-            config = m.Container.FactoryDecoratorConfig(
+            config = m.ContainerFactoryDecoratorConfig(
                 name=name,
                 singleton=singleton,
                 lazy=lazy,

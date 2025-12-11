@@ -120,7 +120,7 @@ class TestFlextTestsDomains:
 
         assert response["status"] == "error"
         assert "error" in response
-        # Type narrowing: error is GeneralValueType, check if it's a dict
+        # Type narrowing: error is t.GeneralValueType, check if it's a dict
         error_value = response.get("error")
         if isinstance(error_value, dict):
             error_obj: dict[str, t.GeneralValueType] = error_value

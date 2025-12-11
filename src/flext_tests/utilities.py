@@ -21,11 +21,11 @@ from re import Pattern
 from typing import cast
 
 from flext_core import (
-    FlextConfig,
     FlextContext,
     FlextDispatcher,
     FlextProtocols as p,
     FlextRegistry,
+    FlextSettings,
     FlextUtilities,
     T,
     r,
@@ -248,7 +248,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_test_data(
                 **kwargs: t.GeneralValueType,
-            ) -> t.Types.ConfigurationDict:
+            ) -> t.ConfigurationDict:
                 """Create test data dictionary.
 
                 Args:
@@ -351,7 +351,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_user_service(
-                overrides: t.Types.ConfigurationDict,
+                overrides: t.ConfigurationDict,
             ) -> r[t.GeneralValueType]:
                 """Execute user service operation.
 
@@ -799,7 +799,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def assert_model_creation_success[TResult](
                 factory_method: ModelFactory[TResult],
-                expected_attrs: t.Types.ConfigurationMapping,
+                expected_attrs: t.ConfigurationMapping,
                 **factory_kwargs: t.GeneralValueType,
             ) -> TResult:
                 """Assert successful model creation and validate attributes.
@@ -837,27 +837,27 @@ class FlextTestsUtilities(FlextUtilities):
                 return FlextRegistry()
 
         class ConfigHelpers:
-            """Config testing helpers - use FlextConfig directly when possible."""
+            """Config testing helpers - use FlextSettings directly when possible."""
 
             @staticmethod
             def create_test_config(
                 **kwargs: t.GeneralValueType,
-            ) -> FlextConfig:
+            ) -> FlextSettings:
                 """Create a test config instance.
 
                 Args:
                     **kwargs: Config field values
 
                 Returns:
-                    New FlextConfig instance
+                    New FlextSettings instance
 
                 """
-                return FlextConfig(**kwargs)
+                return FlextSettings(**kwargs)
 
             @staticmethod
             def assert_config_fields(
-                config: FlextConfig,
-                expected_fields: t.Types.ConfigurationMapping,
+                config: FlextSettings,
+                expected_fields: t.ConfigurationMapping,
             ) -> None:
                 """Assert config has expected field values.
 
@@ -877,7 +877,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def env_vars_context(
-                env_vars: t.Types.ConfigurationDict,
+                env_vars: t.ConfigurationDict,
                 vars_to_clear: list[str] | None = None,
             ) -> Generator[None]:
                 """Context manager for temporary environment variable changes.
@@ -1017,7 +1017,7 @@ class FlextTestsUtilities(FlextUtilities):
                 command_timeout: int | None = None,
                 max_command_retries: int | None = None,
                 metadata: FlextModelsBase.Metadata | None = None,
-            ) -> m.Cqrs.Handler:
+            ) -> m.CqrsHandler:
                 """Create a handler configuration model.
 
                 Args:
@@ -1037,7 +1037,7 @@ class FlextTestsUtilities(FlextUtilities):
                 h_type = handler_type or c.Cqrs.HandlerType.COMMAND
                 h_mode = handler_mode or h_type
 
-                return m.Cqrs.Handler(
+                return m.CqrsHandler(
                     handler_id=handler_id,
                     handler_name=handler_name,
                     handler_type=h_type,
@@ -1149,10 +1149,10 @@ class FlextTestsUtilities(FlextUtilities):
             def create_operation_test_case(
                 operation: str,
                 description: str,
-                input_data: t.Types.ConfigurationDict,
+                input_data: t.ConfigurationDict,
                 expected_result: t.GeneralValueType,
                 **kwargs: t.GeneralValueType,
-            ) -> t.Types.ConfigurationDict:
+            ) -> t.ConfigurationDict:
                 """Create a test case dict for operation testing.
 
                 Args:
@@ -1166,7 +1166,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Test case dictionary
 
                 """
-                result: t.Types.ConfigurationDict = {
+                result: t.ConfigurationDict = {
                     "operation": operation,
                     "description": description,
                     "input_data": input_data,
@@ -1179,10 +1179,10 @@ class FlextTestsUtilities(FlextUtilities):
             def create_batch_operation_test_cases(
                 operation: str,
                 descriptions: list[str],
-                input_data_list: list[t.Types.ConfigurationDict],
+                input_data_list: list[t.ConfigurationDict],
                 expected_results: list[t.GeneralValueType],
                 **common_kwargs: t.GeneralValueType,
-            ) -> list[t.Types.ConfigurationDict]:
+            ) -> list[t.ConfigurationDict]:
                 """Create batch test cases for operation testing.
 
                 Args:
@@ -1196,7 +1196,7 @@ class FlextTestsUtilities(FlextUtilities):
                     List of test case dictionaries
 
                 """
-                cases: list[t.Types.ConfigurationDict] = []
+                cases: list[t.ConfigurationDict] = []
                 for desc, data, expected in zip(
                     descriptions,
                     input_data_list,
@@ -1217,7 +1217,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_and_assert_operation_result(
                 operation: Callable[[], t.GeneralValueType],
-                test_case: t.Types.ConfigurationDict,
+                test_case: t.ConfigurationDict,
             ) -> None:
                 """Execute operation and assert result.
 
@@ -1352,7 +1352,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_domain_operation(
                 operation: str,
-                input_data: t.Types.ConfigurationDict,
+                input_data: t.ConfigurationDict,
                 **kwargs: t.GeneralValueType,
             ) -> object:
                 """Execute a domain utility operation.
@@ -1380,8 +1380,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_metadata_object(
-                attributes: t.Types.ConfigurationDict,
-            ) -> t.Types.ConfigurationDict:
+                attributes: t.ConfigurationDict,
+            ) -> t.ConfigurationDict:
                 """Create a metadata object for exceptions.
 
                 Args:
@@ -1399,7 +1399,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_mapper_operation(
                 operation: str,
-                input_data: t.Types.ConfigurationDict,
+                input_data: t.ConfigurationDict,
                 **kwargs: t.GeneralValueType,
             ) -> r[object]:
                 """Execute a mapper utility operation.
@@ -1432,7 +1432,7 @@ class FlextTestsUtilities(FlextUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                def model_dump(self) -> t.Types.ConfigurationDict:
+                def model_dump(self) -> t.ConfigurationDict:
                     """Raise error on model_dump."""
                     msg = "Bad model_dump"
                     raise RuntimeError(msg)

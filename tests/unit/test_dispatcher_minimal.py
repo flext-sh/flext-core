@@ -131,7 +131,7 @@ def test_register_and_dispatch_success() -> None:
     """Register a callable handler and dispatch a message successfully."""
     dispatcher = FlextDispatcher()
     handler = CallableHandleWrapper(EchoHandler().handle)
-    # Cast to GeneralValueType | BaseModel for type checker
+    # Cast to t.GeneralValueType | BaseModel for type checker
     registration = dispatcher.register_handler(
         cast("t.GeneralValueType | BaseModel", EchoCommand),
         cast("t.GeneralValueType", handler),
@@ -146,7 +146,7 @@ def test_register_and_dispatch_success() -> None:
 def test_register_handler_validation_error_on_missing_message_type() -> None:
     """Handler without can_handle but missing message_type should fail."""
     dispatcher = FlextDispatcher()
-    # Cast dict to GeneralValueType | BaseModel for type checker
+    # Cast dict to t.GeneralValueType | BaseModel for type checker
     register_result = dispatcher.register_handler(
         cast("t.GeneralValueType | BaseModel", {"handler": object()}),
     )
@@ -158,7 +158,7 @@ def test_dispatch_handler_raises_returns_failure() -> None:
     """Handler exceptions should surface as failure results."""
     dispatcher = FlextDispatcher()
     handler = ExplodingHandler()
-    # Cast to GeneralValueType | BaseModel for type checker
+    # Cast to t.GeneralValueType | BaseModel for type checker
     _ = dispatcher.register_handler(
         cast("t.GeneralValueType | BaseModel", EchoCommand),
         cast("t.GeneralValueType", handler),
@@ -170,7 +170,7 @@ def test_dispatch_handler_raises_returns_failure() -> None:
 
 def test_convert_metadata_to_model_and_build_config() -> None:
     """Cover metadata conversion branches and config construction."""
-    # Cast metadata to GeneralValueType for type checker
+    # Cast metadata to t.GeneralValueType for type checker
     metadata: t.GeneralValueType = cast(
         "t.GeneralValueType",
         {"numbers": [1, 2], "nested": {"k": object()}, "flag": True},
@@ -188,12 +188,12 @@ def test_convert_metadata_to_model_and_build_config() -> None:
         timeout_override=5,
     )
     assert config is not None
-    # Type narrowing: config is DispatchConfig or GeneralValueType
-    if isinstance(config, m.Config.DispatchConfig):
+    # Type narrowing: config is DispatchConfig or t.GeneralValueType
+    if isinstance(config, m.DispatchConfig):
         assert config.correlation_id == "cid"
         assert config.timeout_override == 5
     else:
-        # For GeneralValueType, use getattr
+        # For t.GeneralValueType, use getattr
         assert getattr(config, "correlation_id", None) == "cid"
         assert getattr(config, "timeout_override", None) == 5
 
@@ -211,7 +211,7 @@ def test_try_simple_dispatch_non_callable_handler() -> None:
     dispatcher = FlextDispatcher()
     # Cast string to HandlerType for type checker (testing invalid handler)
     dispatcher._handlers[EchoCommand.__name__] = cast(
-        "t.Handler.HandlerType",
+        "t.HandlerType",
         "not_callable",
     )
     result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ping")))
@@ -223,7 +223,7 @@ def test_auto_discovery_handler_processes_command() -> None:
     """Handler registered via single-arg auto-discovery must be used."""
     dispatcher = FlextDispatcher()
     handler = AutoDiscoveryHandler()
-    # Cast handler to GeneralValueType | BaseModel for type checker
+    # Cast handler to t.GeneralValueType | BaseModel for type checker
     reg = dispatcher.register_handler(cast("t.GeneralValueType | BaseModel", handler))
     assert reg.is_success
 
@@ -236,7 +236,7 @@ def test_register_handler_with_request_dict_success() -> None:
     """Explicit request dict with message_type and handler should succeed."""
     dispatcher = FlextDispatcher()
     handler = EchoHandler()
-    # Cast dict to GeneralValueType | BaseModel for type checker
+    # Cast dict to t.GeneralValueType | BaseModel for type checker
     request: t.GeneralValueType | BaseModel = cast(
         "t.GeneralValueType | BaseModel",
         {
@@ -255,18 +255,18 @@ def test_middleware_short_circuits_and_preserves_order() -> None:
     dispatcher = FlextDispatcher()
     handler = AutoRecordingHandler()
     log: list[tuple[str, str]] = []
-    # Cast handler to GeneralValueType | BaseModel for type checker
+    # Cast handler to t.GeneralValueType | BaseModel for type checker
     dispatcher.register_handler(cast("t.GeneralValueType | BaseModel", handler))
 
     # Blocking middleware runs first (order 0) and stops execution
     # Cast middleware to HandlerCallable for type checker
     dispatcher.layer1_add_middleware(
-        cast("t.Handler.HandlerCallable", BlockingMiddleware()),
+        cast("t.HandlerCallable", BlockingMiddleware()),
         {"middleware_id": "block", "order": 0},
     )
     # This middleware would run second if pipeline continued
     dispatcher.layer1_add_middleware(
-        cast("t.Handler.HandlerCallable", RecordingMiddleware(log)),
+        cast("t.HandlerCallable", RecordingMiddleware(log)),
         {"middleware_id": "record", "order": 1},
     )
 
@@ -282,11 +282,11 @@ def test_disabled_middleware_is_skipped() -> None:
     dispatcher = FlextDispatcher()
     handler = AutoRecordingHandler()
     log: list[tuple[str, str]] = []
-    # Cast handler to GeneralValueType | BaseModel for type checker
+    # Cast handler to t.GeneralValueType | BaseModel for type checker
     dispatcher.register_handler(cast("t.GeneralValueType | BaseModel", handler))
 
     dispatcher.layer1_add_middleware(
-        cast("t.Handler.HandlerCallable", RecordingMiddleware(log)),
+        cast("t.HandlerCallable", RecordingMiddleware(log)),
         {"middleware_id": "mw_disabled", "enabled": False},
     )
 
@@ -300,11 +300,11 @@ def test_middleware_requires_process_callable() -> None:
     """Middleware without process should return configuration error."""
     dispatcher = FlextDispatcher()
     handler = AutoRecordingHandler()
-    # Cast handler to GeneralValueType | BaseModel for type checker
+    # Cast handler to t.GeneralValueType | BaseModel for type checker
     dispatcher.register_handler(cast("t.GeneralValueType | BaseModel", handler))
 
     dispatcher.layer1_add_middleware(
-        cast("t.Handler.HandlerCallable", InvalidMiddleware()),
+        cast("t.HandlerCallable", InvalidMiddleware()),
         {"middleware_id": "invalid"},
     )
 

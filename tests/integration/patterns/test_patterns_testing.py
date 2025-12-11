@@ -18,31 +18,27 @@ import gc
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
-from typing import ParamSpec, TypeVar, cast
+from typing import cast
 
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextTypes, FlextUtilities
+from flext_core import FlextTypes, FlextUtilities, P, R
 from tests.typings import TestsFlextTypes
 
-# TypedDict definitions from consolidated test typings
 FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
 FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
 FixtureFixturesDict = TestsFlextTypes.Fixtures.FixtureFixturesDict
 FixtureSuiteDict = TestsFlextTypes.Fixtures.FixtureSuiteDict
 MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
 
-_P = ParamSpec("_P")
-_R = TypeVar("_R")
-
 
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[_P, _R]], Callable[_P, _R]]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         # Use setattr for dynamic attribute setting to avoid type checker issues
         # Type ignore needed because Callable doesn't have _test_pattern attribute
         setattr(func, "_test_pattern", pattern)

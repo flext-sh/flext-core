@@ -28,7 +28,6 @@ from pydantic import (
 from pydantic.fields import ModelPrivateAttr
 
 from flext_core._dispatcher import CircuitBreakerManager, RateLimiterManager
-from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
@@ -41,6 +40,7 @@ from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
 from flext_core.result import r
+from flext_core.settings import FlextSettings
 from flext_core.typings import t
 from flext_core.utilities import u
 
@@ -201,11 +201,11 @@ class FlextService[TDomainResult](
 
         # Set attributes directly - PrivateAttr allows assignment without validation
         self._context = runtime.context
-        # Type narrowing: runtime.config is p.Config, but we need FlextConfig
-        # All implementations of p.Config in FLEXT are FlextConfig or subclasses
-        # Use isinstance check for type narrowing since FlextConfig is concrete class
-        if not isinstance(runtime.config, FlextConfig):
-            msg = f"Expected FlextConfig, got {type(runtime.config).__name__}"
+        # Type narrowing: runtime.config is p.Config, but we need FlextSettings
+        # All implementations of p.Config in FLEXT are FlextSettings or subclasses
+        # Use isinstance check for type narrowing since FlextSettings is concrete class
+        if not isinstance(runtime.config, FlextSettings):
+            msg = f"Expected FlextSettings, got {type(runtime.config).__name__}"
             raise TypeError(msg)
         self._config = runtime.config
         self._container = runtime.container
@@ -224,32 +224,32 @@ class FlextService[TDomainResult](
     # PrivateAttr allows setting attributes without validation and bypasses __setattr__
     # Type annotations using PrivateAttr with explicit type hints
     _context: p.Ctx | None = PrivateAttr(default=None)
-    _config: FlextConfig | None = PrivateAttr(default=None)
+    _config: FlextSettings | None = PrivateAttr(default=None)
     _container: p.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _discovered_handlers: list[tuple[str, m.Handler.DecoratorConfig]] = PrivateAttr(
+    _discovered_handlers: list[tuple[str, m.HandlerDecoratorConfig]] = PrivateAttr(
         default_factory=list
     )
     _auto_result: TDomainResult | None = None
 
     @classmethod
-    def _get_service_config_type(cls) -> type[FlextConfig]:
+    def _get_service_config_type(cls) -> type[FlextSettings]:
         """Get the config type for this service class.
 
         Services can override this method to specify their specific config type.
-        Defaults to FlextConfig for generic services.
+        Defaults to FlextSettings for generic services.
 
         Returns:
-            type[FlextConfig]: The config class to use for this service
+            type[FlextSettings]: The config class to use for this service
 
         """
-        return FlextConfig  # Runtime return needs concrete class
+        return FlextSettings  # Runtime return needs concrete class
 
     @classmethod
     def _create_runtime(
         cls,
         *,
-        config_type: type[FlextConfig] | None = None,
+        config_type: type[FlextSettings] | None = None,
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
         context: p.Ctx | None = None,
         subproject: str | None = None,
@@ -296,7 +296,7 @@ class FlextService[TDomainResult](
         :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
         # 1. Config materialization with overrides
-        config_cls = config_type or FlextConfig
+        config_cls = config_type or FlextSettings
         runtime_config = config_cls.materialize(config_overrides=config_overrides)
 
         # 2. Context creation with initial data
@@ -310,8 +310,8 @@ class FlextService[TDomainResult](
             runtime_context_typed = FlextContext.create()
 
         # 3. Container creation with registrations
-        # runtime_config is FlextConfig which implements p.Config structurally
-        # No cast needed - FlextConfig implements p.Config protocol
+        # runtime_config is FlextSettings which implements p.Config structurally
+        # No cast needed - FlextSettings implements p.Config protocol
         runtime_config_typed: p.Config = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
@@ -357,7 +357,7 @@ class FlextService[TDomainResult](
             u.mapper().get(options, "config_type") if "config_type" in options else None
         )
         config_type_val = (
-            cast("type[FlextConfig] | None", config_type_raw)
+            cast("type[FlextSettings] | None", config_type_raw)
             if config_type_raw is not None and isinstance(config_type_raw, type)
             else config_type
         )
@@ -380,7 +380,7 @@ class FlextService[TDomainResult](
             cast("p.Ctx | None", context_raw) if context_raw is not None else None
         )
 
-        # Cast needed: mapper().get() returns GeneralValueType, narrow to str | None
+        # Cast needed: mapper().get() returns t.GeneralValueType, narrow to str | None
         subproject_val: str | None = cast(
             "str | None", u.mapper().get(options, "subproject")
         )
@@ -474,7 +474,7 @@ class FlextService[TDomainResult](
         )
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
         """Hook for subclasses to parametrize runtime automation.
 
         Override to customize:
@@ -512,7 +512,7 @@ class FlextService[TDomainResult](
         container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> m.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
-        config: FlextConfig = require_initialized(self._config, "Config")
+        config: FlextSettings = require_initialized(self._config, "Config")
         ctx: p.Ctx = require_initialized(self._context, "Context")
         container: p.DI = require_initialized(self._container, "Container")
         cloned_config = config.model_copy(
@@ -557,7 +557,7 @@ class FlextService[TDomainResult](
         return require_initialized(self._context, "Context")
 
     @property
-    def config(self) -> FlextConfig:
+    def config(self) -> FlextSettings:
         """Service-scoped configuration clone."""
         return require_initialized(self._config, "Config")
 
@@ -698,7 +698,7 @@ class FlextService[TDomainResult](
             >>> nested = service.access.clone_config(app_name="test")
 
         """
-        # Direct access - GeneralValueType covers all domain results
+        # Direct access - t.GeneralValueType covers all domain results
         # Type narrowing: self is FlextService[TDomainResult], compatible with FlextService[t.GeneralValueType]
         # TDomainResult is a TypeVar (not a concrete type), so mypy needs explicit cast
         # Cast: FlextService[TDomainResult] → FlextService[t.GeneralValueType] (TypeVar variance)
@@ -766,9 +766,9 @@ class FlextService[TDomainResult](
             merged_context = parent_context
 
         # Create child with inherited infrastructure
-        # Type narrowing: cls is FlextService subclass, merged_config is FlextConfig
+        # Type narrowing: cls is FlextService subclass, merged_config is FlextSettings
         # Pass as **kwargs since __init__ accepts **data: t.GeneralValueType
-        # Cast needed: Infrastructure objects (FlextConfig, FlextContext, FlextContainer) are not GeneralValueType
+        # Cast needed: Infrastructure objects (FlextSettings, FlextContext, FlextContainer) are not t.GeneralValueType
         # But __init__ accepts them via protocol dispatch
         merged_data: dict[str, t.GeneralValueType | object] = {
             "config": merged_config,
@@ -789,7 +789,7 @@ class _ServiceExecutionScope(m.ArbitraryTypesModel):
     result: type
     context: p.Ctx
     runtime: m.ServiceRuntime
-    service_data: t.Types.ConfigurationMapping
+    service_data: t.ConfigurationMapping
 
 
 class _ServiceAccess(m.ArbitraryTypesModel):
@@ -822,7 +822,7 @@ class _ServiceAccess(m.ArbitraryTypesModel):
 
     def __init__(self, service: FlextService[t.GeneralValueType]) -> None:
         super().__init__()
-        # Accept any FlextService instance - GeneralValueType covers all domain results
+        # Accept any FlextService instance - t.GeneralValueType covers all domain results
         # Set attributes directly (no PrivateAttr needed)
         # service is never None after __init__, so we can use non-optional type
         self._service = service
@@ -1112,7 +1112,7 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         else:
             _ = runtime_context.Utilities.ensure_correlation_id()
 
-        service_data: t.Types.ConfigurationMapping = {
+        service_data: t.ConfigurationMapping = {
             "service_type": self._service.__class__.__name__,
             "payload": {},
         }

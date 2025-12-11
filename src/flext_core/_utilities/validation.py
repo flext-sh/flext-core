@@ -42,7 +42,6 @@ import inspect
 import json
 import operator
 import re
-import socket
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields as get_dataclass_fields, is_dataclass
 from datetime import datetime
@@ -54,6 +53,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
+from flext_core._models.validation import FlextModelsValidation
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core._utilities.validators import ValidatorSpec
@@ -92,29 +92,24 @@ class FlextUtilitiesValidation:
             uri: str | None,
             allowed_schemes: list[str] | None = None,
             context: str = "URI",
-        ) -> FlextRuntime.RuntimeResult[str]:
+        ) -> r[str]:
             """Validate URI format."""
-            return FlextUtilitiesValidation.validate_uri(uri, allowed_schemes, context)
+            return FlextModelsValidation.validate_uri(uri, allowed_schemes, context)
 
         @staticmethod
         def validate_port_number(
             port: int | None,
             context: str = "Port",
-        ) -> FlextRuntime.RuntimeResult[int]:
+        ) -> r[int]:
             """Validate port number (1-65535)."""
-            return FlextUtilitiesValidation.validate_port_number(port, context)
+            return FlextModelsValidation.validate_port_number(port, context)
 
         @staticmethod
         def validate_hostname(
             hostname: str,
-            *,
-            perform_dns_lookup: bool = True,
-        ) -> FlextRuntime.RuntimeResult[str]:
+        ) -> r[str]:
             """Validate hostname format."""
-            return FlextUtilitiesValidation.validate_hostname(
-                hostname,
-                perform_dns_lookup=perform_dns_lookup,
-            )
+            return FlextUtilitiesValidation.validate_hostname_format(hostname)
 
     class String:
         """String-related validation (pattern, length, choice)."""
@@ -260,7 +255,7 @@ class FlextUtilitiesValidation:
                 return str(component)
 
         # Check for dataclass instance (before Sequence check to avoid treating as list)
-        # GeneralValueType doesn't include type, so isinstance(component, type) is always False
+        # t.GeneralValueType doesn't include type, so isinstance(component, type) is always False
         # But is_dataclass() can still be True for dataclass instances
         # Runtime check: is_dataclass() works at runtime even if type system doesn't allow type
         if is_dataclass(component):
@@ -268,20 +263,20 @@ class FlextUtilitiesValidation:
                 component,
             )
 
-        # Check if already valid GeneralValueType
+        # Check if already valid t.GeneralValueType
         return FlextUtilitiesValidation._ensure_general_value_type(component)
 
     @staticmethod
     def _ensure_general_value_type(
         component: t.GeneralValueType | type,
     ) -> t.GeneralValueType:
-        """Ensure component is valid GeneralValueType.
+        """Ensure component is valid t.GeneralValueType.
 
         Args:
             component: Component to validate
 
         Returns:
-            Valid GeneralValueType
+            Valid t.GeneralValueType
 
         """
         if isinstance(component, (str, int, float, bool, type(None))):
@@ -315,30 +310,29 @@ class FlextUtilitiesValidation:
         ):
             # Use _normalize_sequence which returns dict with type marker
             return FlextUtilitiesValidation._normalize_sequence(component, visited)
-        # Runtime check: set is not in GeneralValueType union, but can occur at runtime
+        # Runtime check: set is not in t.GeneralValueType union, but can occur at runtime
         # Type narrowing: isinstance(component, set) is always False per type system
         # But runtime check handles actual set instances
         if isinstance(component, set):
             return FlextUtilitiesValidation._normalize_set(component, visited)
 
-        # Ensure valid GeneralValueType for primitives
+        # Ensure valid t.GeneralValueType for primitives
         return FlextUtilitiesValidation._ensure_general_value_type(
             component,
         )
 
     @staticmethod
     def _convert_items_to_dict(
-        items_result: Sequence[tuple[str, t.GeneralValueType]]
-        | t.Types.ConfigurationMapping,
-    ) -> t.Types.ConfigurationDict:
+        items_result: Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping,
+    ) -> t.ConfigurationDict:
         """Convert items() result to dict with normalization."""
         if isinstance(items_result, (list, tuple)):
             return dict(cast("Sequence[tuple[str, t.GeneralValueType]]", items_result))
 
         if FlextUtilitiesGuards.is_type(items_result, "mapping"):
             # Convert Mapping to dict explicitly for type safety
-            mapping_result: t.Types.ConfigurationMapping = cast(
-                "t.Types.ConfigurationMapping",
+            mapping_result: t.ConfigurationMapping = cast(
+                "t.ConfigurationMapping",
                 items_result,
             )
             return FlextUtilitiesMapper.to_dict(mapping_result)
@@ -350,10 +344,10 @@ class FlextUtilitiesValidation:
 
         items_iterable = cast("Iterable[tuple[str, t.GeneralValueType]]", items_result)
         items_list = list(items_iterable)
-        temp_dict: t.Types.ConfigurationDict = {}
+        temp_dict: t.ConfigurationDict = {}
         for k, v in items_list:
             # k is already str from the cast
-            # v is already GeneralValueType from the cast
+            # v is already t.GeneralValueType from the cast
             normalized_v = FlextUtilitiesValidation._normalize_component(
                 v,
                 visited=None,
@@ -363,9 +357,9 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _extract_dict_from_component(
-        component: t.Types.ConfigurationMapping | p.HasModelDump,
+        component: t.ConfigurationMapping | p.HasModelDump,
         _visited: set[int] | None = None,
-    ) -> t.Types.ConfigurationMapping:
+    ) -> t.ConfigurationMapping:
         """Extract dict-like structure from component."""
         if isinstance(component, (Mapping, dict)):
             return component
@@ -380,9 +374,9 @@ class FlextUtilitiesValidation:
             # Type narrowing: items_result is from dict-like object, should be iterable of tuples
             # Cast to proper type for _convert_items_to_dict
             items_typed: (
-                Sequence[tuple[str, t.GeneralValueType]] | t.Types.ConfigurationMapping
+                Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping
             ) = cast(
-                "Sequence[tuple[str, t.GeneralValueType]] | t.Types.ConfigurationMapping",
+                "Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping",
                 items_result,
             )
             return FlextUtilitiesValidation._convert_items_to_dict(items_typed)
@@ -393,16 +387,16 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _convert_items_result_to_dict(
         items_result: Sequence[tuple[str, t.GeneralValueType]]
-        | t.Types.ConfigurationMapping
+        | t.ConfigurationMapping
         | Iterable[tuple[str, t.GeneralValueType]],
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Convert items() result to dict (helper for _convert_to_mapping).
 
         Args:
             items_result: Result from calling items() method
 
         Returns:
-            t.Types.ConfigurationDict: Converted dictionary
+            t.ConfigurationDict: Converted dictionary
 
         Raises:
             TypeError: If items_result cannot be converted to dict
@@ -423,11 +417,11 @@ class FlextUtilitiesValidation:
         items_list = list(items_iterable)
 
         # Convert tuples to dict, normalizing values
-        temp_dict: t.Types.ConfigurationDict = {}
+        temp_dict: t.ConfigurationDict = {}
         for k, v in items_list:
             if FlextUtilitiesGuards.is_type(k, str):
-                # Normalize value first, then cast to GeneralValueType
-                # v is object from items_list iteration, cast to GeneralValueType
+                # Normalize value first, then cast to t.GeneralValueType
+                # v is object from items_list iteration, cast to t.GeneralValueType
                 v_typed: t.GeneralValueType = cast(
                     "t.GeneralValueType",
                     v,
@@ -436,21 +430,21 @@ class FlextUtilitiesValidation:
                     v_typed,
                     visited=None,
                 )
-                # normalized_v is already GeneralValueType from _normalize_component
+                # normalized_v is already t.GeneralValueType from _normalize_component
                 temp_dict[k] = normalized_v
         return temp_dict
 
     @staticmethod
     def _convert_to_mapping(
-        component: t.Types.ConfigurationMapping | p.HasModelDump,
-    ) -> t.Types.ConfigurationMapping:
+        component: t.ConfigurationMapping | p.HasModelDump,
+    ) -> t.ConfigurationMapping:
         """Convert object to Mapping (helper for _normalize_dict_like).
 
         Args:
             component: Object to convert to Mapping
 
         Returns:
-            t.Types.ConfigurationMapping: Converted mapping
+            t.ConfigurationMapping: Converted mapping
 
         Raises:
             TypeError: If component cannot be converted to dict
@@ -468,9 +462,9 @@ class FlextUtilitiesValidation:
             # Has items() method - convert to dict
             # Cast needed: items_method() returns object, but we know it's dict-like
             items_result: (
-                Sequence[tuple[str, t.GeneralValueType]] | t.Types.ConfigurationMapping
+                Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping
             ) = cast(
-                "Sequence[tuple[str, t.GeneralValueType]] | t.Types.ConfigurationMapping",
+                "Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping",
                 items_method(),
             )
             try:
@@ -488,9 +482,9 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_dict_like(
-        component: t.Types.ConfigurationMapping | p.HasModelDump,
+        component: t.ConfigurationMapping | p.HasModelDump,
         visited: set[int] | None = None,
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Normalize dict-like objects.
 
         Note: visited tracking is handled by _normalize_component, so we don't
@@ -504,7 +498,7 @@ class FlextUtilitiesValidation:
         component_id = id(component_dict)
 
         # Normalize values in the dictionary
-        normalized_dict: t.Types.ConfigurationDict = {}
+        normalized_dict: t.ConfigurationDict = {}
         for k, v in component_dict.items():
             # Check if value is the same dict (circular reference)
             if id(v) == component_id:
@@ -600,10 +594,10 @@ class FlextUtilitiesValidation:
         data: t.GeneralValueType,
     ) -> t.GeneralValueType:
         """Sort dict keys for consistent representation (internal recursive)."""
-        # Type narrowing: GeneralValueType includes Mapping[str, GeneralValueType]
+        # Type narrowing: t.GeneralValueType includes Mapping[str, t.GeneralValueType]
         if FlextUtilitiesGuards.is_type(data, "mapping") and isinstance(data, Mapping):
-            # data is Mapping[str, GeneralValueType], which is valid GeneralValueType
-            data_dict: t.Types.ConfigurationMapping = (
+            # data is Mapping[str, t.GeneralValueType], which is valid t.GeneralValueType
+            data_dict: t.ConfigurationMapping = (
                 data if isinstance(data, dict) else FlextUtilitiesMapper.to_dict(data)
             )
             return {
@@ -715,7 +709,7 @@ class FlextUtilitiesValidation:
     ) -> TypeGuard[t.GeneralValueType]:
         """Type guard to check if object is a dataclass instance (not class)."""
         # Check if obj is a dataclass instance
-        # GeneralValueType doesn't include type, so obj is never a type
+        # t.GeneralValueType doesn't include type, so obj is never a type
         # We only need to check if it's a dataclass
         return is_dataclass(obj)
 
@@ -786,7 +780,7 @@ class FlextUtilitiesValidation:
         """
         # Caller guarantees value is a dataclass instance via
         # _is_dataclass_instance check. Using manual field extraction
-        field_dict: t.Types.ConfigurationDict = {}
+        field_dict: t.ConfigurationDict = {}
         # value.__class__ is type for dataclass instances
         value_class: type = value.__class__
         for field in get_dataclass_fields(value_class):
@@ -797,7 +791,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_mapping(
-        value: t.Types.ConfigurationMapping,
+        value: t.ConfigurationMapping,
         visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize mapping to cache-friendly structure."""
@@ -850,10 +844,10 @@ class FlextUtilitiesValidation:
         """Normalize object attributes to cache-friendly structure."""
         try:
             vars_result = vars(value)
-            # vars() returns t.Types.ConfigurationDict which we normalize to GeneralValueType
+            # vars() returns t.ConfigurationDict which we normalize to t.GeneralValueType
             # Type narrowing: vars_result is always a dict
-            value_vars_dict: t.Types.ConfigurationDict = cast(
-                "t.Types.ConfigurationDict",
+            value_vars_dict: t.ConfigurationDict = cast(
+                "t.ConfigurationDict",
                 vars_result,
             )
             # Process vars_result - normalize all values
@@ -903,7 +897,7 @@ class FlextUtilitiesValidation:
     ) -> str | None:
         """Generate cache key from dataclass."""
         try:
-            dataclass_data: t.Types.ConfigurationDict = {}
+            dataclass_data: t.ConfigurationDict = {}
             # command.__class__ is type for class instances
             command_class: type = command.__class__
             for field in get_dataclass_fields(command_class):
@@ -918,7 +912,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _generate_key_dict(
-        command: t.Types.ConfigurationMapping,
+        command: t.ConfigurationMapping,
         command_type: type[t.GeneralValueType],
     ) -> str | None:
         """Generate cache key from dict."""
@@ -953,10 +947,10 @@ class FlextUtilitiesValidation:
                 return key
 
         # Try dataclass
-        # GeneralValueType doesn't include type, so isinstance(command, type) is always False
+        # t.GeneralValueType doesn't include type, so isinstance(command, type) is always False
         # But we check hasattr and is_dataclass to ensure it's a dataclass instance
         # Runtime check: hasattr ensures it's not None, is_dataclass checks type
-        # Type narrowing: GeneralValueType doesn't include dataclass types, but runtime check handles instances
+        # Type narrowing: t.GeneralValueType doesn't include dataclass types, but runtime check handles instances
         if (
             command is not None
             and hasattr(command, "__dataclass_fields__")
@@ -975,8 +969,8 @@ class FlextUtilitiesValidation:
             "mapping",
         ):
             # Type narrowing: command is dict-like, cast to ConfigurationMapping
-            command_dict: t.Types.ConfigurationMapping = cast(
-                "t.Types.ConfigurationMapping",
+            command_dict: t.ConfigurationMapping = cast(
+                "t.ConfigurationMapping",
                 command,
             )
             key = FlextUtilitiesValidation._generate_key_dict(
@@ -1007,10 +1001,10 @@ class FlextUtilitiesValidation:
             Object with sorted keys
 
         """
-        # Type narrowing: obj can be Mapping (which is GeneralValueType)
+        # Type narrowing: obj can be Mapping (which is t.GeneralValueType)
         if FlextUtilitiesGuards.is_type(obj, "mapping") and isinstance(obj, Mapping):
-            # obj is Mapping[str, GeneralValueType]
-            dict_obj: t.Types.ConfigurationMapping = (
+            # obj is Mapping[str, t.GeneralValueType]
+            dict_obj: t.ConfigurationMapping = (
                 obj if isinstance(obj, dict) else FlextUtilitiesMapper.to_dict(obj)
             )
             # Convert items() view to list for sorting
@@ -1025,14 +1019,14 @@ class FlextUtilitiesValidation:
                 str(k): FlextUtilitiesValidation._sort_dict_keys(v)
                 for k, v in sorted_items
             }
-        # Type narrowing: obj can be Sequence (which is GeneralValueType)
+        # Type narrowing: obj can be Sequence (which is t.GeneralValueType)
         # Handle tuple first (tuple is a Sequence but needs special handling)
         if isinstance(obj, tuple):
             # obj is confirmed to be tuple, iterate directly
             return tuple(FlextUtilitiesValidation._sort_dict_keys(item) for item in obj)
         # Handle other Sequences (but not str, bytes, or tuple)
         if isinstance(obj, (list, tuple)) and not isinstance(obj, (str, bytes)):
-            # obj is Sequence[GeneralValueType] - use directly
+            # obj is Sequence[t.GeneralValueType] - use directly
             obj_list: Sequence[t.GeneralValueType] = obj
             return [
                 FlextUtilitiesValidation._sort_dict_keys(
@@ -1478,7 +1472,7 @@ class FlextUtilitiesValidation:
                 error_code=error_code,
             )
         # Return True for valid callable (not the callable itself)
-        # Type narrowing: value is GeneralValueType, but runtime check ensures callable
+        # Type narrowing: value is t.GeneralValueType, but runtime check ensures callable
         return r[bool].ok(True)
 
     @staticmethod
@@ -1646,88 +1640,6 @@ class FlextUtilitiesValidation:
             )
 
     @staticmethod
-    def validate_hostname(
-        hostname: str,
-        *,
-        perform_dns_lookup: bool = True,
-    ) -> FlextRuntime.RuntimeResult[str]:
-        """Validate hostname format and optionally perform DNS resolution.
-
-        This generic helper consolidates hostname validation logic from typings.py
-        and provides flexible validation with optional DNS lookup.
-
-        Args:
-            hostname: Hostname string to validate
-            perform_dns_lookup: If True, perform DNS lookup to verify hostname
-                resolution (default: True)
-
-        Returns:
-            r[str]: Success with hostname if valid, failure otherwise
-
-        Example:
-            >>> from flext_core._utilities.guards import FlextUtilitiesGuards
-            >>> result = u.Validation.validate_hostname("localhost")
-            >>> result.is_success
-            True
-            >>> result = u.Validation.validate_hostname("invalid..hostname")
-            >>> result.is_failure
-            True
-            >>> # Skip DNS lookup for performance
-            >>> result = u.Validation.validate_hostname(
-            ...     "example.com", perform_dns_lookup=False
-            ... )
-            >>> result.is_success
-            True
-
-        """
-        # Basic hostname validation (empty check)
-        if not hostname or not hostname.strip():
-            return r[str].fail(
-                "Hostname cannot be empty",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
-
-        normalized_hostname = hostname.strip()
-
-        # Validate hostname format (RFC 1035: basic pattern)
-        hostname_pattern = re.compile(
-            r"^(?!-)(?!.*--)(?!.*\.$)(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$",
-        )
-        if not hostname_pattern.match(normalized_hostname):
-            return r[str].fail(
-                f"Invalid hostname format: '{normalized_hostname}'",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
-
-        # Validate hostname length (RFC 1035: max 253 characters)
-        if len(normalized_hostname) > c.Network.MAX_HOSTNAME_LENGTH:
-            error_msg = (
-                f"Hostname '{normalized_hostname}' exceeds maximum length of "
-                f"{c.Network.MAX_HOSTNAME_LENGTH} characters"
-            )
-            return r[str].fail(
-                error_msg,
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
-
-        # Perform DNS lookup if requested
-        if perform_dns_lookup:
-            try:
-                socket.gethostbyname(normalized_hostname)
-            except socket.gaierror as e:
-                return r[str].fail(
-                    f"Cannot resolve hostname '{normalized_hostname}': {e}",
-                    error_code=c.Errors.VALIDATION_ERROR,
-                )
-            except (OSError, ValueError) as e:
-                return r[str].fail(
-                    f"Invalid hostname '{normalized_hostname}': {e}",
-                    error_code=c.Errors.VALIDATION_ERROR,
-                )
-
-        return r[str].ok(normalized_hostname)
-
-    @staticmethod
     def validate_identifier(
         name: str,
         *,
@@ -1848,15 +1760,15 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_batch_services(
-        services: t.Types.ConfigurationMapping,
-    ) -> FlextRuntime.RuntimeResult[t.Types.ConfigurationMapping]:
+        services: t.ConfigurationMapping,
+    ) -> FlextRuntime.RuntimeResult[t.ConfigurationMapping]:
         """Validate batch services dictionary for container registration.
 
         Args:
             services: Dictionary of service names to service instances
 
         Returns:
-            r[t.Types.ConfigurationMapping]: Validated services or validation error
+            r[t.ConfigurationMapping]: Validated services or validation error
 
         """
         # Allow empty dictionaries for batch_register flexibility
@@ -1864,20 +1776,20 @@ class FlextUtilitiesValidation:
         # Validate service names
         for name in services:
             if not FlextUtilitiesGuards.is_type(name, str) or not name.strip():
-                return r[t.Types.ConfigurationMapping].fail(
+                return r[t.ConfigurationMapping].fail(
                     f"Invalid service name: '{name}'. Must be non-empty string",
                 )
 
             # Check for reserved names
             if name.startswith("_"):
-                return r[t.Types.ConfigurationMapping].fail(
+                return r[t.ConfigurationMapping].fail(
                     f"Service name cannot start with underscore: '{name}'",
                 )
 
         # Validate service instances
         for name, service in services.items():
             if service is None:
-                return r[t.Types.ConfigurationMapping].fail(
+                return r[t.ConfigurationMapping].fail(
                     f"Service '{name}' cannot be None",
                 )
 
@@ -1886,11 +1798,11 @@ class FlextUtilitiesValidation:
                 error_msg: str = (
                     f"Service '{name}' appears to be callable. Use with_factory instead"
                 )
-                return r[t.Types.ConfigurationMapping].fail(
+                return r[t.ConfigurationMapping].fail(
                     error_msg,
                 )
 
-        return r[t.Types.ConfigurationMapping].ok(services)
+        return r[t.ConfigurationMapping].ok(services)
 
     @staticmethod
     def analyze_constructor_parameter(
@@ -1920,30 +1832,30 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_dispatch_config(
-        config: t.Types.ConfigurationMapping | None,
-    ) -> FlextRuntime.RuntimeResult[t.Types.ConfigurationMapping]:
+        config: t.ConfigurationMapping | None,
+    ) -> FlextRuntime.RuntimeResult[t.ConfigurationMapping]:
         """Validate dispatch configuration dictionary.
 
         Args:
             config: Dispatch configuration dictionary
 
         Returns:
-            r[t.Types.ConfigurationMapping]: Validated configuration or validation error
+            r[t.ConfigurationMapping]: Validated configuration or validation error
 
         """
         if config is None:
-            return r[t.Types.ConfigurationMapping].fail(
+            return r[t.ConfigurationMapping].fail(
                 "Configuration cannot be None",
             )
         if not FlextRuntime.is_dict_like(config):
-            return r[t.Types.ConfigurationMapping].fail(
+            return r[t.ConfigurationMapping].fail(
                 "Configuration must be a dictionary",
             )
 
         # Validate metadata if present
         metadata = config.get("metadata")
         if metadata is not None and not FlextRuntime.is_dict_like(metadata):
-            return r[t.Types.ConfigurationMapping].fail(
+            return r[t.ConfigurationMapping].fail(
                 "Metadata must be a dictionary",
             )
 
@@ -1953,7 +1865,7 @@ class FlextUtilitiesValidation:
             correlation_id,
             str,
         ):
-            return r[t.Types.ConfigurationMapping].fail(
+            return r[t.ConfigurationMapping].fail(
                 "Correlation ID must be a string",
             )
 
@@ -1963,15 +1875,15 @@ class FlextUtilitiesValidation:
             timeout_override,
             (int, float),
         ):
-            return r[t.Types.ConfigurationMapping].fail(
+            return r[t.ConfigurationMapping].fail(
                 "Timeout override must be a number",
             )
 
         # Type narrowing: config is guaranteed to be Mapping after validation above
-        # Parameter type is already t.Types.ConfigurationMapping | None
+        # Parameter type is already t.ConfigurationMapping | None
         # and we've validated it's not None and is dict-like
         # Cast to correct type for type checker - config is validated as dict-like above
-        return r[t.Types.ConfigurationMapping].ok(
+        return r[t.ConfigurationMapping].ok(
             config,
         )
 
@@ -2402,11 +2314,11 @@ class FlextUtilitiesValidation:
         # Dict-like validation
         if FlextRuntime.is_dict_like(value_typed):
             result_dict = (
-                r[t.Types.ConfigurationDict].ok(
-                    cast("t.Types.ConfigurationDict", value_typed),
+                r[t.ConfigurationDict].ok(
+                    cast("t.ConfigurationDict", value_typed),
                 )
                 if FlextUtilitiesGuards.is_type(value_typed, "dict_non_empty")
-                else r[t.Types.ConfigurationDict].fail(
+                else r[t.ConfigurationDict].fail(
                     f"{error_template} non-empty dict",
                 )
             )
@@ -2432,7 +2344,7 @@ class FlextUtilitiesValidation:
 
     # Guard shortcut table: maps shortcut names to (check_fn, type_desc) tuples
     # check_fn: (value) -> bool (True = valid)
-    _GUARD_SHORTCUTS: ClassVar[t.Types.StringCallableBoolStrTupleDict] = {
+    _GUARD_SHORTCUTS: ClassVar[t.StringCallableBoolStrTupleDict] = {
         # Numeric shortcuts
         "positive": (
             lambda v: isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0,
@@ -2773,7 +2685,7 @@ class FlextUtilitiesValidation:
 
         @staticmethod
         def from_[T](
-            source: t.Types.ConfigurationMapping | object | None,
+            source: t.ConfigurationMapping | object | None,
             key: str,
             *,
             as_type: type[T] | None = None,
@@ -2983,7 +2895,7 @@ class FlextUtilitiesValidation:
             items: list[object]
             | tuple[object, ...]
             | set[object]
-            | t.Types.ConfigurationMapping,
+            | t.ConfigurationMapping,
         ) -> bool:
             """Check if value is in items (mnemonic: in_ = membership).
 
@@ -3147,9 +3059,9 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _ensure_to_dict(
-        value: t.GeneralValueType | t.Types.ConfigurationDict | None,
-        default: t.Types.ConfigurationDict | None,
-    ) -> t.Types.ConfigurationDict:
+        value: t.GeneralValueType | t.ConfigurationDict | None,
+        default: t.ConfigurationDict | None,
+    ) -> t.ConfigurationDict:
         """Helper: Convert value to dict."""
         if value is None:
             return default if default is not None else {}
@@ -3206,9 +3118,9 @@ class FlextUtilitiesValidation:
                 "list[T]", FlextUtilitiesMapper.ensure(value, default=str_list_default)
             )
         if target_type == "dict":
-            dict_default_typed: t.Types.ConfigurationDict | None
+            dict_default_typed: t.ConfigurationDict | None
             if isinstance(default, dict):
-                dict_default_typed = cast("t.Types.ConfigurationDict", default)
+                dict_default_typed = cast("t.ConfigurationDict", default)
             else:
                 dict_default_typed = None
             dict_result = FlextUtilitiesValidation._ensure_to_dict(
@@ -3332,6 +3244,43 @@ class FlextUtilitiesValidation:
                 return r[T].fail(f"JSON parsing failed: {error_msg}")
             except Exception as e:
                 return r[T].fail(f"JSON parsing failed: {e}")
+
+    @staticmethod
+    def validate_hostname_format(
+        hostname: str | None,
+        context: str = "Hostname",
+    ) -> r[str]:
+        if hostname is None:
+            return r[str].fail(
+                f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
+            )
+        if not isinstance(hostname, str):
+            return r[str].fail(
+                f"{context} must be a string (got {type(hostname).__name__})",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        if not hostname:
+            return r[str].fail(
+                f"{context} cannot be empty", error_code=c.Errors.VALIDATION_ERROR
+            )
+
+        # Regex for hostname validation (RFC 1123, RFC 952):
+        # - Allows letters, digits, and hyphens
+        # - Must not start or end with a hyphen
+        # - Each label (segment) separated by dots
+        # - Max length for a label is 63 chars (not checked by this regex, but good to know)
+        # - Total length max 255 chars (not checked by this regex)
+        hostname_pattern = re.compile(
+            r"""^(?!-)[A-Za-z0-9-]{1,63}(\.(?!-)[A-Za-z0-9-]{1,63})*(\.?)$"""
+        )
+
+        if not hostname_pattern.fullmatch(hostname):
+            return r[str].fail(
+                f"Invalid {context} format '{hostname}'. "
+                "Must be a valid hostname (e.g., example.com)",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        return r[str].ok(hostname)
 
 
 __all__ = [

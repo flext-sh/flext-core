@@ -52,7 +52,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         self,
         _result: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: t.Types.ConfigurationMapping | None = None,
+        error_data: t.ConfigurationMapping | None = None,
         *,
         # RuntimeResult initialization parameters
         value: T_co | None = None,
@@ -176,7 +176,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                                 "Cannot extract value from IOSuccess",
                             )
                         # Type narrowing: unwrapped_value_raw is the inner value type
-                        # Convert to GeneralValueType with proper type narrowing
+                        # Convert to t.GeneralValueType with proper type narrowing
                         unwrapped_value: t.GeneralValueType
                         if isinstance(
                             unwrapped_value_raw,
@@ -283,7 +283,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.Types.ConfigurationMapping | None = None,
+        error_data: t.ConfigurationMapping | None = None,
     ) -> FlextResult[T]:
         """Create failed result with error message.
 
@@ -547,7 +547,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     ) -> FlextResult[T_co]:
         """Create from returns.maybe.Maybe."""
         if isinstance(maybe, Some):
-            value = maybe.value
+            value = maybe.unwrap()
             if value is not None:
                 return cls.ok(value)
         return cls.fail(error)

@@ -91,7 +91,7 @@ class TestFlextContext:
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
-        initial_data = m.Context.ContextData(
+        initial_data = m.ContextData(
             data={"user_id": "123", "session_id": "abc"},
         )
         context = FlextContext(initial_data)
@@ -120,7 +120,7 @@ class TestFlextContext:
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
-        # Type narrowing: value must be GeneralValueType compatible
+        # Type narrowing: value must be t.GeneralValueType compatible
         converted_value: t.GeneralValueType = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
@@ -128,7 +128,7 @@ class TestFlextContext:
         )
         set_result = context.set(key, converted_value)
         u.Tests.Result.assert_result_success(set_result)
-        # Convert expected to GeneralValueType for assert_context_get_success
+        # Convert expected to t.GeneralValueType for assert_context_get_success
         expected_value: t.GeneralValueType = cast("t.GeneralValueType", expected)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
@@ -186,7 +186,7 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        # Type narrowing: nested_data must be GeneralValueType compatible
+        # Type narrowing: nested_data must be t.GeneralValueType compatible
         nested_data: dict[str, t.GeneralValueType] = {
             "user": {
                 "id": "123",
@@ -374,7 +374,7 @@ class TestFlextContext:
         context = test_context
         hook_called = False
 
-        # HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
+        # HandlerCallable = Callable[[t.GeneralValueType], t.GeneralValueType]
         def test_hook(_arg: t.GeneralValueType) -> t.GeneralValueType:
             nonlocal hook_called
             hook_called = True
@@ -405,7 +405,7 @@ class TestFlextContext:
         context.remove("key1")
         stats = context._get_statistics()
         assert stats is not None
-        assert isinstance(stats, m.Context.ContextStatistics)
+        assert isinstance(stats, m.ContextStatistics)
 
     def test_context_cleanup(self, test_context: FlextContext) -> None:
         """Test context cleanup."""
@@ -428,7 +428,7 @@ class TestFlextContext:
         global_data = exported.get("global")
         new_context = FlextContext()
         if global_data is not None and isinstance(global_data, dict):
-            # Convert dict[str, object] to dict[str, GeneralValueType]
+            # Convert dict[str, object] to dict[str, t.GeneralValueType]
             converted_global: dict[str, t.GeneralValueType] = {
                 str(k): v
                 if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -482,7 +482,7 @@ class TestFlextContext:
     ) -> None:
         """Test context with special values."""
         context = test_context
-        # Type narrowing: special_value must be GeneralValueType compatible
+        # Type narrowing: special_value must be t.GeneralValueType compatible
         converted_value: t.GeneralValueType = (
             special_value
             if isinstance(
@@ -623,7 +623,7 @@ class TestFlextContext:
         context.set("key2", "value2").value
         stats = context._get_statistics()
         assert stats is not None
-        assert isinstance(stats, m.Context.ContextStatistics)
+        assert isinstance(stats, m.ContextStatistics)
 
     def test_context_from_json_invalid_json(self) -> None:
         """Test creating context from invalid JSON."""
@@ -806,7 +806,7 @@ class TestFlextContext:
         context.set("key1", "value1").value
         snapshot = context._export_snapshot()
         assert snapshot is not None
-        assert isinstance(snapshot, m.Context.ContextExport)
+        assert isinstance(snapshot, m.ContextExport)
 
     def test_context_to_json(self, test_context: FlextContext) -> None:
         """Test context serialization to JSON."""
@@ -906,7 +906,7 @@ class TestFlextContext:
     def test_context_import_data(self, test_context: FlextContext) -> None:
         """Test importing data into context."""
         context = test_context
-        # Type narrowing: convert dict[str, object] to dict[str, GeneralValueType]
+        # Type narrowing: convert dict[str, object] to dict[str, t.GeneralValueType]
         data_to_import: dict[str, t.GeneralValueType] = {
             "key1": "value1",
             "key2": "value2",
@@ -972,7 +972,7 @@ class TestFlextContext:
             return arg
 
         # Type narrowing: test_hook signature matches HandlerCallable
-        # HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
+        # HandlerCallable = Callable[[t.GeneralValueType], t.GeneralValueType]
         # test_hook has the same signature, so it's compatible
         context._add_hook("test_event", test_hook)
 

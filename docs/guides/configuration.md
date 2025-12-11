@@ -2,11 +2,11 @@
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Layered Configuration
 
-Comprehensive guide to managing application configuration with FlextConfig in FLEXT-Core.
+Comprehensive guide to managing application configuration with FlextSettings in FLEXT-Core.
 
 ## Overview
 
-**FlextConfig** provides a layered configuration system that supports multiple sources (environment variables, files, programmatic overrides) with type-safe access and validation.
+**FlextSettings** provides a layered configuration system that supports multiple sources (environment variables, files, programmatic overrides) with type-safe access and validation.
 
 **Key Features:**
 
@@ -32,22 +32,22 @@ Higher priority sources override lower priority ones.
 ### Creating a Configuration Instance
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 
 # Create with default settings
-config = FlextConfig()
+config = FlextSettings()
 
 # Create with specific environment
-config = FlextConfig(environment='production')
+config = FlextSettings(environment='production')
 
 # Create with config files
-config = FlextConfig(
+config = FlextSettings(
     config_files=['config.toml', 'secrets.env'],
     environment='production'
 )
 
 # Create with programmatic overrides
-config = FlextConfig(
+config = FlextSettings(
     config_files=['config.toml'],
     overrides={'debug': False, 'log_level': 'WARNING'}
 )
@@ -56,9 +56,9 @@ config = FlextConfig(
 ### Accessing Configuration Values
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 
-config = FlextConfig()
+config = FlextSettings()
 
 # Get configuration value with default
 database_url = config.get('database.url', default='sqlite:///:memory:')
@@ -139,7 +139,7 @@ LOG_LEVEL=DEBUG
 ### Load Configuration by Environment
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 import os
 
 # Detect environment
@@ -151,7 +151,7 @@ config_files = [
     f'config.{env}.toml'        # Environment-specific overrides
 ]
 
-config = FlextConfig(
+config = FlextSettings(
     config_files=config_files,
     environment=env
 )
@@ -196,7 +196,7 @@ url = "${DATABASE_URL}"
 
 ```python
 from pydantic import BaseModel, Field
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from typing import Optional
 
 class DatabaseConfig(BaseModel):
@@ -217,7 +217,7 @@ class AppConfig(BaseModel):
     database: DatabaseConfig
 
 # Load and validate configuration
-config = FlextConfig(config_files=['config.toml'])
+config = FlextSettings(config_files=['config.toml'])
 
 # Parse into typed model
 try:
@@ -244,10 +244,10 @@ except ValueError as e:
 ### Handling Sensitive Data
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 import os
 
-config = FlextConfig(
+config = FlextSettings(
     config_files=['config.toml', '.env'],
     environment=os.getenv('APP_ENV', 'development')
 )
@@ -288,14 +288,14 @@ api_secret = "${API_SECRET}"
 **Python code:**
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 
 # Set environment variables
 import os
 os.environ['DATABASE_PASSWORD'] = 'secure_password'
 os.environ['API_KEY'] = 'your_api_key'
 
-config = FlextConfig(config_files=['config.toml'])
+config = FlextSettings(config_files=['config.toml'])
 
 # Values automatically expand
 db_password = config.get('database.password')  # "secure_password"
@@ -307,10 +307,10 @@ api_key = config.get('api.api_key')  # "your_api_key"
 ### Register Configuration in Container
 
 ```python
-from flext_core import FlextConfig, FlextContainer
+from flext_core import FlextSettings, FlextContainer
 
 # Create and validate configuration
-config = FlextConfig(
+config = FlextSettings(
     config_files=['config.toml'],
     environment='production'
 )
@@ -338,7 +338,7 @@ def get_database_url() -> str:
 database_url = "postgresql://user:password@localhost/myapp"
 
 # ✅ CORRECT - Load from configuration
-config = FlextConfig(config_files=['config.toml'])
+config = FlextSettings(config_files=['config.toml'])
 database_url = config.get('database.url', required=True)
 ```
 
@@ -350,7 +350,7 @@ config_files = [
     'config.toml',                    # Shared config
     f'config.{os.getenv("ENV")}.toml' # Environment-specific
 ]
-config = FlextConfig(config_files=config_files)
+config = FlextSettings(config_files=config_files)
 ```
 
 ### 3. Validate Configuration Early
@@ -365,7 +365,7 @@ class AppConfig(BaseModel):
     debug: bool = False
 
 try:
-    config = FlextConfig(config_files=['config.toml'])
+    config = FlextSettings(config_files=['config.toml'])
     app_config = AppConfig(
         database_url=config.get('database.url', required=True),
         api_key=config.get('api.key', required=True),
@@ -400,7 +400,7 @@ port = 5432
 DATABASE_PASSWORD=secret_password
 
 # Python
-config = FlextConfig(config_files=['config.toml', '.env'])
+config = FlextSettings(config_files=['config.toml', '.env'])
 db_host = config.get('database.host')
 db_password = config.get('database.password')
 ```
@@ -410,7 +410,7 @@ db_password = config.get('database.password')
 ### Application Configuration Class
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 from dataclasses import dataclass
 from typing import Optional
 
@@ -425,8 +425,8 @@ class AppConfiguration:
     log_level: str
 
     @classmethod
-    def from_config(cls, config: FlextConfig) -> 'AppConfiguration':
-        """Create configuration from FlextConfig."""
+    def from_config(cls, config: FlextSettings) -> 'AppConfiguration':
+        """Create configuration from FlextSettings."""
         return cls(
             app_name=config.get('app.name', required=True),
             app_version=config.get('app.version', required=True),
@@ -437,16 +437,16 @@ class AppConfiguration:
         )
 
 # Usage
-config = FlextConfig(config_files=['config.toml'])
+config = FlextSettings(config_files=['config.toml'])
 app_config = AppConfiguration.from_config(config)
 ```
 
 ### Configuration with Sections
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 
-config = FlextConfig(config_files=['config.toml'])
+config = FlextSettings(config_files=['config.toml'])
 
 # Get database section
 db_section = config.get_section('database')
@@ -468,15 +468,15 @@ if api_section:
 ### Missing Configuration File
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 import os
 
 # ✅ CORRECT - Handle missing files gracefully
 if os.path.exists('config.toml'):
-    config = FlextConfig(config_files=['config.toml'])
+    config = FlextSettings(config_files=['config.toml'])
 else:
     # Use defaults or raise error
-    config = FlextConfig()
+    config = FlextSettings()
     logger.warning("config.toml not found, using defaults")
 ```
 
@@ -484,7 +484,7 @@ else:
 
 ```python
 # ✅ CORRECT - Check for required values
-config = FlextConfig(config_files=['config.toml'])
+config = FlextSettings(config_files=['config.toml'])
 
 try:
     database_url = config.get('database.url', required=True)
@@ -505,7 +505,7 @@ except ValueError as e:
 
 ## Summary
 
-FlextConfig provides:
+FlextSettings provides:
 
 - ✅ Multiple configuration sources with priority hierarchy
 - ✅ Type-safe access with Pydantic validation
@@ -514,7 +514,7 @@ FlextConfig provides:
 - ✅ Integration with FLEXT-Core dependency injection
 - ✅ Production-ready error handling
 
-Use FlextConfig to manage all application configuration with confidence and safety.
+Use FlextSettings to manage all application configuration with confidence and safety.
 
 ## Next Steps
 
@@ -522,7 +522,7 @@ Use FlextConfig to manage all application configuration with confidence and safe
 2. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for configuration error patterns
 3. **Testing**: Review [Testing Guide](./testing.md) for configuration testing strategies
 4. **Troubleshooting**: See [Troubleshooting Guide](./troubleshooting.md) for configuration debugging
-5. **API Reference**: Consult [API Reference: FlextConfig](../api-reference/infrastructure.md#flextconfig) for complete API
+5. **API Reference**: Consult [API Reference: FlextSettings](../api-reference/infrastructure.md#flextconfig) for complete API
 
 ## See Also
 
@@ -530,7 +530,7 @@ Use FlextConfig to manage all application configuration with confidence and safe
 - [Error Handling Guide](./error-handling.md) - Handling configuration errors
 - [Testing Guide](./testing.md) - Testing with configuration
 - [Troubleshooting Guide](./troubleshooting.md) - Configuration troubleshooting
-- [API Reference: FlextConfig](../api-reference/infrastructure.md#flextconfig) - Complete configuration API
+- [API Reference: FlextSettings](../api-reference/infrastructure.md#flextconfig) - Complete configuration API
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ---

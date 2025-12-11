@@ -37,7 +37,7 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: BadDictLike instances are compatible with GeneralValueType at runtime
+        # Business Rule: BadDictLike instances are compatible with t.GeneralValueType at runtime
         obj = BadDictLike()
         obj_typed = cast("t.GeneralValueType", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -58,7 +58,7 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: BadDictLike instances are compatible with GeneralValueType at runtime
+        # Business Rule: BadDictLike instances are compatible with t.GeneralValueType at runtime
         obj = BadDictLike()
         obj_typed = cast("t.GeneralValueType", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -76,7 +76,7 @@ class TestRuntimeDictLike:
         class NotDictLike:
             pass
 
-        # Business Rule: NotDictLike instances are compatible with GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
         obj = NotDictLike()
         obj_typed = cast("t.GeneralValueType", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -92,7 +92,7 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: NotDictLike instances are compatible with GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
         obj = NotDictLike()
         obj_typed = cast("t.GeneralValueType", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -108,7 +108,7 @@ class TestRuntimeDictLike:
             def get(self, key: object) -> object:
                 return None
 
-        # Business Rule: NotDictLike instances are compatible with GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
         obj = NotDictLike()
         obj_typed = cast("t.GeneralValueType", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -124,7 +124,7 @@ class TestRuntimeDictLike:
             def items(self) -> list[tuple[object, object]]:
                 return []
 
-        # Business Rule: NotDictLike instances are compatible with GeneralValueType at runtime
+        # Business Rule: NotDictLike instances are compatible with t.GeneralValueType at runtime
         obj = NotDictLike()
         obj_typed = cast("t.GeneralValueType", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
@@ -197,7 +197,7 @@ class TestRuntimeTypeChecking:
         # A malformed one would be just "_level_" or "_level_debug" (not enough parts)
         # Create a key that starts with _level_ but has fewer parts than required
         malformed_key = "_level_"  # This will split into fewer parts than required
-        event_dict: t.Types.ConfigurationMapping = {
+        event_dict: t.ConfigurationMapping = {
             malformed_key: "value1",  # Malformed - not enough parts after split
             "normal_key": "value2",  # Not prefixed
         }
@@ -225,13 +225,13 @@ class TestRuntimeTypeChecking:
 
         config = Config()
         # Convert Config object to Mapping for type compatibility
-        # Convert list[object] to Sequence[GeneralValueType] for type compatibility
+        # Convert list[object] to Sequence[t.GeneralValueType] for type compatibility
         additional_processors_typed: Sequence[t.GeneralValueType] = (
             cast("Sequence[t.GeneralValueType]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
             else []
         )
-        # Convert object | None to GeneralValueType | None for type compatibility
+        # Convert object | None to t.GeneralValueType | None for type compatibility
         wrapper_class_factory_typed: t.GeneralValueType | None = (
             cast("t.GeneralValueType", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
@@ -242,7 +242,7 @@ class TestRuntimeTypeChecking:
             if config.logger_factory is not None
             else None
         )
-        config_dict: t.Types.ConfigurationMapping = {
+        config_dict: t.ConfigurationMapping = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,
@@ -343,7 +343,7 @@ class TestRuntimeTypeChecking:
         # Format: _level_<level>_<key> where parts_count = 4
         # So "_level_debug_config" splits into ['', 'level', 'debug', 'config']
         # Level hierarchy: DEBUG (10) < INFO (20) < WARNING (30) < ERROR (40) < CRITICAL (50)
-        event_dict: t.Types.ConfigurationMapping = {
+        event_dict: t.ConfigurationMapping = {
             "_level_debug_config": {"key": "value"},  # DEBUG level (10)
             "_level_info_status": "ok",  # INFO level (20)
             "_level_error_stack": "trace",  # ERROR level (40)
@@ -385,13 +385,13 @@ class TestRuntimeTypeChecking:
 
         config = Config()
         # Convert Config object to Mapping for type compatibility
-        # Convert list[object] to Sequence[GeneralValueType] for type compatibility
+        # Convert list[object] to Sequence[t.GeneralValueType] for type compatibility
         additional_processors_typed: Sequence[t.GeneralValueType] = (
             cast("Sequence[t.GeneralValueType]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
             else []
         )
-        # Convert object | None to GeneralValueType | None for type compatibility
+        # Convert object | None to t.GeneralValueType | None for type compatibility
         wrapper_class_factory_typed: t.GeneralValueType | None = (
             cast("t.GeneralValueType", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
@@ -402,7 +402,7 @@ class TestRuntimeTypeChecking:
             if config.logger_factory is not None
             else None
         )
-        config_dict: t.Types.ConfigurationMapping = {
+        config_dict: t.ConfigurationMapping = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,

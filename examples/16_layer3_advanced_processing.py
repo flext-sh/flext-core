@@ -11,12 +11,12 @@ about failures.
 - Parallel processing with worker pools
 - Timeout enforcement for long-running operations
 - Fallback chains for reliability
-- Circuit breaker patterns (via FlextConfig)
-- Rate limiting demonstrations (via FlextConfig)
+- Circuit breaker patterns (via FlextSettings)
+- Rate limiting demonstrations (via FlextSettings)
 
 **Reliability Configuration:**
 Dispatcher reliability (circuit breaker, rate limiting, retry, timeout) is configured
-via FlextConfig. See dependency-injection-advanced.md guide for configuration examples.
+via FlextSettings. See dependency-injection-advanced.md guide for configuration examples.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -133,7 +133,7 @@ class DataValidator:
             )
         if data < 0:
             return FlextResult[t.GeneralValueType].fail("Data must be positive")
-        # int is part of GeneralValueType, so int can be used as t.GeneralValueType
+        # int is part of t.GeneralValueType, so int can be used as t.GeneralValueType
         return FlextResult[t.GeneralValueType].ok(data)
 
 

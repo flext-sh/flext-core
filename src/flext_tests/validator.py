@@ -31,9 +31,9 @@ from typing import ClassVar
 from flext_core import r
 from flext_tests._validator import (
     FlextValidatorBypass,
-    FlextValidatorConfig,
     FlextValidatorImports,
     FlextValidatorLayer,
+    FlextValidatorSettings,
     FlextValidatorTests,
     FlextValidatorTypes,
 )
@@ -174,7 +174,7 @@ class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):
             FlextResult[ScanResult] with violations found
 
         """
-        return FlextValidatorConfig.validate(pyproject_path, approved_exceptions)
+        return FlextValidatorSettings.validate(pyproject_path, approved_exceptions)
 
     @classmethod
     def bypass(

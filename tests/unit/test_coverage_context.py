@@ -576,11 +576,11 @@ class TestUtilitiesDomain:
 
 
 class TestContextDataModel:
-    """Test FlextContext with m.Context.ContextData using FlextTestsUtilities."""
+    """Test FlextContext with m.ContextData using FlextTestsUtilities."""
 
     def test_context_with_context_data_model(self) -> None:
         """Test FlextContext initialization with ContextData model."""
-        context_data = m.Context.ContextData(
+        context_data = m.ContextData(
             data={"key1": "value1", "key2": "value2"},
         )
         context = FlextContext(context_data)
@@ -597,7 +597,7 @@ class TestContextDataModel:
         context.set("key1", "value1")
         context.set_metadata("created_at", "2025-01-01")
         export_snapshot = context._export_snapshot()
-        assert isinstance(export_snapshot, m.Context.ContextExport)
+        assert isinstance(export_snapshot, m.ContextExport)
         assert export_snapshot.data.get("key1") == "value1"
         assert export_snapshot.metadata is not None
         metadata = export_snapshot.metadata

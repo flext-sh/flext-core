@@ -18,14 +18,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConfig, FlextLogger, FlextResult, FlextRuntime, p
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextSettings, p
 from flext_core.constants import c
 
 
 def make_result_logger(
     name: str,
     *,
-    config: FlextConfig | None = None,
+    config: FlextSettings | None = None,
     _level: str | None = None,
     _service_name: str | None = None,
     _service_version: str | None = None,
@@ -110,7 +110,7 @@ class TestGlobalContextManagement:
 
     def test_context_operation_unknown_operation(self) -> None:
         """Test context operation with unknown operation (covers line 131)."""
-        # _execute_context_op returns ResultProtocol[bool] | dict[str, GeneralValueType]
+        # _execute_context_op returns ResultProtocol[bool] | dict[str, t.GeneralValueType]
         # For unknown operations, it returns ResultProtocol[bool] via result_fail
         result = FlextLogger._execute_context_op("unknown_operation", {})
         # Type narrowing: unknown operation returns ResultProtocol[bool], not dict

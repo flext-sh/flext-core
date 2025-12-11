@@ -237,11 +237,11 @@ class TestsFlextConstants(FlextTestsConstants):
         MISSING_VALUE: Final[str] = "Missing value"
         INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
         CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
-        TEST_DATA: Final[core_t.Types.ConfigurationMapping] = {
+        TEST_DATA: Final[core_t.ConfigurationMapping] = {
             "key": "value",
             "value": 5,
         }
-        TEST_DICT: Final[core_t.Types.ConfigurationMapping] = {"key": "value"}
+        TEST_DICT: Final[core_t.ConfigurationMapping] = {"key": "value"}
         TEST_LIST: Final[tuple[int, ...]] = (1, 2, 3)
         MAX_EXECUTION_TIME: Final[float] = 1.0
         ITERATION_COUNT: Final[int] = 1000

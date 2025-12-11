@@ -114,7 +114,7 @@ FLEXT-Core implements a layered dependency injection pattern following Clear Arc
 
 **Key Services Accessible via DI** (Auto-registered):
 
-- `FlextConfig`: Available as `"config"` - Configuration management with environment variables and validation
+- `FlextSettings`: Available as `"config"` - Configuration management with environment variables and validation
 - `FlextLogger`: Available as `"logger"` (factory) - Structured logging with context propagation
 - `FlextContext`: Available as `"context"` - Request/operation context and correlation IDs
 - `FlextContainer`: Dependency injection container with scoped contexts
@@ -124,12 +124,12 @@ FLEXT-Core implements a layered dependency injection pattern following Clear Arc
 Core services (`config`, `logger`, `context`) are automatically registered when creating a `FlextContainer` instance, making them immediately available for dependency injection:
 
 ```python
-from flext_core import FlextContainer, FlextConfig, FlextLogger, FlextContext, r
+from flext_core import FlextContainer, FlextSettings, FlextLogger, FlextContext, r
 
 container = FlextContainer()
 
 # Core services are automatically available
-config_result: r[FlextConfig] = container.get("config")
+config_result: r[FlextSettings] = container.get("config")
 logger_result: r[FlextLogger] = container.get("logger")
 context_result: r[FlextContext] = container.get("context")
 
@@ -169,7 +169,7 @@ from flext_core import FlextService, r, t
 
 class MyService(FlextService[str]):
     @classmethod
-    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
         return {
             "config_overrides": {"app_name": "my_app"},
             "services": {"feature_flag": True},
@@ -208,7 +208,7 @@ di_container = FlextRuntime.DependencyIntegration.create_container(
 
 class ReportingService(FlextService[r[str]]):
     @classmethod
-    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
         return {
             "config_overrides": {"app_name": "reports"},
             "services": {"feature_flag": True},
@@ -226,13 +226,13 @@ class ReportingService(FlextService[r[str]]):
 
 ### Centralized Type System (FlextTypes) ✅ **COMPLETED**
 
-**MANDATORY**: All complex types MUST use centralized type aliases from `t.Types` namespace.
+**MANDATORY**: All complex types MUST use centralized type aliases from `t` namespace.
 
 ```python
 from flext_core.typings import t, T, U  # ✅ CORRECT - Direct import
 
 # ✅ CORRECT - Use centralized types
-def process_config(config: t.Types.ConfigurationDict) -> t.Types.StringDict:
+def process_config(config: t.ConfigurationDict) -> t.StringDict:
     """Use centralized type aliases."""
     pass
 
@@ -247,7 +247,7 @@ def map_dict[T, U](data: dict[T, U]) -> dict[U, T]:
     return {v: k for k, v in data.items()}
 
 # ✅ CORRECT - Enum instance mappings
-members_dict: t.Types.StringStrEnumInstanceDict = getattr(
+members_dict: t.StringStrEnumInstanceDict = getattr(
     enum_cls, "__members__", {}
 )
 
@@ -259,7 +259,7 @@ def process_config(config: dict[str, t.GeneralValueType]) -> dict[str, str]:  # 
 TResult = TypeVar("TResult")  # FORBIDDEN - Use T from flext_core.typings
 ```
 
-**Available Type Aliases** (in `t.Types` namespace):
+**Available Type Aliases** (in `t` namespace):
 
 - Configuration: `ConfigurationDict`, `ConfigurationMapping`, `StringConfigurationDictDict`
 - String mappings: `StringDict`, `StringIntDict`, `StringFloatDict`, `StringBoolDict`
@@ -299,7 +299,7 @@ def get_logger() -> p.Logger.StructlogLogger:
     return cast("p.Logger.StructlogLogger", logger)
 
 # ❌ FORBIDDEN - Direct class references in interfaces
-def create_service(config: FlextConfig) -> FlextService[str]:  # AVOID
+def create_service(config: FlextSettings) -> FlextService[str]:  # AVOID
     pass
 ```
 
@@ -313,7 +313,7 @@ def create_service(config: FlextConfig) -> FlextService[str]:  # AVOID
 **Type System Rules**:
 
 - ✅ Import: `from flext_core.typings import t, T, U` (NOT `from flext_core import typings as t`)
-- ✅ All `dict[str, ...]` patterns MUST use `t.Types.*` aliases
+- ✅ All `dict[str, ...]` patterns MUST use `t.*` aliases
 - ✅ All TypeVars MUST be imported from `flext_core.typings` (no local definitions)
 - ✅ Generic types like `dict[str, T]` where `T` is a type parameter are OK
 - ✅ Zero tolerance for duplicate type/TypeVar definitions
@@ -341,7 +341,7 @@ def validate_data(data: t.GeneralValueType) -> r[bool]:
     return r[bool].ok(True)
 
 # ✅ CORRECT - Access nested namespaces via short aliases
-config_dict: t.Types.ConfigurationDict = {"key": "value"}
+config_dict: t.ConfigurationDict = {"key": "value"}
 error_code = c.Errors.VALIDATION_ERROR
 ```
 
@@ -405,7 +405,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 - ✅ **Complexity**: Radon CC + MI analysis passing
 - ✅ **Circular Dependencies**: ZERO (verified by import tests)
 - ✅ **API Compatibility**: Both `.data` and `.value` work (backward compatible)
-- ✅ **Centralized Types**: ✅ **COMPLETED** - All modules using `t.Types.*` aliases
+- ✅ **Centralized Types**: ✅ **COMPLETED** - All modules using `t.*` aliases
 - ✅ **Centralized TypeVars**: ✅ **COMPLETED** - All TypeVars from `flext_core.typings`
 - ✅ **Centralized Constants**: ✅ **COMPLETED** - All constants using `c.Namespace.CONSTANT`
 
@@ -432,7 +432,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 
 - ✅ All 66 Python files in `src/` using centralized types
 - ✅ All TypeVars imported from `flext_core.typings` (T, U, T_co, T_contra, E, R, P, etc.)
-- ✅ All complex types using `t.Types.*` aliases
+- ✅ All complex types using `t.*` aliases
 - ✅ Zero local TypeVar definitions
 - ✅ Zero duplicate type definitions
 
@@ -463,7 +463,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 **Key Patterns Established**:
 
 - ✅ Direct import: `from flext_core.typings import t, T, U` (required for MyPy)
-- ✅ All complex types use `t.Types.*` aliases
+- ✅ All complex types use `t.*` aliases
 - ✅ All TypeVars from `flext_core.typings` (no local definitions)
 - ✅ Generic types (`dict[str, T]` where `T` is a type parameter) remain as-is
 - ✅ Zero tolerance for duplicate type/constant definitions

@@ -74,15 +74,15 @@ class GetUserQuery(FlextModels.Cqrs.Query):
     user_id: str
 
 
-class GetUserHandler(h[GetUserQuery, t.Types.ServiceMetadataMapping]):
+class GetUserHandler(h[GetUserQuery, t.ServiceMetadataMapping]):
     """Handler for getting users."""
 
     def handle(
         self,
         message: GetUserQuery,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Handle get user query."""
-        return FlextResult[t.Types.ServiceMetadataMapping].ok({
+        return FlextResult[t.ServiceMetadataMapping].ok({
             "user_id": message.user_id,
             "name": "Demo User",
             "email": "demo@example.com",
@@ -94,12 +94,12 @@ class GetUserHandler(h[GetUserQuery, t.Types.ServiceMetadataMapping]):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
+class RegistryDispatcherService(s[t.ServiceMetadataMapping]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
     def execute(
         self,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Execute registry and dispatcher demonstrations."""
         print("Starting registry and dispatcher demonstration")
 
@@ -108,7 +108,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
             self._demonstrate_dispatcher()
             self._demonstrate_integration()
 
-            return FlextResult[t.Types.ServiceMetadataMapping].ok({
+            return FlextResult[t.ServiceMetadataMapping].ok({
                 "patterns_demonstrated": [
                     "handler_registration",
                     "batch_registration",
@@ -130,7 +130,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"
-            return FlextResult[t.Types.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.ServiceMetadataMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_registry() -> None:
@@ -155,7 +155,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
         # Business Rule: register_handlers accepts list of handlers compatible with Handler protocol
         # Handler types implement Handler protocol and are compatible at runtime
         # Cast needed because GetUserHandler[GetUserQuery, ServiceMetadataMapping] is compatible
-        # with h[GeneralValueType, GeneralValueType] at runtime
+        # with h[t.GeneralValueType, t.GeneralValueType] at runtime
         handler_for_registry = cast(
             "h[t.GeneralValueType, t.GeneralValueType]",
             get_handler,
@@ -180,7 +180,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
         # Handler types implement Handler protocol and are compatible at runtime
         create_handler = CreateUserHandler()
         # Cast needed because CreateUserHandler[CreateUserCommand, UserCreatedEvent] is compatible
-        # with h[GeneralValueType, GeneralValueType] at runtime
+        # with h[t.GeneralValueType, t.GeneralValueType] at runtime
         handler_for_registry = cast(
             "h[t.GeneralValueType, t.GeneralValueType]",
             create_handler,
@@ -189,9 +189,9 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         # Dispatch command
         command = CreateUserCommand(name="Alice", email="alice@example.com")
-        # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
+        # Business Rule: dispatch accepts commands/queries compatible with t.GeneralValueType
         # Pydantic models implement model_dump() and are compatible at runtime
-        # Cast needed because CreateUserCommand is compatible with GeneralValueType at runtime
+        # Cast needed because CreateUserCommand is compatible with t.GeneralValueType at runtime
         command_for_dispatch = cast("t.GeneralValueType", command)
         dispatch_result = dispatcher.dispatch(command_for_dispatch)
         if dispatch_result.is_success:
@@ -217,7 +217,7 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         # Business Rule: register_handler accepts handlers compatible with Handler protocol
         # Handler types implement Handler protocol and are compatible at runtime
-        # Cast needed because handlers are compatible with h[GeneralValueType, GeneralValueType] at runtime
+        # Cast needed because handlers are compatible with h[t.GeneralValueType, t.GeneralValueType] at runtime
         create_handler_for_registry = cast(
             "h[t.GeneralValueType, t.GeneralValueType]",
             create_handler,
@@ -231,9 +231,9 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         # Dispatch command
         command = CreateUserCommand(name="Bob", email="bob@example.com")
-        # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
+        # Business Rule: dispatch accepts commands/queries compatible with t.GeneralValueType
         # Pydantic models implement model_dump() and are compatible at runtime
-        # Cast needed because CreateUserCommand is compatible with GeneralValueType at runtime
+        # Cast needed because CreateUserCommand is compatible with t.GeneralValueType at runtime
         command_for_dispatch = cast("t.GeneralValueType", command)
         command_result = dispatcher.dispatch(command_for_dispatch)
         if command_result.is_success:
@@ -241,9 +241,9 @@ class RegistryDispatcherService(s[t.Types.ServiceMetadataMapping]):
 
         # Dispatch query
         query = GetUserQuery(user_id="user-123")
-        # Business Rule: dispatch accepts commands/queries compatible with GeneralValueType
+        # Business Rule: dispatch accepts commands/queries compatible with t.GeneralValueType
         # Pydantic models implement model_dump() and are compatible at runtime
-        # Cast needed because GetUserQuery is compatible with GeneralValueType at runtime
+        # Cast needed because GetUserQuery is compatible with t.GeneralValueType at runtime
         query_for_dispatch = cast("t.GeneralValueType", query)
         query_result = dispatcher.dispatch(query_for_dispatch)
         if query_result.is_success:

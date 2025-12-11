@@ -45,7 +45,7 @@ External concerns including logging, configuration, dependency injection, and co
 | `FlextDispatcher` | Command/query dispatcher with reliability controls         |
 | `FlextContext`    | Hierarchical context management for tracing                |
 | `FlextLogger`     | Structured logging with automatic context propagation      |
-| `FlextConfig`     | Configuration management with Pydantic validation          |
+| `FlextSettings`     | Configuration management with Pydantic validation          |
 | `FlextModels`     | DDD patterns (Entity, Value, AggregateRoot)                |
 
 ## Usage Examples
@@ -53,7 +53,7 @@ External concerns including logging, configuration, dependency injection, and co
 ### Basic Setup
 
 ```python
-from flext_core.config import FlextConfig
+from flext_core.settings import FlextSettings
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext

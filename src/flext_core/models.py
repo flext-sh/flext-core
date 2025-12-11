@@ -19,13 +19,13 @@ from pydantic import Discriminator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.config import FlextModelsConfig
 from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.service import FlextModelsService
+from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.protocols import p
 from flext_core.typings import t
@@ -125,7 +125,7 @@ class FlextModels:
 
     # Categories with default type - expose at class level with real inheritance
     class Categories(FlextModelsCollections.Categories[t.GeneralValueType]):
-        """Categories collection with default GeneralValueType - real inheritance."""
+        """Categories collection with default t.GeneralValueType - real inheritance."""
 
     # Collections - Real inheritance classes (no type aliases)
     # CollectionsConfig removed - use Collections.Config directly
@@ -149,7 +149,7 @@ class FlextModels:
         class Handler(FlextModelsCqrs.Handler):
             """Handler base class - real inheritance."""
 
-        # NOTE: Use FlextConfig.get_global_instance() directly in model defaults
+        # NOTE: Use FlextSettings.get_global_instance() directly in model defaults
         # No wrapper methods needed - access config directly per FLEXT standards
 
     # Base Utility Models - Real inheritance classes
@@ -164,11 +164,11 @@ class FlextModels:
         # constants.py cannot import ConfigDict, so this belongs here
         DOMAIN_MODEL_CONFIG = FlextModelsConfig.DOMAIN_MODEL_CONFIG
         """Domain model configuration defaults.
-        
+
         Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because
         constants.py cannot import ConfigDict from pydantic.
-        
-        Use m.Config.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
+
+        Use m.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
         """
 
         class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
@@ -387,26 +387,149 @@ class FlextModels:
         Discriminator("message_type"),
     ]
 
-    # Validation Patterns - Real inheritance class
-    class Validation(FlextModelsValidation):
-        """Validation namespace with real inheritance.
-
-        All validation methods are available through inheritance from
-        FlextModelsValidation. Methods return Result[T] for various T.
-        """
-
     # =========================================================================
-    # NAMESPACE HIERARCHY - PADRAO CORRETO
+    # FLAT NAMESPACE ACCESS - NEW STANDARD (December 2025)
     # =========================================================================
-    # Todos os projetos devem usar namespace hierárquico completo
-    # SEM duplicação de declarações ou aliases de raiz
+    # Classes are now accessible via flat namespace for common usage patterns.
+    # Sub-namespaces (Config, Cqrs, Context, etc.) are DEPRECATED but maintained
+    # for backward compatibility. New code should use flat access.
     #
-    # CORRETO: m.Cqrs.Command, m.Config.ProcessingRequest, m.Context.ContextData
-    # ERRADO:  m.Command, m.ProcessingRequest, m.ContextData (PROIBIDO)
+    # CORRECT (new): m.DispatchConfig, m.Command, m.ContextData
+    # DEPRECATED:    m.DispatchConfig, m.Command, m.ContextData
     #
-    # Herança real, não aliases - todas as classes herdam diretamente
-    # Sem quebra de código - mantém compatibilidade backward
+    # Project-specific namespaces (m.Cli.*, m.Ldif.*) remain for extensions.
     # =========================================================================
+
+    # =========================================================================
+    # FLAT ALIASES - m.Config.* → m.*
+    # =========================================================================
+    DOMAIN_MODEL_CONFIG = FlextModelsConfig.DOMAIN_MODEL_CONFIG
+    ProcessingRequest = FlextModelsConfig.ProcessingRequest
+    RetryConfiguration = FlextModelsConfig.RetryConfiguration
+    ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
+    BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
+    HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
+    OperationExtraConfig = FlextModelsConfig.OperationExtraConfig
+    LogOperationFailureConfig = FlextModelsConfig.LogOperationFailureConfig
+    RetryLoopConfig = FlextModelsConfig.RetryLoopConfig
+    DispatchConfig = FlextModelsConfig.DispatchConfig
+    ExecuteDispatchAttemptOptions = FlextModelsConfig.ExecuteDispatchAttemptOptions
+    RuntimeScopeOptions = FlextModelsConfig.RuntimeScopeOptions
+    NestedExecutionOptions = FlextModelsConfig.NestedExecutionOptions
+    ExceptionConfig = FlextModelsConfig.ExceptionConfig
+    ValidationErrorConfig = FlextModelsConfig.ValidationErrorConfig
+    ConfigurationErrorConfig = FlextModelsConfig.ConfigurationErrorConfig
+    ConnectionErrorConfig = FlextModelsConfig.ConnectionErrorConfig
+    TimeoutErrorConfig = FlextModelsConfig.TimeoutErrorConfig
+    AuthenticationErrorConfig = FlextModelsConfig.AuthenticationErrorConfig
+    AuthorizationErrorConfig = FlextModelsConfig.AuthorizationErrorConfig
+    NotFoundErrorConfig = FlextModelsConfig.NotFoundErrorConfig
+    ConflictErrorConfig = FlextModelsConfig.ConflictErrorConfig
+    RateLimitErrorConfig = FlextModelsConfig.RateLimitErrorConfig
+    InternalErrorConfig = FlextModelsConfig.InternalErrorConfig
+    TypeErrorOptions = FlextModelsConfig.TypeErrorOptions
+    TypeErrorConfig = FlextModelsConfig.TypeErrorConfig
+    ValueErrorConfig = FlextModelsConfig.ValueErrorConfig
+    CircuitBreakerErrorConfig = FlextModelsConfig.CircuitBreakerErrorConfig
+    OperationErrorConfig = FlextModelsConfig.OperationErrorConfig
+    AttributeAccessErrorConfig = FlextModelsConfig.AttributeAccessErrorConfig
+    MiddlewareConfig = FlextModelsConfig.MiddlewareConfig
+    RateLimiterState = FlextModelsConfig.RateLimiterState
+
+    # =========================================================================
+    # FLAT ALIASES - m.Context.* → m.*
+    # =========================================================================
+    StructlogProxyToken = FlextModelsContext.StructlogProxyToken
+    StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar
+    ContextToken = FlextModelsContext.Token
+    ContextData = FlextModelsContext.ContextData
+    ContextExport = FlextModelsContext.ContextExport
+    ContextScopeData = FlextModelsContext.ContextScopeData
+    ContextStatistics = FlextModelsContext.ContextStatistics
+    ContextMetadata = FlextModelsContext.ContextMetadata
+    ContextDomainData = FlextModelsContext.ContextDomainData
+
+    # =========================================================================
+    # FLAT ALIASES - m.Cqrs.* → m.*
+    # =========================================================================
+    Command = FlextModelsCqrs.Command
+    Query = FlextModelsCqrs.Query
+    Pagination = FlextModelsCqrs.Pagination
+    CqrsBus = FlextModelsCqrs.Bus
+    CqrsHandler = FlextModelsCqrs.Handler
+
+    # =========================================================================
+    # FLAT ALIASES - m.Collections.* → m.*
+    # =========================================================================
+    CollectionsConfig = FlextModelsCollections.Config
+    CollectionsRules = FlextModelsCollections.Rules
+    CollectionsStatistics = FlextModelsCollections.Statistics
+    CollectionsResults = FlextModelsCollections.Results
+    CollectionsOptions = FlextModelsCollections.Options
+    CollectionsParseOptions = FlextModelsCollections.ParseOptions
+    # Categories already exists at root level
+
+    # =========================================================================
+    # FLAT ALIASES - m.Handler.* → m.*
+    # =========================================================================
+    HandlerRegistration = FlextModelsHandler.Registration
+    HandlerRegistrationDetails = FlextModelsHandler.RegistrationDetails
+    HandlerExecutionContext = FlextModelsHandler.ExecutionContext
+    HandlerDecoratorConfig = FlextModelsHandler.DecoratorConfig
+
+    # =========================================================================
+    # FLAT ALIASES - m.Service.* → m.*
+    # =========================================================================
+    DomainServiceExecutionRequest = FlextModelsService.DomainServiceExecutionRequest
+    DomainServiceBatchRequest = FlextModelsService.DomainServiceBatchRequest
+    DomainServiceMetricsRequest = FlextModelsService.DomainServiceMetricsRequest
+    DomainServiceResourceRequest = FlextModelsService.DomainServiceResourceRequest
+    AclResponse = FlextModelsService.AclResponse
+    OperationExecutionRequest = FlextModelsService.OperationExecutionRequest
+
+    # =========================================================================
+    # FLAT ALIASES - m.Container.* → m.*
+    # =========================================================================
+    ContainerServiceRegistration = FlextModelsContainer.ServiceRegistration
+    ContainerFactoryRegistration = FlextModelsContainer.FactoryRegistration
+    ContainerFactoryDecoratorConfig = FlextModelsContainer.FactoryDecoratorConfig
+    ContainerResourceRegistration = FlextModelsContainer.ResourceRegistration
+    ContainerConfig = FlextModelsContainer.ContainerConfig
+
+    # NOTE: m.Metadata is already available via class Metadata(FlextModelsBase.Metadata)
+    # defined in the Entity namespace section above (line 156)
+
+    class Validation:
+        """Validation functions and types."""
+
+        validate_business_rules = FlextModelsValidation.validate_business_rules
+        validate_cross_fields = FlextModelsValidation.validate_cross_fields
+        validate_performance = FlextModelsValidation.validate_performance
+        validate_batch = FlextModelsValidation.validate_batch
+        validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
+        validate_aggregate_consistency_with_rules = (
+            FlextModelsValidation.validate_aggregate_consistency_with_rules
+        )
+        validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
+        validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
+        validate_domain_event = FlextModelsValidation.validate_domain_event
+        validate_aggregate_consistency = (
+            FlextModelsValidation.validate_aggregate_consistency
+        )
+        validate_entity_relationships = (
+            FlextModelsValidation.validate_entity_relationships
+        )
+        validate_uri = FlextModelsValidation.validate_uri
+        validate_port_number = FlextModelsValidation.validate_port_number
+
+        # Nested Validation types (PortNumber, TimeoutSeconds, etc.)
+        # PortNumber = FlextModelsValidation.PortNumber
+        # TimeoutSeconds = FlextModelsValidation.TimeoutSeconds
+        # RetryCount = FlextModelsValidation.RetryCount
+        # NonEmptyStr = FlextModelsValidation.NonEmptyStr
+        # HostName = FlextModelsValidation.HostName
+
+        # validate_hostname = FlextModelsValidation.validate_hostname
 
 
 m = FlextModels

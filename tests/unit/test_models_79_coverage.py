@@ -15,7 +15,7 @@ from flext_core import m, t
 
 
 # Define Query and Command classes at module level to avoid Pydantic model_rebuild() requirement
-class CreateUserCommand(m.Cqrs.Command):
+class CreateUserCommand(m.Command):
     """Command to create a user."""
 
     user_id: str
@@ -23,34 +23,34 @@ class CreateUserCommand(m.Cqrs.Command):
     email: str
 
 
-class FindUserQuery(m.Cqrs.Query):
+class FindUserQuery(m.Query):
     """Query to find a user."""
 
     user_id: str
 
 
-class OptionalFieldCommand(m.Cqrs.Command):
+class OptionalFieldCommand(m.Command):
     """Command with optional fields."""
 
     required_field: str
     optional_field: str | None = None
 
 
-class PagedQuery(m.Cqrs.Query):
+class PagedQuery(m.Query):
     """Query with pagination parameters."""
 
     page: int
     page_size: int
 
 
-class CreateUserCmd(m.Cqrs.Command):
+class CreateUserCmd(m.Command):
     """Command to create a user."""
 
     user_id: str
     name: str
 
 
-class GetUserQuery(m.Cqrs.Query):
+class GetUserQuery(m.Query):
     """Query to get a user."""
 
     user_id: str
@@ -226,10 +226,6 @@ class TestFlextModelsDomainEvent:
         assert event.data == {}
 
 
-class TestFlextModelsValidation:
-    """Test FlextModels.Validation functionality."""
-
-
 class TestFlextModelsCommand:
     """Test FlextModels.Cqrs.Command functionality."""
 
@@ -287,7 +283,7 @@ class TestFlextModelsEdgeCases:
 
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
-        large_data: t.Types.EventDataMapping = {
+        large_data: t.EventDataMapping = {
             f"field_{i}": f"value_{i}" for i in range(100)
         }
         event = m.DomainEvent(
@@ -358,6 +354,5 @@ __all__ = [
     "TestFlextModelsEntity",
     "TestFlextModelsIntegration",
     "TestFlextModelsQuery",
-    "TestFlextModelsValidation",
     "TestFlextModelsValueObject",
 ]

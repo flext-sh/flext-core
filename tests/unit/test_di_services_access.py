@@ -2,11 +2,11 @@
 
 Module: flext_core DI services validation
 Scope: Real execution validating that core services
-       (FlextConfig, FlextLogger, FlextContext) are easily accessible via DI
+       (FlextSettings, FlextLogger, FlextContext) are easily accessible via DI
        following Clear Architecture principles
 
 Tests service accessibility via DI:
-- FlextConfig via container and service runtime
+- FlextSettings via container and service runtime
 - FlextLogger via container and service runtime
 - FlextContext via container and service runtime
 - Service registration and injection patterns
@@ -22,11 +22,11 @@ from types import ModuleType
 from typing import cast
 
 from flext_core import (
-    FlextConfig,
     FlextContainer,
     FlextContext,
     FlextLogger,
     FlextRuntime,
+    FlextSettings,
     r,
     s,
     t,
@@ -36,35 +36,35 @@ from flext_tests.utilities import u
 
 
 class TestConfigServiceViaDI:
-    """Test FlextConfig accessibility via DI."""
+    """Test FlextSettings accessibility via DI."""
 
     def test_config_via_container_get_global(self) -> None:
-        """Test accessing FlextConfig via container.get_global_instance."""
+        """Test accessing FlextSettings via container.get_global_instance."""
         # Config is accessible via singleton pattern
-        config1 = FlextConfig.get_global_instance()
-        config2 = FlextConfig.get_global_instance()
+        config1 = FlextSettings.get_global_instance()
+        config2 = FlextSettings.get_global_instance()
         assert config1 is config2
-        assert isinstance(config1, FlextConfig)
+        assert isinstance(config1, FlextSettings)
 
     def test_config_via_service_runtime(self) -> None:
-        """Test FlextConfig accessible via FlextService._create_runtime."""
+        """Test FlextSettings accessible via FlextService._create_runtime."""
         runtime = s._create_runtime(
             config_overrides={"app_name": "test_app"},
         )
         assert runtime.config is not None
-        assert isinstance(runtime.config, FlextConfig)
+        assert isinstance(runtime.config, FlextSettings)
         assert runtime.config.app_name == "test_app"
 
     def test_config_via_container_scoped(self) -> None:
-        """Test FlextConfig accessible via scoped container."""
+        """Test FlextSettings accessible via scoped container."""
         container = FlextContainer(_context=FlextContext())
-        scoped = container.scoped(config=FlextConfig(app_name="scoped_config"))
+        scoped = container.scoped(config=FlextSettings(app_name="scoped_config"))
         assert scoped.config is not None
-        assert isinstance(scoped.config, FlextConfig)
+        assert isinstance(scoped.config, FlextSettings)
         assert scoped.config.app_name == "scoped_config"
 
     def test_config_injection_via_wiring(self) -> None:
-        """Test injecting FlextConfig via @inject decorator."""
+        """Test injecting FlextSettings via @inject decorator."""
         # Use DependencyIntegration to create container with config
         di_container = FlextRuntime.DependencyIntegration.create_container(
             config={"app_name": "injected_config"},
@@ -189,7 +189,7 @@ class TestServicesIntegrationViaDI:
 
         # Verify all services accessible
         assert runtime.config is not None
-        assert isinstance(runtime.config, FlextConfig)
+        assert isinstance(runtime.config, FlextSettings)
         assert runtime.config.app_name == "integrated_app"
 
         assert runtime.context is not None
@@ -203,7 +203,7 @@ class TestServicesIntegrationViaDI:
 
         class ServiceWithDI(s[str]):
             @classmethod
-            def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+            def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
                 # Create a factory function that returns a context instance
                 def create_context() -> FlextContext:
                     """Factory function for creating context instances."""
@@ -258,14 +258,14 @@ class TestServicesIntegrationViaDI:
         """Test injecting multiple services via @inject."""
         # Use DependencyIntegration to create container with config and services
         # This ensures config provider is properly configured
-        # Convert services to GeneralValueType-compatible dict for type compatibility
+        # Convert services to t.GeneralValueType-compatible dict for type compatibility
         logger_instance = FlextLogger.create_module_logger("test")
         context_instance = FlextContext()
         services_raw: dict[str, object] = {
             "logger": logger_instance,
             "context": context_instance,
         }
-        # Cast to GeneralValueType dict - services dict accepts any object
+        # Cast to t.GeneralValueType dict - services dict accepts any object
         services: dict[str, t.GeneralValueType] = cast(
             "dict[str, t.GeneralValueType]",
             services_raw,

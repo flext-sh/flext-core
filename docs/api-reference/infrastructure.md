@@ -4,14 +4,14 @@ This section summarizes the infrastructure layer components that provide configu
 
 ## Configuration Management
 
-### FlextConfig — Layered Configuration
+### FlextSettings — Layered Configuration
 
 Layered configuration system supporting environment variables, files, and programmatic overrides with type-safe access.
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 
-config = FlextConfig(
+config = FlextSettings(
     config_files=["config.toml", "secrets.env"],
     overrides={"debug": True},
 )

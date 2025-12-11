@@ -58,8 +58,8 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: t.Types.ConfigurationDict = Field(default_factory=dict)
-        context: t.Types.ConfigurationDict = Field(default_factory=dict)
+        data: t.ConfigurationDict = Field(default_factory=dict)
+        context: t.ConfigurationDict = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -76,10 +76,10 @@ class FlextModelsConfig:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: t.GeneralValueType) -> t.Types.StringDict:
+        def validate_context(cls, v: t.GeneralValueType) -> t.StringDict:
             """Ensure context has required fields (using FlextUtilitiesGenerators).
 
-            Returns t.Types.StringDict because ensure_trace_context generates
+            Returns t.StringDict because ensure_trace_context generates
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """
@@ -193,7 +193,7 @@ class FlextModelsConfig:
             """Validate custom validators are callable."""
             for validator in v:
                 # Direct callable check - object can be any callable,
-                # not just GeneralValueType
+                # not just t.GeneralValueType
                 if not callable(validator):
                     base_msg = "Validator must be callable"
                     error_msg = f"{base_msg}: got {type(validator).__name__}"
@@ -244,8 +244,8 @@ class FlextModelsConfig:
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
-        input_data: t.Types.ConfigurationDict = Field(default_factory=dict)
-        execution_context: t.Types.ConfigurationDict = Field(
+        input_data: t.ConfigurationDict = Field(default_factory=dict)
+        execution_context: t.ConfigurationDict = Field(
             default_factory=dict,
         )
         timeout_seconds: float = Field(
@@ -282,7 +282,7 @@ class FlextModelsConfig:
             description="Execution order in middleware chain",
         )
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: t.Types.ConfigurationDict = Field(
+        config: t.ConfigurationDict = Field(
             default_factory=dict,
             description="Middleware-specific configuration",
         )
@@ -347,7 +347,7 @@ class FlextModelsConfig:
             default=True,
             description="Whether to raise exception on non-zero exit code",
         )
-        env: t.Types.StringDict | None = Field(
+        env: t.StringDict | None = Field(
             default=None,
             description="Environment variables for the command",
         )
@@ -578,7 +578,7 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: t.Types.ConfigurationDict = Field(
+        extra_kwargs: t.ConfigurationDict = Field(
             default_factory=dict,
             description="Additional keyword arguments for metadata",
         )
@@ -904,7 +904,7 @@ class FlextModelsConfig:
             default_factory=tuple,
             description="Positional arguments for function",
         )
-        kwargs: t.Types.ConfigurationMapping = Field(
+        kwargs: t.ConfigurationMapping = Field(
             default_factory=dict,
             description="Keyword arguments for function",
         )
@@ -946,7 +946,7 @@ class FlextModelsConfig:
     Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because
     constants.py cannot import ConfigDict from pydantic.
 
-    Use m.Config.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
+    Use m.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
     """
 
 

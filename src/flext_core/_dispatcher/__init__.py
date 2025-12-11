@@ -14,9 +14,10 @@ from flext_core._dispatcher.reliability import (
     RetryPolicy,
 )
 from flext_core._dispatcher.timeout import TimeoutEnforcer
-from flext_core.typings import t
+from flext_core.typings import FlextTypes
 
-DispatcherConfig = t.Dispatcher.DispatcherConfig
+# Import DispatcherConfig from the correct location in typings
+DispatcherConfig = FlextTypes.Dispatcher.DispatcherConfig
 
 __all__ = [
     "CircuitBreakerManager",

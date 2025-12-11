@@ -61,7 +61,7 @@ class FlextTestsDomains:
         service_type: str = "api",
         environment: str = "test",
         **overrides: t.GeneralValueType,
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Create test configuration data using factories.
 
         Args:
@@ -93,9 +93,9 @@ class FlextTestsDomains:
             "enable_caching": True,
             "cache_ttl": 300,
         }
-        # Convert to ConfigurationDict - ensure all values are GeneralValueType compatible
-        base_config: t.Types.ConfigurationDict = cast(
-            "t.Types.ConfigurationDict",
+        # Convert to ConfigurationDict - ensure all values are t.GeneralValueType compatible
+        base_config: t.ConfigurationDict = cast(
+            "t.ConfigurationDict",
             dict(config_dict),
         )
         base_config.update(overrides)
@@ -105,7 +105,7 @@ class FlextTestsDomains:
     def create_payload(
         data_type: str = "user",
         **custom_fields: t.GeneralValueType,
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Create test payload data.
 
         Args:
@@ -116,7 +116,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: t.Types.StringConfigurationDictDict = {
+        payloads: t.StringConfigurationDictDict = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",
@@ -148,7 +148,7 @@ class FlextTestsDomains:
         *,
         include_data: bool | None = None,
         **custom_fields: t.GeneralValueType,
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Create API response test data.
 
         Args:
@@ -160,7 +160,7 @@ class FlextTestsDomains:
             API response dictionary
 
         """
-        response: t.Types.ConfigurationDict = {
+        response: t.ConfigurationDict = {
             "status": status,
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
@@ -200,7 +200,7 @@ class FlextTestsDomains:
     def create_service(
         service_type: str = "api",
         **config: t.GeneralValueType,
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Create test service configuration.
 
         Args:
@@ -211,7 +211,7 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: t.Types.ConfigurationDict = {
+        base_service: t.ConfigurationDict = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,

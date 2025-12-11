@@ -712,7 +712,7 @@ class Teste:
         """Test _normalize_metadata fallback path - tests line 219."""
         # Test with non-Mapping, non-Metadata value
         result = e.BaseError._normalize_metadata(
-            12345,  # int is GeneralValueType but not Mapping/Metadata
+            12345,  # int is t.GeneralValueType but not Mapping/Metadata
             {},
         )
         assert isinstance(result, p.Log.Metadata)
@@ -945,10 +945,10 @@ class Teste:
             "valid_int": 123,
             "invalid_type": object(),  # Should be normalized to string (not filtered out)
         }
-        # Convert to t.Types.MetadataAttributeDict
+        # Convert to t.MetadataAttributeDict
         # normalize_to_metadata_value converts object() to string, so it won't be filtered
         # The test expectation is wrong - object() gets normalized to string, not filtered
-        extra_kwargs: t.Types.MetadataAttributeDict = {
+        extra_kwargs: t.MetadataAttributeDict = {
             k: FlextRuntime.normalize_to_metadata_value(
                 cast(
                     "t.GeneralValueType",
@@ -960,9 +960,9 @@ class Teste:
             for k, v in extra_kwargs_raw.items()
         }
         context_raw = {"key1": "value1"}
-        # Convert to t.Types.MetadataAttributeDict
+        # Convert to t.MetadataAttributeDict
         # All values need to be t.GeneralValueType for normalize_to_metadata_value
-        context: t.Types.MetadataAttributeDict = {
+        context: t.MetadataAttributeDict = {
             k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
             for k, v in context_raw.items()
         }
@@ -987,9 +987,9 @@ class Teste:
             "auto_correlation": True,
             "valid_key": "value",
         }
-        # Convert to t.Types.MetadataAttributeDict
+        # Convert to t.MetadataAttributeDict
         # All values need to be t.GeneralValueType for normalize_to_metadata_value
-        context: t.Types.MetadataAttributeDict = {
+        context: t.MetadataAttributeDict = {
             k: FlextRuntime.normalize_to_metadata_value(cast("t.GeneralValueType", v))
             for k, v in context_raw.items()
         }
@@ -1112,10 +1112,10 @@ class Teste:
         # Test extracting type from extra_kwargs when type_value is None
         type_map: dict[str, type] = {"str": str, "int": int}
         extra_kwargs_raw = {"expected_type": "str"}
-        # Convert to t.Types.MetadataAttributeDict
-        # _normalize_type accepts t.Types.MetadataAttributeDict but at runtime can handle type objects
+        # Convert to t.MetadataAttributeDict
+        # _normalize_type accepts t.MetadataAttributeDict but at runtime can handle type objects
         # Mypy limitation: type objects not in MetadataAttributeValue union, but method handles them
-        extra_kwargs: t.Types.MetadataAttributeDict = {
+        extra_kwargs: t.MetadataAttributeDict = {
             k: cast("t.MetadataAttributeValue", v)  # str is ScalarValue
             for k, v in extra_kwargs_raw.items()
         }
@@ -1131,11 +1131,11 @@ class Teste:
 
         # Test extracting type object from extra_kwargs
         extra_kwargs_type_raw = {"expected_type": int}
-        # Type objects need special handling - _normalize_type accepts t.Types.MetadataAttributeDict
+        # Type objects need special handling - _normalize_type accepts t.MetadataAttributeDict
         # but at runtime can handle type objects (defensive programming)
         # Mypy limitation: type objects not in MetadataAttributeValue union
-        extra_kwargs_type: t.Types.MetadataAttributeDict = cast(
-            "t.Types.MetadataAttributeDict",
+        extra_kwargs_type: t.MetadataAttributeDict = cast(
+            "t.MetadataAttributeDict",
             extra_kwargs_type_raw,
         )
         result = e.TypeError._normalize_type(
@@ -1357,7 +1357,7 @@ class Teste:
         # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
         # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
         # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to GeneralValueType (string), then normalize
+        # First convert object values to t.GeneralValueType (string), then normalize
         dict_like_converted: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 cast(
@@ -1450,8 +1450,8 @@ class Teste:
     def test_prepare_kwargs(self) -> None:
         """Test prepare_exception_kwargs - tests lines 945-970."""
         specific_params_raw = {"field": "test_field"}
-        # Convert to t.Types.MetadataAttributeDict
-        specific_params: t.Types.MetadataAttributeDict = {
+        # Convert to t.MetadataAttributeDict
+        specific_params: t.MetadataAttributeDict = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
@@ -1464,8 +1464,8 @@ class Teste:
             "field": "override_field",  # Should be overridden by specific_params
             "custom": "value",
         }
-        # Convert to t.Types.MetadataAttributeDict
-        kwargs: t.Types.MetadataAttributeDict = {}
+        # Convert to t.MetadataAttributeDict
+        kwargs: t.MetadataAttributeDict = {}
         for k, v in kwargs_raw.items():
             if isinstance(v, m.Metadata):
                 # m.Metadata is compatible with p.Log.Metadata which is in MetadataAttributeValue union
@@ -1503,8 +1503,8 @@ class Teste:
     def test_prepare_kwargs_with_empty_specific_params(self) -> None:
         """Test prepare_exception_kwargs with empty specific_params - tests line 945."""
         kwargs_raw = {"field": "test_field"}
-        # Convert to t.Types.MetadataAttributeDict
-        kwargs: t.Types.MetadataAttributeDict = {
+        # Convert to t.MetadataAttributeDict
+        kwargs: t.MetadataAttributeDict = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, {})
@@ -1515,12 +1515,12 @@ class Teste:
     def test_prepare_kwargs_setdefault_behavior(self) -> None:
         """Test prepare_exception_kwargs setdefault behavior - tests line 948."""
         specific_params_raw = {"field": "test_field"}
-        # Convert to t.Types.MetadataAttributeDict
-        specific_params: t.Types.MetadataAttributeDict = {
+        # Convert to t.MetadataAttributeDict
+        specific_params: t.MetadataAttributeDict = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
-        kwargs: t.Types.MetadataAttributeDict = {}  # field not in kwargs
+        kwargs: t.MetadataAttributeDict = {}  # field not in kwargs
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
         assert "field" in extra
@@ -1529,14 +1529,14 @@ class Teste:
     def test_prepare_kwargs_with_specific_params_none(self) -> None:
         """Test prepare_exception_kwargs with None in specific_params - tests lines 947-948."""
         specific_params_raw = {"field": None}  # None value should not override
-        # Convert to t.Types.MetadataAttributeDict (None is valid MetadataAttributeValue)
-        specific_params: t.Types.MetadataAttributeDict = {
+        # Convert to t.MetadataAttributeDict (None is valid MetadataAttributeValue)
+        specific_params: t.MetadataAttributeDict = {
             k: cast("t.MetadataAttributeValue", v)
             for k, v in specific_params_raw.items()
         }
         kwargs_raw = {"field": "test_field"}
-        # Convert to t.Types.MetadataAttributeDict
-        kwargs: t.Types.MetadataAttributeDict = {
+        # Convert to t.MetadataAttributeDict
+        kwargs: t.MetadataAttributeDict = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs_raw.items()
         }
         result = e.prepare_exception_kwargs(kwargs, specific_params)
@@ -1601,7 +1601,7 @@ class Teste:
         # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
         # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
         # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to GeneralValueType (string), then normalize
+        # First convert object values to t.GeneralValueType (string), then normalize
         dict_like_converted: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 cast(
@@ -1645,7 +1645,7 @@ class Teste:
         # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
         # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
         # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to GeneralValueType (string), then normalize
+        # First convert object values to t.GeneralValueType (string), then normalize
         dict_like_converted: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 cast(
@@ -1693,7 +1693,7 @@ class Teste:
         # Convert DictLike to Mapping[str, t.MetadataAttributeValue] for metadata parameter
         # create accepts **kwargs: t.MetadataAttributeValue, and metadata is one of those kwargs
         # DictLike is Mapping[str, object], need to convert values to MetadataAttributeValue
-        # First convert object values to GeneralValueType (string), then normalize
+        # First convert object values to t.GeneralValueType (string), then normalize
         dict_like_converted: dict[str, t.MetadataAttributeValue] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 cast(

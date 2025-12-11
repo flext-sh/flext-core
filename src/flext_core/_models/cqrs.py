@@ -125,8 +125,8 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: t.Types.ConfigurationMapping = Field(default_factory=dict)
-        pagination: FlextModelsCqrs.Pagination | t.Types.StringIntDict = Field(
+        filters: t.ConfigurationMapping = Field(default_factory=dict)
+        pagination: FlextModelsCqrs.Pagination | t.StringIntDict = Field(
             default_factory=dict,
         )
         query_id: str = Field(
@@ -169,7 +169,7 @@ class FlextModelsCqrs:
 
         @staticmethod
         def _convert_dict_to_pagination(
-            v: t.Types.StringIntDict | t.Types.StringDict,
+            v: t.StringIntDict | t.StringDict,
             pagination_cls: type[FlextModelsCqrs.Pagination],
         ) -> FlextModelsCqrs.Pagination:
             """Convert dict to Pagination instance."""
@@ -195,10 +195,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination
-            | t.Types.StringIntDict
-            | t.Types.StringDict
-            | None,
+            v: FlextModelsCqrs.Pagination | t.StringIntDict | t.StringDict | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
@@ -207,11 +204,11 @@ class FlextModelsCqrs:
 
             # Convert dict to Pagination
             if FlextRuntime.is_dict_like(v):
-                # TypeGuard narrows v to Mapping[str, GeneralValueType]
+                # TypeGuard narrows v to Mapping[str, t.GeneralValueType]
                 # No cast needed - TypeGuard already narrows the type
                 v_dict = v
-                # .get() returns GeneralValueType | None, pass directly
-                # (None is valid GeneralValueType)
+                # .get() returns t.GeneralValueType | None, pass directly
+                # (None is valid t.GeneralValueType)
                 page = FlextUtilitiesParser().convert(
                     FlextUtilitiesMapper().get(
                         v_dict,
@@ -240,35 +237,35 @@ class FlextModelsCqrs:
         @classmethod
         def validate_query(
             cls,
-            query_payload: t.Types.ConfigurationMapping,
+            query_payload: t.ConfigurationMapping,
         ) -> r[FlextModelsCqrs.Query]:
             """Validate and create Query from payload."""
             try:
                 # Fast fail: filters and pagination must be dict or None
                 # mapper().get() without default returns T | None directly
                 filters_raw = FlextUtilitiesMapper().get(query_payload, "filters")
-                # TypeGuard narrows to Mapping[str, GeneralValueType] when
+                # TypeGuard narrows to Mapping[str, t.GeneralValueType] when
                 # is_dict_like is True
                 if filters_raw is not None and FlextRuntime.is_dict_like(filters_raw):
                     # Type narrowing: is_dict_like ensures filters_raw is ConfigurationMapping
                     # Explicit type assertion after type guard
                     if isinstance(filters_raw, Mapping):
-                        filters: t.Types.ConfigurationMapping = cast(
-                            "t.Types.ConfigurationMapping", filters_raw
+                        filters: t.ConfigurationMapping = cast(
+                            "t.ConfigurationMapping", filters_raw
                         )
                     else:
                         filters = {}
                 else:
                     filters = {}
                 pagination_raw = FlextUtilitiesMapper().get(query_payload, "pagination")
-                # TypeGuard narrows to Mapping[str, GeneralValueType] when is_dict_like is True
+                # TypeGuard narrows to Mapping[str, t.GeneralValueType] when is_dict_like is True
                 if pagination_raw is not None and FlextRuntime.is_dict_like(
                     pagination_raw
                 ):
                     # Type narrowing: is_dict_like ensures pagination_raw is ConfigurationMapping
                     # Explicit type assertion after type guard
                     if isinstance(pagination_raw, Mapping):
-                        pagination_data: t.Types.ConfigurationMapping = pagination_raw
+                        pagination_data: t.ConfigurationMapping = pagination_raw
                     else:
                         pagination_data = {}
                 else:
@@ -296,7 +293,7 @@ class FlextModelsCqrs:
                         int,
                         default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
                     )
-                    pagination: t.Types.StringIntDict = {"page": page, "size": size}
+                    pagination: t.StringIntDict = {"page": page, "size": size}
                 else:
                     pagination = {
                         "page": c.Pagination.DEFAULT_PAGE_NUMBER,
@@ -405,7 +402,7 @@ class FlextModelsCqrs:
             )
             default_name: str | None = None
             default_id: str | None = None
-            handler_config: t.Types.ConfigurationMapping | None = None
+            handler_config: t.ConfigurationMapping | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 
@@ -424,7 +421,7 @@ class FlextModelsCqrs:
                 """Initialize builder with required handler_type."""
                 super().__init__()
                 handler_short_id = FlextUtilitiesGenerators().generate("ulid", length=8)
-                self._data: t.Types.ConfigurationDict = {
+                self._data: t.ConfigurationDict = {
                     "handler_type": handler_type,
                     "handler_mode": (
                         c.Dispatcher.HANDLER_MODE_COMMAND
@@ -460,8 +457,8 @@ class FlextModelsCqrs:
 
             def with_metadata(self, metadata: FlextModelsBase.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
-                # Convert Metadata model to dict for GeneralValueType compatibility
-                metadata_dict: t.Types.ConfigurationDict = dict(
+                # Convert Metadata model to dict for t.GeneralValueType compatibility
+                metadata_dict: t.ConfigurationDict = dict(
                     metadata.model_dump().items(),
                 )
                 self._data["metadata"] = metadata_dict
@@ -469,7 +466,7 @@ class FlextModelsCqrs:
 
             def merge_config(
                 self,
-                config: t.Types.ConfigurationMapping,
+                config: t.ConfigurationMapping,
             ) -> Self:
                 """Merge additional config (fluent API)."""
                 self._data.update(config)

@@ -179,15 +179,15 @@ else:
     print(f"❌ Error: {result.error}")
 ```
 
-### 5. Configuration (FlextConfig)
+### 5. Configuration (FlextSettings)
 
 Manage application configuration with multiple sources:
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 
 # Define configuration schema
-class AppConfig(FlextConfig):
+class AppConfig(FlextSettings):
     """Application configuration."""
     app_name: str = "myapp"
     debug: bool = False

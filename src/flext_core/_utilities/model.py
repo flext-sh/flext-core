@@ -167,7 +167,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def normalize_to_metadata(
         value: t.GeneralValueType | FlextModelsBase.Metadata | None,
-    ) -> FlextModelsBase.Metadata:  # Returns m.Base.Metadata at runtime
+    ) -> FlextModelsBase.Metadata:  # Returns m.Metadata at runtime
         """Normalize any value to FlextModelsBase.Metadata.
 
         Business Rule: Always returns Metadata, never None.
@@ -176,7 +176,7 @@ class FlextUtilitiesModel:
         fallbacks by centralizing all metadata normalization logic.
 
         Args:
-            value: None, dict, Mapping, Metadata, or any GeneralValueType
+            value: None, dict, Mapping, Metadata, or any t.GeneralValueType
 
         Returns:
             FlextModelsBase.Metadata: Normalized metadata (empty attributes
@@ -203,13 +203,13 @@ class FlextUtilitiesModel:
             return value
 
         # Handle dict-like values using FlextRuntime guards
-        # TypeGuard ensures value is t.Types.ConfigurationMapping after is_dict_like check
+        # TypeGuard ensures value is t.ConfigurationMapping after is_dict_like check
         if FlextRuntime.is_dict_like(value) and isinstance(value, dict):
             # Normalize each value using FlextRuntime.normalize_to_metadata_value
             attributes: dict[str, t.MetadataAttributeValue] = {}
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
-            # attributes contains t.MetadataAttributeValue (subset of GeneralValueType)
+            # attributes contains t.MetadataAttributeValue (subset of t.GeneralValueType)
             # Type: attributes is dict[str, t.MetadataAttributeValue] which is compatible
             return FlextModelsBase.Metadata(attributes=attributes)
 
@@ -230,7 +230,7 @@ class FlextUtilitiesModel:
         exclude_defaults: bool = False,
         include: set[str] | None = None,
         exclude: set[str] | None = None,
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
@@ -271,7 +271,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def load[T_Model: BaseModel](
         model_cls: type[T_Model],
-        data: t.Types.ConfigurationMapping,
+        data: t.ConfigurationMapping,
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with FlextResult.
 

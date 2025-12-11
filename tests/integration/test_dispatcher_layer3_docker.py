@@ -219,7 +219,7 @@ class NetworkLatencyProcessor:
 
         assert self.process_count > 0, "Process count should be incremented"
 
-        # Cast to GeneralValueType for type compatibility
+        # Cast to t.GeneralValueType for type compatibility
         result_dict: dict[str, t.GeneralValueType] = {
             "processed": cast("t.GeneralValueType", data),
             "latency": cast("t.GeneralValueType", self.latency_seconds),
@@ -286,7 +286,7 @@ class FaultInjectionProcessor:
             )
 
         self.success_count += 1
-        # Cast to GeneralValueType for type compatibility
+        # Cast to t.GeneralValueType for type compatibility
         result_dict: dict[str, t.GeneralValueType] = {
             "data": cast("t.GeneralValueType", data),
             "attempt": cast("t.GeneralValueType", self.attempt_count),
@@ -569,7 +569,7 @@ class TestFlextDispatcherLayer3Docker:
             )
 
             data_list = self._create_test_data(data_count)
-            # Cast to list[GeneralValueType] for type compatibility
+            # Cast to list[t.GeneralValueType] for type compatibility
             data_list_cast = cast("list[t.GeneralValueType]", data_list)
             start_time = time.time()
             result = dispatcher.process_batch(
@@ -626,7 +626,7 @@ class TestFlextDispatcherLayer3Docker:
             )
 
             data_list = self._create_test_data(data_count)
-            # Cast to list[GeneralValueType] for type compatibility
+            # Cast to list[t.GeneralValueType] for type compatibility
             data_list_cast = cast("list[t.GeneralValueType]", data_list)
             start_time = time.time()
             result = dispatcher.process_parallel(
@@ -957,7 +957,7 @@ class TestFlextDispatcherLayer3Docker:
             )
 
             data_list = [{"value": i} for i in range(data_count)]
-            # Cast to list[GeneralValueType] for type compatibility
+            # Cast to list[t.GeneralValueType] for type compatibility
             data_list_cast = cast("list[t.GeneralValueType]", data_list)
             if operation_type == "batch":
                 _ = dispatcher.process_batch(

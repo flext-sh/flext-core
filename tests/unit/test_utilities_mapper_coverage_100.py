@@ -229,7 +229,7 @@ class TestuMapperConversions:
         """Test convert_to_json_value."""
         obj = SimpleObj("test", 1)
         res = u.mapper().convert_to_json_value(
-            cast("t.Types.ConfigurationDict", {"obj": obj}),
+            cast("t.ConfigurationDict", {"obj": obj}),
         )
         # Should convert obj to string
         assert isinstance(res, dict)
@@ -239,7 +239,7 @@ class TestuMapperConversions:
     def test_convert_dict_to_json(self) -> None:
         """Test convert_dict_to_json."""
         d = {"a": SimpleObj("test", 1)}
-        res = u.mapper().convert_dict_to_json(cast("t.Types.ConfigurationDict", d))
+        res = u.mapper().convert_dict_to_json(cast("t.ConfigurationDict", d))
         assert isinstance(res["a"], str)
 
     def test_convert_list_to_json(self) -> None:
@@ -267,7 +267,7 @@ class TestuMapperBuild:
         # Map (x*2): [6, 8]
         res = u.mapper().build(
             [1, 2, 3, 4],
-            ops=cast("t.Types.ConfigurationDict | None", ops),
+            ops=cast("t.ConfigurationDict | None", ops),
         )
         assert res == [6, 8]
 
@@ -286,7 +286,7 @@ class TestuMapperBuild:
         }
         res = u.mapper().build(
             input_data,
-            ops=cast("t.Types.ConfigurationDict | None", ops),
+            ops=cast("t.ConfigurationDict | None", ops),
         )
         assert res == [25, 35]
 
@@ -294,7 +294,7 @@ class TestuMapperBuild:
         """Test build normalize."""
         res = u.mapper().build(
             ["A", "b"],
-            ops=cast("t.Types.ConfigurationDict | None", {"normalize": "lower"}),
+            ops=cast("t.ConfigurationDict | None", {"normalize": "lower"}),
         )
         assert res == ["a", "b"]
 
@@ -302,7 +302,7 @@ class TestuMapperBuild:
         """Test build group."""
         res = u.mapper().build(
             ["cat", "dog", "ant"],
-            ops=cast("t.Types.ConfigurationDict | None", {"group": len}),
+            ops=cast("t.ConfigurationDict | None", {"group": len}),
         )
         assert res == {3: ["cat", "dog", "ant"]}
 
@@ -310,7 +310,7 @@ class TestuMapperBuild:
         """Test build chunk."""
         res = u.mapper().build(
             [1, 2, 3, 4],
-            ops=cast("t.Types.ConfigurationDict | None", {"chunk": 2}),
+            ops=cast("t.ConfigurationDict | None", {"chunk": 2}),
         )
         assert res == [[1, 2], [3, 4]]
 
@@ -335,8 +335,8 @@ class TestuMapperBuild:
             "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
         }
         res = u.mapper().construct(
-            cast("t.Types.ConfigurationDict", spec),
-            cast("t.Types.ConfigurationDict", source),
+            cast("t.ConfigurationDict", spec),
+            cast("t.ConfigurationDict", source),
         )
         assert res == {"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"}
 
@@ -360,7 +360,7 @@ class TestuMapperAdvanced:
         # Convert fails -> returns default (which is convert_type() -> int() -> 0)
         res = u.mapper().build(
             "invalid",
-            ops=cast("t.Types.ConfigurationDict | None", {"convert": int}),
+            ops=cast("t.ConfigurationDict | None", {"convert": int}),
         )
         assert res == 0
 
@@ -368,7 +368,7 @@ class TestuMapperAdvanced:
         res = u.mapper().build(
             "invalid",
             ops=cast(
-                "t.Types.ConfigurationDict | None",
+                "t.ConfigurationDict | None",
                 {"convert": int, "convert_default": 10},
             ),
         )
@@ -385,7 +385,7 @@ class TestuMapperAdvanced:
                 "strip_empty": True,
             },
         }
-        res = u.mapper().build(data, ops=cast("t.Types.ConfigurationDict | None", ops))
+        res = u.mapper().build(data, ops=cast("t.ConfigurationDict | None", ops))
         # c stripped (empty), b stripped (None). 'a' preserved (cache normalization doesn't lowercase values)
         assert res == {"a": "UPPER"}
 
@@ -394,14 +394,14 @@ class TestuMapperAdvanced:
         data = [{"a": 2}, {"a": 1}]
         res = u.mapper().build(
             data,
-            ops=cast("t.Types.ConfigurationDict | None", {"sort": "a"}),
+            ops=cast("t.ConfigurationDict | None", {"sort": "a"}),
         )
         assert cast("list[dict[str, int]]", res)[0]["a"] == 1
 
         res = u.mapper().build(
             data,
             ops=cast(
-                "t.Types.ConfigurationDict | None",
+                "t.ConfigurationDict | None",
                 {"sort": operator.itemgetter("a")},
             ),
         )

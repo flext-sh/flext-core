@@ -75,7 +75,7 @@ class TestContext100Coverage:
         context1.set("key1", "value1").value
 
         merge_data: dict[str, object] = {"key2": "value2", "key3": "value3"}
-        # Convert dict[str, object] to dict[str, GeneralValueType]
+        # Convert dict[str, object] to dict[str, t.GeneralValueType]
         converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -189,7 +189,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
 
         snapshot = context._export_snapshot()
-        assert isinstance(snapshot, m.Context.ContextExport)
+        assert isinstance(snapshot, m.ContextExport)
         assert "key1" in snapshot.data
 
     def test_import_data_loads_dict(self) -> None:
@@ -197,7 +197,7 @@ class TestContext100Coverage:
         context = FlextContext()
 
         import_data: dict[str, object] = {"key1": "value1", "key2": "value2"}
-        # Convert dict[str, object] to dict[str, GeneralValueType]
+        # Convert dict[str, object] to dict[str, t.GeneralValueType]
         converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -326,7 +326,7 @@ class TestContext100Coverage:
         context._destroy()  # Deactivates context
 
         snapshot = context._export_snapshot()
-        assert isinstance(snapshot, m.Context.ContextExport)
+        assert isinstance(snapshot, m.ContextExport)
 
     def test_import_data_when_not_active(self) -> None:
         """Test import_data when context not active."""
@@ -458,7 +458,7 @@ class TestContext100Coverage:
         context.get("key1")
 
         stats = context._get_statistics()
-        assert isinstance(stats, m.Context.ContextStatistics)
+        assert isinstance(stats, m.ContextStatistics)
 
     def test_statistics_access(self) -> None:
         """Test statistics access via get_statistics."""
@@ -466,7 +466,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
 
         stats = context._get_statistics()
-        assert isinstance(stats, m.Context.ContextStatistics)
+        assert isinstance(stats, m.ContextStatistics)
         assert stats.sets >= 1  # Fixed: Field is 'sets', not 'set_count'
 
     def test_to_json_returns_string(self) -> None:
@@ -488,12 +488,12 @@ class TestContext100Coverage:
         exported = context1.export()
         context2 = FlextContext()
         # Pass global scope data to _import_data
-        # Type narrowing: exported is dict[str, GeneralValueType] | ContextExport
+        # Type narrowing: exported is dict[str, t.GeneralValueType] | ContextExport
         # When as_dict=True (default), it returns dict
         if isinstance(exported, dict):
             global_data = exported.get("global")
             if isinstance(global_data, dict):
-                # Convert dict[str, object] to dict[str, GeneralValueType]
+                # Convert dict[str, object] to dict[str, t.GeneralValueType]
                 converted_global: dict[str, t.GeneralValueType] = {
                     k: v
                     if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -575,12 +575,12 @@ class TestContext100Coverage:
 
         # Import global scope data into new context
         context2 = FlextContext()
-        # Type narrowing: exported is dict[str, GeneralValueType] | ContextExport
+        # Type narrowing: exported is dict[str, t.GeneralValueType] | ContextExport
         # When as_dict=True (default), it returns dict
         if isinstance(exported, dict):
             global_data = exported.get("global")
             if isinstance(global_data, dict):
-                # Convert dict[str, object] to dict[str, GeneralValueType]
+                # Convert dict[str, object] to dict[str, t.GeneralValueType]
                 converted_global: dict[str, t.GeneralValueType] = {
                     k: v
                     if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -603,7 +603,7 @@ class TestContext100Coverage:
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            m.Context.ContextData(metadata=invalid_metadata)
+            m.ContextData(metadata=invalid_metadata)
 
     def test_context_data_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextData.validate_dict_serializable with non-string key."""
@@ -622,7 +622,7 @@ class TestContext100Coverage:
             Exception,  # Can be ValidationError from Pydantic or TypeError from custom validation
             match=r".*(keys must be strings|Dictionary keys must be strings|Input should be a valid string).*",
         ):
-            m.Context.ContextData(data=bad_dict)
+            m.ContextData(data=bad_dict)
 
     def test_context_data_validate_dict_serializable_non_serializable_value(
         self,
@@ -631,7 +631,7 @@ class TestContext100Coverage:
         # Test with dict containing non-serializable value (e.g., set)
         bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set is not JSON-serializable
         with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
-            m.Context.ContextData(data=bad_dict)
+            m.ContextData(data=bad_dict)
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
@@ -641,7 +641,7 @@ class TestContext100Coverage:
 
         # Test with Pydantic model (should convert via model_dump)
         model: TestModel = TestModel()
-        export = m.Context.ContextExport(data=model)
+        export = m.ContextExport(data=model)
         assert isinstance(export.data, dict)
         assert "field" in export.data
 
@@ -653,7 +653,7 @@ class TestContext100Coverage:
             TypeError,
             match=r".*must be a dict or Pydantic model.*",
         ):
-            m.Context.ContextExport(data=invalid_data)
+            m.ContextExport(data=invalid_data)
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-string key."""
@@ -665,7 +665,7 @@ class TestContext100Coverage:
             Exception,  # Can be ValidationError from Pydantic or TypeError from custom validation
             match=r".*(keys must be strings|Dictionary keys must be strings|must be a dictionary|Input should be a valid string).*",
         ):
-            m.Context.ContextExport(data=bad_data)
+            m.ContextExport(data=bad_data)
 
     def test_context_export_validate_dict_serializable_non_serializable_value(
         self,
@@ -674,11 +674,11 @@ class TestContext100Coverage:
         # Test with dict containing non-serializable value (e.g., set)
         bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set is not JSON-serializable
         with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
-            m.Context.ContextExport(data=bad_dict)
+            m.ContextExport(data=bad_dict)
 
     def test_context_export_total_data_items(self) -> None:
         """Test ContextExport.total_data_items computed field."""
-        export = m.Context.ContextExport(
+        export = m.ContextExport(
             data={"key1": "value1", "key2": "value2"},
             metadata=m.Metadata(attributes={}),
             statistics={},
@@ -689,7 +689,7 @@ class TestContext100Coverage:
     def test_context_export_has_statistics(self) -> None:
         """Test ContextExport.has_statistics computed field."""
         # With statistics
-        export1 = m.Context.ContextExport(
+        export1 = m.ContextExport(
             data={},
             metadata=m.Metadata(attributes={}),
             statistics={"sets": 5},
@@ -698,7 +698,7 @@ class TestContext100Coverage:
         assert bool(export1.statistics) is True
 
         # Without statistics
-        export2 = m.Context.ContextExport(
+        export2 = m.ContextExport(
             data={},
             metadata=m.Metadata(attributes={}),
             statistics={},
@@ -714,14 +714,14 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        scope_data = m.Context.ContextScopeData(data=model)
+        scope_data = m.ContextScopeData(data=model)
         assert isinstance(scope_data.data, dict)
         assert "field" in scope_data.data
 
     def test_context_scope_data_validate_data_with_none(self) -> None:
         """Test ContextScopeData._validate_data with None."""
         # Create instance with empty dict (None validation tests not applicable here)
-        scope_data = m.Context.ContextScopeData(data={})
+        scope_data = m.ContextScopeData(data={})
         assert isinstance(scope_data.data, dict)
         assert scope_data.data == {}
 
@@ -733,14 +733,14 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        scope_data = m.Context.ContextScopeData(metadata=model)
+        scope_data = m.ContextScopeData(metadata=model)
         assert isinstance(scope_data.metadata, dict)
         assert "field" in scope_data.metadata
 
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
         """Test ContextScopeData._validate_metadata with None."""
         # Create instance with empty dict (None validation tests not applicable here)
-        scope_data = m.Context.ContextScopeData(metadata={})
+        scope_data = m.ContextScopeData(metadata={})
         assert isinstance(scope_data.metadata, dict)
         assert scope_data.metadata == {}
 
@@ -752,7 +752,7 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        stats = m.Context.ContextStatistics(operations=model)
+        stats = m.ContextStatistics(operations=model)
         assert isinstance(stats.operations, dict)
         assert "field" in stats.operations
 
@@ -760,7 +760,7 @@ class TestContext100Coverage:
         """Test ContextStatistics._validate_operations with None."""
         # Create instance with None - validator will convert to {}
         none_operations: object | None = None
-        stats = m.Context.ContextStatistics(operations=none_operations)
+        stats = m.ContextStatistics(operations=none_operations)
         assert isinstance(stats.operations, dict)
         assert stats.operations == {}
 
@@ -772,7 +772,7 @@ class TestContext100Coverage:
 
         model: TestModel = TestModel()
         # Create instance with BaseModel - validator will be called
-        metadata = m.Context.ContextMetadata(custom_fields=model)
+        metadata = m.ContextMetadata(custom_fields=model)
         assert isinstance(metadata.custom_fields, dict)
         assert "field" in metadata.custom_fields
 
@@ -780,6 +780,6 @@ class TestContext100Coverage:
         """Test ContextMetadata._validate_custom_fields with None."""
         # Create instance with None - validator will convert to {}
         none_custom_fields: object | None = None
-        metadata = m.Context.ContextMetadata(custom_fields=none_custom_fields)
+        metadata = m.ContextMetadata(custom_fields=none_custom_fields)
         assert isinstance(metadata.custom_fields, dict)
         assert metadata.custom_fields == {}

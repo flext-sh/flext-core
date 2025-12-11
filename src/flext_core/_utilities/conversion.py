@@ -93,7 +93,7 @@ class FlextUtilitiesConversion:
             return [value]
         if isinstance(value, (list, tuple, set, frozenset)):
             return [str(item) for item in value if item is not None]
-        # Cast to GeneralValueType to help type checker
+        # Cast to t.GeneralValueType to help type checker
         value_typed: t.GeneralValueType = value
         if FlextRuntime.is_list_like(value_typed) and isinstance(value_typed, Sequence):
             return [str(item) for item in value_typed if item is not None]

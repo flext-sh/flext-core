@@ -184,12 +184,12 @@ class FlextUtilitiesArgs:
     class _CallableWithHints(Protocol):
         """Protocol for callables that support type hints introspection."""
 
-        __annotations__: t.Types.ConfigurationDict
+        __annotations__: t.ConfigurationDict
 
     @staticmethod
     def get_enum_params(
         func: _CallableWithHints,
-    ) -> t.Types.StringStrEnumTypeDict:
+    ) -> t.StringStrEnumTypeDict:
         """Extract parameters that are StrEnum from function signature.
 
         Example:
@@ -204,7 +204,7 @@ class FlextUtilitiesArgs:
         except Exception:
             return {}
 
-        enum_params: t.Types.StringStrEnumTypeDict = {}
+        enum_params: t.StringStrEnumTypeDict = {}
 
         for name, hint in hints.items():
             if name == "return":

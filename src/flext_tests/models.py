@@ -477,7 +477,7 @@ class FlextTestsModels(FlextModelsBase):
             class CreateParams(FlextModelsBase.Value):
                 """Parameters for file creation operations with Pydantic 2 advanced validation."""
 
-                content: t.Tests.Files.FileContent
+                content: t.FileContent
                 """File content to create."""
                 name: str = Field(
                     default=c.Tests.Files.DEFAULT_FILENAME,

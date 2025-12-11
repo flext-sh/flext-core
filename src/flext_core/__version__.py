@@ -64,7 +64,7 @@ class FlextVersion:
         _metadata = metadata("flext-core")
     except PackageNotFoundError:
         # Create PackageMetadata-compatible dict and cast to PackageMetadata
-        _metadata_dict: t.Types.StringDict = {
+        _metadata_dict: t.StringDict = {
             "Version": "0.0.0-dev",
             "Name": "flext-core",
             "Summary": "FLEXT core (metadata fallback)",
@@ -151,7 +151,7 @@ class FlextVersion:
         return cls.__version_info__ >= (major, minor, patch)
 
     @classmethod
-    def get_package_info(cls) -> t.Types.StringDict:
+    def get_package_info(cls) -> t.StringDict:
         """Get comprehensive package information dictionary.
 
         Returns all available package metadata in a structured dictionary

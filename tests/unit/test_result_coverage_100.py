@@ -87,7 +87,7 @@ class TestrCoverage:
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
-        error_data: t.Types.EventDataMapping = {"status": "failed", "count": 5}
+        error_data: t.EventDataMapping = {"status": "failed", "count": 5}
         result = r[str].fail("Error", error_data=error_data)
         u.Tests.Result.assert_result_failure(result)
         assert result.error_data == error_data
@@ -143,7 +143,7 @@ class TestrCoverage:
     def test_unwrap_failure_raises(self) -> None:
         """Test that unwrap raises on failure."""
         result = r[str].fail("error")
-        with pytest.raises(RuntimeError, match="Cannot unwrap failed result"):
+        with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             result.value
 
     def test_unwrap_or_success(self) -> None:
@@ -363,7 +363,7 @@ class TestrCoverage:
         result = r[str].ok("test")
         maybe = result.to_maybe()
         assert isinstance(maybe, Some)
-        assert maybe.value == "test"
+        assert maybe.unwrap() == "test"
 
     def test_to_maybe_failure(self) -> None:
         """Test conversion to Maybe on failure."""
@@ -613,15 +613,15 @@ class TestrCoverage:
 
     def test_with_resource_success(self) -> None:
         """Test with_resource executes operation."""
-        resources_created: list[t.Types.ConfigurationMapping] = []
+        resources_created: list[t.ConfigurationMapping] = []
 
-        def factory() -> t.Types.ConfigurationMapping:
-            resource: t.Types.ConfigurationMapping = {"id": 1}
+        def factory() -> t.ConfigurationMapping:
+            resource: t.ConfigurationMapping = {"id": 1}
             resources_created.append(resource)
             return resource
 
         def operation(
-            resource: t.Types.ConfigurationMapping,
+            resource: t.ConfigurationMapping,
         ) -> r[str]:
             if isinstance(resource, dict):
                 return r[str].ok("success")
@@ -638,11 +638,11 @@ class TestrCoverage:
         """Test with_resource executes cleanup even on success."""
         cleanups_called = []
 
-        def factory() -> t.Types.ConfigurationMapping:
+        def factory() -> t.ConfigurationMapping:
             return {"id": 1}
 
         def operation(
-            resource: t.Types.ConfigurationMapping,
+            resource: t.ConfigurationMapping,
         ) -> r[str]:
             return r[str].ok("success")
 
@@ -721,7 +721,7 @@ class TestrCoverage:
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
-        error_data: t.Types.EventDataMapping = {"details": "something"}
+        error_data: t.EventDataMapping = {"details": "something"}
         result = r[str].fail(
             "Error",
             error_code="CODE_123",

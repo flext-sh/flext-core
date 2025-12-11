@@ -177,7 +177,7 @@ class TestuValidation:
     def test_normalize_component_pydantic_model(self) -> None:
         """Test normalize_component with Pydantic model."""
         model = PydanticModelForTest(name="test", value=42)
-        # Convert BaseModel to GeneralValueType via model_dump()
+        # Convert BaseModel to t.GeneralValueType via model_dump()
         model_dict: t.GeneralValueType = model.model_dump()
         result = u.Validation.normalize_component(model_dict)
         # normalize_component converts Pydantic models to dict via model_dump
@@ -188,7 +188,7 @@ class TestuValidation:
     def test_normalize_component_dataclass(self) -> None:
         """Test normalize_component with dataclass."""
         data = DataclassForTest(name="test", value=42)
-        # Convert dataclass to dict (GeneralValueType) for type compatibility
+        # Convert dataclass to dict (t.GeneralValueType) for type compatibility
         data_dict: t.GeneralValueType = asdict(data)
         result = u.Validation.normalize_component(data_dict)
         # normalize_component converts dataclasses to dict
@@ -253,7 +253,7 @@ class TestuValidation:
     def test_normalize_component_pydantic_model_direct(self) -> None:
         """Test normalize_component with Pydantic model instance directly."""
         model = PydanticModelForTest(name="test", value=42)
-        # Convert BaseModel to GeneralValueType via model_dump() before passing
+        # Convert BaseModel to t.GeneralValueType via model_dump() before passing
         model_dict: t.GeneralValueType = model.model_dump()
         result = u.Validation.normalize_component(model_dict)
         assert isinstance(result, dict)
@@ -356,7 +356,7 @@ class TestuValidation:
     def test_generate_cache_key_pydantic_model(self) -> None:
         """Test generate_cache_key with Pydantic model."""
         model = PydanticModelForTest(name="test", value=42)
-        # Convert BaseModel to GeneralValueType via model_dump()
+        # Convert BaseModel to t.GeneralValueType via model_dump()
         model_dict: t.GeneralValueType = model.model_dump()
         # Business Rule: generate_cache_key accepts model dict and type for cache key generation
         # The type parameter determines the type name in the cache key
@@ -376,7 +376,7 @@ class TestuValidation:
     def test_generate_cache_key_dataclass(self) -> None:
         """Test generate_cache_key with dataclass."""
         data = DataclassForTest(name="test", value=42)
-        # Convert dataclass to GeneralValueType via asdict()
+        # Convert dataclass to t.GeneralValueType via asdict()
         data_dict: t.GeneralValueType = asdict(data)
         # Type narrowing: generate_cache_key accepts type hints, cast for mypy
         # DataclassForTest is compatible at runtime but mypy expects specific types
@@ -652,7 +652,7 @@ class TestuValidation:
             """Test function."""
             return "test"
 
-        # validate_callable accepts callables at runtime but expects GeneralValueType
+        # validate_callable accepts callables at runtime but expects t.GeneralValueType
 
         result = u.Validation.validate_callable(cast("t.GeneralValueType", test_func))
         u.Tests.Result.assert_result_success(result)
