@@ -30,7 +30,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def extract_page_params(
-        query_params: t.Types.StringDict,
+        query_params: t.StringDict,
         *,
         default_page: int = 1,
         default_page_size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
@@ -78,7 +78,7 @@ class FlextUtilitiesPagination:
         page: int,
         page_size: int | None,
         max_page_size: int,
-    ) -> r[t.Types.StringIntDict]:
+    ) -> r[t.StringIntDict]:
         """Validate pagination parameters.
 
         Args:
@@ -109,7 +109,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> r[t.Types.ConfigurationDict]:
+    ) -> r[t.ConfigurationDict]:
         """Prepare pagination data structure.
 
         Args:
@@ -131,17 +131,17 @@ class FlextUtilitiesPagination:
 
         # Ensure page is within bounds
         if page > total_pages > 0:
-            return r[t.Types.ConfigurationDict].fail(
+            return r[t.ConfigurationDict].fail(
                 f"Page {page} exceeds total pages {total_pages}",
             )
 
         has_next = page < total_pages
         has_prev = page > 1
 
-        # Convert Sequence[T] to GeneralValueType-compatible list
+        # Convert Sequence[T] to t.GeneralValueType-compatible list
         data_list = list(data)
 
-        return r[t.Types.ConfigurationDict].ok({
+        return r[t.ConfigurationDict].ok({
             "data": data_list,
             "pagination": {
                 "page": page,
@@ -155,9 +155,9 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: t.Types.ConfigurationDict,
+        pagination_data: t.ConfigurationDict,
         message: str | None = None,
-    ) -> r[t.Types.ConfigurationDict]:
+    ) -> r[t.ConfigurationDict]:
         """Build paginated response dictionary.
 
         Args:
@@ -172,17 +172,17 @@ class FlextUtilitiesPagination:
         pagination = pagination_data.get("pagination")
 
         if data is None or pagination is None:
-            return r[t.Types.ConfigurationDict].fail(
+            return r[t.ConfigurationDict].fail(
                 "Invalid pagination data structure",
             )
 
         # Type narrowing: data and pagination from dict.get() are object
-        # but we know they are valid GeneralValueType from prepare_pagination_data
+        # but we know they are valid t.GeneralValueType from prepare_pagination_data
         # Convert to proper types for response dict
         data_typed: t.GeneralValueType
         pagination_typed: t.GeneralValueType
 
-        # Validate types match GeneralValueType
+        # Validate types match t.GeneralValueType
         if isinstance(data, (str, int, float, bool, type(None), Sequence, Mapping)):
             data_typed = data
         else:
@@ -196,7 +196,7 @@ class FlextUtilitiesPagination:
         else:
             pagination_typed = str(pagination)
 
-        response: t.Types.ConfigurationDict = {
+        response: t.ConfigurationDict = {
             "data": data_typed,
             "pagination": pagination_typed,
         }
@@ -204,12 +204,12 @@ class FlextUtilitiesPagination:
         if message is not None:
             response["message"] = message
 
-        return r[t.Types.ConfigurationDict].ok(response)
+        return r[t.ConfigurationDict].ok(response)
 
     @staticmethod
     def extract_pagination_config(
         config: t.GeneralValueType | None,
-    ) -> t.Types.StringIntDict:
+    ) -> t.StringIntDict:
         """Extract pagination configuration values - no fallbacks.
 
         Args:

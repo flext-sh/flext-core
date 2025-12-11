@@ -30,7 +30,7 @@ python examples/01_basic_result.py
 **Dependency Injection & Configuration**:
 
 - **02_dependency_injection.py** — `FlextContainer` usage, service registration, and logger resolution.
-- **04_config_basics.py** — `FlextConfig` settings loading, validation, and environment-specific configurations.
+- **04_config_basics.py** — `FlextSettings` settings loading, validation, and environment-specific configurations.
 
 **Domain Modeling**:
 

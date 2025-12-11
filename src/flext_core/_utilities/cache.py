@@ -64,7 +64,7 @@ class FlextUtilitiesCache:
        - Type-aware sorting for cross-type comparisons
 
     2. **Type Safety**:
-       - Handles all GeneralValueType variants
+       - Handles all t.GeneralValueType variants
        - BaseModel special handling with model_dump()
        - Graceful fallback to string representation
 
@@ -122,10 +122,10 @@ class FlextUtilitiesCache:
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component.model_dump().items()
             }
-        # component is already GeneralValueType (not BaseModel)
+        # component is already t.GeneralValueType (not BaseModel)
         # Check if dict-like
         if FlextRuntime.is_dict_like(component) and isinstance(component, Mapping):
-            # Type narrowing: component is now Mapping[str, GeneralValueType]
+            # Type narrowing: component is now Mapping[str, t.GeneralValueType]
             # Convert to dict for consistent iteration
             dict_component: dict[str, t.GeneralValueType] = dict(component.items())
             # Type narrowing: dict_component is dict[str, t.GeneralValueType]
@@ -210,18 +210,18 @@ class FlextUtilitiesCache:
         Type Safety:
         - Uses FlextRuntime.is_dict_like for Mapping detection
         - Returns input unchanged if not dict-like
-        - Preserves GeneralValueType contract
+        - Preserves t.GeneralValueType contract
 
         Args:
-            data: GeneralValueType value
+            data: t.GeneralValueType value
 
         Returns:
             Sorted dict if input is dict-like, unchanged otherwise
 
         """
         if FlextRuntime.is_dict_like(data) and isinstance(data, Mapping):
-            # Type narrowing: data is now Mapping[str, GeneralValueType]
-            result: t.Types.ConfigurationDict = {}
+            # Type narrowing: data is now Mapping[str, t.GeneralValueType]
+            result: t.ConfigurationDict = {}
             for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data[k]
                 # Handle None values - convert to empty dict for consistency
@@ -280,7 +280,7 @@ class FlextUtilitiesCache:
                 if hasattr(obj, attr_name):
                     cache_attr = getattr(obj, attr_name, None)
                     if cache_attr is not None:
-                        # Clear t.Types.ConfigurationDict-like caches
+                        # Clear t.ConfigurationDict-like caches
                         if hasattr(cache_attr, "clear") and callable(
                             cache_attr.clear,
                         ):
@@ -305,7 +305,7 @@ class FlextUtilitiesCache:
         Useful for deciding whether to attempt cache clearing.
 
         Args:
-            obj: GeneralValueType object
+            obj: t.GeneralValueType object
 
         Returns:
             True if any known cache attribute exists, False otherwise

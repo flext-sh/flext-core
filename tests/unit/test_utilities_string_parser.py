@@ -411,7 +411,7 @@ class StringParserTestFactory:
                 description="function",
             ),
             ObjectKeyCase(
-                {},  # Empty dict - valid GeneralValueType, tests dict instance behavior
+                {},  # Empty dict - valid t.GeneralValueType, tests dict instance behavior
                 expected_exact="dict",
                 description="instance",
             ),
@@ -470,7 +470,7 @@ class TestuStringParser:
                 """Execute parse_delimited based on case configuration."""
                 if case.use_legacy:
                     # Legacy params not supported, use options instead
-                    options = core_m.Collections.ParseOptions(
+                    options = core_m.CollectionsParseOptions(
                         strip=case.strip or True,
                         remove_empty=case.remove_empty or True,
                         validator=case.validator,
@@ -506,7 +506,7 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
-            # Type narrowing: assert_failure expects r[GeneralValueType], r[list[str]] is compatible
+            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.FAILED_PARSE,
@@ -549,7 +549,7 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
-            # Type narrowing: assert_failure expects r[GeneralValueType], r[list[str]] is compatible
+            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[list[str]] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.FAILED_SPLIT,
@@ -591,7 +591,7 @@ class TestuStringParser:
             # Type checker: cast to str to test runtime error handling
             bad_str = cast("str", bad_obj)
             result = parser.normalize_whitespace(bad_str)
-            # Type narrowing: assert_failure expects r[GeneralValueType], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.FAILED_NORMALIZE,
@@ -627,7 +627,7 @@ class TestuStringParser:
                 invalid_pattern,
             ]  # Runtime allows this
             result = parser.apply_regex_pipeline("test", patterns)
-            # Type narrowing: assert_failure expects r[GeneralValueType], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.FAILED_PIPELINE,
@@ -640,7 +640,7 @@ class TestuStringParser:
                 (r"[invalid", "replacement"),
             ]
             result = parser.apply_regex_pipeline("test", patterns)
-            # Type narrowing: assert_failure expects r[GeneralValueType], r[str] is compatible
+            # Type narrowing: assert_failure expects r[t.GeneralValueType], r[str] is compatible
             TestsFlextUtilities.CoreAssertions.assert_failure(
                 cast("r[t.GeneralValueType]", result),
                 TestsFlextConstants.TestErrors.INVALID_REGEX,

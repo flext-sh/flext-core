@@ -255,7 +255,7 @@ class TestCommands:
     def test_command_creation(self) -> None:
         """Test creating a command."""
 
-        class CreateUserCommand(m.Cqrs.Command):
+        class CreateUserCommand(m.Command):
             """Command to create a user."""
 
             email: str
@@ -268,7 +268,7 @@ class TestCommands:
     def test_command_mutation_behavior(self) -> None:
         """Test command mutation behavior with validate_assignment."""
 
-        class UpdateProfileCommand(m.Cqrs.Command):
+        class UpdateProfileCommand(m.Command):
             """Command to update profile."""
 
             name: str
@@ -283,7 +283,7 @@ class TestCommands:
     def test_command_validation(self) -> None:
         """Test command validation."""
 
-        class DepositCommand(m.Cqrs.Command):
+        class DepositCommand(m.Command):
             """Command with validation."""
 
             account_id: str
@@ -304,18 +304,18 @@ class TestCommands:
 
 
 # Define Query classes at module level using direct import
-class GetUserQuery(m.Cqrs.Query):
+class GetUserQuery(m.Query):
     """Query to get a user."""
 
 
-class ListAccountsQuery(m.Cqrs.Query):
+class ListAccountsQuery(m.Query):
     """Query to list accounts."""
 
     page: int
     limit: int
 
 
-class SearchProductsQuery(m.Cqrs.Query):
+class SearchProductsQuery(m.Query):
     """Query to search products."""
 
     keyword: str
@@ -523,7 +523,7 @@ class TestModelSerialization:
     def test_command_serialization(self) -> None:
         """Test command serialization."""
 
-        class SendEmailCommand(m.Cqrs.Command):
+        class SendEmailCommand(m.Command):
             """Command to send email."""
 
             recipient: str
@@ -584,7 +584,7 @@ class TestModelIntegration:
     def test_command_factory_pattern(self) -> None:
         """Test command creation as factories."""
 
-        class RegisterUserCommand(m.Cqrs.Command):
+        class RegisterUserCommand(m.Command):
             """User registration command."""
 
             email: str

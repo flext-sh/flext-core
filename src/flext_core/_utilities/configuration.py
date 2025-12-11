@@ -14,7 +14,7 @@ Business Rules & Architecture:
    distinguishes "not found" from "value is None".
 
 2. **Singleton Pattern Integration** (get_singleton/set_singleton):
-   - Expects classes with `get_global_instance()` method (FlextConfig pattern)
+   - Expects classes with `get_global_instance()` method (FlextSettings pattern)
    - Returns FlextResult for set operations (railway-oriented error handling)
    - Raises specific exceptions for get operations (fail-fast behavior)
 
@@ -46,12 +46,12 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.config import FlextConfig
 from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
+from flext_core.settings import FlextSettings
 from flext_core.typings import T_Model, t
 
 
@@ -126,7 +126,7 @@ class FlextUtilitiesConfiguration:
             str | None: Path to .env file or None if not found
 
         Example:
-            # In namespace config classes (e.g., FlextLdapConfig)
+            # In namespace config classes (e.g., FlextLdapSettings)
             model_config = SettingsConfigDict(
                 env_prefix="FLEXT_LDAP_",
                 env_file=u.Configuration.resolve_env_file(),
@@ -134,7 +134,7 @@ class FlextUtilitiesConfiguration:
             )
 
         """
-        return FlextConfig.resolve_env_file()
+        return FlextSettings.resolve_env_file()
 
     # =========================================================================
     # Sentinel Pattern for Parameter Access
@@ -171,7 +171,7 @@ class FlextUtilitiesConfiguration:
 
         Type Safety:
         - Uses hasattr() before getattr() to avoid AttributeError
-        - Cast to GeneralValueType preserves union type safety
+        - Cast to t.GeneralValueType preserves union type safety
         - Returns sentinel tuple to distinguish "not found" from "None value"
 
         Args:
@@ -302,10 +302,10 @@ class FlextUtilitiesConfiguration:
         try:
             model_data = model_dump_fn()
             if isinstance(model_data, dict):
-                # model_dump() returns dict[str, GeneralValueType] which is ConfigurationDict
+                # model_dump() returns dict[str, t.GeneralValueType] which is ConfigurationDict
                 # Use cast to help pyright infer the correct type
-                model_data_dict: t.Types.ConfigurationDict = cast(
-                    "t.Types.ConfigurationDict",
+                model_data_dict: t.ConfigurationDict = cast(
+                    "t.ConfigurationDict",
                     model_data,
                 )
                 if parameter in model_data_dict:
@@ -373,10 +373,10 @@ class FlextUtilitiesConfiguration:
                 parameter,
             )
             if found:
-                # Type narrowing: when found is True, value is GeneralValueType (not None)
+                # Type narrowing: when found is True, value is t.GeneralValueType (not None)
                 return value
 
-        # Strategy 2: Dict-like GeneralValueType
+        # Strategy 2: Dict-like t.GeneralValueType
         if isinstance(obj, (str, int, float, bool, type(None), Sequence, Mapping)):
             obj_general = obj
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
@@ -384,7 +384,7 @@ class FlextUtilitiesConfiguration:
                 parameter,
             )
             if found:
-                # Type narrowing: when found is True, value is GeneralValueType (not None)
+                # Type narrowing: when found is True, value is t.GeneralValueType (not None)
                 return value
 
         # Strategy 3: Object with model_dump method (duck typing)
@@ -393,13 +393,13 @@ class FlextUtilitiesConfiguration:
             parameter,
         )
         if found:
-            # Type narrowing: when found is True, value is GeneralValueType (not None)
+            # Type narrowing: when found is True, value is t.GeneralValueType (not None)
             return value
 
         # Strategy 4: Direct attribute access (final fallback)
         found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
         if found:
-            # Type narrowing: when found is True, attr_val is GeneralValueType (not None)
+            # Type narrowing: when found is True, attr_val is t.GeneralValueType (not None)
             return attr_val
 
         msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
@@ -482,7 +482,7 @@ class FlextUtilitiesConfiguration:
 
         - Consistent configuration across all services
         - Lazy initialization (instance created on first access)
-        - Thread-safe singleton access (handled by FlextConfig implementation)
+        - Thread-safe singleton access (handled by FlextSettings implementation)
 
         Expected Interface:
         - singleton_class.get_global_instance() → Returns singleton instance
@@ -499,7 +499,7 @@ class FlextUtilitiesConfiguration:
         - Explicit local variable for type checker compatibility
 
         Args:
-            singleton_class: The singleton class (e.g., FlextConfig)
+            singleton_class: The singleton class (e.g., FlextSettings)
             parameter: The parameter name to retrieve
 
         Returns:
@@ -563,12 +563,12 @@ class FlextUtilitiesConfiguration:
         5. set_parameter returns bool, converted to FlextResult
 
         Thread Safety:
-        - Singleton access is thread-safe (FlextConfig guarantees this)
+        - Singleton access is thread-safe (FlextSettings guarantees this)
         - Individual parameter mutation is NOT atomic
         - External synchronization needed for concurrent writes
 
         Args:
-            singleton_class: The singleton class (e.g., FlextConfig)
+            singleton_class: The singleton class (e.g., FlextSettings)
             parameter: The parameter name to set
             value: The new value to set (will be validated by Pydantic)
 
@@ -672,7 +672,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> t.Types.ConfigurationDict:
+    ) -> t.ConfigurationDict:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration
@@ -816,7 +816,7 @@ class FlextUtilitiesConfiguration:
             # Step 3: Get valid field names from model class
             # Access model_fields as class attribute for type safety
             model_fields_attr = getattr(model_class, "model_fields", {})
-            model_fields: t.Types.ConfigurationDict = (
+            model_fields: t.ConfigurationDict = (
                 model_fields_attr
                 if FlextUtilitiesGuards.is_type(model_fields_attr, dict)
                 else {}
@@ -824,7 +824,7 @@ class FlextUtilitiesConfiguration:
             valid_field_names = set(model_fields.keys())
 
             # Step 4: Filter kwargs to only valid field names
-            valid_kwargs: t.Types.ConfigurationDict = {}
+            valid_kwargs: t.ConfigurationDict = {}
             invalid_kwargs: list[str] = []
 
             for key, value in kwargs.items():

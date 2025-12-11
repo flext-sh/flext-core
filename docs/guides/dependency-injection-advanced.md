@@ -18,7 +18,7 @@ FlextContainer implements the Service Locator pattern (also called the registry 
 │ Services:           │
 │ - logger            │ → FlextLogger instance
 │ - database          │ → DatabaseService instance
-│ - config            │ → FlextConfig instance
+│ - config            │ → FlextSettings instance
 │ - api_client        │ → APIClient factory
 └─────────────────────┘
 ```
@@ -176,7 +176,7 @@ if result.is_success:
 ### Pattern 1: Application Initialization
 
 ```python
-from flext_core import FlextContainer, FlextResult, FlextConfig, FlextLogger
+from flext_core import FlextContainer, FlextResult, FlextSettings, FlextLogger
 
 def initialize_application() -> FlextResult[None]:
     """Initialize all application services."""
@@ -185,7 +185,7 @@ def initialize_application() -> FlextResult[None]:
     # Load configuration
     config_result = (
         FlextResult.ok(None)
-        .flat_map(lambda _: FlextConfig.load())
+        .flat_map(lambda _: FlextSettings.load())
     )
 
     if config_result.is_failure:
@@ -317,14 +317,14 @@ assert result1.unwrap() is result2.unwrap()
 ### Pattern 4: Conditional Service Registration
 
 ```python
-from flext_core import FlextContainer, FlextResult, FlextConfig
+from flext_core import FlextContainer, FlextResult, FlextSettings
 
 def setup_services_based_on_config() -> FlextResult[None]:
     """Register services conditionally based on configuration."""
     container = FlextContainer.get_global()
 
     # Load config
-    config_result = FlextConfig.load()
+    config_result = FlextSettings.load()
     if config_result.is_failure:
         return config_result
 
@@ -367,7 +367,7 @@ class DatabaseConnection:
 def setup_database_lifecycle() -> FlextResult[None]:
     """Setup database with lifecycle management."""
     container = FlextContainer.get_global()
-    config_result = FlextConfig.load()
+    config_result = FlextSettings.load()
 
     if config_result.is_failure:
         return config_result
@@ -612,7 +612,7 @@ service = container.get("service").unwrap()  # May crash
 def initialize():
     container = FlextContainer.get_global()
     container.register("logger", FlextLogger())
-    container.register("config", FlextConfig.load().unwrap())
+    container.register("config", FlextSettings.load().unwrap())
 
 initialize()
 
@@ -638,15 +638,15 @@ result: FlextResult[object] = container.get("logger")
 
 ## FlextDispatcher Reliability Settings
 
-FlextDispatcher provides configurable reliability patterns including circuit breaker, rate limiting, retry policies, and timeout enforcement. These settings are configured via FlextConfig and apply to all dispatcher operations.
+FlextDispatcher provides configurable reliability patterns including circuit breaker, rate limiting, retry policies, and timeout enforcement. These settings are configured via FlextSettings and apply to all dispatcher operations.
 
-### Configuration via FlextConfig
+### Configuration via FlextSettings
 
 ```python
-from flext_core import FlextConfig, FlextDispatcher
+from flext_core import FlextSettings, FlextDispatcher
 
 # Configure dispatcher reliability settings
-class AppConfig(FlextConfig):
+class AppConfig(FlextSettings):
     """Application configuration with dispatcher reliability settings."""
 
     # Circuit Breaker Settings
@@ -669,7 +669,7 @@ class AppConfig(FlextConfig):
 
 # Initialize dispatcher with configuration
 config = AppConfig()
-dispatcher = FlextDispatcher()  # Uses config via FlextConfig singleton
+dispatcher = FlextDispatcher()  # Uses config via FlextSettings singleton
 ```
 
 ### Circuit Breaker Configuration
@@ -677,9 +677,9 @@ dispatcher = FlextDispatcher()  # Uses config via FlextConfig singleton
 Circuit breaker prevents cascading failures by temporarily blocking requests when failures exceed threshold:
 
 ```python
-from flext_core import FlextConfig, FlextDispatcher, r
+from flext_core import FlextSettings, FlextDispatcher, r
 
-class ConfigWithCircuitBreaker(FlextConfig):
+class ConfigWithCircuitBreaker(FlextSettings):
     """Configuration with circuit breaker protection."""
     circuit_breaker_threshold: int = 5  # Open circuit after 5 failures
     circuit_breaker_recovery_timeout: float = 60.0  # Wait 60s before retry
@@ -699,9 +699,9 @@ if result.is_failure and "circuit breaker" in result.error.lower():
 Rate limiting prevents overload by restricting requests per time window:
 
 ```python
-from flext_core import FlextConfig, FlextDispatcher
+from flext_core import FlextSettings, FlextDispatcher
 
-class ConfigWithRateLimiting(FlextConfig):
+class ConfigWithRateLimiting(FlextSettings):
     """Configuration with rate limiting."""
     rate_limit_max_requests: int = 100  # Max 100 requests
     rate_limit_window_seconds: float = 60.0  # Per 60 seconds
@@ -722,9 +722,9 @@ for i in range(150):  # More than rate limit
 Retry policy automatically retries failed operations with configurable backoff:
 
 ```python
-from flext_core import FlextConfig, FlextDispatcher
+from flext_core import FlextSettings, FlextDispatcher
 
-class ConfigWithRetry(FlextConfig):
+class ConfigWithRetry(FlextSettings):
     """Configuration with retry policy."""
     max_retry_attempts: int = 3  # Retry up to 3 times
     retry_delay: float = 1.0  # 1 second delay between retries
@@ -743,9 +743,9 @@ result = dispatcher.dispatch(ProcessOrderCommand(order_id="123"))
 Timeout enforcement prevents operations from hanging indefinitely:
 
 ```python
-from flext_core import FlextConfig, FlextDispatcher
+from flext_core import FlextSettings, FlextDispatcher
 
-class ConfigWithTimeout(FlextConfig):
+class ConfigWithTimeout(FlextSettings):
     """Configuration with timeout enforcement."""
     dispatcher_timeout_seconds: float = 30.0  # 30 second timeout
     enable_timeout_executor: bool = True  # Use executor for timeout
@@ -769,9 +769,9 @@ result = dispatcher.dispatch(
 ### Complete Reliability Configuration Example
 
 ```python
-from flext_core import FlextConfig, FlextDispatcher, r
+from flext_core import FlextSettings, FlextDispatcher, r
 
-class ProductionConfig(FlextConfig):
+class ProductionConfig(FlextSettings):
     """Production configuration with comprehensive reliability settings."""
 
     # Circuit Breaker: Fail fast on repeated failures
@@ -812,10 +812,10 @@ def process_with_reliability(command):
 Configure reliability settings per environment:
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 import os
 
-class Config(FlextConfig):
+class Config(FlextSettings):
     """Environment-aware configuration."""
 
     @property
@@ -865,7 +865,7 @@ print(f"Timeout executions: {metrics.get('timeout_executions', 0)}")
 
 **Layer**: Layer 1 (Foundation)
 **Used by**: Layers 2-4 (Domain, Application, Infrastructure)
-**Dependencies**: FlextResult, FlextConfig, dependency-injector
+**Dependencies**: FlextResult, FlextSettings, dependency-injector
 **Ecosystem**: 32+ projects depend on FlextContainer
 
 ```

@@ -223,7 +223,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def calculate_delay(
         attempt: int,
-        config: t.Types.ConfigurationDict | None,
+        config: t.ConfigurationDict | None,
     ) -> float:
         """Calculate delay for retry attempt using configuration.
 
@@ -236,7 +236,7 @@ class FlextUtilitiesReliability:
 
         """
         # Extract configuration values safely with proper type conversion
-        # config is t.Types.ConfigurationDict | None, use dict.get() instead of getattr()
+        # config is t.ConfigurationDict | None, use dict.get() instead of getattr()
         if config is None:
             config = {}
         # Type narrowing: ensure values are numeric before conversion
@@ -379,8 +379,9 @@ class FlextUtilitiesReliability:
                     and hasattr(result, "is_failure")
                     and hasattr(result, "value")
                 ):
-                    # Type narrowing: result has RuntimeResult structure
-                    result_typed: r[object] = result
+                    # Intentional cast: Structural typing validates Result protocol
+                    # We've confirmed via hasattr that result implements Result interface
+                    result_typed = cast("p.Result[object]", result)
                     if result_typed.is_failure:
                         if on_error == "stop":
                             err_msg = result_typed.error or "Unknown error"
@@ -440,7 +441,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def flow(
         value: object,
-        *ops: t.Types.ConfigurationDict | Callable[[object], object],
+        *ops: t.ConfigurationDict | Callable[[object], object],
     ) -> object:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
@@ -467,8 +468,8 @@ class FlextUtilitiesReliability:
         for op in ops:
             if isinstance(op, dict):
                 # Type narrowing: op is dict, isinstance provides type narrowing to ConfigurationDict
-                # build() expects ops: t.Types.ConfigurationDict | None
-                op_dict: t.Types.ConfigurationDict = op
+                # build() expects ops: t.ConfigurationDict | None
+                op_dict: t.ConfigurationDict = op
                 current = FlextUtilitiesMapper.build(current, ops=op_dict)
             elif callable(op):
                 current = op(current)

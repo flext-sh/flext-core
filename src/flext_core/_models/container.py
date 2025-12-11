@@ -47,7 +47,7 @@ class FlextModelsContainer:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: t.Types.ServiceRegistrationDict for service tracking.
+        Replaces: t.ServiceRegistrationDict for service tracking.
         """
 
         model_config = ConfigDict(
@@ -76,11 +76,9 @@ class FlextModelsContainer:
             default_factory=_generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None = (
-            Field(
-                default=None,
-                description="Additional service metadata (JSON-serializable)",
-            )
+        metadata: FlextModelsBase.Metadata | t.ServiceMetadataMapping | None = Field(
+            default=None,
+            description="Additional service metadata (JSON-serializable)",
         )
         service_type: str | None = Field(
             default=None,
@@ -106,7 +104,7 @@ class FlextModelsContainer:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: t.Types.FactoryRegistrationDict for factory tracking.
+        Replaces: t.FactoryRegistrationDict for factory tracking.
         """
 
         model_config = ConfigDict(
@@ -137,11 +135,9 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None = (
-            Field(
-                default=None,
-                description="Additional factory metadata (JSON-serializable)",
-            )
+        metadata: FlextModelsBase.Metadata | t.ServiceMetadataMapping | None = Field(
+            default=None,
+            description="Additional factory metadata (JSON-serializable)",
         )
         invocation_count: int = Field(
             default=c.ZERO,
@@ -187,11 +183,9 @@ class FlextModelsContainer:
             default_factory=_generate_datetime_utc,
             description="UTC timestamp when resource was registered",
         )
-        metadata: FlextModelsBase.Metadata | t.Types.ServiceMetadataMapping | None = (
-            Field(
-                default=None,
-                description="Additional resource metadata (JSON-serializable)",
-            )
+        metadata: FlextModelsBase.Metadata | t.ServiceMetadataMapping | None = Field(
+            default=None,
+            description="Additional resource metadata (JSON-serializable)",
         )
 
         @field_validator("metadata", mode="before")
@@ -203,7 +197,7 @@ class FlextModelsContainer:
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 
-        Replaces: t.Types.ConfigurationDict for container configuration storage.
+        Replaces: t.ConfigurationDict for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 

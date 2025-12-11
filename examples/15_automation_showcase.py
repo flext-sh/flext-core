@@ -35,7 +35,7 @@ from flext_core.utilities import u
 # =============================================================================
 
 
-class UserService(FlextService[t.Types.ServiceMetadataMapping]):
+class UserService(FlextService[t.ServiceMetadataMapping]):
     """Service demonstrating automatic context enrichment."""
 
     def __init__(self, **data: t.GeneralValueType) -> None:
@@ -47,28 +47,28 @@ class UserService(FlextService[t.Types.ServiceMetadataMapping]):
         super().__init__(**data)
         # Context now includes: service_type, service_module
 
-    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    def execute(self) -> FlextResult[t.ServiceMetadataMapping]:
         """Required abstract method implementation."""
-        return FlextResult[t.Types.ServiceMetadataMapping].ok({"status": "initialized"})
+        return FlextResult[t.ServiceMetadataMapping].ok({"status": "initialized"})
 
     def create_user(
         self,
         username: str,
         email: str,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Create user with automatic context enrichment."""
         # Context includes service metadata from __init__
         if self.logger:
             self.logger.info("Creating user", username=username, email=email)
 
         # Business logic
-        user_data: t.Types.ServiceMetadataMapping = {
+        user_data: t.ServiceMetadataMapping = {
             "id": "usr_123",
             "username": username,
             "email": email,
         }
 
-        return FlextResult[t.Types.ServiceMetadataMapping].ok(user_data)
+        return FlextResult[t.ServiceMetadataMapping].ok(user_data)
 
 
 # =============================================================================
@@ -76,23 +76,23 @@ class UserService(FlextService[t.Types.ServiceMetadataMapping]):
 # =============================================================================
 
 
-class PaymentService(FlextService[t.Types.ServiceMetadataMapping]):
+class PaymentService(FlextService[t.ServiceMetadataMapping]):
     """Service demonstrating correlation ID tracking."""
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize with automatic context enrichment."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    def execute(self) -> FlextResult[t.ServiceMetadataMapping]:
         """Required abstract method implementation."""
-        return FlextResult[t.Types.ServiceMetadataMapping].ok({"status": "initialized"})
+        return FlextResult[t.ServiceMetadataMapping].ok({"status": "initialized"})
 
     def process_payment(
         self,
         payment_id: str,
         amount: float,
         user_id: str,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Process payment with correlation tracking.
 
         Demonstrates:
@@ -127,7 +127,7 @@ class PaymentService(FlextService[t.Types.ServiceMetadataMapping]):
             )
 
         # Business logic
-        payment_data: t.Types.ServiceMetadataMapping = {
+        payment_data: t.ServiceMetadataMapping = {
             "payment_id": payment_id,
             "amount": amount,
             "status": "completed",
@@ -137,7 +137,7 @@ class PaymentService(FlextService[t.Types.ServiceMetadataMapping]):
         # Clean up operation context
         self._clear_operation_context()
 
-        return FlextResult[t.Types.ServiceMetadataMapping].ok(payment_data)
+        return FlextResult[t.ServiceMetadataMapping].ok(payment_data)
 
 
 # =============================================================================
@@ -145,16 +145,16 @@ class PaymentService(FlextService[t.Types.ServiceMetadataMapping]):
 # =============================================================================
 
 
-class OrderService(FlextService[t.Types.ServiceMetadataMapping]):
+class OrderService(FlextService[t.ServiceMetadataMapping]):
     """Service demonstrating context enrichment helper method."""
 
-    _order_data: t.Types.ConfigurationMapping = PrivateAttr(default_factory=dict)
+    _order_data: t.ConfigurationMapping = PrivateAttr(default_factory=dict)
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize service."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    def execute(self) -> FlextResult[t.ServiceMetadataMapping]:
         """Process order with business logic."""
         order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data)
         # Simple merge: new values override existing ones
@@ -169,7 +169,7 @@ class OrderService(FlextService[t.Types.ServiceMetadataMapping]):
         order_data_dict = merged
 
         def is_string_key(_k: str, _v: t.GeneralValueType) -> bool:
-            # k is already typed as str from dict[str, GeneralValueType]
+            # k is already typed as str from dict[str, t.GeneralValueType]
             return True
 
         # Use u.filter to filter dict items with string keys
@@ -177,19 +177,19 @@ class OrderService(FlextService[t.Types.ServiceMetadataMapping]):
             order_data_dict,
             predicate=is_string_key,
         )
-        result_data: t.Types.ServiceMetadataMapping = (
+        result_data: t.ServiceMetadataMapping = (
             filtered_dict
             if u.Validation.guard(filtered_dict, dict, return_value=True) is not None
             else {}
         )
-        return FlextResult[t.Types.ServiceMetadataMapping].ok(result_data)
+        return FlextResult[t.ServiceMetadataMapping].ok(result_data)
 
     def process_order(
         self,
         order_id: str,
         customer_id: str,
         correlation_id: str | None = None,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Process order with automatic context enrichment."""
         order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data)
         order_data_dict["order_id"] = order_id
@@ -217,7 +217,7 @@ class OrderService(FlextService[t.Types.ServiceMetadataMapping]):
 # =============================================================================
 
 
-class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
+class AutomationService(FlextService[t.ServiceMetadataMapping]):
     """Service demonstrating the 5 new FlextResult methods in automation context.
 
     Shows how the new v0.9.9+ methods work with automated workflows:
@@ -235,9 +235,9 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
     def execute(
         self,
         **_kwargs: t.GeneralValueType,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Required abstract method implementation."""
-        return FlextResult[t.Types.ServiceMetadataMapping].ok({
+        return FlextResult[t.ServiceMetadataMapping].ok({
             "status": "automation_ready",
         })
 
@@ -266,8 +266,8 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         """Demo 1: from_callable - Safe Automation Task Execution."""
         print("\n=== 1. from_callable: Safe Automation Task Execution ===")
 
-        def risky_automation_task() -> t.Types.ServiceMetadataMapping:
-            task_data: t.Types.ServiceMetadataMapping = {
+        def risky_automation_task() -> t.ServiceMetadataMapping:
+            task_data: t.ServiceMetadataMapping = {
                 "task_id": "AUTO-001",
                 "task_type": "data_sync",
                 "records_processed": 1000,
@@ -282,7 +282,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
                 raise ValueError(msg)
             return task_data
 
-        result = FlextResult[t.Types.ServiceMetadataMapping].create_from_callable(
+        result = FlextResult[t.ServiceMetadataMapping].create_from_callable(
             risky_automation_task,
         )
         if result.is_success:
@@ -298,30 +298,30 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         print("\n=== 2. flow_through: Automation Pipeline Composition ===")
 
         def validate(
-            data: t.Types.ConfigurationDict,
-        ) -> FlextResult[t.Types.ConfigurationDict]:
+            data: t.ConfigurationDict,
+        ) -> FlextResult[t.ConfigurationDict]:
             task_type = data.get("task_type", "")
             if not isinstance(task_type, str) or not task_type:
-                return FlextResult[t.Types.ConfigurationDict].fail("Task type required")
-            return FlextResult[t.Types.ConfigurationDict].ok(data)
+                return FlextResult[t.ConfigurationDict].fail("Task type required")
+            return FlextResult[t.ConfigurationDict].ok(data)
 
         def enrich(
-            data: t.Types.ConfigurationDict,
-        ) -> FlextResult[t.Types.ConfigurationDict]:
-            enriched: t.Types.ConfigurationDict = {
+            data: t.ConfigurationDict,
+        ) -> FlextResult[t.ConfigurationDict]:
+            enriched: t.ConfigurationDict = {
                 **data,
                 "automation_timestamp": "2025-01-01T12:00:00Z",
                 "duration_ms": 250,
                 "result_id": "RESULT-001",
             }
-            return FlextResult[t.Types.ConfigurationDict].ok(enriched)
+            return FlextResult[t.ConfigurationDict].ok(enriched)
 
-        automation_input: t.Types.ConfigurationDict = {
+        automation_input: t.ConfigurationDict = {
             "task_type": FlextConstants.Cqrs.ProcessingMode.BATCH.value,
             "source": "database",
         }
         pipeline_result = (
-            FlextResult[t.Types.ConfigurationDict]
+            FlextResult[t.ConfigurationDict]
             .ok(automation_input)
             .flow_through(validate, enrich)
         )
@@ -358,11 +358,11 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         """Demo 4: alt - Alternative Automation Paths."""
         print("\n=== 4. alt: Alternative Automation Paths ===")
 
-        def get_cached() -> FlextResult[t.Types.ServiceMetadataMapping]:
-            return FlextResult[t.Types.ServiceMetadataMapping].fail("Cache unavailable")
+        def get_cached() -> FlextResult[t.ServiceMetadataMapping]:
+            return FlextResult[t.ServiceMetadataMapping].fail("Cache unavailable")
 
-        def get_default() -> FlextResult[t.Types.ServiceMetadataMapping]:
-            return FlextResult[t.Types.ServiceMetadataMapping].ok({
+        def get_default() -> FlextResult[t.ServiceMetadataMapping]:
+            return FlextResult[t.ServiceMetadataMapping].ok({
                 "automation_mode": FlextConstants.Cqrs.ProcessingMode.SEQUENTIAL.value,
                 "batch_size": FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
             })
@@ -383,7 +383,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         """Demo 5: value_or_call - Lazy Resource Initialization."""
         print("\n=== 5. value_or_call: Lazy Resource Initialization ===")
 
-        def create_engine() -> t.Types.ServiceMetadataMapping:
+        def create_engine() -> t.ServiceMetadataMapping:
             print("   ⚙️  Initializing automation engine...")
             return {
                 "engine_id": "AUTO-ENGINE-001",
@@ -391,7 +391,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
                 "worker_count": FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
             }
 
-        fail_result = FlextResult[t.Types.ServiceMetadataMapping].fail(
+        fail_result = FlextResult[t.ServiceMetadataMapping].fail(
             "No existing engine",
         )
         engine = create_engine() if fail_result.is_failure else fail_result.value
@@ -403,11 +403,11 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         print(f"✅ Engine acquired: {engine_id}")
         print(f"   Workers: {worker_count}")
 
-        existing: t.Types.ServiceMetadataMapping = {
+        existing: t.ServiceMetadataMapping = {
             "engine_id": "CACHED-ENGINE-001",
             "worker_count": FlextConstants.Container.DEFAULT_WORKERS,
         }
-        success_result = FlextResult[t.Types.ServiceMetadataMapping].ok(existing)
+        success_result = FlextResult[t.ServiceMetadataMapping].ok(existing)
         cached = success_result.value if success_result.is_success else create_engine()
         cached_id = str(cached.get("engine_id", "unknown"))
         print(f"✅ Existing engine used: {cached_id}")
@@ -428,26 +428,26 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
         """ETL Pipeline with Error Recovery."""
         print("\n--- Data Pipeline with Error Recovery ---")
 
-        def extract() -> FlextResult[list[t.Types.ConfigurationDict]]:
-            return FlextResult[list[t.Types.ConfigurationDict]].ok([
+        def extract() -> FlextResult[list[t.ConfigurationDict]]:
+            return FlextResult[list[t.ConfigurationDict]].ok([
                 {"id": 1, "name": "Item A", "value": 100},
                 {"id": 2, "name": "Item B", "value": 200},
             ])
 
         def transform(
-            data: list[t.Types.ConfigurationDict],
-        ) -> FlextResult[list[t.Types.ConfigurationDict]]:
-            transformed: list[t.Types.ConfigurationDict] = [
+            data: list[t.ConfigurationDict],
+        ) -> FlextResult[list[t.ConfigurationDict]]:
+            transformed: list[t.ConfigurationDict] = [
                 {**item, "processed": True, "timestamp": "2025-01-01T12:00:00Z"}
                 for item in data
             ]
-            return FlextResult[list[t.Types.ConfigurationDict]].ok(transformed)
+            return FlextResult[list[t.ConfigurationDict]].ok(transformed)
 
         def load(
-            data: list[t.Types.ConfigurationDict],
-        ) -> FlextResult[list[t.Types.ConfigurationDict]]:
+            data: list[t.ConfigurationDict],
+        ) -> FlextResult[list[t.ConfigurationDict]]:
             print(f"   💾 Loaded {len(data)} records successfully")
-            return FlextResult[list[t.Types.ConfigurationDict]].ok(data)
+            return FlextResult[list[t.ConfigurationDict]].ok(data)
 
         result = extract().flow_through(transform, load)
         if result.is_success:
@@ -483,7 +483,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
 
         cache: dict[str, t.GeneralValueType] = {}
 
-        def load_config() -> t.Types.ConfigurationMapping:
+        def load_config() -> t.ConfigurationMapping:
             if not cache:
                 print("   📄 Loading configuration from file...")
                 cache.update({
@@ -492,7 +492,7 @@ class AutomationService(FlextService[t.Types.ServiceMetadataMapping]):
                 })
             return cache
 
-        fail_attempt = FlextResult[t.Types.ConfigurationMapping].fail(
+        fail_attempt = FlextResult[t.ConfigurationMapping].fail(
             "No cached config",
         )
         config = load_config() if fail_attempt.is_failure else fail_attempt.value

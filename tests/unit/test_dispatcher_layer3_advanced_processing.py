@@ -86,7 +86,7 @@ class SlowProcessor:
     ) -> t.GeneralValueType | BaseModel | p.Result[t.GeneralValueType]:
         """Sleep then return result."""
         time.sleep(self.delay_seconds)
-        # Cast data to GeneralValueType for FlextResult.ok()
+        # Cast data to t.GeneralValueType for FlextResult.ok()
         # The actual data may be any of the union types, but we wrap it in result
         return FlextResult[t.GeneralValueType].ok(cast("t.GeneralValueType", data))
 

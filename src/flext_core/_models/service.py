@@ -39,26 +39,26 @@ class FlextModelsService:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Method to execute",
         )
-        parameters: t.Types.ConfigurationDict = Field(default_factory=dict)
-        context: t.Types.ConfigurationDict = Field(default_factory=dict)
+        parameters: t.ConfigurationDict = Field(default_factory=dict)
+        context: t.ConfigurationDict = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
             le=c.Performance.MAX_TIMEOUT_SECONDS,
-            description="Timeout from FlextConfig (Config has priority over Constants)",
+            description="Timeout from FlextSettings (Config has priority over Constants)",
         )
         execution: bool = False
         enable_validation: bool = True
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: t.GeneralValueType) -> t.Types.StringDict:
+        def validate_context(cls, v: t.GeneralValueType) -> t.StringDict:
             """Ensure context has required fields (using FlextUtilitiesGenerators).
 
-            Returns t.Types.StringDict because ensure_trace_context generates string trace IDs.
-            This is compatible with the field type t.Types.ConfigurationDict since str is a subtype.
+            Returns t.StringDict because ensure_trace_context generates string trace IDs.
+            This is compatible with the field type t.ConfigurationDict since str is a subtype.
             """
-            # ensure_trace_context already returns t.Types.StringDict
+            # ensure_trace_context already returns t.StringDict
             return FlextUtilitiesGenerators.ensure_trace_context(v)
 
         @field_validator("timeout_seconds", mode="after")
@@ -81,7 +81,7 @@ class FlextModelsService:
         """Domain service batch request."""
 
         service_name: str
-        operations: list[t.Types.ConfigurationDict] = Field(
+        operations: list[t.ConfigurationDict] = Field(
             default_factory=list,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             max_length=c.Performance.MAX_BATCH_OPERATIONS,
@@ -90,11 +90,11 @@ class FlextModelsService:
         stop_on_error: bool = True
         batch_size: int = Field(
             default=c.Performance.MAX_BATCH_SIZE,
-            description="Batch size from FlextConfig (Config has priority over Constants)",
+            description="Batch size from FlextSettings (Config has priority over Constants)",
         )
         timeout_per_operation: float = Field(
             default=c.Defaults.TIMEOUT,
-            description="Timeout per operation from FlextConfig (Config has priority over Constants)",
+            description="Timeout per operation from FlextSettings (Config has priority over Constants)",
         )
 
     class DomainServiceMetricsRequest(FlextModelsBase.ArbitraryTypesModel):
@@ -113,7 +113,7 @@ class FlextModelsService:
             default_factory=lambda: c.Cqrs.Aggregation.AVG,
         )
         group_by: list[str] = Field(default_factory=list)
-        filters: t.Types.ConfigurationDict = Field(default_factory=dict)
+        filters: t.ConfigurationDict = Field(default_factory=dict)
 
     class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service resource request."""
@@ -126,8 +126,8 @@ class FlextModelsService:
         resource_id: str | None = None
         resource_limit: int = Field(c.Performance.MAX_BATCH_SIZE, gt=c.ZERO)
         action: str = Field(default_factory=lambda: c.Cqrs.Action.GET)
-        data: t.Types.ConfigurationDict = Field(default_factory=dict)
-        filters: t.Types.ConfigurationDict = Field(default_factory=dict)
+        data: t.ConfigurationDict = Field(default_factory=dict)
+        filters: t.ConfigurationDict = Field(default_factory=dict)
 
     class AclResponse(FlextModelsBase.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
@@ -144,7 +144,7 @@ class FlextModelsService:
             default_factory=list,
             description="Denied permissions",
         )
-        context: t.Types.ConfigurationDict = Field(
+        context: t.ConfigurationDict = Field(
             default_factory=dict,
             description="Additional context",
         )
@@ -158,17 +158,17 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: p.VariadicCallable[p.ResultLike[t.GeneralValueType]]
-        arguments: t.Types.ConfigurationDict = Field(default_factory=dict)
-        keyword_arguments: t.Types.ConfigurationDict = Field(
+        arguments: t.ConfigurationDict = Field(default_factory=dict)
+        keyword_arguments: t.ConfigurationDict = Field(
             default_factory=dict,
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
             le=c.Performance.MAX_TIMEOUT_SECONDS,
-            description="Timeout from FlextConfig (Config has priority over Constants)",
+            description="Timeout from FlextSettings (Config has priority over Constants)",
         )
-        retry_config: t.Types.ConfigurationDict = Field(
+        retry_config: t.ConfigurationDict = Field(
             default_factory=dict,
         )
 

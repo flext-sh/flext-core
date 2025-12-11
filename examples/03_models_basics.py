@@ -151,10 +151,10 @@ class Order(FlextModels.AggregateRoot):
 # automatically resolves forward references at runtime
 
 
-class DomainModelService(s[t.Types.ServiceMetadataMapping]):
+class DomainModelService(s[t.ServiceMetadataMapping]):
     """Advanced DDD demonstration service with railway-oriented programming."""
 
-    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    def execute(self) -> FlextResult[t.ServiceMetadataMapping]:
         """Execute comprehensive DDD demonstrations using railway patterns."""
         # Railway pattern with value objects using traverse (DRY)
         email_result = FlextResult[Email].ok(Email(address="Test@Example.Com"))
@@ -215,7 +215,7 @@ class DomainModelService(s[t.Types.ServiceMetadataMapping]):
             vo_tuple: tuple[Email, Money],
             user: User,
             order: Order,
-        ) -> t.Types.ServiceMetadataMapping:
+        ) -> t.ServiceMetadataMapping:
             return {
                 "email": vo_tuple[0].address,
                 "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
@@ -226,11 +226,11 @@ class DomainModelService(s[t.Types.ServiceMetadataMapping]):
 
         def combine_with_user(
             vo_tuple: tuple[Email, Money],
-        ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+        ) -> FlextResult[t.ServiceMetadataMapping]:
             def combine_with_order(
                 user: User,
-            ) -> FlextResult[t.Types.ServiceMetadataMapping]:
-                def finalize(order: Order) -> t.Types.ServiceMetadataMapping:
+            ) -> FlextResult[t.ServiceMetadataMapping]:
+                def finalize(order: Order) -> t.ServiceMetadataMapping:
                     return build_result(vo_tuple, user, order)
 
                 return order_result.map(finalize)

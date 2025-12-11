@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConfig, FlextContainer, FlextContext, FlextService, r, t
+from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, r, t
 from flext_tests import u
 
 
@@ -26,7 +26,7 @@ class ConcreteTestService(FlextService[r[bool]]):
     """Concrete service for testing bootstrap patterns."""
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
         """Return bootstrap options for this service."""
         return {
             "config_overrides": {"debug": True},
@@ -67,7 +67,7 @@ class TestServiceBootstrap:
         assert runtime.registry is not None
 
         # Verify types
-        assert isinstance(runtime.config, FlextConfig)
+        assert isinstance(runtime.config, FlextSettings)
         assert isinstance(runtime.context, FlextContext)
         assert isinstance(runtime.container, FlextContainer)
 

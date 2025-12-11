@@ -10,75 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self, TypeGuard
+from typing import Self
 
 from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelsBase
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-
-# Tier 0.5 - Helper functions inline (avoid FlextRuntime import)
-def _is_list_like(value: object) -> TypeGuard[t.ObjectList]:
-    """Check if value is list-like (but not string/bytes) with type narrowing.
-
-    Args:
-        value: Object to check
-
-    Returns:
-        TypeGuard[t.ObjectList]: True if value is Sequence
-        and not str/bytes.
-
-    """
-    # Inline type check to avoid circular import with guards.py -> runtime.py
-    return isinstance(value, Sequence) and not isinstance(value, (str, bytes))
-
-
-def _is_dict_like(
-    value: object,
-) -> TypeGuard[t.Types.ConfigurationMapping]:
-    """Check if value is dict-like with type narrowing.
-
-    Args:
-        value: Object to check
-
-    Returns:
-        TypeGuard[t.Types.ConfigurationMapping]: True if value is Mapping.
-
-    """
-    # Inline type check to avoid circular import with guards.py -> runtime.py
-    return isinstance(value, Mapping)
-
-
-def _normalize_to_general_value(val: object) -> t.GeneralValueType:
-    """Normalize any value to t.GeneralValueType recursively (inline implementation).
-
-    This is an inline implementation of FlextRuntime.normalize_to_general_value
-    to avoid circular import. Collections.py is Tier 0.5 and cannot import runtime.py.
-
-    Args:
-        val: Value to normalize (object)
-
-    Returns:
-        Normalized value compatible with GeneralValueType
-
-    """
-    # Handle primitives
-    if isinstance(val, (str, int, float, bool, type(None))):
-        return val
-    # Handle dict-like values recursively
-    if _is_dict_like(val):
-        result: t.Types.ConfigurationDict = {}
-        dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
-        # Type guard ensures keys are str, so no isinstance check needed
-        for k, v in dict_v.items():
-            result[k] = _normalize_to_general_value(v)
-        return result
-    # Handle list-like values recursively
-    if _is_list_like(val):
-        return [_normalize_to_general_value(item) for item in val]
-    # For arbitrary objects, convert to string representation
-    return str(val)
 
 
 class FlextModelsCollections:
@@ -233,23 +171,23 @@ class FlextModelsCollections:
                 instance.add_entries(category, entries)
             return instance
 
-        def to_dict(self) -> t.Types.StringSequenceGeneralValueDict:
+        def to_dict(self) -> t.StringSequenceGeneralValueDict:
             """Convert categories to dictionary representation.
 
-            Normalizes list[T] to Sequence[GeneralValueType] for type compatibility.
+            Normalizes list[T] to Sequence[t.GeneralValueType] for type compatibility.
             Uses inline _normalize_to_general_value to avoid circular import.
 
             Returns:
                 CategoryGroupsMapping: Dictionary representation of categories.
 
             """
-            # Normalize list[T] to Sequence[GeneralValueType] for type compatibility
-            result: t.Types.StringSequenceGeneralValueDict = {}
+            # Normalize list[T] to Sequence[t.GeneralValueType] for type compatibility
+            result: t.StringSequenceGeneralValueDict = {}
             for key, value_list in self.categories.items():
-                # Normalize each item in the list to GeneralValueType
+                # Normalize each item in the list to t.GeneralValueType
                 # Use inline helper to avoid circular import with runtime.py
                 normalized_list: list[t.GeneralValueType] = [
-                    _normalize_to_general_value(item) for item in value_list
+                    FlextRuntime.normalize_to_general_value(item) for item in value_list
                 ]
                 result[key] = normalized_list
             return result
@@ -277,7 +215,7 @@ class FlextModelsCollections:
             # Filter out None values for comparison
             non_none = [v for v in [existing, value] if v is not None]
             if not non_none:
-                # None is part of GeneralValueType, so this is valid
+                # None is part of t.GeneralValueType, so this is valid
                 return None
 
             first_val = non_none[0]
@@ -288,13 +226,13 @@ class FlextModelsCollections:
                 ]
                 return sum(numeric_values)
             # Concatenate lists
-            if _is_list_like(first_val):
+            if FlextRuntime.is_list_like(first_val):
                 combined: list[t.GeneralValueType] = []
                 for v in non_none:
-                    if _is_list_like(v):
-                        # Normalize each item to GeneralValueType
+                    if FlextRuntime.is_list_like(v):
+                        # Normalize each item to t.GeneralValueType
                         for item in v:
-                            normalized = _normalize_to_general_value(item)
+                            normalized = FlextRuntime.normalize_to_general_value(item)
                             combined.append(normalized)
                 return combined
             # Keep last for other types
@@ -303,7 +241,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: t.Types.ConfigurationMapping,
+            data: t.ConfigurationMapping,
         ) -> Self:
             """Create Statistics instance from dictionary.
 
@@ -327,7 +265,7 @@ class FlextModelsCollections:
             - Keeping last value for other types
 
             Returns:
-                GeneralValueType: Aggregated statistics dictionary.
+                t.GeneralValueType: Aggregated statistics dictionary.
 
             Example:
                 stats1 = Stats(count=10, items=['a'])
@@ -353,10 +291,10 @@ class FlextModelsCollections:
                             value,
                         )
 
-            # Normalize result dict to GeneralValueType
-            normalized_result: t.Types.ConfigurationDict = {}
+            # Normalize result dict to t.GeneralValueType
+            normalized_result: t.ConfigurationDict = {}
             for key, value in result.items():
-                normalized_result[key] = _normalize_to_general_value(value)
+                normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
             return normalized_result
 
     class Rules(FlextModelsBase.ArbitraryTypesModel):
@@ -376,7 +314,7 @@ class FlextModelsCollections:
                 Merged rules instance
 
             """
-            merged_data: t.Types.ConfigurationDict = {}
+            merged_data: t.ConfigurationDict = {}
             for rule in rules:
                 merged_data.update(rule.model_dump())
             return cls(**merged_data)
@@ -421,10 +359,10 @@ class FlextModelsCollections:
             """
             combined: list[t.GeneralValueType] = []
             for v in non_none:
-                if _is_list_like(v):
-                    # Normalize each item to GeneralValueType
+                if FlextRuntime.is_list_like(v):
+                    # Normalize each item to t.GeneralValueType
                     for item in v:
-                        normalized = _normalize_to_general_value(item)
+                        normalized = FlextRuntime.normalize_to_general_value(item)
                         combined.append(normalized)
             return combined
 
@@ -432,7 +370,7 @@ class FlextModelsCollections:
         def _merge_dicts(
             cls,
             non_none: list[t.GeneralValueType],
-        ) -> t.Types.ConfigurationDict:
+        ) -> t.ConfigurationDict:
             """Merge dict-like values.
 
             Args:
@@ -442,10 +380,10 @@ class FlextModelsCollections:
                 Merged dictionary
 
             """
-            merged: t.Types.ConfigurationDict = {}
+            merged: t.ConfigurationDict = {}
             for v in non_none:
-                if _is_dict_like(v):
-                    # Type narrowing: v is Mapping[str, GeneralValueType]
+                if FlextRuntime.is_dict_like(v):
+                    # Type narrowing: v is Mapping[str, t.GeneralValueType]
                     dict_v = dict(v.items()) if hasattr(v, "items") else dict(v)
                     merged.update(dict_v)
             return merged
@@ -473,7 +411,7 @@ class FlextModelsCollections:
                 v for v in [existing, value] if v is not None
             ]
             if not non_none:
-                # None is part of GeneralValueType, so this is valid
+                # None is part of t.GeneralValueType, so this is valid
                 return None
 
             first_val = non_none[0]
@@ -486,10 +424,10 @@ class FlextModelsCollections:
                 numeric_sum = cls._sum_numeric_values(non_none)
                 return numeric_sum if numeric_sum is not None else non_none[-1]
             # Concatenate lists
-            if _is_list_like(first_val):
+            if FlextRuntime.is_list_like(first_val):
                 return cls._concatenate_lists(non_none)
             # Merge dicts
-            if _is_dict_like(first_val):
+            if FlextRuntime.is_dict_like(first_val):
                 return cls._merge_dicts(non_none)
             # Keep last for other types
             return non_none[-1]
@@ -508,7 +446,7 @@ class FlextModelsCollections:
                 Combined results instance
 
             """
-            combined_data: t.Types.ConfigurationDict = {}
+            combined_data: t.ConfigurationDict = {}
             for result in results:
                 combined_data.update(result.model_dump())
             return cls(**combined_data)
@@ -524,7 +462,7 @@ class FlextModelsCollections:
             - Keeping last value for other types
 
             Returns:
-                GeneralValueType: Aggregated results dictionary.
+                t.GeneralValueType: Aggregated results dictionary.
 
             Example:
                 result1 = Results(processed=10, errors=['a'])
@@ -537,7 +475,7 @@ class FlextModelsCollections:
                 return {}
 
             # Start with first result as base
-            result: t.Types.ConfigurationDict = {}
+            result: t.ConfigurationDict = {}
             for res in results_list:
                 res_dict = res.model_dump()
                 for key, value in res_dict.items():
@@ -550,10 +488,10 @@ class FlextModelsCollections:
                             value,
                         )
 
-            # Normalize result dict to GeneralValueType
-            normalized_result: t.Types.ConfigurationDict = {}
+            # Normalize result dict to t.GeneralValueType
+            normalized_result: t.ConfigurationDict = {}
             for key, value in result.items():
-                normalized_result[key] = _normalize_to_general_value(value)
+                normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
             return normalized_result
 
     class Options(FlextModelsBase.ArbitraryTypesModel):
@@ -579,7 +517,7 @@ class FlextModelsCollections:
             # Filter out None values for comparison
             non_none = [v for v in [existing, value] if v is not None]
             if not non_none:
-                # None is part of GeneralValueType, so this is valid
+                # None is part of t.GeneralValueType, so this is valid
                 return None
 
             first_val = non_none[0]
@@ -596,13 +534,13 @@ class FlextModelsCollections:
                 if numeric_values:
                     return sum(numeric_values)
             # Concatenate lists
-            if _is_list_like(first_val):
+            if FlextRuntime.is_list_like(first_val):
                 combined: list[t.GeneralValueType] = []
                 for v in non_none:
-                    if _is_list_like(v):
-                        # Normalize each item to GeneralValueType
+                    if FlextRuntime.is_list_like(v):
+                        # Normalize each item to t.GeneralValueType
                         for item in v:
-                            normalized = _normalize_to_general_value(item)
+                            normalized = FlextRuntime.normalize_to_general_value(item)
                             combined.append(normalized)
                 return combined
             # Keep last for other types
@@ -644,7 +582,7 @@ class FlextModelsCollections:
                 return cls()
 
             # Start with first options as base
-            result: t.Types.ConfigurationDict = {}
+            result: t.ConfigurationDict = {}
             for opt in options:
                 opt_dict = opt.model_dump()
                 for key, value in opt_dict.items():
@@ -654,10 +592,10 @@ class FlextModelsCollections:
                         # Conflict resolution - delegate to helper method
                         result[key] = cls._resolve_merge_conflict(result[key], value)
 
-            # Normalize result dict to GeneralValueType and create instance
-            normalized_result: t.Types.ConfigurationDict = {}
+            # Normalize result dict to t.GeneralValueType and create instance
+            normalized_result: t.ConfigurationDict = {}
             for key, value in result.items():
-                normalized_result[key] = _normalize_to_general_value(value)
+                normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
             # Create new instance from normalized dict
             return cls(**normalized_result)
 
@@ -681,7 +619,7 @@ class FlextModelsCollections:
         @classmethod
         def from_mapping(
             cls,
-            mapping: t.Types.ConfigurationMapping,
+            mapping: t.ConfigurationMapping,
         ) -> Self:
             """Create Config instance from mapping.
 
@@ -697,7 +635,7 @@ class FlextModelsCollections:
             mapping_dict = dict(mapping)
             return cls.model_validate(mapping_dict)
 
-        def to_mapping(self) -> t.Types.ConfigurationMapping:
+        def to_mapping(self) -> t.ConfigurationMapping:
             """Convert Config to mapping.
 
             Returns:
@@ -709,7 +647,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: t.Types.ConfigurationMapping,
+            data: t.ConfigurationMapping,
         ) -> Self:
             """Create Config instance from dictionary.
 

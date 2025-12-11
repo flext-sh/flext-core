@@ -317,7 +317,7 @@ Config value not found or returns None
 **Solutions:**
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 import os
 
 # ✅ CORRECT - Verify file exists
@@ -325,9 +325,9 @@ config_file = 'config.toml'
 if not os.path.exists(config_file):
     print(f"Config file not found: {config_file}")
     # Use defaults or raise error
-    config = FlextConfig()
+    config = FlextSettings()
 else:
-    config = FlextConfig(config_files=[config_file])
+    config = FlextSettings(config_files=[config_file])
 
 # Verify values loaded
 database_url = config.get('database.url')
@@ -361,14 +361,14 @@ python main.py
 **Python code:**
 
 ```python
-from flext_core import FlextConfig
+from flext_core import FlextSettings
 import os
 
 # Set environment variable if not set
 if 'API_KEY' not in os.environ:
     os.environ['API_KEY'] = 'default_key'
 
-config = FlextConfig(config_files=['config.toml'])
+config = FlextSettings(config_files=['config.toml'])
 api_key = config.get('api.key')  # Will expand from environment
 ```
 
@@ -711,8 +711,8 @@ grep -A 5 "operation_name" logs/app.log
 ```bash
 # Print loaded configuration (hide secrets!)
 python -c "
-from flext_core import FlextConfig
-config = FlextConfig(config_files=['config.toml'])
+from flext_core import FlextSettings
+config = FlextSettings(config_files=['config.toml'])
 # Print non-sensitive values
 for key in ['app', 'database', 'api']:
     section = config.get_section(key)

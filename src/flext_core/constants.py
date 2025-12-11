@@ -45,9 +45,9 @@ class AutoStrEnum(StrEnum):
     @staticmethod
     def _generate_next_value_(
         name: str,
-        start: int,  # noqa: ARG004
-        count: int,  # noqa: ARG004
-        last_values: list[str],  # noqa: ARG004
+        _start: int,
+        _count: int,
+        _last_values: list[str],
     ) -> str:
         """Generate the next value as the lowercased member name."""
         return name.lower()
@@ -1181,7 +1181,7 @@ class FlextConstants:
             CANCELLED = "cancelled"  # Matches _Base.CommonStatus.CANCELLED
 
         # DOMAIN_MODEL_CONFIG moved to _models/config.py - constants.py cannot import ConfigDict
-        # Use m.Config.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG
+        # Use m.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG
 
         # ─────────────────────────────────────────────────────────────────
         # SUBSETS: Literal referencing StrEnum members

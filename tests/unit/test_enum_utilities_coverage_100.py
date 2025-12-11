@@ -226,7 +226,7 @@ class TestuEnumIsMember:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
-        # Convert object to GeneralValueType for type compatibility
+        # Convert object to t.GeneralValueType for type compatibility
         value_typed: t.GeneralValueType = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, type(None)))
@@ -242,7 +242,7 @@ class TestuEnumIsSubset:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        # Convert object to GeneralValueType for type compatibility
+        # Convert object to t.GeneralValueType for type compatibility
         value_typed: t.GeneralValueType = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, type(None)))
@@ -265,7 +265,7 @@ class TestuEnumParse:
         result = u.Enum.parse(Status, scenario.value)
 
         if scenario.expected_success:
-            # Type annotation: Status is StrEnum, compatible with GeneralValueType
+            # Type annotation: Status is StrEnum, compatible with t.GeneralValueType
             # Use explicit type annotation to help mypy infer TValue
             expected_status_cast: t.GeneralValueType = cast(
                 "t.GeneralValueType",

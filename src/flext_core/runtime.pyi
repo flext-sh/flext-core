@@ -11,7 +11,7 @@ class RuntimeResult[T]:
         value: T | None = None,
         error: str | None = None,
         error_code: str | None = None,
-        error_data: t.Types.ConfigurationMapping | None = None,
+        error_data: t.ConfigurationMapping | None = None,
         *,
         is_success: bool = True,
     ) -> None: ...
@@ -30,7 +30,7 @@ class RuntimeResult[T]:
     @property
     def error_code(self) -> str | None: ...
     @property
-    def error_data(self) -> t.Types.ConfigurationMapping | None: ...
+    def error_data(self) -> t.ConfigurationMapping | None: ...
     def unwrap(self) -> T: ...
     def unwrap_or(self, default: T) -> T: ...
     def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
@@ -70,7 +70,7 @@ class RuntimeResult[T]:
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.Types.ConfigurationMapping | None = None,
+        error_data: t.ConfigurationMapping | None = None,
     ) -> RuntimeResult[T]: ...
 
 class FlextRuntime:
@@ -81,7 +81,7 @@ class FlextRuntime:
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: t.Types.ConfigurationMapping | None = None,
+            error_data: t.ConfigurationMapping | None = None,
             *,
             is_success: bool = True,
         ) -> None: ...
@@ -100,7 +100,7 @@ class FlextRuntime:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.Types.ConfigurationMapping | None: ...
+        def error_data(self) -> t.ConfigurationMapping | None: ...
         def unwrap(self) -> T: ...
         def unwrap_or(self, default: T) -> T: ...
         def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
@@ -150,7 +150,7 @@ class FlextRuntime:
             cls,
             error: str | None,
             error_code: str | None = None,
-            error_data: t.Types.ConfigurationMapping | None = None,
+            error_data: t.ConfigurationMapping | None = None,
         ) -> FlextRuntime.RuntimeResult[T]: ...
 
     @staticmethod
@@ -164,11 +164,11 @@ class FlextRuntime:
         default: t.GeneralValueType = None,
     ) -> t.GeneralValueType: ...
     @staticmethod
-    def is_sequence_type(type_hint: t.Utility.TypeHintSpecifier) -> bool: ...
+    def is_sequence_type(type_hint: t.TypeHintSpecifier) -> bool: ...
     @staticmethod
     def extract_generic_args(
-        type_hint: t.Utility.TypeHintSpecifier,
-    ) -> tuple[t.Utility.GenericTypeArgument, ...]: ...
+        type_hint: t.TypeHintSpecifier,
+    ) -> tuple[t.GenericTypeArgument, ...]: ...
     @staticmethod
     def normalize_to_general_value(val: t.GeneralValueType) -> t.GeneralValueType: ...
     @staticmethod
@@ -195,13 +195,13 @@ class FlextRuntime:
         inject: object
         @classmethod
         def create_layered_bridge(
-            cls, config: t.Types.ConfigurationMapping | None = None
+            cls, config: t.ConfigurationMapping | None = None
         ) -> tuple[object, object, object]: ...
         @classmethod
         def create_container(
             cls,
             *,
-            config: t.Types.ConfigurationMapping | None = None,
+            config: t.ConfigurationMapping | None = None,
             services: object | None = None,
             factories: object | None = None,
             resources: object | None = None,
@@ -212,11 +212,11 @@ class FlextRuntime:
         ) -> object: ...
         @staticmethod
         def bind_configuration(
-            di_container: object, config: t.Types.ConfigurationMapping | None
+            di_container: object, config: t.ConfigurationMapping | None
         ) -> object: ...
         @staticmethod
         def bind_configuration_provider(
-            configuration_provider: object, config: t.Types.ConfigurationMapping | None
+            configuration_provider: object, config: t.ConfigurationMapping | None
         ) -> object: ...
         @staticmethod
         def register_object[T](

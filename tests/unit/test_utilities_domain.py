@@ -44,13 +44,13 @@ SimpleValue = TestsFlextModels.SimpleValue
 
 # Module-level helper functions (must be defined before class for @pytest.mark.parametrize)
 def _convert_to_general_value(obj: object) -> t.GeneralValueType:
-    """Convert object to GeneralValueType (handles Pydantic models).
+    """Convert object to t.GeneralValueType (handles Pydantic models).
 
     Args:
         obj: Object to convert (Pydantic model, dict, list, or primitive)
 
     Returns:
-        GeneralValueType-compatible value
+        t.GeneralValueType-compatible value
 
     """
     if isinstance(obj, BaseModel):
@@ -77,17 +77,17 @@ def _convert_to_general_value(obj: object) -> t.GeneralValueType:
 def _convert_expected_result(
     expected: object,
 ) -> t.GeneralValueType:
-    """Convert expected result to GeneralValueType (handles type objects).
+    """Convert expected result to t.GeneralValueType (handles type objects).
 
     Args:
         expected: Expected result (type, value, or other)
 
     Returns:
-        GeneralValueType-compatible value
+        t.GeneralValueType-compatible value
 
     """
     if isinstance(expected, type):
-        # Type objects are not GeneralValueType, convert to string
+        # Type objects are not t.GeneralValueType, convert to string
         return expected.__name__
     if isinstance(expected, (str, int, float, bool, type(None))):
         return expected
@@ -123,23 +123,23 @@ def create_compare_entities_cases() -> list[dict[str, t.GeneralValueType]]:
     custom2 = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_same_id: t.Types.ConfigurationDict = {
+    input_data_same_id: t.ConfigurationDict = {
         "entity_a": alice_entity,
         "entity_b": alice_entity,
     }
-    input_data_different_id: t.Types.ConfigurationDict = {
+    input_data_different_id: t.ConfigurationDict = {
         "entity_a": alice_entity,
         "entity_b": bob_entity,
     }
-    input_data_different_type: t.Types.ConfigurationDict = {
+    input_data_different_type: t.ConfigurationDict = {
         "entity_a": alice_entity,
         "entity_b": value_obj,
     }
-    input_data_no_id: t.Types.ConfigurationDict = {
+    input_data_no_id: t.ConfigurationDict = {
         "entity_a": alice_no_id,
         "entity_b": bob_entity,
     }
-    input_data_custom: t.Types.ConfigurationDict = {
+    input_data_custom: t.ConfigurationDict = {
         "entity_a": custom1,
         "entity_b": custom2,
     }
@@ -206,13 +206,13 @@ def create_hash_entity_cases() -> list[dict[str, t.GeneralValueType]]:
     custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_with_id: t.Types.ConfigurationDict = {
+    input_data_with_id: t.ConfigurationDict = {
         "entity": alice_entity,
     }
-    input_data_no_id: t.Types.ConfigurationDict = {
+    input_data_no_id: t.ConfigurationDict = {
         "entity": alice_no_id,
     }
-    input_data_custom: t.Types.ConfigurationDict = {
+    input_data_custom: t.ConfigurationDict = {
         "entity": custom,
     }
 
@@ -273,7 +273,7 @@ def create_compare_value_objects_cases() -> list[dict[str, t.GeneralValueType]]:
     no_dict2 = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_list: list[t.Types.ConfigurationDict] = [
+    input_data_list: list[t.ConfigurationDict] = [
         {
             "obj_a": value1,
             "obj_b": value1,
@@ -344,7 +344,7 @@ def create_hash_value_object_cases() -> list[dict[str, t.GeneralValueType]]:
     no_dict_obj = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_list_hash: list[t.Types.ConfigurationDict] = [
+    input_data_list_hash: list[t.ConfigurationDict] = [
         {"obj": value_obj},
         {"obj": simple_obj},
         {"obj": bad_obj},
@@ -392,13 +392,13 @@ def create_validate_entity_has_id_cases() -> list[dict[str, t.GeneralValueType]]
     custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_has_id: t.Types.ConfigurationDict = {
+    input_data_has_id: t.ConfigurationDict = {
         "entity": alice_entity,
     }
-    input_data_no_id_validate: t.Types.ConfigurationDict = {
+    input_data_no_id_validate: t.ConfigurationDict = {
         "entity": alice_no_id,
     }
-    input_data_custom_validate: t.Types.ConfigurationDict = {
+    input_data_custom_validate: t.ConfigurationDict = {
         "entity": custom,
     }
 
@@ -493,19 +493,19 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test compare_entities_by_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's GeneralValueType
-        # Cast lambda return type to GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
+        # Cast lambda return type to t.GeneralValueType for type checker
         operation_result: t.GeneralValueType = cast(
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.Types.ConfigurationDict", test_case["input_data"]),
+                cast("t.ConfigurationDict", test_case["input_data"]),
                 id_attr=cast("str", test_case.get("id_attr", "unique_id")),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.Types.ConfigurationDict", test_case),
+            cast("t.ConfigurationDict", test_case),
         )
 
     @pytest.mark.parametrize(
@@ -518,19 +518,19 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test hash_entity_by_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's GeneralValueType
-        # Cast lambda return type to GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
+        # Cast lambda return type to t.GeneralValueType for type checker
         operation_result: t.GeneralValueType = cast(
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.Types.ConfigurationDict", test_case["input_data"]),
+                cast("t.ConfigurationDict", test_case["input_data"]),
                 id_attr=cast("str", test_case.get("id_attr", "unique_id")),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.Types.ConfigurationDict", test_case),
+            cast("t.ConfigurationDict", test_case),
         )
 
     @pytest.mark.parametrize(
@@ -543,18 +543,18 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test compare_value_objects_by_value using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's GeneralValueType
-        # Cast lambda return type to GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
+        # Cast lambda return type to t.GeneralValueType for type checker
         operation_result: t.GeneralValueType = cast(
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.Types.ConfigurationDict", test_case["input_data"]),
+                cast("t.ConfigurationDict", test_case["input_data"]),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.Types.ConfigurationDict", test_case),
+            cast("t.ConfigurationDict", test_case),
         )
 
     @pytest.mark.parametrize(
@@ -567,18 +567,18 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test hash_value_object_by_value using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's GeneralValueType
-        # Cast lambda return type to GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
+        # Cast lambda return type to t.GeneralValueType for type checker
         operation_result: t.GeneralValueType = cast(
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.Types.ConfigurationDict", test_case["input_data"]),
+                cast("t.ConfigurationDict", test_case["input_data"]),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.Types.ConfigurationDict", test_case),
+            cast("t.ConfigurationDict", test_case),
         )
 
     @pytest.mark.parametrize(
@@ -591,19 +591,19 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test validate_entity_has_id using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's GeneralValueType
-        # Cast lambda return type to GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
+        # Cast lambda return type to t.GeneralValueType for type checker
         operation_result: t.GeneralValueType = cast(
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.Types.ConfigurationDict", test_case["input_data"]),
+                cast("t.ConfigurationDict", test_case["input_data"]),
                 id_attr=cast("str", test_case.get("id_attr", "unique_id")),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.Types.ConfigurationDict", test_case),
+            cast("t.ConfigurationDict", test_case),
         )
 
     @pytest.mark.parametrize(
@@ -616,18 +616,18 @@ class TestuDomain:
         test_case: dict[str, t.GeneralValueType],
     ) -> None:
         """Test validate_value_object_immutable using FlextTestsUtilities."""
-        # Type narrowing: execute_domain_operation returns object, but we know it's GeneralValueType
-        # Cast lambda return type to GeneralValueType for type checker
+        # Type narrowing: execute_domain_operation returns object, but we know it's t.GeneralValueType
+        # Cast lambda return type to t.GeneralValueType for type checker
         operation_result: t.GeneralValueType = cast(
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.Types.ConfigurationDict", test_case["input_data"]),
+                cast("t.ConfigurationDict", test_case["input_data"]),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.Types.ConfigurationDict", test_case),
+            cast("t.ConfigurationDict", test_case),
         )
 
     # ============================================================================

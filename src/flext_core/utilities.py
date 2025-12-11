@@ -160,6 +160,38 @@ class FlextUtilities:
         )
 
     @staticmethod
+    def create_enum(name: str, values: dict[str, str]) -> type[StrEnum]:
+        """Create StrEnum dynamically from values dict.
+
+        Factory method for reducing StrEnum boilerplate during constants refactoring.
+        Enables transitioning from class definitions to alias-based constants.
+
+        Python 3.13+ recommended pattern for dynamic enum creation.
+
+        Args:
+            name: StrEnum class name (will be used as __name__)
+            values: Dictionary mapping member names to string values
+
+        Returns:
+            Newly created StrEnum class with specified members
+
+        Example:
+            >>> from flext_core.utilities import u
+            >>> OutputFormat = u.create_enum(
+            ...     "OutputFormat", {"JSON": "json", "YAML": "yaml", "CSV": "csv"}
+            ... )
+            >>> assert OutputFormat.JSON.value == "json"
+            >>> assert isinstance(OutputFormat.JSON, StrEnum)
+
+        Note:
+            This method is used during v0.10 → v0.11 constants refactoring
+            to reduce boilerplate code in FlextConstants and dependent projects.
+            After refactoring completes, prefer explicit StrEnum class definitions.
+
+        """
+        return StrEnum(name, values)
+
+    @staticmethod
     def to_str(value: object, *, default: str | None = None) -> str:
         """Convert value to string. Alias for conversion(value, mode='to_str')."""
         return _conversion_fn(value, mode="to_str", default=default)
@@ -472,10 +504,10 @@ class FlextUtilities:
             """
             # Use container's scoped() method for proper scoping
             # Python 3.13: dict[str, object] is structurally compatible with ServiceMapping
-            # ServiceInstanceType = GeneralValueType | BaseModel | Callable[..., GeneralValueType] | object
+            # ServiceInstanceType = t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
             # object is compatible with ServiceInstanceType (object is included in union)
             # Convert dict to Mapping for structural compatibility
-            services_mapping: t.Types.ServiceMapping | None = (
+            services_mapping: t.ServiceMapping | None = (
                 dict(overrides) if overrides is not None else None
             )
             # Cast needed: ServiceMapping includes 'object' but scoped() expects narrower type
@@ -567,8 +599,8 @@ class FlextUtilities:
 
             """
             try:
-                # Python 3.13: Callable[[], T] is compatible with FactoryCallable = Callable[[], GeneralValueType]
-                # Cast needed: T might be wider than GeneralValueType, but protocol expects GeneralValueType
+                # Python 3.13: Callable[[], T] is compatible with FactoryCallable = Callable[[], t.GeneralValueType]
+                # Cast needed: T might be wider than t.GeneralValueType, but protocol expects t.GeneralValueType
                 register_result = container.register_factory(
                     name, cast("Callable[[], t.GeneralValueType]", factory)
                 )
@@ -688,26 +720,26 @@ class FlextUtilities:
 
     @staticmethod
     def merge(
-        base: t.Types.ConfigurationDict,
-        other: t.Types.ConfigurationDict,
+        base: t.ConfigurationDict,
+        other: t.ConfigurationDict,
         *,
         strategy: str = "deep",
-    ) -> r[t.Types.ConfigurationDict]:
+    ) -> r[t.ConfigurationDict]:
         """Merge two dictionaries - delegates to FlextUtilitiesCollection."""
         return FlextUtilitiesCollection.merge(base, other, strategy=strategy)
 
     @staticmethod
     def transform(
-        source: t.Types.ConfigurationDict | t.Types.ConfigurationMapping,
+        source: t.ConfigurationDict | t.ConfigurationMapping,
         *,
         normalize: bool = False,
         strip_none: bool = False,
         strip_empty: bool = False,
-        map_keys: t.Types.StringDict | None = None,
+        map_keys: t.StringDict | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
         to_json: bool = False,
-    ) -> r[t.Types.ConfigurationDict]:
+    ) -> r[t.ConfigurationDict]:
         """Transform dictionary with multiple options - delegates to FlextUtilitiesMapper.
 
         Args:
@@ -815,7 +847,7 @@ class FlextUtilities:
 
     @staticmethod
     def extract[T](
-        data: t.Types.ConfigurationMapping | object,
+        data: t.ConfigurationMapping | object,
         path: str,
         *,
         default: T | None = None,
@@ -1030,7 +1062,7 @@ class FlextUtilities:
         _progress_interval: int = 1,
         pre_validate: Callable[[T], bool] | None = None,
         flatten: bool = False,
-    ) -> r[t.Types.BatchResultDict]:
+    ) -> r[t.BatchResultDict]:
         """Process items in batches - delegates to FlextUtilitiesCollection.batch."""
         return FlextUtilitiesCollection.batch(
             items,
@@ -1066,7 +1098,7 @@ class FlextUtilities:
     @staticmethod
     @overload
     def get(
-        data: t.Types.ConfigurationMapping | object,
+        data: t.ConfigurationMapping | object,
         key: str,
         *,
         default: str = "",
@@ -1075,7 +1107,7 @@ class FlextUtilities:
     @staticmethod
     @overload
     def get[T](
-        data: t.Types.ConfigurationMapping | object,
+        data: t.ConfigurationMapping | object,
         key: str,
         *,
         default: list[T],
@@ -1084,7 +1116,7 @@ class FlextUtilities:
     @staticmethod
     @overload
     def get[T](
-        data: t.Types.ConfigurationMapping | object,
+        data: t.ConfigurationMapping | object,
         key: str,
         *,
         default: T | None = None,
@@ -1092,7 +1124,7 @@ class FlextUtilities:
 
     @staticmethod
     def get[T](
-        data: t.Types.ConfigurationMapping | object,
+        data: t.ConfigurationMapping | object,
         key: str,
         *,
         default: T | None = None,

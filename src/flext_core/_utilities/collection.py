@@ -202,8 +202,8 @@ class FlextUtilitiesCollection:
                 msg = f"Expected dict, got {type(value).__name__}"
                 raise TypeError(msg)
 
-            # Python 3.13: Type narrowing - value is dict[str, GeneralValueType] after TypeGuard
-            # GeneralValueType includes ScalarValue, so we can safely narrow
+            # Python 3.13: Type narrowing - value is dict[str, t.GeneralValueType] after TypeGuard
+            # t.GeneralValueType includes ScalarValue, so we can safely narrow
             # Use type narrowing with runtime validation
             # Use dict comprehension for type narrowing
             value_dict: dict[str, t.ScalarValue] = {
@@ -951,7 +951,7 @@ class FlextUtilitiesCollection:
         operation: Callable[[T], R | r[R]],
         errors: list[tuple[int, str]],
         on_error: str,
-    ) -> R | r[R] | r[t.Types.BatchResultDict] | None:
+    ) -> R | r[R] | r[t.BatchResultDict] | None:
         """Helper: Process a single batch item."""
         try:
             # Type narrowing: operation is Callable, result type is unknown
@@ -971,7 +971,7 @@ class FlextUtilitiesCollection:
                     error_msg = result_typed.error or "Unknown error"
                     error_text = f"Item {idx} failed: {error_msg}"
                     if on_error == "fail":
-                        return r[t.Types.BatchResultDict].fail(error_text)
+                        return r[t.BatchResultDict].fail(error_text)
                     if on_error == "collect":
                         errors.append((idx, error_msg))
                     return None
@@ -984,7 +984,7 @@ class FlextUtilitiesCollection:
             error_msg = str(e)
             error_text = f"Item {idx} failed: {error_msg}"
             if on_error == "fail":
-                return r[t.Types.BatchResultDict].fail(error_text)
+                return r[t.BatchResultDict].fail(error_text)
             if on_error == "collect":
                 errors.append((idx, error_msg))
             return None
@@ -1039,7 +1039,7 @@ class FlextUtilitiesCollection:
         _progress_interval: int = 1,
         pre_validate: Callable[[T], bool] | None = None,
         flatten: bool = False,
-    ) -> r[t.Types.BatchResultDict]:
+    ) -> r[t.BatchResultDict]:
         """Process items in batches (mnemonic: batch = chunk + process).
 
         Args:
@@ -1054,7 +1054,7 @@ class FlextUtilitiesCollection:
             flatten: If True, flatten nested lists in results
 
         Returns:
-            r[t.Types.BatchResultDict] containing batch results with errors
+            r[t.BatchResultDict] containing batch results with errors
 
         """
         total_items = len(items)
@@ -1073,7 +1073,7 @@ class FlextUtilitiesCollection:
         processed_results: list[R] = []
 
         for idx, item in enumerate(items_to_process):
-            # Type narrowing: process_result is R | "r[t.Types.BatchResultDict]" | None
+            # Type narrowing: process_result is R | "r[t.BatchResultDict]" | None
             process_result_raw = FlextUtilitiesCollection._batch_process_single_item(
                 item,
                 idx,
@@ -1088,8 +1088,8 @@ class FlextUtilitiesCollection:
             if hasattr(process_result_raw, "is_success"):
                 is_failure = getattr(process_result_raw, "is_failure", False)
                 if is_failure:
-                    # Type narrowing: process_result_raw is r[t.Types.BatchResultDict]
-                    return cast("r[t.Types.BatchResultDict]", process_result_raw)
+                    # Type narrowing: process_result_raw is r[t.BatchResultDict]
+                    return cast("r[t.BatchResultDict]", process_result_raw)
                 # Type narrowing: process_result_raw is r[R] and is_success is True
                 # Extract value from result
                 extracted_value = getattr(
@@ -1103,10 +1103,10 @@ class FlextUtilitiesCollection:
             if progress is not None and idx % _progress_interval == 0:
                 progress(idx + 1, total_items)
 
-        # Convert to GeneralValueType for flattening
+        # Convert to t.GeneralValueType for flattening
         def to_general_value(item: R) -> t.GeneralValueType:
-            """Convert item to GeneralValueType."""
-            # Cast to GeneralValueType - R is known to be a valid GeneralValueType
+            """Convert item to t.GeneralValueType."""
+            # Cast to t.GeneralValueType - R is known to be a valid t.GeneralValueType
             return item
 
         validated_results_raw_list: list[R] = processed_results
@@ -1125,7 +1125,7 @@ class FlextUtilitiesCollection:
         if progress is not None:
             progress(total_items, total_items)
 
-        batch_result: t.Types.BatchResultDict = {
+        batch_result: t.BatchResultDict = {
             "results": flattened_results,
             "errors": errors,
             "total": total_items,
@@ -1165,11 +1165,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge(
-        base: t.Types.ConfigurationMapping,
-        other: t.Types.ConfigurationMapping,
+        base: t.ConfigurationMapping,
+        other: t.ConfigurationMapping,
         *,
         strategy: str = "deep",
-    ) -> r[t.Types.ConfigurationDict]:
+    ) -> r[t.ConfigurationDict]:
         """Merge two dictionaries using specified strategy.
 
         Strategies:
@@ -1193,8 +1193,8 @@ class FlextUtilitiesCollection:
             # Convert inputs to dicts for manipulation
             # Deep copy base to avoid side effects
             # ConfigurationMapping is always a Mapping, so isinstance is redundant
-            merged: t.Types.ConfigurationDict = copy.deepcopy(dict(base))
-            other_dict: t.Types.ConfigurationDict = dict(other)
+            merged: t.ConfigurationDict = copy.deepcopy(dict(base))
+            other_dict: t.ConfigurationDict = dict(other)
 
             if strategy == c.Mixins.OPERATION_OVERRIDE:
                 merged.update(other_dict)
@@ -1215,12 +1215,12 @@ class FlextUtilitiesCollection:
 
             # Helper for deep merge
             def _deep_merge(
-                target: t.Types.ConfigurationDict,
-                source: t.Types.ConfigurationDict,
+                target: t.ConfigurationDict,
+                source: t.ConfigurationDict,
                 mode: str,
             ) -> None:
                 for key, value_raw in source.items():
-                    # Type narrowing: value from ConfigurationDict is GeneralValueType
+                    # Type narrowing: value from ConfigurationDict is t.GeneralValueType
                     value: t.GeneralValueType = value_raw
                     # Filter logic
                     if mode in {"filter_none", "filter_both"} and value is None:
@@ -1245,8 +1245,8 @@ class FlextUtilitiesCollection:
                         if isinstance(target_val, dict) and isinstance(value, dict):
                             # Type narrowing: TypeGuard ensures both are dict
                             # No cast needed - TypeGuard provides type narrowing
-                            target_dict: t.Types.ConfigurationDict = target_val
-                            value_dict: t.Types.ConfigurationDict = value
+                            target_dict: t.ConfigurationDict = target_val
+                            value_dict: t.ConfigurationDict = value
                             _deep_merge(
                                 target_dict,
                                 value_dict,
@@ -1263,7 +1263,7 @@ class FlextUtilitiesCollection:
                             and FlextUtilitiesGuards.is_list(value)
                         ):
                             # Python 3.13: Type narrowing - TypeGuard ensures both are list
-                            # TypeGuard narrows to list, but we need list[GeneralValueType]
+                            # TypeGuard narrows to list, but we need list[t.GeneralValueType]
                             # Use type narrowing with runtime validation
                             target_list: list[t.GeneralValueType] = cast(
                                 "list[t.GeneralValueType]", list(target_val)
@@ -1275,7 +1275,7 @@ class FlextUtilitiesCollection:
                             # Create new list to avoid mutating original objects if they were refs
                             target[key] = (
                                 target_list + value_list
-                            )  # list[GeneralValueType] compatible with GeneralValueType
+                            )  # list[t.GeneralValueType] compatible with t.GeneralValueType
                             continue
 
                     # Default: override
@@ -1283,13 +1283,13 @@ class FlextUtilitiesCollection:
                     # Python 3.13: Use TypeGuard for proper type narrowing
                     # Access private methods for TypeGuard return type (needed for type narrowing)
                     if isinstance(value, (dict, list)):
-                        # Type narrowing: value is dict[str, GeneralValueType] | list[GeneralValueType]
-                        # deepcopy preserves type, so result is GeneralValueType compatible
+                        # Type narrowing: value is dict[str, t.GeneralValueType] | list[t.GeneralValueType]
+                        # deepcopy preserves type, so result is t.GeneralValueType compatible
                         copied_value = copy.deepcopy(value)
                         target[key] = copied_value
                     else:
-                        # Type narrowing: value is GeneralValueType (scalar or other types)
-                        target[key] = value  # GeneralValueType compatible
+                        # Type narrowing: value is t.GeneralValueType (scalar or other types)
+                        target[key] = value  # t.GeneralValueType compatible
 
             _deep_merge(merged, other_dict, strategy)
             return r.ok(merged)

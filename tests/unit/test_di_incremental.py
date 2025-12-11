@@ -22,10 +22,10 @@ from types import ModuleType
 from typing import cast
 
 from flext_core import (
-    FlextConfig,
     FlextContainer,
     FlextContext,
     FlextRuntime,
+    FlextSettings,
     r,
     s,
     t,
@@ -350,7 +350,7 @@ class TestContainerDIRealExecution:
         container = FlextContainer(_context=FlextContext())
 
         # Create scoped container with config
-        config_override = FlextConfig(app_name="scoped_app")
+        config_override = FlextSettings(app_name="scoped_app")
         scoped = container.scoped(config=config_override)
 
         # Verify scoped container has config via public API
@@ -406,7 +406,7 @@ class TestServiceBootstrapWithDI:
 
         class TestService(s[str]):
             @classmethod
-            def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+            def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
                 # Return RuntimeBootstrapOptions TypedDict with correct types
                 # factories expects Callable[[], ScalarValue | Sequence[ScalarValue] | Mapping[str, ScalarValue]]
                 # lambda: {"custom": "data"} returns dict[str, str] which is Mapping[str, ScalarValue]

@@ -37,7 +37,7 @@
 
 ### infrastructure.md (Layer 4)
 
-- **Strengths**: `FlextConfig`, `FlextLogger`, and `FlextContext` samples map to the current code.
+- **Strengths**: `FlextSettings`, `FlextLogger`, and `FlextContext` samples map to the current code.
 - **Gaps**: Briefly document protocol usage (runtime-checkable) and how logging picks up request/user context.
 
 ---

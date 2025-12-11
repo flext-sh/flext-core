@@ -300,16 +300,21 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: object,
-    ) -> TypeGuard[t.Types.ConfigurationMapping]:
+    ) -> TypeGuard[t.ConfigurationMapping]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a t.Types.ConfigurationMapping or dict-like object, False otherwise
+            True if value is a t.ConfigurationMapping or dict-like object, False otherwise
 
         """
+        # #region agent log
+        # import json
+        # with open('/home/marlonsc/flext/.cursor/debug.log', 'a') as f:
+        #     f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "runtime.py:317", "message": "Entering is_dict_like", "data": {"value": str(value)}, "timestamp": Date.now()}) + '\n')
+        # #endregion
         if isinstance(value, dict):
             return True
         # Check for dict-like objects (UserDict, etc.)
@@ -338,6 +343,11 @@ class FlextRuntime:
             True if value is a list[t.GeneralValueType] or list-like sequence, False otherwise
 
         """
+        # #region agent log
+        # import json
+        # with open('/home/marlonsc/flext/.cursor/debug.log', 'a') as f:
+        #     f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "runtime.py:343", "message": "Entering is_list_like", "data": {"value": str(value)}, "timestamp": Date.now()}) + '\n')
+        # #endregion
         return isinstance(value, list)
 
     @staticmethod
@@ -346,15 +356,15 @@ class FlextRuntime:
     ) -> t.GeneralValueType:
         """Normalize any value to t.GeneralValueType recursively.
 
-        Converts arbitrary objects, t.Types.ConfigurationDict, list[object], and other types
-        to t.Types.ConfigurationMapping, Sequence[GeneralValueType], etc.
+        Converts arbitrary objects, t.ConfigurationDict, list[object], and other types
+        to t.ConfigurationMapping, Sequence[t.GeneralValueType], etc.
         This is the central conversion function for type safety.
 
         Args:
             val: Value to normalize (accepts object for flexibility with generics)
 
         Returns:
-            Normalized value compatible with GeneralValueType
+            Normalized value compatible with t.GeneralValueType
 
         Examples:
             >>> FlextRuntime.normalize_to_general_value({"key": "value"})
@@ -365,31 +375,36 @@ class FlextRuntime:
             [1, 2, {'a': 'b'}]
 
         """
+        # #region agent log
+        # import json
+        # with open('/home/marlonsc/flext/.cursor/debug.log', 'a') as f:
+        #     f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "runtime.py:366", "message": "Entering normalize_to_general_value", "data": {"val": str(val)}, "timestamp": Date.now()}) + '\n')
+        # #endregion
         if isinstance(val, (str, int, float, bool, type(None))):
             return val
         if FlextRuntime.is_dict_like(val):
-            # Business Rule: Convert to t.Types.ConfigurationDict recursively
-            # dict is compatible with Mapping[str, GeneralValueType] in GeneralValueType union.
+            # Business Rule: Convert to t.ConfigurationDict recursively
+            # dict is compatible with Mapping[str, t.GeneralValueType] in t.GeneralValueType union.
             # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
             #
             # Audit Implication: Normalizes nested data structures for type safety.
-            # Used throughout FLEXT for converting arbitrary data to GeneralValueType.
+            # Used throughout FLEXT for converting arbitrary data to t.GeneralValueType.
             # Returns dict that is compatible with Mapping interface for read-only access.
             dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
             # Type narrowing: dict_v is dict[object, object] from dict() constructor
             # We need to filter only str keys to build ConfigurationDict
             # Use direct dict comprehension to avoid circular dependency with mapper
-            result: t.Types.ConfigurationDict = {}
+            result: t.ConfigurationDict = {}
             for k, v in dict_v.items():
                 # Type narrowing: k is object from dict.items(), check if str for ConfigurationDict
                 if isinstance(k, str):
                     result[k] = FlextRuntime.normalize_to_general_value(v)
             return result
         if FlextRuntime.is_list_like(val):
-            # Convert to list[GeneralValueType] recursively
+            # Convert to list[t.GeneralValueType] recursively
             return [FlextRuntime.normalize_to_general_value(item) for item in val]
         # For arbitrary objects that don't match known types, convert to string representation
-        # This ensures we always return a GeneralValueType-compatible value
+        # This ensures we always return a t.GeneralValueType-compatible value
         return str(val)
 
     @staticmethod
@@ -433,7 +448,7 @@ class FlextRuntime:
             # Type narrowing: dict_v is dict[object, object] from dict() constructor
             # We need to filter only str keys to build MetadataAttributeDict
             # Use direct dict comprehension to avoid circular dependency with mapper
-            result: t.Types.MetadataAttributeDict = {}
+            result: t.MetadataAttributeDict = {}
             for k, v in dict_v.items():
                 # Type narrowing: k is object from dict.items(), check if str for MetadataAttributeDict
                 if isinstance(k, str):
@@ -541,8 +556,8 @@ class FlextRuntime:
 
     @staticmethod
     def extract_generic_args(
-        type_hint: t.Utility.TypeHintSpecifier,
-    ) -> tuple[t.Utility.GenericTypeArgument, ...]:
+        type_hint: t.TypeHintSpecifier,
+    ) -> tuple[t.GenericTypeArgument, ...]:
         """Extract generic type arguments from a type hint.
 
         Business Rule: Extracts generic type arguments from type hints using
@@ -571,10 +586,10 @@ class FlextRuntime:
             if hasattr(type_hint, "__name__"):
                 type_name = getattr(type_hint, "__name__", "")
                 # Handle common type aliases - use actual type objects
-                # GenericTypeArgument = str | type[GeneralValueType]
+                # GenericTypeArgument = str | type[t.GeneralValueType]
                 # Type objects (str, int, float, bool) are valid GenericTypeArgument
-                # since they represent type[T] where T is a scalar GeneralValueType
-                type_mapping: t.Types.StringGenericTypeArgumentTupleDict = {
+                # since they represent type[T] where T is a scalar t.GeneralValueType
+                type_mapping: t.StringGenericTypeArgumentTupleDict = {
                     "StringList": (str,),
                     "IntList": (int,),
                     "FloatList": (float,),
@@ -603,7 +618,7 @@ class FlextRuntime:
             return ()
 
     @staticmethod
-    def is_sequence_type(type_hint: t.Utility.TypeHintSpecifier) -> bool:
+    def is_sequence_type(type_hint: t.TypeHintSpecifier) -> bool:
         """Check if type hint represents a sequence type (list, tuple, etc.).
 
         Business Rule: Checks if type hint represents a sequence type using
@@ -730,7 +745,7 @@ class FlextRuntime:
         @classmethod
         def create_layered_bridge(
             cls,
-            config: t.Types.ConfigurationMapping | None = None,
+            config: t.ConfigurationMapping | None = None,
         ) -> tuple[
             containers.DeclarativeContainer,
             containers.DynamicContainer,
@@ -762,7 +777,7 @@ class FlextRuntime:
         def create_container(
             cls,
             *,
-            config: t.Types.ConfigurationMapping | None = None,
+            config: t.ConfigurationMapping | None = None,
             services: Mapping[
                 str,
                 t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType],
@@ -864,7 +879,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration(
             di_container: containers.DynamicContainer,
-            config: t.Types.ConfigurationMapping | None,
+            config: t.ConfigurationMapping | None,
         ) -> providers.Configuration:
             """Bind configuration mapping to the DI container.
 
@@ -881,7 +896,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration_provider(
             configuration_provider: providers.Configuration,
-            config: t.Types.ConfigurationMapping | None,
+            config: t.ConfigurationMapping | None,
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
             if config:
@@ -950,6 +965,8 @@ class FlextRuntime:
             Note: packages parameter is accepted for API compatibility but not used internally.
             wiring.wire's packages parameter expects Iterable[Module] (module objects),
             but we accept Sequence[str] (package names). The actual wiring is handled by modules parameter.
+            For now, we pass None for packages when it's a Sequence[str] to avoid type errors.
+            The actual wiring will be handled by modules parameter.
             """
             modules_to_wire: list[ModuleType] = list(modules or [])
             if classes:
@@ -977,8 +994,8 @@ class FlextRuntime:
     def level_based_context_filter(
         _logger: p.Log,
         method_name: str,
-        event_dict: t.Types.ConfigurationMapping,
-    ) -> t.Types.ConfigurationMapping:
+        event_dict: t.ConfigurationMapping,
+    ) -> t.ConfigurationMapping:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -1025,13 +1042,13 @@ class FlextRuntime:
 
         # Process all keys in event_dict
         # Business Rule: Build mutable dict for construction, then return as dict
-        # dict is compatible with t.Types.ConfigurationMapping return type.
+        # dict is compatible with t.ConfigurationMapping return type.
         # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
         #
         # Audit Implication: This method filters log event data based on log level.
         # Used for conditional inclusion of verbose fields in structured logging.
         # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict: t.Types.ConfigurationDict = {}
+        filtered_dict: t.ConfigurationDict = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -1382,7 +1399,7 @@ class FlextRuntime:
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: t.Types.ConfigurationMapping | None = None,
+            error_data: t.ConfigurationMapping | None = None,
             *,
             is_success: bool = True,
         ) -> None:
@@ -1447,7 +1464,7 @@ class FlextRuntime:
             return self._error_code
 
         @property
-        def error_data(self) -> t.Types.ConfigurationMapping | None:
+        def error_data(self) -> t.ConfigurationMapping | None:
             """Get the error data."""
             return self._error_data
 
@@ -1652,7 +1669,7 @@ class FlextRuntime:
             cls,
             error: str | None,
             error_code: str | None = None,
-            error_data: t.Types.ConfigurationMapping | None = None,
+            error_data: t.ConfigurationMapping | None = None,
         ) -> FlextRuntime.RuntimeResult[T]:
             """Create failed result with error message.
 
@@ -1756,7 +1773,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: t.Types.EventDataMapping | None = None,
+            event_data: t.EventDataMapping | None = None,
         ) -> None:
             """Track domain event with context correlation.
 

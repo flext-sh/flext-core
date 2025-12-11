@@ -142,7 +142,7 @@ class TestFlextContainer:
     ) -> None:
         """Test fluent interface for service registration using fixtures."""
         container = clean_container
-        # Cast object to GeneralValueType | BaseModel for type compatibility
+        # Cast object to t.GeneralValueType | BaseModel for type compatibility
         # scenario.service is compatible at runtime but typed as object
         service_typed: (
             t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]
@@ -356,7 +356,7 @@ class TestFlextContainer:
         """Test typed retrieval with correct types using fixtures."""
         container = clean_container
         # Cast scenario.service to container.register() compatible type
-        # Runtime: object is compatible with GeneralValueType | BaseModel |
+        # Runtime: object is compatible with t.GeneralValueType | BaseModel |
         # Callable | object
         service_typed: (
             t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
@@ -526,10 +526,10 @@ class TestFlextContainer:
     def test_configure_container(self, config: dict[str, object]) -> None:
         """Test container configuration."""
         container = FlextContainer()
-        # Cast dict[str, object] to Mapping[str, GeneralValueType]
+        # Cast dict[str, object] to Mapping[str, t.GeneralValueType]
         # for type compatibility
-        config_typed: t.Types.ConfigurationMapping = cast(
-            "t.Types.ConfigurationMapping",
+        config_typed: t.ConfigurationMapping = cast(
+            "t.ConfigurationMapping",
             config,
         )
         container.configure(config_typed)
@@ -549,8 +549,8 @@ class TestFlextContainer:
             "max_workers": c.Container.DEFAULT_WORKERS,
         }
         # Cast dict[str, object] to ConfigurationMapping for type compatibility
-        config_typed: t.Types.ConfigurationMapping = cast(
-            "t.Types.ConfigurationMapping",
+        config_typed: t.ConfigurationMapping = cast(
+            "t.ConfigurationMapping",
             config,
         )
         result = container.with_config(config_typed)

@@ -17,6 +17,64 @@
 
 ---
 
+## 🔒 FLOCK PROTOCOL - Multi-Agent File Coordination
+
+### Purpose
+Prevent simultaneous file modifications that cause merge conflicts and corrupted code in multi-agent development environment.
+
+### Protocol Overview
+**Flock (File Lock)** establishes exclusive access to files during modification operations.
+
+### Establishing a Flock
+1. **Check .token** for existing locks on target file
+2. **Write lock** to .token: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
+3. **Re-read file** after lock is established (other agents may have modified)
+4. **Make changes** to the re-read content
+5. **Test changes** ensure they work
+6. **Release lock**: Update .token with `RELEASE_[AGENT_NAME]_[TARGET_FILE]`
+
+### Lock Format
+```bash
+# Establish lock
+FLOCK_[AGENT_NAME]_[TARGET_FILE]
+
+# Example
+FLOCK_AGENT_PLAN_EXECUTOR_flext_core/typings.py
+
+# Release lock
+RELEASE_[AGENT_NAME]_[TARGET_FILE]
+```
+
+### Critical Rules
+- **🔴 NEVER modify a file with active flock from another agent**
+- **🔄 ALWAYS re-read file after establishing your flock**
+- **⚡ RELEASE immediately after changes are complete and tested**
+- **🤝 COORDINATE with other agents if conflicts detected**
+- **📝 DOCUMENT your flock purpose in .token**
+
+### File Modification Workflow
+```bash
+# 1. Check for existing locks
+cat ../.token
+
+# 2. Establish your flock
+echo "FLOCK_AGENT_PLAN_EXECUTOR_flext_core/typings.py" >> ../.token
+
+# 3. Re-read the file (other agents may have changed it)
+git checkout HEAD -- src/flext_core/typings.py
+
+# 4. Make your changes
+# ... edit file ...
+
+# 5. Test your changes
+make test
+
+# 6. Release your flock
+echo "RELEASE_AGENT_PLAN_EXECUTOR_flext_core/typings.py" >> ../.token
+```
+
+---
+
 ## Rule 0 — Cross-Project Alignment
 - This file mirrors the root `../CLAUDE.md` standards. Any rule change must be written in the root first and then propagated to this file and to `flext-cli/`, `flext-ldap/`, `flext-ldif/`, and `algar-oud-mig/` `CLAUDE.md` files.
 - All agents accept cross-project changes and resolve conflicts in the root `CLAUDE.md` before coding.

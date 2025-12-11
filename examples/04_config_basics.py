@@ -1,4 +1,4 @@
-"""FlextConfig configuration management demonstration.
+"""FlextSettings configuration management demonstration.
 
 Shows environment-aware, type-safe configuration with Pydantic Settings.
 Demonstrates global singleton, validation patterns, and railway-oriented programming.
@@ -28,15 +28,15 @@ from pathlib import Path
 from pydantic import Field, ValidationError
 
 from flext_core import (
-    FlextConfig,
     FlextConstants,
     FlextResult,
     FlextService,
+    FlextSettings,
     t,
 )
 
 
-class AppConfig(FlextConfig):
+class AppConfig(FlextSettings):
     """Application configuration with advanced Pydantic 2 features.
 
     Uses Python 3.13+ patterns: PEP 695 type aliases, StrEnum validation,
@@ -96,14 +96,14 @@ class AppConfig(FlextConfig):
     )
 
 
-class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
-    """Service demonstrating advanced FlextConfig patterns using railway-oriented programming.
+class ConfigManagementService(FlextService[t.ServiceMetadataMapping]):
+    """Service demonstrating advanced FlextSettings patterns using railway-oriented programming.
 
     Uses functional composition, error handling chains, and type-safe configuration
     management with Python 3.13+ advanced patterns.
     """
 
-    def execute(self) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    def execute(self) -> FlextResult[t.ServiceMetadataMapping]:
         """Execute comprehensive configuration demonstrations using railway pattern."""
         return (
             self._log_start()
@@ -134,9 +134,9 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
     @staticmethod
     def _create_success_metadata(
         patterns: tuple[str, ...],
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Create success metadata from demonstrated patterns."""
-        return FlextResult[t.Types.ServiceMetadataMapping].ok({
+        return FlextResult[t.ServiceMetadataMapping].ok({
             "patterns_demonstrated": list(patterns),
             "config_features": [
                 "pydantic_settings",
@@ -156,11 +156,11 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
     @staticmethod
     def _handle_execution_error(
         error: str,
-    ) -> FlextResult[t.Types.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ServiceMetadataMapping]:
         """Handle execution errors with proper logging."""
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
-        return FlextResult[t.Types.ServiceMetadataMapping].fail(
+        return FlextResult[t.ServiceMetadataMapping].fail(
             error_msg,
             error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
@@ -294,7 +294,7 @@ class ConfigManagementService(FlextService[t.Types.ServiceMetadataMapping]):
             config1, config2 = configs
             print("\n=== Singleton Pattern ===")
             print(f"✅ Config instances: {id(config1)} vs {id(config2)}")
-            print("✅ Note: FlextConfig uses singleton pattern per settings class")
+            print("✅ Note: FlextSettings uses singleton pattern per settings class")
             return FlextResult[bool].ok(True)
 
         return create_configs().flat_map(display_singleton)
@@ -351,13 +351,13 @@ def main() -> FlextResult[bool]:
         result = demonstrate_file_config()
         return FlextResult[bool].ok(result.is_success)
 
-    def run_service_demo() -> FlextResult[t.Types.ServiceMetadataMapping]:
+    def run_service_demo() -> FlextResult[t.ServiceMetadataMapping]:
         """Run service-based configuration demonstration."""
         service = ConfigManagementService()
         return service.execute()
 
     def display_results(
-        metadata: t.Types.ServiceMetadataMapping,
+        metadata: t.ServiceMetadataMapping,
     ) -> FlextResult[bool]:
         """Display demonstration results."""
         patterns = metadata.get("patterns_demonstrated", [])

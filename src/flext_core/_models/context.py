@@ -34,25 +34,25 @@ class FlextModelsContext:
     @staticmethod
     def _to_general_value_dict(
         value: t.GeneralValueType,
-    ) -> t.Types.ConfigurationDict:
-        """Convert dict-like value to t.Types.ConfigurationDict ensuring type safety.
+    ) -> t.ConfigurationDict:
+        """Convert dict-like value to t.ConfigurationDict ensuring type safety.
 
         Helper method to convert dicts with potentially object values to
-        t.Types.ConfigurationDict for type compatibility.
+        t.ConfigurationDict for type compatibility.
         """
         if not FlextRuntime.is_dict_like(value):
             return {}
         if not isinstance(value, Mapping):
             return {}
-        result: t.Types.ConfigurationDict = {}
+        result: t.ConfigurationDict = {}
         # Type narrowing: value is now Mapping after isinstance check
         # Convert to dict for consistent iteration (handles both dict and Mapping)
         # Use ConfigurationMapping for type safety - values will be normalized
-        # to GeneralValueType
-        dict_value: t.Types.ConfigurationMapping = dict(value.items())
+        # to t.GeneralValueType
+        dict_value: t.ConfigurationMapping = dict(value.items())
         for k, v in dict_value.items():
             dict_key: str = str(k)
-            # Normalize value to GeneralValueType
+            # Normalize value to t.GeneralValueType
             normalized = FlextRuntime.normalize_to_general_value(v)
             result[dict_key] = normalized
         return result
@@ -147,7 +147,7 @@ class FlextModelsContext:
                 Current value with type T (from Generic[T] contract), or None.
 
             Architecture:
-                structlog stores Mapping[str, GeneralValueType] (typed via t).
+                structlog stores Mapping[str, t.GeneralValueType] (typed via t).
                 We cast to T | None to honor the Generic[T] contract.
                 Type safety is ensured by FlextContext using typed variables.
 
@@ -177,14 +177,14 @@ class FlextModelsContext:
                 structlog.contextvars.unbind_contextvars(self._key)
 
             # Create token for reset functionality
-            # T is conceptually bounded to GeneralValueType at runtime
+            # T is conceptually bounded to t.GeneralValueType at runtime
             # (structlog context)
             # Normalize value to ensure type safety
             if isinstance(
                 current_value,
                 (str, int, float, bool, type(None), dict, list),
             ):
-                # Type narrowing: current_value is already GeneralValueType
+                # Type narrowing: current_value is already t.GeneralValueType
                 prev_value: t.GeneralValueType = cast(
                     "t.GeneralValueType",
                     current_value,
@@ -289,13 +289,13 @@ class FlextModelsContext:
         """
 
         data: Annotated[
-            t.Types.ConfigurationDict,
+            t.ConfigurationDict,
             Field(
                 default_factory=dict,
                 description="Initial context data as key-value pairs",
             ),
         ] = Field(default_factory=dict)
-        metadata: FlextModelsBase.Metadata | t.Types.ConfigurationDict | None = Field(
+        metadata: FlextModelsBase.Metadata | t.ConfigurationDict | None = Field(
             default=None,
             description="Context metadata (creation info, source, etc.)",
         )
@@ -317,7 +317,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(val) and isinstance(val, Mapping):
                 # Type narrowing: is_dict_like ensures dict-like, isinstance ensures Mapping
                 # Convert to ConfigurationDict recursively
-                result: t.Types.ConfigurationDict = {}
+                result: t.ConfigurationDict = {}
                 dict_v = dict(val.items())
                 for k, v in dict_v.items():
                     result[k] = (
@@ -334,7 +334,7 @@ class FlextModelsContext:
                     FlextModelsContext.ContextData.normalize_to_general_value(item)
                     for item in val
                 ]
-            # For arbitrary objects, keep as is since GeneralValueType includes object
+            # For arbitrary objects, keep as is since t.GeneralValueType includes object
             return val
 
         @classmethod
@@ -381,8 +381,8 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: t.GeneralValueType | t.Types.ConfigurationMapping | None,
-        ) -> t.Types.ConfigurationDict:
+            v: t.GeneralValueType | t.ConfigurationMapping | None,
+        ) -> t.ConfigurationDict:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
             STRICT mode: Also accepts FlextModelsBase.Metadata and converts to dict.
@@ -398,7 +398,7 @@ class FlextModelsContext:
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
                     # model_dump() returns dict - cast for pyright type narrowing
-                    v = cast("t.Types.ConfigurationDict", model_dump_method())
+                    v = cast("t.ConfigurationDict", model_dump_method())
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -451,19 +451,17 @@ class FlextModelsContext:
         """
 
         data: Annotated[
-            t.Types.ConfigurationDict,
+            t.ConfigurationDict,
             Field(
                 default_factory=dict,
                 description="All context data from all scopes",
             ),
         ] = Field(default_factory=dict)
-        metadata: FlextModelsBase.Metadata | t.Types.ContextMetadataMapping | None = (
-            Field(
-                default=None,
-                description="Context metadata (creation info, source, etc.)",
-            )
+        metadata: FlextModelsBase.Metadata | t.ContextMetadataMapping | None = Field(
+            default=None,
+            description="Context metadata (creation info, source, etc.)",
         )
-        statistics: t.Types.ContextMetadataMapping = Field(
+        statistics: t.ContextMetadataMapping = Field(
             default_factory=dict,
             description="Usage statistics (operation counts, timing info)",
         )
@@ -517,8 +515,8 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: t.GeneralValueType | t.Types.ConfigurationMapping | None,
-        ) -> t.Types.ConfigurationDict:
+            v: t.GeneralValueType | t.ConfigurationMapping | None,
+        ) -> t.ConfigurationDict:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
@@ -526,7 +524,7 @@ class FlextModelsContext:
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
-            # Handle m.Base.Metadata specially - extract only attributes dict
+            # Handle m.Metadata specially - extract only attributes dict
             # (excludes datetime fields which aren't JSON-serializable)
             if isinstance(v, FlextModelsBase.Metadata):
                 v = v.attributes
@@ -535,7 +533,7 @@ class FlextModelsContext:
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
                     # model_dump() returns dict - cast for pyright type narrowing
-                    v = cast("t.Types.ConfigurationDict", model_dump_method())
+                    v = cast("t.ConfigurationDict", model_dump_method())
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -597,11 +595,11 @@ class FlextModelsContext:
             Field(default="", description="Type/category of scope"),
         ] = ""
         data: Annotated[
-            t.Types.ConfigurationDict,
+            t.ConfigurationDict,
             Field(default_factory=dict, description="Scope data"),
         ] = Field(default_factory=dict)
         metadata: Annotated[
-            t.Types.ConfigurationDict,
+            t.ConfigurationDict,
             Field(default_factory=dict, description="Scope metadata"),
         ] = Field(default_factory=dict)
 
@@ -609,8 +607,8 @@ class FlextModelsContext:
         @classmethod
         def _validate_data(
             cls,
-            v: t.GeneralValueType | t.Types.ConfigurationMapping | None,
-        ) -> t.Types.ConfigurationDict:
+            v: t.GeneralValueType | t.ConfigurationMapping | None,
+        ) -> t.ConfigurationDict:
             """Validate scope data - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
@@ -628,8 +626,8 @@ class FlextModelsContext:
         @classmethod
         def _validate_metadata(
             cls,
-            v: t.GeneralValueType | t.Types.ConfigurationMapping | None,
-        ) -> t.Types.ConfigurationDict:
+            v: t.GeneralValueType | t.ConfigurationMapping | None,
+        ) -> t.ConfigurationDict:
             """Validate scope metadata - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
@@ -688,7 +686,7 @@ class FlextModelsContext:
             Field(default=c.ZERO, ge=c.ZERO, description="Number of clear operations"),
         ] = c.ZERO
         operations: Annotated[
-            t.Types.ConfigurationDict,
+            t.ConfigurationDict,
             Field(
                 default_factory=dict,
                 description="Extensible operation/metrics counts",
@@ -699,8 +697,8 @@ class FlextModelsContext:
         @classmethod
         def _validate_operations(
             cls,
-            v: t.GeneralValueType | t.Types.ConfigurationMapping | None,
-        ) -> t.Types.ConfigurationDict:
+            v: t.GeneralValueType | t.ConfigurationMapping | None,
+        ) -> t.ConfigurationDict:
             """Validate operations - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
@@ -796,7 +794,7 @@ class FlextModelsContext:
             Field(default=None, description="Unique message identifier"),
         ] = None
         custom_fields: Annotated[
-            t.Types.ConfigurationDict,
+            t.ConfigurationDict,
             Field(
                 default_factory=dict,
                 description="Extensible custom metadata fields",
@@ -807,8 +805,8 @@ class FlextModelsContext:
         @classmethod
         def _validate_custom_fields(
             cls,
-            v: t.GeneralValueType | t.Types.ConfigurationMapping | None,
-        ) -> t.Types.ConfigurationDict:
+            v: t.GeneralValueType | t.ConfigurationMapping | None,
+        ) -> t.ConfigurationDict:
             """Validate custom_fields - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
@@ -834,13 +832,16 @@ class FlextModelsContext:
             Field(default=None, description="Type of domain"),
         ] = None
         domain_data: Annotated[
-            t.Types.ConfigurationDict,
+            t.ConfigurationDict,
             Field(default_factory=dict, description="Domain-specific data"),
         ] = Field(default_factory=dict)
         domain_metadata: Annotated[
-            t.Types.ConfigurationDict,
+            t.ConfigurationDict,
             Field(default_factory=dict, description="Domain metadata"),
         ] = Field(default_factory=dict)
 
 
 __all__ = ["FlextModelsContext"]
+
+# Rebuild models to resolve forward references in recursive types
+FlextModelsContext.ContextData.model_rebuild()

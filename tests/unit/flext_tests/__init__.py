@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import (
-    FlextConfig as FlextConfig,
     FlextConstants as FlextConstants,
     FlextContainer as FlextContainer,
     FlextContext as FlextContext,
@@ -21,6 +20,7 @@ from flext_core import (
     FlextResult as FlextResult,
     FlextRuntime as FlextRuntime,
     FlextService as FlextService,
+    FlextSettings as FlextSettings,
     h as h,
     p as p,
     t as t,

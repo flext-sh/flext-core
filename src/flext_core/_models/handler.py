@@ -210,7 +210,7 @@ class FlextModelsHandler:
         # Use PrivateAttr for internal state (Pydantic v2 pattern)
         # PrivateAttr fields are not validated by Pydantic, so pyright needs explicit type hints
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: t.Types.ConfigurationDict | None = PrivateAttr(default=None)
+        _metrics_state: t.ConfigurationDict | None = PrivateAttr(default=None)
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -256,7 +256,7 @@ class FlextModelsHandler:
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
 
         @computed_field
-        def metrics_state(self) -> t.Types.ConfigurationMapping:
+        def metrics_state(self) -> t.ConfigurationMapping:
             """Get current metrics state.
 
             Returns:
@@ -273,18 +273,18 @@ class FlextModelsHandler:
             """
             if self._metrics_state is None:
                 # Use PrivateAttr for proper Pydantic v2 pattern
-                empty_dict: t.Types.ConfigurationDict = {}
+                empty_dict: t.ConfigurationDict = {}
                 self._metrics_state = empty_dict
             # Type narrowing: _metrics_state is not None after initialization above
             # PrivateAttr type narrowing works after None check and initialization
-            metrics_state: t.Types.ConfigurationDict = self._metrics_state
+            metrics_state: t.ConfigurationDict = self._metrics_state
             # ConfigurationDict (dict) is compatible with ConfigurationMapping (Mapping)
             # dict implements Mapping, so direct return works without cast
             return metrics_state
 
         def set_metrics_state(
             self,
-            state: t.Types.ConfigurationDict,
+            state: t.ConfigurationDict,
         ) -> None:
             """Set metrics state.
 

@@ -161,7 +161,7 @@ class TestHandlerDecoratorMetadata:
                 return r[str].ok("handled")
 
         method = TestService.handle_user
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         assert config.command is UserCreateCommand
 
     def test_decorator_with_custom_priority(self) -> None:
@@ -173,7 +173,7 @@ class TestHandlerDecoratorMetadata:
                 return r[str].ok("handled")
 
         method = TestService.handle_user
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         assert config.priority == 42
 
     def test_decorator_default_priority(self) -> None:
@@ -185,7 +185,7 @@ class TestHandlerDecoratorMetadata:
                 return r[str].ok("handled")
 
         method = TestService.handle_user
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         assert config.priority == c.Discovery.DEFAULT_PRIORITY
 
     def test_decorator_with_timeout(self) -> None:
@@ -200,7 +200,7 @@ class TestHandlerDecoratorMetadata:
                 return r[str].ok("handled")
 
         method = TestService.handle_user
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         assert config.timeout == 5.0
 
     def test_decorator_default_timeout(self) -> None:
@@ -212,7 +212,7 @@ class TestHandlerDecoratorMetadata:
                 return r[str].ok("handled")
 
         method = TestService.handle_user
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         assert config.timeout == c.Discovery.DEFAULT_TIMEOUT
 
     def test_decorator_with_middleware_list(self) -> None:
@@ -228,7 +228,7 @@ class TestHandlerDecoratorMetadata:
                 return r[str].ok("handled")
 
         method = TestService.handle_user
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         assert config.middleware == middleware_types
 
     def test_decorator_default_middleware(self) -> None:
@@ -240,7 +240,7 @@ class TestHandlerDecoratorMetadata:
                 return r[str].ok("handled")
 
         method = TestService.handle_user
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         assert config.middleware == []
 
     def test_decorator_preserves_function_identity(self) -> None:
@@ -271,7 +271,7 @@ class TestHandlerDiscoveryClass:
         handlers = h.Discovery.scan_class(UserService)
         for name, config in handlers:
             assert isinstance(name, str)
-            assert isinstance(config, m.Handler.DecoratorConfig)
+            assert isinstance(config, m.HandlerDecoratorConfig)
 
     def test_scan_class_sorts_by_priority_descending(self) -> None:
         """scan_class() should sort handlers by priority (highest first)."""
@@ -301,7 +301,7 @@ class TestHandlerDiscoveryClass:
         """scan_class() results should include DecoratorConfig."""
         handlers = h.Discovery.scan_class(UserService)
         for _, config in handlers:
-            assert isinstance(config, m.Handler.DecoratorConfig)
+            assert isinstance(config, m.HandlerDecoratorConfig)
             assert config.command is not None
             assert config.priority >= 0
 
@@ -363,7 +363,7 @@ class TestHandlerDiscoveryModule:
         for name, func, config in handlers:
             assert isinstance(name, str)
             assert callable(func)
-            assert isinstance(config, m.Handler.DecoratorConfig)
+            assert isinstance(config, m.HandlerDecoratorConfig)
 
     def test_scan_module_ignores_private_functions(self) -> None:
         """scan_module() should skip functions starting with underscore."""
@@ -524,7 +524,7 @@ class TestHandlerDiscoveryEdgeCases:
                 return r[str].ok("ok")
 
         method = TestService.handle
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         assert config.timeout is None
 
     def test_scan_class_on_builtin_class(self) -> None:
@@ -552,7 +552,7 @@ class TestHandlerDiscoveryEdgeCases:
                 return r[str].ok("ok")
 
         method = TestService.handle
-        config: m.Handler.DecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
+        config: m.HandlerDecoratorConfig = getattr(method, c.Discovery.HANDLER_ATTR)
         # The innermost (first applied) decorator should take effect
         # Due to decorator order, UserDeleteCommand with priority 20 is applied last
         assert config.command is UserDeleteCommand

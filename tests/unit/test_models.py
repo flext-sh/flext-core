@@ -196,7 +196,7 @@ class TestFlextModels:
     def test_models_command_creation(self) -> None:
         """Test command model creation."""
 
-        class TestCommand(m.Cqrs.Command):
+        class TestCommand(m.Command):
             command_type: str = "test_command"
             data: str
 
@@ -242,7 +242,7 @@ class TestFlextModels:
 
     def test_models_pagination_creation(self) -> None:
         """Test pagination model creation."""
-        pagination = m.Cqrs.Pagination(page=1, size=10)
+        pagination = m.Pagination(page=1, size=10)
         tm.that(pagination.page, eq=1, msg="Pagination page must match input")
         tm.that(pagination.size, eq=10, msg="Pagination size must match input")
         tm.that(pagination.size, gt=0, msg="Pagination size must be positive")
@@ -650,7 +650,7 @@ class TestFlextModels:
     def test_command_creation_with_mixins(self) -> None:
         """Test Command creation with all mixins."""
 
-        class TestCommand(m.Cqrs.Command):
+        class TestCommand(m.Command):
             action: str
             target: str
 
@@ -677,7 +677,7 @@ class TestFlextModels:
 
     def test_query_creation(self) -> None:
         """Test Query creation."""
-        query = m.Cqrs.Query(
+        query = m.Query(
             query_type="find_users",
             filters={"active": "true"},
         )
@@ -723,7 +723,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         # Convert to proper type: Sequence[tuple[str, EventDataMapping | None]]
-        events: Sequence[tuple[str, t.Types.EventDataMapping | None]] = [
+        events: Sequence[tuple[str, t.EventDataMapping | None]] = [
             ("event1", {"data": "value1"}),
             ("event2", {"data": "value2"}),
             ("event3", {"data": "value3"}),
@@ -747,13 +747,13 @@ class TestFlextModels:
         # Testing invalid input type - intentionally passing wrong type
         # for runtime validation
         invalid_input = cast(
-            "Sequence[tuple[str, t.Types.EventDataMapping | None]]",
+            "Sequence[tuple[str, t.EventDataMapping | None]]",
             "not a list",
         )
         result = aggregate.add_domain_events_bulk(invalid_input)
         u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "Events must be a list" in result.error
-        invalid_empty_name: Sequence[tuple[str, t.Types.EventDataMapping | None]] = [
+        invalid_empty_name: Sequence[tuple[str, t.EventDataMapping | None]] = [
             ("", {"data": "value"}),
         ]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
@@ -770,7 +770,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
-        events: Sequence[tuple[str, t.Types.EventDataMapping | None]] = [
+        events: Sequence[tuple[str, t.EventDataMapping | None]] = [
             (f"event{i}", {"data": f"value{i}"}) for i in range(max_events + 1)
         ]
         result = aggregate.add_domain_events_bulk(events)
@@ -830,7 +830,7 @@ class TestFlextModels:
 
     def test_command_model_creation(self) -> None:
         """Test Command model creation with correct fields."""
-        command = m.Cqrs.Command(
+        command = m.Command(
             command_type="CreateOrder",
             issuer_id="issuer-123",
         )
@@ -855,7 +855,7 @@ class TestFlextModels:
 
     def test_processing_request_model_creation(self) -> None:
         """Test ProcessingRequest model with correct fields."""
-        request = m.Config.ProcessingRequest(
+        request = m.ProcessingRequest(
             data={"input": "data"},
             enable_validation=True,
         )
@@ -869,7 +869,7 @@ class TestFlextModels:
         def dummy_handler() -> None:
             pass
 
-        reg = m.Handler.Registration(
+        reg = m.HandlerRegistration(
             name="TestHandler",
             handler=dummy_handler,
             event_types=["CreateUser"],
@@ -880,7 +880,7 @@ class TestFlextModels:
 
     def test_batch_processing_config_model(self) -> None:
         """Test BatchProcessingConfig model with correct fields."""
-        config = m.Config.BatchProcessingConfig(
+        config = m.BatchProcessingConfig(
             batch_size=100,
             continue_on_error=True,
             data_items=[1, 2, 3],
@@ -891,7 +891,7 @@ class TestFlextModels:
 
     def test_handler_execution_config_model(self) -> None:
         """Test HandlerExecutionConfig model with correct fields."""
-        config = m.Config.HandlerExecutionConfig(
+        config = m.HandlerExecutionConfig(
             handler_name="my_handler",
             input_data={"key": "value"},
             retry_on_failure=True,
@@ -902,7 +902,7 @@ class TestFlextModels:
 
     def test_retry_configuration_model(self) -> None:
         """Test RetryConfiguration model with correct fields."""
-        retry = m.Config.RetryConfiguration(
+        retry = m.RetryConfiguration(
             max_attempts=3,
             initial_delay_seconds=1000,
             max_delay_seconds=30000,
@@ -933,7 +933,7 @@ class TestFlextModels:
 
     def test_retry_configuration_with_exceptions(self) -> None:
         """Test RetryConfiguration with retry_on_exceptions."""
-        retry = m.Config.RetryConfiguration(
+        retry = m.RetryConfiguration(
             max_attempts=3,
             retry_on_exceptions=[ValueError, RuntimeError, TypeError],
         )
@@ -967,7 +967,7 @@ class TestFlextModels:
 
     def test_retry_configuration_with_status_codes(self) -> None:
         """Test RetryConfiguration with retry_on_status_codes."""
-        retry = m.Config.RetryConfiguration(
+        retry = m.RetryConfiguration(
             max_attempts=3,
             retry_on_status_codes=[500, 502, 503, 504],
         )
@@ -1006,7 +1006,7 @@ class TestFlextModels:
 
     def test_retry_configuration_with_both_exceptions_and_status_codes(self) -> None:
         """Test RetryConfiguration with both retry_on_exceptions and status codes."""
-        retry = m.Config.RetryConfiguration(
+        retry = m.RetryConfiguration(
             max_attempts=3,
             retry_on_exceptions=[ValueError, ConnectionError],
             retry_on_status_codes=[429, 500, 503],
@@ -1050,7 +1050,7 @@ class TestFlextModels:
 
     def test_validation_configuration_model(self) -> None:
         """Test ValidationConfiguration model with correct fields."""
-        val_config = m.Config.ValidationConfiguration(
+        val_config = m.ValidationConfiguration(
             enable_strict_mode=True,
             validate_on_assignment=True,
             validate_on_read=False,
@@ -1061,7 +1061,7 @@ class TestFlextModels:
 
     def test_cqrs_handler_model_creation(self) -> None:
         """Test Cqrs.Handler model creation."""
-        handler_config = m.Cqrs.Handler(
+        handler_config = m.CqrsHandler(
             handler_id="handler-123",
             handler_name="CreateUserHandler",
             handler_type=c.Cqrs.HandlerType.COMMAND,
@@ -1072,15 +1072,15 @@ class TestFlextModels:
 
     def test_pagination_model_creation(self) -> None:
         """Test Pagination model with correct fields."""
-        paging = m.Cqrs.Pagination(page=1, size=20)
+        paging = m.Pagination(page=1, size=20)
         assert paging.page == 1
         assert paging.size == 20
         assert paging.offset == 0
 
     def test_query_model_creation(self) -> None:
         """Test Query model with validators."""
-        pagination = m.Cqrs.Pagination(page=1, size=20)
-        query = m.Cqrs.Query(
+        pagination = m.Pagination(page=1, size=20)
+        query = m.Query(
             filters={"user_id": "user-456"},
             pagination=pagination,
             query_type="GetOrdersByUser",
@@ -1088,13 +1088,13 @@ class TestFlextModels:
         assert query.filters["user_id"] == "user-456"
         assert query.query_type == "GetOrdersByUser"
         assert query.pagination is not None
-        assert isinstance(query.pagination, m.Cqrs.Pagination)
+        assert isinstance(query.pagination, m.Pagination)
         assert query.pagination.page == 1
         assert query.pagination.size == 20
 
     def test_context_data_model_creation(self) -> None:
         """Test ContextData model with validators."""
-        ctx = m.Context.ContextData(
+        ctx = m.ContextData(
             data={"request_id": "req-456", "user_id": "user-123"},
             metadata=m.Metadata(attributes={"source": "api"}),
         )
@@ -1105,7 +1105,7 @@ class TestFlextModels:
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
-        export = m.Context.ContextExport(
+        export = m.ContextExport(
             data={"key": "value"},
             metadata=m.Metadata(attributes={"version": "1.0"}),
             statistics={"sets": 10, "gets": 20},
@@ -1115,17 +1115,17 @@ class TestFlextModels:
 
     def test_handler_execution_context_model(self) -> None:
         """Test HandlerExecutionContext model creation."""
-        context = m.Handler.ExecutionContext.create_for_handler(
+        context = m.HandlerExecutionContext.create_for_handler(
             handler_name="ProcessOrderCommand",
             handler_mode=c.Cqrs.HandlerType.COMMAND,
         )
         assert context.handler_name == "ProcessOrderCommand"
         assert context.handler_mode == "command"
-        assert isinstance(context, m.Handler.ExecutionContext)
+        assert isinstance(context, m.HandlerExecutionContext)
 
     def test_registration_details_model(self) -> None:
         """Test RegistrationDetails model creation."""
-        details = m.Handler.RegistrationDetails(
+        details = m.HandlerRegistrationDetails(
             registration_id="reg-123",
             handler_mode=c.Cqrs.HandlerType.COMMAND,
             timestamp="2025-01-01T00:00:00Z",

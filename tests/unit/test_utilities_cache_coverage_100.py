@@ -124,7 +124,7 @@ class CacheScenarios:
             expected_value=None,
         ),
         # Sets - test that normalize_component converts set to tuple
-        # Cast to GeneralValueType | BaseModel for type checker
+        # Cast to t.GeneralValueType | BaseModel for type checker
         NormalizeComponentScenario(
             name="set_of_ints",
             component=cast(
@@ -172,10 +172,10 @@ class CacheScenarios:
             component={"a": {"b": {"c": 123}}},
             expected_type=dict,
         ),
-        # Fallback (other types) - convert to string for GeneralValueType compatibility
+        # Fallback (other types) - convert to string for t.GeneralValueType compatibility
         NormalizeComponentScenario(
             name="custom_object",
-            component=str(object()),  # Convert object to string for GeneralValueType
+            component=str(object()),  # Convert object to string for t.GeneralValueType
             expected_type=str,
         ),
     ]
@@ -291,7 +291,7 @@ class TestuCacheNormalizeComponent:
     def test_normalize_set_preserves_order(self) -> None:
         """Test normalize_component converts set to tuple."""
         component = {3, 1, 2}
-        # Cast to GeneralValueType | BaseModel for type checker
+        # Cast to t.GeneralValueType | BaseModel for type checker
         # normalize_component will convert set to tuple at runtime
         result = u.Cache.normalize_component(
             cast("t.GeneralValueType | BaseModel", component),
@@ -329,8 +329,8 @@ class TestuCacheNormalizeComponent:
     def test_normalize_sequence_with_nested_values(self) -> None:
         """Test normalize_component with Sequence containing nested values."""
         component_raw: list[object] = [1, "test", {"nested": "dict"}, [1, 2, 3]]
-        # Convert list[object] to Sequence[GeneralValueType] for type compatibility
-        # ObjectList is Sequence[GeneralValueType], use that type directly
+        # Convert list[object] to Sequence[t.GeneralValueType] for type compatibility
+        # ObjectList is Sequence[t.GeneralValueType], use that type directly
         component: Sequence[t.GeneralValueType] = cast(
             "Sequence[t.GeneralValueType]",
             component_raw,
@@ -354,7 +354,7 @@ class TestuCacheNormalizeComponent:
                 return "custom_object"
 
         obj = CustomObject()
-        # Cast to GeneralValueType | BaseModel to test fallback behavior
+        # Cast to t.GeneralValueType | BaseModel to test fallback behavior
         # Runtime will handle non-BaseModel objects by converting to string
         result = u.Cache.normalize_component(
             cast("t.GeneralValueType | BaseModel", obj),
@@ -423,7 +423,7 @@ class TestuCacheSortDictKeys:
         data = {"key1": "value", "key2": None, "key3": 42}
         result = u.Cache.sort_dict_keys(data)
 
-        # Type narrowing: sort_dict_keys returns GeneralValueType, but for
+        # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
         # dict input it returns dict
         tu.Tests.Assertions.assert_result_matches_expected(
             result,
@@ -443,7 +443,7 @@ class TestuCacheSortDictKeys:
         }
         result = u.Cache.sort_dict_keys(data)
 
-        # Type narrowing: sort_dict_keys returns GeneralValueType, but for
+        # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
         # dict input it returns dict
         tu.Tests.Assertions.assert_result_matches_expected(
             result,
@@ -578,7 +578,7 @@ class TestuCacheClearObjectCache:
                 raise RuntimeError(error_msg)
 
         obj = BadObject()
-        # Cast to GeneralValueType | BaseModel for type checker
+        # Cast to t.GeneralValueType | BaseModel for type checker
         # Runtime will handle the object correctly
         result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
 
@@ -600,7 +600,7 @@ class TestuCacheClearObjectCache:
                 super().__setattr__(name, value)
 
         obj = BadObject()
-        # Cast to GeneralValueType | BaseModel for type checker
+        # Cast to t.GeneralValueType | BaseModel for type checker
         # Runtime will handle the object correctly
         result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
 
@@ -622,7 +622,7 @@ class TestuCacheClearObjectCache:
                 return super().__getattribute__(name)
 
         obj = BadObject()
-        # Cast to GeneralValueType | BaseModel for type checker
+        # Cast to t.GeneralValueType | BaseModel for type checker
         # Runtime will handle the object correctly
         result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
 
@@ -642,7 +642,7 @@ class TestuCacheClearObjectCache:
                 self._cache = BadCache({"key": "value"})
 
         obj = BadObject()
-        # Cast to GeneralValueType | BaseModel for type checker
+        # Cast to t.GeneralValueType | BaseModel for type checker
         # Runtime will handle the object correctly
         result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
 
@@ -682,7 +682,7 @@ class TestuCacheHasCacheAttributes:
                 self._cache: dict[str, object] = {}
 
         obj = TestObject()
-        # Cast to GeneralValueType for type checker
+        # Cast to t.GeneralValueType for type checker
         assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is True
 
     def test_has_cache_attributes_false(self) -> None:
@@ -693,7 +693,7 @@ class TestuCacheHasCacheAttributes:
                 self.data = "value"
 
         obj = TestObject()
-        # Cast to GeneralValueType for type checker
+        # Cast to t.GeneralValueType for type checker
         assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is False
 
     def test_has_cache_attributes_multiple(self) -> None:
@@ -705,7 +705,7 @@ class TestuCacheHasCacheAttributes:
                 self.cache: dict[str, object] = {}
 
         obj = TestObject()
-        # Cast to GeneralValueType for type checker
+        # Cast to t.GeneralValueType for type checker
         assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is True
 
 

@@ -112,15 +112,15 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: t.Types.ConfigurationDict | object,
-    ) -> t.Types.ConfigurationDict:
+        context: t.ConfigurationDict | object,
+    ) -> t.ConfigurationDict:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            t.Types.ConfigurationDict: Normalized context dict
+            t.ConfigurationDict: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -128,12 +128,12 @@ class FlextUtilitiesGenerators:
         """
         if isinstance(context, dict):
             # Type narrowing: context is dict, isinstance provides type narrowing to ConfigurationDict
-            context_dict_result: t.Types.ConfigurationDict = context
+            context_dict_result: t.ConfigurationDict = context
             return context_dict_result
         if isinstance(context, Mapping):
             try:
                 # Type narrowing: context is Mapping, convert to dict
-                context_dict_mapping: t.Types.ConfigurationDict = dict(context.items())
+                context_dict_mapping: t.ConfigurationDict = dict(context.items())
                 return context_dict_mapping
             except (AttributeError, TypeError) as e:
                 msg = (
@@ -163,7 +163,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _enrich_context_fields(
-        context_dict: t.Types.StringDict,
+        context_dict: t.StringDict,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -193,11 +193,11 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context(
-        context: t.Types.StringMapping | object,
+        context: t.StringMapping | object,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> t.Types.StringDict:
+    ) -> t.StringDict:
         """Ensure context dict has distributed tracing fields (trace_id, span_id, etc).
 
         This generic helper consolidates duplicate context enrichment logic
@@ -213,7 +213,7 @@ class FlextUtilitiesGenerators:
             include_timestamp: If True, ensure timestamp exists (ISO 8601)
 
         Returns:
-            t.Types.StringDict: Enriched context with requested fields (all string values)
+            t.StringDict: Enriched context with requested fields (all string values)
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -237,7 +237,7 @@ class FlextUtilitiesGenerators:
         """
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
         # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
-        context_dict: t.Types.StringDict = {
+        context_dict: t.StringDict = {
             k: v if isinstance(v, str) else str(v) for k, v in normalized_dict.items()
         }
         FlextUtilitiesGenerators._enrich_context_fields(
@@ -250,8 +250,8 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def ensure_dict(
         value: t.GeneralValueType,
-        default: t.Types.ConfigurationDict | None = None,
-    ) -> t.Types.ConfigurationDict:
+        default: t.ConfigurationDict | None = None,
+    ) -> t.ConfigurationDict:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -271,7 +271,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            t.Types.ConfigurationDict: Normalized dict or default
+            t.ConfigurationDict: Normalized dict or default
 
         Raises:
             TypeError: If value is None (and no default) or cannot be converted
@@ -303,13 +303,13 @@ class FlextUtilitiesGenerators:
                 result = value.model_dump()
                 if FlextUtilitiesGuards.is_type(result, dict):
                     # normalize_to_general_value preserves dict structure
-                    # so normalized will be t.Types.ConfigurationDict
+                    # so normalized will be t.ConfigurationDict
                     normalized = FlextRuntime.normalize_to_general_value(result)
                     # Type narrowing: normalize_to_general_value on dict returns dict
-                    # Runtime check: normalized is GeneralValueType, but we know it's dict from input
+                    # Runtime check: normalized is t.GeneralValueType, but we know it's dict from input
                     if FlextUtilitiesGuards.is_type(normalized, dict):
                         # Type narrowing: normalized is dict after is_type check
-                        return normalized  # type: ignore[return-value]
+                        return normalized
                     # Fallback: if normalization changed type, return empty dict
                     return {}
                 return {}
@@ -363,7 +363,7 @@ class FlextUtilitiesGenerators:
         if kind is None:
             return None
 
-        kind_prefix_map: t.Types.StringDict = {
+        kind_prefix_map: t.StringDict = {
             "correlation": "corr",
             "entity": "ent",
             "batch": c.Cqrs.ProcessingMode.BATCH,
@@ -489,7 +489,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: t.Types.ConfigurationMapping | t.Types.ConfigurationDict,
+        attributes: t.ConfigurationMapping | t.ConfigurationDict,
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 
@@ -517,7 +517,7 @@ class FlextUtilitiesGenerators:
             raise TypeError(msg)
         # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
         # Convert to dict for type() call
-        attributes_dict: t.Types.ConfigurationDict = dict(attributes)
+        attributes_dict: t.ConfigurationDict = dict(attributes)
         base_type: type = base_class
         return type(name, (base_type,), attributes_dict)
 

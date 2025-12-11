@@ -1120,7 +1120,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
     @staticmethod
     def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain:
         """Start chained assertions on result (railway pattern)."""
-        # Cast r[TResult] to r[GeneralValueType] for Chain compatibility
+        # Cast r[TResult] to r[t.GeneralValueType] for Chain compatibility
         result_typed: r[t.GeneralValueType] = cast("r[t.GeneralValueType]", result)
         return m.Tests.Matcher.Chain(result=result_typed)
 
@@ -1199,7 +1199,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
         """DEPRECATED: Use tm.that(value, is_=type, none=...) instead.
 
         Migration:
-            tm.is_(config, FlextConfig) -> tm.that(config, is_=FlextConfig)
+            tm.is_(config, FlextSettings) -> tm.that(config, is_=FlextSettings)
             tm.is_(value, none=False) -> tm.that(value, none=False)
             tm.is_(value, none=True) -> tm.that(value, none=True)
             tm.is_(value, str, none=False) -> tm.that(value, is_=str, none=False)
@@ -1283,9 +1283,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 os.chdir(cwd_path)
 
             # Create scope
-            cfg: t.Types.ConfigurationDict = (
-                dict(params.config) if params.config else {}
-            )
+            cfg: t.ConfigurationDict = dict(params.config) if params.config else {}
             scope = m.Tests.Matcher.TestScope(
                 config=cfg,
                 container=dict(params.container or {}),

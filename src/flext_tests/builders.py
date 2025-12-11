@@ -103,7 +103,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         """
         self._ensure_data_initialized()
         data = self.build()
-        # Cast to GeneralValueType for proper return
+        # Cast to t.GeneralValueType for proper return
         return r[t.GeneralValueType].ok(data)
 
     # =========================================================================
@@ -393,8 +393,8 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                     [params.transform(item) for item in seq],
                 )
             else:
-                # Transform expects GeneralValueType, but BuilderValue is wider
-                # Cast to GeneralValueType for transform, then back to BuilderValue
+                # Transform expects t.GeneralValueType, but BuilderValue is wider
+                # Cast to t.GeneralValueType for transform, then back to BuilderValue
                 transformed = params.transform(
                     resolved_value,
                 )
@@ -481,7 +481,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             elif u.is_type(value, "mapping"):
                 # Cast to Mapping for dict conversion (pyrefly needs explicit narrowing)
                 value_map = cast("Mapping[str, t.GeneralValueType]", value)
-                merged: t.Types.ConfigurationDict = dict(value_map)
+                merged: t.ConfigurationDict = dict(value_map)
                 merged.update(kwargs)
                 final_value = cast("t_test.Tests.Builders.BuilderValue", merged)
             else:
@@ -499,8 +499,8 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         # Navigate to parent
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
         assert self._data is not None, "_data must be initialized"
-        current: t.Types.ConfigurationDict = cast(
-            "t.Types.ConfigurationDict",
+        current: t.ConfigurationDict = cast(
+            "t.ConfigurationDict",
             self._data,
         )
         for part in parts[:-1]:
@@ -518,10 +518,10 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 else:
                     error_msg = f"Path '{part}' is not a dict in '{path}'"
                     raise TypeError(error_msg)
-            current = cast("t.Types.ConfigurationDict", next_val)
+            current = cast("t.ConfigurationDict", next_val)
 
-        # BuilderValue is wider than GeneralValueType, but ConfigurationDict accepts it
-        # Cast to GeneralValueType for assignment
+        # BuilderValue is wider than t.GeneralValueType, but ConfigurationDict accepts it
+        # Cast to t.GeneralValueType for assignment
         current[parts[-1]] = final_value
         return self
 
@@ -663,12 +663,12 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             values = list(data.values())
             if params.unwrap:
                 return cast("T", values)
-            return cast("r[T]", r.ok(cast("T", values)))
+            return r.ok(cast("T", values))
 
         if params.as_dict_result:
             if params.unwrap:
                 return cast("T", data)
-            return cast("r[T]", r.ok(cast("T", data)))
+            return r.ok(cast("T", data))
 
         # Standard result
         result = r[t_test.Tests.Builders.BuilderDict].ok(data)
@@ -828,7 +828,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             assert len(data["users"]) == 3
 
         """
-        users: list[t.Types.ConfigurationDict] = [
+        users: list[t.ConfigurationDict] = [
             {
                 "id": f"user_{i}",
                 "name": f"User {i}",
@@ -857,7 +857,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             assert data["configs"]["environment"] == "production"
 
         """
-        config: t.Types.ConfigurationDict = {
+        config: t.ConfigurationDict = {
             "environment": "production" if production else "development",
             "debug": not production,
             "service_type": "api",
@@ -883,7 +883,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             assert len(data["validation_fields"]["valid_emails"]) == 3
 
         """
-        validation_fields: t.Types.ConfigurationDict = {
+        validation_fields: t.ConfigurationDict = {
             "valid_emails": [f"user{i}@example.com" for i in range(count)],
             "invalid_emails": ["invalid", "no-at-sign.com", "@missing-local.com"],
             "valid_hostnames": ["example.com", "localhost"],
@@ -1004,8 +1004,8 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             }
 
         merge_result = u.merge(
-            cast("t.Types.ConfigurationDict", self._data),
-            cast("t.Types.ConfigurationDict", other_data),
+            cast("t.ConfigurationDict", self._data),
+            cast("t.ConfigurationDict", other_data),
             strategy=params.strategy,
         )
         if merge_result.is_success:
@@ -1356,7 +1356,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             def fail[T](
                 error: str,
                 code: str | None = None,
-                data: t.Types.ConfigurationDict | None = None,
+                data: t.ConfigurationDict | None = None,
             ) -> r[T]:
                 """Create failure result - DELEGATES to tt.res()."""
                 error_code = code or c.Errors.VALIDATION_ERROR
@@ -1444,18 +1444,18 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             def parametrized(
                 success_values: Sequence[t.GeneralValueType],
                 failure_errors: Sequence[str],
-            ) -> list[tuple[str, t.Types.ConfigurationDict]]:
+            ) -> list[tuple[str, t.ConfigurationDict]]:
                 """Create parametrized cases - DELEGATES to tu.Tests.GenericHelpers."""
                 cases = tu.Tests.GenericHelpers.create_parametrized_cases(
                     success_values=list(success_values),
                     failure_errors=list(failure_errors),
                 )
                 # Convert to (test_id, data) format
-                result: list[tuple[str, t.Types.ConfigurationDict]] = []
+                result: list[tuple[str, t.ConfigurationDict]] = []
                 for i, (res, is_success, value, error) in enumerate(cases):
                     test_id = f"case_{i}"
-                    data: t.Types.ConfigurationDict = cast(
-                        "t.Types.ConfigurationDict",
+                    data: t.ConfigurationDict = cast(
+                        "t.ConfigurationDict",
                         {
                             "result": res,
                             "is_success": is_success,
@@ -1470,9 +1470,9 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             def test_cases(
                 operation: str,
                 descriptions: Sequence[str],
-                inputs: Sequence[t.Types.ConfigurationDict],
+                inputs: Sequence[t.ConfigurationDict],
                 expected: Sequence[t.GeneralValueType],
-            ) -> list[t.Types.ConfigurationDict]:
+            ) -> list[t.ConfigurationDict]:
                 """Create batch test cases - DELEGATES to tu.Tests.TestCaseHelpers."""
                 return tu.Tests.TestCaseHelpers.create_batch_operation_test_cases(
                     operation=operation,
@@ -1488,16 +1488,16 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             """
 
             @staticmethod
-            def dict(**kwargs: t.GeneralValueType) -> t.Types.ConfigurationDict:
-                """Create typed dictionary - Uses t.Types.ConfigurationDict type."""
+            def dict(**kwargs: t.GeneralValueType) -> t.ConfigurationDict:
+                """Create typed dictionary - Uses t.ConfigurationDict type."""
                 return dict(kwargs)
 
             @staticmethod
             def merged(
                 *dicts: Mapping[str, t.GeneralValueType],
-            ) -> t.Types.ConfigurationDict:
+            ) -> t.ConfigurationDict:
                 """Merge dictionaries - DELEGATES to u.merge()."""
-                result: t.Types.ConfigurationDict = {}
+                result: t.ConfigurationDict = {}
                 for d in dicts:
                     merge_result = u.merge(result, dict(d))
                     if merge_result.is_success:
@@ -1508,7 +1508,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             def flatten(
                 nested: Mapping[str, t.GeneralValueType],
                 separator: str = ".",
-            ) -> t.Types.ConfigurationDict:
+            ) -> t.ConfigurationDict:
                 """Flatten nested dict - uses manual implementation."""
 
                 # Manual flatten since u.Collection.flatten may not exist
@@ -1692,7 +1692,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
 
             @staticmethod
             def execute_service(
-                overrides: t.Types.ConfigurationDict | None = None,
+                overrides: t.ConfigurationDict | None = None,
             ) -> r[t.GeneralValueType]:
                 """Execute service - DELEGATES to tu.Tests.Factory."""
                 return tu.Tests.Factory.execute_user_service(overrides or {})

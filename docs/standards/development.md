@@ -83,7 +83,7 @@ Inner layers know NOTHING about outer layers.
    - FlextRegistry - Component management
 
 4. **Infrastructure Layer** (All Layers):
-   - FlextConfig - Configuration management
+   - FlextSettings - Configuration management
    - FlextLogger - Structured logging
    - FlextContext - Context propagation
 
@@ -101,7 +101,7 @@ src/flext_core/
 ├── models.py           # DDD base classes (FlextModels)
 ├── service.py          # Domain service base (FlextService)
 ├── dispatcher.py      # Command/query dispatcher
-├── config.py          # Configuration (FlextConfig)
+├── config.py          # Configuration (FlextSettings)
 ├── loggings.py        # Logging (FlextLogger)
 └── ... (other modules)
 ```

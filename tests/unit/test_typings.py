@@ -177,7 +177,7 @@ class TestFlextTypings:
                 none=False,
                 msg=f"{test_case.name} alias must not be None",
             )
-            # CQRS aliases should all be GeneralValueType
+            # CQRS aliases should all be t.GeneralValueType
             tm.that(
                 test_case.type_var,
                 eq=t.GeneralValueType,
@@ -250,7 +250,7 @@ class TestFlextTypings:
                 eq=True,
                 msg="TypeVar must be TypeVar or ParamSpec instance",
             )
-        # Validate CQRS aliases all point to GeneralValueType
+        # Validate CQRS aliases all point to t.GeneralValueType
         cqrs_aliases = [
             t.GeneralValueType,  # Command
             t.GeneralValueType,  # Event

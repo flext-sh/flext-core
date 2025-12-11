@@ -35,12 +35,12 @@ from pydantic import BaseModel
 # Test Models
 # Use public facade m.Entity for inheritance
 from flext_core import (
-    FlextConfig,
     FlextContainer,
     FlextExceptions,
     FlextLogger,
     FlextResult,
     FlextService,
+    FlextSettings,
     m,
     t,
 )
@@ -202,7 +202,7 @@ class TestFactories:
         ]
 
     @staticmethod
-    def multi_operation_cases() -> list[tuple[str, int, t.Types.ConfigurationMapping]]:
+    def multi_operation_cases() -> list[tuple[str, int, t.ConfigurationMapping]]:
         """Generate multiple operation test cases."""
         return [
             ("double", 5, {"operation": "double", "result": 10}),
@@ -271,12 +271,12 @@ class SendEmailService(FlextService[EmailResponse]):
         return FlextResult.ok(EmailResponse(status="sent", message_id=f"msg-{self.to}"))
 
 
-class ValidationService(FlextService[t.Types.ConfigurationMapping]):
+class ValidationService(FlextService[t.ConfigurationMapping]):
     """Service that validates input."""
 
     value: int
 
-    def execute(self) -> FlextResult[t.Types.ConfigurationMapping]:
+    def execute(self) -> FlextResult[t.ConfigurationMapping]:
         """Validate value."""
         if self.value < 0:
             return FlextResult.fail("Value must be positive")
@@ -287,13 +287,13 @@ class ValidationService(FlextService[t.Types.ConfigurationMapping]):
         return FlextResult.ok({"valid": True, "value": self.value})
 
 
-class MultiOperationService(FlextService[t.Types.ConfigurationMapping]):
+class MultiOperationService(FlextService[t.ConfigurationMapping]):
     """Service with multiple operations."""
 
     operation: str
     value: int
 
-    def execute(self) -> FlextResult[t.Types.ConfigurationMapping]:
+    def execute(self) -> FlextResult[t.ConfigurationMapping]:
         """Execute based on operation."""
         match self.operation:
             case "double":
@@ -656,7 +656,7 @@ class TestPattern9AutomaticInfrastructure:
 
         # Config is automatically available
         assert service.config is not None
-        assert isinstance(service.config, FlextConfig)
+        assert isinstance(service.config, FlextSettings)
 
     def test_infrastructure_logger_automatic(self) -> None:
         """Infrastructure: Logger available automatically."""
@@ -702,10 +702,10 @@ class TestPattern10MultipleOperations:
         self,
         operation: str,
         value: int,
-        expected: t.Types.ConfigurationMapping,
+        expected: t.ConfigurationMapping,
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
-        result: t.Types.ConfigurationMapping = MultiOperationService(
+        result: t.ConfigurationMapping = MultiOperationService(
             operation=operation,
             value=value,
         ).result
@@ -811,7 +811,7 @@ class TestAllPatternsIntegration:
         assert message_id.startswith("msg-")
 
         # Step 3: Multiple operations (V2 Property)
-        calc_result: t.Types.ConfigurationMapping = MultiOperationService(
+        calc_result: t.ConfigurationMapping = MultiOperationService(
             operation="double",
             value=10,
         ).result

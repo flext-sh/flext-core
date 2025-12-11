@@ -58,12 +58,12 @@ class SimpleV2AutoService(s[str]):
         return r.ok(f"V2 Auto: {self.message}")
 
 
-class ValidationService(s[t.Types.ConfigurationMapping]):
+class ValidationService(s[t.ConfigurationMapping]):
     """Service with validation for testing."""
 
     value: int
 
-    def execute(self) -> r[t.Types.ConfigurationMapping]:
+    def execute(self) -> r[t.ConfigurationMapping]:
         """Execute with validation."""
         if self.value < 0:
             return r.fail("Value must be positive")
@@ -71,13 +71,13 @@ class ValidationService(s[t.Types.ConfigurationMapping]):
         return r.ok({"value": self.value, "valid": True})
 
 
-class AutoValidationService(s[t.Types.ConfigurationMapping]):
+class AutoValidationService(s[t.ConfigurationMapping]):
     """Service with validation and auto_execute."""
 
     auto_execute: ClassVar[bool] = True
     value: int
 
-    def execute(self) -> r[t.Types.ConfigurationMapping]:
+    def execute(self) -> r[t.ConfigurationMapping]:
         """Execute with validation."""
         if self.value < 0:
             return r.fail("Value must be positive")
@@ -85,13 +85,13 @@ class AutoValidationService(s[t.Types.ConfigurationMapping]):
         return r.ok({"value": self.value, "valid": True})
 
 
-class ComplexV1Service(s[t.Types.ConfigurationMapping]):
+class ComplexV1Service(s[t.ConfigurationMapping]):
     """Complex service for V1 testing."""
 
     items: list[str] = Field(default_factory=list)
     multiplier: int = 1
 
-    def execute(self) -> r[t.Types.ConfigurationMapping]:
+    def execute(self) -> r[t.ConfigurationMapping]:
         """Execute complex operation."""
         if not self.items:
             return r.fail("Items cannot be empty")
@@ -102,13 +102,13 @@ class ComplexV1Service(s[t.Types.ConfigurationMapping]):
         })
 
 
-class ComplexV2Service(s[t.Types.ConfigurationMapping]):
+class ComplexV2Service(s[t.ConfigurationMapping]):
     """Complex service for V2 testing."""
 
     items: list[str] = Field(default_factory=list)
     multiplier: int = 1
 
-    def execute(self) -> r[t.Types.ConfigurationMapping]:
+    def execute(self) -> r[t.ConfigurationMapping]:
         """Execute complex operation."""
         if not self.items:
             return r.fail("Items cannot be empty")

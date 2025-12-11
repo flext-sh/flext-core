@@ -1089,14 +1089,14 @@ class TestuCollectionMerge:
         """Test deep merge."""
         base = {"a": 1, "b": {"x": 1}}
         other = {"b": {"y": 2}, "c": 3}
-        # u.Collection.merge expects t.Types.ConfigurationMapping
+        # u.Collection.merge expects t.ConfigurationMapping
         # but base and other are dict[str, object], cast to ConfigurationMapping
-        base_mapping: t.Types.ConfigurationMapping = cast(
-            "t.Types.ConfigurationMapping",
+        base_mapping: t.ConfigurationMapping = cast(
+            "t.ConfigurationMapping",
             base,
         )
-        other_mapping: t.Types.ConfigurationMapping = cast(
-            "t.Types.ConfigurationMapping",
+        other_mapping: t.ConfigurationMapping = cast(
+            "t.ConfigurationMapping",
             other,
         )
         result = u.Collection.merge(base_mapping, other_mapping)
@@ -1107,14 +1107,14 @@ class TestuCollectionMerge:
         """Test override merge."""
         base = {"a": 1, "b": {"x": 1}}
         other = {"b": {"y": 2}, "c": 3}
-        # u.Collection.merge expects t.Types.ConfigurationMapping
+        # u.Collection.merge expects t.ConfigurationMapping
         # but base and other are dict[str, object], cast to ConfigurationMapping
-        base_mapping: t.Types.ConfigurationMapping = cast(
-            "t.Types.ConfigurationMapping",
+        base_mapping: t.ConfigurationMapping = cast(
+            "t.ConfigurationMapping",
             base,
         )
-        other_mapping: t.Types.ConfigurationMapping = cast(
-            "t.Types.ConfigurationMapping",
+        other_mapping: t.ConfigurationMapping = cast(
+            "t.ConfigurationMapping",
             other,
         )
         result = u.Collection.merge(base_mapping, other_mapping, strategy="override")

@@ -239,17 +239,17 @@ class TestFlextProtocols:
         class UserRepository:
             """Repository for user entities."""
 
-            def find_by_id(self, entity_id: str) -> r[t.Types.ConfigurationMapping]:
-                return r[t.Types.ConfigurationMapping].ok({
+            def find_by_id(self, entity_id: str) -> r[t.ConfigurationMapping]:
+                return r[t.ConfigurationMapping].ok({
                     "id": entity_id,
                     "name": "Test",
                 })
 
             def save(
                 self,
-                entity: t.Types.ConfigurationMapping,
-            ) -> r[t.Types.ConfigurationMapping]:
-                return r[t.Types.ConfigurationMapping].ok(entity)
+                entity: t.ConfigurationMapping,
+            ) -> r[t.ConfigurationMapping]:
+                return r[t.ConfigurationMapping].ok(entity)
 
             def delete(self, entity_id: str) -> r[bool]:
                 return r[bool].ok(True)
@@ -279,8 +279,8 @@ class TestFlextProtocols:
         class UserService:
             """Service for user operations."""
 
-            def execute(self) -> r[t.Types.ConfigurationMapping]:
-                return r[t.Types.ConfigurationMapping].ok({"status": "success"})
+            def execute(self) -> r[t.ConfigurationMapping]:
+                return r[t.ConfigurationMapping].ok({"status": "success"})
 
         service = UserService()
         tm.that(
@@ -310,9 +310,9 @@ class TestFlextProtocols:
 
             def handle(
                 self,
-                command: t.Types.ConfigurationMapping,
-            ) -> r[t.Types.ConfigurationMapping]:
-                return r[t.Types.ConfigurationMapping].ok({"user_id": "123"})
+                command: t.ConfigurationMapping,
+            ) -> r[t.ConfigurationMapping]:
+                return r[t.ConfigurationMapping].ok({"user_id": "123"})
 
         handler = CreateUserHandler()
         tm.that(
@@ -343,14 +343,14 @@ class TestFlextProtocols:
         class AdvancedService:
             """Service implementing multiple protocols."""
 
-            def execute(self) -> r[t.Types.ConfigurationMapping]:
-                return r[t.Types.ConfigurationMapping].ok({})
+            def execute(self) -> r[t.ConfigurationMapping]:
+                return r[t.ConfigurationMapping].ok({})
 
             def handle(
                 self,
-                command: t.Types.ConfigurationMapping,
-            ) -> r[t.Types.ConfigurationMapping]:
-                return r[t.Types.ConfigurationMapping].ok({})
+                command: t.ConfigurationMapping,
+            ) -> r[t.ConfigurationMapping]:
+                return r[t.ConfigurationMapping].ok({})
 
         service = AdvancedService()
         required_methods = ["execute", "handle"]

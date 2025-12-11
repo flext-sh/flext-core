@@ -463,7 +463,7 @@ class TestExceptionFactory:
         # Convert dict[str, object] to dict[str, MetadataAttributeValue]
         converted_kwargs: dict[str, t.MetadataAttributeValue] = {}
         for key, value in kwargs.items():
-            # Type narrowing: ensure value is GeneralValueType before normalization
+            # Type narrowing: ensure value is t.GeneralValueType before normalization
             if isinstance(value, (str, int, float, bool, type(None), list, dict)):
                 converted_kwargs[key] = FlextRuntime.normalize_to_metadata_value(value)
             else:

@@ -21,11 +21,11 @@ from typing import cast
 import pytest
 
 from flext_core import (
-    FlextConfig,
     FlextContainer,
     FlextContext,
     FlextResult,
     FlextRuntime,
+    FlextSettings,
     t,
 )
 
@@ -47,7 +47,7 @@ warnings.filterwarnings(
 
 @pytest.fixture(autouse=True)
 def reset_container_singleton() -> Generator[None]:
-    """Reset FlextContainer, FlextConfig, and FlextRuntime between tests.
+    """Reset FlextContainer, FlextSettings, and FlextRuntime between tests.
 
     This autouse fixture ensures that every test starts with clean singleton states,
     preventing test contamination from shared state. Critical for test idempotency
@@ -59,7 +59,7 @@ def reset_container_singleton() -> Generator[None]:
     # Business Rule: Use public testing methods instead of direct private access
     # This ensures proper thread-safety and maintains architectural boundaries
     FlextContainer.reset_singleton_for_testing()
-    FlextConfig.reset_global_instance()
+    FlextSettings.reset_global_instance()
 
     # Reset FlextRuntime structlog configuration state
     # Business Rule: Use public testing method for proper state reset
@@ -70,7 +70,7 @@ def reset_container_singleton() -> Generator[None]:
     # Clear singletons after test
     # Business Rule: Cleanup uses same public testing methods for consistency
     FlextContainer.reset_singleton_for_testing()
-    FlextConfig.reset_global_instance()
+    FlextSettings.reset_global_instance()
 
     # Reset FlextRuntime state after test
     FlextRuntime.reset_structlog_state_for_testing()
@@ -340,7 +340,7 @@ def logging_test_env() -> Generator[None]:
 
     try:
         # Clear both config and logger singleton states
-        FlextConfig._instances.clear()
+        FlextSettings._instances.clear()
 
         # Reset logger singleton state via runtime
         FlextRuntime._structlog_configured = False
@@ -350,7 +350,7 @@ def logging_test_env() -> Generator[None]:
         yield
     finally:
         # Clear both singleton states again and restore original value
-        FlextConfig._instances.clear()
+        FlextSettings._instances.clear()
         FlextRuntime._structlog_configured = False
 
         if original_log_level is not None:

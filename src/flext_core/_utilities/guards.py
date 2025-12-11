@@ -142,7 +142,7 @@ class FlextUtilitiesGuards:
         if FlextRuntime.is_dict_like(val):
             # Convert to flat dict with ScalarValue values
             # Type narrowing: is_dict_like returns TypeGuard[ConfigurationMapping]
-            # ConfigurationMapping is Mapping[str, GeneralValueType]
+            # ConfigurationMapping is Mapping[str, t.GeneralValueType]
             val_mapping = val  # type narrowing via TypeGuard
             result_dict: dict[str, t.ScalarValue] = {}
             # Before accessing .items(), narrow the type
@@ -157,7 +157,7 @@ class FlextUtilitiesGuards:
             return result_dict
         if FlextRuntime.is_list_like(val):
             # Convert to list[t.MetadataAttributeValue]
-            # Type narrowing: is_list_like returns TypeGuard[Sequence[GeneralValueType]]
+            # Type narrowing: is_list_like returns TypeGuard[Sequence[t.GeneralValueType]]
             val_sequence = val  # type narrowing via TypeGuard
             result_list: list[str | int | float | bool | None] = []
             # Before iterating, narrow the type
@@ -179,19 +179,19 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_general_value_type(value: object) -> TypeGuard[t.GeneralValueType]:
-        """Check if value is a valid GeneralValueType.
+        """Check if value is a valid t.GeneralValueType.
 
-        GeneralValueType = ScalarValue | Sequence[GeneralValueType] | Mapping[str, GeneralValueType]
+        t.GeneralValueType = ScalarValue | Sequence[t.GeneralValueType] | Mapping[str, t.GeneralValueType]
         ScalarValue = str | int | float | bool | datetime | None
 
-        This TypeGuard enables type narrowing without  for GeneralValueType.
+        This TypeGuard enables type narrowing without  for t.GeneralValueType.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[t.GeneralValueType]: True if value matches GeneralValueType structure
+            TypeGuard[t.GeneralValueType]: True if value matches t.GeneralValueType structure
 
         """
         # Check scalar types first (most common case)
@@ -466,7 +466,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, str)
 
     @staticmethod
-    def _is_dict(value: object) -> TypeGuard[t.Types.ConfigurationDict]:
+    def _is_dict(value: object) -> TypeGuard[t.ConfigurationDict]:
         """Check if value is dict[str, object].
 
         Type guard for dictionary types. Returns ConfigurationDict for type safety.
@@ -708,7 +708,7 @@ class FlextUtilitiesGuards:
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
             # Map string names to private method names
-            method_map: t.Types.StringDict = {
+            method_map: t.StringDict = {
                 # Protocol checks
                 "config": "_is_config",
                 "context": "_is_context",
@@ -745,17 +745,17 @@ class FlextUtilitiesGuards:
             if type_name in method_map:
                 method_name = method_map[type_name]
                 method = getattr(FlextUtilitiesGuards, method_name)
-                # For non-empty checks, use GeneralValueType from lower layer
-                # Methods accept GeneralValueType, so use TypeGuard for type narrowing
+                # For non-empty checks, use t.GeneralValueType from lower layer
+                # Methods accept t.GeneralValueType, so use TypeGuard for type narrowing
                 if type_name in {
                     "string_non_empty",
                     "dict_non_empty",
                     "list_non_empty",
                 }:
-                    # TypeGuard-based type narrowing for GeneralValueType
+                    # TypeGuard-based type narrowing for t.GeneralValueType
                     if FlextUtilitiesGuards.is_general_value_type(value):
                         return bool(method(value))
-                    # Value is not GeneralValueType, return False
+                    # Value is not t.GeneralValueType, return False
                     return False
                 return bool(method(value))
             # Unknown string type spec

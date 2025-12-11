@@ -90,7 +90,7 @@ class RuntimeTestCase:
     name: str
     operation: RuntimeOperationType
     # Business Rule: test_input supports both values and types for comprehensive testing
-    # GeneralValueType | type[object] | None allows testing runtime type checking with various inputs
+    # t.GeneralValueType | type[object] | None allows testing runtime type checking with various inputs
     test_input: t.GeneralValueType | type[object] | None = None
     expected_result: bool | tuple[object, ...] | object = None
     should_reset_config: bool = False
@@ -561,12 +561,12 @@ class TestFlextRuntime:
     def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test dict-like object validation.
 
-        Business Rule: is_dict_like accepts GeneralValueType compatible objects.
-        test_case.test_input may be None or various types, so we cast to GeneralValueType
+        Business Rule: is_dict_like accepts t.GeneralValueType compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.GeneralValueType
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to GeneralValueType for type compatibility
-        # None and various types are compatible with GeneralValueType at runtime
+        # Business Rule: Cast to t.GeneralValueType for type compatibility
+        # None and various types are compatible with t.GeneralValueType at runtime
         test_input_typed = cast("t.GeneralValueType", test_case.test_input)
         result = FlextRuntime.is_dict_like(test_input_typed)
         assert result == test_case.expected_result
@@ -579,12 +579,12 @@ class TestFlextRuntime:
     def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test list-like object validation.
 
-        Business Rule: is_list_like accepts GeneralValueType compatible objects.
-        test_case.test_input may be None or various types, so we cast to GeneralValueType
+        Business Rule: is_list_like accepts t.GeneralValueType compatible objects.
+        test_case.test_input may be None or various types, so we cast to t.GeneralValueType
         for type compatibility while preserving runtime behavior.
         """
-        # Business Rule: Cast to GeneralValueType for type compatibility
-        # None and various types are compatible with GeneralValueType at runtime
+        # Business Rule: Cast to t.GeneralValueType for type compatibility
+        # None and various types are compatible with t.GeneralValueType at runtime
         test_input_typed = cast("t.GeneralValueType", test_case.test_input)
         result = FlextRuntime.is_list_like(test_input_typed)
         assert result == test_case.expected_result
@@ -634,7 +634,7 @@ class TestFlextRuntime:
                 attr = "value"
 
             test_obj = TestObj()
-            # Type narrowing: TestObj is compatible with GeneralValueType
+            # Type narrowing: TestObj is compatible with t.GeneralValueType
             test_obj_cast: t.GeneralValueType = cast("t.GeneralValueType", test_obj)
             result = FlextRuntime.safe_get_attribute(test_obj_cast, "attr")
             assert result == "value"
@@ -647,7 +647,7 @@ class TestFlextRuntime:
                 pass
 
             test_obj_default_obj = TestObjDefault()
-            # Type narrowing: TestObjDefault is compatible with GeneralValueType
+            # Type narrowing: TestObjDefault is compatible with t.GeneralValueType
             test_obj_default_cast: t.GeneralValueType = cast(
                 "t.GeneralValueType",
                 test_obj_default_obj,
@@ -666,8 +666,8 @@ class TestFlextRuntime:
             class TestObjNoDefault:
                 pass
 
-            # Business Rule: TestObjNoDefault instances are compatible with GeneralValueType at runtime
-            # Cast to GeneralValueType for type compatibility
+            # Business Rule: TestObjNoDefault instances are compatible with t.GeneralValueType at runtime
+            # Cast to t.GeneralValueType for type compatibility
             test_obj_no_default = cast("t.GeneralValueType", TestObjNoDefault())
             result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
             assert result is None
@@ -686,7 +686,7 @@ class TestFlextRuntime:
         """
         # Business Rule: Cast to TypeHintSpecifier for type compatibility
         # None and various types are compatible with TypeHintSpecifier at runtime
-        test_input_typed = cast("t.Utility.TypeHintSpecifier", test_case.test_input)
+        test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
         args = FlextRuntime.extract_generic_args(test_input_typed)
         assert args == test_case.expected_result
 
@@ -704,7 +704,7 @@ class TestFlextRuntime:
         """
         # Business Rule: Cast to TypeHintSpecifier for type compatibility
         # None and various types are compatible with TypeHintSpecifier at runtime
-        test_input_typed = cast("t.Utility.TypeHintSpecifier", test_case.test_input)
+        test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
         result = FlextRuntime.is_sequence_type(test_input_typed)
         assert result == test_case.expected_result
 
@@ -919,7 +919,7 @@ class TestFlextRuntime:
 
             class RuntimeAwareComponent(FlextMixins):
                 @classmethod
-                def _runtime_bootstrap_options(cls) -> t.Types.RuntimeBootstrapOptions:
+                def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
                     # factories should be Mapping[str, Callable[[], ScalarValue | Sequence | Mapping]]
                     # RuntimeBootstrapOptions["factories"] has the correct type
                     def counter_factory() -> t.GeneralValueType:
@@ -1032,7 +1032,7 @@ class TestFlextRuntime:
                 event_dict["custom"] = True
                 return event_dict
 
-            # Business Rule: Callable processors are compatible with GeneralValueType at runtime
+            # Business Rule: Callable processors are compatible with t.GeneralValueType at runtime
             # structlog accepts callable processors for custom processing
             processor_typed: t.GeneralValueType = cast(
                 "t.GeneralValueType",

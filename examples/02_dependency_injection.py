@@ -20,11 +20,11 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from flext_core import (
-    FlextConfig,
     FlextConstants,
     FlextContainer,
     FlextModels,
     FlextResult,
+    FlextSettings,
     s,
     t,
     u,
@@ -55,7 +55,7 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
 
-    config: t.Types.ServiceMetadataMapping
+    config: t.ServiceMetadataMapping
     status: FlextConstants.Domain.Status = FlextConstants.Domain.Status.INACTIVE
 
     def connect(self) -> FlextResult[bool]:
@@ -79,10 +79,10 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):
         self.status = FlextConstants.Domain.Status.ACTIVE
         return FlextResult[bool].ok(True)
 
-    def query(self, sql: str) -> FlextResult[t.Types.ConfigurationDict]:
+    def query(self, sql: str) -> FlextResult[t.ConfigurationDict]:
         """Execute query with comprehensive validation using u."""
         if self.status != FlextConstants.Domain.Status.ACTIVE:
-            return FlextResult[t.Types.ConfigurationDict].fail(
+            return FlextResult[t.ConfigurationDict].fail(
                 FlextConstants.Errors.CONNECTION_ERROR,
             )
 
@@ -96,16 +96,16 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):
         )
         sql_pattern = rf"\b({'|'.join(sql_keywords)})\b"
         if not u.Validation.validate_pattern(sql, sql_pattern).is_success:
-            return FlextResult[t.Types.ConfigurationDict].fail(
+            return FlextResult[t.ConfigurationDict].fail(
                 FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-        result: t.Types.ConfigurationDict = {
+        result: t.ConfigurationDict = {
             "id": u.Generators.Random.generate_short_id(),
             "name": "Alice",
             "email": "alice@example.com",
         }
-        return FlextResult[t.Types.ConfigurationDict].ok(result)
+        return FlextResult[t.ConfigurationDict].ok(result)
 
 
 class CacheService(FlextModels.ArbitraryTypesModel):
@@ -113,7 +113,7 @@ class CacheService(FlextModels.ArbitraryTypesModel):
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
 
-    config: t.Types.ServiceMetadataMapping
+    config: t.ServiceMetadataMapping
     status: FlextConstants.Domain.Status = FlextConstants.Domain.Status.INACTIVE
 
     def get(self, key: str) -> FlextResult[str | int]:
@@ -163,7 +163,7 @@ class EmailService(FlextModels.ArbitraryTypesModel):
 
     model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
 
-    config: t.Types.ServiceMetadataMapping
+    config: t.ServiceMetadataMapping
     status: FlextConstants.Domain.Status = FlextConstants.Domain.Status.INACTIVE
 
     def send(self, to: str, subject: str, body: str) -> FlextResult[bool]:
@@ -197,10 +197,10 @@ class EmailService(FlextModels.ArbitraryTypesModel):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class DependencyInjectionService(s[t.Types.ConfigurationDict]):
+class DependencyInjectionService(s[t.ConfigurationDict]):
     """Service demonstrating FlextContainer dependency injection patterns."""
 
-    def execute(self) -> FlextResult[t.Types.ConfigurationDict]:
+    def execute(self) -> FlextResult[t.ConfigurationDict]:
         """Execute DI demonstrations."""
         self.logger.info("Starting dependency injection demonstration")
 
@@ -210,7 +210,7 @@ class DependencyInjectionService(s[t.Types.ConfigurationDict]):
         self._demonstrate_resolution(container)
         self._demonstrate_advanced_patterns(container)
 
-        result_data: t.Types.ConfigurationDict = {
+        result_data: t.ConfigurationDict = {
             "patterns_demonstrated": 5,
             "services_registered": ["database", "cache", "email"],
             "di_patterns": [
@@ -224,7 +224,7 @@ class DependencyInjectionService(s[t.Types.ConfigurationDict]):
         }
 
         self.logger.info("Dependency injection demonstration completed")
-        return FlextResult[t.Types.ConfigurationDict].ok(result_data)
+        return FlextResult[t.ConfigurationDict].ok(result_data)
 
     @staticmethod
     def _setup_container() -> FlextContainer:
@@ -232,7 +232,7 @@ class DependencyInjectionService(s[t.Types.ConfigurationDict]):
         container = FlextContainer()
 
         # Create services with centralized config mappings from t
-        db_config: t.Types.ConfigurationDict = {
+        db_config: t.ConfigurationDict = {
             "driver": "sqlite",
             "url": "sqlite:///:memory:",
             "timeout": FlextConstants.Network.DEFAULT_TIMEOUT,
@@ -240,14 +240,14 @@ class DependencyInjectionService(s[t.Types.ConfigurationDict]):
         db_service = DatabaseService(config=db_config)
         db_service.status = FlextConstants.Domain.Status.ACTIVE
 
-        cache_config: t.Types.ConfigurationDict = {
+        cache_config: t.ConfigurationDict = {
             "backend": "memory",
             "ttl": FlextConstants.Defaults.DEFAULT_CACHE_TTL,
         }
         cache_service = CacheService(config=cache_config)
         cache_service.status = FlextConstants.Domain.Status.ACTIVE
 
-        email_config: t.Types.ConfigurationDict = {
+        email_config: t.ConfigurationDict = {
             "host": "smtp.example.com",
             "port": 587,
         }
@@ -364,8 +364,8 @@ def main() -> None:
 
     # Global config singleton demonstration (containers are not global singletons)
     print("\n=== Global Config Pattern ===")
-    global_config = FlextConfig.get_global_instance()
-    another_ref = FlextConfig.get_global_instance()
+    global_config = FlextSettings.get_global_instance()
+    another_ref = FlextSettings.get_global_instance()
     print(f"✅ Global singleton: {global_config is another_ref}")
 
     print("=" * 60)

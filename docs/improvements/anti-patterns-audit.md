@@ -426,7 +426,7 @@ $ grep -n "frozen.*True" src/flext_core/models.py
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-class FlextConfig(BaseSettings):
+class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation."""
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_",
@@ -436,7 +436,7 @@ class FlextConfig(BaseSettings):
 
 **Verification**: ✅ ACCURATE
 
-- FlextConfig extends pydantic_settings.BaseSettings
+- FlextSettings extends pydantic_settings.BaseSettings
 - Environment variable support built-in
 - No hardcoded credentials or config values
 
@@ -450,7 +450,7 @@ class FlextConfig(BaseSettings):
 **Source Code Evidence** (config.py):
 
 ```python
-class FlextConfig(BaseSettings):
+class FlextSettings(BaseSettings):
     # Pydantic automatically validates all fields
     timeout: int = Field(gt=0)
     log_level: str = Field(pattern="^(DEBUG|INFO|WARNING|ERROR)$")

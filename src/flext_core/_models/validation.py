@@ -9,14 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import socket
+import re
 import time as time_module
 from collections.abc import Callable, Mapping
 from datetime import datetime
-from typing import Annotated
-
-from pydantic import BaseModel, Field
-from pydantic.functional_validators import AfterValidator
+from urllib.parse import urlparse
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -77,7 +74,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_cross_fields(
         model: t.GeneralValueType,
-        field_validators: t.Types.FieldValidatorMapping,
+        field_validators: t.FieldValidatorMapping,
     ) -> r[t.GeneralValueType]:
         """Validate cross-field dependencies with railway patterns.
 
@@ -127,9 +124,9 @@ class FlextModelsValidation:
 
     @staticmethod
     def validate_performance(
-        model: BaseModel,
+        model: t.GeneralValueType,
         max_validation_time_ms: int | None = None,
-    ) -> r[BaseModel]:
+    ) -> r[t.GeneralValueType]:
         """Validate model with performance constraints.
 
         Args:
@@ -169,15 +166,21 @@ class FlextModelsValidation:
             ) * c.MILLISECONDS_MULTIPLIER
 
             if validation_time > timeout_ms:
-                return r[BaseModel].fail(
+                return r[t.GeneralValueType].fail(
                     f"Validation too slow: {validation_time:.2f}ms > {timeout_ms}ms",
                     error_code="PERFORMANCE_VALIDATION_FAILED",
                     error_data={"validation_time_ms": validation_time},
                 )
 
-            return r[BaseModel].ok(validated_model)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[BaseModel].fail(
+            return r[t.GeneralValueType].ok(validated_model)
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+        ) as e:
+            return r[t.GeneralValueType].fail(
                 f"Validation failed: {e}",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
@@ -239,7 +242,7 @@ class FlextModelsValidation:
         all_errors: list[str] = []
 
         for model in models:
-            # Use individual validation for models since validators may return GeneralValueType
+            # Use individual validation for models since validators may return t.GeneralValueType
             validation_result: r[t.GeneralValueType] = r[t.GeneralValueType].ok(model)
             for validator in validators:
                 result = validator(model)
@@ -306,7 +309,7 @@ class FlextModelsValidation:
 
         """
         for invariant in invariants:
-            # Cast model to GeneralValueType for type safety
+            # Cast model to t.GeneralValueType for type safety
             result = invariant(model)
             is_failure = getattr(result, "is_failure", False)
             if is_failure:
@@ -321,7 +324,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_aggregate_consistency_with_rules(
         aggregate: t.GeneralValueType,
-        consistency_rules: t.Types.ConsistencyRuleMapping,
+        consistency_rules: t.ConsistencyRuleMapping,
     ) -> r[t.GeneralValueType]:
         """Validate aggregate consistency with railway patterns.
 
@@ -366,7 +369,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_event_sourcing(
         event: t.GeneralValueType,
-        event_validators: t.Types.EventValidatorMapping,
+        event_validators: t.EventValidatorMapping,
     ) -> r[t.GeneralValueType]:
         """Validate event sourcing patterns with railway patterns.
 
@@ -458,7 +461,7 @@ class FlextModelsValidation:
             )
 
         for validator in validators:
-            # Cast command_or_query to GeneralValueType for type safety
+            # Cast command_or_query to t.GeneralValueType for type safety
             result = validator(command_or_query)
             if result.is_failure:
                 return r[t.GeneralValueType].fail(
@@ -684,94 +687,208 @@ class FlextModelsValidation:
         # Return validated entity
         return r[object].ok(entity)
 
-    # =========================================================================
-    # VALIDATION TYPE ALIASES (Tier 1 - can import constants)
-    # =========================================================================
-    # Moved from typings.py (Tier 0) to here (Tier 1) because Field validators
-    # require actual constant values which cannot be imported in Tier 0 modules
+    @staticmethod
+    def _validate_uri_format(
+        uri: str | None,
+        allowed_schemes: list[str] | None = None,
+        context: str = "URI",
+    ) -> r[str]:
+        if uri is None:
+            return r[str].fail(
+                f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
+            )
+        if not isinstance(uri, str):
+            return r[str].fail(
+                f"{context} must be a string (got {type(uri).__name__})",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        try:
+            parsed_uri = urlparse(uri)
+            if not all([parsed_uri.scheme, parsed_uri.netloc]):
+                return r[str].fail(
+                    f"Invalid {context} format: missing scheme or netloc",
+                    error_code=c.Errors.VALIDATION_ERROR,
+                )
+            if allowed_schemes and parsed_uri.scheme not in allowed_schemes:
+                return r[str].fail(
+                    f"Invalid {context} scheme: '{parsed_uri.scheme}'. Must be one of {allowed_schemes}",
+                    error_code=c.Errors.VALIDATION_ERROR,
+                )
+            return r[str].ok(uri)
+        except ValueError as e:
+            return r[str].fail(
+                f"Invalid {context} format: {e}", error_code=c.Errors.VALIDATION_ERROR
+            )
 
-    class Validation:
-        """Domain validation types using Pydantic Field annotations."""
+    @staticmethod
+    def validate_uri(
+        uri: str | None,
+        allowed_schemes: list[str] | None = None,
+        context: str = "URI",
+    ) -> r[str]:
+        return FlextModelsValidation._validate_uri_format(uri, allowed_schemes, context)
 
-        # Network validation types
-        # NOTE: Field() requires literal values, so we use constants directly
-        # These constants are centralized in FlextConstants for reuse
-        type PortNumber = Annotated[
-            int,
-            Field(
-                ge=c.Network.MIN_PORT,
-                le=c.Network.MAX_PORT,
-                description="Network port",
-            ),
-        ]
-        type TimeoutSeconds = Annotated[
-            float,
-            Field(
-                gt=c.ZERO,
-                le=int(c.Network.DEFAULT_TIMEOUT),
-                description="Timeout in seconds",
-            ),
-        ]
-        type RetryCount = Annotated[
-            int,
-            Field(
-                ge=c.ZERO,
-                le=c.Validation.RETRY_COUNT_MAX,
-                description="Retry attempts",
-            ),
-        ]
+    @staticmethod
+    def _validate_port_range(port: int | None, context: str = "Port") -> r[int]:
+        if port is None:
+            return r[int].fail(
+                f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
+            )
+        if not isinstance(port, int):
+            return r[int].fail(
+                f"{context} must be an integer (got {type(port).__name__})",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        if not c.Network.MIN_PORT <= port <= c.Network.MAX_PORT:
+            return r[int].fail(
+                f"{context} must be between {c.Network.MIN_PORT} and {c.Network.MAX_PORT} (got {port})",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        return r[int].ok(port)
 
-        # String validation types
-        type NonEmptyStr = Annotated[
-            str,
-            Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
-                description="Non-empty string",
-            ),
-        ]
+    @staticmethod
+    def validate_port_number(
+        port: int | None,
+        context: str = "Port",
+    ) -> r[int]:
+        return FlextModelsValidation._validate_port_range(port, context)
 
-        @staticmethod
-        def validate_hostname(value: str) -> str:
-            """Validate hostname by attempting DNS resolution.
+    @staticmethod
+    def _validate_non_empty_string_format(
+        value: str | None,
+        context: str = "Field",
+    ) -> r[str]:
+        if value is None:
+            return r[str].fail(
+                f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
+            )
+        if not isinstance(value, str):
+            return r[str].fail(
+                f"{context} must be a string (got {type(value).__name__})",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        if not value:
+            return r[str].fail(
+                f"{context} cannot be empty", error_code=c.Errors.VALIDATION_ERROR
+            )
+        return r[str].ok(value)
 
-            Business Rule: Validates hostname strings by attempting DNS resolution
-            using socket.gethostbyname(). Ensures hostnames are resolvable before
-            being used in network configurations. Raises ValueError if hostname cannot
-            be resolved, preventing invalid network configurations.
+    @staticmethod
+    def validate_required_string(
+        value: str | None,
+        context: str = "Field",
+    ) -> r[str]:
+        return FlextModelsValidation._validate_non_empty_string_format(value, context)
 
-            Audit Implication: Hostname validation ensures network configurations
-            are valid before being used in production systems. Failed validations
-            are logged with error messages for audit trail completeness. Used by
-            Pydantic 2 AfterValidator for type-safe hostname validation.
+    @staticmethod
+    def _validate_choice_value(
+        value: str,
+        valid_choices: set[str],
+        context: str = "Value",
+        *,
+        case_sensitive: bool = False,
+    ) -> r[str]:
+        if not isinstance(value, str):
+            return r[str].fail(
+                f"{context} must be a string (got {type(value).__name__})",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        if not valid_choices:
+            return r[str].fail(
+                "Valid choices cannot be empty", error_code=c.Errors.VALIDATION_ERROR
+            )
 
-            Args:
-                value: Hostname string to validate
+        target_value = value if case_sensitive else value.lower()
+        target_choices = (
+            valid_choices if case_sensitive else {c.lower() for c in valid_choices}
+        )
 
-            Returns:
-                Validated hostname string (same as input if valid)
+        if target_value not in target_choices:
+            return r[str].fail(
+                f"Invalid {context}: '{value}'. Must be one of {list(valid_choices)}",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        return r[str].ok(value)
 
-            Raises:
-                ValueError: If hostname cannot be resolved via DNS
+    @staticmethod
+    def validate_choice(
+        value: str,
+        valid_choices: set[str],
+        context: str = "Value",
+        *,
+        case_sensitive: bool = False,
+    ) -> r[str]:
+        return FlextModelsValidation._validate_choice_value(
+            value, valid_choices, context, case_sensitive=case_sensitive
+        )
 
-            """
-            try:
-                _ = socket.gethostbyname(value)
-                return value
-            except socket.gaierror as e:
-                msg = f"Cannot resolve hostname '{value}': {e}"
-                raise ValueError(msg) from e
+    @staticmethod
+    def _validate_length_range(
+        value: str,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        context: str = "Value",
+    ) -> r[str]:
+        if not isinstance(value, str):
+            return r[str].fail(
+                f"{context} must be a string (got {type(value).__name__})",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        current_length = len(value)
+        if min_length is not None and current_length < min_length:
+            return r[str].fail(
+                f"{context} length {current_length} is less than minimum {min_length}",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        if max_length is not None and current_length > max_length:
+            return r[str].fail(
+                f"{context} length {current_length} exceeds maximum {max_length}",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        return r[str].ok(value)
 
-        # HostName type defined below after validate_hostname method
+    @staticmethod
+    def validate_length(
+        value: str,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        context: str = "Value",
+    ) -> r[str]:
+        return FlextModelsValidation._validate_length_range(
+            value, min_length, max_length, context
+        )
 
-        type HostName = Annotated[
-            str,
-            Field(
-                min_length=c.Reliability.RETRY_COUNT_MIN,
-                max_length=c.Network.MAX_HOSTNAME_LENGTH,
-                description="Valid hostname",
-            ),
-            AfterValidator(FlextModelsValidation.Validation.validate_hostname),
-        ]
+    @staticmethod
+    def _validate_regex_pattern(
+        value: str,
+        pattern: str,
+        context: str = "Value",
+    ) -> r[str]:
+        if not isinstance(value, str):
+            return r[str].fail(
+                f"{context} must be a string (got {type(value).__name__})",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+        try:
+            if not re.fullmatch(pattern, value):
+                return r[str].fail(
+                    f"{context} '{value}' does not match pattern '{pattern}'",
+                    error_code=c.Errors.VALIDATION_ERROR,
+                )
+            return r[str].ok(value)
+        except re.error as e:
+            return r[str].fail(
+                f"Invalid regex pattern '{pattern}': {e}",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+
+    @staticmethod
+    def validate_pattern(
+        value: str,
+        pattern: str,
+        context: str = "Value",
+    ) -> r[str]:
+        return FlextModelsValidation._validate_regex_pattern(value, pattern, context)
 
 
 __all__ = ["FlextModelsValidation"]

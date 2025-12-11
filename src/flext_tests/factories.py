@@ -171,7 +171,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 )
 
             if params.kind == "user":
-                user_data: t.Types.ConfigurationDict = {
+                user_data: t.ConfigurationDict = {
                     "id": params.model_id or u.Tests.Factory.generate_id(),
                     "name": params.name or c.Tests.Factory.DEFAULT_USER_NAME,
                     "email": params.email
@@ -184,14 +184,14 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 }
                 if params.overrides:
                     # Convert overrides to ConfigurationDict for merge
-                    user_overrides: t.Types.ConfigurationDict = dict(params.overrides)
+                    user_overrides: t.ConfigurationDict = dict(params.overrides)
                     merge_result = u.merge(user_data, user_overrides, strategy="deep")
                     if merge_result.is_success:
                         user_data = merge_result.value
                 return m.Tests.Factory.User.model_validate(user_data)
 
             if params.kind == "config":
-                config_data: t.Types.ConfigurationDict = {
+                config_data: t.ConfigurationDict = {
                     "service_type": params.service_type
                     or c.Tests.Factory.DEFAULT_SERVICE_TYPE,
                     "environment": params.environment
@@ -209,7 +209,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 }
                 if params.overrides:
                     # Convert overrides to ConfigurationDict for merge
-                    config_overrides: t.Types.ConfigurationDict = dict(params.overrides)
+                    config_overrides: t.ConfigurationDict = dict(params.overrides)
                     merge_result = u.merge(
                         config_data,
                         config_overrides,
@@ -231,7 +231,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 }
                 # Convert overrides to compatible dict
                 if params.overrides:
-                    # Type narrowing: params.overrides is Mapping[str, GeneralValueType]
+                    # Type narrowing: params.overrides is Mapping[str, t.GeneralValueType]
                     overrides_mapping = params.overrides
                     overrides_dict: dict[str, t.Tests.TestResultValue] = dict(
                         overrides_mapping,
@@ -472,7 +472,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             result_list = []
             if params.values:
                 for raw_val in params.values:
-                    # raw_val is GeneralValueType, transform if needed then cast to TValue
+                    # raw_val is t.GeneralValueType, transform if needed then cast to TValue
                     transformed_val: TValue = (
                         cast("TValue", params.transform(raw_val))
                         if params.transform
@@ -1129,7 +1129,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         try:
             instance = _create_instance()
             if params.as_result:
-                return r[T].ok(cast("T", instance))
+                return r[T].ok(instance)
             return instance
         except Exception as e:
             if params.as_result:
@@ -1171,414 +1171,6 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         return cls._create_test_service_impl(kind, **overrides)
 
     # ==========================================================================
-    # DEPRECATED NESTED FACTORY CLASSES - Use tt.model(), tt.res(), tt.op(), tt.batch()
-    # ==========================================================================
-
-    class Result:
-        """FlextResult factory methods for test assertions.
-
-        .. deprecated::
-            Use tt.res() instead. This class will be removed in a future version.
-
-        Provides simplified creation of success/failure results for testing.
-        """
-
-        @staticmethod
-        def ok[TValue](value: TValue) -> r[TValue]:
-            """Create success result with value.
-
-            .. deprecated::
-                Use tt.res("ok", value=value) instead.
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_RESULT_OK,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return r[TValue].ok(value)
-
-        @staticmethod
-        def fail(error: str, error_code: str | None = None) -> r[object]:
-            """Create failure result with error.
-
-            .. deprecated::
-                Use tt.res("fail", error=error, error_code=error_code) instead.
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_RESULT_FAIL,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return r[object].fail(error, error_code=error_code)
-
-        @staticmethod
-        def from_value[TValue](
-            value: TValue | None,
-            error_on_none: str = c.Tests.Factory.ERROR_VALUE_NONE,
-        ) -> r[TValue]:
-            """Create result from optional value.
-
-            .. deprecated::
-                Use tt.res("from_value", value=value, error_on_none=msg) instead.
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_RESULT_FROM_VALUE,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if value is None:
-                return r[TValue].fail(error_on_none)
-            return r[TValue].ok(value)
-
-    class Models:
-        """Model factory methods for domain objects.
-
-        .. deprecated::
-            Use tt.model() instead. This class will be removed in a future version.
-
-        Creates instances of common domain models with sensible defaults.
-        """
-
-        @staticmethod
-        def user(
-            user_id: str | None = None,
-            name: str | None = None,
-            email: str | None = None,
-            **overrides: t.Tests.TestResultValue,
-        ) -> m.Tests.Factory.User:
-            """Create test user model.
-
-            .. deprecated::
-                Use tt.model("user", id=user_id, name=name, email=email) instead.
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_MODELS_USER,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return FlextTestsFactories.create_user(user_id, name, email, **overrides)
-
-        @staticmethod
-        def config(
-            service_type: str = "api",
-            environment: str = "test",
-            **overrides: t.Tests.TestResultValue,
-        ) -> m.Tests.Factory.Config:
-            """Create test configuration model.
-
-            .. deprecated::
-                Use tt.model("config", service_type=..., environment=...) instead.
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_MODELS_CONFIG,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return FlextTestsFactories.create_config(
-                service_type,
-                environment,
-                **overrides,
-            )
-
-        @staticmethod
-        def service(
-            service_type: str = "api",
-            service_id: str | None = None,
-            **overrides: t.Tests.TestResultValue,
-        ) -> m.Tests.Factory.Service:
-            """Create test service model.
-
-            .. deprecated::
-                Use tt.model("service", service_type=..., id=...) instead.
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_MODELS_SERVICE,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return FlextTestsFactories.create_service(
-                service_type,
-                service_id,
-                **overrides,
-            )
-
-        @staticmethod
-        def entity(
-            name: str = c.Tests.Factory.DEFAULT_ENTITY_NAME,
-            value: t.GeneralValueType = None,
-        ) -> m.Tests.Factory.Entity:
-            """Create test entity with identity.
-
-            .. deprecated::
-                Use tt.model("entity", name=..., value=...) instead.
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_MODELS_ENTITY,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            # Delegate to DomainHelpers for consistent entity creation
-            return u.Tests.DomainHelpers.create_test_entity_instance(
-                name=name,
-                value=value,
-                entity_class=m.Tests.Factory.Entity,
-            )
-
-        @staticmethod
-        def value_object(
-            data: str = c.Tests.Factory.DEFAULT_VALUE_DATA,
-            count: int = c.Tests.Factory.DEFAULT_VALUE_COUNT,
-        ) -> m.Tests.Factory.ValueObject:
-            """Create test value object.
-
-            .. deprecated::
-                Use tt.model("value", data=..., count=...) instead.
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_MODELS_VALUE_OBJECT,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            # Delegate to DomainHelpers for consistent value object creation
-            return u.Tests.DomainHelpers.create_test_value_object_instance(
-                data=data,
-                count=count,
-                value_class=m.Tests.Factory.ValueObject,
-            )
-
-    class Operations:
-        """Operation factory methods for callable test functions.
-
-        Creates callable operations for testing handlers, processors, etc.
-        """
-
-        @staticmethod
-        def simple() -> Callable[[], str]:
-            """Create simple operation returning 'success'."""
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_OPS_SIMPLE,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-            def op() -> str:
-                return c.Tests.Factory.SUCCESS_MESSAGE
-
-            return op
-
-        @staticmethod
-        def add() -> Callable[
-            [t.Tests.TestResultValue, t.Tests.TestResultValue],
-            t.Tests.TestResultValue,
-        ]:
-            """Create add operation for numeric/string concatenation."""
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_OPS_ADD,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-            def op(
-                a: t.Tests.TestResultValue,
-                b: t.Tests.TestResultValue,
-            ) -> t.Tests.TestResultValue:
-                if isinstance(a, (int, float)) and isinstance(b, (int, float)):
-                    return a + b
-                return str(a) + str(b)
-
-            return op
-
-        @staticmethod
-        def format() -> Callable[[str, int], str]:
-            """Create format operation returning 'name: value'."""
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_OPS_FORMAT,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-            def op(name: str, value: int = 10) -> str:
-                return f"{name}: {value}"
-
-            return op
-
-        @staticmethod
-        def error(message: str = c.Tests.Factory.ERROR_DEFAULT) -> Callable[..., Never]:
-            """Create operation that raises ValueError."""
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_OPS_ERROR,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-            def op() -> Never:
-                raise ValueError(message)
-
-            return op
-
-        @staticmethod
-        def type_error(
-            message: str = c.Tests.Factory.ERROR_DEFAULT,
-        ) -> Callable[..., Never]:
-            """Create operation that raises TypeError."""
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_OPS_TYPE_ERROR,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-            def op() -> Never:
-                raise TypeError(message)
-
-            return op
-
-        @staticmethod
-        def result_success[TValue](value: TValue) -> Callable[[], r[TValue]]:
-            """Create operation returning success result."""
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_OPS_RESULT_OK,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-            def op() -> r[TValue]:
-                return r[TValue].ok(value)
-
-            return op
-
-        @staticmethod
-        def result_failure(
-            error: str = c.Tests.Factory.ERROR_OPERATION_FAILED,
-        ) -> Callable[[], r[object]]:
-            """Create operation returning failure result."""
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_OPS_RESULT_FAIL,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-            def op() -> r[object]:
-                return r[object].fail(error)
-
-            return op
-
-    class Batch:
-        """Batch factory methods for creating multiple objects.
-
-        Provides methods for generating lists of test objects.
-        """
-
-        @staticmethod
-        def users(
-            count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
-        ) -> builtins.list[m.Tests.Factory.User]:
-            """Create batch of test users.
-
-            Args:
-                count: Number of users to create
-
-            Returns:
-                List of user model instances
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_BATCH_USERS,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return FlextTestsFactories.batch_users(count)
-
-        @staticmethod
-        def configs(
-            count: int = 3,
-            environments: builtins.list[str] | None = None,
-        ) -> builtins.list[m.Tests.Factory.Config]:
-            """Create batch of test configurations.
-
-            Args:
-                count: Number of configs to create
-                environments: Optional list of environment names
-
-            Returns:
-                List of config model instances
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_BATCH_CONFIGS,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            envs = (
-                environments or list(c.Tests.Factory.DEFAULT_BATCH_ENVIRONMENTS)[:count]
-            )
-            return [
-                FlextTestsFactories.create_config(environment=envs[i % len(envs)])
-                for i in range(count)
-            ]
-
-        @staticmethod
-        def services(
-            count: int = 3,
-            service_types: builtins.list[str] | None = None,
-        ) -> builtins.list[m.Tests.Factory.Service]:
-            """Create batch of test services.
-
-            Args:
-                count: Number of services to create
-                service_types: Optional list of service types
-
-            Returns:
-                List of service model instances
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_BATCH_SERVICES,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            types = (
-                service_types
-                or list(c.Tests.Factory.DEFAULT_BATCH_SERVICE_TYPES)[:count]
-            )
-            return [
-                FlextTestsFactories.create_service(service_type=types[i % len(types)])
-                for i in range(count)
-            ]
-
-        @staticmethod
-        def results[TValue](
-            values: builtins.list[TValue],
-            errors: builtins.list[str] | None = None,
-        ) -> builtins.list[r[TValue]]:
-            """Create batch of results from values and errors.
-
-            Args:
-                values: Values for success results
-                errors: Error messages for failure results
-
-            Returns:
-                List of FlextResult instances
-
-            """
-            warnings.warn(
-                c.Tests.Factory.DEPRECATION_BATCH_RESULTS,
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            results: builtins.list[r[TValue]] = [r[TValue].ok(v) for v in values]
-            if errors:
-                results.extend([r[TValue].fail(e) for e in errors])
-            return results
-
-    # ==========================================================================
     # STATIC FACTORY METHODS - Primary interface (backward compatible)
     # ==========================================================================
 
@@ -1601,12 +1193,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             User model instance
 
         """
-        warnings.warn(
-            c.Tests.Factory.DEPRECATION_CREATE_USER,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        user_data: t.Types.ConfigurationDict = {
+        user_data: t.ConfigurationDict = {
             "id": user_id or u.Tests.Factory.generate_id(),
             "name": name or c.Tests.Factory.DEFAULT_USER_NAME,
             "email": email
@@ -1614,7 +1201,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             "active": c.Tests.Factory.DEFAULT_USER_ACTIVE,
         }
         # Convert overrides dict to ConfigurationDict
-        overrides_dict: t.Types.ConfigurationDict = dict(overrides)
+        overrides_dict: t.ConfigurationDict = dict(overrides)
         merge_result = u.merge(user_data, overrides_dict, strategy="deep")
         if merge_result.is_success:
             user_data = merge_result.value
@@ -1642,12 +1229,12 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             DeprecationWarning,
             stacklevel=2,
         )
-        config_data: t.Types.ConfigurationDict = {
+        config_data: t.ConfigurationDict = {
             "service_type": service_type,
             "environment": environment,
         }
         # Convert overrides dict to ConfigurationDict
-        overrides_dict: t.Types.ConfigurationDict = dict(overrides)
+        overrides_dict: t.ConfigurationDict = dict(overrides)
         merge_result = u.merge(config_data, overrides_dict, strategy="deep")
         if merge_result.is_success:
             config_data = merge_result.value
@@ -1756,7 +1343,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 type_error_message,
             ),
         }
-        # Cast to expected return type (GeneralValueType is superset)
+        # Cast to expected return type (t.GeneralValueType is superset)
         operations = ops
 
         if operation_type in operations:
@@ -1823,7 +1410,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
 
                 # Use captured_overrides from outer scope (closure)
                 for key, value in {**captured_overrides, **data}.items():
-                    # value is already GeneralValueType from dict iteration
+                    # value is already t.GeneralValueType from dict iteration
                     gv: t_core.GeneralValueType = value
                     if key == "name":
                         name_value = gv
@@ -1855,7 +1442,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 # MyPy limitation: dict unpacking to **kwargs not fully supported for BaseModel.__init__
                 # The dict is compatible at runtime, but MyPy can't infer the type compatibility
                 # Solution: Use cast to help MyPy understand the type compatibility
-                # BaseModel.__init__ accepts **data: GeneralValueType, so this is safe
+                # BaseModel.__init__ accepts **data: t.GeneralValueType, so this is safe
                 super().__init__(**service_data)
                 # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
                 # Initialize mutable attribute in __init__ to avoid ClassVar requirement

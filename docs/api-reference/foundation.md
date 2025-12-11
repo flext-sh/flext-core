@@ -150,7 +150,7 @@ def process(value: str) -> r[str]:
     return r[str].ok(value.upper())
 
 # Type annotations
-config_dict: t.Types.ConfigurationDict = {"key": "value"}
+config_dict: t.ConfigurationDict = {"key": "value"}
 
 # Constants
 error_code = c.Errors.VALIDATION_ERROR

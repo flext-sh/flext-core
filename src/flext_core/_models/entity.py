@@ -49,11 +49,11 @@ class FlextModelsEntity:
 
         event_type: str
         aggregate_id: str
-        data: t.Types.EventDataMapping = Field(
+        data: t.EventDataMapping = Field(
             default_factory=dict,
             description="Event data - maps to EventDataMapping",
         )
-        metadata: t.Types.FieldMetadataMapping = Field(
+        metadata: t.FieldMetadataMapping = Field(
             default_factory=dict,
             description="Event metadata - maps to FieldMetadataMapping",
         )
@@ -154,14 +154,14 @@ class FlextModelsEntity:
                 # Fast fail: data must be dict (None not allowed for domain events)
                 # Type narrowing: if dict-like, treat as Mapping; else use empty dict
                 if isinstance(data, dict):
-                    event_data: t.Types.EventDataMapping = data
+                    event_data: t.EventDataMapping = data
                 else:
                     event_data = {}
 
                 domain_event = FlextModelsEntity.DomainEvent(
                     event_type=event_name,
                     aggregate_id=self.unique_id,
-                    data=cast("t.Types.EventDataMapping", event_data),
+                    data=cast("t.EventDataMapping", event_data),
                 )
 
                 # Validate domain event using FlextModelsValidation
@@ -198,7 +198,7 @@ class FlextModelsEntity:
                 and isinstance(data, Mapping)
             ):
                 # Type narrowing: is_dict_like + isinstance ensures data is ConfigurationMapping
-                data_mapping: t.Types.ConfigurationMapping = data
+                data_mapping: t.ConfigurationMapping = data
                 event_type_raw = FlextUtilitiesMapper().get(data_mapping, "event_type")
                 event_type = "" if event_type_raw is None else str(event_type_raw)
             if event_type:
@@ -230,7 +230,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self: Self,
             event_name: str,
-            data: t.Types.EventDataMapping | None,
+            data: t.EventDataMapping | None,
         ) -> r[bool]:
             """Add a domain event to be dispatched with enhanced validation."""
             # Validate input
@@ -368,30 +368,28 @@ class FlextModelsEntity:
 
         @staticmethod
         def validate_and_collect_events(
-            events: Sequence[tuple[str, t.Types.EventDataMapping | None]],
-        ) -> r[list[tuple[str, t.Types.EventDataMapping]]]:
+            events: Sequence[tuple[str, t.EventDataMapping | None]],
+        ) -> r[list[tuple[str, t.EventDataMapping]]]:
             """Validate and collect events for bulk add.
 
             Returns:
                 r with validated events list or error
 
             """
-            validated_events: list[tuple[str, t.Types.EventDataMapping]] = []
+            validated_events: list[tuple[str, t.EventDataMapping]] = []
 
             if not isinstance(events, (list, tuple)):
-                return r[list[tuple[str, t.Types.EventDataMapping]]].fail(
+                return r[list[tuple[str, t.EventDataMapping]]].fail(
                     "Events must be a list or tuple",
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
 
             # Cast to help pyrefly with type narrowing
-            events_typed = cast(
-                "list[tuple[str, t.Types.EventDataMapping | None]]", events
-            )
+            events_typed = cast("list[tuple[str, t.EventDataMapping | None]]", events)
             for i, event_item in enumerate(events_typed):
                 event_tuple_size = c.EVENT_TUPLE_SIZE
                 if len(event_item) != event_tuple_size:
-                    return r[list[tuple[str, t.Types.EventDataMapping]]].fail(
+                    return r[list[tuple[str, t.EventDataMapping]]].fail(
                         f"Event {i}: must have exactly 2 elements (name, data)",
                         error_code=c.Errors.VALIDATION_ERROR,
                     )
@@ -399,30 +397,30 @@ class FlextModelsEntity:
                 event_name, data = event_item
 
                 if not event_name:
-                    return r[list[tuple[str, t.Types.EventDataMapping]]].fail(
+                    return r[list[tuple[str, t.EventDataMapping]]].fail(
                         f"Event {i}: name must be non-empty string",
                         error_code=c.Errors.VALIDATION_ERROR,
                     )
                 if data is not None and not FlextRuntime.is_dict_like(data):
-                    return r[list[tuple[str, t.Types.EventDataMapping]]].fail(
+                    return r[list[tuple[str, t.EventDataMapping]]].fail(
                         f"Event {i}: data must be ConfigurationDict or None",
                         error_code=c.Errors.VALIDATION_ERROR,
                     )
                 # Fast fail: data must be dict (None not allowed)
                 # Type narrowing: if dict-like, treat as Mapping; else use empty dict
                 if isinstance(data, dict):
-                    event_data: t.Types.EventDataMapping = data
+                    event_data: t.EventDataMapping = data
                 else:
                     event_data = {}
                 validated_events.append((event_name, event_data))
 
-            return r[list[tuple[str, t.Types.EventDataMapping]]].ok(
+            return r[list[tuple[str, t.EventDataMapping]]].ok(
                 validated_events,
             )
 
         def _add_validated_events_bulk(
             self: Self,
-            validated_events: list[tuple[str, t.Types.EventDataMapping]],
+            validated_events: list[tuple[str, t.EventDataMapping]],
         ) -> r[bool]:
             """Add validated events in bulk.
 
@@ -435,11 +433,11 @@ class FlextModelsEntity:
             """
             try:
                 for event_name, data in validated_events:
-                    # EventDataMapping is already Mapping[str, GeneralValueType]
+                    # EventDataMapping is already Mapping[str, t.GeneralValueType]
                     domain_event = FlextModelsEntity.DomainEvent(
                         event_type=event_name,
                         aggregate_id=self.unique_id,
-                        data=cast("t.Types.EventDataMapping", data),
+                        data=cast("t.EventDataMapping", data),
                     )
                     self.domain_events.append(domain_event)
                     self.increment_version()
@@ -465,7 +463,7 @@ class FlextModelsEntity:
 
         def add_domain_events_bulk(
             self: Self,
-            events: Sequence[tuple[str, t.Types.EventDataMapping | None]],
+            events: Sequence[tuple[str, t.EventDataMapping | None]],
         ) -> r[bool]:
             """Add multiple domain events in bulk with validation."""
             # Validate input

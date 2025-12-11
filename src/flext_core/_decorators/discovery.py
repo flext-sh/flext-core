@@ -28,7 +28,7 @@ class FactoryDecoratorsDiscovery:
     @staticmethod
     def scan_module(
         module: object,
-    ) -> list[tuple[str, m.Container.FactoryDecoratorConfig]]:
+    ) -> list[tuple[str, m.ContainerFactoryDecoratorConfig]]:
         """Scan module for functions decorated with @factory().
 
         Introspects the module to find all functions with factory configuration
@@ -47,13 +47,13 @@ class FactoryDecoratorsDiscovery:
             ...     print(f"{func_name}: singleton={config.singleton}")
 
         """
-        factories: list[tuple[str, m.Container.FactoryDecoratorConfig]] = []
+        factories: list[tuple[str, m.ContainerFactoryDecoratorConfig]] = []
         for name in dir(module):
             if name.startswith("_"):
                 continue
             func = getattr(module, name, None)
             if callable(func) and hasattr(func, c.Discovery.FACTORY_ATTR):
-                config: m.Container.FactoryDecoratorConfig = getattr(
+                config: m.ContainerFactoryDecoratorConfig = getattr(
                     func,
                     c.Discovery.FACTORY_ATTR,
                 )

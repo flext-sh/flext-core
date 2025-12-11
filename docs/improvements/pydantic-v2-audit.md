@@ -229,7 +229,7 @@ $ grep -n "Annotated\[" src/flext_core/typings.py | head -5
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-class FlextConfig(BaseSettings):
+class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation."""
 
     model_config = SettingsConfigDict(

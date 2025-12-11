@@ -321,7 +321,7 @@ class TestFlextRegistry:
         else:
             u.Tests.Result.assert_result_failure(result)
             if test_case.error_pattern:
-                # Type ignore: RegistrationDetails is not GeneralValueType but test is valid
+                # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
                 u.Tests.Result.assert_failure_with_error(
                     result,
                     test_case.error_pattern,
@@ -403,7 +403,7 @@ class TestFlextRegistry:
         if test_case.handler_count > 0:
             for i in range(test_case.handler_count):
                 summary.registered.append(
-                    m.Handler.RegistrationDetails(
+                    m.HandlerRegistrationDetails(
                         registration_id=f"test_{i}",
                         handler_mode=c.Cqrs.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
@@ -443,7 +443,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(None)
             u.Tests.Result.assert_result_failure(result)
-            # Type ignore: RegistrationDetails is not GeneralValueType but test is valid
+            # Type ignore: RegistrationDetails is not t.GeneralValueType but test is valid
             u.Tests.Result.assert_failure_with_error(
                 result,
                 "Handler cannot be None",
@@ -452,7 +452,7 @@ class TestFlextRegistry:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
             u.Tests.Result.assert_result_success(result)
-            assert isinstance(result.value, m.Handler.RegistrationDetails)
+            assert isinstance(result.value, m.HandlerRegistrationDetails)
 
     def test_registry_initialization(self) -> None:
         """Test registry initialization."""
@@ -466,7 +466,7 @@ class TestFlextRegistry:
         handler = ConcreteTestHandler()
         result = registry.register_handler(handler)
         u.Tests.Result.assert_result_success(result)
-        assert isinstance(result.value, m.Handler.RegistrationDetails)
+        assert isinstance(result.value, m.HandlerRegistrationDetails)
 
     @pytest.mark.parametrize(
         ("mode", "expected"),

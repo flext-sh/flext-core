@@ -1,4 +1,4 @@
-"""FlextConfig - Configuration Management Module.
+"""FlextSettings - Configuration Management Module.
 
 This module provides comprehensive configuration management for the FLEXT ecosystem,
 implementing Pydantic v2 BaseSettings with dependency injection, environment variable support,
@@ -54,7 +54,7 @@ def _resolve_env_file() -> str | None:
     return c.Platform.ENV_FILE_DEFAULT
 
 
-class FlextConfig(BaseSettings, FlextRuntime):
+class FlextSettings(BaseSettings, FlextRuntime):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)
@@ -112,10 +112,10 @@ class FlextConfig(BaseSettings, FlextRuntime):
             str | None: Path to .env file or None if not found
 
         Example:
-            # In namespace config classes (e.g., FlextLdapConfig)
+            # In namespace config classes (e.g., FlextLdapSettings)
             model_config = SettingsConfigDict(
                 env_prefix="FLEXT_LDAP_",
-                env_file=FlextConfig.resolve_env_file(),
+                env_file=FlextSettings.resolve_env_file(),
                 ...
             )
 
@@ -416,7 +416,7 @@ class FlextConfig(BaseSettings, FlextRuntime):
         services that need to apply runtime overrides. It respects Clean
         Architecture principles where each class owns its own instantiation.
 
-        For FlextConfig (base class): clones from the global instance to
+        For FlextSettings (base class): clones from the global instance to
         preserve environment-derived values while allowing overrides.
         For subclasses: creates a new instance directly.
 
@@ -427,13 +427,15 @@ class FlextConfig(BaseSettings, FlextRuntime):
             New configuration instance with applied overrides.
 
         Example:
-            >>> config = FlextConfig.materialize(config_overrides={"app_name": "myapp"})
+            >>> config = FlextSettings.materialize(
+            ...     config_overrides={"app_name": "myapp"}
+            ... )
             >>> config.app_name
             'myapp'
 
         """
-        # For FlextConfig itself, clone from global instance
-        if cls is FlextConfig:
+        # For FlextSettings itself, clone from global instance
+        if cls is FlextSettings:
             global_config = cls.get_global_instance()
             # Use model_copy to clone the instance properly
             # This ensures Pydantic internal state (__pydantic_fields_set__, etc.) is properly initialized
@@ -501,7 +503,7 @@ class FlextConfig(BaseSettings, FlextRuntime):
     # Audit Implication: This registry tracks namespace configuration classes for
     # auto-registration pattern. Used by @auto_register decorator to map namespace
     # strings to configuration classes.
-    _namespace_registry: ClassVar[t.Types.StringBaseSettingsTypeDict] = {}
+    _namespace_registry: ClassVar[t.StringBaseSettingsTypeDict] = {}
     _context_overrides: ClassVar[dict[str, dict[str, t.FlexibleValue]]] = {}
 
     @staticmethod
@@ -516,7 +518,7 @@ class FlextConfig(BaseSettings, FlextRuntime):
         not BaseSettings. Registers class in _namespace_registry for dynamic namespace
         resolution.
 
-        WARNING: Registered classes should use FlextConfig.resolve_env_file()
+        WARNING: Registered classes should use FlextSettings.resolve_env_file()
         in their model_config.env_file to respect FLEXT_ENV_FILE environment variable.
         Hardcoded '.env' values will trigger a deprecation warning.
 
@@ -537,10 +539,10 @@ class FlextConfig(BaseSettings, FlextRuntime):
             # Note: Previous validation for env_file=".env" was removed because
             # it cannot distinguish between:
             # 1. Hardcoded ".env" (incorrect)
-            # 2. FlextConfig.resolve_env_file() returning ".env" (correct)
+            # 2. FlextSettings.resolve_env_file() returning ".env" (correct)
             # The documentation warns about proper usage of resolve_env_file().
             # Register in namespace registry (namespace stored in registry key, not on class)
-            FlextConfig._namespace_registry[namespace] = cls
+            FlextSettings._namespace_registry[namespace] = cls
             return cls
 
         return decorator
@@ -614,7 +616,7 @@ class FlextConfig(BaseSettings, FlextRuntime):
         return config_class()
 
     # __getattr__ removed - use get_namespace() method explicitly
-    # Example: config.get_namespace("ldif", FlextLdifConfig) instead of config.ldif
+    # Example: config.get_namespace("ldif", FlextLdifSettings) instead of config.ldif
 
     @classmethod
     def for_context(
@@ -635,7 +637,7 @@ class FlextConfig(BaseSettings, FlextRuntime):
             Self: Configuration instance with context overrides applied.
 
         Example:
-            >>> config = FlextConfig.for_context(
+            >>> config = FlextSettings.for_context(
             ...     "worker_1", log_level="DEBUG", timeout=60
             ... )
 
@@ -665,10 +667,10 @@ class FlextConfig(BaseSettings, FlextRuntime):
             **overrides: Configuration field overrides to register.
 
         Example:
-            >>> FlextConfig.register_context_overrides(
+            >>> FlextSettings.register_context_overrides(
             ...     "worker_1", log_level="DEBUG", timeout=60
             ... )
-            >>> config = FlextConfig.for_context("worker_1")
+            >>> config = FlextSettings.for_context("worker_1")
 
         """
         if context_id not in cls._context_overrides:
@@ -682,4 +684,4 @@ class FlextConfig(BaseSettings, FlextRuntime):
         cls._context_overrides.clear()
 
 
-__all__ = ["FlextConfig"]
+__all__ = ["FlextSettings"]

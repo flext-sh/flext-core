@@ -18,7 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
-from flext_core import FlextConfig, FlextResult
+from flext_core import FlextResult, FlextSettings
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,7 +105,7 @@ class TestPhase2FinalCoveragePush:
 
     def test_config_with_all_field_types(self) -> None:
         """Test config with all field types together."""
-        config = FlextConfig(
+        config = FlextSettings(
             app_name="complete_test",
             version="2.0.0",
             debug=True,
@@ -119,7 +119,7 @@ class TestPhase2FinalCoveragePush:
 
     def test_config_json_serialization(self) -> None:
         """Test config JSON serialization and deserialization."""
-        original = FlextConfig(app_name="json_test", version="1.0.0", debug=False)
+        original = FlextSettings(app_name="json_test", version="1.0.0", debug=False)
         config_dict = original.model_dump()
         assert isinstance(config_dict, dict)
         assert config_dict["app_name"] == "json_test"
@@ -129,7 +129,7 @@ class TestPhase2FinalCoveragePush:
             for k, v in config_dict.items()
             if k not in {"is_production", "effective_log_level"}
         }
-        new_config = FlextConfig(**config_dict_filtered)
+        new_config = FlextSettings(**config_dict_filtered)
         assert new_config.app_name == original.app_name
         assert new_config.version == original.version
 

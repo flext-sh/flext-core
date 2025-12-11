@@ -79,7 +79,7 @@ class ModelConversionScenario:
     name: str
     scenario_type: ModelConversionScenarioType
     input_value: t.GeneralValueType
-    expected_output: t.Types.ConfigurationMapping
+    expected_output: t.ConfigurationMapping
 
 
 @dataclass(frozen=True, slots=True)

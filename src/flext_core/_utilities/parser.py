@@ -591,7 +591,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _extract_key_from_mapping(
-        obj: t.Types.ConfigurationMapping,
+        obj: t.ConfigurationMapping,
     ) -> str | None:
         """Extract key from mapping object (Strategy 2).
 
@@ -1020,7 +1020,7 @@ class FlextUtilitiesParser:
             if isinstance(members_raw, Mapping) and all(
                 isinstance(k, str) for k in members_raw
             ):
-                members_dict: t.Types.ConfigurationDict = dict(members_raw)
+                members_dict: t.ConfigurationDict = dict(members_raw)
             else:
                 members_dict = {}
             members_list = list(members_dict.values())
@@ -1404,7 +1404,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _convert_to_int[T](value: t.GeneralValueType, *, default: T) -> T:
-        """Convert value to int with fallback using GeneralValueType from lower layer."""
+        """Convert value to int with fallback using t.GeneralValueType from lower layer."""
         # Use ScalarValue from lower layer - int is part of ScalarValue
         if isinstance(value, int) and not isinstance(value, bool):
             # Type narrowing: value is int, and when default is int, T is int
@@ -1430,7 +1430,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _convert_to_float[T](value: t.GeneralValueType, *, default: T) -> T:
-        """Convert value to float with fallback using GeneralValueType from lower layer."""
+        """Convert value to float with fallback using t.GeneralValueType from lower layer."""
         # Use ScalarValue from lower layer - float is part of ScalarValue
         if isinstance(value, float):
             # Type narrowing: value is float, and when default is float, T is float
@@ -1453,7 +1453,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _convert_to_str[T](value: t.GeneralValueType, *, default: T) -> T:
-        """Convert value to str with fallback using GeneralValueType from lower layer."""
+        """Convert value to str with fallback using t.GeneralValueType from lower layer."""
         # Use ScalarValue from lower layer - str is part of ScalarValue
         if isinstance(value, str):
             # Type narrowing: value is str, and when default is str, T is str
@@ -1476,7 +1476,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _convert_to_bool[T](value: t.GeneralValueType, *, default: T) -> T:
-        """Convert value to bool with fallback using GeneralValueType from lower layer."""
+        """Convert value to bool with fallback using t.GeneralValueType from lower layer."""
         # Use ScalarValue from lower layer - bool is part of ScalarValue
         if isinstance(value, bool):
             # Type narrowing: value is bool, and when default is bool, T is bool
@@ -1595,8 +1595,8 @@ class FlextUtilitiesParser:
             list[str]: Converted and filtered list
 
         """
-        # Use GeneralValueType from lower layer for type compatibility
-        # Narrow object to GeneralValueType - object is compatible with GeneralValueType
+        # Use t.GeneralValueType from lower layer for type compatibility
+        # Narrow object to t.GeneralValueType - object is compatible with t.GeneralValueType
         value_typed: t.GeneralValueType = value
         result = FlextUtilitiesParser.conv_str_list(value_typed, default=default)
         return [v for v in result if v]
@@ -1616,8 +1616,8 @@ class FlextUtilitiesParser:
         """
         if value is None:
             return []
-        # Use GeneralValueType from lower layer for type compatibility
-        # Narrow object to GeneralValueType - object is compatible with GeneralValueType
+        # Use t.GeneralValueType from lower layer for type compatibility
+        # Narrow object to t.GeneralValueType - object is compatible with t.GeneralValueType
         value_typed: t.GeneralValueType = value
         return FlextUtilitiesParser.conv_str_list(value_typed, default=[])
 
@@ -1652,12 +1652,12 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: list[str] | t.Types.StringDict,
+        items: list[str] | t.StringDict,
         *,
         case: str | None = None,
         filter_truthy: bool = False,
         to_set: bool = False,
-    ) -> list[str] | set[str] | t.Types.StringDict:
+    ) -> list[str] | set[str] | t.StringDict:
         """Normalize list/dict (builder: norm().list()).
 
         Mnemonic: norm = normalize, list = list[str]
@@ -1673,7 +1673,7 @@ class FlextUtilitiesParser:
 
         """
         if isinstance(items, dict):
-            dict_items: t.Types.StringDict = items
+            dict_items: t.StringDict = items
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {
@@ -1714,7 +1714,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: list[str] | t.Types.ConfigurationMapping,
+        items: list[str] | t.ConfigurationMapping,
         *,
         case: str | None = None,
     ) -> bool:

@@ -109,7 +109,7 @@ class FlextUtilitiesCast:
         """
         if isinstance(value, target_type):
             return value
-        # For GeneralValueType, try to convert
+        # For t.GeneralValueType, try to convert
         # Dispatch based on target_type identity
         # The overloads ensure correct return types for str, int, float, bool
         # Use  for type narrowing - type checker can't infer from identity checks
