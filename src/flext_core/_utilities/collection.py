@@ -41,9 +41,14 @@ class FlextUtilitiesCollection:
         Python 3.13: Uses isinstance for proper type narrowing with Mapping protocol.
         """
         # Python 3.13: isinstance with Mapping provides proper type narrowing
-        if isinstance(value, Mapping) and all(isinstance(k, str) for k in value):
-            # Type narrowing: value is Mapping[str, object] after isinstance checks
-            return value  # Mapping[str, object] compatible with Mapping[str, object]
+        if isinstance(value, Mapping):
+            # Explicit type narrowing: check all keys are strings
+            keys = list(value.keys())
+            if all(isinstance(k, str) for k in keys):
+                # Type narrowing: value is Mapping[str, object] after isinstance checks
+                return (
+                    value  # Mapping[str, object] compatible with Mapping[str, object]
+                )
         error_msg = f"Cannot narrow {type(value)} to Mapping[str, object]"
         raise TypeError(error_msg)
 
@@ -548,13 +553,7 @@ class FlextUtilitiesCollection:
         mapper: Callable[[T], R],
     ) -> list[R]:
         """Filter a list with mapping - filter original items, then map."""
-        filtered_items: list[R] = []
-        for item in items_list:
-            # Type narrowing: item is T from items_list[T]
-            if predicate(item):
-                mapped = mapper(item)
-                filtered_items.append(mapped)
-        return filtered_items
+        return [mapper(item) for item in items_list if predicate(item)]
 
     @staticmethod
     def _filter_dict[T](
@@ -922,12 +921,14 @@ class FlextUtilitiesCollection:
         items_list = list(items)
         for item in items_list:
             if callable(key):
-                k: object = key(item)
-            # Type narrowing: key is str here (not callable)
-            # Use TypeGuard for proper type narrowing - eliminates need for isinstance
-            # Access private methods for TypeGuard return type (needed for type narrowing)
+                k = key(item)
+            # Type narrowing: use isinstance to properly narrow key to str
+            elif isinstance(key, str):
+                k = getattr(item, key, None)
             else:
-                k: object = getattr(item, cast("str", key), None)
+                # Unreachable - key must be either callable or str
+                # but needed to handle union type exhaustively
+                k = None
             if k not in result:
                 result[k] = []
             result[k].append(item)

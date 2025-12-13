@@ -13,10 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Annotated, TypeAlias
 
-from pydantic import Discriminator, Field
+from pydantic import Discriminator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
@@ -59,16 +58,15 @@ class FlextModels:
         class ExecutionContext(FlextModelsHandler.ExecutionContext):
             """Handler execution context - real inheritance."""
 
-        class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
-            """Handler decorator configuration."""
-
-            command: type | None = None
-            priority: int = 100
-            timeout: float | None = None
-            middleware: Sequence[type[object]] = Field(default_factory=list)
+        class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
+            """Handler decorator configuration - direct class for mypy compatibility."""
 
         class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
-            """Factory decorator config - real inheritance."""
+            """Handler factory decorator configuration - direct class for mypy compatibility."""
+
+    # Direct aliases for top-level access
+    HandlerDecoratorConfig: TypeAlias = Handler.DecoratorConfig
+    HandlerFactoryDecoratorConfig: TypeAlias = Handler.FactoryDecoratorConfig
 
     # Aliases for direct access
     HandlerRegistrationDetails: TypeAlias = Handler.RegistrationDetails
@@ -80,13 +78,6 @@ class FlextModels:
     ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
     HandlerRegistration = FlextModelsHandler.Registration
     HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
-
-    # Direct class definitions for type safety
-    class HandlerDecoratorConfig(FlextModelsHandler.DecoratorConfig):
-        """Handler decorator configuration - direct class for mypy compatibility."""
-
-    class HandlerFactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
-        """Handler factory decorator configuration - direct class for mypy compatibility."""
 
     # Direct alias for CQRS handler
     CqrsHandler = Handler
@@ -182,6 +173,22 @@ class FlextModels:
 
     class ContextMetadata(FlextModelsContext.ContextMetadata):
         """Context metadata - direct class for mypy compatibility."""
+
+    # Context namespace - aggregates all context-related models
+    class Context:
+        """Context-related models aggregated for convenient access."""
+
+        StructlogProxyContextVar: TypeAlias = (
+            FlextModelsContext.StructlogProxyContextVar
+        )
+        StructlogProxyToken = FlextModelsContext.StructlogProxyToken
+        Token = FlextModelsContext.Token
+        ContextData = FlextModelsContext.ContextData
+        ContextDomainData = FlextModelsContext.ContextDomainData
+        ContextExport = FlextModelsContext.ContextExport
+        ContextScopeData = FlextModelsContext.ContextScopeData
+        ContextStatistics = FlextModelsContext.ContextStatistics
+        ContextMetadata = FlextModelsContext.ContextMetadata
 
     # CQRS and Collections aliases
     Cqrs = FlextModelsCqrs

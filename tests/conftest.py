@@ -9,14 +9,14 @@ from __future__ import annotations
 import math
 import signal
 import types
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Never, TypeVar
+from typing import TypeVar
 
 import pytest
 
-from flext_core import FlextContainer, FlextContext, FlextResult, m, r
+from flext_core import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r
 from flext_core._models import entity as flext_models_entity
 from tests.helpers import factories  # Import for User model rebuild
 from tests.test_utils import assertion_helpers
@@ -132,7 +132,7 @@ class TestAutomationFramework:
 
     @staticmethod
     def execute_with_timeout(
-        func: callable, timeout_seconds: float = 5.0
+        func: Callable[..., object], timeout_seconds: float = 5.0
     ) -> TestResult[object]:
         """Execute function with timeout for performance testing.
 
@@ -147,7 +147,7 @@ class TestAutomationFramework:
 
         @contextmanager
         def timeout_context() -> Generator[None]:
-            def timeout_handler(signum: int, frame: types.FrameType) -> Never:
+            def timeout_handler(signum: int, frame: types.FrameType | None) -> None:
                 raise TimeoutError(f"Operation timed out after {timeout_seconds}s")
 
             signal.signal(signal.SIGALRM, timeout_handler)
@@ -297,16 +297,17 @@ def clean_container() -> FlextContainer:
 
 
 @pytest.fixture(autouse=True)
-def _reset_global_container() -> None:
-    """Reset the global FlextContainer instance after each test.
+def _reset_global_container() -> Generator[None]:
+    """Reset the global FlextContainer and FlextSettings instances after each test.
 
-    This fixture ensures test isolation by clearing the global container
-    singleton that persists across tests. Without this, tests interfere
-    with each other due to shared global state.
+    This fixture ensures test isolation by clearing the global singletons
+    that persist across tests. Without this, tests interfere with each other
+    due to shared global state.
     """
     yield  # Run the test
-    # After the test completes, reset the global instance
+    # After the test completes, reset the global instances
     FlextContainer._global_instance = None
+    FlextSettings.reset_global_instance()
 
 
 @pytest.fixture

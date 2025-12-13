@@ -313,12 +313,15 @@ class FlextTestsTypes(FlextTypes):
             ]
             """Type for parametrized test cases (test_id, data)."""
 
-            # Reuse HandlerCallable from flext_core.typings - no duplication
-            type TransformFunc = t.HandlerCallable
+            type TransformFunc = Callable[
+                [FlextTestsTypes.Tests.Builders.BuilderValue],
+                FlextTestsTypes.Tests.Builders.BuilderValue,
+            ]
             """Type for transformation functions."""
 
-            # Reuse ConditionCallable from flext_core.typings - no duplication
-            type ValidateFunc = t.ConditionCallable
+            type ValidateFunc = Callable[
+                [FlextTestsTypes.Tests.Builders.BuilderValue], bool
+            ]
             """Type for validation functions."""
 
             type ResultBuilder[T] = Callable[[], r[T]]

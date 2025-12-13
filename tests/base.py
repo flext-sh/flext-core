@@ -164,7 +164,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                         msg = "Handler ID cannot be empty"
                         raise ValueError(msg)
 
-                    config = FlextModels.Cqrs.Handler(
+                    config = FlextModels.Handler(
                         handler_id=handler_id,
                         handler_name=handler_name
                         or handler_id.replace("_", " ").title(),

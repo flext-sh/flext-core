@@ -20,6 +20,7 @@ from typing import Final, Self, cast, overload
 
 from pydantic import BaseModel
 
+from flext_core._models.context import FlextModelsContext
 from flext_core.constants import c
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
@@ -1284,29 +1285,29 @@ class FlextContext(FlextRuntime):
         class Correlation:
             """Correlation variables for distributed tracing."""
 
-            CORRELATION_ID: Final[m.StructlogProxyContextVar[str]] = (
+            CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     c.Context.KEY_CORRELATION_ID,
                     default=None,
                 )
             )
-            PARENT_CORRELATION_ID: Final[m.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
-                    c.Context.KEY_PARENT_CORRELATION_ID,
-                    default=None,
-                )
+            PARENT_CORRELATION_ID: Final[
+                FlextModelsContext.StructlogProxyContextVar[str]
+            ] = u.Context.create_str_proxy(
+                c.Context.KEY_PARENT_CORRELATION_ID,
+                default=None,
             )
 
         class Service:
             """Service context variables for identification."""
 
-            SERVICE_NAME: Final[m.StructlogProxyContextVar[str]] = (
+            SERVICE_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     c.Context.KEY_SERVICE_NAME,
                     default=None,
                 )
             )
-            SERVICE_VERSION: Final[m.StructlogProxyContextVar[str]] = (
+            SERVICE_VERSION: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     "service_version",
                     default=None,
@@ -1316,39 +1317,39 @@ class FlextContext(FlextRuntime):
         class Request:
             """Request context variables for metadata."""
 
-            USER_ID: Final[m.StructlogProxyContextVar[str]] = (
+            USER_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     c.Context.KEY_USER_ID,
                     default=None,
                 )
             )
-            REQUEST_ID: Final[m.StructlogProxyContextVar[str]] = (
+            REQUEST_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     "request_id",
                     default=None,
                 )
             )
-            REQUEST_TIMESTAMP: Final[m.StructlogProxyContextVar[datetime]] = (
-                u.Context.create_datetime_proxy(
-                    "request_timestamp",
-                    default=None,
-                )
+            REQUEST_TIMESTAMP: Final[
+                FlextModelsContext.StructlogProxyContextVar[datetime]
+            ] = u.Context.create_datetime_proxy(
+                "request_timestamp",
+                default=None,
             )
 
         class Performance:
             """Performance context variables for timing."""
 
-            OPERATION_NAME: Final[m.StructlogProxyContextVar[str]] = (
+            OPERATION_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
                 u.Context.create_str_proxy(
                     c.Context.KEY_OPERATION_NAME,
                     default=None,
                 )
             )
-            OPERATION_START_TIME: Final[m.StructlogProxyContextVar[datetime]] = (
-                u.Context.create_datetime_proxy("operation_start_time", default=None)
-            )
+            OPERATION_START_TIME: Final[
+                FlextModelsContext.StructlogProxyContextVar[datetime]
+            ] = u.Context.create_datetime_proxy("operation_start_time", default=None)
             OPERATION_METADATA: Final[
-                m.StructlogProxyContextVar[t.ConfigurationDict]
+                FlextModelsContext.StructlogProxyContextVar[t.ConfigurationDict]
             ] = u.Context.create_dict_proxy(
                 "operation_metadata",
                 default=None,

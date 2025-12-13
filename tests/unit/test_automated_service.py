@@ -150,11 +150,12 @@ class TestAutomatedFlextService:
         """
         try:
             # Generic operation - adapt based on actual service interface
-            if hasattr(instance, "process"):
+            if hasattr(instance, "process") and callable(getattr(instance, "process")):
                 return instance.process(input_data)
-            if hasattr(instance, "execute"):
-                return instance.execute(input_data)
-            if hasattr(instance, "handle"):
+            if hasattr(instance, "execute") and callable(getattr(instance, "execute")):
+                # FlextService.execute() takes no arguments
+                return instance.execute()
+            if hasattr(instance, "handle") and callable(getattr(instance, "handle")):
                 return instance.handle(input_data)
             # Fallback: if no methods found, return the instance itself as success
             return r[object].ok(instance)

@@ -849,8 +849,8 @@ class FlextUtilitiesMapper:
                 # Since T is generic, return the raw value and let caller handle type
                 if FlextUtilitiesGuards.is_general_value_type(raw_value):
                     # Safe to return as T | None since t.GeneralValueType is compatible
-                    # Cast to T for type safety
-                    return cast("T", raw_value)  # type narrowing via TypeGuard
+                    # Cast to T for type safety - TypeGuard ensures type narrowing
+                    return cast("T", raw_value)
                 return default
             case _:
                 return getattr(data, key, default)
@@ -1486,8 +1486,10 @@ class FlextUtilitiesMapper:
         if isinstance(map_keys_val, dict) and all(
             isinstance(v, str) for v in map_keys_val.values()
         ):
-            # Runtime check ensures all values are str, so this is a valid StringMapping
-            map_keys_dict: t.StringMapping | None = map_keys_val
+            # Runtime check ensures all values are str, so cast to StringMapping is safe
+            map_keys_dict: t.StringMapping | None = cast(
+                "t.StringMapping", map_keys_val
+            )
         else:
             map_keys_dict = None
         filter_keys_val = transform_opts.get("filter_keys")

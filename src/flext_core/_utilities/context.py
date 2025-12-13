@@ -12,8 +12,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from flext_core.models import m
-from flext_core.typings import t
+from flext_core._models.context import FlextModelsContext
+
+# Import FlextTypes class directly for type aliases access
+from flext_core.typings import FlextTypes
 
 
 class FlextUtilitiesContext:
@@ -23,7 +25,7 @@ class FlextUtilitiesContext:
     def create_str_proxy(
         key: str,
         default: str | None = None,
-    ) -> m.StructlogProxyContextVar[str]:
+    ) -> FlextModelsContext.StructlogProxyContextVar[str]:
         """Create StructlogProxyContextVar[str] instance.
 
         Helper factory for creating string-typed context variables with structlog
@@ -42,13 +44,17 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns "abc-123"
 
         """
-        return m.StructlogProxyContextVar[str](key, default=default)
+        # Explicit instantiation with full type
+        proxy: FlextModelsContext.StructlogProxyContextVar[str] = (
+            FlextModelsContext.StructlogProxyContextVar[str](key, default=default)
+        )
+        return proxy
 
     @staticmethod
     def create_datetime_proxy(
         key: str,
         default: datetime | None = None,
-    ) -> m.StructlogProxyContextVar[datetime]:
+    ) -> FlextModelsContext.StructlogProxyContextVar[datetime]:
         """Create StructlogProxyContextVar[datetime] instance.
 
         Helper factory for creating datetime-typed context variables with structlog
@@ -68,16 +74,20 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns datetime instance
 
         """
-        return m.StructlogProxyContextVar[datetime](
-            key,
-            default=default,
+        # Explicit instantiation with full type
+        proxy: FlextModelsContext.StructlogProxyContextVar[datetime] = (
+            FlextModelsContext.StructlogProxyContextVar[datetime](
+                key,
+                default=default,
+            )
         )
+        return proxy
 
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: t.ConfigurationDict | None = None,
-    ) -> m.StructlogProxyContextVar[t.ConfigurationDict]:
+        default: FlextTypes.ConfigurationDict | None = None,
+    ) -> FlextModelsContext.StructlogProxyContextVar[FlextTypes.ConfigurationDict]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -88,7 +98,7 @@ class FlextUtilitiesContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[t.ConfigurationDict] instance
+            StructlogProxyContextVar[FlextTypes.ConfigurationDict] instance
 
         Example:
             >>> var = uContext.create_dict_proxy("metadata")
@@ -96,10 +106,14 @@ class FlextUtilitiesContext:
             >>> var.get()  # Returns dict
 
         """
-        return m.StructlogProxyContextVar[t.ConfigurationDict](
+        # Explicit instantiation with full type
+        proxy: FlextModelsContext.StructlogProxyContextVar[
+            FlextTypes.ConfigurationDict
+        ] = FlextModelsContext.StructlogProxyContextVar[FlextTypes.ConfigurationDict](
             key,
             default=default,
         )
+        return proxy
 
 
 uContext = FlextUtilitiesContext
