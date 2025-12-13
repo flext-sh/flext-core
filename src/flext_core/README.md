@@ -45,7 +45,7 @@ External concerns including logging, configuration, dependency injection, and co
 | `FlextDispatcher` | Command/query dispatcher with reliability controls         |
 | `FlextContext`    | Hierarchical context management for tracing                |
 | `FlextLogger`     | Structured logging with automatic context propagation      |
-| `FlextSettings`     | Configuration management with Pydantic validation          |
+| `FlextSettings`   | Configuration management with Pydantic validation          |
 | `FlextModels`     | DDD patterns (Entity, Value, AggregateRoot)                |
 
 ## Usage Examples

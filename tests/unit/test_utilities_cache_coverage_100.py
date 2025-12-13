@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 
 from flext_core import t, u
 from flext_tests import tm, u as tu
+from tests.test_utils import assertion_helpers
 
 
 class CacheTestModel(BaseModel):
@@ -480,7 +481,7 @@ class TestuCacheClearObjectCache:
         assert len(obj._cache) == 2
 
         result = u.Cache.clear_object_cache(obj)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
         assert len(obj._cache) == 0
 
@@ -498,7 +499,7 @@ class TestuCacheClearObjectCache:
         assert obj._cached_value == "cached_value"
 
         result = u.Cache.clear_object_cache(obj)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert obj._cached_value is None
 
     def test_clear_object_cache_with_non_dict_cache(self) -> None:
@@ -513,7 +514,7 @@ class TestuCacheClearObjectCache:
         assert obj._cache == "simple_string_cache"
 
         result = u.Cache.clear_object_cache(obj)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         # Should set to None (line 284-285)
         assert obj._cache is None
 
@@ -535,7 +536,7 @@ class TestuCacheClearObjectCache:
 
         result = u.Cache.clear_object_cache(obj)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert len(obj._cache) == 0
         assert obj._cached_value is None
         assert len(obj._cached_at) == 0
@@ -551,7 +552,7 @@ class TestuCacheClearObjectCache:
         obj = TestObject()
         result = u.Cache.clear_object_cache(obj)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_clear_object_cache_with_none_cache(self) -> None:
@@ -565,7 +566,7 @@ class TestuCacheClearObjectCache:
         obj = TestObject()
         result = u.Cache.clear_object_cache(obj)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         # None cache should be skipped (not cleared)
 
     def test_clear_object_cache_error_handling(self) -> None:
@@ -582,7 +583,7 @@ class TestuCacheClearObjectCache:
         # Runtime will handle the object correctly
         result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
     def test_clear_object_cache_type_error(self) -> None:
@@ -605,7 +606,7 @@ class TestuCacheClearObjectCache:
         result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
 
         # Should handle TypeError gracefully and return failure
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
     def test_clear_object_cache_value_error(self) -> None:
@@ -626,7 +627,7 @@ class TestuCacheClearObjectCache:
         # Runtime will handle the object correctly
         result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
     def test_clear_object_cache_key_error(self) -> None:
@@ -646,7 +647,7 @@ class TestuCacheClearObjectCache:
         # Runtime will handle the object correctly
         result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
     def test_clear_object_cache_with_pydantic_model(self) -> None:
@@ -665,7 +666,7 @@ class TestuCacheClearObjectCache:
         assert len(cache_before) == 1
 
         result = u.Cache.clear_object_cache(model)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         # Cache should be cleared (dict.clear() leaves empty dict, not None)
         cache_after = getattr(model, "_cache", None)
         assert cache_after == {}  # clear() leaves empty dict

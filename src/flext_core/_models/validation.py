@@ -15,6 +15,8 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from urllib.parse import urlparse
 
+from pydantic import BaseModel
+
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
@@ -153,6 +155,11 @@ class FlextModelsValidation:
         start_time = time_module.time()
 
         try:
+            # Only validate Pydantic models with model_dump/model_validate
+            if not isinstance(model, BaseModel):
+                # For non-model types, just return success
+                return r[t.GeneralValueType].ok(model)
+
             # Exclude computed fields that are not actual model fields
             # Use model_dump with exclude_unset to avoid extra fields
             dump = model.model_dump(

@@ -41,16 +41,19 @@ from flext_core import (
     FlextResult,
     FlextService,
     FlextSettings,
-    m,
     t,
 )
+from tests.test_utils import assertion_helpers
 
 
-class User(m.Entity):
+@dataclass
+class User:
     """User domain model."""
 
+    unique_id: str
     name: str
     email: str
+    active: bool = True
 
 
 class EmailResponse(BaseModel):
@@ -320,7 +323,7 @@ class TestPattern1V1Explicit:
         service = case.create_user_service()
         result = service.execute()
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         user = result.value
 
         assert isinstance(user, User)
@@ -333,7 +336,7 @@ class TestPattern1V1Explicit:
         service = case.create_user_service()
         result = service.execute()
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         expected = case.expected_error
@@ -385,7 +388,7 @@ class TestPattern2V2Property:
         """V2 Property: .execute() still works for railway pattern."""
         result = case.create_user_service().execute()
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         user = result.value
         assert isinstance(user, User)
         assert user.unique_id == case.user_id
@@ -444,7 +447,7 @@ class TestPattern4RailwayV1:
         """V1 Railway: Full composition pipeline with various operations."""
         result = case.execute_v1_pipeline()
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         # Verify pipeline executed all expected steps
         if "get_status" in case.operations:
             assert result.value == "sent"
@@ -479,7 +482,7 @@ class TestPattern5RailwayV2Property:
         # V2 Property: Use .execute() for railway pattern
         result = GetUserService(user_id="123").execute().map(lambda u: u.email)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "user123@example.com"
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
@@ -529,7 +532,7 @@ class TestPattern6RailwayV2Auto:
         # Can use railway pattern
         result = service.execute().map(lambda u: u.email)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test@example.com"
 
 
@@ -578,7 +581,7 @@ class TestPattern7MonadicComposition:
             )
         )
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
     def test_monadic_complex_pipeline(self) -> None:
         """Monadic: Complex pipeline with multiple operations."""

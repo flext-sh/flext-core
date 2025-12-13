@@ -123,7 +123,7 @@ infrastructure:
 
 | Property         | Type             | Description                    |
 | ---------------- | ---------------- | ------------------------------ |
-| `self.config`    | `FlextSettings`    | Configuration singleton        |
+| `self.config`    | `FlextSettings`  | Configuration singleton        |
 | `self.logger`    | `FlextLogger`    | Logger with context            |
 | `self.container` | `FlextContainer` | Dependency injection container |
 | `self.context`   | `FlextContext`   | Execution context (task-local) |

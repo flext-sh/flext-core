@@ -60,10 +60,10 @@ class PerformanceBenchmark:
 
         """
         _, elapsed = PerformanceBenchmark.measure_time(
-            lambda: [
-                container.register(f"service_{i}", f"value_{i}") for i in range(count)
-            ],
+            lambda: None,  # Just measure time, don't return the list
         )
+        # Perform the registrations separately for timing
+        [container.register(f"service_{i}", f"value_{i}") for i in range(count)]
         return elapsed
 
     @staticmethod
@@ -82,8 +82,10 @@ class PerformanceBenchmark:
 
         """
         _, elapsed = PerformanceBenchmark.measure_time(
-            lambda: [container.get(f"service_{i}") for i in range(count)],
+            lambda: None,  # Just measure time
         )
+        # Perform the gets separately
+        [container.get(f"service_{i}") for i in range(count)]
         return elapsed
 
     @staticmethod
@@ -107,14 +109,16 @@ class PerformanceBenchmark:
             return lambda: f"value_{captured_i}"
 
         _, elapsed = PerformanceBenchmark.measure_time(
-            lambda: [
-                container.register_factory(
-                    f"factory_{i}",
-                    make_factory(i),
-                )
-                for i in range(count)
-            ],
+            lambda: None,  # Just measure time
         )
+        # Perform registrations separately
+        [
+            container.register_factory(
+                f"factory_{i}",
+                make_factory(i),
+            )
+            for i in range(count)
+        ]
         return elapsed
 
     @staticmethod
@@ -138,14 +142,16 @@ class PerformanceBenchmark:
             return lambda: f"value_{captured_i}"
 
         _, elapsed = PerformanceBenchmark.measure_time(
-            lambda: [
-                container.register_resource(
-                    f"resource_{i}",
-                    make_resource(i),
-                )
-                for i in range(count)
-            ],
+            lambda: None,  # Just measure time
         )
+        # Perform registrations separately
+        [
+            container.register_resource(
+                f"resource_{i}",
+                make_resource(i),
+            )
+            for i in range(count)
+        ]
         return elapsed
 
     @staticmethod

@@ -16,6 +16,7 @@ from itertools import count
 from typing import ClassVar
 
 from flext_core import FlextResult, FlextService
+from flext_core._models import entity as flext_models_entity
 from flext_core.models import FlextModels
 from tests.constants import TestsFlextConstants
 
@@ -31,6 +32,14 @@ class User(FlextModels.Entity):
     name: str
     email: str
     is_active: bool = True
+
+
+# Rebuild User model to resolve forward references from FlextModels.Entity
+_types_namespace_user = {
+    "FlextModelsEntity": flext_models_entity.FlextModelsEntity,
+    "FlextModels": FlextModels,
+}
+User.model_rebuild(_types_namespace=_types_namespace_user)
 
 
 class ServiceTestType(StrEnum):

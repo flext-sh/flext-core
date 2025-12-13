@@ -1596,8 +1596,8 @@ class FlextUtilitiesParser:
 
         """
         # Use t.GeneralValueType from lower layer for type compatibility
-        # Narrow object to t.GeneralValueType - object is compatible with t.GeneralValueType
-        value_typed: t.GeneralValueType = value
+        # Cast object to t.GeneralValueType for type checker
+        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
         result = FlextUtilitiesParser.conv_str_list(value_typed, default=default)
         return [v for v in result if v]
 
@@ -1617,8 +1617,8 @@ class FlextUtilitiesParser:
         if value is None:
             return []
         # Use t.GeneralValueType from lower layer for type compatibility
-        # Narrow object to t.GeneralValueType - object is compatible with t.GeneralValueType
-        value_typed: t.GeneralValueType = value
+        # Cast object to t.GeneralValueType for type checker
+        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
         return FlextUtilitiesParser.conv_str_list(value_typed, default=[])
 
     # =========================================================================

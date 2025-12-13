@@ -9,6 +9,7 @@ from typing import cast
 from pydantic import BaseModel
 
 from flext_core import FlextDispatcher, c, m, r, t
+from tests.test_utils import assertion_helpers
 
 
 @dataclass(slots=True)
@@ -139,7 +140,7 @@ def test_register_and_dispatch_success() -> None:
     assert registration.is_success
 
     result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ping")))
-    assert result.is_success
+    assertion_helpers.assert_flext_result_success(result)
     assert result.value == "handled:ping"
 
 
@@ -164,7 +165,7 @@ def test_dispatch_handler_raises_returns_failure() -> None:
         cast("t.GeneralValueType", handler),
     )
     result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ping")))
-    assert result.is_failure
+    assertion_helpers.assert_flext_result_failure(result)
     assert "boom" in (result.error or "")
 
 
@@ -202,7 +203,7 @@ def test_dispatch_none_message_fails() -> None:
     """Ensure None messages are rejected early."""
     dispatcher = FlextDispatcher()
     result = dispatcher.dispatch(None)
-    assert result.is_failure
+    assertion_helpers.assert_flext_result_failure(result)
     assert result.error_code == c.Errors.VALIDATION_ERROR
 
 
@@ -215,7 +216,7 @@ def test_try_simple_dispatch_non_callable_handler() -> None:
         "not_callable",
     )
     result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ping")))
-    assert result.is_failure
+    assertion_helpers.assert_flext_result_failure(result)
     assert "not callable" in (result.error or "")
 
 
@@ -228,7 +229,7 @@ def test_auto_discovery_handler_processes_command() -> None:
     assert reg.is_success
 
     result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("auto")))
-    assert result.is_success
+    assertion_helpers.assert_flext_result_success(result)
     assert result.value == "auto:auto"
 
 
@@ -271,7 +272,7 @@ def test_middleware_short_circuits_and_preserves_order() -> None:
     )
 
     result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("halt")))
-    assert result.is_failure
+    assertion_helpers.assert_flext_result_failure(result)
     assert "blocked:halt" in (result.error or "")
     assert handler.called is False
     assert log == []
@@ -291,7 +292,7 @@ def test_disabled_middleware_is_skipped() -> None:
     )
 
     result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("ok")))
-    assert result.is_success
+    assertion_helpers.assert_flext_result_success(result)
     assert handler.called
     assert log == []
 
@@ -309,6 +310,6 @@ def test_middleware_requires_process_callable() -> None:
     )
 
     result = dispatcher.dispatch(cast("t.GeneralValueType", EchoCommand("x")))
-    assert result.is_failure
+    assertion_helpers.assert_flext_result_failure(result)
     assert "callable 'process' method" in (result.error or "")
     assert handler.called is False

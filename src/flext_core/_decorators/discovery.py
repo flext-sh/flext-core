@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import operator
 
+from flext_core._models.container import FlextModelsContainer
 from flext_core.constants import c
-from flext_core.models import m
 
 
 class FactoryDecoratorsDiscovery:
@@ -28,7 +28,7 @@ class FactoryDecoratorsDiscovery:
     @staticmethod
     def scan_module(
         module: object,
-    ) -> list[tuple[str, m.ContainerFactoryDecoratorConfig]]:
+    ) -> list[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
         """Scan module for functions decorated with @factory().
 
         Introspects the module to find all functions with factory configuration
@@ -47,13 +47,13 @@ class FactoryDecoratorsDiscovery:
             ...     print(f"{func_name}: singleton={config.singleton}")
 
         """
-        factories: list[tuple[str, m.ContainerFactoryDecoratorConfig]] = []
+        factories: list[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]] = []
         for name in dir(module):
             if name.startswith("_"):
                 continue
             func = getattr(module, name, None)
             if callable(func) and hasattr(func, c.Discovery.FACTORY_ATTR):
-                config: m.ContainerFactoryDecoratorConfig = getattr(
+                config: FlextModelsContainer.FactoryDecoratorConfig = getattr(
                     func,
                     c.Discovery.FACTORY_ATTR,
                 )

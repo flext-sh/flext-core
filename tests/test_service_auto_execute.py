@@ -20,6 +20,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextExceptions, FlextResult
+from tests.test_utils import assertion_helpers
 
 from .helpers.factories import (
     FailingService,
@@ -57,7 +58,7 @@ class TestServiceAutoExecute:
         result = service.execute()
 
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value.user_id == user_id
 
     def test_manual_execution_failure_handling(self) -> None:
@@ -66,7 +67,7 @@ class TestServiceAutoExecute:
         result = service.execute()
 
         assert isinstance(result, FlextResult)
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "Manual fail" in str(result.error)
 
     @pytest.mark.parametrize("user_id", ["1", "101", "201"])
@@ -98,7 +99,7 @@ class TestServiceAutoExecute:
         """Auto-execution raises exception on failure."""
         # V2 Auto pattern: raises exception directly on failure
         with pytest.raises(FlextExceptions.BaseError, match="Auto fail"):
-            FailingServiceAuto(error_message="Auto fail")
+            _ = FailingServiceAuto(error_message="Auto fail")
 
     @pytest.mark.parametrize("user_id", ["1", "101", "201"])
     def test_manual_service_execute_works(self, user_id: str) -> None:
@@ -107,7 +108,7 @@ class TestServiceAutoExecute:
         result = service.execute()
 
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value.user_id == user_id
 
     # =====================================================================
@@ -130,7 +131,7 @@ class TestServiceAutoExecute:
             FlextExceptions.BaseError,
             match="Value must be at least 5 characters",
         ):
-            ValidatingServiceAuto(value_input="x", min_length=5)
+            _ = ValidatingServiceAuto(value_input="x", min_length=5)
 
     # =====================================================================
     # Pattern Equivalence Tests
@@ -173,7 +174,7 @@ class TestServiceAutoExecute:
 
         # Can call execute
         result = service.execute()
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
         # Can access result property
         user = service.result
@@ -201,7 +202,7 @@ class TestServiceAutoExecute:
 
         for error_msg in errors:
             with pytest.raises(FlextExceptions.BaseError) as exc_info:
-                FailingServiceAuto(error_message=error_msg)
+                _ = FailingServiceAuto(error_message=error_msg)
             assert error_msg in str(exc_info.value)
 
     def test_manual_vs_auto_service_behavior(self) -> None:
@@ -255,8 +256,8 @@ class TestServiceAutoExecute:
 
         # Just below boundary
         with pytest.raises(FlextExceptions.BaseError):
-            ValidatingServiceAuto(value_input="ab", min_length=3)
+            _ = ValidatingServiceAuto(value_input="ab", min_length=3)
 
         # Empty string
         with pytest.raises(FlextExceptions.BaseError):
-            ValidatingServiceAuto(value_input="", min_length=1)
+            _ = ValidatingServiceAuto(value_input="", min_length=1)

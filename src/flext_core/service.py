@@ -28,6 +28,7 @@ from pydantic import (
 from pydantic.fields import ModelPrivateAttr
 
 from flext_core._dispatcher import CircuitBreakerManager, RateLimiterManager
+from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
@@ -214,10 +215,11 @@ class FlextService[TDomainResult](
         # Auto-discovery of handler-decorated methods for zero-config handler setup
         # Discovers all methods marked with @h.handler() decorator
         # Makes them available for dispatcher routing without explicit registration
-        self._discovered_handlers = (
+        self._discovered_handlers = cast(
+            "list[tuple[str, m.HandlerDecoratorConfig]]",
             FlextHandlers.Discovery.scan_class(self.__class__)
             if FlextHandlers.Discovery.has_handlers(self.__class__)
-            else []
+            else [],
         )
 
     # Use PrivateAttr for private attributes (Pydantic v2 pattern)
@@ -778,12 +780,12 @@ class FlextService[TDomainResult](
         return cls(**cast("dict[str, t.GeneralValueType]", merged_data))
 
 
-class _ServiceExecutionScope(m.ArbitraryTypesModel):
+class _ServiceExecutionScope(FlextModelsBase.ArbitraryTypesModel):
     """Immutable view of nested execution resources for a service."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    cqrs: type[m.Cqrs]
+    cqrs: type
     registry: FlextRegistry
     config: p.Config
     result: type
@@ -829,7 +831,7 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         self._registry = FlextRegistry()
 
     @computed_field
-    def cqrs(self) -> type[m.Cqrs]:
+    def cqrs(self) -> type:
         """CQRS facade from m.
 
         Note: Cannot be @staticmethod because @computed_field requires instance method

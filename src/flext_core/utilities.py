@@ -189,7 +189,7 @@ class FlextUtilities:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        return StrEnum(name, values)
+        return cast("type[StrEnum]", StrEnum(name, values))
 
     @staticmethod
     def to_str(value: object, *, default: str | None = None) -> str:
@@ -356,7 +356,12 @@ class FlextUtilities:
                 ... )
 
             """
-            return result.flow_through(*funcs)
+            # FlextResult extends RuntimeResult, use its inherited flow_through method
+            # Type narrowing: r[U] is assignable to RuntimeResult[U] since FlextResult extends RuntimeResult
+            result_chained = result.flow_through(
+                *cast("tuple[Callable[[T | U], r[U]], ...]", funcs)
+            )
+            return cast("r[U]", result_chained)
 
         @staticmethod
         def and_then[T, U](

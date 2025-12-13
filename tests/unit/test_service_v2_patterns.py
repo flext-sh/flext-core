@@ -21,6 +21,7 @@ import pytest
 from pydantic import Field
 
 from flext_core import e, m, r, s, t
+from tests.test_utils import assertion_helpers
 
 # ============================================================================
 # Test Services - V1 and V2 Pattern Implementations
@@ -556,7 +557,7 @@ class TestsV2Patterns:
                 )
 
             result: r[str] = service_rail.execute().flat_map(chain_wrapper)
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
 
         elif test_case.operation == ServiceOperationType.MIX_V1_AND_V2_PIPELINE:
             step2_result = SimpleV2PropertyService(message="step2").execute()
@@ -591,7 +592,7 @@ class TestsV2Patterns:
         if test_case.operation == ServiceOperationType.V1_CODE_STILL_WORKS:
             service = SimpleV1Service(message="test")
             result = service.execute()
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             assert result.value == "V1: test"
 
         elif test_case.operation == ServiceOperationType.V2_DOESNT_BREAK_V1:

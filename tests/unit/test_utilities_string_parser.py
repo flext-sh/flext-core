@@ -31,7 +31,7 @@ import pytest
 from flext_core import (
     FlextModels as core_m,
     FlextResult as r,
-    FlextTypes as t,
+    t,
 )
 from flext_tests import u
 from tests.constants import TestsFlextConstants

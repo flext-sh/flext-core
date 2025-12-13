@@ -2695,7 +2695,7 @@ class FlextDispatcher(x):
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
         request: t.ConfigurationDict = {
-            "handler": handler,
+            "handler": cast("t.GeneralValueType", handler),
             "message_type": message_type_name,
             "handler_mode": handler_mode,
             "handler_config": handler_config,
@@ -2837,7 +2837,7 @@ class FlextDispatcher(x):
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
         request: t.ConfigurationDict = {
-            "handler": handler_result.value,
+            "handler": cast("t.GeneralValueType", handler_result.value),
             "message_type": message_type_name,
             "handler_mode": mode,
             "handler_config": handler_config,
@@ -2906,7 +2906,7 @@ class FlextDispatcher(x):
                     return r[t.GeneralValueType].ok(result)
 
             # Create handler config with name and type
-            handler_config = m.CqrsHandler(
+            handler_config = m.Handler(
                 handler_id=f"function_{id(handler_func)}",
                 handler_name=handler_name,
                 handler_mode=mode,
@@ -3381,12 +3381,8 @@ class FlextDispatcher(x):
             else:
                 attributes_dict = {}
 
-            # Cast attributes_dict to t.ConfigurationDict for invariance compatibility
-            attributes_general: t.ConfigurationDict = cast(
-                "t.ConfigurationDict",
-                attributes_dict,
-            )
-            return m.Metadata(attributes=attributes_general)
+            # attributes_dict is dict[str, str] which is assignable to t.ConfigurationDict
+            return m.Metadata(attributes=attributes_dict)
         # Convert other types to Metadata via dict with string value
         return m.Metadata(attributes={"value": str(metadata)})
 
@@ -3409,7 +3405,7 @@ class FlextDispatcher(x):
             DispatchConfig instance or original config
 
         """
-        if isinstance(config, m.DispatchConfig):
+        if hasattr(config, "model_dump"):  # Check if it's a Pydantic model
             return config
         if config is not None:
             return config
@@ -3418,6 +3414,7 @@ class FlextDispatcher(x):
 
         # Build from individual arguments
         metadata_model = FlextDispatcher._convert_metadata_to_model(metadata)
+        # Create config dynamically since we can't reference the type
         return m.DispatchConfig(
             metadata=metadata_model,
             correlation_id=correlation_id,
@@ -3757,7 +3754,9 @@ class FlextDispatcher(x):
                 return str(self.data)
 
         # Cast MessageWrapper to t.GeneralValueType
-        return MessageWrapper(data=data, message_type=message_type)
+        return cast(
+            "t.GeneralValueType", MessageWrapper(data=data, message_type=message_type)
+        )
 
     def _get_timeout_seconds(self, timeout_override: int | None) -> float:
         """Get timeout seconds from config or override.
@@ -3870,11 +3869,7 @@ class FlextDispatcher(x):
                     }
                 else:
                     metadata_attrs = {}
-                metadata_attrs_general = cast(
-                    "t.ConfigurationDict",
-                    metadata_attrs,
-                )
-                _ = m.Metadata(attributes=metadata_attrs_general)
+                _ = m.Metadata(attributes=metadata_attrs)
 
             timeout_seconds = self._get_timeout_seconds(options.timeout_override)
             _ = self._track_timeout_context(options.operation_id, timeout_seconds)
@@ -4166,8 +4161,11 @@ class FlextDispatcher(x):
                             # Register under the handler command type name for routing
                             command_type_name = (
                                 handler_config.command.__name__
-                                if hasattr(handler_config.command, "__name__")
+                                if handler_config.command is not None
+                                and hasattr(handler_config.command, "__name__")
                                 else str(handler_config.command)
+                                if handler_config.command is not None
+                                else "unknown"
                             )
                             # Cast handler_func to expected type for register_handler
                             handler_typed: t.GeneralValueType = cast(

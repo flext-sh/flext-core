@@ -31,6 +31,7 @@ from flext_core import (
     x,
 )
 from flext_tests import FlextTestsUtilities, u
+from tests.test_utils import assertion_helpers
 
 
 class ConcreteTestHandler(h[str, str]):
@@ -543,7 +544,7 @@ class TestFlextHandlers:
         # object is compatible with AcceptableMessageType at runtime
         message_typed = cast("t.AcceptableMessageType", message)
         result = handler.validate(message_typed)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
     def test_handlers_validate_message_protocol(self) -> None:
         """Test validate_message protocol method."""

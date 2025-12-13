@@ -13,10 +13,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.result import r
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import T, t
 
 
@@ -139,7 +141,10 @@ class FlextUtilitiesPagination:
         has_prev = page > 1
 
         # Convert Sequence[T] to t.GeneralValueType-compatible list
-        data_list = list(data)
+        data_list = [
+            FlextRuntime.normalize_to_general_value(cast("t.GeneralValueType", item))
+            for item in data
+        ]
 
         return r[t.ConfigurationDict].ok({
             "data": data_list,

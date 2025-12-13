@@ -18,10 +18,9 @@ from typing import Literal, Self, TypeGuard, cast, overload
 from pydantic import BaseModel
 
 from flext_core import (
-    FlextProtocols as p,
     FlextResult as r,
-    FlextTypes as t,
-    FlextUtilities as u,
+    p,
+    u,
 )
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T
@@ -29,7 +28,7 @@ from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.factories import FlextTestsFactories as tt
 from flext_tests.models import FlextTestsModels as m
-from flext_tests.typings import FlextTestsTypes as t_test
+from flext_tests.typings import t
 from flext_tests.utilities import FlextTestsUtilities as tu
 
 
@@ -53,7 +52,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
     - Nested structures
 
     Example:
-        from flext_tests import tb
+        from flexts import tb
 
         # Simple usage
         dataset = tb().add("users", count=5).add("config", production=True).build()
@@ -77,7 +76,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
 
     # Use class attribute (not PrivateAttr) to match FlextService pattern
     # Initialize as None to avoid ClassVar requirement (mutable default)
-    _data: t_test.Tests.Builders.BuilderDict | None = None
+    _data: t.Tests.Builders.BuilderDict | None = None
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize builder with optional initial data."""
@@ -113,7 +112,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
     def add(
         self,
         key: str,
-        value: t_test.Tests.Builders.BuilderValue | None = None,
+        value: t.Tests.Builders.BuilderValue | None = None,
         **kwargs: object,  # Accept object to allow Callable, set, etc. - validated by AddParams
     ) -> Self:
         """Add data to builder with smart type inference.
@@ -174,17 +173,17 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             raise ValueError(error_msg)
         params = params_result.value
 
-        resolved_value: t_test.Tests.Builders.BuilderValue = None
+        resolved_value: t.Tests.Builders.BuilderValue = None
 
         # Priority 1: FlextResult direct
         if params.result is not None:
-            resolved_value = cast("t_test.Tests.Builders.BuilderValue", params.result)
+            resolved_value = cast("t.Tests.Builders.BuilderValue", params.result)
 
         # Priority 2: Create success result
         elif params.result_ok is not None:
             error_code_val = params.result_code or c.Errors.VALIDATION_ERROR
             resolved_value = cast(
-                "t_test.Tests.Builders.BuilderValue",
+                "t.Tests.Builders.BuilderValue",
                 FlextRuntime.RuntimeResult[t.GeneralValueType].ok(params.result_ok),
             )
 
@@ -192,7 +191,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         elif params.result_fail is not None:
             error_code_val = params.result_code or c.Errors.VALIDATION_ERROR
             resolved_value = cast(
-                "t_test.Tests.Builders.BuilderValue",
+                "t.Tests.Builders.BuilderValue",
                 FlextRuntime.RuntimeResult[t.GeneralValueType].fail(
                     params.result_fail,
                     error_code=error_code_val,
@@ -202,14 +201,14 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         # Priority 4: Batch results
         elif params.results is not None:
             resolved_value = cast(
-                "t_test.Tests.Builders.BuilderValue",
+                "t.Tests.Builders.BuilderValue",
                 list(params.results),
             )
 
         # Priority 5: Batch success results
         elif params.results_ok is not None:
             resolved_value = cast(
-                "t_test.Tests.Builders.BuilderValue",
+                "t.Tests.Builders.BuilderValue",
                 [r[t.GeneralValueType].ok(v) for v in params.results_ok],
             )
 
@@ -217,7 +216,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         elif params.results_fail is not None:
             error_code_val = params.result_code or c.Errors.VALIDATION_ERROR
             resolved_value = cast(
-                "t_test.Tests.Builders.BuilderValue",
+                "t.Tests.Builders.BuilderValue",
                 [
                     r[t.GeneralValueType].fail(e, error_code=error_code_val)
                     for e in params.results_fail
@@ -278,7 +277,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                     instance = cls_type.__call__(*args, **cls_kwargs)
                 else:
                     instance = cls_type.__call__()
-                resolved_value = cast("t_test.Tests.Builders.BuilderValue", instance)
+                resolved_value = cast("t.Tests.Builders.BuilderValue", instance)
 
         # Priority 8: Items with transformation/filtering
         elif params.items is not None:
@@ -289,7 +288,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 ]
             if params.items_map is not None:
                 items_processed = [params.items_map(item) for item in items_processed]
-            resolved_value = cast("t_test.Tests.Builders.BuilderValue", items_processed)
+            resolved_value = cast("t.Tests.Builders.BuilderValue", items_processed)
 
         # Priority 9: Entries with transformation/filtering
         elif params.entries is not None:
@@ -305,7 +304,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                     k: params.entries_map(v) for k, v in entries_processed.items()
                 }
             resolved_value = cast(
-                "t_test.Tests.Builders.BuilderValue",
+                "t.Tests.Builders.BuilderValue",
                 entries_processed,
             )
 
@@ -321,23 +320,23 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             data_dict = dict(params.model_data) if params.model_data else {}
             model_kind_str = self._get_model_kind(params.model)
             # Filter data_dict to only TestResultValue types
-            filtered_dict: dict[str, t_test.Tests.TestResultValue] = {}
+            filtered_dict: dict[str, t.Tests.TestResultValue] = {}
             for dict_key, dict_value in data_dict.items():
                 if isinstance(dict_value, (str, int, float, bool, type(None))):
                     filtered_dict[dict_key] = cast(
-                        "t_test.Tests.TestResultValue",
+                        "t.Tests.TestResultValue",
                         dict_value,
                     )
                 elif u.is_type(dict_value, "list_or_tuple"):
                     # Cast to Sequence for list conversion (mypy needs explicit narrowing)
                     seq = cast("Sequence[t.GeneralValueType]", dict_value)
                     filtered_dict[dict_key] = cast(
-                        "t_test.Tests.TestResultValue",
+                        "t.Tests.TestResultValue",
                         list(seq),
                     )
                 elif u.is_type(dict_value, "dict"):
                     filtered_dict[dict_key] = cast(
-                        "t_test.Tests.TestResultValue",
+                        "t.Tests.TestResultValue",
                         dict_value,
                     )
             # Cast to literal type for tt.model()
@@ -346,7 +345,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 model_kind_str,
             )
             resolved_value = cast(
-                "t_test.Tests.Builders.BuilderValue",
+                "t.Tests.Builders.BuilderValue",
                 tt.model(model_kind, **filtered_dict),
             )
 
@@ -363,25 +362,25 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         elif params.mapping is not None:
             # params.mapping is BuilderMapping which is Mapping[str, BuilderValue]
             mapping_dict = dict(
-                cast("t_test.Tests.Builders.BuilderMapping", params.mapping),
+                cast("t.Tests.Builders.BuilderMapping", params.mapping),
             )
-            resolved_value = cast("t_test.Tests.Builders.BuilderValue", mapping_dict)
+            resolved_value = cast("t.Tests.Builders.BuilderValue", mapping_dict)
 
         # Priority 14: Sequence
         elif params.sequence is not None:
             # params.sequence is BuilderSequence which is Sequence[BuilderValue]
             sequence_list = list(
-                cast("t_test.Tests.Builders.BuilderSequence", params.sequence),
+                cast("t.Tests.Builders.BuilderSequence", params.sequence),
             )
-            resolved_value = cast("t_test.Tests.Builders.BuilderValue", sequence_list)
+            resolved_value = cast("t.Tests.Builders.BuilderValue", sequence_list)
 
         # Priority 15: Direct value
         elif params.value is not None:
-            resolved_value = cast("t_test.Tests.Builders.BuilderValue", params.value)
+            resolved_value = cast("t.Tests.Builders.BuilderValue", params.value)
 
         # Priority 16: Default
         elif params.default is not None:
-            resolved_value = cast("t_test.Tests.Builders.BuilderValue", params.default)
+            resolved_value = cast("t.Tests.Builders.BuilderValue", params.default)
 
         # Apply transformation if provided
         if params.transform is not None and resolved_value is not None:
@@ -389,7 +388,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 # Cast to Sequence for iteration (pyrefly needs explicit narrowing)
                 seq = cast("Sequence[t.GeneralValueType]", resolved_value)
                 resolved_value = cast(
-                    "t_test.Tests.Builders.BuilderValue",
+                    "t.Tests.Builders.BuilderValue",
                     [params.transform(item) for item in seq],
                 )
             else:
@@ -398,7 +397,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 transformed = params.transform(
                     resolved_value,
                 )
-                resolved_value = cast("t_test.Tests.Builders.BuilderValue", transformed)
+                resolved_value = cast("t.Tests.Builders.BuilderValue", transformed)
 
         # Apply validation if provided
         if (
@@ -415,7 +414,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         self._ensure_data_initialized()
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
         assert self._data is not None, "_data must be initialized"
-        builder_data: t_test.Tests.Builders.BuilderDict = self._data
+        builder_data: t.Tests.Builders.BuilderDict = self._data
         if params.merge and params.key in builder_data:
             existing = builder_data[params.key]
             if u.is_type(existing, "mapping") and u.is_type(resolved_value, "mapping"):
@@ -428,7 +427,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 )
                 if merge_result.is_success:
                     resolved_value = cast(
-                        "t_test.Tests.Builders.BuilderValue",
+                        "t.Tests.Builders.BuilderValue",
                         merge_result.value,
                     )
             else:
@@ -443,7 +442,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
     def set(
         self,
         path: str,
-        value: t_test.Tests.Builders.BuilderValue | None = None,
+        value: t.Tests.Builders.BuilderValue | None = None,
         *,
         create_parents: bool = True,
         **kwargs: str | float | bool,
@@ -474,18 +473,18 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
         assert self._data is not None, "_data must be initialized"
         # If kwargs provided, merge with value as mapping
-        final_value: t_test.Tests.Builders.BuilderValue
+        final_value: t.Tests.Builders.BuilderValue
         if kwargs:
             if value is None:
-                final_value = cast("t_test.Tests.Builders.BuilderValue", dict(kwargs))
+                final_value = cast("t.Tests.Builders.BuilderValue", dict(kwargs))
             elif u.is_type(value, "mapping"):
                 # Cast to Mapping for dict conversion (pyrefly needs explicit narrowing)
                 value_map = cast("Mapping[str, t.GeneralValueType]", value)
                 merged: t.ConfigurationDict = dict(value_map)
                 merged.update(kwargs)
-                final_value = cast("t_test.Tests.Builders.BuilderValue", merged)
+                final_value = cast("t.Tests.Builders.BuilderValue", merged)
             else:
-                final_value = cast("t_test.Tests.Builders.BuilderValue", dict(kwargs))
+                final_value = cast("t.Tests.Builders.BuilderValue", dict(kwargs))
         else:
             final_value = value
 
@@ -565,7 +564,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         **kwargs: object,  # Accept object to allow Callable, etc. - validated by ToResultParams
     ) -> (
         r[T]
-        | r[t_test.Tests.Builders.BuilderDict]
+        | r[t.Tests.Builders.BuilderDict]
         | r[BaseModel]
         | r[list[T]]
         | r[dict[str, T]]
@@ -604,7 +603,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         params = params_result.value
 
         if params.error is not None:
-            return r[t_test.Tests.Builders.BuilderDict].fail(
+            return r[t.Tests.Builders.BuilderDict].fail(
                 params.error,
                 error_code=params.error_code,
                 error_data=params.error_data,
@@ -615,7 +614,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         if params.validate_func is not None and not params.validate_func(
             data,
         ):
-            return r[t_test.Tests.Builders.BuilderDict].fail(
+            return r[t.Tests.Builders.BuilderDict].fail(
                 "Validation failed",
                 error_code=params.error_code,
                 error_data=params.error_data,
@@ -626,7 +625,8 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             transformed = params.map_fn(data)
             if params.unwrap:
                 return cast("T", transformed)
-            return cast("r[T]", r.ok(cast("T", transformed)))
+            result_val: r[T] = r.ok(cast("T", transformed))
+            return result_val
 
         # Generic class instantiation
         if params.as_cls is not None:
@@ -635,7 +635,8 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 instance = params.as_cls(*args, **data)
                 if params.unwrap:
                     return cast("T", instance)
-                return cast("r[T]", r.ok(cast("T", instance)))
+                result_instance_val: r[T] = r.ok(cast("T", instance))
+                return result_instance_val
             except Exception as exc:
                 return r[T].fail(
                     str(exc),
@@ -663,15 +664,15 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             values = list(data.values())
             if params.unwrap:
                 return cast("T", values)
-            return r.ok(cast("T", values))
+            return cast("r[T]", r.ok(values))
 
         if params.as_dict_result:
             if params.unwrap:
                 return cast("T", data)
-            return r.ok(cast("T", data))
+            return cast("r[T]", r.ok(data))
 
         # Standard result
-        result = r[t_test.Tests.Builders.BuilderDict].ok(data)
+        result = r[t.Tests.Builders.BuilderDict].ok(data)
         if params.unwrap:
             if result.is_failure:
                 msg = params.unwrap_msg or f"Failed to unwrap result: {result.error}"
@@ -680,7 +681,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         return result
 
     @overload
-    def build(self) -> t_test.Tests.Builders.BuilderDict: ...
+    def build(self) -> t.Tests.Builders.BuilderDict: ...
 
     @overload
     def build[T](self, *, as_model: type[T], **kwargs: t.GeneralValueType) -> T: ...
@@ -690,7 +691,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         self,
         *,
         as_list: bool,
-    ) -> list[tuple[str, t_test.Tests.Builders.BuilderValue]]: ...
+    ) -> list[tuple[str, t.Tests.Builders.BuilderValue]]: ...
 
     @overload
     def build(self, *, keys_only: bool) -> list[str]: ...
@@ -700,25 +701,25 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         self,
         *,
         values_only: bool,
-    ) -> list[t_test.Tests.Builders.BuilderValue]: ...
+    ) -> list[t.Tests.Builders.BuilderValue]: ...
 
     @overload
     def build(
         self,
         *,
         as_parametrized: bool = ...,
-    ) -> list[t_test.Tests.Builders.ParametrizedCase]: ...
+    ) -> list[t.Tests.Builders.ParametrizedCase]: ...
 
     def build[T](
         self,
         **kwargs: object,
     ) -> (
-        t_test.Tests.Builders.BuilderDict
+        t.Tests.Builders.BuilderDict
         | BaseModel
-        | list[tuple[str, t_test.Tests.Builders.BuilderValue]]
+        | list[tuple[str, t.Tests.Builders.BuilderValue]]
         | list[str]
-        | list[t_test.Tests.Builders.BuilderValue]
-        | list[t_test.Tests.Builders.ParametrizedCase]
+        | list[t.Tests.Builders.BuilderValue]
+        | list[t.Tests.Builders.ParametrizedCase]
         | T
     ):
         """Build the dataset with output type control.
@@ -758,7 +759,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         self._ensure_data_initialized()
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
         assert self._data is not None, "_data must be initialized"
-        data: t_test.Tests.Builders.BuilderDict = dict(self._data)
+        data: t.Tests.Builders.BuilderDict = dict(self._data)
 
         if params.filter_none:
             data = {k: v for k, v in data.items() if v is not None}
@@ -839,7 +840,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         ]
         return self.add(
             "users",
-            value=cast("t_test.Tests.Builders.BuilderValue", users),
+            value=cast("t.Tests.Builders.BuilderValue", users),
         )
 
     def with_configs(self, *, production: bool = False) -> Self:
@@ -865,7 +866,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         }
         return self.add(
             "configs",
-            value=cast("t_test.Tests.Builders.BuilderValue", config),
+            value=cast("t.Tests.Builders.BuilderValue", config),
         )
 
     def with_validation_fields(self, count: int = 5) -> Self:
@@ -890,7 +891,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         }
         return self.add(
             "validation_fields",
-            value=cast("t_test.Tests.Builders.BuilderValue", validation_fields),
+            value=cast("t.Tests.Builders.BuilderValue", validation_fields),
         )
 
     # =========================================================================
@@ -947,7 +948,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         for key, value in updates.items():
             _ = new_builder.add(
                 key,
-                value=cast("t_test.Tests.Builders.BuilderValue", value),
+                value=cast("t.Tests.Builders.BuilderValue", value),
             )  # add() returns Self for chaining
         return new_builder
 
@@ -1013,7 +1014,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             self._ensure_data_initialized()
             assert self._data is not None, "_data must be initialized"
             self._data = cast(
-                "t_test.Tests.Builders.BuilderDict",
+                "t.Tests.Builders.BuilderDict",
                 merge_result.value,
             )
         return self
@@ -1075,7 +1076,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         self._ensure_data_initialized()
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
         assert self._data is not None, "_data must be initialized"
-        builder_data: t_test.Tests.Builders.BuilderDict = self._data
+        builder_data: t.Tests.Builders.BuilderDict = self._data
         batch_data: list[t.GeneralValueType | r[t.GeneralValueType]] = []
         for _scenario_id, scenario_data in params.scenarios:
             if params.as_results:
@@ -1088,7 +1089,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 batch_data.append(r[t.GeneralValueType].fail(fail_error))
 
         builder_data[params.key] = cast(
-            "t_test.Tests.Builders.BuilderValue",
+            "t.Tests.Builders.BuilderValue",
             batch_data,
         )
         # Update instance attribute after local modifications
@@ -1097,8 +1098,8 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
 
     def scenarios(
         self,
-        *cases: tuple[str, dict[str, t_test.Tests.Builders.BuilderValue]],
-    ) -> list[t_test.Tests.Builders.ParametrizedCase]:
+        *cases: tuple[str, dict[str, t.Tests.Builders.BuilderValue]],
+    ) -> list[t.Tests.Builders.ParametrizedCase]:
         """Build pytest.mark.parametrize compatible scenarios.
 
         Examples:
@@ -1158,7 +1159,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         self,
         factory: str,
         count: int,
-    ) -> t_test.Tests.Builders.BuilderValue:
+    ) -> t.Tests.Builders.BuilderValue:
         """Generate data using factory methods.
 
         Args:
@@ -1219,7 +1220,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         *,
         production: bool,
         debug: bool,
-    ) -> t_test.Tests.Builders.BuilderValue:
+    ) -> t.Tests.Builders.BuilderValue:
         """Create configuration data.
 
         Args:
@@ -1291,10 +1292,10 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
 
     def _flatten_dict(
         self,
-        data: t_test.Tests.Builders.BuilderDict,
+        data: t.Tests.Builders.BuilderDict,
         parent_key: str = "",
         sep: str = ".",
-    ) -> t_test.Tests.Builders.BuilderDict:
+    ) -> t.Tests.Builders.BuilderDict:
         """Flatten nested dict using dot notation keys.
 
         Args:
@@ -1306,7 +1307,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             Flattened dict.
 
         """
-        items: list[tuple[str, t_test.Tests.Builders.BuilderValue]] = []
+        items: list[tuple[str, t.Tests.Builders.BuilderValue]] = []
         for key, value in data.items():
             new_key = f"{parent_key}{sep}{key}" if parent_key else key
             # Check if value is a Mapping but not a BaseModel
@@ -1315,7 +1316,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 value_map = cast("Mapping[str, t.GeneralValueType]", value)
                 items.extend(
                     self._flatten_dict(
-                        cast("t_test.Tests.Builders.BuilderDict", dict(value_map)),
+                        cast("t.Tests.Builders.BuilderDict", dict(value_map)),
                         new_key,
                         sep,
                     ).items(),
@@ -1559,57 +1560,57 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
             def user(**overrides: t.GeneralValueType) -> m.Tests.Factory.User:
                 """Create user - DELEGATES to tt.model()."""
                 # Filter only valid TestResultValue types
-                filtered: dict[str, t_test.Tests.TestResultValue] = {}
+                filtered: dict[str, t.Tests.TestResultValue] = {}
                 for key, value in overrides.items():
                     if isinstance(value, (str, int, float, bool, type(None))):
-                        filtered[key] = cast("t_test.Tests.TestResultValue", value)
+                        filtered[key] = cast("t.Tests.TestResultValue", value)
                     elif u.is_type(value, "list_or_tuple"):
                         # Cast to Sequence for list conversion (mypy needs explicit narrowing)
                         seq = cast("Sequence[t.GeneralValueType]", value)
                         filtered[key] = cast(
-                            "t_test.Tests.TestResultValue",
+                            "t.Tests.TestResultValue",
                             list(seq),
                         )
                     elif u.is_type(value, "dict"):
-                        filtered[key] = cast("t_test.Tests.TestResultValue", value)
+                        filtered[key] = cast("t.Tests.TestResultValue", value)
                 return cast("m.Tests.Factory.User", tt.model("user", **filtered))
 
             @staticmethod
             def config(**overrides: t.GeneralValueType) -> m.Tests.Factory.Config:
                 """Create config - DELEGATES to tt.model()."""
                 # Filter only valid TestResultValue types
-                filtered: dict[str, t_test.Tests.TestResultValue] = {}
+                filtered: dict[str, t.Tests.TestResultValue] = {}
                 for key, value in overrides.items():
                     if isinstance(value, (str, int, float, bool, type(None))):
-                        filtered[key] = cast("t_test.Tests.TestResultValue", value)
+                        filtered[key] = cast("t.Tests.TestResultValue", value)
                     elif u.is_type(value, "list_or_tuple"):
                         # Cast to Sequence for list conversion (mypy needs explicit narrowing)
                         seq = cast("Sequence[t.GeneralValueType]", value)
                         filtered[key] = cast(
-                            "t_test.Tests.TestResultValue",
+                            "t.Tests.TestResultValue",
                             list(seq),
                         )
                     elif u.is_type(value, "dict"):
-                        filtered[key] = cast("t_test.Tests.TestResultValue", value)
+                        filtered[key] = cast("t.Tests.TestResultValue", value)
                 return cast("m.Tests.Factory.Config", tt.model("config", **filtered))
 
             @staticmethod
             def service(**overrides: t.GeneralValueType) -> m.Tests.Factory.Service:
                 """Create service - DELEGATES to tt.model()."""
                 # Filter only valid TestResultValue types
-                filtered: dict[str, t_test.Tests.TestResultValue] = {}
+                filtered: dict[str, t.Tests.TestResultValue] = {}
                 for key, value in overrides.items():
                     if isinstance(value, (str, int, float, bool, type(None))):
-                        filtered[key] = cast("t_test.Tests.TestResultValue", value)
+                        filtered[key] = cast("t.Tests.TestResultValue", value)
                     elif u.is_type(value, "list_or_tuple"):
                         # Cast to Sequence for list conversion (mypy needs explicit narrowing)
                         seq = cast("Sequence[t.GeneralValueType]", value)
                         filtered[key] = cast(
-                            "t_test.Tests.TestResultValue",
+                            "t.Tests.TestResultValue",
                             list(seq),
                         )
                     elif u.is_type(value, "dict"):
-                        filtered[key] = cast("t_test.Tests.TestResultValue", value)
+                        filtered[key] = cast("t.Tests.TestResultValue", value)
                 return cast("m.Tests.Factory.Service", tt.model("service", **filtered))
 
             @staticmethod
@@ -1652,11 +1653,14 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 values: Sequence[t.GeneralValueType],
             ) -> list[T]:
                 """Create batch entities - DELEGATES to tu.Tests.DomainHelpers."""
-                return tu.Tests.DomainHelpers.create_test_entities_batch(
+                result = tu.Tests.DomainHelpers.create_test_entities_batch(
                     names=list(names),
                     values=list(values),
                     entity_class=entity_class,
                 )
+                if result.is_success:
+                    return result.value
+                raise ValueError(result.error)
 
         class Operation:
             """Operation helpers - tb.Tests.Operation.*.

@@ -19,6 +19,7 @@ from flext_core.typings import t
 from flext_core.utilities import FlextUtilities
 from flext_tests import tm
 from tests.constants import TestsFlextConstants
+from tests.test_utils import assertion_helpers
 
 
 class TestMapperMapDictKeys:
@@ -114,7 +115,7 @@ class TestMapperBuildFlagsDict:
 
         result = FlextUtilities.mapper().build_flags_dict(flags, mapping)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == {
             mc.CAN_READ: True,
             mc.CAN_WRITE: True,
@@ -133,7 +134,7 @@ class TestMapperBuildFlagsDict:
             default_value=True,
         )
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         # When default_value=True, unset flags start True and active flags become True
         assert result.value == {mc.CAN_READ: True, mc.CAN_WRITE: True}
 
@@ -155,7 +156,7 @@ class TestMapperBuildFlagsDict:
         bad_list_typed: list[str] = cast("list[str]", bad_list_instance)
         result = FlextUtilities.mapper().build_flags_dict(bad_list_typed, {})
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "Failed to build flags dict" in str(result.error)
 
 
@@ -178,7 +179,7 @@ class TestMapperCollectActiveKeys:
 
         result = FlextUtilities.mapper().collect_active_keys(source, mapping)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert set(result.value) == {"r", "w"}
 
     def test_none_active(self) -> None:
@@ -189,7 +190,7 @@ class TestMapperCollectActiveKeys:
 
         result = FlextUtilities.mapper().collect_active_keys(source, mapping)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == []
 
     def test_exception_handling(self) -> None:
@@ -208,7 +209,7 @@ class TestMapperCollectActiveKeys:
             {"key": "output"},
         )
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "Failed to collect active keys" in str(result.error)
 
 

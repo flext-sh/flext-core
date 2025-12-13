@@ -30,8 +30,8 @@ from flext_core import (
     T_co,
     T_contra,
     U,
-    m,
     t,
+    u,
 )
 from flext_tests.matchers import tm
 
@@ -206,17 +206,11 @@ class TestFlextTypings:
     def test_flexttypes_accessible(self) -> None:
         """Test t namespace is accessible with real validation."""
         tm.that(t, none=False, msg="FlextTypes (t) must be accessible")
-        # Verify actual nested classes in FlextTypes
-        # Note: Handler (not HandlerAliases), Dispatcher (not Processor)
-        # Validation moved to m.Validation (FlextModels.Validation)
-        # Factory, Bus, Logging, Cqrs exist in other modules (constants, models)
+        # Verify flat namespace structure after migration
+        # Types are now directly on FlextTypes, not in nested namespaces
+        # Only Dispatcher remains as a nested namespace (contains TypedDict)
         required_attrs = [
-            "Json",
-            "Handler",
-            "Dispatcher",
-            "Utility",
-            "Config",
-            "Types",
+            "Dispatcher",  # Only nested namespace remaining (contains TypedDict)
         ]
         for attr in required_attrs:
             tm.that(
@@ -227,6 +221,20 @@ class TestFlextTypings:
             # Validate attribute is not None
             attr_value = getattr(t, attr)
             tm.that(attr_value, none=False, msg=f"t.{attr} must not be None")
+        # Verify flat type aliases are accessible
+        flat_types = [
+            "GeneralValueType",
+            "ScalarValue",
+            "ConfigurationDict",
+            "ConfigurationMapping",
+            "HandlerCallable",
+        ]
+        for type_alias in flat_types:
+            tm.that(
+                hasattr(t, type_alias),
+                eq=True,
+                msg=f"t must have {type_alias} type alias",
+            )
 
     def test_all_exports_importable(self) -> None:
         """Test that all public exports can be imported and are valid."""
@@ -267,35 +275,34 @@ class TestFlextTypings:
 
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
-        # Test with a valid hostname (localhost should always resolve)
-        # Validation moved to m.Validation namespace (FlextModels.Validation)
-        # validate_hostname is in m.Validation.Validation nested class
-        result = m.Validation.Validation.validate_hostname("localhost")
-        tm.that(result, eq="localhost", msg="localhost must resolve correctly")
+        # Test with a valid hostname - validate_hostname is in u.Validation.Network
+        result = u.Validation.Network.validate_hostname("localhost")
+        tm.that(result.is_success, eq=True, msg="Result must be successful")
+        tm.that(result.value, eq="localhost", msg="localhost must validate correctly")
         tm.that(
-            result,
+            result.value,
             is_=str,
             none=False,
             empty=False,
-            msg="Result must be non-empty string",
+            msg="Result value must be non-empty string",
         )
 
         # Test with a valid IP address (should also work)
-        result = m.Validation.Validation.validate_hostname("127.0.0.1")
-        tm.that(result, eq="127.0.0.1", msg="IP address must resolve correctly")
+        result = u.Validation.Network.validate_hostname("127.0.0.1")
+        tm.that(result.is_success, eq=True, msg="Result must be successful")
+        tm.that(result.value, eq="127.0.0.1", msg="IP address must validate correctly")
         tm.that(
-            result,
+            result.value,
             is_=str,
             none=False,
             empty=False,
-            msg="Result must be non-empty string",
+            msg="Result value must be non-empty string",
         )
 
     def test_hostname_validation_error(self) -> None:
         """Test hostname validation error path with real validation."""
-        # Access the validator via m.Validation namespace (FlextModels.Validation)
-        # The validator is a static method in m.Validation class
-        invalid_hostname = "this-hostname-definitely-does-not-exist-12345.invalid"
+        # validate_hostname is in u.Validation.Network and returns FlextResult
+        invalid_hostname = "invalid..hostname"  # Invalid due to consecutive dots
         tm.that(
             invalid_hostname,
             is_=str,
@@ -304,11 +311,9 @@ class TestFlextTypings:
             msg="Invalid hostname must be a non-empty string",
         )
 
-        # Test that invalid hostname raises ValueError with specific message
-        # Validation moved to m.Validation namespace (FlextModels.Validation)
-        # validate_hostname is in m.Validation.Validation nested class
-        with pytest.raises(ValueError, match="Cannot resolve hostname"):
-            m.Validation.Validation.validate_hostname(invalid_hostname)
+        # Test that invalid hostname returns failed result
+        result = u.Validation.Network.validate_hostname(invalid_hostname)
+        tm.that(result.is_failure, eq=True, msg="Invalid hostname must return failure")
 
 
 __all__ = ["TestFlextTypings"]

@@ -417,29 +417,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             func(self.value)
         return self
 
-    @override
-    def flow_through[U](  # pyrefly: ignore[bad-override]
-        self,
-        *funcs: Callable[[T_co | U], FlextRuntime.RuntimeResult[U]],
-    ) -> FlextResult[U]:
-        """Chain multiple operations in sequence.
-
-        Overrides RuntimeResult.flow_through to return FlextResult for type consistency.
-        """
-        # Call parent method and convert result to FlextResult
-        parent_result: FlextRuntime.RuntimeResult[U] = super().flow_through(*funcs)
-        if parent_result.is_success:
-            value: U = parent_result.value  # parent_result.value is U when is_success
-            return FlextResult[U].ok(value)
-        return cast(
-            "FlextResult[U]",
-            FlextResult.fail(
-                parent_result.error or "",
-                error_code=getattr(parent_result, "error_code", None),
-                error_data=getattr(parent_result, "error_data", None),
-            ),
-        )
-
     @classmethod
     def create_from_callable(
         cls,

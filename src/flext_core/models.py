@@ -13,9 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from collections.abc import Sequence
+from typing import Annotated, TypeAlias
 
-from pydantic import Discriminator
+from pydantic import Discriminator, Field
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
@@ -24,11 +25,9 @@ from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
-from flext_core._models.service import FlextModelsService
 from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.protocols import p
-from flext_core.typings import t
 
 
 class FlextModels:
@@ -50,275 +49,81 @@ class FlextModels:
     and JSON-ready serialization for all exported types.
     """
 
-    # Entity & DDD Patterns - Real inheritance classes
-    class Entity(FlextModelsEntity.Entry):
-        """Entity base class with real inheritance."""
-
-    class Value(FlextModelsEntity.Value):
-        """Value object base class with real inheritance."""
-
-    class AggregateRoot(Entity, FlextModelsEntity.AggregateRoot):
-        """Aggregate root base class with real inheritance.
-
-        Inherits from both Entity (for hierarchy) and FlextModelsEntity.AggregateRoot
-        (for functionality) to maintain correct inheritance chain.
-
-        Note: type: ignore[misc] is required because mypy cannot determine type of
-        "model_config" in base classes with multiple inheritance (Pydantic v2 limitation).
-        """
-
-    class DomainEvent(FlextModelsEntity.DomainEvent):
-        """Domain event base class with real inheritance."""
-
-    # Direct base class - real inheritance
-    class ArbitraryTypesModel(FlextModelsBase.ArbitraryTypesModel):
-        """Base model with arbitrary types support - real inheritance."""
-
-    # Base namespace - Real inheritance classes
-    class Base:
-        """Base namespace with real inheritance classes."""
-
-        class Metadata(FlextModelsBase.Metadata):
-            """Standard metadata model - real inheritance."""
-
-    # Base Models - Real inheritance classes
-    class FrozenStrictModel(FlextModelsBase.FrozenStrictModel):
-        """Immutable base model with strict validation - real inheritance."""
-
-    class IdentifiableMixin(FlextModelsBase.IdentifiableMixin):
-        """Mixin for unique identifiers - real inheritance."""
-
-    class TimestampableMixin(FlextModelsBase.TimestampableMixin):
-        """Mixin for timestamps - real inheritance."""
-
-    class TimestampedModel(FlextModelsBase.TimestampedModel):
-        """Timestamped model - real inheritance."""
-
-    class VersionableMixin(FlextModelsBase.VersionableMixin):
-        """Mixin for versioning - real inheritance."""
-
-    # Collections - Real inheritance classes
-    class Collections:
-        """Collections namespace with real inheritance classes."""
-
-        class Config(FlextModelsCollections.Config):
-            """Collections config - real inheritance."""
-
-        class Rules(FlextModelsCollections.Rules):
-            """Collections rules - real inheritance."""
-
-        class Statistics(FlextModelsCollections.Statistics):
-            """Collections statistics - real inheritance."""
-
-        class Results(FlextModelsCollections.Results):
-            """Collections results - real inheritance."""
-
-        class Options(FlextModelsCollections.Options):
-            """Collections options - real inheritance."""
-
-        class ParseOptions(FlextModelsCollections.ParseOptions):
-            """Collections parse options - real inheritance."""
-
-        # Categories is generic - expose as class with real inheritance
-        class Categories[T](FlextModelsCollections.Categories[T]):
-            """Categories collection with real inheritance - generic class."""
-
-    # Categories with default type - expose at class level with real inheritance
-    class Categories(FlextModelsCollections.Categories[t.GeneralValueType]):
-        """Categories collection with default t.GeneralValueType - real inheritance."""
-
-    # Collections - Real inheritance classes (no type aliases)
-    # CollectionsConfig removed - use Collections.Config directly
-
-    # CQRS Patterns - Real inheritance classes
-    class Cqrs:
-        """CQRS namespace with real inheritance classes."""
-
-        class Command(FlextModelsCqrs.Command):
-            """Command base class - real inheritance."""
-
-        class Pagination(FlextModelsCqrs.Pagination):
-            """Pagination base class - real inheritance."""
-
-        class Query(FlextModelsCqrs.Query):
-            """Query base class - real inheritance."""
-
-        class Bus(FlextModelsCqrs.Bus):
-            """Bus base class - real inheritance."""
-
-        class Handler(FlextModelsCqrs.Handler):
-            """Handler base class - real inheritance."""
-
-        # NOTE: Use FlextSettings.get_global_instance() directly in model defaults
-        # No wrapper methods needed - access config directly per FLEXT standards
-
-    # Base Utility Models - Real inheritance classes
-    class Metadata(FlextModelsBase.Metadata):
-        """Metadata model with real inheritance."""
-
-    # Configuration Models - Real inheritance classes
-    class Config:
-        """Configuration namespace with real inheritance classes."""
-
-        # Domain model configuration - moved from constants.py
-        # constants.py cannot import ConfigDict, so this belongs here
-        DOMAIN_MODEL_CONFIG = FlextModelsConfig.DOMAIN_MODEL_CONFIG
-        """Domain model configuration defaults.
-
-        Moved from FlextConstants.Domain.DOMAIN_MODEL_CONFIG because
-        constants.py cannot import ConfigDict from pydantic.
-
-        Use m.DOMAIN_MODEL_CONFIG instead of c.Domain.DOMAIN_MODEL_CONFIG.
-        """
-
-        class ProcessingRequest(FlextModelsConfig.ProcessingRequest):
-            """Processing request config - real inheritance."""
-
-        class RetryConfiguration(FlextModelsConfig.RetryConfiguration):
-            """Retry configuration - real inheritance."""
-
-        class ValidationConfiguration(FlextModelsConfig.ValidationConfiguration):
-            """Validation configuration - real inheritance."""
-
-        class BatchProcessingConfig(FlextModelsConfig.BatchProcessingConfig):
-            """Batch processing config - real inheritance."""
-
-        class HandlerExecutionConfig(FlextModelsConfig.HandlerExecutionConfig):
-            """Handler execution config - real inheritance."""
-
-        class OperationExtraConfig(FlextModelsConfig.OperationExtraConfig):
-            """Operation extra config - real inheritance."""
-
-        class LogOperationFailureConfig(FlextModelsConfig.LogOperationFailureConfig):
-            """Log operation failure config - real inheritance."""
-
-        class RetryLoopConfig(FlextModelsConfig.RetryLoopConfig):
-            """Retry loop config - real inheritance."""
-
-        class DispatchConfig(FlextModelsConfig.DispatchConfig):
-            """Dispatch config - real inheritance."""
-
-        class ExecuteDispatchAttemptOptions(
-            FlextModelsConfig.ExecuteDispatchAttemptOptions,
-        ):
-            """Execute dispatch attempt options - real inheritance."""
-
-        class RuntimeScopeOptions(FlextModelsConfig.RuntimeScopeOptions):
-            """Runtime scope options - real inheritance."""
-
-        class NestedExecutionOptions(FlextModelsConfig.NestedExecutionOptions):
-            """Nested execution options - real inheritance."""
-
-        class ExceptionConfig(FlextModelsConfig.ExceptionConfig):
-            """Exception config - real inheritance."""
-
-        class ValidationErrorConfig(FlextModelsConfig.ValidationErrorConfig):
-            """Validation error config - real inheritance."""
-
-        class ConfigurationErrorConfig(FlextModelsConfig.ConfigurationErrorConfig):
-            """Configuration error config - real inheritance."""
-
-        class ConnectionErrorConfig(FlextModelsConfig.ConnectionErrorConfig):
-            """Connection error config - real inheritance."""
-
-        class TimeoutErrorConfig(FlextModelsConfig.TimeoutErrorConfig):
-            """Timeout error config - real inheritance."""
-
-        class AuthenticationErrorConfig(FlextModelsConfig.AuthenticationErrorConfig):
-            """Authentication error config - real inheritance."""
-
-        class AuthorizationErrorConfig(FlextModelsConfig.AuthorizationErrorConfig):
-            """Authorization error config - real inheritance."""
-
-        class NotFoundErrorConfig(FlextModelsConfig.NotFoundErrorConfig):
-            """NotFound error config - real inheritance."""
-
-        class ConflictErrorConfig(FlextModelsConfig.ConflictErrorConfig):
-            """Conflict error config - real inheritance."""
-
-        class RateLimitErrorConfig(FlextModelsConfig.RateLimitErrorConfig):
-            """Rate limit error config - real inheritance."""
-
-        class InternalErrorConfig(FlextModelsConfig.InternalErrorConfig):
-            """Internal error config - real inheritance."""
-
-        class TypeErrorOptions(FlextModelsConfig.TypeErrorOptions):
-            """Type error options - real inheritance."""
-
-        class TypeErrorConfig(FlextModelsConfig.TypeErrorConfig):
-            """Type error config - real inheritance."""
-
-        class ValueErrorConfig(FlextModelsConfig.ValueErrorConfig):
-            """Value error config - real inheritance."""
-
-        class CircuitBreakerErrorConfig(FlextModelsConfig.CircuitBreakerErrorConfig):
-            """Circuit breaker error config - real inheritance."""
-
-        class OperationErrorConfig(FlextModelsConfig.OperationErrorConfig):
-            """Operation error config - real inheritance."""
-
-        class AttributeAccessErrorConfig(FlextModelsConfig.AttributeAccessErrorConfig):
-            """Attribute access error config - real inheritance."""
-
-        class MiddlewareConfig(FlextModelsConfig.MiddlewareConfig):
-            """Middleware config - real inheritance."""
-
-        class RateLimiterState(FlextModelsConfig.RateLimiterState):
-            """Rate limiter state - real inheritance."""
-
-    # Configuration Models - All classes use real inheritance (no type aliases)
-    # Access via Config namespace: FlextModels.Config.ProcessingRequest, etc.
-
-    class Context:
-        """Context namespace with real inheritance classes."""
-
-        class StructlogProxyToken(FlextModelsContext.StructlogProxyToken):
-            """Structlog proxy token - real inheritance."""
-
-        class StructlogProxyContextVar[T](
-            FlextModelsContext.StructlogProxyContextVar[T],
-        ):
-            """Structlog proxy context var - real inheritance."""
-
-        class Token(FlextModelsContext.Token):
-            """Token - real inheritance."""
-
-        class ContextData(FlextModelsContext.ContextData):
-            """Context data - real inheritance."""
-
-        class ContextExport(FlextModelsContext.ContextExport):
-            """Context export - real inheritance."""
-
-        class ContextScopeData(FlextModelsContext.ContextScopeData):
-            """Context scope data - real inheritance."""
-
-        class ContextStatistics(FlextModelsContext.ContextStatistics):
-            """Context statistics - real inheritance."""
-
-        class ContextMetadata(FlextModelsContext.ContextMetadata):
-            """Context metadata - real inheritance."""
-
-        class ContextDomainData(FlextModelsContext.ContextDomainData):
-            """Context domain data - real inheritance."""
-
-    # Handler Management Models - Real inheritance classes
-    class Handler:
-        """Handler namespace with real inheritance classes."""
-
-        class Registration(FlextModelsHandler.Registration):
-            """Handler registration - real inheritance."""
+    # CQRS Handler with subclasses (keep for compatibility)
+    class Handler(FlextModelsCqrs.Handler):
+        """Handler base class - real inheritance."""
 
         class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
-            """Registration details - real inheritance."""
+            """Handler registration details - real inheritance."""
 
         class ExecutionContext(FlextModelsHandler.ExecutionContext):
             """Handler execution context - real inheritance."""
 
-        class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
-            """Decorator configuration - real inheritance."""
+        class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
+            """Handler decorator configuration."""
+
+            command: type | None = None
+            priority: int = 100
+            timeout: float | None = None
+            middleware: Sequence[type[object]] = Field(default_factory=list)
+
+        class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
+            """Factory decorator config - real inheritance."""
+
+    # Aliases for direct access
+    HandlerRegistrationDetails: TypeAlias = Handler.RegistrationDetails
+    HandlerExecutionContext = Handler.ExecutionContext
+    Config = FlextModelsConfig
+    ProcessingRequest = FlextModelsConfig.ProcessingRequest
+    ProcessingConfig = ProcessingRequest  # Simple access alias
+    BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
+    ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
+    HandlerRegistration = FlextModelsHandler.Registration
+    HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
+
+    # Direct class definitions for type safety
+    class HandlerDecoratorConfig(FlextModelsHandler.DecoratorConfig):
+        """Handler decorator configuration - direct class for mypy compatibility."""
+
+    class HandlerFactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
+        """Handler factory decorator configuration - direct class for mypy compatibility."""
+
+    # Direct alias for CQRS handler
+    CqrsHandler = Handler
+
+    # Type aliases for mypy compatibility
+    Entity: TypeAlias = FlextModelsEntity.Entry
+    Value: TypeAlias = FlextModelsEntity.Value
+    AggregateRoot: TypeAlias = FlextModelsEntity.AggregateRoot
+    DomainEvent: TypeAlias = FlextModelsEntity.DomainEvent
+    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
+    FrozenStrictModel: TypeAlias = FlextModelsBase.FrozenStrictModel
+    IdentifiableMixin: TypeAlias = FlextModelsBase.IdentifiableMixin
+    TimestampableMixin: TypeAlias = FlextModelsBase.TimestampableMixin
+    TimestampedModel: TypeAlias = FlextModelsBase.TimestampedModel
+    VersionableMixin: TypeAlias = FlextModelsBase.VersionableMixin
+    CollectionsCategories: TypeAlias = FlextModelsCollections.Categories
+
+    # Direct aliases for simple access (remove subnamespaces)
+    Command = FlextModelsCqrs.Command
+    Pagination = FlextModelsCqrs.Pagination
+    Query = FlextModelsCqrs.Query
+    Bus = FlextModelsCqrs.Bus
+
+    # NOTE: Use FlextSettings.get_global_instance() directly in model defaults
+    # No wrapper methods needed - access config directly per FLEXT standards
+
+    # Type aliases for mypy compatibility
+    Metadata: TypeAlias = FlextModelsBase.Metadata
+    StructlogProxyToken: TypeAlias = FlextModelsContext.StructlogProxyToken
+    StructlogProxyContextVar: TypeAlias = FlextModelsContext.StructlogProxyContextVar
+    Token: TypeAlias = FlextModelsContext.Token
+    ContextData: TypeAlias = FlextModelsContext.ContextData
+
+    # Configuration Models - All classes use real inheritance (no type aliases)
+    # Access directly: FlextModels.ProcessingConfig, etc.
 
     # Service Models - Real inheritance classes
-    # ServiceRuntime needs to stay as class due to protocol fields
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
         """Runtime quintuple (config, context, container, dispatcher, registry) for services.
 
@@ -334,51 +139,13 @@ class FlextModels:
         dispatcher: p.CommandBus
         registry: p.Registry
 
-    class Service:
-        """Service namespace with real inheritance classes."""
+    # Container Models - Real inheritance classes (flattened from Container namespace)
 
-        class DomainServiceExecutionRequest(
-            FlextModelsService.DomainServiceExecutionRequest,
-        ):
-            """Domain service execution request - real inheritance."""
-
-        class DomainServiceBatchRequest(FlextModelsService.DomainServiceBatchRequest):
-            """Domain service batch request - real inheritance."""
-
-        class DomainServiceMetricsRequest(
-            FlextModelsService.DomainServiceMetricsRequest,
-        ):
-            """Domain service metrics request - real inheritance."""
-
-        class DomainServiceResourceRequest(
-            FlextModelsService.DomainServiceResourceRequest,
-        ):
-            """Domain service resource request - real inheritance."""
-
-        class AclResponse(FlextModelsService.AclResponse):
-            """ACL response - real inheritance."""
-
-        class OperationExecutionRequest(FlextModelsService.OperationExecutionRequest):
-            """Operation execution request - real inheritance."""
-
-    # Container Models - Real inheritance classes
-    class Container:
-        """Container namespace with real inheritance classes."""
-
-        class ServiceRegistration(FlextModelsContainer.ServiceRegistration):
-            """Service registration - real inheritance."""
-
-        class FactoryRegistration(FlextModelsContainer.FactoryRegistration):
-            """Factory registration - real inheritance."""
-
-        class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
-            """Factory decorator config - real inheritance."""
-
-        class ResourceRegistration(FlextModelsContainer.ResourceRegistration):
-            """Resource registration - real inheritance."""
-
-        class ContainerConfig(FlextModelsContainer.ContainerConfig):
-            """Container config - real inheritance."""
+    # Type aliases for mypy compatibility
+    ServiceRegistration: TypeAlias = FlextModelsContainer.ServiceRegistration
+    FactoryRegistration: TypeAlias = FlextModelsContainer.FactoryRegistration
+    ResourceRegistration: TypeAlias = FlextModelsContainer.ResourceRegistration
+    ContainerConfig: TypeAlias = FlextModelsContainer.ContainerConfig
 
     # Pydantic v2 discriminated union using modern typing (PEP 695)
     # Use direct references to base classes, not aliases
@@ -400,136 +167,92 @@ class FlextModels:
     # Project-specific namespaces (m.Cli.*, m.Ldif.*) remain for extensions.
     # =========================================================================
 
-    # =========================================================================
-    # FLAT ALIASES - m.Config.* → m.*
-    # =========================================================================
-    DOMAIN_MODEL_CONFIG = FlextModelsConfig.DOMAIN_MODEL_CONFIG
-    ProcessingRequest = FlextModelsConfig.ProcessingRequest
-    RetryConfiguration = FlextModelsConfig.RetryConfiguration
-    ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
-    BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
-    HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
-    OperationExtraConfig = FlextModelsConfig.OperationExtraConfig
-    LogOperationFailureConfig = FlextModelsConfig.LogOperationFailureConfig
-    RetryLoopConfig = FlextModelsConfig.RetryLoopConfig
-    DispatchConfig = FlextModelsConfig.DispatchConfig
-    ExecuteDispatchAttemptOptions = FlextModelsConfig.ExecuteDispatchAttemptOptions
-    RuntimeScopeOptions = FlextModelsConfig.RuntimeScopeOptions
-    NestedExecutionOptions = FlextModelsConfig.NestedExecutionOptions
-    ExceptionConfig = FlextModelsConfig.ExceptionConfig
-    ValidationErrorConfig = FlextModelsConfig.ValidationErrorConfig
-    ConfigurationErrorConfig = FlextModelsConfig.ConfigurationErrorConfig
-    ConnectionErrorConfig = FlextModelsConfig.ConnectionErrorConfig
-    TimeoutErrorConfig = FlextModelsConfig.TimeoutErrorConfig
-    AuthenticationErrorConfig = FlextModelsConfig.AuthenticationErrorConfig
-    AuthorizationErrorConfig = FlextModelsConfig.AuthorizationErrorConfig
-    NotFoundErrorConfig = FlextModelsConfig.NotFoundErrorConfig
-    ConflictErrorConfig = FlextModelsConfig.ConflictErrorConfig
-    RateLimitErrorConfig = FlextModelsConfig.RateLimitErrorConfig
-    InternalErrorConfig = FlextModelsConfig.InternalErrorConfig
-    TypeErrorOptions = FlextModelsConfig.TypeErrorOptions
-    TypeErrorConfig = FlextModelsConfig.TypeErrorConfig
-    ValueErrorConfig = FlextModelsConfig.ValueErrorConfig
-    CircuitBreakerErrorConfig = FlextModelsConfig.CircuitBreakerErrorConfig
-    OperationErrorConfig = FlextModelsConfig.OperationErrorConfig
-    AttributeAccessErrorConfig = FlextModelsConfig.AttributeAccessErrorConfig
-    MiddlewareConfig = FlextModelsConfig.MiddlewareConfig
-    RateLimiterState = FlextModelsConfig.RateLimiterState
+    # Direct class definitions for type safety
+    class ContextDomainData(FlextModelsContext.ContextDomainData):
+        """Context domain data - direct class for mypy compatibility."""
 
-    # =========================================================================
-    # FLAT ALIASES - m.Context.* → m.*
-    # =========================================================================
-    StructlogProxyToken = FlextModelsContext.StructlogProxyToken
-    StructlogProxyContextVar = FlextModelsContext.StructlogProxyContextVar
-    ContextToken = FlextModelsContext.Token
-    ContextData = FlextModelsContext.ContextData
-    ContextExport = FlextModelsContext.ContextExport
-    ContextScopeData = FlextModelsContext.ContextScopeData
-    ContextStatistics = FlextModelsContext.ContextStatistics
-    ContextMetadata = FlextModelsContext.ContextMetadata
-    ContextDomainData = FlextModelsContext.ContextDomainData
+    class ContextExport(FlextModelsContext.ContextExport):
+        """Context export data - direct class for mypy compatibility."""
 
-    # =========================================================================
-    # FLAT ALIASES - m.Cqrs.* → m.*
-    # =========================================================================
-    Command = FlextModelsCqrs.Command
-    Query = FlextModelsCqrs.Query
-    Pagination = FlextModelsCqrs.Pagination
-    CqrsBus = FlextModelsCqrs.Bus
-    CqrsHandler = FlextModelsCqrs.Handler
+    class ContextScopeData(FlextModelsContext.ContextScopeData):
+        """Context scope data - direct class for mypy compatibility."""
 
-    # =========================================================================
-    # FLAT ALIASES - m.Collections.* → m.*
-    # =========================================================================
-    CollectionsConfig = FlextModelsCollections.Config
-    CollectionsRules = FlextModelsCollections.Rules
+    class ContextStatistics(FlextModelsContext.ContextStatistics):
+        """Context statistics - direct class for mypy compatibility."""
+
+    class ContextMetadata(FlextModelsContext.ContextMetadata):
+        """Context metadata - direct class for mypy compatibility."""
+
+    # CQRS and Collections aliases
+    Cqrs = FlextModelsCqrs
+    Collections = FlextModelsCollections
     CollectionsStatistics = FlextModelsCollections.Statistics
-    CollectionsResults = FlextModelsCollections.Results
-    CollectionsOptions = FlextModelsCollections.Options
-    CollectionsParseOptions = FlextModelsCollections.ParseOptions
-    # Categories already exists at root level
-
-    # =========================================================================
-    # FLAT ALIASES - m.Handler.* → m.*
-    # =========================================================================
-    HandlerRegistration = FlextModelsHandler.Registration
-    HandlerRegistrationDetails = FlextModelsHandler.RegistrationDetails
-    HandlerExecutionContext = FlextModelsHandler.ExecutionContext
-    HandlerDecoratorConfig = FlextModelsHandler.DecoratorConfig
-
-    # =========================================================================
-    # FLAT ALIASES - m.Service.* → m.*
-    # =========================================================================
-    DomainServiceExecutionRequest = FlextModelsService.DomainServiceExecutionRequest
-    DomainServiceBatchRequest = FlextModelsService.DomainServiceBatchRequest
-    DomainServiceMetricsRequest = FlextModelsService.DomainServiceMetricsRequest
-    DomainServiceResourceRequest = FlextModelsService.DomainServiceResourceRequest
-    AclResponse = FlextModelsService.AclResponse
-    OperationExecutionRequest = FlextModelsService.OperationExecutionRequest
-
-    # =========================================================================
-    # FLAT ALIASES - m.Container.* → m.*
-    # =========================================================================
-    ContainerServiceRegistration = FlextModelsContainer.ServiceRegistration
-    ContainerFactoryRegistration = FlextModelsContainer.FactoryRegistration
-    ContainerFactoryDecoratorConfig = FlextModelsContainer.FactoryDecoratorConfig
-    ContainerResourceRegistration = FlextModelsContainer.ResourceRegistration
-    ContainerConfig = FlextModelsContainer.ContainerConfig
+    # Type aliases for mypy compatibility
+    CollectionsConfig: TypeAlias = FlextModelsBase.ArbitraryTypesModel
+    CollectionsResults: TypeAlias = FlextModelsCollections.Results
+    CollectionsOptions: TypeAlias = FlextModelsCollections.Options
+    Options: TypeAlias = FlextModelsCollections.Options  # Simple access
+    CollectionsParseOptions: TypeAlias = FlextModelsCollections.ParseOptions
+    Categories: TypeAlias = CollectionsCategories
 
     # NOTE: m.Metadata is already available via class Metadata(FlextModelsBase.Metadata)
     # defined in the Entity namespace section above (line 156)
 
-    class Validation:
-        """Validation functions and types."""
+    # Validation namespace - aggregates FlextModelsValidation
+    Validation = FlextModelsValidation
 
-        validate_business_rules = FlextModelsValidation.validate_business_rules
-        validate_cross_fields = FlextModelsValidation.validate_cross_fields
-        validate_performance = FlextModelsValidation.validate_performance
-        validate_batch = FlextModelsValidation.validate_batch
-        validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
-        validate_aggregate_consistency_with_rules = (
-            FlextModelsValidation.validate_aggregate_consistency_with_rules
-        )
-        validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
-        validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
-        validate_domain_event = FlextModelsValidation.validate_domain_event
-        validate_aggregate_consistency = (
-            FlextModelsValidation.validate_aggregate_consistency
-        )
-        validate_entity_relationships = (
-            FlextModelsValidation.validate_entity_relationships
-        )
-        validate_uri = FlextModelsValidation.validate_uri
-        validate_port_number = FlextModelsValidation.validate_port_number
+    # Direct aliases for validation functions (remove subnamespace)
+    validate_business_rules = FlextModelsValidation.validate_business_rules
+    validate_cross_fields = FlextModelsValidation.validate_cross_fields
+    validate_performance = FlextModelsValidation.validate_performance
+    validate_batch = FlextModelsValidation.validate_batch
+    validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
+    validate_aggregate_consistency_with_rules = (
+        FlextModelsValidation.validate_aggregate_consistency_with_rules
+    )
+    validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
+    validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
+    validate_domain_event = FlextModelsValidation.validate_domain_event
+    validate_aggregate_consistency = (
+        FlextModelsValidation.validate_aggregate_consistency
+    )
+    validate_entity_relationships = FlextModelsValidation.validate_entity_relationships
+    validate_uri = FlextModelsValidation.validate_uri
+    validate_port_number = FlextModelsValidation.validate_port_number
 
-        # Nested Validation types (PortNumber, TimeoutSeconds, etc.)
-        # PortNumber = FlextModelsValidation.PortNumber
-        # TimeoutSeconds = FlextModelsValidation.TimeoutSeconds
-        # RetryCount = FlextModelsValidation.RetryCount
-        # NonEmptyStr = FlextModelsValidation.NonEmptyStr
-        # HostName = FlextModelsValidation.HostName
+    # =========================================================================
+    # ESSENTIAL CONFIG CLASSES - Direct access for common usage
+    # =========================================================================
+    # Type aliases for mypy compatibility
+    RetryConfiguration: TypeAlias = FlextModelsConfig.RetryConfiguration
+    DispatchConfig: TypeAlias = FlextModelsConfig.DispatchConfig
 
-        # validate_hostname = FlextModelsValidation.validate_hostname
+    class ExecuteDispatchAttemptOptions(
+        FlextModelsConfig.ExecuteDispatchAttemptOptions
+    ):
+        """Execute dispatch attempt options - direct class for mypy compatibility."""
+
+    RuntimeScopeOptions: TypeAlias = FlextModelsConfig.RuntimeScopeOptions
+    NestedExecutionOptions: TypeAlias = FlextModelsConfig.NestedExecutionOptions
+    ExceptionConfig: TypeAlias = FlextModelsConfig.ExceptionConfig
+    ValidationErrorConfig: TypeAlias = FlextModelsConfig.ValidationErrorConfig
+    ConfigurationErrorConfig: TypeAlias = FlextModelsConfig.ConfigurationErrorConfig
+    ConnectionErrorConfig: TypeAlias = FlextModelsConfig.ConnectionErrorConfig
+    TimeoutErrorConfig: TypeAlias = FlextModelsConfig.TimeoutErrorConfig
+    AuthenticationErrorConfig: TypeAlias = FlextModelsConfig.AuthenticationErrorConfig
+    AuthorizationErrorConfig: TypeAlias = FlextModelsConfig.AuthorizationErrorConfig
+    NotFoundErrorConfig: TypeAlias = FlextModelsConfig.NotFoundErrorConfig
+    ConflictErrorConfig: TypeAlias = FlextModelsConfig.ConflictErrorConfig
+    RateLimitErrorConfig: TypeAlias = FlextModelsConfig.RateLimitErrorConfig
+    InternalErrorConfig: TypeAlias = FlextModelsConfig.InternalErrorConfig
+    TypeErrorOptions: TypeAlias = FlextModelsConfig.TypeErrorOptions
+    TypeErrorConfig: TypeAlias = FlextModelsConfig.TypeErrorConfig
+    ValueErrorConfig: TypeAlias = FlextModelsConfig.ValueErrorConfig
+    CircuitBreakerErrorConfig: TypeAlias = FlextModelsConfig.CircuitBreakerErrorConfig
+    OperationErrorConfig: TypeAlias = FlextModelsConfig.OperationErrorConfig
+    AttributeAccessErrorConfig: TypeAlias = FlextModelsConfig.AttributeAccessErrorConfig
+    MiddlewareConfig: TypeAlias = FlextModelsConfig.MiddlewareConfig
+    RateLimiterState: TypeAlias = FlextModelsConfig.RateLimiterState
 
 
 m = FlextModels

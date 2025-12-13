@@ -22,9 +22,7 @@ from typing import cast
 
 from pydantic import BaseModel as PydanticBaseModel
 
-# Add src to path for imports (required for tests/examples structure)
 from flext_core import (
-    FlextConfig,
     FlextConstants,
     FlextContainer,
     FlextContext,
@@ -38,9 +36,11 @@ from flext_core import (
     FlextRegistry,
     FlextResult,
     FlextService,
+    FlextSettings,
     FlextTypes,
     FlextUtilities,
 )
+from tests.test_utils import assertion_helpers
 
 
 class TestMigrationScenario1:
@@ -58,7 +58,7 @@ class TestMigrationScenario1:
 
         # Test with .value (primary access - documented pattern)
         result = process_user("user_123")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"id": "user_123", "name": "Alice"}
 
         # Verify value returns the data
@@ -165,7 +165,7 @@ class TestMigrationScenario4:
         # Test service functionality
         service = UserService()
         result = service.create_user("alice", "alice@example.com")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value["username"] == "alice"
 
 
@@ -198,7 +198,7 @@ class TestBackwardCompatibility:
         assert FlextModels is not None
         assert FlextService is not None
         assert FlextLogger is not None
-        assert FlextConfig is not None
+        assert FlextSettings is not None
         assert FlextConstants is not None
         assert FlextContext is not None
         assert FlextDispatcher is not None
@@ -286,7 +286,7 @@ class TestMigrationComplexity:
         app = ApplicationExample()
         result = app.process_data({"key": "value"})
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value["processed"] is True
 
     def test_all_core_apis_functional(self) -> None:
@@ -296,7 +296,7 @@ class TestMigrationComplexity:
 
         # Test FlextResult works
         result = FlextResult[str].ok("test")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test"
 
         # Test FlextContainer works

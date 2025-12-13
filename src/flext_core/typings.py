@@ -175,9 +175,14 @@ class FlextTypes:
     # Reuses FlextTypes.ScalarValue defined above (forward reference managed by
     # __future__ annotations)
     type MetadataAttributeValue = (
-        str | int | float | bool | datetime | None,
-        Sequence[FlextTypes.MetadataAttributeValue],
-        Mapping[str, FlextTypes.MetadataAttributeValue],
+        str
+        | int
+        | float
+        | bool
+        | datetime
+        | None
+        | Sequence[FlextTypes.MetadataAttributeValue]
+        | Mapping[str, FlextTypes.MetadataAttributeValue]
     )
 
     # Generic metadata dictionary type - read-only interface for metadata containers
@@ -378,6 +383,8 @@ class FlextTypes:
     """Mapping for shared containers (container IDs to container objects)."""
 
     type EventDataMapping = Mapping[str, FlextTypes.GeneralValueType]
+    # Mutable dict version for Pydantic models (DomainEvent.data)
+    type EventDataDict = dict[str, FlextTypes.GeneralValueType]
     """Mapping for event data (event properties to values)."""
 
     type ContextMetadataMapping = Mapping[str, FlextTypes.GeneralValueType]
@@ -806,7 +813,6 @@ class FlextTypes:
         """Classes to wire for dependency injection."""
 
     # Commonly used type aliases
-    StringDict = dict[str, str]
 
 
 t_core = FlextTypes

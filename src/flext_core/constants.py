@@ -86,7 +86,8 @@ class BiMapping[K, V]:
             data: Dictionary to create bidirectional mapping from.
 
         """
-        self._forward: MappingProxyType[K, V] = MappingProxyType(dict(data))
+        forward_dict: dict[K, V] = dict(data)
+        self._forward: MappingProxyType[K, V] = MappingProxyType(forward_dict)
         self._inverse: MappingProxyType[V, K] = MappingProxyType({
             v: k for k, v in data.items()
         })

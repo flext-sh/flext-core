@@ -9,17 +9,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pytest
 from pydantic import PrivateAttr
 
 from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
+from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService
 
 
-class UserServiceEntity(m.Entity):
-    """Test user entity model using m.Entity."""
+@dataclass
+class UserServiceEntity:
+    """Test user entity model using dataclass."""
 
+    unique_id: str
     name: str
     email: str
     active: bool = True
@@ -312,7 +317,7 @@ class TestFlextServiceIntegration:
         result = user_service.execute()
 
         # Assert
-        assert result.is_success is True
+        assert assertion_helpers.assert_flext_result_success(result) is True
         assert result.value is True  # execute() returns True on success
 
     @pytest.mark.integration
@@ -334,7 +339,7 @@ class TestFlextServiceIntegration:
         result = user_service.get_user(user_id)
 
         # Assert
-        assert result.is_success is True
+        assert assertion_helpers.assert_flext_result_success(result) is True
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == f"User {user_id}"
@@ -367,7 +372,7 @@ class TestFlextServiceIntegration:
         result = user_service.get_user(user_id)
 
         # Assert
-        assert result.is_success is True
+        assert assertion_helpers.assert_flext_result_success(result) is True
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == "Custom User"
@@ -392,7 +397,7 @@ class TestFlextServiceIntegration:
         result = user_service.execute()
 
         # Assert
-        assert result.is_success is False
+        assert assertion_helpers.assert_flext_result_success(result) is False
         assert result.error == "User service unavailable"
 
     @pytest.mark.integration
@@ -413,7 +418,7 @@ class TestFlextServiceIntegration:
         result = notification_service.execute()
 
         # Assert
-        assert result.is_success is True
+        assert assertion_helpers.assert_flext_result_success(result) is True
         assert result.value == "sent"
 
     @pytest.mark.integration
@@ -435,7 +440,7 @@ class TestFlextServiceIntegration:
         result = notification_service.send(email)
 
         # Assert
-        assert result.is_success is True
+        assert assertion_helpers.assert_flext_result_success(result) is True
         assert result.value == "sent"
         assert email in notification_service.sent_notifications
         assert notification_service.call_count == 1
@@ -459,7 +464,7 @@ class TestFlextServiceIntegration:
         result = notification_service.send("test@example.com")
 
         # Assert
-        assert result.is_success is False
+        assert assertion_helpers.assert_flext_result_success(result) is False
         assert result.error == "Notification service unavailable"
 
     @pytest.mark.integration
@@ -480,7 +485,7 @@ class TestFlextServiceIntegration:
         result = lifecycle_service.execute()
 
         # Assert
-        assert result.is_success is True
+        assert assertion_helpers.assert_flext_result_success(result) is True
         assert result.value == "ready"
         assert lifecycle_service.initialized is False
 
@@ -509,7 +514,7 @@ class TestFlextServiceIntegration:
         result = lifecycle_service.initialize(service_config)
 
         # Assert
-        assert result.is_success is True
+        assert assertion_helpers.assert_flext_result_success(result) is True
         assert result.value == "initialized"
         assert lifecycle_service.initialized is True
         assert lifecycle_service.service_config is not None
@@ -575,7 +580,7 @@ class TestFlextServiceIntegration:
         result = lifecycle_service.shutdown()
 
         # Assert
-        assert result.is_success is True
+        assert assertion_helpers.assert_flext_result_success(result) is True
         assert result.value == "shutdown"
         assert lifecycle_service.shutdown_called is True
         assert lifecycle_service.health_check() is False

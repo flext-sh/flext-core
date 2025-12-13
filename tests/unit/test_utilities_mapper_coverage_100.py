@@ -20,6 +20,7 @@ from typing import cast
 from pydantic import BaseModel
 
 from flext_core import t, u
+from tests.test_utils import assertion_helpers
 
 
 @dataclass
@@ -45,63 +46,63 @@ class TestuMapperExtract:
         """Test simple dict extraction."""
         data = {"a": 1, "b": 2}
         result = u.mapper().extract(data, "a")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == 1
 
     def test_extract_dict_nested(self) -> None:
         """Test nested dict extraction."""
         data = {"a": {"b": {"c": 3}}}
         result = u.mapper().extract(data, "a.b.c")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == 3
 
     def test_extract_object(self) -> None:
         """Test object attribute extraction."""
         obj = SimpleObj(name="test", value=42)
         result = u.mapper().extract(obj, "name")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test"
 
     def test_extract_model(self) -> None:
         """Test Pydantic model extraction."""
         model = ComplexModel(id=1, data={"key": "val"}, items=["a", "b"])
         result = u.mapper().extract(model, "data.key")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "val"
 
     def test_extract_array_index(self) -> None:
         """Test array indexing."""
         data = {"items": [1, 2, 3]}
         result = u.mapper().extract(data, "items[1]")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == 2
 
     def test_extract_array_index_nested(self) -> None:
         """Test nested array indexing."""
         data = {"users": [{"name": "alice"}, {"name": "bob"}]}
         result = u.mapper().extract(data, "users[1].name")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "bob"
 
     def test_extract_missing_default(self) -> None:
         """Test missing key with default."""
         data = {"a": 1}
         result = u.mapper().extract(data, "b", default=10)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == 10
 
     def test_extract_missing_required(self) -> None:
         """Test missing key required."""
         data = {"a": 1}
         result = u.mapper().extract(data, "b", required=True)
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "not found" in str(result.error)
 
     def test_extract_array_index_error(self) -> None:
         """Test invalid array index."""
         data = {"items": [1]}
         result = u.mapper().extract(data, "items[5]", required=True)
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         # Check for 'out of range' or 'Invalid index' or 'not found' depending on impl
         msg = str(result.error)
         assert any(x in msg for x in ["out of range", "Invalid index", "not found"])
@@ -110,7 +111,7 @@ class TestuMapperExtract:
         """Test extraction when intermediate path is None."""
         data = {"a": None}
         result = u.mapper().extract(data, "a.b", default="defs")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "defs"
 
         result_req = u.mapper().extract(data, "a.b", required=True)

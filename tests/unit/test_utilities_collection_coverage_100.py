@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field
 from flext_core import FlextRuntime, r, t
 from flext_core.result import FlextResult
 from flext_tests import u
+from tests.test_utils import assertion_helpers
 
 
 class FixtureStatus(StrEnum):
@@ -656,7 +657,10 @@ class TestuCollectionParseSequence:
         )
 
         if scenario.expected_success:
-            assert result.is_success, f"Expected success but got: {result.error}"
+            (
+                assertion_helpers.assert_flext_result_success(result),
+                f"Expected success but got: {result.error}",
+            )
             assert result.value is not None
             if scenario.expected_count is not None:
                 assert len(result.value) == scenario.expected_count
@@ -664,7 +668,10 @@ class TestuCollectionParseSequence:
             for val in result.value:
                 assert isinstance(val, scenario.enum_cls)
         else:
-            assert result.is_failure, "Expected failure but got success"
+            (
+                assertion_helpers.assert_flext_result_failure(result),
+                "Expected failure but got success",
+            )
             assert result.error is not None
             if scenario.error_contains:
                 assert scenario.error_contains in result.error
@@ -675,7 +682,7 @@ class TestuCollectionParseSequence:
             FixturePriority,
             ["low", "medium", "high"],
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert len(result.value) == 3
         assert all(isinstance(v, FixturePriority) for v in result.value)
@@ -686,7 +693,7 @@ class TestuCollectionParseSequence:
             FixtureStatus,
             ["active", "invalid1", "invalid2"],
         )
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert "Invalid" in result.error
         assert "invalid1" in result.error or "invalid2" in result.error
@@ -764,7 +771,10 @@ class TestuCollectionParseMapping:
         )
 
         if scenario.expected_success:
-            assert result.is_success, f"Expected success but got: {result.error}"
+            (
+                assertion_helpers.assert_flext_result_success(result),
+                f"Expected success but got: {result.error}",
+            )
             assert result.value is not None
             if scenario.expected_keys is not None:
                 assert set(result.value.keys()) == set(scenario.expected_keys)
@@ -772,7 +782,10 @@ class TestuCollectionParseMapping:
             for val in result.value.values():
                 assert isinstance(val, scenario.enum_cls)
         else:
-            assert result.is_failure, "Expected failure but got success"
+            (
+                assertion_helpers.assert_flext_result_failure(result),
+                "Expected failure but got success",
+            )
             assert result.error is not None
             if scenario.error_contains:
                 assert scenario.error_contains in result.error
@@ -783,7 +796,7 @@ class TestuCollectionParseMapping:
             FixturePriority,
             {"task1": "low", "task2": "medium", "task3": "high"},
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert len(result.value) == 3
         assert all(isinstance(v, FixturePriority) for v in result.value.values())
@@ -794,7 +807,7 @@ class TestuCollectionParseMapping:
             FixtureStatus,
             {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
         )
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert "Invalid" in result.error
         assert "invalid1" in result.error or "invalid2" in result.error
@@ -882,13 +895,13 @@ class TestuCollectionMap:
         if scenario.expected_failure:
             # collection.py returns RuntimeResult, check for both types
             assert isinstance(result, (r, FlextRuntime.RuntimeResult))
-            assert result.is_failure
+            assertion_helpers.assert_flext_result_failure(result)
             if scenario.error_contains:
                 assert scenario.error_contains in str(result.error)
         elif isinstance(scenario.expected_result, (r, FlextRuntime.RuntimeResult)):
             # collection.py returns RuntimeResult, check for both types
             assert isinstance(result, (r, FlextRuntime.RuntimeResult))
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             assert result.value == scenario.expected_result.value
         else:
             assert result == scenario.expected_result
@@ -987,11 +1000,11 @@ class TestuCollectionProcess:
         )
 
         if scenario.expected_failure:
-            assert result.is_failure
+            assertion_helpers.assert_flext_result_failure(result)
             if scenario.error_contains:
                 assert scenario.error_contains in str(result.error)
         else:
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             assert result.value == scenario.expected_result
 
 
@@ -1040,7 +1053,7 @@ class TestuCollectionBatch:
             lambda x: x * 2,
             _size=2,
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data["total"] == 5
         assert data["success_count"] == 5
@@ -1062,7 +1075,7 @@ class TestuCollectionBatch:
             op,
             on_error="collect",
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data["total"] == 4
         assert data["success_count"] == 3
@@ -1077,7 +1090,7 @@ class TestuCollectionBatch:
             lambda x: x,
             flatten=True,
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data["results"] == [1, 2, 3, 4, 5]
 
@@ -1100,7 +1113,7 @@ class TestuCollectionMerge:
             other,
         )
         result = u.Collection.merge(base_mapping, other_mapping)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"x": 1, "y": 2}, "c": 3}
 
     def test_merge_override(self) -> None:
@@ -1118,7 +1131,7 @@ class TestuCollectionMerge:
             other,
         )
         result = u.Collection.merge(base_mapping, other_mapping, strategy="override")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"y": 2}, "c": 3}
 
 

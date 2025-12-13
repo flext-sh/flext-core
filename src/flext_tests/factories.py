@@ -26,7 +26,7 @@ from typing import Never, TypeVar, cast
 
 from pydantic import BaseModel as _BaseModel
 
-from flext_core import FlextProtocols as p, FlextResult, r
+from flext_core import FlextResult, p, r
 from flext_core.typings import t as t_core
 from flext_tests.base import su
 from flext_tests.constants import c
@@ -335,7 +335,8 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 cast("_BaseModel", inst) for inst in instances
             ]
             if params.as_result:
-                return cast("r[list[_BaseModel]]", r.ok(typed_instances))
+                result: r[list[_BaseModel]] = r.ok(typed_instances)
+                return result
             return typed_instances
 
         # Single instance - handle as_dict
@@ -1129,7 +1130,8 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         try:
             instance = _create_instance()
             if params.as_result:
-                return r[T].ok(instance)
+                result_instance: r[T] = r.ok(instance)
+                return result_instance
             return instance
         except Exception as e:
             if params.as_result:

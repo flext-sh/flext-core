@@ -60,16 +60,35 @@ class TestsFlextModels:
     class Core:
         """flext-core-specific test models namespace."""
 
-        class DomainTestEntity(FlextModels.Entity):
+        class DomainTestEntity:
             """Test entity for domain tests."""
 
-            name: str
-            value: int
+            def __init__(self, name: str, value: int) -> None:
+                """Initialize test entity with name and value."""
+                self.name = name
+                self.value = value
+                self.unique_id = f"test-{name}-{value}"
 
-        class DomainTestValue(FlextModels.Value):
+        class DomainTestValue:
             """Test value object for domain tests."""
 
-            data: str
+            _frozen = False
+
+            def __init__(self, data: str = "", count: int = 0) -> None:
+                """Initialize test value object with optional data and count."""
+                self._frozen = False
+                self.data = data
+                self.count = count
+                self._frozen = True
+
+            def __setattr__(self, name: str, value: object) -> None:
+                """Set attribute with frozen state validation."""
+                if getattr(self, "_frozen", False) and name != "_frozen":
+                    raise AttributeError(
+                        f"{type(self).__name__} object attribute '{name}' is read-only"
+                    )
+                super().__setattr__(name, value)
+
             count: int
 
         class CustomEntity:

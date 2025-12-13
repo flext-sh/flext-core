@@ -24,6 +24,7 @@ from flext_core import (
     t,
 )
 from flext_tests import u
+from tests.test_utils import assertion_helpers
 
 # ==================== COVERAGE TESTS ====================
 
@@ -247,7 +248,7 @@ class TestContext100Coverage:
         context._destroy()  # Deactivates context
 
         result = context.get("any_key")
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "not active" in result.error
 
     def test_set_when_context_not_active(self) -> None:
@@ -395,7 +396,7 @@ class TestContext100Coverage:
 
         # Verify removed
         result = context.get("key1", scope="user")
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
 
     def test_has_with_different_scope(self) -> None:
         """Test has with different scope."""

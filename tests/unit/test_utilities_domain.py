@@ -99,7 +99,7 @@ def create_compare_entities_cases() -> list[dict[str, t.GeneralValueType]]:
     """Create test cases for entity comparison using constants."""
     # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
     # Create entities using u.Tests.DomainHelpers with batch creation
-    entities = u.Tests.DomainHelpers.create_test_entities_batch(
+    entities_result = u.Tests.DomainHelpers.create_test_entities_batch(
         names=[
             TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
             TestsFlextConstants.TestDomain.ENTITY_NAME_BOB,
@@ -113,6 +113,10 @@ def create_compare_entities_cases() -> list[dict[str, t.GeneralValueType]]:
         entity_class=DomainTestEntity,
         remove_ids=[False, False, True],  # alice_no_id without ID
     )
+    assert entities_result.is_success, (
+        f"Failed to create entities: {entities_result.error}"
+    )
+    entities = entities_result.value
     alice_entity, bob_entity, alice_no_id = entities
     value_obj = u.Tests.DomainHelpers.create_test_value_object_instance(
         data=TestsFlextConstants.TestDomain.VALUE_DATA_TEST,
@@ -190,7 +194,7 @@ def create_hash_entity_cases() -> list[dict[str, t.GeneralValueType]]:
     """Create test cases for entity hashing using constants."""
     # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
     # Create entities using batch helper
-    entities = u.Tests.DomainHelpers.create_test_entities_batch(
+    entities_result = u.Tests.DomainHelpers.create_test_entities_batch(
         names=[
             TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
             TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
@@ -202,6 +206,10 @@ def create_hash_entity_cases() -> list[dict[str, t.GeneralValueType]]:
         entity_class=DomainTestEntity,
         remove_ids=[False, True],  # alice_no_id without ID
     )
+    assert entities_result.is_success, (
+        f"Failed to create entities: {entities_result.error}"
+    )
+    entities = entities_result.value
     alice_entity, alice_no_id = entities
     custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
@@ -376,7 +384,7 @@ def create_validate_entity_has_id_cases() -> list[dict[str, t.GeneralValueType]]
     """Create test cases for entity ID validation using constants."""
     # Use TestsFlextConstants.TestDomain directly (c is imported from tests.helpers)
     # Create entities using batch helper
-    entities = u.Tests.DomainHelpers.create_test_entities_batch(
+    entities_result = u.Tests.DomainHelpers.create_test_entities_batch(
         names=[
             TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
             TestsFlextConstants.TestDomain.ENTITY_NAME_ALICE,
@@ -388,6 +396,10 @@ def create_validate_entity_has_id_cases() -> list[dict[str, t.GeneralValueType]]
         entity_class=DomainTestEntity,
         remove_ids=[False, True],  # alice_no_id without ID
     )
+    assert entities_result.is_success, (
+        f"Failed to create entities: {entities_result.error}"
+    )
+    entities = entities_result.value
     alice_entity, alice_no_id = entities
     custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
