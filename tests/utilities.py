@@ -20,6 +20,7 @@ from flext_core import FlextResult
 from flext_core.typings import t as core_t
 from flext_core.utilities import u as core_u
 from flext_tests.utilities import FlextTestsUtilities
+from tests.test_utils import assertion_helpers
 
 
 class TestsFlextUtilities(FlextTestsUtilities):
@@ -124,15 +125,17 @@ class TestsFlextUtilities(FlextTestsUtilities):
             result = operation()
 
             if expected_error is not None:
-                assert result.is_failure, (
-                    f"Expected failure for: {description}, got success"
+                (
+                    assertion_helpers.assert_flext_result_failure(result),
+                    (f"Expected failure for: {description}, got success"),
                 )
                 assert expected_error in str(result.error), (
                     f"Expected error '{expected_error}' in '{result.error}' for: {description}"
                 )
             else:
-                assert result.is_success, (
-                    f"Expected success for: {description}, got: {result.error}"
+                (
+                    assertion_helpers.assert_flext_result_success(result),
+                    (f"Expected success for: {description}, got: {result.error}"),
                 )
                 if expected_value is not None:
                     assert result.value == expected_value, (
@@ -242,8 +245,9 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            assert result.is_failure, (
-                f"Expected failure for: {description}, got success"
+            (
+                assertion_helpers.assert_flext_result_failure(result),
+                (f"Expected failure for: {description}, got success"),
             )
             assert expected_error in str(result.error), (
                 f"Expected error '{expected_error}' in '{result.error}' for: {description}"
@@ -261,8 +265,9 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            assert result.is_success, (
-                f"Expected success for: {description}, got: {result.error}"
+            (
+                assertion_helpers.assert_flext_result_success(result),
+                (f"Expected success for: {description}, got: {result.error}"),
             )
 
         @staticmethod
@@ -279,8 +284,9 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            assert result.is_success, (
-                f"Expected success for: {description}, got: {result.error}"
+            (
+                assertion_helpers.assert_flext_result_success(result),
+                (f"Expected success for: {description}, got: {result.error}"),
             )
             assert result.value == expected_value, (
                 f"Expected {expected_value}, got {result.value} for: {description}"

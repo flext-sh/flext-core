@@ -125,17 +125,17 @@ class FlextHandlers[MessageT_contra, ResultT](
     # Class variables for message type expectations (configurable via inheritance)
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
-    _config_model: m.CqrsHandler
+    _config_model: m.Handler
 
     def __init__(
         self,
         *,
-        config: m.CqrsHandler | None = None,
+        config: m.Handler | None = None,
     ) -> None:
         """Initialize handler with configuration and context.
 
         Sets up the handler with optional configuration parameters.
-        The config parameter accepts a m.CqrsHandler instance.
+        The config parameter accepts a m.Handler instance.
 
         Args:
             config: Optional handler configuration model
@@ -148,7 +148,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             self._config_model = config
         else:
             # Create default config if not provided
-            self._config_model = m.CqrsHandler(
+            self._config_model = m.Handler(
                 handler_id=f"handler_{id(self)}",
                 handler_name=self.__class__.__name__,
             )
@@ -172,7 +172,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         # Business Rule: HandlerType StrEnum members are runtime-compatible with HandlerTypeLiteral
         # Use helper function for type-safe conversion
         handler_mode_literal = _handler_type_to_literal(handler_type)
-        self._execution_context = m.HandlerExecutionContext.create_for_handler(
+        self._execution_context = m.Handler.ExecutionContext.create_for_handler(
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
         )
@@ -205,7 +205,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         handler_name: str | None = None,
         handler_type: c.Cqrs.HandlerType | None = None,
         mode: c.Cqrs.HandlerType | str | None = None,
-        handler_config: m.CqrsHandler | None = None,
+        handler_config: m.Handler | None = None,
     ) -> FlextHandlers[t.GeneralValueType, t.GeneralValueType]:
         """Create a handler instance from a callable function.
 
@@ -217,7 +217,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             handler_name: Optional handler name (defaults to function name)
             handler_type: Optional handler type (command, query, event)
             mode: Optional handler mode (compatibility alias for handler_type)
-            handler_config: Optional m.CqrsHandler configuration
+            handler_config: Optional m.Handler configuration
 
         Returns:
             FlextHandlers[t.GeneralValueType, t.GeneralValueType]: Handler instance wrapping the callable
@@ -250,7 +250,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     [t.GeneralValueType],
                     t.GeneralValueType,
                 ],
-                config: m.CqrsHandler | None = None,
+                config: m.Handler | None = None,
             ) -> None:
                 # Call parent __init__ with config as keyword argument
                 super().__init__(config=config)
@@ -300,7 +300,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         )
 
         # Create config
-        config = m.CqrsHandler(
+        config = m.Handler(
             handler_id=f"callable_{id(handler_callable)}",
             handler_name=resolved_name,
             handler_type=resolved_type,
@@ -616,7 +616,9 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
         # Validate handler mode matches operation
-        handler_mode = self._config_model.handler_mode.value
+        handler_mode = getattr(
+            self._config_model.handler_mode, "value", self._config_model.handler_mode
+        )
         valid_operations = {
             c.Dispatcher.HANDLER_MODE_COMMAND,
             c.Dispatcher.HANDLER_MODE_QUERY,
@@ -658,7 +660,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         self._execution_context.start_execution()
 
         # Push execution context using ExecutionContext from mixin
-        # Mixin push_context expects m.HandlerExecutionContext, use existing _execution_context
+        # Mixin push_context expects m.ExecutionContext, use existing _execution_context
         self.push_context(self._execution_context)
 
         try:
@@ -759,7 +761,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             """
             # Only set if not already set (innermost decorator wins)
             if not hasattr(func, c.Discovery.HANDLER_ATTR):
-                config = m.HandlerDecoratorConfig(
+                config = m.Handler.DecoratorConfig(
                     command=command,
                     priority=priority,
                     timeout=timeout,
@@ -783,7 +785,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> list[tuple[str, m.HandlerDecoratorConfig]]:
+        ) -> list[tuple[str, m.Handler.DecoratorConfig]]:
             """Scan class for methods decorated with @handler().
 
             Introspects the class to find all methods with handler configuration
@@ -801,11 +803,11 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     print(f"{method_name}: {config.command.__name__}")
 
             """
-            handlers: list[tuple[str, m.HandlerDecoratorConfig]] = []
+            handlers: list[tuple[str, m.Handler.DecoratorConfig]] = []
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
                 if hasattr(method, c.Discovery.HANDLER_ATTR):
-                    config: m.HandlerDecoratorConfig = getattr(
+                    config: m.Handler.DecoratorConfig = getattr(
                         method,
                         c.Discovery.HANDLER_ATTR,
                     )
@@ -845,7 +847,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         @staticmethod
         def scan_module(
             module: object,
-        ) -> list[tuple[str, t.HandlerCallable, m.HandlerDecoratorConfig]]:
+        ) -> list[tuple[str, t.HandlerCallable, m.Handler.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -863,13 +865,15 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     print(f"{func_name}: {config.command.__name__}")
 
             """
-            handlers: list[tuple[str, t.HandlerCallable, m.HandlerDecoratorConfig]] = []
+            handlers: list[
+                tuple[str, t.HandlerCallable, m.Handler.DecoratorConfig]
+            ] = []
             for name in dir(module):
                 if name.startswith("_"):
                     continue
                 func = getattr(module, name, None)
                 if callable(func) and hasattr(func, c.Discovery.HANDLER_ATTR):
-                    config: m.HandlerDecoratorConfig = getattr(
+                    config: m.Handler.DecoratorConfig = getattr(
                         func,
                         c.Discovery.HANDLER_ATTR,
                     )

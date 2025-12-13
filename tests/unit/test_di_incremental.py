@@ -31,6 +31,7 @@ from flext_core import (
     t,
 )
 from flext_tests import u
+from tests.test_utils import assertion_helpers
 
 # DI decorators from Runtime
 Provide = FlextRuntime.DependencyIntegration.Provide
@@ -736,7 +737,7 @@ class TestRealWiringScenarios:
         # Get resource
         result_raw: object = scoped.get("test_resource")
         result: r[t.GeneralValueType] = cast("r[t.GeneralValueType]", result_raw)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert isinstance(result.value, dict)
         assert result.value == {"resource": True}
         assert lifecycle["created"] is True

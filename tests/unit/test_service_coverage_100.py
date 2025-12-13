@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from flext_core import r, s, t
 from flext_tests.domains import FlextTestsDomains
+from tests.test_utils import assertion_helpers
 
 # ==================== REAL SERVICE CLASSES ====================
 
@@ -58,7 +59,7 @@ class TestService100Coverage:
         result = service.validate_business_rules()
 
         # Default implementation should succeed
-        assert result.is_success or result.is_failure
+        assertion_helpers.assert_flext_result_success(result) or result.is_failure
 
     def test_is_valid(self) -> None:
         """Test is_valid property."""
@@ -83,7 +84,7 @@ class TestService100Coverage:
         service = TestService()
         result = service.execute()
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert isinstance(result.value, TestDomainResult)
 
     def test_ok_method(self) -> None:
@@ -91,7 +92,7 @@ class TestService100Coverage:
         service = TestService()
         result = service.ok(TestDomainResult("test"))
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value.value == "test"
 
     def test_result_property(self) -> None:

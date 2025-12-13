@@ -805,6 +805,21 @@ class FlextUtilitiesGuards:
         except TypeError:
             return False
 
+    @staticmethod
+    def is_pydantic_model(value: object) -> TypeGuard[p.HasModelDump]:
+        """Type guard to check if value is a Pydantic model with model_dump method.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            True if object implements HasModelDump protocol, False otherwise
+
+        """
+        return hasattr(value, "model_dump") and callable(
+            getattr(value, "model_dump", None)
+        )
+
     def __getattribute__(self, name: str) -> object:
         """Intercept attribute access to warn about direct usage.
 

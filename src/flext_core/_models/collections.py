@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self
+from typing import Self, cast
 
 from pydantic import ConfigDict, Field
 
@@ -186,8 +186,12 @@ class FlextModelsCollections:
             for key, value_list in self.categories.items():
                 # Normalize each item in the list to t.GeneralValueType
                 # Use inline helper to avoid circular import with runtime.py
+                # Cast item to GeneralValueType since Categories[T] should contain compatible types
                 normalized_list: list[t.GeneralValueType] = [
-                    FlextRuntime.normalize_to_general_value(item) for item in value_list
+                    FlextRuntime.normalize_to_general_value(
+                        cast("t.GeneralValueType", item)
+                    )
+                    for item in value_list
                 ]
                 result[key] = normalized_list
             return result
@@ -230,8 +234,10 @@ class FlextModelsCollections:
                 combined: list[t.GeneralValueType] = []
                 for v in non_none:
                     if FlextRuntime.is_list_like(v):
+                        # Type narrowing with cast after is_list_like check
+                        v_list = cast("Sequence[t.GeneralValueType]", v)
                         # Normalize each item to t.GeneralValueType
-                        for item in v:
+                        for item in v_list:
                             normalized = FlextRuntime.normalize_to_general_value(item)
                             combined.append(normalized)
                 return combined
@@ -360,8 +366,10 @@ class FlextModelsCollections:
             combined: list[t.GeneralValueType] = []
             for v in non_none:
                 if FlextRuntime.is_list_like(v):
+                    # Type narrowing with cast after is_list_like check
+                    v_list = cast("Sequence[t.GeneralValueType]", v)
                     # Normalize each item to t.GeneralValueType
-                    for item in v:
+                    for item in v_list:
                         normalized = FlextRuntime.normalize_to_general_value(item)
                         combined.append(normalized)
             return combined
@@ -383,8 +391,8 @@ class FlextModelsCollections:
             merged: t.ConfigurationDict = {}
             for v in non_none:
                 if FlextRuntime.is_dict_like(v):
-                    # Type narrowing: v is Mapping[str, t.GeneralValueType]
-                    dict_v = dict(v.items()) if hasattr(v, "items") else dict(v)
+                    # Type narrowing with cast after is_dict_like check
+                    dict_v = cast("t.ConfigurationMapping", v)
                     merged.update(dict_v)
             return merged
 
@@ -538,8 +546,10 @@ class FlextModelsCollections:
                 combined: list[t.GeneralValueType] = []
                 for v in non_none:
                     if FlextRuntime.is_list_like(v):
+                        # Type narrowing with cast after is_list_like check
+                        v_list = cast("Sequence[t.GeneralValueType]", v)
                         # Normalize each item to t.GeneralValueType
-                        for item in v:
+                        for item in v_list:
                             normalized = FlextRuntime.normalize_to_general_value(item)
                             combined.append(normalized)
                 return combined

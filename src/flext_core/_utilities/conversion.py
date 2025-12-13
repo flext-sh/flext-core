@@ -11,7 +11,7 @@ from __future__ import annotations
 import inspect
 import warnings
 from collections.abc import Sequence
-from typing import Literal, overload
+from typing import Literal, cast, overload
 
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -93,8 +93,9 @@ class FlextUtilitiesConversion:
             return [value]
         if isinstance(value, (list, tuple, set, frozenset)):
             return [str(item) for item in value if item is not None]
-        # Cast to t.GeneralValueType to help type checker
-        value_typed: t.GeneralValueType = value
+        # Type narrowing: at this point value is not str, list, tuple, set, frozenset
+        # Assume it's compatible with GeneralValueType for further processing
+        value_typed: t.GeneralValueType = cast("t.GeneralValueType", value)
         if FlextRuntime.is_list_like(value_typed) and isinstance(value_typed, Sequence):
             return [str(item) for item in value_typed if item is not None]
         return [str(value)]

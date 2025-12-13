@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
-from typing import Annotated, Final, Self
+from typing import Annotated, Final, Self, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -125,11 +125,11 @@ class FlextModelsConfig:
             description="Backoff multiplier for exponential backoff",
         )
         retry_on_exceptions: list[type[BaseException]] = Field(
-            default_factory=list,
+            default_factory=lambda: cast("list[type[BaseException]]", []),
             description="Exception types to retry on",
         )
         retry_on_status_codes: list[int] = Field(
-            default_factory=list,
+            default_factory=lambda: cast("list[int]", []),
             max_length=c.Validation.MAX_RETRY_STATUS_CODES,
             description="HTTP status codes to retry on",
         )
@@ -391,7 +391,7 @@ class FlextModelsConfig:
             description="Use console renderer (True) or JSON renderer (False)",
         )
         additional_processors: list[Callable[..., object]] = Field(
-            default_factory=list,
+            default_factory=lambda: cast("list[Callable[..., object]]", []),
             description="Optional extra processors after standard FLEXT processors",
         )
         wrapper_class_factory: Callable[[], type] | None = Field(

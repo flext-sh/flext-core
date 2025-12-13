@@ -6,6 +6,8 @@ utilities, and infrastructure bridges (configuration, logging, context)
 used across the FLEXT ecosystem. Components follow clean architecture
 boundaries and favor structural typing for protocol compliance.
 
+FLEXT follows Railway-Oriented Programming with Result[T, E] patterns.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

@@ -730,9 +730,9 @@ class TestuValidation:
 
     def test_validate_hostname_valid(self) -> None:
         """Test validate_hostname with valid hostname."""
-        result = u.Validation.validate_hostname(
+        # validate_hostname is in Network nested class
+        result = u.Validation.Network.validate_hostname(
             "example.com",
-            perform_dns_lookup=False,
         )
         u.Tests.Result.assert_result_success(result)
         u.Tests.Result.assert_success_with_value(
@@ -742,9 +742,9 @@ class TestuValidation:
 
     def test_validate_hostname_invalid(self) -> None:
         """Test validate_hostname with invalid hostname."""
-        result = u.Validation.validate_hostname(
+        # validate_hostname is in Network nested class
+        result = u.Validation.Network.validate_hostname(
             "invalid..hostname",
-            perform_dns_lookup=False,
         )
         u.Tests.Result.assert_result_failure(result)
 

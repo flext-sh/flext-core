@@ -22,6 +22,7 @@ from docker import DockerClient
 
 from flext_core import FlextResult
 from flext_tests.docker import FlextTestsDocker
+from tests.test_utils import assertion_helpers
 
 # Access nested classes
 ContainerInfo = FlextTestsDocker.ContainerInfo
@@ -191,7 +192,7 @@ class TestFlextTestsDocker:
         """Test marking container as dirty."""
         result = docker_manager.mark_container_dirty("test_container")
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert "test_container" in docker_manager._dirty_containers
 
     def test_mark_container_clean(self, docker_manager: FlextTestsDocker) -> None:
@@ -200,7 +201,7 @@ class TestFlextTestsDocker:
 
         result = docker_manager.mark_container_clean("test_container")
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert "test_container" not in docker_manager._dirty_containers
 
     def test_is_container_dirty(self, docker_manager: FlextTestsDocker) -> None:
@@ -260,7 +261,7 @@ class TestFlextTestsDocker:
         """Test starting non-existent container."""
         result = docker_manager.start_existing_container("nonexistent_container")
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "not found" in str(result.error).lower()
 
     def test_get_container_info_not_found(
@@ -270,7 +271,7 @@ class TestFlextTestsDocker:
         """Test getting info for non-existent container."""
         result = docker_manager.get_container_info("nonexistent_container")
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "not found" in str(result.error).lower()
 
     def test_get_container_status_alias(
@@ -280,7 +281,7 @@ class TestFlextTestsDocker:
         """Test get_container_status is alias for get_container_info."""
         result = docker_manager.get_container_status("nonexistent")
 
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
 
     def test_wait_for_port_ready_immediate(
         self,
@@ -289,7 +290,7 @@ class TestFlextTestsDocker:
         """Test wait_for_port_ready returns quickly for unavailable port."""
         result = docker_manager.wait_for_port_ready("127.0.0.1", 59999, max_wait=1)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value is False
 
     def test_start_compose_stack_returns_result(
@@ -310,7 +311,7 @@ class TestFlextTestsDocker:
 
         result = docker_manager.cleanup_dirty_containers()
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == []
 
 

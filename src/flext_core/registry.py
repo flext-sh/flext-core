@@ -453,7 +453,7 @@ class FlextRegistry(x):
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
         # Cast handler to t.GeneralValueType for type compatibility (runtime handles h correctly)
         registration = self._dispatcher.register_handler(
-            handler,
+            cast("t.GeneralValueType", handler),
         )
         if registration.is_success:
             self._registered_keys.add(key)
@@ -599,7 +599,7 @@ class FlextRegistry(x):
         )
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
         registration_result = self._dispatcher.register_handler(
-            handler,
+            cast("t.GeneralValueType", handler),
         )
         if registration_result.is_success:
             # Convert dict result to RegistrationDetails
@@ -708,7 +708,7 @@ class FlextRegistry(x):
             # Cast to t.GeneralValueType for protocol compatibility
             registration = self._dispatcher.register_command(
                 message_type,
-                handler,
+                cast("t.GeneralValueType", handler),
             )
             if registration.is_failure:
                 # When is_failure is True, error is never None (fail() converts None to "")
@@ -881,7 +881,7 @@ class FlextRegistry(x):
         handler = handler_result.value
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
         register_result = self._dispatcher.register_handler(
-            handler,
+            cast("t.GeneralValueType", handler),
         )
         if register_result.is_failure:
             return r[m.HandlerRegistrationDetails].fail(
@@ -905,7 +905,7 @@ class FlextRegistry(x):
         """Register h instance - DRY helper reduces nesting."""
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
         register_result = self._dispatcher.register_handler(
-            entry,
+            cast("t.GeneralValueType", entry),
         )
         if register_result.is_failure:
             return r[m.HandlerRegistrationDetails].fail(

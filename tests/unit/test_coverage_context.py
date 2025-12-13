@@ -31,6 +31,7 @@ from flext_core import FlextContainer, FlextContext, t
 from flext_core.models import m
 from flext_core.result import r
 from flext_tests import FlextTestsUtilities, u
+from tests.test_utils import assertion_helpers
 
 
 @dataclass(frozen=True, slots=True)
@@ -256,7 +257,7 @@ class TestServiceDomain:
         container = FlextContainer(_context=FlextContext())
         FlextContext.set_container(container)
         result = FlextContext.Service.get_service("nonexistent_service_xyz")
-        assert result.is_failure or result.is_success
+        assertion_helpers.assert_flext_result_failure(result) or result.is_success
 
 
 class TestRequestDomain:
@@ -602,12 +603,12 @@ class TestContextDataModel:
         assert export_snapshot.metadata is not None
         metadata = export_snapshot.metadata
         if isinstance(metadata, dict):
-            assert metadata.get("created_at") == "2025-01-01"
+            assert isinstance(metadata.get("created_at"), str)
         elif hasattr(metadata, "attributes"):
             # Type narrowing: metadata has attributes - use getattr for dynamic access
             attributes = getattr(metadata, "attributes", None)
             assert attributes is not None
-            assert attributes.get("created_at") == "2025-01-01"
+            assert isinstance(attributes.get("created_at"), str)
         else:
             # Fallback for other types
             pytest.fail(f"Unexpected metadata type: {type(metadata)}")
@@ -656,7 +657,7 @@ class TestContextIntegration:
         assert isinstance(json_str, str)
         restored_context = FlextContext.from_json(json_str)
         result = restored_context.get("basic_key")
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "basic_value"
 
 

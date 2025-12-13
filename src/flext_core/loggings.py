@@ -177,10 +177,7 @@ class FlextLogger(FlextRuntime):
             ... )
 
         """
-        return cls._context_operation(
-            c.Logging.ContextOperation.BIND.value,
-            **context,
-        )
+        return cls._context_operation(c.Logging.ContextOperation.BIND.value, **context)
 
     @classmethod
     def clear_global_context(cls) -> r[bool]:

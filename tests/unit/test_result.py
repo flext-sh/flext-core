@@ -31,6 +31,7 @@ from returns.result import Success
 
 from flext_core import c, e, r, t
 from flext_tests import FlextTestsUtilities, u
+from tests.test_utils import assertion_helpers
 
 
 class ResultOperationType(StrEnum):
@@ -523,7 +524,7 @@ class Testr:
         # IOSuccess wraps a Success in its _inner_value
         io_success = IOSuccess("test_value")
         result = r.from_io_result(io_success)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         # IOSuccess._inner_value is a Success object (from returns library)
         # The implementation stores this Success object as the FlextResult value
         value = result.value
@@ -541,7 +542,7 @@ class Testr:
         # from_io_result expects IOResult[t.GeneralValueType, str]
         # InvalidIOResult is not IOResult, but method handles it at runtime
         result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", invalid_io))
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert "Invalid IO result type" in str(result.error)
 
@@ -549,7 +550,7 @@ class Testr:
         """Test from_io_result with IOFailure."""
         io_failure = IOFailure("error_message")
         result = r.from_io_result(io_failure)
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         # IOFailure._inner_value may be a Failure object, converted to string
         # The error should contain the error message
         assert "error_message" in str(result.error)
@@ -564,7 +565,7 @@ class Testr:
             return a // b
 
         result: r[int] = divide(10, 2)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == 5
 
         result_fail: r[int] = divide(10, 0)
@@ -635,7 +636,7 @@ class Testr:
         """Test traverse maps over sequence successfully."""
         items = [1, 2, 3]
         result = r.traverse(items, lambda x: r[int].ok(x * 2))
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == [2, 4, 6]
 
     def test_traverse_failure(self) -> None:
@@ -645,7 +646,7 @@ class Testr:
             items,
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
         )
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "error"
 
     def test_accumulate_errors_all_success(self) -> None:
@@ -671,7 +672,7 @@ class Testr:
             items,
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
         )
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
 
     def test_parallel_map_no_fail_fast(self) -> None:
         """Test parallel_map with fail_fast=False."""
@@ -681,7 +682,7 @@ class Testr:
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
             fail_fast=False,
         )
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert "error" in str(result.error)
 
@@ -703,7 +704,7 @@ class Testr:
             resource.clear()
 
         result = r.with_resource(factory, op, cleanup)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
         assert len(resource_created) == 1
         assert len(resource_cleaned) == 1
@@ -757,7 +758,7 @@ class Testr:
         # from_io_result expects IOResult[t.GeneralValueType, str]
         # IOSuccess[IO[str]] is compatible at runtime but type system doesn't know
         result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", real_io))
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
         # The exception path (lines 106-107) is defensive code that catches
         # exceptions during unwrap(). Since IOSuccess is immutable and can't be
@@ -782,7 +783,7 @@ class Testr:
         # from_io_result expects IOResult[t.GeneralValueType, str]
         # BadIO is not IOResult, but method handles it at runtime
         result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", bad_io))
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         assert "Invalid IO result type" in error_msg
@@ -849,7 +850,7 @@ class Testr:
         """Test parallel_map with all successes."""
         items = [1, 2, 3]
         result = r.parallel_map(items, lambda x: r[int].ok(x * 2), fail_fast=True)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == [2, 4, 6]
 
     def test_ok_with_none_raises(self) -> None:
@@ -879,14 +880,14 @@ class Testr:
         """Test from_maybe with Some."""
         maybe = Some("value")
         result = r.from_maybe(maybe)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "value"
 
     def test_from_maybe_nothing(self) -> None:
         """Test from_maybe with Nothing."""
         maybe = Nothing
         result = r.from_maybe(maybe, error="Custom error")
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Custom error"
 
     def test_flow_through_stops_on_failure(self) -> None:
@@ -914,7 +915,7 @@ class Testr:
             return "success"
 
         result = r.create_from_callable(func)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_create_from_callable_none(self) -> None:
@@ -924,7 +925,7 @@ class Testr:
             return None
 
         result = r.create_from_callable(func)
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         assert "Callable returned None" in error_msg
@@ -937,7 +938,7 @@ class Testr:
             raise ValueError(error_msg)
 
         result = r.create_from_callable(func)
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         assert "Callable failed" in error_msg

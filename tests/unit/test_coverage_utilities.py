@@ -29,6 +29,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextResult, p, t, u
+from tests.test_utils import assertion_helpers
 
 # =========================================================================
 # Test Data and Scenarios
@@ -342,7 +343,7 @@ class Testu:
     def test_text_processor_truncate(self) -> None:
         """Test text truncation - returns FlextResult[str]."""
         result = u.Text.truncate_text("hello world", max_length=8)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) <= 8
         assert result.value.endswith("...")
 
@@ -415,7 +416,7 @@ class Testu:
                         else str(v)
                     )
             result = u.Cache.clear_object_cache(obj_dict)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
@@ -444,7 +445,7 @@ class Testu:
             return FlextResult[str].ok("success")
 
         result = u.Reliability.with_timeout(quick_op, 5.0)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_reliability_timeout_invalid(self) -> None:
@@ -454,7 +455,7 @@ class Testu:
             return FlextResult[str].ok("success")
 
         result = u.Reliability.with_timeout(op, -1.0)
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
 
     def test_reliability_retry_first_success(self) -> None:
         """Test retry that succeeds immediately."""
@@ -463,7 +464,7 @@ class Testu:
             return FlextResult[str].ok("success")
 
         result: FlextResult[str] = u.Reliability.retry(op, max_attempts=3)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_reliability_retry_eventual_success(self) -> None:
@@ -474,7 +475,7 @@ class Testu:
             max_attempts=3,
             delay_seconds=0.01,
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert attempt_count[0] >= 2
 
     # =====================================================================
@@ -538,7 +539,7 @@ class Testu:
             "test_value",
             [failing_validator],
         )
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "Validator failed" in (result.error or "")
 
     def test_validation_sort_key_dict(self) -> None:

@@ -15,6 +15,7 @@ from pydantic import BaseModel, ValidationError
 from flext_core import FlextResult as r
 from flext_tests.builders import FlextTestsBuilders, tb
 from flext_tests.typings import t as t_test
+from tests.test_utils import assertion_helpers
 
 
 class TestFlextTestsBuilders:
@@ -195,7 +196,7 @@ class TestFlextTestsBuilders:
         builder.add("result", result_ok=42)
         data = builder.build()
         result = cast("r[int]", data["result"])
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_add_with_result_fail(self) -> None:
@@ -204,7 +205,7 @@ class TestFlextTestsBuilders:
         builder.add("error", result_fail="Failed", result_code="E001")
         data = builder.build()
         result = cast("r[object]", data["error"])
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
     def test_add_with_items_and_map(self) -> None:
@@ -394,7 +395,7 @@ class TestFlextTestsBuilders:
             "r[t_test.Tests.Builders.BuilderDict]",
             result_raw,
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data["x"] == 1
 
@@ -406,7 +407,7 @@ class TestFlextTestsBuilders:
             "r[t_test.Tests.Builders.BuilderDict]",
             builder.to_result(error="Failed", error_code="E001"),
         )
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
     def test_to_result_with_unwrap(self) -> None:
@@ -442,7 +443,7 @@ class TestFlextTestsBuilders:
             "r[t_test.Tests.Builders.BuilderDict]",
             result_raw,
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
     # =========================================================================
     # Tests for builder composition methods
@@ -525,7 +526,7 @@ class TestFlextTestsBuilders:
     def test_tests_result_ok(self) -> None:
         """Test tb.Tests.Result.ok()."""
         result = tb.Tests.Result.ok(42)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_tests_result_fail(self) -> None:
@@ -533,7 +534,7 @@ class TestFlextTestsBuilders:
         # Result.fail() returns r[T] where T is inferred from context
         result_raw: r[object] = tb.Tests.Result.fail("Error", code="E001")
         result: r[object] = result_raw
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
 
     def test_tests_result_batch_ok(self) -> None:
         """Test tb.Tests.Result.batch_ok()."""
@@ -614,7 +615,7 @@ class TestFlextTestsBuilders:
             result_raw,
         )
         # Should succeed but error_code is ignored without error
-        assert result.is_success or result.is_failure
+        assertion_helpers.assert_flext_result_success(result) or result.is_failure
 
     def test_batch_params_validation_scenarios_not_empty(self) -> None:
         """Test BatchParams validates scenarios is not empty."""
@@ -682,7 +683,7 @@ class TestFlextTestsBuilders:
             "r[t_test.Tests.Builders.BuilderDict]",
             result_raw,
         )
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
     def test_merge_from_uses_merge_utility(self) -> None:
         """Test merge_from() uses u.merge() utility."""
@@ -717,7 +718,7 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Result.ok() delegates to tt.res()."""
         # Result.ok() delegates to tt.res("ok", value=...)
         result = tb.Tests.Result.ok(42)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == 42
 
     def test_result_fail_delegates_to_tt_res(self) -> None:
@@ -726,7 +727,7 @@ class TestFlextTestsBuilders:
         # Result.fail() returns r[T] where T is inferred from context
         result_raw: r[object] = tb.Tests.Result.fail("Error")
         result: r[object] = result_raw
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
 
     def test_result_batch_ok_delegates_to_tt_results(self) -> None:
         """Test tb.Tests.Result.batch_ok() delegates to tt.results()."""
@@ -829,4 +830,4 @@ class TestFlextTestsBuilders:
         """Test tb.Tests.Operation.execute_service() delegates to tu.Tests.Factory."""
         # Operation.execute_service() delegates to tu.Tests.Factory.execute_user_service()
         result = tb.Tests.Operation.execute_service()
-        assert result.is_success or result.is_failure
+        assertion_helpers.assert_flext_result_success(result) or result.is_failure

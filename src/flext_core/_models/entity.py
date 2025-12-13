@@ -49,7 +49,7 @@ class FlextModelsEntity:
 
         event_type: str
         aggregate_id: str
-        data: t.EventDataMapping = Field(
+        data: t.EventDataDict = Field(
             default_factory=dict,
             description="Event data - maps to EventDataMapping",
         )
@@ -74,7 +74,7 @@ class FlextModelsEntity:
         """
 
         domain_events: list[FlextModelsEntity.DomainEvent] = Field(
-            default_factory=list,
+            default_factory=lambda: cast("list[FlextModelsEntity.DomainEvent]", []),
             description="List of uncommitted domain events for event sourcing",
         )
 
@@ -152,16 +152,13 @@ class FlextModelsEntity:
             """Create and validate domain event."""
             try:
                 # Fast fail: data must be dict (None not allowed for domain events)
-                # Type narrowing: if dict-like, treat as Mapping; else use empty dict
-                if isinstance(data, dict):
-                    event_data: t.EventDataMapping = data
-                else:
-                    event_data = {}
+                # Type narrowing: if dict-like, use as dict; else use empty dict
+                event_data = data if isinstance(data, dict) else {}
 
                 domain_event = FlextModelsEntity.DomainEvent(
                     event_type=event_name,
                     aggregate_id=self.unique_id,
-                    data=cast("t.EventDataMapping", event_data),
+                    data=event_data,
                 )
 
                 # Validate domain event using FlextModelsValidation
@@ -433,11 +430,11 @@ class FlextModelsEntity:
             """
             try:
                 for event_name, data in validated_events:
-                    # EventDataMapping is already Mapping[str, t.GeneralValueType]
+                    # Convert Mapping to dict for DomainEvent
                     domain_event = FlextModelsEntity.DomainEvent(
                         event_type=event_name,
                         aggregate_id=self.unique_id,
-                        data=cast("t.EventDataMapping", data),
+                        data=dict(data),
                     )
                     self.domain_events.append(domain_event)
                     self.increment_version()

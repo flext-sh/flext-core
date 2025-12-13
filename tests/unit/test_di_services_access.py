@@ -33,6 +33,7 @@ from flext_core import (
 )
 from flext_tests.matchers import tm
 from flext_tests.utilities import u
+from tests.test_utils import assertion_helpers
 
 
 class TestConfigServiceViaDI:
@@ -128,7 +129,7 @@ class TestLoggerServiceViaDI:
 
         # Register custom logger factory with different name
         result = container.register_factory("custom_logger", create_custom_logger)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
         # Retrieve custom logger
         custom_logger_result: r[FlextLogger] = container.get("custom_logger")
@@ -166,7 +167,7 @@ class TestContextServiceViaDI:
         # Test registering a custom context with a different name
         custom_context = FlextContext()
         result = container.register("custom_context", custom_context)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
         # Retrieve custom context
         custom_context_result: r[FlextContext] = container.get("custom_context")
@@ -251,7 +252,7 @@ class TestServicesIntegrationViaDI:
 
         service = ServiceWithDI()
         result = service.execute()
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         assert "app: service_app" in result.value
 
     def test_services_injection_combined(self) -> None:

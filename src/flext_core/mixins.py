@@ -19,6 +19,7 @@ from typing import ClassVar, cast
 
 from pydantic import BaseModel, PrivateAttr
 
+from flext_core._models.handler import FlextModelsHandler
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
@@ -747,7 +748,7 @@ class FlextMixins(FlextRuntime):
             """Manages execution context stack."""
 
             # Type annotation for type checker
-            _stack: list[m.HandlerExecutionContext | t.ConfigurationDict]
+            _stack: list[FlextModelsHandler.ExecutionContext | t.ConfigurationDict]
 
             def __init__(
                 self, *args: t.GeneralValueType, **kwargs: t.GeneralValueType
@@ -759,7 +760,7 @@ class FlextMixins(FlextRuntime):
 
             def push_context(
                 self,
-                ctx: m.HandlerExecutionContext | t.ConfigurationDict,
+                ctx: FlextModelsHandler.ExecutionContext | t.ConfigurationDict,
             ) -> r[bool]:
                 """Push execution context onto the stack.
 
@@ -794,9 +795,11 @@ class FlextMixins(FlextRuntime):
                     handler_mode_literal = cast(
                         "c.Cqrs.HandlerTypeLiteral", handler_mode_str
                     )
-                    execution_ctx = m.HandlerExecutionContext.create_for_handler(
-                        handler_name=handler_name,
-                        handler_mode=handler_mode_literal,
+                    execution_ctx = (
+                        FlextModelsHandler.ExecutionContext.create_for_handler(
+                            handler_name=handler_name,
+                            handler_mode=handler_mode_literal,
+                        )
                     )
                     self._stack.append(execution_ctx)
                 else:
@@ -816,21 +819,23 @@ class FlextMixins(FlextRuntime):
                 if self._stack:
                     popped = self._stack.pop()
                     # Convert ExecutionContext to dict for backward compatibility
-                    if isinstance(popped, m.HandlerExecutionContext):
+                    if isinstance(popped, m.Handler.ExecutionContext):
                         context_dict: t.ConfigurationDict = {
                             "handler_name": popped.handler_name,
                             "handler_mode": popped.handler_mode,
                         }
                         return r[t.ConfigurationDict].ok(context_dict)
                     # If it's already a dict, return as-is
-                    return r[t.ConfigurationDict].ok(popped)
+                    return r[t.ConfigurationDict].ok(
+                        cast("t.ConfigurationDict", popped)
+                    )
                 return r[t.ConfigurationDict].ok({})
 
-            def current_context(self) -> m.HandlerExecutionContext | None:
+            def current_context(self) -> m.Handler.ExecutionContext | None:
                 """Get current execution context without popping.
 
                 Returns:
-                    m.HandlerExecutionContext | None: Current context or None if stack is empty
+                    m.ExecutionContext | None: Current context or None if stack is empty
 
                 """
                 # _stack is initialized in __init__, but check for safety
@@ -840,7 +845,7 @@ class FlextMixins(FlextRuntime):
                     top_item = self._stack[-1]
                     # Type narrowing: _stack contains ExecutionContext | ConfigurationDict
                     # Return None if ConfigurationDict, otherwise ExecutionContext
-                    if isinstance(top_item, m.HandlerExecutionContext):
+                    if isinstance(top_item, m.Handler.ExecutionContext):
                         return top_item
                     return None
                 return None

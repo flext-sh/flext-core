@@ -24,6 +24,7 @@ import pytest
 
 from flext_core import r, t
 from flext_tests import u
+from tests.test_utils import assertion_helpers
 
 
 class TestFlextUtilitiesArgs:
@@ -321,7 +322,7 @@ class TestFlextUtilitiesArgs:
                 values.STATUS_ACTIVE,
             )
             result = process(valid_status)
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             assert result.value == values.STATUS_ACTIVE
 
         @staticmethod

@@ -32,7 +32,7 @@ from flext_core.typings import P, R, T, t
 from flext_core.utilities import u
 
 
-def deprecated(message: str) -> Callable:
+def deprecated(message: str) -> Callable[[object], object]:
     """Decorator to mark functions/variables as deprecated.
 
     Emits DeprecationWarning when decorated function is called.
@@ -66,19 +66,24 @@ def deprecated(message: str) -> Callable:
 
     """
 
-    def decorator(func_or_value: Callable | object) -> Callable | object:
+    def decorator(
+        func_or_value: Callable[..., object] | object,
+    ) -> Callable[..., object] | object:
         """Apply deprecation warning to callable."""
         if callable(func_or_value):
-            # Callable (function/method)
-            @wraps(func_or_value)
-            def wrapper(*args, **kwargs):  # type: ignore
+            # Callable (function/method) - type narrowed by callable() check
+            # Assignment ensures type narrowing propagates through wraps() and closure
+            func_callable: Callable[..., object] = func_or_value
+
+            @wraps(func_callable)
+            def wrapper(*args: object, **kwargs: object) -> object:
                 """Wrapper that emits warning before execution."""
                 warnings.warn(
                     message,
                     DeprecationWarning,
                     stacklevel=2,
                 )
-                return func_or_value(*args, **kwargs)  # type: ignore
+                return func_callable(*args, **kwargs)
 
             return wrapper
         # Value (constant, variable)
@@ -1588,7 +1593,7 @@ class FlextDecorators(FlextRuntime):
 
         def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
             """Apply factory configuration metadata to function."""
-            config = m.ContainerFactoryDecoratorConfig(
+            config = m.HandlerFactoryDecoratorConfig(
                 name=name,
                 singleton=singleton,
                 lazy=lazy,

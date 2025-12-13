@@ -99,7 +99,7 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test ServiceRegistration metadata validation with various types."""
         if should_pass:
-            registration = m.ContainerServiceRegistration(
+            registration = m.ServiceRegistration(
                 name="test_service",
                 service="test_value",
                 metadata=cast(
@@ -111,7 +111,7 @@ class TestFlextModelsContainer:
             assert isinstance(registration.metadata, FlextModelsBase.Metadata)
         else:
             with pytest.raises((ValidationError, TypeError)):
-                m.ContainerServiceRegistration(
+                m.ServiceRegistration(
                     name="test_service",
                     service="test_value",
                     metadata=cast(
@@ -122,7 +122,7 @@ class TestFlextModelsContainer:
 
     def test_service_registration_defaults(self) -> None:
         """Test ServiceRegistration default values."""
-        registration = m.ContainerServiceRegistration(
+        registration = m.ServiceRegistration(
             name="test",
             service="value",
         )
@@ -140,7 +140,7 @@ class TestFlextModelsContainer:
     def test_service_registration_with_all_fields(self) -> None:
         """Test ServiceRegistration with all fields populated."""
         metadata = m.Metadata(attributes={"env": "test"})
-        registration = m.ContainerServiceRegistration(
+        registration = m.ServiceRegistration(
             name="full_service",
             service={"data": "value"},
             metadata=metadata,
@@ -155,7 +155,7 @@ class TestFlextModelsContainer:
 
     def test_service_registration_metadata_dict_conversion(self) -> None:
         """Test metadata dict conversion to Metadata model."""
-        registration = m.ContainerServiceRegistration(
+        registration = m.ServiceRegistration(
             name="test",
             service="value",
             metadata={"key1": "value1", "key2": 42, "key3": True},
@@ -171,7 +171,7 @@ class TestFlextModelsContainer:
     def test_service_registration_metadata_nested_dict(self) -> None:
         """Test metadata with nested dict conversion."""
         nested_dict = {"level1": {"level2": {"level3": "value"}}}
-        registration = m.ContainerServiceRegistration(
+        registration = m.ServiceRegistration(
             name="test",
             service="value",
             metadata=nested_dict,
@@ -196,7 +196,7 @@ class TestFlextModelsContainer:
             return "test"
 
         if should_pass:
-            registration = m.ContainerFactoryRegistration(
+            registration = m.FactoryRegistration(
                 name="test_factory",
                 factory=factory,
                 metadata=cast(
@@ -208,7 +208,7 @@ class TestFlextModelsContainer:
             assert isinstance(registration.metadata, FlextModelsBase.Metadata)
         else:
             with pytest.raises((ValidationError, TypeError)):
-                m.ContainerFactoryRegistration(
+                m.FactoryRegistration(
                     name="test_factory",
                     factory=factory,
                     metadata=cast(
@@ -223,7 +223,7 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "value"
 
-        registration = m.ContainerFactoryRegistration(
+        registration = m.FactoryRegistration(
             name="test",
             factory=factory,
         )
@@ -245,7 +245,7 @@ class TestFlextModelsContainer:
             return "created"
 
         metadata = m.Metadata(attributes={"type": "factory"})
-        registration = m.ContainerFactoryRegistration(
+        registration = m.FactoryRegistration(
             name="full_factory",
             factory=factory,
             metadata=metadata,
@@ -266,7 +266,7 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "value"
 
-        registration = m.ContainerFactoryRegistration(
+        registration = m.FactoryRegistration(
             name="test",
             factory=factory,
             metadata={"factory_type": "test", "priority": 1},
@@ -365,7 +365,7 @@ class TestFlextModelsContainer:
 
     def test_service_registration_metadata_none_handling(self) -> None:
         """Test ServiceRegistration handles None metadata correctly."""
-        registration = m.ContainerServiceRegistration(
+        registration = m.ServiceRegistration(
             name="test",
             service="value",
             metadata=None,
@@ -380,7 +380,7 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "value"
 
-        registration = m.ContainerFactoryRegistration(
+        registration = m.FactoryRegistration(
             name="test",
             factory=factory,
             metadata=None,
@@ -391,7 +391,7 @@ class TestFlextModelsContainer:
 
     def test_service_registration_metadata_empty_dict(self) -> None:
         """Test ServiceRegistration with empty dict metadata."""
-        registration = m.ContainerServiceRegistration(
+        registration = m.ServiceRegistration(
             name="test",
             service="value",
             metadata={},
@@ -405,7 +405,7 @@ class TestFlextModelsContainer:
         def factory() -> t.ScalarValue:
             return "value"
 
-        registration = m.ContainerFactoryRegistration(
+        registration = m.FactoryRegistration(
             name="test",
             factory=factory,
             metadata={},
@@ -496,7 +496,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         # So we need to test the actual Mapping case that leads to line 108
         # Line 108 is the fallback when isinstance check fails after _is_dict_like
         # Actually, let's test with a real dict that gets processed
-        registration = m.ContainerServiceRegistration(
+        registration = m.ServiceRegistration(
             name="test",
             service="value",
             metadata={"key": "value"},
@@ -513,7 +513,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         # This happens when _is_dict_like returns True but isinstance(v, Mapping) is False
         # In practice, this is hard to trigger since _is_dict_like checks isinstance(value, Mapping)
         # But we can test the normal dict path which should work
-        registration = m.ContainerFactoryRegistration(
+        registration = m.FactoryRegistration(
             name="test",
             factory=factory,
             metadata={"key": "value"},

@@ -2,7 +2,7 @@
 
 **Hierarchy**: PROJECT
 **Parent**: [../CLAUDE.md](../CLAUDE.md) - Workspace standards
-**Last Update**: 2025-12-07
+**Last Update**: 2025-12-12
 
 ---
 
@@ -17,146 +17,49 @@
 
 ---
 
-## 🔒 FLOCK PROTOCOL - Multi-Agent File Coordination
+## 🔒 Multi-Agent Coordination
 
-### Purpose
-Prevent simultaneous file modifications that cause merge conflicts and corrupted code in multi-agent development environment.
+**See [../CLAUDE.md - FLOCK Protocol](../CLAUDE.md#-flock-protocol---multi-agent-file-coordination)** for the authoritative multi-agent coordination specification.
 
-### Protocol Overview
-**Flock (File Lock)** establishes exclusive access to files during modification operations.
-
-### Establishing a Flock
-1. **Check .token** for existing locks on target file
-2. **Write lock** to .token: `FLOCK_[AGENT_NAME]_[TARGET_FILE]`
-3. **Re-read file** after lock is established (other agents may have modified)
-4. **Make changes** to the re-read content
-5. **Test changes** ensure they work
-6. **Release lock**: Update .token with `RELEASE_[AGENT_NAME]_[TARGET_FILE]`
-
-### Lock Format
-```bash
-# Establish lock
-FLOCK_[AGENT_NAME]_[TARGET_FILE]
-
-# Example
-FLOCK_AGENT_PLAN_EXECUTOR_flext_core/typings.py
-
-# Release lock
-RELEASE_[AGENT_NAME]_[TARGET_FILE]
-```
-
-### Critical Rules
-- **🔴 NEVER modify a file with active flock from another agent**
-- **🔄 ALWAYS re-read file after establishing your flock**
-- **⚡ RELEASE immediately after changes are complete and tested**
-- **🤝 COORDINATE with other agents if conflicts detected**
-- **📝 DOCUMENT your flock purpose in .token**
-
-### File Modification Workflow
-```bash
-# 1. Check for existing locks
-cat ../.token
-
-# 2. Establish your flock
-echo "FLOCK_AGENT_PLAN_EXECUTOR_flext_core/typings.py" >> ../.token
-
-# 3. Re-read the file (other agents may have changed it)
-git checkout HEAD -- src/flext_core/typings.py
-
-# 4. Make your changes
-# ... edit file ...
-
-# 5. Test your changes
-make test
-
-# 6. Release your flock
-echo "RELEASE_AGENT_PLAN_EXECUTOR_flext_core/typings.py" >> ../.token
-```
+**Quick Reference**:
+- Check `.token` before modifying critical files
+- Use `FLOCK_[AGENT]_[FILE]` to establish locks
+- Release locks immediately after changes
 
 ---
 
-## Rule 0 — Cross-Project Alignment
-- This file mirrors the root `../CLAUDE.md` standards. Any rule change must be written in the root first and then propagated to this file and to `flext-cli/`, `flext-ldap/`, `flext-ldif/`, and `client-a-oud-mig/` `CLAUDE.md` files.
-- All agents accept cross-project changes and resolve conflicts in the root `CLAUDE.md` before coding.
+## ⚠️ Architecture Layering
 
-## ⚠️ CRITICAL: Architecture Layering (Zero Tolerance)
+**See [../CLAUDE.md - Architecture Layering](../CLAUDE.md#-critical-architecture-layering-zero-tolerance)** for the complete architecture specification.
 
-### Module Import Hierarchy (MANDATORY)
-
-**ABSOLUTELY FORBIDDEN IMPORT PATTERNS**:
-
+**Quick Reference** (Tier 0→3):
 ```
-NEVER IMPORT (regardless of method - direct, lazy, function-local, proxy):
-
-Foundation Modules (models.py, protocols.py, utilities.py, typings.py, constants.py):
-  ❌ NEVER import services/*.py
-  ❌ NEVER import servers/*.py
-  ❌ NEVER import api.py
-
-Infrastructure Modules (servers/*.py):
-  ❌ NEVER import services/*.py
-  ❌ NEVER import api.py
+Tier 0: constants.py, typings.py, protocols.py (ZERO internal imports)
+Tier 1: models.py, utilities.py
+Tier 2: servers/*.py
+Tier 3: services/*.py, api.py
 ```
-
-**CORRECT ARCHITECTURE LAYERING**:
-
-```
-Tier 0 - Foundation (ZERO internal dependencies):
-  ├── constants.py    # Only StrEnum, Final, Literal - NO functions
-  ├── typings.py      # Type aliases, TypeVars
-  └── protocols.py    # Interface definitions (Protocol classes)
-
-Tier 1 - Domain Foundation:
-  ├── models.py       # Pydantic models → constants, typings, protocols
-  └── utilities.py    # Helper functions → constants, typings, protocols, models
-
-Tier 2 - Infrastructure:
-  └── servers/*.py    # Server implementations → Tier 0, Tier 1 only
-                      # NEVER import services/, api.py
-
-Tier 3 - Application (Top Layer):
-  ├── services/*.py   # Business logic → All lower tiers
-  └── api.py          # Facade/API → All lower tiers
-```
-
-**WHY THIS MATTERS**:
-- Circular imports cause runtime failures
-- Lazy imports are a band-aid, not a solution
-- Proper layering ensures testability and maintainability
-- Each tier only depends on lower tiers, NEVER on higher tiers
+**Rule**: Lower tiers NEVER import from higher tiers.
 
 ---
 
-## Unified Ecosystem Standards
+## Critical Rules
 
-**CRITICAL**: These standards apply to ALL projects in the FLEXT ecosystem (flext-core, flext-cli, flext-ldif, flext-ldap, etc.). They ensure consistency, maintainability, and type safety across the entire ecosystem.
+**See [../CLAUDE.md - Critical Rules](../CLAUDE.md#critical-rules--zero-tolerance)** for the complete list of zero-tolerance rules.
 
-### Critical Rules (Zero Tolerance)
+**Quick Reference**:
+- ❌ No `TYPE_CHECKING`, `# type: ignore`, `cast()`, `Any`
+- ❌ No metaclasses, `__getattr__`, dynamic assignments
+- ✅ Full namespace always (no root aliases)
+- ✅ Real tests only (no mocks)
 
-1. **TYPE_CHECKING**: ❌ PROHIBITED completely — refactor architecture instead.
-2. **# type: ignore**: ❌ PROHIBITED completely — fix types properly.
-3. **cast()**: ❌ PROHIBITED completely — replace with Models/Protocols/TypeGuards and correct typing.
-4. **Any**: ❌ PROHIBITED completely — including docstrings/comments.
-5. **Metaclasses/__getattr__/dynamic assignments**: ❌ PROHIBITED — use explicit methods and full namespaces.
-6. **Constants**: ❌ No functions/logic in constants.py — only StrEnum/Final/Literal.
-7. **Namespace**: ✅ Full namespace always; no root aliases or lazy imports/ImportError fallbacks.
-8. **Architecture layering**: ✅ Enforced; lower tiers never import higher tiers (see hierarchy above).
-9. **Testing**: ✅ Real implementations only (no mocks/monkeypatch), real data/fixtures, 100% coverage expectation, no functionality loss.
-
-### Architecture Violation Quick Check
-
-**Run before committing:**
+**Architecture Check** (run before commit):
 ```bash
-# Quick check for this project
 grep -rEn "(from flext_.*\.(services|api) import)" \
   src/*/models.py src/*/protocols.py src/*/utilities.py \
-  src/*/constants.py src/*/typings.py src/*/servers/*.py 2>/dev/null
-
+  src/*/constants.py src/*/typings.py 2>/dev/null
 # Expected: ZERO results
-# If violations found: Do NOT commit, fix architecture first
 ```
-
-**See [Ecosystem Standards](../CLAUDE.md) for complete prohibited patterns and remediation examples.**
 
 ### Reference Documentation
 
@@ -1102,43 +1005,42 @@ poetry run pytest --lf --ff -x         # Last failed, fail fast
 
 ## Development Workflow
 
-### Using Serena MCP for Code Navigation
+### Using claude-mem for Cross-Session Context
 
 ```python
-# Activate project
-mcp__serena__activate_project project="flext-core"
+# Search for prior decisions about a topic
+mcp__plugin_claude-mem_claude-mem-search__decisions(query="FlextResult API design")
 
-# Explore structure
-mcp__serena__list_dir relative_path="src/flext_core"
+# Find previous changes to a component
+mcp__plugin_claude-mem_claude-mem-search__changes(query="result.py refactoring")
 
-# Get symbol overview (ALWAYS do this before reading full file)
-mcp__serena__get_symbols_overview relative_path="src/flext_core/result.py"
+# Understand how something was implemented
+mcp__plugin_claude-mem_claude-mem-search__how_it_works(query="dependency injection")
 
-# Find specific symbols
-mcp__serena__find_symbol name_path="FlextResult" relative_path="src/flext_core"
+# Get recent session context
+mcp__plugin_claude-mem_claude-mem-search__get_recent_context(project="flext-core")
 
-# Find references (critical before API changes)
-mcp__serena__find_referencing_symbols name_path="FlextResult" relative_path="src/flext_core/result.py"
-
-# Intelligent editing (symbol-based)
-mcp__serena__replace_symbol_body name_path="FlextResult/unwrap" relative_path="src/flext_core/result.py" body="..."
-mcp__serena__insert_after_symbol name_path="FlextResult" relative_path="src/flext_core/result.py" body="..."
+# Search all memory types
+mcp__plugin_claude-mem_claude-mem-search__search(query="error handling pattern", type="observations")
 ```
 
 ### Development Cycle
 
 ```bash
-# 1. Explore with Serena (BEFORE reading full files)
-mcp__serena__get_symbols_overview relative_path="src/flext_core/models.py"
+# 1. Check prior context with claude-mem (if returning to task)
+# Use mem-search skill: "what did we decide about X?"
 
-# 2. Make changes
-# ... edit code using symbol-based tools ...
+# 2. Explore codebase with standard tools
+Grep, Glob, Read for code exploration
 
-# 3. Quick validation during development
+# 3. Make changes
+# ... edit code using Edit tool ...
+
+# 4. Quick validation during development
 make check              # lint + type-check only
 make test-fast          # tests without coverage
 
-# 4. Before commit (MANDATORY)
+# 5. Before commit (MANDATORY)
 make validate           # Complete pipeline: lint + type + security + test
 ```
 
@@ -1149,7 +1051,7 @@ make validate           # Complete pipeline: lint + type + security + test
 **32+ dependent projects**: flext-api, flext-cli, flext-auth, flext-ldap, flext-web, flext-meltano, Singer taps/targets, Oracle adapters, etc.
 
 **Before ANY API change**:
-1. Find ALL usages across workspace with Serena MCP: `mcp__serena__find_referencing_symbols`
+1. Find ALL usages across workspace with Grep: `grep -r "FlextResult" ~/flext/*/src/`
 2. Maintain backward compatibility (keep old AND new APIs during transition)
 3. Minimum 2-version deprecation cycle (6+ months)
 4. Provide migration tools

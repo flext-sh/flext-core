@@ -16,6 +16,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextResult, m
+from tests.test_utils import assertion_helpers
 
 
 class TestEnterprisePatterns:
@@ -160,7 +161,10 @@ class TestEnterprisePatterns:
         start_time = time.perf_counter()
         for i in range(1000):
             result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
-            assert result.is_success, f"Save operation {i} should succeed"
+            (
+                assertion_helpers.assert_flext_result_success(result),
+                f"Save operation {i} should succeed",
+            )
 
         save_duration = time.perf_counter() - start_time
 

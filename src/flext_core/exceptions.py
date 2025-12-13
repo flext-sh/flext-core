@@ -155,7 +155,7 @@ class FlextExceptions:
                 context_dict = _to_dict(context)
                 # Type narrowing: context_dict is dict[str, t.GeneralValueType]
                 # MetadataAttributeDict accepts t.GeneralValueType values
-                final_kwargs.update(cast("t.MetadataAttributeDict", context_dict))
+                final_kwargs.update(context_dict)
             if extra_kwargs:
                 extra_kwargs_dict = _to_dict(extra_kwargs)
                 normalized_extra = _transform_values(
@@ -164,7 +164,7 @@ class FlextExceptions:
                 )
                 # Type narrowing: normalized_extra is dict[str, MetadataAttributeValue]
                 # MetadataAttributeDict accepts MetadataAttributeValue values
-                final_kwargs.update(cast("t.MetadataAttributeDict", normalized_extra))
+                final_kwargs.update(normalized_extra)
 
             self.correlation_id = (
                 f"exc_{uuid.uuid4().hex[:8]}"
@@ -223,7 +223,7 @@ class FlextExceptions:
                     else self.metadata.attributes
                 )
                 filtered_attrs = _filter_dict(attrs_dict, lambda k, _v: k not in result)
-                result.update(cast("t.MetadataAttributeDict", filtered_attrs))
+                result.update(filtered_attrs)
             return result
 
         @staticmethod
@@ -245,7 +245,7 @@ class FlextExceptions:
                 metadata_dict_typed,
                 FlextRuntime.normalize_to_metadata_value,
             )
-            merged_attrs.update(cast("t.MetadataAttributeDict", normalized_metadata))
+            merged_attrs.update(normalized_metadata)
 
             # Normalize merged_kwargs values using mapper
             if merged_kwargs:
@@ -258,7 +258,7 @@ class FlextExceptions:
                     merged_kwargs_typed,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                merged_attrs.update(cast("t.MetadataAttributeDict", normalized_kwargs))
+                merged_attrs.update(normalized_kwargs)
 
             return _Metadata(attributes=merged_attrs)
 
@@ -316,23 +316,15 @@ class FlextExceptions:
                     # merged_kwargs values are MetadataAttributeValue (subset of t.GeneralValueType)
                     # Add merged_kwargs with explicit type handling
                     for k, v_merged in merged_kwargs.items():
-                        v_merged_general: t.GeneralValueType = cast(
-                            "t.GeneralValueType",
-                            v_merged,
-                        )
-                        combined_attrs[k] = v_merged_general
+                        combined_attrs[k] = v_merged
                     # Normalize all values with explicit type handling
                     for k, v_combined in combined_attrs.items():
                         # Always normalize - normalize_to_metadata_value handles all t.GeneralValueType
                         normalized_value = FlextRuntime.normalize_to_metadata_value(
                             v_combined,
                         )
-                        # Cast to t.GeneralValueType since Metadata accepts it
-                        normalized_general: t.GeneralValueType = cast(
-                            "t.GeneralValueType",
-                            normalized_value,
-                        )
-                        new_attrs[k] = normalized_general
+                        # normalize_to_metadata_value returns t.GeneralValueType
+                        new_attrs[k] = normalized_value
                     # new_attrs is already t.ConfigurationDict from loop
                     return _Metadata(attributes=new_attrs)
                 return metadata
@@ -379,9 +371,7 @@ class FlextExceptions:
                     context_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                validation_context.update(
-                    cast("t.MetadataAttributeDict", normalized_context)
-                )
+                validation_context.update(normalized_context)
             if field is not None:
                 validation_context["field"] = field
             if value is not None:
@@ -399,9 +389,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                validation_context.update(
-                    cast("t.MetadataAttributeDict", normalized_extra)
-                )
+                validation_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -452,7 +440,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                config_context.update(cast("t.MetadataAttributeDict", normalized_extra))
+                config_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -494,7 +482,7 @@ class FlextExceptions:
                     context_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                conn_context.update(cast("t.MetadataAttributeDict", normalized_context))
+                conn_context.update(normalized_context)
             if extra_kwargs:
                 extra_kwargs_dict = (
                     _to_dict(extra_kwargs)
@@ -505,7 +493,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                conn_context.update(cast("t.MetadataAttributeDict", normalized_extra))
+                conn_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -550,9 +538,7 @@ class FlextExceptions:
                     context_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                timeout_context.update(
-                    cast("t.MetadataAttributeDict", normalized_context)
-                )
+                timeout_context.update(normalized_context)
             if timeout_seconds is not None:
                 timeout_context["timeout_seconds"] = timeout_seconds
             if operation is not None:
@@ -567,9 +553,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                timeout_context.update(
-                    cast("t.MetadataAttributeDict", normalized_extra)
-                )
+                timeout_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -613,7 +597,7 @@ class FlextExceptions:
                     context_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                auth_context.update(cast("t.MetadataAttributeDict", normalized_context))
+                auth_context.update(normalized_context)
             if auth_method is not None:
                 auth_context["auth_method"] = auth_method
             if user_id is not None:
@@ -628,7 +612,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                auth_context.update(cast("t.MetadataAttributeDict", normalized_extra))
+                auth_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -670,9 +654,7 @@ class FlextExceptions:
                     context_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                authz_context.update(
-                    cast("t.MetadataAttributeDict", normalized_context)
-                )
+                authz_context.update(normalized_context)
             if extra_kwargs:
                 extra_kwargs_dict = (
                     _to_dict(extra_kwargs)
@@ -683,7 +665,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                authz_context.update(cast("t.MetadataAttributeDict", normalized_extra))
+                authz_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -833,9 +815,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                notfound_context.update(
-                    cast("t.MetadataAttributeDict", normalized_extra)
-                )
+                notfound_context.update(normalized_extra)
 
             # Add context items (excluding reserved keys)
             if context is not None:
@@ -887,9 +867,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                conflict_context.update(
-                    cast("t.MetadataAttributeDict", normalized_extra)
-                )
+                conflict_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -937,9 +915,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                rate_limit_context.update(
-                    cast("t.MetadataAttributeDict", normalized_extra)
-                )
+                rate_limit_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -998,7 +974,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                cb_context.update(cast("t.MetadataAttributeDict", normalized_extra))
+                cb_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -1101,7 +1077,7 @@ class FlextExceptions:
                     context_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                type_context.update(cast("t.MetadataAttributeDict", normalized_context))
+                type_context.update(normalized_context)
             # Handle both type objects and string representations
             if expected_type is not None:
                 # Handle both type objects and string representations
@@ -1130,7 +1106,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                type_context.update(cast("t.MetadataAttributeDict", normalized_extra))
+                type_context.update(normalized_extra)
             return type_context
 
         def __init__(
@@ -1216,7 +1192,7 @@ class FlextExceptions:
                     context_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                op_context.update(cast("t.MetadataAttributeDict", normalized_context))
+                op_context.update(normalized_context)
             if operation is not None:
                 op_context["operation"] = operation
             if reason is not None:
@@ -1231,7 +1207,7 @@ class FlextExceptions:
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
-                op_context.update(cast("t.MetadataAttributeDict", normalized_extra))
+                op_context.update(normalized_extra)
 
             super().__init__(
                 message,
@@ -1309,7 +1285,7 @@ class FlextExceptions:
                 specific_params if isinstance(specific_params, dict) else {},
                 lambda _k, v: v is not None,
             )
-            kwargs.update(cast("t.MetadataAttributeDict", filtered_params))
+            kwargs.update(filtered_params)
         extra_kwargs = {
             k: v
             for k, v in kwargs.items()
@@ -1331,10 +1307,10 @@ class FlextExceptions:
         )
         return (
             correlation_id,
-            cast("t.MetadataAttributeValue | None", _get(kwargs, "metadata")),
+            _get(kwargs, "metadata"),
             bool(_get(kwargs, "auto_log")),
             bool(_get(kwargs, "auto_correlation")),
-            cast("t.MetadataAttributeValue | None", _get(kwargs, "config")),
+            _get(kwargs, "config"),
             extra_kwargs,
         )
 

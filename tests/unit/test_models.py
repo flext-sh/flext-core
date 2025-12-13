@@ -1061,7 +1061,7 @@ class TestFlextModels:
 
     def test_cqrs_handler_model_creation(self) -> None:
         """Test Cqrs.Handler model creation."""
-        handler_config = m.CqrsHandler(
+        handler_config = m.Handler(
             handler_id="handler-123",
             handler_name="CreateUserHandler",
             handler_type=c.Cqrs.HandlerType.COMMAND,

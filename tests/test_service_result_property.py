@@ -21,6 +21,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextExceptions, FlextResult
+from tests.test_utils import assertion_helpers
 
 from .helpers.factories import (
     FailingService,
@@ -132,7 +133,7 @@ class TestServiceResultProperty:
         result = service.execute()
 
         assert isinstance(result, FlextResult)
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
 
         user = result.value
         assert isinstance(user, User)
@@ -144,7 +145,7 @@ class TestServiceResultProperty:
         result = service.execute()
 
         assert isinstance(result, FlextResult)
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert "Test failure" in str(result.error)
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
@@ -159,7 +160,7 @@ class TestServiceResultProperty:
             .map(lambda name: f"Hello, {name}!")
         )
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         greeting = result.value
         assert greeting == f"Hello, USER {case.input_value}!"
 

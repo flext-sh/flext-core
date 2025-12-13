@@ -35,6 +35,7 @@ from typing import Final, cast
 import pytest
 
 from flext_core import FlextDispatcher, FlextResult, t
+from tests.test_utils import assertion_helpers
 
 # Skip entire module if optional dependencies not available
 psycopg2 = pytest.importorskip("psycopg2")
@@ -226,7 +227,10 @@ class NetworkLatencyProcessor:
         }
         result = FlextResult[t.GeneralValueType].ok(result_dict)
 
-        assert result.is_success, "Processing should succeed"
+        (
+            assertion_helpers.assert_flext_result_success(result),
+            "Processing should succeed",
+        )
         assert result.value is not None, "Result should contain value"
         assert isinstance(result.value, dict), "Result value should be a dict"
         result_value_dict: dict[str, t.GeneralValueType] = result.value
@@ -433,7 +437,7 @@ class TestFlextDispatcherLayer3Docker:
             processor = processor_class()
             result = dispatcher.register_processor(processor_name, processor)
 
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             assert processor_name in dispatcher.processor_metrics
             if processor_name == TestDispatcherConstants.ProcessorNames.POSTGRES.value:
                 assert dispatcher.processor_metrics[processor_name]["executions"] == 0
@@ -463,7 +467,7 @@ class TestFlextDispatcherLayer3Docker:
                 {"query": TestDispatcherConstants.QueryStrings.SELECT_1},
             )
 
-            assert result.is_success or result.is_failure
+            assertion_helpers.assert_flext_result_success(result) or result.is_failure
             if result.is_success:
                 data = result.value
                 assert isinstance(data, dict)
@@ -494,7 +498,7 @@ class TestFlextDispatcherLayer3Docker:
             )
             elapsed = time.time() - start_time
 
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             assert elapsed >= TestDispatcherConstants.TestValues.LATENCY_DEFAULT
             assert latency_service.process_count == 1
 
@@ -579,7 +583,7 @@ class TestFlextDispatcherLayer3Docker:
             )
             elapsed = time.time() - start_time
 
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             items = result.value
             assert len(items) == expected_count
             if data_count > 0:
@@ -636,7 +640,7 @@ class TestFlextDispatcherLayer3Docker:
             )
             elapsed = time.time() - start_time
 
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             items = result.value
             assert len(items) == expected_count
             if data_count == 4:
@@ -693,10 +697,10 @@ class TestFlextDispatcherLayer3Docker:
             )
 
             if should_succeed:
-                assert result.is_success
+                assertion_helpers.assert_flext_result_success(result)
                 assert service.process_count == 1
             else:
-                assert result.is_failure
+                assertion_helpers.assert_flext_result_failure(result)
                 assert "timeout" in (result.error or "").lower()
 
         def test_execute_with_timeout_unregistered_processor(
@@ -715,7 +719,7 @@ class TestFlextDispatcherLayer3Docker:
                 timeout=TestDispatcherConstants.TestValues.TIMEOUT_SUCCESS,
             )
 
-            assert result.is_failure
+            assertion_helpers.assert_flext_result_failure(result)
 
     class TestFallbackChains:
         """Tests for fallback chain execution."""
@@ -748,7 +752,7 @@ class TestFlextDispatcherLayer3Docker:
                 {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
             )
 
-            assert result.is_success
+            assertion_helpers.assert_flext_result_success(result)
             assert latency_service.process_count == 1
 
         @pytest.mark.parametrize(
@@ -795,7 +799,7 @@ class TestFlextDispatcherLayer3Docker:
             )
 
             if expected_failure:
-                assert result.is_failure
+                assertion_helpers.assert_flext_result_failure(result)
                 assert primary.attempt_count >= 1
                 assert fallback.attempt_count == 0
 
@@ -837,7 +841,7 @@ class TestFlextDispatcherLayer3Docker:
                 {"value": TestDispatcherConstants.TestValues.TEST_VALUE},
             )
 
-            assert result.is_failure
+            assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None
             assert fallback1.attempt_count == 0
             assert fallback2.attempt_count == 0

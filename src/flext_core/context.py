@@ -66,7 +66,7 @@ class FlextContext(FlextRuntime):
 
     # Instance attributes
     # Using direct import for mypy compatibility with nested class aliases
-    _metadata: m.ContextMetadata
+    _metadata: m.Metadata
 
     # NOTE: _scope_vars is an instance attribute (see __init__)
     # No property accessor needed - direct access via self._scope_vars
@@ -110,7 +110,7 @@ class FlextContext(FlextRuntime):
         # Initialize context-specific metadata (separate from ContextData.metadata)
         # ContextData.metadata = generic creation/modification metadata (m.Metadata)
         # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
-        self._metadata = m.ContextMetadata()
+        self._metadata = m.Metadata()
 
         self._hooks: t.StringHandlerCallableListDict = {}
         # Use Facade model for statistics to ensure instance checks pass in tests
@@ -620,7 +620,7 @@ class FlextContext(FlextRuntime):
                 _ = FlextLogger.clear_global_context()
 
         # Reset metadata model (formerly in cleanup())
-        self._metadata = m.ContextMetadata()
+        self._metadata = m.Metadata()
 
         # Update statistics using model (type-safe, no .get() needed)
         self._statistics.clears += 1
@@ -1049,7 +1049,7 @@ class FlextContext(FlextRuntime):
                 _ = FlextLogger.clear_global_context()
 
         # Clear metadata and hooks
-        self._metadata = m.ContextMetadata()  # Reset model
+        self._metadata = m.Metadata()  # Reset model
         self._hooks.clear()
 
     def set_metadata(self, key: str, value: t.GeneralValueType) -> None:
@@ -1060,9 +1060,9 @@ class FlextContext(FlextRuntime):
             value: The metadata value
 
         """
-        # Directly update custom_fields dict to avoid deprecation warning
+        # Directly update attributes dict to avoid deprecation warning
         # and object recreation
-        self._metadata.custom_fields[key] = value
+        self._metadata.attributes[key] = value
 
     def get_metadata(self, key: str) -> r[t.GeneralValueType]:
         """Get metadata from the context.
@@ -1092,8 +1092,8 @@ class FlextContext(FlextRuntime):
 
         """
         custom_fields = (
-            self._metadata.custom_fields
-            if FlextRuntime.is_dict_like(self._metadata.custom_fields)
+            self._metadata.attributes
+            if FlextRuntime.is_dict_like(self._metadata.attributes)
             else {}
         )
 
@@ -1574,7 +1574,7 @@ class FlextContext(FlextRuntime):
                 # Type narrowing: service is t.GeneralValueType | BaseModel | Callable, protocol accepts t.GeneralValueType
                 # BaseModel and Callable are NOT subtypes of t.GeneralValueType in mypy's type system
                 # Cast is needed: with_service signature accepts broader type including BaseModel/Callable
-                service_typed: t.GeneralValueType = service
+                service_typed: t.GeneralValueType = cast("t.GeneralValueType", service)
                 # with_service returns Self for fluent chaining, but we don't need the return value
                 _ = container.with_service(service_name, service_typed)
                 return r[bool].ok(True)

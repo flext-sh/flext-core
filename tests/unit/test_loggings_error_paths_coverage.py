@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from flext_core import FlextLogger, FlextRuntime, p
 from flext_core.constants import c
+from tests.test_utils import assertion_helpers
 
 LoggerClass = FlextLogger
 
@@ -27,7 +28,7 @@ class TestLoggingsErrorPaths:
         # Type narrowing: unknown operation returns ResultProtocol[bool], not dict
         # RuntimeResult implements p.Result protocol
         assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert "Unknown operation" in result.error
 
@@ -41,7 +42,9 @@ class TestLoggingsErrorPaths:
         # Type narrowing: UNBIND operation returns ResultProtocol[bool], not dict
         # RuntimeResult implements p.Result protocol
         assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
-        assert result.is_success  # Still succeeds, just skips unbind
+        assertion_helpers.assert_flext_result_success(
+            result
+        )  # Still succeeds, just skips unbind
 
     def test_handle_context_error_get_operation(self) -> None:
         """Test _handle_context_error for GET operation (covers lines 140-142)."""
@@ -63,7 +66,7 @@ class TestLoggingsErrorPaths:
         # Type narrowing: non-GET operations return ResultProtocol[bool], not dict
         # RuntimeResult implements p.Result protocol
         assert isinstance(result, (p.Result, FlextRuntime.RuntimeResult))
-        assert result.is_failure
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert "Failed to bind global context" in result.error
 
@@ -79,7 +82,9 @@ class TestLoggingsErrorPaths:
             c.Logging.ContextOperation.BIND,
             test_key="test_value",
         )
-        assert result.is_success or isinstance(result, dict)
+        assertion_helpers.assert_flext_result_success(result) or isinstance(
+            result, dict
+        )
 
     def test_context_operation_get_with_context_vars_none(self) -> None:
         """Test GET operation when context_vars is None (covers line 130)."""

@@ -249,7 +249,8 @@ class FlextUtilitiesValidation:
             try:
                 dump_result = model_dump_attr()
                 if FlextUtilitiesGuards.is_type(dump_result, dict):
-                    return dump_result
+                    # Cast to the specific dict type that GeneralValueType accepts
+                    return cast("t.GeneralValueType", dump_result)
                 return str(component)
             except Exception:
                 return str(component)
@@ -1250,11 +1251,11 @@ class FlextUtilitiesValidation:
         # Basic URI format validation using regex
         # RFC 3986 compliant URI pattern (simplified but stricter)
         uri_pattern = re.compile(
-            r"^([a-zA-Z][a-zA-Z0-9+.-]*):"  # scheme
-            r"//([^/?#]+)"  # authority (required for validation)
-            r"([^?#]*)"  # path
-            r"(?:\?([^#]*))?"  # query (optional)
-            r"(?:#(.*))?$",  # fragment (optional)
+            r"^([a-zA-Z][a-zA-Z0-9+.-]*):"
+            r"//([^/?#]+)"
+            r"([^?#]*)"
+            r"(?:\?([^#]*))?"
+            r"(?:#(.*))?$",
         )
 
         if not uri_pattern.match(uri_stripped):
@@ -1631,7 +1632,7 @@ class FlextUtilitiesValidation:
                 if timestamp.endswith("Z")
                 else timestamp
             )
-            datetime.fromisoformat(normalized)
+            _ = datetime.fromisoformat(normalized)  # Validate timestamp format
             return r[str].ok(timestamp)
         except (ValueError, TypeError) as e:
             return r[str].fail(
@@ -2326,7 +2327,7 @@ class FlextUtilitiesValidation:
             return cast("r[object]", result_dict)
 
         # List-like validation
-        if FlextRuntime.is_list_like(value_typed):
+        if FlextRuntime.is_list_like(cast("t.GeneralValueType", value_typed)):
             result_list = (
                 r[list[t.GeneralValueType]].ok(
                     cast("list[t.GeneralValueType]", value_typed),
@@ -2395,13 +2396,9 @@ class FlextUtilitiesValidation:
                 shortcut_lower
             ]
             if check_fn(value):
-                result_ok = r[t.GeneralValueType].ok(value)
-                # Cast to r[object] for return type compatibility
-                return cast("r[object]", result_ok)
-            result_fail: r[object] = r[t.GeneralValueType].fail(
-                f"{error_template} {type_desc}"
-            )
-            return result_fail
+                # r[GeneralValueType] is assignable to r[object]
+                return r[t.GeneralValueType].ok(value)
+            return r[t.GeneralValueType].fail(f"{error_template} {type_desc}")
 
         result_unknown: r[object] = r[t.GeneralValueType].fail(
             f"{context} unknown guard shortcut: {shortcut}",
@@ -3254,11 +3251,7 @@ class FlextUtilitiesValidation:
             return r[str].fail(
                 f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
             )
-        if not isinstance(hostname, str):
-            return r[str].fail(
-                f"{context} must be a string (got {type(hostname).__name__})",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
+        # hostname is already guaranteed to be str by type annotation
         if not hostname:
             return r[str].fail(
                 f"{context} cannot be empty", error_code=c.Errors.VALIDATION_ERROR
@@ -3276,8 +3269,7 @@ class FlextUtilitiesValidation:
 
         if not hostname_pattern.fullmatch(hostname):
             return r[str].fail(
-                f"Invalid {context} format '{hostname}'. "
-                "Must be a valid hostname (e.g., example.com)",
+                f"Invalid {context} format '{hostname}'. Must be a valid hostname (e.g., example.com)",
                 error_code=c.Errors.VALIDATION_ERROR,
             )
         return r[str].ok(hostname)

@@ -22,7 +22,8 @@ from flext_core.constants import c
 from flext_core.typings import t
 
 
-class FlextModelsBase:
+# Renamed to FlextModelFoundation for better clarity
+class FlextModelFoundation:
     """Container for base model classes - Tier 0, 100% standalone."""
 
     class ArbitraryTypesModel(BaseModel):
@@ -185,4 +186,9 @@ class FlextModelsBase:
         """Model with timestamp fields."""
 
 
-__all__ = ["FlextModelsBase"]
+# Alias for backward compatibility during transition
+# NOTE: Remove in v1.0.0, use FlextModelFoundation directly
+# Ref: https://github.com/flext-team/flext-core/issues/rename-base-class
+FlextModelsBase = FlextModelFoundation
+
+__all__ = ["FlextModelFoundation", "FlextModelsBase"]

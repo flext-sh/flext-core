@@ -14,6 +14,7 @@ import pytest
 
 from flext_core import FlextLogger
 from flext_core.constants import c
+from tests.test_utils import assertion_helpers
 
 # Alias for the LogLevel enum
 FlextLogLevel = c.Settings.LogLevel
@@ -218,7 +219,7 @@ class TestFlextLogger:
 
         # Validate base logger can be used for logging
         result = base_logger.info("Base logger test message")
-        assert result.is_success, "Base logger should work"
+        assertion_helpers.assert_flext_result_success(result), "Base logger should work"
 
     def test_get_base_logger_with_level(self) -> None:
         """Test getting base logger with specific level.
@@ -238,7 +239,10 @@ class TestFlextLogger:
 
         # Validate logger can be used for logging
         result = base_logger.info("Level logger test message")
-        assert result.is_success, "Level logger should work"
+        (
+            assertion_helpers.assert_flext_result_success(result),
+            "Level logger should work",
+        )
 
     def test_bind_context(self) -> None:
         """Test binding context to logger.
@@ -262,7 +266,10 @@ class TestFlextLogger:
 
         # Validate bound logger can be used for logging
         result = bound_logger.info("Test message with bound context")
-        assert result.is_success, "Bound logger should work for logging"
+        (
+            assertion_helpers.assert_flext_result_success(result),
+            "Bound logger should work for logging",
+        )
 
     def test_backward_compatibility_function(self) -> None:
         """Test backward compatibility function.
@@ -282,7 +289,10 @@ class TestFlextLogger:
 
         # Validate logger works with standard logging patterns
         result = logger.info("Compatibility test message")
-        assert result.is_success, "Logger should work with standard patterns"
+        (
+            assertion_helpers.assert_flext_result_success(result),
+            "Logger should work with standard patterns",
+        )
 
     def test_module_level_function(self) -> None:
         """Test module-level backward compatibility function.
@@ -302,7 +312,10 @@ class TestFlextLogger:
 
         # Validate logger can be used for logging
         result = logger.info("Module-level logger test message")
-        assert result.is_success, "Module-level logger should work"
+        (
+            assertion_helpers.assert_flext_result_success(result),
+            "Module-level logger should work",
+        )
 
 
 class TestFlextLoggerUsage:
@@ -421,7 +434,10 @@ class TestFlextLoggerUsage:
 
         # Validate all logging operations succeeded
         for i, result in enumerate(results):
-            assert result.is_success, f"Log entry {i + 1} should succeed"
+            (
+                assertion_helpers.assert_flext_result_success(result),
+                f"Log entry {i + 1} should succeed",
+            )
 
         # Validate context was bound for all entries (no errors raised)
         # Note: Actual log content validation would require log capture
@@ -445,7 +461,10 @@ class TestFlextLoggerUsage:
 
         # Validate performance logging succeeds
         result = perf_logger.info("Performance test message")
-        assert result.is_success, "Performance logging should succeed"
+        (
+            assertion_helpers.assert_flext_result_success(result),
+            "Performance logging should succeed",
+        )
 
         # Validate logger can be used for multiple operations
         result2 = perf_logger.debug("Performance debug message")
@@ -550,7 +569,10 @@ class TestFlextLoggerIntegration:
             )
 
             # Validate logging succeeded
-            assert result.is_success, "Exception logging should succeed"
+            (
+                assertion_helpers.assert_flext_result_success(result),
+                "Exception logging should succeed",
+            )
 
         # Validate exception details were captured (outside except block)
         # Note: These validations happen after exception handling completes
@@ -595,7 +617,7 @@ class TestFlextLoggerIntegration:
         )
 
         # Validate logging succeeded
-        assert result.is_success, "Logging should succeed"
+        assertion_helpers.assert_flext_result_success(result), "Logging should succeed"
 
         # Validate logged values are correct
         # Note: Actual log content validation would require log capture

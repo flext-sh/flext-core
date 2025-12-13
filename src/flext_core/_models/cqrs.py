@@ -125,7 +125,7 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: t.ConfigurationMapping = Field(default_factory=dict)
+        filters: dict[str, t.GeneralValueType] = Field(default_factory=dict)
         pagination: FlextModelsCqrs.Pagination | t.StringIntDict = Field(
             default_factory=dict,
         )
@@ -247,14 +247,11 @@ class FlextModelsCqrs:
                 # TypeGuard narrows to Mapping[str, t.GeneralValueType] when
                 # is_dict_like is True
                 if filters_raw is not None and FlextRuntime.is_dict_like(filters_raw):
-                    # Type narrowing: is_dict_like ensures filters_raw is ConfigurationMapping
-                    # Explicit type assertion after type guard
-                    if isinstance(filters_raw, Mapping):
-                        filters: t.ConfigurationMapping = cast(
-                            "t.ConfigurationMapping", filters_raw
-                        )
-                    else:
-                        filters = {}
+                    # Type narrowing: isinstance check ensures filters_raw is Mapping
+                    filters: dict[str, t.GeneralValueType] = cast(
+                        "dict[str, t.GeneralValueType]",
+                        filters_raw if isinstance(filters_raw, Mapping) else {},
+                    )
                 else:
                     filters = {}
                 pagination_raw = FlextUtilitiesMapper().get(query_payload, "pagination")
@@ -311,8 +308,9 @@ class FlextModelsCqrs:
                     "query_type",
                 )
                 # filters is already guaranteed to be ConfigurationMapping from earlier validation
+                # Convert Mapping to dict for Pydantic model compatibility
                 query = cls(
-                    filters=filters,
+                    filters=dict(filters),
                     pagination=pagination,
                     query_id=query_id,
                     query_type=str(query_type) if query_type is not None else None,

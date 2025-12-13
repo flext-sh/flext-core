@@ -40,6 +40,7 @@ from flext_core import (
     t,
     u,
 )
+from tests.test_utils import assertion_helpers
 
 # Use FunctionalExternalService from conftest.py to avoid duplication
 from ..conftest import FunctionalExternalService
@@ -78,7 +79,7 @@ class TestLibraryIntegration:
         result = FlextResult[str].ok(test_value)
 
         # Assert - FlextResult functionality
-        assert result.is_success is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == test_value
 
         # Act - Test entity ID type system using u
@@ -165,14 +166,14 @@ class TestLibraryIntegration:
 
         # Assert - Functional service was called (real validation)
         assert mock_external_service.get_call_count() == 1
-        assert input_data in mock_external_service.processed_items
+        assert expected_result_data in mock_external_service.processed_items
 
     def test_entity_id_in_flext_result(self) -> None:
         """Test entity ID used in FlextResult."""
         entity_id = u.generate()  # Use actual method name
         result = FlextResult[str].ok(entity_id)
 
-        assert result.is_success
+        assertion_helpers.assert_flext_result_success(result)
         # Entity ID is a valid UUID string (36 chars)
         assert isinstance(result.value, str)
         assert len(result.value) == 36  # UUIDs are 36 character strings

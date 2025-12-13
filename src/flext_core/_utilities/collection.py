@@ -265,14 +265,16 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def map[T, R](
-        items: T
-        | list[T]
-        | tuple[T, ...]
-        | set[T]
-        | frozenset[T]
-        | dict[str, T]
-        | Mapping[str, T]
-        | r[T],
+        items: (
+            T
+            | list[T]
+            | tuple[T, ...]
+            | set[T]
+            | frozenset[T]
+            | dict[str, T]
+            | Mapping[str, T]
+            | r[T]
+        ),
         mapper: Callable[[T], R] | Callable[[str, T], R],
         *,
         default_error: str = "Operation failed",
@@ -307,14 +309,16 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _map_impl[T, R](
-        items: T
-        | list[T]
-        | tuple[T, ...]
-        | set[T]
-        | frozenset[T]
-        | dict[str, T]
-        | Mapping[str, T]
-        | r[T],
+        items: (
+            T
+            | list[T]
+            | tuple[T, ...]
+            | set[T]
+            | frozenset[T]
+            | dict[str, T]
+            | Mapping[str, T]
+            | r[T]
+        ),
         mapper: Callable[[T], R] | Callable[[str, T], R],
         default_error: str,
     ) -> list[R] | set[R] | frozenset[R] | dict[str, R] | r[R]:
@@ -469,12 +473,14 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def find[T](
-        items: list[T]
-        | tuple[T, ...]
-        | set[T]
-        | frozenset[T]
-        | dict[str, T]
-        | Mapping[str, T],
+        items: (
+            list[T]
+            | tuple[T, ...]
+            | set[T]
+            | frozenset[T]
+            | dict[str, T]
+            | Mapping[str, T]
+        ),
         predicate: Callable[..., bool],
         *,
         return_key: bool = False,
@@ -542,8 +548,9 @@ class FlextUtilitiesCollection:
         mapper: Callable[[T], R],
     ) -> list[R]:
         """Filter a list with mapping - filter original items, then map."""
-        filtered_items = []
+        filtered_items: list[R] = []
         for item in items_list:
+            # Type narrowing: item is T from items_list[T]
             if predicate(item):
                 mapped = mapper(item)
                 filtered_items.append(mapped)
@@ -1095,8 +1102,9 @@ class FlextUtilitiesCollection:
                 extracted_value = getattr(
                     process_result_raw, "value", process_result_raw
                 )
-                process_result_raw = cast("R", extracted_value)
-            # Type narrowing: process_result_raw is R (not r, not None)
+                process_result_raw = extracted_value
+            # Type narrowing: process_result_raw is R after extraction
+            # Cast to R since we've unwrapped the result
             processed_results.append(cast("R", process_result_raw))
 
             # Call progress callback if provided
@@ -1107,7 +1115,7 @@ class FlextUtilitiesCollection:
         def to_general_value(item: R) -> t.GeneralValueType:
             """Convert item to t.GeneralValueType."""
             # Cast to t.GeneralValueType - R is known to be a valid t.GeneralValueType
-            return item
+            return cast("t.GeneralValueType", item)
 
         validated_results_raw_list: list[R] = processed_results
         validated_results = FlextUtilitiesCollection.map(
@@ -1263,14 +1271,9 @@ class FlextUtilitiesCollection:
                             and FlextUtilitiesGuards.is_list(value)
                         ):
                             # Python 3.13: Type narrowing - TypeGuard ensures both are list
-                            # TypeGuard narrows to list, but we need list[t.GeneralValueType]
-                            # Use type narrowing with runtime validation
-                            target_list: list[t.GeneralValueType] = cast(
-                                "list[t.GeneralValueType]", list(target_val)
-                            )
-                            value_list: list[t.GeneralValueType] = cast(
-                                "list[t.GeneralValueType]", list(value)
-                            )
+                            # list() preserves element types from original list
+                            target_list: list[t.GeneralValueType] = list(target_val)
+                            value_list: list[t.GeneralValueType] = list(value)  # type: ignore[arg-type]
                             # Append elements from source list to target list
                             # Create new list to avoid mutating original objects if they were refs
                             target[key] = (
