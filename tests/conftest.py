@@ -296,6 +296,19 @@ def clean_container() -> FlextContainer:
     return container
 
 
+@pytest.fixture(autouse=True)
+def _reset_global_container() -> None:
+    """Reset the global FlextContainer instance after each test.
+
+    This fixture ensures test isolation by clearing the global container
+    singleton that persists across tests. Without this, tests interfere
+    with each other due to shared global state.
+    """
+    yield  # Run the test
+    # After the test completes, reset the global instance
+    FlextContainer._global_instance = None
+
+
 @pytest.fixture
 def mock_external_service() -> FunctionalExternalService:
     """Provide mock external service for integration tests."""
@@ -317,6 +330,6 @@ def sample_data() -> dict[str, object]:
 
 
 @pytest.fixture
-def temp_directory(tmp_path: Path) -> str:
-    """Provide temporary directory path as string for integration tests."""
-    return str(tmp_path)
+def temp_directory(tmp_path: Path) -> Path:
+    """Provide temporary directory path for integration tests."""
+    return tmp_path
