@@ -544,8 +544,8 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _filter_list_with_mapper[T, R](
         items_list: list[T],
-        predicate: Callable[[T], bool],
-        mapper: Callable[[T], R],
+        predicate: Callable[..., bool],
+        mapper: Callable[..., R],
     ) -> list[R]:
         """Filter a list with mapping - filter original items, then map."""
         filtered_items: list[R] = []
@@ -924,7 +924,7 @@ class FlextUtilitiesCollection:
             # Use TypeGuard for proper type narrowing - eliminates need for isinstance
             # Access private methods for TypeGuard return type (needed for type narrowing)
             else:
-                k = cast("object", getattr(item, key, None))
+                k: object = getattr(item, cast("str", key), None)
             if k not in result:
                 result[k] = []
             result[k].append(item)

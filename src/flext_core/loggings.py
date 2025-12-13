@@ -84,17 +84,17 @@ class FlextLogger(FlextRuntime):
     @overload
     def _context_operation(
         cls,
-        operation: c.Literals.ContextOperationGetLiteral,
+        operation: str,
         **kwargs: t.GeneralValueType,
-    ) -> t.ContextMetadataMapping: ...
+    ) -> r[bool]: ...
 
     @classmethod
     @overload
     def _context_operation(
         cls,
-        operation: c.Literals.ContextOperationModifyLiteral,
+        operation: str,
         **kwargs: t.GeneralValueType,
-    ) -> r[bool]: ...
+    ) -> t.ContextMetadataMapping: ...
 
     @classmethod
     def _context_operation(
@@ -177,7 +177,7 @@ class FlextLogger(FlextRuntime):
             ... )
 
         """
-        return cls._context_operation(c.Logging.ContextOperation.BIND.value, **context)
+        return cls._context_operation(c.Logging.ContextOperation.BIND, **context)
 
     @classmethod
     def clear_global_context(cls) -> r[bool]:
@@ -200,7 +200,7 @@ class FlextLogger(FlextRuntime):
             >>> # All global context cleared
 
         """
-        return cls._context_operation(c.Logging.ContextOperation.CLEAR.value)
+        return cls._context_operation(c.Logging.ContextOperation.CLEAR)
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> r[bool]:
@@ -236,7 +236,7 @@ class FlextLogger(FlextRuntime):
     @classmethod
     def _get_global_context(cls) -> t.ContextMetadataMapping:
         """Get current global context (internal use only)."""
-        return cls._context_operation(c.Logging.ContextOperation.GET.value)
+        return cls._context_operation(c.Logging.ContextOperation.GET)
 
     # =========================================================================
     # SCOPED CONTEXT MANAGEMENT - Three-tier context system
