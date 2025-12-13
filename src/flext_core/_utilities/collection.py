@@ -544,8 +544,8 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _filter_list_with_mapper[T, R](
         items_list: list[T],
-        predicate: Callable[..., bool],
-        mapper: Callable[..., R],
+        predicate: Callable[[T], bool],
+        mapper: Callable[[T], R],
     ) -> list[R]:
         """Filter a list with mapping - filter original items, then map."""
         filtered_items: list[R] = []
@@ -668,9 +668,12 @@ class FlextUtilitiesCollection:
                     predicate,
                     cast("Callable[[T], R]", mapper),
                 )
-            return FlextUtilitiesCollection._filter_list_no_mapper(
-                items_list_typed,
-                predicate,
+            return cast(
+                "list[R]",
+                FlextUtilitiesCollection._filter_list_no_mapper(
+                    items_list_typed,
+                    predicate,
+                ),
             )
         # Check for mapping types using TypeGuard (avoids isinstance when possible)
         if isinstance(items, Mapping):
@@ -693,7 +696,7 @@ class FlextUtilitiesCollection:
                     cast("Callable[[str, T], R]", mapper),
                 )
             return FlextUtilitiesCollection._filter_dict(
-                cast("dict[str, T] | Mapping[str, T]", items_dict_filtered),
+                cast("Mapping[str, R] | dict[str, R]", items_dict_filtered),
                 predicate,
             )
         # Single item case
