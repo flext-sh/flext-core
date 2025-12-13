@@ -125,6 +125,7 @@ class TestFlextModelsValueObject:
 
         @dataclass
         class Price:
+            amount: Decimal
             currency: str
 
         price = Price(amount=Decimal("10.00"), currency="USD")
@@ -144,6 +145,7 @@ class TestFlextModelsAggregateRoot:
         @dataclass
         class Account:
             unique_id: str
+            owner_name: str
             balance: Decimal
 
         account = Account(
@@ -158,9 +160,8 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_domain_events(self) -> None:
         """Test aggregate root domain event handling."""
 
-        @dataclass
-        class BankAccount:
-            unique_id: str
+        class BankAccount(m.AggregateRoot):
+            balance: Decimal
 
         account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
 
@@ -171,9 +172,8 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_domain_event_validation(self) -> None:
         """Test domain event validation."""
 
-        @dataclass
-        class Order:
-            unique_id: str
+        class Order(m.AggregateRoot):
+            total: Decimal
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
 
@@ -184,9 +184,8 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_uncommitted_events(self) -> None:
         """Test uncommitted events tracking."""
 
-        @dataclass
-        class Order:
-            unique_id: str
+        class Order(m.AggregateRoot):
+            status: str = "pending"
 
         order = Order(unique_id="order-1", status="pending")
 
@@ -260,11 +259,13 @@ class TestFlextModelsEdgeCases:
 
         @dataclass
         class Address:
+            street: str
             city: str
 
         @dataclass
         class Person:
             unique_id: str
+            name: str
             address: Address
 
         addr = Address(street="123 Main", city="Springfield")
@@ -281,6 +282,7 @@ class TestFlextModelsEdgeCases:
         @dataclass
         class ShoppingCart:
             unique_id: str
+            customer_id: str
 
         cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
         # Aggregate roots typically contain collections of value objects
@@ -317,9 +319,8 @@ class TestFlextModelsIntegration:
     def test_entity_command_query_flow(self) -> None:
         """Test flow: Command -> Entity -> Event -> Query."""
 
-        @dataclass
-        class User:
-            unique_id: str
+        class User(m.Entity):
+            name: str
 
         # Create command
         cmd = CreateUserCmd(user_id="user-1", name="Alice")
@@ -336,10 +337,9 @@ class TestFlextModelsIntegration:
     def test_aggregate_full_lifecycle(self) -> None:
         """Test complete aggregate lifecycle."""
 
-        @dataclass
-        class Order:
-            unique_id: str
-            items_count: int
+        class Order(m.AggregateRoot):
+            items_count: int = 0
+            status: str = "new"
 
         # Create aggregate
         order = Order(unique_id="order-1", status="new", items_count=0)

@@ -188,7 +188,7 @@ class FlextModels:
     Collections = FlextModelsCollections
     CollectionsStatistics = FlextModelsCollections.Statistics
     # Type aliases for mypy compatibility
-    CollectionsConfig: TypeAlias = FlextModelsBase.ArbitraryTypesModel
+    CollectionsConfig: TypeAlias = FlextModelsCollections.Config
     CollectionsResults: TypeAlias = FlextModelsCollections.Results
     CollectionsOptions: TypeAlias = FlextModelsCollections.Options
     Options: TypeAlias = FlextModelsCollections.Options  # Simple access
