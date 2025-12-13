@@ -19,7 +19,7 @@ import types
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Self, overload
+from typing import ClassVar, Literal, Self, overload
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -84,7 +84,7 @@ class FlextLogger(FlextRuntime):
     @overload
     def _context_operation(
         cls,
-        operation: str,
+        operation: c.Literals.ContextOperationModifyLiteral,
         **kwargs: t.GeneralValueType,
     ) -> r[bool]: ...
 
@@ -92,14 +92,14 @@ class FlextLogger(FlextRuntime):
     @overload
     def _context_operation(
         cls,
-        operation: str,
+        operation: c.Literals.ContextOperationGetLiteral,
         **kwargs: t.GeneralValueType,
     ) -> t.ContextMetadataMapping: ...
 
     @classmethod
     def _context_operation(
         cls,
-        operation: str,
+        operation: Literal["get", "bind", "unbind", "clear"],
         **kwargs: t.GeneralValueType,
     ) -> r[bool] | t.ContextMetadataMapping:
         """Generic context operation handler using mapping for DRY."""
@@ -177,7 +177,7 @@ class FlextLogger(FlextRuntime):
             ... )
 
         """
-        return cls._context_operation(c.Logging.ContextOperation.BIND, **context)
+        return cls._context_operation("bind", **context)
 
     @classmethod
     def clear_global_context(cls) -> r[bool]:
@@ -200,7 +200,7 @@ class FlextLogger(FlextRuntime):
             >>> # All global context cleared
 
         """
-        return cls._context_operation(c.Logging.ContextOperation.CLEAR)
+        return cls._context_operation("clear")
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> r[bool]:
@@ -236,7 +236,7 @@ class FlextLogger(FlextRuntime):
     @classmethod
     def _get_global_context(cls) -> t.ContextMetadataMapping:
         """Get current global context (internal use only)."""
-        return cls._context_operation(c.Logging.ContextOperation.GET)
+        return cls._context_operation("get")
 
     # =========================================================================
     # SCOPED CONTEXT MANAGEMENT - Three-tier context system

@@ -317,7 +317,7 @@ class TestFlextServiceIntegration:
         result = user_service.execute()
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value is True  # execute() returns True on success
 
     @pytest.mark.integration
@@ -339,7 +339,7 @@ class TestFlextServiceIntegration:
         result = user_service.get_user(user_id)
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == f"User {user_id}"
@@ -372,7 +372,7 @@ class TestFlextServiceIntegration:
         result = user_service.get_user(user_id)
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == "Custom User"
@@ -397,7 +397,7 @@ class TestFlextServiceIntegration:
         result = user_service.execute()
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is False
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "User service unavailable"
 
     @pytest.mark.integration
@@ -418,7 +418,7 @@ class TestFlextServiceIntegration:
         result = notification_service.execute()
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "sent"
 
     @pytest.mark.integration
@@ -440,7 +440,7 @@ class TestFlextServiceIntegration:
         result = notification_service.send(email)
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "sent"
         assert email in notification_service.sent_notifications
         assert notification_service.call_count == 1
@@ -464,7 +464,7 @@ class TestFlextServiceIntegration:
         result = notification_service.send("test@example.com")
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is False
+        assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Notification service unavailable"
 
     @pytest.mark.integration
@@ -485,7 +485,7 @@ class TestFlextServiceIntegration:
         result = lifecycle_service.execute()
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "ready"
         assert lifecycle_service.initialized is False
 
@@ -514,7 +514,7 @@ class TestFlextServiceIntegration:
         result = lifecycle_service.initialize(service_config)
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "initialized"
         assert lifecycle_service.initialized is True
         assert lifecycle_service.service_config is not None
@@ -580,7 +580,7 @@ class TestFlextServiceIntegration:
         result = lifecycle_service.shutdown()
 
         # Assert
-        assert assertion_helpers.assert_flext_result_success(result) is True
+        assertion_helpers.assert_flext_result_success(result)
         assert result.value == "shutdown"
         assert lifecycle_service.shutdown_called is True
         assert lifecycle_service.health_check() is False
@@ -710,5 +710,7 @@ class TestFlextServiceIntegration:
 
         # Assert
         assert external_result.is_success is True
-        assert user_entity.email in mock_external_service.processed_items
+        # Mock service prefixes with "processed_"
+        expected_processed = f"processed_{user_entity.email}"
+        assert expected_processed in mock_external_service.processed_items
         assert mock_external_service.get_call_count() == 1

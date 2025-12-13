@@ -359,7 +359,7 @@ class FlextUtilities:
             # FlextResult extends RuntimeResult, use its inherited flow_through method
             # Type narrowing: r[U] is assignable to RuntimeResult[U] since FlextResult extends RuntimeResult
             result_chained = result.flow_through(
-                *cast("tuple[Callable[[T | U], r[U]], ...]", funcs)
+                *cast("tuple[Callable[[T | U], r[T | U]], ...]", funcs)
             )
             return cast("r[U]", result_chained)
 
