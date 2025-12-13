@@ -24,7 +24,6 @@ from flext_core import (
 )
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T
-from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.factories import FlextTestsFactories as tt
 from flext_tests.models import FlextTestsModels as m
@@ -32,7 +31,7 @@ from flext_tests.typings import t
 from flext_tests.utilities import FlextTestsUtilities as tu
 
 
-class FlextTestsBuilders(su[t.GeneralValueType]):
+class FlextTestsBuilders:
     """Ultra-powerful test data builder with fluent interface.
 
     Provides minimal public methods that handle almost everything:
@@ -80,8 +79,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize builder with optional initial data."""
-        # Call super().__init__() without kwargs - FlextService doesn't accept arbitrary kwargs
-        super().__init__()
+        # Initialize without inheritance
         # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
         # Always initialize as empty dict (class attribute is default, instance needs fresh copy)
         self._data = {}
@@ -93,7 +91,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         # Type assertion for mypy - after this method, _data is guaranteed to be dict
         assert self._data is not None, "_data must be initialized"
 
-    def execute(self) -> r[t.GeneralValueType]:
+    def execute(self) -> r[t.Tests.Builders.BuilderDict]:
         """Execute service - builds and returns as FlextResult.
 
         Returns:
@@ -102,8 +100,8 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         """
         self._ensure_data_initialized()
         data = self.build()
-        # Cast to t.GeneralValueType for proper return
-        return r[t.GeneralValueType].ok(data)
+        # Return as BuilderDict
+        return r[t.Tests.Builders.BuilderDict].ok(data)
 
     # =========================================================================
     # CORE PUBLIC METHODS - Minimal and Powerful
@@ -393,11 +391,11 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 )
             else:
                 # Transform expects t.GeneralValueType, but BuilderValue is wider
-                # Cast to t.GeneralValueType for transform, then back to BuilderValue
+                # Type narrowing: transform returns same type as input (BuilderValue)
                 transformed = params.transform(
                     resolved_value,
                 )
-                resolved_value = cast("t.Tests.Builders.BuilderValue", transformed)
+                resolved_value = transformed
 
         # Apply validation if provided
         if (
@@ -498,10 +496,7 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         # Navigate to parent
         # Type narrowing: _ensure_data_initialized() guarantees _data is not None
         assert self._data is not None, "_data must be initialized"
-        current: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
-            self._data,
-        )
+        current: t.Tests.Builders.BuilderDict = self._data
         for part in parts[:-1]:
             if part not in current:
                 if create_parents:
@@ -517,10 +512,9 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
                 else:
                     error_msg = f"Path '{part}' is not a dict in '{path}'"
                     raise TypeError(error_msg)
-            current = cast("t.ConfigurationDict", next_val)
+            current = cast("dict[str, t.Tests.Builders.BuilderValue]", next_val)
 
-        # BuilderValue is wider than t.GeneralValueType, but ConfigurationDict accepts it
-        # Cast to t.GeneralValueType for assignment
+        # current is BuilderDict, which accepts BuilderValue
         current[parts[-1]] = final_value
         return self
 
@@ -544,13 +538,13 @@ class FlextTestsBuilders(su[t.GeneralValueType]):
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current: t.GeneralValueType = self._data
+        current: object = self._data
 
         for part in parts:
             if not u.is_type(current, "mapping"):
                 return default
             # Cast to Mapping for key access (pyrefly needs explicit narrowing)
-            current_map = cast("Mapping[str, t.GeneralValueType]", current)
+            current_map = cast("Mapping[str, t.Tests.Builders.BuilderValue]", current)
             if part not in current_map:
                 return default
             current = current_map[part]

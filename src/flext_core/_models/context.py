@@ -115,6 +115,13 @@ class FlextModelsContext:
             - Thread Safety: structlog handles all thread safety
             - Performance: Direct delegation, no overhead
 
+        Type Safety Note:
+            structlog.contextvars.get_contextvars() has incomplete type hints:
+            it returns dict[str, Any] but we control the values (always
+            t.GeneralValueType). We cast to dict[str, t.GeneralValueType]
+            to recover proper type information. This is NECESSARY to enable
+            type inference of T through the proxy.
+
         Usage:
             >>> var = FlextModelsContext.StructlogProxyContextVar[str](
             ...     "correlation_id", default=None
@@ -147,15 +154,33 @@ class FlextModelsContext:
                 Current value with type T (from Generic[T] contract), or None.
 
             Architecture:
-                structlog stores Mapping[str, t.GeneralValueType] (typed via t).
-                We cast to T | None to honor the Generic[T] contract.
-                Type safety is ensured by FlextContext using typed variables.
+                structlog.contextvars.get_contextvars() returns dict[str, Any]
+                (incomplete type hint). We cast to dict[str, t.GeneralValueType]
+                because we control what goes in (always t.GeneralValueType via set()).
+                Then we get the value and cast to T | None.
+
+                Type parameter T is bounded to t.GeneralValueType at runtime:
+                - str, int, float, bool, None - primitives
+                - dict[str, T.GeneralValueType] - mappings
+                - Sequence[T.GeneralValueType] - sequences
+                - datetime, BaseModel - complex types
+
+                Casting is NECESSARY to fix structlog's incomplete type hints.
 
             """
             structlog_context = structlog.contextvars.get_contextvars()
             if not structlog_context:
                 return self._default
-            return structlog_context.get(self._key, self._default)
+            # Cast from dict[str, Any] (structlog's incomplete type)
+            # to dict[str, t.GeneralValueType] (what we actually store)
+            typed_context: dict[str, t.GeneralValueType] = cast(
+                "dict[str, t.GeneralValueType]",
+                structlog_context,
+            )
+            value = typed_context.get(self._key, self._default)
+            # value is t.GeneralValueType | None, and T is bounded to GeneralValueType
+            # at runtime, so this cast is safe
+            return cast("T | None", value)
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.
@@ -171,27 +196,34 @@ class FlextModelsContext:
             current_value = self.get()
 
             if value is not None:
-                _ = structlog.contextvars.bind_contextvars(**{self._key: value})
+                # Cast T to t.GeneralValueType for storage
+                # T is bounded to GeneralValueType, so this is safe
+                stored_value: t.GeneralValueType = cast(
+                    "t.GeneralValueType",
+                    value,
+                )
+                _ = structlog.contextvars.bind_contextvars(**{
+                    self._key: stored_value,
+                })
             else:
                 # Unbind if setting to None
                 structlog.contextvars.unbind_contextvars(self._key)
 
             # Create token for reset functionality
-            # T is conceptually bounded to t.GeneralValueType at runtime
-            # (structlog context)
-            # Normalize value to ensure type safety
-            if isinstance(
+            # Normalize current_value to t.GeneralValueType for storage
+            if current_value is None:
+                prev_value: t.GeneralValueType | None = None
+            elif isinstance(
                 current_value,
-                (str, int, float, bool, type(None), dict, list),
+                (str, int, float, bool, dict, list),
             ):
-                # Type narrowing: current_value is already t.GeneralValueType
-                prev_value: t.GeneralValueType = cast(
-                    "t.GeneralValueType",
-                    current_value,
-                )
+                # Type narrowing: current_value is primitive t.GeneralValueType
+                prev_value = cast("t.GeneralValueType", current_value)
             else:
-                # Convert to string for type safety
-                prev_value = str(current_value)
+                # For datetime and other objects, they're already GeneralValueType
+                # (T is bounded to GeneralValueType)
+                prev_value = cast("t.GeneralValueType", current_value)
+
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key,
                 previous_value=prev_value,

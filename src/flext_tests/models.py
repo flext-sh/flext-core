@@ -25,9 +25,30 @@ from pydantic import (
 )
 
 from flext_core import r, u as flext_u
+from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import FlextModels as FlextModelsBase
 from flext_tests.constants import ContainerStatus, c
 from flext_tests.typings import t
+
+# =====================================================================
+# Module-level test models for Pydantic forward reference resolution
+# (These are defined at module level to avoid nested class issues)
+# Use actual classes, not type aliases, for proper Pydantic inheritance
+# =====================================================================
+
+
+class _TestEntity(FlextModelsEntity.Entry):
+    """Test entity model with identity - module-level for Pydantic resolution."""
+
+    name: str
+    value: t.GeneralValueType = ""
+
+
+class _TestValueObject(FlextModelsBase.Value):
+    """Test value object model - module-level for Pydantic resolution."""
+
+    data: str = ""
+    count: int = 1
 
 
 # Create FlextTestsModels that extends FlextModels with Tests.Factory namespace
@@ -422,17 +443,9 @@ class FlextTestsModels(FlextModelsBase):
                 name: str = ""
                 status: str = "active"
 
-            class Entity(FlextModelsBase.Entity):
-                """Test entity model with identity."""
-
-                name: str
-                value: t.GeneralValueType = ""
-
-            class ValueObject(FlextModelsBase.Value):
-                """Test value object model."""
-
-                data: str = ""
-                count: int = 1
+            # Use module-level Entity and ValueObject to avoid Pydantic forward reference issues
+            Entity = _TestEntity
+            ValueObject = _TestValueObject
 
         class Files:
             """File-related models for test infrastructure."""
@@ -1186,10 +1199,12 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Positional arguments for as_cls",
                 )
-                validate_func: Callable[[t.GeneralValueType], bool] | None = Field(
-                    default=None,
-                    alias="validate",
-                    description="Validation function for built data",
+                validate_func: Callable[[t.Tests.Builders.BuilderDict], bool] | None = (
+                    Field(
+                        default=None,
+                        alias="validate",
+                        description="Validation function for built data",
+                    )
                 )
                 map_fn: (
                     Callable[[t.Tests.Builders.BuilderDict], t.GeneralValueType] | None

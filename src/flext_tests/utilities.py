@@ -1049,7 +1049,7 @@ class FlextTestsUtilities(FlextUtilities):
                 command_timeout: int | None = None,
                 max_command_retries: int | None = None,
                 metadata: FlextModelsBase.Metadata | None = None,
-            ) -> m.CqrsHandler:
+            ) -> m.Handler:
                 """Create a handler configuration model.
 
                 Args:
@@ -1070,7 +1070,7 @@ class FlextTestsUtilities(FlextUtilities):
                 h_type = handler_type or c.Cqrs.HandlerType.COMMAND
                 h_mode = handler_mode or h_type
 
-                return m.CqrsHandler(
+                return m.Handler(
                     handler_id=handler_id,
                     handler_name=handler_name,
                     handler_type=h_type,

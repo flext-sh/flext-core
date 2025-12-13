@@ -35,8 +35,8 @@ TestResultCo = FlextResult[T_co]
 
 
 @dataclass
-class TestCase:
-    """Standardized test case structure."""
+class StandardTestCase:
+    """Standardized test case structure for parametrized tests."""
 
     description: str
     input_data: dict[str, object]
@@ -67,9 +67,9 @@ class TestDataFactory:
         input_data: dict[str, object],
         expected_result: object,
         **kwargs: object,
-    ) -> TestCase:
+    ) -> StandardTestCase:
         """Create standardized operation test case."""
-        return TestCase(
+        return StandardTestCase(
             description=description,
             input_data={"operation": operation, **input_data},
             expected_result=expected_result,
@@ -130,7 +130,9 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[..., object], test_case: TestCase, context: str = ""
+        operation_func: Callable[..., object],
+        test_case: StandardTestCase,
+        context: str = "",
     ) -> object:
         """Execute operation and assert result matches test case."""
         try:
@@ -244,9 +246,17 @@ class TestFixtureFactory:
         return FlextRuntime
 
     @staticmethod
-    def create_test_service_instance() -> type[FlextService]:
+    def create_test_service_instance() -> FlextService:
         """Create test service fixture."""
-        return FlextService
+
+        class TestFlextService(FlextService[dict]):
+            """Concrete test service implementation."""
+
+            def execute(self) -> r[dict]:
+                """Execute test service operation."""
+                return r[dict].ok({"result": "test_service_executed"})
+
+        return TestFlextService()
 
     @staticmethod
     def create_test_settings_instance() -> type[FlextSettings]:

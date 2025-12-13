@@ -704,11 +704,7 @@ class FlextModelsValidation:
             return r[str].fail(
                 f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
             )
-        if not isinstance(uri, str):
-            return r[str].fail(
-                f"{context} must be a string (got {type(uri).__name__})",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
+        # Type narrowing: after None check, uri is guaranteed to be str
         try:
             parsed_uri = urlparse(uri)
             if not all([parsed_uri.scheme, parsed_uri.netloc]):
@@ -741,11 +737,7 @@ class FlextModelsValidation:
             return r[int].fail(
                 f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
             )
-        if not isinstance(port, int):
-            return r[int].fail(
-                f"{context} must be an integer (got {type(port).__name__})",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
+        # Type narrowing: after None check, port is guaranteed to be int
         if not c.Network.MIN_PORT <= port <= c.Network.MAX_PORT:
             return r[int].fail(
                 f"{context} must be between {c.Network.MIN_PORT} and {c.Network.MAX_PORT} (got {port})",
@@ -769,11 +761,7 @@ class FlextModelsValidation:
             return r[str].fail(
                 f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
             )
-        if not isinstance(value, str):
-            return r[str].fail(
-                f"{context} must be a string (got {type(value).__name__})",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
+        # Type narrowing: after None check, value is guaranteed to be str
         if not value:
             return r[str].fail(
                 f"{context} cannot be empty", error_code=c.Errors.VALIDATION_ERROR
@@ -795,11 +783,7 @@ class FlextModelsValidation:
         *,
         case_sensitive: bool = False,
     ) -> r[str]:
-        if not isinstance(value, str):
-            return r[str].fail(
-                f"{context} must be a string (got {type(value).__name__})",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
+        # Type narrowing: value is already typed as str (no runtime check needed)
         if not valid_choices:
             return r[str].fail(
                 "Valid choices cannot be empty", error_code=c.Errors.VALIDATION_ERROR
@@ -836,11 +820,7 @@ class FlextModelsValidation:
         max_length: int | None = None,
         context: str = "Value",
     ) -> r[str]:
-        if not isinstance(value, str):
-            return r[str].fail(
-                f"{context} must be a string (got {type(value).__name__})",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
+        # Type narrowing: value is already typed as str (no runtime check needed)
         current_length = len(value)
         if min_length is not None and current_length < min_length:
             return r[str].fail(
@@ -871,11 +851,7 @@ class FlextModelsValidation:
         pattern: str,
         context: str = "Value",
     ) -> r[str]:
-        if not isinstance(value, str):
-            return r[str].fail(
-                f"{context} must be a string (got {type(value).__name__})",
-                error_code=c.Errors.VALIDATION_ERROR,
-            )
+        # Type narrowing: value is already typed as str (no runtime check needed)
         try:
             if not re.fullmatch(pattern, value):
                 return r[str].fail(

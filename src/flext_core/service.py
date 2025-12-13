@@ -215,11 +215,10 @@ class FlextService[TDomainResult](
         # Auto-discovery of handler-decorated methods for zero-config handler setup
         # Discovers all methods marked with @h.handler() decorator
         # Makes them available for dispatcher routing without explicit registration
-        self._discovered_handlers = cast(
-            "list[tuple[str, m.HandlerDecoratorConfig]]",
+        self._discovered_handlers = (
             FlextHandlers.Discovery.scan_class(self.__class__)
             if FlextHandlers.Discovery.has_handlers(self.__class__)
-            else [],
+            else []
         )
 
     # Use PrivateAttr for private attributes (Pydantic v2 pattern)
