@@ -164,7 +164,7 @@
 		        python-on-whales = "^0.78.0"
 		        rich = "=14.2.0"
 		        types-pyyaml = "^6.0.12.20250822"
-		        urllib3 = "^2.6.0"
+		        urllib3 = "^2.6.2"
 
 		    [tool.poetry.group.typings.dependencies]
 		        types-colorama = ">=0.4.15.20240311"
