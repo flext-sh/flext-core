@@ -280,3 +280,33 @@ build/
 !**/.gitkeep
 # Backup files
 *.bak
+*.backup
+*.orig
+*.old
+*_backup*
+*_old*
+*_temp*
+*backup*
+
+# Validation and test scripts outside proper directories
+**/validate*.sh
+**/validate*.py
+**/test*.sh
+**/test*.py
+
+# Temporary and working files
+*.tmp
+*.temp
+temp/
+staging/
+.cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude AI files
+.claude/

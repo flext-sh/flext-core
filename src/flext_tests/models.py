@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import cast
+from typing import TypeAlias, cast
 
 from pydantic import (
     AliasChoices,
@@ -444,8 +444,8 @@ class FlextTestsModels(FlextModelsBase):
                 status: str = "active"
 
             # Use module-level Entity and ValueObject to avoid Pydantic forward reference issues
-            Entity = _TestEntity
-            ValueObject = _TestValueObject
+            Entity: TypeAlias = _TestEntity
+            ValueObject: TypeAlias = _TestValueObject
 
         class Files:
             """File-related models for test infrastructure."""

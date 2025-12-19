@@ -56,36 +56,63 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _is_configuration_dict(value: object) -> TypeGuard[t.ConfigurationDict]:
         """Type guard for ConfigurationDict (dict with str keys and t.GeneralValueType values)."""
-        return isinstance(value, dict) and all(isinstance(k, str) for k in value)
+        if not isinstance(value, dict):
+            return False
+        # Explicitly type the dict first to help pyright infer key types
+        value_dict: dict[object, object] = cast("dict[object, object]", value)
+        keys: list[object] = list(value_dict.keys())
+        return all(isinstance(k, str) for k in keys)
 
     @staticmethod
     def _is_configuration_mapping(
         value: object,
     ) -> TypeGuard[t.ConfigurationMapping]:
         """Type guard for ConfigurationMapping."""
-        return isinstance(value, Mapping) and all(isinstance(k, str) for k in value)
+        if not isinstance(value, Mapping):
+            return False
+        # Explicitly type keys from Mapping.keys()
+        keys: list[object] = list(value.keys())
+        return all(isinstance(k, str) for k in keys)
 
     @staticmethod
     def _narrow_to_configuration_dict(value: object) -> t.ConfigurationDict:
         """Safely narrow object to ConfigurationDict with runtime validation."""
-        if isinstance(value, dict) and all(isinstance(k, str) for k in value):
-            return value  # Type narrowing via isinstance
-        error_msg = f"Cannot narrow {type(value)} to ConfigurationDict"
-        raise TypeError(error_msg)
+        if not isinstance(value, dict):
+            error_msg = f"Cannot narrow {type(value)} to ConfigurationDict"
+            raise TypeError(error_msg)
+        # Explicit cast after isinstance - helps Pyright track type narrowing
+        dict_typed: dict[str, object] = cast("dict[str, object]", value)
+        # Verify keys are strings
+        keys: list[object] = list(dict_typed.keys())
+        if not all(isinstance(k, str) for k in keys):
+            error_msg = f"Cannot narrow {type(value)} to ConfigurationDict - non-string keys found"
+            raise TypeError(error_msg)
+        # Type narrowing: dict is confirmed, keys are strings
+        return cast("t.ConfigurationDict", value)
 
     @staticmethod
     def _narrow_to_configuration_mapping(value: object) -> t.ConfigurationMapping:
         """Safely narrow object to ConfigurationMapping with runtime validation."""
-        if isinstance(value, Mapping) and all(isinstance(k, str) for k in value):
-            return value  # Type narrowing via isinstance
-        error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping"
-        raise TypeError(error_msg)
+        if not isinstance(value, Mapping):
+            error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping"
+            raise TypeError(error_msg)
+        # Explicit cast after isinstance - helps Pyright track type narrowing
+        mapping_typed: Mapping[str, object] = cast("Mapping[str, object]", value)
+        # Verify keys are strings
+        keys: list[object] = list(mapping_typed.keys())
+        if not all(isinstance(k, str) for k in keys):
+            error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping - non-string keys found"
+            raise TypeError(error_msg)
+        # Type narrowing: Mapping is confirmed, keys are strings
+        return cast("t.ConfigurationMapping", value)
 
     @staticmethod
     def _narrow_to_sequence(value: object) -> Sequence[object]:
         """Safely narrow object to Sequence[object] with runtime validation."""
         if isinstance(value, (list, tuple)):
-            return value  # Type narrowing via isinstance
+            return cast(
+                "Sequence[object]", value
+            )  # Type narrowing via isinstance + cast
         error_msg = f"Cannot narrow {type(value)} to Sequence"
         raise TypeError(error_msg)
 
@@ -1324,9 +1351,10 @@ class FlextUtilitiesMapper:
             case "list":
                 if isinstance(current, list):
                     # Type narrowing: current is list, convert items to t.GeneralValueType
+                    list_current: list[object] = cast("list[object]", current)
                     return [
                         FlextUtilitiesMapper._narrow_to_general_value_type(item)
-                        for item in current
+                        for item in list_current
                     ]
                 return (
                     default_val
@@ -1336,9 +1364,10 @@ class FlextUtilitiesMapper:
             case "str_list":
                 if isinstance(current, list):
                     # Type narrowing: current is list[object], convert each to str
+                    list_current_str: list[object] = cast("list[object]", current)
                     return [
                         str(FlextUtilitiesMapper._narrow_to_general_value_type(x))
-                        for x in current
+                        for x in list_current_str
                     ]
                 return (
                     default_val
@@ -1374,9 +1403,10 @@ class FlextUtilitiesMapper:
         # Handle collections
         if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence[object], x is t.GeneralValueType
+            seq_current: Sequence[object] = cast("Sequence[object]", current)
             return [
                 FlextUtilitiesMapper._narrow_to_general_value_type(x)
-                for x in current
+                for x in seq_current
                 if filter_pred(x)
             ]
         if isinstance(current, dict):
@@ -1404,9 +1434,10 @@ class FlextUtilitiesMapper:
         map_func: Callable[[t.GeneralValueType], t.GeneralValueType] = map_func_raw
         if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence, items are t.GeneralValueType
+            seq_current: Sequence[object] = cast("Sequence[object]", current)
             return [
                 map_func(FlextUtilitiesMapper._narrow_to_general_value_type(x))
-                for x in current
+                for x in seq_current
             ]
         if isinstance(current, dict):
             # Type narrowing: current is dict, use ConfigurationDict
@@ -1432,8 +1463,9 @@ class FlextUtilitiesMapper:
             return current.lower() if normalize_case == "lower" else current.upper()
         if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence, items are t.GeneralValueType
+            seq_current: Sequence[object] = cast("Sequence[object]", current)
             result: list[t.GeneralValueType] = []
-            for x in current:
+            for x in seq_current:
                 x_general = FlextUtilitiesMapper._narrow_to_general_value_type(x)
                 if isinstance(x_general, str):
                     result.append(
@@ -1709,9 +1741,10 @@ class FlextUtilitiesMapper:
         try:
             if isinstance(current, (list, tuple)):
                 # Type narrowing: current is Sequence, items are t.GeneralValueType
+                seq_current: Sequence[object] = cast("Sequence[object]", current)
                 return [
                     process_func(FlextUtilitiesMapper._narrow_to_general_value_type(x))
-                    for x in current
+                    for x in seq_current
                 ]
             if isinstance(current, dict):
                 # Type narrowing: current is dict, use ConfigurationDict
