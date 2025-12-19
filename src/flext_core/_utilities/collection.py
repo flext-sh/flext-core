@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import copy
-import datetime
 from collections.abc import Callable, Iterable, Mapping
 from enum import StrEnum
 from typing import cast, overload
@@ -41,16 +40,16 @@ class FlextUtilitiesCollection:
         Python 3.13: Uses isinstance for proper type narrowing with Mapping protocol.
         """
         # Python 3.13: isinstance with Mapping provides proper type narrowing
-        if isinstance(value, Mapping):
-            # Explicit type narrowing: check all keys are strings
-            keys = list(value.keys())
-            if all(isinstance(k, str) for k in keys):
-                # Type narrowing: value is Mapping[str, object] after isinstance checks
-                return (
-                    value  # Mapping[str, object] compatible with Mapping[str, object]
-                )
-        error_msg = f"Cannot narrow {type(value)} to Mapping[str, object]"
-        raise TypeError(error_msg)
+        if not isinstance(value, Mapping):
+            error_msg = f"Cannot narrow {type(value)} to Mapping[str, object]"
+            raise TypeError(error_msg)
+        # Explicit type narrowing: check all keys are strings
+        keys: list[object] = list(value.keys())
+        if not all(isinstance(k, str) for k in keys):
+            error_msg = f"Cannot narrow {type(value)} to Mapping[str, object] - non-string keys found"
+            raise TypeError(error_msg)
+        # Type narrowing: value is Mapping[str, object] after isinstance checks
+        return cast("Mapping[str, object]", value)
 
     @staticmethod
     def _narrow_to_list_object(value: object) -> list[object]:
@@ -60,9 +59,9 @@ class FlextUtilitiesCollection:
         """
         # Use isinstance for proper type narrowing
         if isinstance(value, list):
-            return value  # Type narrowing via isinstance
-        if isinstance(value, (list, tuple)):
-            return list(value)  # Convert tuple to list
+            return cast("list[object]", value)  # Type narrowing via isinstance + cast
+        if isinstance(value, tuple):
+            return cast("list[object]", list(value))  # Convert tuple to list and cast
         error_msg = f"Cannot narrow {type(value)} to list[object]"
         raise TypeError(error_msg)
 
@@ -207,15 +206,10 @@ class FlextUtilitiesCollection:
                 msg = f"Expected dict, got {type(value).__name__}"
                 raise TypeError(msg)
 
-            # Python 3.13: Type narrowing - value is dict[str, t.GeneralValueType] after TypeGuard
-            # t.GeneralValueType includes ScalarValue, so we can safely narrow
-            # Use type narrowing with runtime validation
-            # Use dict comprehension for type narrowing
-            value_dict: dict[str, t.ScalarValue] = {
-                k: v
-                for k, v in value.items()
-                if isinstance(v, (str, int, float, bool, type(None), datetime.datetime))
-            }
+            # Python 3.13: Type narrowing - value is dict[str, t.ScalarValue] after isinstance(value, dict)
+            # FlexibleValue includes dict which maps to Mapping[str, ScalarValue]
+            # After isinstance(value, dict), all values are already ScalarValue
+            value_dict = value  # Type automatically narrowed by isinstance check
             result: dict[str, E] = {}
             for key, val in value_dict.items():
                 if isinstance(val, enum_cls):
@@ -920,15 +914,10 @@ class FlextUtilitiesCollection:
         result: dict[object, list[T]] = {}
         items_list = list(items)
         for item in items_list:
-            if callable(key):
-                k = key(item)
-            # Type narrowing: use isinstance to properly narrow key to str
-            elif isinstance(key, str):
-                k = getattr(item, key, None)
-            else:
-                # Unreachable - key must be either callable or str
-                # but needed to handle union type exhaustively
-                k = None
+            # key is str or callable - isinstance enables proper type narrowing
+            k: object | None = (
+                getattr(item, key, None) if isinstance(key, str) else key(item)
+            )
             if k not in result:
                 result[k] = []
             result[k].append(item)

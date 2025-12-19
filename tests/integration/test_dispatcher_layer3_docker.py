@@ -42,6 +42,35 @@ psycopg2 = pytest.importorskip("psycopg2")
 redis = pytest.importorskip("redis")
 
 
+def _postgres_available() -> bool:
+    """Check if PostgreSQL is available on localhost:5432.
+
+    Returns:
+        True if PostgreSQL connection succeeds, False otherwise.
+
+    """
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            port=5432,
+            user="postgres",
+            password="postgres",
+            dbname="postgres",
+            connect_timeout=1,
+        )
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+# Pytest skip condition for PostgreSQL-dependent tests
+skip_if_no_postgres = pytest.mark.skipif(
+    not _postgres_available(),
+    reason="PostgreSQL not available on localhost:5432 (required for Docker tests)",
+)
+
+
 # ==================== TEST CONSTANTS ====================
 
 
@@ -391,11 +420,20 @@ pytestmark = [pytest.mark.integration]
 # ==================== TESTS ====================
 
 
+@skip_if_no_postgres
+@pytest.mark.integration
 class TestFlextDispatcherLayer3Docker:
     """Comprehensive integration tests for FlextDispatcher Layer 3 with Docker.
 
     Single class pattern with nested classes organizing test cases by functionality.
     Uses factories, constants, and DRY principles to minimize code duplication.
+
+    Requirements:
+    - Docker daemon running
+    - PostgreSQL server on localhost:5432 (user: postgres, password: postgres)
+    - Redis library installed (handled by pytest.importorskip)
+
+    The entire test suite is skipped if PostgreSQL is not available.
     """
 
     class TestServiceDiscovery:
