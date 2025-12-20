@@ -43,7 +43,7 @@ import json
 import operator
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import fields as get_dataclass_fields, is_dataclass
+from dataclasses import fields, is_dataclass
 from datetime import datetime
 from typing import ClassVar, Never, TypeGuard, cast
 
@@ -784,7 +784,7 @@ class FlextUtilitiesValidation:
         field_dict: t.ConfigurationDict = {}
         # value.__class__ is type for dataclass instances
         value_class: type = value.__class__
-        for field in get_dataclass_fields(value_class):
+        for field in fields(value_class):
             field_dict[field.name] = getattr(value, field.name)
         sorted_data = FlextUtilitiesValidation._sort_dict_keys(field_dict)
         # Return as dict with type marker for cache structure
@@ -901,7 +901,7 @@ class FlextUtilitiesValidation:
             dataclass_data: t.ConfigurationDict = {}
             # command.__class__ is type for class instances
             command_class: type = command.__class__
-            for field in get_dataclass_fields(command_class):
+            for field in fields(command_class):
                 dataclass_data[field.name] = getattr(command, field.name)
             sorted_data = FlextUtilitiesValidation._sort_dict_keys(dataclass_data)
             return FlextUtilitiesValidation._generate_key_from_data(

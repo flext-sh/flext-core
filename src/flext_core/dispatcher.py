@@ -40,8 +40,8 @@ from flext_core._dispatcher import (
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.handlers import h
-from flext_core.mixins import x
+from flext_core.handlers import FlextHandlers
+from flext_core.mixins import FlextMixins as x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -541,11 +541,8 @@ class FlextDispatcher(x):
         return r[t.GeneralValueType].ok(processor_typed)
 
     @staticmethod
-    def _apply_processor_rate_limiter(_processor_name: str) -> r[bool]:
+    def _apply_processor_rate_limiter() -> r[bool]:
         """Apply per-processor rate limiting.
-
-        Args:
-            _processor_name: Processor name (unused, reserved for future per-processor limits)
 
         Returns:
             r[bool]: Success with True if within limit, failure if exceeded
@@ -886,7 +883,7 @@ class FlextDispatcher(x):
             )
 
         # Apply per-processor rate limiter
-        rate_limit_result = FlextDispatcher._apply_processor_rate_limiter(name)
+        rate_limit_result = FlextDispatcher._apply_processor_rate_limiter()
         if rate_limit_result.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
             error_msg = u.err(
@@ -1310,7 +1307,7 @@ class FlextDispatcher(x):
     ) -> r[t.GeneralValueType]:
         """Execute the handler using h pipeline when available.
 
-        Delegates to h._run_pipeline() for full CQRS support including
+        Delegates to FlextHandlers._run_pipeline() for full CQRS support including
         mode validation, can_handle check, message validation, context tracking,
         and metrics recording. Falls back to direct handle()/execute() for
         non-h instances.
@@ -1337,9 +1334,9 @@ class FlextDispatcher(x):
             source="flext-core/src/flext_core/dispatcher.py",
         )
 
-        # Delegate to h.dispatch_message() for full CQRS support
-        if isinstance(handler, h):
-            # Type narrowing: handler is h[MessageT_contra, ResultT]
+        # Delegate to FlextHandlers.dispatch_message() for full CQRS support
+        if isinstance(handler, FlextHandlers):
+            # Type narrowing: handler is FlextHandlers[MessageT_contra, ResultT]
             # dispatch_message returns r[ResultT], but ResultT is unknown at runtime
             # Since handler is generic and ResultT cannot be inferred, we cast the result
             # to r[t.GeneralValueType] for compatibility with return type
@@ -2671,7 +2668,7 @@ class FlextDispatcher(x):
     def _register_handler[TMessage, TResult](
         self,
         message_type: type[TMessage],
-        handler: h[TMessage, TResult],
+        handler: FlextHandlers[TMessage, TResult],
         handler_mode: str,
         handler_config: t.ConfigurationMapping | None = None,
     ) -> r[t.GeneralValueType]:
@@ -2716,7 +2713,7 @@ class FlextDispatcher(x):
     def register_command[TCommand, TResult](
         self,
         command_type: type[TCommand],
-        handler: h[TCommand, TResult],
+        handler: FlextHandlers[TCommand, TResult],
         *,
         handler_config: t.ConfigurationMapping | None = None,
     ) -> r[t.GeneralValueType]:
@@ -2741,7 +2738,7 @@ class FlextDispatcher(x):
     def register_query[TQuery, TResult](
         self,
         query_type: type[TQuery],
-        handler: h[TQuery, TResult],
+        handler: FlextHandlers[TQuery, TResult],
         *,
         handler_config: t.ConfigurationMapping | None = None,
     ) -> r[t.GeneralValueType]:
@@ -2861,12 +2858,12 @@ class FlextDispatcher(x):
         _handler_config: t.ConfigurationMapping | None = None,
         mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
     ) -> r[
-        h[
+        FlextHandlers[
             t.GeneralValueType,
             t.GeneralValueType,
         ]
     ]:
-        """Create handler from function using h constructor.
+        """Create handler from function using FlextHandlers constructor.
 
         Args:
             handler_func: Function to wrap
@@ -2882,7 +2879,7 @@ class FlextDispatcher(x):
             handler_name = getattr(handler_func, "__name__", "FunctionHandler")
 
             class FunctionHandler(
-                h[
+                FlextHandlers[
                     t.GeneralValueType,
                     t.GeneralValueType,
                 ],
@@ -2913,7 +2910,7 @@ class FlextDispatcher(x):
             )
             handler = FunctionHandler(config=handler_config)
             return r[
-                h[
+                FlextHandlers[
                     t.GeneralValueType,
                     t.GeneralValueType,
                 ]
@@ -2921,7 +2918,7 @@ class FlextDispatcher(x):
 
         except Exception as error:
             return r[
-                h[
+                FlextHandlers[
                     t.GeneralValueType,
                     t.GeneralValueType,
                 ]
@@ -2934,12 +2931,12 @@ class FlextDispatcher(x):
         handler: t.GeneralValueType,
         mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
     ) -> r[
-        h[
+        FlextHandlers[
             t.GeneralValueType,
             t.GeneralValueType,
         ]
     ]:
-        """Ensure handler is a h instance, converting from callable if needed.
+        """Ensure handler is a FlextHandlers instance, converting from callable if needed.
 
         Private helper to eliminate duplication in handler registration.
 
@@ -2951,16 +2948,16 @@ class FlextDispatcher(x):
             r with h instance or error
 
         """
-        # If already h, return success
-        if isinstance(handler, h):
+        # If already FlextHandlers, return success
+        if isinstance(handler, FlextHandlers):
             return r[
-                h[
+                FlextHandlers[
                     t.GeneralValueType,
                     t.GeneralValueType,
                 ]
             ].ok(handler)
 
-        # If callable, convert to h
+        # If callable, convert to FlextHandlers
         if callable(handler):
             return FlextDispatcher.create_handler_from_function(
                 handler_func=handler,
@@ -2969,12 +2966,14 @@ class FlextDispatcher(x):
 
         # Invalid handler type
         return r[
-            h[
+            FlextHandlers[
                 t.GeneralValueType,
                 t.GeneralValueType,
             ]
         ].fail(
-            (f"Handler must be h instance or callable, got {type(handler).__name__}"),
+            (
+                f"Handler must be FlextHandlers instance or callable, got {type(handler).__name__}"
+            ),
         )
 
     # ------------------------------------------------------------------
@@ -4124,7 +4123,7 @@ class FlextDispatcher(x):
         Architecture principles where higher layers create their own instances.
 
         Auto-discovery of handlers discovers all functions marked with
-        @h.handler() decorator in the calling module and registers them
+        @FlextHandlers.handler() decorator in the calling module and registers them
         automatically. This enables zero-config handler registration for services.
 
         Args:
@@ -4152,7 +4151,7 @@ class FlextDispatcher(x):
                 caller_module = sys.modules.get(module_name)
                 if caller_module:
                     # Scan module for handler-decorated functions
-                    handlers = h.Discovery.scan_module(caller_module)
+                    handlers = FlextHandlers.Discovery.scan_module(caller_module)
                     for _handler_name, handler_func, handler_config in handlers:
                         # Get actual handler function from module
                         # Check if handler_func is not None before checking callable

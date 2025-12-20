@@ -23,7 +23,7 @@ from typing import ClassVar, cast
 
 from flext_core.constants import c
 from flext_core.exceptions import e
-from flext_core.mixins import FlextMixins, x
+from flext_core.mixins import FlextMixins as x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -69,8 +69,8 @@ def _handler_type_to_literal(
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextMixins.CQRS.MetricsTracker,
-    FlextMixins.CQRS.ContextStack,
+    x.CQRS.MetricsTracker,
+    x.CQRS.ContextStack,
     x,
     ABC,
 ):

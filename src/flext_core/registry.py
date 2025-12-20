@@ -19,8 +19,8 @@ from pydantic import Field, computed_field
 
 from flext_core.constants import c
 from flext_core.dispatcher import FlextDispatcher
-from flext_core.handlers import h
-from flext_core.mixins import x
+from flext_core.handlers import FlextHandlers
+from flext_core.mixins import FlextMixins as x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -222,7 +222,7 @@ class FlextRegistry(x):
         Architecture principles where higher layers create their own instances.
 
         Auto-discovery of handlers discovers all functions marked with
-        @h.handler() decorator in the calling module and auto-registers them
+        @FlextHandlers.handler() decorator in the calling module and auto-registers them
         with built-in deduplication. This enables zero-config handler
         registration for services with idempotent tracking.
 
@@ -253,7 +253,7 @@ class FlextRegistry(x):
                 caller_module = sys.modules.get(module_name)
                 if caller_module:
                     # Scan module for handler-decorated functions
-                    handlers = h.Discovery.scan_module(caller_module)
+                    handlers = FlextHandlers.Discovery.scan_module(caller_module)
                     for _handler_name, handler_func, _handler_config in handlers:
                         # Get actual handler from module
                         # Check if handler_func is not None before checking callable
@@ -261,11 +261,12 @@ class FlextRegistry(x):
                             # Register handler with deduplication built-in
                             # Deduplication happens in register_handler() via _registered_keys
                             # Cast handler_func to expected type for register_handler
-                            # register_handler expects h[T, R] | None where h is from flext_core.handlers
+                            # register_handler expects FlextHandlers[T, R] | None where FlextHandlers is from flext_core.handlers
                             handler_typed: (
-                                h[t.GeneralValueType, t.GeneralValueType] | None
+                                FlextHandlers[t.GeneralValueType, t.GeneralValueType]
+                                | None
                             ) = cast(
-                                "h[t.GeneralValueType, t.GeneralValueType] | None",
+                                "FlextHandlers[t.GeneralValueType, t.GeneralValueType] | None",
                                 handler_func,
                             )
                             _ = instance.register_handler(handler_typed)
@@ -389,7 +390,7 @@ class FlextRegistry(x):
     # ------------------------------------------------------------------
     def register_handler(
         self,
-        handler: (h[t.GeneralValueType, t.GeneralValueType] | None),
+        handler: (FlextHandlers[t.GeneralValueType, t.GeneralValueType] | None),
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -494,7 +495,7 @@ class FlextRegistry(x):
 
     def register_handlers(
         self,
-        handlers: Iterable[h[t.GeneralValueType, t.GeneralValueType]],
+        handlers: Iterable[FlextHandlers[t.GeneralValueType, t.GeneralValueType]],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in one shot using railway pattern.
 
@@ -568,7 +569,7 @@ class FlextRegistry(x):
 
     def _process_single_handler(
         self,
-        handler: h[t.GeneralValueType, t.GeneralValueType],
+        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType],
         summary: FlextRegistry.Summary,
     ) -> r[bool]:
         """Process a single handler registration.
@@ -687,7 +688,7 @@ class FlextRegistry(x):
         bindings: Sequence[
             tuple[
                 type[t.GeneralValueType],
-                h[t.GeneralValueType, t.GeneralValueType],
+                FlextHandlers[t.GeneralValueType, t.GeneralValueType],
             ]
         ],
     ) -> r[FlextRegistry.Summary]:
@@ -757,7 +758,7 @@ class FlextRegistry(x):
         mapping: Mapping[
             type[t.GeneralValueType],
             (
-                h[t.GeneralValueType, t.GeneralValueType]
+                FlextHandlers[t.GeneralValueType, t.GeneralValueType]
                 | tuple[
                     t.HandlerCallable,
                     t.GeneralValueType | r[t.GeneralValueType],
@@ -815,8 +816,8 @@ class FlextRegistry(x):
                         result = self._register_tuple_entry(tuple_entry, key)
                     else:
                         result = FlextRegistry._register_other_entry(key)
-                elif isinstance(entry, h):
-                    # Type narrowing: entry is h instance
+                elif isinstance(entry, FlextHandlers):
+                    # Type narrowing: entry is FlextHandlers instance
                     result = self._register_handler_entry(entry, key)
                 else:
                     result = self._register_other_entry(key)
@@ -899,10 +900,10 @@ class FlextRegistry(x):
 
     def _register_handler_entry(
         self,
-        entry: h[t.GeneralValueType, t.GeneralValueType],
+        entry: FlextHandlers[t.GeneralValueType, t.GeneralValueType],
         key: str,
     ) -> r[m.HandlerRegistrationDetails]:
-        """Register h instance - DRY helper reduces nesting."""
+        """Register FlextHandlers instance - DRY helper reduces nesting."""
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
         register_result = self._dispatcher.register_handler(
             cast("t.GeneralValueType", entry),
@@ -939,7 +940,7 @@ class FlextRegistry(x):
     # ------------------------------------------------------------------
     @staticmethod
     def _resolve_handler_key(
-        handler: h[t.GeneralValueType, t.GeneralValueType],
+        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType],
     ) -> str:
         handler_id = getattr(handler, "handler_id", None)
         return (
@@ -950,7 +951,7 @@ class FlextRegistry(x):
 
     @staticmethod
     def _resolve_binding_key(
-        handler: h[t.GeneralValueType, t.GeneralValueType],
+        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType],
         message_type: type[t.GeneralValueType],
     ) -> str:
         base_key = FlextRegistry._resolve_handler_key(handler)
@@ -964,7 +965,7 @@ class FlextRegistry(x):
     @staticmethod
     def _resolve_binding_key_from_entry(
         entry: (
-            h[t.GeneralValueType, t.GeneralValueType]
+            FlextHandlers[t.GeneralValueType, t.GeneralValueType]
             | tuple[
                 t.HandlerCallable,
                 t.GeneralValueType | r[t.GeneralValueType],
@@ -991,8 +992,8 @@ class FlextRegistry(x):
             else:
                 type_name = str(message_type)
             return f"{handler_name}::{type_name}"
-        if isinstance(entry, h):
-            # Type narrowing: entry is h instance
+        if isinstance(entry, FlextHandlers):
+            # Type narrowing: entry is FlextHandlers instance
             return FlextRegistry._resolve_binding_key(entry, message_type)
         # Handle t.GeneralValueType or other types
         return str(entry)

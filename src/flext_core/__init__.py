@@ -25,7 +25,7 @@ from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions, e
 from flext_core.handlers import FlextHandlers, h
 from flext_core.loggings import FlextLogger
-from flext_core.mixins import FlextMixins, x
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels, m
 from flext_core.protocols import FlextProtocols, p
 from flext_core.registry import FlextRegistry
@@ -50,6 +50,9 @@ from flext_core.typings import (
     t,
 )
 from flext_core.utilities import FlextUtilities, u
+
+# Runtime aliases
+x = FlextMixins
 
 # =============================================================================
 # RUNTIME TYPE CHECKING - Python 3.13 Strict Typing Enforcement

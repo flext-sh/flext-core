@@ -587,7 +587,7 @@ class FlextContext(FlextRuntime):
         )
         if key in current:
             # Use filter_dict for concise key removal
-            def key_filter(k: str, _v: t.GeneralValueType) -> bool:
+            def key_filter(k: str, v: t.GeneralValueType) -> bool:  # noqa: ARG001
                 return k != key
 
             filtered: t.ConfigurationDict = u.Mapper.filter_dict(

@@ -914,7 +914,7 @@ class FlextMixins(FlextRuntime):
             return True
 
         @staticmethod
-        def is_command_bus(_obj: p.CommandBus) -> bool:
+        def is_command_bus() -> bool:
             """Check if object satisfies p.CommandBus protocol."""
             return True
 
@@ -970,7 +970,7 @@ class FlextMixins(FlextRuntime):
             return r[bool].ok(True)
 
 
-# Alias for simplified usage
+# Alias for runtime compatibility
 x = FlextMixins
 
 __all__ = [

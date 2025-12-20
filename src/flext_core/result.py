@@ -11,17 +11,32 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Self, cast, override
+from typing import Self, TypeIs, TypeVar, cast
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
 
-from flext_core.exceptions import FlextExceptions as e
-from flext_core.protocols import p
+from flext_core.exceptions import FlextExceptions
+from flext_core.protocols import FlextProtocols
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import U, t
+
+# Type parameter defaults (PEP 696) for better type inference
+T = TypeVar("T")
+E = TypeVar("E", default=str)  # Error type defaults to str
+
+
+# Type narrowing functions using Python 3.13 TypeIs (PEP 742)
+def is_success_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:
+    """Type guard that narrows to successful FlextResult."""
+    return result.is_success and result.value is not None
+
+
+def is_failure_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:
+    """Type guard that narrows to failed FlextResult."""
+    return result.is_failure
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
@@ -153,7 +168,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             if result.is_success:
                 return IO(result.value)
             msg = "Cannot convert failure to IO"
-            raise e.ValidationError(msg)
+            raise FlextExceptions.ValidationError(msg)
 
         @staticmethod
         def from_io_result(
@@ -231,8 +246,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         @staticmethod
         def safe(
-            func: p.VariadicCallable[T],
-        ) -> p.VariadicCallable[FlextResult[T]]:
+            func: FlextProtocols.VariadicCallable[T],
+        ) -> FlextProtocols.VariadicCallable[FlextResult[T]]:
             """Decorator to wrap function in FlextResult."""
 
             def wrapper(
@@ -249,7 +264,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     @classmethod
     def ok[T](cls, value: T) -> FlextResult[T]:
-        """Create successful result wrapping data.
+        """Create successful result wrapping data using Python 3.13 advanced patterns.
 
         Business Rule: Creates successful FlextResult wrapping value. Raises ValueError
         if value is None (None values are not allowed in success results). Uses returns
@@ -275,17 +290,18 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if value is None:
             msg = "Cannot create success result with None value"
             raise ValueError(msg)
+
+        # Use returns library Success wrapper for railway-oriented programming
         return FlextResult[T](Success(value))
 
     @classmethod
-    @override
     def fail[T](
         cls,
         error: str | None,
         error_code: str | None = None,
         error_data: t.ConfigurationMapping | None = None,
     ) -> FlextResult[T]:
-        """Create failed result with error message.
+        """Create failed result with error message using Python 3.13 advanced patterns.
 
         Business Rule: Creates failed FlextResult with error message, optional error
         code, and optional error metadata. Converts None error to empty string for
@@ -310,13 +326,15 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         error_msg = error if error is not None else ""
+
+        # Use returns library Failure wrapper for railway-oriented programming
         result = Failure(error_msg)
         return FlextResult[T](result, error_code=error_code, error_data=error_data)
 
     @staticmethod
     def safe[T](
-        func: p.VariadicCallable[T],
-    ) -> p.VariadicCallable[FlextResult[T]]:
+        func: FlextProtocols.VariadicCallable[T],
+    ) -> FlextProtocols.VariadicCallable[FlextResult[T]]:
         """Decorator to wrap function in FlextResult.
 
         Catches exceptions and returns FlextResult.fail() on error.
@@ -327,7 +345,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 return 42
 
         """
-        # Operations.safe returns p.VariadicCallable[FlextResult[T]]
+        # Operations.safe returns FlextProtocols.VariadicCallable[FlextResult[T]]
         return FlextResult.Operations.safe(func)
 
     @property
