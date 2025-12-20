@@ -1261,17 +1261,11 @@ class FlextUtilitiesCollection:
                         if (
                             mode == "append"
                             and isinstance(target_val, list)
-                            and FlextUtilitiesGuards.is_list(value)
+                            and isinstance(value, list)
                         ):
-                            # Python 3.13: Type narrowing - TypeGuard ensures both are list
-                            # list() preserves element types from original list
-                            target_list: list[t.GeneralValueType] = list(target_val)
-                            value_list: list[t.GeneralValueType] = list(value)  # type: ignore[arg-type]
-                            # Append elements from source list to target list
-                            # Create new list to avoid mutating original objects if they were refs
-                            target[key] = (
-                                target_list + value_list
-                            )  # list[t.GeneralValueType] compatible with t.GeneralValueType
+                            # Both are lists - concatenate them
+                            # Create new list to avoid mutating original objects
+                            target[key] = list(target_val) + list(value)
                             continue
 
                     # Default: override

@@ -1912,6 +1912,19 @@ class FlextConstants:
         DEFAULT_TIMEOUT: Final[float | None] = None
         """Default timeout for handlers (None = no timeout)."""
 
+    class Test:
+        """Test constants for unit and integration testing.
+
+        Provides standardized test data values used across the FLEXT ecosystem.
+        These constants ensure consistent test behavior and avoid magic strings.
+        """
+
+        DEFAULT_PASSWORD: Final[str] = "test_password"
+        """Default password for test user authentication."""
+
+        NONEXISTENT_USERNAME: Final[str] = "nonexistent"
+        """Username that should not exist in test scenarios."""
+
     # =========================================================================
     # ROOT-LEVEL ALIASES (Most Commonly Used Constants)
     # =========================================================================
