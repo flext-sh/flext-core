@@ -1173,4 +1173,9 @@ class FlextProtocols:
 
 p = FlextProtocols
 fc = FlextProtocols
-__all__ = ["FlextProtocols", "fc"]
+
+# Export nested protocols for direct import compatibility
+VariadicCallable = FlextProtocols.VariadicCallable
+ValidatorSpec = FlextProtocols.ValidatorSpec
+
+__all__ = ["FlextProtocols", "ValidatorSpec", "VariadicCallable", "fc", "p"]

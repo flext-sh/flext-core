@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-import time as time_module
+import time
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from urllib.parse import urlparse
@@ -152,7 +152,7 @@ class FlextModelsValidation:
         else:
             # Use constant for validation timeout
             timeout_ms = c.Validation.VALIDATION_TIMEOUT_MS
-        start_time = time_module.time()
+        start_time = time.time()
 
         try:
             # Only validate Pydantic models with model_dump/model_validate
@@ -168,9 +168,7 @@ class FlextModelsValidation:
             )
             # Re-validate the model from the dump
             validated_model = model.__class__.model_validate(dump)
-            validation_time = (
-                time_module.time() - start_time
-            ) * c.MILLISECONDS_MULTIPLIER
+            validation_time = (time.time() - start_time) * c.MILLISECONDS_MULTIPLIER
 
             if validation_time > timeout_ms:
                 return r[t.GeneralValueType].fail(

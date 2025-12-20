@@ -748,7 +748,7 @@ class FlextUtilitiesCollection:
         """Helper: Process dict items."""
         if filter_keys is not None or exclude_keys is not None:
 
-            def key_predicate(k: str, _v: T) -> bool:
+            def key_predicate(k: str, v: T) -> bool:  # noqa: ARG001
                 """Filter predicate for dict keys."""
                 return (filter_keys is None or k in filter_keys) and (
                     exclude_keys is None or k not in exclude_keys

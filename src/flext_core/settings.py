@@ -231,7 +231,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: t.GeneralValueType) -> Self:
+    def __new__(cls, **kwargs: t.GeneralValueType) -> Self:  # noqa: ARG004
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.

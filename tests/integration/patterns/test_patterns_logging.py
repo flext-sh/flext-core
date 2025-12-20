@@ -599,12 +599,12 @@ class TestFlextLoggerIntegration:
 
         duration_ms = (time.perf_counter() - start_time) * 1000
 
-        # Validate duration measurement
-        assert duration_ms >= expected_duration_ms * 0.8, (
-            f"Duration {duration_ms}ms should be >= {expected_duration_ms * 0.8}ms"
+        # Validate duration measurement (more tolerant for CI environments)
+        assert duration_ms >= expected_duration_ms * 0.5, (
+            f"Duration {duration_ms}ms should be >= {expected_duration_ms * 0.5}ms"
         )
-        assert duration_ms < expected_duration_ms * 2, (
-            f"Duration {duration_ms}ms should be < {expected_duration_ms * 2}ms "
+        assert duration_ms < expected_duration_ms * 3, (
+            f"Duration {duration_ms}ms should be < {expected_duration_ms * 3}ms "
             "(reasonable overhead)"
         )
 

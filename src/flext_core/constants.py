@@ -598,6 +598,15 @@ class FlextConstants:
             r"^https?://(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::\d+)?"
         )
         PATTERN_PHONE_NUMBER: Final[str] = r"^\+?[\d\s\-\(\)]{10,20}$"
+
+        class Reliability:
+            """Reliability constants for system behavior."""
+
+            MAX_RETRY_ATTEMPTS: Final[int] = 3
+            DEFAULT_TIMEOUT: Final[float] = 30.0
+            CIRCUIT_BREAKER_THRESHOLD: Final[int] = 5
+            HEADER_REQUEST_ID: Final[str] = "X-Request-ID"
+
         PATTERN_UUID: Final[str] = (
             r"^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
         )
@@ -1947,7 +1956,6 @@ class FlextConstants:
 
 
 c = FlextConstants
-c_core = FlextConstants
 
 # DRY Compliance Note:
 # The following constants match StrEnum values (DRY pattern at documentation level):
@@ -1958,4 +1966,4 @@ c_core = FlextConstants
 # StrEnum is the single source of truth. These constants are kept for backward compatibility
 # and must match StrEnum values (documented, not code-referenced due to Python scoping limitations).
 
-__all__ = ["FlextConstants", "c", "c_core"]
+__all__ = ["FlextConstants", "c"]

@@ -33,10 +33,10 @@ from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.dispatcher import FlextDispatcher
-from flext_core.exceptions import e
+from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
-from flext_core.mixins import require_initialized, x
+from flext_core.mixins import FlextMixins as x, require_initialized
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.registry import FlextRegistry
@@ -137,7 +137,7 @@ class FlextService[TDomainResult](
             # This allows: user = AutoGetUserService(user_id="123") to get User object
             if result.is_failure:
                 error_msg = result.error or "Service execution failed"
-                raise e.BaseError(error_msg)
+                raise FlextExceptions.BaseError(error_msg)
             # Return the unwrapped value directly (breaks static typing but is intended behavior)
             # Type narrowing: result.value is TDomainResult, which may be Self in some cases
             # This is a runtime pattern where TDomainResult can be the service instance itself
@@ -165,7 +165,7 @@ class FlextService[TDomainResult](
         if result.is_success:
             return result.value
         # On failure, raise exception
-        raise e.BaseError(result.error or "Service execution failed")
+        raise FlextExceptions.BaseError(result.error or "Service execution failed")
 
     @override
     def __init__(
@@ -298,7 +298,8 @@ class FlextService[TDomainResult](
         """
         # 1. Config materialization with overrides
         config_cls = config_type or FlextSettings
-        runtime_config = config_cls.materialize(config_overrides=config_overrides)
+        # Pydantic v2: Use model_validate for proper validation with overrides
+        runtime_config = config_cls.model_validate(config_overrides or {})
 
         # 2. Context creation with initial data
         # FlextContext implements Ctx protocol structurally

@@ -18,18 +18,18 @@ from pydantic import BaseModel
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.cast import FlextUtilitiesCast, cast_safe as _cast_safe_fn
+from flext_core._utilities.cast import FlextUtilitiesCast, cast_safe
 from flext_core._utilities.checker import FlextUtilitiesChecker
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
 from flext_core._utilities.context import FlextUtilitiesContext
 from flext_core._utilities.conversion import (
     FlextUtilitiesConversion,
-    conversion as _conversion_fn,
+    conversion,
 )
 from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
 from flext_core._utilities.domain import FlextUtilitiesDomain
-from flext_core._utilities.enum import FlextUtilitiesEnum, enum as _enum_fn
+from flext_core._utilities.enum import FlextUtilitiesEnum, enum
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -101,20 +101,20 @@ class FlextUtilities:
         """Enum utility class - real inheritance."""
 
     # Generalized public function aliases
-    enum = staticmethod(_enum_fn)
-    conversion = staticmethod(_conversion_fn)
-    cast_safe = staticmethod(_cast_safe_fn)
+    enum = staticmethod(enum)
+    conversion = staticmethod(conversion)
+    cast_safe = staticmethod(cast_safe)
 
     # Convenience shortcuts for common operations
     @staticmethod
     def is_enum_member[E: StrEnum](value: object, enum_cls: type[E]) -> TypeIs[E]:
         """Check if value is enum member. Alias for enum(value, cls, mode='is_member')."""
-        return _enum_fn(value, enum_cls, mode="is_member")
+        return enum(value, enum_cls, mode="is_member")
 
     @staticmethod
     def parse_enum[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
         """Parse value to enum. Alias for enum(value, cls, mode='parse')."""
-        return _enum_fn(value, enum_cls, mode="parse")
+        return enum(value, enum_cls, mode="parse")
 
     @staticmethod
     def get_enum_values(enum_class: type[StrEnum]) -> Sequence[str]:
@@ -194,7 +194,7 @@ class FlextUtilities:
     @staticmethod
     def to_str(value: object, *, default: str | None = None) -> str:
         """Convert value to string. Alias for conversion(value, mode='to_str')."""
-        return _conversion_fn(value, mode="to_str", default=default)
+        return conversion(value, mode="to_str", default=default)
 
     @staticmethod
     def to_str_list(
@@ -203,7 +203,7 @@ class FlextUtilities:
         default: list[str] | None = None,
     ) -> list[str]:
         """Convert value to list of strings. Alias for conversion(value, mode='to_str_list')."""
-        return _conversion_fn(value, mode="to_str_list", default=default)
+        return conversion(value, mode="to_str_list", default=default)
 
     @staticmethod
     def mapper() -> FlextUtilitiesMapper:

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time as time_module
+import time
 from collections.abc import Callable
 from typing import Annotated, Self
 
@@ -226,7 +226,7 @@ class FlextModelsHandler:
 
             """
             # Use PrivateAttr for proper Pydantic v2 pattern
-            self._start_time = time_module.time()
+            self._start_time = time.time()
 
         @computed_field
         def execution_time_ms(self) -> float:
@@ -252,7 +252,7 @@ class FlextModelsHandler:
             # Type narrowing: _start_time is not None after check, so it's float
             # PrivateAttr type narrowing works after None check
             start_time: float = self._start_time
-            elapsed: float = time_module.time() - start_time
+            elapsed: float = time.time() - start_time
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
 
         @computed_field
@@ -366,7 +366,7 @@ class FlextModelsHandler:
             return self._metrics_state is not None and bool(self._metrics_state)
 
     class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
-        """Configuration extracted from @h.handler() decorator.
+        """Configuration extracted from @FlextHandlers.handler() decorator.
 
         Used by handler discovery to auto-register handlers with FlextDispatcher.
         Stores metadata about command binding, priority, timeout, and middleware chain.
