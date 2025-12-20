@@ -8,7 +8,6 @@ and event collection.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
@@ -94,6 +93,29 @@ class FlextModels:
     TimestampedModel: TypeAlias = FlextModelsBase.TimestampedModel
     VersionableMixin: TypeAlias = FlextModelsBase.VersionableMixin
     CollectionsCategories: TypeAlias = FlextModelsCollections.Categories
+
+    # Auth-specific models
+    class Identity(FlextModelsEntity.AggregateRoot):
+        """User identity aggregate root for authentication domain.
+
+        Represents a user account with authentication credentials,
+        roles, and session management capabilities.
+        """
+
+        name: str
+        contact: str
+        credential: str
+        roles: list[str] | None = None
+        metadata: dict[str, str] | None = None
+
+    class IdentityRequest(FlextModelsCqrs.Command):
+        """Command for identity operations in auth domain."""
+
+        name: str
+        contact: str
+        credential: str
+        roles: list[str] | None = None
+        metadata: dict[str, str] | None = None
 
     # Direct aliases for simple access (remove subnamespaces)
     Command = FlextModelsCqrs.Command
@@ -260,6 +282,12 @@ class FlextModels:
     AttributeAccessErrorConfig: TypeAlias = FlextModelsConfig.AttributeAccessErrorConfig
     MiddlewareConfig: TypeAlias = FlextModelsConfig.MiddlewareConfig
     RateLimiterState: TypeAlias = FlextModelsConfig.RateLimiterState
+
+
+# Resolve forward references for Pydantic v2 compatibility
+# This is required for models with forward references in base classes
+FlextModels.Identity.model_rebuild()
+FlextModels.IdentityRequest.model_rebuild()
 
 
 m = FlextModels

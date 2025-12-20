@@ -24,7 +24,6 @@ from typing import (
     TypeAlias,
     TypedDict,
     TypeVar,
-    Union,
 )
 
 from pydantic import BaseModel, ConfigDict
@@ -121,11 +120,7 @@ class FlextTypes:
     # Reuses ScalarValue defined above
     # PEP 695 recursive types work with __future__ annotations
     # Use string forward reference for recursive types to avoid pyrefly errors
-    type GeneralValueType = Union[
-        str | int | float | bool | datetime | None,
-        Sequence[FlextTypes.GeneralValueType],
-        Mapping[str, FlextTypes.GeneralValueType],
-    ]
+    type GeneralValueType = str | int | float | bool | datetime | None | Sequence[FlextTypes.GeneralValueType] | Mapping[str, FlextTypes.GeneralValueType]
 
     # Constant value type - all possible constant types in FlextConstants
     # Used for type-safe constant access via __getitem__ method
@@ -196,11 +191,7 @@ class FlextTypes:
 
     # Flexible value type for protocol methods - contains scalars,
     # sequences, or mappings
-    type FlexibleValue = Union[
-        str | int | float | bool | datetime | None,
-        Sequence[str | int | float | bool | datetime | None],
-        Mapping[str, str | int | float | bool | datetime | None],
-    ]
+    type FlexibleValue = str | int | float | bool | datetime | None | Sequence[str | int | float | bool | datetime | None] | Mapping[str, str | int | float | bool | datetime | None]
 
     # Mapping of string keys to flexible values
     type FlexibleMapping = Mapping[str, FlextTypes.FlexibleValue]
