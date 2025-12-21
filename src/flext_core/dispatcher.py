@@ -2440,9 +2440,8 @@ class FlextDispatcher(x):
         """
         # handler is validated to have can_handle() before calling this function
         # Type narrowing: treat as t.HandlerType directly
-        if u.Guards.is_handler_type(handler):
-            if handler not in self._auto_handlers:
-                self._auto_handlers.append(handler)
+        if u.Guards.is_handler_type(handler) and handler not in self._auto_handlers:
+            self._auto_handlers.append(handler)
 
         return r[t.ConfigurationMapping].ok({
             "handler_name": handler_name,

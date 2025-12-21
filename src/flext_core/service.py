@@ -472,7 +472,7 @@ class FlextService[TDomainResult](
         )
 
         return cls._create_runtime(
-            config_type=cast("type[FlextSettings] | None", config_type_val),
+            config_type=config_type_val,  # Already typed as type[FlextSettings] | None
             config_overrides=config_overrides_val,
             context=context_val,
             subproject=subproject_val,
@@ -1032,8 +1032,8 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> m.ServiceRuntime:
         """Clone the service runtime triple using protocol-backed models."""
-        # Use public properties instead of private attributes
         # Cast needed: mypy sees @property/@computed_field as Callable, not the return type
+        # These are workarounds for mypy's property inference limitation
         config = cast("p.Config", self.config)
         ctx = cast("p.Ctx", self.context)
         container = cast("p.DI", self.container)
@@ -1073,7 +1073,6 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             Config: Cloned configuration instance with updates applied.
 
         """
-        # Use public property instead of private attribute
         # Cast needed: mypy sees @property as Callable, not the return type
         config = cast("p.Config", self.config)
         return config.model_copy(update=overrides, deep=True)
@@ -1096,10 +1095,10 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         isolated from the parent, enabling containerized execution flows without
         mutating global state.
         """
-        # Use public property instead of private attribute
         # Cast needed: mypy sees @computed_field as Callable, not the return type
         base_runtime = cast("m.ServiceRuntime", self.runtime)
         # Type narrowing: base_runtime.context is FlextContext for nested class access
+        # Cast needed: protocol (p.Ctx) doesn't expose nested classes (.Correlation, .Service)
         base_context = cast("FlextContext", base_runtime.context)
         original_correlation = base_context.Correlation.get_correlation_id()
 

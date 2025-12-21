@@ -517,6 +517,7 @@ class FlextMixins(FlextRuntime):
         # Check cache first (thread-safe)
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
+                # INTENTIONAL CAST: FlextLogger → p.Log.StructlogLogger protocol conversion
                 return cast("p.Log.StructlogLogger", cls._logger_cache[logger_name])
 
         # Try to get from DI container
@@ -533,6 +534,7 @@ class FlextMixins(FlextRuntime):
                 # Cache the result
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger
+                # INTENTIONAL CAST: FlextLogger → p.Log.StructlogLogger protocol conversion
                 return cast("p.Log.StructlogLogger", logger)
 
             # Logger not in container - create and register
@@ -554,6 +556,7 @@ class FlextMixins(FlextRuntime):
             with cls._cache_lock:
                 cls._logger_cache[logger_name] = logger
 
+            # INTENTIONAL CAST: FlextLogger → p.Log.StructlogLogger protocol conversion
             return cast("p.Log.StructlogLogger", logger)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
@@ -561,6 +564,7 @@ class FlextMixins(FlextRuntime):
             logger = FlextLogger(logger_name)
             with cls._cache_lock:
                 cls._logger_cache[logger_name] = logger
+            # INTENTIONAL CAST: FlextLogger → p.Log.StructlogLogger protocol conversion
             return cast("p.Log.StructlogLogger", logger)
 
     def _log_with_context(
