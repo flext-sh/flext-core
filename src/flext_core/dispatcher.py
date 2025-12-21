@@ -1194,11 +1194,8 @@ class FlextDispatcher(x):
                 # Validate it's callable or BaseModel (valid HandlerType)
                 # HandlerType includes Callable and BaseModel instances
                 # Type narrowing: isinstance checks narrow to t.HandlerType
-                if callable(extracted_handler) or isinstance(
-                    extracted_handler,
-                    BaseModel,
-                ):
-                    return cast("t.HandlerType", extracted_handler)
+                if u.Guards.is_handler_type(extracted_handler):
+                    return extracted_handler
             # Return handler directly (it's already HandlerType from dict definition)
             return handler_entry
 
@@ -2331,10 +2328,10 @@ class FlextDispatcher(x):
                 request_dict = {}
         else:
             normalized = FlextRuntime.normalize_to_general_value(request)
-            request_dict = cast(
-                "t.ConfigurationDict",
-                (normalized if u.is_type(normalized, dict) else {}),
-            )
+            if u.Guards.is_configuration_dict(normalized):
+                request_dict = normalized
+            else:
+                request_dict = {}
 
         return r[t.ConfigurationDict].ok(request_dict)
 
@@ -2443,9 +2440,9 @@ class FlextDispatcher(x):
         """
         # handler is validated to have can_handle() before calling this function
         # Type narrowing: treat as t.HandlerType directly
-        handler_typed = cast("t.HandlerType", handler)
-        if handler_typed not in self._auto_handlers:
-            self._auto_handlers.append(handler_typed)
+        if u.Guards.is_handler_type(handler):
+            if handler not in self._auto_handlers:
+                self._auto_handlers.append(handler)
 
         return r[t.ConfigurationMapping].ok({
             "handler_name": handler_name,
@@ -2547,8 +2544,13 @@ class FlextDispatcher(x):
             )
         # Use .value directly - FlextResult never returns None on success
         handler_general, handler_name = handler_result.value
-        # Cast t.GeneralValueType to HandlerType for storage in typed collections
-        handler = cast("t.HandlerType", handler_general)
+        # Validate handler type before registration
+        if u.Guards.is_handler_type(handler_general):
+            handler = handler_general
+        else:
+            return r[t.ConfigurationMapping].fail(
+                f"Invalid handler type: {type(handler_general).__name__}"
+            )
 
         # Determine registration mode and register
         can_handle_attr = getattr(handler, "can_handle", None)
@@ -2615,16 +2617,16 @@ class FlextDispatcher(x):
 
         """
         if handler is not None:
-            # Cast request and handler to HandlerType for layer1_register_handler
-            request_typed_for_reg: t.HandlerType = cast(
-                "t.HandlerType",
-                request,
-            )
-            handler_typed: t.HandlerType = cast(
-                "t.HandlerType",
-                handler,
-            )
-            result = self.layer1_register_handler(request_typed_for_reg, handler_typed)
+            # Validate request and handler are HandlerType before registration
+            if not u.Guards.is_handler_type(request):
+                return r[t.ConfigurationMapping].fail(
+                    f"Invalid request type: {type(request).__name__}"
+                )
+            if not u.Guards.is_handler_type(handler):
+                return r[t.ConfigurationMapping].fail(
+                    f"Invalid handler type: {type(handler).__name__}"
+                )
+            result = self.layer1_register_handler(request, handler)
             if result.is_failure:
                 return r[t.ConfigurationMapping].fail(
                     result.error or "Registration failed",
@@ -2640,20 +2642,16 @@ class FlextDispatcher(x):
         # Single-arg mode: register_handler(dict_or_model_or_handler)
         if isinstance(request, BaseModel) or FlextRuntime.is_dict_like(request):
             # Delegate to register_handler_with_request (eliminates ~100 lines of duplication)
-            # Safe cast: request is BaseModel or dict-like, compatible with t.GeneralValueType
-            request_for_registration: t.GeneralValueType = cast(
-                "t.GeneralValueType",
-                request,
-            )
-            return self.register_handler_with_request(request_for_registration)
+            # request is already t.GeneralValueType, no cast needed
+            return self.register_handler_with_request(request)
 
         # Single handler object - delegate to layer1_register_handler
-        # Cast request to HandlerType
-        request_typed_for_single: t.HandlerType = cast(
-            "t.HandlerType",
-            request,
-        )
-        result = self.layer1_register_handler(request_typed_for_single)
+        # Validate request is HandlerType before passing to layer1_register_handler
+        if not u.Guards.is_handler_type(request):
+            return r[t.ConfigurationMapping].fail(
+                f"Invalid handler type: {type(request).__name__}"
+            )
+        result = self.layer1_register_handler(request)
         if result.is_failure:
             return r[t.ConfigurationMapping].fail(
                 result.error or "Registration failed",
@@ -3997,13 +3995,15 @@ class FlextDispatcher(x):
 
         # Extract attributes section if present - fast fail: must be dict or None
         attributes_section_raw = dumped.get("attributes")
-        if attributes_section_raw is not None and isinstance(
-            attributes_section_raw, Mapping
+        if (
+            attributes_section_raw is not None
+            and u.Guards.is_configuration_mapping(attributes_section_raw)
         ):
-            # dumped.get("attributes") returns unknown type, cast to ConfigurationMapping after isinstance check
-            return cast("t.ConfigurationMapping", attributes_section_raw)
+            # Type narrowing: is_configuration_mapping TypeGuard narrows to ConfigurationMapping
+            return attributes_section_raw
         # Return full dump if no attributes section
-        return cast("t.ConfigurationMapping", dumped)
+        # dumped is dict from model_dump(), is ConfigurationMapping compatible
+        return dumped  # type: ignore[return-value]
 
     @staticmethod
     def _extract_from_object_attributes(
