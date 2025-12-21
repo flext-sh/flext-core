@@ -18,6 +18,8 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import TypeGuard
 
+from pydantic import BaseModel
+
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -212,6 +214,103 @@ class FlextUtilitiesGuards:
                 for k, v in value.items()
             )
         return False
+
+    @staticmethod
+    def is_handler_type(value: object) -> TypeGuard[t.HandlerType]:
+        """Check if value is a valid t.HandlerType.
+
+        t.HandlerType = Callable | BaseModel | type[BaseModel] | object with handle/can_handle
+
+        This TypeGuard enables type narrowing without cast() for t.HandlerType.
+        Uses structural typing to validate at runtime.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[t.HandlerType]: True if value matches t.HandlerType structure
+
+        Example:
+            >>> from flext_core.utilities import u
+            >>> if u.Guards.is_handler_type(handler):
+            ...     # handler is now typed as t.HandlerType
+            ...     result = container.register("my_handler", handler)
+
+        """
+        # Check if callable (most common case)
+        if callable(value):
+            return True
+        # Check if BaseModel instance or class
+        if isinstance(value, (BaseModel, type)) and (
+            isinstance(value, BaseModel) or issubclass(value, BaseModel)
+        ):
+            return True
+        # Check for handler protocol methods (duck typing)
+        return hasattr(value, "handle") or hasattr(value, "can_handle")
+
+    @staticmethod
+    def is_configuration_mapping(
+        value: object,
+    ) -> TypeGuard[t.ConfigurationMapping]:
+        """Check if value is a valid t.ConfigurationMapping.
+
+        t.ConfigurationMapping = Mapping[str, t.GeneralValueType]
+
+        This TypeGuard enables type narrowing without cast() for t.ConfigurationMapping.
+        Uses structural typing to validate at runtime.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[t.ConfigurationMapping]: True if value matches ConfigurationMapping structure
+
+        Example:
+            >>> from flext_core.utilities import u
+            >>> if u.Guards.is_configuration_mapping(config):
+            ...     # config is now typed as t.ConfigurationMapping
+            ...     items = config.items()
+
+        """
+        # Check if it's a Mapping
+        if not isinstance(value, Mapping):
+            return False
+        # Check all keys are strings and values are GeneralValueType
+        return all(
+            isinstance(k, str) and FlextUtilitiesGuards.is_general_value_type(v)
+            for k, v in value.items()
+        )
+
+    @staticmethod
+    def is_configuration_dict(value: object) -> TypeGuard[t.ConfigurationDict]:
+        """Check if value is a valid t.ConfigurationDict.
+
+        t.ConfigurationDict = dict[str, t.GeneralValueType]
+
+        This TypeGuard enables type narrowing without cast() for t.ConfigurationDict.
+        Uses structural typing to validate at runtime.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[t.ConfigurationDict]: True if value matches ConfigurationDict structure
+
+        Example:
+            >>> from flext_core.utilities import u
+            >>> if u.Guards.is_configuration_dict(config):
+            ...     # config is now typed as t.ConfigurationDict
+            ...     config["key"] = "value"
+
+        """
+        # Check if it's a dict (mutable)
+        if not isinstance(value, dict):
+            return False
+        # Check all keys are strings and values are GeneralValueType
+        return all(
+            isinstance(k, str) and FlextUtilitiesGuards.is_general_value_type(v)
+            for k, v in value.items()
+        )
 
     @staticmethod
     def _is_config(obj: object) -> TypeGuard[p.Config]:

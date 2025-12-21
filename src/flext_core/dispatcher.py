@@ -529,14 +529,13 @@ class FlextDispatcher(x):
         # Use global circuit breaker manager
         # Per-processor circuit breaking is handled at dispatch() level
         # For now, always allow (dispatch() will enforce global CB)
-        # Type narrowing: processor is already t.GeneralValueType compatible
+        # Type narrowing: isinstance check narrows to t.GeneralValueType
         # processor is HandlerCallable | Callable[t.GeneralValueType] | Processor
         # Convert to t.GeneralValueType for return
-        processor_typed: t.GeneralValueType = cast(
-            "t.GeneralValueType",
+        processor_typed: t.GeneralValueType = (
             processor
             if isinstance(processor, (str, int, float, bool, type(None), dict, list))
-            else str(processor),
+            else str(processor)
         )
         return r[t.GeneralValueType].ok(processor_typed)
 
@@ -598,7 +597,7 @@ class FlextDispatcher(x):
                             "'process' attribute must be callable"
                         ),
                     )
-                # Type narrowing: process_method() returns object, convert to t.GeneralValueType
+                # Type narrowing: isinstance check narrows to t.GeneralValueType
                 process_result_raw = process_method(data)
                 processor_result = cast(
                     "t.GeneralValueType",
@@ -624,10 +623,8 @@ class FlextDispatcher(x):
 
             # Convert to r if needed
             # Ensure result is wrapped in r using consolidated helper
-            # Type narrowing: processor_result is t.GeneralValueType, ensure_result accepts T | r[T]
-            result_wrapped = x.ResultHandling.ensure_result(
-                cast("t.GeneralValueType | r[t.GeneralValueType]", processor_result)
-            )
+            # processor_result is already t.GeneralValueType, no cast needed
+            result_wrapped = x.ResultHandling.ensure_result(processor_result)
 
             # Update metrics
             execution_time = time.time() - start_time
@@ -705,6 +702,7 @@ class FlextDispatcher(x):
                     results.append(result.value)
                 else:
                     # Use u.err() for unified error extraction (DSL pattern)
+                    # result is r[t.GeneralValueType] which satisfies p.Result protocol
                     error_msg = u.err(
                         cast("p.Result[t.GeneralValueType]", result),
                         default="Unknown error in processor",
@@ -768,10 +766,8 @@ class FlextDispatcher(x):
                         results.append(result.value)
                     else:
                         # Use u.err() for unified error extraction (DSL pattern)
-                        error_msg = u.err(
-                            cast("p.Result[t.GeneralValueType]", result),
-                            default="Unknown error in processor",
-                        )
+                        # result is r[t.GeneralValueType] which satisfies p.Result protocol
+                        error_msg = u.err(cast("p.Result[t.GeneralValueType]", result), default="Unknown error in processor")
                         return r[list[t.GeneralValueType]].fail(
                             error_msg,
                         )
@@ -886,6 +882,7 @@ class FlextDispatcher(x):
         rate_limit_result = FlextDispatcher._apply_processor_rate_limiter()
         if rate_limit_result.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
+            # rate_limit_result is r[bool] which satisfies p.Result protocol
             error_msg = u.err(
                 cast("p.Result[bool]", rate_limit_result), default="Rate limit exceeded"
             )
@@ -1196,7 +1193,7 @@ class FlextDispatcher(x):
                 )
                 # Validate it's callable or BaseModel (valid HandlerType)
                 # HandlerType includes Callable and BaseModel instances
-                # Type narrowing: extracted_handler is HandlerType after validation
+                # Type narrowing: isinstance checks narrow to t.HandlerType
                 if callable(extracted_handler) or isinstance(
                     extracted_handler,
                     BaseModel,
@@ -1567,6 +1564,7 @@ class FlextDispatcher(x):
         """Handle middleware execution result."""
         if isinstance(result, r) and result.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
+            # result is r[bool] which satisfies p.Result protocol
             error_msg = u.err(cast("p.Result[bool]", result), default="Unknown error")
             self.logger.warning(
                 "Middleware rejected command - command processing stopped",
@@ -1640,6 +1638,8 @@ class FlextDispatcher(x):
                         lambda h: h.__class__.__name__,
                     ),
                 )
+                # Type note: handler_names is list[str] but logger accepts more general types
+                # This is semantically correct - logger should accept list[str] for string list fields
                 self.logger.error(
                     "FAILED to find handler for command - DISPATCH ABORTED",
                     operation=c.Mixins.METHOD_EXECUTE,
@@ -2441,11 +2441,9 @@ class FlextDispatcher(x):
             r with registration details
 
         """
-        # Cast handler to HandlerType for append
-        handler_typed: t.HandlerType = cast(
-            "t.HandlerType",
-            handler,
-        )
+        # handler is validated to have can_handle() before calling this function
+        # Type narrowing: treat as t.HandlerType directly
+        handler_typed = cast("t.HandlerType", handler)
         if handler_typed not in self._auto_handlers:
             self._auto_handlers.append(handler_typed)
 
@@ -3630,6 +3628,7 @@ class FlextDispatcher(x):
         conditions_check = self._check_pre_dispatch_conditions(message_type)
         if conditions_check.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
+            # conditions_check is r[bool] which satisfies p.Result protocol
             error_msg = u.err(
                 cast("p.Result[bool]", conditions_check),
                 default="Pre-dispatch conditions check failed",

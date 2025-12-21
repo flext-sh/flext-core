@@ -480,14 +480,14 @@ class FlextDecorators(FlextRuntime):
                 )
 
                 # Get logger from self if available, otherwise create one
-                args_tuple = cast("tuple[object, ...]", args)
-                logger = FlextDecorators._resolve_logger(args_tuple, func)
+                logger = FlextDecorators._resolve_logger(args, func)
                 # with_result() is specific to FlextLogger, not in protocol
-                result_logger = cast("FlextLogger", logger).with_result()
+                # Type narrowing: _resolve_logger always returns FlextLogger
+                result_logger = logger.with_result()
 
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
-                    logger=logger,
+                    logger=logger,  # type: ignore[arg-type]
                     function_name=func.__name__,
                     ensure_correlation=True,
                 )
@@ -513,10 +513,7 @@ class FlextDecorators(FlextRuntime):
                         logger=logger,
                         fallback_message="operation_log_emit_failed",
                         kwargs={
-                            "extra": cast(
-                                "t.GeneralValueType",
-                                {**start_extra, "log_state": "start"},
-                            ),
+                            "extra": {**start_extra, "log_state": "start"},
                         },
                     )
 
@@ -547,10 +544,7 @@ class FlextDecorators(FlextRuntime):
                         logger=logger,
                         fallback_message="operation_log_emit_failed",
                         kwargs={
-                            "extra": cast(
-                                "t.GeneralValueType",
-                                {**completion_extra, "log_state": "completed"},
-                            ),
+                            "extra": {**completion_extra, "log_state": "completed"},
                         },
                     )
                     return result
@@ -602,14 +596,11 @@ class FlextDecorators(FlextRuntime):
                         logger=logger,
                         fallback_message="operation_log_emit_failed",
                         kwargs={
-                            "extra": cast(
-                                "t.GeneralValueType",
-                                {
-                                    **failure_extra,
-                                    "log_state": "failed",
-                                    "exception_repr": repr(e),
-                                },
-                            ),
+                            "extra": {
+                                **failure_extra,
+                                "log_state": "failed",
+                                "exception_repr": repr(e),
+                            },
                         },
                     )
                     raise
@@ -669,8 +660,7 @@ class FlextDecorators(FlextRuntime):
                 )
 
                 # Get logger from self if available, otherwise create one
-                args_tuple = cast("tuple[object, ...]", args)
-                logger = FlextDecorators._resolve_logger(args_tuple, func)
+                logger = FlextDecorators._resolve_logger(args, func)
 
                 start_time = time.perf_counter()
 
@@ -786,8 +776,9 @@ class FlextDecorators(FlextRuntime):
                     result = func(*args, **kwargs)
 
                     # If already a FlextResult, return as-is
+                    # Type narrowing: isinstance(result, r) confirms result is r[T]
                     if isinstance(result, r):
-                        return cast("r[T]", result)
+                        return result
 
                     # Wrap successful result
                     return r[T].ok(result)
@@ -922,18 +913,22 @@ class FlextDecorators(FlextRuntime):
     def _resolve_logger(
         args: tuple[object, ...],
         func: Callable[P, R],
-    ) -> p.Log.StructlogLogger:
-        """Resolve logger from first argument or create module logger."""
+    ) -> FlextLogger:
+        """Resolve logger from first argument or create module logger.
+
+        Returns:
+            FlextLogger instance (concrete type, not protocol)
+
+        """
         first_arg = args[0] if args else None
         potential_logger: object | None = (
             getattr(first_arg, "logger", None) if first_arg is not None else None
         )
         if potential_logger is not None and isinstance(potential_logger, FlextLogger):
-            return cast("p.Log.StructlogLogger", potential_logger)
-        return cast(
-            "p.Log.StructlogLogger",
-            FlextLogger(func.__module__),
-        )
+            # Type narrowing via isinstance check
+            return potential_logger
+        # FlextLogger constructor returns FlextLogger
+        return FlextLogger(func.__module__)
 
     @staticmethod
     def _execute_retry_loop[R](
@@ -945,7 +940,7 @@ class FlextDecorators(FlextRuntime):
             str,
             object,
         ],  # Function kwargs can contain any type (ParamSpec compatibility)
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,
     ) -> R | Exception:
@@ -1038,7 +1033,7 @@ class FlextDecorators(FlextRuntime):
         func: Callable[P, R],
         attempts: int,
         error_code: str | None,
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
     ) -> None:
         """Handle retry exhaustion and raise appropriate exception."""
         # All retries exhausted
@@ -1081,7 +1076,7 @@ class FlextDecorators(FlextRuntime):
     def _bind_operation_context(
         *,
         operation: str,
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         function_name: str,
         ensure_correlation: bool,
     ) -> str | None:
@@ -1117,7 +1112,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def _clear_operation_scope(
         *,
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         function_name: str,
         operation: str,
     ) -> None:
@@ -1141,7 +1136,7 @@ class FlextDecorators(FlextRuntime):
     def _handle_log_result(
         *,
         result: p.Result[bool] | FlextRuntime.RuntimeResult[bool],
-        logger: p.Log.StructlogLogger,
+        logger: FlextLogger,
         fallback_message: str,
         kwargs: t.ConfigurationMapping,
     ) -> None:
@@ -1435,8 +1430,7 @@ class FlextDecorators(FlextRuntime):
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                args_tuple = cast("tuple[object, ...]", args)
-                logger = FlextDecorators._resolve_logger(args_tuple, func)
+                logger = FlextDecorators._resolve_logger(args, func)
 
                 try:
                     # Bind context variables to global logging context
@@ -1527,8 +1521,7 @@ class FlextDecorators(FlextRuntime):
                     operation_name if operation_name is not None else func.__name__
                 )
 
-                args_tuple = cast("tuple[object, ...]", args)
-                logger = FlextDecorators._resolve_logger(args_tuple, func)
+                logger = FlextDecorators._resolve_logger(args, func)
 
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,

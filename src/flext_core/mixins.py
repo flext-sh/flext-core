@@ -172,9 +172,9 @@ class FlextMixins(FlextRuntime):
                 if dict_result is not None:
                     # Type narrowing: dict is a subtype of Mapping[str, t.GeneralValueType]
                     # ConfigurationDict (dict[str, t.GeneralValueType]) is compatible with ContextMetadataMapping
-                    return cast("t.ContextMetadataMapping", dict_result)
+                    return dict_result  # type: ignore[return-value]
                 # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
-                return cast("t.ContextMetadataMapping", {"value": normalized})
+                return {"value": normalized}
             # For Mapping, normalize each value
             try:
                 normalized_dict = {}
@@ -192,8 +192,8 @@ class FlextMixins(FlextRuntime):
                 # Since dict is a subtype of Mapping, ConfigurationDict is compatible with ContextMetadataMapping
                 result_value = process_result.value
                 if isinstance(result_value, dict):
-                    return cast("t.ContextMetadataMapping", result_value)
-            return cast("t.ContextMetadataMapping", {})
+                    return result_value
+            return {}
 
     # =========================================================================
     # RESULT HANDLING UTILITIES (New in Phase 0 - Consolidation)
@@ -245,7 +245,12 @@ class FlextMixins(FlextRuntime):
 
     @property
     def config(self) -> FlextSettings:
-        """Return the runtime configuration associated with this component."""
+        """Return the runtime configuration associated with this component.
+
+        INTENTIONAL CAST: ServiceRuntime.config is typed as p.Config (protocol)
+        but guaranteed to be FlextSettings in practice. This cast enables
+        concrete attribute access without breaking protocol abstraction.
+        """
         return cast("FlextSettings", self._get_runtime().config)
 
     @classmethod
@@ -270,7 +275,7 @@ class FlextMixins(FlextRuntime):
             and hasattr(runtime, "config")
             and hasattr(runtime, "container")
         ):
-            return cast("m.ServiceRuntime", runtime)
+            return runtime
 
         runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
         # Call method and ensure result is t.RuntimeBootstrapOptions TypedDict
@@ -278,14 +283,15 @@ class FlextMixins(FlextRuntime):
         options_raw: object = (
             runtime_options_callable() if callable(runtime_options_callable) else {}
         )
-        # Type narrowing: ensure result is RuntimeBootstrapOptions TypedDict
-        # Cast to t.RuntimeBootstrapOptions - object from callable is compatible
+        # INTENTIONAL CAST: RuntimeBootstrapOptions is a TypedDict, but callable
+        # returns object. This narrows type while preserving dict structure validation.
         options: t.RuntimeBootstrapOptions = cast(
             "t.RuntimeBootstrapOptions",
             options_raw if isinstance(options_raw, dict) else {},
         )
         # Use factory methods directly - Clean Architecture pattern
         # Each class knows how to instantiate itself
+        # INTENTIONAL CAST: u.mapper().get() returns GeneralValueType, narrow to class type
         config_type = (
             cast(
                 "type[FlextSettings] | None",
@@ -296,6 +302,7 @@ class FlextMixins(FlextRuntime):
         )
         config_cls = config_type or FlextSettings
         config_overrides_raw = u.mapper().get(options, "config_overrides")
+        # INTENTIONAL CAST: isinstance check narrows to dict/Mapping, cast refines value type
         config_overrides_typed: Mapping[str, t.FlexibleValue] | None = (
             cast("Mapping[str, t.FlexibleValue]", config_overrides_raw)
             if isinstance(config_overrides_raw, (dict, Mapping))
@@ -305,6 +312,7 @@ class FlextMixins(FlextRuntime):
             config_overrides=config_overrides_typed,
         )
 
+        # INTENTIONAL CAST: u.mapper().get() returns GeneralValueType, narrow to protocol type
         context_option = (
             cast(
                 "p.Ctx | None",
@@ -317,11 +325,9 @@ class FlextMixins(FlextRuntime):
             context_option if context_option is not None else FlextContext.create()
         )
 
-        # Cast config to protocol for container.scoped() compatibility
-        runtime_config_typed: p.Config = cast(
-            "p.Config",
-            runtime_config,
-        )
+        # FlextSettings already implements p.Config protocol
+        runtime_config_typed: p.Config = runtime_config
+        # INTENTIONAL CAST: u.mapper().get() returns GeneralValueType, narrow to service mapping type
         services_option = (
             cast(
                 "Mapping[str, t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType]] | None",
@@ -331,26 +337,24 @@ class FlextMixins(FlextRuntime):
             else None
         )
 
-        # Cast context to Ctx | None for scoped() compatibility
-        context_typed: p.Ctx | None = (
-            cast("p.Ctx", runtime_context)
-            if isinstance(runtime_context, FlextContext)
-            else runtime_context
-        )
+        # FlextContext already implements p.Ctx protocol
+        context_typed: p.Ctx | None = runtime_context
         factories_raw = options.get("factories")
 
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
             context=context_typed,
-            # Cast needed: mapper().get() returns t.GeneralValueType, narrow to str | None
+            # INTENTIONAL CAST: mapper().get() returns GeneralValueType, narrow to str | None
             subproject=cast("str | None", u.mapper().get(options, "subproject")),
             services=services_option,
+            # INTENTIONAL CAST: isinstance narrows to dict/Mapping, cast refines callable signature
             factories=cast(
                 "Mapping[str, Callable[[], str | int | float | bool | datetime | Sequence[str | int | float | bool | datetime | None] | Mapping[str, str | int | float | bool | datetime | None] | None]] | None",
                 factories_raw,
             )
             if isinstance(factories_raw, (dict, Mapping))
             else None,
+            # INTENTIONAL CAST: mapper().get() returns GeneralValueType, narrow to resource mapping
             resources=cast(
                 "Mapping[str, Callable[[], t.GeneralValueType]] | None",
                 u.mapper().get(options, "resources"),
@@ -477,12 +481,14 @@ class FlextMixins(FlextRuntime):
         # Use r.create_from_callable() for unified error handling (DSL pattern)
         def register() -> bool:
             """Register service in container."""
+            # INTENTIONAL CAST: self is Pydantic model, narrow to service type for container
             service: t.GeneralValueType | BaseModel = cast(
                 "t.GeneralValueType | BaseModel",
                 self,
             )
             result = self.container.register(
                 service_name,
+                # INTENTIONAL CAST: Narrow BaseModel to FlexibleValue for container registration
                 cast("t.FlexibleValue", service),
             )
             # Use u.when() for conditional error handling (DSL pattern)
@@ -511,10 +517,7 @@ class FlextMixins(FlextRuntime):
         # Check cache first (thread-safe)
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
-                return cast(
-                    "p.Log.StructlogLogger",
-                    cls._logger_cache[logger_name],
-                )
+                return cast("p.Log.StructlogLogger", cls._logger_cache[logger_name])
 
         # Try to get from DI container
         try:
@@ -796,7 +799,7 @@ class FlextMixins(FlextRuntime):
                         if handler_mode_raw is not None
                         else "operation"
                     )
-                    # Cast handler_mode to Literal type - runtime validated, type checker needs cast
+                    # INTENTIONAL CAST: Literal type narrowing - runtime validated via str conversion
                     handler_mode_literal = cast(
                         "c.Cqrs.HandlerTypeLiteral", handler_mode_str
                     )
@@ -831,9 +834,10 @@ class FlextMixins(FlextRuntime):
                         }
                         return r[t.ConfigurationDict].ok(context_dict)
                     # If it's already a dict, return as-is
-                    return r[t.ConfigurationDict].ok(
-                        cast("t.ConfigurationDict", popped)
-                    )
+                    if isinstance(popped, dict):
+                        return r[t.ConfigurationDict].ok(popped)
+                    # Fallback for unexpected types
+                    return r[t.ConfigurationDict].fail("Invalid context type in stack")
                 return r[t.ConfigurationDict].ok({})
 
             def current_context(self) -> m.Handler.ExecutionContext | None:
