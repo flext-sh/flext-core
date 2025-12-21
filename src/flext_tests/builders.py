@@ -180,38 +180,45 @@ class FlextTestsBuilders:
         # Priority 2: Create success result
         elif params.result_ok is not None:
             error_code_val = params.result_code or c.Errors.VALIDATION_ERROR
-            resolved_value = FlextRuntime.RuntimeResult[
-                t.GeneralValueType
-            ].ok(params.result_ok)
+            resolved_value = cast(
+                "t.Tests.Builders.BuilderValue",
+                FlextRuntime.RuntimeResult[t.GeneralValueType].ok(params.result_ok),
+            )
 
         # Priority 3: Create failure result
         elif params.result_fail is not None:
             error_code_val = params.result_code or c.Errors.VALIDATION_ERROR
-            resolved_value = (
+            resolved_value = cast(
+                "t.Tests.Builders.BuilderValue",
                 FlextRuntime.RuntimeResult[t.GeneralValueType].fail(
                     params.result_fail,
                     error_code=error_code_val,
-                )
+                ),
             )
 
         # Priority 4: Batch results
         elif params.results is not None:
-            resolved_value = list(params.results)
+            resolved_value = cast(
+                "t.Tests.Builders.BuilderValue",
+                list(params.results),
+            )
 
         # Priority 5: Batch success results
         elif params.results_ok is not None:
-            resolved_value = (
-                [r[t.GeneralValueType].ok(v) for v in params.results_ok]
+            resolved_value = cast(
+                "t.Tests.Builders.BuilderValue",
+                [r[t.GeneralValueType].ok(v) for v in params.results_ok],
             )
 
         # Priority 6: Batch failure results
         elif params.results_fail is not None:
             error_code_val = params.result_code or c.Errors.VALIDATION_ERROR
-            resolved_value = (
+            resolved_value = cast(
+                "t.Tests.Builders.BuilderValue",
                 [
                     r[t.GeneralValueType].fail(e, error_code=error_code_val)
                     for e in params.results_fail
-                ]
+                ],
             )
 
         # Priority 7: Generic class instantiation
@@ -316,8 +323,8 @@ class FlextTestsBuilders:
                         "t.Tests.TestResultValue",
                         dict_value,
                     )
-                elif u.is_type(dict_value, "list_or_tuple"):
-                    # Type narrowed by u.is_type check for sequences
+                elif isinstance(dict_value, (list, tuple)):
+                    # Type narrowed by isinstance check for sequences
                     sequence_list = list(dict_value)  # Convert to list
                     filtered_dict[dict_key] = cast(
                         "t.Tests.TestResultValue",
@@ -332,11 +339,11 @@ class FlextTestsBuilders:
             # Cast to literal type for tt.model()
             # model_kind_str is validated by _get_model_kind to be one of these values
             model_kind: Literal["user", "config", "service", "entity", "value"] = cast(
-                Literal["user", "config", "service", "entity", "value"],
+                "Literal['user', 'config', 'service', 'entity', 'value']",
                 model_kind_str,
             )
-            resolved_value: t.Tests.Builders.BuilderValue = tt.model(
-                model_kind, **filtered_dict
+            resolved_value = cast(
+                "t.Tests.Builders.BuilderValue", tt.model(model_kind, **filtered_dict)
             )
 
         # Priority 12: Config shortcuts
@@ -351,29 +358,36 @@ class FlextTestsBuilders:
         # Priority 13: Mapping
         elif params.mapping is not None:
             # params.mapping is BuilderMapping which is Mapping[str, BuilderValue]
-            resolved_value: t.Tests.Builders.BuilderValue = dict(params.mapping)
+            mapping_dict = dict(
+                cast("t.Tests.Builders.BuilderMapping", params.mapping),
+            )
+            resolved_value = mapping_dict
 
         # Priority 14: Sequence
         elif params.sequence is not None:
             # params.sequence is BuilderSequence which is Sequence[BuilderValue]
-            resolved_value: t.Tests.Builders.BuilderValue = list(params.sequence)
+            sequence_list = list(
+                cast("t.Tests.Builders.BuilderSequence", params.sequence),
+            )
+            resolved_value = cast("t.Tests.Builders.BuilderValue", sequence_list)
 
         # Priority 15: Direct value
         elif params.value is not None:
-            resolved_value: t.Tests.Builders.BuilderValue = params.value
+            resolved_value = cast("t.Tests.Builders.BuilderValue", params.value)
 
         # Priority 16: Default
         elif params.default is not None:
-            resolved_value: t.Tests.Builders.BuilderValue = params.default
+            resolved_value = cast("t.Tests.Builders.BuilderValue", params.default)
 
         # Apply transformation if provided
         if params.transform is not None and resolved_value is not None:
             if u.is_type(resolved_value, "sequence"):
-                # Type narrowed by u.is_type check - treat as sequence
-                transformed_seq: t.Tests.Builders.BuilderValue = (
-                    [params.transform(item) for item in resolved_value]  # type: ignore
+                # Cast to Sequence for iteration (pyrefly needs explicit narrowing)
+                seq = cast("Sequence[t.GeneralValueType]", resolved_value)
+                resolved_value = cast(
+                    "t.Tests.Builders.BuilderValue",
+                    [params.transform(item) for item in seq],
                 )
-                resolved_value = transformed_seq
             else:
                 # Transform expects t.GeneralValueType, but BuilderValue is wider
                 # Type narrowing: transform returns same type as input (BuilderValue)
@@ -401,15 +415,15 @@ class FlextTestsBuilders:
         if params.merge and params.key in builder_data:
             existing = builder_data[params.key]
             if u.is_type(existing, "mapping") and u.is_type(resolved_value, "mapping"):
-                # Type narrowed by u.is_type checks - treat as mappings
+                # Cast to Mapping for dict conversion (pyrefly needs explicit narrowing)
+                existing_map = cast("Mapping[str, t.GeneralValueType]", existing)
+                resolved_map = cast("Mapping[str, t.GeneralValueType]", resolved_value)
                 merge_result = u.merge(
-                    dict(existing),  # type: ignore
-                    dict(resolved_value),  # type: ignore
+                    dict(existing_map),
+                    dict(resolved_map),
                 )
                 if merge_result.is_success:
-                    resolved_value: t.Tests.Builders.BuilderValue = (
-                        merge_result.value
-                    )
+                    resolved_value = merge_result.value
             else:
                 builder_data[params.key] = resolved_value
         else:
@@ -458,8 +472,9 @@ class FlextTestsBuilders:
             if value is None:
                 final_value = dict(kwargs)
             elif u.is_type(value, "mapping"):
-                # Type narrowed by u.is_type check - treat as mapping
-                merged: t.ConfigurationDict = dict(value)  # type: ignore
+                # Cast to Mapping for dict conversion (pyrefly needs explicit narrowing)
+                value_map = cast("Mapping[str, t.GeneralValueType]", value)
+                merged: t.ConfigurationDict = dict(value_map)
                 merged.update(kwargs)
                 final_value = merged
             else:
@@ -493,8 +508,7 @@ class FlextTestsBuilders:
                 else:
                     error_msg = f"Path '{part}' is not a dict in '{path}'"
                     raise TypeError(error_msg)
-            # Type narrowed by u.is_type check - treat as dict
-            current = next_val  # type: ignore
+            current = cast("dict[str, t.Tests.Builders.BuilderValue]", next_val)
 
         # current is BuilderDict, which accepts BuilderValue
         current[parts[-1]] = final_value
@@ -525,10 +539,11 @@ class FlextTestsBuilders:
         for part in parts:
             if not u.is_type(current, "mapping"):
                 return default
-            # Type narrowed by u.is_type check - treat as mapping
-            if part not in current:  # type: ignore
+            # Cast to Mapping for key access (pyrefly needs explicit narrowing)
+            current_map = cast("Mapping[str, t.Tests.Builders.BuilderValue]", current)
+            if part not in current_map:
                 return default
-            current = current[part]  # type: ignore
+            current = current_map[part]
 
         if as_type is not None:
             return cast("T", current)

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core.constants import c
 from flext_core.exceptions import e
@@ -259,12 +259,9 @@ class FlextHandlers[MessageT_contra, ResultT](
             def handle(self, message: object) -> r[t.GeneralValueType]:
                 """Execute the wrapped callable."""
                 try:
-                    # Message is object, cast to t.GeneralValueType for handler function
-                    message_value: t.GeneralValueType = cast(
-                        "t.GeneralValueType",
-                        message,
-                    )
-                    result = self._handler_fn(message_value)
+                    # Type assertion: Assume message is compatible with handler function
+                    # Handler functions are user-provided and may accept various types
+                    result = self._handler_fn(message)  # type: ignore[arg-type]
                     # If result is already r, return it directly
                     if isinstance(result, r):
                         return result
@@ -358,19 +355,15 @@ class FlextHandlers[MessageT_contra, ResultT](
             ...     print(f"Failed: {result.error}")
 
         """
-        # Cast message to AcceptableMessageType for validation
-        message_for_validation: t.AcceptableMessageType = cast(
-            "t.AcceptableMessageType",
-            message,
-        )
-        validation = self.validate(message_for_validation)
+        # Type narrowing: MessageT_contra is compatible with AcceptableMessageType
+        validation = self.validate(message)
         if validation.is_failure:
             return r[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
 
     def validate(
         self,
-        data: t.AcceptableMessageType,
+        data: MessageT_contra | t.AcceptableMessageType,
     ) -> r[bool]:
         """Validate input data using extensible validation pipeline.
 
@@ -408,7 +401,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def validate_command(
         self,
-        command: t.AcceptableMessageType,
+        command: MessageT_contra | t.AcceptableMessageType,
     ) -> r[bool]:
         """Validate command message with command-specific rules.
 
@@ -431,7 +424,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
     def validate_query(
         self,
-        query: t.AcceptableMessageType,
+        query: MessageT_contra | t.AcceptableMessageType,
     ) -> r[bool]:
         """Validate query message with query-specific rules.
 
@@ -638,18 +631,14 @@ class FlextHandlers[MessageT_contra, ResultT](
             error_msg = f"Handler cannot handle message type {type_name}"
             return r[ResultT].fail(error_msg)
 
-        # Cast message to AcceptableMessageType for validation
-        message_for_validation: t.AcceptableMessageType = cast(
-            "t.AcceptableMessageType",
-            message,
-        )
+        # Type narrowing: MessageT_contra is compatible with AcceptableMessageType
         # Validate message based on operation type
         if operation == c.Dispatcher.HANDLER_MODE_COMMAND:
-            validation = self.validate_command(message_for_validation)
+            validation = self.validate_command(message)
         elif operation == c.Dispatcher.HANDLER_MODE_QUERY:
-            validation = self.validate_query(message_for_validation)
+            validation = self.validate_query(message)
         else:
-            validation = self.validate(message_for_validation)
+            validation = self.validate(message)
 
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
@@ -877,9 +866,9 @@ class FlextHandlers[MessageT_contra, ResultT](
                         func,
                         c.Discovery.HANDLER_ATTR,
                     )
-                    # Type narrowing: func is callable, cast to HandlerCallable
-                    func_typed = cast("t.HandlerCallable", func)
-                    handlers.append((name, func_typed, config))
+                    # Type assertion: callable(func) confirms it's a function
+                    # HandlerCallable is defined as Callable, so this is safe
+                    handlers.append((name, func, config))  # type: ignore[arg-type]
 
             # Sort by priority (descending), then by name for stability
             return sorted(

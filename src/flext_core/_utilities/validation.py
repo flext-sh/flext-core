@@ -248,9 +248,9 @@ class FlextUtilitiesValidation:
         if model_dump_attr is not None and callable(model_dump_attr):
             try:
                 dump_result = model_dump_attr()
-                if FlextUtilitiesGuards.is_type(dump_result, dict):
-                    # Cast to the specific dict type that GeneralValueType accepts
-                    return cast("t.GeneralValueType", dump_result)
+                if isinstance(dump_result, dict):
+                    # dump_result is already dict, which is t.GeneralValueType
+                    return dump_result
                 return str(component)
             except Exception:
                 return str(component)
@@ -305,10 +305,7 @@ class FlextUtilitiesValidation:
 
         if FlextRuntime.is_dict_like(component) and isinstance(component, Mapping):
             return FlextUtilitiesValidation._normalize_dict_like(component, visited)
-        if isinstance(component, (list, tuple)) and not isinstance(
-            component,
-            (str, bytes),
-        ):
+        if isinstance(component, (list, tuple)):
             # Use _normalize_sequence which returns dict with type marker
             return FlextUtilitiesValidation._normalize_sequence(component, visited)
         # Runtime check: set is not in t.GeneralValueType union, but can occur at runtime
@@ -328,23 +325,20 @@ class FlextUtilitiesValidation:
     ) -> t.ConfigurationDict:
         """Convert items() result to dict with normalization."""
         if isinstance(items_result, (list, tuple)):
-            return dict(cast("Sequence[tuple[str, t.GeneralValueType]]", items_result))
+            # items_result is Sequence[tuple[str, t.GeneralValueType]]
+            return dict(items_result)
 
-        if FlextUtilitiesGuards.is_type(items_result, "mapping"):
-            # Convert Mapping to dict explicitly for type safety
-            mapping_result: t.ConfigurationMapping = cast(
-                "t.ConfigurationMapping",
-                items_result,
-            )
-            return FlextUtilitiesMapper.to_dict(mapping_result)
+        if isinstance(items_result, Mapping):
+            # items_result is already t.ConfigurationMapping
+            return FlextUtilitiesMapper.to_dict(items_result)
 
         if not hasattr(items_result, "__iter__"):
             result_type = type(items_result)
             msg = f"items() returned non-iterable: {result_type}"
             raise TypeError(msg)
 
-        items_iterable = cast("Iterable[tuple[str, t.GeneralValueType]]", items_result)
-        items_list = list(items_iterable)
+        # items_result has __iter__, treat as Iterable
+        items_list = list(items_result)
         temp_dict: t.ConfigurationDict = {}
         for k, v in items_list:
             # k is already str from the cast
@@ -373,14 +367,8 @@ class FlextUtilitiesValidation:
         items_result = items_attr()
         try:
             # Type narrowing: items_result is from dict-like object, should be iterable of tuples
-            # Cast to proper type for _convert_items_to_dict
-            items_typed: (
-                Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping
-            ) = cast(
-                "Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping",
-                items_result,
-            )
-            return FlextUtilitiesValidation._convert_items_to_dict(items_typed)
+            # items_result is already the correct type from items() method
+            return FlextUtilitiesValidation._convert_items_to_dict(items_result)
         except (TypeError, ValueError) as e:
             msg = f"Cannot convert {type(component).__name__}.items() to dict"
             raise TypeError(msg) from e
@@ -405,7 +393,7 @@ class FlextUtilitiesValidation:
         """
         if isinstance(items_result, (list, tuple)):
             # items() returned list/tuple of pairs - convert to dict
-            return dict(cast("Sequence[tuple[str, t.GeneralValueType]]", items_result))
+            return dict(items_result)
 
         # items() returned something else - try to iterate
         if not hasattr(items_result, "__iter__"):
@@ -413,22 +401,16 @@ class FlextUtilitiesValidation:
             msg = f"items() returned non-iterable: {result_type}"
             raise TypeError(msg)
 
-        # Cast to satisfy type checker - items_result is iterable at runtime
-        items_iterable = cast("Iterable[tuple[str, object]]", items_result)
-        items_list = list(items_iterable)
+        # items_result is iterable at runtime
+        items_list = list(items_result)
 
         # Convert tuples to dict, normalizing values
         temp_dict: t.ConfigurationDict = {}
         for k, v in items_list:
-            if FlextUtilitiesGuards.is_type(k, str):
-                # Normalize value first, then cast to t.GeneralValueType
-                # v is object from items_list iteration, cast to t.GeneralValueType
-                v_typed: t.GeneralValueType = cast(
-                    "t.GeneralValueType",
-                    v,
-                )
+            if isinstance(k, str):
+                # Normalize value - v is already compatible with t.GeneralValueType
                 normalized_v = FlextUtilitiesValidation._normalize_component(
-                    v_typed,
+                    v,
                     visited=None,
                 )
                 # normalized_v is already t.GeneralValueType from _normalize_component
@@ -461,13 +443,8 @@ class FlextUtilitiesValidation:
         items_method = getattr(component, "items", None)
         if items_method is not None and callable(items_method):
             # Has items() method - convert to dict
-            # Cast needed: items_method() returns object, but we know it's dict-like
-            items_result: (
-                Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping
-            ) = cast(
-                "Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping",
-                items_method(),
-            )
+            # items_method() returns dict-like items
+            items_result = items_method()
             try:
                 return FlextUtilitiesValidation._convert_items_result_to_dict(
                     items_result,
@@ -530,7 +507,7 @@ class FlextUtilitiesValidation:
         if isinstance(value, (str, int, float, bool, type(None))):
             # Type narrowing: these are all valid t.GeneralValueType
             return value
-        if isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes)):
+        if isinstance(value, (list, tuple)):
             # Type narrowing: tuple is valid t.GeneralValueType
             return tuple(value)
         if FlextUtilitiesGuards.is_type(value, "mapping"):
@@ -626,13 +603,6 @@ class FlextUtilitiesValidation:
         for validator in validators:
             # Type narrowing: validators is list[Callable[[str], r[bool]]]
             # So validator is always callable per type system
-            # Runtime check for safety (type: ignore needed because type system guarantees callable)
-            if not callable(validator):
-                # Runtime safety check (type system ensures callable)
-                return r[bool].fail(
-                    "Validator must be callable",
-                    error_code=c.Errors.VALIDATION_ERROR,
-                )
             try:
                 # Execute validator - may return r[bool] or raise exception
                 result = validator(value)
@@ -845,12 +815,7 @@ class FlextUtilitiesValidation:
         """Normalize object attributes to cache-friendly structure."""
         try:
             vars_result = vars(value)
-            # vars() returns t.ConfigurationDict which we normalize to t.GeneralValueType
-            # Type narrowing: vars_result is always a dict
-            value_vars_dict: t.ConfigurationDict = cast(
-                "t.ConfigurationDict",
-                vars_result,
-            )
+            # vars() always returns a dict
             # Process vars_result - normalize all values
             normalized_vars = {
                 str(key): FlextUtilitiesValidation._normalize_component(
@@ -858,7 +823,7 @@ class FlextUtilitiesValidation:
                     visited=None,
                 )
                 for key, val in sorted(
-                    value_vars_dict.items(),
+                    vars_result.items(),
                     key=operator.itemgetter(0),
                 )
             }
@@ -965,18 +930,9 @@ class FlextUtilitiesValidation:
                 return key
 
         # Try dict
-        if FlextRuntime.is_dict_like(command) and FlextUtilitiesGuards.is_type(
-            command,
-            "mapping",
-        ):
-            # Type narrowing: command is dict-like, cast to ConfigurationMapping
-            command_dict: t.ConfigurationMapping = cast(
-                "t.ConfigurationMapping",
-                command,
-            )
-            key = FlextUtilitiesValidation._generate_key_dict(
-                command_dict, command_type
-            )
+        if isinstance(command, Mapping):
+            # command is already t.ConfigurationMapping
+            key = FlextUtilitiesValidation._generate_key_dict(command, command_type)
             if key is not None:
                 return key
 
@@ -1026,7 +982,7 @@ class FlextUtilitiesValidation:
             # obj is confirmed to be tuple, iterate directly
             return tuple(FlextUtilitiesValidation._sort_dict_keys(item) for item in obj)
         # Handle other Sequences (but not str, bytes, or tuple)
-        if isinstance(obj, (list, tuple)) and not isinstance(obj, (str, bytes)):
+        if isinstance(obj, (list, tuple)):
             # obj is Sequence[t.GeneralValueType] - use directly
             obj_list: Sequence[t.GeneralValueType] = obj
             return [
@@ -1439,7 +1395,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_callable(
-        value: t.GeneralValueType,
+        value: object,
         error_message: str = "Value must be callable",
         error_code: str = c.Errors.TYPE_ERROR,
     ) -> FlextRuntime.RuntimeResult[bool]:
@@ -1795,13 +1751,6 @@ class FlextUtilitiesValidation:
                 )
 
             # Check for callable services (should be registered as factories)
-            if callable(service):
-                error_msg: str = (
-                    f"Service '{name}' appears to be callable. Use with_factory instead"
-                )
-                return r[t.ConfigurationMapping].fail(
-                    error_msg,
-                )
 
         return r[t.ConfigurationMapping].ok(services)
 
@@ -2303,42 +2252,22 @@ class FlextUtilitiesValidation:
         value_typed = value
 
         # String validation
-        if FlextUtilitiesGuards.is_type(value, str):
-            result_str = (
-                r[str].ok(cast("str", value))
-                if FlextUtilitiesGuards.is_type(value, "string_non_empty")
-                else r[str].fail(f"{error_template} non-empty string")
-            )
-            # Cast to r[object] for return type compatibility
-            return cast("r[object]", result_str)
+        if isinstance(value, str):
+            if value:  # Non-empty string
+                return r[object].ok(value)
+            return r[object].fail(f"{error_template} non-empty string")
 
         # Dict-like validation
-        if FlextRuntime.is_dict_like(value_typed):
-            result_dict = (
-                r[t.ConfigurationDict].ok(
-                    cast("t.ConfigurationDict", value_typed),
-                )
-                if FlextUtilitiesGuards.is_type(value_typed, "dict_non_empty")
-                else r[t.ConfigurationDict].fail(
-                    f"{error_template} non-empty dict",
-                )
-            )
-            # Cast to r[object] for return type compatibility
-            return cast("r[object]", result_dict)
+        if isinstance(value_typed, dict):
+            if value_typed:  # Non-empty dict
+                return r[object].ok(value_typed)
+            return r[object].fail(f"{error_template} non-empty dict")
 
         # List-like validation
-        if FlextRuntime.is_list_like(cast("t.GeneralValueType", value_typed)):
-            result_list = (
-                r[list[t.GeneralValueType]].ok(
-                    cast("list[t.GeneralValueType]", value_typed),
-                )
-                if FlextUtilitiesGuards.is_type(value_typed, "list_non_empty")
-                else r[list[t.GeneralValueType]].fail(
-                    f"{error_template} non-empty list",
-                )
-            )
-            # Cast to r[object] for return type compatibility
-            return cast("r[object]", result_list)
+        if isinstance(value_typed, list):
+            if value_typed:  # Non-empty list
+                return r[object].ok(value_typed)
+            return r[object].fail(f"{error_template} non-empty list")
 
         # Unknown type
         return r[object].fail(f"{error_template} non-empty (str/dict/list)")
@@ -2469,20 +2398,10 @@ class FlextUtilitiesValidation:
         error_msg = error_message
 
         for condition in conditions:
-            # Type narrowing: condition is one of the supported types
-            condition_typed: (
-                type[object]
-                | tuple[type[object], ...]
-                | Callable[[object], bool]
-                | ValidatorSpec
-                | str
-            ) = cast(
-                "type[object] | tuple[type[object], ...] | Callable[[object], bool] | ValidatorSpec | str",
-                condition,
-            )
+            # Type narrowing: condition is one of the supported types per annotation
             check_result = FlextUtilitiesValidation._guard_check_condition(
-                cast("object", value),
-                condition_typed,
+                value,
+                condition,  # type: ignore[arg-type]
                 context_name,
                 error_msg,
             )
@@ -2615,16 +2534,17 @@ class FlextUtilitiesValidation:
 
             """
             rh = FlextUtilitiesValidation.ResultHelpers
-            # Cast r[T] to p.Result[T] for protocol compatibility
-            items_dict = (
-                rh.val(cast("p.Result[dict[str, T]]", items), default={})
-                if isinstance(items, r)
-                else items
-            )
+            # Handle r[dict[str, T]] or dict[str, T]
+            items_dict: dict[str, T]
+            if isinstance(items, r):
+                items_dict = rh.val(items, default={}) or {}  # type: ignore[arg-type]
+            else:
+                items_dict = items
+
             if items_dict:
                 return list(items_dict.values())
-            result = rh.or_(default, default=[])
-            return cast("list[T]", result)
+
+            return default if default is not None else []
 
         @staticmethod
         def or_[T](
@@ -3043,9 +2963,7 @@ class FlextUtilitiesValidation:
     ) -> list[t.GeneralValueType]:
         """Helper: Convert value to list."""
         if value is None:
-            rh = FlextUtilitiesValidation.ResultHelpers
-            result = rh.or_(default, default=[])
-            return cast("list[t.GeneralValueType]", result)
+            return default if default is not None else []
         match value:
             case list():
                 return value
@@ -3103,41 +3021,29 @@ class FlextUtilitiesValidation:
         """
         # Handle string conversions first
         if target_type == "str":
-            str_default = cast("str", default) if default is not None else ""
-            return cast(
-                "T", FlextUtilitiesMapper.ensure_str(value, default=str_default)
-            )
+            str_default = default if isinstance(default, str) else ""
+            return FlextUtilitiesMapper.ensure_str(value, default=str_default)  # type: ignore[return-value]
+
         if target_type == "str_list":
-            str_list_default = (
-                cast("list[str]", default) if isinstance(default, list) else None
-            )
-            return cast(
-                "list[T]", FlextUtilitiesMapper.ensure(value, default=str_list_default)
-            )
+            str_list_default = default if isinstance(default, list) else None
+            return FlextUtilitiesMapper.ensure(value, default=str_list_default)  # type: ignore[return-value,arg-type]
+
         if target_type == "dict":
-            dict_default_typed: t.ConfigurationDict | None
-            if isinstance(default, dict):
-                dict_default_typed = cast("t.ConfigurationDict", default)
-            else:
-                dict_default_typed = None
-            dict_result = FlextUtilitiesValidation._ensure_to_dict(
+            dict_default_typed = default if isinstance(default, dict) else None
+            return FlextUtilitiesValidation._ensure_to_dict(
                 value,
-                dict_default_typed,
-            )
-            return cast("T", dict_result)
+                dict_default_typed,  # type: ignore[arg-type]
+            )  # type: ignore[return-value]
+
         if target_type == "auto" and isinstance(value, dict):
-            return cast("T", value)
+            return value  # type: ignore[return-value]
+
         # Handle list or fallback
-        list_default_fallback: list[t.GeneralValueType] | None = (
-            cast("list[t.GeneralValueType]", default)
-            if isinstance(default, list)
-            else None
-        )
-        list_result = FlextUtilitiesValidation._ensure_to_list(
+        list_default_fallback = default if isinstance(default, list) else None
+        return FlextUtilitiesValidation._ensure_to_list(
             value,
-            list_default_fallback,
-        )
-        return cast("T", list_result)
+            list_default_fallback,  # type: ignore[arg-type]
+        )  # type: ignore[return-value]
 
     # ═══════════════════════════════════════════════════════════════════
     # TYPEADAPTER UTILITIES (Pydantic v2 dynamic validation)

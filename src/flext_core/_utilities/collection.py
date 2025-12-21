@@ -12,18 +12,22 @@ from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 
 from flext_core.result import r
-from flext_core.typings import t
+from flext_core.typings import T, U, t
 
 
 class FlextUtilitiesCollection:
-    """Utilities for collection operations."""
+    """Utilities for collection operations with full generic type support."""
 
     @staticmethod
-    def map(
-        items: Sequence[object] | Mapping[str, object] | set[object],
-        mapper: Callable[[object], object],
-    ) -> Sequence[object] | Mapping[str, object] | set[object] | frozenset[object]:
-        """Unified map function that auto-detects input type."""
+    def map[T, U](
+        items: Sequence[T] | Mapping[str, T] | set[T] | frozenset[T],
+        mapper: Callable[[T], U],
+    ) -> Sequence[U] | Mapping[str, U] | set[U] | frozenset[U]:
+        """Unified map function with generic type support.
+
+        Transforms elements using mapper function while preserving container type.
+        Supports lists, tuples, dicts, sets, and frozensets.
+        """
         if isinstance(items, list):
             return [mapper(item) for item in items]
         if isinstance(items, tuple):
@@ -34,14 +38,21 @@ class FlextUtilitiesCollection:
             return {mapper(item) for item in items}
         if isinstance(items, frozenset):
             return frozenset(mapper(item) for item in items)
-        return items
+        # Unreachable - all supported types handled above
+        msg = f"Unsupported collection type: {type(items)}"
+        raise TypeError(msg)
 
     @staticmethod
-    def filter(
-        items: Sequence[object] | Mapping[str, object],
-        predicate: Callable[[object], bool],
-    ) -> Sequence[object] | Mapping[str, object]:
-        """Unified filter function."""
+    def filter[T](
+        items: Sequence[T] | Mapping[str, T],
+        predicate: Callable[[T], bool],
+    ) -> Sequence[T] | Mapping[str, T]:
+        """Unified filter function with generic type support.
+
+        Filters elements based on predicate while preserving container type.
+        Supports lists, tuples, and dicts.
+        Returns same type as input.
+        """
         if isinstance(items, list):
             return [item for item in items if predicate(item)]
         if isinstance(items, tuple):
@@ -55,12 +66,14 @@ class FlextUtilitiesCollection:
         items: Sequence[object] | Mapping[str, object],
         predicate: Callable[[object], bool],
     ) -> object | None:
-        """Find first item matching predicate."""
+        """Find first item matching predicate with generic type support.
+
+        Returns first item where predicate returns True, or None.
+        """
         if isinstance(items, (list, tuple)):
             for item in items:
                 if predicate(item):
-                    found: object = item
-                    return found
+                    return item
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
@@ -150,7 +163,6 @@ class FlextUtilitiesCollection:
             total = len(items)
 
             for processed, item in enumerate(items, 1):
-                item: T  # Type hint for mypy
                 # Pre-validate if validator provided
                 if pre_validate is not None and not pre_validate(item):
                     results.append(None)
@@ -183,26 +195,28 @@ class FlextUtilitiesCollection:
             return r[t.BatchResultDict].fail(f"Batch processing failed: {e}")
 
     @staticmethod
-    def process(
-        items: Sequence[object],
-        processor: Callable[[object], object],
-        predicate: Callable[[object], bool] | None = None,
+    def process[T, U](
+        items: Sequence[T],
+        processor: Callable[[T], U],
+        predicate: Callable[[T], bool] | None = None,
         _on_error: str = "fail",
-    ) -> r[list[object]]:
+    ) -> r[list[U]]:
         """Process items with optional filtering and error handling.
+
+        Transforms items using processor, optionally filtering with predicate.
 
         Args:
             items: Items to process
-            processor: Function to apply to each item
-            predicate: Optional filter function
-            _on_error: "fail" to return error, "skip" to skip failed items
+            processor: Function to transform each item
+            predicate: Optional filter function (applied before processor)
+            _on_error: "fail" to abort on error, "skip" to skip failed items
 
         Returns:
-            List of processed results or error
+            FlextResult with list of processed results or error
 
         """
         try:
-            results: list[object] = []
+            results: list[U] = []
             for item in items:
                 if predicate is None or predicate(item):
                     try:
@@ -211,12 +225,10 @@ class FlextUtilitiesCollection:
                     except Exception:
                         if _on_error == "skip":
                             continue
-                        return r[list[object]].fail(
-                            f"Processing failed for item: {item}"
-                        )
-            return r[list[object]].ok(results)
+                        return r[list[U]].fail(f"Processing failed for item: {item}")
+            return r[list[U]].ok(results)
         except Exception as e:
-            return r[list[object]].fail(f"Process failed: {e}")
+            return r[list[U]].fail(f"Process failed: {e}")
 
     @staticmethod
     def parse_sequence(
