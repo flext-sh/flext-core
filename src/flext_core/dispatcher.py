@@ -1644,7 +1644,7 @@ class FlextDispatcher(x):
                     "FAILED to find handler for command - DISPATCH ABORTED",
                     operation=c.Mixins.METHOD_EXECUTE,
                     command_type=command_type.__name__,
-                    registered_handlers=handler_names,
+                    registered_handlers=handler_names,  # type: ignore[arg-type]
                     consequence="Command cannot be processed - handler not registered",
                     resolution_hint="Register handler using register_handler() before dispatch",
                     source="flext-core/src/flext_core/dispatcher.py",
@@ -2311,19 +2311,22 @@ class FlextDispatcher(x):
             # Handler normalization would convert handler instances to string repr
             handler_keys = {"handler", "handlers", "processor", "processors"}
             # Use process() for concise request normalization with key conversion
+            # Convert dict to items for processing
             process_result = u.Collection.process(
-                request,
-                lambda k, v: (
-                    v
-                    if str(k) in handler_keys
-                    else FlextRuntime.normalize_to_general_value(v)
+                list(request.items()),  # Convert dict to sequence of pairs
+                lambda kv: (
+                    kv[1]  # type: ignore[index] # value
+                    if str(kv[0]) in handler_keys  # type: ignore[index] # key
+                    else FlextRuntime.normalize_to_general_value(kv[1])  # type: ignore[index]
                 ),
-                on_error="collect",
+                _on_error="collect",
             )
-            # Convert keys to strings - use process() to transform keys
-            if process_result.is_success and isinstance(process_result.value, dict):
-                # Create new dict with string keys
-                request_dict = {str(k): v for k, v in process_result.value.items()}
+            # Reconstruct dict from processed items
+            if process_result.is_success:
+                request_dict = {
+                    str(k): cast("t.GeneralValueType", v)
+                    for k, v in zip(request.keys(), process_result.value, strict=False)
+                }  # type: ignore[misc]
             else:
                 request_dict = {}
         else:
@@ -3349,31 +3352,31 @@ class FlextDispatcher(x):
                         else str(item)
                         for item in v
                     ]
-                if u.Guards.is_type(v, "mapping"):
-                    # Use process() for concise dict conversion (transform values and convert keys)
-                    transform_result = u.Collection.process(
-                        v,
-                        lambda _k, v2: v2
-                        if isinstance(v2, (str, int, float, bool, type(None)))
-                        else str(v2),
-                        on_error="collect",
-                    )
-                    if transform_result.is_success and isinstance(
-                        transform_result.value,
-                        dict,
-                    ):
-                        # Convert keys to strings - u.map preserves keys, so use dict comprehension
-                        # for key transformation (u.map only transforms values)
-                        return {str(k): v for k, v in transform_result.value.items()}
-                    return {}
+                if u.Guards.is_type(v, "mapping") and isinstance(v, dict):
+                    # Transform dict values using dict comprehension
+                    return {
+                        str(k): (
+                            v2
+                            if isinstance(v2, (str, int, float, bool, type(None)))
+                            else str(v2)
+                        )
+                        for k, v2 in v.items()
+                    }
                 return str(v)
 
-            # Use process() for metadata conversion
-            process_result = u.Collection.process(
-                metadata,
-                lambda _k, v: convert_metadata_value(v),
-                on_error="collect",
-            )
+            # Convert metadata dict to items for processing
+            if isinstance(metadata, dict):
+                process_result = u.Collection.process(
+                    list(metadata.items()),
+                    lambda kv: (kv[0], convert_metadata_value(kv[1])),  # type: ignore[index,misc]
+                    _on_error="collect",
+                )
+                if process_result.is_success:
+                    attributes_dict = {str(k): v for k, v in process_result.value}  # type: ignore[misc,has-type]  # type: ignore[misc]
+                else:
+                    attributes_dict = {}
+            else:
+                attributes_dict = {}
             if process_result.is_success and isinstance(process_result.value, dict):
                 # Convert keys to strings
                 attributes_dict = {str(k): v for k, v in process_result.value.items()}
@@ -3754,7 +3757,8 @@ class FlextDispatcher(x):
 
         # Cast MessageWrapper to t.GeneralValueType
         return cast(
-            "t.GeneralValueType", MessageWrapper(data=data, message_type=message_type)
+            "t.GeneralValueType",
+            MessageWrapper(data=data, message_type=message_type),  # type: ignore[call-arg]
         )
 
     def _get_timeout_seconds(self, timeout_override: int | None) -> float:
@@ -3851,21 +3855,19 @@ class FlextDispatcher(x):
                     "Mapping[str, t.GeneralValueType]", options.metadata
                 )
                 transform_result = u.Collection.process(
-                    metadata_mapping,
-                    lambda _k, v: str(v),
-                    on_error="collect",
+                    list(metadata_mapping.items()),
+                    lambda kv: (kv[0], str(kv[1])),  # type: ignore[index]
+                    _on_error="collect",
                 )
                 # Convert keys to strings and values to MetadataAttributeValue
-                # Convert keys to strings and values to MetadataAttributeValue
                 metadata_attrs: t.MetadataAttributeDict
-                if transform_result.is_success and isinstance(
-                    transform_result.value,
-                    dict,
-                ):
-                    metadata_attrs = {
-                        str(k): cast("t.MetadataAttributeValue", v)
-                        for k, v in transform_result.value.items()
-                    }
+                if transform_result.is_success:
+                    # Cast the result value to the expected type for iteration
+                    result_items = cast(
+                        "list[tuple[str, t.MetadataAttributeValue]]",
+                        transform_result.value,
+                    )
+                    metadata_attrs = {str(k): v for k, v in result_items}
                 else:
                     metadata_attrs = {}
                 _ = m.Metadata(attributes=metadata_attrs)
@@ -4214,7 +4216,7 @@ class FlextDispatcher(x):
         """
         # Dispatch each message - message_type is extracted from message object
         # Use u.map for concise batch processing
-        return list(u.Collection.map(messages, self.dispatch))
+        return list(u.Collection.map(messages, self.dispatch))  # type: ignore[arg-type]
 
     def get_performance_metrics(
         self,

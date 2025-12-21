@@ -419,24 +419,9 @@ class FlextProtocols:
             config: FlextProtocols.Config | None = None,
             context: FlextProtocols.Ctx | None = None,
             subproject: str | None = None,
-            services: Mapping[
-                str,
-                t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType],
-            ]
-            | None = None,
-            factories: Mapping[
-                str,
-                Callable[
-                    [],
-                    (
-                        t.ScalarValue
-                        | Sequence[t.ScalarValue]
-                        | Mapping[str, t.ScalarValue]
-                    ),
-                ],
-            ]
-            | None = None,
-            resources: Mapping[str, Callable[[], t.GeneralValueType]] | None = None,
+            services: Mapping[str, object] | None = None,
+            factories: Mapping[str, Callable[[], object]] | None = None,
+            resources: Mapping[str, Callable[[], object]] | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...
@@ -462,7 +447,7 @@ class FlextProtocols:
         def register(
             self,
             name: str,
-            service: t.FlexibleValue,
+            service: object,
         ) -> FlextProtocols.Result[bool]:
             """Register a service instance."""
             ...

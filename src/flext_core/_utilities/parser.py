@@ -1341,6 +1341,7 @@ class FlextUtilitiesParser:
     # =========================================================================
 
     @staticmethod
+    @staticmethod
     def convert[T](
         value: t.GeneralValueType,
         target_type: type[T],
@@ -1493,15 +1494,20 @@ class FlextUtilitiesParser:
     @staticmethod
     def _convert_fallback[T](
         value: t.GeneralValueType,
-        target_type: Callable[..., T],
+        target_type: type[T],
         default: T,
     ) -> T:
         """Fallback: try direct type constructor."""
         try:
-            # target_type is Callable[..., T] so it returns T
-            result: T = target_type(value)
-            return result
-        except (ValueError, TypeError):
+            # Try to call target_type as constructor
+            # Dynamic type construction - value passed as object
+            if callable(target_type):
+                constructor: Callable[[object], T] = target_type
+                result = constructor(value)
+                if isinstance(result, target_type):
+                    return result
+            return default
+        except (ValueError, TypeError, Exception):
             return default
 
     # =========================================================================
@@ -1740,6 +1746,8 @@ class FlextUtilitiesParser:
             items_to_check = [str(k) for k in items_mapping if isinstance(k, str)]
         elif isinstance(items, list):
             # items is list[str] - use isinstance for proper type narrowing
+            items_to_check = [str(item) for item in items if isinstance(item, str)]
+        elif isinstance(items, (set, tuple)):
             items_to_check = [str(item) for item in items if isinstance(item, str)]
         else:
             items_to_check = []

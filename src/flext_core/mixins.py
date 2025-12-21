@@ -175,12 +175,17 @@ class FlextMixins(FlextRuntime):
                     return cast("t.ContextMetadataMapping", dict_result)
                 # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
                 return cast("t.ContextMetadataMapping", {"value": normalized})
-            # For Mapping, use Collection.process() to normalize each value
-            process_result = u.Collection.process(
-                obj,
-                lambda _k, v: FlextRuntime.normalize_to_general_value(v),
-                on_error="skip",
-            )
+            # For Mapping, normalize each value
+            try:
+                normalized_dict = {}
+                for k, v in obj.items():
+                    normalized_dict[k] = FlextRuntime.normalize_to_general_value(v)
+                process_result = r[t.ContextMetadataMapping].ok(normalized_dict)
+            except Exception as e:
+                process_result = r[t.ContextMetadataMapping].fail(
+                    f"Failed to normalize mapping: {e}"
+                )
+
             if process_result.is_success:
                 # Type narrowing: ConfigurationDict is dict[str, t.GeneralValueType]
                 # ContextMetadataMapping is Mapping[str, t.GeneralValueType]

@@ -69,6 +69,11 @@ class FlextUtilitiesConversion:
             return default or ""
         if isinstance(value, str):
             return value
+        if isinstance(value, float):
+            # Format float to 2 decimal places if it's a decimal number
+            if value.is_integer():
+                return str(int(value))
+            return f"{value:.2f}"
         return str(value)
 
     @staticmethod

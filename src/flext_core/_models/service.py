@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, cast
+from typing import Annotated
 
 from pydantic import Field, field_validator
 
@@ -82,7 +82,7 @@ class FlextModelsService:
 
         service_name: str
         operations: list[t.ConfigurationDict] = Field(
-            default_factory=lambda: cast("list[t.ConfigurationDict]", []),
+            default_factory=list,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             max_length=c.Performance.MAX_BATCH_OPERATIONS,
         )

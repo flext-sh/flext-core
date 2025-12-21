@@ -298,25 +298,20 @@ class FlextUtilitiesGenerators:
 
         # Strategy 2: Pydantic BaseModel - use model_dump()
         if isinstance(value, BaseModel):
-            # Runtime safety: model_dump() can raise AttributeError/TypeError
-            # This try/except is necessary for defensive programming
-            try:
-                result = value.model_dump()
-                if FlextUtilitiesGuards.is_type(result, dict):
-                    # normalize_to_general_value preserves dict structure
-                    # so normalized will be t.ConfigurationDict
-                    normalized = FlextRuntime.normalize_to_general_value(result)
-                    # Type narrowing: normalize_to_general_value on dict returns dict
-                    # Runtime check: normalized is t.GeneralValueType, but we know it's dict from input
-                    if FlextUtilitiesGuards.is_type(normalized, dict):
-                        # Type narrowing: normalized is dict after is_type check
-                        # Cast to ConfigurationDict (dict[str, GeneralValueType])
-                        return cast("t.ConfigurationDict", normalized)
-                    # Fallback: if normalization changed type, return empty dict
-                    return {}
+            # BaseModel.model_dump() returns dict-like object, check with is_type guard
+            result = value.model_dump()
+            if FlextUtilitiesGuards.is_type(result, dict):
+                # normalize_to_general_value preserves dict structure
+                # so normalized will be t.ConfigurationDict
+                normalized = FlextRuntime.normalize_to_general_value(result)
+                # Type narrowing: normalize_to_general_value on dict returns dict
+                # Runtime check: normalized is t.GeneralValueType, but we know it's dict from input
+                if FlextUtilitiesGuards.is_type(normalized, dict):
+                    # Type narrowing: normalized is dict after is_type check
+                    # Cast to ConfigurationDict (dict[str, GeneralValueType])
+                    return cast("t.ConfigurationDict", normalized)
+                # Fallback: if normalization changed type, return empty dict
                 return {}
-            except (AttributeError, TypeError):
-                pass
 
         # Strategy 3: Mapping (dict-like) - convert via dict() (fast fail)
         if isinstance(value, Mapping):
@@ -510,13 +505,7 @@ class FlextUtilitiesGenerators:
         # pyrefly doesn't understand type() for dynamic class creation
         # This is valid Python metaprogramming
         # Runtime validation: base_class parameter is typed as type
-        # Note: isinstance(base_class, type) is always True for type parameters,
-        # but we keep this for defensive programming and runtime validation
-        # Pyright reports this as unnecessary, but it's intentional for safety
-        if not isinstance(base_class, type):
-            # Runtime safety check (type system ensures type, but runtime validation needed)
-            msg: str = f"base_class must be a type, got {type(base_class).__name__}"
-            raise TypeError(msg)
+        # Type system ensures base_class is a type, so no runtime check needed
         # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
         # Convert to dict for type() call
         attributes_dict: t.ConfigurationDict = dict(attributes)

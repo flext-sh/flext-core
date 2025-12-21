@@ -18,7 +18,6 @@ from collections.abc import Callable, Generator, Mapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
-from typing import cast
 
 from flext_core import (
     FlextContext,
@@ -877,11 +876,10 @@ class FlextTestsUtilities(FlextUtilities):
                     **kwargs: Config field values
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
                     New FlextSettings instance
 
                 """
-                return FlextSettings(**kwargs)
+                return FlextSettings.materialize(config_overrides=kwargs)  # type: ignore[arg-type]
 
             @staticmethod
             def assert_config_fields(
@@ -1489,9 +1487,7 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise error on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return cast(
-                            "t.GeneralValueType", super().__getattribute__(name)
-                        )
+                        return super().__getattribute__(name)  # type: ignore[no-any-return]
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
 
@@ -1502,9 +1498,7 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise TypeError on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return cast(
-                            "t.GeneralValueType", super().__getattribute__(name)
-                        )
+                        return super().__getattribute__(name)  # type: ignore[no-any-return]
                     msg = f"Bad config type: {name}"
                     raise TypeError(msg)
 
@@ -2186,7 +2180,10 @@ class FlextTestsUtilities(FlextUtilities):
                     return False
 
                 # Type guard: value has __len__ so it's Sized
-                actual_len = len(cast("Sized", value))
+                # isinstance check with Sized narrows type for len()
+                if not isinstance(value, Sized):
+                    return False
+                actual_len = len(value)
 
                 if isinstance(spec, int):
                     # Delegate to flext-core chk() - zero duplication

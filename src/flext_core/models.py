@@ -47,54 +47,28 @@ class FlextModels:
     and JSON-ready serialization for all exported types.
     """
 
-    # CQRS Handler with subclasses (keep for compatibility)
-    class Handler(FlextModelsCqrs.Handler):
-        """Handler base class - real inheritance."""
+    # =========================================================================
+    # CORE DOMAIN ENTITIES - Direct access for common usage
+    # =========================================================================
 
-        class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
-            """Handler registration details - real inheritance."""
-
-        class ExecutionContext(FlextModelsHandler.ExecutionContext):
-            """Handler execution context - real inheritance."""
-
-        class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
-            """Handler decorator configuration - direct class for mypy compatibility."""
-
-        class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
-            """Handler factory decorator configuration - direct class for mypy compatibility."""
-
-    # Direct aliases for top-level access
-    HandlerDecoratorConfig: TypeAlias = Handler.DecoratorConfig
-    HandlerFactoryDecoratorConfig: TypeAlias = Handler.FactoryDecoratorConfig
-
-    # Aliases for direct access
-    HandlerRegistrationDetails: TypeAlias = Handler.RegistrationDetails
-    HandlerExecutionContext = Handler.ExecutionContext
-    Config = FlextModelsConfig
-    ProcessingRequest = FlextModelsConfig.ProcessingRequest
-    ProcessingConfig = ProcessingRequest  # Simple access alias
-    BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
-    ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
-    HandlerRegistration = FlextModelsHandler.Registration
-    HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
-
-    # Direct alias for CQRS handler
-    CqrsHandler = Handler
-
-    # Type aliases for mypy compatibility
     Entity: TypeAlias = FlextModelsEntity.Entry
     Value: TypeAlias = FlextModelsEntity.Value
     AggregateRoot: TypeAlias = FlextModelsEntity.AggregateRoot
     DomainEvent: TypeAlias = FlextModelsEntity.DomainEvent
-    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
-    FrozenStrictModel: TypeAlias = FlextModelsBase.FrozenStrictModel
-    IdentifiableMixin: TypeAlias = FlextModelsBase.IdentifiableMixin
-    TimestampableMixin: TypeAlias = FlextModelsBase.TimestampableMixin
-    TimestampedModel: TypeAlias = FlextModelsBase.TimestampedModel
-    VersionableMixin: TypeAlias = FlextModelsBase.VersionableMixin
-    CollectionsCategories: TypeAlias = FlextModelsCollections.Categories
 
-    # Auth-specific models
+    # =========================================================================
+    # CQRS MESSAGING - Direct access for common usage
+    # =========================================================================
+
+    Command: TypeAlias = FlextModelsCqrs.Command
+    Query: TypeAlias = FlextModelsCqrs.Query
+    Bus: TypeAlias = FlextModelsCqrs.Bus
+    Pagination: TypeAlias = FlextModelsCqrs.Pagination
+
+    # =========================================================================
+    # AUTH DOMAIN MODELS
+    # =========================================================================
+
     class Identity(FlextModelsEntity.AggregateRoot):
         """User identity aggregate root for authentication domain.
 
@@ -117,26 +91,22 @@ class FlextModels:
         roles: list[str] | None = None
         metadata: dict[str, str] | None = None
 
-    # Direct aliases for simple access (remove subnamespaces)
-    Command = FlextModelsCqrs.Command
-    Pagination = FlextModelsCqrs.Pagination
-    Query = FlextModelsCqrs.Query
-    Bus = FlextModelsCqrs.Bus
+    # =========================================================================
+    # CONFIGURATION MODELS - Direct access for common usage
+    # =========================================================================
 
-    # NOTE: Use FlextSettings.get_global_instance() directly in model defaults
-    # No wrapper methods needed - access config directly per FLEXT standards
+    Config: TypeAlias = FlextModelsConfig
+    ProcessingRequest: TypeAlias = FlextModelsConfig.ProcessingRequest
+    ProcessingConfig: TypeAlias = ProcessingRequest
+    BatchProcessingConfig: TypeAlias = FlextModelsConfig.BatchProcessingConfig
+    ValidationConfiguration: TypeAlias = FlextModelsConfig.ValidationConfiguration
+    HandlerRegistration: TypeAlias = FlextModelsHandler.Registration
+    HandlerExecutionConfig: TypeAlias = FlextModelsConfig.HandlerExecutionConfig
 
-    # Type aliases for mypy compatibility
-    Metadata: TypeAlias = FlextModelsBase.Metadata
-    StructlogProxyToken: TypeAlias = FlextModelsContext.StructlogProxyToken
-    StructlogProxyContextVar: TypeAlias = FlextModelsContext.StructlogProxyContextVar
-    Token: TypeAlias = FlextModelsContext.Token
-    ContextData: TypeAlias = FlextModelsContext.ContextData
+    # =========================================================================
+    # SERVICE MODELS
+    # =========================================================================
 
-    # Configuration Models - All classes use real inheritance (no type aliases)
-    # Access directly: FlextModels.ProcessingConfig, etc.
-
-    # Service Models - Real inheritance classes
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
         """Runtime quintuple (config, context, container, dispatcher, registry) for services.
 
@@ -152,85 +122,32 @@ class FlextModels:
         dispatcher: p.CommandBus
         registry: p.Registry
 
-    # Container Models - Real inheritance classes (flattened from Container namespace)
-
-    # Type aliases for mypy compatibility
-    ServiceRegistration: TypeAlias = FlextModelsContainer.ServiceRegistration
-    FactoryRegistration: TypeAlias = FlextModelsContainer.FactoryRegistration
-    ResourceRegistration: TypeAlias = FlextModelsContainer.ResourceRegistration
-    ContainerConfig: TypeAlias = FlextModelsContainer.ContainerConfig
-
-    # Pydantic v2 discriminated union using modern typing (PEP 695)
-    # Use direct references to base classes, not aliases
-    type MessageUnion = Annotated[
-        FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsEntity.DomainEvent,
-        Discriminator("message_type"),
-    ]
-
     # =========================================================================
-    # FLAT NAMESPACE ACCESS - NEW STANDARD (December 2025)
-    # =========================================================================
-    # Classes are now accessible via flat namespace for common usage patterns.
-    # Sub-namespaces (Config, Cqrs, Context, etc.) are DEPRECATED but maintained
-    # for backward compatibility. New code should use flat access.
-    #
-    # CORRECT (new): m.DispatchConfig, m.Command, m.ContextData
-    # DEPRECATED:    m.DispatchConfig, m.Command, m.ContextData
-    #
-    # Project-specific namespaces (m.Cli.*, m.Ldif.*) remain for extensions.
+    # CONTEXT MODELS - Direct access for common usage
     # =========================================================================
 
-    # Direct class definitions for type safety
-    class ContextDomainData(FlextModelsContext.ContextDomainData):
-        """Context domain data - direct class for mypy compatibility."""
+    ContextDomainData: TypeAlias = FlextModelsContext.ContextDomainData
+    ContextExport: TypeAlias = FlextModelsContext.ContextExport
+    ContextScopeData: TypeAlias = FlextModelsContext.ContextScopeData
+    ContextStatistics: TypeAlias = FlextModelsContext.ContextStatistics
+    ContextMetadata: TypeAlias = FlextModelsContext.ContextMetadata
 
-    class ContextExport(FlextModelsContext.ContextExport):
-        """Context export data - direct class for mypy compatibility."""
+    # =========================================================================
+    # COLLECTIONS MODELS - Direct access for common usage
+    # =========================================================================
 
-    class ContextScopeData(FlextModelsContext.ContextScopeData):
-        """Context scope data - direct class for mypy compatibility."""
-
-    class ContextStatistics(FlextModelsContext.ContextStatistics):
-        """Context statistics - direct class for mypy compatibility."""
-
-    class ContextMetadata(FlextModelsContext.ContextMetadata):
-        """Context metadata - direct class for mypy compatibility."""
-
-    # Context namespace - aggregates all context-related models
-    class Context:
-        """Context-related models aggregated for convenient access."""
-
-        StructlogProxyContextVar: TypeAlias = (
-            FlextModelsContext.StructlogProxyContextVar
-        )
-        StructlogProxyToken = FlextModelsContext.StructlogProxyToken
-        Token = FlextModelsContext.Token
-        ContextData = FlextModelsContext.ContextData
-        ContextDomainData = FlextModelsContext.ContextDomainData
-        ContextExport = FlextModelsContext.ContextExport
-        ContextScopeData = FlextModelsContext.ContextScopeData
-        ContextStatistics = FlextModelsContext.ContextStatistics
-        ContextMetadata = FlextModelsContext.ContextMetadata
-
-    # CQRS and Collections aliases
-    Cqrs = FlextModelsCqrs
-    Collections = FlextModelsCollections
-    CollectionsStatistics = FlextModelsCollections.Statistics
-    # Type aliases for mypy compatibility
+    CollectionsCategories: TypeAlias = FlextModelsCollections.Categories
     CollectionsConfig: TypeAlias = FlextModelsCollections.Config
     CollectionsResults: TypeAlias = FlextModelsCollections.Results
     CollectionsOptions: TypeAlias = FlextModelsCollections.Options
-    Options: TypeAlias = FlextModelsCollections.Options  # Simple access
+    Options: TypeAlias = FlextModelsCollections.Options
     CollectionsParseOptions: TypeAlias = FlextModelsCollections.ParseOptions
     Categories: TypeAlias = CollectionsCategories
 
-    # NOTE: m.Metadata is already available via class Metadata(FlextModelsBase.Metadata)
-    # defined in the Entity namespace section above (line 156)
+    # =========================================================================
+    # VALIDATION FUNCTIONS - Direct access for common usage
+    # =========================================================================
 
-    # Validation namespace - aggregates FlextModelsValidation
-    Validation = FlextModelsValidation
-
-    # Direct aliases for validation functions (remove subnamespace)
     validate_business_rules = FlextModelsValidation.validate_business_rules
     validate_cross_fields = FlextModelsValidation.validate_cross_fields
     validate_performance = FlextModelsValidation.validate_performance
@@ -250,9 +167,9 @@ class FlextModels:
     validate_port_number = FlextModelsValidation.validate_port_number
 
     # =========================================================================
-    # ESSENTIAL CONFIG CLASSES - Direct access for common usage
+    # CONFIG CLASSES - Direct access for common usage
     # =========================================================================
-    # Type aliases for mypy compatibility
+
     RetryConfiguration: TypeAlias = FlextModelsConfig.RetryConfiguration
     DispatchConfig: TypeAlias = FlextModelsConfig.DispatchConfig
 
@@ -283,14 +200,105 @@ class FlextModels:
     MiddlewareConfig: TypeAlias = FlextModelsConfig.MiddlewareConfig
     RateLimiterState: TypeAlias = FlextModelsConfig.RateLimiterState
 
+    # =========================================================================
+    # BASE CLASSES - Direct access for common usage
+    # =========================================================================
 
-# Resolve forward references for Pydantic v2 compatibility
-# This is required for models with forward references in base classes
-FlextModels.Identity.model_rebuild()
-FlextModels.IdentityRequest.model_rebuild()
+    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
+    FrozenStrictModel: TypeAlias = FlextModelsBase.FrozenStrictModel
+    IdentifiableMixin: TypeAlias = FlextModelsBase.IdentifiableMixin
+    TimestampableMixin: TypeAlias = FlextModelsBase.TimestampableMixin
+    TimestampedModel: TypeAlias = FlextModelsBase.TimestampedModel
+    VersionableMixin: TypeAlias = FlextModelsBase.VersionableMixin
+    Metadata: TypeAlias = FlextModelsBase.Metadata
+
+    # =========================================================================
+    # HANDLER MODELS - Direct access for common usage
+    # =========================================================================
+
+    class Handler(FlextModelsCqrs.Handler):
+        """Handler base class - real inheritance."""
+
+        class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
+            """Handler registration details - real inheritance."""
+
+        class ExecutionContext(FlextModelsHandler.ExecutionContext):
+            """Handler execution context - real inheritance."""
+
+        class DecoratorConfig(FlextModelsHandler.DecoratorConfig):
+            """Handler decorator configuration - direct class for mypy compatibility."""
+
+        class FactoryDecoratorConfig(FlextModelsContainer.FactoryDecoratorConfig):
+            """Handler factory decorator configuration - direct class for mypy compatibility."""
+
+    # Direct aliases for top-level access
+    HandlerDecoratorConfig: TypeAlias = Handler.DecoratorConfig
+    HandlerFactoryDecoratorConfig: TypeAlias = Handler.FactoryDecoratorConfig
+    HandlerRegistrationDetails: TypeAlias = Handler.RegistrationDetails
+    HandlerExecutionContext: TypeAlias = Handler.ExecutionContext
+    CqrsHandler: TypeAlias = Handler
+
+    # =========================================================================
+    # TYPE UNIONS - Pydantic discriminated unions
+    # =========================================================================
+
+    type MessageUnion = Annotated[
+        Command | Query | DomainEvent,
+        Discriminator("message_type"),
+    ]
+
+    # =========================================================================
+    # NAMESPACE ACCESS - Backward compatibility
+    # =========================================================================
+
+    # Context namespace - aggregates all context-related models
+    class Context:
+        """Context-related models aggregated for convenient access."""
+
+        StructlogProxyContextVar: TypeAlias = (
+            FlextModelsContext.StructlogProxyContextVar
+        )
+        StructlogProxyToken: TypeAlias = FlextModelsContext.StructlogProxyToken
+        Token: TypeAlias = FlextModelsContext.Token
+        ContextData: TypeAlias = FlextModelsContext.ContextData
+        ContextDomainData: TypeAlias = FlextModelsContext.ContextDomainData
+        ContextExport: TypeAlias = FlextModelsContext.ContextExport
+        ContextScopeData: TypeAlias = FlextModelsContext.ContextScopeData
+        ContextStatistics: TypeAlias = FlextModelsContext.ContextStatistics
+        ContextMetadata: TypeAlias = FlextModelsContext.ContextMetadata
+
+    # CQRS and Collections aliases
+    Cqrs: TypeAlias = FlextModelsCqrs
+    Collections: TypeAlias = FlextModelsCollections
+    CollectionsStatistics: TypeAlias = FlextModelsCollections.Statistics
+
+    # Container namespace - aggregates FlextModelsContainer
+    class Container:
+        """Container-related models aggregated for convenient access."""
+
+        Container: TypeAlias = FlextModelsContainer
+        ServiceRegistration: TypeAlias = FlextModelsContainer.ServiceRegistration
+        FactoryRegistration: TypeAlias = FlextModelsContainer.FactoryRegistration
+        ResourceRegistration: TypeAlias = FlextModelsContainer.ResourceRegistration
+        ContainerConfig: TypeAlias = FlextModelsContainer.ContainerConfig
+
+    # Validation namespace - aggregates FlextModelsValidation
+    Validation: TypeAlias = FlextModelsValidation
+
+    # Direct aliases for backward compatibility
+    ContextData: TypeAlias = FlextModelsContext.ContextData
 
 
+# =========================================================================
+# MODULE ALIASES - Runtime access patterns
+# =========================================================================
+
+# Main alias for direct access
 m = FlextModels
 m_core = FlextModels
+
+# Resolve forward references for Pydantic v2 compatibility
+FlextModels.Identity.model_rebuild()
+FlextModels.IdentityRequest.model_rebuild()
 
 __all__ = ["FlextModels", "m", "m_core"]

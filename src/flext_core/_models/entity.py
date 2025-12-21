@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, cast, override
+from typing import ClassVar, Self, override
 
 from pydantic import Field
 
@@ -25,6 +25,9 @@ from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+# Constants for event validation
+EVENT_TUPLE_SIZE = 2  # (event_name, event_data)
 
 
 class FlextModelsEntity:
@@ -74,7 +77,7 @@ class FlextModelsEntity:
         """
 
         domain_events: list[FlextModelsEntity.DomainEvent] = Field(
-            default_factory=lambda: cast("list[FlextModelsEntity.DomainEvent]", []),
+            default_factory=list,
             description="List of uncommitted domain events for event sourcing",
         )
 
@@ -381,9 +384,17 @@ class FlextModelsEntity:
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
 
-            # Cast to help pyrefly with type narrowing
-            events_typed = cast("list[tuple[str, t.EventDataMapping | None]]", events)
-            for i, event_item in enumerate(events_typed):
+            # Type narrowing through runtime validation
+            if not all(
+                isinstance(item, (list, tuple)) and len(item) == EVENT_TUPLE_SIZE
+                for item in events
+            ):
+                return r[list[tuple[str, t.EventDataMapping]]].fail(
+                    "All events must be tuples/lists with exactly 2 elements",
+                    error_code=c.Errors.VALIDATION_ERROR,
+                )
+
+            for i, event_item in enumerate(events):
                 event_tuple_size = c.EVENT_TUPLE_SIZE
                 if len(event_item) != event_tuple_size:
                     return r[list[tuple[str, t.EventDataMapping]]].fail(

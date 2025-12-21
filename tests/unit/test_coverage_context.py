@@ -581,7 +581,7 @@ class TestContextDataModel:
 
     def test_context_with_context_data_model(self) -> None:
         """Test FlextContext initialization with ContextData model."""
-        context_data = m.ContextData(
+        context_data = m.Context.ContextData(
             data={"key1": "value1", "key2": "value2"},
         )
         context = FlextContext(context_data)

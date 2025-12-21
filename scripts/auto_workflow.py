@@ -5,7 +5,8 @@ Automates common development workflows based on file changes and patterns.
 """
 
 import argparse
-import subprocess  # noqa: S404
+import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -29,12 +30,12 @@ class AutoWorkflow:
         cmd: list[str],
         cwd: Path | None = None,
         timeout: int = 60,
-        env: dict | None = None,
+        env: dict[str, str] | None = None,
     ) -> bool:
         """Run a command and return success status."""
         try:
             # Merge environment variables
-            run_env = {**subprocess.os.environ}
+            run_env = {**os.environ}
             if env:
                 run_env.update(env)
 

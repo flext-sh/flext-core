@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TypeAlias, cast
+from typing import TypeAlias
 
 from pydantic import (
     AliasChoices,
@@ -1422,7 +1422,11 @@ class FlextTestsModels(FlextModelsBase):
                     # If data is OkParams, convert to dict
                     if isinstance(data, FlextTestsModels.Tests.Matcher.OkParams):
                         return data.model_dump()
-                    return cast("dict[str, object]", data)
+                    # data should be dict[str, object] at this point
+                    if isinstance(data, dict):
+                        return data
+                    # This should not happen given the type hint
+                    raise ValueError(f"Unexpected data type: {type(data)}")
 
             class FailParams(FlextModelsBase.Value):
                 """Parameters for matcher fail() operations with Pydantic 2 validation."""
@@ -1490,7 +1494,11 @@ class FlextTestsModels(FlextModelsBase):
                     # If data is FailParams, convert to dict
                     if isinstance(data, FlextTestsModels.Tests.Matcher.FailParams):
                         return data.model_dump()
-                    return cast("dict[str, object]", data)
+                    # data should be dict[str, object] at this point
+                    if isinstance(data, dict):
+                        return data
+                    # This should not happen given the type hint
+                    raise ValueError(f"Unexpected data type: {type(data)}")
 
             class ThatParams(FlextModelsBase.Value):
                 """Parameters for matcher that() operations with Pydantic 2 validation."""
@@ -1716,7 +1724,11 @@ class FlextTestsModels(FlextModelsBase):
                     # Use string literal to avoid forward reference issue during class definition
                     if isinstance(data, cls):
                         return data.model_dump()
-                    return cast("dict[str, object]", data)
+                    # data should be dict[str, object] at this point
+                    if isinstance(data, dict):
+                        return data
+                    # This should not happen given the type hint
+                    raise ValueError(f"Unexpected data type: {type(data)}")
 
             class ScopeParams(FlextModelsBase.Value):
                 """Parameters for matcher scope() operations with Pydantic 2 validation."""

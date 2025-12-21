@@ -78,7 +78,7 @@ class FlextContext(FlextRuntime):
 
     def __init__(
         self,
-        initial_data: m.ContextData | t.ConfigurationDict | None = None,
+        initial_data: m.Context.ContextData | t.ConfigurationDict | None = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -87,12 +87,12 @@ class FlextContext(FlextRuntime):
         integration, maintaining clear separation of concerns.
 
         Args:
-            initial_data: Optional `m.ContextData` instance or dict
+            initial_data: Optional `m.Context.ContextData` instance or dict
 
         """
         super().__init__()
         # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
-        # Type narrowing: always create m.ContextData instance
+        # Type narrowing: always create m.Context.ContextData instance
         if isinstance(initial_data, dict):
             # Type narrowing: initial_data is t.ConfigurationDict
             initial_dict: t.ConfigurationDict = initial_data
@@ -101,13 +101,13 @@ class FlextContext(FlextRuntime):
                 str(k): FlextRuntime.normalize_to_general_value(v)
                 for k, v in u.mapper().to_dict(initial_dict).items()
             }
-            context_data = m.ContextData(data=normalized_data)
-        elif isinstance(initial_data, m.ContextData):
+            context_data = m.Context.ContextData(data=normalized_data)
+        elif isinstance(initial_data, m.Context.ContextData):
             # Already a ContextData instance (not dict, not None)
             context_data = initial_data
         else:
             # None or uninitialized - create empty ContextData
-            context_data = m.ContextData()
+            context_data = m.Context.ContextData()
         # Initialize context-specific metadata (separate from ContextData.metadata)
         # ContextData.metadata = generic creation/modification metadata (m.Metadata)
         # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
@@ -142,7 +142,7 @@ class FlextContext(FlextRuntime):
 
         # Initialize contextvars with initial data if provided
         # Note: No self._lock needed - contextvars are thread-safe by design
-        # Type narrowing: context_data is always m.ContextData at this point
+        # Type narrowing: context_data is always m.Context.ContextData at this point
         if context_data.data:
             # Set initial data in global context
             self._set_in_contextvar(
@@ -154,7 +154,7 @@ class FlextContext(FlextRuntime):
     @classmethod
     def create(
         cls,
-        initial_data: m.ContextData | t.ConfigurationDict | None = None,
+        initial_data: m.Context.ContextData | t.ConfigurationDict | None = None,
     ) -> Self: ...
 
     @overload
@@ -170,7 +170,7 @@ class FlextContext(FlextRuntime):
     @classmethod
     def create(
         cls,
-        initial_data: m.ContextData | t.ConfigurationDict | None = None,
+        initial_data: m.Context.ContextData | t.ConfigurationDict | None = None,
         *,
         operation_id: str | None = None,
         user_id: str | None = None,
@@ -492,6 +492,46 @@ class FlextContext(FlextRuntime):
             )
             return r[bool].fail(error_msg)
 
+    def set_all(
+        self,
+        data: t.ConfigurationDict,
+        scope: str = c.Context.SCOPE_GLOBAL,
+    ) -> r[bool]:
+        """Set multiple values in the context.
+
+        Args:
+            data: Dictionary of key-value pairs to set
+            scope: The scope for the values (global, user, session)
+
+        Returns:
+            r[bool]: Success with True if all set, failure with error message
+
+        """
+        if not self._active:
+            return r[bool].fail("Context is not active")
+
+        if not data:
+            return r[bool].ok(True)
+
+        try:
+            ctx_var = self._get_or_create_scope_var(scope)
+            # Type narrowing: ctx_var.get() is dict after isinstance check
+            current_dict = ctx_var.get() if u.is_type(ctx_var.get(), dict) else {}
+            current_dict = current_dict if isinstance(current_dict, dict) else {}
+            # Merge the new data
+            updated_dict = {**current_dict, **data}
+            ctx_var.set(updated_dict)
+            self._update_statistics(c.Context.OPERATION_SET)
+            self._execute_hooks(c.Context.OPERATION_SET, {"data": data})
+            return r[bool].ok(True)
+        except (TypeError, Exception) as e:
+            error_msg = (
+                str(e)
+                if isinstance(e, TypeError)
+                else f"Failed to set context values: {e}"
+            )
+            return r[bool].fail(error_msg)
+
     def get(
         self,
         key: str,
@@ -587,12 +627,9 @@ class FlextContext(FlextRuntime):
         )
         if key in current:
             # Use filter_dict for concise key removal
-            def key_filter(k: str, v: t.GeneralValueType) -> bool:  # noqa: ARG001
-                return k != key
-
             filtered: t.ConfigurationDict = u.Mapper.filter_dict(
                 current,
-                key_filter,
+                lambda k, _v: k != key,
             )
             _ = ctx_var.set(filtered)
             # Note: ContextVar.set() already cleared the key, no need to unbind from logger
@@ -723,15 +760,19 @@ class FlextContext(FlextRuntime):
             A new FlextContext with the same data
 
         """
-        cloned: Self = cast("Self", FlextContext())
-        for scope_name, ctx_var in self._scope_vars.items():
-            # Use helper for type narrowing to ConfigurationDict
+        cloned: Self = type(self)()
+        # Clone all scope data using public API
+        for scope_name, ctx_var in self.iter_scope_vars().items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
-                _ = cloned._get_or_create_scope_var(scope_name).set(scope_dict.copy())  # noqa: SLF001
-        # Clone metadata and statistics
-        cloned._metadata = self._metadata.model_copy()  # noqa: SLF001
-        cloned._statistics = self._statistics.model_copy()  # noqa: SLF001
+                # Set all key-value pairs in the cloned context for this scope
+                result = cloned.set_all(scope_dict, scope_name)
+                if not result:
+                    # If setting fails, log warning but continue cloning
+                    pass
+        # Clone metadata and statistics using public methods
+        cloned.set_all_metadata_for_clone(self._metadata.model_copy())
+        cloned.set_statistics_for_clone(self._statistics.model_copy())
 
         # Type narrowing: cloned is FlextContext which implements p.Ctx protocol
         # FlextContext structurally implements p.Ctx, so no cast needed
@@ -847,7 +888,7 @@ class FlextContext(FlextRuntime):
                 data,
                 transformer=normalize_value,
             )
-            context_data = m.ContextData(data=normalized_data)
+            context_data = m.Context.ContextData(data=normalized_data)
             # Type narrowing: cls(initial_data=context_data) returns FlextContext which implements p.Ctx protocol
             # FlextContext structurally implements p.Ctx, so no cast needed
             return cls(initial_data=context_data)
@@ -1130,6 +1171,33 @@ class FlextContext(FlextRuntime):
 
         """
         return self._statistics
+
+    def set_statistics_for_clone(self, statistics: m.ContextStatistics) -> None:
+        """Set context statistics (used internally for cloning).
+
+        Args:
+            statistics: ContextStatistics model to set
+
+        """
+        self._statistics = statistics
+
+    def set_all_metadata_for_clone(self, metadata: m.Metadata) -> None:
+        """Set all metadata for the context (used internally for cloning).
+
+        Args:
+            metadata: Metadata model to set
+
+        """
+        self._metadata = metadata
+
+    def _set_all_metadata(self, metadata: m.Metadata) -> None:
+        """Set all metadata for the context (used internally for cloning).
+
+        Args:
+            metadata: Metadata model to set
+
+        """
+        self._metadata = metadata
 
     def _get_all_metadata(self) -> t.ConfigurationDict:
         """Get all metadata from the context.

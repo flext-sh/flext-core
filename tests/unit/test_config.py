@@ -487,8 +487,8 @@ class TestFlextSettingsPydantic:
             ["FLEXT_TIMEOUT_SECONDS", "FLEXT_ENV_FILE"],
         ):
             # Test explicit init (highest priority)
-            config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
-                timeout_seconds=90,
+            config = FlextSettings.materialize(
+                config_overrides={"timeout_seconds": 90},
             )
             assert config.timeout_seconds == 90
 

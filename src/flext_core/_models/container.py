@@ -61,12 +61,8 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Service identifier/name",
         )
-        # Note: Using 'object' as base type allows arbitrary service instances
-        # while maintaining type safety (all classes inherit from object)
-        # This is essential for DI container to accept any service type
-        service: (
-            t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
-        ) = Field(
+        # Service instance with specific types for DI container
+        service: object = Field(
             ...,
             description=(
                 "Service instance (primitives, BaseModel, callable, or any object)"
