@@ -3915,9 +3915,11 @@ class FlextDispatcher(x):
             return None
 
         # Use process() for concise key normalization - convert keys to strings
-        normalized = {str(k): v for k, v in raw_metadata.items()}
+        # raw_metadata is ConfigurationMapping (Mapping[str, t.GeneralValueType])
+        # so this dict comprehension produces ConfigurationDict directly
+        normalized: t.ConfigurationDict = {str(k): v for k, v in raw_metadata.items()}
 
-        return cast("t.ConfigurationDict | None", normalized)
+        return normalized
 
     @staticmethod
     def _extract_metadata_mapping(
@@ -4081,15 +4083,11 @@ class FlextDispatcher(x):
                 _ = parent_var.set(current_parent)
 
         # Set metadata if provided
-        if metadata:
-            # Cast metadata to t.ConfigurationDict | None for set()
-            metadata_dict: t.ConfigurationDict | None = (
-                cast("t.ConfigurationDict | None", metadata)
-                if FlextRuntime.is_dict_like(metadata)
-                else None
-            )
-            if metadata_dict is not None:
-                _ = metadata_var.set(metadata_dict)
+        if metadata and FlextRuntime.is_dict_like(metadata):
+            # Type narrowing: metadata is dict-like after isinstance check
+            # Use TypeGuard for proper ConfigurationDict validation
+            if u.Guards.is_configuration_dict(metadata):
+                _ = metadata_var.set(metadata)
 
             # Use provided correlation ID or generate one if needed
             effective_correlation_id = correlation_id
