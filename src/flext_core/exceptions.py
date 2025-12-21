@@ -1043,11 +1043,8 @@ class FlextExceptions:
                 if isinstance(type_raw, str):
                     result = _get(type_map, type_raw)
                     return cast("type[object] | None", result)
-                # Runtime safety: type_raw is t.MetadataAttributeValue per type system,
-                # but at runtime can be type object (defensive programming)
-                if isinstance(type_raw, type):
-                    return type_raw
-                # type_raw is not a type, return None
+                # type_raw is t.MetadataAttributeValue, which does not include type objects
+                # type_raw is not a recognized type, return None
                 return None
             # Handle case where type is passed as string in named arg
             if isinstance(type_value, str):

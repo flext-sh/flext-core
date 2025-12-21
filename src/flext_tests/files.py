@@ -1221,7 +1221,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         batch_result_dict = u.Collection.batch(
             items_list,
             operation_fn,
-            on_error=error_mode_str,
+            _on_error=error_mode_str,
             _parallel=params.parallel,
         )
 

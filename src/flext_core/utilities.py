@@ -12,13 +12,11 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping, Sequence, Sized
 from enum import StrEnum
-from typing import TypeIs, cast, overload
-
-from pydantic import BaseModel
+from typing import TypeIs, overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
-from flext_core._utilities.cast import FlextUtilitiesCast, cast_safe
+from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.checker import FlextUtilitiesChecker
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
@@ -103,7 +101,6 @@ class FlextUtilities:
     # Generalized public function aliases
     enum = staticmethod(enum)
     conversion = staticmethod(conversion)
-    cast_safe = staticmethod(cast_safe)
 
     # Convenience shortcuts for common operations
     @staticmethod
@@ -189,7 +186,11 @@ class FlextUtilities:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        return cast("type[StrEnum]", StrEnum(name, values))
+        return type(
+            name,
+            (StrEnum,),
+            {"__members__": {k: StrEnum(k, v) for k, v in values.items()}},
+        )
 
     @staticmethod
     def to_str(value: object, *, default: str | None = None) -> str:
@@ -223,6 +224,63 @@ class FlextUtilities:
 
         """
         return FlextUtilitiesMapper()
+
+    @staticmethod
+    def guard(
+        value: object,
+        validator: Callable[[object], bool] | type | object = None,
+        *,
+        return_value: bool = False,
+    ) -> object | None:
+        """Simple guard method for validation. Returns value if valid, None if not."""
+        try:
+            if callable(validator):
+                if validator(value):
+                    return value if return_value else True
+            elif isinstance(validator, type):
+                if isinstance(value, validator):
+                    return value if return_value else True
+            # Default validation - check if value is truthy
+            elif value:
+                return value if return_value else True
+            return None
+        except Exception:
+            return None
+
+    @staticmethod
+    def ensure_str(value: t.GeneralValueType, default: str = "") -> str:
+        """Ensure value is string. Alias for Mapper.ensure_str()."""
+        return FlextUtilitiesMapper.ensure_str(value, default)
+
+    @staticmethod
+    def count(items: object) -> int:
+        """Count items."""
+        if hasattr(items, "__len__"):
+            return len(items)
+        return 0
+
+    @staticmethod
+    def in_(value: object, container: object) -> bool:
+        """Check if value is in container."""
+        if isinstance(container, (list, tuple, set, dict)):
+            try:
+                return value in container
+            except TypeError:
+                return False
+        return False
+
+    @staticmethod
+    def find(
+        items: Sequence[object] | Mapping[str, object],
+        predicate: Callable[[object], bool],
+    ) -> object | None:
+        """Find first item matching predicate. Alias for Collection.find()."""
+        return FlextUtilitiesCollection.find(items, predicate)
+
+    @staticmethod
+    def format_app_id(name: str) -> str:
+        """Format application ID. Simple implementation."""
+        return name.lower().replace(" ", "-").replace("_", "-")
 
     class Generators(FlextUtilitiesGenerators):
         """Generators utility class - real inheritance."""
@@ -337,9 +395,9 @@ class FlextUtilities:
 
         @staticmethod
         def flow_through[T, U](
-            result: r[T],
-            *funcs: Callable[[T | U], r[U]],
-        ) -> r[U]:
+            result: r[T | U],
+            *funcs: Callable[[T | U], r[T | U]],
+        ) -> r[T | U]:
             """Chain multiple operations in a pipeline.
 
             Args:
@@ -356,12 +414,14 @@ class FlextUtilities:
                 ... )
 
             """
-            # FlextResult extends RuntimeResult, use its inherited flow_through method
-            # Type narrowing: r[U] is assignable to RuntimeResult[U] since FlextResult extends RuntimeResult
-            result_chained = result.flow_through(
-                *cast("tuple[Callable[[T | U], r[T | U]], ...]", funcs)
-            )
-            return cast("r[U]", result_chained)
+            # Chain functions through result
+            current_result = result
+            for func in funcs:
+                if current_result.is_failure:
+                    break
+                next_result = func(current_result.value)
+                current_result = next_result
+            return current_result
 
         @staticmethod
         def and_then[T, U](
@@ -485,7 +545,7 @@ class FlextUtilities:
             container: p.DI,
             *,
             scope_id: str | None = None,
-            overrides: dict[str, object] | None = None,
+            overrides: Mapping[str, object] | None = None,
         ) -> p.DI:
             """Clone container with scoping.
 
@@ -508,20 +568,9 @@ class FlextUtilities:
 
             """
             # Use container's scoped() method for proper scoping
-            # Python 3.13: dict[str, object] is structurally compatible with ServiceMapping
-            # ServiceInstanceType = t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType] | object
-            # object is compatible with ServiceInstanceType (object is included in union)
-            # Convert dict to Mapping for structural compatibility
-            services_mapping: t.ServiceMapping | None = (
-                dict(overrides) if overrides is not None else None
-            )
-            # Cast needed: ServiceMapping includes 'object' but scoped() expects narrower type
             return container.scoped(
                 subproject=scope_id,
-                services=cast(
-                    "Mapping[str, t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType]] | None",
-                    services_mapping,
-                ),
+                services=overrides,
             )
 
     class Registration:
@@ -532,10 +581,10 @@ class FlextUtilities:
         """
 
         @staticmethod
-        def register_singleton[T](
+        def register_singleton(
             container: p.DI,
             name: str,
-            instance: T,
+            instance: t.GeneralValueType,
         ) -> r[None]:
             """Register singleton with standard error handling.
 
@@ -554,17 +603,8 @@ class FlextUtilities:
 
             """
             try:
-                # Python 3.13: T is compatible with ServiceInstanceType via structural typing
-                # Protocol's register() expects FlexibleValue, but implementation accepts T
-                # Cast instance to match protocol's signature for type checking
-                # FlexibleValue = str | int | float | bool | datetime | None | Sequence | Mapping
-                register_result = container.register(
-                    name,
-                    cast(
-                        "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None] | None",
-                        instance,
-                    ),
-                )
+                # Type should be compatible with FlexibleValue
+                register_result = container.register(name, instance)
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Registration failed",
@@ -575,10 +615,10 @@ class FlextUtilities:
                 return r[None].fail(f"Registration failed for {name}: {e}")
 
         @staticmethod
-        def register_factory[T](
+        def register_factory(
             container: p.DI,
             name: str,
-            factory: Callable[[], T],
+            factory: Callable[[], t.GeneralValueType],
             *,
             _cache: bool = False,
         ) -> r[None]:
@@ -604,11 +644,8 @@ class FlextUtilities:
 
             """
             try:
-                # Python 3.13: Callable[[], T] is compatible with FactoryCallable = Callable[[], t.GeneralValueType]
-                # Cast needed: T might be wider than t.GeneralValueType, but protocol expects t.GeneralValueType
-                register_result = container.register_factory(
-                    name, cast("Callable[[], t.GeneralValueType]", factory)
-                )
+                # Type is now correctly constrained to t.GeneralValueType
+                register_result = container.register_factory(name, factory)
                 if register_result.is_failure:
                     return r[None].fail(
                         register_result.error or "Factory registration failed",
@@ -625,7 +662,7 @@ class FlextUtilities:
             container: p.DI,
             registrations: Mapping[
                 str,
-                object | Callable[[], t.GeneralValueType],
+                t.FlexibleValue | Callable[[], t.GeneralValueType],
             ],
         ) -> r[int]:
             """Register multiple services at once.
@@ -655,15 +692,9 @@ class FlextUtilities:
                         # Direct assignment works - type checker recognizes callable compatibility
                         register_result = container.register_factory(name, value)
                     else:
-                        # Cast needed: value is object from registrations mapping, but protocol expects FlexibleValue
-                        # FlexibleValue = str | int | float | bool | datetime | None | Sequence | Mapping
-                        register_result = container.register(
-                            name,
-                            cast(
-                                "str | int | float | bool | Sequence[str | int | float | bool | None] | Mapping[str, str | int | float | bool | None] | None",
-                                value,
-                            ),
-                        )
+                        # Type is now correctly constrained to t.FlexibleValue
+                        # Use direct assignment since value is already compatible
+                        register_result = container.register(name, value)
                     if register_result.is_failure:
                         return r[int].fail(
                             f"Bulk registration failed at {name}: {register_result.error}",
@@ -1056,16 +1087,16 @@ class FlextUtilities:
         return FlextUtilitiesReliability.pipe(value, *operations, on_error=on_error)
 
     @staticmethod
-    def batch[T, R](
-        items: list[T],
-        operation: Callable[[T], R | r[R]],
+    def batch(
+        items: list[object],
+        operation: Callable[[object], object],
         *,
         _size: int = c.DEFAULT_BATCH_SIZE,
         on_error: str = "collect",
         _parallel: bool = False,
         progress: Callable[[int, int], None] | None = None,
         _progress_interval: int = 1,
-        pre_validate: Callable[[T], bool] | None = None,
+        pre_validate: Callable[[object], bool] | None = None,
         flatten: bool = False,
     ) -> r[t.BatchResultDict]:
         """Process items in batches - delegates to FlextUtilitiesCollection.batch."""
@@ -1073,12 +1104,12 @@ class FlextUtilities:
             items,
             operation,
             _size=_size,
-            on_error=on_error,
+            _on_error=on_error,
             _parallel=_parallel,
             progress=progress,
             _progress_interval=_progress_interval,
             pre_validate=pre_validate,
-            flatten=flatten,
+            _flatten=flatten,
         )
 
     @staticmethod

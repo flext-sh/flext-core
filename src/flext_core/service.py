@@ -344,7 +344,7 @@ class FlextService[TDomainResult](
             config=runtime_config,
             context=runtime_context_typed,
             container=runtime_container,
-            dispatcher=runtime_dispatcher,
+            dispatcher=cast("p.CommandBus", runtime_dispatcher),
             registry=runtime_registry,
         )
 

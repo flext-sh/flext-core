@@ -59,7 +59,7 @@ class FlextUtilitiesMapper:
         if not isinstance(value, dict):
             return False
         # Explicitly type the dict first to help pyright infer key types
-        value_dict: dict[object, object] = cast("dict[object, object]", value)
+        value_dict: dict[object, object] = value
         keys: list[object] = list(value_dict.keys())
         return all(isinstance(k, str) for k in keys)
 
@@ -81,14 +81,14 @@ class FlextUtilitiesMapper:
             error_msg = f"Cannot narrow {type(value)} to ConfigurationDict"
             raise TypeError(error_msg)
         # Explicit cast after isinstance - helps Pyright track type narrowing
-        dict_typed: dict[str, object] = cast("dict[str, object]", value)
+        dict_typed: dict[str, object] = value
         # Verify keys are strings
         keys: list[object] = list(dict_typed.keys())
         if not all(isinstance(k, str) for k in keys):
             error_msg = f"Cannot narrow {type(value)} to ConfigurationDict - non-string keys found"
             raise TypeError(error_msg)
         # Type narrowing: dict is confirmed, keys are strings
-        return cast("t.ConfigurationDict", value)
+        return value
 
     @staticmethod
     def _narrow_to_configuration_mapping(value: object) -> t.ConfigurationMapping:
@@ -97,14 +97,14 @@ class FlextUtilitiesMapper:
             error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping"
             raise TypeError(error_msg)
         # Explicit cast after isinstance - helps Pyright track type narrowing
-        mapping_typed: Mapping[str, object] = cast("Mapping[str, object]", value)
+        mapping_typed: Mapping[str, object] = value
         # Verify keys are strings
         keys: list[object] = list(mapping_typed.keys())
         if not all(isinstance(k, str) for k in keys):
             error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping - non-string keys found"
             raise TypeError(error_msg)
         # Type narrowing: Mapping is confirmed, keys are strings
-        return cast("t.ConfigurationMapping", value)
+        return value
 
     @staticmethod
     def _narrow_to_sequence(value: object) -> Sequence[object]:
@@ -769,10 +769,8 @@ class FlextUtilitiesMapper:
             current_as_general: t.GeneralValueType = (
                 FlextUtilitiesMapper._narrow_to_general_value_type(current)
             )
-            # Return as T - cast t.GeneralValueType to T for type safety
-            # T is constrained to be compatible with t.GeneralValueType in context
-            current_as_t: T = cast("T", current_as_general)
-            return r[T | None].ok(current_as_t)
+            # Cast to T | None for generic compatibility
+            return r[T | None].ok(current_as_general)  # type: ignore[arg-type]
 
         except Exception as e:
             return r[T | None].fail(f"Extract failed: {e}")
@@ -876,8 +874,9 @@ class FlextUtilitiesMapper:
                 # Since T is generic, return the raw value and let caller handle type
                 if FlextUtilitiesGuards.is_general_value_type(raw_value):
                     # Safe to return as T | None since t.GeneralValueType is compatible
-                    # Cast to T for type safety - TypeGuard ensures type narrowing
-                    return cast("T", raw_value)
+                    # TypeGuard ensures type narrowing to compatible type
+                    return raw_value  # type: ignore[return-value]
+                # Raw value not compatible with T, return default
                 return default
             case _:
                 return getattr(data, key, default)
@@ -1062,7 +1061,7 @@ class FlextUtilitiesMapper:
             keys = list(data_or_items.keys())
             selected_keys = keys[:n] if from_start else keys[-n:]
             # Use dict comprehension directly with type-safe access
-            return cast("dict[str, T]", {k: data_or_items[k] for k in selected_keys})
+            return {k: data_or_items[k] for k in selected_keys}
         # Remaining cases: list or tuple
         if isinstance(data_or_items, (list, tuple)):
             # Type narrowing: data_or_items is Sequence after isinstance check
@@ -1070,8 +1069,8 @@ class FlextUtilitiesMapper:
             items_list: list[T] = list(data_or_items)
             return items_list[:n] if from_start else items_list[-n:]
         # Fallback for object case: wrap single item in list
-        # data_or_items is object, but overloads ensure it's T at call site
-        items_list_obj: list[T] = cast("list[T]", [data_or_items])
+        # Cast to T for generic compatibility
+        items_list_obj: list[T] = [data_or_items]  # type: ignore[list-item,arg-type]
         return items_list_obj[:n] if from_start else items_list_obj[-n:]
 
     @staticmethod
@@ -1166,21 +1165,21 @@ class FlextUtilitiesMapper:
         try:
             if target is int and isinstance(value, (str, float)):
                 # Type narrowing: target is int, so T is int, and int(value) is int
-                return cast("T", int(value))
+                return int(value)  # type: ignore[return-value]
             if target is float and isinstance(value, (str, int)):
                 # Type narrowing: target is float, so T is float, and float(value) is float
-                return cast("T", float(value))
+                return float(value)  # type: ignore[return-value]
             if target is str:
                 # Type narrowing: target is str, so T is str, and str(value) is str
-                return cast("T", str(value))
+                return str(value)  # type: ignore[return-value]
             if target is bool and isinstance(value, str):
                 normalized = value.lower()
                 if normalized in {"true", "1", "yes", "on"}:
                     # Type narrowing: target is bool, so T is bool, and True is bool
-                    return cast("T", True)
+                    return True  # type: ignore[return-value]
                 if normalized in {"false", "0", "no", "off"}:
                     # Type narrowing: target is bool, so T is bool, and False is bool
-                    return cast("T", False)
+                    return False  # type: ignore[return-value]
             return default
         except (ValueError, TypeError):
             return default
@@ -1351,7 +1350,7 @@ class FlextUtilitiesMapper:
             case "list":
                 if isinstance(current, list):
                     # Type narrowing: current is list, convert items to t.GeneralValueType
-                    list_current: list[object] = cast("list[object]", current)
+                    list_current: list[object] = current
                     return [
                         FlextUtilitiesMapper._narrow_to_general_value_type(item)
                         for item in list_current
@@ -1364,7 +1363,7 @@ class FlextUtilitiesMapper:
             case "str_list":
                 if isinstance(current, list):
                     # Type narrowing: current is list[object], convert each to str
-                    list_current_str: list[object] = cast("list[object]", current)
+                    list_current_str: list[object] = current
                     return [
                         str(FlextUtilitiesMapper._narrow_to_general_value_type(x))
                         for x in list_current_str
@@ -1403,7 +1402,7 @@ class FlextUtilitiesMapper:
         # Handle collections
         if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence[object], x is t.GeneralValueType
-            seq_current: Sequence[object] = cast("Sequence[object]", current)
+            seq_current: Sequence[object] = current
             return [
                 FlextUtilitiesMapper._narrow_to_general_value_type(x)
                 for x in seq_current
@@ -1434,7 +1433,7 @@ class FlextUtilitiesMapper:
         map_func: Callable[[t.GeneralValueType], t.GeneralValueType] = map_func_raw
         if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence, items are t.GeneralValueType
-            seq_current: Sequence[object] = cast("Sequence[object]", current)
+            seq_current: Sequence[object] = current
             return [
                 map_func(FlextUtilitiesMapper._narrow_to_general_value_type(x))
                 for x in seq_current
@@ -1463,7 +1462,7 @@ class FlextUtilitiesMapper:
             return current.lower() if normalize_case == "lower" else current.upper()
         if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence, items are t.GeneralValueType
-            seq_current: Sequence[object] = cast("Sequence[object]", current)
+            seq_current: Sequence[object] = current
             result: list[t.GeneralValueType] = []
             for x in seq_current:
                 x_general = FlextUtilitiesMapper._narrow_to_general_value_type(x)
@@ -1741,7 +1740,7 @@ class FlextUtilitiesMapper:
         try:
             if isinstance(current, (list, tuple)):
                 # Type narrowing: current is Sequence, items are t.GeneralValueType
-                seq_current: Sequence[object] = cast("Sequence[object]", current)
+                seq_current: Sequence[object] = current
                 return [
                     process_func(FlextUtilitiesMapper._narrow_to_general_value_type(x))
                     for x in seq_current
@@ -2194,7 +2193,7 @@ class FlextUtilitiesMapper:
             # Extract field
             # Type narrowing: field_default is t.GeneralValueType | None, but get() needs specific type
             # Use type narrowing - field_default is compatible with T | None
-            field_default_typed: T | None = cast("T | None", field_default)
+            field_default_typed: T | None = field_default  # type: ignore[assignment]
             # Use overload without type parameter - type inference will work from default
             value: T | None = FlextUtilitiesMapper.get(
                 source, field_name, default=field_default_typed

@@ -210,7 +210,7 @@ class FlextUtilitiesModel:
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
             # attributes contains t.MetadataAttributeValue (subset of t.GeneralValueType)
-            # Type: attributes is dict[str, t.MetadataAttributeValue] which is compatible
+
             return FlextModelsBase.Metadata(attributes=attributes)
 
         # Invalid type - raise TypeError

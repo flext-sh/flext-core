@@ -91,7 +91,7 @@ class TestFlextContext:
 
     def test_context_with_initial_data(self) -> None:
         """Test context initialization with initial data."""
-        initial_data = m.ContextData(
+        initial_data = m.Context.ContextData(
             data={"user_id": "123", "session_id": "abc"},
         )
         context = FlextContext(initial_data)

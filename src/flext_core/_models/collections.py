@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self, cast
+from typing import Self
 
 from pydantic import ConfigDict, Field
 
@@ -185,14 +185,12 @@ class FlextModelsCollections:
             result: t.StringSequenceGeneralValueDict = {}
             for key, value_list in self.categories.items():
                 # Normalize each item in the list to t.GeneralValueType
-                # Use inline helper to avoid circular import with runtime.py
-                # Cast item to GeneralValueType since Categories[T] should contain compatible types
-                normalized_list: list[t.GeneralValueType] = [
-                    FlextRuntime.normalize_to_general_value(
-                        cast("t.GeneralValueType", item)
-                    )
-                    for item in value_list
-                ]
+                # Assume T is compatible or use runtime normalization
+                normalized_list: list[t.GeneralValueType] = []
+                for item in value_list:
+                    # normalize_to_general_value accepts any object
+                    normalized = FlextRuntime.normalize_to_general_value(item)
+                    normalized_list.append(normalized)
                 result[key] = normalized_list
             return result
 
@@ -233,11 +231,9 @@ class FlextModelsCollections:
             if FlextRuntime.is_list_like(first_val):
                 combined: list[t.GeneralValueType] = []
                 for v in non_none:
-                    if FlextRuntime.is_list_like(v):
-                        # Type narrowing with cast after is_list_like check
-                        v_list = cast("Sequence[t.GeneralValueType]", v)
-                        # Normalize each item to t.GeneralValueType
-                        for item in v_list:
+                    if isinstance(v, Sequence) and not isinstance(v, str):
+                        # Explicit check for Sequence (excluding str)
+                        for item in v:
                             normalized = FlextRuntime.normalize_to_general_value(item)
                             combined.append(normalized)
                 return combined
@@ -365,11 +361,9 @@ class FlextModelsCollections:
             """
             combined: list[t.GeneralValueType] = []
             for v in non_none:
-                if FlextRuntime.is_list_like(v):
-                    # Type narrowing with cast after is_list_like check
-                    v_list = cast("Sequence[t.GeneralValueType]", v)
-                    # Normalize each item to t.GeneralValueType
-                    for item in v_list:
+                if isinstance(v, Sequence) and not isinstance(v, str):
+                    # Explicit sequence check
+                    for item in v:
                         normalized = FlextRuntime.normalize_to_general_value(item)
                         combined.append(normalized)
             return combined
@@ -390,10 +384,9 @@ class FlextModelsCollections:
             """
             merged: t.ConfigurationDict = {}
             for v in non_none:
-                if FlextRuntime.is_dict_like(v):
-                    # Type narrowing with cast after is_dict_like check
-                    dict_v = cast("t.ConfigurationMapping", v)
-                    merged.update(dict_v)
+                if isinstance(v, Mapping):
+                    # Explicit check for Mapping
+                    merged.update(dict(v))
             return merged
 
         @classmethod
@@ -545,11 +538,9 @@ class FlextModelsCollections:
             if FlextRuntime.is_list_like(first_val):
                 combined: list[t.GeneralValueType] = []
                 for v in non_none:
-                    if FlextRuntime.is_list_like(v):
-                        # Type narrowing with cast after is_list_like check
-                        v_list = cast("Sequence[t.GeneralValueType]", v)
-                        # Normalize each item to t.GeneralValueType
-                        for item in v_list:
+                    if isinstance(v, Sequence) and not isinstance(v, str):
+                        # Explicit check for Sequence (excluding str)
+                        for item in v:
                             normalized = FlextRuntime.normalize_to_general_value(item)
                             combined.append(normalized)
                 return combined

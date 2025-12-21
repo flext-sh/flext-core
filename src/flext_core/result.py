@@ -492,8 +492,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             # Extract error message from Pydantic ValidationError if available
             if hasattr(e, "errors") and callable(getattr(e, "errors", None)):
                 error_msg = "; ".join(
-                    f"{err.get('loc', [])}: {err.get('msg', '')}"
-                    for err in getattr(e, "errors")()
+                    f"{err.get('loc', [])}: {err.get('msg', '')}" for err in e.errors()
                 )
             else:
                 error_msg = str(e)

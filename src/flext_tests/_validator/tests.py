@@ -5,8 +5,8 @@ Detects test violations: monkeypatch, mocks, @patch decorator usage.
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
-
 from __future__ import annotations
+
 
 import ast
 from pathlib import Path
