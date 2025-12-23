@@ -475,3 +475,4 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 - Review [`CLAUDE.md`](./CLAUDE.md) for project-specific guidelines and architecture patterns
 - Review [`docs/development/contributing.md`](./docs/development/contributing.md) for coding, documentation, and testing expectations (PEP 8/257 compliant)
 - Open issues or discussions on GitHub for bug reports or design questions
+# Test
