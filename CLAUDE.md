@@ -22,6 +22,7 @@
 **See [../CLAUDE.md - FLOCK Protocol](../CLAUDE.md#-flock-protocol---multi-agent-file-coordination)** for the authoritative multi-agent coordination specification.
 
 **Quick Reference**:
+
 - Check `.token` before modifying critical files
 - Use `FLOCK_[AGENT]_[FILE]` to establish locks
 - Release locks immediately after changes
@@ -33,12 +34,14 @@
 **See [../CLAUDE.md - Architecture Layering](../CLAUDE.md#-critical-architecture-layering-zero-tolerance)** for the complete architecture specification.
 
 **Quick Reference** (Tier 0→3):
+
 ```
 Tier 0: constants.py, typings.py, protocols.py (ZERO internal imports)
 Tier 1: models.py, utilities.py
 Tier 2: servers/*.py
 Tier 3: services/*.py, api.py
 ```
+
 **Rule**: Lower tiers NEVER import from higher tiers.
 
 ---
@@ -48,12 +51,14 @@ Tier 3: services/*.py, api.py
 **See [../CLAUDE.md - Critical Rules](../CLAUDE.md#critical-rules--zero-tolerance)** for the complete list of zero-tolerance rules.
 
 **Quick Reference**:
+
 - ❌ No `TYPE_CHECKING`, `# type: ignore`, `cast()`, `Any`
 - ❌ No metaclasses, `__getattr__`, dynamic assignments
 - ✅ Full namespace always (no root aliases)
 - ✅ Real tests only (no mocks)
 
 **Architecture Check** (run before commit):
+
 ```bash
 grep -rEn "(from flext_.*\.(services|api) import)" \
   src/*/models.py src/*/protocols.py src/*/utilities.py \
@@ -73,6 +78,7 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 ### Current Status (December 2025)
 
 **Centralized Type System** ✅ **COMPLETED**:
+
 - ✅ **Status**: Migration completed across all `src/` modules
 - ✅ **Pattern**: All complex types use `t.Types.*` aliases from `flext_core.typings`
 - ✅ **Import**: `from flext_core.typings import t, T, U` (NOT `from flext_core import typings as t`)
@@ -82,6 +88,7 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 - ✅ **Modules Updated**: All modules in `src/flext_core/` and `src/flext_tests/`
 
 **Centralized Constants** ✅ **COMPLETED**:
+
 - ✅ **Status**: `FlextConstants` fully organized with 20+ namespaces
 - ✅ **Pattern**: All constants use `c.Namespace.CONSTANT` pattern
 - ✅ **Coverage**: All modules using centralized constants
@@ -158,6 +165,7 @@ Tier 3 (Application Layer):
 **CRITICAL**: Protocols are used EXTENSIVELY throughout `src/` to avoid circular imports, Pydantic forward reference issues, and to follow SOLID principles.
 
 **Protocol Organization** (hierarchical namespaces - FULL NAMESPACE REQUIRED):
+
 ```python
 from flext_core.protocols import p  # FlextProtocols
 
@@ -199,6 +207,7 @@ p.Infrastructure.Metadata
 ```
 
 **Usage Pattern** (MANDATORY for interfaces):
+
 ```python
 # ✅ CORRECT - Use full namespace (MANDATORY)
 def execute_service(service: p.Domain.Service[str]) -> p.Foundation.Result[str]:
@@ -221,6 +230,7 @@ def execute_service(service: FlextService[str]) -> FlextResult[str]:  # FORBIDDE
 ```
 
 **Protocol Benefits**:
+
 - ✅ Eliminates circular import issues
 - ✅ Avoids Pydantic forward reference problems
 - ✅ Follows Dependency Inversion Principle (SOLID)
@@ -228,12 +238,14 @@ def execute_service(service: FlextService[str]) -> FlextResult[str]:  # FORBIDDE
 - ✅ Interfaces well-defined and testable
 
 **NO TYPE_CHECKING or Lazy Imports**:
+
 - ❌ **FORBIDDEN**: `TYPE_CHECKING` blocks for protocol imports (ZERO TOLERANCE)
 - ❌ **FORBIDDEN**: Lazy imports (imports inside functions)
 - ✅ **REQUIRED**: All imports at top of file, use protocols directly
 - ✅ **REQUIRED**: Use forward references with `from __future__ import annotations` to avoid circular dependencies
 
 #### 2. Single Class Per Module (OBLIGATORY)
+
 Every module exports exactly ONE main public class with `Flext` prefix:
 
 ```python
@@ -274,6 +286,7 @@ from flext_core.models import FlextModels
 **CRITICAL**: All complex types MUST use centralized type aliases from `t.Types` namespace.
 
 **Import Pattern** (MANDATORY):
+
 ```python
 # ✅ CORRECT - Direct import from typings module
 from flext_core.typings import t, T, U, T_co, T_contra, E, R, P
@@ -287,6 +300,7 @@ TValue = TypeVar("TValue")     # FORBIDDEN - Use T or U from flext_core.typings
 ```
 
 **Type Alias Usage** (MANDATORY - FULL NAMESPACE REQUIRED):
+
 ```python
 from flext_core.typings import t, T, U
 
@@ -340,6 +354,7 @@ def process[TResult](value: TResult) -> r[TResult]:  # Use T instead
 ```
 
 **Available Type Aliases** (in `t.Types` namespace):
+
 - **Configuration**: `ConfigurationDict`, `ConfigurationMapping`, `StringConfigurationDictDict`
 - **String mappings**: `StringDict`, `StringIntDict`, `StringFloatDict`, `StringBoolDict`, `StringNumericDict`
 - **Enum types**: `StringStrEnumTypeDict`, `StringStrEnumInstanceDict`
@@ -352,6 +367,7 @@ def process[TResult](value: TResult) -> r[TResult]:  # Use T instead
 - **And many more...** (see `typings.py` for complete list)
 
 **Available TypeVars** (from `flext_core.typings`):
+
 - **Core generics**: `T`, `T_co` (covariant), `T_contra` (contravariant)
 - **Utilities**: `U`, `R`, `E`
 - **ParamSpec**: `P` (for decorators)
@@ -359,6 +375,7 @@ def process[TResult](value: TResult) -> r[TResult]:  # Use T instead
 - **Config/Models**: `T_Model`, `T_Namespace`, `T_Settings`
 
 **Status**: ✅ **COMPLETED** (January 2025)
+
 - ✅ All modules in `src/flext_core/` using centralized types
 - ✅ All modules in `src/flext_tests/` using centralized types
 - ✅ All TypeVars imported from `flext_core.typings`
@@ -366,6 +383,7 @@ def process[TResult](value: TResult) -> r[TResult]:  # Use T instead
 - ✅ Zero Ruff/MyPy errors
 
 **Rules**:
+
 - ✅ All `dict[str, ...]` patterns MUST use `t.Types.*` aliases
 - ✅ All `Mapping[str, ...]` patterns SHOULD use `t.Types.*` aliases when available
 - ✅ Generic types like `dict[str, T]` where `T` is a type parameter are OK (no replacement needed)
@@ -377,6 +395,7 @@ def process[TResult](value: TResult) -> r[TResult]:  # Use T instead
 **CRITICAL**: Short aliases are the standard pattern for FLEXT modules, providing concise syntax for frequently used types.
 
 **Import Pattern** (MANDATORY):
+
 ```python
 # ✅ CORRECT - Import short aliases from their modules
 from flext_core.result import r       # FlextResult alias
@@ -446,6 +465,7 @@ assert result.value == result.data
 ```
 
 **FlextResult Creation Pattern** (MANDATORY):
+
 ```python
 # ✅ CORRECT - Use r[T].ok() and r[T].fail() directly
 def validate_input(data: str) -> r[bool]:
@@ -480,6 +500,7 @@ The Result type architecture has been unified across all modules to ensure seaml
 | `RuntimeResult[T]` | Tier 0.5 class | `runtime.py` | Bootstrap operations |
 
 **Key Rules**:
+
 - ✅ **Return types**: Use `r[T]` in methods that return FlextResult
 - ✅ **Parameter types**: Use `r[T]` for input parameters expecting FlextResult
 - ✅ **Interface types**: Use `p.Foundation.Result[T]` only in protocol definitions
@@ -487,6 +508,7 @@ The Result type architecture has been unified across all modules to ensure seaml
 - ✅ **Backward compatibility**: Both `.data` and `.value` properties work identically
 
 **Migration Pattern** (from protocol to concrete):
+
 ```python
 # BEFORE (causes mypy errors)
 def process() -> p.Foundation.Result[str]:
@@ -502,6 +524,7 @@ def process() -> r[str]:
 **CRITICAL**: FLEXT-Core implements a layered dependency injection pattern following Clear Architecture principles. This ensures services (`FlextConfig`, `FlextLogger`, `FlextContext`, etc.) are easily accessible via DI for downstream projects, reducing complexity and promoting consistent patterns.
 
 **Architecture Layers**:
+
 - **L0.5 (Runtime Bridge)**: `FlextRuntime` is the single surface to access providers/containers/wiring (`Provide`, `inject`) and configuration helpers. Expand capabilities only by exposing new helpers here.
 - **L1 (DI Integration)**: `FlextRuntime.DependencyIntegration` owns declarative containers, typed providers (Singleton/Factory/Resource), and `providers.Configuration` for defaults/overrides
 - **L1.5 (Service Runtime Bootstrap)**: `FlextRuntime.create_service_runtime` (inherited by `FlextService`) materializes config/context/container in one call with optional overrides, registrations, and wiring
@@ -509,6 +532,7 @@ def process() -> r[str]:
 - **L3 (Handlers/Dispatcher)**: Handlers are wired via `wire_modules`, and `@inject`/`Provide` decorators are re-exported by the runtime. Do NOT import `dependency-injector` directly in L3.
 
 **Implementation Rules**:
+
 - Prefer `providers.Resource` for external clients (DB/HTTP/queues), guaranteeing teardown/close and removing manual lifecycle boilerplate
 - Use `providers.Configuration` to synchronize defaults/overrides validated by `FlextConfig`; avoid manual merges and preserve override precedence
 - Prefer the parameterized `DependencyIntegration.create_container` helper when instantiating DI containers directly
@@ -517,6 +541,7 @@ def process() -> r[str]:
 - Any new DI surface must be exposed via the bridge/runtime or existing facades, never by direct `dependency-injector` imports in upper layers
 
 **Key Services Accessible via DI** (Auto-registered):
+
 - `FlextConfig`: Available as `"config"` - Configuration management (via `container.get("config")` or `container.config` property)
 - `FlextLogger`: Available as `"logger"` (factory) - Structured logging (via `container.get("logger")` or `FlextRuntime.structlog()`)
 - `FlextContext`: Available as `"context"` - Request/operation context (via `container.get("context")` or `container.context` property)
@@ -525,6 +550,7 @@ def process() -> r[str]:
 
 **Core Services Auto-Registration**:
 When a `FlextContainer` is created, core services are automatically registered with standard names:
+
 - `"config"` → `FlextConfig` instance (singleton)
 - `"logger"` → `FlextLogger` factory (creates module logger)
 - `"context"` → `FlextContext` instance (singleton)
@@ -549,6 +575,7 @@ def my_handler(
 ```
 
 **Usage in Downstream Projects**:
+
 - Inject services/resources via facades (`FlextContainer`, `wire_modules`, re-exported decorators)
 - Do NOT create alternative containers or access `dependency-injector` directly
 - Honor inherited configuration contracts: defaults via `providers.Configuration` and user overrides applied by `configure(...)`
@@ -695,6 +722,7 @@ m = FlextModels
 ### 3. Circular Import Avoidance Strategies
 
 **Strategy 1: Forward References with `from __future__ import annotations`**
+
 ```python
 from __future__ import annotations
 from typing import Self
@@ -714,6 +742,7 @@ class FlextEntry:
 ```
 
 **Strategy 2: Protocol-Based Decoupling**
+
 ```python
 # protocols.py (Tier 0 - no internal imports)
 from typing import Protocol
@@ -731,6 +760,7 @@ class MyService:
 ```
 
 **Strategy 3: Dependency Injection**
+
 ```python
 # Instead of importing services directly, inject them
 from flext_core import FlextContainer
@@ -893,6 +923,7 @@ src/flext_tests/
 ### Key Classes and Aliases
 
 **Foundation Classes** (extend flext_core, provide short aliases):
+
 - `FlextTestsTypes` → `t` (extends `FlextTypes`)
 - `FlextTestsConstants` → `c` (extends `FlextConstants`)
 - `FlextTestsProtocols` → `p` (extends `FlextProtocols`)
@@ -901,6 +932,7 @@ src/flext_tests/
 - `FlextTestsServiceBase` → `s` (extends `FlextService`)
 
 **Direct Imports from flext_core**:
+
 - `e` - FlextExceptions
 - `r` - FlextResult
 - `d` - FlextDispatcher
@@ -931,11 +963,13 @@ logger: p.Infrastructure.Logger.StructlogLogger = ...
 **Status**: ✅ **Simplified from 4094 to 333 lines (92% reduction)**
 
 The `FlextTestsUtilities` class was significantly simplified to:
+
 - **Extend `FlextUtilities`** - All `FlextUtilities` functionality available via inheritance
 - **Essential methods only** - Removed overengineered nested classes
 - **Compatibility maintained** - Old API still works via compatibility aliases
 
 **Structure**:
+
 ```python
 class FlextTestsUtilities(FlextUtilities):
     """Extends FlextUtilities with test-specific helpers."""
@@ -1051,6 +1085,7 @@ make validate           # Complete pipeline: lint + type + security + test
 **32+ dependent projects**: flext-api, flext-cli, flext-auth, flext-ldap, flext-web, flext-meltano, Singer taps/targets, Oracle adapters, etc.
 
 **Before ANY API change**:
+
 1. Find ALL usages across workspace with Grep: `grep -r "FlextResult" ~/flext/*/src/`
 2. Maintain backward compatibility (keep old AND new APIs during transition)
 3. Minimum 2-version deprecation cycle (6+ months)
@@ -1058,6 +1093,7 @@ make validate           # Complete pipeline: lint + type + security + test
 5. Test all dependent projects
 
 **Breaking Change Example**:
+
 ```python
 # Adding new API while keeping old one
 class FlextResult[T]:
@@ -1089,6 +1125,7 @@ class FlextResult[T]:
 ### Recent Type Safety Improvements (January 2025)
 
 **Pyright Type Corrections** ✅ **COMPLETED**:
+
 - ✅ **Status**: Core modules corrected with proper type hints
 - ✅ **Modules Fixed**: `_utilities/configuration.py`, `_utilities/cache.py`, `_utilities/domain.py`, `_models/context.py`, `_models/config.py`
 - ✅ **Pattern**: Used `getattr` with `cast()` for dynamic attribute access
@@ -1098,6 +1135,7 @@ class FlextResult[T]:
 - ✅ **Tests**: All tests passing with real execution (no mocks)
 
 **Pyrefly Configuration** ✅ **COMPLETED**:
+
 - ✅ **Status**: All errors corrected in `src/` and `tests/`
 - ✅ **Configuration**: Search path configured to exclude backup directories
 - ✅ **Tests**: Fixed test class inheritance issues (IOSuccess final class)
@@ -1113,6 +1151,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 ### Detailed Requirements
 
 **Code Quality**:
+
 - **Linting**: Ruff ZERO violations ✅
 - **Type Checking**: Pyrefly ZERO errors (uses Pyright internally) ✅
 - **Coverage**: 80% minimum (strict enforcement via pytest-cov + CI) ✅
@@ -1120,23 +1159,27 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 - **Line Length**: 88 characters max (ruff-shared.toml)
 
 **Security (Local + CI)**:
+
 - **Bandit**: ZERO high/medium security issues ✅
 - **detect-secrets**: Baseline file required (`.secrets.baseline`) ✅
 - **pip-audit**: Dependency vulnerability scanning ✅
 
 **Code Complexity**:
+
 - **Radon CC**: Cyclomatic Complexity ≤ 10 per function ✅
 - **Radon MI**: Maintainability Index ≥ A rating ✅
 
 **Documentation**:
+
 - **Docstrings**: 80% coverage via interrogate ✅
 - **API Compatibility**: Both `.data` and `.value` must work ✅
 
 **Architecture**:
+
 - **Circular Dependencies**: ZERO (verified by import tests) ✅
 - **TYPE_CHECKING Blocks**: ZERO (prohibited, use forward references) ✅
 - **Type Ignore Comments**: ZERO `# type: ignore` (prohibited, refactor code) ✅
-- **__getattr__ Methods**: ZERO (prohibited, use explicit methods) ✅
+- ****getattr** Methods**: ZERO (prohibited, use explicit methods) ✅
 - **Any Types**: ZERO `Any` type annotations (prohibited, use specific types) ✅
 - **Root Aliases**: ZERO (prohibited, use full namespace) ✅
 - **Centralized Types**: All complex types use `t.Types.*` aliases ✅
@@ -1175,6 +1218,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 ```
 
 **Pyright Type Corrections** (January 2025):
+
 - ✅ Fixed `get_global_instance` type inference using `getattr` with `cast()`
 - ✅ Fixed generic type annotations in `collection.py` methods
 - ✅ Fixed `isinstance` unnecessary checks
@@ -1190,6 +1234,7 @@ make validate  # Runs: lint + format-check + type-check + complexity + docstring
 **Principle**: Minimize `cast()` aggressively - replace with Models/Protocols/TypeGuards where possible. Document intentional ones that remain.
 
 **Eliminated Cast Patterns**:
+
 ```python
 # ❌ BEFORE (eliminated) - FlextConfig from protocol-typed property
 config = cast("FlextConfig", self.config)
@@ -1201,6 +1246,7 @@ config.enable_caching  # Direct access
 ```
 
 **Intentional Cast Patterns** (protocol-to-concrete for nested class access):
+
 ```python
 # ✅ INTENTIONAL - ServiceRuntime.context is p.Context.Ctx protocol
 # but FlextContext has nested classes like .Service.service_context()
@@ -1216,6 +1262,7 @@ class MyService(FlextService):
 ```
 
 **TypeGuard Functions** (preferred alternative to cast when applicable):
+
 ```python
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
@@ -1230,6 +1277,7 @@ if FlextUtilitiesGuards.is_handler(obj):
 ```
 
 **Available TypeGuard Functions** (in `u.Guards`):
+
 - `is_config()` → `p.Configuration.Config`
 - `is_context()` → `p.Context.Ctx`
 - `is_container()` → `p.Container.DI`
@@ -1241,6 +1289,7 @@ if FlextUtilitiesGuards.is_handler(obj):
 - `is_middleware()` → `p.Application.Middleware`
 
 **Quality Gate**:
+
 ```bash
 make validate  # Runs: lint + type-check + security + test
 ```
@@ -1270,6 +1319,7 @@ done
 ---
 
 **See Also**:
+
 - [Workspace Standards](../CLAUDE.md)
 - [flext-ldif Patterns](../flext-ldif/CLAUDE.md)
 - [flext-cli Patterns](../flext-cli/CLAUDE.md)

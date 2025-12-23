@@ -1341,7 +1341,7 @@ class FlextUtilities:
         return FlextUtilitiesValidation.ResultHelpers.any_(*values)
 
     @staticmethod
-    def not_(value: object = False) -> bool:
+    def not_(value: object) -> bool:
         """Negate value - delegates to Validation.ResultHelpers.not_."""
         return FlextUtilitiesValidation.ResultHelpers.not_(value)
 
@@ -1395,18 +1395,16 @@ class FlextUtilities:
     def fields(
         obj: Mapping[str, object] | object,
         *field_names: str | Mapping[str, object],
-        on_error: str = "skip",
     ) -> dict[str, object]:
         """Extract specified fields from object.
 
         Supports two patterns:
         1. Simple: u.fields(obj, "name", "email", "id")
-        2. DSL spec: u.fields(obj, {"name": {"default": ""}, ...}, on_error="stop")
+        2. DSL spec: u.fields(obj, {"name": {"default": ""}, ...})
 
         Args:
             obj: Object or dict to extract from
             *field_names: Field names (str) or field specs (dict)
-            on_error: Error handling ("skip", "stop", "default")
 
         Returns:
             Dict with extracted fields
@@ -1419,7 +1417,7 @@ class FlextUtilities:
             data = u.fields(payload, {
                 "name": {"default": ""},
                 "count": {"default": 0}
-            }, on_error="stop")
+            })
 
         """
         result: dict[str, object] = {}
