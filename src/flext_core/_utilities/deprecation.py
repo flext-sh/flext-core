@@ -204,8 +204,7 @@ class FlextUtilitiesDeprecation:
         report += "This is a placeholder implementation.\n"
         report += "Full implementation would scan for deprecations and generate migration guide.\n"
         if output_file:
-            with pathlib.Path(output_file).open("w", encoding="utf-8") as f:
-                f.write(report)
+            pathlib.Path(output_file).write_text(report, encoding="utf-8")
         return report
 
     @classmethod

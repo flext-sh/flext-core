@@ -2708,20 +2708,20 @@ class FlextUtilitiesValidation:
             return then_value if condition else else_value
 
         @staticmethod
-        def not_(*, value: bool = False) -> bool:
+        def not_(value: object = False) -> bool:
             """Negate boolean (mnemonic: not_ = not).
 
             Args:
-                value: Boolean to negate
+                value: Value to negate (will be coerced to bool)
 
             Returns:
                 Negated boolean
 
             Example:
-                is_empty = ResultHelpers.not_(value=all_(items))
+                is_empty = ResultHelpers.not_(all_(items))
 
             """
-            return not value
+            return not bool(value)
 
         @staticmethod
         def empty[T](
