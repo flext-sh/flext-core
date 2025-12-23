@@ -230,22 +230,34 @@ class FlextUtilities:
         value: object,
         validator: Callable[[object], bool] | type | object = None,
         *,
+        default: object | None = None,
         return_value: bool = False,
     ) -> object | None:
-        """Simple guard method for validation. Returns value if valid, None if not."""
+        """Simple guard method for validation. Returns value if valid, default if not.
+
+        Args:
+            value: Value to validate
+            validator: Callable, type, or tuple of types to validate against
+            default: Default value to return if validation fails
+            return_value: If True, return the value itself; if False, return True/default
+
+        Returns:
+            Validated value, True, or default value
+
+        """
         try:
             if callable(validator):
                 if validator(value):
                     return value if return_value else True
-            elif isinstance(validator, type):
+            elif isinstance(validator, (type, tuple)):
                 if isinstance(value, validator):
                     return value if return_value else True
             # Default validation - check if value is truthy
             elif value:
                 return value if return_value else True
-            return None
+            return default
         except Exception:
-            return None
+            return default
 
     @staticmethod
     def ensure_str(value: t.GeneralValueType, default: str = "") -> str:
@@ -1064,8 +1076,34 @@ class FlextUtilities:
         return True
 
     @staticmethod
-    def normalize(text: str, pattern: str = r"\s+", replacement: str = " ") -> str:
-        """Normalize whitespace - delegates to FlextUtilitiesParser."""
+    def normalize(
+        text: str,
+        pattern: str = r"\s+",
+        replacement: str = " ",
+        *,
+        case: str | None = None,
+    ) -> str:
+        r"""Normalize string with whitespace and optional case conversion.
+
+        Args:
+            text: Text to normalize
+            pattern: Regex pattern for whitespace (default: r"\s+")
+            replacement: Replacement string (default: " ")
+            case: Case normalization ("lower", "upper", or None)
+
+        Returns:
+            Normalized string
+
+        Example:
+            u.normalize("  foo  bar  ")  # -> "foo bar"
+            u.normalize("FOO", case="lower")  # -> "foo"
+
+        """
+        # If case conversion is requested, use FlextUtilitiesConversion
+        if case is not None:
+            return FlextUtilitiesConversion.normalize(text, case=case)
+
+        # Otherwise use whitespace normalization
         parser = FlextUtilitiesParser()
         result = parser.normalize_whitespace(
             text,
@@ -1167,6 +1205,368 @@ class FlextUtilities:
     ) -> T | None:
         """Get value from dict/object - delegates to FlextUtilitiesMapper.get."""
         return FlextUtilitiesMapper.get(data, key, default=default)
+
+    # =========================================================
+    # Root-level aliases for nested class methods
+    # These provide u.method() access instead of u.Class.method()
+    # =========================================================
+
+    # Collection operations
+    @staticmethod
+    def filter[T](
+        items: Sequence[T] | Mapping[str, T],
+        predicate: Callable[[T], bool],
+    ) -> Sequence[T] | Mapping[str, T]:
+        """Filter items by predicate - delegates to Collection.filter."""
+        return FlextUtilitiesCollection.filter(items, predicate)
+
+    @staticmethod
+    def map[T, U](
+        items: Sequence[T] | Mapping[str, T] | set[T] | frozenset[T],
+        mapper: Callable[[T], U],
+    ) -> Sequence[U] | Mapping[str, U] | set[U] | frozenset[U]:
+        """Map items through mapper - delegates to Collection.map."""
+        return FlextUtilitiesCollection.map(items, mapper)
+
+    @staticmethod
+    def process[T, U](
+        items: Sequence[T] | Mapping[str, T],
+        processor: Callable[[T], r[U]],
+        *,
+        on_error: str = "skip",
+    ) -> r[Sequence[U] | Mapping[str, U]]:
+        """Process items with result-aware function - delegates to Collection.process."""
+        return FlextUtilitiesCollection.process(items, processor, on_error=on_error)
+
+    # Conversion operations
+    @staticmethod
+    def join(
+        values: Sequence[object] | set[object],
+        sep: str = " ",
+    ) -> str:
+        """Join values with separator - delegates to Conversion.join."""
+        return FlextUtilitiesConversion.join(values, sep=sep)
+
+    # Mapper operations
+    @staticmethod
+    def take[T](
+        data: Mapping[str, object] | object,
+        key: str,
+        *,
+        as_type: type[T] | None = None,
+        default: T | None = None,
+    ) -> T | None:
+        """Take value from data - delegates to Mapper.take."""
+        return FlextUtilitiesMapper.take(data, key, as_type=as_type, default=default)
+
+    @staticmethod
+    def build(
+        value: object,
+        *,
+        ops: dict[str, object] | None = None,
+    ) -> object:
+        """Build/transform value with DSL - delegates to Mapper.build."""
+        return FlextUtilitiesMapper.build(value, ops=ops)
+
+    @staticmethod
+    def construct[T](
+        spec: type[T] | dict[str, object],
+        *,
+        source: dict[str, object] | None = None,
+    ) -> T | dict[str, object]:
+        """Construct object from spec - delegates to Mapper.construct."""
+        return FlextUtilitiesMapper.construct(spec, source=source)
+
+    @staticmethod
+    def agg[T](
+        items: Sequence[T] | Mapping[str, T],
+        field: str | None = None,
+        *,
+        fn: Callable[[Sequence[object]], object] = sum,
+    ) -> object:
+        """Aggregate items - delegates to Mapper.agg."""
+        return FlextUtilitiesMapper.agg(items, field=field, fn=fn)
+
+    # Validation/ResultHelpers operations
+    @staticmethod
+    def ok[T](value: T) -> r[T]:
+        """Create success result - delegates to Validation.ResultHelpers.ok."""
+        return FlextUtilitiesValidation.ResultHelpers.ok(value)
+
+    @staticmethod
+    def fail(error: str) -> r[object]:
+        """Create failure result - delegates to Validation.ResultHelpers.fail."""
+        return FlextUtilitiesValidation.ResultHelpers.fail(error)
+
+    @staticmethod
+    def or_[T](
+        *values: T | None,
+        default: T | None = None,
+    ) -> T | None:
+        """Return first non-None value - delegates to Validation.ResultHelpers.or_."""
+        return FlextUtilitiesValidation.ResultHelpers.or_(*values, default=default)
+
+    @staticmethod
+    def try_[T](
+        func: Callable[[], T],
+        *,
+        default: T | None = None,
+        catch: type[Exception] | tuple[type[Exception], ...] = Exception,
+    ) -> T | None:
+        """Try operation with fallback - delegates to Validation.ResultHelpers.try_."""
+        return FlextUtilitiesValidation.ResultHelpers.try_(
+            func, default=default, catch=catch
+        )
+
+    @staticmethod
+    def empty(items: object | None) -> bool:
+        """Check if items is empty or None.
+
+        Args:
+            items: Any object to check (None, Sized, or any object)
+
+        Returns:
+            True if items is None, empty, or falsy
+
+        """
+        if items is None:
+            return True
+        if hasattr(items, "__len__"):
+            return len(items) == 0  # type: ignore[arg-type]
+        return not bool(items)
+
+    @staticmethod
+    def any_(*values: object) -> bool:
+        """Check if any value is truthy - delegates to Validation.ResultHelpers.any_."""
+        return FlextUtilitiesValidation.ResultHelpers.any_(*values)
+
+    @staticmethod
+    def not_(value: object = False) -> bool:
+        """Negate value - delegates to Validation.ResultHelpers.not_."""
+        return FlextUtilitiesValidation.ResultHelpers.not_(value)
+
+    @staticmethod
+    def from_[T](
+        source: t.ConfigurationMapping | object | None,
+        key: str,
+        *,
+        as_type: type[T] | None = None,
+        default: T,
+    ) -> T:
+        """Extract from source with type guard - delegates to Validation.ResultHelpers.from_."""
+        return FlextUtilitiesValidation.ResultHelpers.from_(
+            source, key, as_type=as_type, default=default
+        )
+
+    @staticmethod
+    def starts(value: str, prefix: str, *prefixes: str) -> bool:
+        """Check if value starts with prefix - delegates to Validation.ResultHelpers.starts."""
+        return FlextUtilitiesValidation.ResultHelpers.starts(value, prefix, *prefixes)
+
+    @staticmethod
+    def ensure[T](
+        value: object,
+        target_type: str | type[T] = "auto",
+        *,
+        default: T | None = None,
+    ) -> T | None:
+        """Ensure value is of target type - delegates to Validation.ensure."""
+        return FlextUtilitiesValidation.ensure(value, target_type, default=default)
+
+    # New methods not previously in ResultHelpers
+    @staticmethod
+    def none_(*values: object) -> bool:
+        """Check if all values are None.
+
+        Args:
+            *values: Values to check
+
+        Returns:
+            True if all values are None, False otherwise
+
+        Example:
+            if u.none_(name, email):
+                return r.fail("Name and email are required")
+
+        """
+        return all(v is None for v in values)
+
+    @staticmethod
+    def fields(
+        obj: Mapping[str, object] | object,
+        *field_names: str | Mapping[str, object],
+        on_error: str = "skip",
+    ) -> dict[str, object]:
+        """Extract specified fields from object.
+
+        Supports two patterns:
+        1. Simple: u.fields(obj, "name", "email", "id")
+        2. DSL spec: u.fields(obj, {"name": {"default": ""}, ...}, on_error="stop")
+
+        Args:
+            obj: Object or dict to extract from
+            *field_names: Field names (str) or field specs (dict)
+            on_error: Error handling ("skip", "stop", "default")
+
+        Returns:
+            Dict with extracted fields
+
+        Example:
+            # Simple extraction
+            data = u.fields(user, "name", "email", "id")
+
+            # With field specs
+            data = u.fields(payload, {
+                "name": {"default": ""},
+                "count": {"default": 0}
+            }, on_error="stop")
+
+        """
+        result: dict[str, object] = {}
+
+        for spec in field_names:
+            # DSL pattern: dict with field specifications
+            if isinstance(spec, Mapping):
+                for name, field_config in spec.items():
+                    if isinstance(obj, Mapping):
+                        if name in obj:
+                            result[name] = obj[name]
+                        elif isinstance(field_config, Mapping):
+                            # Use default value from spec
+                            result[name] = field_config.get("default")
+                        else:
+                            result[name] = field_config
+                    elif hasattr(obj, name):
+                        result[name] = getattr(obj, name)
+                    elif isinstance(field_config, Mapping):
+                        result[name] = field_config.get("default")
+            # Simple pattern: string field name
+            elif isinstance(spec, str):
+                if isinstance(obj, Mapping):
+                    if spec in obj:
+                        result[spec] = obj[spec]
+                elif hasattr(obj, spec):
+                    result[spec] = getattr(obj, spec)
+
+        return result
+
+    @overload
+    @staticmethod
+    def cast[T](
+        value: r[T],
+        target_type: None = None,
+        *,
+        default: None = None,
+        default_error: str,
+    ) -> r[T]: ...
+
+    @overload
+    @staticmethod
+    def cast[T](
+        value: object,
+        target_type: type[T],
+        *,
+        default: T | None = None,
+        default_error: None = None,
+    ) -> T | None: ...
+
+    @overload
+    @staticmethod
+    def cast[T](
+        value: object | r[T],
+        target_type: type[T] | None = None,
+        *,
+        default: T | None = None,
+        default_error: str | None = None,
+    ) -> T | r[T] | None: ...
+
+    @staticmethod
+    def cast[T](
+        value: object | r[T],
+        target_type: type[T] | None = None,
+        *,
+        default: T | None = None,
+        default_error: str | None = None,
+    ) -> T | r[T] | None:
+        """Safe cast with fallback or FlextResult error wrapping.
+
+        Supports two patterns:
+        1. Type casting: u.cast(value, target_type, default=...)
+        2. Result wrapping: u.cast(result, default_error="...")
+
+        Args:
+            value: Value to cast or FlextResult to wrap
+            target_type: Target type (optional for result wrapping)
+            default: Default value if cast fails
+            default_error: Default error message for failed FlextResult
+
+        Returns:
+            Cast value, wrapped FlextResult, or default
+
+        Example:
+            # Type casting
+            port = u.cast(config.get("port"), int, default=8080)
+
+            # Result error wrapping
+            return u.cast(result, default_error="Operation failed")
+
+        """
+        # Pattern 2: FlextResult error wrapping
+        if hasattr(value, "is_success") and hasattr(value, "is_failure"):
+            result_value: r[object] = value  # type: ignore[assignment]
+            if result_value.is_failure and default_error:
+                # Return result as-is (error already set) or wrap with default
+                return result_value  # type: ignore[return-value]
+            return result_value  # type: ignore[return-value]
+
+        # Pattern 1: Type casting
+        if target_type is None:
+            return value  # type: ignore[return-value]
+
+        if isinstance(value, target_type):
+            return value
+        try:
+            return target_type(value)  # type: ignore[call-arg]
+        except (TypeError, ValueError):
+            return default
+
+    @staticmethod
+    def chunk[T](items: Sequence[T], size: int) -> list[Sequence[T]]:
+        """Split sequence into chunks.
+
+        Args:
+            items: Sequence to split
+            size: Chunk size
+
+        Returns:
+            List of chunks
+
+        Example:
+            batches = u.chunk(records, 100)
+
+        """
+        if size <= 0:
+            return [items]
+        return [items[i : i + size] for i in range(0, len(items), size)]
+
+    @staticmethod
+    def mul(*values: float) -> int | float:
+        """Multiply values.
+
+        Args:
+            *values: Values to multiply
+
+        Returns:
+            Product of all values
+
+        Example:
+            total = u.mul(price, quantity, tax_rate)
+
+        """
+        result: int | float = 1
+        for v in values:
+            result *= v
+        return result
 
 
 u = FlextUtilities  # Runtime alias (not TypeAlias to avoid PYI042)

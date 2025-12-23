@@ -767,7 +767,10 @@ class FlextDispatcher(x):
                     else:
                         # Use u.err() for unified error extraction (DSL pattern)
                         # result is r[t.GeneralValueType] which satisfies p.Result protocol
-                        error_msg = u.err(cast("p.Result[t.GeneralValueType]", result), default="Unknown error in processor")
+                        error_msg = u.err(
+                            cast("p.Result[t.GeneralValueType]", result),
+                            default="Unknown error in processor",
+                        )
                         return r[list[t.GeneralValueType]].fail(
                             error_msg,
                         )
@@ -3996,9 +3999,8 @@ class FlextDispatcher(x):
 
         # Extract attributes section if present - fast fail: must be dict or None
         attributes_section_raw = dumped.get("attributes")
-        if (
-            attributes_section_raw is not None
-            and u.Guards.is_configuration_mapping(attributes_section_raw)
+        if attributes_section_raw is not None and u.Guards.is_configuration_mapping(
+            attributes_section_raw
         ):
             # Type narrowing: is_configuration_mapping TypeGuard narrows to ConfigurationMapping
             return attributes_section_raw

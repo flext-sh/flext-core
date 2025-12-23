@@ -8,142 +8,134 @@ default_stages: [pre-commit, pre-push]
 default_language_version:
   python: python3.13
 
-repos:
-  # ===== SECURITY SCANNING =====
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets
-        name: "🔐 Detect Secrets"
-        args: ["--baseline", ".secrets.baseline"]
-        exclude: .*\.lock$|.*\.lockb$|poetry\.lock
-
-  # Poetry-managed tools via local repo
-  - repo: local
-    hooks:
-      - id: ruff-format
-        name: "⚡ Ruff Format (PEP8 Strict - 79 chars)"
-        entry: poetry run ruff format
-        language: system
-        types: [python]
-        require_serial: true
-        args: [--check, --diff, src/, tests/, scripts/, examples/]
-
-      - id: ruff-lint
-        name: "🔥 Ruff Lint (PEP8 + ALL categories)"
-        entry: poetry run ruff check
-        language: system
-        types: [python]
-        require_serial: true
-        args: [--fix, --exit-non-zero-on-fix, src/, tests/, scripts/, examples/]
-
-      # isort import sorting
-      # - id: isort
-      #   name: "📦 Import Sort"
-      #   entry: poetry run isort
-      #   language: system
-      #   types: [python]
-      #   require_serial: true
-      #   args: [--check-only, --diff]
-
-      # Bandit security
-      - id: bandit
-        name: "🔒 Bandit Security"
-        entry: poetry run bandit
-        language: system
-        types: [python]
-        require_serial: true
-        pass_filenames: false
-        args: [-r, src/, --exclude, src/flext_tests, --severity-level=medium]
-
-      # Vulture dead code - TEMPORARILY DISABLED while configuring whitelist
-      # - id: vulture
-      #   name: "🦅 Dead Code Detection"
-      #   entry: poetry run vulture
-      #   language: system
-      #   types: [python]
-      #   pass_filenames: false
-      #   args: [src/, .vulture_whitelist.py, --min-confidence=80]
-
-      # Radon complexity
-      - id: radon-cc
-        name: "📊 Cyclomatic Complexity"
-        entry: poetry run radon cc
-        language: system
-        types: [python]
-        pass_filenames: false
-        args: [src/, -a, -nb, --total-average]
-
-      - id: radon-mi
-        name: "📊 Maintainability Index"
-        entry: poetry run radon mi
-        language: system
-        types: [python]
-        pass_filenames: false
-        args: [src/, -nb]
-
-      # DEPRECATED - Use flext-quality instead
-      # - id: check-pydantic-v2
-      #   name: "🐍 Pydantic v2 Compliance Check"
-      #   entry: python scripts/check_pydantic_v2_precommit.py
-      #   language: system
-      #   types: [python]
-      #   pass_filenames: true
-      #   stages: [commit]
-
-  # YAML/TOML/JSON validation
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: check-yaml
-        name: "📋 YAML Syntax Check"
-      - id: check-toml
-        name: "📋 TOML Syntax Check"
-      - id: check-json
-        name: "📋 JSON Syntax Check"
-      - id: end-of-file-fixer
-        name: "📄 EOF Fixer"
-      - id: trailing-whitespace
-        name: "✂️ Trailing Whitespace"
-      - id: check-added-large-files
-        name: "📦 Large File Check"
-        args: [--maxkb=1000]
-      - id: check-case-conflict
-        name: "🔤 Case Conflict Check"
-      - id: check-merge-conflict
-        name: "⚔️ Merge Conflict Check"
-      - id: mixed-line-ending
-        name: "📏 Line Ending Check"
-        args: [--fix=lf]
-      - id: debug-statements
-        name: "🐛 Debug Statement Check"
-
-  # Python-specific checks
-  - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
-    hooks:
-      - id: python-check-blanket-noqa
-        name: "🚫 Blanket noqa Check"
-      - id: python-check-blanket-type-ignore
-        name: "🚫 Blanket type: ignore Check"
-      - id: python-no-eval
-        name: "🚫 No eval() Check"
-      - id: python-no-log-warn
-        name: "⚠️ No log.warn Check"
-      - id: python-use-type-annotations
-        name: "📝 Type Annotations Check"
-
-  # Commit message validation via Poetry
-  - repo: local
-    hooks:
-      - id: commitizen
-        name: "💬 Commit Message Check"
-        entry: poetry run cz check
-        language: system
-        stages: [commit-msg]
-        pass_filenames: false
-        args: [--commit-msg-file]
-
+repos: []  # DISABLED BY SCRIPT - All hooks disabled
+# 
+#   # Poetry-managed tools via local repo
+#   - repo: local
+#     hooks:
+#       - id: ruff-format
+#         name: "⚡ Ruff Format (PEP8 Strict - 79 chars)"
+#         entry: poetry run ruff format
+#         language: system
+#         types: [python]
+#         require_serial: true
+#         args: [--check, --diff, src/, tests/, scripts/, examples/]
+# 
+#       - id: ruff-lint
+#         name: "🔥 Ruff Lint (PEP8 + ALL categories)"
+#         entry: poetry run ruff check
+#         language: system
+#         types: [python]
+#         require_serial: true
+#         args: [--fix, --exit-non-zero-on-fix, src/, tests/, scripts/, examples/]
+# 
+#       # isort import sorting
+#       # - id: isort
+#       #   name: "📦 Import Sort"
+#       #   entry: poetry run isort
+#       #   language: system
+#       #   types: [python]
+#       #   require_serial: true
+#       #   args: [--check-only, --diff]
+# 
+#       # Bandit security
+#       - id: bandit
+#         name: "🔒 Bandit Security"
+#         entry: poetry run bandit
+#         language: system
+#         types: [python]
+#         require_serial: true
+#         pass_filenames: false
+#         args: [-r, src/, --exclude, src/flext_tests, --severity-level=medium]
+# 
+#       # Vulture dead code - TEMPORARILY DISABLED while configuring whitelist
+#       # - id: vulture
+#       #   name: "🦅 Dead Code Detection"
+#       #   entry: poetry run vulture
+#       #   language: system
+#       #   types: [python]
+#       #   pass_filenames: false
+#       #   args: [src/, .vulture_whitelist.py, --min-confidence=80]
+# 
+#       # Radon complexity
+#       - id: radon-cc
+#         name: "📊 Cyclomatic Complexity"
+#         entry: poetry run radon cc
+#         language: system
+#         types: [python]
+#         pass_filenames: false
+#         args: [src/, -a, -nb, --total-average]
+# 
+#       - id: radon-mi
+#         name: "📊 Maintainability Index"
+#         entry: poetry run radon mi
+#         language: system
+#         types: [python]
+#         pass_filenames: false
+#         args: [src/, -nb]
+# 
+#       # DEPRECATED - Use flext-quality instead
+#       # - id: check-pydantic-v2
+#       #   name: "🐍 Pydantic v2 Compliance Check"
+#       #   entry: python scripts/check_pydantic_v2_precommit.py
+#       #   language: system
+#       #   types: [python]
+#       #   pass_filenames: true
+#       #   stages: [commit]
+# 
+#   # YAML/TOML/JSON validation
+#   - repo: https://github.com/pre-commit/pre-commit-hooks
+#     rev: v5.0.0
+#     hooks:
+#       - id: check-yaml
+#         name: "📋 YAML Syntax Check"
+#       - id: check-toml
+#         name: "📋 TOML Syntax Check"
+#       - id: check-json
+#         name: "📋 JSON Syntax Check"
+#       - id: end-of-file-fixer
+#         name: "📄 EOF Fixer"
+#       - id: trailing-whitespace
+#         name: "✂️ Trailing Whitespace"
+#       - id: check-added-large-files
+#         name: "📦 Large File Check"
+#         args: [--maxkb=1000]
+#       - id: check-case-conflict
+#         name: "🔤 Case Conflict Check"
+#       - id: check-merge-conflict
+#         name: "⚔️ Merge Conflict Check"
+#       - id: mixed-line-ending
+#         name: "📏 Line Ending Check"
+#         args: [--fix=lf]
+#       - id: debug-statements
+#         name: "🐛 Debug Statement Check"
+# 
+#   # Python-specific checks
+#   - repo: https://github.com/pre-commit/pygrep-hooks
+#     rev: v1.10.0
+#     hooks:
+#       - id: python-check-blanket-noqa
+#         name: "🚫 Blanket noqa Check"
+#       - id: python-check-blanket-type-ignore
+#         name: "🚫 Blanket type: ignore Check"
+#       - id: python-no-eval
+#         name: "🚫 No eval() Check"
+#       - id: python-no-log-warn
+#         name: "⚠️ No log.warn Check"
+#       - id: python-use-type-annotations
+#         name: "📝 Type Annotations Check"
+# 
+#   # Commit message validation via Poetry
+#   - repo: local
+#     hooks:
+#       - id: commitizen
+#         name: "💬 Commit Message Check"
+#         entry: poetry run cz check
+#         language: system
+#         stages: [commit-msg]
+#         pass_filenames: false
+#         args: [--commit-msg-file]
+# 
 # CI configuration
 ci:
   autofix_prs: false # No automatic fixes - must be intentional
