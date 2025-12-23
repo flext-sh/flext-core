@@ -2708,7 +2708,7 @@ class FlextUtilitiesValidation:
             return then_value if condition else else_value
 
         @staticmethod
-        def not_(value: object = False) -> bool:
+        def not_(value: object) -> bool:
             """Negate boolean (mnemonic: not_ = not).
 
             Args:
