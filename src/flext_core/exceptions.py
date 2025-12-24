@@ -1045,10 +1045,8 @@ class FlextExceptions:
                     return cast("type[object] | None", result)
                 # Support type objects directly (defensive programming for runtime type objects)
                 if isinstance(type_raw, type):
-                    return type_raw
-                # type_raw is t.MetadataAttributeValue, which does not include type objects
-                # type_raw is not a recognized type, return None
-                return None
+                    return type_raw  # type: ignore[unreachable]
+                # type_raw is not a recognized type, continue to next checks
             # Handle case where type is passed as string in named arg
             if isinstance(type_value, str):
                 # type_map.get returns type | None

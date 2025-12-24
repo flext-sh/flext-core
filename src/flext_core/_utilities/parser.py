@@ -745,7 +745,7 @@ class FlextUtilitiesParser:
             pattern = str(pattern_tuple[0])
             replacement = str(pattern_tuple[1])
             # Access third element with type safety via isinstance check
-            flags_raw = pattern_tuple[2]
+            flags_raw = cast("int", pattern_tuple[2])
             flags = flags_raw if isinstance(flags_raw, int) else 0
         else:
             return r[tuple[str, str, int]].fail(
