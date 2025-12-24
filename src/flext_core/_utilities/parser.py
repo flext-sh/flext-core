@@ -742,11 +742,12 @@ class FlextUtilitiesParser:
             flags: int = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
             # Type narrowing: tuple[str, str, int] - access via indexing
-            pattern = str(pattern_tuple[0])
-            replacement = str(pattern_tuple[1])
-            # Access third element with type safety via isinstance check
-            flags_raw = cast("int", pattern_tuple[2])
-            flags = flags_raw if isinstance(flags_raw, int) else 0
+            # Cast to 3-element tuple after length check (type checker needs help)
+            pattern_tuple_3 = cast("tuple[str, str, int]", pattern_tuple)
+            pattern = str(pattern_tuple_3[0])
+            replacement = str(pattern_tuple_3[1])
+            # Access third element - guaranteed to exist due to length check
+            flags = int(pattern_tuple_3[2])
         else:
             return r[tuple[str, str, int]].fail(
                 f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
@@ -1579,7 +1580,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def conv_str_list_truthy(
-        value: object,
+        value: t.GeneralValueType | None,
         *,
         default: list[str] | None = None,
     ) -> list[str]:
@@ -1595,14 +1596,11 @@ class FlextUtilitiesParser:
             list[str]: Converted and filtered list
 
         """
-        # Use t.GeneralValueType from lower layer for type compatibility
-        # value is object, which is compatible with t.GeneralValueType
-        value_typed: t.GeneralValueType = value
-        result = FlextUtilitiesParser.conv_str_list(value_typed, default=default)
+        result = FlextUtilitiesParser.conv_str_list(value, default=default)
         return [v for v in result if v]
 
     @staticmethod
-    def conv_str_list_safe(value: object | None) -> list[str]:
+    def conv_str_list_safe(value: t.GeneralValueType | None) -> list[str]:
         """Safe str_list conversion.
 
         Mnemonic: conv_str_list_safe = convert + safe mode
@@ -1616,10 +1614,7 @@ class FlextUtilitiesParser:
         """
         if value is None:
             return []
-        # Use t.GeneralValueType from lower layer for type compatibility
-        # value is object, which is compatible with t.GeneralValueType
-        value_typed: t.GeneralValueType = value
-        return FlextUtilitiesParser.conv_str_list(value_typed, default=[])
+        return FlextUtilitiesParser.conv_str_list(value, default=[])
 
     # =========================================================================
     # NORM_* METHODS - String normalization utilities

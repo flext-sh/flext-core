@@ -154,7 +154,7 @@ class FlextUtilitiesMapper:
         """
         value = ops.get(key)
         if callable(value):
-            return value
+            return value  # type: ignore[unreachable]
         return None
 
     @property
@@ -774,10 +774,8 @@ class FlextUtilitiesMapper:
                 FlextUtilitiesMapper._narrow_to_general_value_type(current)
             )
 
-            # The type checker cannot infer that T is compatible with GeneralValueType,
-            # but semantically this is correct because ConfigurationMapping guarantees
-            # values are GeneralValueType-compatible
-            return r[T | None].ok(current_as_general)
+            # Cast to T | None for type safety - ConfigurationMapping guarantees compatibility
+            return r[T | None].ok(cast("T | None", current_as_general))
 
         except Exception as e:
             return r[T | None].fail(f"Extract failed: {e}")
@@ -1492,7 +1490,7 @@ class FlextUtilitiesMapper:
         convert_type = ops["convert"]
         if not isinstance(convert_type, type):
             return current
-        convert_default = ops.get("convert_default", convert_type())
+        convert_default = ops.get("convert_default", convert_type())  # type: ignore[unreachable]
         try:
             return convert_type(current)
         except (ValueError, TypeError):
@@ -2204,10 +2202,8 @@ class FlextUtilitiesMapper:
                 field_required = field_spec is None
 
             # Extract field
-            # Type narrowing: field_default is t.GeneralValueType | None, but get() needs specific type
-            # Semantically correct because field_default comes from ConfigurationMapping which
-            # only contains GeneralValueType-compatible values, so T is compatible with GeneralValueType
-            field_default_typed: T | None = field_default
+            # Cast for type safety - ConfigurationMapping guarantees GeneralValueType compatibility
+            field_default_typed: T | None = cast("T | None", field_default)
             # Use overload without type parameter - type inference will work from default
             value: T | None = FlextUtilitiesMapper.get(
                 source,

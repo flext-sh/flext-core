@@ -15,6 +15,7 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable
+from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -378,7 +379,8 @@ class FlextUtilitiesReliability:
                 if has_result_interface:
                     # Structural typing: result has Result interface methods
                     # result is a Result type - use it as one
-                    result_typed = result  # type: ignore[assignment]
+                    # Cast to Result protocol after interface check
+                    result_typed = cast("p.Result[object]", result)
                     if result_typed.is_failure:
                         if on_error == "stop":
                             err_msg = result_typed.error or "Unknown error"
