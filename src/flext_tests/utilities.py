@@ -879,7 +879,7 @@ class FlextTestsUtilities(FlextUtilities):
                     New FlextSettings instance
 
                 """
-                return FlextSettings.materialize(config_overrides=kwargs)  # type: ignore[arg-type]
+                return FlextSettings.materialize(config_overrides=kwargs)
 
             @staticmethod
             def assert_config_fields(
@@ -1487,7 +1487,7 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise error on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return super().__getattribute__(name)  # type: ignore[no-any-return]
+                        return super().__getattribute__(name)
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
 
@@ -1498,7 +1498,7 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise TypeError on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return super().__getattribute__(name)  # type: ignore[no-any-return]
+                        return super().__getattribute__(name)
                     msg = f"Bad config type: {name}"
                     raise TypeError(msg)
 

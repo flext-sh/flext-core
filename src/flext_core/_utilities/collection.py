@@ -320,9 +320,9 @@ class FlextUtilitiesCollection:
                     # General type coercion
                     elif target_type is object:
                         # object() doesn't accept arguments, just assign as-is
-                        result[key] = value  # type: ignore[assignment]
+                        result[key] = value
                     else:
-                        result[key] = cast("T", target_type(value))  # type: ignore[call-arg]
+                        result[key] = cast("T", target_type(value))
                 except ValueError as e:
                     # For enum validation errors, re-raise as ValueError
                     type_name = getattr(target_type, "__name__", "Unknown")
@@ -371,13 +371,13 @@ class FlextUtilitiesCollection:
                         if not isinstance(value, str):
                             msg = "Expected str"
                             raise TypeError(msg)
-                        result.append(target_type(value))  # type: ignore[call-arg]
+                        result.append(target_type(value))
                     # General type coercion
                     # Handle special case for object type
                     elif target_type is object:
                         result.append(value)
                     else:
-                        result.append(target_type(value))  # type: ignore[call-arg]
+                        result.append(target_type(value))
                 except ValueError as e:
                     # For enum validation errors, re-raise as ValueError
                     type_name = getattr(target_type, "__name__", "Unknown")

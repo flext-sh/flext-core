@@ -487,7 +487,7 @@ class FlextDecorators(FlextRuntime):
 
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
-                    logger=logger,  # type: ignore[arg-type]
+                    logger=logger,
                     function_name=func.__name__,
                     ensure_correlation=True,
                 )
