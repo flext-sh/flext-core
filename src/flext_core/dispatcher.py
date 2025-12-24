@@ -1119,11 +1119,10 @@ class FlextDispatcher(x):
 
         """
         # Fast fail: __name__ should always exist on types, but handle gracefully
-        # Use u.has() + u.mapper().get() for unified attribute access (DSL pattern)
-        if u.has(command_type_obj, "__name__"):
-            name_attr = u.mapper().get(command_type_obj, "__name__", default=None)
-            if name_attr is not None:
-                return str(name_attr)
+        # Use getattr for direct attribute access
+        name_attr = getattr(command_type_obj, "__name__", None)
+        if name_attr is not None:
+            return str(name_attr)
         return str(command_type_obj)
 
     def _validate_handler_interface(
@@ -2335,7 +2334,7 @@ class FlextDispatcher(x):
             # Reconstruct dict from processed items
             if process_result.is_success:
                 request_dict = {
-                    str(k): cast("t.GeneralValueType", v)
+                    str(k): v
                     for k, v in zip(request.keys(), process_result.value, strict=False)
                 }
             else:
@@ -2866,7 +2865,7 @@ class FlextDispatcher(x):
 
     @staticmethod
     def create_handler_from_function(
-        handler_func: Callable[[t.GeneralValueType], object],
+        handler_func: Callable[[t.GeneralValueType], t.GeneralValueType],
         _handler_config: t.ConfigurationMapping | None = None,
         mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
     ) -> r[
@@ -3322,7 +3321,7 @@ class FlextDispatcher(x):
         # DispatchConfig (BaseModel) is compatible with t.GeneralValueType (includes BaseModel via Mapping)
         return self._execute_dispatch_pipeline(
             message,
-            cast("t.GeneralValueType | None", dispatch_config),
+            dispatch_config,
             metadata,
             correlation_id,
             timeout_override,
@@ -4010,7 +4009,7 @@ class FlextDispatcher(x):
             attributes_section_raw,
         ):
             # Type narrowing: is_configuration_mapping TypeGuard narrows to ConfigurationMapping
-            return attributes_section_raw
+            return cast("t.ConfigurationMapping", attributes_section_raw)
         # Return full dump if no attributes section
         # dumped is dict from model_dump(), is ConfigurationMapping compatible
         return dumped
@@ -4221,8 +4220,8 @@ class FlextDispatcher(x):
 
         """
         # Dispatch each message - message_type is extracted from message object
-        # Use u.map for concise batch processing
-        return list(u.Collection.map(messages, self.dispatch))
+        # Use list comprehension for type safety
+        return [self.dispatch(msg) for msg in messages]
 
     def get_performance_metrics(
         self,
