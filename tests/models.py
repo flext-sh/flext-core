@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
-from flext import FlextModels, FlextProtocols, FlextTypes
+from flext_core import FlextModels, FlextProtocols, FlextTypes
 from flext_tests.models import FlextTestsModels
 
 

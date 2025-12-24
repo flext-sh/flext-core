@@ -16,7 +16,7 @@ from typing import TypeVar
 
 import pytest
 
-from flext import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r
+from flext_core import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r
 from flext_core._models import entity as flext_models_entity
 from tests.helpers import factories  # Import for User model rebuild
 from tests.test_utils import assertion_helpers

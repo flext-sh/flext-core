@@ -74,7 +74,7 @@ class FlextUtilitiesCollection:
         if isinstance(items, (list, tuple)):
             for item in items:
                 if predicate(item):
-                    return item
+                    return item  # type: ignore[no-any-return]
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
@@ -299,9 +299,6 @@ class FlextUtilitiesCollection:
         """
 
         def validator(data: dict[str, object]) -> dict[str, T]:
-            if not isinstance(data, dict):
-                msg = f"Expected dict, got {type(data).__name__}"
-                raise TypeError(msg)
 
             result: dict[str, T] = {}
             for key, value in data.items():
@@ -320,7 +317,7 @@ class FlextUtilitiesCollection:
                     # General type coercion
                     elif target_type is object:
                         # object() doesn't accept arguments, just assign as-is
-                        result[key] = value
+                        result[key] = cast("T", value)
                     else:
                         result[key] = cast("T", target_type(value))
                 except ValueError as e:

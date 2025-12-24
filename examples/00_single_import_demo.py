@@ -26,7 +26,7 @@ from collections.abc import Callable, Sequence, Set as AbstractSet
 from dataclasses import dataclass
 from itertools import starmap
 
-from flext import (
+from flext_core import (
     FlextContext,
     FlextLogger,
     c,
