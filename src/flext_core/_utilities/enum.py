@@ -13,7 +13,7 @@ import inspect
 import warnings
 from collections.abc import Callable, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, cast, overload
+from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.result import r
@@ -301,19 +301,18 @@ class FlextUtilitiesEnum:
 
         Audit Implication: Cached results ensure consistent identity across calls.
         """
-        # Check cache first
-        if enum_cls in FlextUtilitiesEnum._members_cache:
-            # Cache stores frozenset[StrEnum] but we need frozenset[E]
-            # Cast is safe because cache is per enum class type
-            cached = FlextUtilitiesEnum._members_cache[enum_cls]
-            return cast("frozenset[E]", cached)
+        # Check cache first - retrieve cached members for this enum class
+        cached_result = FlextUtilitiesEnum._members_cache.get(enum_cls)
+        if cached_result is not None:
+            # Type narrowing: If cached for enum_cls, it's frozenset[E] for that class
+            return cached_result  # Valid return: all members are from enum_cls
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
         members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
         result = frozenset(members_dict.values())
 
-        # Cache result - store as frozenset[StrEnum] for compatibility
-        FlextUtilitiesEnum._members_cache[enum_cls] = cast("frozenset[StrEnum]", result)
+        # Cache result - store in dictionary for all future calls with same enum_cls
+        FlextUtilitiesEnum._members_cache[enum_cls] = result
         return result
 
     # ─────────────────────────────────────────────────────────────

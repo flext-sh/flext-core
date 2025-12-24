@@ -171,7 +171,7 @@ class FlextMixins(FlextRuntime):
                 if dict_result is not None:
                     # Type narrowing: dict is a subtype of Mapping[str, t.GeneralValueType]
                     # ConfigurationDict (dict[str, t.GeneralValueType]) is compatible with ContextMetadataMapping
-                    return dict_result
+                    return cast("t.ContextMetadataMapping", dict_result)
                 # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
                 return {"value": normalized}
             # For Mapping, normalize each value
@@ -274,7 +274,7 @@ class FlextMixins(FlextRuntime):
             and hasattr(runtime, "config")
             and hasattr(runtime, "container")
         ):
-            return runtime
+            return cast("m.ServiceRuntime", runtime)
 
         runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
         # Call method and ensure result is t.RuntimeBootstrapOptions TypedDict

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
-from typing import Annotated, Self, cast
+from typing import Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -251,11 +251,14 @@ class FlextModelsCqrs:
                 # TypeGuard narrows to Mapping[str, t.GeneralValueType] when
                 # is_dict_like is True
                 if filters_raw is not None and FlextRuntime.is_dict_like(filters_raw):
-                    # Type narrowing: isinstance check ensures filters_raw is Mapping
-                    filters: dict[str, t.GeneralValueType] = cast(
-                        "dict[str, t.GeneralValueType]",
-                        filters_raw if isinstance(filters_raw, Mapping) else {},
-                    )
+                    # Type narrowing: is_dict_like confirms filters_raw is Mapping
+                    # Convert Mapping to dict for type safety
+                    if isinstance(filters_raw, dict):
+                        filters = filters_raw
+                    elif isinstance(filters_raw, Mapping):
+                        filters = dict(filters_raw)
+                    else:
+                        filters = {}
                 else:
                     filters = {}
                 pagination_raw = FlextUtilitiesMapper().get(query_payload, "pagination")

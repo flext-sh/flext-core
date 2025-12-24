@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Annotated, cast
+from typing import Annotated
 
 import structlog.contextvars
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
@@ -171,16 +171,13 @@ class FlextModelsContext:
             structlog_context = structlog.contextvars.get_contextvars()
             if not structlog_context:
                 return self._default
-            # Cast from dict[str, Any] (structlog's incomplete type)
-            # to dict[str, t.GeneralValueType] (what we actually store)
-            typed_context: dict[str, t.GeneralValueType] = cast(
-                "dict[str, t.GeneralValueType]",
-                structlog_context,
-            )
-            value = typed_context.get(self._key, self._default)
-            # value is t.GeneralValueType | None, and T is bounded to GeneralValueType
-            # at runtime, so this cast is safe
-            return cast("T | None", value)
+            # structlog.contextvars.get_contextvars() returns dict[str, Any] (library limitation)
+            # We know values are t.GeneralValueType because we only store those via set()
+            # Type narrowing via structural validation: dict.get() confirms type
+            typed_context: dict[str, t.GeneralValueType] = structlog_context  # type: ignore[assignment]
+            # value is t.GeneralValueType | None, T is bounded to GeneralValueType
+            # Structural typing: value type matches T parameter
+            return typed_context.get(self._key, self._default)  # type: ignore[return-value]
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.
@@ -196,12 +193,9 @@ class FlextModelsContext:
             current_value = self.get()
 
             if value is not None:
-                # Cast T to t.GeneralValueType for storage
-                # T is bounded to GeneralValueType, so this is safe
-                stored_value: t.GeneralValueType = cast(
-                    "t.GeneralValueType",
-                    value,
-                )
+                # T is bounded to GeneralValueType in generic contract
+                # Store directly - type parameter constraint guarantees compatibility
+                stored_value: t.GeneralValueType = value  # type: ignore[assignment]
                 _ = structlog.contextvars.bind_contextvars(**{
                     self._key: stored_value,
                 })
@@ -217,12 +211,13 @@ class FlextModelsContext:
                 current_value,
                 (str, int, float, bool, dict, list),
             ):
-                # Type narrowing: current_value is primitive t.GeneralValueType
-                prev_value = cast("t.GeneralValueType", current_value)
+                # Type narrowing: isinstance confirms current_value is GeneralValueType
+                # isinstance check validates type - assign directly
+                prev_value = current_value  # type: ignore[assignment]
             else:
-                # For datetime and other objects, they're already GeneralValueType
-                # (T is bounded to GeneralValueType)
-                prev_value = cast("t.GeneralValueType", current_value)
+                # For datetime and other objects, T is bounded to GeneralValueType
+                # Structural typing: current_value matches T which extends GeneralValueType
+                prev_value = current_value  # type: ignore[assignment]
 
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key,
@@ -429,8 +424,9 @@ class FlextModelsContext:
                 # Call model_dump on Pydantic model (safely via callable check)
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict - cast for pyright type narrowing
-                    v = cast("t.ConfigurationDict", model_dump_method())
+                    # model_dump() returns dict - type narrowing from callable check
+                    # Pydantic's model_dump() returns dict[str, Any] which is ConfigurationDict
+                    v = model_dump_method()  # type: ignore[assignment]
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -564,8 +560,9 @@ class FlextModelsContext:
             elif hasattr(v, "model_dump"):
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict - cast for pyright type narrowing
-                    v = cast("t.ConfigurationDict", model_dump_method())
+                    # model_dump() returns dict - callable check validates
+                    # Pydantic's model_dump() returns dict[str, Any] (ConfigurationDict)
+                    v = model_dump_method()  # type: ignore[assignment]
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -576,9 +573,8 @@ class FlextModelsContext:
             # Access via class name since we're in a nested class
             FlextModelsContext.ContextExport.check_json_serializable(v)
             # Type assertion: runtime validation ensures correct type
-            # Convert to dict explicitly (is_dict_like ensures dict-like)
-            # Cast to Mapping for dict() constructor
-            return dict(cast("Mapping[str, t.GeneralValueType]", v))
+            # is_dict_like() confirms v is Mapping - dict() constructor accepts it
+            return dict(v)  # type: ignore[arg-type]
 
         @computed_field
         def total_data_items(self) -> int:
@@ -644,9 +640,9 @@ class FlextModelsContext:
             """Validate scope data - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                # Convert to dict explicitly (is_dict_like ensures dict-like)
-                # Cast to Mapping for dict() constructor
-                return dict(cast("Mapping[str, t.GeneralValueType]", v))
+                # is_dict_like() confirms v is Mapping - dict() accepts it
+                # Convert to dict explicitly for type safety
+                return dict(v)  # type: ignore[arg-type]
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -663,9 +659,9 @@ class FlextModelsContext:
             """Validate scope metadata - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                # Convert to dict explicitly (is_dict_like ensures dict-like)
-                # Cast to Mapping for dict() constructor
-                return dict(cast("Mapping[str, t.GeneralValueType]", v))
+                # is_dict_like() confirms v is Mapping - dict() accepts it
+                # Convert to dict explicitly for type safety
+                return dict(v)  # type: ignore[arg-type]
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -734,9 +730,9 @@ class FlextModelsContext:
             """Validate operations - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                # Convert to dict explicitly (is_dict_like ensures dict-like)
-                # Cast to Mapping for dict() constructor
-                return dict(cast("Mapping[str, t.GeneralValueType]", v))
+                # is_dict_like() confirms v is Mapping - dict() accepts it
+                # Convert to dict explicitly for type safety
+                return dict(v)  # type: ignore[arg-type]
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -842,9 +838,9 @@ class FlextModelsContext:
             """Validate custom_fields - direct validation without helper."""
             # Fast fail: direct validation instead of helper
             if FlextRuntime.is_dict_like(v):
-                # Convert to dict explicitly (is_dict_like ensures dict-like)
-                # Cast to Mapping for dict() constructor
-                return dict(cast("Mapping[str, t.GeneralValueType]", v))
+                # is_dict_like() confirms v is Mapping - dict() accepts it
+                # Convert to dict explicitly for type safety
+                return dict(v)  # type: ignore[arg-type]
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:

@@ -28,7 +28,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextResult, t, u
-from flext_tests.matchers import FlextTestsMatchers
+from flext_tests import tm
 
 # Alias for V namespace
 V = u.V
@@ -318,7 +318,7 @@ class TestValidateMethod:
     def test_validate_no_validators_returns_ok(self) -> None:
         """Empty validators list returns Ok with original value."""
         result = u.Validation.validate("hello")
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == "hello"
 
     @pytest.mark.parametrize(
@@ -336,7 +336,7 @@ class TestValidateMethod:
         # Implication: Validator wrapper makes callable compatible with ValidatorSpec protocol
         validator_spec = u.V.custom(predicate=validator, description=description)
         result = u.Validation.validate(value, validator_spec)
-        FlextTestsMatchers.Tests.Result.assert_success(
+        tm.ok(
             result,
             f"{description} should pass",
         )
@@ -358,7 +358,7 @@ class TestValidateMethod:
         # Implication: Validator wrapper makes callable compatible with ValidatorSpec protocol
         validator_spec = u.V.custom(predicate=validator, description=description)
         result = u.Validation.validate(value, validator_spec)
-        error = FlextTestsMatchers.Tests.Result.assert_failure(result)
+        error = tm.fail(result)
         assert error_contains in error, (
             f"{description}: expected '{error_contains}' in error"
         )
@@ -370,7 +370,7 @@ class TestValidateMethod:
             V.string.non_empty,
             V.string.email,
         )
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
 
     def test_validate_multiple_first_fails(self) -> None:
         """First validator fails returns Fail (fail_fast)."""
@@ -379,7 +379,7 @@ class TestValidateMethod:
             V.string.non_empty,
             V.string.email,
         )
-        error = FlextTestsMatchers.Tests.Result.assert_failure(result)
+        error = tm.fail(result)
         assert "non_empty" in error
 
     def test_validate_collect_errors(self) -> None:
@@ -391,7 +391,7 @@ class TestValidateMethod:
             fail_fast=True,
             collect_errors=True,
         )
-        error = FlextTestsMatchers.Tests.Result.assert_failure(result)
+        error = tm.fail(result)
         assert "non_empty" in error
         assert "min_length" in error
 
@@ -413,12 +413,12 @@ class TestValidateMethod:
             mode="any",
         )
         if expected_success:
-            FlextTestsMatchers.Tests.Result.assert_success(
+            tm.ok(
                 result,
                 f"{description} should pass",
             )
         else:
-            FlextTestsMatchers.Tests.Result.assert_failure(result)
+            tm.fail(result)
 
     def test_validate_with_field_name(self) -> None:
         """field_name adds context to error message."""
@@ -427,26 +427,26 @@ class TestValidateMethod:
             V.string.non_empty,
             field_name="user.email",
         )
-        error = FlextTestsMatchers.Tests.Result.assert_failure(result)
+        error = tm.fail(result)
         assert "user.email:" in error
 
     def test_validate_and_operator(self) -> None:
         """AND operator composition."""
         validator = V.string.non_empty & V.string.max_length(10)
         result = u.Validation.validate("hello", validator)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
 
     def test_validate_or_operator(self) -> None:
         """OR operator composition."""
         validator = V.string.email | V.string.url
         result = u.Validation.validate("test@example.com", validator)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
 
     def test_validate_not_operator(self) -> None:
         """NOT operator negates validator."""
         validator = ~V.string.non_empty
         result = u.Validation.validate("", validator)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
 
     def test_validate_complex_expression(self) -> None:
         """Complex expression with multiple operators."""
@@ -456,7 +456,7 @@ class TestValidateMethod:
             & (V.string.email | V.string.url)
         )
         result = u.Validation.validate("test@example.com", validator)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
 
 
 # =============================================================================
@@ -713,7 +713,7 @@ class TestParseMethod:
         # Use type narrowing - parse() returns FlextResult[T] where T is target_type
         result = u.Parser.parse(value, target_type)
         # Type narrowing: result is FlextResult[target_type] after successful parse
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(
+        parsed = tm.ok(
             result,
             f"{description} failed",
         )
@@ -738,7 +738,7 @@ class TestParseMethod:
             case_insensitive=case_insensitive,
         )
         # Type narrowing: result is FlextResult[Status] after successful parse
-        parsed: Status = FlextTestsMatchers.Tests.Result.assert_success(
+        parsed: Status = tm.ok(
             result,
             f"{description} failed",
         )
@@ -747,44 +747,44 @@ class TestParseMethod:
     def test_parse_enum_case_insensitive(self) -> None:
         """Test case-insensitive enum parsing."""
         result = u.Parser.parse("active", Status, case_insensitive=True)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == Status.ACTIVE
 
     def test_parse_enum_invalid_fails(self) -> None:
         """Test that invalid enum value fails."""
         result = u.Parser.parse("invalid", Status)
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
 
     def test_parse_with_default(self) -> None:
         """Test parsing with default value on failure."""
         result = u.Parser.parse("not_a_number", int, default=42)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == 42
 
     def test_parse_with_default_factory(self) -> None:
         """Test parsing with default factory on failure."""
         result = u.Parser.parse("invalid", int, default_factory=lambda: 99)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == 99
 
     def test_parse_str_to_int_coerce(self) -> None:
         """Test string to int coercion."""
         result = u.Parser.parse("123", int, coerce=True)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == 123
         assert isinstance(parsed, int)
 
     def test_parse_int_to_str_coerce(self) -> None:
         """Test int to string coercion."""
         result = u.Parser.parse(456, str, coerce=True)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == "456"
         assert isinstance(parsed, str)
 
     def test_parse_float_to_int_coerce(self) -> None:
         """Test float to int coercion."""
         result = u.Parser.parse(math.pi, int, coerce=True)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == 3
         assert isinstance(parsed, int)
 
@@ -793,26 +793,26 @@ class TestParseMethod:
         # strict=True only skips primitive coercion helpers like _coerce_primitive
         # but int("123") works directly via target(value) fallback
         result = u.Parser.parse("123", int, strict=True)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == 123
 
     def test_parse_strict_mode_passes_on_exact_type(self) -> None:
         """Test strict mode accepts exact type match."""
         result = u.Parser.parse(123, int, strict=True)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == 123
 
     def test_parse_bool_values(self) -> None:
         """Test parsing boolean values."""
         result_true = u.Parser.parse(True, bool)
         result_false = u.Parser.parse(False, bool)
-        assert FlextTestsMatchers.Tests.Result.assert_success(result_true) is True
-        assert FlextTestsMatchers.Tests.Result.assert_success(result_false) is False
+        assert tm.ok(result_true) is True
+        assert tm.ok(result_false) is False
 
     def test_parse_none_with_default(self) -> None:
         """Test parsing None with default value."""
         result = u.Parser.parse(None, int, default=0)
-        parsed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        parsed = tm.ok(result)
         assert parsed == 0
 
 
@@ -842,7 +842,7 @@ class TestTransformMethod:
             strip_none=strip_none,
             strip_empty=strip_empty,
         )
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(
+        transformed = tm.ok(
             result,
             f"{description} failed",
         )
@@ -863,7 +863,7 @@ class TestTransformMethod:
         # Business Rule: transform accepts dict[str, str] for map_keys, but Mapping is compatible
         # Implication: Convert Mapping to dict for type compatibility
         result = u.transform(input_dict, map_keys=dict(key_map) if key_map else None)
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(
+        transformed = tm.ok(
             result,
             f"{description} failed",
         )
@@ -876,7 +876,7 @@ class TestTransformMethod:
             "Age": 25,
         }
         result = u.transform(input_data, normalize=True)
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        transformed = tm.ok(result)
         assert isinstance(transformed, dict)
 
     def test_transform_to_json(self) -> None:
@@ -886,7 +886,7 @@ class TestTransformMethod:
             "active": True,
         }
         result = u.transform(input_data, to_json=True)
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        transformed = tm.ok(result)
         # Should be JSON-serializable dict (converts non-JSON values to JSON types)
         assert isinstance(transformed, dict)
         assert transformed == {"name": "John", "active": True}
@@ -899,7 +899,7 @@ class TestTransformMethod:
             "items": [],
         }
         result = u.transform(input_data, strip_empty=True)
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        transformed = tm.ok(result)
         assert "name" in transformed
         assert "empty" not in transformed
 
@@ -911,7 +911,7 @@ class TestTransformMethod:
             "email": "john@test.com",
         }
         result = u.transform(input_data, filter_keys={"name", "age"})
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        transformed = tm.ok(result)
         assert "name" in transformed
         assert "age" in transformed
         assert "email" not in transformed
@@ -924,21 +924,21 @@ class TestTransformMethod:
             "age": 25,
         }
         result = u.transform(input_data, exclude_keys={"password"})
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        transformed = tm.ok(result)
         assert "name" in transformed
         assert "password" not in transformed
 
     def test_transform_empty_dict(self) -> None:
         """Test transform with empty dict."""
         result = u.transform({}, normalize=True)
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        transformed = tm.ok(result)
         assert transformed == {}
 
     def test_transform_nested_dict(self) -> None:
         """Test transform with nested dictionary."""
         input_data = {"user": {"name": "John", "age": None}}
         result = u.transform(input_data, strip_none=True)
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        transformed = tm.ok(result)
         assert "user" in transformed
 
     def test_transform_combined_options(self) -> None:
@@ -949,7 +949,7 @@ class TestTransformMethod:
             strip_none=True,
             map_keys={"old_key": "new_key"},
         )
-        transformed = FlextTestsMatchers.Tests.Result.assert_success(result)
+        transformed = tm.ok(result)
         assert "new_key" in transformed
         assert "remove" not in transformed
 
@@ -969,13 +969,13 @@ class TestPipeMethod:
     def test_pipe_empty_operations_returns_value(self) -> None:
         """Empty operations returns original value."""
         result = u.pipe("hello")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "hello"
 
     def test_pipe_single_operation(self) -> None:
         """Single operation transforms value."""
         result = u.pipe("hello", str.upper)
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "HELLO"
 
     def test_pipe_multiple_operations(self) -> None:
@@ -986,7 +986,7 @@ class TestPipeMethod:
             str.upper,
             lambda s: f"[{s}]",
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "[HELLO]"
 
     def test_pipe_with_lambdas(self) -> None:
@@ -997,7 +997,7 @@ class TestPipeMethod:
             lambda x: x + 3,
             lambda x: x * x,
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         # (5 * 2) + 3 = 13, 13 * 13 = 169
         assert value == 169
 
@@ -1010,7 +1010,7 @@ class TestPipeMethod:
             str,
             lambda s: f"Result: {s}",
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "Result: 84"
 
     # -------------------------------------------------------------------------
@@ -1024,7 +1024,7 @@ class TestPipeMethod:
             int,  # Will raise ValueError
             lambda x: x * 2,
         )
-        error = FlextTestsMatchers.Tests.Result.assert_failure(result)
+        error = tm.fail(result)
         assert (
             "int" in error.lower()
             or "invalid" in error.lower()
@@ -1042,7 +1042,7 @@ class TestPipeMethod:
             on_error="skip",
         )
         # With skip mode, continues with previous value "TEST"
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert "TEST" in str(value)
 
     def test_pipe_first_operation_fails(self) -> None:
@@ -1051,7 +1051,7 @@ class TestPipeMethod:
             "abc",
             int,  # Fails immediately
         )
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
 
     def test_pipe_middle_operation_fails(self) -> None:
         """Middle operation failing stops chain."""
@@ -1061,7 +1061,7 @@ class TestPipeMethod:
             lambda x: 1 / (x - 15),  # Division by zero when x=15
             lambda x: x * 100,
         )
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
 
     # -------------------------------------------------------------------------
     # FlextResult handling in pipe
@@ -1074,7 +1074,7 @@ class TestPipeMethod:
             lambda s: FlextResult[str].ok(s.upper()),
             lambda s: f"[{s}]",
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "[TEST]"
 
     def test_pipe_with_flext_result_failure_propagates(self) -> None:
@@ -1084,7 +1084,7 @@ class TestPipeMethod:
             lambda s: FlextResult[str].fail("validation error"),
             lambda s: s.upper(),  # Should not execute
         )
-        error = FlextTestsMatchers.Tests.Result.assert_failure(result)
+        error = tm.fail(result)
         assert "validation" in error.lower()
 
     def test_pipe_mixed_results_and_plain_values(self) -> None:
@@ -1095,7 +1095,7 @@ class TestPipeMethod:
             lambda x: FlextResult[int].ok(x + 5),  # Result: ok(15)
             lambda x: x * 3,  # Plain: 45
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == 45
 
     # -------------------------------------------------------------------------
@@ -1109,7 +1109,7 @@ class TestPipeMethod:
             lambda x: x is None,
             lambda b: "yes" if b else "no",
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "yes"
 
     def test_pipe_empty_string(self) -> None:
@@ -1119,7 +1119,7 @@ class TestPipeMethod:
             len,
             lambda n: n == 0,
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value is True
 
     def test_pipe_dict_transformation(self) -> None:
@@ -1132,7 +1132,7 @@ class TestPipeMethod:
             },
             operator.itemgetter("upper_name"),
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "JOHN"
 
     def test_pipe_list_operations(self) -> None:
@@ -1143,7 +1143,7 @@ class TestPipeMethod:
             operator.itemgetter(slice(3)),
             sum,
         )
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == 5  # sorted: [1,1,3,4,5], first 3: [1,1,3], sum: 5
 
 
@@ -1162,14 +1162,14 @@ class TestMergeMethod:
     def test_merge_empty_returns_empty(self) -> None:
         """No dicts returns empty dict."""
         result = u.merge({}, {})
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {}
 
     def test_merge_single_dict_returns_copy(self) -> None:
         """Single dict returns copy of it."""
         original: dict[str, t.GeneralValueType] = {"a": 1, "b": 2}
         result = u.merge(original, {})
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"a": 1, "b": 2}
         # Verify it's a copy, not same reference
         assert value is not original
@@ -1182,7 +1182,7 @@ class TestMergeMethod:
         d1_dict = dict(d1) if isinstance(d1, Mapping) else d1
         d2_dict = dict(d2) if isinstance(d2, Mapping) else d2
         result = u.merge(d1_dict, d2_dict, strategy="override")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"a": 1, "b": 3, "c": 4}
 
     @pytest.mark.parametrize(
@@ -1202,7 +1202,7 @@ class TestMergeMethod:
         d1_dict = dict(d1) if isinstance(d1, Mapping) else d1
         d2_dict = dict(d2) if isinstance(d2, Mapping) else d2
         result = u.merge(d1_dict, d2_dict, strategy=strategy)
-        value = FlextTestsMatchers.Tests.Result.assert_success(
+        value = tm.ok(
             result,
             f"{description} failed",
         )
@@ -1223,7 +1223,7 @@ class TestMergeMethod:
         d1_dict = dict(d1) if isinstance(d1, Mapping) else d1
         d2_dict = dict(d2) if isinstance(d2, Mapping) else d2
         result = u.merge(d1_dict, d2_dict, strategy="deep")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"a": {"x": 1, "y": 20, "z": 30}, "b": 3, "c": 4}
 
     def test_merge_deep_three_levels(self) -> None:
@@ -1236,7 +1236,7 @@ class TestMergeMethod:
         # Type narrowing: d1_dict and d2_dict are dict[str, t.GeneralValueType] compatible
         # u.merge accepts dict[str, t.GeneralValueType] so no cast needed
         result = u.merge(d1_dict, d2_dict, strategy="deep")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"l1": {"l2": {"l3": {"a": 1, "b": 2}}}}
 
     def test_merge_deep_non_dict_override(self) -> None:
@@ -1247,7 +1247,7 @@ class TestMergeMethod:
         d1_dict = dict(d1) if isinstance(d1, Mapping) else d1
         d2_dict = dict(d2) if isinstance(d2, Mapping) else d2
         result = u.merge(d1_dict, d2_dict, strategy="deep")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"a": "string_value"}
 
     # -------------------------------------------------------------------------
@@ -1262,7 +1262,7 @@ class TestMergeMethod:
         d1_dict = dict(d1) if isinstance(d1, Mapping) else d1
         d2_dict = dict(d2) if isinstance(d2, Mapping) else d2
         result = u.merge(d1_dict, d2_dict, strategy="append")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"items": [1, 2, 3, 4]}
 
     def test_merge_append_non_list_overrides(self) -> None:
@@ -1273,7 +1273,7 @@ class TestMergeMethod:
         d1_dict = dict(d1) if isinstance(d1, Mapping) else d1
         d2_dict = dict(d2) if isinstance(d2, Mapping) else d2
         result = u.merge(d1_dict, d2_dict, strategy="append")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"a": 2}
 
     # -------------------------------------------------------------------------
@@ -1286,7 +1286,7 @@ class TestMergeMethod:
         d2: dict[str, t.GeneralValueType] = {"a": None, "b": 2}
         # filter_none not supported, using standard merge
         result = u.merge(d1, d2, strategy="filter_none")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value.get("a") == 1  # Not overridden by None
         assert value.get("b") == 2
 
@@ -1295,7 +1295,7 @@ class TestMergeMethod:
         d1: dict[str, t.GeneralValueType] = {"a": "value"}
         d2: dict[str, t.GeneralValueType] = {"a": "", "b": 2}
         result = u.merge(d1, d2, strategy="filter_empty")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value.get("a") == "value"  # Not overridden by ""
         assert value.get("b") == 2
 
@@ -1304,7 +1304,7 @@ class TestMergeMethod:
         d1: dict[str, t.GeneralValueType] = {"a": 1, "b": "text"}
         d2: dict[str, t.GeneralValueType] = {"a": None, "b": ""}
         result = u.merge(d1, d2, strategy="filter_both")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"a": 1, "b": "text"}
 
     # -------------------------------------------------------------------------
@@ -1319,7 +1319,7 @@ class TestMergeMethod:
         # Merge first two, then merge result with third
         result1 = u.merge(d1, d2)
         result = u.merge(result1.value, d3)
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"a": 10, "b": 2, "c": 3}
 
     def test_merge_many_dicts(self) -> None:
@@ -1335,7 +1335,7 @@ class TestMergeMethod:
         result = u.merge(dicts[0], dicts[1])
         for d in dicts[2:]:
             result = u.merge(result.value, d)
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {"key": 5}  # Last one wins
 
     # -------------------------------------------------------------------------
@@ -1346,7 +1346,7 @@ class TestMergeMethod:
         """Empty dicts merge to empty."""
         result = u.merge({}, {})
         result = u.merge(result.value, {})
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == {}
 
     def test_merge_preserves_types(self) -> None:
@@ -1360,7 +1360,7 @@ class TestMergeMethod:
             "dict": {"nested": True},
         }
         result = u.merge(d1, {})
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value["int"] == 42
         assert value["float"] == math.pi
         assert value["str"] == "hello"
@@ -1385,21 +1385,21 @@ class TestExtractMethod:
         """Extract simple top-level key."""
         data = {"name": "John", "age": 30}
         result = u.extract(data, "name")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "John"
 
     def test_extract_nested_path(self) -> None:
         """Extract nested value with dot notation."""
         data = {"user": {"name": "John", "email": "john@test.com"}}
         result = u.extract(data, "user.name")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "John"
 
     def test_extract_deep_nested(self) -> None:
         """Extract deeply nested value."""
         data = {"level1": {"level2": {"level3": {"value": 42}}}}
         result = u.extract(data, "level1.level2.level3.value")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == 42
 
     @pytest.mark.parametrize(
@@ -1415,7 +1415,7 @@ class TestExtractMethod:
     ) -> None:
         """Test path extraction scenarios."""
         result = u.extract(data, path)
-        value = FlextTestsMatchers.Tests.Result.assert_success(
+        value = tm.ok(
             result,
             f"{description} failed",
         )
@@ -1438,7 +1438,7 @@ class TestExtractMethod:
     ) -> None:
         """Test array index extraction."""
         result = u.extract(data, path)
-        value = FlextTestsMatchers.Tests.Result.assert_success(
+        value = tm.ok(
             result,
             f"{description} failed",
         )
@@ -1448,14 +1448,14 @@ class TestExtractMethod:
         """Extract first element from array."""
         data = {"items": [10, 20, 30]}
         result = u.extract(data, "items[0]")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == 10
 
     def test_extract_array_last_element(self) -> None:
         """Extract last element from array."""
         data = {"items": [10, 20, 30]}
         result = u.extract(data, "items[-1]")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == 30
 
     def test_extract_nested_array(self) -> None:
@@ -1463,7 +1463,7 @@ class TestExtractMethod:
         data = {"matrix": {"row0": [1, 2], "row1": [3, 4]}}
         # Extract first element from row0
         result = u.extract(data, "matrix.row0[0]")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == 1
 
     # -------------------------------------------------------------------------
@@ -1474,7 +1474,7 @@ class TestExtractMethod:
         """Missing key returns default value."""
         data = {"a": 1}
         result = u.extract(data, "missing", default="fallback")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "fallback"
 
     def test_extract_missing_nested_returns_sentinel(self) -> None:
@@ -1482,7 +1482,7 @@ class TestExtractMethod:
         data = {"user": {"name": "John"}}
         # FlextResult cannot have None as success value, so use sentinel
         result = u.extract(data, "user.missing.deep", default="NOT_FOUND")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "NOT_FOUND"
 
     def test_extract_missing_with_none_default_fails(self) -> None:
@@ -1491,7 +1491,7 @@ class TestExtractMethod:
         # FlextResult cannot have None as success value
         result = u.extract(data, "missing")
         # This should fail because default=None can't be wrapped in FlextResult.ok()
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
 
     # -------------------------------------------------------------------------
     # Required option
@@ -1501,14 +1501,14 @@ class TestExtractMethod:
         """Required extraction succeeds when path exists."""
         data = {"key": "value"}
         result = u.extract(data, "key", required=True)
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "value"
 
     def test_extract_required_fails_when_missing(self) -> None:
         """Required extraction fails when path missing."""
         data = {"a": 1}
         result = u.extract(data, "missing", required=True)
-        error = FlextTestsMatchers.Tests.Result.assert_failure(result)
+        error = tm.fail(result)
         assert (
             "missing" in error.lower()
             or "not found" in error.lower()
@@ -1519,7 +1519,7 @@ class TestExtractMethod:
         """Required extraction fails for missing nested path."""
         data = {"user": {"name": "John"}}
         result = u.extract(data, "user.email", required=True)
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
 
     # -------------------------------------------------------------------------
     # Custom separator
@@ -1529,14 +1529,14 @@ class TestExtractMethod:
         """Custom separator: forward slash."""
         data = {"user": {"profile": {"name": "John"}}}
         result = u.extract(data, "user/profile/name", separator="/")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "John"
 
     def test_extract_custom_separator_arrow(self) -> None:
         """Custom separator: arrow."""
         data = {"a": {"b": {"c": 100}}}
         result = u.extract(data, "a->b->c", separator="->")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == 100
 
     # -------------------------------------------------------------------------
@@ -1547,7 +1547,7 @@ class TestExtractMethod:
         """Extract from empty dict returns default."""
         data: dict[str, t.GeneralValueType] = {}
         result = u.extract(data, "any.path", default="default")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result)
+        value = tm.ok(result)
         assert value == "default"
 
     def test_extract_none_in_path_fails(self) -> None:
@@ -1555,16 +1555,16 @@ class TestExtractMethod:
         data: dict[str, t.GeneralValueType] = {"a": None}
         # Cannot traverse None to get "b", and default is None -> fails
         result = u.extract(data, "a.b", default=None)
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
 
         # With non-None default, should return default (success)
         result_with_default = u.extract(data, "a.b", default="fallback")
-        value = FlextTestsMatchers.Tests.Result.assert_success(result_with_default)
+        value = tm.ok(result_with_default)
         assert value == "fallback"
 
         # With required=True, should fail even with default
         result_required = u.extract(data, "a.b", required=True)
-        FlextTestsMatchers.Tests.Result.assert_failure(result_required)
+        tm.fail(result_required)
 
     def test_extract_preserves_types(self) -> None:
         """Extract preserves various value types."""
@@ -1574,19 +1574,19 @@ class TestExtractMethod:
             "bool_val": True,
             "list_val": [1, 2, 3],
         }
-        int_val = FlextTestsMatchers.Tests.Result.assert_success(
+        int_val = tm.ok(
             u.extract(data, "int_val"),
         )
         assert int_val == 42
-        str_val = FlextTestsMatchers.Tests.Result.assert_success(
+        str_val = tm.ok(
             u.extract(data, "str_val"),
         )
         assert str_val == "hello"
-        bool_val = FlextTestsMatchers.Tests.Result.assert_success(
+        bool_val = tm.ok(
             u.extract(data, "bool_val"),
         )
         assert bool(bool_val)  # Check truthy value without type narrowing
-        list_val = FlextTestsMatchers.Tests.Result.assert_success(
+        list_val = tm.ok(
             u.extract(data, "list_val"),
         )
         assert list_val == [1, 2, 3]
@@ -1767,7 +1767,7 @@ class TestBatchMethod:
     def test_batch_empty_items_returns_empty_results(self) -> None:
         """Batch processing empty items returns empty results."""
         result = u.batch([], lambda x: x * 2)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == []
         assert batch_result["total"] == 0
@@ -1775,7 +1775,7 @@ class TestBatchMethod:
     def test_batch_single_item(self) -> None:
         """Batch processing single item works correctly."""
         result = u.batch([5], lambda x: x * 2)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == [10]
         assert batch_result["total"] == 1
@@ -1785,7 +1785,7 @@ class TestBatchMethod:
     def test_batch_multiple_items(self) -> None:
         """Batch processing multiple items transforms all."""
         result = u.batch([1, 2, 3, 4, 5], lambda x: x * 2)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == [2, 4, 6, 8, 10]
         assert batch_result["total"] == 5
@@ -1794,7 +1794,7 @@ class TestBatchMethod:
     def test_batch_string_items(self) -> None:
         """Batch processes string items."""
         result = u.batch(["hello", "world"], lambda s: s.upper())
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == ["HELLO", "WORLD"]
 
@@ -1802,7 +1802,7 @@ class TestBatchMethod:
         """Batch processes dict items."""
         items = [{"a": 1}, {"a": 2}, {"a": 3}]
         result = u.batch(items, lambda d: d["a"] * 2)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == [2, 4, 6]
 
@@ -1820,7 +1820,7 @@ class TestBatchMethod:
             return x * 2
 
         result = u.batch([1, 2, 3, 4, 5], operation, on_error="collect")
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == [2, 4, 8, 10]  # 3 is skipped
         assert batch_result["error_count"] == 1
@@ -1836,7 +1836,7 @@ class TestBatchMethod:
             return x
 
         result = u.batch([1, 2, 3, 4, 5], operation, on_error="skip")
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == [1, 3, 5]
         # Skip mode doesn't collect errors
@@ -1853,7 +1853,7 @@ class TestBatchMethod:
 
         result = u.batch([1, 2, 3, 4, 5], operation, on_error="fail")
         # on_error="fail" returns FlextResult.fail when error occurs
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
         assert result.error is not None
         assert "Error on 3" in result.error
 
@@ -1865,7 +1865,7 @@ class TestBatchMethod:
             raise ValueError(msg)
 
         result = u.batch([1, 2, 3], always_fail, on_error="collect")
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == []
         assert batch_result["error_count"] == 3
@@ -1878,7 +1878,7 @@ class TestBatchMethod:
     def test_batch_with_none_in_items(self) -> None:
         """Batch handles None values in items."""
         result = u.batch([1, None, 3], lambda x: x or 0)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == [1, 0, 3]
 
@@ -1886,7 +1886,7 @@ class TestBatchMethod:
         """Batch handles large item count."""
         items = list(range(100))
         result = u.batch(items, lambda x: x + 1)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["total"] == 100
         assert batch_result["success_count"] == 100
@@ -1896,7 +1896,7 @@ class TestBatchMethod:
         """Batch with identity operation returns same items."""
         items = [1, 2, 3]
         result = u.batch(items, lambda x: x)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == items
 
@@ -1907,7 +1907,7 @@ class TestBatchMethod:
             items,
             lambda d: {"name": d["name"].upper(), "processed": True},
         )
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == [
             {"name": "ALICE", "processed": True},
@@ -1924,7 +1924,7 @@ class TestBatchMethod:
             return x * 10
 
         result = u.batch([1, 2, 3, 4, 5], alternate, on_error="collect")
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         batch_result = result.value
         assert batch_result["results"] == [10, 30, 50]
         assert batch_result["success_count"] == 3
@@ -1941,7 +1941,7 @@ class TestRetryMethod:
     def test_retry_succeeds_first_attempt(self) -> None:
         """Retry succeeds on first attempt."""
         result = u.retry(lambda: 42, max_attempts=3)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == 42
 
     def test_retry_succeeds_after_failures(self) -> None:
@@ -1956,7 +1956,7 @@ class TestRetryMethod:
             return 100
 
         result = u.retry(flaky, max_attempts=5, delay=0.01)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == 100
         assert attempts[0] == 3
 
@@ -1968,7 +1968,7 @@ class TestRetryMethod:
             raise ValueError(msg)
 
         result = u.retry(always_fail, max_attempts=3, delay=0.01)
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
         assert result.error is not None
         assert "Always fails" in result.error
 
@@ -1982,7 +1982,7 @@ class TestRetryMethod:
             raise ValueError(msg)
 
         result = u.retry(fail_once, max_attempts=1, delay=0.01)
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
         assert attempts[0] == 1
 
     # =========================================================================
@@ -2006,7 +2006,7 @@ class TestRetryMethod:
             delay=0.01,
             retry_on=(ValueError,),
         )
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert attempts[0] == 2
 
     def test_retry_does_not_retry_excluded_exception(self) -> None:
@@ -2041,7 +2041,7 @@ class TestRetryMethod:
             return 99
 
         result = u.retry(fail_twice, max_attempts=5, delay=0)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == 99
 
     def test_retry_with_small_delay(self) -> None:
@@ -2056,7 +2056,7 @@ class TestRetryMethod:
             return "success"
 
         result = u.retry(fail_once, max_attempts=3, delay=0.001)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == "success"
 
     # =========================================================================
@@ -2066,19 +2066,19 @@ class TestRetryMethod:
     def test_retry_returns_string(self) -> None:
         """Retry can return string value."""
         result = u.retry(lambda: "hello", max_attempts=1)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == "hello"
 
     def test_retry_returns_dict(self) -> None:
         """Retry can return dict value."""
         result = u.retry(lambda: {"key": "value"}, max_attempts=1)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == {"key": "value"}
 
     def test_retry_returns_list(self) -> None:
         """Retry can return list value."""
         result = u.retry(lambda: [1, 2, 3], max_attempts=1)
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == [1, 2, 3]
 
     # =========================================================================
@@ -2101,7 +2101,7 @@ class TestRetryMethod:
             max_attempts=5,
             delay=0.01,
         )
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert result.value == 4
         assert state["count"] == 4
 
@@ -2111,7 +2111,7 @@ class TestRetryMethod:
         result = u.retry(lambda: "fast", max_attempts=3, delay=1.0)
         elapsed = time.time() - start
 
-        FlextTestsMatchers.Tests.Result.assert_success(result)
+        tm.ok(result)
         assert elapsed < 0.5  # Should be nearly instant
 
     def test_retry_preserves_exception_message(self) -> None:
@@ -2122,6 +2122,6 @@ class TestRetryMethod:
             raise ValueError(msg)
 
         result = u.retry(specific_error, max_attempts=2, delay=0.01)
-        FlextTestsMatchers.Tests.Result.assert_failure(result)
+        tm.fail(result)
         assert result.error is not None
         assert "XYZ123" in result.error
