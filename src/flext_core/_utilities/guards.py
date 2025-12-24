@@ -164,7 +164,8 @@ class FlextUtilitiesGuards:
             result_list: list[str | int | float | bool | None] = []
             # Before iterating, narrow the type
             if isinstance(val_sequence, Sequence) and not isinstance(
-                val_sequence, (str, bytes)
+                val_sequence,
+                (str, bytes),
             ):
                 for item in val_sequence:
                     if isinstance(item, (str, int, float, bool, type(None))):
@@ -916,7 +917,7 @@ class FlextUtilitiesGuards:
 
         """
         return hasattr(value, "model_dump") and callable(
-            getattr(value, "model_dump", None)
+            getattr(value, "model_dump", None),
         )
 
     def __getattribute__(self, name: str) -> object:

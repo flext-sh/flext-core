@@ -1061,13 +1061,15 @@ class FlextProtocols:
             ...
 
         def __and__(
-            self, other: FlextProtocols.ValidatorSpec
+            self,
+            other: FlextProtocols.ValidatorSpec,
         ) -> FlextProtocols.ValidatorSpec:
             """Compose with AND - both validators must pass."""
             ...
 
         def __or__(
-            self, other: FlextProtocols.ValidatorSpec
+            self,
+            other: FlextProtocols.ValidatorSpec,
         ) -> FlextProtocols.ValidatorSpec:
             """Compose with OR - at least one validator must pass."""
             ...
@@ -1154,6 +1156,21 @@ class FlextProtocols:
         def __call__(self, key: str, value: T) -> R:
             """Map a key-value pair to a result."""
             ...
+
+    # =========================================================================
+    # UTILITIES PROTOCOLS
+    # =========================================================================
+
+    class Utilities:
+        """Protocols for utility operations."""
+
+        @runtime_checkable
+        class CallableWithHints(Protocol):
+            """Protocol for callables that support type hints introspection."""
+
+            __annotations__: t.ConfigurationDict
+
+    # =========================================================================
 
 
 p = FlextProtocols

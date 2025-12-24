@@ -610,7 +610,9 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         # Validate handler mode matches operation
         handler_mode = getattr(
-            self._config_model.handler_mode, "value", self._config_model.handler_mode
+            self._config_model.handler_mode,
+            "value",
+            self._config_model.handler_mode,
         )
         valid_operations = {
             c.Dispatcher.HANDLER_MODE_COMMAND,

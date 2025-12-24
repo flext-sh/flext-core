@@ -36,13 +36,17 @@ class RuntimeResult[T]:
     def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
     def map[U](self, func: Callable[[T], U]) -> RuntimeResult[U]: ...
     def flat_map[U](
-        self, func: Callable[[T], RuntimeResult[U]]
+        self,
+        func: Callable[[T], RuntimeResult[U]],
     ) -> RuntimeResult[U]: ...
     def and_then[U](
-        self, func: Callable[[T], RuntimeResult[U]]
+        self,
+        func: Callable[[T], RuntimeResult[U]],
     ) -> RuntimeResult[U]: ...
     def fold[U](
-        self, on_failure: Callable[[str], U], on_success: Callable[[T], U]
+        self,
+        on_failure: Callable[[str], U],
+        on_success: Callable[[T], U],
     ) -> U: ...
     def tap(self, func: Callable[[T], None]) -> RuntimeResult[T]: ...
     def tap_error(self, func: Callable[[str], None]) -> RuntimeResult[T]: ...
@@ -52,7 +56,8 @@ class RuntimeResult[T]:
     def lash(self, func: Callable[[str], RuntimeResult[T]]) -> RuntimeResult[T]: ...
     def recover(self, func: Callable[[str], T]) -> RuntimeResult[T]: ...
     def flow_through[U](
-        self, *funcs: Callable[[T | U], RuntimeResult[U]]
+        self,
+        *funcs: Callable[[T | U], RuntimeResult[U]],
     ) -> RuntimeResult[U]: ...
     def __or__(self, default: T) -> T: ...
     def __bool__(self) -> bool: ...
@@ -106,33 +111,43 @@ class FlextRuntime:
         def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
         def map[U](self, func: Callable[[T], U]) -> FlextRuntime.RuntimeResult[U]: ...
         def flat_map[U](
-            self, func: Callable[[T], FlextRuntime.RuntimeResult[U]]
+            self,
+            func: Callable[[T], FlextRuntime.RuntimeResult[U]],
         ) -> FlextRuntime.RuntimeResult[U]: ...
         def and_then[U](
-            self, func: Callable[[T], FlextRuntime.RuntimeResult[U]]
+            self,
+            func: Callable[[T], FlextRuntime.RuntimeResult[U]],
         ) -> FlextRuntime.RuntimeResult[U]: ...
         def fold[U](
-            self, on_failure: Callable[[str], U], on_success: Callable[[T], U]
+            self,
+            on_failure: Callable[[str], U],
+            on_success: Callable[[T], U],
         ) -> U: ...
         def tap(self, func: Callable[[T], None]) -> FlextRuntime.RuntimeResult[T]: ...
         def tap_error(
-            self, func: Callable[[str], None]
+            self,
+            func: Callable[[str], None],
         ) -> FlextRuntime.RuntimeResult[T]: ...
         def map_error(
-            self, func: Callable[[str], str]
+            self,
+            func: Callable[[str], str],
         ) -> FlextRuntime.RuntimeResult[T]: ...
         def filter(
-            self, predicate: Callable[[T], bool]
+            self,
+            predicate: Callable[[T], bool],
         ) -> FlextRuntime.RuntimeResult[T]: ...
         def alt(self, func: Callable[[str], str]) -> FlextRuntime.RuntimeResult[T]: ...
         def lash(
-            self, func: Callable[[str], FlextRuntime.RuntimeResult[T]]
+            self,
+            func: Callable[[str], FlextRuntime.RuntimeResult[T]],
         ) -> FlextRuntime.RuntimeResult[T]: ...
         def recover(
-            self, func: Callable[[str], T]
+            self,
+            func: Callable[[str], T],
         ) -> FlextRuntime.RuntimeResult[T]: ...
         def flow_through[U](
-            self, *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]]
+            self,
+            *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]],
         ) -> FlextRuntime.RuntimeResult[U]: ...
         def __or__(self, default: T) -> T: ...
         def __bool__(self) -> bool: ...
@@ -195,7 +210,8 @@ class FlextRuntime:
         inject: object
         @classmethod
         def create_layered_bridge(
-            cls, config: t.ConfigurationMapping | None = None
+            cls,
+            config: t.ConfigurationMapping | None = None,
         ) -> tuple[object, object, object]: ...
         @classmethod
         def create_container(
@@ -212,23 +228,33 @@ class FlextRuntime:
         ) -> object: ...
         @staticmethod
         def bind_configuration(
-            di_container: object, config: t.ConfigurationMapping | None
+            di_container: object,
+            config: t.ConfigurationMapping | None,
         ) -> object: ...
         @staticmethod
         def bind_configuration_provider(
-            configuration_provider: object, config: t.ConfigurationMapping | None
+            configuration_provider: object,
+            config: t.ConfigurationMapping | None,
         ) -> object: ...
         @staticmethod
         def register_object[T](
-            di_container: object, name: str, instance: T
+            di_container: object,
+            name: str,
+            instance: T,
         ) -> object: ...
         @staticmethod
         def register_factory[T](
-            di_container: object, name: str, factory: object, *, cache: bool = True
+            di_container: object,
+            name: str,
+            factory: object,
+            *,
+            cache: bool = True,
         ) -> object: ...
         @staticmethod
         def register_resource[T](
-            di_container: object, name: str, factory: object
+            di_container: object,
+            name: str,
+            factory: object,
         ) -> object: ...
         @staticmethod
         def wire(

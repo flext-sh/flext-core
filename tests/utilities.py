@@ -16,8 +16,7 @@ from __future__ import annotations
 from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
 
-from flext_core import FlextResult
-from flext_core.typings import t as core_t
+from flext import FlextResult, t as core_t
 from flext_core.utilities import u as core_u
 from flext_tests.utilities import FlextTestsUtilities
 from tests.test_utils import assertion_helpers

@@ -380,7 +380,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return FlextResult[U](Failure(self.error or ""))
 
     def flat_map[U](
-        self, func: Callable[[T_co], FlextRuntime.RuntimeResult[U]]
+        self,
+        func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
     ) -> FlextResult[U]:
         """Chain operations returning FlextResult.
 
@@ -392,7 +393,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return FlextResult[U](Failure(self.error or ""))
 
     def and_then[U](
-        self, func: Callable[[T_co], FlextRuntime.RuntimeResult[U]]
+        self,
+        func: Callable[[T_co], FlextRuntime.RuntimeResult[U]],
     ) -> FlextResult[U]:
         """RFC-compliant alias for flat_map.
 
@@ -476,7 +478,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         # Check if model is a BaseModel subclass before calling model_validate
         if not issubclass(model, BaseModel):
             fail_result: FlextResult[str] = cls.fail(
-                f"Type {model} is not a BaseModel subclass"
+                f"Type {model} is not a BaseModel subclass",
             )
             return cast("FlextResult[T]", fail_result)
         # After issubclass check, model is guaranteed to be BaseModel subclass
@@ -566,7 +568,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return self
 
     def lash(
-        self, func: Callable[[str], FlextRuntime.RuntimeResult[T_co]]
+        self,
+        func: Callable[[str], FlextRuntime.RuntimeResult[T_co]],
     ) -> FlextResult[T_co]:
         """Apply recovery function on failure.
 

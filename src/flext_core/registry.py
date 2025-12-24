@@ -1031,7 +1031,8 @@ class FlextRegistry(x):
                     # Type guard ensures metadata_as_general is t.ConfigurationMapping
                     # Cast to Mapping[str, T] for to_dict() call
                     metadata_mapping: t.ConfigurationMapping = cast(
-                        "t.ConfigurationMapping", metadata_as_general
+                        "t.ConfigurationMapping",
+                        metadata_as_general,
                     )
                     validated_metadata = u.mapper().to_dict(metadata_mapping)
                 else:

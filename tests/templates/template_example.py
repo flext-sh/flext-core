@@ -55,7 +55,8 @@ class TestTEMPLATECategory:
 
         # Always use FlextResult assertion patterns
         actual_output = test_framework.assert_result_success(
-            result, f"TEMPLATE operation failed for input: {test_data['input']}"
+            result,
+            f"TEMPLATE operation failed for input: {test_data['input']}",
         )
 
         # Assert real behavior
@@ -68,7 +69,9 @@ class TestTEMPLATECategory:
 
         # Assert proper failure handling
         error_msg = test_framework.assert_result_failure(
-            result, "Invalid input", "TEMPLATE operation should fail with invalid input"
+            result,
+            "Invalid input",
+            "TEMPLATE operation should fail with invalid input",
         )
 
         # Verify error message content
@@ -86,7 +89,8 @@ class TestTEMPLATECategory:
 
         # Assert operation completed within time limit
         test_framework.assert_result_success(
-            result, "TEMPLATE operation exceeded performance requirements"
+            result,
+            "TEMPLATE operation exceeded performance requirements",
         )
 
     @pytest.mark.integration
@@ -94,7 +98,8 @@ class TestTEMPLATECategory:
         """Test TEMPLATE integration with other flext-core modules."""
         # Create real entity through facade
         entity_result = test_framework.create_test_entity(
-            "integration-test", "Test Entity"
+            "integration-test",
+            "Test Entity",
         )
         entity = test_framework.assert_result_success(entity_result)
 
@@ -103,7 +108,8 @@ class TestTEMPLATECategory:
 
         # Assert successful integration
         processed_entity = test_framework.assert_result_success(
-            result, "TEMPLATE integration with entity failed"
+            result,
+            "TEMPLATE integration with entity failed",
         )
 
         # Verify entity was processed correctly
@@ -136,7 +142,9 @@ class TestTEMPLATECategory:
 
         # Assert error propagation
         test_framework.assert_result_failure(
-            result, "Simulated failure", "Error should propagate through map operations"
+            result,
+            "Simulated failure",
+            "Error should propagate through map operations",
         )
 
     def test_template_type_safety(self) -> None:
@@ -149,5 +157,7 @@ class TestTEMPLATECategory:
         # Test type coercion/error handling
         type_result = u.TEMPLATE.process_typed_data(123)  # Wrong type
         test_framework.assert_result_failure(
-            type_result, "type", "Wrong input type should be rejected"
+            type_result,
+            "type",
+            "Wrong input type should be rejected",
         )

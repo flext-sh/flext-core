@@ -174,7 +174,7 @@ class FlextModels:
     DispatchConfig: TypeAlias = FlextModelsConfig.DispatchConfig
 
     class ExecuteDispatchAttemptOptions(
-        FlextModelsConfig.ExecuteDispatchAttemptOptions
+        FlextModelsConfig.ExecuteDispatchAttemptOptions,
     ):
         """Execute dispatch attempt options - direct class for mypy compatibility."""
 

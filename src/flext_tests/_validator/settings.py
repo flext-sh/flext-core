@@ -284,7 +284,7 @@ class FlextValidatorSettings:
                             "CONFIG-002",
                             f'"{ignore_str}"',
                             c.Tests.Validator.Messages.CONFIG_RUFF.format(
-                                code=ignore_str
+                                code=ignore_str,
                             ),
                         ),
                     )
@@ -313,7 +313,8 @@ class FlextValidatorSettings:
         # Type narrowing: pyright_config_raw is dict after isinstance check
         # Use cast to help pyright infer type (dict[str, object] is compatible)
         pyright_config: dict[str, object] = cast(
-            "dict[str, object]", pyright_config_raw
+            "dict[str, object]",
+            pyright_config_raw,
         )
 
         # Check reportPrivateUsage

@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
-from flext_core import FlextModels, FlextProtocols, FlextTypes
+from flext import FlextModels, FlextProtocols, FlextTypes
 from flext_tests.models import FlextTestsModels
 
 
@@ -85,7 +85,7 @@ class TestsFlextModels:
                 """Set attribute with frozen state validation."""
                 if getattr(self, "_frozen", False) and name != "_frozen":
                     raise AttributeError(
-                        f"{type(self).__name__} object attribute '{name}' is read-only"
+                        f"{type(self).__name__} object attribute '{name}' is read-only",
                     )
                 super().__setattr__(name, value)
 

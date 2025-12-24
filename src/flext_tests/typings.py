@@ -205,7 +205,8 @@ class FlextTestsTypes(FlextTypes):
             """List of factory models."""
 
             type FactoryModelDict = dict[
-                str, FlextTestsTypes.Tests.Factory.FactoryModel
+                str,
+                FlextTestsTypes.Tests.Factory.FactoryModel,
             ]
             """Dictionary of factory models keyed by string ID."""
 
@@ -309,7 +310,8 @@ class FlextTestsTypes(FlextTypes):
             """Type for builder sequences."""
 
             type ParametrizedCase = tuple[
-                str, FlextTestsTypes.Tests.Builders.BuilderDict
+                str,
+                FlextTestsTypes.Tests.Builders.BuilderDict,
             ]
             """Type for parametrized test cases (test_id, data)."""
 
@@ -320,7 +322,8 @@ class FlextTestsTypes(FlextTypes):
             """Type for transformation functions."""
 
             type ValidateFunc = Callable[
-                [FlextTestsTypes.Tests.Builders.BuilderValue], bool
+                [FlextTestsTypes.Tests.Builders.BuilderValue],
+                bool,
             ]
             """Type for validation functions."""
 

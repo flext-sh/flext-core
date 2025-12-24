@@ -175,7 +175,9 @@ class FlextModelsCqrs:
             """Convert dict to Pagination instance."""
             page = FlextUtilitiesParser().convert(
                 FlextUtilitiesMapper().get(
-                    v, "page", default=c.Pagination.DEFAULT_PAGE_NUMBER
+                    v,
+                    "page",
+                    default=c.Pagination.DEFAULT_PAGE_NUMBER,
                 )
                 or c.Pagination.DEFAULT_PAGE_NUMBER,
                 int,
@@ -183,7 +185,9 @@ class FlextModelsCqrs:
             )
             size = FlextUtilitiesParser().convert(
                 FlextUtilitiesMapper().get(
-                    v, "size", default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
+                    v,
+                    "size",
+                    default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
                 )
                 or c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
                 int,
@@ -257,7 +261,7 @@ class FlextModelsCqrs:
                 pagination_raw = FlextUtilitiesMapper().get(query_payload, "pagination")
                 # TypeGuard narrows to Mapping[str, t.GeneralValueType] when is_dict_like is True
                 if pagination_raw is not None and FlextRuntime.is_dict_like(
-                    pagination_raw
+                    pagination_raw,
                 ):
                     # Type narrowing: is_dict_like ensures pagination_raw is ConfigurationMapping
                     # Explicit type assertion after type guard

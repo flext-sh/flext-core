@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable, Mapping
 from typing import Annotated, Final, Self
 
@@ -17,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
+from flext_core._utilities.configuration import FlextUtilitiesConfiguration
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import c
@@ -27,20 +27,22 @@ from flext_core.typings import t
 # NOTE: models.py cannot import utilities - use direct imports from _utilities/* instead
 
 
-def _get_log_level_from_config() -> int:
-    """Get log level from default constant (avoids circular import with config.py)."""
-    # Use default log level from constants to avoid circular import
-    # config.py -> runtime.py -> models.py -> _models/config.py -> config.py
-    default_log_level = c.Logging.DEFAULT_LEVEL.upper()
-    return getattr(logging, default_log_level, logging.INFO)
-
-
 class FlextModelsConfig:
     """Configuration pattern container class.
 
     This class acts as a namespace container for configuration patterns.
     All nested classes are accessed via FlextModels.Config.* in the main models.py.
     """
+
+    @staticmethod
+    def _get_log_level_from_config() -> int:
+        """Get default log level from configuration constants.
+
+        Returns:
+            int: Numeric logging level (e.g., logging.INFO = 20)
+
+        """
+        return FlextUtilitiesConfiguration.get_log_level_from_config()
 
     class ProcessingRequest(FlextModelsBase.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
@@ -378,7 +380,7 @@ class FlextModelsConfig:
         """
 
         log_level: int = Field(
-            default_factory=_get_log_level_from_config,
+            default_factory=FlextUtilitiesConfiguration.get_log_level_from_config,
             ge=c.ZERO,
             le=c.Validation.MAX_CUSTOM_VALIDATORS,
             description=(

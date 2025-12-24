@@ -13,45 +13,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import threading
 from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
 from typing import ClassVar, Self
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
+from flext_core._utilities.configuration import FlextUtilitiesConfiguration
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Namespace, T_Settings, t
-
-
-def _resolve_env_file() -> str | None:
-    """Resolve .env file path from FLEXT_ENV_FILE environment variable.
-
-    Internal helper for configuration initialization.
-    Precedence (highest to lowest):
-    1. FLEXT_ENV_FILE environment variable (custom path)
-    2. Default .env file from current directory
-    """
-    # Check for custom env file path
-    custom_env_file = os.environ.get(c.Platform.ENV_FILE_ENV_VAR)
-    if custom_env_file:
-        custom_path = Path(custom_env_file)
-        if custom_path.exists():
-            return str(custom_path.resolve())
-        # If custom path doesn't exist, return it anyway (Pydantic will handle gracefully)
-        return custom_env_file
-
-    # Default: use .env from current directory
-    default_path = Path.cwd() / c.Platform.ENV_FILE_DEFAULT
-    if default_path.exists():
-        return str(default_path.resolve())
-
-    # Fallback: use default value (Pydantic handles missing file gracefully)
-    return c.Platform.ENV_FILE_DEFAULT
 
 
 class FlextSettings(BaseSettings, FlextRuntime):
@@ -87,10 +60,11 @@ class FlextSettings(BaseSettings, FlextRuntime):
     model_config = SettingsConfigDict(
         env_prefix=c.Platform.ENV_PREFIX,
         env_nested_delimiter=c.Platform.ENV_NESTED_DELIMITER,
-        env_file=_resolve_env_file(),
+        env_file=FlextUtilitiesConfiguration.resolve_env_file(),
         env_file_encoding=c.Utilities.DEFAULT_ENCODING,
         case_sensitive=False,
         extra=c.ModelConfig.EXTRA_IGNORE,
+        validate_assignment=True,
     )
 
     # =========================================================================
@@ -120,7 +94,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             )
 
         """
-        return _resolve_env_file()
+        return FlextUtilitiesConfiguration.resolve_env_file()
 
     # Core configuration
     app_name: str = Field(default="flext", description="Application name")
@@ -261,7 +235,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             if cls in cls._instances:
                 del cls._instances[cls]
 
-    def __init__(self, **kwargs: t.GeneralValueType) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -270,85 +244,36 @@ class FlextSettings(BaseSettings, FlextRuntime):
         """
         # Check if already initialized (singleton pattern)
         if hasattr(self, "_di_provider"):
-            # Instance already initialized, just update fields from kwargs
+            # Instance already initialized - update fields atomically to avoid
+            # triggering model validators after each field change. Use object.__setattr__
+            # to bypass Pydantic's validate_assignment and set all fields first,
+            # then optionally trigger a full validation if needed.
             if kwargs:
                 for key, value in kwargs.items():
-                    if hasattr(self, key):
-                        setattr(self, key, value)
+                    if key in self.__class__.model_fields:
+                        # Use object.__setattr__ to bypass per-field validation
+                        object.__setattr__(self, key, value)
             return
 
-        # First initialization - call BaseSettings.__init__() then apply kwargs
-        # BaseSettings loads from environment/files, then we apply explicit kwargs
+        # First initialization - call BaseSettings.__init__() without kwargs
+        # BaseSettings loads from environment/files first
+        # Pydantic v2 handles validation automatically via field_validator decorators
         # Note: In Pydantic v2, model_config is a class attribute and cannot be
         # modified per-instance. However, BaseSettings.__init__() will automatically
         # look for .env files in the current working directory, so changing directories
         # in tests will work correctly. The env_file in model_config is a fallback.
         super().__init__()
+
+        # Apply explicit kwargs to model fields after initialization
+        # This allows overriding env-loaded values with explicit values
+        if kwargs:
+            for key, value in kwargs.items():
+                if key in self.__class__.model_fields:
+                    object.__setattr__(self, key, value)
+
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as object to avoid direct dependency-injector import in this module
         self._di_provider: object | None = None
-
-        # Apply explicit kwargs after BaseSettings initialization (overrides env values)
-        # Validate kwargs using Pydantic validators before applying
-        if kwargs:
-            # Apply kwargs directly - BaseSettings.__init__ already called above
-            # Validate kwargs by applying them individually
-            for key, value in kwargs.items():
-                if key in self.__class__.model_fields:
-                    # Validate using field validator if exists
-                    validated_value = value
-                    # Check if there's a field validator for this field
-                    if hasattr(self.__class__, f"validate_{key}"):
-                        validator = getattr(self.__class__, f"validate_{key}")
-                        validated_value = validator(value)
-                    # Apply validated value - use direct assignment (no frozen=True in model_config)
-                    setattr(self, key, validated_value)
-
-    @field_validator("log_level", mode="before")
-    @classmethod
-    def validate_log_level(
-        cls,
-        v: str | c.Settings.LogLevel,
-    ) -> c.Settings.LogLevel:
-        """Validate and normalize log level against allowed values.
-
-        Business Rule: Validates log level strings against Settings.LogLevel StrEnum.
-        Accepts string or LogLevel StrEnum, normalizes to uppercase string.
-        Returns LogLevel StrEnum member which is compatible with LogLevelLiteral.
-        Uses __members__ access with getattr for runtime safety. Raises ValueError
-        if log level is invalid, preventing invalid log level configurations.
-
-        Audit Implication: Log level validation ensures audit trail completeness by
-        preventing invalid log levels from being used. All log levels are validated
-        before being used in logging configuration and audit systems. Used by Pydantic
-        v2 field_validator for type-safe log level validation.
-
-        Accepts string or LogLevel StrEnum, normalizes to uppercase string.
-        Returns LogLevel StrEnum member which is compatible with LogLevelLiteral.
-        """
-        if isinstance(v, c.Settings.LogLevel):
-            # v is already LogLevel enum member, which is compatible with LogLevelLiteral
-            # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
-            # Return the enum member directly (compatible with Literal type)
-            return v
-        normalized = v.upper()
-        # Validate against StrEnum values and return the enum value (Literal type)
-        try:
-            # Return LogLevel enum member, compatible with LogLevelLiteral
-            # LogLevelLiteral is Literal[LogLevel.DEBUG, LogLevel.INFO, ...]
-            return c.Settings.LogLevel(normalized)
-        except ValueError:
-            log_level_enum = c.Settings.LogLevel
-            # Type hint: log_level_enum is StrEnum class, so __members__ exists
-            # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-            members_dict: dict[str, c.Settings.LogLevel] = getattr(
-                log_level_enum,
-                "__members__",
-                {},
-            )
-            allowed_values = [level.value for level in members_dict.values()]
-            msg = f"Invalid log level: {v}. Must be one of {allowed_values}"
-            raise ValueError(msg) from None
 
     @model_validator(mode="after")
     def validate_configuration(self) -> Self:

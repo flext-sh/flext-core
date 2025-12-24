@@ -220,7 +220,7 @@ class FlextContext(FlextRuntime):
             elif auto_correlation_id:
                 # Auto-generate correlation_id when not provided and auto_correlation_id=True
                 initial_data_dict[c.Context.KEY_OPERATION_ID] = u.generate(
-                    "correlation"
+                    "correlation",
                 )
             if user_id is not None:
                 initial_data_dict[c.Context.KEY_USER_ID] = user_id
@@ -989,7 +989,8 @@ class FlextContext(FlextRuntime):
         ):
             # Cast: MetadataAttributeDict widens to ConfigurationDict (invariant dict variance)
             metadata_general: t.ConfigurationDict | None = cast(
-                "t.ConfigurationDict | None", normalized_metadata
+                "t.ConfigurationDict | None",
+                normalized_metadata,
             )
         else:
             metadata_general = None
@@ -1269,7 +1270,8 @@ class FlextContext(FlextRuntime):
         ):
             # Cast: MetadataAttributeDict widens to ConfigurationDict (invariant dict variance)
             metadata_general: t.ConfigurationDict | None = cast(
-                "t.ConfigurationDict | None", normalized_metadata
+                "t.ConfigurationDict | None",
+                normalized_metadata,
             )
         else:
             metadata_general = None
@@ -1639,13 +1641,9 @@ class FlextContext(FlextRuntime):
             # get_container is a classmethod on FlextContext, access via class
             container = FlextContext.get_container()
             try:
-                # Use container.with_service for fluent API (accepts t.GeneralValueType | BaseModel | Callable)
-                # Type narrowing: service is t.GeneralValueType | BaseModel | Callable, protocol accepts t.GeneralValueType
-                # BaseModel and Callable are NOT subtypes of t.GeneralValueType in mypy's type system
-                # Cast is needed: with_service signature accepts broader type including BaseModel/Callable
-                service_typed: t.GeneralValueType = cast("t.GeneralValueType", service)
+                # Use container.with_service for fluent API
                 # with_service returns Self for fluent chaining, but we don't need the return value
-                _ = container.with_service(service_name, service_typed)
+                _ = container.with_service(service_name, service)
                 return r[bool].ok(True)
             except ValueError as e:
                 return r[bool].fail(str(e))
