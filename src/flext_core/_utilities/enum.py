@@ -13,7 +13,7 @@ import inspect
 import warnings
 from collections.abc import Callable, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
+from typing import ClassVar, Literal, TypeGuard, TypeIs, cast, overload
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.result import r
@@ -305,7 +305,8 @@ class FlextUtilitiesEnum:
         cached_result = FlextUtilitiesEnum._members_cache.get(enum_cls)
         if cached_result is not None:
             # Type narrowing: If cached for enum_cls, it's frozenset[E] for that class
-            return cached_result  # Valid return: all members are from enum_cls
+            # Cache stores frozenset[StrEnum], so we need to cast to frozenset[E]
+            return cast("frozenset[E]", cached_result)
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
         members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})

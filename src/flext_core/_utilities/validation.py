@@ -2558,7 +2558,11 @@ class FlextUtilitiesValidation:
             # Handle r[dict[str, T]] or dict[str, T]
             items_dict: dict[str, T]
             if isinstance(items, r):
-                items_dict = rh.val(items, default={}) or {}
+                # Cast FlextResult to protocol type for ResultHelpers
+                items_dict = rh.val(
+                    cast("p.Result[dict[str, T]]", items),
+                    default={},
+                ) or {}
             else:
                 items_dict = items
 
@@ -3046,17 +3050,31 @@ class FlextUtilitiesValidation:
         # Handle string conversions first
         if target_type == "str":
             str_default = default if isinstance(default, str) else ""
-            return FlextUtilitiesMapper.ensure_str(value, default=str_default)
+            return cast(
+                "T",
+                FlextUtilitiesMapper.ensure_str(value, default=str_default),
+            )
 
         if target_type == "str_list":
             str_list_default = default if isinstance(default, list) else None
-            return FlextUtilitiesMapper.ensure(value, default=str_list_default)
+            return cast(
+                "list[T]",
+                FlextUtilitiesMapper.ensure(
+                    value,
+                    default=cast("list[str] | None", str_list_default),
+                ),
+            )
 
         if target_type == "dict":
+            # When target_type is dict, the return type is dict[str, GeneralValueType]
+            # which means T is GeneralValueType in this context
             dict_default_typed = default if isinstance(default, dict) else None
-            return FlextUtilitiesValidation._ensure_to_dict(
-                value,
-                dict_default_typed,
+            return cast(
+                "dict[str, T]",
+                FlextUtilitiesValidation._ensure_to_dict(
+                    value,
+                    dict_default_typed,  # type: ignore[arg-type]
+                ),
             )
 
         if target_type == "auto" and isinstance(value, dict):

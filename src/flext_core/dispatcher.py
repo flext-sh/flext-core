@@ -599,27 +599,23 @@ class FlextDispatcher(x):
                     )
                 # Type narrowing: isinstance check narrows to t.GeneralValueType
                 process_result_raw = process_method(data)
-                processor_result = cast(
-                    "t.GeneralValueType",
+                if isinstance(
+                    process_result_raw,
                     (
-                        process_result_raw
-                        if isinstance(
-                            process_result_raw,
-                            (
-                                str,
-                                int,
-                                float,
-                                bool,
-                                type(None),
-                                dict,
-                                list,
-                                BaseModel,
-                                r,
-                            ),
-                        )
-                        else str(process_result_raw)
+                        str,
+                        int,
+                        float,
+                        bool,
+                        type(None),
+                        dict,
+                        list,
+                        BaseModel,
+                        r,
                     ),
-                )
+                ):
+                    processor_result = process_result_raw
+                else:
+                    processor_result = str(process_result_raw)
 
             # Convert to r if needed
             # Ensure result is wrapped in r using consolidated helper
@@ -709,7 +705,7 @@ class FlextDispatcher(x):
                     # Use u.err() for unified error extraction (DSL pattern)
                     # result is r[t.GeneralValueType] which satisfies p.Result protocol
                     error_msg = u.err(
-                        cast("p.Result[t.GeneralValueType]", result),
+                        result,  # type: ignore[arg-type]
                         default="Unknown error in processor",
                     )
                     return r[list[t.GeneralValueType]].fail(
@@ -773,7 +769,7 @@ class FlextDispatcher(x):
                         # Use u.err() for unified error extraction (DSL pattern)
                         # result is r[t.GeneralValueType] which satisfies p.Result protocol
                         error_msg = u.err(
-                            cast("p.Result[t.GeneralValueType]", result),
+                            result,  # type: ignore[arg-type]
                             default="Unknown error in processor",
                         )
                         return r[list[t.GeneralValueType]].fail(
@@ -892,7 +888,7 @@ class FlextDispatcher(x):
             # Use u.err() for unified error extraction (DSL pattern)
             # rate_limit_result is r[bool] which satisfies p.Result protocol
             error_msg = u.err(
-                cast("p.Result[bool]", rate_limit_result),
+                rate_limit_result,  # type: ignore[arg-type]
                 default="Rate limit exceeded",
             )
             return r[t.GeneralValueType].fail(error_msg)
@@ -1144,23 +1140,27 @@ class FlextDispatcher(x):
         # __members__ returns mappingproxy[str, HandlerType], which is compatible with HandlerTypeDict
         handler_type_members_raw: (
             Mapping[str, t.HandlerType] | dict[str, t.HandlerType]
-        ) = cast(
-            "Mapping[str, t.HandlerType] | dict[str, t.HandlerType]",
-            u.mapper().get(c.Cqrs.HandlerType, "__members__", default={}) or {},
+        ) = (
+            u.mapper().get(c.Cqrs.HandlerType, "__members__", default={}) or {}  # type: ignore[assignment]
         )
         # __members__ returns mappingproxy[str, HandlerType], cast to HandlerTypeDict
         # HandlerTypeDict is dict[str, HandlerType], which matches __members__ structure
 
-        handler_type_members: t.HandlerTypeDict = cast(
-            "t.HandlerTypeDict",
-            handler_type_members_raw
-            if isinstance(handler_type_members_raw, Mapping)
-            else {},
-        )
+        if isinstance(handler_type_members_raw, Mapping):
+            handler_type_members: t.HandlerTypeDict = handler_type_members_raw  # type: ignore[assignment]
+        else:
+            handler_type_members = {}
+
+        def extract_handler_mode(m: t.HandlerType) -> str:
+            """Extract string value from handler mode enum."""
+            if isinstance(m, c.Cqrs.HandlerType):
+                return m.value
+            return str(m)
+
         valid_modes = list(
             u.Collection.map(
                 list(handler_type_members.values()),
-                lambda m: cast("c.Cqrs.HandlerType", m).value,
+                extract_handler_mode,
             ),
         )
         if str(handler_mode) not in valid_modes:
@@ -1543,7 +1543,6 @@ class FlextDispatcher(x):
         result_raw = process_method(command, handler)
 
         # Ensure result is t.GeneralValueType or FlextResult
-        result: t.GeneralValueType | r[t.GeneralValueType]
         if isinstance(
             result_raw,
             (
@@ -1559,10 +1558,7 @@ class FlextDispatcher(x):
                 r,
             ),
         ):
-            result = cast(
-                "t.GeneralValueType | r[t.GeneralValueType]",
-                result_raw,
-            )
+            result: t.GeneralValueType | r[t.GeneralValueType] = result_raw  # type: ignore[assignment]
         else:
             result = str(result_raw)
         return self._handle_middleware_result(result, middleware_type)
@@ -1576,7 +1572,7 @@ class FlextDispatcher(x):
         if isinstance(result, r) and result.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
             # result is r[bool] which satisfies p.Result protocol
-            error_msg = u.err(cast("p.Result[bool]", result), default="Unknown error")
+            error_msg = u.err(result, default="Unknown error")  # type: ignore[arg-type]
             self.logger.warning(
                 "Middleware rejected command - command processing stopped",
                 operation="execute_middleware",
@@ -1728,11 +1724,8 @@ class FlextDispatcher(x):
         if len(args) == c.Dispatcher.TWO_HANDLER_ARG_COUNT:
             # Cast args[0] to t.GeneralValueType | str and args[1] to HandlerType
             # args[0] can be HandlerType (when it's a message type), so we need to handle both cases
-            command_type_typed: t.GeneralValueType | str = cast(
-                "t.GeneralValueType | str",
-                args[0],
-            )
-            handler_two: t.HandlerType = args[1]
+            command_type_typed: t.GeneralValueType | str = args[0]  # type: ignore[assignment]
+            handler_two: t.HandlerType = args[1]  # type: ignore[assignment]
             return self._register_two_arg_handler(command_type_typed, handler_two)
 
         return r[bool].fail(
@@ -2006,8 +1999,8 @@ class FlextDispatcher(x):
             )
             if isinstance(order_raw, int):
                 order_value = order_raw
-            elif isinstance(order_raw, (str, float)):
-                order_value = int(order_raw)  # type: ignore[unreachable]  # type: ignore[unreachable]
+            elif isinstance(order_raw, (str, float)):  # type: ignore[unreachable]
+                order_value = int(order_raw)
 
         final_config_raw: t.ConfigurationMapping = {
             "middleware_id": middleware_id_str,
@@ -2142,10 +2135,7 @@ class FlextDispatcher(x):
         """
         try:
             # Cast event_type and handler to HandlerType for layer1_register_handler
-            event_type_typed: t.HandlerType = cast(
-                "t.HandlerType",
-                event_type,
-            )
+            event_type_typed: t.HandlerType = event_type  # type: ignore[assignment]
             handler_typed: t.HandlerType = handler
             return self.layer1_register_handler(event_type_typed, handler_typed)
         except (TypeError, AttributeError, ValueError) as e:
@@ -2313,9 +2303,8 @@ class FlextDispatcher(x):
         if isinstance(request, BaseModel):
             dumped = request.model_dump()
             normalized = FlextRuntime.normalize_to_general_value(dumped)
-            request_dict = cast(
-                "t.ConfigurationDict",
-                (normalized if isinstance(normalized, Mapping) else {}),
+            request_dict: t.ConfigurationDict = (
+                normalized if isinstance(normalized, Mapping) else {}  # type: ignore[assignment]
             )
         elif isinstance(request, Mapping):
             # Preserve handler objects directly (don't normalize them to strings)
@@ -2374,10 +2363,7 @@ class FlextDispatcher(x):
             | t.HandlerCallable
             | p.VariadicCallable[t.GeneralValueType]
             | BaseModel
-        ) = cast(
-            "t.HandlerType | t.HandlerCallable | p.VariadicCallable[t.GeneralValueType] | BaseModel",
-            handler_raw,
-        )
+        ) = handler_raw  # type: ignore[assignment]
 
         validation_result = self._validate_handler_registry_interface(
             handler_typed,
@@ -2389,10 +2375,7 @@ class FlextDispatcher(x):
             )
 
         # Cast handler to t.GeneralValueType for _extract_handler_name
-        handler_for_extraction: t.GeneralValueType = cast(
-            "t.GeneralValueType",
-            handler_typed,
-        )
+        handler_for_extraction: t.GeneralValueType = handler_typed  # type: ignore[assignment]
         handler_name = self._extract_handler_name(handler_for_extraction, request_dict)
         if not handler_name:
             return r[tuple[t.GeneralValueType, str]].fail(
@@ -2400,10 +2383,7 @@ class FlextDispatcher(x):
             )
 
         # Cast handler_typed to t.GeneralValueType for return
-        handler_for_return: t.GeneralValueType = cast(
-            "t.GeneralValueType",
-            handler_typed,
-        )
+        handler_for_return: t.GeneralValueType = handler_typed  # type: ignore[assignment]
         return r[tuple[t.GeneralValueType, str]].ok(
             (handler_for_return, handler_name),
         )
@@ -2846,7 +2826,7 @@ class FlextDispatcher(x):
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
         request: t.ConfigurationDict = {
-            "handler": cast("t.GeneralValueType", handler_result.value),
+            "handler": handler_result.value,  # type: ignore[dict-item]
             "message_type": message_type_name,
             "handler_mode": mode,
             "handler_config": handler_config,
@@ -3636,7 +3616,7 @@ class FlextDispatcher(x):
             # Use u.err() for unified error extraction (DSL pattern)
             # conditions_check is r[bool] which satisfies p.Result protocol
             error_msg = u.err(
-                cast("p.Result[bool]", conditions_check),
+                conditions_check,  # type: ignore[arg-type]
                 default="Pre-dispatch conditions check failed",
             )
             return r[t.GeneralValueType].fail(
@@ -3699,14 +3679,13 @@ class FlextDispatcher(x):
             timeout_override=timeout_override,
             operation_id=operation_id,
         )
-        retry_result = u.Reliability.with_retry(
+        # with_retry returns RuntimeResult, which has same interface as FlextResult[T]
+        return u.Reliability.with_retry(  # type: ignore[return-value]
             lambda: self._execute_dispatch_attempt(message, options),
             max_attempts=self._retry_policy.get_max_attempts(),
             should_retry_func=self._should_retry_on_error,
             cleanup_func=lambda: self._cleanup_timeout_context(operation_id),
         )
-        # with_retry returns RuntimeResult, cast to FlextResult for compatibility
-        return cast("r[t.GeneralValueType]", retry_result)
 
     @staticmethod
     def _normalize_dispatch_message(
@@ -4012,7 +3991,7 @@ class FlextDispatcher(x):
             attributes_section_raw,
         ):
             # Type narrowing: is_configuration_mapping TypeGuard narrows to ConfigurationMapping
-            return attributes_section_raw
+            return attributes_section_raw  # type: ignore[no-any-return]
         # Return full dump if no attributes section
         # dumped is dict from model_dump(), is ConfigurationMapping compatible
         return cast("t.ConfigurationMapping", dumped)
