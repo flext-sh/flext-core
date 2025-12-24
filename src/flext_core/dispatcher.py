@@ -28,7 +28,7 @@ from types import ModuleType
 from typing import Self, cast, override
 
 from cachetools import LRUCache
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from flext_core._dispatcher import (
     CircuitBreakerManager,
@@ -1349,21 +1349,21 @@ class FlextDispatcher(x):
             # Type is already r[t.GeneralValueType] - no cast needed
 
         # Fallback for non-h: try handle() then execute()
-        # Use u.has() + u.mapper().get() for unified attribute access (DSL pattern)
+        # Use hasattr + getattr for attribute access
         method_name = None
-        if u.has(handler, c.Mixins.METHOD_HANDLE):
-            handle_method = u.mapper().get(
+        if hasattr(handler, c.Mixins.METHOD_HANDLE):
+            handle_method = getattr(
                 handler,
                 c.Mixins.METHOD_HANDLE,
-                default=None,
+                None,
             )
             if callable(handle_method):
                 method_name = c.Mixins.METHOD_HANDLE
-        elif u.has(handler, c.Mixins.METHOD_EXECUTE):
-            execute_method = u.Mapper.get(
+        elif hasattr(handler, c.Mixins.METHOD_EXECUTE):
+            execute_method = getattr(
                 handler,
                 c.Mixins.METHOD_EXECUTE,
-                default=None,
+                None,
             )
             if callable(execute_method):
                 method_name = c.Mixins.METHOD_EXECUTE
@@ -1373,8 +1373,8 @@ class FlextDispatcher(x):
                 f"Handler must have '{c.Mixins.METHOD_HANDLE}' or '{c.Mixins.METHOD_EXECUTE}' method",
                 error_code=c.Errors.COMMAND_BUS_ERROR,
             )
-        # Use u.mapper().get() for unified attribute access (DSL pattern)
-        handle_method = u.mapper().get(handler, method_name, default=None)
+        # Use getattr for attribute access
+        handle_method = getattr(handler, method_name, None)
         if not callable(handle_method):
             error_msg = f"Handler '{method_name}' must be callable"
             return r[t.GeneralValueType].fail(
@@ -1771,7 +1771,7 @@ class FlextDispatcher(x):
 
     def _register_single_handler(
         self,
-        handler: t.HandlerType,
+        handler: t.HandlerType | None,
     ) -> r[bool]:
         """Register single handler for auto-discovery.
 
@@ -1783,7 +1783,7 @@ class FlextDispatcher(x):
 
         """
         if handler is None:
-            return r[bool].fail("Handler cannot be None")
+            return r[bool].fail("Handler cannot be None")  # type: ignore[unreachable]
 
         # handler is already HandlerType from method signature
         validation_result = self._validate_handler_interface(handler)
@@ -2006,7 +2006,7 @@ class FlextDispatcher(x):
             if isinstance(order_raw, int):
                 order_value = order_raw
             elif isinstance(order_raw, (str, float)):
-                order_value = int(order_raw)
+                order_value = int(order_raw)  # type: ignore[unreachable]
 
         final_config_raw: t.ConfigurationMapping = {
             "middleware_id": middleware_id_str,
@@ -2909,9 +2909,9 @@ class FlextDispatcher(x):
                     result = handler_func(message)
                     # Ensure result is r
                     if isinstance(result, r):
-                        return result
+                        return result  # type: ignore[unreachable]
                     # Wrap non-r return values
-                    return r[t.GeneralValueType].ok(result)
+                    return r.ok(result)
 
             # Create handler config with name and type
             handler_config = m.Handler(
@@ -3740,8 +3740,10 @@ class FlextDispatcher(x):
     ) -> t.GeneralValueType:
         """Create message wrapper for string message types."""
 
-        class MessageWrapper(m.Value):
-            """Temporary message wrapper using FlextModels.Value."""
+        class MessageWrapper(BaseModel):
+            """Temporary message wrapper using BaseModel."""
+
+            model_config = ConfigDict(frozen=True)
 
             data: t.GeneralValueType
             message_type: str
@@ -4012,7 +4014,7 @@ class FlextDispatcher(x):
             return cast("t.ConfigurationMapping", attributes_section_raw)
         # Return full dump if no attributes section
         # dumped is dict from model_dump(), is ConfigurationMapping compatible
-        return dumped
+        return cast("t.ConfigurationMapping", dumped)
 
     @staticmethod
     def _extract_from_object_attributes(
