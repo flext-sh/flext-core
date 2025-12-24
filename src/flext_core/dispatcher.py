@@ -1655,7 +1655,7 @@ class FlextDispatcher(x):
                     "FAILED to find handler for command - DISPATCH ABORTED",
                     operation=c.Mixins.METHOD_EXECUTE,
                     command_type=command_type.__name__,
-                    registered_handlers=handler_names,  # type: ignore[arg-type]
+                    registered_handlers=handler_names,
                     consequence="Command cannot be processed - handler not registered",
                     resolution_hint="Register handler using register_handler() before dispatch",
                     source="flext-core/src/flext_core/dispatcher.py",
@@ -2326,9 +2326,9 @@ class FlextDispatcher(x):
             process_result = u.Collection.process(
                 list(request.items()),  # Convert dict to sequence of pairs
                 lambda kv: (
-                    kv[1]  # type: ignore[index] # value
-                    if str(kv[0]) in handler_keys  # type: ignore[index] # key
-                    else FlextRuntime.normalize_to_general_value(kv[1])  # type: ignore[index]
+                    kv[1]
+                    if str(kv[0]) in handler_keys
+                    else FlextRuntime.normalize_to_general_value(kv[1])
                 ),
                 on_error="collect",
             )
@@ -2337,7 +2337,7 @@ class FlextDispatcher(x):
                 request_dict = {
                     str(k): cast("t.GeneralValueType", v)
                     for k, v in zip(request.keys(), process_result.value, strict=False)
-                }  # type: ignore[misc]
+                }
             else:
                 request_dict = {}
         else:
@@ -2912,7 +2912,7 @@ class FlextDispatcher(x):
                     if isinstance(result, r):
                         return result
                     # Wrap non-r return values
-                    return r[t.GeneralValueType].ok(result)  # type: ignore[arg-type]  # result: object is assignable to GeneralValueType
+                    return r[t.GeneralValueType].ok(result)
 
             # Create handler config with name and type
             handler_config = m.Handler(
@@ -3377,11 +3377,11 @@ class FlextDispatcher(x):
             if isinstance(metadata, dict):
                 process_result = u.Collection.process(
                     list(metadata.items()),
-                    lambda kv: (kv[0], convert_metadata_value(kv[1])),  # type: ignore[index,misc]
+                    lambda kv: (kv[0], convert_metadata_value(kv[1])),
                     on_error="collect",
                 )
                 if process_result.is_success:
-                    attributes_dict = {str(k): v for k, v in process_result.value}  # type: ignore[misc,has-type]  # type: ignore[misc]
+                    attributes_dict = {str(k): v for k, v in process_result.value}
                 else:
                     attributes_dict = {}
             else:
@@ -3763,7 +3763,7 @@ class FlextDispatcher(x):
         # Cast MessageWrapper to t.GeneralValueType
         return cast(
             "t.GeneralValueType",
-            MessageWrapper(data=data, message_type=message_type),  # type: ignore[call-arg]
+            MessageWrapper(data=data, message_type=message_type),
         )
 
     def _get_timeout_seconds(self, timeout_override: int | None) -> float:
@@ -3862,7 +3862,7 @@ class FlextDispatcher(x):
                 )
                 transform_result = u.Collection.process(
                     list(metadata_mapping.items()),
-                    lambda kv: (kv[0], str(kv[1])),  # type: ignore[index]
+                    lambda kv: (kv[0], str(kv[1])),
                     on_error="collect",
                 )
                 # Convert keys to strings and values to MetadataAttributeValue
@@ -4013,7 +4013,7 @@ class FlextDispatcher(x):
             return attributes_section_raw
         # Return full dump if no attributes section
         # dumped is dict from model_dump(), is ConfigurationMapping compatible
-        return dumped  # type: ignore[return-value]
+        return dumped
 
     @staticmethod
     def _extract_from_object_attributes(
@@ -4222,7 +4222,7 @@ class FlextDispatcher(x):
         """
         # Dispatch each message - message_type is extracted from message object
         # Use u.map for concise batch processing
-        return list(u.Collection.map(messages, self.dispatch))  # type: ignore[arg-type]
+        return list(u.Collection.map(messages, self.dispatch))
 
     def get_performance_metrics(
         self,

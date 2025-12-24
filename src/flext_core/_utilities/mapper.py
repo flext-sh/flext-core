@@ -773,11 +773,11 @@ class FlextUtilitiesMapper:
             current_as_general: t.GeneralValueType = (
                 FlextUtilitiesMapper._narrow_to_general_value_type(current)
             )
-            # Type: returned value is GeneralValueType from ConfigurationMapping
+
             # The type checker cannot infer that T is compatible with GeneralValueType,
             # but semantically this is correct because ConfigurationMapping guarantees
             # values are GeneralValueType-compatible
-            return r[T | None].ok(current_as_general)  # type: ignore[arg-type]
+            return r[T | None].ok(current_as_general)
 
         except Exception as e:
             return r[T | None].fail(f"Extract failed: {e}")
@@ -2207,7 +2207,7 @@ class FlextUtilitiesMapper:
             # Type narrowing: field_default is t.GeneralValueType | None, but get() needs specific type
             # Semantically correct because field_default comes from ConfigurationMapping which
             # only contains GeneralValueType-compatible values, so T is compatible with GeneralValueType
-            field_default_typed: T | None = field_default  # type: ignore[assignment]
+            field_default_typed: T | None = field_default
             # Use overload without type parameter - type inference will work from default
             value: T | None = FlextUtilitiesMapper.get(
                 source,

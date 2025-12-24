@@ -745,7 +745,7 @@ class FlextUtilitiesParser:
             pattern = str(pattern_tuple[0])
             replacement = str(pattern_tuple[1])
             # Access third element with type safety via isinstance check
-            flags_raw = pattern_tuple[2]  # type: ignore[misc]
+            flags_raw = pattern_tuple[2]
             flags = flags_raw if isinstance(flags_raw, int) else 0
         else:
             return r[tuple[str, str, int]].fail(
@@ -1119,15 +1119,15 @@ class FlextUtilitiesParser:
         """Coerce primitive types. Returns None if no coercion applied."""
         if target is int:
             int_result = FlextUtilitiesParser._coerce_to_int(value)
-            return int_result if int_result is not None else None  # type: ignore[return-value]
+            return int_result if int_result is not None else None
         if target is float:
             float_result = FlextUtilitiesParser._coerce_to_float(value)
-            return float_result if float_result is not None else None  # type: ignore[return-value]
+            return float_result if float_result is not None else None
         if target is str:
-            return r[str].ok(str(value))  # type: ignore[arg-type,return-value]
+            return r[str].ok(str(value))
         if target is bool:
             bool_result = FlextUtilitiesParser._coerce_to_bool(value)
-            return bool_result if bool_result is not None else None  # type: ignore[return-value]
+            return bool_result if bool_result is not None else None
         return None
 
     @staticmethod
@@ -1403,16 +1403,16 @@ class FlextUtilitiesParser:
         # Use ScalarValue from lower layer - int is part of ScalarValue
         if isinstance(value, int) and not isinstance(value, bool):
             # Type narrowing: value is int, and when default is int, T is int
-            return value if isinstance(default, int) else default  # type: ignore[return-value]
+            return value if isinstance(default, int) else default
         if isinstance(value, str):
             try:
                 converted: int = int(value)
-                return converted if isinstance(default, int) else default  # type: ignore[return-value]
+                return converted if isinstance(default, int) else default
             except ValueError:
                 return default
         if isinstance(value, float):
             converted_int: int = int(value)
-            return converted_int if isinstance(default, int) else default  # type: ignore[return-value]
+            return converted_int if isinstance(default, int) else default
         return default
 
     @staticmethod
@@ -1429,11 +1429,11 @@ class FlextUtilitiesParser:
         # Use ScalarValue from lower layer - float is part of ScalarValue
         if isinstance(value, float):
             # Type narrowing: value is float, and when default is float, T is float
-            return value if isinstance(default, float) else default  # type: ignore[return-value]
+            return value if isinstance(default, float) else default
         if isinstance(value, (int, str)):
             try:
                 converted: float = float(value)
-                return converted if isinstance(default, float) else default  # type: ignore[return-value]
+                return converted if isinstance(default, float) else default
             except (ValueError, TypeError):
                 return default
         return default
@@ -1452,12 +1452,12 @@ class FlextUtilitiesParser:
         # Use ScalarValue from lower layer - str is part of ScalarValue
         if isinstance(value, str):
             # Type narrowing: value is str, and when default is str, T is str
-            return value if isinstance(default, str) else default  # type: ignore[return-value]
+            return value if isinstance(default, str) else default
         if value is None:
             return default
         try:
             converted: str = str(value)
-            return converted if isinstance(default, str) else default  # type: ignore[return-value]
+            return converted if isinstance(default, str) else default
         except (ValueError, TypeError):
             return default
 
@@ -1475,14 +1475,14 @@ class FlextUtilitiesParser:
         # Use ScalarValue from lower layer - bool is part of ScalarValue
         if isinstance(value, bool):
             # Type narrowing: value is bool, and when default is bool, T is bool
-            return value if isinstance(default, bool) else default  # type: ignore[return-value]
+            return value if isinstance(default, bool) else default
         if isinstance(value, str):
             normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
             converted: bool = normalized in {"true", "1", "yes", "on"}
-            return converted if isinstance(default, bool) else default  # type: ignore[return-value]
+            return converted if isinstance(default, bool) else default
         if isinstance(value, (int, float)):
             converted_bool: bool = bool(value)
-            return converted_bool if isinstance(default, bool) else default  # type: ignore[return-value]
+            return converted_bool if isinstance(default, bool) else default
         return default
 
     @staticmethod
@@ -1597,7 +1597,7 @@ class FlextUtilitiesParser:
         """
         # Use t.GeneralValueType from lower layer for type compatibility
         # value is object, which is compatible with t.GeneralValueType
-        value_typed: t.GeneralValueType = value  # type: ignore[assignment]
+        value_typed: t.GeneralValueType = value
         result = FlextUtilitiesParser.conv_str_list(value_typed, default=default)
         return [v for v in result if v]
 
@@ -1618,7 +1618,7 @@ class FlextUtilitiesParser:
             return []
         # Use t.GeneralValueType from lower layer for type compatibility
         # value is object, which is compatible with t.GeneralValueType
-        value_typed: t.GeneralValueType = value  # type: ignore[assignment]
+        value_typed: t.GeneralValueType = value
         return FlextUtilitiesParser.conv_str_list(value_typed, default=[])
 
     # =========================================================================
@@ -1743,7 +1743,7 @@ class FlextUtilitiesParser:
             items_to_check = [str(item) for item in items if isinstance(item, str)]
         else:
             # items is tuple, set, or other Sequence
-            items_to_check = [str(item) for item in items]  # type: ignore[unreachable]
+            items_to_check = [str(item) for item in items]
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = FlextUtilitiesParser.norm_list(
             items_to_check,

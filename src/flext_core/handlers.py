@@ -261,7 +261,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 try:
                     # Type assertion: Assume message is compatible with handler function
                     # Handler functions are user-provided and may accept various types
-                    result = self._handler_fn(message)  # type: ignore[arg-type]
+                    result = self._handler_fn(message)
                     # If result is already r, return it directly
                     if isinstance(result, r):
                         return result
@@ -870,7 +870,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     )
                     # Type assertion: callable(func) confirms it's a function
                     # HandlerCallable is defined as Callable, so this is safe
-                    handlers.append((name, func, config))  # type: ignore[arg-type]
+                    handlers.append((name, func, config))
 
             # Sort by priority (descending), then by name for stability
             return sorted(

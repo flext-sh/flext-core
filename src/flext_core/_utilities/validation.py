@@ -2422,7 +2422,7 @@ class FlextUtilitiesValidation:
             # Type narrowing: condition is one of the supported types per annotation
             check_result = FlextUtilitiesValidation._guard_check_condition(
                 value,
-                condition,  # type: ignore[arg-type]
+                condition,
                 context_name,
                 error_msg,
             )
@@ -2558,7 +2558,7 @@ class FlextUtilitiesValidation:
             # Handle r[dict[str, T]] or dict[str, T]
             items_dict: dict[str, T]
             if isinstance(items, r):
-                items_dict = rh.val(items, default={}) or {}  # type: ignore[arg-type]
+                items_dict = rh.val(items, default={}) or {}
             else:
                 items_dict = items
 
@@ -3046,28 +3046,28 @@ class FlextUtilitiesValidation:
         # Handle string conversions first
         if target_type == "str":
             str_default = default if isinstance(default, str) else ""
-            return FlextUtilitiesMapper.ensure_str(value, default=str_default)  # type: ignore[return-value]
+            return FlextUtilitiesMapper.ensure_str(value, default=str_default)
 
         if target_type == "str_list":
             str_list_default = default if isinstance(default, list) else None
-            return FlextUtilitiesMapper.ensure(value, default=str_list_default)  # type: ignore[return-value,arg-type]
+            return FlextUtilitiesMapper.ensure(value, default=str_list_default)
 
         if target_type == "dict":
             dict_default_typed = default if isinstance(default, dict) else None
             return FlextUtilitiesValidation._ensure_to_dict(
                 value,
-                dict_default_typed,  # type: ignore[arg-type]
-            )  # type: ignore[return-value]
+                dict_default_typed,
+            )
 
         if target_type == "auto" and isinstance(value, dict):
-            return value  # type: ignore[return-value]
+            return value
 
         # Handle list or fallback
         list_default_fallback = default if isinstance(default, list) else None
         return FlextUtilitiesValidation._ensure_to_list(
             value,
-            list_default_fallback,  # type: ignore[arg-type]
-        )  # type: ignore[return-value]
+            list_default_fallback,
+        )
 
     # ═══════════════════════════════════════════════════════════════════
     # TYPEADAPTER UTILITIES (Pydantic v2 dynamic validation)
