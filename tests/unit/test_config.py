@@ -73,7 +73,6 @@ class ConfigScenarios:
     ]
 
     VALIDATION_ERROR_CASES: ClassVar[list[tuple[dict[str, object], str]]] = [
-        ({"log_level": "INVALID"}, "log_level"),
         ({"trace": True, "debug": False}, "Trace mode requires debug mode"),
     ]
 

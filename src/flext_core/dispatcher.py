@@ -623,8 +623,13 @@ class FlextDispatcher(x):
 
             # Convert to r if needed
             # Ensure result is wrapped in r using consolidated helper
-            # processor_result is already t.GeneralValueType, no cast needed
-            result_wrapped = x.ResultHandling.ensure_result(processor_result)
+            # processor_result is already t.GeneralValueType
+            # Explicit type parameter for pyrefly type inference
+            result_wrapped: r[t.GeneralValueType] = (
+                processor_result
+                if isinstance(processor_result, r)
+                else r[t.GeneralValueType].ok(processor_result)
+            )
 
             # Update metrics
             execution_time = time.time() - start_time
@@ -887,7 +892,8 @@ class FlextDispatcher(x):
             # Use u.err() for unified error extraction (DSL pattern)
             # rate_limit_result is r[bool] which satisfies p.Result protocol
             error_msg = u.err(
-                cast("p.Result[bool]", rate_limit_result), default="Rate limit exceeded"
+                cast("p.Result[bool]", rate_limit_result),
+                default="Rate limit exceeded",
             )
             return r[t.GeneralValueType].fail(error_msg)
 
@@ -1321,7 +1327,9 @@ class FlextDispatcher(x):
         handler_class = type(handler)
         # Use u.mapper().get() for unified attribute access (DSL pattern)
         handler_class_name = u.mapper().get(
-            handler_class, "__name__", default="Unknown"
+            handler_class,
+            "__name__",
+            default="Unknown",
         )
         self.logger.debug(
             "Delegating to handler",
@@ -1346,7 +1354,9 @@ class FlextDispatcher(x):
         method_name = None
         if u.has(handler, c.Mixins.METHOD_HANDLE):
             handle_method = u.mapper().get(
-                handler, c.Mixins.METHOD_HANDLE, default=None
+                handler,
+                c.Mixins.METHOD_HANDLE,
+                default=None,
             )
             if callable(handle_method):
                 method_name = c.Mixins.METHOD_HANDLE
@@ -1465,7 +1475,8 @@ class FlextDispatcher(x):
         # Extract configuration values from dict using get()
         # u.Mapper.get() without default returns t.GeneralValueType | None
         middleware_id_value: t.GeneralValueType | None = u.Mapper.get(
-            middleware_config, "middleware_id"
+            middleware_config,
+            "middleware_id",
         )
         middleware_type_value = u.Mapper.get(middleware_config, "middleware_type")
         enabled_raw = u.mapper().get(middleware_config, "enabled", default=True)
@@ -1872,7 +1883,7 @@ class FlextDispatcher(x):
             )
 
         if u.Guards.is_type(command_type_obj, str) and not u.Guards.is_string_non_empty(
-            command_type_obj
+            command_type_obj,
         ):
             return r[bool].fail("Command type cannot be empty")
 
@@ -2319,7 +2330,7 @@ class FlextDispatcher(x):
                     if str(kv[0]) in handler_keys  # type: ignore[index] # key
                     else FlextRuntime.normalize_to_general_value(kv[1])  # type: ignore[index]
                 ),
-                _on_error="collect",
+                on_error="collect",
             )
             # Reconstruct dict from processed items
             if process_result.is_success:
@@ -2551,7 +2562,7 @@ class FlextDispatcher(x):
             handler = handler_general
         else:
             return r[t.ConfigurationMapping].fail(
-                f"Invalid handler type: {type(handler_general).__name__}"
+                f"Invalid handler type: {type(handler_general).__name__}",
             )
 
         # Determine registration mode and register
@@ -2622,11 +2633,11 @@ class FlextDispatcher(x):
             # Validate request and handler are HandlerType before registration
             if not u.Guards.is_handler_type(request):
                 return r[t.ConfigurationMapping].fail(
-                    f"Invalid request type: {type(request).__name__}"
+                    f"Invalid request type: {type(request).__name__}",
                 )
             if not u.Guards.is_handler_type(handler):
                 return r[t.ConfigurationMapping].fail(
-                    f"Invalid handler type: {type(handler).__name__}"
+                    f"Invalid handler type: {type(handler).__name__}",
                 )
             result = self.layer1_register_handler(request, handler)
             if result.is_failure:
@@ -2651,7 +2662,7 @@ class FlextDispatcher(x):
         # Validate request is HandlerType before passing to layer1_register_handler
         if not u.Guards.is_handler_type(request):
             return r[t.ConfigurationMapping].fail(
-                f"Invalid handler type: {type(request).__name__}"
+                f"Invalid handler type: {type(request).__name__}",
             )
         result = self.layer1_register_handler(request)
         if result.is_failure:
@@ -2855,7 +2866,7 @@ class FlextDispatcher(x):
 
     @staticmethod
     def create_handler_from_function(
-        handler_func: t.HandlerCallable,
+        handler_func: Callable[[t.GeneralValueType], object],
         _handler_config: t.ConfigurationMapping | None = None,
         mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
     ) -> r[
@@ -2867,7 +2878,7 @@ class FlextDispatcher(x):
         """Create handler from function using FlextHandlers constructor.
 
         Args:
-            handler_func: Function to wrap
+            handler_func: Function to wrap (any callable accepting GeneralValueType)
             _handler_config: Optional configuration (reserved for future use)
             mode: Handler mode
 
@@ -2901,7 +2912,7 @@ class FlextDispatcher(x):
                     if isinstance(result, r):
                         return result
                     # Wrap non-r return values
-                    return r[t.GeneralValueType].ok(result)
+                    return r[t.GeneralValueType].ok(result)  # type: ignore[arg-type]  # result: object is assignable to GeneralValueType
 
             # Create handler config with name and type
             handler_config = m.Handler(
@@ -3367,17 +3378,12 @@ class FlextDispatcher(x):
                 process_result = u.Collection.process(
                     list(metadata.items()),
                     lambda kv: (kv[0], convert_metadata_value(kv[1])),  # type: ignore[index,misc]
-                    _on_error="collect",
+                    on_error="collect",
                 )
                 if process_result.is_success:
                     attributes_dict = {str(k): v for k, v in process_result.value}  # type: ignore[misc,has-type]  # type: ignore[misc]
                 else:
                     attributes_dict = {}
-            else:
-                attributes_dict = {}
-            if process_result.is_success and isinstance(process_result.value, dict):
-                # Convert keys to strings
-                attributes_dict = {str(k): v for k, v in process_result.value.items()}
             else:
                 attributes_dict = {}
 
@@ -3851,12 +3857,13 @@ class FlextDispatcher(x):
                 # Use process() for concise conversion (transform values)
                 # Type narrowing: options.metadata is mapping, cast to Mapping[str, t.GeneralValueType]
                 metadata_mapping = cast(
-                    "Mapping[str, t.GeneralValueType]", options.metadata
+                    "Mapping[str, t.GeneralValueType]",
+                    options.metadata,
                 )
                 transform_result = u.Collection.process(
                     list(metadata_mapping.items()),
                     lambda kv: (kv[0], str(kv[1])),  # type: ignore[index]
-                    _on_error="collect",
+                    on_error="collect",
                 )
                 # Convert keys to strings and values to MetadataAttributeValue
                 metadata_attrs: t.MetadataAttributeDict
@@ -4000,7 +4007,7 @@ class FlextDispatcher(x):
         # Extract attributes section if present - fast fail: must be dict or None
         attributes_section_raw = dumped.get("attributes")
         if attributes_section_raw is not None and u.Guards.is_configuration_mapping(
-            attributes_section_raw
+            attributes_section_raw,
         ):
             # Type narrowing: is_configuration_mapping TypeGuard narrows to ConfigurationMapping
             return attributes_section_raw
@@ -4015,7 +4022,7 @@ class FlextDispatcher(x):
         """Extract metadata mapping from object's attributes."""
         attributes_value = getattr(metadata, "attributes", None)
         if u.Guards.is_type(attributes_value, "mapping") and u.Guards.is_dict_non_empty(
-            attributes_value
+            attributes_value,
         ):
             # Type narrowing: attributes_value is dict-like, convert to ConfigurationMapping
             # ConfigurationMapping is compatible with dict and Mapping types
@@ -4168,7 +4175,8 @@ class FlextDispatcher(x):
                             )
                             # Cast handler_func to expected type for register_handler
                             handler_typed: t.GeneralValueType = cast(
-                                "t.GeneralValueType", handler_func
+                                "t.GeneralValueType",
+                                handler_func,
                             )
                             _ = instance.register_handler(
                                 command_type_name,

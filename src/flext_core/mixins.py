@@ -19,7 +19,6 @@ from typing import ClassVar, cast
 
 from pydantic import BaseModel, PrivateAttr
 
-from flext_core._models.handler import FlextModelsHandler
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
@@ -183,7 +182,7 @@ class FlextMixins(FlextRuntime):
                 process_result = r[t.ContextMetadataMapping].ok(normalized_dict)
             except Exception as e:
                 process_result = r[t.ContextMetadataMapping].fail(
-                    f"Failed to normalize mapping: {e}"
+                    f"Failed to normalize mapping: {e}",
                 )
 
             if process_result.is_success:
@@ -420,7 +419,9 @@ class FlextMixins(FlextRuntime):
                     # Success - update stats
                     if "duration_ms" in metrics:
                         total_dur_raw = u.mapper().get(
-                            stats, "total_duration_ms", default=0.0
+                            stats,
+                            "total_duration_ms",
+                            default=0.0,
                         )
                         dur_ms_raw = u.mapper().get(metrics, "duration_ms", default=0.0)
                         total_dur = float(
@@ -455,7 +456,9 @@ class FlextMixins(FlextRuntime):
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
                         total_raw = u.mapper().get(
-                            stats, "total_duration_ms", default=0.0
+                            stats,
+                            "total_duration_ms",
+                            default=0.0,
                         )
                         total_dur_final = float(
                             total_raw
@@ -715,7 +718,9 @@ class FlextMixins(FlextRuntime):
             _metrics: t.ConfigurationDict
 
             def __init__(
-                self, *args: t.GeneralValueType, **kwargs: t.GeneralValueType
+                self,
+                *args: t.GeneralValueType,
+                **kwargs: t.GeneralValueType,
             ) -> None:
                 """Initialize metrics tracker with empty metrics dict."""
                 super().__init__(*args, **kwargs)
@@ -760,10 +765,12 @@ class FlextMixins(FlextRuntime):
             """Manages execution context stack."""
 
             # Type annotation for type checker
-            _stack: list[FlextModelsHandler.ExecutionContext | t.ConfigurationDict]
+            _stack: list[m.Handler.ExecutionContext | t.ConfigurationDict]
 
             def __init__(
-                self, *args: t.GeneralValueType, **kwargs: t.GeneralValueType
+                self,
+                *args: t.GeneralValueType,
+                **kwargs: t.GeneralValueType,
             ) -> None:
                 """Initialize context stack with empty list."""
                 super().__init__(*args, **kwargs)
@@ -772,7 +779,7 @@ class FlextMixins(FlextRuntime):
 
             def push_context(
                 self,
-                ctx: FlextModelsHandler.ExecutionContext | t.ConfigurationDict,
+                ctx: m.Handler.ExecutionContext | t.ConfigurationDict,
             ) -> r[bool]:
                 """Push execution context onto the stack.
 
@@ -805,13 +812,12 @@ class FlextMixins(FlextRuntime):
                     )
                     # INTENTIONAL CAST: Literal type narrowing - runtime validated via str conversion
                     handler_mode_literal = cast(
-                        "c.Cqrs.HandlerTypeLiteral", handler_mode_str
+                        "c.Cqrs.HandlerTypeLiteral",
+                        handler_mode_str,
                     )
-                    execution_ctx = (
-                        FlextModelsHandler.ExecutionContext.create_for_handler(
-                            handler_name=handler_name,
-                            handler_mode=handler_mode_literal,
-                        )
+                    execution_ctx = m.Handler.ExecutionContext.create_for_handler(
+                        handler_name=handler_name,
+                        handler_mode=handler_mode_literal,
                     )
                     self._stack.append(execution_ctx)
                 else:

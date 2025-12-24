@@ -343,7 +343,8 @@ class FlextTestsBuilders:
                 model_kind_str,
             )
             resolved_value = cast(
-                "t.Tests.Builders.BuilderValue", tt.model(model_kind, **filtered_dict)
+                "t.Tests.Builders.BuilderValue",
+                tt.model(model_kind, **filtered_dict),
             )
 
         # Priority 12: Config shortcuts
@@ -1408,7 +1409,7 @@ class FlextTestsBuilders:
             def assert_failure(result: r[t.GeneralValueType]) -> str:
                 """Assert failure - DELEGATES to tu.Tests.Result."""
                 return tu.Tests.Result.assert_failure(
-                    cast("p.Result[t.GeneralValueType]", result)
+                    cast("p.Result[t.GeneralValueType]", result),
                 )
 
         class Batch:

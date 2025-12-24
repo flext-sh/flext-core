@@ -16,7 +16,7 @@ from typing import TypeVar
 
 import pytest
 
-from flext_core import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r
+from flext import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r
 from flext_core._models import entity as flext_models_entity
 from tests.helpers import factories  # Import for User model rebuild
 from tests.test_utils import assertion_helpers
@@ -59,7 +59,9 @@ class TestAutomationFramework:
 
     @staticmethod
     def assert_result_failure(
-        result: TestResult[object], expected_error: str | None = None, context: str = ""
+        result: TestResult[object],
+        expected_error: str | None = None,
+        context: str = "",
     ) -> str:
         """Assert FlextResult is failure and optionally check error message.
 
@@ -87,7 +89,9 @@ class TestAutomationFramework:
 
     @staticmethod
     def create_test_entity(
-        unique_id: str, name: str, **kwargs: object
+        unique_id: str,
+        name: str,
+        **kwargs: object,
     ) -> TestResult[m.Entity]:
         """Create test entity with real functionality.
 
@@ -132,7 +136,8 @@ class TestAutomationFramework:
 
     @staticmethod
     def execute_with_timeout(
-        func: Callable[..., object], timeout_seconds: float = 5.0
+        func: Callable[..., object],
+        timeout_seconds: float = 5.0,
     ) -> TestResult[object]:
         """Execute function with timeout for performance testing.
 
@@ -178,7 +183,9 @@ class TestAutomationFramework:
 
         """
         return pytest.mark.parametrize(
-            "test_data", test_cases, ids=lambda case: case.get("description", str(case))
+            "test_data",
+            test_cases,
+            ids=lambda case: case.get("description", str(case)),
         )
 
 

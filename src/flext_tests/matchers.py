@@ -64,10 +64,10 @@ from flext_core import r
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t
-from flext_tests.utilities import FlextTestsUtilities, u
+from flext_tests.utilities import u
 
 
-class FlextTestsMatchers(FlextTestsUtilities):
+class FlextTestsMatchers:
     """Test matchers with powerful generalist methods.
 
     Short alias: tm
@@ -170,7 +170,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 params.msg or c.Tests.Matcher.ERR_OK_FAILED.format(error=result.error),
             )
         # Type as object since path extraction may change type; cast to TResult at return
-        value: object = result.value
+        result_value: object = result.value
 
         # Path extraction first (if specified)
         if params.path is not None:
@@ -180,7 +180,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 path_str: str = params.path
             else:
                 path_str = ".".join(params.path)
-            extracted = u.Mapper.extract(value, path_str)
+            extracted = u.Mapper.extract(result_value, path_str)
             if extracted.is_failure:
                 raise AssertionError(
                     params.msg
@@ -189,7 +189,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
                         error=extracted.error,
                     ),
                 )
-            value = extracted.value
+            result_value = extracted.value
 
         # Validate value with u.chk() - pass parameters directly for type safety
         # Note: u.chk() doesn't support tuple types for is_/not_, handle separately
@@ -211,7 +211,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
             # u.chk() only accepts single type, not tuple
             is_type = params.is_ if not isinstance(params.is_, tuple) else None
             if not u.chk(
-                value,
+                result_value,
                 eq=params.eq,
                 ne=params.ne,
                 is_=is_type,
@@ -225,19 +225,21 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 ends=params.ends,
                 match=params.match,
             ):
-                error_msg = params.msg or f"Value {value!r} did not satisfy constraints"
+                error_msg = (
+                    params.msg or f"Value {result_value!r} did not satisfy constraints"
+                )
                 raise AssertionError(error_msg)
         # Handle tuple types separately (isinstance supports tuples)
         if (
             params.is_ is not None
             and isinstance(params.is_, tuple)
-            and not isinstance(value, params.is_)
+            and not isinstance(result_value, params.is_)
         ):
             raise AssertionError(
                 params.msg
                 or c.Tests.Matcher.ERR_TYPE_FAILED.format(
                     expected=params.is_,
-                    actual=type(value).__name__,
+                    actual=type(result_value).__name__,
                 ),
             )
 
@@ -260,11 +262,11 @@ class FlextTestsMatchers(FlextTestsUtilities):
             for item in has_items:
                 # Type narrowing: item is object from Sequence[object]
                 item_typed: object = item
-                if not u.chk(value, contains=item_typed):
+                if not u.chk(result_value, contains=item_typed):
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
-                            container=value,
+                            container=result_value,
                             item=item_typed,
                         ),
                     )
@@ -279,21 +281,23 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 lacks_item: object = params.lacks
                 lacks_items = cast("Sequence[object]", [lacks_item])
             for item in lacks_items:
-                if u.chk(value, contains=item):
+                if u.chk(result_value, contains=item):
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_LACKS_FAILED.format(
-                            container=value,
+                            container=result_value,
                             item=item,
                         ),
                     )
 
         # Length validation (delegate to u.Tests.Length)
-        if params.len is not None and not u.Tests.Length.validate(value, params.len):
-            # Type guard: value has __len__ if it passed validation
-            # Use isinstance to help type checker understand value has __len__
-            if isinstance(value, (str, bytes, Sequence, Mapping)):
-                actual_len = len(value)
+        if params.len is not None and not u.Tests.Length.validate(
+            result_value, params.len
+        ):
+            # Type guard: result_value has __len__ if it passed validation
+            # Use isinstance to help type checker understand result_value has __len__
+            if isinstance(result_value, (str, bytes, Sequence, Mapping)):
+                actual_len = len(result_value)
             else:
                 actual_len = 0
             if isinstance(params.len, int):
@@ -315,7 +319,7 @@ class FlextTestsMatchers(FlextTestsUtilities):
 
         # Deep matching (delegate to u.Tests.DeepMatch)
         if params.deep is not None:
-            match_result = u.Tests.DeepMatch.match(value, params.deep)
+            match_result = u.Tests.DeepMatch.match(result_value, params.deep)
             if not match_result.matched:
                 raise AssertionError(
                     params.msg
@@ -326,20 +330,21 @@ class FlextTestsMatchers(FlextTestsUtilities):
                 )
 
         # Custom predicate
-        if params.where is not None and not params.where(value):
+        if params.where is not None and not params.where(result_value):
             raise AssertionError(
-                params.msg or c.Tests.Matcher.ERR_PREDICATE_FAILED.format(value=value),
+                params.msg
+                or c.Tests.Matcher.ERR_PREDICATE_FAILED.format(value=result_value),
             )
 
-        # Type guard: value is not None after all validations
-        if value is None:
+        # Type guard: result_value is not None after all validations
+        if result_value is None:
             raise AssertionError(
                 params.msg
                 or "Value is None but validation passed - this should not happen",
             )
         # Cast to TResult: path extraction may change type at runtime,
         # but return type must match signature for type safety
-        return cast("TResult", value)
+        return cast("TResult", result_value)
 
     @staticmethod
     def fail[TResult](
@@ -963,7 +968,8 @@ class FlextTestsMatchers(FlextTestsUtilities):
                     # sorted() expects iterable and key function - use explicit types
                     # Use overload-compatible type for key function (str | int | float for comparison)
                     key_func: Callable[[object], str | int | float] = cast(
-                        "Callable[[object], str | int | float]", sorted_param
+                        "Callable[[object], str | int | float]",
+                        sorted_param,
                     )
                     sorted_list = sorted(value_list, key=key_func)
                     if value_list != sorted_list:

@@ -228,7 +228,7 @@ class FlextService[TDomainResult](
     _container: p.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
     _discovered_handlers: list[tuple[str, m.HandlerDecoratorConfig]] = PrivateAttr(
-        default_factory=list
+        default_factory=list,
     )
     _auto_result: TDomainResult | None = None
 
@@ -715,7 +715,8 @@ class FlextService[TDomainResult](
         # FlextService[t.GeneralValueType] because t.GeneralValueType covers all domain results
         # Cast is intentional: TypeVar variance issue - TDomainResult is not covariant
         service_typed: FlextService[t.GeneralValueType] = cast(
-            "FlextService[t.GeneralValueType]", self
+            "FlextService[t.GeneralValueType]",
+            self,
         )
         # _ServiceAccess(service_typed) already returns _ServiceAccess instance
         return _ServiceAccess(service_typed)

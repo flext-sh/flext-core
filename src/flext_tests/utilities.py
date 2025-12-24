@@ -1339,7 +1339,7 @@ class FlextTestsUtilities(FlextUtilities):
                         entities.append(entity)
                     except Exception as e:
                         return r[list[TEntity]].fail(
-                            f"Failed to create entity {name}: {e}"
+                            f"Failed to create entity {name}: {e}",
                         )
                 return r[list[TEntity]].ok(entities)
 

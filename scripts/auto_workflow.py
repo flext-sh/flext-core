@@ -60,7 +60,8 @@ class AutoWorkflow:
         """Run code validation."""
         print("🔍 Running code validation...")
         success = self.run_command(
-            ["make", "lint"], cwd=self.project_root / "flext-core"
+            ["make", "lint"],
+            cwd=self.project_root / "flext-core",
         )
         if success:
             print("✅ Validation passed")
@@ -109,7 +110,8 @@ class AutoWorkflow:
             )
         elif test_type == "all":
             success = self.run_command(
-                ["make", "test"], cwd=self.project_root / "flext-core"
+                ["make", "test"],
+                cwd=self.project_root / "flext-core",
             )
         else:
             print(f"❌ Unknown test type: {test_type}")
@@ -126,7 +128,8 @@ class AutoWorkflow:
         # This would check pyproject.toml vs installed packages
         # For now, just run poetry install
         success = self.run_command(
-            ["poetry", "install"], cwd=self.project_root / "flext-core"
+            ["poetry", "install"],
+            cwd=self.project_root / "flext-core",
         )
         if success:
             print("✅ Dependencies updated")

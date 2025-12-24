@@ -26,7 +26,7 @@ from collections.abc import Callable, Sequence, Set as AbstractSet
 from dataclasses import dataclass
 from itertools import starmap
 
-from flext_core import (
+from flext import (
     FlextContext,
     FlextLogger,
     c,
@@ -104,7 +104,9 @@ def process_user_data(
 ) -> r[str]:
     """Decorated railway with centralized StrEnum constraints - direct functional composition."""
     return validate_transform_user(user_data).map(
-        lambda profile: f"{operation.value.upper()}D: {profile.name} ({profile.status.value})",
+        lambda profile: (
+            f"{operation.value.upper()}D: {profile.name} ({profile.status.value})"
+        ),
     )
 
 
@@ -138,7 +140,8 @@ class UserService:
 
             # Railway pattern with advanced functional composition (DRY)
             return (
-                self._validate_data(user_data)
+                self
+                ._validate_data(user_data)
                 .flat_map(lambda _: validate_transform_user(user_data))
                 .map(self._log_success)
             )
@@ -212,7 +215,8 @@ def demonstrate_utilities() -> None:
     ]
 
     result = (
-        r.traverse(validation_results, lambda r: r)
+        r
+        .traverse(validation_results, lambda r: r)
         .flat_map(lambda _: cache_result)
         .map(
             lambda cache_cleared: "\n".join([
@@ -240,25 +244,31 @@ def demonstrate_exceptions() -> None:
     r.traverse(
         list(
             starmap(
-                lambda msg, field, value: r.fail(
-                    e.ValidationError(
-                        msg,
-                        field=field,
-                        value=value,
+                lambda msg, field, value: (
+                    r
+                    .fail(
+                        e.ValidationError(
+                            msg,
+                            field=field,
+                            value=value,
+                            error_code=c.Errors.VALIDATION_ERROR,
+                        ).message,
                         error_code=c.Errors.VALIDATION_ERROR,
-                    ).message,
-                    error_code=c.Errors.VALIDATION_ERROR,
-                )
-                .map(
-                    lambda _: f"Error: {field}={value}, code: {c.Errors.VALIDATION_ERROR}, railway: True",
-                )
-                .map(print),
+                    )
+                    .map(
+                        lambda _: (
+                            f"Error: {field}={value}, code: {c.Errors.VALIDATION_ERROR}, railway: True"
+                        ),
+                    )
+                    .map(print)
+                ),
                 error_scenarios,
             ),
         )
         + [
             # Standard exception conversion
-            r.fail("Standard exception")
+            r
+            .fail("Standard exception")
             .map(lambda error: f"Converted exception to result: {error}")
             .map(print),
         ],
@@ -277,7 +287,9 @@ def execute_validation_chain(
     (
         validate_transform_user(user_data)
         .map(
-            lambda user: f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}",
+            lambda user: (
+                f"User: {user.name} ({user.status.value}) - ID: {user.unique_id[:8]}"
+            ),
         )
         .flat_map(r.ok)
         .flat_map(

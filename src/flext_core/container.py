@@ -175,7 +175,9 @@ class FlextContainer(FlextRuntime, p.DI):
                 caller_globals = frame.f_back.f_globals
                 # Get module name from globals
                 module_name = u.mapper().get(
-                    caller_globals, "__name__", default="__main__"
+                    caller_globals,
+                    "__name__",
+                    default="__main__",
                 )
                 # Get module object from globals (usually available as __import__ or direct reference)
 
@@ -650,12 +652,12 @@ class FlextContainer(FlextRuntime, p.DI):
         """
         if not name:
             return _to_protocol_result(
-                r[bool].fail("Service name must have at least 1 character")
+                r[bool].fail("Service name must have at least 1 character"),
             )
         try:
             if hasattr(self._di_services, name):
                 return _to_protocol_result(
-                    r[bool].fail(f"Service '{name}' already registered")
+                    r[bool].fail(f"Service '{name}' already registered"),
                 )
             registration = m.Container.ServiceRegistration(
                 name=name,
@@ -692,7 +694,7 @@ class FlextContainer(FlextRuntime, p.DI):
                 return _to_protocol_result(r[bool].fail("Factory must be callable"))
             if hasattr(self._di_services, name):
                 return _to_protocol_result(
-                    r[bool].fail(f"Factory '{name}' already registered")
+                    r[bool].fail(f"Factory '{name}' already registered"),
                 )
             # Factory returns t.GeneralValueType which is compatible with FactoryRegistration requirements
             # Type narrowing: factory is already compatible with the expected type
@@ -731,11 +733,11 @@ class FlextContainer(FlextRuntime, p.DI):
         try:
             if not callable(factory):
                 return _to_protocol_result(
-                    r[bool].fail("Resource factory must be callable")
+                    r[bool].fail("Resource factory must be callable"),
                 )
             if hasattr(self._di_resources, name):
                 return _to_protocol_result(
-                    r[bool].fail(f"Resource '{name}' already registered")
+                    r[bool].fail(f"Resource '{name}' already registered"),
                 )
             # factory is already ResourceCallable (Callable[[], object])
             registration = m.Container.ResourceRegistration(
@@ -844,7 +846,7 @@ class FlextContainer(FlextRuntime, p.DI):
                 type_cls,
             )
             return _to_protocol_result(
-                r[T].fail(f"Service '{name}' is not of type {type_name}")
+                r[T].fail(f"Service '{name}' is not of type {type_name}"),
             )
         return _to_protocol_result(r[T].ok(result.value))
 

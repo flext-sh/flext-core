@@ -128,8 +128,9 @@ class FlextTypes:
         | datetime
         | None
         | BaseModel
-        | Sequence[GeneralValueType]
-        | Mapping[str, GeneralValueType]
+        | Path
+        | Sequence[FlextTypes.GeneralValueType]
+        | Mapping[str, FlextTypes.GeneralValueType]
     )
 
     # Constant value type - all possible constant types in FlextConstants
@@ -171,7 +172,9 @@ class FlextTypes:
     # Note: Uses ScalarValue but excludes bool/None for sorting compatibility
     # PEP 695 recursive types work with __future__ annotations
     # Use string forward reference for recursive types to avoid pyrefly errors
-    type SortableObjectType = str | int | float | Mapping[str, SortableObjectType]
+    type SortableObjectType = (
+        str | int | float | Mapping[str, FlextTypes.SortableObjectType]
+    )
 
     # Metadata-compatible attribute value type - composed for strict
     # validation
@@ -184,9 +187,10 @@ class FlextTypes:
         | bool
         | datetime
         | BaseModel
+        | Path
         | None
-        | Sequence[MetadataAttributeValue]
-        | Mapping[str, MetadataAttributeValue]
+        | Sequence[FlextTypes.MetadataAttributeValue]
+        | Mapping[str, FlextTypes.MetadataAttributeValue]
     )
 
     # Generic metadata dictionary type - read-only interface for metadata containers

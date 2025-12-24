@@ -96,7 +96,7 @@ class StringValidators:
     # Class-level validators (no args needed)
     non_empty: Validator = Validator(
         predicate=lambda v: FlextUtilitiesGuards.is_string_non_empty(
-            cast("t.GeneralValueType", v)
+            cast("t.GeneralValueType", v),
         ),
         description="string.non_empty",
     )
@@ -160,14 +160,18 @@ class StringValidators:
 
     # Common format validators
     email: Validator = Validator(
-        predicate=lambda v: isinstance(v, str)
-        and bool(re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", v)),
+        predicate=lambda v: (
+            isinstance(v, str)
+            and bool(re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", v))
+        ),
         description="string.email",
     )
 
     url: Validator = Validator(
-        predicate=lambda v: isinstance(v, str)
-        and bool(re.match(r"^https?://[^\s/$.?#].[^\s]*$", v, re.IGNORECASE)),
+        predicate=lambda v: (
+            isinstance(v, str)
+            and bool(re.match(r"^https?://[^\s/$.?#].[^\s]*$", v, re.IGNORECASE))
+        ),
         description="string.url",
     )
 
@@ -229,8 +233,9 @@ class NumberValidators:
     )
 
     integer: Validator = Validator(
-        predicate=lambda v: isinstance(v, int)
-        or (isinstance(v, float) and v.is_integer()),
+        predicate=lambda v: (
+            isinstance(v, int) or (isinstance(v, float) and v.is_integer())
+        ),
         description="number.integer",
     )
 
@@ -292,14 +297,16 @@ class CollectionValidators:
     """
 
     non_empty: Validator = Validator(
-        predicate=lambda v: isinstance(v, (list, tuple, dict, set))
-        and len(
-            cast(
-                "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
-                v,
-            ),
-        )
-        > 0,
+        predicate=lambda v: (
+            isinstance(v, (list, tuple, dict, set))
+            and len(
+                cast(
+                    "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
+                    v,
+                ),
+            )
+            > 0
+        ),
         description="collection.non_empty",
     )
 
@@ -327,17 +334,19 @@ class CollectionValidators:
     def min_length(n: int) -> Validator:
         """Validate collection has at least n items."""
         return Validator(
-            predicate=lambda v: isinstance(
-                v,
-                (list, tuple, dict, set),
-            )
-            and len(
-                cast(
-                    "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
+            predicate=lambda v: (
+                isinstance(
                     v,
-                ),
-            )
-            >= n,
+                    (list, tuple, dict, set),
+                )
+                and len(
+                    cast(
+                        "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
+                        v,
+                    ),
+                )
+                >= n
+            ),
             description=f"collection.min_length({n})",
         )
 
@@ -345,17 +354,19 @@ class CollectionValidators:
     def max_length(n: int) -> Validator:
         """Validate collection has at most n items."""
         return Validator(
-            predicate=lambda v: isinstance(
-                v,
-                (list, tuple, dict, set),
-            )
-            and len(
-                cast(
-                    "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
+            predicate=lambda v: (
+                isinstance(
                     v,
-                ),
-            )
-            <= n,
+                    (list, tuple, dict, set),
+                )
+                and len(
+                    cast(
+                        "list[object] | tuple[object, ...] | dict[object, object] | set[object]",
+                        v,
+                    ),
+                )
+                <= n
+            ),
             description=f"collection.max_length({n})",
         )
 
@@ -363,11 +374,13 @@ class CollectionValidators:
     def length(n: int) -> Validator:
         """Validate collection has exactly n items."""
         return Validator(
-            predicate=lambda v: isinstance(
-                v,
-                (list, tuple, dict, set),
-            )
-            and len(v) == n,
+            predicate=lambda v: (
+                isinstance(
+                    v,
+                    (list, tuple, dict, set),
+                )
+                and len(v) == n
+            ),
             description=f"collection.length({n})",
         )
 
@@ -383,10 +396,14 @@ class CollectionValidators:
     def all_match(validator: ValidatorSpec | Validator) -> Validator:
         """Validate all items in collection match validator."""
         return Validator(
-            predicate=lambda v: isinstance(v, (list, tuple, set))
-            and all(
-                validator(item)
-                for item in cast("list[object] | tuple[object, ...] | set[object]", v)
+            predicate=lambda v: (
+                isinstance(v, (list, tuple, set))
+                and all(
+                    validator(item)
+                    for item in cast(
+                        "list[object] | tuple[object, ...] | set[object]", v
+                    )
+                )
             ),
             description=f"collection.all_match({getattr(validator, 'description', 'validator')})",
         )
@@ -395,10 +412,14 @@ class CollectionValidators:
     def any_match(validator: ValidatorSpec) -> Validator:
         """Validate at least one item in collection matches validator."""
         return Validator(
-            predicate=lambda v: isinstance(v, (list, tuple, set))
-            and any(
-                validator(item)
-                for item in cast("list[object] | tuple[object, ...] | set[object]", v)
+            predicate=lambda v: (
+                isinstance(v, (list, tuple, set))
+                and any(
+                    validator(item)
+                    for item in cast(
+                        "list[object] | tuple[object, ...] | set[object]", v
+                    )
+                )
             ),
             description=f"collection.any_match({getattr(validator, 'description', 'validator')})",
         )
@@ -448,7 +469,8 @@ class DictValidators:
         # Pyright needs explicit cast to help with type inference in lambda
         # ValidatorSpec implements __call__(value: object) -> bool
         validator_callable: Callable[[object], bool] = cast(
-            "Callable[[object], bool]", validator
+            "Callable[[object], bool]",
+            validator,
         )
         return Validator(
             predicate=lambda v: (
@@ -463,8 +485,10 @@ class DictValidators:
     def all_keys_match(validator: ValidatorSpec) -> Validator:
         """Validate all dict keys match validator."""
         return Validator(
-            predicate=lambda v: isinstance(v, dict)
-            and all(validator(k) for k in cast("dict[object, object]", v)),
+            predicate=lambda v: (
+                isinstance(v, dict)
+                and all(validator(k) for k in cast("dict[object, object]", v))
+            ),
             description=f"dict.all_keys_match({getattr(validator, 'description', 'validator')})",
         )
 
@@ -472,8 +496,12 @@ class DictValidators:
     def all_values_match(validator: ValidatorSpec) -> Validator:
         """Validate all dict values match validator."""
         return Validator(
-            predicate=lambda v: isinstance(v, dict)
-            and all(validator(val) for val in cast("dict[object, object]", v).values()),
+            predicate=lambda v: (
+                isinstance(v, dict)
+                and all(
+                    validator(val) for val in cast("dict[object, object]", v).values()
+                )
+            ),
             description=f"dict.all_values_match({getattr(validator, 'description', 'validator')})",
         )
 

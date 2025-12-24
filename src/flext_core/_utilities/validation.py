@@ -321,7 +321,9 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _convert_items_to_dict(
-        items_result: Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping,
+        items_result: (
+            Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping | object
+        ),
     ) -> t.ConfigurationDict:
         """Convert items() result to dict with normalization."""
         if isinstance(items_result, (list, tuple)):
@@ -332,23 +334,31 @@ class FlextUtilitiesValidation:
             # items_result is already t.ConfigurationMapping
             return FlextUtilitiesMapper.to_dict(items_result)
 
-        if not hasattr(items_result, "__iter__"):
+        # Use isinstance for type narrowing (pyrefly requires this)
+        if not isinstance(items_result, Iterable):
             result_type = type(items_result)
             msg = f"items() returned non-iterable: {result_type}"
             raise TypeError(msg)
 
-        # items_result has __iter__, treat as Iterable
-        items_list = list(items_result)
-        temp_dict: t.ConfigurationDict = {}
-        for k, v in items_list:
-            # k is already str from the cast
-            # v is already t.GeneralValueType from the cast
-            normalized_v = FlextUtilitiesValidation._normalize_component(
-                v,
-                visited=None,
-            )
-            temp_dict[k] = normalized_v
-        return temp_dict
+        # items_result is Iterable after isinstance check
+        # Convert to list via explicit iteration
+        items_list: list[tuple[str, t.GeneralValueType]] = []
+        for item in items_result:
+            if not isinstance(item, tuple):
+                continue
+            # Use try/except for tuple unpacking instead of len check
+            try:
+                k, v = item
+            except ValueError:
+                continue
+            if isinstance(k, str):
+                # Normalize v to GeneralValueType
+                normalized_v = FlextUtilitiesValidation._normalize_component(
+                    v,
+                    visited=None,
+                )
+                items_list.append((k, normalized_v))
+        return dict(items_list)
 
     @staticmethod
     def _extract_dict_from_component(
@@ -375,9 +385,12 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _convert_items_result_to_dict(
-        items_result: Sequence[tuple[str, t.GeneralValueType]]
-        | t.ConfigurationMapping
-        | Iterable[tuple[str, t.GeneralValueType]],
+        items_result: (
+            Sequence[tuple[str, t.GeneralValueType]]
+            | t.ConfigurationMapping
+            | Iterable[tuple[str, t.GeneralValueType]]
+            | object
+        ),
     ) -> t.ConfigurationDict:
         """Convert items() result to dict (helper for _convert_to_mapping).
 
@@ -395,25 +408,32 @@ class FlextUtilitiesValidation:
             # items() returned list/tuple of pairs - convert to dict
             return dict(items_result)
 
-        # items() returned something else - try to iterate
-        if not hasattr(items_result, "__iter__"):
+        if isinstance(items_result, Mapping):
+            # items_result is already a Mapping - convert to dict
+            return dict(items_result)
+
+        # Use isinstance for type narrowing (pyrefly requires this)
+        if not isinstance(items_result, Iterable):
             result_type = type(items_result)
             msg = f"items() returned non-iterable: {result_type}"
             raise TypeError(msg)
 
-        # items_result is iterable at runtime
-        items_list = list(items_result)
-
-        # Convert tuples to dict, normalizing values
+        # items_result is Iterable after isinstance check
         temp_dict: t.ConfigurationDict = {}
-        for k, v in items_list:
+        for item in items_result:
+            if not isinstance(item, tuple):
+                continue
+            # Use try/except for tuple unpacking instead of len check
+            try:
+                k, v = item
+            except ValueError:
+                continue
             if isinstance(k, str):
-                # Normalize value - v is already compatible with t.GeneralValueType
+                # Normalize value - v is compatible with t.GeneralValueType
                 normalized_v = FlextUtilitiesValidation._normalize_component(
                     v,
                     visited=None,
                 )
-                # normalized_v is already t.GeneralValueType from _normalize_component
                 temp_dict[k] = normalized_v
         return temp_dict
 
@@ -2245,7 +2265,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _guard_non_empty(
-        value: object, error_template: str
+        value: object,
+        error_template: str,
     ) -> FlextRuntime.RuntimeResult[object]:
         """Internal helper for non-empty validation."""
         # Use pattern matching for type-specific validation
@@ -2281,9 +2302,9 @@ class FlextUtilitiesValidation:
             "positive number",
         ),
         "non_negative": (
-            lambda v: isinstance(v, (int, float))
-            and not isinstance(v, bool)
-            and v >= 0,
+            lambda v: (
+                isinstance(v, (int, float)) and not isinstance(v, bool) and v >= 0
+            ),
             "non-negative number",
         ),
         # Type shortcuts
@@ -2431,7 +2452,7 @@ class FlextUtilitiesValidation:
         """
 
         @staticmethod
-        def ok[T](value: T) -> FlextRuntime.RuntimeResult[T]:
+        def ok[T](value: T) -> r[T]:
             """Create success result (mnemonic: ok = success).
 
             Generic replacement for: p.Result[T].ok(value)
@@ -2450,7 +2471,7 @@ class FlextUtilitiesValidation:
             return r[T].ok(value)
 
         @staticmethod
-        def fail(error: str) -> FlextRuntime.RuntimeResult[object]:
+        def fail(error: str) -> r[object]:
             """Create failure result (mnemonic: fail = failure).
 
             Business Rule: Failures don't carry a value, only an error message.
@@ -2627,7 +2648,10 @@ class FlextUtilitiesValidation:
                 return default
             if as_type is not None:
                 taken = FlextUtilitiesMapper.take(
-                    source, key, as_type=as_type, default=default
+                    source,
+                    key,
+                    as_type=as_type,
+                    default=default,
                 )
                 return taken if taken is not None else default
             gotten = FlextUtilitiesMapper.get(source, key, default=default)
@@ -3110,14 +3134,15 @@ class FlextUtilitiesValidation:
                 return r[Mapping[str, object]].ok(
                     serialized
                     if isinstance(serialized, dict)
-                    else {"value": serialized}
+                    else {"value": serialized},
                 )
             except Exception as e:
                 return r[Mapping[str, object]].fail(f"Serialization failed: {e}")
 
         @staticmethod
         def parse_json[T](
-            json_str: str, type_: type[T]
+            json_str: str,
+            type_: type[T],
         ) -> FlextRuntime.RuntimeResult[T]:
             """Parse JSON string into typed model.
 
@@ -3155,12 +3180,14 @@ class FlextUtilitiesValidation:
     ) -> r[str]:
         if hostname is None:
             return r[str].fail(
-                f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
+                f"{context} cannot be None",
+                error_code=c.Errors.VALIDATION_ERROR,
             )
         # hostname is already guaranteed to be str by type annotation
         if not hostname:
             return r[str].fail(
-                f"{context} cannot be empty", error_code=c.Errors.VALIDATION_ERROR
+                f"{context} cannot be empty",
+                error_code=c.Errors.VALIDATION_ERROR,
             )
 
         # Regex for hostname validation (RFC 1123, RFC 952):
@@ -3170,7 +3197,7 @@ class FlextUtilitiesValidation:
         # - Max length for a label is 63 chars (not checked by this regex, but good to know)
         # - Total length max 255 chars (not checked by this regex)
         hostname_pattern = re.compile(
-            r"""^(?!-)[A-Za-z0-9-]{1,63}(\.(?!-)[A-Za-z0-9-]{1,63})*(\.?)$"""
+            r"""^(?!-)[A-Za-z0-9-]{1,63}(\.(?!-)[A-Za-z0-9-]{1,63})*(\.?)$""",
         )
 
         if not hostname_pattern.fullmatch(hostname):

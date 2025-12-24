@@ -129,7 +129,7 @@ class DataValidator:
         # FlextResult satisfies the protocol, so it's compatible with p.Result
         if not isinstance(data, int):
             return FlextResult[t.GeneralValueType].fail(
-                f"Expected int, got {type(data)}"
+                f"Expected int, got {type(data)}",
             )
         if data < 0:
             return FlextResult[t.GeneralValueType].fail("Data must be positive")

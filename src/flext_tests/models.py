@@ -1785,7 +1785,7 @@ class FlextTestsModels(FlextModelsBase):
                 """Chain matcher configuration for railway pattern assertions."""
 
                 result: r[t.GeneralValueType] = Field(
-                    description="FlextResult being chained"
+                    description="FlextResult being chained",
                 )
 
             class TestScope(FlextModelsBase.Value):

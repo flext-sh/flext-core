@@ -15,9 +15,8 @@ from enum import StrEnum
 from itertools import count
 from typing import ClassVar
 
-from flext_core import FlextResult, FlextService
+from flext import FlextModels, FlextResult, FlextService
 from flext_core._models import entity as flext_models_entity
-from flext_core.models import FlextModels
 from tests.constants import TestsFlextConstants
 
 # =========================================================================

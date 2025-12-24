@@ -111,7 +111,8 @@ class FlextUtilitiesMapper:
         """Safely narrow object to Sequence[object] with runtime validation."""
         if isinstance(value, (list, tuple)):
             return cast(
-                "Sequence[object]", value
+                "Sequence[object]",
+                value,
             )  # Type narrowing via isinstance + cast
         error_msg = f"Cannot narrow {type(value)} to Sequence"
         raise TypeError(error_msg)
@@ -131,7 +132,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_str_from_dict(
-        ops: t.ConfigurationDict, key: str, default: str = ""
+        ops: t.ConfigurationDict,
+        key: str,
+        default: str = "",
     ) -> str:
         """Safely extract str value from ConfigurationDict."""
         value = ops.get(key, default)
@@ -141,7 +144,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_callable_from_dict(
-        ops: t.ConfigurationDict, key: str
+        ops: t.ConfigurationDict,
+        key: str,
     ) -> Callable[[t.GeneralValueType], t.GeneralValueType] | None:
         """Safely extract Callable from ConfigurationDict.
 
@@ -485,7 +489,7 @@ class FlextUtilitiesMapper:
         # Use list comprehension for better performance
         return [
             FlextUtilitiesMapper.convert_dict_to_json(
-                FlextUtilitiesMapper._narrow_to_configuration_dict(item)
+                FlextUtilitiesMapper._narrow_to_configuration_dict(item),
             )
             for item in data
             if isinstance(item, dict)
@@ -700,11 +704,11 @@ class FlextUtilitiesMapper:
                     # Return default if provided, otherwise fail
                     if required:
                         return r[T | None].fail(
-                            f"Path '{separator.join(parts[:i])}' is None"
+                            f"Path '{separator.join(parts[:i])}' is None",
                         )
                     if default is None:
                         return r[T | None].fail(
-                            f"Path '{separator.join(parts[:i])}' is None and default is None"
+                            f"Path '{separator.join(parts[:i])}' is None and default is None",
                         )
                     return r[T | None].ok(default)
 
@@ -723,11 +727,11 @@ class FlextUtilitiesMapper:
                     path_context = separator.join(parts[:i])
                     if required:
                         return r[T | None].fail(
-                            f"Key '{key_part}' not found at '{path_context}'"
+                            f"Key '{key_part}' not found at '{path_context}'",
                         )
                     if default is None:
                         return r[T | None].fail(
-                            f"Key '{key_part}' not found at '{path_context}' and default is None"
+                            f"Key '{key_part}' not found at '{path_context}' and default is None",
                         )
                     return r[T | None].ok(default)
 
@@ -742,11 +746,11 @@ class FlextUtilitiesMapper:
                     if error:
                         if required:
                             return r[T | None].fail(
-                                f"Array error at '{key_part}': {error}"
+                                f"Array error at '{key_part}': {error}",
                             )
                         if default is None:
                             return r[T | None].fail(
-                                f"Array error at '{key_part}': {error} and default is None"
+                                f"Array error at '{key_part}': {error} and default is None",
                             )
                         return r[T | None].ok(default)
                     current = value
@@ -756,7 +760,7 @@ class FlextUtilitiesMapper:
                     return r[T | None].fail("Extracted value is None")
                 if default is None:
                     return r[T | None].fail(
-                        "Extracted value is None and default is None"
+                        "Extracted value is None and default is None",
                     )
                 return r[T | None].ok(default)
 
@@ -817,12 +821,12 @@ class FlextUtilitiesMapper:
     ) -> T: ...
 
     @staticmethod
-    def get[T](
+    def get(
         data: t.ConfigurationMapping | object,
         key: str,
         *,
-        default: T | None = None,
-    ) -> T | None:
+        default: object = None,
+    ) -> object:
         """Unified get function for dict/object access with default.
 
         Generic replacement for: get(), get_str(), get_list()
@@ -855,12 +859,12 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._get_raw(data, key, default=default)
 
     @staticmethod
-    def _get_raw[T](
+    def _get_raw(
         data: t.ConfigurationMapping | object,
         key: str,
         *,
-        default: T | None = None,
-    ) -> T | None:
+        default: object = None,
+    ) -> object:
         """Internal helper for raw get without DSL conversion."""
         match data:
             case dict() | Mapping():
@@ -873,14 +877,12 @@ class FlextUtilitiesMapper:
                 raw_value = data_mapping.get(key)
                 if raw_value is None:
                     return default
-                # Type narrowing: result is T if it matches the expected type
+                # Type narrowing: raw_value is GeneralValueType
                 # ConfigurationMapping always returns GeneralValueType-compatible values
-                # Return the value if it's compatible, otherwise return default
                 if FlextUtilitiesGuards.is_general_value_type(raw_value):
                     # TypeGuard ensures type narrowing to GeneralValueType
-                    # This is semantically correct because ConfigurationMapping contains GeneralValueType
                     return raw_value
-                # Raw value not compatible with T, return default
+                # Raw value not compatible with GeneralValueType, return default
                 return default
             case _:
                 return getattr(data, key, default)
@@ -1000,18 +1002,18 @@ class FlextUtilitiesMapper:
     ) -> list[T]: ...
 
     @staticmethod
-    def take[T](
+    def take(
         data_or_items: Mapping[str, object]
         | object
-        | dict[str, T]
-        | list[T]
-        | tuple[T, ...],
+        | dict[str, object]
+        | list[object]
+        | tuple[object, ...],
         key_or_n: str | int,
         *,
-        as_type: type[T] | None = None,
-        default: T | None = None,
+        as_type: type[object] | None = None,
+        default: object = None,
         from_start: bool = True,
-    ) -> dict[str, T] | list[T] | T | None:
+    ) -> dict[str, object] | list[object] | object:
         """Unified take function (generalized from take_n).
 
         Generic replacement for: list slicing, dict slicing
@@ -1064,13 +1066,12 @@ class FlextUtilitiesMapper:
             # Extract keys from dict - keys are always str since it's a dict
             keys = list(data_or_items.keys())
             selected_keys = keys[:n] if from_start else keys[-n:]
-            # Use dict comprehension directly with type-safe access
+            # Return dict with selected keys - type matches dict[str, T] via overload resolution
             return {k: data_or_items[k] for k in selected_keys}
         # Remaining cases: list or tuple
         if isinstance(data_or_items, (list, tuple)):
             # Type narrowing: data_or_items is Sequence after isinstance check
-            # list[T] and tuple[T, ...] are both Sequence[T], so direct conversion works
-            items_list: list[T] = list(data_or_items)
+            items_list: list[object] = list(data_or_items)
             return items_list[:n] if from_start else items_list[-n:]
         # Fallback for unsupported types: return None
         # Slice operations only make sense for collections
@@ -1375,7 +1376,9 @@ class FlextUtilitiesMapper:
                     default_val
                     if current is None
                     else [
-                        str(FlextUtilitiesMapper._narrow_to_general_value_type(current))
+                        str(
+                            FlextUtilitiesMapper._narrow_to_general_value_type(current)
+                        ),
                     ]
                 )
             case "dict":
@@ -1400,7 +1403,8 @@ class FlextUtilitiesMapper:
             return current
         # Cast the callable to proper filter predicate type
         filter_pred: Callable[[object], bool] = cast(
-            "Callable[[object], bool]", filter_pred_raw
+            "Callable[[object], bool]",
+            filter_pred_raw,
         )
         # Handle collections
         if isinstance(current, (list, tuple)):
@@ -1522,7 +1526,8 @@ class FlextUtilitiesMapper:
         ):
             # Runtime check ensures all values are str, so cast to StringMapping is safe
             map_keys_dict: t.StringMapping | None = cast(
-                "t.StringMapping", map_keys_val
+                "t.StringMapping",
+                map_keys_val,
             )
         else:
             map_keys_dict = None
@@ -1679,7 +1684,8 @@ class FlextUtilitiesMapper:
     ) -> object:
         """Helper: Apply transform operation."""
         if "transform" not in ops or not FlextUtilitiesGuards.is_type(
-            current, "mapping"
+            current,
+            "mapping",
         ):
             return current
         transform_opts_raw: t.GeneralValueType = ops["transform"]
@@ -1757,7 +1763,7 @@ class FlextUtilitiesMapper:
                 return {k: process_func(v) for k, v in current_dict.items()}
             # Single value case - narrow to t.GeneralValueType before processing
             current_general = FlextUtilitiesMapper._narrow_to_general_value_type(
-                current
+                current,
             )
             return process_func(current_general)
         except Exception:
@@ -1839,9 +1845,10 @@ class FlextUtilitiesMapper:
             # sort_spec accepts t.GeneralValueType since items are t.GeneralValueType
             sort_fn = sort_spec
 
-            def key_func_wrapper(item: t.GeneralValueType) -> str | int | float:
-                # Type narrowing: item is t.GeneralValueType from list[t.GeneralValueType]
-                key_value: t.GeneralValueType = sort_fn(item)
+            def key_func_wrapper(item: object) -> str | int | float:
+                # Type narrowing: item is object, sort_fn expects t.GeneralValueType
+                # Pass item directly since object is compatible with t.GeneralValueType
+                key_value = sort_fn(item)
                 # ScalarValue (str | int | float | bool | datetime | None) is part of t.GeneralValueType
                 if isinstance(key_value, (str, int, float)):
                     return key_value
@@ -1863,12 +1870,13 @@ class FlextUtilitiesMapper:
                 FlextUtilitiesMapper._narrow_to_general_value_type(
                     item
                     if isinstance(item, (str, int, float, bool, type(None)))
-                    else str(item)
+                    else str(item),
                 )
                 for item in current_list
             ]
             sorted_comparable: list[t.GeneralValueType] = sorted(
-                comparable_items, key=str
+                comparable_items,
+                key=str,
             )
             # Return using t.GeneralValueType from lower layer
             if isinstance(current, list):
@@ -2174,10 +2182,12 @@ class FlextUtilitiesMapper:
                 # field_spec_dict is already ConfigurationDict (dict subclass), use .get() directly
                 # Access via dict.get() for cleaner code
                 field_default_raw: t.GeneralValueType | None = field_spec_dict.get(
-                    "default", None
+                    "default",
+                    None,
                 )
                 field_ops_raw: t.GeneralValueType | None = field_spec_dict.get(
-                    "ops", None
+                    "ops",
+                    None,
                 )
                 field_default = field_default_raw
                 field_ops = field_ops_raw
@@ -2200,7 +2210,9 @@ class FlextUtilitiesMapper:
             field_default_typed: T | None = field_default  # type: ignore[assignment]
             # Use overload without type parameter - type inference will work from default
             value: T | None = FlextUtilitiesMapper.get(
-                source, field_name, default=field_default_typed
+                source,
+                field_name,
+                default=field_default_typed,
             )
             if value is None and field_required:
                 extracted: T | None = None
@@ -2348,7 +2360,7 @@ class FlextUtilitiesMapper:
                     if isinstance(field_ops, dict):
                         field_ops_dict: t.ConfigurationDict = (
                             FlextUtilitiesMapper._narrow_to_configuration_dict(
-                                field_ops
+                                field_ops,
                             )
                         )
                         extracted = FlextUtilitiesMapper.build(
@@ -2363,7 +2375,7 @@ class FlextUtilitiesMapper:
                 # Narrow extracted to t.GeneralValueType for type safety
                 final_value: t.GeneralValueType = (
                     FlextUtilitiesMapper._narrow_to_general_value_type(
-                        extracted if extracted is not None else field_default
+                        extracted if extracted is not None else field_default,
                     )
                 )
                 constructed[target_key] = final_value

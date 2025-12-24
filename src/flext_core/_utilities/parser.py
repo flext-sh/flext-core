@@ -1012,7 +1012,9 @@ class FlextUtilitiesParser:
             # _parse_get_attr returns object, need to narrow to ConfigurationDict
             # StrEnum.__members__ returns a mappingproxy, not a dict
             members_raw = FlextUtilitiesParser._parse_get_attr(
-                enum_type, "__members__", {}
+                enum_type,
+                "__members__",
+                {},
             )
             # Use Mapping for type narrowing - __members__ returns mappingproxy which is a Mapping
             if isinstance(members_raw, Mapping) and all(

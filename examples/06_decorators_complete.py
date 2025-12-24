@@ -267,10 +267,10 @@ def main() -> None:
 
     print("\n" + "=" * 60)
     print(
-        "🎯 Decorator Patterns: Inject, Log, Railway, Context, Retry, Timeout, Combined"
+        "🎯 Decorator Patterns: Inject, Log, Railway, Context, Retry, Timeout, Combined",
     )
     print(
-        "🎯 Cross-Cutting Concerns: DI, Logging, Error Handling, Context, Reliability"
+        "🎯 Cross-Cutting Concerns: DI, Logging, Error Handling, Context, Reliability",
     )
     print("🎯 Composition: Retry + Timeout + Railway working together")
     print("🎯 Python 3.13+: PEP 695 type aliases, collections.abc")

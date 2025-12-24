@@ -153,7 +153,8 @@ class FlextUtilities:
 
         """
         return FlextUtilitiesEnum.create_discriminated_union(
-            discriminator_field, *enum_classes
+            discriminator_field,
+            *enum_classes,
         )
 
     @staticmethod
@@ -265,9 +266,9 @@ class FlextUtilities:
         return FlextUtilitiesMapper.ensure_str(value, default)
 
     @staticmethod
-    def count(items: object) -> int:
+    def count(items: Sized | object) -> int:
         """Count items."""
-        if hasattr(items, "__len__"):
+        if isinstance(items, Sized):
             return len(items)
         return 0
 
@@ -672,10 +673,7 @@ class FlextUtilities:
         @staticmethod
         def bulk_register(
             container: p.DI,
-            registrations: Mapping[
-                str,
-                t.FlexibleValue | Callable[[], t.GeneralValueType],
-            ],
+            registrations: Mapping[str, t.GeneralValueType],
         ) -> r[int]:
             """Register multiple services at once.
 
@@ -699,14 +697,8 @@ class FlextUtilities:
             count = 0
             for name, value in registrations.items():
                 try:
-                    if callable(value):
-                        # Python 3.13: callable value is compatible with FactoryCallable = Callable[[], object]
-                        # Direct assignment works - type checker recognizes callable compatibility
-                        register_result = container.register_factory(name, value)
-                    else:
-                        # Type is now correctly constrained to t.FlexibleValue
-                        # Use direct assignment since value is already compatible
-                        register_result = container.register(name, value)
+                    # All values go through register() which accepts t.GeneralValueType
+                    register_result = container.register(name, value)
                     if register_result.is_failure:
                         return r[int].fail(
                             f"Bulk registration failed at {name}: {register_result.error}",
@@ -1129,11 +1121,11 @@ class FlextUtilities:
         items: list[object],
         operation: Callable[[object], object],
         *,
-        _size: int = c.DEFAULT_BATCH_SIZE,
+        size: int = c.DEFAULT_BATCH_SIZE,
         on_error: str = "collect",
-        _parallel: bool = False,
+        parallel: bool = False,
         progress: Callable[[int, int], None] | None = None,
-        _progress_interval: int = 1,
+        progress_interval: int = 1,
         pre_validate: Callable[[object], bool] | None = None,
         flatten: bool = False,
     ) -> r[t.BatchResultDict]:
@@ -1141,11 +1133,11 @@ class FlextUtilities:
         return FlextUtilitiesCollection.batch(
             items,
             operation,
-            _size=_size,
-            _on_error=on_error,
-            _parallel=_parallel,
+            size=size,
+            on_error=on_error,
+            parallel=parallel,
             progress=progress,
-            _progress_interval=_progress_interval,
+            progress_interval=progress_interval,
             pre_validate=pre_validate,
             _flatten=flatten,
         )
@@ -1230,22 +1222,29 @@ class FlextUtilities:
 
     @staticmethod
     def process[T, U](
-        items: Sequence[T] | Mapping[str, T],
-        processor: Callable[[T], r[U]],
-        *,
-        on_error: str = "skip",
-    ) -> r[Sequence[U] | Mapping[str, U]]:
+        items: Sequence[T],
+        processor: Callable[[T], U],
+        predicate: Callable[[T], bool] | None = None,
+        on_error: str = "fail",
+    ) -> r[list[U]]:
         """Process items with result-aware function - delegates to Collection.process."""
-        return FlextUtilitiesCollection.process(items, processor, on_error=on_error)
+        return FlextUtilitiesCollection.process(
+            items,
+            processor,
+            predicate,
+            on_error,
+        )
 
     # Conversion operations
     @staticmethod
     def join(
-        values: Sequence[object] | set[object],
-        sep: str = " ",
+        values: Sequence[str],
+        *,
+        separator: str = " ",
+        case: str | None = None,
     ) -> str:
         """Join values with separator - delegates to Conversion.join."""
-        return FlextUtilitiesConversion.join(values, sep=sep)
+        return FlextUtilitiesConversion.join(values, separator=separator, case=case)
 
     # Mapper operations
     @staticmethod
@@ -1260,32 +1259,40 @@ class FlextUtilities:
         return FlextUtilitiesMapper.take(data, key, as_type=as_type, default=default)
 
     @staticmethod
-    def build(
-        value: object,
+    def build[T](
+        value: T,
         *,
-        ops: dict[str, object] | None = None,
-    ) -> object:
+        ops: t.ConfigurationDict | None = None,
+        default: object = None,
+        on_error: str = "stop",
+    ) -> T | object:
         """Build/transform value with DSL - delegates to Mapper.build."""
-        return FlextUtilitiesMapper.build(value, ops=ops)
+        return FlextUtilitiesMapper.build(
+            value,
+            ops=ops,
+            default=default,
+            on_error=on_error,
+        )
 
     @staticmethod
-    def construct[T](
-        spec: type[T] | dict[str, object],
+    def construct(
+        spec: t.ConfigurationDict,
+        source: Mapping[str, object] | object | None = None,
         *,
-        source: dict[str, object] | None = None,
-    ) -> T | dict[str, object]:
+        on_error: str = "stop",
+    ) -> t.ConfigurationDict:
         """Construct object from spec - delegates to Mapper.construct."""
-        return FlextUtilitiesMapper.construct(spec, source=source)
+        return FlextUtilitiesMapper.construct(spec, source, on_error=on_error)
 
     @staticmethod
     def agg[T](
-        items: Sequence[T] | Mapping[str, T],
-        field: str | None = None,
+        items: list[T] | tuple[T, ...],
+        field: str | Callable[[T], int | float],
         *,
-        fn: Callable[[Sequence[object]], object] = sum,
-    ) -> object:
+        fn: Callable[[list[int | float]], int | float] | None = None,
+    ) -> int | float:
         """Aggregate items - delegates to Mapper.agg."""
-        return FlextUtilitiesMapper.agg(items, field=field, fn=fn)
+        return FlextUtilitiesMapper.agg(items, field, fn=fn)
 
     # Validation/ResultHelpers operations
     @staticmethod
@@ -1315,7 +1322,9 @@ class FlextUtilities:
     ) -> T | None:
         """Try operation with fallback - delegates to Validation.ResultHelpers.try_."""
         return FlextUtilitiesValidation.ResultHelpers.try_(
-            func, default=default, catch=catch
+            func,
+            default=default,
+            catch=catch,
         )
 
     @staticmethod
@@ -1331,8 +1340,8 @@ class FlextUtilities:
         """
         if items is None:
             return True
-        if hasattr(items, "__len__"):
-            return len(items) == 0  # type: ignore[arg-type]
+        if isinstance(items, Sized):
+            return len(items) == 0
         return not bool(items)
 
     @staticmethod
@@ -1355,7 +1364,10 @@ class FlextUtilities:
     ) -> T:
         """Extract from source with type guard - delegates to Validation.ResultHelpers.from_."""
         return FlextUtilitiesValidation.ResultHelpers.from_(
-            source, key, as_type=as_type, default=default
+            source,
+            key,
+            as_type=as_type,
+            default=default,
         )
 
     @staticmethod
@@ -1365,13 +1377,17 @@ class FlextUtilities:
 
     @staticmethod
     def ensure[T](
-        value: object,
-        target_type: str | type[T] = "auto",
+        value: t.GeneralValueType,
         *,
-        default: T | None = None,
-    ) -> T | None:
+        target_type: str = "auto",
+        default: T | list[T] | dict[str, T] | None = None,
+    ) -> T | list[T] | dict[str, T]:
         """Ensure value is of target type - delegates to Validation.ensure."""
-        return FlextUtilitiesValidation.ensure(value, target_type, default=default)
+        return FlextUtilitiesValidation.ensure(
+            value,
+            target_type=target_type,
+            default=default,
+        )
 
     # New methods not previously in ResultHelpers
     @staticmethod
@@ -1448,27 +1464,6 @@ class FlextUtilities:
 
         return result
 
-    @overload
-    @staticmethod
-    def cast[T](
-        value: r[T],
-        target_type: None = None,
-        *,
-        default: None = None,
-        default_error: str,
-    ) -> r[T]: ...
-
-    @overload
-    @staticmethod
-    def cast[T](
-        value: object,
-        target_type: type[T],
-        *,
-        default: T | None = None,
-        default_error: None = None,
-    ) -> T | None: ...
-
-    @overload
     @staticmethod
     def cast[T](
         value: object | r[T],
@@ -1476,16 +1471,7 @@ class FlextUtilities:
         *,
         default: T | None = None,
         default_error: str | None = None,
-    ) -> T | r[T] | None: ...
-
-    @staticmethod
-    def cast[T](
-        value: object | r[T],
-        target_type: type[T] | None = None,
-        *,
-        default: T | None = None,
-        default_error: str | None = None,
-    ) -> T | r[T] | None:
+    ) -> object:
         """Safe cast with fallback or FlextResult error wrapping.
 
         Supports two patterns:
@@ -1509,21 +1495,22 @@ class FlextUtilities:
             return u.cast(result, default_error="Operation failed")
 
         """
+        _ = default_error
         # Pattern 2: FlextResult error wrapping
         if hasattr(value, "is_success") and hasattr(value, "is_failure"):
-            result_value: r[object] = value  # type: ignore[assignment]
-            if result_value.is_failure and default_error:
-                # Return result as-is (error already set) or wrap with default
-                return result_value  # type: ignore[return-value]
-            return result_value  # type: ignore[return-value]
+            # value is FlextResult-like, return as-is
+            return value
 
         # Pattern 1: Type casting
         if target_type is None:
-            return value  # type: ignore[return-value]
+            return value
 
         if isinstance(value, target_type):
             return value
         try:
+            # Handle special case for object type which doesn't accept arguments
+            if target_type is object:
+                return value
             return target_type(value)  # type: ignore[call-arg]
         except (TypeError, ValueError):
             return default

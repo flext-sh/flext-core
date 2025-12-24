@@ -1492,7 +1492,8 @@ class FlextRuntime:
             if self.is_success:
                 try:
                     return FlextRuntime.RuntimeResult(
-                        value=func(self.value), is_success=True
+                        value=func(self.value),
+                        is_success=True,
                     )
                 except Exception as e:
                     return FlextRuntime.RuntimeResult(error=str(e), is_success=False)
@@ -1504,7 +1505,8 @@ class FlextRuntime:
             )
 
         def flat_map[U](
-            self, func: Callable[[T], FlextRuntime.RuntimeResult[U]]
+            self,
+            func: Callable[[T], FlextRuntime.RuntimeResult[U]],
         ) -> FlextRuntime.RuntimeResult[U]:
             """Chain operations returning RuntimeResult."""
             if self.is_success:
@@ -1517,7 +1519,8 @@ class FlextRuntime:
             )
 
         def and_then[U](
-            self, func: Callable[[T], FlextRuntime.RuntimeResult[U]]
+            self,
+            func: Callable[[T], FlextRuntime.RuntimeResult[U]],
         ) -> FlextRuntime.RuntimeResult[U]:
             """RFC-compliant alias for flat_map."""
             return self.flat_map(func)
@@ -1539,7 +1542,8 @@ class FlextRuntime:
             return self
 
         def tap_error(
-            self, func: Callable[[str], None]
+            self,
+            func: Callable[[str], None],
         ) -> FlextRuntime.RuntimeResult[T]:
             """Apply side effect to error, return unchanged."""
             if not self._is_success:
@@ -1547,7 +1551,8 @@ class FlextRuntime:
             return self
 
         def map_error(
-            self, func: Callable[[str], str]
+            self,
+            func: Callable[[str], str],
         ) -> FlextRuntime.RuntimeResult[T]:
             """Transform error message."""
             if not self._is_success:
@@ -1560,7 +1565,8 @@ class FlextRuntime:
             return self
 
         def filter(
-            self, predicate: Callable[[T], bool]
+            self,
+            predicate: Callable[[T], bool],
         ) -> FlextRuntime.RuntimeResult[T]:
             """Filter success value using predicate."""
             if self.is_success and not predicate(self.value):
@@ -1582,7 +1588,8 @@ class FlextRuntime:
             return self
 
         def lash(
-            self, func: Callable[[str], FlextRuntime.RuntimeResult[T]]
+            self,
+            func: Callable[[str], FlextRuntime.RuntimeResult[T]],
         ) -> FlextRuntime.RuntimeResult[T]:
             """Apply recovery function on failure."""
             if not self._is_success:

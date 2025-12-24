@@ -42,7 +42,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
+import os
 from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -51,7 +54,6 @@ from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.settings import FlextSettings
 from flext_core.typings import T_Model, t
 
 
@@ -134,7 +136,46 @@ class FlextUtilitiesConfiguration:
             )
 
         """
-        return FlextSettings.resolve_env_file()
+        # Check for custom env file path
+        custom_env_file = os.environ.get(c.Platform.ENV_FILE_ENV_VAR)
+        if custom_env_file:
+            custom_path = Path(custom_env_file)
+            if custom_path.exists():
+                return str(custom_path.resolve())
+            # If custom path doesn't exist, return it anyway (Pydantic will handle gracefully)
+            return custom_env_file
+
+        # Default: use .env from current directory
+        default_path = Path.cwd() / c.Platform.ENV_FILE_DEFAULT
+        if default_path.exists():
+            return str(default_path.resolve())
+
+        # Return default string if no .env file exists (Pydantic handles gracefully)
+        return c.Platform.ENV_FILE_DEFAULT
+
+    @staticmethod
+    def get_log_level_from_config() -> int:
+        """Get log level from default constant (avoids circular import with config.py).
+
+        Business Rule: Log Level Resolution
+        ===================================
+        This method resolves the default log level from constants to avoid circular
+        imports between configuration and logging modules. It provides a safe way
+        to get the default log level without importing the full settings hierarchy.
+
+        Process:
+        1. Get default log level name from constants (e.g., "INFO")
+        2. Convert string to actual logging level constant
+        3. Return numeric logging level or fallback to INFO
+
+        Returns:
+            int: Numeric logging level (e.g., logging.INFO = 20)
+
+        """
+        # Use default log level from constants to avoid circular import
+        # config.py -> runtime.py -> models.py -> _models/config.py -> config.py
+        default_log_level = c.Logging.DEFAULT_LEVEL.upper()
+        return getattr(logging, default_log_level, logging.INFO)
 
     # =========================================================================
     # Sentinel Pattern for Parameter Access

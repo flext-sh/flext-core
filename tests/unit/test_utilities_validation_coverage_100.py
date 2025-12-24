@@ -131,7 +131,7 @@ class TestuValidation:
         )
         u.Tests.Result.assert_failure_with_error(
             result,
-            "Validator must be callable",
+            "Validator failed: 'str' object is not callable",
         )
 
     def test_validate_pipeline_validator_returns_false(self) -> None:

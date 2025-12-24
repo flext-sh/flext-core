@@ -151,14 +151,17 @@ class TestAutomatedFlextUtilities:
         For now, it provides a generic implementation that can be adapted.
         """
         try:
-            # Generic operation - adapt based on actual utilities interface
-            if hasattr(instance, "process"):
-                return instance.process(input_data)
-            if hasattr(instance, "execute"):
-                return instance.execute(input_data)
-            if hasattr(instance, "handle"):
-                return instance.handle(input_data)
-            # Fallback: if no methods found, return the instance itself as success
+            # FlextUtilities is a facade class with static methods
+            # Use the process method with a simple processor function
+            if hasattr(instance, "process") and callable(getattr(instance, "process")):
+                # Create a simple processor function that returns success
+                def simple_processor(data: object) -> r.FlextResult[object]:
+                    return r[object].ok(f"processed_{data}")
+
+                # Call process with input_data as items and simple_processor
+                return instance.process(input_data, simple_processor)
+
+            # Fallback: if no methods found, return success
             return r[object].ok(instance)
         except Exception as e:
             return r[object].fail(f"FlextUtilities operation failed: {e}")

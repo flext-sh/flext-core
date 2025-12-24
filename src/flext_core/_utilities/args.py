@@ -14,9 +14,7 @@ from functools import wraps
 from types import UnionType
 from typing import (
     Annotated,
-    Protocol,
     TypeVar,
-    cast,
     get_args,
     get_origin,
     get_type_hints,
@@ -24,6 +22,7 @@ from typing import (
 
 from pydantic import ConfigDict, validate_call
 
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, t
@@ -125,15 +124,15 @@ class FlextUtilitiesArgs:
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> _ValidatedResultT:
             try:
                 # Type narrowing: validated_func returns _ValidatedResultT
-                return validated_func(*args, **kwargs)
+                result: _ValidatedResultT = validated_func(*args, **kwargs)
+                return result
             except Exception as e:
-                fail_result: _ValidatedResultT = cast(
-                    "_ValidatedResultT",
-                    r[t.GeneralValueType].fail(str(e)),
-                )
+                # Return fail result - type annotation ensures correct type
+                fail_result: r[t.GeneralValueType] = r[t.GeneralValueType].fail(str(e))
                 return fail_result
 
-        return cast("Callable[P, _ValidatedResultT]", wrapper)
+        # wrapper has correct type via @wraps preserving signature
+        return wrapper
 
     # ─────────────────────────────────────────────────────────────
     # METHOD 2: Parse kwargs to typed dict
@@ -181,14 +180,9 @@ class FlextUtilitiesArgs:
     # METHOD 3: Signature introspection for auto-parsing
     # ─────────────────────────────────────────────────────────────
 
-    class _CallableWithHints(Protocol):
-        """Protocol for callables that support type hints introspection."""
-
-        __annotations__: t.ConfigurationDict
-
     @staticmethod
     def get_enum_params(
-        func: _CallableWithHints,
+        func: p.Utilities.CallableWithHints,
     ) -> t.StringStrEnumTypeDict:
         """Extract parameters that are StrEnum from function signature.
 

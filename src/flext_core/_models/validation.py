@@ -700,7 +700,8 @@ class FlextModelsValidation:
     ) -> r[str]:
         if uri is None:
             return r[str].fail(
-                f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
+                f"{context} cannot be None",
+                error_code=c.Errors.VALIDATION_ERROR,
             )
         # Type narrowing: after None check, uri is guaranteed to be str
         try:
@@ -718,7 +719,8 @@ class FlextModelsValidation:
             return r[str].ok(uri)
         except ValueError as e:
             return r[str].fail(
-                f"Invalid {context} format: {e}", error_code=c.Errors.VALIDATION_ERROR
+                f"Invalid {context} format: {e}",
+                error_code=c.Errors.VALIDATION_ERROR,
             )
 
     @staticmethod
@@ -733,7 +735,8 @@ class FlextModelsValidation:
     def _validate_port_range(port: int | None, context: str = "Port") -> r[int]:
         if port is None:
             return r[int].fail(
-                f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
+                f"{context} cannot be None",
+                error_code=c.Errors.VALIDATION_ERROR,
             )
         # Type narrowing: after None check, port is guaranteed to be int
         if not c.Network.MIN_PORT <= port <= c.Network.MAX_PORT:
@@ -757,12 +760,14 @@ class FlextModelsValidation:
     ) -> r[str]:
         if value is None:
             return r[str].fail(
-                f"{context} cannot be None", error_code=c.Errors.VALIDATION_ERROR
+                f"{context} cannot be None",
+                error_code=c.Errors.VALIDATION_ERROR,
             )
         # Type narrowing: after None check, value is guaranteed to be str
         if not value:
             return r[str].fail(
-                f"{context} cannot be empty", error_code=c.Errors.VALIDATION_ERROR
+                f"{context} cannot be empty",
+                error_code=c.Errors.VALIDATION_ERROR,
             )
         return r[str].ok(value)
 
@@ -784,7 +789,8 @@ class FlextModelsValidation:
         # Type narrowing: value is already typed as str (no runtime check needed)
         if not valid_choices:
             return r[str].fail(
-                "Valid choices cannot be empty", error_code=c.Errors.VALIDATION_ERROR
+                "Valid choices cannot be empty",
+                error_code=c.Errors.VALIDATION_ERROR,
             )
 
         target_value = value if case_sensitive else value.lower()
@@ -808,7 +814,10 @@ class FlextModelsValidation:
         case_sensitive: bool = False,
     ) -> r[str]:
         return FlextModelsValidation._validate_choice_value(
-            value, valid_choices, context, case_sensitive=case_sensitive
+            value,
+            valid_choices,
+            context,
+            case_sensitive=case_sensitive,
         )
 
     @staticmethod
@@ -840,7 +849,10 @@ class FlextModelsValidation:
         context: str = "Value",
     ) -> r[str]:
         return FlextModelsValidation._validate_length_range(
-            value, min_length, max_length, context
+            value,
+            min_length,
+            max_length,
+            context,
         )
 
     @staticmethod
