@@ -164,20 +164,23 @@ class FlextUtilitiesCollection:
 
             for processed, item in enumerate(items, 1):
                 # Pre-validate if validator provided
-                if pre_validate is not None and not pre_validate(item):
-                    results.append(None)
-                else:
-                    result = operation(item)
-                    # Handle both direct returns and FlextResult returns
-                    if hasattr(result, "is_success") and hasattr(result, "value"):
-                        # It's a FlextResult
-                        if result.is_success:
-                            results.append(result.value)
-                        else:
-                            results.append(None)
+                if pre_validate is not None:
+                    # Evaluate predicate on item
+                    if not pre_validate(item):
+                        results.append(None)
+                        continue
+
+                result = operation(item)
+                # Handle both direct returns and FlextResult returns
+                if hasattr(result, "is_success") and hasattr(result, "value"):
+                    # It's a FlextResult
+                    if result.is_success:
+                        results.append(result.value)
                     else:
-                        # It's a direct return - cast to GeneralValueType
-                        results.append(result)
+                        results.append(None)
+                else:
+                    # It's a direct return - cast to GeneralValueType
+                    results.append(result)
 
                 # Track progress
                 if progress is not None and processed % _progress_interval == 0:
@@ -218,14 +221,17 @@ class FlextUtilitiesCollection:
         try:
             results: list[U] = []
             for item in items:
-                if predicate is None or predicate(item):
-                    try:
-                        result = processor(item)
-                        results.append(result)
-                    except Exception:
-                        if _on_error == "skip":
-                            continue
-                        return r[list[U]].fail(f"Processing failed for item: {item}")
+                # Check predicate - item is T from Sequence[T]
+                if predicate is not None and not predicate(item):
+                    continue
+
+                try:
+                    result = processor(item)
+                    results.append(result)
+                except Exception:
+                    if _on_error == "skip":
+                        continue
+                    return r[list[U]].fail(f"Processing failed for item: {item}")
             return r[list[U]].ok(results)
         except Exception as e:
             return r[list[U]].fail(f"Process failed: {e}")
