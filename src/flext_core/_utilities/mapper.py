@@ -88,7 +88,7 @@ class FlextUtilitiesMapper:
             error_msg = f"Cannot narrow {type(value)} to ConfigurationDict - non-string keys found"
             raise TypeError(error_msg)
         # Type narrowing: dict is confirmed, keys are strings
-        return value  # type: ignore[unreachable]
+        return cast("t.ConfigurationDict", value)
 
     @staticmethod
     def _narrow_to_configuration_mapping(value: object) -> t.ConfigurationMapping:
@@ -104,7 +104,7 @@ class FlextUtilitiesMapper:
             error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping - non-string keys found"
             raise TypeError(error_msg)
         # Type narrowing: Mapping is confirmed, keys are strings
-        return value  # type: ignore[unreachable]
+        return cast("t.ConfigurationMapping", value)
 
     @staticmethod
     def _narrow_to_sequence(value: object) -> Sequence[object]:
@@ -125,7 +125,7 @@ class FlextUtilitiesMapper:
         """
         # Use TypeGuard for proper type narrowing
         if FlextUtilitiesGuards.is_general_value_type(value):
-            return value  # type: ignore[unreachable]
+            return value
         # Fallback: convert to string (str is a valid t.GeneralValueType)
         return str(value)
 
@@ -136,7 +136,7 @@ class FlextUtilitiesMapper:
         """Safely extract str value from ConfigurationDict."""
         value = ops.get(key, default)
         if isinstance(value, str):
-            return value  # type: ignore[unreachable]
+            return value
         return str(value) if value is not None else default
 
     @staticmethod
@@ -150,7 +150,7 @@ class FlextUtilitiesMapper:
         """
         value = ops.get(key)
         if callable(value):
-            return value  # type: ignore[unreachable]
+            return value
         return None
 
     @property
@@ -415,7 +415,7 @@ class FlextUtilitiesMapper:
 
         """
         if cls.is_json_primitive(value):
-            return value  # type: ignore[unreachable]
+            return value
         # Use isinstance for type narrowing (is_type() doesn't return TypeGuard)
         if isinstance(value, dict):
             # Type narrowing: value is dict after isinstance check
@@ -516,7 +516,7 @@ class FlextUtilitiesMapper:
         if value is None:
             return default
         if isinstance(value, str):
-            return value  # type: ignore[unreachable]
+            return value
         return str(value)
 
     @staticmethod
@@ -879,7 +879,7 @@ class FlextUtilitiesMapper:
                 if FlextUtilitiesGuards.is_general_value_type(raw_value):
                     # TypeGuard ensures type narrowing to GeneralValueType
                     # This is semantically correct because ConfigurationMapping contains GeneralValueType
-                    return raw_value  # type: ignore[return-value]
+                    return raw_value
                 # Raw value not compatible with T, return default
                 return default
             case _:
@@ -1054,7 +1054,7 @@ class FlextUtilitiesMapper:
                 return default
             if as_type is not None and not isinstance(value, as_type):
                 return default
-            return value  # type: ignore[unreachable]
+            return value
 
         # Slice mode: take N items from list/dict
         n = key_or_n
@@ -1209,7 +1209,7 @@ class FlextUtilitiesMapper:
         """
         for value in values:
             if value is not None:
-                return value  # type: ignore[unreachable]
+                return value
         return default
 
     @staticmethod
@@ -2007,7 +2007,7 @@ class FlextUtilitiesMapper:
 
         """
         if ops is None:
-            return value  # type: ignore[unreachable]
+            return value
 
         current: object = value
         default_val = default if default is not None else value
@@ -2099,7 +2099,7 @@ class FlextUtilitiesMapper:
             return None
         # Type annotation: value is T | None
         # Type inference: value is already T | None, no cast needed
-        return value  # type: ignore[unreachable]
+        return value
 
     @staticmethod
     def fields_multi(
