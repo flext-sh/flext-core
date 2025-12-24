@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core.constants import c
 from flext_core.exceptions import e
@@ -869,8 +869,9 @@ class FlextHandlers[MessageT_contra, ResultT](
                         c.Discovery.HANDLER_ATTR,
                     )
                     # Type assertion: callable(func) confirms it's a function
-                    # HandlerCallable is defined as Callable, so this is safe
-                    handlers.append((name, func, config))
+                    # Use cast to satisfy type checker after callable() check
+                    handler_func = cast("t.HandlerCallable", func)
+                    handlers.append((name, handler_func, config))
 
             # Sort by priority (descending), then by name for stability
             return sorted(

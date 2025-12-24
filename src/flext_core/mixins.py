@@ -376,10 +376,22 @@ class FlextMixins(FlextRuntime):
                 classes=wire_classes,
             )
 
+        # Create dispatcher and registry with auto-discovery
+        from flext_core.dispatcher import (  # noqa: PLC0415
+            FlextDispatcher,  # Local import to avoid circular dependency
+        )
+        from flext_core.registry import (  # noqa: PLC0415
+            FlextRegistry,  # Local import to avoid circular dependency
+        )
+        runtime_dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
+        runtime_registry = FlextRegistry.create(auto_discover_handlers=True)
+
         runtime = m.ServiceRuntime.model_construct(
             config=runtime_config,
             context=runtime_context,
             container=runtime_container,
+            dispatcher=cast("p.CommandBus", runtime_dispatcher),
+            registry=cast("p.Registry", runtime_registry),
         )
         self._runtime = runtime
         return runtime
