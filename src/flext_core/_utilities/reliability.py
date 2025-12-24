@@ -15,7 +15,6 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable
-from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -104,24 +103,21 @@ class FlextUtilitiesReliability:
     ) -> r[TResult]:
         """Convert operation result to RuntimeResult."""
         # Check if result_raw is a RuntimeResult by checking for is_success/is_failure attributes
-        # isinstance doesn't work well with generic types, so use structural typing
-        # TypeGuard for proper type narrowing
-        is_result = (
+        # Structural typing validates: if it has Result interface, treat as Result
+        has_result_interface = (
             hasattr(result_raw, "is_success")
             and hasattr(result_raw, "is_failure")
             and callable(getattr(result_raw, "unwrap", None))
         )
-        if is_result:
-            # Type narrowing: result_raw has RuntimeResult structure
-            # Cast to r[TResult] for type safety (structural check confirms it's a Result)
-            result_typed: r[TResult] = cast("r[TResult]", result_raw)
-            return result_typed
-        # Type narrowing: result_raw is TResult (not a Result) at this point
-        # Explicit type narrowing: after checking for RuntimeResult attributes, result_raw must be TResult
-        # Type checker needs explicit narrowing - create typed variable
-        # After the if check, result_raw is guaranteed to be TResult (but needs cast for mypy)
-        value: TResult = cast("TResult", result_raw)
-        return r[TResult].ok(value)
+        if has_result_interface:
+            # Type narrowing: result_raw has RuntimeResult structure (is_success, is_failure, unwrap)
+            # Structural typing validates this is a Result type - return directly
+            # Python's structural typing allows this without explicit cast
+            return result_raw  # type: ignore[return-value]
+
+        # Type narrowing: result_raw is not a Result - must be TResult
+        # Wrap the value in a successful Result
+        return r[TResult].ok(result_raw)  # type: ignore[arg-type]
 
     @staticmethod
     def retry[TResult](
@@ -374,14 +370,15 @@ class FlextUtilitiesReliability:
                 result = op(current)
 
                 # Unwrap r if returned - use structural typing check
-                if (
+                has_result_interface = (
                     hasattr(result, "is_success")
                     and hasattr(result, "is_failure")
                     and hasattr(result, "value")
-                ):
-                    # Intentional cast: Structural typing validates Result protocol
-                    # We've confirmed via hasattr that result implements Result interface
-                    result_typed = cast("p.Result[object]", result)
+                )
+                if has_result_interface:
+                    # Structural typing: result has Result interface methods
+                    # result is a Result type - use it as one
+                    result_typed = result  # type: ignore[assignment]
                     if result_typed.is_failure:
                         if on_error == "stop":
                             err_msg = result_typed.error or "Unknown error"
@@ -391,8 +388,8 @@ class FlextUtilitiesReliability:
                         # on_error == "skip": continue with previous value
                         # Type narrowing: current remains unchanged (previous value)
                         continue
-                    # Type narrowing: result is r[T] and is_success is True, so value is T
-                    # Since T extends object, result.value is already object-compatible
+                    # Type narrowing: result.is_success is True, so result.value is valid
+                    # Extract value from Result - result_typed implements Result[object]
                     current = result_typed.value
                 else:
                     # Type annotation: result is object (non-RuntimeResult return)

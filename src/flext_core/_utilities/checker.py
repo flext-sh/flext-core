@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import cast, get_origin, get_type_hints
+from typing import get_origin, get_type_hints
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -136,7 +136,7 @@ class FlextUtilitiesChecker:
             # Return the type hint directly (plain types, generic aliases, etc.)
             hint = type_hints[param_name]
             # Type narrowing: MessageTypeSpecifier = str | type[t.GeneralValueType]
-            # hint is t.GeneralValueType, but we need to check if it's a valid MessageTypeSpecifier
+            # Check what hint is and return appropriately
             if hint is None:
                 return None
             # If hint is a string or a type, it's valid MessageTypeSpecifier
@@ -144,8 +144,8 @@ class FlextUtilitiesChecker:
                 return hint
             if isinstance(hint, type):
                 # Type narrowing: hint is type after isinstance check
-                # Cast to expected type since isinstance(type) confirms it's a type
-                return cast("t.MessageTypeSpecifier", hint)
+                # type objects are valid MessageTypeSpecifier - return directly
+                return hint  # type: ignore[return-value]
             # For other types (Sequence, Mapping), convert to string
             # string is valid MessageTypeSpecifier
             return str(hint)
@@ -153,9 +153,8 @@ class FlextUtilitiesChecker:
         annotation = parameter.annotation
         if annotation is not inspect.Signature.empty:
             # Type narrowing: annotation exists and is not empty
-            # MessageTypeSpecifier = str | type[t.GeneralValueType]
-            # Cast annotation to MessageTypeSpecifier since we confirmed it's not empty
-            return cast("t.MessageTypeSpecifier", annotation)
+            # Return annotation as MessageTypeSpecifier - it can be str, type, or generic alias
+            return annotation  # type: ignore[return-value]
 
         return None
 

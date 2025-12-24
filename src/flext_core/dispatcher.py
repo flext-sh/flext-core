@@ -1345,7 +1345,7 @@ class FlextDispatcher(x):
             # Since handler is generic and ResultT cannot be inferred, we cast the result
             # to r[t.GeneralValueType] for compatibility with return type
             # This is safe because t.GeneralValueType is the base type for all values
-            return handler.dispatch_message(command, operation=operation)
+            return handler.dispatch_message(command, operation=operation)  # type: ignore[unreachable]
             # Type is already r[t.GeneralValueType] - no cast needed
 
         # Fallback for non-h: try handle() then execute()
@@ -1539,9 +1539,10 @@ class FlextDispatcher(x):
                 "Middleware must have callable 'process' method",
                 error_code=c.Errors.CONFIGURATION_ERROR,
             )
+        # Invoke middleware and get result
         result_raw = process_method(command, handler)
-        # Ensure result is t.GeneralValueType or FlextResult
 
+        # Ensure result is t.GeneralValueType or FlextResult
         result: t.GeneralValueType | r[t.GeneralValueType]
         if isinstance(
             result_raw,
@@ -2006,7 +2007,7 @@ class FlextDispatcher(x):
             if isinstance(order_raw, int):
                 order_value = order_raw
             elif isinstance(order_raw, (str, float)):
-                order_value = int(order_raw)  # type: ignore[unreachable]
+                order_value = int(order_raw)  # type: ignore[unreachable]  # type: ignore[unreachable]
 
         final_config_raw: t.ConfigurationMapping = {
             "middleware_id": middleware_id_str,
@@ -2961,7 +2962,7 @@ class FlextDispatcher(x):
         """
         # If already FlextHandlers, return success
         if isinstance(handler, FlextHandlers):
-            return r[
+            return r[  # type: ignore[unreachable]
                 FlextHandlers[
                     t.GeneralValueType,
                     t.GeneralValueType,
@@ -2970,7 +2971,7 @@ class FlextDispatcher(x):
 
         # If callable, convert to FlextHandlers
         if callable(handler):
-            return FlextDispatcher.create_handler_from_function(
+            return FlextDispatcher.create_handler_from_function(  # type: ignore[unreachable]
                 handler_func=handler,
                 mode=mode,
             )
@@ -4011,7 +4012,7 @@ class FlextDispatcher(x):
             attributes_section_raw,
         ):
             # Type narrowing: is_configuration_mapping TypeGuard narrows to ConfigurationMapping
-            return cast("t.ConfigurationMapping", attributes_section_raw)
+            return attributes_section_raw
         # Return full dump if no attributes section
         # dumped is dict from model_dump(), is ConfigurationMapping compatible
         return cast("t.ConfigurationMapping", dumped)
