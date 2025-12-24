@@ -25,7 +25,7 @@ import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import Self, cast, override
+from typing import Self, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel, ConfigDict
@@ -2474,10 +2474,7 @@ class FlextDispatcher(x):
         message_type_name = name_attr if name_attr is not None else str(message_type)
 
         # Cast handler to HandlerType for assignment
-        handler_typed: t.HandlerType = cast(
-            "t.HandlerType",
-            handler,
-        )
+        handler_typed: t.HandlerType = handler  # type: ignore[assignment]
         self._handlers[message_type_name] = handler_typed
 
         return r[t.ConfigurationMapping].ok({
@@ -2684,7 +2681,7 @@ class FlextDispatcher(x):
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
         request: t.ConfigurationDict = {
-            "handler": cast("t.GeneralValueType", handler),
+            "handler": handler,  # type: ignore[dict-item]
             "message_type": message_type_name,
             "handler_mode": handler_mode,
             "handler_config": handler_config,
@@ -2781,10 +2778,7 @@ class FlextDispatcher(x):
         # Simple registration for basic test compatibility
         if not handler_config:
             # Cast handler_func to HandlerType for assignment
-            handler_func_typed: t.HandlerType = cast(
-                "t.HandlerType",
-                handler_func,
-            )
+            handler_func_typed: t.HandlerType = handler_func  # type: ignore[assignment]
             # Access __name__ attribute safely - type objects have this attribute
             handler_key = getattr(message_type, "__name__", str(message_type))
             self._handlers[handler_key] = handler_func_typed
@@ -2800,7 +2794,7 @@ class FlextDispatcher(x):
         ) -> t.GeneralValueType:
             # handler_func is callable, accept any arguments and convert result
             # Cast msg to TMessage for handler_func call
-            msg_typed: TMessage = cast("TMessage", msg)
+            msg_typed: TMessage = msg  # type: ignore[assignment]
             result_raw = handler_func(msg_typed) if callable(handler_func) else msg
             # Convert result to t.GeneralValueType
             if isinstance(
@@ -3247,10 +3241,7 @@ class FlextDispatcher(x):
             message_class = type(message_type_str, (), {"payload": data})
             message_raw = message_class()
             # Safe cast: dynamically created class instance is compatible with t.GeneralValueType
-            message = cast(
-                "t.GeneralValueType",
-                message_raw,
-            )
+            message: t.GeneralValueType = message_raw  # type: ignore[assignment]
         else:
             # dispatch(message_object) pattern
             message = message_or_type
@@ -3532,10 +3523,7 @@ class FlextDispatcher(x):
             }
 
             # Cast config_dict to Mapping[str, t.GeneralValueType] for validate_dispatch_config
-            config_dict_mapping: t.ConfigurationMapping = cast(
-                "t.ConfigurationMapping",
-                config_dict,
-            )
+            config_dict_mapping: t.ConfigurationMapping = config_dict  # type: ignore[assignment]
             validation_result = u.Validation.validate_dispatch_config(
                 config_dict_mapping,
             )
@@ -3742,10 +3730,7 @@ class FlextDispatcher(x):
                 return str(self.data)
 
         # Cast MessageWrapper to t.GeneralValueType
-        return cast(
-            "t.GeneralValueType",
-            MessageWrapper(data=data, message_type=message_type),
-        )
+        return MessageWrapper(data=data, message_type=message_type)  # type: ignore[return-value]
 
     def _get_timeout_seconds(self, timeout_override: int | None) -> float:
         """Get timeout seconds from config or override.
@@ -3837,10 +3822,7 @@ class FlextDispatcher(x):
             if options.metadata and u.is_type(options.metadata, "mapping"):
                 # Use process() for concise conversion (transform values)
                 # Type narrowing: options.metadata is mapping, cast to Mapping[str, t.GeneralValueType]
-                metadata_mapping = cast(
-                    "Mapping[str, t.GeneralValueType]",
-                    options.metadata,
-                )
+                metadata_mapping: Mapping[str, t.GeneralValueType] = options.metadata  # type: ignore[assignment]
                 transform_result = u.Collection.process(
                     list(metadata_mapping.items()),
                     lambda kv: (kv[0], str(kv[1])),
@@ -3850,10 +3832,7 @@ class FlextDispatcher(x):
                 metadata_attrs: t.MetadataAttributeDict
                 if transform_result.is_success:
                     # Cast the result value to the expected type for iteration
-                    result_items = cast(
-                        "list[tuple[str, t.MetadataAttributeValue]]",
-                        transform_result.value,
-                    )
+                    result_items: list[tuple[str, t.MetadataAttributeValue]] = transform_result.value  # type: ignore[assignment]
                     metadata_attrs = {str(k): v for k, v in result_items}
                 else:
                     metadata_attrs = {}
@@ -3994,7 +3973,7 @@ class FlextDispatcher(x):
             return attributes_section_raw  # type: ignore[no-any-return]
         # Return full dump if no attributes section
         # dumped is dict from model_dump(), is ConfigurationMapping compatible
-        return cast("t.ConfigurationMapping", dumped)
+        return dumped  # type: ignore[return-value]
 
     @staticmethod
     def _extract_from_object_attributes(
@@ -4007,10 +3986,7 @@ class FlextDispatcher(x):
         ):
             # Type narrowing: attributes_value is dict-like, convert to ConfigurationMapping
             # ConfigurationMapping is compatible with dict and Mapping types
-            attributes_dict: t.ConfigurationMapping = cast(
-                "t.ConfigurationMapping",
-                attributes_value,
-            )
+            attributes_dict: t.ConfigurationMapping = attributes_value  # type: ignore[assignment]
             return attributes_dict
 
         # Use model_dump() directly if available - Pydantic v2 pattern
@@ -4033,7 +4009,7 @@ class FlextDispatcher(x):
                 )
                 raise TypeError(msg)
             # model_dump() returns dict, which implements Mapping[str, t.GeneralValueType]
-            return cast("t.ConfigurationMapping", dumped)
+            return dumped  # type: ignore[return-value]
 
         return None
 
@@ -4155,10 +4131,7 @@ class FlextDispatcher(x):
                                 else "unknown"
                             )
                             # Cast handler_func to expected type for register_handler
-                            handler_typed: t.GeneralValueType = cast(
-                                "t.GeneralValueType",
-                                handler_func,
-                            )
+                            handler_typed: t.GeneralValueType = handler_func  # type: ignore[assignment]
                             _ = instance.register_handler(
                                 command_type_name,
                                 handler_typed,

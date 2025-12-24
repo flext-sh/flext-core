@@ -2422,7 +2422,7 @@ class FlextUtilitiesValidation:
             # Type narrowing: condition is one of the supported types per annotation
             check_result = FlextUtilitiesValidation._guard_check_condition(
                 value,
-                condition,
+                cast("type[object] | tuple[type[object], ...] | Callable[[object], bool] | ValidatorSpec | str", condition),
                 context_name,
                 error_msg,
             )
@@ -3082,9 +3082,12 @@ class FlextUtilitiesValidation:
 
         # Handle list or fallback
         list_default_fallback = default if isinstance(default, list) else None
-        return FlextUtilitiesValidation._ensure_to_list(
-            value,
-            list_default_fallback,
+        return cast(
+            "list[T]",
+            FlextUtilitiesValidation._ensure_to_list(
+                value,
+                cast("list[t.GeneralValueType] | None", list_default_fallback),
+            ),
         )
 
     # ═══════════════════════════════════════════════════════════════════
