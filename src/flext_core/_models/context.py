@@ -401,6 +401,7 @@ class FlextModelsContext:
             Uses u.Model.normalize_to_metadata() for centralized
             normalization.
             """
+            from flext_core.utilities import u  # noqa: PLC0415
             return u.Model.normalize_to_metadata(v)
 
         @field_validator("data", mode="before")
@@ -505,6 +506,7 @@ class FlextModelsContext:
             Uses u.Model.normalize_to_metadata() for centralized
             normalization.
             """
+            from flext_core.utilities import u  # noqa: PLC0415
             return u.Model.normalize_to_metadata(v)
 
         @classmethod
