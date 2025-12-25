@@ -20,11 +20,17 @@ from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
-from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+
+# Lazy import to avoid circular dependency
+def _get_exceptions():
+    from flext_core.exceptions import FlextExceptions  # noqa: PLC0415
+    return FlextExceptions
+
 
 # Constants for event validation
 EVENT_TUPLE_SIZE = 2  # (event_name, event_data)
@@ -559,7 +565,7 @@ class FlextModelsEntity:
             for invariant in self._invariants:
                 if not invariant():
                     msg = f"Invariant violated: {invariant.__name__}"
-                    raise e.ValidationError(
+                    raise _get_exceptions().ValidationError(
                         msg,
                         error_code=c.Errors.VALIDATION_ERROR,
                     )

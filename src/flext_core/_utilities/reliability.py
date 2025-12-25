@@ -514,5 +514,117 @@ class FlextUtilitiesReliability:
         # mode == "flow"
         return lambda value: FlextUtilitiesReliability.flow(value, *funcs)
 
+    # ========================================================================
+    # Result Pipeline Methods (Railway-Oriented Programming)
+    # ========================================================================
+
+    @staticmethod
+    def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
+        """Chain multiple operations on FlextResult.
+
+        Applies each function in sequence, short-circuiting on failure.
+        Railway-oriented programming pattern for composing result-returning operations.
+
+        Args:
+            result: Initial FlextResult to chain
+            *funcs: Functions that take a value and return r[T]
+
+        Returns:
+            Final FlextResult after all operations or first failure
+
+        Example:
+            result = u.flow_result(
+                r.ok(user),
+                validate_user,
+                enrich_profile,
+                save_to_db,
+            )
+
+        """
+        current: r[T] = result
+        for func in funcs:
+            if current.is_failure:
+                return current
+            current = func(current.value)
+        return current
+
+    @staticmethod
+    def then[T, U](result: r[T], func: Callable[[T], r[U]]) -> r[U]:
+        """Chain single operation on FlextResult (monadic bind).
+
+        Also known as flatMap or bind in other languages.
+
+        Args:
+            result: FlextResult to chain
+            func: Function that takes value and returns new FlextResult
+
+        Returns:
+            Result of applying func, or original failure
+
+        Example:
+            user_result = u.then(
+                validate_input(data),
+                lambda data: create_user(data)
+            )
+
+        """
+        if result.is_failure:
+            return r[U].fail(result.error or "Unknown error")
+        return func(result.value)
+
+    @staticmethod
+    def fold_result[T, U](
+        result: r[T],
+        on_failure: Callable[[str], U],
+        on_success: Callable[[T], U],
+    ) -> U:
+        """Fold FlextResult into single value (catamorphism).
+
+        Allows handling both success and failure cases uniformly.
+
+        Args:
+            result: FlextResult to fold
+            on_failure: Handler for failure case (receives error message)
+            on_success: Handler for success case (receives value)
+
+        Returns:
+            Result of applying appropriate handler
+
+        Example:
+            response = u.fold_result(
+                user_result,
+                on_failure=lambda e: {"error": e, "status": 400},
+                on_success=lambda u: {"user": u.dict(), "status": 200},
+            )
+
+        """
+        if result.is_failure:
+            return on_failure(result.error or "Unknown error")
+        return on_success(result.value)
+
+    @staticmethod
+    def tap_result[T](result: r[T], func: Callable[[T], None]) -> r[T]:
+        """Execute side effect on success without changing result.
+
+        Useful for logging, metrics, or other side effects.
+
+        Args:
+            result: FlextResult to tap
+            func: Side effect function (return value ignored)
+
+        Returns:
+            Original result unchanged
+
+        Example:
+            result = u.tap_result(
+                user_result,
+                lambda u: logger.info("User created", user_id=u.id)
+            )
+
+        """
+        if result.is_success:
+            func(result.value)
+        return result
+
 
 __all__ = ["FlextUtilitiesReliability"]
