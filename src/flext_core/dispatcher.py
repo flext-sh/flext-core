@@ -613,7 +613,7 @@ class FlextDispatcher(x):
                         r,
                     ),
                 ):
-                    processor_result = process_result_raw
+                    processor_result = process_result_raw  # type: ignore[assignment]
                 else:
                     processor_result = str(process_result_raw)
 
@@ -704,7 +704,7 @@ class FlextDispatcher(x):
                 else:
                     # Use u.err() for unified error extraction (DSL pattern)
                     # result is r[t.GeneralValueType] which satisfies p.Result protocol
-                    error_msg = u.err(
+                    error_msg = u.err(  # type: ignore[arg-type]
                         result,
                         default="Unknown error in processor",
                     )
@@ -769,7 +769,7 @@ class FlextDispatcher(x):
                         # Use u.err() for unified error extraction (DSL pattern)
                         # result is r[t.GeneralValueType] which satisfies p.Result protocol
                         error_msg = u.err(
-                            result,
+                            result,  # type: ignore[arg-type]
                             default="Unknown error in processor",
                         )
                         return r[list[t.GeneralValueType]].fail(
@@ -3964,7 +3964,7 @@ class FlextDispatcher(x):
             attributes_section_raw,
         ):
             # Type narrowing: is_configuration_mapping TypeGuard narrows to ConfigurationMapping
-            return attributes_section_raw
+            return attributes_section_raw  # type: ignore[no-any-return]
         # Return full dump if no attributes section
         # dumped is dict from model_dump(), is ConfigurationMapping compatible
         return dumped
@@ -3980,7 +3980,7 @@ class FlextDispatcher(x):
         ):
             # Type narrowing: attributes_value is dict-like, convert to ConfigurationMapping
             # ConfigurationMapping is compatible with dict and Mapping types
-            attributes_dict: t.ConfigurationMapping = attributes_value
+            attributes_dict: t.ConfigurationMapping = attributes_value  # type: ignore[assignment]
             return attributes_dict
 
         # Use model_dump() directly if available - Pydantic v2 pattern
