@@ -154,7 +154,7 @@ class FlextUtilitiesMapper:
         """
         value = ops.get(key)
         if callable(value):
-            return value  # type: ignore[unreachable]
+            return value
         return None
 
     @property
@@ -1490,7 +1490,7 @@ class FlextUtilitiesMapper:
         convert_type = ops["convert"]
         if not isinstance(convert_type, type):
             return current
-        convert_default = ops.get("convert_default", convert_type())  # type: ignore[unreachable]
+        convert_default = ops.get("convert_default", convert_type())
         try:
             return convert_type(current)
         except (ValueError, TypeError):

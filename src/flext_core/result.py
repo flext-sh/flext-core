@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Self, TypeIs, TypeVar, cast
+from typing import Self, TypeIs, TypeVar
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -209,24 +209,15 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                                 IOFailure,
                             ),
                         ):
-                            unwrapped_value = cast(
-                                "t.GeneralValueType",
-                                unwrapped_value_raw,
-                            )
+                            unwrapped_value: t.GeneralValueType = unwrapped_value_raw  # type: ignore[assignment]
                         else:
-                            unwrapped_value = cast(
-                                "t.GeneralValueType",
-                                str(unwrapped_value_raw),
-                            )
+                            unwrapped_value = str(unwrapped_value_raw)  # type: ignore[assignment]
                         return FlextResult[t.GeneralValueType].ok(unwrapped_value)
                     except Exception as unwrap_error:  # pragma: no cover
                         # Defensive exception handling - hard to test without complex mocking
                         # since IOSuccess is immutable
-                        return cast(
-                            "FlextResult[t.GeneralValueType]",
-                            FlextResult.fail(
-                                f"Error processing IO result: {unwrap_error}",
-                            ),
+                        return FlextResult[t.GeneralValueType].fail(  # type: ignore[return-value]
+                            f"Error processing IO result: {unwrap_error}",
                         )
                 if isinstance(io_result, IOFailure):
                     # IOFailure stores error in _inner_value attribute
@@ -389,7 +380,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         if self.is_success:
             result = func(self.value)
-            return cast("FlextResult[U]", result)
+            return FlextResult[U](result)
         return FlextResult[U](Failure(self.error or ""))
 
     def and_then[U](
@@ -480,16 +471,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             fail_result: FlextResult[str] = cls.fail(
                 f"Type {model} is not a BaseModel subclass",
             )
-            return cast("FlextResult[T]", fail_result)
+            return fail_result  # type: ignore[return-value]
         # After issubclass check, model is guaranteed to be BaseModel subclass
-        # Cast to type[BaseModel] to help type checker understand model_validate is available
-        model_typed: type[BaseModel] = cast("type[BaseModel]", model)
+        # Type narrowing: model is now known to be BaseModel subclass
+        model_typed: type[BaseModel] = model  # type: ignore[assignment]
         try:
-            validated: T = cast("T", model_typed.model_validate(data))
-            # Cast validated to T_co to match FlextResult[T_co] signature
-            validated_co: T_co = cast("T_co", validated)
-            result = cls.ok(validated_co)
-            return cast("FlextResult[T]", result)
+            validated = model_typed.model_validate(data)
+            # T_co is covariant, T is subtype compatible
+            return cls.ok(validated)
         except Exception as e:
             # Extract error message from Pydantic ValidationError if available
             if hasattr(e, "errors") and callable(getattr(e, "errors", None)):
@@ -498,9 +487,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 )
             else:
                 error_msg = str(e)
-            # Cast to help type checker understand that T_co == T in this context
-            fail_result = cls.fail(f"Validation failed: {error_msg}")
-            return cast("FlextResult[T]", fail_result)
+            # RuntimeResult[T] returns FlextResult[T] via covariance
+            return cls.fail(f"Validation failed: {error_msg}")
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
         """Convert successful value to Pydantic model.
@@ -557,13 +545,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         if self.is_failure:
             transformed_error = func(self.error or "")
-            return cast(
-                "Self",
-                type(self).fail(
-                    transformed_error,
-                    error_code=self.error_code,
-                    error_data=self.error_data,
-                ),
+            return type(self).fail(  # type: ignore[return-value]
+                transformed_error,
+                error_code=self.error_code,
+                error_data=self.error_data,
             )
         return self
 
@@ -576,8 +561,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         Overrides RuntimeResult.lash to return FlextResult for type consistency.
         """
         if self.is_failure:
-            result = func(self.error or "")
-            return cast("FlextResult[T_co]", result)
+            return func(self.error or "")
         return self
 
     def to_io(self) -> IO[T_co]:

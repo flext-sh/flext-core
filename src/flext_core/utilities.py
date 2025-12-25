@@ -1511,7 +1511,7 @@ class FlextUtilities:
             # Handle special case for object type which doesn't accept arguments
             if target_type is object:
                 return value
-            return target_type(value)  # type: ignore[call-arg]
+            return target_type(value)
         except (TypeError, ValueError):
             return default
 

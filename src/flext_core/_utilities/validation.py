@@ -2422,7 +2422,10 @@ class FlextUtilitiesValidation:
             # Type narrowing: condition is one of the supported types per annotation
             check_result = FlextUtilitiesValidation._guard_check_condition(
                 value,
-                cast("type[object] | tuple[type[object], ...] | Callable[[object], bool] | ValidatorSpec | str", condition),
+                cast(
+                    "type[object] | tuple[type[object], ...] | Callable[[object], bool] | ValidatorSpec | str",
+                    condition,
+                ),
                 context_name,
                 error_msg,
             )
@@ -2559,10 +2562,13 @@ class FlextUtilitiesValidation:
             items_dict: dict[str, T]
             if isinstance(items, r):
                 # Cast FlextResult to protocol type for ResultHelpers
-                items_dict = rh.val(
-                    cast("p.Result[dict[str, T]]", items),
-                    default={},
-                ) or {}
+                items_dict = (
+                    rh.val(
+                        cast("p.Result[dict[str, T]]", items),
+                        default={},
+                    )
+                    or {}
+                )
             else:
                 items_dict = items
 
