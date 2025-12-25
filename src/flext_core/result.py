@@ -1,8 +1,7 @@
-"""Railway-oriented result type for dispatcher-driven applications.
+"""Type-safe result type for operations.
 
-FlextResult wraps outcomes with explicit success/failure states so dispatcher
-handlers, services, and middleware can compose operations without exceptions.
-It underpins CQRS flows with monadic helpers for predictable, typed pipelines.
+Provides success/failure handling with monadic helpers for composing
+operations without exceptions.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,17 +17,15 @@ from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
 
-from flext_core.exceptions import FlextExceptions
+# Removed circular import - exceptions cannot import utilities
 from flext_core.protocols import FlextProtocols
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import U, t
 
-# Type parameter defaults (PEP 696) for better type inference
 T = TypeVar("T")
-E = TypeVar("E", default=str)  # Error type defaults to str
+E = TypeVar("E", default=str)
 
 
-# Type narrowing functions using Python 3.13 TypeIs (PEP 742)
 def is_success_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:
     """Type guard that narrows to successful FlextResult."""
     return result.is_success and result.value is not None
@@ -40,27 +37,12 @@ def is_failure_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
-    """Type-safe railway result with monadic helpers for CQRS pipelines.
+    """Type-safe result with monadic helpers for operation composition.
 
-    Extends RuntimeResult with advanced functionality:
-    - Integration with returns library (Result[T, str], Success, Failure)
-    - Pydantic validation (from_validation, to_model)
-    - Conversions (to_maybe, from_maybe, to_io, to_io_result, from_io_result)
-    - Sequence operations (traverse, accumulate_errors, parallel_map)
-    - Resource management (with_resource)
-    - Nested operation groups (Monad, Convert, Operations)
-
-    Use FlextResult to compose dispatcher handlers and domain services without
-    raising exceptions, while preserving optional error codes and metadata for
-    structured logging.
-
-    TODO(docs/FLEXT_SERVICE_ARCHITECTURE.md#smart-resolution): expose an
-    explicit ``and_then`` helper so the implementation matches the "Smart
-    Resolution" flow described in the documentation. At the moment
-    ``flat_map`` covers the scenario with slightly different syntax.
+    Provides success/failure handling with various conversion and operation
+    methods for composing operations without exceptions.
     """
 
-    # Instance attribute type annotation for lazy Result creation
     _result: Result[T_co, str] | None
 
     def __init__(
@@ -168,7 +150,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             if result.is_success:
                 return IO(result.value)
             msg = "Cannot convert failure to IO"
-            raise FlextExceptions.ValidationError(msg)
+            raise ValueError(msg)
 
         @staticmethod
         def from_io_result(
@@ -399,16 +381,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         Returns:
             FlextResult[U]: New result from the function application.
 
-        Example:
-            >>> result = FlextResult.ok(5)
-            >>> result.and_then(lambda x: FlextResult.ok(x * 2))
-            FlextResult.ok(10)
-
         """
         return self.flat_map(func)
 
-    # fold, tap_error, map_error, filter are inherited from RuntimeResult
-    # But we override recover, tap, and flow_through to return FlextResult instead of RuntimeResult
     def recover(self, func: Callable[[str], T_co]) -> FlextResult[T_co]:
         """Recover from failure with fallback value.
 
@@ -460,11 +435,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             FlextResult[T]: Success with validated model, or failure with
                 validation errors.
 
-        Example:
-            >>> result = FlextResult.from_validation({"name": "John"}, UserModel)
-            >>> if result.is_success:
-            ...     user = result.value
-
         """
         # Check if model is a BaseModel subclass before calling model_validate
         if not issubclass(model, BaseModel):
@@ -503,10 +473,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         Returns:
             FlextResult[U]: Success with converted model, or failure with
                 conversion errors.
-
-        Example:
-            >>> result = FlextResult.ok({"name": "John", "age": 30})
-            >>> user_result = result.to_model(UserModel)
 
         """
         if self.is_failure:

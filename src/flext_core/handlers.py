@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core.constants import c
 from flext_core.exceptions import e
@@ -266,7 +266,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 try:
                     # Type assertion: Assume message is compatible with handler function
                     # Handler functions are user-provided and may accept various types
-                    result = self._handler_fn(message)
+                    result = self._handler_fn(cast("t.GeneralValueType", message))
                     # If result is already r, return it directly
                     if isinstance(result, r):
                         return result
@@ -875,7 +875,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     )
                     # Type assertion: callable(func) confirms it's a function
                     # Type narrowing: func is callable with handler decorator
-                    handler_func: t.HandlerCallable = func  # type: ignore[assignment]
+                    handler_func: t.HandlerCallable = func
                     handlers.append((name, handler_func, config))
 
             # Sort by priority (descending), then by name for stability

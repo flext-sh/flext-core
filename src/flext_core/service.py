@@ -131,7 +131,7 @@ class FlextService[TDomainResult](
                 raise TypeError(msg)
             # Type narrowing: result_raw is r, and execute() signature guarantees r[TDomainResult]
             # isinstance() check confirms type but doesn't preserve generic type parameter
-            result: r[TDomainResult] = result_raw  # type: ignore[assignment]
+            result: r[TDomainResult] = result_raw
             # For auto_execute=True, return the result value directly (V2 Auto pattern)
             # This allows: user = AutoGetUserService(user_id="123") to get User object
             if result.is_failure:

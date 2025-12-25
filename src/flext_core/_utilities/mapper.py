@@ -2542,6 +2542,142 @@ class FlextUtilitiesMapper:
 
         return True
 
+    @staticmethod
+    def process_context_data(
+        primary_data: t.ConfigurationMapping | object | None = None,
+        secondary_data: t.ConfigurationMapping | object | None = None,
+        *,
+        transformer: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
+        field_overrides: t.ConfigurationDict | None = None,
+        merge_strategy: str = "merge",
+        filter_keys: set[str] | None = None,
+        exclude_keys: set[str] | None = None,
+    ) -> t.ConfigurationDict:
+        """Process and merge contextual data with flexible transformation options.
+
+        Generic utility for processing context data across the FLEXT ecosystem.
+        Handles conversion, transformation, filtering, and merging of contextual information.
+
+        **Usage Examples:**
+        ```python
+        # Exception context processing
+        context = FlextUtilitiesMapper.process_context_data(
+            primary_data=user_context,
+            secondary_data=extra_kwargs,
+            field_overrides={"error_type": "ValidationError"},
+            transformer=FlextRuntime.normalize_to_metadata_value,
+        )
+
+        # Configuration merging
+        config = FlextUtilitiesMapper.process_context_data(
+            primary_data=base_config,
+            secondary_data=user_overrides,
+            merge_strategy="deep_merge",
+        )
+
+        # API request processing
+        request_data = FlextUtilitiesMapper.process_context_data(
+            primary_data=request_body,
+            secondary_data=query_params,
+            filter_keys={"password", "secret"},
+            transformer=str,
+        )
+        ```
+
+        Args:
+            primary_data: Main data source (dict, object, or None)
+            secondary_data: Additional data to merge (dict, object, or None)
+            transformer: Function to transform all values (default: identity)
+            field_overrides: Specific field values to override/add
+            merge_strategy: How to merge data ("merge", "primary_only", "secondary_only")
+            filter_keys: Only include these keys if specified
+            exclude_keys: Exclude these keys from result
+
+        Returns:
+            Processed and merged configuration dictionary
+
+        """
+        # Default transformer (identity function)
+        if transformer is None:
+
+            def identity_transformer(x: t.GeneralValueType) -> t.GeneralValueType:
+                return x
+
+            transformer = identity_transformer
+
+        result: t.ConfigurationDict = {}
+
+        # Process primary data
+        if primary_data is not None:
+            primary_dict = FlextUtilitiesMapper.to_dict(primary_data)
+            transformed_primary = FlextUtilitiesMapper.transform_values(
+                primary_dict,
+                transformer,
+            )
+            result.update(transformed_primary)
+
+        # Process secondary data based on merge strategy
+        if secondary_data is not None and merge_strategy != "primary_only":
+            secondary_dict = FlextUtilitiesMapper.to_dict(secondary_data)
+            transformed_secondary = FlextUtilitiesMapper.transform_values(
+                secondary_dict,
+                transformer,
+            )
+
+            if merge_strategy == "secondary_only":
+                result = transformed_secondary
+            elif merge_strategy == "merge":
+                result.update(transformed_secondary)
+            # For other strategies, secondary data is ignored
+
+        # Apply field overrides
+        if field_overrides:
+            for key, value in field_overrides.items():
+                result[key] = transformer(value) if callable(transformer) else value
+
+        # Apply filtering
+        if filter_keys:
+            result = FlextUtilitiesMapper.filter_dict(
+                result,
+                lambda k, _v: k in filter_keys,
+            )
+
+        if exclude_keys:
+            result = FlextUtilitiesMapper.filter_dict(
+                result,
+                lambda k, _v: k not in exclude_keys,
+            )
+
+        return result
+
+    @staticmethod
+    def normalize_context_values(
+        context: t.ConfigurationMapping | None,
+        extra_kwargs: t.ConfigurationMapping,
+        **specific_fields: t.MetadataAttributeValue,
+    ) -> t.MetadataAttributeDict:
+        """Normalize and merge context values for exception handling.
+
+        Convenience method for exception context processing.
+        Uses process_context_data with metadata normalization.
+
+        Args:
+            context: Optional context mapping to normalize
+            extra_kwargs: Additional kwargs to normalize and merge
+            **specific_fields: Specific fields to add (field, value, config_key, etc.)
+
+        Returns:
+            Normalized metadata attribute dict
+
+        """
+        return FlextUtilitiesMapper.process_context_data(
+            primary_data=context,
+            secondary_data=extra_kwargs,
+            transformer=FlextRuntime.normalize_to_metadata_value,
+            field_overrides=specific_fields,
+            merge_strategy="merge",
+        )
+
 
 __all__ = [
     "FlextUtilitiesMapper",

@@ -574,7 +574,7 @@ class FlextModelsContext:
             FlextModelsContext.ContextExport.check_json_serializable(v)
             # Type assertion: runtime validation ensures correct type
             # is_dict_like() confirms v is Mapping - dict() constructor accepts it
-            return dict(v)  # type: ignore[call-overload]
+            return dict(v)
 
         @computed_field
         def total_data_items(self) -> int:
@@ -642,7 +642,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(v):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)  # type: ignore[call-overload]
+                return dict(v)
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -661,7 +661,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(v):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)  # type: ignore[call-overload]
+                return dict(v)
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -732,7 +732,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(v):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)  # type: ignore[call-overload]
+                return dict(v)
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -840,7 +840,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(v):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)  # type: ignore[call-overload]
+                return dict(v)
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:

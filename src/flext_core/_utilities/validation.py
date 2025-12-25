@@ -3079,7 +3079,7 @@ class FlextUtilitiesValidation:
                 "dict[str, T]",
                 FlextUtilitiesValidation._ensure_to_dict(
                     value,
-                    dict_default_typed,  # type: ignore[arg-type]
+                        cast("list[t.GeneralValueType] | None", dict_default_typed),
                 ),
             )
 

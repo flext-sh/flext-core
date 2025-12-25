@@ -1,14 +1,10 @@
-"""Type aliases and generics used across dispatcher-ready components.
+"""Type aliases and generics for the FLEXT ecosystem.
 
-``t`` centralizes ``TypeVar`` declarations and nested namespaces of
-aliases for CQRS messages, handlers, utilities, logging, and validation. The
-module keeps typing consistent for dispatcher pipelines, services, and examples
-without importing higher-layer implementations while retaining compatibility
-with legacy bus naming where necessary.
+Centralizes TypeVar declarations and type aliases for CQRS messages, handlers,
+utilities, logging, and validation across the FLEXT ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations
