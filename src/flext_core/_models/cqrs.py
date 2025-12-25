@@ -16,13 +16,11 @@ from typing import Annotated, Self
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core._utilities.parser import FlextUtilitiesParser
 from flext_core.constants import c
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextModelsCqrs:

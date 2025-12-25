@@ -600,7 +600,7 @@ class FlextModelsCollections:
             # Create new instance from normalized dict
             return cls(**normalized_result)
 
-    class Config(FlextModelsBase.ArbitraryTypesModel):
+    class Config(FlextModelsBase.ArbitraryTypesModel):  # noqa: PLW1641
         """Base for configuration models - mutable Pydantic v2 model.
 
         Pydantic v2 models are not hashable by default when not frozen.

@@ -1553,6 +1553,130 @@ class FlextUtilities:
             result *= v
         return result
 
+    # =========================================================
+    # NEW: Collection convenience aliases (Phase 5)
+    # =========================================================
+
+    @staticmethod
+    def first[T_item](
+        items: Sequence[T_item],
+        predicate: Callable[[T_item], bool] | None = None,
+        default: T_item | None = None,
+    ) -> T_item | None:
+        """Get first item (optionally matching predicate) - delegates to Collection.first."""
+        return FlextUtilitiesCollection.first(items, predicate, default)
+
+    @staticmethod
+    def last[T_item](
+        items: Sequence[T_item],
+        predicate: Callable[[T_item], bool] | None = None,
+        default: T_item | None = None,
+    ) -> T_item | None:
+        """Get last item (optionally matching predicate) - delegates to Collection.last."""
+        return FlextUtilitiesCollection.last(items, predicate, default)
+
+    @staticmethod
+    def group_by[T_item, K](
+        items: Sequence[T_item],
+        key_func: Callable[[T_item], K],
+    ) -> dict[K, list[T_item]]:
+        """Group items by key function - delegates to Collection.group_by."""
+        return FlextUtilitiesCollection.group_by(items, key_func)
+
+    @staticmethod
+    def unique[T_item](
+        items: Sequence[T_item],
+        key_func: Callable[[T_item], object] | None = None,
+    ) -> list[T_item]:
+        """Get unique items preserving order - delegates to Collection.unique."""
+        return FlextUtilitiesCollection.unique(items, key_func)
+
+    @staticmethod
+    def partition[T_item](
+        items: Sequence[T_item],
+        predicate: Callable[[T_item], bool],
+    ) -> tuple[list[T_item], list[T_item]]:
+        """Split items by predicate: (matches, non-matches) - delegates to Collection.partition."""
+        return FlextUtilitiesCollection.partition(items, predicate)
+
+    @staticmethod
+    def flatten[T_item](items: Sequence[Sequence[T_item]]) -> list[T_item]:
+        """Flatten nested sequences - delegates to Collection.flatten."""
+        return FlextUtilitiesCollection.flatten(items)
+
+    # =========================================================
+    # NEW: Mapper convenience aliases (Phase 6)
+    # =========================================================
+
+    @staticmethod
+    def omit[T](data: Mapping[str, T], *keys: str) -> dict[str, T]:
+        """Omit specific keys from mapping - delegates to Mapper.omit."""
+        return FlextUtilitiesMapper.omit(data, *keys)
+
+    @staticmethod
+    def pluck(
+        items: Sequence[Mapping[str, object]],
+        key: str,
+        default: object | None = None,
+    ) -> list[object | None]:
+        """Extract single key from sequence of mappings - delegates to Mapper.pluck."""
+        return FlextUtilitiesMapper.pluck(items, key, default)
+
+    @staticmethod
+    def key_by[T, K](
+        items: Sequence[T],
+        key_func: Callable[[T], K],
+    ) -> dict[K, T]:
+        """Create dict keyed by function result - delegates to Mapper.key_by."""
+        return FlextUtilitiesMapper.key_by(items, key_func)
+
+    # =========================================================
+    # NEW: Pipeline/Reliability convenience aliases (Phase 3)
+    # =========================================================
+
+    @staticmethod
+    def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
+        """Chain multiple operations on FlextResult - delegates to Reliability.flow_result."""
+        return FlextUtilitiesReliability.flow_result(result, *funcs)
+
+    @staticmethod
+    def then[T, U](result: r[T], func: Callable[[T], r[U]]) -> r[U]:
+        """Chain single operation on FlextResult (monadic bind) - delegates to Reliability.then."""
+        return FlextUtilitiesReliability.then(result, func)
+
+    @staticmethod
+    def fold_result[T, U](
+        result: r[T],
+        on_failure: Callable[[str], U],
+        on_success: Callable[[T], U],
+    ) -> U:
+        """Fold FlextResult into single value - delegates to Reliability.fold_result."""
+        return FlextUtilitiesReliability.fold_result(result, on_failure, on_success)
+
+    @staticmethod
+    def tap_result[T](result: r[T], func: Callable[[T], None]) -> r[T]:
+        """Execute side effect on success without changing result - delegates to Reliability.tap_result."""
+        return FlextUtilitiesReliability.tap_result(result, func)
+
+    # =========================================================
+    # NEW: Validation convenience aliases (Phase 4)
+    # =========================================================
+
+    @staticmethod
+    def validate_with(value: object, *validators: ValidatorSpec) -> r[bool]:
+        """Validate value against multiple validators - delegates to Validation.validate_with_validators."""
+        return FlextUtilitiesValidation.validate_with_validators(value, *validators)
+
+    @staticmethod
+    def check_all(value: object, *validators: ValidatorSpec) -> bool:
+        """Check if value passes all validators - delegates to Validation.check_all_validators."""
+        return FlextUtilitiesValidation.check_all_validators(value, *validators)
+
+    @staticmethod
+    def check_any(value: object, *validators: ValidatorSpec) -> bool:
+        """Check if value passes any validator - delegates to Validation.check_any_validator."""
+        return FlextUtilitiesValidation.check_any_validator(value, *validators)
+
 
 u = FlextUtilities  # Runtime alias (not TypeAlias to avoid PYI042)
 u_core = FlextUtilities  # Runtime alias (not TypeAlias to avoid PYI042)

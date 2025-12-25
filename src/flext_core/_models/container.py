@@ -18,22 +18,19 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.typings import t
-
-# NOTE: models.py cannot import utilities - use direct imports from _utilities/* instead
+from flext_core.utilities import u
 
 
 def _generate_datetime_utc() -> datetime:
     """Generate UTC datetime."""
-    return FlextUtilitiesGenerators.generate_datetime_utc()
+    return u.Generators.generate_datetime_utc()
 
 
 def _normalize_to_metadata(v: t.GeneralValueType) -> FlextModelsBase.Metadata:
     """Normalize value to Metadata."""
-    return FlextUtilitiesModel.normalize_to_metadata(v)
+    return u.Model.normalize_to_metadata(v)
 
 
 class FlextModelsContainer:
@@ -91,8 +88,7 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
-            normalization.
+            Uses u.Model.normalize_to_metadata() for centralized normalization.
             """
             return _normalize_to_metadata(v)
 
@@ -147,8 +143,7 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
-            normalization.
+            Uses u.Model.normalize_to_metadata() for centralized normalization.
             """
             return _normalize_to_metadata(v)
 
