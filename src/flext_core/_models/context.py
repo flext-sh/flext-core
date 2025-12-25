@@ -17,7 +17,6 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validat
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -399,10 +398,10 @@ class FlextModelsContext:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
+            Uses u.Model.normalize_to_metadata() for centralized
             normalization.
             """
-            return FlextUtilitiesModel.normalize_to_metadata(v)
+            return u.Model.normalize_to_metadata(v)
 
         @field_validator("data", mode="before")
         @classmethod
@@ -503,10 +502,10 @@ class FlextModelsContext:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized
+            Uses u.Model.normalize_to_metadata() for centralized
             normalization.
             """
-            return FlextUtilitiesModel.normalize_to_metadata(v)
+            return u.Model.normalize_to_metadata(v)
 
         @classmethod
         def check_json_serializable(

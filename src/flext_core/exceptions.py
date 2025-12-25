@@ -15,12 +15,11 @@ from collections.abc import Mapping
 from typing import ClassVar, cast
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+from flext_core.utilities import u
 
 _Metadata = FlextModelsBase.Metadata
 
@@ -79,13 +78,13 @@ class FlextExceptions:
 
             # Use helper functions to merge context and normalize extra_kwargs
             if context:
-                context_dict = FlextUtilitiesMapper.to_dict(context)
+                context_dict = u.Mapper.to_dict(context)
                 # Type narrowing: context_dict is dict[str, t.GeneralValueType]
                 # MetadataAttributeDict accepts t.GeneralValueType values
                 final_kwargs.update(context_dict)
             if extra_kwargs:
-                extra_kwargs_dict = FlextUtilitiesMapper.to_dict(extra_kwargs)
-                normalized_extra = FlextUtilitiesMapper.transform_values(
+                extra_kwargs_dict = u.Mapper.to_dict(extra_kwargs)
+                normalized_extra = u.Mapper.transform_values(
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
@@ -136,8 +135,8 @@ class FlextExceptions:
 
             # Add metadata attributes using mapper (only keys not in result)
             if self.metadata and self.metadata.attributes:
-                attrs_dict = FlextUtilitiesMapper.to_dict(self.metadata.attributes)
-                filtered_attrs = FlextUtilitiesMapper.filter_dict(
+                attrs_dict = u.Mapper.to_dict(self.metadata.attributes)
+                filtered_attrs = u.Mapper.filter_dict(
                     attrs_dict, lambda k, _v: k not in result
                 )
                 result.update(filtered_attrs)
@@ -153,8 +152,8 @@ class FlextExceptions:
             merged_attrs: t.ConfigurationDict = {}
 
             # Use mapper to normalize metadata_dict values
-            metadata_dict_typed = FlextUtilitiesMapper.to_dict(metadata_dict)
-            normalized_metadata = FlextUtilitiesMapper.transform_values(
+            metadata_dict_typed = u.Mapper.to_dict(metadata_dict)
+            normalized_metadata = u.Mapper.transform_values(
                 metadata_dict_typed,
                 FlextRuntime.normalize_to_metadata_value,
             )
@@ -162,8 +161,8 @@ class FlextExceptions:
 
             # Normalize merged_kwargs values using mapper
             if merged_kwargs:
-                merged_kwargs_typed = FlextUtilitiesMapper.to_dict(merged_kwargs)
-                normalized_kwargs = FlextUtilitiesMapper.transform_values(
+                merged_kwargs_typed = u.Mapper.to_dict(merged_kwargs)
+                normalized_kwargs = u.Mapper.transform_values(
                     merged_kwargs_typed,
                     FlextRuntime.normalize_to_metadata_value,
                 )
@@ -193,8 +192,8 @@ class FlextExceptions:
                 # Normalize attributes to t.GeneralValueType for Metadata
                 # Use mapper to normalize merged_kwargs
                 if merged_kwargs:
-                    merged_kwargs_dict = FlextUtilitiesMapper.to_dict(merged_kwargs)
-                    normalized_attrs = FlextUtilitiesMapper.transform_values(
+                    merged_kwargs_dict = u.Mapper.to_dict(merged_kwargs)
+                    normalized_attrs = u.Mapper.transform_values(
                         merged_kwargs_dict,
                         FlextRuntime.normalize_to_metadata_value,
                     )
@@ -259,7 +258,7 @@ class FlextExceptions:
             # Import mapper to use context normalization
 
             # Use automated context normalization
-            validation_context = FlextUtilitiesMapper.normalize_context_values(
+            validation_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
                 field=field,
@@ -298,7 +297,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Use automated context normalization
-            config_context = FlextUtilitiesMapper.normalize_context_values(
+            config_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
                 config_key=config_key,
@@ -335,7 +334,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Use automated context normalization
-            conn_context = FlextUtilitiesMapper.normalize_context_values(
+            conn_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
             )
@@ -349,9 +348,9 @@ class FlextExceptions:
                 if preserved_corr_id is not None
                 else None,
             )
-            self.host = FlextUtilitiesMapper.get(conn_context, "host")
-            self.port = FlextUtilitiesMapper.get(conn_context, "port")
-            self.timeout = FlextUtilitiesMapper.get(conn_context, "timeout")
+            self.host = u.Mapper.get(conn_context, "host")
+            self.port = u.Mapper.get(conn_context, "port")
+            self.timeout = u.Mapper.get(conn_context, "timeout")
 
     class TimeoutError(BaseError):
         """Exception raised for operation timeout errors."""
@@ -373,7 +372,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Use automated context normalization
-            timeout_context = FlextUtilitiesMapper.normalize_context_values(
+            timeout_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
                 timeout_seconds=timeout_seconds,
@@ -412,7 +411,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Use automated context normalization
-            auth_context = FlextUtilitiesMapper.normalize_context_values(
+            auth_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
                 auth_method=auth_method,
@@ -449,7 +448,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Use automated context normalization
-            authz_context = FlextUtilitiesMapper.normalize_context_values(
+            authz_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
             )
@@ -465,9 +464,9 @@ class FlextExceptions:
                     str(preserved_corr_id) if preserved_corr_id is not None else None
                 ),
             )
-            self.user_id = FlextUtilitiesMapper.get(authz_context, "user_id")
-            self.resource = FlextUtilitiesMapper.get(authz_context, "resource")
-            self.permission = FlextUtilitiesMapper.get(authz_context, "permission")
+            self.user_id = u.Mapper.get(authz_context, "user_id")
+            self.resource = u.Mapper.get(authz_context, "resource")
+            self.permission = u.Mapper.get(authz_context, "permission")
 
     class NotFoundError(BaseError):
         """Exception raised when a resource is not found."""
@@ -532,7 +531,7 @@ class FlextExceptions:
             valid_extra: t.MetadataAttributeDict = {
                 k: FlextRuntime.normalize_to_metadata_value(v)
                 for k, v in extra_kwargs.items()
-                if FlextUtilitiesGuards.is_general_value_type(v)
+                if u.Guards.is_general_value_type(v)
             }
             notfound_kwargs.update(valid_extra)
 
@@ -548,7 +547,7 @@ class FlextExceptions:
                     k: v
                     for k, v in context.items()
                     if k not in excluded_keys
-                    and FlextUtilitiesGuards.is_general_value_type(v)
+                    and u.Guards.is_general_value_type(v)
                 }
                 notfound_kwargs.update(valid_context)
 
@@ -593,8 +592,8 @@ class FlextExceptions:
 
             # Use mapper to normalize extra_kwargs
             if extra_kwargs:
-                extra_kwargs_dict = FlextUtilitiesMapper.to_dict(extra_kwargs)
-                normalized_extra = FlextUtilitiesMapper.transform_values(
+                extra_kwargs_dict = u.Mapper.to_dict(extra_kwargs)
+                normalized_extra = u.Mapper.transform_values(
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
@@ -641,8 +640,8 @@ class FlextExceptions:
                 conflict_context.update(context)
             # Use mapper to normalize extra_kwargs
             if extra_kwargs:
-                extra_kwargs_dict = FlextUtilitiesMapper.to_dict(extra_kwargs)
-                normalized_extra = FlextUtilitiesMapper.transform_values(
+                extra_kwargs_dict = u.Mapper.to_dict(extra_kwargs)
+                normalized_extra = u.Mapper.transform_values(
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
@@ -659,11 +658,11 @@ class FlextExceptions:
                     str(preserved_corr_id) if preserved_corr_id is not None else None
                 ),
             )
-            self.resource_type = FlextUtilitiesMapper.get(
+            self.resource_type = u.Mapper.get(
                 conflict_context, "resource_type"
             )
-            self.resource_id = FlextUtilitiesMapper.get(conflict_context, "resource_id")
-            self.conflict_reason = FlextUtilitiesMapper.get(
+            self.resource_id = u.Mapper.get(conflict_context, "resource_id")
+            self.conflict_reason = u.Mapper.get(
                 conflict_context, "conflict_reason"
             )
 
@@ -689,8 +688,8 @@ class FlextExceptions:
                 rate_limit_context.update(context)
             # Use mapper to normalize extra_kwargs
             if extra_kwargs:
-                extra_kwargs_dict = FlextUtilitiesMapper.to_dict(extra_kwargs)
-                normalized_extra = FlextUtilitiesMapper.transform_values(
+                extra_kwargs_dict = u.Mapper.to_dict(extra_kwargs)
+                normalized_extra = u.Mapper.transform_values(
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
@@ -709,12 +708,12 @@ class FlextExceptions:
             )
             limit_val = rate_limit_context.get("limit")
             self.limit = (
-                limit_val if FlextUtilitiesGuards.is_type(limit_val, int) else None
+                limit_val if u.Guards.is_type(limit_val, int) else None
             )
             window_seconds_val = rate_limit_context.get("window_seconds")
             self.window_seconds = (
                 window_seconds_val
-                if FlextUtilitiesGuards.is_type(window_seconds_val, int)
+                if u.Guards.is_type(window_seconds_val, int)
                 else None
             )
             retry_after_val = rate_limit_context.get("retry_after")
@@ -744,8 +743,8 @@ class FlextExceptions:
                 cb_context.update(context)
             # Use mapper to normalize extra_kwargs
             if extra_kwargs:
-                extra_kwargs_dict = FlextUtilitiesMapper.to_dict(extra_kwargs)
-                normalized_extra = FlextUtilitiesMapper.transform_values(
+                extra_kwargs_dict = u.Mapper.to_dict(extra_kwargs)
+                normalized_extra = u.Mapper.transform_values(
                     extra_kwargs_dict,
                     FlextRuntime.normalize_to_metadata_value,
                 )
@@ -765,13 +764,13 @@ class FlextExceptions:
             service_name_val = cb_context.get("service_name")
             self.service_name = (
                 service_name_val
-                if FlextUtilitiesGuards.is_type(service_name_val, str)
+                if u.Guards.is_type(service_name_val, str)
                 else None
             )
             failure_count_val = cb_context.get("failure_count")
             self.failure_count = (
                 failure_count_val
-                if FlextUtilitiesGuards.is_type(failure_count_val, int)
+                if u.Guards.is_type(failure_count_val, int)
                 else None
             )
             reset_timeout_val = cb_context.get("reset_timeout")
@@ -811,7 +810,7 @@ class FlextExceptions:
             if type_value is None and key in extra_kwargs:
                 type_raw = extra_kwargs.pop(key)
                 if isinstance(type_raw, str):
-                    result = FlextUtilitiesMapper.get(type_map, type_raw)
+                    result = u.Mapper.get(type_map, type_raw)
                     return cast("type[object] | None", result)
                 # Support type objects directly (defensive programming for runtime type objects)
                 # Cast to object first to handle any type that might be passed
@@ -822,7 +821,7 @@ class FlextExceptions:
             # Handle case where type is passed as string in named arg
             if isinstance(type_value, str):
                 # type_map.get returns type | None
-                result = FlextUtilitiesMapper.get(type_map, type_value)
+                result = u.Mapper.get(type_map, type_value)
                 return cast("type[object] | None", result)
             # type_value is already type | None at this point (str case handled above)
             if isinstance(type_value, type):
@@ -838,7 +837,7 @@ class FlextExceptions:
         ) -> t.MetadataAttributeDict:
             """Build type context dictionary."""
             # Use automated context normalization for context and extra_kwargs
-            type_context = FlextUtilitiesMapper.normalize_context_values(
+            type_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
             )
@@ -937,7 +936,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Use automated context normalization
-            op_context = FlextUtilitiesMapper.normalize_context_values(
+            op_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
                 operation=operation,
@@ -978,7 +977,7 @@ class FlextExceptions:
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
 
             # Use automated context normalization
-            attr_context = FlextUtilitiesMapper.normalize_context_values(
+            attr_context = u.Mapper.normalize_context_values(
                 context=context,
                 extra_kwargs=extra_kwargs,
                 attribute_name=attribute_name,
@@ -1014,7 +1013,7 @@ class FlextExceptions:
         """Prepare exception kwargs by extracting common parameters."""
         if specific_params:
             # Use mapper to filter out None values
-            filtered_params = FlextUtilitiesMapper.filter_dict(
+            filtered_params = u.Mapper.filter_dict(
                 specific_params if isinstance(specific_params, dict) else {},
                 lambda _k, v: v is not None,
             )
@@ -1031,19 +1030,19 @@ class FlextExceptions:
                 "config",
             }
         }
-        correlation_id_raw = FlextUtilitiesMapper.get(kwargs, "correlation_id")
+        correlation_id_raw = u.Mapper.get(kwargs, "correlation_id")
         correlation_id: str | None = (
             str(correlation_id_raw)
             if correlation_id_raw is not None
-            and FlextUtilitiesGuards.is_type(correlation_id_raw, str)
+            and u.Guards.is_type(correlation_id_raw, str)
             else None
         )
         return (
             correlation_id,
-            FlextUtilitiesMapper.get(kwargs, "metadata"),
-            bool(FlextUtilitiesMapper.get(kwargs, "auto_log")),
-            bool(FlextUtilitiesMapper.get(kwargs, "auto_correlation")),
-            FlextUtilitiesMapper.get(kwargs, "config"),
+            u.Mapper.get(kwargs, "metadata"),
+            bool(u.Mapper.get(kwargs, "auto_log")),
+            bool(u.Mapper.get(kwargs, "auto_correlation")),
+            u.Mapper.get(kwargs, "config"),
             extra_kwargs,
         )
 
@@ -1058,12 +1057,12 @@ class FlextExceptions:
 
         Returns typed values: correlation_id as str | None, metadata as _Metadata | Mapping | None.
         """
-        correlation_id_raw = FlextUtilitiesMapper.get(kwargs, "correlation_id")
+        correlation_id_raw = u.Mapper.get(kwargs, "correlation_id")
         # Use isinstance for proper type narrowing
         correlation_id: str | None = (
             correlation_id_raw if isinstance(correlation_id_raw, str) else None
         )
-        metadata_raw = FlextUtilitiesMapper.get(kwargs, "metadata")
+        metadata_raw = u.Mapper.get(kwargs, "metadata")
         # Return metadata as-is if it's Metadata or dict-like, otherwise None
         metadata: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None = None
         if metadata_raw is not None:
@@ -1162,7 +1161,7 @@ class FlextExceptions:
         key: str,
     ) -> str | None:
         """Extract and convert value from kwargs to string."""
-        val = FlextUtilitiesMapper.get(kwargs, key)
+        val = u.Mapper.get(kwargs, key)
         return str(val) if val is not None else None
 
     @staticmethod
@@ -1194,7 +1193,7 @@ class FlextExceptions:
         }
 
         error_class = (
-            FlextUtilitiesMapper.get(error_classes, error_type or "")
+            u.Mapper.get(error_classes, error_type or "")
             if error_type
             else None
         )

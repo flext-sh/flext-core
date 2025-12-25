@@ -223,9 +223,9 @@ class FlextContainer(FlextRuntime, p.DI):
            assert consume() == "abc123"
         """
         # getattr accesses Provide from bridge object safely
-        # cast helps type checker understand the return type
+        # Type narrowing: getattr returns Provide callable or None
         provide_helper: object = getattr(self._di_bridge, "Provide", None)
-        return cast("Callable[[str], object]", provide_helper)
+        return provide_helper  # type: ignore[return-value]
 
     @classmethod
     def get_global(
@@ -800,7 +800,7 @@ class FlextContainer(FlextRuntime, p.DI):
             service_registration = self._services[name]
             service = service_registration.service
             # Runtime type safety guaranteed by container registration
-            return _to_protocol_result(r[T].ok(cast("T", service)))
+            return _to_protocol_result(r[T].ok(service))  # type: ignore[arg-type]
 
         # Try factory
         if name in self._factories:
@@ -808,7 +808,7 @@ class FlextContainer(FlextRuntime, p.DI):
                 factory_registration = self._factories[name]
                 instance = factory_registration.factory()
                 # Runtime type safety guaranteed by container registration
-                return _to_protocol_result(r[T].ok(cast("T", instance)))
+                return _to_protocol_result(r[T].ok(instance))  # type: ignore[arg-type]
             except Exception as e:
                 return _to_protocol_result(r[T].fail(str(e)))
 

@@ -390,6 +390,161 @@ class FlextUtilitiesCollection:
 
         return validator
 
+    # ========================================================================
+    # Additional Collection Convenience Methods
+    # ========================================================================
+
+    @staticmethod
+    def first[T_item](
+        items: Sequence[T_item],
+        predicate: Callable[[T_item], bool] | None = None,
+        default: T_item | None = None,
+    ) -> T_item | None:
+        """Get first item (optionally matching predicate).
+
+        Args:
+            items: Sequence to search
+            predicate: Optional filter function
+            default: Value to return if no match found
+
+        Returns:
+            First matching item or default
+
+        Example:
+            user = u.first(users, lambda u: u.is_active)
+
+        """
+        for item in items:
+            if predicate is None or predicate(item):
+                return item
+        return default
+
+    @staticmethod
+    def last[T_item](
+        items: Sequence[T_item],
+        predicate: Callable[[T_item], bool] | None = None,
+        default: T_item | None = None,
+    ) -> T_item | None:
+        """Get last item (optionally matching predicate).
+
+        Args:
+            items: Sequence to search
+            predicate: Optional filter function
+            default: Value to return if no match found
+
+        Returns:
+            Last matching item or default
+
+        Example:
+            last_error = u.last(logs, lambda l: l.level == "error")
+
+        """
+        for item in reversed(items):
+            if predicate is None or predicate(item):
+                return item
+        return default
+
+    @staticmethod
+    def group_by[T_item, K](
+        items: Sequence[T_item],
+        key_func: Callable[[T_item], K],
+    ) -> dict[K, list[T_item]]:
+        """Group items by key function.
+
+        Args:
+            items: Items to group
+            key_func: Function to extract group key
+
+        Returns:
+            Dict mapping keys to lists of items
+
+        Example:
+            by_status = u.group_by(users, lambda u: u.status)
+            # {"active": [User1, User2], "inactive": [User3]}
+
+        """
+        result: dict[K, list[T_item]] = {}
+        for item in items:
+            key = key_func(item)
+            if key not in result:
+                result[key] = []
+            result[key].append(item)
+        return result
+
+    @staticmethod
+    def unique[T_item](
+        items: Sequence[T_item],
+        key_func: Callable[[T_item], object] | None = None,
+    ) -> list[T_item]:
+        """Get unique items preserving order.
+
+        Args:
+            items: Items to deduplicate
+            key_func: Optional function to extract uniqueness key
+
+        Returns:
+            List of unique items in order of first appearance
+
+        Example:
+            unique_emails = u.unique(users, lambda u: u.email.lower())
+
+        """
+        seen: set[object] = set()
+        result: list[T_item] = []
+        for item in items:
+            key = key_func(item) if key_func else item
+            if key not in seen:
+                seen.add(key)
+                result.append(item)
+        return result
+
+    @staticmethod
+    def partition[T_item](
+        items: Sequence[T_item],
+        predicate: Callable[[T_item], bool],
+    ) -> tuple[list[T_item], list[T_item]]:
+        """Split items by predicate: (matches, non-matches).
+
+        Args:
+            items: Items to partition
+            predicate: Function to test each item
+
+        Returns:
+            Tuple of (matching_items, non_matching_items)
+
+        Example:
+            active, inactive = u.partition(users, lambda u: u.is_active)
+
+        """
+        matches: list[T_item] = []
+        non_matches: list[T_item] = []
+        for item in items:
+            if predicate(item):
+                matches.append(item)
+            else:
+                non_matches.append(item)
+        return matches, non_matches
+
+    @staticmethod
+    def flatten[T_item](items: Sequence[Sequence[T_item]]) -> list[T_item]:
+        """Flatten nested sequences into single list.
+
+        Args:
+            items: Nested sequences to flatten (one level)
+
+        Returns:
+            Flattened list
+
+        Example:
+            flat = u.flatten([[1, 2], [3, 4], [5]])
+            # [1, 2, 3, 4, 5]
+
+        """
+        result: list[T_item] = []
+        for seq in items:
+            result.extend(seq)
+        return result
+
 
 __all__ = [
     "FlextUtilitiesCollection",

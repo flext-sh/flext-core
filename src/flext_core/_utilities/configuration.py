@@ -50,7 +50,6 @@ from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
-from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -444,6 +443,7 @@ class FlextUtilitiesConfiguration:
             return attr_val
 
         msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+        from flext_core.exceptions import e  # noqa: PLC0415 - Local import to avoid circular dependency
         raise e.NotFoundError(msg)
 
     @staticmethod
@@ -577,6 +577,7 @@ class FlextUtilitiesConfiguration:
         msg = (
             f"Class {singleton_class.__name__} does not have get_global_instance method"
         )
+        from flext_core.exceptions import e  # noqa: PLC0415 - Local import to avoid circular dependency
         raise e.ValidationError(msg)
 
     @staticmethod

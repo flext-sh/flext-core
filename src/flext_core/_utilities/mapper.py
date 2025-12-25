@@ -2678,6 +2678,84 @@ class FlextUtilitiesMapper:
             merge_strategy="merge",
         )
 
+    # ========================================================================
+    # Additional Mapper Convenience Methods
+    # ========================================================================
+
+    @staticmethod
+    def omit[T](data: Mapping[str, T], *keys: str) -> dict[str, T]:
+        """Omit specific keys from mapping.
+
+        Generic replacement for: {k: v for k, v in data.items() if k not in keys}
+
+        Args:
+            data: Source mapping
+            *keys: Keys to omit
+
+        Returns:
+            Dict without the specified keys
+
+        Example:
+            clean = u.Mapper.omit(user_data, "password", "secret")
+            # {"name": "John", "email": "john@test.com"}
+
+        """
+        keys_set = set(keys)
+        return {k: v for k, v in data.items() if k not in keys_set}
+
+    @staticmethod
+    def pluck(
+        items: Sequence[Mapping[str, object]],
+        key: str,
+        default: object | None = None,
+    ) -> list[object | None]:
+        """Extract single key from sequence of mappings.
+
+        Generic replacement for: [item.get(key) for item in items]
+
+        Args:
+            items: Sequence of mappings
+            key: Key to extract
+            default: Default value if key not found
+
+        Returns:
+            List of values for the specified key
+
+        Example:
+            names = u.Mapper.pluck(users, "name")
+            # ["Alice", "Bob", "Charlie"]
+
+            ages = u.Mapper.pluck(users, "age", default=0)
+            # [25, 30, 0]
+
+        """
+        return [item.get(key, default) for item in items]
+
+    @staticmethod
+    def key_by[T, K](
+        items: Sequence[T],
+        key_func: Callable[[T], K],
+    ) -> dict[K, T]:
+        """Create dict keyed by function result.
+
+        Generic replacement for: {key_func(item): item for item in items}
+
+        Args:
+            items: Items to index
+            key_func: Function to extract key from each item
+
+        Returns:
+            Dict mapping keys to items (last item wins if duplicate keys)
+
+        Example:
+            users_by_id = u.Mapper.key_by(users, lambda u: u.id)
+            # {1: User(id=1, ...), 2: User(id=2, ...)}
+
+            users_by_email = u.Mapper.key_by(users, lambda u: u.email.lower())
+
+        """
+        return {key_func(item): item for item in items}
+
 
 __all__ = [
     "FlextUtilitiesMapper",

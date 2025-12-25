@@ -21,10 +21,10 @@ from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
-from flext_core._utilities.configuration import FlextUtilitiesConfiguration
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Namespace, T_Settings, t
+from flext_core.utilities import u
 
 
 class FlextSettings(BaseSettings, FlextRuntime):
@@ -60,7 +60,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     model_config = SettingsConfigDict(
         env_prefix=c.Platform.ENV_PREFIX,
         env_nested_delimiter=c.Platform.ENV_NESTED_DELIMITER,
-        env_file=FlextUtilitiesConfiguration.resolve_env_file(),
+        env_file=u.Configuration.resolve_env_file(),
         env_file_encoding=c.Utilities.DEFAULT_ENCODING,
         case_sensitive=False,
         extra=c.ModelConfig.EXTRA_IGNORE,
@@ -94,7 +94,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             )
 
         """
-        return FlextUtilitiesConfiguration.resolve_env_file()
+        return u.Configuration.resolve_env_file()
 
     # Core configuration
     app_name: str = Field(default="flext", description="Application name")
