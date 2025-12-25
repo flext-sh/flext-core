@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import Self, cast, override
+from typing import Self, override
 
 from pydantic import (
     BaseModel,
@@ -397,82 +397,53 @@ class FlextService[TDomainResult](
         )
 
         services_raw = options.get("services") if "services" in options else None
-        # Cast needed: isinstance doesn't narrow to specific Mapping type signature
-        services_val = (
-            cast(
-                "Mapping[str, t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType]] | None",
-                services_raw,
-            )
-            if services_raw is not None and isinstance(services_raw, Mapping)
-            else None
-        )
+        # Type narrowing: isinstance() confirms Mapping type
+        if services_raw is not None and isinstance(services_raw, Mapping):
+            services_val: Mapping[str, t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType]] | None = services_raw  # type: ignore[assignment]
+        else:
+            services_val = None
 
         factories_raw = options.get("factories")
-        # Cast needed: isinstance doesn't narrow to specific Mapping type signature
-        factories_val = (
-            cast(
-                "Mapping[str, Callable[[], t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]]] | None",
-                factories_raw,
-            )
-            if factories_raw is not None and isinstance(factories_raw, Mapping)
-            else None
-        )
+        # Type narrowing: isinstance() confirms Mapping type
+        if factories_raw is not None and isinstance(factories_raw, Mapping):
+            factories_val: Mapping[str, Callable[[], t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]]] | None = factories_raw  # type: ignore[assignment]
+        else:
+            factories_val = None
 
         resources_raw = u.mapper().get(options, "resources")
-        # Cast needed: isinstance doesn't narrow to specific Mapping type signature
-        resources_val = (
-            cast(
-                "Mapping[str, Callable[[], t.GeneralValueType]] | None",
-                resources_raw,
-            )
-            if resources_raw is not None and isinstance(resources_raw, Mapping)
-            else None
-        )
+        # Type narrowing: isinstance() confirms Mapping type
+        if resources_raw is not None and isinstance(resources_raw, Mapping):
+            resources_val: Mapping[str, Callable[[], t.GeneralValueType]] | None = resources_raw  # type: ignore[assignment]
+        else:
+            resources_val = None
 
         container_overrides_raw = u.mapper().get(options, "container_overrides")
-        # Cast needed: isinstance doesn't narrow to specific Mapping type signature
-        container_overrides_val = (
-            cast(
-                "Mapping[str, t.FlexibleValue] | None",
-                container_overrides_raw,
-            )
-            if container_overrides_raw is not None
-            and isinstance(container_overrides_raw, Mapping)
-            else None
-        )
+        # Type narrowing: isinstance() confirms Mapping type
+        if container_overrides_raw is not None and isinstance(container_overrides_raw, Mapping):
+            container_overrides_val: Mapping[str, t.FlexibleValue] | None = container_overrides_raw  # type: ignore[assignment]
+        else:
+            container_overrides_val = None
 
         wire_modules_raw = u.mapper().get(options, "wire_modules")
-        # Cast needed: isinstance doesn't narrow to specific Sequence type signature
-        wire_modules_val = (
-            cast(
-                "Sequence[ModuleType] | None",
-                wire_modules_raw,
-            )
-            if wire_modules_raw is not None and isinstance(wire_modules_raw, Sequence)
-            else None
-        )
+        # Type narrowing: isinstance() confirms Sequence type
+        if wire_modules_raw is not None and isinstance(wire_modules_raw, Sequence):
+            wire_modules_val: Sequence[ModuleType] | None = wire_modules_raw  # type: ignore[assignment]
+        else:
+            wire_modules_val = None
 
         wire_packages_raw = u.mapper().get(options, "wire_packages")
-        # Cast needed: isinstance doesn't narrow to specific Sequence type signature
-        wire_packages_val = (
-            cast(
-                "Sequence[str] | None",
-                wire_packages_raw,
-            )
-            if wire_packages_raw is not None and isinstance(wire_packages_raw, Sequence)
-            else None
-        )
+        # Type narrowing: isinstance() confirms Sequence type
+        if wire_packages_raw is not None and isinstance(wire_packages_raw, Sequence):
+            wire_packages_val: Sequence[str] | None = wire_packages_raw  # type: ignore[assignment]
+        else:
+            wire_packages_val = None
 
         wire_classes_raw = u.mapper().get(options, "wire_classes")
-        # Cast needed: isinstance doesn't narrow to specific Sequence type signature
-        wire_classes_val = (
-            cast(
-                "Sequence[type] | None",
-                wire_classes_raw,
-            )
-            if wire_classes_raw is not None and isinstance(wire_classes_raw, Sequence)
-            else None
-        )
+        # Type narrowing: isinstance() confirms Sequence type
+        if wire_classes_raw is not None and isinstance(wire_classes_raw, Sequence):
+            wire_classes_val: Sequence[type] | None = wire_classes_raw  # type: ignore[assignment]
+        else:
+            wire_classes_val = None
 
         return cls._create_runtime(
             config_type=config_type_val,  # Already typed as type[FlextSettings] | None
@@ -716,11 +687,8 @@ class FlextService[TDomainResult](
         # Direct access - _ServiceAccess accepts any FlextService instance
         # Type narrowing: self is FlextService[TDomainResult], which is compatible with
         # FlextService[t.GeneralValueType] because t.GeneralValueType covers all domain results
-        # Cast is intentional: TypeVar variance issue - TDomainResult is not covariant
-        service_typed: FlextService[t.GeneralValueType] = cast(
-            "FlextService[t.GeneralValueType]",
-            self,
-        )
+        # Type assertion: TypeVar variance issue - TDomainResult is not covariant
+        service_typed: FlextService[t.GeneralValueType] = self  # type: ignore[assignment]
         # _ServiceAccess(service_typed) already returns _ServiceAccess instance
         return _ServiceAccess(service_typed)
 
@@ -791,7 +759,9 @@ class FlextService[TDomainResult](
             "context": merged_context,
             "container": parent.container,
         }
-        return cls(**cast("dict[str, t.GeneralValueType]", merged_data))
+        # Type: merged_data contains FlextSettings/FlextContext/FlextContainer objects
+        # which satisfy __init__ signature via protocol dispatch
+        return cls(**merged_data)  # type: ignore[arg-type]
 
 
 class _ServiceExecutionScope(FlextModelsBase.ArbitraryTypesModel):
@@ -952,9 +922,8 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             raise TypeError(msg)
         # Type narrowing: runtime_attr is m.ServiceRuntime after check
         # runtime.dispatcher is p.CommandBus protocol, but we need FlextDispatcher for metrics
-        # Cast needed: Protocol doesn't expose metrics API
-        return cast("FlextDispatcher", runtime_attr.dispatcher)
         # Dispatcher inherits from FlextMixins.CQRS.MetricsTracker
+        return runtime_attr.dispatcher  # type: ignore[return-value]
 
     @property
     def rate_limiter(self) -> RateLimiterManager:
@@ -975,11 +944,11 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             raise TypeError(msg)
         # Type narrowing: runtime_attr is m.ServiceRuntime after check
         # runtime.dispatcher is p.CommandBus protocol, but we need FlextDispatcher for rate_limiter
-        # Cast needed: Protocol doesn't expose _rate_limiter private attribute
-        dispatcher = cast("FlextDispatcher", runtime_attr.dispatcher)
+        # Dispatcher has _rate_limiter private attribute
+        dispatcher = runtime_attr.dispatcher  # type: ignore[assignment]
         # Access private attribute (dispatcher._rate_limiter is private)
         # Type assertion: dispatcher has _rate_limiter attribute
-        return dispatcher._rate_limiter
+        return dispatcher._rate_limiter  # type: ignore[attr-defined]
 
     @property
     def circuit_breaker(self) -> CircuitBreakerManager:
@@ -1000,11 +969,11 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             raise TypeError(msg)
         # Type narrowing: runtime_attr is m.ServiceRuntime after check
         # runtime.dispatcher is p.CommandBus protocol, but we need FlextDispatcher for circuit_breaker
-        # Cast needed: Protocol doesn't expose _circuit_breaker private attribute
-        dispatcher = cast("FlextDispatcher", runtime_attr.dispatcher)
+        # Dispatcher has _circuit_breaker private attribute
+        dispatcher = runtime_attr.dispatcher  # type: ignore[assignment]
         # Access private attribute (dispatcher._circuit_breaker is private)
         # Type assertion: dispatcher has _circuit_breaker attribute
-        return dispatcher._circuit_breaker
+        return dispatcher._circuit_breaker  # type: ignore[attr-defined]
 
     def container_scope(
         self,
@@ -1036,11 +1005,11 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> m.ServiceRuntime:
         """Clone the service runtime triple using protocol-backed models."""
-        # Cast needed: mypy sees @property/@computed_field as Callable, not the return type
-        # These are workarounds for mypy's property inference limitation
-        config = cast("p.Config", self.config)
-        ctx = cast("p.Ctx", self.context)
-        container = cast("p.DI", self.container)
+        # Type narrowing: @property/@computed_field returns protocol types
+        # mypy infers property as Callable, use type: ignore for the assignment
+        config: p.Config = self.config  # type: ignore[assignment]
+        ctx: p.Ctx = self.context  # type: ignore[assignment]
+        container: p.DI = self.container  # type: ignore[assignment]
 
         # Clone config with overrides using Pydantic's model_copy
         cloned_config = config.model_copy(
@@ -1077,8 +1046,8 @@ class _ServiceAccess(m.ArbitraryTypesModel):
             Config: Cloned configuration instance with updates applied.
 
         """
-        # Cast needed: mypy sees @property as Callable, not the return type
-        config = cast("p.Config", self.config)
+        # Type narrowing: @property returns protocol type
+        config: p.Config = self.config  # type: ignore[assignment]
         return config.model_copy(update=overrides, deep=True)
 
     @contextmanager
@@ -1099,23 +1068,23 @@ class _ServiceAccess(m.ArbitraryTypesModel):
         isolated from the parent, enabling containerized execution flows without
         mutating global state.
         """
-        # Cast needed: mypy sees @computed_field as Callable, not the return type
-        base_runtime = cast("m.ServiceRuntime", self.runtime)
+        # Type narrowing: @computed_field returns concrete runtime type
+        base_runtime: m.ServiceRuntime = self.runtime  # type: ignore[assignment]
         # Type narrowing: base_runtime.context is FlextContext for nested class access
-        # Cast needed: protocol (p.Ctx) doesn't expose nested classes (.Correlation, .Service)
-        base_context = cast("FlextContext", base_runtime.context)
+        # Protocol (p.Ctx) doesn't expose nested classes (.Correlation, .Service)
+        base_context: FlextContext = base_runtime.context  # type: ignore[assignment]
         original_correlation = base_context.Correlation.get_correlation_id()
 
-        # base_context implements Ctx structurally - cast to protocol type
+        # base_context implements Ctx structurally
         runtime = self.runtime_scope(
             config_overrides=config_overrides,
-            context=cast("p.Ctx | None", base_context),
+            context=base_context,  # type: ignore[arg-type]
             container_services=container_services,
             container_factories=container_factories,
         )
 
         # Type narrowing: runtime.context is FlextContext
-        runtime_context = cast("FlextContext", runtime.context)
+        runtime_context: FlextContext = runtime.context  # type: ignore[assignment]
         if correlation_id:
             runtime_context.Correlation.set_correlation_id(correlation_id)
         else:
