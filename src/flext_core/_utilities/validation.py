@@ -3234,6 +3234,83 @@ class FlextUtilitiesValidation:
             )
         return r[str].ok(hostname)
 
+    # ========================================================================
+    # Validation Convenience Methods
+    # ========================================================================
+
+    @staticmethod
+    def validate_with_validators(value: object, *validators: ValidatorSpec) -> r[bool]:
+        """Validate value against multiple validators.
+
+        Returns r[bool].ok(True) if all validators pass,
+        r[bool].fail(message) on first failure.
+
+        Args:
+            value: Value to validate
+            *validators: ValidatorSpec instances to apply
+
+        Returns:
+            r[bool] with success or first validation error
+
+        Example:
+            result = u.validate_with(
+                email,
+                V.string.non_empty,
+                V.string.contains("@"),
+            )
+            if result.is_failure:
+                return r.fail(result.error)
+
+        """
+        for validator in validators:
+            try:
+                if not validator(value):
+                    desc = getattr(validator, "description", "validation")
+                    return r[bool].fail(f"Validation failed: {desc}")
+            except Exception as e:
+                return r[bool].fail(f"Validator error: {e}")
+        return r[bool].ok(True)
+
+    @staticmethod
+    def check_all_validators(value: object, *validators: ValidatorSpec) -> bool:
+        """Check if value passes all validators.
+
+        Simple boolean check without result wrapping.
+
+        Args:
+            value: Value to check
+            *validators: ValidatorSpec instances to apply
+
+        Returns:
+            True if all validators pass, False otherwise
+
+        Example:
+            if u.check_all(email, V.string.non_empty, V.string.contains("@")):
+                process_email(email)
+
+        """
+        return all(v(value) for v in validators)
+
+    @staticmethod
+    def check_any_validator(value: object, *validators: ValidatorSpec) -> bool:
+        """Check if value passes any validator.
+
+        Simple boolean check without result wrapping.
+
+        Args:
+            value: Value to check
+            *validators: ValidatorSpec instances to apply
+
+        Returns:
+            True if any validator passes, False otherwise
+
+        Example:
+            if u.check_any(value, V.number.positive, V.string.numeric):
+                process_numeric(value)
+
+        """
+        return any(v(value) for v in validators)
+
 
 __all__ = [
     "FlextUtilitiesValidation",
