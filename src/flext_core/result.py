@@ -209,14 +209,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                                 IOFailure,
                             ),
                         ):
-                            unwrapped_value: t.GeneralValueType = unwrapped_value_raw  # type: ignore[assignment]
+                            unwrapped_value: t.GeneralValueType = unwrapped_value_raw
                         else:
-                            unwrapped_value = str(unwrapped_value_raw)  # type: ignore[assignment]
+                            unwrapped_value = str(unwrapped_value_raw)
                         return FlextResult[t.GeneralValueType].ok(unwrapped_value)
                     except Exception as unwrap_error:  # pragma: no cover
                         # Defensive exception handling - hard to test without complex mocking
                         # since IOSuccess is immutable
-                        return FlextResult[t.GeneralValueType].fail(  # type: ignore[return-value]
+                        return FlextResult[t.GeneralValueType].fail(
                             f"Error processing IO result: {unwrap_error}",
                         )
                 if isinstance(io_result, IOFailure):
@@ -471,10 +471,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             fail_result: FlextResult[str] = cls.fail(
                 f"Type {model} is not a BaseModel subclass",
             )
-            return fail_result  # type: ignore[return-value]
+            return fail_result
         # After issubclass check, model is guaranteed to be BaseModel subclass
         # Type narrowing: model is now known to be BaseModel subclass
-        model_typed: type[BaseModel] = model  # type: ignore[assignment]
+        model_typed: type[BaseModel] = model
         try:
             validated = model_typed.model_validate(data)
             # T_co is covariant, T is subtype compatible

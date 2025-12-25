@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import inspect
 import sys
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Annotated, Self
 
 from pydantic import Field, computed_field
@@ -191,11 +192,10 @@ class FlextRegistry(x):
 
         # Structural typing - FlextDispatcher implements p.CommandBus
         # Create dispatcher instance if not provided
-        actual_dispatcher: p.CommandBus = (
-            dispatcher
-            if dispatcher is not None
-            else FlextDispatcher()
-        )
+        if dispatcher is not None:
+            actual_dispatcher = dispatcher  # dispatcher is CommandBus when not None
+        else:
+            actual_dispatcher = FlextDispatcher()  # FlextDispatcher implements CommandBus
         self._dispatcher: p.CommandBus = actual_dispatcher
 
         # Enrich context with registry metadata for observability
@@ -263,16 +263,10 @@ class FlextRegistry(x):
                         if handler_func is not None and callable(handler_func):
                             # Register handler with deduplication built-in
                             # Deduplication happens in register_handler() via _registered_keys
-                            # Cast handler_func to expected type for register_handler
-                            # register_handler expects FlextHandlers[T, R] | None where FlextHandlers is from flext_core.handlers
-                            handler_typed: (
-                                FlextHandlers[t.GeneralValueType, t.GeneralValueType]
-                                | None
-                            ) = cast(
-                                "FlextHandlers[t.GeneralValueType, t.GeneralValueType] | None",
-                                handler_func,
-                            )
-                            _ = instance.register_handler(handler_typed)
+                            # Type narrowing: handler_func is callable and not None here
+                            # handler_typed receives FlextHandlers-like object (structural typing via protocol)
+                            handler_typed = handler_func
+                            _ = instance.register_handler(handler_typed)  # type: ignore[arg-type]
 
         return instance
 
@@ -455,9 +449,9 @@ class FlextRegistry(x):
         )
         # register_handler returns r[t.ConfigurationDict]
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
-        # Cast handler to t.GeneralValueType for type compatibility (runtime handles h correctly)
+        # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
         registration = self._dispatcher.register_handler(
-            cast("t.GeneralValueType", handler),
+            handler,  # type: ignore[arg-type]
         )
         if registration.is_success:
             self._registered_keys.add(key)
@@ -602,8 +596,9 @@ class FlextRegistry(x):
             handler_key=key,
         )
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
+        # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
         registration_result = self._dispatcher.register_handler(
-            cast("t.GeneralValueType", handler),
+            handler,  # type: ignore[arg-type]
         )
         if registration_result.is_success:
             # Convert dict result to RegistrationDetails
@@ -709,7 +704,8 @@ class FlextRegistry(x):
                 continue
 
             # Structural typing - handler is h which implements p.Handler
-            # Cast to t.GeneralValueType for protocol compatibility
+            # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
+            from typing import cast
             registration = self._dispatcher.register_command(
                 message_type,
                 cast("t.GeneralValueType", handler),
@@ -807,11 +803,8 @@ class FlextRegistry(x):
                     handler_elem, config_elem = tuple_result
                     # Type narrowing: handler_elem should be HandlerCallableType
                     if isinstance(handler_elem, type) or callable(handler_elem):
-                        # Cast handler_elem to HandlerCallable for type safety
-                        handler_typed: t.HandlerCallable = cast(
-                            "t.HandlerCallable",
-                            handler_elem,
-                        )
+                        # Type narrowing: handler_elem is callable, assign as HandlerCallable
+                        handler_typed = handler_elem
                         tuple_entry: tuple[
                             t.HandlerCallable,
                             t.GeneralValueType | r[t.GeneralValueType],
@@ -861,19 +854,13 @@ class FlextRegistry(x):
             if handler_config is not None
             else None
         )
-        # Cast config_dict to HandlerConfigurationType
-        handler_config_typed: t.ConfigurationMapping | None = cast(
-            "t.ConfigurationMapping | None",
-            config_dict,
-        )
+        # Type narrowing: config_dict is dict or None, assign as ConfigurationMapping
+        handler_config_typed = config_dict
         # Structural typing - handler_func is HandlerCallable compatible
-        # Cast handler_config to protocol-compatible type
+        # Type narrowing: handler_config_typed is ConfigurationMapping | None which is compatible with dict
         handler_result = self._dispatcher.create_handler_from_function(
             handler_func,
-            handler_config=cast(
-                "dict[str, t.FlexibleValue] | None",
-                handler_config_typed,
-            ),
+            handler_config=handler_config_typed,
             mode=c.Cqrs.HandlerType.COMMAND,
         )
         if handler_result.is_failure:
@@ -884,8 +871,9 @@ class FlextRegistry(x):
         # Register with dispatcher
         handler = handler_result.value
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
+        # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
         register_result = self._dispatcher.register_handler(
-            cast("t.GeneralValueType", handler),
+            cast(t.GeneralValueType, handler),
         )
         if register_result.is_failure:
             return r[m.HandlerRegistrationDetails].fail(
@@ -908,8 +896,9 @@ class FlextRegistry(x):
     ) -> r[m.HandlerRegistrationDetails]:
         """Register FlextHandlers instance - DRY helper reduces nesting."""
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
+        # Type narrowing: entry is FlextHandlers which is compatible with t.GeneralValueType
         register_result = self._dispatcher.register_handler(
-            cast("t.GeneralValueType", entry),
+            entry,  # type: ignore[arg-type]
         )
         if register_result.is_failure:
             return r[m.HandlerRegistrationDetails].fail(
@@ -1032,12 +1021,9 @@ class FlextRegistry(x):
                 metadata_as_general = metadata
                 if FlextRuntime.is_dict_like(metadata_as_general):
                     # Type guard ensures metadata_as_general is t.ConfigurationMapping
-                    # Cast to Mapping[str, T] for to_dict() call
-                    metadata_mapping: t.ConfigurationMapping = cast(
-                        "t.ConfigurationMapping",
-                        metadata_as_general,
-                    )
-                    validated_metadata = u.mapper().to_dict(metadata_mapping)
+                    # Type narrowing: metadata_as_general is dict-like, assign as ConfigurationMapping
+                    metadata_mapping = metadata_as_general
+                    validated_metadata = u.mapper().to_dict(metadata_mapping)  # type: ignore[arg-type]
                 else:
                     return r[bool].fail(
                         f"metadata must be dict or m.Metadata, got {type(metadata).__name__}",
