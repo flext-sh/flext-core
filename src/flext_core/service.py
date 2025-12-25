@@ -130,8 +130,8 @@ class FlextService[TDomainResult](
                 msg = f"execute() must return r, got {type(result_raw).__name__}"
                 raise TypeError(msg)
             # Type narrowing: result_raw is r, and execute() signature guarantees r[TDomainResult]
-            # Cast is necessary because isinstance() doesn't preserve generic type parameter
-            result: r[TDomainResult] = cast("r[TDomainResult]", result_raw)
+            # isinstance() check confirms type but doesn't preserve generic type parameter
+            result: r[TDomainResult] = result_raw  # type: ignore[assignment]
             # For auto_execute=True, return the result value directly (V2 Auto pattern)
             # This allows: user = AutoGetUserService(user_id="123") to get User object
             if result.is_failure:
@@ -140,8 +140,8 @@ class FlextService[TDomainResult](
             # Return the unwrapped value directly (breaks static typing but is intended behavior)
             # Type narrowing: result.value is TDomainResult, which may be Self in some cases
             # This is a runtime pattern where TDomainResult can be the service instance itself
-            # Cast needed because mypy doesn't know that TDomainResult can be Self
-            return cast("Self", result.value)
+            # Type narrowing: result.is_success confirmed above, so result.value is TDomainResult
+            return result.value  # type: ignore[return-value]
         # For auto_execute=False, return instance (normal pattern)
         # Pydantic BaseModel calls __init__ automatically after __new__,
         # so we don't need to call it manually here
@@ -343,7 +343,7 @@ class FlextService[TDomainResult](
             config=runtime_config,
             context=runtime_context_typed,
             container=runtime_container,
-            dispatcher=cast("p.CommandBus", runtime_dispatcher),
+            dispatcher=runtime_dispatcher,  # type: ignore[arg-type]
             registry=runtime_registry,
         )
 
@@ -370,22 +370,25 @@ class FlextService[TDomainResult](
 
         config_overrides_raw = u.mapper().get(options, "config_overrides")
         # Type narrowing: Check if config_overrides_raw is a Mapping
-        # Cast needed: isinstance doesn't narrow to specific Mapping type signature
-        config_overrides_val = (
-            cast("Mapping[str, t.FlexibleValue] | None", config_overrides_raw)
-            if config_overrides_raw is not None
-            and isinstance(config_overrides_raw, Mapping)
-            else None
-        )
+        # isinstance() confirms type, use type: ignore for Mapping check
+        if config_overrides_raw is not None and isinstance(
+            config_overrides_raw, Mapping
+        ):
+            config_overrides_val: Mapping[str, t.FlexibleValue] | None = (
+                config_overrides_raw  # type: ignore[assignment]
+            )
+        else:
+            config_overrides_val = None
 
         context_raw = (
             u.mapper().get(options, "context") if "context" in options else None
         )
         # Type narrowing: context_raw should implement p.Ctx protocol if present
-        # Since we can't check protocol conformance at runtime, keep the cast
-        context_val = (
-            cast("p.Ctx | None", context_raw) if context_raw is not None else None
-        )
+        # Since we can't check protocol conformance at runtime, use type: ignore
+        if context_raw is not None:
+            context_val: p.Ctx | None = context_raw  # type: ignore[assignment]
+        else:
+            context_val = None
 
         # Type narrowing: Check if subproject is a string
         subproject_raw = u.mapper().get(options, "subproject")
