@@ -23,6 +23,7 @@ from typing import ClassVar
 
 from flext_core.constants import c
 from flext_core.exceptions import e
+from flext_core.mixins import FlextMixins as x
 
 # from flext_core.mixins import FlextMixins as x  # Local import to avoid circular dependency
 from flext_core.models import m
@@ -69,8 +70,7 @@ def _handler_type_to_literal(
             return "operation"
 
 
-# Local import to avoid circular dependency
-from flext_core.mixins import FlextMixins as x
+# Import moved to top of file to avoid circular dependency
 
 
 class FlextHandlers[MessageT_contra, ResultT](

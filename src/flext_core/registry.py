@@ -12,19 +12,18 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Iterable, Mapping, Sequence
-from typing import Annotated, Self, cast
+from typing import Annotated, Self
 
 from pydantic import Field, computed_field
 
 from flext_core.constants import c
+from flext_core.dispatcher import FlextDispatcher
+from flext_core.handlers import (
+    FlextHandlers,
+)
 
 # Local import to avoid circular dependency
 from flext_core.mixins import FlextMixins as x
-
-# from flext_core.dispatcher import FlextDispatcher  # Local import to avoid circular dependency
-# from flext_core.handlers import FlextHandlers  # Local import to avoid circular dependency
-# from flext_core.mixins import FlextMixins as x  # Not used
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -192,13 +191,10 @@ class FlextRegistry(x):
 
         # Structural typing - FlextDispatcher implements p.CommandBus
         # Create dispatcher instance if not provided
-        from flext_core.dispatcher import (
-            FlextDispatcher,  # Local import to avoid circular dependency
-        )
         actual_dispatcher: p.CommandBus = (
             dispatcher
             if dispatcher is not None
-            else cast("p.CommandBus", FlextDispatcher())
+            else FlextDispatcher()
         )
         self._dispatcher: p.CommandBus = actual_dispatcher
 
@@ -250,8 +246,6 @@ class FlextRegistry(x):
         instance = cls(dispatcher)
 
         if auto_discover_handlers:
-            # Local import to avoid circular dependency
-            from flext_core.handlers import FlextHandlers
             # Get the caller's frame to discover handlers in calling module
             frame = inspect.currentframe()
             if frame and frame.f_back:
@@ -399,7 +393,7 @@ class FlextRegistry(x):
     # ------------------------------------------------------------------
     def register_handler(
         self,
-        handler: (FlextHandlers[t.GeneralValueType, t.GeneralValueType] | None),
+        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType] | None,
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
