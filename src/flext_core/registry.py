@@ -1,8 +1,7 @@
 """Handler registration and discovery utilities.
 
-FlextRegistry wires handlers to ``FlextDispatcher`` with explicit binding,
-idempotent tracking, and batch registration support that matches the current
-dispatcher-centric application layer.
+Provides handler registration with binding, tracking, and batch operations
+for the FLEXT dispatcher system.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Annotated, Self
+from typing import Annotated, Self, cast
 
 from pydantic import Field, computed_field
 
@@ -22,8 +21,6 @@ from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import (
     FlextHandlers,
 )
-
-# Local import to avoid circular dependency
 from flext_core.mixins import FlextMixins as x
 from flext_core.models import m
 from flext_core.protocols import p
@@ -45,44 +42,8 @@ class FlextRegistry(x):
     class Summary(m.Value):
         """Aggregated outcome for batch handler registration tracking.
 
-        Provides comprehensive summary of batch handler registration operations,
-        tracking successful, skipped, and failed registrations with detailed
-        metadata and computed success indicators.
-
-        This immutable value object is used by FlextRegistry to report the
-        results of batch handler registration operations, enabling idempotent
-        registration with full auditability.
-
-        Attributes:
-            registered: List of successfully registered handlers with details
-            skipped: List of handler identifiers that were skipped (already registered)
-            errors: List of error messages for failed registrations
-
-        Computed Properties:
-            is_success: True if no errors occurred during registration
-            successful_registrations: Count of successfully registered handlers
-            failed_registrations: Count of failed registration attempts
-
-        Examples:
-            >>> from pydantic import Field
-            >>> from flext_core import FlextConstants
-            >>> summary = FlextRegistry.Summary(
-            ...     registered=[
-            ...         m.HandlerRegistrationDetails(
-            ...             registration_id="reg-001",
-            ...             handler_mode=c.Cqrs.HandlerType.COMMAND,
-            ...             timestamp="2025-01-01T00:00:00Z",
-            ...             status=c.Cqrs.CommonStatus.RUNNING,
-            ...         )
-            ...     ],
-            ...     skipped=["CreateUserCommand"],
-            ...     errors=[],
-            ... )
-            >>> summary.is_success
-            True
-            >>> summary.successful_registrations
-            1
-
+        Tracks successful, skipped, and failed registrations with computed
+        success indicators for batch handler operations.
         """
 
         registered: Annotated[
@@ -116,11 +77,6 @@ class FlextRegistry(x):
             Returns:
                 True if no errors occurred, False otherwise
 
-            Examples:
-                >>> summary = FlextRegistry.Summary(registered=[...], errors=[])
-                >>> summary.is_success
-                True
-
             """
             return not self.errors
 
@@ -130,11 +86,6 @@ class FlextRegistry(x):
 
             Returns:
                 True if any errors occurred, False otherwise
-
-            Examples:
-                >>> summary = FlextRegistry.Summary(errors=["error1"])
-                >>> summary.is_failure
-                True
 
             """
             return bool(self.errors)
@@ -146,11 +97,6 @@ class FlextRegistry(x):
             Returns:
                 Count of successfully registered handlers
 
-            Examples:
-                >>> summary = FlextRegistry.Summary(registered=[detail1, detail2])
-                >>> summary.successful_registrations
-                2
-
             """
             return len(self.registered)
 
@@ -160,11 +106,6 @@ class FlextRegistry(x):
 
             Returns:
                 Count of failed registration attempts
-
-            Examples:
-                >>> summary = FlextRegistry.Summary(errors=["error1", "error2"])
-                >>> summary.failed_registrations
-                2
 
             """
             return len(self.errors)
@@ -190,12 +131,12 @@ class FlextRegistry(x):
         # Initialize service infrastructure (DI, Context, Logging, Metrics)
         self._init_service("flext_registry")
 
-        # Structural typing - FlextDispatcher implements p.CommandBus
         # Create dispatcher instance if not provided
-        if dispatcher is not None:
-            actual_dispatcher = dispatcher  # dispatcher is CommandBus when not None
-        else:
-            actual_dispatcher = FlextDispatcher()  # FlextDispatcher implements CommandBus
+        actual_dispatcher = (
+            dispatcher
+            if dispatcher is not None
+            else cast("p.CommandBus", FlextDispatcher())
+        )
         self._dispatcher: p.CommandBus = actual_dispatcher
 
         # Enrich context with registry metadata for observability
@@ -238,10 +179,6 @@ class FlextRegistry(x):
         Returns:
             FlextRegistry instance with auto-discovered handlers if enabled.
 
-        Example:
-            >>> registry = FlextRegistry.create(auto_discover_handlers=True)
-            >>> result = registry.register_handler(create_user_handler)
-
         """
         instance = cls(dispatcher)
 
@@ -264,7 +201,6 @@ class FlextRegistry(x):
                             # Register handler with deduplication built-in
                             # Deduplication happens in register_handler() via _registered_keys
                             # Type narrowing: handler_func is callable and not None here
-                            # handler_typed receives FlextHandlers-like object (structural typing via protocol)
                             handler_typed = handler_func
                             _ = instance.register_handler(handler_typed)  # type: ignore[arg-type]
 
@@ -703,9 +639,7 @@ class FlextRegistry(x):
                 summary.skipped.append(key)
                 continue
 
-            # Structural typing - handler is h which implements p.Handler
             # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
-            from typing import cast
             registration = self._dispatcher.register_command(
                 message_type,
                 cast("t.GeneralValueType", handler),
@@ -856,7 +790,6 @@ class FlextRegistry(x):
         )
         # Type narrowing: config_dict is dict or None, assign as ConfigurationMapping
         handler_config_typed = config_dict
-        # Structural typing - handler_func is HandlerCallable compatible
         # Type narrowing: handler_config_typed is ConfigurationMapping | None which is compatible with dict
         handler_result = self._dispatcher.create_handler_from_function(
             handler_func,
@@ -873,7 +806,7 @@ class FlextRegistry(x):
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
         register_result = self._dispatcher.register_handler(
-            cast(t.GeneralValueType, handler),
+            cast("t.GeneralValueType", handler),
         )
         if register_result.is_failure:
             return r[m.HandlerRegistrationDetails].fail(

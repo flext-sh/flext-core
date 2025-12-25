@@ -1,14 +1,7 @@
-"""Message dispatch orchestration with layered reliability.
+"""Message dispatch orchestration with reliability features.
 
-FlextDispatcher coordinates command and query execution with CQRS routing,
-reliability policies (circuit breaker, rate limiting, retry, timeout), and
-context-aware observability. The dispatcher is the application entry point for
-handler registration and execution in the current architecture.
-
-The dispatcher now supports dependency injection for reliability managers.
-Managers can be injected via constructor parameters or resolved from
-FlextContainer. See the ``__init__`` signature and ``_resolve_reliability_manager``
-for the implementation pattern.
+Coordinates command and query execution with routing, reliability policies,
+and observability features for handler registration and execution.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,7 +18,7 @@ import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import Self, override
+from typing import Self, cast, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel, ConfigDict
@@ -54,14 +47,7 @@ class FlextDispatcher(x):
     """Application-level dispatcher that satisfies the command bus protocol.
 
     The dispatcher exposes CQRS routing, handler registration, and execution
-    with layered reliability controls. It leans on structural typing to satisfy
-    ``p.CommandBus`` without inheritance while providing context
-    propagation, metrics, and audit logging aligned to the current architecture.
-
-    Basic usage:
-        >>> dispatcher = FlextDispatcher()
-        >>> dispatcher.register_handler(CreateUserCommand, handler)
-        >>> dispatcher.dispatch(CreateUserCommand(name="Alice"))
+    with layered reliability controls for message dispatching and handler execution.
     """
 
     @override
@@ -94,13 +80,10 @@ class FlextDispatcher(x):
         """
         super().__init__()
 
-        # Initialize service infrastructure (DI, Context, Logging, Metrics)
         self._init_service("flext_dispatcher")
 
-        # Store container for manager resolution
         self._container = container or FlextContainer.create()
 
-        # Enrich context with dispatcher metadata for observability
         self._enrich_context(
             service_type="dispatcher",
             dispatcher_type="FlextDispatcher",
@@ -140,7 +123,6 @@ class FlextDispatcher(x):
 
         # ==================== LAYER 2.5: TIMEOUT CONTEXT PROPAGATION ====================
 
-        # Timeout context tracking for deadline and cancellation propagation
         self._timeout_contexts: t.ConfigurationDict = {}  # operation_id → context
         self._timeout_deadlines: t.StringFloatDict = {}  # operation_id → deadline timestamp
 
@@ -164,7 +146,6 @@ class FlextDispatcher(x):
         # Event subscribers (from FlextDispatcher event protocol)
         self._event_subscribers: t.StringListDict = {}  # event_type → handlers
 
-        # Execution counter for metrics
         self._execution_count: int = 0
 
         # ==================== LAYER 3: ADVANCED PROCESSING INITIALIZATION ====================
@@ -178,7 +159,6 @@ class FlextDispatcher(x):
             str,
             t.ConfigurationMapping,
         ] = {}  # name → config
-        self._processor_metrics_per_name: t.NestedStringIntDict = {}  # per-processor metrics
         self._processor_locks: dict[
             str,
             threading.Lock,
@@ -213,7 +193,6 @@ class FlextDispatcher(x):
         ] = {}  # composed functions
         self._pipeline_memo: t.ConfigurationDict = {}  # Memoization cache for pipeline
 
-        # Group 5: Metrics & Auditing (dispatcher-level counters)
         self._process_metrics: t.StringNumericDict = {
             "registrations": 0,
             "successful_processes": 0,
@@ -704,8 +683,8 @@ class FlextDispatcher(x):
                 else:
                     # Use u.err() for unified error extraction (DSL pattern)
                     # result is r[t.GeneralValueType] which satisfies p.Result protocol
-                    error_msg = u.err(  # type: ignore[arg-type]
-                        result,
+                    error_msg = u.err(
+                        cast("p.Result[t.GeneralValueType]", result),
                         default="Unknown error in processor",
                     )
                     return r[list[t.GeneralValueType]].fail(
@@ -769,7 +748,7 @@ class FlextDispatcher(x):
                         # Use u.err() for unified error extraction (DSL pattern)
                         # result is r[t.GeneralValueType] which satisfies p.Result protocol
                         error_msg = u.err(
-                            result,  # type: ignore[arg-type]
+                            cast("p.Result[t.GeneralValueType]", result),
                             default="Unknown error in processor",
                         )
                         return r[list[t.GeneralValueType]].fail(
@@ -836,7 +815,6 @@ class FlextDispatcher(x):
         else:
             self._processor_configs[name] = {}
 
-        # Initialize per-processor metrics and lock
         self._processor_metrics_per_name[name] = {
             "successful_processes": 0,
             "failed_processes": 0,
@@ -888,7 +866,7 @@ class FlextDispatcher(x):
             # Use u.err() for unified error extraction (DSL pattern)
             # rate_limit_result is r[bool] which satisfies p.Result protocol
             error_msg = u.err(
-                    rate_limit_result,  # type: ignore[arg-type]
+                cast("p.Result[bool]", rate_limit_result),
                 default="Rate limit exceeded",
             )
             return r[t.GeneralValueType].fail(error_msg)
@@ -1570,7 +1548,9 @@ class FlextDispatcher(x):
         if isinstance(result, r) and result.is_failure:
             # Use u.err() for unified error extraction (DSL pattern)
             # result is r[bool] which satisfies p.Result protocol
-            error_msg = u.err(result, default="Unknown error")  # type: ignore[arg-type]
+            error_msg = u.err(
+                cast("p.Result[t.GeneralValueType]", result), default="Unknown error"
+            )
             self.logger.warning(
                 "Middleware rejected command - command processing stopped",
                 operation="execute_middleware",
@@ -2359,7 +2339,7 @@ class FlextDispatcher(x):
             | t.HandlerCallable
             | p.VariadicCallable[t.GeneralValueType]
             | BaseModel
-            ) = handler_raw  # type: ignore[assignment]
+        ) = handler_raw  # type: ignore[assignment]
 
         validation_result = self._validate_handler_registry_interface(
             handler_typed,
@@ -2370,7 +2350,7 @@ class FlextDispatcher(x):
                 validation_result.error or "Handler validation failed",
             )
 
-        # Cast handler to t.GeneralValueType for _extract_handler_name
+            # Cast handler to t.GeneralValueType for _extract_handler_name
             handler_for_extraction: t.GeneralValueType = handler_typed  # type: ignore[assignment]
         handler_name = self._extract_handler_name(handler_for_extraction, request_dict)
         if not handler_name:
@@ -2378,7 +2358,7 @@ class FlextDispatcher(x):
                 "handler_name is required",
             )
 
-        # Cast handler_typed to t.GeneralValueType for return
+            # Cast handler_typed to t.GeneralValueType for return
             handler_for_return: t.GeneralValueType = handler_typed  # type: ignore[assignment]
         return r[tuple[t.GeneralValueType, str]].ok(
             (handler_for_return, handler_name),
@@ -2583,24 +2563,6 @@ class FlextDispatcher(x):
         Returns:
             r with registration details or error
 
-        Example:
-            >>> from dataclasses import dataclass
-            >>> from flext_core import FlextDispatcher, r
-            >>>
-            >>> @dataclass
-            ... class CreateUser:
-            ...     email: str
-            >>>
-            >>> def handle_create_user(message: CreateUser) -> r[str]:
-            ...     if "@" not in message.email:
-            ...         return r[str].fail("Invalid email")
-            ...     return r[str].ok(f"Created: {message.email}")
-            >>>
-            >>> dispatcher = FlextDispatcher()
-            >>> result = dispatcher.register_handler(CreateUser, handle_create_user)
-            >>> if result.is_success:
-            ...     print("Handler registered successfully")
-
         """
         if handler is not None:
             # Validate request and handler are HandlerType before registration
@@ -2660,7 +2622,7 @@ class FlextDispatcher(x):
         """Register handler with specific mode (DRY helper).
 
         Eliminates duplication between register_command and register_query.
-        Both methods follow identical pattern: create request dict → call
+        Both methods follow identical pattern: create request dict then call
         register_handler_with_request().
 
         Args:
@@ -2677,7 +2639,7 @@ class FlextDispatcher(x):
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
         request: t.ConfigurationDict = {
-                "handler": handler,  # type: ignore[dict-item]
+            "handler": cast("t.GeneralValueType", handler),
             "message_type": message_type_name,
             "handler_mode": handler_mode,
             "handler_config": handler_config,
@@ -2774,7 +2736,7 @@ class FlextDispatcher(x):
         # Simple registration for basic test compatibility
         if not handler_config:
             # Cast handler_func to HandlerType for assignment
-            handler_func_typed: t.HandlerType = handler_func  # type: ignore[assignment]
+            handler_func_typed: t.HandlerType = cast("t.HandlerType", handler_func)  # type: ignore[assignment]
             # Access __name__ attribute safely - type objects have this attribute
             handler_key = getattr(message_type, "__name__", str(message_type))
             self._handlers[handler_key] = handler_func_typed
@@ -2790,7 +2752,7 @@ class FlextDispatcher(x):
         ) -> t.GeneralValueType:
             # handler_func is callable, accept any arguments and convert result
             # Cast msg to TMessage for handler_func call
-            msg_typed: TMessage = msg  # type: ignore[assignment]
+            msg_typed: TMessage = cast("TMessage", msg)  # type: ignore[assignment]
             result_raw = handler_func(msg_typed) if callable(handler_func) else msg
             # Convert result to t.GeneralValueType
             if isinstance(
@@ -2816,7 +2778,7 @@ class FlextDispatcher(x):
         # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
         message_type_name = getattr(message_type, "__name__", str(message_type))
         request: t.ConfigurationDict = {
-                "handler": handler_result.value,  # type: ignore[dict-item]
+            "handler": handler_result.value,  # type: ignore[dict-item]
             "message_type": message_type_name,
             "handler_mode": mode,
             "handler_config": handler_config,
@@ -3210,24 +3172,6 @@ class FlextDispatcher(x):
         Returns:
             r with execution result or error
 
-        Example:
-            >>> from dataclasses import dataclass
-            >>> from flext_core import FlextDispatcher, r
-            >>>
-            >>> @dataclass
-            ... class CreateUser:
-            ...     email: str
-            >>>
-            >>> dispatcher = FlextDispatcher()
-            >>>
-            >>> def handle_create_user(message: CreateUser) -> r[str]:
-            ...     return r[str].ok(f"Created user: {message.email}")
-            >>>
-            >>> dispatcher.register_handler(CreateUser, handle_create_user)
-            >>> result = dispatcher.dispatch(CreateUser(email="user@example.com"))
-            >>> if result.is_success:
-            ...     print(result.value)
-
         """
         # Detect API pattern - (type, data) vs (object)
         message: t.GeneralValueType
@@ -3596,7 +3540,7 @@ class FlextDispatcher(x):
             # Use u.err() for unified error extraction (DSL pattern)
             # conditions_check is r[bool] which satisfies p.Result protocol
             error_msg = u.err(
-                    conditions_check,  # type: ignore[arg-type]
+                cast("p.Result[bool]", conditions_check),
                 default="Pre-dispatch conditions check failed",
             )
             return r[t.GeneralValueType].fail(
@@ -3825,7 +3769,7 @@ class FlextDispatcher(x):
                 if transform_result.is_success:
                     # Cast the result value to the expected type for iteration
                     result_items: list[tuple[str, t.MetadataAttributeValue]] = (
-                            transform_result.value  # type: ignore[assignment]
+                        transform_result.value  # type: ignore[assignment]
                     )
                     metadata_attrs = {str(k): v for k, v in result_items}
                 else:
@@ -4090,10 +4034,6 @@ class FlextDispatcher(x):
 
         Returns:
             FlextDispatcher instance.
-
-        Example:
-            >>> dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
-            >>> result = dispatcher.dispatch(CreateUserCommand(name="Alice"))
 
         """
         instance = cls()

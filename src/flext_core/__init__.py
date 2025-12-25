@@ -1,12 +1,7 @@
 """Public API for flext-core.
 
-This package exposes the dispatcher-centric application layer (dispatcher,
-registry, handlers), domain primitives (models, services), shared
-utilities, and infrastructure bridges (configuration, logging, context)
-used across the FLEXT ecosystem. Components follow clean architecture
-boundaries and favor structural typing for protocol compliance.
-
-FLEXT follows Railway-Oriented Programming with Result[T, E] patterns.
+Provides access to core FLEXT components including dispatcher, models,
+utilities, and configuration for the FLEXT ecosystem.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -54,28 +49,14 @@ from flext_core.utilities import FlextUtilities, u
 # Runtime aliases
 x = FlextMixins
 
-# =============================================================================
-# RUNTIME TYPE CHECKING - Python 3.13 Strict Typing Enforcement
-# =============================================================================
-# beartype provides RUNTIME type validation in addition to static checking.
-#
-# ENABLED via FlextRuntime.enable_runtime_checking() for package-wide validation.
-# Critical methods can also use @beartype decorator individually.
-#
-# Beartype provides O(log n) runtime validation with minimal overhead.
-# Static type checking (pyright strict mode) is ALWAYS active.
-# Documentation: https://beartype.readthedocs.io/en/stable/
-# =============================================================================
 
-# Beartype configuration for runtime type checking (available for your use)
 BEARTYPE_CONF = BeartypeConf(
-    strategy=BeartypeStrategy.Ologn,  # O(log n) - thorough with acceptable overhead
-    is_color=True,  # Colored error messages
-    claw_is_pep526=False,  # Disable variable annotation checking
-    warning_cls_on_decorator_exception=UserWarning,  # Warnings on decorator failures
+    strategy=BeartypeStrategy.Ologn,
+    is_color=True,
+    claw_is_pep526=False,
+    warning_cls_on_decorator_exception=UserWarning,
 )
 
-# =============================================================================
 
 __all__ = [
     "BEARTYPE_CONF",

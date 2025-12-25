@@ -1,14 +1,7 @@
-"""FlextVersion - Package Version and Metadata Information Module.
+"""Package version and metadata information.
 
-This module provides version and package metadata for flext-core using
-importlib.metadata, extracting information from the package's metadata
-including version, author, license, and other package details. Implements
-structural typing via p.Version through duck typing,
-providing a foundation for version management and package information access.
-
-Scope: Package metadata extraction, version string and tuple representation,
-PEP 440 semantic versioning compliance, metadata access for package information,
-version comparison utilities, and package identity management.
+Provides version information and package metadata for the flext-core package
+using standard library metadata extraction.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,43 +15,12 @@ from flext_core.typings import t
 
 
 class FlextVersion:
-    """Package version and metadata information for FLEXT ecosystem.
+    """Package version and metadata information.
 
-    Provides comprehensive package metadata extraction and version management
-    using importlib.metadata. Implements structural typing via p.Version
-    through duck typing (no inheritance required), serving as the foundation layer
-    (Layer 0) for version information throughout the FLEXT ecosystem.
-
-    Core Features:
-    - PEP 440 semantic versioning compliance
-    - Package metadata extraction from distribution metadata
-    - Version string and tuple representations for different use cases
-    - Graceful fallback handling for missing metadata fields
-    - Type-safe metadata access with proper error handling
-    - Zero external dependencies (stdlib only)
-
-    Architecture:
-    - Single class with nested metadata extraction logic
-    - DRY principle applied through centralized metadata access
-    - SOLID principles: Single Responsibility for version/metadata management
-    - Railway pattern for error handling in metadata extraction
-    - Structural typing for protocol compliance without inheritance
-
-    Version Formats:
-    - String format: "major.minor.patch" (e.g., "1.0.0") for display
-    - Tuple format: (major, minor, patch, ...) for numeric comparison
-    - Supports pre-release versions: "1.0.0rc1", "1.0.0a1", "1.0.0b1"
-    - Compatible with PEP 440 semantic versioning specification
-
-    Usage Examples:
-        >>> from flext_core import __version__, __version_info__
-        >>> print(f"flext-core {__version__}")  # "flext-core 1.0.0"
-        >>> if __version_info__ >= (1, 0, 0):  # Version comparison
-        ...     enable_new_feature()
-        >>> assert __version_info__[0] >= 0  # Runtime version validation
+    Provides version information and package metadata using standard library
+    metadata extraction with graceful fallback handling.
     """
 
-    # Package metadata extraction with error handling
     _metadata: PackageMetadata | dict[str, str]
     try:
         _metadata = metadata("flext-core")
@@ -74,13 +36,11 @@ class FlextVersion:
             "Home-Page": "",
         }
 
-    # Core version information - extracted once at import time
     __version__ = _metadata["Version"]
     __version_info__ = tuple(
         int(part) if part.isdigit() else part for part in __version__.split(".")
     )
 
-    # Package identity information
     __title__ = _metadata["Name"]
     __description__ = _metadata.get("Summary", "")
     __author__ = _metadata.get("Author", "")
@@ -98,11 +58,6 @@ class FlextVersion:
         Returns:
             str: Version string (e.g., "1.0.0", "1.0.0rc1")
 
-        Example:
-            >>> version = FlextVersion.get_version_string()
-            >>> print(f"Current version: {version}")
-            Current version: 1.0.0
-
         """
         return cls.__version__
 
@@ -116,11 +71,6 @@ class FlextVersion:
 
         Returns:
             tuple[int | str, ...]: Version tuple for comparison (e.g., (1, 0, 0))
-
-        Example:
-            >>> vinfo = FlextVersion.get_version_info()
-            >>> if vinfo >= (1, 0, 0):
-            ...     print("Version 1.0.0 or higher")
 
         """
         return cls.__version_info__
@@ -140,10 +90,6 @@ class FlextVersion:
 
         Returns:
             bool: True if current version >= specified version
-
-        Example:
-            >>> if FlextVersion.is_version_at_least(1, 0, 0):
-            ...     enable_new_api()
 
         """
         return cls.__version_info__ >= (major, minor, patch)
@@ -165,10 +111,6 @@ class FlextVersion:
                 - license: License type
                 - url: Homepage URL
 
-        Example:
-            >>> info = FlextVersion.get_package_info()
-            >>> print(f"Package: {info['name']} v{info['version']}")
-
         """
         return {
             "name": cls.__title__,
@@ -181,7 +123,6 @@ class FlextVersion:
         }
 
 
-# Module-level exports for external access
 __version__ = FlextVersion.__version__
 __version_info__ = FlextVersion.__version_info__
 __title__ = FlextVersion.__title__
