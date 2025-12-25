@@ -174,10 +174,10 @@ class FlextModelsContext:
             # structlog.contextvars.get_contextvars() returns dict[str, Any] (library limitation)
             # We know values are t.GeneralValueType because we only store those via set()
             # Type narrowing via structural validation: dict.get() confirms type
-            typed_context: dict[str, t.GeneralValueType] = structlog_context  # type: ignore[assignment]
+            typed_context: dict[str, t.GeneralValueType] = structlog_context
             # value is t.GeneralValueType | None, T is bounded to GeneralValueType
             # Structural typing: value type matches T parameter
-            return typed_context.get(self._key, self._default)  # type: ignore[return-value]
+            return typed_context.get(self._key, self._default)
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.
@@ -195,7 +195,7 @@ class FlextModelsContext:
             if value is not None:
                 # T is bounded to GeneralValueType in generic contract
                 # Store directly - type parameter constraint guarantees compatibility
-                stored_value: t.GeneralValueType = value  # type: ignore[assignment]
+                stored_value: t.GeneralValueType = value
                 _ = structlog.contextvars.bind_contextvars(**{
                     self._key: stored_value,
                 })
@@ -213,11 +213,11 @@ class FlextModelsContext:
             ):
                 # Type narrowing: isinstance confirms current_value is GeneralValueType
                 # isinstance check validates type - assign directly
-                prev_value = current_value  # type: ignore[assignment]
+                prev_value = current_value
             else:
                 # For datetime and other objects, T is bounded to GeneralValueType
                 # Structural typing: current_value matches T which extends GeneralValueType
-                prev_value = current_value  # type: ignore[assignment]
+                prev_value = current_value
 
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key,
@@ -426,7 +426,7 @@ class FlextModelsContext:
                 if callable(model_dump_method):
                     # model_dump() returns dict - type narrowing from callable check
                     # Pydantic's model_dump() returns dict[str, Any] which is ConfigurationDict
-                    v = model_dump_method()  # type: ignore[assignment]
+                    v = model_dump_method()
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -562,7 +562,7 @@ class FlextModelsContext:
                 if callable(model_dump_method):
                     # model_dump() returns dict - callable check validates
                     # Pydantic's model_dump() returns dict[str, Any] (ConfigurationDict)
-                    v = model_dump_method()  # type: ignore[assignment]
+                    v = model_dump_method()
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -574,7 +574,7 @@ class FlextModelsContext:
             FlextModelsContext.ContextExport.check_json_serializable(v)
             # Type assertion: runtime validation ensures correct type
             # is_dict_like() confirms v is Mapping - dict() constructor accepts it
-            return dict(v)  # type: ignore[arg-type]
+            return dict(v)  # type: ignore[call-overload]
 
         @computed_field
         def total_data_items(self) -> int:
@@ -642,7 +642,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(v):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)  # type: ignore[arg-type]
+                return dict(v)  # type: ignore[call-overload]
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -661,7 +661,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(v):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)  # type: ignore[arg-type]
+                return dict(v)  # type: ignore[call-overload]
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -732,7 +732,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(v):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)  # type: ignore[arg-type]
+                return dict(v)  # type: ignore[call-overload]
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:
@@ -840,7 +840,7 @@ class FlextModelsContext:
             if FlextRuntime.is_dict_like(v):
                 # is_dict_like() confirms v is Mapping - dict() accepts it
                 # Convert to dict explicitly for type safety
-                return dict(v)  # type: ignore[arg-type]
+                return dict(v)  # type: ignore[call-overload]
             if isinstance(v, BaseModel):
                 return FlextModelsContext._to_general_value_dict(v.model_dump())
             if v is None:

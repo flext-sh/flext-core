@@ -145,7 +145,7 @@ class FlextUtilitiesChecker:
             if isinstance(hint, type):
                 # Type narrowing: hint is type after isinstance check
                 # type objects are valid MessageTypeSpecifier - return directly
-                return hint  # type: ignore[return-value]
+                return hint
             # For other types (Sequence, Mapping), convert to string
             # string is valid MessageTypeSpecifier
             return str(hint)
@@ -154,7 +154,7 @@ class FlextUtilitiesChecker:
         if annotation is not inspect.Signature.empty:
             # Type narrowing: annotation exists and is not empty
             # Return annotation as MessageTypeSpecifier - it can be str, type, or generic alias
-            return annotation  # type: ignore[return-value]
+            return annotation
 
         return None
 

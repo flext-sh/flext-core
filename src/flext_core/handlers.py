@@ -19,11 +19,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core.constants import c
 from flext_core.exceptions import e
-from flext_core.mixins import FlextMixins as x
+
+# from flext_core.mixins import FlextMixins as x  # Local import to avoid circular dependency
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -66,6 +67,10 @@ def _handler_type_to_literal(
         case _:
             # Should never reach here as all HandlerType values are covered
             return "operation"
+
+
+# Local import to avoid circular dependency
+from flext_core.mixins import FlextMixins as x
 
 
 class FlextHandlers[MessageT_contra, ResultT](
@@ -869,8 +874,8 @@ class FlextHandlers[MessageT_contra, ResultT](
                         c.Discovery.HANDLER_ATTR,
                     )
                     # Type assertion: callable(func) confirms it's a function
-                    # Use cast to satisfy type checker after callable() check
-                    handler_func = cast("t.HandlerCallable", func)
+                    # Type narrowing: func is callable with handler decorator
+                    handler_func: t.HandlerCallable = func  # type: ignore[assignment]
                     handlers.append((name, handler_func, config))
 
             # Sort by priority (descending), then by name for stability

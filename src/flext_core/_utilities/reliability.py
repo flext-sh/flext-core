@@ -15,7 +15,6 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable
-from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -114,11 +113,11 @@ class FlextUtilitiesReliability:
             # Type narrowing: result_raw has RuntimeResult structure (is_success, is_failure, unwrap)
             # Structural typing validates this is a Result type - return directly
             # Python's structural typing allows this without explicit cast
-            return result_raw  # type: ignore[return-value]
+            return result_raw
 
         # Type narrowing: result_raw is not a Result - must be TResult
         # Wrap the value in a successful Result
-        return r[TResult].ok(result_raw)  # type: ignore[arg-type]
+        return r[TResult].ok(result_raw)
 
     @staticmethod
     def retry[TResult](
@@ -378,9 +377,8 @@ class FlextUtilitiesReliability:
                 )
                 if has_result_interface:
                     # Structural typing: result has Result interface methods
-                    # result is a Result type - use it as one
-                    # Cast to Result protocol after interface check
-                    result_typed = cast("p.Result[object]", result)
+                    # result implements Result protocol - access via protocol
+                    result_typed: p.Result[object] = result
                     if result_typed.is_failure:
                         if on_error == "stop":
                             err_msg = result_typed.error or "Unknown error"
@@ -391,7 +389,7 @@ class FlextUtilitiesReliability:
                         # Type narrowing: current remains unchanged (previous value)
                         continue
                     # Type narrowing: result.is_success is True, so result.value is valid
-                    # Extract value from Result - result_typed implements Result[object]
+                    # Extract value from Result - result_typed implements Result protocol
                     current = result_typed.value
                 else:
                     # Type annotation: result is object (non-RuntimeResult return)

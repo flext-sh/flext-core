@@ -364,7 +364,7 @@ class FlextService[TDomainResult](
             and isinstance(config_type_raw, type)
             and issubclass(config_type_raw, FlextSettings)
         ):
-            config_type_val = config_type_raw  # type: ignore[assignment]
+            config_type_val = config_type_raw
         else:
             config_type_val = config_type
 

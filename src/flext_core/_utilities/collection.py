@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import cast
 
 from flext_core.result import r
 from flext_core.typings import R, T, U, t
@@ -74,7 +73,7 @@ class FlextUtilitiesCollection:
         if isinstance(items, (list, tuple)):
             for item in items:
                 if predicate(item):
-                    return item  # type: ignore[no-any-return]
+                    return item
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
@@ -302,14 +301,14 @@ class FlextUtilitiesCollection:
             # Runtime check: object type not supported for coercion
             if target_type is object:
                 msg = "object type not supported for coercion"
-                raise ValueError(msg)
+                raise TypeError(msg)
 
             result: dict[str, T] = {}
             for key, value in data.items():
                 try:
                     if isinstance(value, target_type):
                         # Value is already of correct type
-                        result[key] = cast("T", value)
+                        result[key] = value
                     elif isinstance(target_type, type) and issubclass(
                         target_type, StrEnum
                     ):
@@ -320,7 +319,7 @@ class FlextUtilitiesCollection:
                         result[key] = target_type(value)
                     # General type coercion - object type not supported
                     else:
-                        result[key] = target_type(value)  # type: ignore[call-arg]
+                        result[key] = target_type(value)
                 except ValueError as e:
                     # For enum validation errors, re-raise as ValueError
                     type_name = getattr(target_type, "__name__", "Unknown")
@@ -355,7 +354,7 @@ class FlextUtilitiesCollection:
             # Runtime check: object type not supported for coercion
             if target_type is object:
                 msg = "object type not supported for coercion"
-                raise ValueError(msg)
+                raise TypeError(msg)
 
             if not isinstance(data, (list, tuple, set, frozenset)):
                 msg = f"Expected sequence, got {type(data).__name__}"
@@ -366,7 +365,7 @@ class FlextUtilitiesCollection:
                 try:
                     if isinstance(value, target_type):
                         # Value is already of correct type
-                        result.append(cast("T", value))
+                        result.append(value)
                     elif isinstance(target_type, type) and issubclass(
                         target_type, StrEnum
                     ):
@@ -377,7 +376,7 @@ class FlextUtilitiesCollection:
                         result.append(target_type(value))
                     # General type coercion - object type not supported
                     else:
-                        result.append(target_type(value))  # type: ignore[call-arg]
+                        result.append(target_type(value))
                 except ValueError as e:
                     # For enum validation errors, re-raise as ValueError
                     type_name = getattr(target_type, "__name__", "Unknown")
