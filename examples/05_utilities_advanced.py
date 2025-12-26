@@ -130,7 +130,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
         """Show Args validation utilities."""
         print("\n=== Args Validation ===")
 
-        @u.Args.validated
+        @u.validated
         def process_status(status: StatusEnum) -> str:
             """Process status with automatic validation."""
             return f"Status: {status.value}"
@@ -139,7 +139,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
         result = process_status(status_enum)
         print(f"✅ Validated function: {result}")
 
-        @u.Args.validated_with_result
+        @u.validated_with_result
         def process_with_result(status: StatusEnum) -> FlextResult[str]:
             """Process with result validation."""
             return FlextResult[str].ok(f"Processed: {status.value}")
@@ -155,14 +155,14 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
         print("\n=== Enum Utilities ===")
 
         # Parse enum from string
-        parse_result = u.Enum.parse(StatusEnum, "active")
+        parse_result = u.parse_enum(StatusEnum, "active")
         if parse_result.is_success:
             status = parse_result.value
             print(f"✅ Enum parsing: {status.value}")
 
         # Type guard for enum membership
         test_value: t.GeneralValueType = "pending"
-        if u.Enum.is_member(StatusEnum, test_value):
+        if u.is_member(StatusEnum, test_value):
             print(f"✅ Type guard: {test_value} is valid StatusEnum")
 
         # Subset validation - using string value for type guard
@@ -171,7 +171,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
         # Business Rule: is_subset accepts enum class (type[E]), frozenset of enum members, and value to check
         # StatusEnum is the enum class type. Use type() to ensure we pass the class, not an instance.
         # This pattern ensures type checker understands it's a class type for proper type inference.
-        if u.Enum.is_subset(type(StatusEnum.ACTIVE), active_states, test_status_str):
+        if u.is_subset(type(StatusEnum.ACTIVE), active_states, test_status_str):
             print("✅ Subset validation: 'active' is in active states")
 
     @staticmethod
@@ -185,19 +185,18 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
             "status": "active",
             "age": 25,
         }
-        model_result = u.Model.from_dict(UserModel, user_data)
+        model_result = u.from_dict(UserModel, user_data)
         if model_result.is_success:
             user = model_result.value
             status_value = (
                 user.status.value
-                if u.Validation.guard(user.status, StatusEnum, return_value=True)
-                is not None
+                if u.guard(user.status, StatusEnum, return_value=True) is not None
                 else str(user.status)
             )
             print(f"✅ Model from dict: {user.name} ({status_value})")
 
         # Create model from kwargs
-        kwargs_result = u.Model.from_kwargs(
+        kwargs_result = u.from_kwargs(
             UserModel,
             name="Bob",
             status=StatusEnum.PENDING,
@@ -207,8 +206,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
             user = kwargs_result.value
             status_value = (
                 user.status.value
-                if u.Validation.guard(user.status, StatusEnum, return_value=True)
-                is not None
+                if u.guard(user.status, StatusEnum, return_value=True) is not None
                 else str(user.status)
             )
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
@@ -219,13 +217,12 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
             "age": 0,
         }
         overrides: Mapping[str, t.FlexibleValue] = {"name": "Charlie"}
-        merge_result = u.Model.merge_defaults(UserModel, defaults, overrides)
+        merge_result = u.merge_defaults(UserModel, defaults, overrides)
         if merge_result.is_success:
             user = merge_result.value
             status_value = (
                 user.status.value
-                if u.Validation.guard(user.status, StatusEnum, return_value=True)
-                is not None
+                if u.guard(user.status, StatusEnum, return_value=True) is not None
                 else str(user.status)
             )
             print(f"✅ Merged defaults: {user.name} ({status_value})")
@@ -237,19 +234,19 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
 
         # Clean text
         dirty_text = str(TEST_DATA["text"])
-        cleaned = u.Text.clean_text(dirty_text)
+        cleaned = u.clean_text(dirty_text)
         print(f"✅ Text cleaning: '{dirty_text}' → '{cleaned}'")
 
         # Truncate text
         long_text = str(TEST_DATA["long_text"])
-        truncate_result = u.Text.truncate_text(long_text, max_length=50)
+        truncate_result = u.truncate_text(long_text, max_length=50)
         if truncate_result.is_success:
             truncated = truncate_result.value
             print(f"✅ Text truncation: {len(truncated)} chars")
 
         # Safe string validation
         try:
-            safe = u.Text.safe_string("  valid  ")
+            safe = u.safe_string("  valid  ")
             print(f"✅ Safe string: '{safe}'")
         except ValueError as e:
             print(f"⚠️  Safe string validation: {e}")
@@ -285,9 +282,8 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
             dict[str, t.GeneralValueType]
         ].fail("Invalid data types")
         if (
-            u.Validation.guard(source_value, Mapping, return_value=True) is not None
-            and u.Validation.guard(mapping_value, Mapping, return_value=True)
-            is not None
+            u.guard(source_value, Mapping, return_value=True) is not None
+            and u.guard(mapping_value, Mapping, return_value=True) is not None
         ):
             # Type-safe dictionary creation from Mapping
             source_dict: dict[str, t.GeneralValueType] = (
@@ -300,17 +296,17 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
                 mapping_dict: dict[str, t.GeneralValueType] = {
                     str(k): v for k, v in mapping_value.items()
                 }
-                mapped_dict = u.Mapper.transform_values(mapping_dict, str)
+                mapped_dict = u.transform_values(mapping_dict, str)
                 key_mapping: dict[str, str] = {
                     str(k): str(v) for k, v in mapped_dict.items()
                 }
-                map_result = u.Mapper.map_dict_keys(source_dict, key_mapping)
+                map_result = u.map_dict_keys(source_dict, key_mapping)
         if map_result.is_success:
             mapped = map_result.value
             print(f"✅ Key mapping: {list(mapped.keys())}")
 
         # Convert to int safe using parse()
-        int_result = u.Parser.parse("123", int, default=0)
+        int_result = u.parse("123", int, default=0)
         print(
             f"✅ Safe int conversion: '123' → {int_result.map_or(0)}",
         )
@@ -321,7 +317,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
             "read": "can_read",
             "write": "can_write",
         }
-        flags_result = u.Mapper.build_flags_dict(flags, flag_mapping)
+        flags_result = u.build_flags_dict(flags, flag_mapping)
         if flags_result.is_success:
             flags_dict = flags_result.value
             print(f"✅ Flags dict: {list(flags_dict.keys())}")
@@ -336,7 +332,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
         user2 = UserModel(name="Bob", status=StatusEnum.ACTIVE, age=30)
 
         # Compare value objects by value
-        comparison = u.Domain.compare_value_objects_by_value(user1, user2)
+        comparison = u.compare_value_objects_by_value(user1, user2)
         print(f"✅ Value object comparison: {comparison}")
 
         # Entity comparison utilities available
@@ -350,7 +346,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
 
         # Extract page params
         query_params: dict[str, str] = {"page": "2", "page_size": "10"}
-        page_result = u.Pagination.extract_page_params(
+        page_result = u.extract_page_params(
             query_params,
             default_page=1,
             default_page_size=FlextConstants.Pagination.DEFAULT_PAGE_SIZE,
@@ -361,7 +357,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
             print(f"✅ Page params: page={page}, size={page_size}")
 
         # Validate pagination params
-        validate_result = u.Pagination.validate_pagination_params(
+        validate_result = u.validate_pagination_params(
             page=1,
             page_size=20,
             max_page_size=FlextConstants.Pagination.MAX_PAGE_SIZE,
@@ -378,7 +374,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
         # Get parameter from model
         user = UserModel(name="Test", status=StatusEnum.ACTIVE, age=30)
         try:
-            name_param = u.Configuration.get_parameter(user, "name")
+            name_param = u.get_parameter(user, "name")
             print(f"✅ Get parameter: name={name_param}")
         except Exception as e:
             print(f"⚠️  Get parameter: {e}")
@@ -389,7 +385,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
             "retries": 3,
         }
         try:
-            timeout = u.Configuration.get_parameter(config_dict, "timeout")
+            timeout = u.get_parameter(config_dict, "timeout")
             print(f"✅ Get from dict: timeout={timeout}")
         except Exception as e:
             print(f"⚠️  Get from dict: {e}")

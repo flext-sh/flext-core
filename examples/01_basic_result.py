@@ -84,7 +84,8 @@ class RailwayService(s[DemonstrationResult]):
         try:
             # Chain all demonstrations using railway pattern
             return (
-                self._run_demonstrations()
+                self
+                ._run_demonstrations()
                 .flat_map(self._build_result_data)
                 .map(self._log_success)
             )
@@ -155,7 +156,7 @@ class RailwayService(s[DemonstrationResult]):
 
         def validate_user(email: str) -> r[User]:
             # Use u for email validation (DRY)
-            email_validation = u.Validation.validate_pattern(
+            email_validation = u.validate_pattern(
                 email,
                 c.Platform.PATTERN_EMAIL,
                 "email",
@@ -237,7 +238,7 @@ class RailwayService(s[DemonstrationResult]):
         test_value = "test"
 
         def validate_length(v: str) -> r[str]:
-            return u.Validation.validate_length(
+            return u.validate_length(
                 v,
                 min_length=c.Validation.MIN_USERNAME_LENGTH,
             )
@@ -313,11 +314,12 @@ class RailwayService(s[DemonstrationResult]):
         # Chain validations using railway pattern with u (DRY)
         test_email = "test@example.com"
         result = (
-            r.ok(test_email)
+            r
+            .ok(test_email)
             .flat_map(user_validator)
             .map(lambda user: user.email)
             .flat_map(
-                lambda email: u.Validation.validate_length(
+                lambda email: u.validate_length(
                     email,
                     min_length=c.Validation.MIN_USERNAME_LENGTH,
                     max_length=c.Validation.MAX_NAME_LENGTH,
@@ -329,12 +331,12 @@ class RailwayService(s[DemonstrationResult]):
         # Multiple validations with traverse using u (DRY - no custom validators)
         test_email_2 = "user@domain.com"
         validation_results = [
-            u.Validation.validate_pattern(
+            u.validate_pattern(
                 test_email_2,
                 c.Platform.PATTERN_EMAIL,
                 "email",
             ),
-            u.Validation.validate_length(
+            u.validate_length(
                 test_email_2,
                 min_length=c.Validation.MIN_USERNAME_LENGTH,
                 max_length=c.Validation.MAX_NAME_LENGTH,

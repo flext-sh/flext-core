@@ -180,7 +180,9 @@ def test_convert_metadata_to_model_and_build_config() -> None:
     assert meta_model is not None
     assert meta_model.attributes["flag"] is True
     assert meta_model.attributes["numbers"] == [1, 2]
-    assert isinstance(meta_model.attributes["nested"], dict)
+    # Nested dicts are serialized to JSON strings for Metadata.attributes compatibility
+    assert isinstance(meta_model.attributes["nested"], str)
+    assert "k" in meta_model.attributes["nested"]
 
     config = FlextDispatcher._build_dispatch_config_from_args(
         None,

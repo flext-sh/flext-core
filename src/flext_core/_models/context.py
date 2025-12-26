@@ -17,38 +17,10 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validat
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-
-def _normalize_to_metadata(v: t.GeneralValueType) -> FlextModelsBase.Metadata:
-    """Normalize value to Metadata.
-
-    Inlined to avoid circular dependency with utilities.
-    """
-    # Handle None - return empty Metadata
-    if v is None:
-        return FlextModelsBase.Metadata(attributes={})
-
-    # Handle existing Metadata instance - return as-is
-    if isinstance(v, FlextModelsBase.Metadata):
-        return v
-
-    # Handle dict-like values
-    if FlextRuntime.is_dict_like(v) and isinstance(v, dict):
-        # Normalize each value using FlextRuntime.normalize_to_metadata_value
-        attributes: dict[str, t.MetadataAttributeValue] = {}
-        for key, val in v.items():
-            attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
-        return FlextModelsBase.Metadata(attributes=attributes)
-
-    # Invalid type - raise TypeError
-    msg = (
-        f"metadata must be None, dict, or FlextModelsBase.Metadata, "
-        f"got {type(v).__name__}"
-    )
-    raise TypeError(msg)
 
 
 class FlextModelsContext:
@@ -418,9 +390,9 @@ class FlextModelsContext:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses _normalize_to_metadata() helper.
+            Uses FlextUtilitiesModel.normalize_to_metadata() helper.
             """
-            return _normalize_to_metadata(v)
+            return FlextUtilitiesModel.normalize_to_metadata(v)
 
         @field_validator("data", mode="before")
         @classmethod
@@ -442,9 +414,10 @@ class FlextModelsContext:
                 # Call model_dump on Pydantic model (safely via callable check)
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict - type narrowing from callable check
-                    # Pydantic's model_dump() returns dict[str, Any] which is ConfigurationDict
-                    v = model_dump_method()
+                    # model_dump() returns dict[str, Any] - explicit type binding
+                    dump_result = model_dump_method()
+                    if isinstance(dump_result, dict):
+                        v = dump_result
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -460,8 +433,10 @@ class FlextModelsContext:
                 raise TypeError(msg)
             # Use helper to normalize recursively
             normalized = FlextModelsContext.ContextData.normalize_to_general_value(v)
+            # Type guard for return type - ConfigurationDict is dict[str, GeneralValueType]
             if isinstance(normalized, dict):
-                return normalized
+                result: t.ConfigurationDict = normalized
+                return result
             msg = f"Normalized value must be dict, got {type(normalized).__name__}"
             raise TypeError(msg)
 
@@ -521,9 +496,9 @@ class FlextModelsContext:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses _normalize_to_metadata() helper.
+            Uses FlextUtilitiesModel.normalize_to_metadata() helper.
             """
-            return _normalize_to_metadata(v)
+            return FlextUtilitiesModel.normalize_to_metadata(v)
 
         @classmethod
         def check_json_serializable(
@@ -577,9 +552,10 @@ class FlextModelsContext:
             elif hasattr(v, "model_dump"):
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict - callable check validates
-                    # Pydantic's model_dump() returns dict[str, Any] (ConfigurationDict)
-                    v = model_dump_method()
+                    # model_dump() returns dict[str, Any] - explicit type binding
+                    dump_result = model_dump_method()
+                    if isinstance(dump_result, dict):
+                        v = dump_result
 
             if not FlextRuntime.is_dict_like(v):
                 type_name = type(v).__name__
@@ -591,6 +567,9 @@ class FlextModelsContext:
             FlextModelsContext.ContextExport.check_json_serializable(v)
             # Type assertion: runtime validation ensures correct type
             # is_dict_like() confirms v is Mapping - dict() constructor accepts it
+            if isinstance(v, dict):
+                return v
+            # Fallback for Mapping types
             return dict(v)
 
         @computed_field

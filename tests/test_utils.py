@@ -27,6 +27,7 @@ from flext_core import (
     FlextUtilities,
     r,
 )
+from flext_core.typings import t
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -39,7 +40,7 @@ class StandardTestCase:
     """Standardized test case structure for parametrized tests."""
 
     description: str
-    input_data: dict[str, object]
+    input_data: dict[str, t.Types.GeneralValueType]
     expected_result: object
     expected_success: bool = True
     error_contains: str | None = None
@@ -51,12 +52,12 @@ class TestDataFactory:
     @staticmethod
     def create_entity_data(
         unique_id: str, name: str, **kwargs: object
-    ) -> dict[str, object]:
+    ) -> dict[str, t.Types.GeneralValueType]:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
-    def create_value_object_data(value: object, **kwargs: object) -> dict[str, object]:
+    def create_value_object_data(value: object, **kwargs: object) -> dict[str, t.Types.GeneralValueType]:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
@@ -64,7 +65,7 @@ class TestDataFactory:
     def create_operation_test_case(
         operation: str,
         description: str,
-        input_data: dict[str, object],
+        input_data: dict[str, t.Types.GeneralValueType],
         expected_result: object,
         **kwargs: object,
     ) -> StandardTestCase:
@@ -81,11 +82,11 @@ class AssertionHelpers:
     """Reusable assertion helpers to eliminate duplication."""
 
     @staticmethod
-    def assert_flext_result_success(
-        result: FlextResult[object],
+    def assert_flext_result_success[TResult](
+        result: FlextResult[TResult],
         context: str = "",
         expected_type: type | None = None,
-    ) -> object:
+    ) -> TResult:
         """Assert FlextResult success with optional type checking."""
         assert result.is_success, f"{context}: Expected success, got: {result.error}"
         value = result.value
@@ -98,8 +99,8 @@ class AssertionHelpers:
         return value
 
     @staticmethod
-    def assert_flext_result_failure(
-        result: FlextResult[object],
+    def assert_flext_result_failure[TResult](
+        result: FlextResult[TResult],
         context: str = "",
         error_contains: str | None = None,
     ) -> str:
@@ -118,7 +119,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_entity_properties(
-        entity: object, expected_props: dict[str, object], context: str = ""
+        entity: object, expected_props: dict[str, t.Types.GeneralValueType], context: str = ""
     ) -> None:
         """Assert entity has expected properties."""
         for prop, expected_value in expected_props.items():

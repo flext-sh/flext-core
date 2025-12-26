@@ -215,7 +215,8 @@ class FlextMixins(FlextRuntime):
     # =========================================================================
 
     # Class-level cache for loggers to avoid repeated DI lookups
-    _logger_cache: ClassVar[t.StringFlextLoggerDict] = {}
+    # Uses FlextLogger directly for proper type checking (overloaded methods)
+    _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
     def __init_subclass__(cls, **kwargs: t.GeneralValueType) -> None:
@@ -284,20 +285,18 @@ class FlextMixins(FlextRuntime):
         )
         # Use factory methods directly - Clean Architecture pattern
         # Each class knows how to instantiate itself
-        # u.mapper().get() returns GeneralValueType, narrow to class type
+        # u.Mapper.get() returns GeneralValueType, narrow to class type
         config_type = (
-            u.mapper().get(options, "config_type") if "config_type" in options else None
+            u.Mapper.get(options, "config_type") if "config_type" in options else None
         )
         config_cls = config_type or FlextSettings
-        config_overrides_raw = u.mapper().get(options, "config_overrides")
+        config_overrides_raw = u.Mapper.get(options, "config_overrides")
         # TypeGuard-based narrowing - filter to FlexibleValue types for materialize
         config_overrides_typed: Mapping[str, t.FlexibleValue] | None = None
-        if u.Guards.is_configuration_mapping(config_overrides_raw):
+        if isinstance(config_overrides_raw, Mapping):
             # Filter mapping to only include FlexibleValue-compatible types
             flexible_overrides: dict[str, t.FlexibleValue] = {
-                k: v
-                for k, v in config_overrides_raw.items()
-                if u.Guards.is_flexible_value(v)
+                k: v for k, v in config_overrides_raw.items() if u.is_flexible_value(v)
             }
             if flexible_overrides:
                 config_overrides_typed = flexible_overrides
@@ -311,9 +310,9 @@ class FlextMixins(FlextRuntime):
             config_overrides=config_overrides_typed,
         )
 
-        # u.mapper().get() returns GeneralValueType, narrow to FlextContext
+        # u.Mapper.get() returns GeneralValueType, narrow to FlextContext
         context_option = (
-            u.mapper().get(options, "context") if "context" in options else None
+            u.Mapper.get(options, "context") if "context" in options else None
         )
         # isinstance narrows to FlextContext (which implements p.Ctx)
         runtime_context: FlextContext = (
@@ -325,17 +324,17 @@ class FlextMixins(FlextRuntime):
         # FlextSettings already implements p.Config protocol
         runtime_config_typed: p.Config = runtime_config
 
-        # u.mapper().get() returns GeneralValueType, narrow to service mapping type
+        # u.Mapper.get() returns GeneralValueType, narrow to service mapping type
         services_raw = (
-            u.mapper().get(options, "services") if "services" in options else None
+            u.Mapper.get(options, "services") if "services" in options else None
         )
         # TypeGuard-based narrowing for GeneralValueType services
         services_typed: Mapping[str, t.GeneralValueType] | None = None
-        if u.Guards.is_mapping(services_raw):
+        if isinstance(services_raw, Mapping):
             # Build typed dict with GeneralValueType values
             typed_services: dict[str, t.GeneralValueType] = {}
             for k, v in services_raw.items():
-                if u.Guards.is_general_value_type(v):
+                if u.is_general_value_type(v):
                     typed_services[str(k)] = v
                 else:
                     typed_services[str(k)] = str(v)
@@ -347,15 +346,15 @@ class FlextMixins(FlextRuntime):
         factories_raw = options.get("factories")
 
         # Get subproject and narrow to str
-        subproject_raw = u.mapper().get(options, "subproject")
+        subproject_raw = u.Mapper.get(options, "subproject")
         subproject_typed: str | None = (
             subproject_raw if isinstance(subproject_raw, str) else None
         )
 
-        # Get resources and narrow to Mapping using TypeGuard
-        resources_raw = u.mapper().get(options, "resources")
+        # Get resources and narrow to Mapping using isinstance
+        resources_raw = u.Mapper.get(options, "resources")
         resources_typed: Mapping[str, t.ResourceCallable] | None = None
-        if u.Guards.is_mapping(resources_raw):
+        if isinstance(resources_raw, Mapping):
             # Build typed dict with callable resource factories
             resource_factories: dict[str, t.ResourceCallable] = {}
             for k, v in resources_raw.items():
@@ -364,10 +363,10 @@ class FlextMixins(FlextRuntime):
             if resource_factories:
                 resources_typed = resource_factories
 
-        # TypeGuard narrowing for factories mapping
+        # isinstance narrowing for factories mapping
         # Validate values are callable for factory pattern
         factories_typed: Mapping[str, t.FactoryCallable] | None = None
-        if u.Guards.is_mapping(factories_raw):
+        if isinstance(factories_raw, Mapping):
             # Build typed dict with only callable values
             callable_factories: dict[str, t.FactoryCallable] = {}
             for k, v in factories_raw.items():
@@ -386,11 +385,11 @@ class FlextMixins(FlextRuntime):
         )
 
         container_overrides_raw = options.get("container_overrides")
-        if u.Guards.is_mapping(container_overrides_raw):
+        if isinstance(container_overrides_raw, Mapping):
             # Build typed dict with GeneralValueType values
             overrides: dict[str, t.GeneralValueType] = {}
             for k, v in container_overrides_raw.items():
-                if u.Guards.is_general_value_type(v):
+                if u.is_general_value_type(v):
                     overrides[str(k)] = v
                 else:
                     overrides[str(k)] = str(v)
@@ -446,7 +445,7 @@ class FlextMixins(FlextRuntime):
         )
 
         # Increment operation count - use cast for type safety
-        op_count_raw = u.mapper().get(stats, "operation_count", default=0)
+        op_count_raw = u.Mapper.get(stats, "operation_count", default=0)
         stats["operation_count"] = (
             int(op_count_raw if isinstance(op_count_raw, (int, float, str)) else 0) + 1
         )
@@ -459,12 +458,12 @@ class FlextMixins(FlextRuntime):
                     yield metrics
                     # Success - update stats
                     if "duration_ms" in metrics:
-                        total_dur_raw = u.mapper().get(
+                        total_dur_raw = u.Mapper.get(
                             stats,
                             "total_duration_ms",
                             default=0.0,
                         )
-                        dur_ms_raw = u.mapper().get(metrics, "duration_ms", default=0.0)
+                        dur_ms_raw = u.Mapper.get(metrics, "duration_ms", default=0.0)
                         total_dur = float(
                             total_dur_raw
                             if isinstance(total_dur_raw, (int, float, str))
@@ -478,7 +477,7 @@ class FlextMixins(FlextRuntime):
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except Exception:
                     # Failure - increment error count
-                    err_raw = u.mapper().get(stats, "error_count", default=0)
+                    err_raw = u.Mapper.get(stats, "error_count", default=0)
                     stats["error_count"] = (
                         int(err_raw if isinstance(err_raw, (int, float, str)) else 0)
                         + 1
@@ -486,8 +485,8 @@ class FlextMixins(FlextRuntime):
                     raise
                 finally:
                     # Calculate success rate
-                    op_raw = u.mapper().get(stats, "operation_count", default=1)
-                    err_raw2 = u.mapper().get(stats, "error_count", default=0)
+                    op_raw = u.Mapper.get(stats, "operation_count", default=1)
+                    err_raw2 = u.Mapper.get(stats, "error_count", default=0)
                     op_count = int(
                         op_raw if isinstance(op_raw, (int, float, str)) else 1,
                     )
@@ -496,7 +495,7 @@ class FlextMixins(FlextRuntime):
                     )
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
-                        total_raw = u.mapper().get(
+                        total_raw = u.Mapper.get(
                             stats,
                             "total_duration_ms",
                             default=0.0,
@@ -1034,7 +1033,7 @@ class FlextMixins(FlextRuntime):
                         f"Processors must implement: {methods_str}"
                     )
                     return r[bool].fail(error_msg)
-                if not callable(u.mapper().get(obj, method_name, default=None)):
+                if not callable(u.Mapper.get(obj, method_name, default=None)):
                     return r[bool].fail(
                         f"Processor {type(obj).__name__}.{method_name} is not callable",
                     )

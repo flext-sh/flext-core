@@ -120,7 +120,7 @@ class FlextLogger(FlextRuntime):
             FlextRuntime.structlog().contextvars.bind_contextvars(**kwargs)
             return r[bool].ok(True)
         if operation == c.Logging.ContextOperation.UNBIND:
-            keys_raw: object = u.mapper().get(kwargs, "keys", default=[])
+            keys_raw = u.Mapper.get(kwargs, "keys", default=[])
             # Type narrowing: ensure keys is list[str]
             keys: list[str] = keys_raw if isinstance(keys_raw, list) else []
             if isinstance(keys, Sequence):

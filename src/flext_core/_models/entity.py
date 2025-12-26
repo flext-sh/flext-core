@@ -16,6 +16,7 @@ from typing import ClassVar, Self, override
 from pydantic import Field
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
@@ -45,13 +46,14 @@ class FlextModelsEntity:
 
         event_type: str
         aggregate_id: str
-        data: t.EventDataDict = Field(
+        # Use t.PydanticConfigDict - Pydantic-safe type that avoids schema recursion
+        data: t.PydanticConfigDict = Field(
             default_factory=dict,
-            description="Event data - maps to EventDataMapping",
+            description="Event data - Pydantic-safe config dict",
         )
-        metadata: t.FieldMetadataMapping = Field(
+        metadata: t.PydanticConfigDict = Field(
             default_factory=dict,
-            description="Event metadata - maps to FieldMetadataMapping",
+            description="Event metadata - Pydantic-safe config dict",
         )
 
     class Entry(
@@ -138,7 +140,7 @@ class FlextModelsEntity:
                     f"{c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
-            data_dict = dict(data) if data else {}
+            data_dict = FlextUtilitiesModel.normalize_to_pydantic_dict(data)
             event = FlextModelsEntity.DomainEvent(
                 event_type=event_type,
                 aggregate_id=self.unique_id,
@@ -202,7 +204,7 @@ class FlextModelsEntity:
                 event = FlextModelsEntity.DomainEvent(
                     event_type=event_type,
                     aggregate_id=self.unique_id,
-                    data=dict(data) if data else {},
+                    data=FlextUtilitiesModel.normalize_to_pydantic_dict(data),
                 )
                 self.domain_events.append(event)
                 created_events.append(event)

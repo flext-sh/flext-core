@@ -1017,17 +1017,20 @@ class FlextUtilitiesParser:
                 for member_name, member_value in members_raw.items():
                     # Check name or value match (case-insensitive)
                     name_matches = FlextUtilitiesParser._parse_normalize_compare(
-                        member_name, value
+                        member_name,
+                        value,
                     )
                     value_attr = getattr(member_value, "value", None)
                     value_matches = (
                         value_attr is not None
                         and FlextUtilitiesParser._parse_normalize_compare(
-                            value_attr, value
+                            value_attr,
+                            value,
                         )
                     )
                     if (name_matches or value_matches) and isinstance(
-                        member_value, target
+                        member_value,
+                        target,
                     ):
                         return r[T].ok(member_value)
         # Case-sensitive: direct lookup in __members__
@@ -1045,7 +1048,7 @@ class FlextUtilitiesParser:
             if member_val == value and isinstance(member_instance, target):
                 return r[T].ok(member_instance)
         return r[T].fail(
-            f"Cannot parse '{value}' as {getattr(target, '__name__', 'enum')}"
+            f"Cannot parse '{value}' as {getattr(target, '__name__', 'enum')}",
         )
 
     @staticmethod
@@ -1242,85 +1245,34 @@ class FlextUtilitiesParser:
             return FlextUtilitiesParser._coerce_to_bool(value)
         return None
 
-    # Note: bool must come before int because bool is subclass of int in Python
-    @overload
     @staticmethod
     def _parse_try_primitive(
         value: object,
-        target: type[bool],
-        default: bool | None,
-        default_factory: Callable[[], bool] | None,
+        target: type,
+        default: float | str | bool | None,
+        default_factory: Callable[[], int | float | str | bool] | None,
         field_prefix: str,
-    ) -> r[bool] | None: ...
-
-    @overload
-    @staticmethod
-    def _parse_try_primitive(
-        value: object,
-        target: type[int],
-        default: int | None,
-        default_factory: Callable[[], int] | None,
-        field_prefix: str,
-    ) -> r[int] | None: ...
-
-    @overload
-    @staticmethod
-    def _parse_try_primitive(
-        value: object,
-        target: type[float],
-        default: float | None,
-        default_factory: Callable[[], float] | None,
-        field_prefix: str,
-    ) -> r[float] | None: ...
-
-    @overload
-    @staticmethod
-    def _parse_try_primitive(
-        value: object,
-        target: type[str],
-        default: str | None,
-        default_factory: Callable[[], str] | None,
-        field_prefix: str,
-    ) -> r[str] | None: ...
-
-    @overload
-    @staticmethod
-    def _parse_try_primitive[T](
-        value: object,
-        target: type[T],
-        default: T | None,
-        default_factory: Callable[[], T] | None,
-        field_prefix: str,
-    ) -> r[T] | None: ...
-
-    @staticmethod
-    def _parse_try_primitive(
-        value: object,
-        target: type[int | float | str | bool | object],
-        default: float | str | bool | object | None,
-        default_factory: Callable[[], object] | None,
-        field_prefix: str,
-    ) -> r[int] | r[float] | r[str] | r[bool] | r[object] | None:
+    ) -> r[int] | r[float] | r[str] | r[bool] | None:
         """Helper: Try primitive coercion."""
         # Only coerce primitive types
         if not FlextUtilitiesParser._is_primitive_type(target):
             return None
         try:
-            # Dispatch to concrete primitive coercion
+            # Dispatch to concrete primitive coercion - each branch returns directly
             if target is int:
-                result = FlextUtilitiesParser._coerce_to_int(value)
-                if result is not None:
-                    return result
+                int_result = FlextUtilitiesParser._coerce_to_int(value)
+                if int_result is not None:
+                    return int_result
             elif target is float:
-                result = FlextUtilitiesParser._coerce_to_float(value)
-                if result is not None:
-                    return result
+                float_result = FlextUtilitiesParser._coerce_to_float(value)
+                if float_result is not None:
+                    return float_result
             elif target is str:
                 return FlextUtilitiesParser._coerce_to_str(value)
             elif target is bool:
-                result = FlextUtilitiesParser._coerce_to_bool(value)
-                if result is not None:
-                    return result
+                bool_result = FlextUtilitiesParser._coerce_to_bool(value)
+                if bool_result is not None:
+                    return bool_result
         except (ValueError, TypeError) as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
                 target,
@@ -1330,19 +1282,19 @@ class FlextUtilitiesParser:
             # For error case, return failure wrapped in appropriate type
             if target is int and isinstance(default, int):
                 return r[int].fail(
-                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}"
+                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
                 )
             if target is float and isinstance(default, float):
                 return r[float].fail(
-                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}"
+                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
                 )
             if target is str and isinstance(default, str):
                 return r[str].fail(
-                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}"
+                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
                 )
             if target is bool and isinstance(default, bool):
                 return r[bool].fail(
-                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}"
+                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
                 )
         return None
 
@@ -1355,11 +1307,16 @@ class FlextUtilitiesParser:
         field_prefix: str,
     ) -> r[T]:
         """Helper: Try direct type call."""
+        # Guard: object type doesn't accept constructor arguments
+        if target is object:
+            return FlextUtilitiesParser._parse_with_default(
+                default,
+                default_factory,
+                f"{field_prefix}Cannot construct 'object' type directly",
+            )
         try:
-            # Call target directly as type constructor - target is type[T]
-            # Type narrowing: type[T] is callable, so we can call it directly
-            # target is type[T], calling target(value) returns T
-            # Direct call - type[T] is callable and returns T
+            # Call target directly as type constructor
+            # After excluding 'object', target is a constructible type
             parsed_result: T = target(value)
             return r[T].ok(parsed_result)
         except Exception as e:
@@ -1443,17 +1400,7 @@ class FlextUtilitiesParser:
         if model_result is not None:
             return model_result
 
-        if coerce and not strict:
-            prim_result = FlextUtilitiesParser._parse_try_primitive(
-                value,
-                target,
-                default,
-                default_factory,
-                field_prefix,
-            )
-            if prim_result is not None:
-                return prim_result
-
+        # Let _parse_try_direct handle all cases including primitives
         return FlextUtilitiesParser._parse_try_direct(
             value,
             target,

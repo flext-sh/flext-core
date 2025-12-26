@@ -99,7 +99,7 @@ class FlextContext(FlextRuntime):
             # Simple dict normalization - no transform available yet
             normalized_data = {
                 str(k): FlextRuntime.normalize_to_general_value(v)
-                for k, v in u.mapper().to_dict(initial_dict).items()
+                for k, v in initial_dict.items()
             }
             context_data = m.Context.ContextData(data=normalized_data)
         elif isinstance(initial_data, m.Context.ContextData):
@@ -234,7 +234,7 @@ class FlextContext(FlextRuntime):
             initial_data is None
             or (
                 isinstance(initial_data, dict)
-                and not u.mapper().get(initial_data, c.Context.KEY_OPERATION_ID)
+                and not u.Mapper.get(initial_data, c.Context.KEY_OPERATION_ID)
             )
         ):
             # Convert initial_data to dict if needed
@@ -435,7 +435,7 @@ class FlextContext(FlextRuntime):
         if value is None:
             return r[bool].fail("Value cannot be None")
         if (
-            u.Validation.guard(
+            u.guard(
                 value,
                 (str, int, float, bool, list, dict),
                 return_value=True,
@@ -627,7 +627,7 @@ class FlextContext(FlextRuntime):
         )
         if key in current:
             # Use filter_dict for concise key removal
-            filtered: t.ConfigurationDict = u.Mapper.filter_dict(
+            filtered: t.ConfigurationDict = u.filter_dict(
                 current,
                 lambda k, _v: k != key,
             )
@@ -875,7 +875,7 @@ class FlextContext(FlextRuntime):
         """
         try:
             data = json.loads(json_str)
-            if u.Validation.guard(data, dict, return_value=True) is None:
+            if u.guard(data, dict, return_value=True) is None:
                 msg = f"JSON must represent a dict, got {type(data).__name__}"
                 raise TypeError(msg)
             # Use u.map to normalize each value in dict to ensure t.GeneralValueType compatibility
@@ -884,7 +884,7 @@ class FlextContext(FlextRuntime):
                 """Normalize value to t.GeneralValueType."""
                 return FlextRuntime.normalize_to_general_value(value)
 
-            normalized_data = u.Mapper.transform_values(
+            normalized_data = u.transform_values(
                 data,
                 transformer=normalize_value,
             )
@@ -985,7 +985,7 @@ class FlextContext(FlextRuntime):
         # TypeGuard-based narrowing - is_configuration_dict returns TypeGuard[ConfigurationDict]
         metadata_general: t.ConfigurationDict | None = (
             normalized_metadata
-            if u.Guards.is_configuration_dict(normalized_metadata)
+            if u.is_configuration_dict(normalized_metadata)
             else None
         )
 
@@ -1260,7 +1260,7 @@ class FlextContext(FlextRuntime):
         # TypeGuard-based narrowing - is_configuration_dict returns TypeGuard[ConfigurationDict]
         metadata_general: t.ConfigurationDict | None = (
             normalized_metadata
-            if u.Guards.is_configuration_dict(normalized_metadata)
+            if u.is_configuration_dict(normalized_metadata)
             else None
         )
 
@@ -1344,14 +1344,14 @@ class FlextContext(FlextRuntime):
             """Correlation variables for distributed tracing."""
 
             CORRELATION_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
+                u.create_str_proxy(
                     c.Context.KEY_CORRELATION_ID,
                     default=None,
                 )
             )
             PARENT_CORRELATION_ID: Final[
                 FlextModelsContext.StructlogProxyContextVar[str]
-            ] = u.Context.create_str_proxy(
+            ] = u.create_str_proxy(
                 c.Context.KEY_PARENT_CORRELATION_ID,
                 default=None,
             )
@@ -1360,13 +1360,13 @@ class FlextContext(FlextRuntime):
             """Service context variables for identification."""
 
             SERVICE_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
+                u.create_str_proxy(
                     c.Context.KEY_SERVICE_NAME,
                     default=None,
                 )
             )
             SERVICE_VERSION: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
+                u.create_str_proxy(
                     "service_version",
                     default=None,
                 )
@@ -1376,20 +1376,20 @@ class FlextContext(FlextRuntime):
             """Request context variables for metadata."""
 
             USER_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
+                u.create_str_proxy(
                     c.Context.KEY_USER_ID,
                     default=None,
                 )
             )
             REQUEST_ID: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
+                u.create_str_proxy(
                     "request_id",
                     default=None,
                 )
             )
             REQUEST_TIMESTAMP: Final[
                 FlextModelsContext.StructlogProxyContextVar[datetime]
-            ] = u.Context.create_datetime_proxy(
+            ] = u.create_datetime_proxy(
                 "request_timestamp",
                 default=None,
             )
@@ -1398,17 +1398,17 @@ class FlextContext(FlextRuntime):
             """Performance context variables for timing."""
 
             OPERATION_NAME: Final[FlextModelsContext.StructlogProxyContextVar[str]] = (
-                u.Context.create_str_proxy(
+                u.create_str_proxy(
                     c.Context.KEY_OPERATION_NAME,
                     default=None,
                 )
             )
             OPERATION_START_TIME: Final[
                 FlextModelsContext.StructlogProxyContextVar[datetime]
-            ] = u.Context.create_datetime_proxy("operation_start_time", default=None)
+            ] = u.create_datetime_proxy("operation_start_time", default=None)
             OPERATION_METADATA: Final[
                 FlextModelsContext.StructlogProxyContextVar[t.ConfigurationDict]
-            ] = u.Context.create_dict_proxy(
+            ] = u.create_dict_proxy(
                 "operation_metadata",
                 default=None,
             )
@@ -1782,7 +1782,7 @@ class FlextContext(FlextRuntime):
         ) -> None:
             """Set operation start time in context."""
             if start_time is None:
-                start_time = u.Generators.generate_datetime_utc()
+                start_time = u.generate_datetime_utc()
             _ = FlextContext.Variables.OperationStartTime.set(start_time)
 
         @staticmethod
@@ -1823,7 +1823,7 @@ class FlextContext(FlextRuntime):
             operation_name: str | None = None,
         ) -> Generator[t.ConfigurationDict]:
             """Create timed operation context with performance tracking."""
-            start_time = u.Generators.generate_datetime_utc()
+            start_time = u.generate_datetime_utc()
             operation_metadata: t.ConfigurationDict = {
                 c.Context.METADATA_KEY_START_TIME: start_time.isoformat(),
                 c.Context.KEY_OPERATION_NAME: operation_name,
@@ -1851,7 +1851,7 @@ class FlextContext(FlextRuntime):
                 yield operation_metadata
             finally:
                 # Calculate duration with full precision
-                end_time = u.Generators.generate_datetime_utc()
+                end_time = u.generate_datetime_utc()
                 duration = (end_time - start_time).total_seconds()
                 operation_metadata.update(
                     {

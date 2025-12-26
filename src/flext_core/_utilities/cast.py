@@ -55,11 +55,14 @@ class FlextUtilitiesCast:
 
     @staticmethod
     def general_value(
-        value: t.GeneralValueType, target_type: type
+        value: t.GeneralValueType,
+        target_type: type,
     ) -> t.GeneralValueType:
         """Cast general value type to target type."""
+        # Preserve original type before isinstance check (avoids mypy narrowing to object)
+        original_value: t.GeneralValueType = value
         if isinstance(value, target_type):
-            return value
+            return original_value
         if target_type is str:
             return str(value)
         if target_type is int:
@@ -90,11 +93,14 @@ class FlextUtilitiesCast:
     @staticmethod
     def callable(value: t.GeneralValueType, target_type: type) -> t.GeneralValueType:
         """Cast callable to target type."""
+        # Preserve original type before isinstance check (avoids mypy narrowing to object)
+        original_value: t.GeneralValueType = value
         if isinstance(value, target_type):
-            return value
+            return original_value
         if callable(value):
             try:
-                return target_type(value)  # type: ignore[call-arg]
+                result: t.GeneralValueType = target_type(value)
+                return result
             except (TypeError, ValueError) as err:
                 target_name = getattr(target_type, "__name__", str(target_type))
                 error_msg = f"Cannot cast callable to {target_name}: {err}"
@@ -106,7 +112,10 @@ class FlextUtilitiesCast:
 
     @staticmethod
     def safe(
-        value: t.GeneralValueType, target_type: type, *, mode: str = "direct"
+        value: t.GeneralValueType,
+        target_type: type,
+        *,
+        mode: str = "direct",
     ) -> t.GeneralValueType:
         """Type-safe casting with routing.
 

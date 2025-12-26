@@ -25,6 +25,7 @@ from pydantic import (
 )
 
 from flext_core import r, u as flext_u
+from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import FlextModels as FlextModelsBase
 from flext_tests.constants import ContainerStatus, c
@@ -195,15 +196,15 @@ class FlextTestsModels(FlextModelsBase):
                     description="Generic field overrides",
                 )
                 # Factory/transform/validation
-                factory: Callable[[], object] | None = Field(
+                factory: Callable[[], BaseModel] | None = Field(
                     default=None,
                     description="Custom factory function",
                 )
-                transform: Callable[[object], object] | None = Field(
+                transform: Callable[[BaseModel], BaseModel] | None = Field(
                     default=None,
                     description="Transform function",
                 )
-                validate_fn: Callable[[object], bool] | None = Field(
+                validate_fn: Callable[[BaseModel], bool] | None = Field(
                     default=None,
                     alias="validate",
                     description="Validation function",
@@ -266,9 +267,11 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Error message when value is None (for 'from_value')",
                 )
-                transform: Callable[[object], object] | None = Field(
-                    default=None,
-                    description="Transform function for success values",
+                transform: Callable[[t.GeneralValueType], t.GeneralValueType] | None = (
+                    Field(
+                        default=None,
+                        description="Transform function for success values",
+                    )
                 )
 
                 @model_validator(mode="after")
@@ -314,7 +317,11 @@ class FlextTestsModels(FlextModelsBase):
                 model_config = BaseModel.model_config.copy()
                 model_config["populate_by_name"] = True
 
-                source: object = Field(
+                source: (
+                    t.Tests.Factory.ModelKind
+                    | Sequence[t.GeneralValueType]
+                    | Callable[[], t.GeneralValueType]
+                ) = Field(
                     default="user",
                     description="Source for list items (ModelKind, Sequence, or Callable)",
                 )
@@ -331,11 +338,13 @@ class FlextTestsModels(FlextModelsBase):
                     default=False,
                     description="Ensure all items are unique",
                 )
-                transform: Callable[[object], object] | None = Field(
-                    default=None,
-                    description="Transform function applied to each item",
+                transform: Callable[[t.GeneralValueType], t.GeneralValueType] | None = (
+                    Field(
+                        default=None,
+                        description="Transform function applied to each item",
+                    )
                 )
-                filter_: Callable[[object], bool] | None = Field(
+                filter_: Callable[[t.GeneralValueType], bool] | None = Field(
                     default=None,
                     alias="filter",
                     description="Filter predicate to exclude items",
@@ -348,7 +357,11 @@ class FlextTestsModels(FlextModelsBase):
                 Mapping, or Callable - uses object type to accept all variants.
                 """
 
-                source: object = Field(
+                source: (
+                    t.Tests.Factory.ModelKind
+                    | Mapping[str, t.GeneralValueType]
+                    | Callable[[], tuple[str, t.GeneralValueType]]
+                ) = Field(
                     default="user",
                     description="Source for dict items (ModelKind, Mapping, or Callable)",
                 )
@@ -357,19 +370,19 @@ class FlextTestsModels(FlextModelsBase):
                     ge=1,
                     description="Number of items to create",
                 )
-                key_factory: Callable[[int], object] | None = Field(
+                key_factory: Callable[[int], str] | None = Field(
                     default=None,
-                    description="Factory function for keys (takes index, returns K)",
+                    description="Factory function for keys (takes index, returns str key)",
                 )
-                value_factory: Callable[[object], object] | None = Field(
+                value_factory: Callable[[str], t.GeneralValueType] | None = Field(
                     default=None,
-                    description="Factory function for values (takes key, returns V)",
+                    description="Factory function for values (takes key, returns value)",
                 )
                 as_result: bool = Field(
                     default=False,
                     description="Wrap result in FlextResult",
                 )
-                merge_with: Mapping[str, object] | None = Field(
+                merge_with: Mapping[str, t.GeneralValueType] | None = Field(
                     default=None,
                     description="Additional mapping to merge into result",
                 )
@@ -381,7 +394,7 @@ class FlextTestsModels(FlextModelsBase):
                 model_validator since Field constraints cannot validate isinstance checks.
                 """
 
-                type_: object = Field(
+                type_: type = Field(
                     description="Type class to instantiate",
                 )
                 args: Sequence[t.GeneralValueType] | None = Field(
@@ -401,21 +414,11 @@ class FlextTestsModels(FlextModelsBase):
                     default=False,
                     description="Wrap result in FlextResult",
                 )
-                validate_fn: Callable[[object], bool] | None = Field(
+                validate_fn: Callable[[t.GeneralValueType], bool] | None = Field(
                     default=None,
                     alias="validate",
                     description="Validation predicate (must return True for success)",
                 )
-
-                @model_validator(mode="after")
-                def validate_type(
-                    self,
-                ) -> FlextTestsModels.Tests.Factory.GenericFactoryParams:
-                    """Validate type_ is a class - Field constraints cannot do isinstance checks."""
-                    if not isinstance(self.type_, type):
-                        msg = "type_ must be a class"
-                        raise ValueError(msg)
-                    return self
 
             class User(FlextModelsBase.Value):
                 """Test user model - immutable value object."""
@@ -850,13 +853,13 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Data for model instantiation",
                 )
-                mapping: object | None = Field(
+                mapping: Mapping[str, t.GeneralValueType] | None = Field(
                     default=None,
-                    description="Dict/mapping to store (validated as BuilderMapping)",
+                    description="Dict/mapping to store",
                 )
-                sequence: object | None = Field(
+                sequence: Sequence[t.GeneralValueType] | None = Field(
                     default=None,
-                    description="List/sequence to store (validated as BuilderSequence)",
+                    description="List/sequence to store",
                 )
                 transform: t.Tests.Builders.TransformFunc | None = Field(
                     default=None,
@@ -1409,8 +1412,9 @@ class FlextTestsModels(FlextModelsBase):
                 @classmethod
                 def convert_legacy_params(
                     cls,
-                    data: dict[str, object] | FlextTestsModels.Tests.Matcher.OkParams,
-                ) -> dict[str, object]:
+                    data: dict[str, t.GeneralValueType]
+                    | FlextTestsModels.Tests.Matcher.OkParams,
+                ) -> dict[str, t.GeneralValueType]:
                     """Convert legacy contains/excludes to has/lacks."""
                     if isinstance(data, dict):
                         # Convert legacy parameters before model creation
@@ -1422,7 +1426,7 @@ class FlextTestsModels(FlextModelsBase):
                     # If data is OkParams, convert to dict
                     if isinstance(data, FlextTestsModels.Tests.Matcher.OkParams):
                         return data.model_dump()
-                    # data should be dict[str, object] at this point
+                    # data should be dict[str, t.GeneralValueType] at this point
                     if isinstance(data, dict):
                         return data
                     # This should not happen given the type hint
@@ -1479,8 +1483,9 @@ class FlextTestsModels(FlextModelsBase):
                 @classmethod
                 def convert_legacy_params(
                     cls,
-                    data: dict[str, object] | FlextTestsModels.Tests.Matcher.FailParams,
-                ) -> dict[str, object]:
+                    data: dict[str, t.GeneralValueType]
+                    | FlextTestsModels.Tests.Matcher.FailParams,
+                ) -> dict[str, t.GeneralValueType]:
                     """Convert legacy error/contains/excludes to has/lacks."""
                     if isinstance(data, dict):
                         # Convert legacy parameters before model creation
@@ -1494,7 +1499,7 @@ class FlextTestsModels(FlextModelsBase):
                     # If data is FailParams, convert to dict
                     if isinstance(data, FlextTestsModels.Tests.Matcher.FailParams):
                         return data.model_dump()
-                    # data should be dict[str, object] at this point
+                    # data should be dict[str, t.GeneralValueType] at this point
                     if isinstance(data, dict):
                         return data
                     # This should not happen given the type hint
@@ -1673,8 +1678,9 @@ class FlextTestsModels(FlextModelsBase):
                 @classmethod
                 def convert_legacy_params(
                     cls,
-                    data: dict[str, object] | FlextTestsModels.Tests.Matcher.ThatParams,
-                ) -> dict[str, object]:
+                    data: dict[str, t.GeneralValueType]
+                    | FlextTestsModels.Tests.Matcher.ThatParams,
+                ) -> dict[str, t.GeneralValueType]:
                     """Convert legacy parameters to unified ones."""
                     if isinstance(data, dict):
                         # Convert legacy parameters before model creation
@@ -1724,7 +1730,7 @@ class FlextTestsModels(FlextModelsBase):
                     # Use string literal to avoid forward reference issue during class definition
                     if isinstance(data, cls):
                         return data.model_dump()
-                    # data should be dict[str, object] at this point
+                    # data should be dict[str, t.GeneralValueType] at this point
                     if isinstance(data, dict):
                         return data
                     # This should not happen given the type hint
@@ -1788,10 +1794,14 @@ class FlextTestsModels(FlextModelsBase):
                     description="FlextResult being chained",
                 )
 
-            class TestScope(FlextModelsBase.Value):
-                """Test scope configuration for isolated test execution."""
+            class TestScope(FlextModelFoundation.DynamicConfigModel):
+                """Test scope configuration for isolated test execution.
 
-                config: dict[str, t.GeneralValueType] = Field(
+                Uses DynamicConfigModel to allow arbitrary test values including
+                mock objects, services, and other non-serializable types.
+                """
+
+                config: dict[str, object] = Field(
                     default_factory=dict,
                     description="Configuration dictionary",
                 )
@@ -1799,7 +1809,7 @@ class FlextTestsModels(FlextModelsBase):
                     default_factory=dict,
                     description="Container/service mappings",
                 )
-                context: dict[str, t.GeneralValueType] = Field(
+                context: dict[str, object] = Field(
                     default_factory=dict,
                     description="Context values",
                 )

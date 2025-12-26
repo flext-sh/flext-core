@@ -161,9 +161,9 @@ class OrderService(FlextService[t.ServiceMetadataMapping]):
         merged: dict[str, t.GeneralValueType] = dict(order_data_dict)
         merged.update(
             {
-                "order_id": u.Mapper.get(order_data_dict, "order_id", default="ord_123")
+                "order_id": u.get(order_data_dict, "order_id", default="ord_123")
                 or "ord_123",
-                "status": FlextConstants.Domain.Status.PENDING.value,
+                "status": FlextConstants.Cqrs.CommonStatus.PENDING.value,
             },
         )
         order_data_dict = merged
@@ -173,13 +173,13 @@ class OrderService(FlextService[t.ServiceMetadataMapping]):
             return True
 
         # Use u.filter to filter dict items with string keys
-        filtered_dict = u.Mapper.filter_dict(
+        filtered_dict = u.filter_dict(
             order_data_dict,
             predicate=is_string_key,
         )
         result_data: t.ServiceMetadataMapping = (
             filtered_dict
-            if u.Validation.guard(filtered_dict, dict, return_value=True) is not None
+            if u.guard(filtered_dict, dict, return_value=True) is not None
             else {}
         )
         return FlextResult[t.ServiceMetadataMapping].ok(result_data)
@@ -273,11 +273,8 @@ class AutomationService(FlextService[t.ServiceMetadataMapping]):
                 "records_processed": 1000,
                 "status": "success",
             }
-            records = u.Mapper.get(task_data, "records_processed", default=0) or 0
-            if (
-                u.Validation.guard(records, int, return_value=True) is None
-                or records == 0
-            ):
+            records = u.get(task_data, "records_processed", default=0) or 0
+            if u.guard(records, int, return_value=True) is None or records == 0:
                 msg = "No records to process"
                 raise ValueError(msg)
             return task_data

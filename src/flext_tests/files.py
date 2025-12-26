@@ -366,7 +366,10 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # This ensures CreateParams receives the unwrapped content, not the FlextResult
         content_to_validate = content
         if extract_result and u.is_type(content, "result"):
-            content_result = cast("r[core_t.FileContent]", content)
+            # u.is_type("result") narrows type to FlextResult
+            content_result: r[core_t.FileContent] = (
+                content  # Already narrowed by type guard
+            )
             if content_result.is_failure:
                 error_msg = content_result.error or "FlextResult failure"
                 raise ValueError(
@@ -419,33 +422,20 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             if all(u.is_type(row, "sequence") for row in actual_content):
                 content_for_detect = [list(row) for row in actual_content]
             else:
-                # Not a nested sequence - cast to expected type for detection
-                # detect_format accepts various types including Sequence
-                content_for_detect = cast(
-                    "str | bytes | t.ConfigurationMapping | list[list[str]]",
-                    actual_content,
-                )
+                # Not a nested sequence - already checked types above
+                content_for_detect = actual_content
         elif u.is_type(actual_content, "mapping") or isinstance(actual_content, dict):
-            # Mapping content - cast to ConfigurationMapping
-            content_for_detect = cast(
-                "str | bytes | t.ConfigurationMapping | list[list[str]]",
-                actual_content,
-            )
+            # Mapping content - already narrowed by isinstance
+            content_for_detect = actual_content
         elif isinstance(actual_content, (str, bytes)):
             # String/bytes content
             content_for_detect = actual_content
         elif isinstance(actual_content, BaseModel):
             # BaseModel - convert to dict first for detection
-            content_for_detect = cast(
-                "str | bytes | t.ConfigurationMapping | list[list[str]]",
-                u.Model.dump(actual_content),
-            )
+            content_for_detect = u.Model.dump(actual_content)
         else:
-            # Fallback - cast to expected union type
-            content_for_detect = cast(
-                "str | bytes | t.ConfigurationMapping | list[list[str]]",
-                actual_content,
-            )
+            # Fallback - content is already compatible with expected union
+            content_for_detect = actual_content
         actual_fmt = u.Tests.Files.detect_format(
             content_for_detect,
             params.name,
@@ -1335,7 +1325,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         directory: Path | None = None,
         ext: str | None = None,
         extract_result: bool = True,
-        **kwargs: object,
+        **kwargs: t.GeneralValueType,
     ) -> Generator[dict[str, Path]]:
         """Create temporary files with auto-cleanup.
 

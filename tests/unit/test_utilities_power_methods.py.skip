@@ -708,7 +708,7 @@ class TestParseMethod:
     ) -> None:
         """Test parsing primitive types."""
         # Use type narrowing - parse() returns FlextResult[T] where T is target_type
-        result = u.Parser.parse(value, target_type)
+        result = u.parse(value, target_type)
         # Type narrowing: result is FlextResult[target_type] after successful parse
         parsed = tm.ok(result, msg=f"{description} failed")
         assert parsed == expected, f"{description}: got {parsed}, expected {expected}"
@@ -726,7 +726,7 @@ class TestParseMethod:
     ) -> None:
         """Test parsing enum values."""
         # Use type narrowing - parse() returns FlextResult[T] where T is Status
-        result = u.Parser.parse(
+        result = u.parse(
             value,
             Status,
             case_insensitive=case_insensitive,
@@ -737,44 +737,44 @@ class TestParseMethod:
 
     def test_parse_enum_case_insensitive(self) -> None:
         """Test case-insensitive enum parsing."""
-        result = u.Parser.parse("active", Status, case_insensitive=True)
+        result = u.parse("active", Status, case_insensitive=True)
         parsed = tm.ok(result)
         assert parsed == Status.ACTIVE
 
     def test_parse_enum_invalid_fails(self) -> None:
         """Test that invalid enum value fails."""
-        result = u.Parser.parse("invalid", Status)
+        result = u.parse("invalid", Status)
         tm.fail(result)
 
     def test_parse_with_default(self) -> None:
         """Test parsing with default value on failure."""
-        result = u.Parser.parse("not_a_number", int, default=42)
+        result = u.parse("not_a_number", int, default=42)
         parsed = tm.ok(result)
         assert parsed == 42
 
     def test_parse_with_default_factory(self) -> None:
         """Test parsing with default factory on failure."""
-        result = u.Parser.parse("invalid", int, default_factory=lambda: 99)
+        result = u.parse("invalid", int, default_factory=lambda: 99)
         parsed = tm.ok(result)
         assert parsed == 99
 
     def test_parse_str_to_int_coerce(self) -> None:
         """Test string to int coercion."""
-        result = u.Parser.parse("123", int, coerce=True)
+        result = u.parse("123", int, coerce=True)
         parsed = tm.ok(result)
         assert parsed == 123
         assert isinstance(parsed, int)
 
     def test_parse_int_to_str_coerce(self) -> None:
         """Test int to string coercion."""
-        result = u.Parser.parse(456, str, coerce=True)
+        result = u.parse(456, str, coerce=True)
         parsed = tm.ok(result)
         assert parsed == "456"
         assert isinstance(parsed, str)
 
     def test_parse_float_to_int_coerce(self) -> None:
         """Test float to int coercion."""
-        result = u.Parser.parse(math.pi, int, coerce=True)
+        result = u.parse(math.pi, int, coerce=True)
         parsed = tm.ok(result)
         assert parsed == 3
         assert isinstance(parsed, int)
@@ -783,26 +783,26 @@ class TestParseMethod:
         """Test strict mode still allows direct target(value) coercion."""
         # strict=True only skips primitive coercion helpers like _coerce_primitive
         # but int("123") works directly via target(value) fallback
-        result = u.Parser.parse("123", int, strict=True)
+        result = u.parse("123", int, strict=True)
         parsed = tm.ok(result)
         assert parsed == 123
 
     def test_parse_strict_mode_passes_on_exact_type(self) -> None:
         """Test strict mode accepts exact type match."""
-        result = u.Parser.parse(123, int, strict=True)
+        result = u.parse(123, int, strict=True)
         parsed = tm.ok(result)
         assert parsed == 123
 
     def test_parse_bool_values(self) -> None:
         """Test parsing boolean values."""
-        result_true = u.Parser.parse(True, bool)
-        result_false = u.Parser.parse(False, bool)
+        result_true = u.parse(True, bool)
+        result_false = u.parse(False, bool)
         assert tm.ok(result_true) is True
         assert tm.ok(result_false) is False
 
     def test_parse_none_with_default(self) -> None:
         """Test parsing None with default value."""
-        result = u.Parser.parse(None, int, default=0)
+        result = u.parse(None, int, default=0)
         parsed = tm.ok(result)
         assert parsed == 0
 

@@ -78,11 +78,11 @@ def validate_transform_user(
     # Advanced validation using u with traverse (DRY - no manual loops)
     return r.traverse(
         [
-            u.Validation.validate_length(
+            u.validate_length(
                 name,
                 min_length=c.Validation.MIN_USERNAME_LENGTH,
             ),
-            u.Validation.validate_pattern(email, c.Platform.PATTERN_EMAIL, "email"),
+            u.validate_pattern(email, c.Platform.PATTERN_EMAIL, "email"),
         ],
         lambda r: r,
     ).flat_map(
@@ -140,7 +140,8 @@ class UserService:
 
             # Railway pattern with advanced functional composition (DRY)
             return (
-                self._validate_data(user_data)
+                self
+                ._validate_data(user_data)
                 .flat_map(lambda _: validate_transform_user(user_data))
                 .map(self._log_success)
             )
@@ -203,10 +204,10 @@ def demonstrate_utilities() -> None:
     }
 
     # Railway pattern with traverse for multiple operations (DRY - no manual loops)
-    cache_result = u.Cache.clear_object_cache(test_obj)
+    cache_result = u.clear_object_cache(test_obj)
     validation_results = [
-        u.Validation.validate_length("test", min_length=1, max_length=10),
-        u.Validation.validate_pattern(
+        u.validate_length("test", min_length=1, max_length=10),
+        u.validate_pattern(
             "test@example.com",
             c.Platform.PATTERN_EMAIL,
             "email",
@@ -214,7 +215,8 @@ def demonstrate_utilities() -> None:
     ]
 
     result = (
-        r.traverse(validation_results, lambda r: r)
+        r
+        .traverse(validation_results, lambda r: r)
         .flat_map(lambda _: cache_result)
         .map(
             lambda cache_cleared: "\n".join([
@@ -243,7 +245,8 @@ def demonstrate_exceptions() -> None:
         list(
             starmap(
                 lambda msg, field, value: (
-                    r.fail(
+                    r
+                    .fail(
                         e.ValidationError(
                             msg,
                             field=field,
@@ -264,7 +267,8 @@ def demonstrate_exceptions() -> None:
         )
         + [
             # Standard exception conversion
-            r.fail("Standard exception")
+            r
+            .fail("Standard exception")
             .map(lambda error: f"Converted exception to result: {error}")
             .map(print),
         ],

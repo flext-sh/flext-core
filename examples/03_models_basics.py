@@ -38,7 +38,7 @@ from flext_core import (
 class Email(FlextModels.Value):
     """Email value object with advanced Pydantic 2 EmailStr validation."""
 
-    model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
+    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
 
     address: Annotated[
         EmailStr,
@@ -52,9 +52,9 @@ class Email(FlextModels.Value):
 class Money(FlextModels.Value):
     """Money value object with StrEnum currency and railway operations."""
 
-    model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
+    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
 
-    amount: Annotated[Decimal, Field(gt=0)]
+    amount: Annotated[Decimal, Field(gt=Decimal(0))]
     currency: FlextConstants.Domain.Currency | str = Field(
         default=FlextConstants.Domain.Currency.USD,
     )
@@ -71,7 +71,7 @@ class Money(FlextModels.Value):
 class User(FlextModels.Entity):
     """User entity with comprehensive validation and domain rules."""
 
-    model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
+    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
 
     name: str = Field(
         min_length=FlextConstants.Validation.MIN_NAME_LENGTH,
@@ -90,7 +90,7 @@ class User(FlextModels.Entity):
 class OrderItem(FlextModels.Value):
     """Order item with computed fields and railway validation."""
 
-    model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
+    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
 
     product_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
@@ -110,7 +110,7 @@ class OrderItem(FlextModels.Value):
 class Order(FlextModels.AggregateRoot):
     """Order aggregate root with advanced business rules."""
 
-    model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
+    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
 
     customer_id: str = Field(min_length=1)
     items: list[OrderItem] = Field(default_factory=list)

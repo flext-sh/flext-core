@@ -19,6 +19,105 @@ from flext_core.typings import T_co, t
 P_HandlerFunc = ParamSpec("P_HandlerFunc")
 
 
+# Module-level protocol definitions for p.Log namespace
+@runtime_checkable
+class _StructlogLoggerProtocol(BindableLogger, Protocol):
+    """Protocol for structlog logger with all logging methods.
+
+    Extends BindableLogger to add explicit method signatures for
+    logging methods (debug, info, warning, error, etc.) that are
+    available via __getattr__ at runtime.
+    """
+
+    def debug(
+        self,
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType | Exception,
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
+        """Log debug message."""
+        ...
+
+    def info(
+        self,
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType,
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
+        """Log info message."""
+        ...
+
+    def warning(
+        self,
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType,
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
+        """Log warning message."""
+        ...
+
+    def warn(
+        self,
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType,
+        **kw: t.GeneralValueType,
+    ) -> None:
+        """Log warning message (alias)."""
+        ...
+
+    def error(
+        self,
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType,
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
+        """Log error message."""
+        ...
+
+    def critical(
+        self,
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType,
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
+        """Log critical message."""
+        ...
+
+    def exception(
+        self,
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType,
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
+        """Log exception with traceback."""
+        ...
+
+
+@runtime_checkable
+class _MetadataProtocol(Protocol):
+    """Metadata object protocol."""
+
+    @property
+    def created_at(self) -> datetime:
+        """Creation timestamp."""
+        ...
+
+    @property
+    def updated_at(self) -> datetime:
+        """Update timestamp."""
+        ...
+
+    @property
+    def version(self) -> str:
+        """Version string."""
+        ...
+
+    @property
+    def attributes(self) -> t.ConfigurationMapping:
+        """Metadata attributes."""
+        ...
+
+
 class FlextProtocols:
     """Hierarchical protocol namespace organized by Interface Segregation Principle."""
 
@@ -469,7 +568,8 @@ class FlextProtocols:
             ...
 
         def get(
-            self, name: str
+            self,
+            name: str,
         ) -> FlextProtocols.ResultLike[FlextProtocols.RegisterableService]:
             """Get service by name.
 
@@ -835,190 +935,38 @@ class FlextProtocols:
     # INFRASTRUCTURE: Infrastructure Protocols
     # =========================================================================
 
-    @runtime_checkable
-    class Log(Protocol):
-        """Logging interface protocol.
+    class Log:
+        """Logging namespace with StructlogLogger and Metadata protocols.
 
-        Uses GeneralValueType for args/context to match FlextLogger implementation.
+        Access patterns:
+        - p.Log.StructlogLogger - structlog logger protocol
+        - p.Log.Metadata - metadata protocol
         """
 
-        def log(
+        StructlogLogger = _StructlogLoggerProtocol
+        Metadata = _MetadataProtocol
+
+    # Backward compatibility aliases at FlextProtocols level
+    StructlogLogger = _StructlogLoggerProtocol
+    Metadata = _MetadataProtocol
+
+    @runtime_checkable
+    class Connection(Protocol):
+        """External system connection protocol."""
+
+        def test_connection(
             self,
-            level: str,
-            message: str,
-            _context: Mapping[str, t.FlexibleValue] | None = None,
-        ) -> None:
-            """Log message."""
+        ) -> FlextProtocols.Result[bool]:
+            """Test connection."""
             ...
 
-        def debug(
-            self,
-            message: str,
-            *args: t.GeneralValueType,
-            return_result: bool = False,
-            **context: t.GeneralValueType,
-        ) -> FlextProtocols.Result[bool] | None:
-            """Debug log."""
+        def get_connection_string(self) -> str:
+            """Get connection string."""
             ...
 
-        def info(
-            self,
-            message: str,
-            *args: t.GeneralValueType,
-            return_result: bool = False,
-            **context: t.GeneralValueType,
-        ) -> FlextProtocols.Result[bool] | None:
-            """Info log."""
+        def close_connection(self) -> None:
+            """Close connection."""
             ...
-
-        def warning(
-            self,
-            message: str,
-            *args: t.GeneralValueType,
-            return_result: bool = False,
-            **context: t.GeneralValueType,
-        ) -> FlextProtocols.Result[bool] | None:
-            """Warning log."""
-            ...
-
-        def error(
-            self,
-            message: str,
-            *args: t.GeneralValueType,
-            return_result: bool = False,
-            **context: t.GeneralValueType,
-        ) -> FlextProtocols.Result[bool] | None:
-            """Error log."""
-            ...
-
-        def exception(
-            self,
-            message: str,
-            *,
-            exception: BaseException | None = None,
-            exc_info: bool = True,
-            return_result: bool = False,
-            **kwargs: t.GeneralValueType,
-        ) -> FlextProtocols.Result[bool] | None:
-            """Exception log."""
-            ...
-
-        @runtime_checkable
-        class StructlogLogger(BindableLogger, Protocol):
-            """Protocol for structlog logger with all logging methods.
-
-            Extends BindableLogger to add explicit method signatures for
-            logging methods (debug, info, warning, error, etc.) that are
-            available via __getattr__ at runtime.
-
-            Structlog loggers implement this protocol through dynamic
-            method dispatch.
-            """
-
-            def debug(
-                self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType | Exception,
-                **kw: t.GeneralValueType | Exception,
-            ) -> None:
-                """Log debug message."""
-                ...
-
-            def info(
-                self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
-            ) -> None:
-                """Log info message."""
-                ...
-
-            def warning(
-                self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
-            ) -> None:
-                """Log warning message."""
-                ...
-
-            def warn(
-                self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType,
-            ) -> None:
-                """Log warning message (alias)."""
-                ...
-
-            def error(
-                self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
-            ) -> None:
-                """Log error message."""
-                ...
-
-            def critical(
-                self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
-            ) -> None:
-                """Log critical message."""
-                ...
-
-            def exception(
-                self,
-                msg: str | t.GeneralValueType,
-                *args: t.GeneralValueType,
-                **kw: t.GeneralValueType | Exception,
-            ) -> None:
-                """Log exception with traceback."""
-                ...
-
-        @runtime_checkable
-        class Connection(Protocol):
-            """External system connection protocol."""
-
-            def test_connection(
-                self,
-            ) -> FlextProtocols.Result[bool]:
-                """Test connection."""
-                ...
-
-            def get_connection_string(self) -> str:
-                """Get connection string."""
-                ...
-
-            def close_connection(self) -> None:
-                """Close connection."""
-                ...
-
-        @runtime_checkable
-        class Metadata(Protocol):
-            """Metadata object protocol."""
-
-            @property
-            def created_at(self) -> datetime:
-                """Creation timestamp."""
-                ...
-
-            @property
-            def updated_at(self) -> datetime:
-                """Update timestamp."""
-                ...
-
-            @property
-            def version(self) -> str:
-                """Version string."""
-                ...
-
-            @property
-            def attributes(self) -> t.ConfigurationMapping:
-                """Metadata attributes."""
-                ...
 
     # =========================================================================
     # UTILITY: Utility Protocols
@@ -1169,6 +1117,25 @@ class FlextProtocols:
             __annotations__: t.ConfigurationDict
 
     # =========================================================================
+    # TYPE ALIASES FOR UTILITIES
+    # =========================================================================
+
+    # Type for data sources that get() can access
+    # Supports: ConfigurationDict (GeneralValueType), JsonValue dicts, and object dicts
+    # NOTE: Explicit dict types needed because pyright treats dict as invariant
+    type AccessibleData = (
+        t.ConfigurationDict
+        | dict[str, t.JsonValue]
+        | dict[str, t.GeneralValueType]
+        | t.ConfigurationMapping
+        | Mapping[str, t.JsonValue]
+        | Mapping[str, t.GeneralValueType]
+        | BaseModel
+        | "FlextProtocols.HasModelDump"
+        | "FlextProtocols.ValidatorSpec"
+    )
+
+    # =========================================================================
 
     # =========================================================================
     # CONTAINER SERVICE TYPE (Union of all registerable service protocols)
@@ -1177,7 +1144,7 @@ class FlextProtocols:
     # RegisterableService: Type alias for all services that can be registered
     # in FlextContainer. Includes protocols, models, and callables.
     # This replaces object/dict usage in DI container methods.
-    RegisterableService = Union[  # type: ignore[explicit-any]
+    RegisterableService = Union[
         # Value types (from typings)
         "t.GeneralValueType",
         # Configuration protocol
@@ -1188,8 +1155,9 @@ class FlextProtocols:
         "FlextProtocols.DI",
         # Domain service protocol
         "FlextProtocols.Service[t.GeneralValueType]",
-        # Logger protocols
+        # Logger protocols (BindableLogger covers FlextLogger which extends FlextRuntime)
         "FlextProtocols.Log",
+        BindableLogger,
         # Handler protocol
         "FlextProtocols.Handler",
         # Registry protocol

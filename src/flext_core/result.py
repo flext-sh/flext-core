@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Self, TypeIs, TypeVar
+from typing import Self, TypeIs, TypeVar, overload
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -327,7 +327,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     @classmethod
     def from_validation[T_BaseModel: BaseModel](
-        cls, data: t.GeneralValueType, model: type[T_BaseModel]
+        cls,
+        data: t.GeneralValueType,
+        model: type[T_BaseModel],
     ) -> FlextResult[T_BaseModel]:
         """Create result from Pydantic validation.
 
@@ -491,11 +493,46 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return self.value
         return default
 
+    @overload
+    def map_or(
+        self,
+        default: None,
+        func: None = None,
+    ) -> T_co | None: ...
+
+    @overload
+    def map_or[K, V](
+        self,
+        default: dict[K, V],
+        func: None = None,
+    ) -> T_co | dict[K, V]: ...
+
+    @overload
+    def map_or[V](
+        self,
+        default: list[V],
+        func: None = None,
+    ) -> T_co | list[V]: ...
+
+    @overload
+    def map_or(
+        self,
+        default: T_co,
+        func: None = None,
+    ) -> T_co: ...
+
+    @overload
+    def map_or[U](
+        self,
+        default: U,
+        func: Callable[[T_co], U],
+    ) -> U: ...
+
     def map_or[U](
         self,
         default: U,
         func: Callable[[T_co], U] | None = None,
-    ) -> U:
+    ) -> U | T_co:
         """Map success value with function or return default.
 
         Applies func to value on success, returns default on failure.
@@ -523,21 +560,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if self.is_success and self.value is not None:
             if func is not None:
                 return func(self.value)
-            # INTENTIONAL: Type-erasing pattern when func is None
-            # This is a documented design choice where the caller ensures type compatibility.
-            # The pattern is used 75+ times across codebase for cases like:
-            #   result.map_or(None)  - returns value | None when T_co allows None
-            #   result.map_or({})    - returns value | dict when T_co == dict
-            #
-            # Alternative (split into separate methods) would be:
-            #   - unwrap_or(default: T_co) -> T_co  (type-preserving)
-            #   - map_or(default: U, func: Callable) -> U  (requires func)
-            # Current design favors ergonomics over strict type safety for this edge case.
-            #
-            # Type safety is caller's responsibility: ensure default type matches T_co.
-            # Pyright/mypy cannot infer "T_co == U when func is None", requiring
-            # either cast() here or @overload (adds complexity for marginal benefit).
-            return self.value  # type: ignore[return-value]  # Documented: caller ensures type compatibility
+            # When func is None, return value directly
+            # Type is preserved via overload: when func=None, return type is T_co
+            return self.value
         return default
 
     def filter(

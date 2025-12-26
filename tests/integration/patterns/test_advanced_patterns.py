@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
 
 import pytest
 
@@ -30,23 +29,22 @@ MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
 TestFunction = Callable[[object], None]
 
 
-def mark_test_pattern(pattern: str) -> Callable[[object], object]:
+def mark_test_pattern[F: Callable[..., None]](pattern: str) -> Callable[[F], F]:
     """Mark test with a specific pattern for demonstration purposes.
 
     Returns:
-        Callable[[object], object]: Decorator function that marks tests with patterns.
+        Callable[[F], F]: Decorator function that marks tests with patterns.
 
     """
 
-    def decorator(func: object) -> object:
+    def decorator(func: F) -> F:
         """Decorator method.
 
         Returns: The decorated function with pattern attribute.
 
         """
-        # Use cast to allow dynamic attribute assignment
-        func_obj = cast("object", func)
-        func_obj._test_pattern = pattern
+        # Use setattr for dynamic attribute assignment
+        setattr(func, "_test_pattern", pattern)
         return func
 
     return decorator
@@ -62,9 +60,9 @@ class MockScenario:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
-        self.given: dict[str, str] = cast("dict[str, str]", data.get("given", {}))
-        self.when: dict[str, str] = cast("dict[str, str]", data.get("when", {}))
-        self.then: dict[str, str] = cast("dict[str, str]", data.get("then", {}))
+        self.given: dict[str, str | int | bool] = data.get("given", {})
+        self.when: dict[str, str | int | bool] = data.get("when", {})
+        self.then: dict[str, str | int | bool] = data.get("then", {})
         self.tags: list[str] = data.get("tags", [])
         self.priority: str = str(data.get("priority", "normal"))
 
@@ -265,14 +263,14 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> FixtureDataDict:
+    def build(self) -> dict[str, object]:
         """Build method.
 
         Returns:
-            dict[str, object]: Copy of the built data.
+            dict: Copy of the built data.
 
         """
-        return cast("FixtureDataDict", self._data.copy())
+        return dict(self._data)
 
 
 class ParameterizedTestBuilder:
@@ -282,23 +280,24 @@ class ParameterizedTestBuilder:
         """Initialize parameterizedtestbuilder:."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[dict[str, object]] = []
-        self._success_cases: list[dict[str, object]] = []
-        self._failure_cases: list[dict[str, object]] = []
+        self._cases: list[FixtureCaseDict] = []
+        self._success_cases: list[FixtureCaseDict] = []
+        self._failure_cases: list[FixtureCaseDict] = []
 
-    def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
+    def add_case(self, **kwargs: str | int | bool | list[str]) -> ParameterizedTestBuilder:
         """add_case method.
 
         Returns:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        self._cases.append(kwargs)
+        case: FixtureCaseDict = kwargs  # type: ignore[assignment]
+        self._cases.append(case)
         return self
 
     def add_success_cases(
         self,
-        cases: list[dict[str, object]],
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -311,7 +310,7 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[dict[str, object]],
+        cases: list[FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -326,10 +325,10 @@ class ParameterizedTestBuilder:
         """Build method.
 
         Returns:
-            list[dict[str, object]]: Copy of the test cases.
+            list[FixtureCaseDict]: Copy of the test cases.
 
         """
-        return cast("list[FixtureCaseDict]", self._cases.copy())
+        return list(self._cases)
 
     def build_pytest_params(self) -> list[tuple[str, str, bool]]:
         """build_pytest_params method.
@@ -397,18 +396,14 @@ class AssertionBuilder:
 
         def assertion() -> None:
             # Check if item is in the data container
-            if isinstance(self.data, (list, tuple, set, str)):
+            if isinstance(self.data, (list, tuple, set)):
                 # Type-safe check for sequence types
-                if isinstance(self.data, (list, tuple, set)):
-                    container_data = cast("list[object]", self.data)
-                    assert item in container_data
-                else:  # self.data is str
-                    assert str(item) in self.data
+                assert item in self.data
+            elif isinstance(self.data, str):
+                assert str(item) in self.data
             else:  # self.data is dict
                 # For dict, check if item is a key
                 assert item in self.data
-                # For other types, check if the item is equal to the data
-                # Note: This should not happen based on type annotations
 
         self._assertions.append(assertion)
         return self
@@ -563,7 +558,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data: dict[str, object] = {
+        scenario_data: MockScenarioData = {
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},
@@ -573,7 +568,7 @@ class TestAdvancedPatterns:
 
         scenario = MockScenario(
             "api_request",
-            cast("MockScenarioData", scenario_data),
+            scenario_data,
         )
 
         assert scenario.name == "api_request"

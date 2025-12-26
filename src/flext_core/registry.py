@@ -238,8 +238,8 @@ class FlextRegistry(FlextService[bool]):
         value: t.GeneralValueType,
     ) -> c.Cqrs.HandlerType:
         """Safely extract and validate handler mode from t.GeneralValueType value."""
-        # Use u.Parser.parse() for cleaner enum parsing
-        parse_result = u.Parser.parse(
+        # Use u.parse() for cleaner enum parsing
+        parse_result = u.parse(
             value,
             c.Cqrs.HandlerType,
             default=c.Cqrs.HandlerType.COMMAND,
@@ -261,8 +261,8 @@ class FlextRegistry(FlextService[bool]):
             return c.Cqrs.CommonStatus.RUNNING
         if value == c.Cqrs.RegistrationStatus.INACTIVE:
             return c.Cqrs.CommonStatus.FAILED
-        # Use u.Parser.parse() for cleaner enum parsing
-        parse_result = u.Parser.parse(
+        # Use u.parse() for cleaner enum parsing
+        parse_result = u.parse(
             value,
             c.Cqrs.CommonStatus,
             default=c.Cqrs.CommonStatus.RUNNING,
@@ -293,25 +293,25 @@ class FlextRegistry(FlextService[bool]):
 
         """
         # Extract values using u.extract() for cleaner code
-        registration_id_result = u.Mapper.extract(
+        registration_id_result = u.extract(
             reg_data,
             "registration_id",
             default=key,
             required=False,
         )
-        handler_mode_result = u.Mapper.extract(
+        handler_mode_result = u.extract(
             reg_data,
             "handler_mode",
             default=c.Dispatcher.HANDLER_MODE_COMMAND,
             required=False,
         )
-        timestamp_result = u.Mapper.extract(
+        timestamp_result = u.extract(
             reg_data,
             "timestamp",
             default="",
             required=False,
         )
-        status_result = u.Mapper.extract(
+        status_result = u.extract(
             reg_data,
             "status",
             default=c.Dispatcher.REGISTRATION_STATUS_ACTIVE,
@@ -437,7 +437,7 @@ class FlextRegistry(FlextService[bool]):
             reg_details = self._create_registration_details(reg_data, key)
             # Override timestamp with formatted default if not provided
             if not reg_details.timestamp:
-                reg_details.timestamp = u.Generators.generate_iso_timestamp().replace(
+                reg_details.timestamp = u.generate_iso_timestamp().replace(
                     "+00:00",
                     "Z",
                 )
@@ -697,14 +697,14 @@ class FlextRegistry(FlextService[bool]):
 
         # Store plugin in container for retrieval
         # Use TypeGuard to narrow plugin to GeneralValueType for container.register()
-        if u.Guards.is_general_value_type(plugin):
+        if u.is_general_value_type(plugin):
             self.container.register(key, plugin)
         else:
             # Convert to string representation for non-GeneralValueType plugins
             plugin_str = str(plugin)
             self.container.register(key, plugin_str)
         self._registered_keys.add(key)
-        self.logger.info(f"Registered {category}: {name}")
+        self.logger.info("Registered %s: %s", category, name)
         return r[bool].ok(True)
 
     def get_plugin(self, category: str, name: str) -> r[t.GeneralValueType]:
@@ -727,13 +727,13 @@ class FlextRegistry(FlextService[bool]):
                 if k.startswith(f"{category}::")
             ]
             return r[t.GeneralValueType].fail(
-                f"{category} '{name}' not found. Available: {available}"
+                f"{category} '{name}' not found. Available: {available}",
             )
 
         raw_result = self.container.get(key)
         if raw_result.is_failure:
             return r[t.GeneralValueType].fail(
-                f"Failed to retrieve {category} '{name}': {raw_result.error}"
+                f"Failed to retrieve {category} '{name}': {raw_result.error}",
             )
         return r[t.GeneralValueType].ok(raw_result.value)
 
@@ -770,7 +770,7 @@ class FlextRegistry(FlextService[bool]):
             return r[bool].fail(f"{category} '{name}' not registered")
 
         self._registered_keys.discard(key)
-        self.logger.info(f"Unregistered {category}: {name}")
+        self.logger.info("Unregistered %s: %s", category, name)
         return r[bool].ok(True)
 
     # ------------------------------------------------------------------
@@ -811,7 +811,7 @@ class FlextRegistry(FlextService[bool]):
 
         cls._class_plugin_storage[key] = plugin
         cls._class_registered_keys.add(key)
-        self.logger.info(f"Registered class plugin {category}: {name}")
+        self.logger.info("Registered class plugin %s: %s", category, name)
         return r[bool].ok(True)
 
     def get_class_plugin(self, category: str, name: str) -> r[t.GeneralValueType]:
@@ -873,7 +873,7 @@ class FlextRegistry(FlextService[bool]):
 
         del cls._class_plugin_storage[key]
         cls._class_registered_keys.discard(key)
-        self.logger.info(f"Unregistered class plugin {category}: {name}")
+        self.logger.info("Unregistered class plugin %s: %s", category, name)
         return r[bool].ok(True)
 
     @classmethod
@@ -934,7 +934,7 @@ class FlextRegistry(FlextService[bool]):
                     # Type guard ensures metadata_as_general is t.ConfigurationMapping
                     # Type narrowing: metadata_as_general is dict-like, assign as ConfigurationMapping
                     metadata_mapping = metadata_as_general
-                    validated_metadata = u.mapper().to_dict(metadata_mapping)
+                    validated_metadata = dict(metadata_mapping)
                 else:
                     return r[bool].fail(
                         f"metadata must be dict or m.Metadata, got {type(metadata).__name__}",
@@ -945,7 +945,7 @@ class FlextRegistry(FlextService[bool]):
             # Type narrowing: validated_metadata is Mapping after isinstance check
             # Log metadata with service name for observability
             # Use guard with return_value=True and default for concise dict conversion
-            metadata_dict_raw = u.Validation.guard(
+            metadata_dict_raw = u.guard(
                 validated_metadata,
                 dict,
                 default=dict(validated_metadata.items()),

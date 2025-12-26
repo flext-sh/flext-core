@@ -55,7 +55,7 @@ import typing
 import uuid
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
-from types import ModuleType
+from types import ModuleType, TracebackType
 from typing import ClassVar, Self, TypeGuard
 
 import structlog
@@ -301,7 +301,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: object,
+        value: t.GeneralValueType,
     ) -> TypeGuard[t.ConfigurationMapping]:
         """Type guard to check if value is dict-like.
 
@@ -334,7 +334,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: object,
+        value: t.GeneralValueType,
     ) -> TypeGuard[Sequence[t.GeneralValueType]]:
         """Type guard to check if value is list-like.
 
@@ -354,7 +354,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: object,
+        val: t.GeneralValueType,
     ) -> t.GeneralValueType:
         """Normalize any value to t.GeneralValueType recursively.
 
@@ -439,39 +439,25 @@ class FlextRuntime:
             result_scalar: t.MetadataAttributeValue = val
             return result_scalar
         if FlextRuntime.is_dict_like(val):
-            # Business Rule: Convert to flat dict[str, MetadataAttributeValue]
-            # dict is compatible with Mapping[str, ScalarValue] in MetadataAttributeValue union.
-            # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
+            # Business Rule: Serialize dict to JSON string for Metadata.attributes compatibility.
+            # Metadata.attributes only accepts flat scalar values (str, int, float, bool, None, list).
+            # Nested dicts must be serialized to JSON strings to be valid attribute values.
             #
-            # Audit Implication: Normalizes nested structures to flat metadata format.
-            # Used for metadata attribute values that must be JSON-serializable.
-            # Returns dict that is compatible with Mapping interface for read-only access.
-            dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
-            # Type narrowing: dict_v is dict[object, object] from dict() constructor
-            # We need to filter only str keys to build MetadataAttributeDict
-            # Use direct dict comprehension to avoid circular dependency with mapper
-            result_dict: dict[str, t.MetadataAttributeValue] = {}
-            for k, v in dict_v.items():
-                # Type narrowing: k is object from dict.items(), check if str for dict
-                if isinstance(k, str):
-                    if isinstance(v, (str, int, float, bool, type(None))):
-                        result_dict[k] = v
-                    else:
-                        result_dict[k] = str(v)
-            # Return type is t.MetadataAttributeValue (Mapping type)
-            # dict[str, MetadataAttributeValue] is compatible with Mapping[str, MetadataAttributeValue]
-            # which is part of the MetadataAttributeValue union
-            result_mapping: t.MetadataAttributeValue = result_dict
-            return result_mapping
+            # Audit Implication: Nested structures are serialized to JSON for metadata storage.
+            # This ensures all metadata values are JSON-serializable and flat.
+            result_json: t.MetadataAttributeValue = json.dumps(
+                dict(val.items()) if hasattr(val, "items") else dict(val),
+            )
+            return result_json
         if FlextRuntime.is_list_like(val):
-            # Convert to list[t.MetadataAttributeValue]
-            result_list: list[str | int | float | bool | None] = []
+            # Convert to list of MetadataAttributeValue scalars (including datetime)
+            result_list: list[str | int | float | bool | datetime | None] = []
             for item in val:
-                if isinstance(item, (str, int, float, bool, type(None))):
+                if isinstance(item, (str, int, float, bool, datetime, type(None))):
                     result_list.append(item)
                 else:
                     result_list.append(str(item))
-            # Return type is t.MetadataAttributeValue (list type)
+            # Explicit annotation to ensure MetadataAttributeValue return type
             result_list_typed: t.MetadataAttributeValue = result_list
             return result_list_typed
         # Return type is t.MetadataAttributeValue (str type)
@@ -896,15 +882,14 @@ class FlextRuntime:
 
         @staticmethod
         def register_object(
-            di_container: object,
+            di_container: containers.DynamicContainer,
             name: str,
             instance: T,
         ) -> providers.Provider[T]:
             """Register a concrete instance using ``providers.Object``.
 
             Args:
-                di_container: DynamicContainer instance (typed as object to avoid
-                    importing dependency-injector types in calling modules).
+                di_container: DynamicContainer instance for provider registration.
 
             """
             if hasattr(di_container, name):
@@ -916,7 +901,7 @@ class FlextRuntime:
 
         @staticmethod
         def register_factory(
-            di_container: object,
+            di_container: containers.DynamicContainer,
             name: str,
             factory: Callable[[], T],
             *,
@@ -925,8 +910,7 @@ class FlextRuntime:
             """Register a factory using Singleton/Factory providers.
 
             Args:
-                di_container: DynamicContainer instance (typed as object to avoid
-                    importing dependency-injector types in calling modules).
+                di_container: DynamicContainer instance for provider registration.
 
             """
             if hasattr(di_container, name):
@@ -940,15 +924,14 @@ class FlextRuntime:
 
         @staticmethod
         def register_resource(
-            di_container: object,
+            di_container: containers.DynamicContainer,
             name: str,
             factory: Callable[[], T],
         ) -> providers.Provider[T]:
             """Register a resource provider for lifecycle-managed dependencies.
 
             Args:
-                di_container: DynamicContainer instance (typed as object to avoid
-                    importing dependency-injector types in calling modules).
+                di_container: DynamicContainer instance for provider registration.
 
             """
             if hasattr(di_container, name):
@@ -1190,22 +1173,28 @@ class FlextRuntime:
         )
 
         # Determine logger factory (handle async buffering)
-        # Use object type for factory_arg - structlog accepts various factory types
-        factory_arg: object = logger_factory
-        if factory_arg is None:
-            # Default factory handling
-            if async_logging:
-                # Use cached async writer or create new one
-                if cls._async_writer is None:
-                    cls._async_writer = cls._AsyncLogWriter(sys.stdout)
-                # PrintLoggerFactory accepts file-like objects with write method
-                # _AsyncLogWriter has write/flush methods (duck-typed TextIO)
-                # Use getattr to call PrintLoggerFactory with duck-typed file arg
-                print_logger_factory = getattr(module, "PrintLoggerFactory", None)
-                if print_logger_factory is not None:
-                    factory_arg = print_logger_factory(file=cls._async_writer)
+        # structlog accepts various factory types
+        # Variable has union type to match all possible factories
+        factory_to_use: t.GeneralValueType
+        if logger_factory is not None:
+            # Use the provided factory directly (Callable[[], BindableLogger])
+            factory_to_use = logger_factory
+        elif async_logging:
+            # Default factory handling with async buffering
+            # Use cached async writer or create new one
+            if cls._async_writer is None:
+                cls._async_writer = cls._AsyncLogWriter(sys.stdout)
+            # PrintLoggerFactory accepts file-like objects with write method
+            # _AsyncLogWriter has write/flush methods (duck-typed TextIO)
+            # Use getattr to call PrintLoggerFactory with duck-typed file arg
+            print_logger_factory = getattr(module, "PrintLoggerFactory", None)
+            if print_logger_factory is not None:
+                factory_to_use = print_logger_factory(file=cls._async_writer)
             else:
-                factory_arg = module.PrintLoggerFactory()
+                factory_to_use = module.PrintLoggerFactory()
+        else:
+            # Default factory without async (PrintLoggerFactory instance)
+            factory_to_use = module.PrintLoggerFactory()
 
         # Call configure directly with constructed arguments
         # Processors are dynamically constructed callables that match structlog's Processor protocol
@@ -1217,7 +1206,7 @@ class FlextRuntime:
             configure_fn(
                 processors=processors,
                 wrapper_class=wrapper_arg,
-                logger_factory=factory_arg,
+                logger_factory=factory_to_use,
                 cache_logger_on_first_use=cache_logger_on_first_use,
             )
 
@@ -1664,7 +1653,7 @@ class FlextRuntime:
             self,
             exc_type: type[BaseException] | None,
             exc_val: BaseException | None,
-            exc_tb: object,
+            exc_tb: TracebackType | None,
         ) -> None:
             """Context manager exit."""
 
@@ -1887,11 +1876,15 @@ class FlextRuntime:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: object,
-        entity_b: object,
+        entity_a: t.GeneralValueType,
+        entity_b: t.GeneralValueType,
         id_attr: str = "unique_id",
     ) -> bool:
         """Compare two entities by unique ID attribute."""
+        # Type narrowing: Check if both entities have __class__ attribute (all objects do)
+        if not hasattr(entity_a, "__class__") or not hasattr(entity_b, "__class__"):
+            return False
+        # Now we can safely access __class__ after hasattr check
         if not isinstance(entity_b, entity_a.__class__):
             return False
         id_a = getattr(entity_a, id_attr, None)
@@ -1900,34 +1893,47 @@ class FlextRuntime:
 
     @staticmethod
     def hash_entity_by_id(
-        entity: object,
+        entity: t.GeneralValueType,
         id_attr: str = "unique_id",
     ) -> int:
         """Hash entity based on unique ID and type."""
         entity_id = getattr(entity, id_attr, None)
         if entity_id is None:
             return hash(id(entity))
+        # Type narrowing: All objects have __class__ attribute
+        if not hasattr(entity, "__class__"):
+            return hash(id(entity))
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def compare_value_objects_by_value(obj_a: object, obj_b: object) -> bool:
+    def compare_value_objects_by_value(
+        obj_a: t.GeneralValueType,
+        obj_b: t.GeneralValueType,
+    ) -> bool:
         """Compare value objects by their values (all attributes)."""
+        # Type narrowing: Check if both objects have __class__ attribute
+        if not hasattr(obj_a, "__class__") or not hasattr(obj_b, "__class__"):
+            return False
         if not isinstance(obj_b, obj_a.__class__):
             return False
-        if hasattr(obj_a, "model_dump") and hasattr(obj_b, "model_dump"):
-            dump_a: dict[str, object] = obj_a.model_dump()
-            dump_b: dict[str, object] = obj_b.model_dump()
+        # Use isinstance for proper type narrowing with BaseModel
+        if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):
+            dump_a = obj_a.model_dump()
+            dump_b = obj_b.model_dump()
             return dump_a == dump_b
         if hasattr(obj_a, "__dict__") and hasattr(obj_b, "__dict__"):
             return bool(obj_a.__dict__ == obj_b.__dict__)
         return repr(obj_a) == repr(obj_b)
 
     @staticmethod
-    def hash_value_object_by_value(obj: object) -> int:
+    def hash_value_object_by_value(obj: t.GeneralValueType) -> int:
         """Hash value object based on all attribute values."""
-        if hasattr(obj, "model_dump"):
+        # Use isinstance for proper type narrowing
+        if isinstance(obj, BaseModel):
             data = obj.model_dump()
             return hash(tuple(sorted(data.items())))
+        if isinstance(obj, Mapping):
+            return hash(tuple(sorted(obj.items())))
         if hasattr(obj, "__dict__"):
             return hash(tuple(sorted(obj.__dict__.items())))
         return hash(repr(obj))
@@ -1977,7 +1983,7 @@ class FlextRuntime:
 
     @staticmethod
     def ensure_trace_context(
-        context: t.StringMapping | object,
+        context: t.StringMapping | t.GeneralValueType,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -1994,7 +2000,7 @@ class FlextRuntime:
 
         """
         # Normalize context to dict
-        context_dict: dict[str, object]
+        context_dict: dict[str, t.GeneralValueType]
         if isinstance(context, dict):
             # dict might have unknown key/value types, normalize to string keys
             context_dict = {str(k): v for k, v in context.items()}
@@ -2029,7 +2035,7 @@ class FlextRuntime:
 
     @staticmethod
     def validate_http_status_codes(
-        codes: list[object],
+        codes: list[t.GeneralValueType],
         min_code: int | None = None,
         max_code: int | None = None,
     ) -> RuntimeResult[list[int]]:
@@ -2055,16 +2061,16 @@ class FlextRuntime:
                     if not min_val <= code_int <= max_val:
                         return FlextRuntime.RuntimeResult[list[int]].fail(
                             f"Invalid HTTP status code: {code} "
-                            f"(must be {min_val}-{max_val})"
+                            f"(must be {min_val}-{max_val})",
                         )
                     validated_codes.append(code_int)
                 else:
                     return FlextRuntime.RuntimeResult[list[int]].fail(
-                        f"Invalid HTTP status code type: {type(code).__name__}"
+                        f"Invalid HTTP status code type: {type(code).__name__}",
                     )
             except ValueError:
                 return FlextRuntime.RuntimeResult[list[int]].fail(
-                    f"Cannot convert to integer: {code}"
+                    f"Cannot convert to integer: {code}",
                 )
 
         return FlextRuntime.RuntimeResult[list[int]].ok(validated_codes)

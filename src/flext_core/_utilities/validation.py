@@ -104,7 +104,7 @@ class FlextUtilitiesValidation:
             scheme = uri.split("://")[0].lower()
             if allowed_schemes and scheme not in allowed_schemes:
                 return r[str].fail(
-                    f"{context} scheme '{scheme}' not in allowed: {allowed_schemes}"
+                    f"{context} scheme '{scheme}' not in allowed: {allowed_schemes}",
                 )
             return r[str].ok(uri)
 
@@ -120,7 +120,7 @@ class FlextUtilitiesValidation:
                 return r[int].fail(f"{context} must be integer")
             if port < 1 or port > c.Network.MAX_PORT:
                 return r[int].fail(
-                    f"{context} must be between 1 and {c.Network.MAX_PORT}"
+                    f"{context} must be between 1 and {c.Network.MAX_PORT}",
                 )
             return r[int].ok(port)
 
@@ -276,10 +276,9 @@ class FlextUtilitiesValidation:
                 return str(component)
 
         # Check for dataclass instance (before Sequence check to avoid treating as list)
-        # t.GeneralValueType doesn't include type, so isinstance(component, type) is always False
-        # But is_dataclass() can still be True for dataclass instances
-        # Runtime check: is_dataclass() works at runtime even if type system doesn't allow type
-        if is_dataclass(component):
+        # is_dataclass() returns True for both classes and instances
+        # We only want instances, so exclude type objects
+        if is_dataclass(component) and not isinstance(component, type):
             return FlextUtilitiesValidation._normalize_dataclass_value_instance(
                 component,
             )
@@ -964,18 +963,20 @@ class FlextUtilitiesValidation:
             if key is not None:
                 return key
 
-        # Try dataclass
-        # t.GeneralValueType doesn't include type, so isinstance(command, type) is always False
-        # But we check hasattr and is_dataclass to ensure it's a dataclass instance
-        # Runtime check: hasattr ensures it's not None, is_dataclass checks type
-        # Type narrowing: t.GeneralValueType doesn't include dataclass types, but runtime check handles instances
+        # Try dataclass instance (not class)
+        # is_dataclass() returns True for both classes and instances
+        # We only want instances, so exclude type objects first
+        # Save command before any narrowing to preserve GeneralValueType type
+        command_for_dataclass: t.GeneralValueType = command
         if (
             command is not None
+            and not isinstance(command, type)
             and hasattr(command, "__dataclass_fields__")
             and is_dataclass(command)
         ):
+            # command is a dataclass instance - use preserved variable
             key = FlextUtilitiesValidation._generate_key_dataclass(
-                command,
+                command_for_dataclass,
                 command_type,
             )
             if key is not None:
@@ -2168,7 +2169,7 @@ class FlextUtilitiesValidation:
         """Validate entity is not None and has id."""
         if entity_value is None:
             return r[p.Model].fail("Entity cannot be None")
-        if hasattr(entity_value, "id") and getattr(entity_value, "id") is None:
+        if hasattr(entity_value, "id") and entity_value.id is None:
             return r[p.Model].fail("Entity must have id")
         return r[p.Model].ok(entity_value)
 
@@ -2182,7 +2183,7 @@ class FlextUtilitiesValidation:
         """Validate value is in range [min_val, max_val]."""
         if value < min_val or value > max_val:
             return r[int | float].fail(
-                f"{context} must be between {min_val} and {max_val}"
+                f"{context} must be between {min_val} and {max_val}",
             )
         return r[int | float].ok(value)
 
@@ -2815,24 +2816,48 @@ class FlextUtilitiesValidation:
             """
             if source is None:
                 return default
-            if as_type is not None:
-                taken = FlextUtilitiesMapper.take(
-                    source,
-                    key,
-                    as_type=as_type,
-                    default=default,
-                )
-                return taken if taken is not None else default
-            # Get without default, then apply default if None
-            # Use take() with type from default to ensure type safety
-            default_type = type(default)
-            taken_val = FlextUtilitiesMapper.take(
-                source,
-                key,
-                as_type=default_type,
-                default=default,
-            )
-            return taken_val if taken_val is not None else default
+
+            # Get raw value from source
+            raw_value: t.GeneralValueType | None = None
+            if isinstance(source, p.HasModelDump):
+                # BaseModel - get attribute
+                raw_value = getattr(source, key, None)
+            elif isinstance(source, Mapping):
+                # Mapping - use get()
+                raw_value = source.get(key)
+
+            if raw_value is None:
+                return default
+
+            # Type check with as_type if provided, or use type of default
+            check_type = as_type if as_type is not None else type(default)
+            if isinstance(raw_value, check_type):
+                # raw_value matches the expected type T
+                return raw_value  # type is narrowed by isinstance
+
+            # Try conversion for primitive types only using str intermediary
+            # This is safe because str() works on any GeneralValueType
+            if check_type in {int, float, str, bool}:
+                try:
+                    str_value = str(raw_value)
+                    # Use unified variable for proper type narrowing
+                    converted_value: int | float | str | bool
+                    if check_type is int:
+                        converted_value = int(str_value)
+                    elif check_type is float:
+                        converted_value = float(str_value)
+                    elif check_type is bool:
+                        # Handle bool conversion from string
+                        converted_value = str_value.lower() in {"true", "1", "yes"}
+                    else:  # check_type is str
+                        converted_value = str_value
+                    # isinstance narrows converted_value to T via check_type: type[T]
+                    if isinstance(converted_value, check_type):
+                        return converted_value
+                except (TypeError, ValueError):
+                    pass
+
+            return default
 
         @staticmethod
         def req[T](
@@ -3389,7 +3414,8 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_with_validators(
-        value: object, *validators: p.ValidatorSpec
+        value: object,
+        *validators: p.ValidatorSpec,
     ) -> r[bool]:
         """Validate value against multiple validators.
 

@@ -93,7 +93,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.GeneralValueType, obj_b: t.GeneralValueType
+        obj_a: t.GeneralValueType,
+        obj_b: t.GeneralValueType,
     ) -> bool:
         """Compare two value objects by their values (all attributes).
 
@@ -167,8 +168,12 @@ class FlextUtilitiesDomain:
             # Filter out non-hashable values and convert to tuple
             hashable_items: list[tuple[str, t.GeneralValueType]] = []
             for key, value in sorted(obj_dict.items()):
-                if isinstance(value, Hashable):
+                # Check for types that are both Hashable and GeneralValueType
+                if isinstance(value, (str, int, float, bool, type(None))):
                     hashable_items.append((key, value))
+                elif isinstance(value, Hashable):
+                    # Other hashables get converted to repr string
+                    hashable_items.append((key, repr(value)))
                 else:
                     # Use repr for non-hashable values
                     hashable_items.append((key, repr(value)))

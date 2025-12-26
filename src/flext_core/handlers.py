@@ -21,6 +21,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import ClassVar
 
+from pydantic import BaseModel
+
 from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.mixins import FlextMixins as x
@@ -65,9 +67,7 @@ def _handler_type_to_literal(
             return "operation"
         case c.Cqrs.HandlerType.SAGA:
             return "saga"
-        case _:
-            # Should never reach here as all HandlerType values are covered
-            return "operation"
+        # All HandlerType values are covered above
 
 
 # Import moved to top of file to avoid circular dependency
@@ -264,17 +264,21 @@ class FlextHandlers[MessageT_contra, ResultT](
             def handle(self, message: object) -> r[t.GeneralValueType]:
                 """Execute the wrapped callable."""
                 try:
-                    # Validate message is compatible with handler function
-                    if not u.Guards.is_general_value_type(message):
+                    # Use type assertion after validation
+                    if not u.is_general_value_type(message):
                         return r[t.GeneralValueType].fail(
-                            "Message is not a valid GeneralValueType"
+                            "Message is not a valid GeneralValueType",
                         )
-                    # TypeGuard narrows message to t.GeneralValueType
+                    # Type guard ensures message is GeneralValueType
+                    assert isinstance(
+                        message,
+                        (str, int, float, bool, type(None), dict, list, BaseModel),
+                    )
                     result = self._handler_fn(message)
                     # If result is already r, return it directly
                     if isinstance(result, r):
                         return result
-                    # Otherwise wrap it in r
+                    # Otherwise wrap it in r - this path may be taken depending on handler implementation
                     return r[t.GeneralValueType].ok(result)
                 except Exception as exc:
                     # Wrap exception in r
@@ -290,7 +294,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             # Handle both HandlerType enum and string (HandlerType is StrEnum, so values are strings)
             if isinstance(mode, c.Cqrs.HandlerType):
                 resolved_type = mode
-            elif mode not in u.Enum.values(c.Cqrs.HandlerType):
+            elif mode not in u.values(c.Cqrs.HandlerType):
                 error_msg = f"Invalid handler mode: {mode}"
                 raise e.ValidationError(error_msg)
             else:
@@ -546,7 +550,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         if isinstance(message, dict):
             # Try command_id first, then message_id using extract
-            cmd_id_result = u.Mapper.extract(
+            cmd_id_result = u.extract(
                 message,
                 "command_id",
                 default=None,
@@ -554,7 +558,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             )
             if cmd_id_result.is_success and cmd_id_result.value:
                 return str(cmd_id_result.value)
-            msg_id_result = u.Mapper.extract(
+            msg_id_result = u.extract(
                 message,
                 "message_id",
                 default=None,
@@ -565,13 +569,15 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if msg_id_result.is_success and msg_id_result.value
                 else None
             )
-        # Use get() for concise attribute extraction
-        if hasattr(message, "command_id"):
-            cmd_id = u.mapper().get(message, "command_id", default="") or ""
-            return str(cmd_id) if cmd_id else None
-        if hasattr(message, "message_id"):
-            msg_id = u.mapper().get(message, "message_id", default="") or ""
-            return str(msg_id) if msg_id else None
+        # Use u.Mapper.get() for concise attribute extraction
+        # Check if message is accessible data (BaseModel or dict)
+        if isinstance(message, (dict, BaseModel)):
+            if hasattr(message, "command_id"):
+                cmd_id = u.Mapper.get(message, "command_id", default="") or ""
+                return str(cmd_id) if cmd_id else None
+            if hasattr(message, "message_id"):
+                msg_id = u.Mapper.get(message, "message_id", default="") or ""
+                return str(msg_id) if msg_id else None
         return None
 
     def dispatch_message(
@@ -661,7 +667,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         # Push execution context using ExecutionContext from mixin
         # Mixin push_context expects m.ExecutionContext, use existing _execution_context
-        self.push_context(self._execution_context)
+        _ = self.push_context(self._execution_context)
 
         try:
             # Execute handler
@@ -691,17 +697,17 @@ class FlextHandlers[MessageT_contra, ResultT](
         exec_time: float = (
             exec_time_value if isinstance(exec_time_value, float) else 0.0
         )
-        # Mixin record_metric() returns None (not r[bool])
-        self.record_metric(
+        # Mixin record_metric() returns r[bool], assign to _ to indicate intentional
+        _ = self.record_metric(
             "execution_time_ms",
             exec_time,
         )
-        self.record_metric(
+        _ = self.record_metric(
             "success",
             success,
         )
         if error is not None:
-            self.record_metric("error", error)
+            _ = self.record_metric("error", error)
 
     def __call__(self, input_data: MessageT_contra) -> r[ResultT]:
         """Callable interface for seamless integration with dispatchers.
@@ -872,15 +878,18 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if name.startswith("_"):
                     continue
                 func = getattr(module, name, None)
-                if u.Guards.is_handler_callable(func) and hasattr(
-                    func, c.Discovery.HANDLER_ATTR
+                if u.is_handler_callable(func) and hasattr(
+                    func,
+                    c.Discovery.HANDLER_ATTR,
                 ):
                     config: m.Handler.DecoratorConfig = getattr(
                         func,
                         c.Discovery.HANDLER_ATTR,
                     )
-                    # TypeGuard narrows func to t.HandlerCallable
-                    handlers.append((name, func, config))
+                    # Type narrowing after guard check
+                    assert callable(func)  # Guard ensures this
+                    narrowed_func: t.HandlerCallable = func
+                    handlers.append((name, narrowed_func, config))
 
             # Sort by priority (descending), then by name for stability
             return sorted(

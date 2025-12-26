@@ -53,14 +53,14 @@ from flext_core import (
 class DatabaseService(FlextModels.ArbitraryTypesModel):
     """Database service using centralized types and railway pattern."""
 
-    model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
+    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
 
-    config: t.ServiceMetadataMapping
-    status: FlextConstants.Domain.Status = FlextConstants.Domain.Status.INACTIVE
+    config: t.ConfigurationDict
+    status: FlextConstants.Cqrs.CommonStatus = FlextConstants.Cqrs.CommonStatus.INACTIVE
 
     def connect(self) -> FlextResult[bool]:
         """Connect to database with validation."""
-        if self.status == FlextConstants.Domain.Status.ACTIVE:
+        if self.status == FlextConstants.Cqrs.CommonStatus.ACTIVE:
             return FlextResult[bool].ok(True)
 
         url = self.config.get("url", "")
@@ -72,16 +72,16 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):
             return FlextResult[bool].fail(FlextConstants.Errors.VALIDATION_ERROR)
 
         # Railway pattern with u validation (DRY)
-        timeout_validation = u.Validation.Numeric.validate_positive(timeout)
+        timeout_validation = u.validate_positive(timeout)
         if timeout_validation.is_failure:
             return FlextResult[bool].fail(FlextConstants.Errors.VALIDATION_ERROR)
 
-        self.status = FlextConstants.Domain.Status.ACTIVE
+        self.status = FlextConstants.Cqrs.CommonStatus.ACTIVE
         return FlextResult[bool].ok(True)
 
     def query(self, sql: str) -> FlextResult[t.ConfigurationDict]:
         """Execute query with comprehensive validation using u."""
-        if self.status != FlextConstants.Domain.Status.ACTIVE:
+        if self.status != FlextConstants.Cqrs.CommonStatus.ACTIVE:
             return FlextResult[t.ConfigurationDict].fail(
                 FlextConstants.Errors.CONNECTION_ERROR,
             )
@@ -95,13 +95,13 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):
             FlextConstants.Cqrs.Action.DELETE,
         )
         sql_pattern = rf"\b({'|'.join(sql_keywords)})\b"
-        if not u.Validation.validate_pattern(sql, sql_pattern).is_success:
+        if not u.validate_pattern(sql, sql_pattern).is_success:
             return FlextResult[t.ConfigurationDict].fail(
                 FlextConstants.Errors.VALIDATION_ERROR,
             )
 
         result: t.ConfigurationDict = {
-            "id": u.Generators.Random.generate_short_id(),
+            "id": u.generate_short_id(),
             "name": "Alice",
             "email": "alice@example.com",
         }
@@ -111,18 +111,18 @@ class DatabaseService(FlextModels.ArbitraryTypesModel):
 class CacheService(FlextModels.ArbitraryTypesModel):
     """Cache service using centralized types."""
 
-    model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
+    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
 
-    config: t.ServiceMetadataMapping
-    status: FlextConstants.Domain.Status = FlextConstants.Domain.Status.INACTIVE
+    config: t.ConfigurationDict
+    status: FlextConstants.Cqrs.CommonStatus = FlextConstants.Cqrs.CommonStatus.INACTIVE
 
     def get(self, key: str) -> FlextResult[str | int]:
         """Get value from cache using railway pattern."""
-        if self.status != FlextConstants.Domain.Status.ACTIVE:
+        if self.status != FlextConstants.Cqrs.CommonStatus.ACTIVE:
             return FlextResult[str | int].fail(FlextConstants.Errors.CONNECTION_ERROR)
 
         # Railway pattern with u validation (DRY)
-        return u.Validation.validate_length(
+        return u.validate_length(
             key,
             max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
         ).flat_map(
@@ -135,18 +135,19 @@ class CacheService(FlextModels.ArbitraryTypesModel):
 
     def set(self, key: str, value: str | int) -> FlextResult[bool]:
         """Set value in cache using railway pattern."""
-        if self.status != FlextConstants.Domain.Status.ACTIVE:
+        if self.status != FlextConstants.Cqrs.CommonStatus.ACTIVE:
             return FlextResult[bool].fail(FlextConstants.Errors.CONNECTION_ERROR)
 
         # Railway pattern with u validation (DRY)
         return (
-            u.Validation.validate_length(
+            u
+            .validate_length(
                 key,
                 max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
             )
             .flat_map(
                 lambda _: (
-                    u.Validation.validate_length(
+                    u.validate_length(
                         value,
                         max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
                     )
@@ -161,29 +162,29 @@ class CacheService(FlextModels.ArbitraryTypesModel):
 class EmailService(FlextModels.ArbitraryTypesModel):
     """Email service using centralized types."""
 
-    model_config = FlextConstants.Domain.DOMAIN_MODEL_CONFIG
+    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
 
-    config: t.ServiceMetadataMapping
-    status: FlextConstants.Domain.Status = FlextConstants.Domain.Status.INACTIVE
+    config: t.ConfigurationDict
+    status: FlextConstants.Cqrs.CommonStatus = FlextConstants.Cqrs.CommonStatus.INACTIVE
 
     def send(self, to: str, subject: str, body: str) -> FlextResult[bool]:
         """Send email with railway pattern validation."""
-        if self.status != FlextConstants.Domain.Status.ACTIVE:
+        if self.status != FlextConstants.Cqrs.CommonStatus.ACTIVE:
             return FlextResult[bool].fail(FlextConstants.Errors.CONNECTION_ERROR)
 
         # Railway pattern with multiple validations using traverse (DRY)
         validations = [
-            u.Validation.validate_pattern(
+            u.validate_pattern(
                 to,
                 FlextConstants.Platform.PATTERN_EMAIL,
                 "email",
             ),
-            u.Validation.validate_length(
+            u.validate_length(
                 subject,
                 min_length=1,
                 max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
             ),
-            u.Validation.validate_length(
+            u.validate_length(
                 body,
                 min_length=1,
                 max_length=FlextConstants.Defaults.MAX_MESSAGE_LENGTH,
@@ -238,21 +239,21 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
             "timeout": FlextConstants.Network.DEFAULT_TIMEOUT,
         }
         db_service = DatabaseService(config=db_config)
-        db_service.status = FlextConstants.Domain.Status.ACTIVE
+        db_service.status = FlextConstants.Cqrs.CommonStatus.ACTIVE
 
         cache_config: t.ConfigurationDict = {
             "backend": "memory",
             "ttl": FlextConstants.Defaults.DEFAULT_CACHE_TTL,
         }
         cache_service = CacheService(config=cache_config)
-        cache_service.status = FlextConstants.Domain.Status.ACTIVE
+        cache_service.status = FlextConstants.Cqrs.CommonStatus.ACTIVE
 
         email_config: t.ConfigurationDict = {
             "host": "smtp.example.com",
             "port": 587,
         }
         email_service = EmailService(config=email_config)
-        email_service.status = FlextConstants.Domain.Status.ACTIVE
+        email_service.status = FlextConstants.Cqrs.CommonStatus.ACTIVE
 
         _ = container.register("database", db_service)
         _ = container.register("cache", cache_service)

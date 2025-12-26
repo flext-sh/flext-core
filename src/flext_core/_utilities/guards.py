@@ -17,6 +17,7 @@ import re
 import warnings
 from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
+from pathlib import Path
 from typing import TypeGuard
 
 from pydantic import BaseModel
@@ -147,22 +148,22 @@ class FlextUtilitiesGuards:
             # Type narrowing: is_dict_like returns TypeGuard[ConfigurationMapping]
             # ConfigurationMapping is Mapping[str, t.GeneralValueType]
             val_mapping = val  # type narrowing via TypeGuard
-            result_dict: dict[str, t.ScalarValue] = {}
+            # Use full type from start to satisfy dict invariance
+            result_dict: t.GeneralNestedDict = {}
             # Before accessing .items(), narrow the type
             if isinstance(val_mapping, Mapping):
                 dict_v = dict(val_mapping.items())
                 for k, v in dict_v.items():
-                    if isinstance(v, (str, int, float, bool, type(None))):
+                    if isinstance(v, (str, int, float, bool, datetime, type(None))):
                         result_dict[k] = v
                     else:
                         result_dict[k] = str(v)
-            # Return as Mapping[str, ScalarValue] - compatible with MetadataAttributeValue
             return result_dict
         if FlextRuntime.is_list_like(val):
             # Convert to list[t.MetadataAttributeValue]
             # Type narrowing: is_list_like returns TypeGuard[Sequence[t.GeneralValueType]]
             val_sequence = val  # type narrowing via TypeGuard
-            result_list: list[str | int | float | bool | None] = []
+            result_list: t.GeneralListValue = []
             # Before iterating, narrow the type
             if isinstance(val_sequence, Sequence) and not isinstance(
                 val_sequence,
@@ -215,7 +216,11 @@ class FlextUtilitiesGuards:
                 isinstance(k, str) and FlextUtilitiesGuards.is_general_value_type(v)
                 for k, v in value.items()
             )
-        return False
+        # Check callable types (GeneralValueType includes Callable[..., object])
+        if callable(value):
+            return True
+        # Check BaseModel or Path instances
+        return isinstance(value, (BaseModel, Path))
 
     @staticmethod
     def is_handler_type(value: object) -> TypeGuard[t.HandlerType]:
@@ -403,7 +408,7 @@ class FlextUtilitiesGuards:
         return isinstance(obj, p.Config)
 
     @staticmethod
-    def _is_context(obj: object) -> TypeGuard[p.Ctx]:
+    def is_context(obj: object) -> TypeGuard[p.Ctx]:
         """Check if object satisfies the Context protocol.
 
         Enables type narrowing for context objects without .
@@ -415,6 +420,11 @@ class FlextUtilitiesGuards:
             TypeGuard[p.Ctx]: True if obj satisfies Ctx protocol
 
         """
+        return isinstance(obj, p.Ctx)
+
+    @staticmethod
+    def _is_context(obj: object) -> TypeGuard[p.Ctx]:
+        """Private version of is_context for internal protocol checks."""
         return isinstance(obj, p.Ctx)
 
     @staticmethod
@@ -537,7 +547,7 @@ class FlextUtilitiesGuards:
     # =========================================================================
 
     @staticmethod
-    def _is_sequence_not_str(value: object) -> TypeGuard[Sequence[object]]:
+    def _is_sequence_not_str(value: object) -> TypeGuard[Sequence[t.GeneralValueType]]:
         """Check if value is Sequence and not str.
 
         Type guard to distinguish Sequence[str] from str in union types.
@@ -547,11 +557,11 @@ class FlextUtilitiesGuards:
             value: Value that can be str or Sequence[T]
 
         Returns:
-            TypeGuard[Sequence[object]]: True if value is Sequence and not str
+            TypeGuard[Sequence[t.GeneralValueType]]: True if value is Sequence and not str
 
         Example:
             >>> if FlextUtilitiesGuards.is_sequence_not_str(spec):
-            ...     # spec is now typed as Sequence[object]
+            ...     # spec is now typed as Sequence[t.GeneralValueType]
             ...     items = list(spec)
 
         """
@@ -620,7 +630,7 @@ class FlextUtilitiesGuards:
 
         Example:
             >>> if FlextUtilitiesGuards.is_sequence(key_equals):
-            ...     # key_equals is now typed as Sequence[object]
+            ...     # key_equals is now typed as Sequence[t.GeneralValueType]
             ...     pairs = list(key_equals)
 
         """
@@ -648,7 +658,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _is_dict(value: object) -> TypeGuard[t.ConfigurationDict]:
-        """Check if value is dict[str, object].
+        """Check if value is dict[str, t.GeneralValueType].
 
         Type guard for dictionary types. Returns ConfigurationDict for type safety.
 
@@ -667,7 +677,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, dict)
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+    def _is_mapping(value: object) -> TypeGuard[Mapping[str, t.GeneralValueType]]:
         """Check if value is a Mapping (dict-like).
 
         Type guard for Mapping types (dict, ChainMap, MappingProxyType, etc.).
@@ -676,11 +686,11 @@ class FlextUtilitiesGuards:
             value: Object to check
 
         Returns:
-            TypeGuard[Mapping[str, object]]: True if value is a Mapping
+            TypeGuard[Mapping[str, t.GeneralValueType]]: True if value is a Mapping
 
         Example:
             >>> if FlextUtilitiesGuards._is_mapping(config):
-            ...     # config is now typed as Mapping[str, object]
+            ...     # config is now typed as Mapping[str, t.GeneralValueType]
             ...     value = config.get("key")
 
         """
@@ -709,7 +719,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def _is_list_or_tuple(
         value: object,
-    ) -> TypeGuard[list[object] | tuple[object, ...]]:
+    ) -> TypeGuard[list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]]:
         """Check if value is list or tuple.
 
         Type guard for list and tuple types.
@@ -718,11 +728,11 @@ class FlextUtilitiesGuards:
             value: Object to check
 
         Returns:
-            TypeGuard[list[object] | tuple[object, ...]]: True if value is list or tuple
+            TypeGuard[list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]]: True if value is list or tuple
 
         Example:
             >>> if FlextUtilitiesGuards._is_list_or_tuple(items):
-            ...     # items is now typed as list[object] | tuple[object, ...]
+            ...     # items is now typed as list[t.GeneralValueType] | tuple[t.GeneralValueType, ...]
             ...     value = items[0]
 
         """
@@ -814,7 +824,7 @@ class FlextUtilitiesGuards:
         return value is None
 
     @staticmethod
-    def _is_tuple(value: object) -> TypeGuard[tuple[object, ...]]:
+    def _is_tuple(value: object) -> TypeGuard[tuple[t.GeneralValueType, ...]]:
         """Check if value is tuple.
 
         Type guard for tuple types.
@@ -823,7 +833,7 @@ class FlextUtilitiesGuards:
             value: Object to check
 
         Returns:
-            TypeGuard[tuple[object, ...]]: True if value is tuple
+            TypeGuard[tuple[t.GeneralValueType, ...]]: True if value is tuple
 
         """
         return isinstance(value, tuple)
@@ -844,7 +854,9 @@ class FlextUtilitiesGuards:
         return isinstance(value, bytes)
 
     @staticmethod
-    def _is_sequence_not_str_bytes(value: object) -> TypeGuard[Sequence[object]]:
+    def _is_sequence_not_str_bytes(
+        value: object,
+    ) -> TypeGuard[Sequence[t.GeneralValueType]]:
         """Check if value is Sequence and not str or bytes.
 
         Type guard to distinguish Sequence from str/bytes in union types.
@@ -853,7 +865,7 @@ class FlextUtilitiesGuards:
             value: Object to check
 
         Returns:
-            TypeGuard[Sequence[object]]: True if value is Sequence and not str/bytes
+            TypeGuard[Sequence[t.GeneralValueType]]: True if value is Sequence and not str/bytes
 
         """
         return isinstance(value, Sequence) and not isinstance(value, (str, bytes))
@@ -1141,14 +1153,14 @@ class FlextUtilitiesGuards:
         gte: float | None = None,
         lt: float | None = None,
         lte: float | None = None,
-        is_: type[object] | None = None,
-        not_: type[object] | None = None,
-        in_: Sequence[object] | None = None,
-        not_in: Sequence[object] | None = None,
+        is_: type[t.GeneralValueType] | None = None,
+        not_: type[t.GeneralValueType] | None = None,
+        in_: Sequence[t.GeneralValueType] | None = None,
+        not_in: Sequence[t.GeneralValueType] | None = None,
         none: bool | None = None,
         empty: bool | None = None,
         match: str | None = None,
-        contains: str | object | None = None,
+        contains: str | t.GeneralValueType | None = None,
         starts: str | None = None,
         ends: str | None = None,
     ) -> bool:

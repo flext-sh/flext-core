@@ -24,6 +24,7 @@ from tests.conftest import test_framework
 from flext_core import r, u
 
 
+@pytest.mark.skip(reason="Template placeholder - replace TEMPLATE with actual module")
 class TestTEMPLATECategory:
     """Test TEMPLATE functionality with real operations.
 

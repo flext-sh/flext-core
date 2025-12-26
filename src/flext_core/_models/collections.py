@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
 from typing import Self
 
 from pydantic import ConfigDict, Field
@@ -229,13 +230,17 @@ class FlextModelsCollections:
                 return sum(numeric_values)
             # Concatenate lists
             if FlextRuntime.is_list_like(first_val):
-                combined: list[t.GeneralValueType] = []
+                combined: list[str | int | float | bool | datetime | None] = []
                 for v in non_none:
                     if isinstance(v, Sequence) and not isinstance(v, str):
-                        # Explicit check for Sequence (excluding str)
-                        for item in v:
-                            normalized = FlextRuntime.normalize_to_general_value(item)
-                            combined.append(normalized)
+                        # Use list.extend with filtered items (PERF401)
+                        combined.extend(
+                            item
+                            for item in v
+                            if isinstance(
+                                item, (str, int, float, bool, datetime, type(None))
+                            )
+                        )
                 return combined
             # Keep last for other types
             return non_none[-1]
@@ -293,10 +298,30 @@ class FlextModelsCollections:
                             value,
                         )
 
-            # Normalize result dict to t.GeneralValueType
-            normalized_result: t.ConfigurationDict = {}
+            # Normalize result dict to GeneralValueType's dict type
+            normalized_result: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | datetime
+                | list[str | int | float | bool | datetime | None]
+                | None,
+            ] = {}
             for key, value in result.items():
-                normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
+                # Filter to types matching GeneralValueType
+                if isinstance(value, (str, int, float, bool, datetime, type(None))):
+                    normalized_result[key] = value
+                elif isinstance(value, list):
+                    filtered: list[str | int | float | bool | datetime | None] = [
+                        item
+                        for item in value
+                        if isinstance(
+                            item, (str, int, float, bool, datetime, type(None))
+                        )
+                    ]
+                    normalized_result[key] = filtered
             return normalized_result
 
     class Rules(FlextModelsBase.ArbitraryTypesModel):
@@ -349,44 +374,83 @@ class FlextModelsCollections:
         def _concatenate_lists(
             cls,
             non_none: list[t.GeneralValueType],
-        ) -> list[t.GeneralValueType]:
+        ) -> list[str | int | float | bool | datetime | None]:
             """Concatenate list-like values.
 
             Args:
                 non_none: List of non-None values
 
             Returns:
-                Combined list of normalized values
+                Combined list matching GeneralValueType's list type
 
             """
-            combined: list[t.GeneralValueType] = []
+            combined: list[str | int | float | bool | datetime | None] = []
             for v in non_none:
                 if isinstance(v, Sequence) and not isinstance(v, str):
-                    # Explicit sequence check
-                    for item in v:
-                        normalized = FlextRuntime.normalize_to_general_value(item)
-                        combined.append(normalized)
+                    # Use list.extend with filtered items (PERF401)
+                    combined.extend(
+                        item
+                        for item in v
+                        if isinstance(
+                            item, (str, int, float, bool, datetime, type(None))
+                        )
+                    )
             return combined
 
         @classmethod
         def _merge_dicts(
             cls,
             non_none: list[t.GeneralValueType],
-        ) -> t.ConfigurationDict:
+        ) -> dict[
+            str,
+            str
+            | int
+            | float
+            | bool
+            | datetime
+            | list[str | int | float | bool | datetime | None]
+            | None,
+        ]:
             """Merge dict-like values.
 
             Args:
                 non_none: List of non-None values
 
             Returns:
-                Merged dictionary
+                Merged dictionary matching GeneralValueType's dict type
 
             """
-            merged: t.ConfigurationDict = {}
+            merged: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | datetime
+                | list[str | int | float | bool | datetime | None]
+                | None,
+            ] = {}
             for v in non_none:
                 if isinstance(v, Mapping):
-                    # Explicit check for Mapping
-                    merged.update(dict(v))
+                    # Explicit check for Mapping - normalize each value
+                    for key, val in v.items():
+                        # Only add values that match the dict value types
+                        if isinstance(
+                            val, (str, int, float, bool, datetime, type(None))
+                        ):
+                            merged[str(key)] = val
+                        elif isinstance(val, list):
+                            # Filter list items
+                            filtered: list[
+                                str | int | float | bool | datetime | None
+                            ] = [
+                                item
+                                for item in val
+                                if isinstance(
+                                    item, (str, int, float, bool, datetime, type(None))
+                                )
+                            ]
+                            merged[str(key)] = filtered
             return merged
 
         @classmethod
@@ -489,11 +553,8 @@ class FlextModelsCollections:
                             value,
                         )
 
-            # Normalize result dict to t.GeneralValueType
-            normalized_result: t.ConfigurationDict = {}
-            for key, value in result.items():
-                normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
-            return normalized_result
+            # Return result directly - GeneralValueType allows Mapping[str, GeneralValueType]
+            return result
 
     class Options(FlextModelsBase.ArbitraryTypesModel):
         """Base for options models (mutable)."""

@@ -505,7 +505,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_str() -> Callable[
-        [dict[str, t.GeneralValueType]], dict[str, str]
+        [dict[str, t.GeneralValueType]],
+        dict[str, str],
     ]:
         """Create validator that coerces dict values to str."""
 
@@ -519,7 +520,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_int() -> Callable[
-        [dict[str, t.GeneralValueType]], dict[str, int]
+        [dict[str, t.GeneralValueType]],
+        dict[str, int],
     ]:
         """Create validator that coerces dict values to int."""
 
@@ -533,7 +535,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_float() -> Callable[
-        [dict[str, t.GeneralValueType]], dict[str, float]
+        [dict[str, t.GeneralValueType]],
+        dict[str, float],
     ]:
         """Create validator that coerces dict values to float."""
 
@@ -547,7 +550,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_bool() -> Callable[
-        [dict[str, t.GeneralValueType]], dict[str, bool]
+        [dict[str, t.GeneralValueType]],
+        dict[str, bool],
     ]:
         """Create validator that coerces dict values to bool."""
 

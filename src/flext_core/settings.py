@@ -60,7 +60,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     model_config = SettingsConfigDict(
         env_prefix=c.Platform.ENV_PREFIX,
         env_nested_delimiter=c.Platform.ENV_NESTED_DELIMITER,
-        env_file=u.Configuration.resolve_env_file(),
+        env_file=u.resolve_env_file(),
         env_file_encoding=c.Utilities.DEFAULT_ENCODING,
         case_sensitive=False,
         extra=c.ModelConfig.EXTRA_IGNORE,
@@ -94,7 +94,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             )
 
         """
-        return u.Configuration.resolve_env_file()
+        return u.resolve_env_file()
 
     # Core configuration
     app_name: str = Field(default="flext", description="Application name")
@@ -258,7 +258,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
         # First initialization - call BaseSettings.__init__() without kwargs.
         # BaseSettings will load values from environment variables and .env files.
         # Then we apply any explicit kwargs to override those loaded values.
-        # This avoids mypy errors about dict[str, object] not matching BaseSettings params.
+        # This avoids mypy errors about dict[str, t.GeneralValueType] not matching BaseSettings params.
         super().__init__()
 
         # Apply explicit kwargs to override environment-loaded values
@@ -269,7 +269,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
                 object.__setattr__(self, key, value)
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
-        # Store as object to avoid direct dependency-injector import in this module
+        # Store as t.GeneralValueType to avoid direct dependency-injector import in this module
         self._di_provider: t.GeneralValueType | None = None
 
     @model_validator(mode="after")
@@ -372,11 +372,11 @@ class FlextSettings(BaseSettings, FlextRuntime):
 
         return instance
 
-    def get_di_config_provider(self) -> object:
+    def get_di_config_provider(self) -> t.GeneralValueType:
         """Get dependency injection provider for this config.
 
         Returns a providers.Singleton instance via the runtime bridge.
-        Type annotation uses object to avoid direct dependency-injector import.
+        Type annotation uses t.GeneralValueType to avoid direct dependency-injector import.
         """
         if self._di_provider is None:
             providers_module = FlextRuntime.dependency_providers()

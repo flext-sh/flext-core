@@ -73,7 +73,7 @@ class CommandHandler(h[CreateUserCommand, str]):
         _ = self.handler_name  # Use self to satisfy ruff
 
         # Railway pattern with u validation (DRY)
-        name_validation = u.Validation.validate_length(
+        name_validation = u.validate_length(
             message.name,
             min_length=FlextConstants.Validation.MIN_NAME_LENGTH,
             max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
@@ -84,7 +84,7 @@ class CommandHandler(h[CreateUserCommand, str]):
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-        email_validation = u.Validation.validate_pattern(
+        email_validation = u.validate_pattern(
             message.email,
             FlextConstants.Platform.PATTERN_EMAIL,
             "email",

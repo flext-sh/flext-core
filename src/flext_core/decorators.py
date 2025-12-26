@@ -16,6 +16,7 @@ import warnings
 from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
+from typing import overload
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
@@ -31,7 +32,12 @@ from flext_core.typings import P, R, T, t
 from flext_core.utilities import u
 
 
-def deprecated(message: str) -> Callable[[object], object]:
+def deprecated(
+    message: str,
+) -> Callable[
+    [Callable[..., t.GeneralValueType] | t.GeneralValueType],
+    Callable[..., t.GeneralValueType] | t.GeneralValueType,
+]:
     """Decorator to mark functions/variables as deprecated.
 
     Emits DeprecationWarning when decorated function is called.
@@ -76,7 +82,8 @@ def deprecated(message: str) -> Callable[[object], object]:
 
             @wraps(func_callable)
             def wrapper(
-                *args: t.GeneralValueType, **kwargs: t.GeneralValueType
+                *args: t.GeneralValueType,
+                **kwargs: t.GeneralValueType,
             ) -> t.GeneralValueType:
                 """Wrapper that emits warning before execution."""
                 warnings.warn(
@@ -1262,6 +1269,7 @@ class FlextDecorators(FlextRuntime):
 
         return decorator
 
+    @overload
     @staticmethod
     def combined(
         *,
@@ -1270,7 +1278,28 @@ class FlextDecorators(FlextRuntime):
         track_perf: bool = True,
         use_railway: bool = False,
         error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+
+    @overload
+    @staticmethod
+    def combined(
+        *,
+        inject_deps: t.StringMapping | None = None,
+        operation_name: str | None = None,
+        track_perf: bool = True,
+        use_railway: bool = True,
+        error_code: str | None = None,
+    ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
+
+    @staticmethod
+    def combined(
+        *,
+        inject_deps: t.StringMapping | None = None,
+        operation_name: str | None = None,
+        track_perf: bool = True,
+        use_railway: bool = False,
+        error_code: str | None = None,
+    ) -> Callable[[Callable[P, R]], Callable[P, R] | Callable[P, r[R]]]:
         """Combined decorator applying multiple automation patterns at once.
 
         Combines @inject, @log_operation (with optional track_perf), and optionally
@@ -1284,7 +1313,9 @@ class FlextDecorators(FlextRuntime):
             error_code: Error code for railway pattern failures
 
         Returns:
-            Decorated function with all requested automations
+            Decorated function with all requested automations.
+            When use_railway=True, returns Callable[P, r[R]].
+            When use_railway=False, returns Callable[P, R].
 
         Example:
             ```python
@@ -1317,44 +1348,36 @@ class FlextDecorators(FlextRuntime):
             maintain code clarity.
 
         """
+        # Return different decorators based on use_railway flag
+        # This separation ensures proper type inference by pyrefly
+        if use_railway:
+            # Railway path decorator
+            def railway_decorator(func: Callable[P, R]) -> Callable[P, r[R]]:
+                # Railway decorator changes return type from R to r[R]
+                result = FlextDecorators.railway(error_code=error_code)(func)
+                # Apply dependency injection to railway-wrapped function
+                if inject_deps:
+                    result = FlextDecorators.inject(**inject_deps)(result)
+                # Apply unified log_operation with optional performance tracking
+                return FlextDecorators.log_operation(
+                    operation_name=operation_name,
+                    track_perf=track_perf,
+                )(result)
 
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            # Start with the base function
-            decorated: Callable[P, R] = func
+            return railway_decorator
 
-            # Apply railway pattern first if requested (outermost wrapper)
-            # Note: railway decorator changes return type from R to FlextResult[R]
-            # but we preserve the original signature for type inference at call sites
-            if use_railway:
-                railway_result = FlextDecorators.railway(error_code=error_code)(
-                    decorated,
-                )
-                # INTENTIONAL: Railway pattern type transformation
-                # railway() transforms Callable[P, R] -> Callable[P, FlextResult[R]]
-                # Combined() maintains original signature Callable[P, R] for ergonomics.
-                #
-                # Runtime behavior: Function returns FlextResult[R] when use_railway=True
-                # Type signature: Preserved as Callable[P, R] for caller convenience
-                #
-                # Callers using combined(use_railway=True) must handle FlextResult wrapper.
-                # Alternative: @overload for each combination of flags (exponential complexity)
-                #
-                # Design trade-off: Ergonomics > strict type safety for this decorator combinator.
-                decorated = railway_result  # type: ignore[assignment]  # Documented: type transform
-
-            # Apply dependency injection
+        # Non-railway path decorator
+        def standard_decorator(func: Callable[P, R]) -> Callable[P, R]:
+            result = func
             if inject_deps:
-                inject_result = FlextDecorators.inject(**inject_deps)(decorated)
-                decorated = inject_result
-
+                result = FlextDecorators.inject(**inject_deps)(result)
             # Apply unified log_operation with optional performance tracking
-            # This replaces separate @track_performance + @log_operation calls
             return FlextDecorators.log_operation(
                 operation_name=operation_name,
                 track_perf=track_perf,
-            )(decorated)
+            )(result)
 
-        return decorator
+        return standard_decorator
 
     @staticmethod
     def with_correlation() -> Callable[[Callable[P, R]], Callable[P, R]]:

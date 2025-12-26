@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import inspect
+import json
 import sys
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
@@ -297,67 +298,67 @@ class FlextDispatcher(FlextService[bool]):
         # No need to check isinstance - dict always implements Mapping
         # Construct DispatcherConfig TypedDict from config values
         return DispatcherConfig(
-            dispatcher_timeout_seconds=u.mapper().get(
+            dispatcher_timeout_seconds=u.Mapper.get(
                 config_dict,
                 "dispatcher_timeout_seconds",
                 default=float(c.Defaults.TIMEOUT),
             )
             or float(c.Defaults.TIMEOUT),
-            executor_workers=u.mapper().get(
+            executor_workers=u.Mapper.get(
                 config_dict,
                 "executor_workers",
                 default=c.Container.DEFAULT_WORKERS,
             )
             or c.Container.DEFAULT_WORKERS,
-            circuit_breaker_threshold=u.mapper().get(
+            circuit_breaker_threshold=u.Mapper.get(
                 config_dict,
                 "circuit_breaker_threshold",
                 default=c.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
             )
             or c.Reliability.DEFAULT_CIRCUIT_BREAKER_THRESHOLD,
-            rate_limit_max_requests=u.mapper().get(
+            rate_limit_max_requests=u.Mapper.get(
                 config_dict,
                 "rate_limit_max_requests",
                 default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
             )
             or c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
-            rate_limit_window_seconds=u.mapper().get(
+            rate_limit_window_seconds=u.Mapper.get(
                 config_dict,
                 "rate_limit_window_seconds",
                 default=float(c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS),
             )
             or float(c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS),
-            max_retry_attempts=u.mapper().get(
+            max_retry_attempts=u.Mapper.get(
                 config_dict,
                 "max_retry_attempts",
                 default=c.Reliability.MAX_RETRY_ATTEMPTS,
             )
             or c.Reliability.MAX_RETRY_ATTEMPTS,
-            retry_delay=u.mapper().get(
+            retry_delay=u.Mapper.get(
                 config_dict,
                 "retry_delay",
                 default=float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
             )
             or float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
-            enable_timeout_executor=u.mapper().get(
+            enable_timeout_executor=u.Mapper.get(
                 config_dict,
                 "enable_timeout_executor",
                 default=True,
             )
             or True,
-            dispatcher_enable_logging=u.mapper().get(
+            dispatcher_enable_logging=u.Mapper.get(
                 config_dict,
                 "dispatcher_enable_logging",
                 default=True,
             )
             or True,
-            dispatcher_auto_context=u.mapper().get(
+            dispatcher_auto_context=u.Mapper.get(
                 config_dict,
                 "dispatcher_auto_context",
                 default=True,
             )
             or True,
-            dispatcher_enable_metrics=u.mapper().get(
+            dispatcher_enable_metrics=u.Mapper.get(
                 config_dict,
                 "dispatcher_enable_metrics",
                 default=True,
@@ -529,7 +530,7 @@ class FlextDispatcher(FlextService[bool]):
             return str(m)
 
         valid_modes = list(
-            u.Collection.map(
+            u.map(
                 list(handler_type_members.values()),
                 extract_handler_mode,
             ),
@@ -566,14 +567,14 @@ class FlextDispatcher(FlextService[bool]):
             if isinstance(handler_entry, Mapping) and "handler" in handler_entry:
                 # Type narrowing: isinstance check above narrows handler_entry to Mapping
                 # handler_entry is dict-like with "handler" key containing HandlerType
-                extracted_handler: t.GeneralValueType | None = u.mapper().get(
+                extracted_handler: t.GeneralValueType | None = u.Mapper.get(
                     handler_entry,
                     "handler",
                 )
                 # Validate it's callable or BaseModel (valid HandlerType)
                 # HandlerType includes Callable and BaseModel instances
                 # Type narrowing: isinstance checks narrow to t.HandlerType
-                if u.Guards.is_handler_type(extracted_handler):
+                if u.is_handler_type(extracted_handler):
                     return extracted_handler
             # Return handler directly (it's already HandlerType from dict definition)
             return handler_entry
@@ -623,7 +624,7 @@ class FlextDispatcher(FlextService[bool]):
         # generate_cache_key accepts *args: t.GeneralValueType, so pass command and command_type name as string
         command_type_name = command_type.__name__ if command_type else "unknown"
         # Pass command and command_type_name (string) as t.GeneralValueType-compatible arguments
-        return u.Cache.generate_cache_key(command, command_type_name)
+        return u.generate_cache_key(command, command_type_name)
 
     def _check_cache_for_result(
         self,
@@ -845,7 +846,7 @@ class FlextDispatcher(FlextService[bool]):
             "middleware_id",
         )
         middleware_type_value = u.Mapper.get(middleware_config, "middleware_type")
-        enabled_raw = u.mapper().get(middleware_config, "enabled", default=True)
+        enabled_raw = u.Mapper.get(middleware_config, "enabled", default=True)
         enabled_value = bool(enabled_raw) if enabled_raw is not None else False
 
         # Convert middleware_id to string (handles None case)
@@ -998,11 +999,11 @@ class FlextDispatcher(FlextService[bool]):
                 "Executing command",
                 operation=c.Mixins.METHOD_EXECUTE,
                 command_type=command_type.__name__,
-                # Use u.mapper().get() for unified attribute access (DSL pattern)
+                # Use u.Mapper.get() for unified attribute access (DSL pattern)
                 command_id=u.Mapper.get(
                     command,
                     "command_id",
-                    default=u.mapper().get(command, "id", default="unknown"),
+                    default=u.Mapper.get(command, "id", default="unknown"),
                 ),
                 execution_count=self._execution_count,
                 source="flext-core/src/flext_core/dispatcher.py",
@@ -1022,7 +1023,7 @@ class FlextDispatcher(FlextService[bool]):
             handler = self._route_to_handler(command)
             if handler is None:
                 handler_names = list(
-                    u.Collection.map(
+                    u.map(
                         self._auto_handlers,
                         lambda h: h.__class__.__name__,
                     ),
@@ -1103,7 +1104,7 @@ class FlextDispatcher(FlextService[bool]):
         if len(args) == c.Dispatcher.SINGLE_HANDLER_ARG_COUNT:
             # Single arg should be a handler (callable or mapping)
             handler_arg = args[0]
-            if u.Guards.is_handler_type(handler_arg):
+            if u.is_handler_type(handler_arg):
                 return self._register_single_handler(handler_arg)
             return r[bool].fail("Handler must be callable or mapping")
         if len(args) == c.Dispatcher.TWO_HANDLER_ARG_COUNT:
@@ -1116,16 +1117,19 @@ class FlextDispatcher(FlextService[bool]):
             if isinstance(command_type_arg, str):
                 command_type = command_type_arg
             elif callable(command_type_arg) and not isinstance(
-                command_type_arg, Mapping
+                command_type_arg,
+                Mapping,
             ):
                 # It's a callable (likely a class/type) - extract its name
                 command_type = getattr(
-                    command_type_arg, "__name__", str(command_type_arg)
+                    command_type_arg,
+                    "__name__",
+                    str(command_type_arg),
                 )
             else:
                 # Other GeneralValueType - use as-is
                 command_type = command_type_arg
-            if u.Guards.is_handler_type(handler_arg):
+            if u.is_handler_type(handler_arg):
                 return self._register_two_arg_handler(command_type, handler_arg)
             return r[bool].fail("Handler must be callable or mapping")
 
@@ -1281,7 +1285,7 @@ class FlextDispatcher(FlextService[bool]):
                 "Invalid arguments: command_type and handler are required",
             )
 
-        if u.Guards.is_type(command_type_obj, str) and not u.Guards.is_string_non_empty(
+        if u.is_type(command_type_obj, str) and not u.is_string_non_empty(
             command_type_obj,
         ):
             return r[bool].fail("Command type cannot be empty")
@@ -1368,7 +1372,7 @@ class FlextDispatcher(FlextService[bool]):
         """
         # Resolve middleware_id
         middleware_id_raw = (
-            u.mapper().get(middleware_config, "middleware_id")
+            u.Mapper.get(middleware_config, "middleware_id")
             if middleware_config
             else None
         )
@@ -1383,7 +1387,7 @@ class FlextDispatcher(FlextService[bool]):
 
         # Resolve middleware type
         middleware_type_raw = (
-            u.mapper().get(middleware_config, "middleware_type")
+            u.Mapper.get(middleware_config, "middleware_type")
             if middleware_config
             else None
         )
@@ -1397,13 +1401,13 @@ class FlextDispatcher(FlextService[bool]):
         # Extract enabled value safely
         enabled_value: bool = True
         if middleware_config:
-            enabled_raw = u.mapper().get(middleware_config, "enabled", default=True)
+            enabled_raw = u.Mapper.get(middleware_config, "enabled", default=True)
             enabled_value = bool(enabled_raw) if enabled_raw is not None else True
 
         # Extract order value safely
         order_value: int = len(self._middleware_configs)
         if middleware_config:
-            order_raw = u.mapper().get(
+            order_raw = u.Mapper.get(
                 middleware_config,
                 "order",
                 default=len(self._middleware_configs),
@@ -1428,7 +1432,7 @@ class FlextDispatcher(FlextService[bool]):
         self.logger.info(
             "Middleware added to pipeline",
             operation="add_middleware",
-            middleware_type=u.mapper().get(final_config, "middleware_type"),
+            middleware_type=u.Mapper.get(final_config, "middleware_type"),
             middleware_id=middleware_id_str,
             total_middleware=len(self._middleware_configs),
             source="flext-core/src/flext_core/dispatcher.py",
@@ -1589,7 +1593,7 @@ class FlextDispatcher(FlextService[bool]):
         # Try extract for dict-like objects first (isinstance for proper type narrowing)
         if isinstance(obj, Mapping):
             path_str = ".".join(path)
-            result = u.mapper().extract(obj, path_str, default=None, required=False)
+            result = u.extract(obj, path_str, default=None, required=False)
             # Use .value directly - FlextResult never returns None on success
             if result.is_success:
                 return result.value
@@ -1619,7 +1623,7 @@ class FlextDispatcher(FlextService[bool]):
 
         """
         # Try extract for dict-like request first
-        handler_name_result = u.mapper().extract(
+        handler_name_result = u.extract(
             request_dict,
             "handler_name",
             default="",
@@ -1678,7 +1682,7 @@ class FlextDispatcher(FlextService[bool]):
             handler_keys = {"handler", "handlers", "processor", "processors"}
             # Use process() for concise request normalization with key conversion
             # Convert dict to items for processing
-            process_result = u.Collection.process(
+            process_result = u.process(
                 list(request.items()),  # Convert dict to sequence of pairs
                 lambda kv: (
                     kv[1]
@@ -1690,20 +1694,19 @@ class FlextDispatcher(FlextService[bool]):
             # Reconstruct dict from processed items
             if process_result.is_success:
                 # Use processed values directly - handlers already preserved, others normalized
-                # Don't re-normalize or handler objects become strings
-                # Use TypeGuard to narrow values to GeneralValueType
-                request_dict = {
-                    str(k): (v if u.Guards.is_general_value_type(v) else str(v))
-                    for k, v in zip(request.keys(), process_result.value, strict=False)
-                }
+                # Handler objects are Callable which is part of GeneralValueType
+                request_dict = {}
+                for k, v in zip(request.keys(), process_result.value, strict=False):
+                    str_key = str(k)
+                    if u.is_general_value_type(v):
+                        request_dict[str_key] = v
+                    else:
+                        request_dict[str_key] = str(v)
             else:
                 request_dict = {}
         else:
             normalized = FlextRuntime.normalize_to_general_value(request)
-            if u.Guards.is_configuration_dict(normalized):
-                request_dict = normalized
-            else:
-                request_dict = {}
+            request_dict = normalized if u.is_configuration_dict(normalized) else {}
 
         return r[t.ConfigurationDict].ok(request_dict)
 
@@ -1727,7 +1730,7 @@ class FlextDispatcher(FlextService[bool]):
             )
 
         # Type narrowing using TypeGuard for handler validation
-        if not u.Guards.is_handler_type(handler_raw):
+        if not u.is_handler_type(handler_raw):
             return r[tuple[t.HandlerType, str]].fail(
                 "Handler must be callable, mapping, or BaseModel",
             )
@@ -1800,7 +1803,7 @@ class FlextDispatcher(FlextService[bool]):
         """
         # handler is validated to have can_handle() before calling this function
         # Type narrowing: treat as t.HandlerType directly
-        if u.Guards.is_handler_type(handler) and handler not in self._auto_handlers:
+        if u.is_handler_type(handler) and handler not in self._auto_handlers:
             self._auto_handlers.append(handler)
 
         return r[t.ConfigurationMapping].ok({
@@ -1953,7 +1956,7 @@ class FlextDispatcher(FlextService[bool]):
             # Two-arg mode: register_handler(command_type, handler)
             # request is command type (string or class), handler is the handler
             # Validate handler is HandlerType
-            if not u.Guards.is_handler_type(handler):
+            if not u.is_handler_type(handler):
                 return r[t.ConfigurationMapping].fail(
                     f"Invalid handler type: {type(handler).__name__}",
                 )
@@ -1991,7 +1994,7 @@ class FlextDispatcher(FlextService[bool]):
 
         # Single handler object - delegate to layer1_register_handler
         # Validate request is HandlerType before passing to layer1_register_handler
-        if not u.Guards.is_handler_type(request):
+        if not u.is_handler_type(request):
             return r[t.ConfigurationMapping].fail(
                 f"Invalid handler type: {type(request).__name__}",
             )
@@ -2408,7 +2411,7 @@ class FlextDispatcher(FlextService[bool]):
         if isinstance(metadata, m.Metadata):
             return metadata
         # Use guard and process_dict for concise metadata conversion
-        if u.Guards.is_type(metadata, "mapping"):
+        if u.is_type(metadata, "mapping"):
 
             def convert_metadata_value(
                 v: t.GeneralValueType,
@@ -2423,21 +2426,15 @@ class FlextDispatcher(FlextService[bool]):
                         else str(item)
                         for item in v
                     ]
-                if u.Guards.is_type(v, "mapping") and isinstance(v, dict):
-                    # Transform dict values using dict comprehension
-                    return {
-                        str(k): (
-                            v2
-                            if isinstance(v2, (str, int, float, bool, type(None)))
-                            else str(v2)
-                        )
-                        for k, v2 in v.items()
-                    }
+                if u.is_type(v, "mapping") and isinstance(v, dict):
+                    # Serialize nested dicts to JSON for Metadata.attributes compatibility.
+                    # Metadata.attributes only accepts flat scalar values, not nested dicts.
+                    return json.dumps({str(k): str(v2) for k, v2 in v.items()})
                 return str(v)
 
             # Convert metadata dict to items for processing
             if isinstance(metadata, dict):
-                process_result = u.Collection.process(
+                process_result = u.process(
                     list(metadata.items()),
                     lambda kv: (kv[0], convert_metadata_value(kv[1])),
                     on_error="collect",
@@ -2728,7 +2725,7 @@ class FlextDispatcher(FlextService[bool]):
         )
 
         # Generate operation ID using u
-        operation_id = u.Generators.generate_operation_id(
+        operation_id = u.generate_operation_id(
             message_type,
             message,
         )
@@ -2742,7 +2739,7 @@ class FlextDispatcher(FlextService[bool]):
             operation_id=operation_id,
         )
         # with_retry returns RuntimeResult - convert to FlextResult
-        runtime_result = u.Reliability.with_retry(
+        runtime_result = u.with_retry(
             lambda: self._execute_dispatch_attempt(message, options),
             max_attempts=self._retry_policy.get_max_attempts(),
             should_retry_func=self._should_retry_on_error,
@@ -2867,9 +2864,9 @@ class FlextDispatcher(FlextService[bool]):
         try:
             # Create structured request
             # Use TypeGuard for proper type narrowing of metadata mapping
-            if options.metadata and u.Guards.is_configuration_mapping(options.metadata):
+            if options.metadata and u.is_configuration_mapping(options.metadata):
                 # options.metadata is now narrowed to t.ConfigurationMapping via TypeGuard
-                transform_result = u.Collection.process(
+                transform_result = u.process(
                     list(options.metadata.items()),
                     lambda kv: (kv[0], str(kv[1])),
                     on_error="collect",
@@ -2988,7 +2985,7 @@ class FlextDispatcher(FlextService[bool]):
             return len(v) > 0
 
         # attributes is already t.ConfigurationDict
-        if attributes and not u.Validation.guard(
+        if attributes and not u.guard(
             attributes,
             non_empty_check,
             return_value=True,
@@ -3014,7 +3011,7 @@ class FlextDispatcher(FlextService[bool]):
 
         # Extract attributes section if present - fast fail: must be dict or None
         attributes_section_raw = dumped.get("attributes")
-        if attributes_section_raw is not None and u.Guards.is_configuration_mapping(
+        if attributes_section_raw is not None and u.is_configuration_mapping(
             attributes_section_raw,
         ):
             # Type narrowing: is_configuration_mapping TypeGuard narrows to ConfigurationMapping
@@ -3030,8 +3027,8 @@ class FlextDispatcher(FlextService[bool]):
         """Extract metadata mapping from object's attributes."""
         attributes_value = getattr(metadata, "attributes", None)
         if (
-            u.Guards.is_type(attributes_value, "mapping")
-            and u.Guards.is_dict_non_empty(attributes_value)
+            u.is_type(attributes_value, "mapping")
+            and u.is_dict_non_empty(attributes_value)
             and isinstance(attributes_value, Mapping)
         ):
             # Type narrowing: attributes_value is dict-like and Mapping
@@ -3101,7 +3098,7 @@ class FlextDispatcher(FlextService[bool]):
         if metadata and FlextRuntime.is_dict_like(metadata):
             # Type narrowing: metadata is dict-like after isinstance check
             # Use TypeGuard for proper ConfigurationDict validation
-            if u.Guards.is_configuration_dict(metadata):
+            if u.is_configuration_dict(metadata):
                 _ = metadata_var.set(metadata)
 
             # Use provided correlation ID or generate one if needed
@@ -3166,8 +3163,8 @@ class FlextDispatcher(FlextService[bool]):
                         # Get actual handler function from module
                         # Check if handler_func is not None before checking callable
                         # Use TypeGuard for proper handler type validation
-                        if handler_func is not None and u.Guards.is_handler_type(
-                            handler_func
+                        if handler_func is not None and u.is_handler_type(
+                            handler_func,
                         ):
                             # Register handler with dispatcher
                             # Register under the handler command type name for routing
