@@ -17,8 +17,6 @@ from structlog.typing import BindableLogger
 from flext_core.typings import P, T_co, t
 
 
-
-
 class FlextProtocols:
     """Hierarchical protocol namespace organized by Interface Segregation Principle."""
 
@@ -939,7 +937,6 @@ class FlextProtocols:
             def attributes(self) -> t.ConfigurationMapping:
                 """Metadata attributes."""
                 ...
-
 
     @runtime_checkable
     class Connection(Protocol):
