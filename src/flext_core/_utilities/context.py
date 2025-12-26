@@ -15,9 +15,7 @@ from datetime import datetime
 
 from flext_core._models.context import FlextModelsContext
 from flext_core.protocols import p
-
-# Import FlextTypes class directly for type aliases access
-from flext_core.typings import FlextTypes
+from flext_core.typings import t
 
 
 class FlextUtilitiesContext:
@@ -88,8 +86,8 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: FlextTypes.ConfigurationDict | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[FlextTypes.ConfigurationDict]:
+        default: t.ConfigurationDict | None = None,
+    ) -> FlextModelsContext.StructlogProxyContextVar[t.ConfigurationDict]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -100,7 +98,7 @@ class FlextUtilitiesContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[FlextTypes.ConfigurationDict] instance
+            StructlogProxyContextVar[t.ConfigurationDict] instance
 
         Example:
             >>> var = uContext.create_dict_proxy("metadata")
@@ -109,11 +107,11 @@ class FlextUtilitiesContext:
 
         """
         # Explicit instantiation with full type
-        proxy: FlextModelsContext.StructlogProxyContextVar[
-            FlextTypes.ConfigurationDict
-        ] = FlextModelsContext.StructlogProxyContextVar[FlextTypes.ConfigurationDict](
-            key,
-            default=default,
+        proxy: FlextModelsContext.StructlogProxyContextVar[t.ConfigurationDict] = (
+            FlextModelsContext.StructlogProxyContextVar[t.ConfigurationDict](
+                key,
+                default=default,
+            )
         )
         return proxy
 
@@ -164,7 +162,7 @@ class FlextUtilitiesContext:
         container: p.DI,
         *,
         scope_id: str | None = None,
-        overrides: Mapping[str, object] | None = None,
+        overrides: Mapping[str, t.GeneralValueType] | None = None,
     ) -> p.DI:
         """Clone container with scoping.
 

@@ -342,6 +342,46 @@ class FlextUtilitiesGuards:
         )
 
     @staticmethod
+    def is_flexible_value(value: object) -> TypeGuard[t.FlexibleValue]:
+        """Check if value is a valid t.FlexibleValue.
+
+        t.FlexibleValue = str | int | float | bool | datetime | None |
+                          Sequence[scalar] | Mapping[str, scalar]
+
+        This TypeGuard enables type narrowing for simple config values.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[t.FlexibleValue]: True if value matches FlexibleValue type
+
+        """
+        # None is flexible
+        if value is None:
+            return True
+        # Scalars: str, int, float, bool
+        if isinstance(value, (str, int, float, bool)):
+            return True
+        # datetime
+        if isinstance(value, datetime):
+            return True
+        # Sequence of scalars (excluding str which is already handled)
+        if isinstance(value, (list, tuple)):
+            return all(
+                v is None or isinstance(v, (str, int, float, bool, datetime))
+                for v in value
+            )
+        # Mapping of str to scalars
+        if isinstance(value, Mapping):
+            return all(
+                isinstance(k, str)
+                and (v is None or isinstance(v, (str, int, float, bool, datetime)))
+                for k, v in value.items()
+            )
+        return False
+
+    @staticmethod
     def _is_config(obj: object) -> TypeGuard[p.Config]:
         """Check if object satisfies the Config protocol.
 
@@ -521,20 +561,21 @@ class FlextUtilitiesGuards:
         return isinstance(value, Sequence) and not isinstance(value, str)
 
     @staticmethod
-    def is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
-        """Check if value is Mapping[str, object].
+    def is_mapping(value: t.GeneralValueType) -> TypeGuard[t.ConfigurationMapping]:
+        """Check if value is ConfigurationMapping (Mapping[str, GeneralValueType]).
 
-        Type guard for mapping types used in validation.
+        Type guard for mapping types used in FLEXT validation.
+        Uses proper FLEXT types instead of object.
 
         Args:
-            value: Object to check
+            value: GeneralValueType to check
 
         Returns:
-            TypeGuard[Mapping[str, object]]: True if value is Mapping
+            TypeGuard[t.ConfigurationMapping]: True if value is ConfigurationMapping
 
         Example:
             >>> if FlextUtilitiesGuards.is_mapping(params.kv):
-            ...     # params.kv is now typed as Mapping[str, object]
+            ...     # params.kv is now typed as t.ConfigurationMapping
             ...     for key, val in params.kv.items():
 
         """
@@ -542,18 +583,18 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _is_callable_key_func(
-        func: object,
-    ) -> TypeGuard[Callable[[object], object]]:
+        func: t.GeneralValueType,
+    ) -> TypeGuard[Callable[[t.GeneralValueType], t.GeneralValueType]]:
         """Check if value is callable and can be used as key function for sorted().
 
         Type guard for sorted() key functions that return comparable values.
-        Runtime validation ensures correctness.
+        Runtime validation ensures correctness. Uses FLEXT types.
 
         Args:
-            func: Object to check
+            func: GeneralValueType to check
 
         Returns:
-            TypeGuard[Callable[[object], object]]: True if func is callable
+            TypeGuard[Callable[[GeneralValueType], GeneralValueType]]: True if callable
 
         Example:
             >>> if FlextUtilitiesGuards.is_callable_key_func(key_func):
@@ -564,16 +605,18 @@ class FlextUtilitiesGuards:
         return callable(func)
 
     @staticmethod
-    def _is_sequence(value: object) -> TypeGuard[Sequence[object]]:
-        """Check if value is Sequence.
+    def _is_sequence(
+        value: t.GeneralValueType,
+    ) -> TypeGuard[Sequence[t.GeneralValueType]]:
+        """Check if value is Sequence of GeneralValueType.
 
-        Type guard for sequence types.
+        Type guard for sequence types using FLEXT types.
 
         Args:
-            value: Object to check
+            value: GeneralValueType to check
 
         Returns:
-            TypeGuard[Sequence[object]]: True if value is Sequence
+            TypeGuard[Sequence[GeneralValueType]]: True if value is Sequence
 
         Example:
             >>> if FlextUtilitiesGuards.is_sequence(key_equals):
@@ -706,20 +749,20 @@ class FlextUtilitiesGuards:
         return isinstance(value, (str, bytes, Sequence, Mapping))
 
     @staticmethod
-    def is_list(value: object) -> TypeGuard[list[object]]:
-        """Check if value is list.
+    def is_list(value: t.GeneralValueType) -> TypeGuard[list[t.GeneralValueType]]:
+        """Check if value is list of GeneralValueType.
 
-        Type guard for list types.
+        Type guard for list types using FLEXT types.
 
         Args:
-            value: Object to check
+            value: GeneralValueType to check
 
         Returns:
-            TypeGuard[list[object]]: True if value is list
+            TypeGuard[list[GeneralValueType]]: True if value is list
 
         Example:
             >>> if FlextUtilitiesGuards.is_list(value):
-            ...     # value is list
+            ...     # value is list[GeneralValueType]
             ...     first = value[0]
 
         """

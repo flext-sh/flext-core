@@ -277,8 +277,9 @@ class FlextMixins(FlextRuntime):
         )
         # Type narrowing: isinstance check ensures options_raw is dict
         # Use dict interface - TypedDict keys accessed via .get() at runtime
-        # RuntimeBootstrapOptions is TypedDict, but runtime data is untyped dict
-        options: dict[str, object] = (
+        # RuntimeBootstrapOptions is TypedDict - use ConfigurationDict for type safety
+        # ConfigurationDict = dict[str, GeneralValueType] which is the proper FLEXT type
+        options: t.ConfigurationDict = (
             dict(options_raw) if isinstance(options_raw, dict) else {}
         )
         # Use factory methods directly - Clean Architecture pattern
@@ -289,12 +290,17 @@ class FlextMixins(FlextRuntime):
         )
         config_cls = config_type or FlextSettings
         config_overrides_raw = u.mapper().get(options, "config_overrides")
-        # TypeGuard-based narrowing - is_configuration_mapping returns TypeGuard[ConfigurationMapping]
-        config_overrides_typed: Mapping[str, t.FlexibleValue] | None = (
-            config_overrides_raw
-            if u.Guards.is_configuration_mapping(config_overrides_raw)
-            else None
-        )
+        # TypeGuard-based narrowing - filter to FlexibleValue types for materialize
+        config_overrides_typed: Mapping[str, t.FlexibleValue] | None = None
+        if u.Guards.is_configuration_mapping(config_overrides_raw):
+            # Filter mapping to only include FlexibleValue-compatible types
+            flexible_overrides: dict[str, t.FlexibleValue] = {
+                k: v
+                for k, v in config_overrides_raw.items()
+                if u.Guards.is_flexible_value(v)
+            }
+            if flexible_overrides:
+                config_overrides_typed = flexible_overrides
         # config_cls is FlextSettings or subclass - type narrowing via isinstance
         config_cls_typed: type[FlextSettings] = (
             config_cls
@@ -323,10 +329,18 @@ class FlextMixins(FlextRuntime):
         services_raw = (
             u.mapper().get(options, "services") if "services" in options else None
         )
-        # TypeGuard-based narrowing - _is_mapping returns TypeGuard[Mapping[str, object]]
-        services_typed: Mapping[str, object] | None = (
-            services_raw if u.Guards.is_mapping(services_raw) else None
-        )
+        # TypeGuard-based narrowing for GeneralValueType services
+        services_typed: Mapping[str, t.GeneralValueType] | None = None
+        if u.Guards.is_mapping(services_raw):
+            # Build typed dict with GeneralValueType values
+            typed_services: dict[str, t.GeneralValueType] = {}
+            for k, v in services_raw.items():
+                if u.Guards.is_general_value_type(v):
+                    typed_services[str(k)] = v
+                else:
+                    typed_services[str(k)] = str(v)
+            if typed_services:
+                services_typed = typed_services
 
         # FlextContext implements p.Ctx protocol - direct assignment (structural typing)
         context_typed: p.Ctx | None = runtime_context
@@ -340,18 +354,25 @@ class FlextMixins(FlextRuntime):
 
         # Get resources and narrow to Mapping using TypeGuard
         resources_raw = u.mapper().get(options, "resources")
-        resources_typed: Mapping[str, object] | None = (
-            resources_raw if u.Guards.is_mapping(resources_raw) else None
-        )
+        resources_typed: Mapping[str, t.ResourceCallable] | None = None
+        if u.Guards.is_mapping(resources_raw):
+            # Build typed dict with callable resource factories
+            resource_factories: dict[str, t.ResourceCallable] = {}
+            for k, v in resources_raw.items():
+                if callable(v):
+                    resource_factories[str(k)] = v
+            if resource_factories:
+                resources_typed = resource_factories
 
         # TypeGuard narrowing for factories mapping
         # Validate values are callable for factory pattern
-        factories_typed: Mapping[str, Callable[[], object]] | None = None
+        factories_typed: Mapping[str, t.FactoryCallable] | None = None
         if u.Guards.is_mapping(factories_raw):
-            # Build typed dict with only callable values using dict comprehension
-            callable_factories: dict[str, Callable[[], object]] = {
-                k: v for k, v in factories_raw.items() if callable(v)
-            }
+            # Build typed dict with only callable values
+            callable_factories: dict[str, t.FactoryCallable] = {}
+            for k, v in factories_raw.items():
+                if callable(v):
+                    callable_factories[str(k)] = v
             if callable_factories:
                 factories_typed = callable_factories
 
@@ -366,7 +387,15 @@ class FlextMixins(FlextRuntime):
 
         container_overrides_raw = options.get("container_overrides")
         if u.Guards.is_mapping(container_overrides_raw):
-            runtime_container.configure(container_overrides_raw)
+            # Build typed dict with GeneralValueType values
+            overrides: dict[str, t.GeneralValueType] = {}
+            for k, v in container_overrides_raw.items():
+                if u.Guards.is_general_value_type(v):
+                    overrides[str(k)] = v
+                else:
+                    overrides[str(k)] = str(v)
+            if overrides:
+                runtime_container.configure(overrides)
 
         wire_modules_raw = options.get("wire_modules")
         wire_packages_raw = options.get("wire_packages")
@@ -496,11 +525,20 @@ class FlextMixins(FlextRuntime):
         # Use r.create_from_callable() for unified error handling (DSL pattern)
         def register() -> bool:
             """Register service in container."""
-            # Container.register accepts object, pass self directly
-            result = self.container.register(
-                service_name,
-                self,
-            )
+            # Type narrowing: if self is BaseModel, it fits GeneralValueType
+            if isinstance(self, BaseModel):
+                result = self.container.register(
+                    service_name,
+                    self,
+                )
+            else:
+                # Fallback: wrap non-BaseModel service in dict with model_dump if available
+                service_data: t.GeneralValueType = (
+                    self.model_dump()
+                    if hasattr(self, "model_dump")
+                    else {"_service": str(type(self).__name__)}
+                )
+                result = self.container.register(service_name, service_data)
             # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
                 error_msg = result.error or ""

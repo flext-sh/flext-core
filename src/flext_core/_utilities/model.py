@@ -67,7 +67,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
-        **kwargs: object,
+        **kwargs: t.GeneralValueType,
     ) -> r[M]:
         """Create Pydantic model from kwargs with r.
 

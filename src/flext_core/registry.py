@@ -129,10 +129,11 @@ class FlextRegistry(FlextService[bool]):
     # These ClassVars are automatically created for each subclass to ensure
     # per-subclass isolation (FlextApiRegistry, FlextAuthRegistry, FlextLdifServer
     # each get their own storage, not inherited from parent)
-    _class_plugin_storage: ClassVar[dict[str, object]] = {}
+    # Uses t.GeneralValueType for type-safe plugin storage (not bare object)
+    _class_plugin_storage: ClassVar[dict[str, t.GeneralValueType]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
+    def __init_subclass__(cls, **kwargs: t.GeneralValueType) -> None:
         """Auto-create per-subclass class-level storage.
 
         Each subclass gets its OWN storage (not shared with parent or siblings).
@@ -695,7 +696,13 @@ class FlextRegistry(FlextService[bool]):
             return r[bool].ok(True)
 
         # Store plugin in container for retrieval
-        self.container.register(key, plugin)
+        # Use TypeGuard to narrow plugin to GeneralValueType for container.register()
+        if u.Guards.is_general_value_type(plugin):
+            self.container.register(key, plugin)
+        else:
+            # Convert to string representation for non-GeneralValueType plugins
+            plugin_str = str(plugin)
+            self.container.register(key, plugin_str)
         self._registered_keys.add(key)
         self.logger.info(f"Registered {category}: {name}")
         return r[bool].ok(True)
@@ -807,7 +814,7 @@ class FlextRegistry(FlextService[bool]):
         self.logger.info(f"Registered class plugin {category}: {name}")
         return r[bool].ok(True)
 
-    def get_class_plugin(self, category: str, name: str) -> r[object]:
+    def get_class_plugin(self, category: str, name: str) -> r[t.GeneralValueType]:
         """Get plugin from class-level storage.
 
         Args:
@@ -815,7 +822,7 @@ class FlextRegistry(FlextService[bool]):
             name: Plugin name
 
         Returns:
-            r[object]: Success with plugin or failure if not found.
+            r[t.GeneralValueType]: Success with plugin or failure if not found.
 
         """
         key = f"{category}::{name}"
@@ -826,10 +833,10 @@ class FlextRegistry(FlextService[bool]):
                 for k in cls._class_registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[object].fail(
+            return r[t.GeneralValueType].fail(
                 f"{category} '{name}' not found. Available: {available}",
             )
-        return r[object].ok(cls._class_plugin_storage[key])
+        return r[t.GeneralValueType].ok(cls._class_plugin_storage[key])
 
     def list_class_plugins(self, category: str) -> r[list[str]]:
         """List class-level plugins in category.

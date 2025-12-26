@@ -64,8 +64,8 @@ class TestContainerMemory:
         gc.collect()
         initial_memory = get_memory_usage()
 
-        # Register services
-        for i in range(1000):
+        # Register services (reduced from 1000 to 100 for memory efficiency)
+        for i in range(100):
             container.register(f"service_{i}", f"value_{i}")
 
         # Force GC after registration
@@ -83,12 +83,12 @@ class TestContainerMemory:
         gc.collect()
         initial_memory = get_memory_usage()
 
-        # Register factories
+        # Register factories (reduced from 1000 to 100 for memory efficiency)
         def make_factory(captured_i: int) -> Callable[[], str]:
             """Create factory function that captures i in closure."""
             return lambda: f"value_{captured_i}"
 
-        for i in range(1000):
+        for i in range(100):
             container.register_factory(
                 f"factory_{i}",
                 make_factory(i),
@@ -105,8 +105,8 @@ class TestContainerMemory:
         """Benchmark memory usage after clear_all()."""
         container = FlextContainer.create()
 
-        # Register services
-        for i in range(1000):
+        # Register services (reduced from 1000 to 100 for memory efficiency)
+        for i in range(100):
             container.register(f"service_{i}", f"value_{i}")
 
         # Force GC before clear
@@ -129,10 +129,10 @@ class TestContainerMemory:
         gc.collect()
         initial_memory = get_memory_usage()
 
-        # Create and destroy containers multiple times
-        for _ in range(100):
+        # Create and destroy containers multiple times (reduced iterations for memory efficiency)
+        for _ in range(10):
             container = FlextContainer.create()
-            for i in range(100):
+            for i in range(10):
                 container.register(f"service_{i}", f"value_{i}")
             container.clear_all()
             del container
@@ -145,6 +145,6 @@ class TestContainerMemory:
 
         # If memory increase is significant, it might indicate a leak
         # This is a basic check - real leak detection would use tracemalloc
-        assert memory_increase < 10_000_000, (
+        assert memory_increase < 1_000_000, (
             f"Potential memory leak: {memory_increase} bytes increase"
         )

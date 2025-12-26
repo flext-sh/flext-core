@@ -513,27 +513,19 @@ class FlextContainer(FlextRuntime, p.DI):
                 _ = self.register("config", {"_config_instance": str(self._config)})
 
         # Register logger factory if not already registered
-        # Note: FlextLogger doesn't extend BaseModel, so we wrap it in a dict
+        # ServiceRegistration now uses SkipValidation - can store any service type
         if not self.has_service("logger"):
 
-            def _create_logger_wrapper() -> t.GeneralValueType:
-                """Factory for creating module logger wrapped in a dict."""
-                logger = FlextLogger.create_module_logger("flext_core")
-                # Wrap logger in dict for GeneralValueType compatibility
-                # Callers should use container.get_typed() or extract from dict
-                return {"_logger": str(type(logger).__name__), "_module": "flext_core"}
+            def _create_logger_factory() -> FlextLogger:
+                """Factory for creating module logger."""
+                return FlextLogger.create_module_logger("flext_core")
 
-            _ = self.register_factory("logger", _create_logger_wrapper)
+            _ = self.register_factory("logger", _create_logger_factory)
 
         # Register context if not already registered
-        # Only register if context is initialized (may not be initialized during container creation)
-        # Type narrowing: FlextContext may extend BaseModel (via mixins)
+        # ServiceRegistration uses SkipValidation - can register any service type
         if not self.has_service("context") and self._context is not None:
-            if isinstance(self._context, BaseModel):
-                _ = self.register("context", self._context)
-            else:
-                # Fallback: wrap non-BaseModel context in a dict for type safety
-                _ = self.register("context", {"_context_instance": str(self._context)})
+            _ = self.register("context", self._context)
 
         # Register container self-reference if not already registered
         if not self.has_service("container"):
@@ -615,12 +607,12 @@ class FlextContainer(FlextRuntime, p.DI):
     def with_service(
         self,
         name: str,
-        service: t.GeneralValueType,
+        service: p.RegisterableService,
     ) -> Self:
         """Register a service and return the container for fluent chaining.
 
-        Accepts primitives, Pydantic models, or callables; values are wrapped
-        in a ``ServiceRegistration`` with configuration derived from
+        Accepts RegisterableService (GeneralValueType, protocols, callables);
+        values are wrapped in a ``ServiceRegistration`` with configuration from
         ``FlextSettings`` and user overrides.
         """
         _ = self.register(name, service)
@@ -647,13 +639,14 @@ class FlextContainer(FlextRuntime, p.DI):
     def register(
         self,
         name: str,
-        service: t.GeneralValueType,
+        service: p.RegisterableService,
     ) -> r[bool]:
         """Register a service instance for dependency resolution.
 
-        Business Rule: The container accepts GeneralValueType for registration,
-        including primitives, BaseModel instances, callables, sequences, and
-        mappings. This allows dependency injection of typed service instances.
+        Business Rule: The container accepts RegisterableService for registration,
+        including GeneralValueType, protocols (Config, Ctx, DI, Service, Log,
+        Handler, Registry), and callables. This enables dependency injection of
+        typed service instances and protocol implementations.
 
         Args:
             name: Unique key for the registration.
@@ -692,9 +685,12 @@ class FlextContainer(FlextRuntime, p.DI):
     def register_factory(
         self,
         name: str,
-        factory: t.FactoryCallable,
+        factory: p.ServiceFactory,
     ) -> r[bool]:
         """Register a factory used to build services on demand.
+
+        Accepts factories returning RegisterableService (including protocols
+        like Log, Ctx, Config, etc.) not just GeneralValueType.
 
         Returns:
             ``FlextResult`` signaling whether the factory was stored. Failure
@@ -984,7 +980,7 @@ class FlextContainer(FlextRuntime, p.DI):
         config: p.Config | None = None,
         context: p.Ctx | None = None,
         subproject: str | None = None,
-        services: Mapping[str, t.GeneralValueType] | None = None,
+        services: Mapping[str, p.RegisterableService] | None = None,
         factories: Mapping[str, t.FactoryCallable] | None = None,
         resources: Mapping[str, t.ResourceCallable] | None = None,
     ) -> FlextContainer:

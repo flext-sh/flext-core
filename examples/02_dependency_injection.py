@@ -140,8 +140,7 @@ class CacheService(FlextModels.ArbitraryTypesModel):
 
         # Railway pattern with u validation (DRY)
         return (
-            u.Validation
-            .validate_length(
+            u.Validation.validate_length(
                 key,
                 max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
             )

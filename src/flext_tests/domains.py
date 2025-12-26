@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import cast
 
 from flext_tests.factories import tt
 from flext_tests.typings import t
@@ -93,11 +92,11 @@ class FlextTestsDomains:
             "enable_caching": True,
             "cache_ttl": 300,
         }
-        # Convert to ConfigurationDict - ensure all values are t.GeneralValueType compatible
-        base_config: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
-            dict(config_dict),
-        )
+        # Type narrowing: config_dict is dict[str, object], which is compatible with ConfigurationDict
+        # ConfigurationDict = dict[str, t.GeneralValueType] where t.GeneralValueType includes object
+        base_config: t.ConfigurationDict = dict(
+            config_dict
+        )  # Safe: object is assignable to GeneralValueType
         base_config.update(overrides)
         return base_config
 

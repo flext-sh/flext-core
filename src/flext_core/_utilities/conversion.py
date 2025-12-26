@@ -12,6 +12,7 @@ from collections.abc import Sequence
 from typing import Literal, overload
 
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 class FlextUtilitiesConversion:
@@ -28,7 +29,7 @@ class FlextUtilitiesConversion:
     """
 
     @staticmethod
-    def to_str(value: object, *, default: str | None = None) -> str:
+    def to_str(value: t.GeneralValueType, *, default: str | None = None) -> str:
         """Convert value to string.
 
         Args:
@@ -52,7 +53,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list(
-        value: object,
+        value: t.GeneralValueType,
         *,
         default: list[str] | None = None,
     ) -> list[str]:
@@ -79,7 +80,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def normalize(
-        value: object,
+        value: t.GeneralValueType,
         *,
         case: str | None = None,
     ) -> str:
@@ -130,7 +131,7 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: object,
+        value: t.GeneralValueType,
         *,
         mode: Literal["to_str"] = "to_str",
         default: str | None = None,
@@ -140,7 +141,7 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: object,
+        value: t.GeneralValueType,
         *,
         mode: Literal["to_str_list"],
         default: list[str] | None = None,
@@ -150,7 +151,7 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: object,
+        value: t.GeneralValueType,
         *,
         mode: Literal["normalize"],
         default: str | None = None,
@@ -170,7 +171,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def conversion(
-        value: object,
+        value: t.GeneralValueType,
         *,
         mode: str = "to_str",
         default: str | list[str] | None = None,

@@ -50,6 +50,7 @@ from typing import ClassVar, TypeGuard
 
 import orjson
 from pydantic import (
+    BaseModel,
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,
 )
@@ -137,7 +138,7 @@ class FlextUtilitiesValidation:
         def validate_required_string(
             value: str | None,
             context: str = "Field",
-        ) -> FlextRuntime.RuntimeResult[str]:
+        ) -> r[str]:
             """Validate non-empty string (wraps to r)."""
             try:
                 result = FlextUtilitiesValidation.validate_required_string(
@@ -155,7 +156,7 @@ class FlextUtilitiesValidation:
             context: str = "Value",
             *,
             case_sensitive: bool = False,
-        ) -> FlextRuntime.RuntimeResult[str]:
+        ) -> r[str]:
             """Validate value is in allowed choices."""
             return FlextUtilitiesValidation.validate_choice(
                 value,
@@ -170,7 +171,7 @@ class FlextUtilitiesValidation:
             min_length: int | None = None,
             max_length: int | None = None,
             context: str = "Value",
-        ) -> FlextRuntime.RuntimeResult[str]:
+        ) -> r[str]:
             """Validate string/sequence length."""
             return FlextUtilitiesValidation.validate_length(
                 value,
@@ -184,7 +185,7 @@ class FlextUtilitiesValidation:
             value: str,
             pattern: str,
             context: str = "Value",
-        ) -> FlextRuntime.RuntimeResult[str]:
+        ) -> r[str]:
             """Validate string matches regex pattern."""
             return FlextUtilitiesValidation.validate_pattern(value, pattern, context)
 
@@ -195,7 +196,7 @@ class FlextUtilitiesValidation:
         def validate_non_negative(
             value: int | None,
             context: str = "Value",
-        ) -> FlextRuntime.RuntimeResult[int]:
+        ) -> r[int]:
             """Validate value >= 0."""
             return FlextUtilitiesValidation.validate_non_negative(value, context)
 
@@ -203,7 +204,7 @@ class FlextUtilitiesValidation:
         def validate_positive(
             value: int | None,
             context: str = "Value",
-        ) -> FlextRuntime.RuntimeResult[int]:
+        ) -> r[int]:
             """Validate value > 0."""
             return FlextUtilitiesValidation.validate_positive(value, context)
 
@@ -213,7 +214,7 @@ class FlextUtilitiesValidation:
             min_value: int | None = None,
             max_value: int | None = None,
             context: str = "Value",
-        ) -> FlextRuntime.RuntimeResult[int]:
+        ) -> r[int]:
             """Validate numeric range."""
             return FlextUtilitiesValidation.validate_range(
                 value,
@@ -643,7 +644,7 @@ class FlextUtilitiesValidation:
     def validate_pipeline(
         value: str,
         validators: list[Callable[[str], r[bool]]],
-    ) -> FlextRuntime.RuntimeResult[bool]:
+    ) -> r[bool]:
         """Validate using a pipeline of validators and surface the first failure.
 
         Returns:
@@ -1121,7 +1122,7 @@ class FlextUtilitiesValidation:
         context: str = "Value",
         *,
         case_sensitive: bool = False,
-    ) -> FlextRuntime.RuntimeResult[str]:
+    ) -> r[str]:
         """Validate value is in set of valid choices (enum validation).
 
         Common pattern in flext-ldap (scope, operation), flext-meltano (plugin type),
@@ -1158,7 +1159,7 @@ class FlextUtilitiesValidation:
         min_length: int | None = None,
         max_length: int | None = None,
         context: str = "Value",
-    ) -> FlextRuntime.RuntimeResult[str]:
+    ) -> r[str]:
         """Validate string length within bounds.
 
         This pattern is repeated 6+ times across flext-ldap (passwords, DN, etc),
@@ -1190,7 +1191,7 @@ class FlextUtilitiesValidation:
         value: str,
         pattern: str,
         context: str = "Value",
-    ) -> FlextRuntime.RuntimeResult[str]:
+    ) -> r[str]:
         r"""Validate value matches regex pattern.
 
         **PYDANTIC 2 ALTERNATIVE**: For new code, use Pydantic's Field(pattern=...)
@@ -1235,7 +1236,7 @@ class FlextUtilitiesValidation:
         uri: str | None,
         allowed_schemes: list[str] | None = None,
         context: str = "URI",
-    ) -> FlextRuntime.RuntimeResult[str]:
+    ) -> r[str]:
         """Validate URI format and optionally check scheme.
 
         **PYDANTIC 2 ALTERNATIVE**: For new code, consider using Pydantic's
@@ -1469,7 +1470,7 @@ class FlextUtilitiesValidation:
         value: object,
         error_message: str = "Value must be callable",
         error_code: str = c.Errors.TYPE_ERROR,
-    ) -> FlextRuntime.RuntimeResult[bool]:
+    ) -> r[bool]:
         """Validate that value is callable (generic helper for field validators).
 
         This generic helper consolidates duplicate callable validation logic
@@ -1509,7 +1510,7 @@ class FlextUtilitiesValidation:
         max_timeout: float,
         error_message: str | None = None,
         error_code: str = c.Errors.VALIDATION_ERROR,
-    ) -> FlextRuntime.RuntimeResult[float | int]:
+    ) -> r[float | int]:
         """Validate that timeout does not exceed maximum (generic helper).
 
         This generic helper consolidates duplicate timeout validation logic
@@ -1559,7 +1560,7 @@ class FlextUtilitiesValidation:
         codes: list[object],
         min_code: int = c.Network.HTTP_STATUS_MIN,
         max_code: int = c.Network.HTTP_STATUS_MAX,
-    ) -> FlextRuntime.RuntimeResult[list[int]]:
+    ) -> r[list[int]]:
         """Validate and normalize HTTP status codes (generic helper).
 
         This generic helper consolidates duplicate HTTP status code validation
@@ -1622,7 +1623,7 @@ class FlextUtilitiesValidation:
         timestamp: str,
         *,
         allow_empty: bool = True,
-    ) -> FlextRuntime.RuntimeResult[str]:
+    ) -> r[str]:
         """Validate ISO 8601 timestamp format (generic helper).
 
         This generic helper consolidates duplicate ISO 8601 timestamp validation
@@ -1675,7 +1676,7 @@ class FlextUtilitiesValidation:
         allow_empty: bool = False,
         strip: bool = True,
         error_message: str | None = None,
-    ) -> FlextRuntime.RuntimeResult[str]:
+    ) -> r[str]:
         """Validate and normalize identifier/name with customizable pattern.
 
         This generic helper consolidates identifier validation logic from
@@ -1789,7 +1790,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_batch_services(
         services: t.ConfigurationMapping,
-    ) -> FlextRuntime.RuntimeResult[t.ConfigurationMapping]:
+    ) -> r[t.ConfigurationMapping]:
         """Validate batch services dictionary for container registration.
 
         Args:
@@ -1854,7 +1855,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_dispatch_config(
         config: t.ConfigurationMapping | None,
-    ) -> FlextRuntime.RuntimeResult[t.ConfigurationMapping]:
+    ) -> r[t.ConfigurationMapping]:
         """Validate dispatch configuration dictionary.
 
         Args:
@@ -1911,7 +1912,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _validate_event_structure(
         event: p.HasModelDump | None,
-    ) -> FlextRuntime.RuntimeResult[bool]:
+    ) -> r[bool]:
         """Validate event is not None and has required attributes."""
         if event is None:
             return r[bool].fail(
@@ -1935,7 +1936,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _validate_event_fields(
         event: p.HasModelDump,
-    ) -> FlextRuntime.RuntimeResult[bool]:
+    ) -> r[bool]:
         """Validate event field types and values."""
         # Validate event_type is non-empty string
         event_type = getattr(event, "event_type", "")
@@ -1966,7 +1967,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_domain_event(
         event: p.HasModelDump | None,
-    ) -> FlextRuntime.RuntimeResult[bool]:
+    ) -> r[bool]:
         """Enhanced domain event validation with comprehensive checks.
 
         Validates domain events for proper structure, required fields,
@@ -2004,14 +2005,11 @@ class FlextUtilitiesValidation:
     def _validate_get_desc(v: p.ValidatorSpec) -> str:
         """Extract validator description (helper for validate)."""
         # Try to extract description from predicate if it's a Validator (preferred)
-        predicate = FlextUtilitiesMapper.get(v, "predicate", default=None)
-        if predicate is not None:
-            predicate_desc = FlextUtilitiesMapper.get(
-                predicate,
-                "description",
-                default=None,
-            )
-            if FlextUtilitiesGuards.is_type(predicate_desc, str) and predicate_desc:
+        predicate = FlextUtilitiesMapper.get(v, "predicate")
+        if predicate is not None and hasattr(predicate, "__getitem__"):
+            # predicate is accessible (has attribute access)
+            predicate_desc = getattr(predicate, "description", None)
+            if isinstance(predicate_desc, str) and predicate_desc:
                 return predicate_desc
         # Fall back to validator's own description
         desc = FlextUtilitiesMapper.get(v, "description", default="validator")
@@ -2022,7 +2020,7 @@ class FlextUtilitiesValidation:
         value: T,
         validators: tuple[p.ValidatorSpec, ...],
         field_prefix: str,
-    ) -> FlextRuntime.RuntimeResult[T]:
+    ) -> r[T]:
         """Check if any validator passes (helper for validate)."""
         for validator in validators:
             if validator(value):
@@ -2042,7 +2040,7 @@ class FlextUtilitiesValidation:
         *,
         fail_fast: bool,
         collect_errors: bool,
-    ) -> FlextRuntime.RuntimeResult[T]:
+    ) -> r[T]:
         """Check if all validators pass (helper for validate)."""
 
         def validator_failed(v: p.ValidatorSpec) -> bool:
@@ -2076,7 +2074,7 @@ class FlextUtilitiesValidation:
         fail_fast: bool = True,
         collect_errors: bool = False,
         field_name: str | None = None,
-    ) -> FlextRuntime.RuntimeResult[T]:
+    ) -> r[T]:
         """Validate value against one or more validators.
 
         Business Rule: Composes validators using AND (all) or OR (any) logic.
@@ -2321,12 +2319,8 @@ class FlextUtilitiesValidation:
         try:
             if not bool(condition(value)):
                 if error_msg is None:
-                    # Use Mapper.get for unified attribute access
-                    func_name = FlextUtilitiesMapper.get(
-                        condition,
-                        "__name__",
-                        default="custom",
-                    )
+                    # Use getattr for callable attribute access (not mapper.get)
+                    func_name = getattr(condition, "__name__", "custom")
                     return f"{context_name} failed {func_name} check"
                 return error_msg
         except Exception as e:
@@ -2402,7 +2396,7 @@ class FlextUtilitiesValidation:
         *,
         return_value: bool,
         default: T | None,
-    ) -> FlextRuntime.RuntimeResult[T] | T | None:
+    ) -> r[T] | T | None:
         """Helper: Handle guard failure with return_value and default logic."""
         if return_value:
             # Use ResultHelpers.or_ for default fallback
@@ -2415,7 +2409,7 @@ class FlextUtilitiesValidation:
     def _guard_non_empty(
         value: object,
         error_template: str,
-    ) -> FlextRuntime.RuntimeResult[object]:
+    ) -> r[object]:
         """Internal helper for non-empty validation."""
         # Use pattern matching for type-specific validation
         value_typed = value
@@ -2478,7 +2472,7 @@ class FlextUtilitiesValidation:
         value: object,
         shortcut: str,
         context: str,
-    ) -> FlextRuntime.RuntimeResult[object]:
+    ) -> r[object]:
         """Handle string shortcuts for common guard patterns via table lookup."""
         # Use lower() instead of u.normalize to avoid dependency
         shortcut_lower = shortcut.lower()
@@ -2513,7 +2507,7 @@ class FlextUtilitiesValidation:
         context: str | None = None,
         default: T | None = None,
         return_value: bool = False,
-    ) -> FlextRuntime.RuntimeResult[T] | T | None:
+    ) -> r[T] | T | None:
         """Advanced guard method unifying type guards and validations.
 
         Business Rule: Provides unified interface for type checking, validation,
@@ -2798,7 +2792,7 @@ class FlextUtilitiesValidation:
 
         @staticmethod
         def from_[T](
-            source: t.ConfigurationMapping | object | None,
+            source: t.ConfigurationMapping | BaseModel | None,
             key: str,
             *,
             as_type: type[T] | None = None,
@@ -2807,7 +2801,7 @@ class FlextUtilitiesValidation:
             """Extract from source with type guard (mnemonic: from_ = extract).
 
             Args:
-                source: Source data (dict/object/None)
+                source: Source data (ConfigurationMapping/BaseModel/None)
                 key: Key/attribute name
                 as_type: Optional type to guard against
                 default: Default value if source is None or field missing
@@ -2829,15 +2823,23 @@ class FlextUtilitiesValidation:
                     default=default,
                 )
                 return taken if taken is not None else default
-            gotten = FlextUtilitiesMapper.get(source, key, default=default)
-            return gotten if gotten is not None else default
+            # Get without default, then apply default if None
+            # Use take() with type from default to ensure type safety
+            default_type = type(default)
+            taken_val = FlextUtilitiesMapper.take(
+                source,
+                key,
+                as_type=default_type,
+                default=default,
+            )
+            return taken_val if taken_val is not None else default
 
         @staticmethod
         def req[T](
             value: T | None,
             *,
             name: str = "value",
-        ) -> FlextRuntime.RuntimeResult[T]:
+        ) -> r[T]:
             """Require non-None value (mnemonic: req = required).
 
             Args:
@@ -2861,7 +2863,7 @@ class FlextUtilitiesValidation:
         def then[T, R2](
             result: p.Result[T],
             func: Callable[[T], r[R2]],
-        ) -> FlextRuntime.RuntimeResult[R2]:
+        ) -> r[R2]:
             """Chain operations (mnemonic: then = flat_map).
 
             Args:
@@ -3154,22 +3156,16 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _ensure_to_list(
-        value: t.GeneralValueType
-        | list[t.GeneralValueType]
-        | tuple[t.GeneralValueType, ...]
-        | None,
+        value: t.GeneralValueType | list[t.GeneralValueType] | None,
         default: list[t.GeneralValueType] | None,
     ) -> list[t.GeneralValueType]:
         """Helper: Convert value to list."""
         if value is None:
             return default if default is not None else []
-        match value:
-            case list():
-                return value
-            case tuple():
-                return list(value)
-            case _:
-                return [value]
+        if isinstance(value, list):
+            return value
+        # For all other types (including str), wrap in list
+        return [value]
 
     @staticmethod
     def _ensure_to_dict(
@@ -3262,7 +3258,7 @@ class FlextUtilitiesValidation:
         """
 
         @staticmethod
-        def validate[T](data: object, type_: type[T]) -> FlextRuntime.RuntimeResult[T]:
+        def validate[T](data: object, type_: type[T]) -> r[T]:
             """Validate data against type using TypeAdapter.
 
             Args:
@@ -3323,7 +3319,7 @@ class FlextUtilitiesValidation:
         def parse_json[T](
             json_str: str,
             type_: type[T],
-        ) -> FlextRuntime.RuntimeResult[T]:
+        ) -> r[T]:
             """Parse JSON string into typed model.
 
             Args:

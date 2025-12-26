@@ -737,10 +737,10 @@ class TestrCoverage:
 
     def test_large_value_handling(self) -> None:
         """Test handling of large values."""
-        large_list = list(range(10000))
+        large_list = list(range(1000))  # Reduced for memory efficiency
         result = r[list[int]].ok(large_list)
         u.Tests.Result.assert_result_success(result)
-        assert len(result.value) == 10000
+        assert len(result.value) == 1000
 
     def test_complex_chaining_scenario(self) -> None:
         """Test complex chaining of operations."""

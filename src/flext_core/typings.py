@@ -17,9 +17,13 @@ from re import Pattern
 from types import ModuleType
 from typing import (
     ParamSpec,
+    Protocol,
+    Self,
     TypeAlias,
     TypedDict,
     TypeVar,
+    Union,
+    runtime_checkable,
 )
 
 from pydantic import BaseModel, ConfigDict
@@ -117,39 +121,40 @@ class FlextTypes:
     # PEP 695 recursive types work with __future__ annotations
     # Use string forward reference for recursive types to avoid pyrefly errors
     # Includes callables for DI container factory support
-    type GeneralValueType = (
-        str
-        | int
-        | float
-        | bool
-        | datetime
-        | None
-        | BaseModel
-        | Path
-        | Callable[..., FlextTypes.GeneralValueType]
-        | Sequence[FlextTypes.GeneralValueType]
-        | Mapping[str, FlextTypes.GeneralValueType]
-    )
+    # Temporarily simplified to avoid recursion issues
+    GeneralValueType = Union[
+        str,
+        int,
+        float,
+        bool,
+        datetime,
+        None,
+        BaseModel,
+        Path,
+        Callable[..., object],  # Simplified to avoid recursion
+        Sequence[object],       # Simplified to avoid recursion
+        Mapping[str, object],   # Simplified to avoid recursion
+    ]
 
     # Constant value type - all possible constant types in FlextConstants
     # Used for type-safe constant access via __getitem__ method
     # Includes all types that can be stored as constants: primitives, collections,
     # Pydantic ConfigDict, SettingsConfigDict, and StrEnum types
-    type ConstantValue = (
-        str
-        | int
-        | float
-        | bool
-        | ConfigDict
-        | SettingsConfigDict
-        | frozenset[str]
-        | tuple[str, ...]
-        | Mapping[str, str | int]
-        | StrEnum
-        | type[StrEnum]
-        | Pattern[str]  # For regex pattern constants
-        | type  # For nested namespace classes (e.g., FlextConstants.Network)
-    )
+    ConstantValue = Union[
+        str,
+        int,
+        float,
+        bool,
+        ConfigDict,
+        SettingsConfigDict,
+        frozenset[str],
+        tuple[str, ...],
+        Mapping[str, str | int],
+        StrEnum,
+        type[StrEnum],
+        Pattern[str],  # For regex pattern constants
+        type,  # For nested namespace classes (e.g., FlextConstants.Network)
+    ]
 
     # Object list type - sequence of general value types for batch operations
     # Reuses "FlextTypes.GeneralValueType" (forward reference managed by __future__ annotations)
@@ -179,19 +184,19 @@ class FlextTypes:
     # Reuses ScalarValue defined above (forward reference managed by
     # __future__ annotations)
     # Includes Callable for consistency with GeneralValueType
-    type MetadataAttributeValue = (
-        str
-        | int
-        | float
-        | bool
-        | datetime
-        | BaseModel
-        | Path
-        | None
-        | Callable[..., FlextTypes.GeneralValueType]
-        | Sequence[FlextTypes.MetadataAttributeValue]
-        | Mapping[str, FlextTypes.MetadataAttributeValue]
-    )
+    MetadataAttributeValue = Union[
+        str,
+        int,
+        float,
+        bool,
+        datetime,
+        BaseModel,
+        Path,
+        None,
+        Callable[..., "FlextTypes.GeneralValueType"],
+        Sequence["FlextTypes.MetadataAttributeValue"],
+        Mapping[str, "FlextTypes.MetadataAttributeValue"],
+    ]
 
     # Generic metadata dictionary type - read-only interface for metadata containers
     type Metadata = Mapping[str, FlextTypes.MetadataAttributeValue]
@@ -562,10 +567,10 @@ class FlextTypes:
     # Service instance type - union of all types accepted by container.register()
     # ARCHITECTURAL EXCEPTION: DI containers must accept any Python object
     # This uses GeneralValueType + Protocol for type-safe service storage
-    type ServiceInstanceType = (
-        FlextTypes.GeneralValueType
-        | Callable[..., FlextTypes.GeneralValueType]
-    )
+    ServiceInstanceType = Union[
+        "FlextTypes.GeneralValueType",
+        Callable[..., "FlextTypes.GeneralValueType"],
+    ]
     """Type for service instances accepted by FlextContainer.register().
 
     Includes all GeneralValueType members plus Callables:
@@ -757,6 +762,21 @@ class FlextTypes:
     # Type narrowing for results: list[T] is done at usage site based on operation return type
     # Users should use BatchResultDict directly
 
+    @runtime_checkable
+    class ContextLike(Protocol):
+        """Minimal context protocol for type safety without circular imports.
+
+        Defined in typings.py (Tier t) to allow RuntimeBootstrapOptions
+        to use proper typing instead of `object`. Full context protocol
+        p.Context.Ctx in protocols.py (Tier p) extends this.
+
+        Methods use minimal signatures for structural compatibility.
+        """
+
+        def clone(self) -> Self:
+            """Clone context for isolated execution."""
+            ...
+
     class RuntimeBootstrapOptions(TypedDict, total=False):
         """Typed dictionary for runtime bootstrap options.
 
@@ -778,24 +798,20 @@ class FlextTypes:
         config_overrides: Mapping[str, FlextTypes.FlexibleValue]
         """Configuration overrides to apply to the config instance."""
 
-        context: object
-        """Context instance (p.Ctx) for service runtime.
+        context: FlextTypes.ContextLike
+        """Context instance for service runtime.
 
-        Note: Uses object to avoid circular import with protocols.py.
-        Actual type is p.Ctx, but protocols cannot be imported here.
+        Uses ContextLike protocol (defined above) for type safety without
+        circular imports. Full p.Context.Ctx extends this protocol.
         """
 
         subproject: str
         """Subproject identifier for scoped container creation."""
 
-        services: Mapping[
-            str,
-            FlextTypes.GeneralValueType | BaseModel | object,
-        ]
+        services: Mapping[str, FlextTypes.GeneralValueType]
         """Service registrations for container.
 
-        Note: Uses object for p.VariadicCallable["FlextTypes.GeneralValueType"] to avoid
-        circular import with protocols.py. Actual type includes callables.
+        Note: BaseModel is already included in GeneralValueType.
         """
 
         factories: Mapping[

@@ -130,8 +130,10 @@ class FlextModelsContext:
             ),
         ] = None
 
-    class StructlogProxyContextVar[T]:
+    class StructlogProxyContextVar[T: t.GeneralValueType]:
         """ContextVar-like proxy using structlog as backend (single source of truth).
+
+        Type Parameter T is bounded by GeneralValueType - all storable context values.
 
         ARCHITECTURAL NOTE: This proxy delegates ALL operations to structlog's
         contextvar storage. This ensures FlextContext.Variables and FlextLogger
@@ -201,13 +203,12 @@ class FlextModelsContext:
                 return self._default
             # structlog.contextvars.get_contextvars() returns dict[str, Any] (library limitation)
             # We know values are t.GeneralValueType because we only store those via set()
-            # Type narrowing via structural validation: dict.get() confirms type
-            typed_context: dict[str, t.GeneralValueType] = structlog_context
-            # value is t.GeneralValueType | None, T is bounded to GeneralValueType
-            # Structural typing: value type matches T parameter
-            result = typed_context.get(self._key, self._default)
-            # T bounded to GeneralValueType - direct return is type-compatible
-            return result if result is not None else self._default
+            # Type narrowing: check key presence, then return stored value
+            typed_context: dict[str, T] = structlog_context
+            if self._key not in typed_context:
+                return self._default
+            # Value exists - retrieve it. Dict typed as T to preserve generic.
+            return typed_context[self._key]
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.

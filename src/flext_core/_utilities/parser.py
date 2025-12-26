@@ -13,13 +13,12 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import cast, overload
+from typing import overload
 
 import structlog
 from pydantic import BaseModel
 
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._utilities.enum import FlextUtilitiesEnum
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
@@ -746,7 +745,9 @@ class FlextUtilitiesParser:
             replacement = str(elements[1])
             # Third element guaranteed by length check - convert to int
             # elements[2] is object type, convert to str first then to int
-            third_element = elements[2] if len(elements) >= self.PATTERN_TUPLE_MAX_LENGTH else 0
+            third_element = (
+                elements[2] if len(elements) >= self.PATTERN_TUPLE_MAX_LENGTH else 0
+            )
             flags = int(str(third_element)) if third_element != 0 else 0
         else:
             return r[tuple[str, str, int]].fail(
@@ -997,7 +998,7 @@ class FlextUtilitiesParser:
         return r[T].fail(error_msg)
 
     @staticmethod
-    def _parse_enum[T](
+    def _parse_enum[T: StrEnum](
         value: str,
         target: type[T],
         *,
@@ -1007,58 +1008,44 @@ class FlextUtilitiesParser:
         # Type narrowing: check if target is a StrEnum subclass
         if not issubclass(target, StrEnum):
             return None
-        # Type narrowing: issubclass confirms target is type[StrEnum]
-        enum_type: type[StrEnum] = target
+        # Case-insensitive matching using members lookup
         if case_insensitive:
-            # _parse_get_attr returns object, need to narrow to ConfigurationDict
-            # StrEnum.__members__ returns a mappingproxy, not a dict
-            members_raw = FlextUtilitiesParser._parse_get_attr(
-                enum_type,
-                "__members__",
-                {},
-            )
-            # Use Mapping for type narrowing - __members__ returns mappingproxy which is a Mapping
-            if isinstance(members_raw, Mapping) and all(
-                isinstance(k, str) for k in members_raw
-            ):
-                members_dict: t.ConfigurationDict = dict(members_raw)
-            else:
-                members_dict = {}
-            members_list = list(members_dict.values())
-
-            def match_member(member: object) -> bool:
-                if not hasattr(member, "value") or not hasattr(member, "name"):
-                    return False
-                member_value = getattr(member, "value", None)
-                member_name = getattr(member, "name", None)
-                if member_value is None or member_name is None:
-                    return False
-                return bool(
-                    FlextUtilitiesParser._parse_normalize_compare(member_value, value)
-                    or FlextUtilitiesParser._parse_normalize_compare(
-                        member_name,
-                        value,
-                    ),
-                )
-
-            found = FlextUtilitiesParser._parse_find_first(members_list, match_member)
-            if found is not None and isinstance(found, enum_type):
-                # JUSTIFIED cast: We checked issubclass(target, StrEnum), so T IS a StrEnum type
-                # found is from enum_type.__members__.values(), guaranteed to be instance of target
-                # Mypy limitation: can't infer that issubclass check bounds T to StrEnum
-                found_enum = cast(T, found)
-                return r[T].ok(found_enum)
-        # Type narrowing: target is type[StrEnum] after issubclass check
-        # Call parse with enum_type
-        result = FlextUtilitiesEnum.parse(enum_type, value)
-        if result.is_success:
-            # JUSTIFIED cast: We checked issubclass(target, StrEnum), so T IS a StrEnum type
-            # result.value comes from enum_type members, guaranteed to be instance of target
-            # Mypy limitation: can't infer that issubclass check bounds T to StrEnum
-            parsed_enum = cast(T, result.value)
-            return r[T].ok(parsed_enum)
+            # Get __members__ from target (which is type[T] where T: StrEnum)
+            members_raw = getattr(target, "__members__", {})
+            # Use Mapping for type narrowing - __members__ returns mappingproxy
+            if isinstance(members_raw, Mapping):
+                for member_name, member_value in members_raw.items():
+                    # Check name or value match (case-insensitive)
+                    name_matches = FlextUtilitiesParser._parse_normalize_compare(
+                        member_name, value
+                    )
+                    value_attr = getattr(member_value, "value", None)
+                    value_matches = (
+                        value_attr is not None
+                        and FlextUtilitiesParser._parse_normalize_compare(
+                            value_attr, value
+                        )
+                    )
+                    if (name_matches or value_matches) and isinstance(
+                        member_value, target
+                    ):
+                        return r[T].ok(member_value)
+        # Case-sensitive: direct lookup in __members__
+        # target is type[T] where T: StrEnum (confirmed by issubclass check)
+        members_raw = getattr(target, "__members__", {})
+        if isinstance(members_raw, Mapping) and value in members_raw:
+            member_value = members_raw[value]
+            if isinstance(member_value, target):
+                return r[T].ok(member_value)
+        # Try parsing value as enum value (not name)
+        for _member_name, member_instance in (
+            members_raw.items() if isinstance(members_raw, Mapping) else []
+        ):
+            member_val = getattr(member_instance, "value", None)
+            if member_val == value and isinstance(member_instance, target):
+                return r[T].ok(member_instance)
         return r[T].fail(
-            FlextUtilitiesParser._parse_result_error(result, "Enum parse failed"),
+            f"Cannot parse '{value}' as {getattr(target, '__name__', 'enum')}"
         )
 
     @staticmethod
@@ -1151,19 +1138,60 @@ class FlextUtilitiesParser:
         field_prefix: str,
     ) -> r[T] | None:
         """Helper: Try enum parsing, return None if not enum."""
-        enum_result = FlextUtilitiesParser._parse_enum(
-            str(value),
-            target,
-            case_insensitive=case_insensitive,
-        )
-        if enum_result is None:
+        # Early return if not a StrEnum subclass
+        if not issubclass(target, StrEnum):
             return None
-        if enum_result.is_success:
-            return enum_result
+        # Get members dict - use target directly to preserve T typing
+        # target.__members__ is typed as dict[str, T] for Enum[T]
+        members_raw = getattr(target, "__members__", None)
+        if members_raw is None or not isinstance(members_raw, Mapping):
+            return None
+        # Assign to new variable after type narrowing for nested function access
+        members: Mapping[str, T] = members_raw
+        value_str = str(value)
+
+        def _lookup_member(name: str) -> T | None:
+            """Lookup member by name, preserving T type from target."""
+            # Access the narrowed members variable
+            return members.get(name)
+
+        # Case-insensitive matching
+        if case_insensitive:
+            value_lower = value_str.lower()
+            for member_name in members:
+                if member_name.lower() == value_lower:
+                    matched = _lookup_member(member_name)
+                    if matched is not None:
+                        return r[T].ok(matched)
+                # Also check by value
+                member = _lookup_member(member_name)
+                if member is not None:
+                    member_val = getattr(member, "value", None)
+                    if (
+                        member_val is not None
+                        and str(member_val).lower() == value_lower
+                    ):
+                        return r[T].ok(member)
+        else:
+            # Case-sensitive lookup by name
+            matched = _lookup_member(value_str)
+            if matched is not None:
+                return r[T].ok(matched)
+            # Try matching by value
+            for member_name in members:
+                member = _lookup_member(member_name)
+                if member is not None:
+                    member_val = getattr(member, "value", None)
+                    if member_val == value_str:
+                        return r[T].ok(member)
+        # No match found - return default or error
+        error_msg = (
+            f"Cannot parse '{value_str}' as {getattr(target, '__name__', 'enum')}"
+        )
         return FlextUtilitiesParser._parse_with_default(
             default,
             default_factory,
-            f"{field_prefix}{enum_result.error}",
+            f"{field_prefix}{error_msg}",
         )
 
     @staticmethod
@@ -1255,7 +1283,15 @@ class FlextUtilitiesParser:
         field_prefix: str,
     ) -> r[str] | None: ...
 
-    # Note: Generic [T] overload removed - not needed as we have specific overloads for all primitives
+    @overload
+    @staticmethod
+    def _parse_try_primitive[T](
+        value: object,
+        target: type[T],
+        default: T | None,
+        default_factory: Callable[[], T] | None,
+        field_prefix: str,
+    ) -> r[T] | None: ...
 
     @staticmethod
     def _parse_try_primitive(

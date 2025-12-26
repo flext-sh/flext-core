@@ -111,7 +111,7 @@ class FlextTestsBuilders:
         self,
         key: str,
         value: t.Tests.Builders.BuilderValue | None = None,
-        **kwargs: object,  # Accept object to allow Callable, set, etc. - validated by AddParams
+        **kwargs: t.GeneralValueType,  # Accept GeneralValueType - validated by AddParams
     ) -> Self:
         """Add data to builder with smart type inference.
 
@@ -159,11 +159,32 @@ class FlextTestsBuilders:
 
         """
         # Convert kwargs to validated model using FlextUtilities
-        # u.Model.from_kwargs() accepts **kwargs: object - Pydantic 2 handles conversions automatically
+        # Convert value to GeneralValueType-compatible form for from_kwargs
+        # BuilderValue includes r[T] which is not in GeneralValueType, so we handle it
+        value_for_kwargs: t.GeneralValueType = None
+        direct_result_value: r[t.GeneralValueType] | None = None
+
+        if value is None:
+            value_for_kwargs = None
+        elif isinstance(value, r):
+            # FlextResult is in BuilderValue but not GeneralValueType
+            # Store it directly and pass None to from_kwargs
+            direct_result_value = value
+            value_for_kwargs = None
+        elif isinstance(value, (str, int, float, bool, BaseModel)):
+            value_for_kwargs = value
+        elif isinstance(value, (list, tuple)):
+            value_for_kwargs = list(value)
+        elif isinstance(value, dict):
+            value_for_kwargs = dict(value)
+        else:
+            # Other types: convert to string representation
+            value_for_kwargs = str(value) if value is not None else None
+
         params_result = u.Model.from_kwargs(
             m.Tests.Builders.AddParams,
             key=key,
-            value=value,
+            value=value_for_kwargs,
             **kwargs,
         )
         if params_result.is_failure:
@@ -173,8 +194,12 @@ class FlextTestsBuilders:
 
         resolved_value: t.Tests.Builders.BuilderValue = None
 
-        # Priority 1: FlextResult direct
-        if params.result is not None:
+        # Priority 0: FlextResult passed directly as value (handled before from_kwargs)
+        if direct_result_value is not None:
+            resolved_value = direct_result_value
+
+        # Priority 1: FlextResult direct (via result= parameter)
+        elif params.result is not None:
             resolved_value = params.result
 
         # Priority 2: Create success result
@@ -275,7 +300,16 @@ class FlextTestsBuilders:
                     instance = cls_type.__call__(*args, **cls_kwargs)
                 else:
                     instance = cls_type.__call__()
-                resolved_value = instance
+                # Type narrow: dynamic class instantiation results are BuilderValue
+                # BaseModel subclasses, primitives, sequences all satisfy BuilderValue
+                if isinstance(
+                    instance,
+                    (str, int, float, bool, type(None), BaseModel, list, dict),
+                ):
+                    resolved_value = instance
+                else:
+                    # Fallback: store as-is, Pydantic handles validation
+                    resolved_value = str(instance) if instance is not None else None
 
         # Priority 8: Items with transformation/filtering
         elif params.items is not None:
@@ -552,7 +586,7 @@ class FlextTestsBuilders:
 
     def to_result[T](
         self,
-        **kwargs: object,  # Accept object to allow Callable, etc. - validated by ToResultParams
+        **kwargs: t.GeneralValueType,  # Accept GeneralValueType - validated by ToResultParams
     ) -> (
         r[T]
         | r[t.Tests.Builders.BuilderDict]
@@ -703,7 +737,7 @@ class FlextTestsBuilders:
 
     def build[T](
         self,
-        **kwargs: object,
+        **kwargs: t.GeneralValueType,  # Accept GeneralValueType - validated by BuildParams
     ) -> (
         t.Tests.Builders.BuilderDict
         | BaseModel
@@ -973,10 +1007,12 @@ class FlextTestsBuilders:
 
         """
         # Convert kwargs to validated model using FlextUtilities
+        # Convert frozenset to list for GeneralValueType compatibility
+        # Pydantic 2 will coerce list back to frozenset in the model
         params_result = u.Model.from_kwargs(
             m.Tests.Builders.MergeFromParams,
             strategy=strategy,
-            exclude_keys=exclude_keys,
+            exclude_keys=list(exclude_keys) if exclude_keys else None,
         )
         if params_result.is_failure:
             error_msg = f"Invalid merge_from() parameters: {params_result.error}"
@@ -1516,7 +1552,22 @@ class FlextTestsBuilders:
                             value,
                             "model_dump",
                         ):
-                            items.extend(_flatten(dict(value), new_key).items())
+                            # Convert Mapping to dict manually for type safety
+                            # After isinstance(value, Mapping), v is object, need type narrowing
+                            value_dict: dict[str, t.GeneralValueType] = {}
+                            for k, v in value.items():
+                                # Narrow v to GeneralValueType compatible types
+                                if v is None:
+                                    value_dict[str(k)] = None
+                                elif isinstance(
+                                    v,
+                                    (str, bool, int, float, BaseModel, list, dict),
+                                ):
+                                    value_dict[str(k)] = v
+                                else:
+                                    # Convert other types to string
+                                    value_dict[str(k)] = str(v)
+                            items.extend(_flatten(value_dict, new_key).items())
                         else:
                             items.append((new_key, value))
                     return dict(items)
