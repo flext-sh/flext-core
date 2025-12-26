@@ -204,6 +204,7 @@ class FlextUtilities:
     # Conversion
     conversion = staticmethod(FlextUtilitiesConversion.conversion)
     join = staticmethod(FlextUtilitiesConversion.join)
+    normalize = staticmethod(FlextUtilitiesConversion.normalize)
     to_str = staticmethod(FlextUtilitiesConversion.to_str)
     to_str_list = staticmethod(FlextUtilitiesConversion.to_str_list)
 

@@ -13,34 +13,11 @@ import inspect
 import warnings
 from collections.abc import Callable, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, cast, overload
+from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.result import r
 from flext_core.typings import t
-
-# Approved modules that can import directly (for testing, internal use)
-_APPROVED_MODULES = frozenset({
-    "flext_core.utilities",
-    "flext_core._utilities",
-    "tests.",
-})
-
-
-def _check_direct_access() -> None:
-    """Warn if accessed from non-approved module."""
-    frame = inspect.currentframe()
-    if frame and frame.f_back and frame.f_back.f_back:
-        caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
-        if not any(
-            caller_module.startswith(approved) for approved in _APPROVED_MODULES
-        ):
-            warnings.warn(
-                "Direct import from _utilities.enum is deprecated. "
-                "Use 'from flext_core import u; u.enum(...)' instead.",
-                DeprecationWarning,
-                stacklevel=4,
-            )
 
 
 class FlextUtilitiesEnum:
@@ -54,10 +31,75 @@ class FlextUtilitiesEnum:
     - Direct integration with Pydantic BeforeValidator
     """
 
+    # Approved modules that can import directly (for testing, internal use)
+    _APPROVED_MODULES: ClassVar[frozenset[str]] = frozenset({
+        "flext_core.utilities",
+        "flext_core._utilities",
+        "tests.",
+    })
+
     # Cache for metadata methods (manual cache since types aren't hashable for lru_cache)
+    # Note: members_cache uses object to avoid type variance issues with generic E
     _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
-    _members_cache: ClassVar[dict[type[StrEnum], frozenset[StrEnum]]] = {}
+    _members_cache: ClassVar[dict[type[StrEnum], object]] = {}
+
+    # ─────────────────────────────────────────────────────────────
+    # PRIVATE HELPERS
+    # ─────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _check_direct_access() -> None:
+        """Warn if accessed from non-approved module."""
+        frame = inspect.currentframe()
+        if frame and frame.f_back and frame.f_back.f_back:
+            caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
+            if not any(
+                caller_module.startswith(approved)
+                for approved in FlextUtilitiesEnum._APPROVED_MODULES
+            ):
+                warnings.warn(
+                    "Direct import from _utilities.enum is deprecated. "
+                    "Use 'from flext_core import u; u.Enum.dispatch(...)' instead.",
+                    DeprecationWarning,
+                    stacklevel=4,
+                )
+
+    @staticmethod
+    def _is_member_by_value[E: StrEnum](value: object, enum_cls: type[E]) -> TypeIs[E]:
+        """Check membership by value (internal helper)."""
+        if isinstance(value, enum_cls):
+            return True
+        if FlextUtilitiesGuards.is_type(value, str):
+            value_map = getattr(enum_cls, "_value2member_map_", {})
+            return value in value_map
+        return False
+
+    @staticmethod
+    def _is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeIs[E]:
+        """Check membership by name (internal helper)."""
+        return name in getattr(enum_cls, "__members__", {})
+
+    @staticmethod
+    def _parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
+        """Parse string to enum (internal helper)."""
+        if isinstance(value, enum_cls):
+            return r[E].ok(value)
+        try:
+            return r[E].ok(enum_cls(value))
+        except ValueError:
+            members_dict = getattr(enum_cls, "__members__", {})
+            enum_members = list(members_dict.values())
+            valid = ", ".join(m.value for m in enum_members)
+            enum_name = getattr(enum_cls, "__name__", "Enum")
+            return r[E].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+
+    @staticmethod
+    def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
+        """Coerce value to enum - for Pydantic validators (internal helper)."""
+        if isinstance(value, enum_cls):
+            return value
+        return enum_cls(value)
 
     # ─────────────────────────────────────────────────────────────
     # TYPEIS FACTORIES: Generate TypeGuard functions for any StrEnum
@@ -302,15 +344,15 @@ class FlextUtilitiesEnum:
         Audit Implication: Cached results ensure consistent identity across calls.
         """
         # Check cache first - retrieve cached members for this enum class
-        cached_result = FlextUtilitiesEnum._members_cache.get(enum_cls)
-        if cached_result is not None:
-            # Type narrowing: If cached for enum_cls, it's frozenset[E] for that class
-            # Cache stores frozenset[StrEnum], so we need to cast to frozenset[E]
-            return cast("frozenset[E]", cached_result)
+        # Cache is keyed by enum_cls, so if we find it, it's the correct type
+        cached = FlextUtilitiesEnum._members_cache.get(enum_cls)
+        if cached is not None and isinstance(cached, frozenset):
+            # isinstance narrows to frozenset, key guarantees correct element type
+            return frozenset(cached)
 
         # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
         members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
-        result = frozenset(members_dict.values())
+        result: frozenset[E] = frozenset(members_dict.values())
 
         # Cache result - store in dictionary for all future calls with same enum_cls
         FlextUtilitiesEnum._members_cache[enum_cls] = result
@@ -457,53 +499,117 @@ class FlextUtilitiesEnum:
         """Parse value to enum. Shortcut for parse()."""
         return FlextUtilitiesEnum.parse(enum_cls, value)
 
+    # ─────────────────────────────────────────────────────────────
+    # GENERALIZED DISPATCH METHOD
+    # ─────────────────────────────────────────────────────────────
 
-# ─────────────────────────────────────────────────────────────
-# GENERALIZED PUBLIC FUNCTION PATTERN
-# ─────────────────────────────────────────────────────────────
+    @overload
+    @staticmethod
+    def dispatch[E: StrEnum](
+        value: object,
+        enum_cls: type[E],
+        *,
+        mode: Literal["is_member"] = "is_member",
+        by_name: bool = False,
+    ) -> TypeIs[E]: ...
 
+    @overload
+    @staticmethod
+    def dispatch[E: StrEnum](
+        value: object,
+        enum_cls: type[E],
+        *,
+        mode: Literal["is_name"],
+        by_name: bool = False,
+    ) -> TypeIs[E]: ...
 
-class _EnumUtilities:
-    """Internal implementation - all methods here are internal to this module."""
+    @overload
+    @staticmethod
+    def dispatch[E: StrEnum](
+        value: object,
+        enum_cls: type[E],
+        *,
+        mode: Literal["parse"],
+        by_name: bool = False,
+    ) -> r[E]: ...
+
+    @overload
+    @staticmethod
+    def dispatch[E: StrEnum](
+        value: object,
+        enum_cls: type[E],
+        *,
+        mode: Literal["coerce"],
+        by_name: bool = False,
+    ) -> E: ...
 
     @staticmethod
-    def is_member_by_value[E: StrEnum](value: object, enum_cls: type[E]) -> TypeIs[E]:
-        """Check membership by value."""
-        if isinstance(value, enum_cls):
-            return True
-        if FlextUtilitiesGuards.is_type(value, str):
-            value_map = getattr(enum_cls, "_value2member_map_", {})
-            return value in value_map
-        return False
+    def dispatch[E: StrEnum](
+        value: object,
+        enum_cls: type[E],
+        *,
+        mode: str = "is_member",
+        by_name: bool = False,
+    ) -> bool | r[E] | E:
+        """Generalized enum utility dispatch function.
 
-    @staticmethod
-    def is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeIs[E]:
-        """Check membership by name."""
-        return name in getattr(enum_cls, "__members__", {})
+        Args:
+            value: Value to check/parse/coerce
+            enum_cls: The StrEnum class
+            mode: Operation mode
+                - "is_member": Check if value is member (returns bool, acts as TypeIs[E])
+                - "is_name": Check if value is member by name (returns bool, acts as TypeIs[E])
+                - "parse": Parse value to enum (returns r[E])
+                - "coerce": Coerce value to enum (returns E, raises on failure)
+            by_name: For is_member, check by name instead of value
 
-    @staticmethod
-    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
-        """Parse string to enum."""
-        if isinstance(value, enum_cls):
-            return r[E].ok(value)
-        try:
-            return r[E].ok(enum_cls(value))
-        except ValueError:
-            members_dict = getattr(enum_cls, "__members__", {})
-            enum_members = list(members_dict.values())
-            valid = ", ".join(m.value for m in enum_members)
-            enum_name = getattr(enum_cls, "__name__", "Enum")
-            return r[E].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+        Returns:
+            Depends on mode - bool (for is_member/is_name), r[E] (for parse), or E (for coerce)
 
-    @staticmethod
-    def coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
-        """Coerce value to enum (for Pydantic validators)."""
-        if isinstance(value, enum_cls):
-            return value
-        return enum_cls(value)
+        """
+        FlextUtilitiesEnum._check_direct_access()
+
+        if mode == "is_member":
+            if by_name and isinstance(value, str):
+                is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
+                    value, enum_cls
+                )
+                return is_member_result
+            result_bool: bool = FlextUtilitiesEnum._is_member_by_value(value, enum_cls)
+            return result_bool
+        if mode == "is_name":
+            return FlextUtilitiesEnum._is_member_by_name(str(value), enum_cls)
+        if mode == "parse":
+            # Type narrowing: value is object, but parse accepts str | E
+            # We handle this by checking if it's already an enum instance
+            if isinstance(value, enum_cls):
+                return FlextUtilitiesEnum._parse(enum_cls, value)
+            if isinstance(value, str):
+                return FlextUtilitiesEnum._parse(enum_cls, value)
+            # For other types, convert to string
+            return FlextUtilitiesEnum._parse(enum_cls, str(value))
+        if mode == "coerce":
+            # Type narrowing: value is object, but coerce accepts str | E
+            # coerce always returns E (raises on failure)
+            # Explicit type narrowing for type checker
+            if isinstance(value, enum_cls):
+                # Type narrowing: isinstance check ensures value is E
+                # Direct return after isinstance narrowing
+                return value
+            if isinstance(value, str):
+                # Type narrowing: isinstance check ensures value is str
+                coerced: E = FlextUtilitiesEnum._coerce(enum_cls, value)
+                return coerced
+            # For other types, convert to string
+            # Type narrowing: str(value) is str, which is valid for coerce
+            value_str: str = str(value)
+            coerced_str: E = FlextUtilitiesEnum._coerce(enum_cls, value_str)
+            return coerced_str
+        error_msg = f"Unknown mode: {mode}"
+        raise ValueError(error_msg)
 
 
-# PUBLIC GENERALIZED METHOD - Single entry point with routing
+# Backward compatibility alias for the module-level enum function
 @overload
 def enum[E: StrEnum](
     value: object,
@@ -551,58 +657,37 @@ def enum[E: StrEnum](
     mode: str = "is_member",
     by_name: bool = False,
 ) -> bool | r[E] | E:
-    """Generalized enum utility function.
-
-    Args:
-        value: Value to check/parse/coerce
-        enum_cls: The StrEnum class
-        mode: Operation mode
-            - "is_member": Check if value is member (returns bool, acts as TypeIs[E])
-            - "is_name": Check if value is member by name (returns bool, acts as TypeIs[E])
-            - "parse": Parse value to enum (returns r[E])
-            - "coerce": Coerce value to enum (returns E, raises on failure)
-        by_name: For is_member, check by name instead of value
-
-    Returns:
-        Depends on mode - bool (for is_member/is_name), r[E] (for parse), or E (for coerce)
-
-    """
-    _check_direct_access()
-
+    """Backward compatibility wrapper for FlextUtilitiesEnum.dispatch()."""
     if mode == "is_member":
         if by_name and isinstance(value, str):
-            is_member_result: bool = _EnumUtilities.is_member_by_name(value, enum_cls)
-            return is_member_result
-        result_bool: bool = _EnumUtilities.is_member_by_value(value, enum_cls)
-        return result_bool
+            # Check membership by name
+            return value in getattr(enum_cls, "__members__", {})
+        # Check membership by value
+        if isinstance(value, enum_cls):
+            return True
+        if FlextUtilitiesGuards.is_type(value, str):
+            value_map = getattr(enum_cls, "_value2member_map_", {})
+            return value in value_map
+        return False
     if mode == "is_name":
-        return _EnumUtilities.is_member_by_name(str(value), enum_cls)
+        return str(value) in getattr(enum_cls, "__members__", {})
     if mode == "parse":
-        # Type narrowing: value is object, but parse accepts str | E
-        # We handle this by checking if it's already an enum instance
         if isinstance(value, enum_cls):
-            return _EnumUtilities.parse(enum_cls, value)
-        if isinstance(value, str):
-            return _EnumUtilities.parse(enum_cls, value)
-        # For other types, convert to string
-        return _EnumUtilities.parse(enum_cls, str(value))
+            return r[E].ok(value)
+        str_value = value if isinstance(value, str) else str(value)
+        try:
+            return r[E].ok(enum_cls(str_value))
+        except ValueError:
+            members_dict = getattr(enum_cls, "__members__", {})
+            enum_members = list(members_dict.values())
+            valid = ", ".join(m.value for m in enum_members)
+            enum_name = getattr(enum_cls, "__name__", "Enum")
+            return r[E].fail(f"Invalid {enum_name}: '{str_value}'. Valid: {valid}")
     if mode == "coerce":
-        # Type narrowing: value is object, but coerce accepts str | E
-        # coerce always returns E (raises on failure)
-        # Explicit type narrowing for type checker
         if isinstance(value, enum_cls):
-            # Type narrowing: isinstance check ensures value is E
-            # Direct return after isinstance narrowing
             return value
-        if isinstance(value, str):
-            # Type narrowing: isinstance check ensures value is str
-            coerced: E = _EnumUtilities.coerce(enum_cls, value)
-            return coerced
-        # For other types, convert to string
-        # Type narrowing: str(value) is str, which is valid for coerce
-        value_str: str = str(value)
-        coerced_str: E = _EnumUtilities.coerce(enum_cls, value_str)
-        return coerced_str
+        str_value = value if isinstance(value, str) else str(value)
+        return enum_cls(str_value)
     error_msg = f"Unknown mode: {mode}"
     raise ValueError(error_msg)
 

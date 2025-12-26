@@ -152,7 +152,7 @@ def test_register_handler_validation_error_on_missing_message_type() -> None:
         cast("t.GeneralValueType | BaseModel", {"handler": object()}),
     )
     assert register_result.is_failure
-    assert "handle" in (register_result.error or "")
+    assert "callable" in (register_result.error or "").lower()
 
 
 def test_dispatch_handler_raises_returns_failure() -> None:

@@ -172,9 +172,17 @@ class FlextModelsEntity:
                 FlextResult with list of created DomainEvents or error
 
             """
-            # Sequence is already iterable - no need for isinstance check
+            # Validate input is a valid sequence (list or tuple)
+            if not isinstance(events, (list, tuple)):
+                return r[list[FlextModelsEntity.DomainEvent]].fail(
+                    "Events must be a list or tuple",
+                )
+
+            # Convert to list for iteration (ensures proper type)
+            event_items = list(events)
+
             # Check if adding all events would exceed limit
-            total_after = len(self.domain_events) + len(events)
+            total_after = len(self.domain_events) + len(event_items)
             if total_after > c.Validation.MAX_UNCOMMITTED_EVENTS:
                 return r[list[FlextModelsEntity.DomainEvent]].fail(
                     f"Cannot add {len(events)} events: would exceed max events "
@@ -182,7 +190,7 @@ class FlextModelsEntity:
                 )
 
             # Validate all event names first
-            for event_type, _ in events:
+            for event_type, _ in event_items:
                 if not event_type or not isinstance(event_type, str):
                     return r[list[FlextModelsEntity.DomainEvent]].fail(
                         "Event name must be non-empty string",
@@ -190,7 +198,7 @@ class FlextModelsEntity:
 
             # Add all events
             created_events: list[FlextModelsEntity.DomainEvent] = []
-            for event_type, data in events:
+            for event_type, data in event_items:
                 event = FlextModelsEntity.DomainEvent(
                     event_type=event_type,
                     aggregate_id=self.unique_id,
