@@ -122,7 +122,7 @@ class FlextTypes:
     # Use string forward reference for recursive types to avoid pyrefly errors
     # Includes callables for DI container factory support
     # Temporarily simplified to avoid recursion issues
-    GeneralValueType = Union[
+    GeneralValueType = Union[  # type: ignore[explicit-any]
         str,
         int,
         float,
@@ -184,7 +184,7 @@ class FlextTypes:
     # Reuses ScalarValue defined above (forward reference managed by
     # __future__ annotations)
     # Includes Callable for consistency with GeneralValueType
-    MetadataAttributeValue = Union[
+    MetadataAttributeValue = Union[  # type: ignore[explicit-any]
         str,
         int,
         float,
@@ -567,7 +567,7 @@ class FlextTypes:
     # Service instance type - union of all types accepted by container.register()
     # ARCHITECTURAL EXCEPTION: DI containers must accept any Python object
     # This uses GeneralValueType + Protocol for type-safe service storage
-    ServiceInstanceType = Union[
+    ServiceInstanceType = Union[  # type: ignore[explicit-any]
         "FlextTypes.GeneralValueType",
         Callable[..., "FlextTypes.GeneralValueType"],
     ]
