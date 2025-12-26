@@ -24,9 +24,7 @@ from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
-from flext_core._models.validation import (
-    FlextModelsValidation,  # Used in Validation alias
-)
+from flext_core._models.validation import FlextModelsValidation
 from flext_core.protocols import p
 
 
@@ -57,6 +55,21 @@ class FlextModels:
     Value: TypeAlias = FlextModelsEntity.Value
     AggregateRoot: TypeAlias = FlextModelsEntity.AggregateRoot
     DomainEvent: TypeAlias = FlextModelsEntity.DomainEvent
+
+    # =========================================================================
+    # NAMESPACE CLASSES - Direct access for internal model classes
+    # =========================================================================
+
+    Base = FlextModelsBase
+    Cqrs = FlextModelsCqrs
+    EntityModels = FlextModelsEntity
+    Entity_ns = FlextModelsEntity
+    ContextModels = FlextModelsContext
+    Context = FlextModelsContext
+    HandlerModels = FlextModelsHandler
+    Handler_ns = FlextModelsHandler
+    ValidationModels = FlextModelsValidation
+    Validation = FlextModelsValidation
 
     # =========================================================================
     # CQRS MESSAGING - Direct access for common usage
@@ -125,6 +138,7 @@ class FlextModels:
     # CONTEXT MODELS - Direct access for common usage
     # =========================================================================
 
+    ContextData: TypeAlias = FlextModelsContext.ContextData
     ContextDomainData: TypeAlias = FlextModelsContext.ContextDomainData
     ContextExport: TypeAlias = FlextModelsContext.ContextExport
     ContextScopeData: TypeAlias = FlextModelsContext.ContextScopeData
@@ -135,13 +149,25 @@ class FlextModels:
     # COLLECTIONS MODELS - Direct access for common usage
     # =========================================================================
 
+    Collections = FlextModelsCollections
     CollectionsCategories: TypeAlias = FlextModelsCollections.Categories
     CollectionsConfig: TypeAlias = FlextModelsCollections.Config
     CollectionsResults: TypeAlias = FlextModelsCollections.Results
     CollectionsOptions: TypeAlias = FlextModelsCollections.Options
+    CollectionsStatistics: TypeAlias = FlextModelsCollections.Statistics
     Options: TypeAlias = FlextModelsCollections.Options
     CollectionsParseOptions: TypeAlias = FlextModelsCollections.ParseOptions
     Categories: TypeAlias = CollectionsCategories
+
+    # =========================================================================
+    # CONTAINER MODELS - DI registry and service registration
+    # =========================================================================
+
+    class Container(FlextModelsContainer):
+        """Container models namespace for DI and service registry.
+
+        Re-exports FlextModelsContainer as a proper class for mypy compatibility.
+        """
 
     # =========================================================================
     # CONFIG CLASSES - Direct access for common usage
@@ -223,47 +249,6 @@ class FlextModels:
         FlextModels.Command | FlextModels.Query | FlextModels.DomainEvent,
         Discriminator("message_type"),
     ]
-
-    # =========================================================================
-    # NAMESPACE ACCESS - Backward compatibility
-    # =========================================================================
-
-    # Context namespace - aggregates all context-related models
-    class Context:
-        """Context-related models aggregated for convenient access."""
-
-        StructlogProxyContextVar: TypeAlias = (
-            FlextModelsContext.StructlogProxyContextVar
-        )
-        StructlogProxyToken: TypeAlias = FlextModelsContext.StructlogProxyToken
-        Token: TypeAlias = FlextModelsContext.Token
-        ContextData: TypeAlias = FlextModelsContext.ContextData
-        ContextDomainData: TypeAlias = FlextModelsContext.ContextDomainData
-        ContextExport: TypeAlias = FlextModelsContext.ContextExport
-        ContextScopeData: TypeAlias = FlextModelsContext.ContextScopeData
-        ContextStatistics: TypeAlias = FlextModelsContext.ContextStatistics
-        ContextMetadata: TypeAlias = FlextModelsContext.ContextMetadata
-
-    # CQRS and Collections aliases
-    Cqrs: TypeAlias = FlextModelsCqrs
-    Collections: TypeAlias = FlextModelsCollections
-    CollectionsStatistics: TypeAlias = FlextModelsCollections.Statistics
-
-    # Validation alias - provides access to validation utilities
-    Validation: TypeAlias = FlextModelsValidation
-
-    # Container namespace - aggregates FlextModelsContainer
-    class Container:
-        """Container-related models aggregated for convenient access."""
-
-        Container: TypeAlias = FlextModelsContainer
-        ServiceRegistration: TypeAlias = FlextModelsContainer.ServiceRegistration
-        FactoryRegistration: TypeAlias = FlextModelsContainer.FactoryRegistration
-        ResourceRegistration: TypeAlias = FlextModelsContainer.ResourceRegistration
-        ContainerConfig: TypeAlias = FlextModelsContainer.ContainerConfig
-
-    # Direct aliases for backward compatibility
-    ContextData: TypeAlias = FlextModelsContext.ContextData
 
 
 # =========================================================================

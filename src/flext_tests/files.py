@@ -365,17 +365,14 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # Extract from FlextResult BEFORE validation if extract_result=True
         # This ensures CreateParams receives the unwrapped content, not the FlextResult
         content_to_validate = content
-        if extract_result and u.is_type(content, "result"):
-            # u.is_type("result") narrows type to FlextResult
-            content_result: r[core_t.FileContent] = (
-                content  # Already narrowed by type guard
-            )
-            if content_result.is_failure:
-                error_msg = content_result.error or "FlextResult failure"
+        if extract_result and isinstance(content, r):
+            # isinstance narrows type to FlextResult for pyrefly
+            if content.is_failure:
+                error_msg = content.error or "FlextResult failure"
                 raise ValueError(
                     f"Cannot create file from failed FlextResult: {error_msg}",
                 )
-            content_to_validate = content_result.value
+            content_to_validate = content.value
 
         # Validate and compute parameters using CreateParams model with u.Model.from_kwargs()
         # All parameters validated via Pydantic 2 Field constraints (ge, min_length, max_length) - no manual validation
@@ -411,31 +408,34 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             actual_content = u.Model.to_dict(actual_content)
 
         # Auto-detect format using utilities
-        # Convert Sequence[Sequence[str]] to list[list[str]] if needed for type compatibility
-        content_for_detect: str | bytes | t.ConfigurationMapping | list[list[str]]
-        if u.is_type(actual_content, "sequence") and not isinstance(
-            actual_content,
-            (str, bytes),
-        ):
-            # Convert nested Sequence to list[list[str]] for type compatibility
-            # Runtime check needed to distinguish nested sequences from flat sequences
-            if all(u.is_type(row, "sequence") for row in actual_content):
-                content_for_detect = [list(row) for row in actual_content]
-            else:
-                # Not a nested sequence - already checked types above
-                content_for_detect = actual_content
-        elif u.is_type(actual_content, "mapping") or isinstance(actual_content, dict):
-            # Mapping content - already narrowed by isinstance
+        # Build content_for_detect with explicit type handling for pyrefly
+        content_for_detect: str | bytes | Mapping[str, object] | list[list[str]]
+        if isinstance(actual_content, (str, bytes, dict)):
             content_for_detect = actual_content
-        elif isinstance(actual_content, (str, bytes)):
-            # String/bytes content
-            content_for_detect = actual_content
+        elif isinstance(actual_content, Mapping):
+            # Convert Mapping to dict for type safety
+            content_for_detect = dict(actual_content)
         elif isinstance(actual_content, BaseModel):
             # BaseModel - convert to dict first for detection
             content_for_detect = u.Model.dump(actual_content)
+        elif isinstance(actual_content, list):
+            # List - check if nested for CSV
+            if actual_content and isinstance(actual_content[0], (list, tuple)):
+                # Nested list/tuple of rows - convert each cell to str for CSV format
+                content_for_detect = [
+                    [str(cell) for cell in row]
+                    for row in actual_content
+                    if isinstance(row, (list, tuple))
+                ]
+            else:
+                # Flat list - convert to string representation
+                content_for_detect = str(actual_content)
+        elif isinstance(actual_content, tuple):
+            # Tuple - convert to string representation
+            content_for_detect = str(actual_content)
         else:
-            # Fallback - content is already compatible with expected union
-            content_for_detect = actual_content
+            # Fallback - convert to string
+            content_for_detect = str(actual_content)
         actual_fmt = u.Tests.Files.detect_format(
             content_for_detect,
             params.name,

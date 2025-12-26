@@ -219,13 +219,14 @@ class FlextService[TDomainResult](
         runtime_config = config_cls.model_validate(config_overrides or {})
 
         # 2. Context creation with initial data
-        # FlextContext implements Ctx protocol structurally
-        # Assign to p.Ctx type - mypy verifies protocol conformance
+        # context parameter is t.ContextLike (minimal protocol)
+        # Use TypeGuard to narrow to p.Ctx (full protocol with set method)
         runtime_context_typed: p.Ctx
-        if context is not None:
+        if context is not None and u.is_context(context):
+            # TypeGuard narrowed to p.Ctx - use directly
             runtime_context_typed = context
         else:
-            # FlextContext.create() returns FlextContext which implements p.Ctx
+            # Minimal ContextLike or None - create full context
             runtime_context_typed = FlextContext.create()
 
         # 3. Container creation with registrations
@@ -270,7 +271,6 @@ class FlextService[TDomainResult](
         config_type_val: type[FlextSettings] | None
         if (
             config_type_raw is not None
-            and isinstance(config_type_raw, type)
             and issubclass(config_type_raw, FlextSettings)
         ):
             config_type_val = config_type_raw
@@ -280,11 +280,11 @@ class FlextService[TDomainResult](
         # config_overrides: TypedDict typed as Mapping[str, FlexibleValue]
         config_overrides_val = options.get("config_overrides")
 
-        # context: TypedDict typed as ContextLike, narrowed to p.Ctx via TypeGuard
-        context_raw = options.get("context")
-        context_val: p.Ctx | None = None
-        if context_raw is not None and u.is_context(context_raw):
-            context_val = context_raw
+        # context: TypedDict typed as ContextLike - narrow to p.Ctx using isinstance
+        context_val_raw = options.get("context")
+        context_val: p.Ctx | None = (
+            context_val_raw if isinstance(context_val_raw, p.Ctx) else None
+        )
 
         # subproject: TypedDict typed as str
         subproject_val = options.get("subproject")

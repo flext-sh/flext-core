@@ -67,7 +67,10 @@ def _handler_type_to_literal(
             return "operation"
         case c.Cqrs.HandlerType.SAGA:
             return "saga"
-        # All HandlerType values are covered above
+        case _:
+            # All valid HandlerType values are covered above
+            # This case is for type safety - should never be reached
+            return "command"
 
 
 # Import moved to top of file to avoid circular dependency
@@ -269,12 +272,16 @@ class FlextHandlers[MessageT_contra, ResultT](
                         return r[t.GeneralValueType].fail(
                             "Message is not a valid GeneralValueType",
                         )
-                    # Type guard ensures message is GeneralValueType
-                    assert isinstance(
+                    # Type guard already validated - use isinstance for narrowing
+                    if isinstance(
                         message,
                         (str, int, float, bool, type(None), dict, list, BaseModel),
-                    )
-                    result = self._handler_fn(message)
+                    ):
+                        result = self._handler_fn(message)
+                    else:
+                        return r[t.GeneralValueType].fail(
+                            f"Unexpected message type: {type(message).__name__}",
+                        )
                     # If result is already r, return it directly
                     if isinstance(result, r):
                         return result
@@ -887,9 +894,9 @@ class FlextHandlers[MessageT_contra, ResultT](
                         c.Discovery.HANDLER_ATTR,
                     )
                     # Type narrowing after guard check
-                    assert callable(func)  # Guard ensures this
-                    narrowed_func: t.HandlerCallable = func
-                    handlers.append((name, narrowed_func, config))
+                    if callable(func):
+                        narrowed_func: t.HandlerCallable = func
+                        handlers.append((name, narrowed_func, config))
 
             # Sort by priority (descending), then by name for stability
             return sorted(

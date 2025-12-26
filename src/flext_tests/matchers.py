@@ -58,6 +58,7 @@ import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
+from typing import TypeGuard, cast
 
 from pydantic import BaseModel
 
@@ -66,6 +67,17 @@ from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.typings import t
 from flext_tests.utilities import u
+
+
+def _is_key_value_pair[TK, TV](
+    item: tuple[TK, TV] | Sequence[tuple[TK, TV]],
+) -> TypeGuard[tuple[TK, TV]]:
+    """TypeGuard to check if item is a single (key, value) tuple, not a sequence of tuples."""
+    return (
+        isinstance(item, tuple)
+        and len(item) == 2
+        and not isinstance(item[0], tuple)
+    )
 
 
 class FlextTestsMatchers:
@@ -364,9 +376,9 @@ class FlextTestsMatchers:
             return result.value
         # Path extraction case - result_value is GeneralValueType
         # Caller expects TResult but path extraction changes the type
-        # Return validated value, caller must handle type appropriately
-        validated_result: TResult = result.value  # Return original TResult
-        return validated_result
+        # Return extracted value - type system sees TResult but runtime value is extracted
+        # Cast is intentional: caller requested path extraction and should expect extracted type
+        return cast("TResult", result_value)
 
     @staticmethod
     def fail[TResult](
@@ -1408,25 +1420,28 @@ class FlextTestsMatchers:
                     raise AssertionError(msg or f"Value {val!r} should not be in dict")
 
         if key_equals is not None:
-            pairs_to_check: list[tuple[TK, TV]]
-            # Check for single tuple first (tuple is a Sequence, so order matters)
-            if isinstance(key_equals, tuple) and len(key_equals) == 2:
-                # Single tuple: (key, value) - already tuple[TK, TV] from type annotation
-                # No cast needed - type is guaranteed by function signature
-                pairs_to_check = [key_equals]
-            else:
-                # Sequence of tuples - mypy understands Sequence[tuple[TK, TV]] from type annotation
-                # Since tuple is a Sequence, this branch handles all non-single-tuple cases
-                # Type annotation ensures items are tuple[TK, TV], no cast needed
-                pairs_to_check = list(key_equals)
-            for key, expected_value in pairs_to_check:
-                if key not in data:
-                    raise AssertionError(msg or f"Key {key!r} not found in dict")
-                if data[key] != expected_value:
+            # key_equals is tuple[TK, TV] | Sequence[tuple[TK, TV]]
+            # Use TypeGuard for proper type narrowing
+            if _is_key_value_pair(key_equals):
+                # TypeGuard narrows to tuple[TK, TV]
+                key_item, expected_item = key_equals
+                if key_item not in data:
+                    raise AssertionError(msg or f"Key {key_item!r} not found in dict")
+                if data[key_item] != expected_item:
                     raise AssertionError(
-                        msg
-                        or f"Key '{key}': expected {expected_value}, got {data[key]}",
+                        msg or f"Key '{key_item}': expected {expected_item}, got {data[key_item]}",
                     )
+            else:
+                # Sequence of tuples - validate each pair
+                for pair in key_equals:
+                    if isinstance(pair, tuple) and len(pair) == 2:
+                        pair_key, pair_val = pair
+                        if pair_key not in data:
+                            raise AssertionError(msg or f"Key {pair_key!r} not found in dict")
+                        if data[pair_key] != pair_val:
+                            raise AssertionError(
+                                msg or f"Key '{pair_key}': expected {pair_val}, got {data[pair_key]}",
+                            )
 
         if contains is not None:
             for key, val in contains.items():

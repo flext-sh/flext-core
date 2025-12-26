@@ -40,7 +40,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel
 
@@ -124,7 +124,7 @@ class FlextUtilitiesCache:
             }
         # component is already t.GeneralValueType (not BaseModel)
         # Check if dict-like
-        if FlextRuntime.is_dict_like(component) and isinstance(component, Mapping):
+        if FlextRuntime.is_dict_like(component):
             # Type narrowing: component is now Mapping[str, t.GeneralValueType]
             # Convert to dict for consistent iteration
             dict_component: dict[str, t.GeneralValueType] = dict(component.items())
@@ -222,7 +222,7 @@ class FlextUtilitiesCache:
             Sorted dict if input is dict-like, unchanged otherwise
 
         """
-        if FlextRuntime.is_dict_like(data) and isinstance(data, Mapping):
+        if FlextRuntime.is_dict_like(data):
             # Type narrowing: data is now Mapping[str, t.GeneralValueType]
             result: t.ConfigurationDict = {}
             for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):

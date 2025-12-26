@@ -51,15 +51,43 @@ class FlextContext(FlextRuntime):
         ctx_value: object,
     ) -> t.ConfigurationDict:
         """Safely narrow contextvar value to ConfigurationDict with runtime validation."""
-        # Use type narrowing: u.is_type() checks if value is dict, then narrow to ConfigurationDict
-        ctx_value_raw = ctx_value if u.is_type(ctx_value, dict) else {}
-        # Type narrowing: ctx_value_raw is dict after u.is_type check
-        # Use isinstance to narrow to ConfigurationDict (dict[str, t.GeneralValueType])
-        if isinstance(ctx_value_raw, dict) and all(
-            isinstance(k, str) for k in ctx_value_raw
-        ):
-            return ctx_value_raw
-        return {}
+        # Runtime type check and narrowing
+        if not isinstance(ctx_value, dict):
+            return {}
+
+        # Validate all keys are strings - avoid direct iteration in all()
+        keys_valid: bool = True
+        for key_to_check in ctx_value:
+            if not isinstance(key_to_check, str):
+                keys_valid = False
+                break
+        if not keys_valid:
+            return {}
+
+        # Build result with normalized values - safe type conversion
+        result: t.ConfigurationDict = {}
+        for key_obj in ctx_value:
+            if isinstance(key_obj, str):
+                value_obj: object = ctx_value[key_obj]
+                # Safe conversion - object to GeneralValueType via normalization
+                try:
+                    # value_obj is object, normalize_to_general_value accepts t.GeneralValueType
+                    # Use getattr pattern for safe access
+                    general_value: t.GeneralValueType = (
+                        FlextRuntime.normalize_to_general_value(
+                            value_obj
+                            if isinstance(
+                                value_obj,
+                                (str, int, float, bool, list, dict, type(None)),
+                            )
+                            else str(value_obj)
+                        )
+                    )
+                    result[key_obj] = general_value
+                except (TypeError, ValueError):
+                    # Skip invalid values that can't be normalized
+                    continue
+        return result
 
     # =========================================================================
     # HELPER METHODS (moved from module level for SRP compliance)
@@ -78,7 +106,9 @@ class FlextContext(FlextRuntime):
 
     def __init__(
         self,
-        initial_data: m.Context.ContextData | t.ConfigurationDict | None = None,
+        initial_data: (
+            FlextModelsContext.ContextData | t.ConfigurationDict | None
+        ) = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -92,30 +122,34 @@ class FlextContext(FlextRuntime):
         """
         super().__init__()
         # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
-        # Type narrowing: always create m.Context.ContextData instance
+        # Type narrowing: always create FlextModelsContext.ContextData instance
         if isinstance(initial_data, dict):
             # Type narrowing: initial_data is t.ConfigurationDict
             initial_dict: t.ConfigurationDict = initial_data
             # Simple dict normalization - no transform available yet
-            normalized_data = {
+            normalized_data: t.ConfigurationDict = {
                 str(k): FlextRuntime.normalize_to_general_value(v)
                 for k, v in initial_dict.items()
             }
-            context_data = m.Context.ContextData(data=normalized_data)
-        elif isinstance(initial_data, m.Context.ContextData):
+            context_data: FlextModelsContext.ContextData = (
+                FlextModelsContext.ContextData(data=normalized_data)
+            )
+        elif isinstance(initial_data, FlextModelsContext.ContextData):
             # Already a ContextData instance (not dict, not None)
             context_data = initial_data
         else:
             # None or uninitialized - create empty ContextData
-            context_data = m.Context.ContextData()
+            context_data = FlextModelsContext.ContextData()
         # Initialize context-specific metadata (separate from ContextData.metadata)
         # ContextData.metadata = generic creation/modification metadata (m.Metadata)
         # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
         self._metadata = m.Metadata()
 
         self._hooks: t.StringHandlerCallableListDict = {}
-        # Use Facade model for statistics to ensure instance checks pass in tests
-        self._statistics: m.ContextStatistics = m.ContextStatistics()
+        # Use nested class from FlextModelsContext
+        self._statistics: FlextModelsContext.ContextStatistics = (
+            FlextModelsContext.ContextStatistics()
+        )
         self._active = True
         self._suspended = False
 
@@ -154,7 +188,9 @@ class FlextContext(FlextRuntime):
     @classmethod
     def create(
         cls,
-        initial_data: m.Context.ContextData | t.ConfigurationDict | None = None,
+        initial_data: (
+            FlextModelsContext.ContextData | t.ConfigurationDict | None
+        ) = None,
     ) -> Self: ...
 
     @overload
@@ -170,7 +206,9 @@ class FlextContext(FlextRuntime):
     @classmethod
     def create(
         cls,
-        initial_data: m.Context.ContextData | t.ConfigurationDict | None = None,
+        initial_data: (
+            FlextModelsContext.ContextData | t.ConfigurationDict | None
+        ) = None,
         *,
         operation_id: str | None = None,
         user_id: str | None = None,
@@ -239,12 +277,14 @@ class FlextContext(FlextRuntime):
         ):
             # Convert initial_data to dict if needed
             if isinstance(initial_data, dict):
-                initial_data_dict = initial_data.copy()
+                initial_data_dict_new: t.ConfigurationDict = initial_data.copy()
             else:
-                initial_data_dict = {}
+                initial_data_dict_new = {}
             # Add auto-generated correlation_id
-            initial_data_dict[c.Context.KEY_OPERATION_ID] = u.generate("correlation")
-            return cls(initial_data=initial_data_dict)
+            initial_data_dict_new[c.Context.KEY_OPERATION_ID] = u.generate(
+                "correlation",
+            )
+            return cls(initial_data=initial_data_dict_new)
         return cls(initial_data=initial_data)
 
     # =========================================================================
@@ -317,20 +357,19 @@ class FlextContext(FlextRuntime):
         """Update statistics counter for an operation (DRY helper).
 
         Args:
-            operation: Operation name ('set', 'get', 'remove', etc.)
+            operation: Operation name ('set', 'get', 'remove', etc')
 
         """
         # Update primary counter using attribute name
-        counter_attr = f"{operation}s"
+        counter_attr: str = f"{operation}s"
         if hasattr(self._statistics, counter_attr):
-            current_value = getattr(self._statistics, counter_attr, 0)
-            # Direct increment if current_value is int (statistics fields are always int)
-            if isinstance(current_value, int):
-                setattr(self._statistics, counter_attr, current_value + 1)
+            current_value: int = getattr(self._statistics, counter_attr, 0)
+            # Direct increment (statistics fields are always int)
+            setattr(self._statistics, counter_attr, current_value + 1)
 
         # Update operations dict if exists
         if operation in self._statistics.operations:
-            value = self._statistics.operations[operation]
+            value: t.GeneralValueType = self._statistics.operations[operation]
             # Direct increment if value is int
             if isinstance(value, int):
                 self._statistics.operations[operation] = value + 1
@@ -663,7 +702,9 @@ class FlextContext(FlextRuntime):
         # Update statistics using model (type-safe, no .get() needed)
         self._statistics.clears += 1
         if c.Context.OPERATION_CLEAR in self._statistics.operations:
-            clear_value = self._statistics.operations[c.Context.OPERATION_CLEAR]
+            clear_value: t.GeneralValueType = self._statistics.operations[
+                c.Context.OPERATION_CLEAR
+            ]
             if isinstance(clear_value, int):
                 self._statistics.operations[c.Context.OPERATION_CLEAR] = clear_value + 1
 
@@ -772,7 +813,10 @@ class FlextContext(FlextRuntime):
                     pass
         # Clone metadata and statistics using public methods
         cloned.set_all_metadata_for_clone(self._metadata.model_copy())
-        cloned.set_statistics_for_clone(self._statistics.model_copy())
+        statistics_copy: FlextModelsContext.ContextStatistics = (
+            self._statistics.model_copy()
+        )
+        cloned.set_statistics_for_clone(statistics_copy)
 
         # Type narrowing: cloned is FlextContext which implements p.Ctx protocol
         # FlextContext structurally implements p.Ctx, so no cast needed
@@ -884,14 +928,16 @@ class FlextContext(FlextRuntime):
                 """Normalize value to t.GeneralValueType."""
                 return FlextRuntime.normalize_to_general_value(value)
 
-            normalized_data = u.transform_values(
+            normalized_data_for_json: t.ConfigurationDict = u.transform_values(
                 data,
                 transformer=normalize_value,
             )
-            context_data = m.Context.ContextData(data=normalized_data)
-            # Type narrowing: cls(initial_data=context_data) returns FlextContext which implements p.Ctx protocol
+            context_data_for_json: FlextModelsContext.ContextData = (
+                FlextModelsContext.ContextData(data=normalized_data_for_json)
+            )
+            # Type narrowing: cls(initial_data=context_data_for_json) returns FlextContext which implements p.Ctx protocol
             # FlextContext structurally implements p.Ctx, so no cast needed
-            return cls(initial_data=context_data)
+            return cls(initial_data=context_data_for_json)
         except json.JSONDecodeError as e:
             msg = f"Invalid JSON string: {e}"
             raise ValueError(msg) from e
@@ -959,53 +1005,47 @@ class FlextContext(FlextRuntime):
 
         """
         all_data: t.ConfigurationDict = {}
-        stats_dict: t.ConfigurationDict | None = None
-        metadata_dict: t.ConfigurationDict | None = None
 
         # Collect all scope data
         all_scopes = self._get_all_scopes()
         all_data = dict(all_scopes)
 
         # Collect statistics if requested
+        stats_dict_export: t.ConfigurationDict | None = None
         if include_statistics and self._statistics:
-            stats_dict = self._statistics.model_dump()
+            stats_dict_export = self._statistics.model_dump()
 
         # Collect metadata if requested
+        metadata_dict_export: t.ConfigurationDict | None = None
         if include_metadata:
-            metadata_dict = self._get_all_metadata()
+            metadata_dict_export = self._get_all_metadata()
 
-        # Normalize metadata_dict values to t.MetadataAttributeValue
-        normalized_metadata: t.MetadataAttributeDict | None = None
-        if metadata_dict:
-            normalized_metadata = {
+        # Normalize metadata_dict values to MetadataAttributeDict
+        metadata_for_model: t.MetadataAttributeDict | None = None
+        if metadata_dict_export:
+            # Convert ConfigurationDict to MetadataAttributeDict
+            metadata_for_model = {
                 k: FlextRuntime.normalize_to_metadata_value(v)
-                for k, v in metadata_dict.items()
+                for k, v in metadata_dict_export.items()
             }
-
-        # TypeGuard-based narrowing - is_configuration_dict returns TypeGuard[ConfigurationDict]
-        metadata_general: t.ConfigurationDict | None = (
-            normalized_metadata
-            if u.is_configuration_dict(normalized_metadata)
-            else None
-        )
 
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, t.GeneralValueType])
-        statistics_mapping: t.ContextMetadataMapping = stats_dict or {}
+        statistics_mapping: t.ContextMetadataMapping = stats_dict_export or {}
 
         # Return as dict if requested
         if as_dict:
             result_dict: t.ConfigurationDict = all_data.copy()
-            if include_statistics and stats_dict:
-                result_dict["statistics"] = stats_dict
-            if include_metadata and metadata_dict:
-                result_dict["metadata"] = metadata_dict
+            if include_statistics and stats_dict_export:
+                result_dict["statistics"] = stats_dict_export
+            if include_metadata and metadata_dict_export:
+                result_dict["metadata"] = metadata_dict_export
             return result_dict
 
-        return m.ContextExport(
+        return FlextModelsContext.ContextExport(
             data=all_data,
-            metadata=m.Metadata(attributes=metadata_general)
-            if metadata_general
+            metadata=m.Metadata(attributes=metadata_for_model)
+            if metadata_for_model
             else None,
             statistics=statistics_mapping,
         )
@@ -1097,9 +1137,13 @@ class FlextContext(FlextRuntime):
             value: The metadata value
 
         """
+        # Normalize value to MetadataAttributeValue before setting
+        normalized_value: t.MetadataAttributeValue = (
+            FlextRuntime.normalize_to_metadata_value(value)
+        )
         # Directly update attributes dict to avoid deprecation warning
         # and object recreation
-        self._metadata.attributes[key] = value
+        self._metadata.attributes[key] = normalized_value
 
     def get_metadata(self, key: str) -> r[t.GeneralValueType]:
         """Get metadata from the context.
@@ -1128,18 +1172,16 @@ class FlextContext(FlextRuntime):
             >>> value = context.get_metadata("key").unwrap_or("default")
 
         """
-        custom_fields = (
-            self._metadata.attributes
-            if FlextRuntime.is_dict_like(self._metadata.attributes)
-            else {}
-        )
-
-        if key not in custom_fields:
+        # Access attributes directly - it's a dict[str, MetadataAttributeValue]
+        if key not in self._metadata.attributes:
             return r[t.GeneralValueType].fail(f"Metadata key '{key}' not found")
 
-        # Use FlextRuntime.normalize_to_general_value directly - no wrapper needed
-        value = custom_fields[key]
-        normalized_value = FlextRuntime.normalize_to_general_value(value)
+        # MetadataAttributeValue is a subset of GeneralValueType, safe to use
+        value: t.MetadataAttributeValue = self._metadata.attributes[key]
+        # Convert MetadataAttributeValue to GeneralValueType
+        normalized_value: t.GeneralValueType = FlextRuntime.normalize_to_general_value(
+            value
+        )
         return r[t.GeneralValueType].ok(normalized_value)
 
     def _get_all_data(self) -> t.ConfigurationDict:
@@ -1158,7 +1200,7 @@ class FlextContext(FlextRuntime):
             all_data.update(scope_dict)
         return all_data
 
-    def _get_statistics(self) -> m.ContextStatistics:
+    def _get_statistics(self) -> FlextModelsContext.ContextStatistics:
         """Get context statistics.
 
         Returns:
@@ -1167,7 +1209,10 @@ class FlextContext(FlextRuntime):
         """
         return self._statistics
 
-    def set_statistics_for_clone(self, statistics: m.ContextStatistics) -> None:
+    def set_statistics_for_clone(
+        self,
+        statistics: FlextModelsContext.ContextStatistics,
+    ) -> None:
         """Set context statistics (used internally for cloning).
 
         Args:
@@ -1205,14 +1250,19 @@ class FlextContext(FlextRuntime):
 
         """
         # Convert Pydantic model to dict
-        data = self._metadata.model_dump()
+        data: dict[str, t.GeneralValueType] = self._metadata.model_dump()
         # Extract and flatten custom_fields into result
-        custom_fields = data.pop("custom_fields", {}) or {}
+        custom_fields_raw: t.GeneralValueType = data.pop("custom_fields", {}) or {}
+        # Type guard for dictionary
+        if not isinstance(custom_fields_raw, dict):
+            custom_fields_dict: t.ConfigurationDict = {}
+        else:
+            custom_fields_dict = custom_fields_raw
         result: t.ConfigurationDict = {
             k: v for k, v in data.items() if v is not None and v != {}
         }
         # Merge custom_fields at top level (custom_fields take precedence)
-        result.update(custom_fields)
+        result.update(custom_fields_dict)
         return result
 
     def _get_all_scopes(self) -> t.StringConfigurationDictDict:
@@ -1234,7 +1284,7 @@ class FlextContext(FlextRuntime):
                 scopes[scope_name] = scope_dict
         return scopes
 
-    def _export_snapshot(self) -> m.ContextExport:
+    def _export_snapshot(self) -> FlextModelsContext.ContextExport:
         """Export context snapshot.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -1244,38 +1294,32 @@ class FlextContext(FlextRuntime):
 
         """
         # Get all data
-        all_data = self._get_all_data()
+        all_data: t.ConfigurationDict = self._get_all_data()
 
         # Get metadata as dict
-        metadata_dict = self._get_all_metadata()
+        metadata_dict: t.ConfigurationDict = self._get_all_metadata()
 
-        # Normalize metadata_dict values to t.MetadataAttributeValue
-        normalized_metadata: t.MetadataAttributeDict | None = None
+        # Normalize metadata values to MetadataAttributeDict
+        metadata_for_model: t.MetadataAttributeDict | None = None
         if metadata_dict:
-            normalized_metadata = {}
-            for k, v in metadata_dict.items():
-                # Normalize t.GeneralValueType to t.MetadataAttributeValue
-                normalized_metadata[k] = FlextRuntime.normalize_to_metadata_value(v)
-
-        # TypeGuard-based narrowing - is_configuration_dict returns TypeGuard[ConfigurationDict]
-        metadata_general: t.ConfigurationDict | None = (
-            normalized_metadata
-            if u.is_configuration_dict(normalized_metadata)
-            else None
-        )
+            # Convert ConfigurationDict to MetadataAttributeDict
+            metadata_for_model = {
+                k: FlextRuntime.normalize_to_metadata_value(v)
+                for k, v in metadata_dict.items()
+            }
 
         # Get statistics as dict
-        stats_dict: t.ConfigurationDict = {}
+        stats_dict_raw: t.ConfigurationDict = {}
         if hasattr(self._statistics, "model_dump"):
-            stats_dict = self._statistics.model_dump()
+            stats_dict_raw = self._statistics.model_dump()
 
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, t.GeneralValueType])
-        statistics_mapping: t.ContextMetadataMapping = stats_dict or {}
-        return m.ContextExport(
+        statistics_mapping: t.ContextMetadataMapping = stats_dict_raw or {}
+        return FlextModelsContext.ContextExport(
             data=all_data,
-            metadata=m.Metadata(attributes=metadata_general)
-            if metadata_general
+            metadata=m.Metadata(attributes=metadata_for_model)
+            if metadata_for_model
             else None,
             statistics=statistics_mapping,
         )
@@ -1576,7 +1620,7 @@ class FlextContext(FlextRuntime):
         @staticmethod
         def get_service(
             service_name: str,
-        ) -> p.ResultLike[t.GeneralValueType]:
+        ) -> r[t.GeneralValueType]:
             """Resolve service from global container using FlextResult.
 
             Provides unified service resolution pattern across the ecosystem
@@ -1596,8 +1640,31 @@ class FlextContext(FlextRuntime):
 
             """
             # get_container is a classmethod on FlextContext, access via class
-            container = FlextContext.get_container()
-            return container.get(service_name)
+            container: p.DI = FlextContext.get_container()
+            # Container.get returns p.ResultLike[RegisterableService]
+            # We need to convert to r[GeneralValueType]
+            service_result: p.ResultLike[object] = container.get(service_name)
+            # Convert protocol result to concrete FlextResult
+            if service_result.is_success:
+                # Service value might be RegisterableService
+                service_value: object = service_result.value
+                # Use TypeGuard to narrow to GeneralValueType
+                if u.Guards.is_general_value_type(service_value):
+                    return r[t.GeneralValueType].ok(service_value)
+                # If not a GeneralValueType, try normalization
+                # Convert using isinstance check for safe types
+                safe_value: t.GeneralValueType = (
+                    service_value
+                    if isinstance(
+                        service_value,
+                        (str, int, float, bool, list, dict, type(None)),
+                    )
+                    else str(service_value)
+                )
+                return r[t.GeneralValueType].ok(safe_value)
+            return r[t.GeneralValueType].fail(
+                service_result.error or "Service not found",
+            )
 
         @staticmethod
         def register_service(

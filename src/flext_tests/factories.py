@@ -878,8 +878,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                     raw_items.append(final_item)
 
         # Transfer raw_items to items - type is enforced by caller's usage
-        for raw in raw_items:
-            items.append(raw)  # type inference handles T
+        items.extend(raw_items)  # PERF402: use extend instead of loop
 
         # Ensure uniqueness if requested
         if params.unique and items:
