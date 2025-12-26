@@ -102,22 +102,15 @@ class FlextUtilitiesReliability:
         result_raw: r[TResult] | TResult,
     ) -> r[TResult]:
         """Convert operation result to RuntimeResult."""
-        # Check if result_raw is a RuntimeResult by checking for is_success/is_failure attributes
-        # Structural typing validates: if it has Result interface, treat as Result
-        has_result_interface = (
-            hasattr(result_raw, "is_success")
-            and hasattr(result_raw, "is_failure")
-            and callable(getattr(result_raw, "unwrap", None))
-        )
-        if has_result_interface:
-            # Type narrowing: result_raw has RuntimeResult structure (is_success, is_failure, unwrap)
-            # Structural typing validates this is a Result type - return directly
-            # Python's structural typing allows this without explicit cast
+        # Check if result_raw is already a FlextResult
+        if isinstance(result_raw, r):
+            # result_raw is a FlextResult - return as-is
             return result_raw
 
-        # Type narrowing: result_raw is not a Result - must be TResult
-        # Wrap the value in a successful Result
-        return r[TResult].ok(result_raw)
+        # result_raw is a plain value - wrap in successful Result
+        # Safe to call ok() because at this point result_raw is TResult
+        value: TResult = result_raw  # Explicit type annotation for mypy
+        return r[TResult].ok(value)
 
     @staticmethod
     def retry[TResult](
@@ -369,30 +362,21 @@ class FlextUtilitiesReliability:
             try:
                 result = op(current)
 
-                # Unwrap r if returned - use structural typing check
-                has_result_interface = (
-                    hasattr(result, "is_success")
-                    and hasattr(result, "is_failure")
-                    and hasattr(result, "value")
-                )
-                if has_result_interface:
-                    # Structural typing: result has Result interface methods
-                    # result implements Result protocol - access via protocol
-                    result_typed: p.Result[object] = result
-                    if result_typed.is_failure:
+                # Unwrap FlextResult if returned - use isinstance for proper narrowing
+                if isinstance(result, r):
+                    # result is FlextResult - check for failure
+                    if result.is_failure:
                         if on_error == "stop":
-                            err_msg = result_typed.error or "Unknown error"
+                            err_msg = result.error or "Unknown error"
                             return r[object].fail(
                                 f"Pipeline step {i} failed: {err_msg}",
                             )
                         # on_error == "skip": continue with previous value
-                        # Type narrowing: current remains unchanged (previous value)
                         continue
-                    # Type narrowing: result.is_success is True, so result.value is valid
-                    # Extract value from Result - result_typed implements Result protocol
-                    current = result_typed.value
+                    # Extract value from successful Result
+                    current = result.value
                 else:
-                    # Type annotation: result is object (non-RuntimeResult return)
+                    # result is plain object (not FlextResult)
                     current = result
 
             except Exception as e:
@@ -625,6 +609,36 @@ class FlextUtilitiesReliability:
         if result.is_success:
             func(result.value)
         return result
+
+    @staticmethod
+    def flow_through[T, U](
+        result: r[T | U],
+        *funcs: Callable[[T | U], r[T | U]],
+    ) -> r[T | U]:
+        """Chain multiple operations in a pipeline.
+
+        Args:
+            result: Initial result to start the pipeline
+            *funcs: Functions to chain, each takes value and returns result
+
+        Returns:
+            Final result after all operations
+
+        Example:
+            result = u.flow_through(
+                initial_result,
+                validate_user,
+                save_user,
+                notify_user,
+            )
+
+        """
+        current_result = result
+        for func in funcs:
+            if current_result.is_failure:
+                break
+            current_result = func(current_result.value)
+        return current_result
 
 
 __all__ = ["FlextUtilitiesReliability"]

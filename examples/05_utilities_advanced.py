@@ -312,7 +312,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
         # Convert to int safe using parse()
         int_result = u.Parser.parse("123", int, default=0)
         print(
-            f"✅ Safe int conversion: '123' → {int_result.value if int_result.is_success else 0}",
+            f"✅ Safe int conversion: '123' → {int_result.map_or(0)}",
         )
 
         # Build flags dict

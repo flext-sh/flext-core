@@ -3,16 +3,14 @@
 This module provides a unified entry point to all FLEXT utility functionality.
 All methods are delegated to specialized classes in _utilities/ submodules.
 
+IMPORTANT: This file contains ONLY aliases - NO local method implementations.
+All implementations are in _utilities/*.py modules.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
-import re
-from collections.abc import Callable, Mapping, Sequence, Sized
-from enum import StrEnum
-from typing import TypeIs, overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
@@ -21,10 +19,7 @@ from flext_core._utilities.checker import FlextUtilitiesChecker
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.configuration import FlextUtilitiesConfiguration
 from flext_core._utilities.context import FlextUtilitiesContext
-from flext_core._utilities.conversion import (
-    FlextUtilitiesConversion,
-    conversion,
-)
+from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
 from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.enum import FlextUtilitiesEnum, enum
@@ -37,11 +32,7 @@ from flext_core._utilities.parser import FlextUtilitiesParser
 from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core._utilities.text import FlextUtilitiesText
 from flext_core._utilities.validation import FlextUtilitiesValidation
-from flext_core._utilities.validators import ValidatorDSL, ValidatorSpec
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilities:
@@ -50,6 +41,8 @@ class FlextUtilities:
     This class provides access to specialized utility classes through
     class attributes. All functionality is delegated to the appropriate
     specialized class.
+
+    IMPORTANT: This file contains ONLY aliases - NO local method implementations.
 
     Usage:
         from flext_core import FlextUtilities
@@ -64,12 +57,16 @@ class FlextUtilities:
         result = u.Parser.parse(value, int)
     """
 
-    # === FACADE ATTRIBUTES - Real inheritance classes ===
+    # === FACADE CLASSES - Real inheritance ===
+
     class Args(FlextUtilitiesArgs):
         """Args utility class - real inheritance."""
 
     class Cache(FlextUtilitiesCache):
         """Cache utility class - real inheritance."""
+
+    class Cast(FlextUtilitiesCast):
+        """Cast utility class - real inheritance."""
 
     class Checker(FlextUtilitiesChecker):
         """Checker utility class - real inheritance."""
@@ -79,9 +76,6 @@ class FlextUtilities:
 
     class Configuration(FlextUtilitiesConfiguration):
         """Configuration utility class - real inheritance."""
-
-    class Cast(FlextUtilitiesCast):
-        """Cast utility class - real inheritance."""
 
     class Context(FlextUtilitiesContext):
         """Context utility class - real inheritance."""
@@ -98,279 +92,11 @@ class FlextUtilities:
     class Enum(FlextUtilitiesEnum):
         """Enum utility class - real inheritance."""
 
-    # Generalized public function aliases
-    enum = staticmethod(enum)
-    conversion = staticmethod(conversion)
-
-    # Convenience shortcuts for common operations
-    @staticmethod
-    def is_enum_member[E: StrEnum](value: object, enum_cls: type[E]) -> TypeIs[E]:
-        """Check if value is enum member. Alias for enum(value, cls, mode='is_member')."""
-        return enum(value, enum_cls, mode="is_member")
-
-    @staticmethod
-    def parse_enum[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
-        """Parse value to enum. Alias for enum(value, cls, mode='parse')."""
-        return enum(value, enum_cls, mode="parse")
-
-    @staticmethod
-    def get_enum_values(enum_class: type[StrEnum]) -> Sequence[str]:
-        """Get all values from StrEnum class.
-
-        Returns immutable sequence for safe iteration.
-        Python 3.13+ collections.abc.Sequence pattern.
-        Uses enum.__members__ for compatibility with all type checkers.
-
-        Args:
-            enum_class: StrEnum class to extract values from
-
-        Returns:
-            Immutable sequence of enum string values
-
-        """
-        return FlextUtilitiesEnum.get_enum_values(enum_class)
-
-    @staticmethod
-    def create_discriminated_union(
-        discriminator_field: str,
-        *enum_classes: type[StrEnum],
-    ) -> dict[str, type[StrEnum]]:
-        """Create discriminated union mapping for Pydantic models.
-
-        Advanced pattern for discriminated unions with multiple enums.
-        Enables efficient validation with Field(discriminator=discriminator_field).
-        Python 3.13+ discriminated union best practice.
-
-        This is a generic utility that extends FlextConstants.create_discriminated_union
-        with discriminator field support for Pydantic models.
-
-        Args:
-            discriminator_field: Field name used as discriminator
-            *enum_classes: StrEnum classes to include in union
-
-        Returns:
-            Mapping of discriminator values to enum classes
-
-        """
-        return FlextUtilitiesEnum.create_discriminated_union(
-            discriminator_field,
-            *enum_classes,
-        )
-
-    @staticmethod
-    def create_enum(name: str, values: dict[str, str]) -> type[StrEnum]:
-        """Create StrEnum dynamically from values dict.
-
-        Factory method for reducing StrEnum boilerplate during constants refactoring.
-        Enables transitioning from class definitions to alias-based constants.
-
-        Python 3.13+ recommended pattern for dynamic enum creation.
-
-        Args:
-            name: StrEnum class name (will be used as __name__)
-            values: Dictionary mapping member names to string values
-
-        Returns:
-            Newly created StrEnum class with specified members
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> OutputFormat = u.create_enum(
-            ...     "OutputFormat", {"JSON": "json", "YAML": "yaml", "CSV": "csv"}
-            ... )
-            >>> assert OutputFormat.JSON.value == "json"
-            >>> assert isinstance(OutputFormat.JSON, StrEnum)
-
-        Note:
-            This method is used during v0.10 → v0.11 constants refactoring
-            to reduce boilerplate code in FlextConstants and dependent projects.
-            After refactoring completes, prefer explicit StrEnum class definitions.
-
-        """
-        return type(
-            name,
-            (StrEnum,),
-            {"__members__": {k: StrEnum(k, v) for k, v in values.items()}},
-        )
-
-    @staticmethod
-    def to_str(value: object, *, default: str | None = None) -> str:
-        """Convert value to string. Alias for conversion(value, mode='to_str')."""
-        return conversion(value, mode="to_str", default=default)
-
-    @staticmethod
-    def to_str_list(
-        value: object,
-        *,
-        default: list[str] | None = None,
-    ) -> list[str]:
-        """Convert value to list of strings. Alias for conversion(value, mode='to_str_list')."""
-        return conversion(value, mode="to_str_list", default=default)
-
-    @staticmethod
-    def mapper() -> FlextUtilitiesMapper:
-        """Get FlextUtilitiesMapper instance.
-
-        Preferred access method for mapper utilities.
-        Use u.mapper() instead of u.Mapper for better encapsulation.
-
-        Returns:
-            FlextUtilitiesMapper instance
-
-        Example:
-            >>> from flext_core.utilities import u
-            >>> mapper = u.mapper()
-            >>> result = mapper.get(data, "key", default="")
-            >>> extracted = mapper.extract(config, "database.port")
-
-        """
-        return FlextUtilitiesMapper()
-
-    @staticmethod
-    def guard(
-        value: object,
-        validator: Callable[[object], bool] | type | object = None,
-        *,
-        default: object | None = None,
-        return_value: bool = False,
-    ) -> object | None:
-        """Simple guard method for validation. Returns value if valid, default if not.
-
-        Args:
-            value: Value to validate
-            validator: Callable, type, or tuple of types to validate against
-            default: Default value to return if validation fails
-            return_value: If True, return the value itself; if False, return True/default
-
-        Returns:
-            Validated value, True, or default value
-
-        """
-        try:
-            if callable(validator):
-                if validator(value):
-                    return value if return_value else True
-            elif isinstance(validator, (type, tuple)):
-                if isinstance(value, validator):
-                    return value if return_value else True
-            # Default validation - check if value is truthy
-            elif value:
-                return value if return_value else True
-            return default
-        except Exception:
-            return default
-
-    @staticmethod
-    def ensure_str(value: t.GeneralValueType, default: str = "") -> str:
-        """Ensure value is string. Alias for Mapper.ensure_str()."""
-        return FlextUtilitiesMapper.ensure_str(value, default)
-
-    @staticmethod
-    def count(items: Sized | object) -> int:
-        """Count items."""
-        if isinstance(items, Sized):
-            return len(items)
-        return 0
-
-    @staticmethod
-    def in_(value: object, container: object) -> bool:
-        """Check if value is in container."""
-        if isinstance(container, (list, tuple, set, dict)):
-            try:
-                return value in container
-            except TypeError:
-                return False
-        return False
-
-    @staticmethod
-    def find(
-        items: Sequence[object] | Mapping[str, object],
-        predicate: Callable[[object], bool],
-    ) -> object | None:
-        """Find first item matching predicate. Alias for Collection.find()."""
-        return FlextUtilitiesCollection.find(items, predicate)
-
-    @staticmethod
-    def format_app_id(name: str) -> str:
-        """Format application ID. Simple implementation."""
-        return name.lower().replace(" ", "-").replace("_", "-")
-
     class Generators(FlextUtilitiesGenerators):
         """Generators utility class - real inheritance."""
 
     class Guards(FlextUtilitiesGuards):
-        """Guards utility class - real inheritance.
-
-        Provides public access to type guard methods. All methods delegate
-        to private methods in FlextUtilitiesGuards to enforce proper API usage.
-        """
-
-        @staticmethod
-        def normalize_to_metadata_value(
-            val: t.GeneralValueType,
-        ) -> t.MetadataAttributeValue:
-            """Normalize any value to MetadataAttributeValue.
-
-            Public wrapper for normalize_to_metadata_value().
-
-            Args:
-                val: Value to normalize
-
-            Returns:
-                t.MetadataAttributeValue: Normalized value compatible with Metadata attributes
-
-            Example:
-                >>> from flext_core.utilities import u
-                >>> u.Guards.normalize_to_metadata_value("test")
-                'test'
-
-            """
-            return FlextUtilitiesGuards.normalize_to_metadata_value(val)
-
-        @staticmethod
-        def is_string_non_empty(value: t.GeneralValueType) -> bool:
-            """Check if value is a non-empty string.
-
-            Public wrapper for is_string_non_empty().
-
-            Args:
-                value: Object to check
-
-            Returns:
-                bool: True if value is non-empty string
-
-            """
-            return FlextUtilitiesGuards.is_string_non_empty(value)
-
-        @staticmethod
-        def is_dict_non_empty(value: t.GeneralValueType) -> bool:
-            """Check if value is a non-empty dictionary.
-
-            Public wrapper for is_dict_non_empty().
-
-            Args:
-                value: Object to check
-
-            Returns:
-                bool: True if value is non-empty dict-like
-
-            """
-            return FlextUtilitiesGuards.is_dict_non_empty(value)
-
-        @staticmethod
-        def is_list_non_empty(value: t.GeneralValueType) -> bool:
-            """Check if value is a non-empty list.
-
-            Public wrapper for is_list_non_empty().
-
-            Args:
-                value: Object to check
-
-            Returns:
-                bool: True if value is non-empty list-like
-
-            """
-            return FlextUtilitiesGuards.is_list_non_empty(value)
+        """Guards utility class - real inheritance."""
 
     class Mapper(FlextUtilitiesMapper):
         """Mapper utility class - real inheritance."""
@@ -393,1297 +119,283 @@ class FlextUtilities:
     class Validation(FlextUtilitiesValidation):
         """Validation utility class - real inheritance."""
 
-    class Validators(ValidatorDSL):
-        """Validators utility class - real inheritance."""
-
-    class V(ValidatorDSL):
-        """V utility class - alias for Validators - real inheritance."""
-
-    class Pipeline:
-        """Pipeline utility for chaining operations with FlextResult.
-
-        Provides convenient access to FlextResult pipeline methods for
-        composing operations in a functional style.
-        """
-
-        @staticmethod
-        def flow_through[T, U](
-            result: r[T | U],
-            *funcs: Callable[[T | U], r[T | U]],
-        ) -> r[T | U]:
-            """Chain multiple operations in a pipeline.
-
-            Args:
-                result: Initial FlextResult to start the pipeline
-                *funcs: Functions to apply in sequence
-
-            Returns:
-                Final FlextResult after all transformations
-
-            Example:
-                >>> result = r[int].ok(5)
-                >>> final = Pipeline.flow_through(
-                ...     result, lambda x: r[int].ok(x * 2), lambda x: r[str].ok(str(x))
-                ... )
-
-            """
-            # Chain functions through result
-            current_result = result
-            for func in funcs:
-                if current_result.is_failure:
-                    break
-                next_result = func(current_result.value)
-                current_result = next_result
-            return current_result
-
-        @staticmethod
-        def and_then[T, U](
-            result: r[T],
-            func: Callable[[T], r[U]],
-        ) -> r[U]:
-            """Chain a single operation.
-
-            Args:
-                result: Initial FlextResult
-                func: Function to apply
-
-            Returns:
-                Result after transformation
-
-            """
-            return result.and_then(func)
-
-        @staticmethod
-        def fold[T, U](
-            result: r[T],
-            on_failure: Callable[[str], U],
-            on_success: Callable[[T], U],
-        ) -> U:
-            """Fold result into a single value.
-
-            Args:
-                result: FlextResult to fold
-                on_failure: Function to call on failure
-                on_success: Function to call on success
-
-            Returns:
-                Folded value
-
-            """
-            return result.fold(on_failure, on_success)
-
-        @staticmethod
-        def tap[T](
-            result: r[T],
-            func: Callable[[T], None],
-        ) -> r[T]:
-            """Execute side effect without changing result.
-
-            Args:
-                result: FlextResult
-                func: Side effect function
-
-            Returns:
-                Same result (for chaining)
-
-            """
-            return result.tap(func)
-
-    class Cloning:
-        """Cloning utility for runtime and container instances.
-
-        Provides convenient access to cloning operations using protocols
-        to avoid circular imports.
-        """
-
-        @staticmethod
-        def clone_runtime[T](
-            runtime: T,
-            *,
-            context: p.Ctx | None = None,
-            config_overrides: dict[str, object] | None = None,
-        ) -> T:
-            """Clone runtime with optional overrides.
-
-            Creates a new runtime instance with the same dispatcher and registry,
-            but with optional context and config overrides.
-
-            Args:
-                runtime: Runtime instance to clone (must implement Runtime protocol).
-                context: Optional new context. If not provided, uses runtime's context.
-                config_overrides: Optional config field overrides.
-
-            Returns:
-                T: Cloned runtime instance.
-
-            Example:
-                >>> new_runtime = FlextUtilities.Cloning.clone_runtime(
-                ...     existing_runtime,
-                ...     context=new_context,
-                ...     config_overrides={"log_level": "DEBUG"},
-                ... )
-
-            """
-            # Create new instance without calling __init__
-            cloned: T = runtime.__class__.__new__(runtime.__class__)
-            # Copy dispatcher and registry via protocol attributes
-            # Note: Accessing private attributes is necessary for cloning runtime instances
-            # that implement the Runtime protocol. These attributes are part of the
-            # internal implementation and are accessed during cloning operations.
-            # Use setattr with variables to avoid type checker errors for private attributes
-            if hasattr(runtime, "_dispatcher"):
-                dispatcher_attr = "_dispatcher"
-                setattr(cloned, dispatcher_attr, getattr(runtime, dispatcher_attr))
-            if hasattr(runtime, "_registry"):
-                registry_attr = "_registry"
-                setattr(cloned, registry_attr, getattr(runtime, registry_attr))
-            # Use new context or copy existing
-            if hasattr(runtime, "_context"):
-                context_attr = "_context"
-                cloned_context = context or getattr(runtime, context_attr)
-                setattr(cloned, context_attr, cloned_context)
-            # Clone config with overrides
-            if hasattr(runtime, "_config"):
-                config_attr = "_config"
-                runtime_config = getattr(runtime, config_attr)
-                if config_overrides:
-                    cloned_config = runtime_config.model_copy(update=config_overrides)
-                    setattr(cloned, config_attr, cloned_config)
-                else:
-                    setattr(cloned, config_attr, runtime_config)
-            return cloned
-
-        @staticmethod
-        def clone_container(
-            container: p.DI,
-            *,
-            scope_id: str | None = None,
-            overrides: Mapping[str, object] | None = None,
-        ) -> p.DI:
-            """Clone container with scoping.
-
-            Creates a scoped container instance with optional service overrides.
-
-            Args:
-                container: Container instance to clone (must implement DI protocol).
-                scope_id: Optional scope identifier.
-                overrides: Optional service overrides.
-
-            Returns:
-                p.DI: Scoped container instance.
-
-            Example:
-                >>> scoped = FlextUtilities.Cloning.clone_container(
-                ...     global_container,
-                ...     scope_id="worker_1",
-                ...     overrides={"logger": custom_logger},
-                ... )
-
-            """
-            # Use container's scoped() method for proper scoping
-            return container.scoped(
-                subproject=scope_id,
-                services=overrides,
-            )
-
-    class Registration:
-        """Registration utility for container services.
-
-        Provides convenient access to registration operations using protocols
-        to avoid circular imports.
-        """
-
-        @staticmethod
-        def register_singleton(
-            container: p.DI,
-            name: str,
-            instance: t.GeneralValueType,
-        ) -> r[None]:
-            """Register singleton with standard error handling.
-
-            Args:
-                container: Container to register in (must implement DI protocol).
-                name: Service name.
-                instance: Service instance to register.
-
-            Returns:
-                r[None]: Success if registration succeeds, failure otherwise.
-
-            Example:
-                >>> result = FlextUtilities.Registration.register_singleton(
-                ...     container, "db", DatabaseService()
-                ... )
-
-            """
-            try:
-                # Type should be compatible with FlexibleValue
-                register_result = container.register(name, instance)
-                if register_result.is_failure:
-                    return r[None].fail(
-                        register_result.error or "Registration failed",
-                    )
-                # For None values, we need to create directly since ok() doesn't accept None
-                return r[None].ok(None)
-            except Exception as e:
-                return r[None].fail(f"Registration failed for {name}: {e}")
-
-        @staticmethod
-        def register_factory(
-            container: p.DI,
-            name: str,
-            factory: Callable[[], t.GeneralValueType],
-            *,
-            _cache: bool = False,
-        ) -> r[None]:
-            """Register factory with optional caching.
-
-            Args:
-                container: Container to register in (must implement DI protocol).
-                name: Factory name.
-                factory: Factory function to register.
-                _cache: Reserved for future implementation of cached factory pattern.
-
-            Returns:
-                r[None]: Success if registration succeeds, failure otherwise.
-
-            Note:
-                The _cache parameter is reserved for future implementation of
-                cached factory pattern.
-
-            Example:
-                >>> result = FlextUtilities.Registration.register_factory(
-                ...     container, "logger", create_logger, _cache=True
-                ... )
-
-            """
-            try:
-                # Type is now correctly constrained to t.GeneralValueType
-                register_result = container.register_factory(name, factory)
-                if register_result.is_failure:
-                    return r[None].fail(
-                        register_result.error or "Factory registration failed",
-                    )
-                # For None values, we need to create directly since ok() doesn't accept None
-                return r[None].ok(None)
-            except Exception as e:
-                return r[None].fail(
-                    f"Factory registration failed for {name}: {e}",
-                )
-
-        @staticmethod
-        def bulk_register(
-            container: p.DI,
-            registrations: Mapping[str, t.GeneralValueType],
-        ) -> r[int]:
-            """Register multiple services at once.
-
-            Args:
-                container: Container to register in (must implement DI protocol).
-                registrations: Mapping of name to service instance or factory.
-
-            Returns:
-                r[int]: Success with count of registered services, or failure.
-
-            Example:
-                >>> result = FlextUtilities.Registration.bulk_register(
-                ...     container,
-                ...     {
-                ...         "db": DatabaseService(),
-                ...         "logger": create_logger,
-                ...     },
-                ... )
-
-            """
-            count = 0
-            for name, value in registrations.items():
-                try:
-                    # All values go through register() which accepts t.GeneralValueType
-                    register_result = container.register(name, value)
-                    if register_result.is_failure:
-                        return r[int].fail(
-                            f"Bulk registration failed at {name}: {register_result.error}",
-                        )
-                    count += 1
-                except Exception as e:
-                    return r[int].fail(
-                        f"Bulk registration failed at {name}: {e}",
-                    )
-            return r[int].ok(count)
-
-    # === UTILITY METHODS ===
-    # These are convenience methods that delegate to specialized classes.
-    # Access specialized classes directly: FlextUtilities.Parser.parse(), etc.
-
-    @staticmethod
-    def is_type(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
-        """Generic type checking function that unifies all guard checks.
-
-        Provides a single entry point for all type checking operations,
-        supporting string-based type names, direct type/class checks, and
-        protocol checks. This function delegates to FlextUtilitiesGuards.is_type().
-
-        Args:
-            value: Object to check
-            type_spec: Type specification as:
-                - String name: "config", "str", "dict", "list", "sequence",
-                  "mapping", "callable", "sized", "list_or_tuple", "sequence_not_str",
-                  "string_non_empty", "dict_non_empty", "list_non_empty"
-                - Type/class: str, dict, list, tuple, Sequence, Mapping, etc.
-                - Tuple of types: (int, float), (str, bytes), etc.
-                - Protocol: p.Config, p.Ctx, etc.
-
-        Returns:
-            bool: True if value matches the type specification
-
-        Examples:
-            >>> # String-based checks
-            >>> u.is_type(obj, "config")
-            >>> u.is_type(obj, "str")
-            >>> u.is_type(obj, "dict")
-            >>> u.is_type(obj, "string_non_empty")
-
-            >>> # Direct type checks
-            >>> u.is_type(obj, str)
-            >>> u.is_type(obj, dict)
-            >>> u.is_type(obj, list)
-
-            >>> # Tuple of types checks
-            >>> u.is_type(obj, (int, float))
-            >>> u.is_type(obj, (str, bytes))
-
-            >>> # Protocol checks
-            >>> u.is_type(obj, p.Config)
-            >>> u.is_type(obj, p.Ctx)
-
-        """
-        return FlextUtilitiesGuards.is_type(value, type_spec)
-
-    @staticmethod
-    def merge(
-        base: t.ConfigurationDict,
-        other: t.ConfigurationDict,
-        *,
-        strategy: str = "deep",
-    ) -> r[t.ConfigurationDict]:
-        """Merge two dictionaries - delegates to FlextUtilitiesCollection."""
-        return FlextUtilitiesCollection.merge(base, other, strategy=strategy)
-
-    @staticmethod
-    def transform(
-        source: t.ConfigurationDict | t.ConfigurationMapping,
-        *,
-        normalize: bool = False,
-        strip_none: bool = False,
-        strip_empty: bool = False,
-        map_keys: t.StringDict | None = None,
-        filter_keys: set[str] | None = None,
-        exclude_keys: set[str] | None = None,
-        to_json: bool = False,
-    ) -> r[t.ConfigurationDict]:
-        """Transform dictionary with multiple options - delegates to FlextUtilitiesMapper.
-
-        Args:
-            source: Source dictionary to transform.
-            normalize: Normalize values using cache normalization.
-            strip_none: Remove keys with None values.
-            strip_empty: Remove keys with empty values (empty strings, lists, dicts).
-            map_keys: Dictionary mapping old keys to new keys.
-            filter_keys: Set of keys to keep (all others removed).
-            exclude_keys: Set of keys to remove.
-            to_json: Convert to JSON-compatible values.
-
-        Returns:
-            FlextResult with transformed dictionary.
-
-        """
-        return FlextUtilitiesMapper.transform(
-            source,
-            normalize=normalize,
-            strip_none=strip_none,
-            strip_empty=strip_empty,
-            map_keys=map_keys,
-            filter_keys=filter_keys,
-            exclude_keys=exclude_keys,
-            to_json=to_json,
-        )
-
-    # Result helpers - FlextResult DSL methods
-    @staticmethod
-    def val[T](result: p.Result[T], default: T) -> T:
-        """Extract value from FlextResult or RuntimeResult with default fallback.
-
-        Accepts both FlextResult[T] and RuntimeResult[T] from flext-core bootstrap layer.
-        Both implement p.Result[T] protocol interface.
-        """
-        # Use .value directly - FlextResult/RuntimeResult never return None on success
-        return result.value if result.is_success else default
-
-    @staticmethod
-    def result_val[T](result: p.Result[T], default: T) -> T:
-        """Extract value from FlextResult or RuntimeResult with default fallback (alias for val)."""
-        return u.val(result, default)
-
-    @staticmethod
-    def vals[T](results: Sequence[p.Result[T]]) -> list[T]:
-        """Extract values from collection of FlextResult or RuntimeResult objects, skipping failures."""
-        # Use .value directly - FlextResult/RuntimeResult never return None on success
-        return [r.value for r in results if r.is_success]
-
-    @staticmethod
-    def err[T](result: p.Result[T], default: str = "") -> str:
-        """Get error message from FlextResult or RuntimeResult.
-
-        Accepts both FlextResult[T] and RuntimeResult[T] from flext-core bootstrap layer.
-        When is_failure is True, error is never None (fail() converts None to "").
-        """
-        if result.is_failure:
-            return result.error or default
-        return default
-
-    @staticmethod
-    def generate(
-        kind: str | None = None,
-        *,
-        prefix: str | None = None,
-        parts: tuple[t.GeneralValueType, ...] | None = None,
-        length: int | None = None,
-        include_timestamp: bool = False,
-        separator: str = "_",
-    ) -> str:
-        """Generate ID by kind or custom prefix - delegates to FlextUtilitiesGenerators.
-
-        Args:
-            kind: ID kind ("uuid", "correlation", "entity", "batch", "transaction",
-                "saga", "event", "command", "query", "aggregate", "ulid", "id").
-                If None, generates UUID.
-            prefix: Custom prefix (overrides kind prefix if provided).
-            parts: Additional parts to include in ID (e.g., batch_size, aggregate_type).
-            length: Custom length for generated ID (only for ulid/short IDs).
-            include_timestamp: Include timestamp in ID.
-            separator: Separator between prefix, parts, and ID (default: "_").
-
-        Returns:
-            Generated ID string.
-
-        Examples:
-            >>> u.generate()  # UUID (36 chars)
-            >>> u.generate("uuid")  # UUID (36 chars)
-            >>> u.generate("correlation")  # corr_...
-            >>> u.generate("entity", prefix="user")  # user_...
-            >>> u.generate("batch", parts=(100,))  # batch_100_...
-            >>> u.generate("aggregate", prefix="user")  # user_...
-            >>> u.generate("ulid", length=16)  # Short ID with 16 chars
-
-        """
-        # Delegate to generators.py - all logic is there
-        return FlextUtilitiesGenerators.generate(
-            kind=kind,
-            prefix=prefix,
-            parts=parts,
-            length=length,
-            include_timestamp=include_timestamp,
-            separator=separator,
-        )
-
-    @staticmethod
-    def extract[T](
-        data: t.ConfigurationMapping | object,
-        path: str,
-        *,
-        default: T | None = None,
-        required: bool = False,
-        separator: str = ".",
-    ) -> r[T | None]:
-        """Extract nested value from data structure - delegates to FlextUtilitiesMapper.
-
-        Args:
-            data: Source data (dict, object with attributes, or Pydantic model).
-            path: Dot-separated path (e.g., "user.profile.name").
-            default: Default value if path not found.
-            required: Fail if path not found.
-            separator: Path separator (default: ".").
-
-        Returns:
-            FlextResult containing extracted value or default.
-
-        Example:
-            >>> result = u.extract({"user": {"name": "John"}}, "user.name")
-            >>> value = result.value  # "John"
-
-        """
-        return FlextUtilitiesMapper.extract(
-            data,
-            path,
-            default=default,
-            required=required,
-            separator=separator,
-        )
-
-    @staticmethod
-    def has(obj: object, key: str) -> bool:
-        """Check if object has attribute/key."""
-        if isinstance(obj, dict):
-            return key in obj
-        return hasattr(obj, key)
-
     # =========================================================================
-    # UNIVERSAL CHECK METHODS - Highly generalized and parametrizable
+    # STATIC METHOD ALIASES - All from _utilities/*.py
     # =========================================================================
 
-    @staticmethod
-    def chk(
-        value: object,
-        *,
-        eq: object | None = None,
-        ne: object | None = None,
-        gt: float | None = None,
-        gte: float | None = None,
-        lt: float | None = None,
-        lte: float | None = None,
-        is_: type[object] | None = None,
-        not_: type[object] | None = None,
-        in_: Sequence[object] | None = None,
-        not_in: Sequence[object] | None = None,
-        none: bool | None = None,
-        empty: bool | None = None,
-        match: str | None = None,
-        contains: str | object | None = None,
-        starts: str | None = None,
-        ends: str | None = None,
-    ) -> bool:
-        """Universal check - single method for ALL validation scenarios.
-
-        Args:
-            value: Value to check
-            eq: Check value == eq
-            ne: Check value != ne
-            gt/gte/lt/lte: Numeric comparisons (works with len for sequences)
-            is_: Check isinstance(value, is_)
-            not_: Check not isinstance(value, not_)
-            in_: Check value in in_
-            not_in: Check value not in not_in
-            none: Check value is None (True) or is not None (False)
-            empty: Check if empty (True) or not empty (False)
-            match: Check regex pattern match (strings)
-            contains: Check if value contains item
-            starts/ends: Check string prefix/suffix
-
-        Returns:
-            True if ALL conditions pass, False otherwise.
-
-        Examples:
-            u.chk(x, gt=0, lt=100)             # 0 < x < 100
-            u.chk(s, empty=False, match="[0-9]+")  # non-empty and has digits
-            u.chk(lst, gte=1, lte=10)          # 1 <= len(lst) <= 10
-            u.chk(v, is_=str, none=False)      # is string and not None
-
-        """
-        # None checks
-        if none is True and value is not None:
-            return False
-        if none is False and value is None:
-            return False
-
-        # Type checks
-        if is_ is not None and not isinstance(value, is_):
-            return False
-        if not_ is not None and isinstance(value, not_):
-            return False
-
-        # Equality checks
-        if eq is not None and value != eq:
-            return False
-        if ne is not None and value == ne:
-            return False
-
-        # Membership checks
-        if in_ is not None and value not in in_:
-            return False
-        if not_in is not None and value in not_in:
-            return False
-
-        # Length/numeric checks - use len() for sequences, direct for numbers
-        # Python 3.13: Use isinstance for proper type narrowing
-        check_val: int | float
-        if isinstance(value, (int, float)):
-            check_val = value
-        elif isinstance(value, (Sequence, Mapping)):
-            # Type narrowing: Sequence and Mapping have __len__
-            check_val = len(value)
-        elif value is not None and isinstance(value, Sized):
-            # Type narrowing: value implements Sized protocol (has __len__)
-            # Sized protocol ensures __len__ exists and returns int
-            check_val = len(value)
-        else:
-            check_val = 0
-
-        if gt is not None and check_val <= gt:
-            return False
-        if gte is not None and check_val < gte:
-            return False
-        if lt is not None and check_val >= lt:
-            return False
-        if lte is not None and check_val > lte:
-            return False
-
-        # Empty checks (after len is computed)
-        if empty is True and check_val != 0:
-            return False
-        if empty is False and check_val == 0:
-            return False
-
-        # String-specific checks
-        if isinstance(value, str):
-            if match is not None and not re.search(match, value):
-                return False
-            if starts is not None and not value.startswith(starts):
-                return False
-            if ends is not None and not value.endswith(ends):
-                return False
-            if (
-                contains is not None
-                and isinstance(contains, str)
-                and contains not in value
-            ):
-                return False
-        elif contains is not None:
-            # Generic containment for sequences/dicts
-            if isinstance(value, dict):
-                # Type narrowing: value is dict after isinstance check
-                # dict supports 'in' operator for keys - no cast needed
-                if contains not in value:
-                    return False
-            elif value is not None and hasattr(value, "__contains__"):
-                # Type narrowing: value is not None and has __contains__ method
-                # Check containment using getattr for type safety
-                contains_method = getattr(value, "__contains__", None)
-                if contains_method is not None:
-                    try:
-                        if not contains_method(contains):
-                            return False
-                    except (TypeError, ValueError):
-                        # If containment check fails due to type mismatch, consider it not contained
-                        return False
-
-        return True
-
-    @staticmethod
-    def normalize(
-        text: str,
-        pattern: str = r"\s+",
-        replacement: str = " ",
-        *,
-        case: str | None = None,
-    ) -> str:
-        r"""Normalize string with whitespace and optional case conversion.
-
-        Args:
-            text: Text to normalize
-            pattern: Regex pattern for whitespace (default: r"\s+")
-            replacement: Replacement string (default: " ")
-            case: Case normalization ("lower", "upper", or None)
-
-        Returns:
-            Normalized string
-
-        Example:
-            u.normalize("  foo  bar  ")  # -> "foo bar"
-            u.normalize("FOO", case="lower")  # -> "foo"
-
-        """
-        # If case conversion is requested, use FlextUtilitiesConversion
-        if case is not None:
-            return FlextUtilitiesConversion.normalize(text, case=case)
-
-        # Otherwise use whitespace normalization
-        parser = FlextUtilitiesParser()
-        result = parser.normalize_whitespace(
-            text,
-            pattern=pattern,
-            replacement=replacement,
-        )
-        # Use .value directly - FlextResult never returns None on success
-        normalized = result.value if result.is_success else text
-        return normalized if u.is_type(normalized, str) else text
-
-    # Power methods - convenience delegates
-    @staticmethod
-    def pipe(
-        value: object,
-        *operations: Callable[[object], object],
-        on_error: str = "stop",
-    ) -> r[object]:
-        """Functional pipeline - delegates to FlextUtilitiesReliability.pipe."""
-        return FlextUtilitiesReliability.pipe(value, *operations, on_error=on_error)
-
-    @staticmethod
-    def batch(
-        items: list[object],
-        operation: Callable[[object], object],
-        *,
-        size: int = c.DEFAULT_BATCH_SIZE,
-        on_error: str = "collect",
-        parallel: bool = False,
-        progress: Callable[[int, int], None] | None = None,
-        progress_interval: int = 1,
-        pre_validate: Callable[[object], bool] | None = None,
-        flatten: bool = False,
-    ) -> r[t.BatchResultDict]:
-        """Process items in batches - delegates to FlextUtilitiesCollection.batch."""
-        return FlextUtilitiesCollection.batch(
-            items,
-            operation,
-            size=size,
-            on_error=on_error,
-            parallel=parallel,
-            progress=progress,
-            progress_interval=progress_interval,
-            pre_validate=pre_validate,
-            _flatten=flatten,
-        )
-
-    @staticmethod
-    def retry[TResult](
-        operation: Callable[[], r[TResult] | TResult],
-        max_attempts: int | None = None,
-        delay: float | None = None,
-        delay_seconds: float | None = None,
-        backoff_multiplier: float | None = None,
-        retry_on: tuple[type[Exception], ...] | None = None,
-    ) -> r[TResult]:
-        """Execute operation with retry logic - delegates to FlextUtilitiesReliability.retry."""
-        return FlextUtilitiesReliability.retry(
-            operation,
-            max_attempts=max_attempts,
-            delay=delay,
-            delay_seconds=delay_seconds,
-            backoff_multiplier=backoff_multiplier,
-            retry_on=retry_on,
-        )
-
-    @staticmethod
-    @overload
-    def get(
-        data: t.ConfigurationMapping | object,
-        key: str,
-        *,
-        default: str = "",
-    ) -> str: ...
-
-    @staticmethod
-    @overload
-    def get[T](
-        data: t.ConfigurationMapping | object,
-        key: str,
-        *,
-        default: list[T],
-    ) -> list[T]: ...
-
-    @staticmethod
-    @overload
-    def get[T](
-        data: t.ConfigurationMapping | object,
-        key: str,
-        *,
-        default: T | None = None,
-    ) -> T | None: ...
-
-    @staticmethod
-    def get[T](
-        data: t.ConfigurationMapping | object,
-        key: str,
-        *,
-        default: T | None = None,
-    ) -> T | None:
-        """Get value from dict/object - delegates to FlextUtilitiesMapper.get."""
-        return FlextUtilitiesMapper.get(data, key, default=default)
-
-    # =========================================================
-    # Root-level aliases for nested class methods
-    # These provide u.method() access instead of u.Class.method()
-    # =========================================================
-
-    # Collection operations
-    @staticmethod
-    def filter[T](
-        items: Sequence[T] | Mapping[str, T],
-        predicate: Callable[[T], bool],
-    ) -> Sequence[T] | Mapping[str, T]:
-        """Filter items by predicate - delegates to Collection.filter."""
-        return FlextUtilitiesCollection.filter(items, predicate)
-
-    @staticmethod
-    def map[T, U](
-        items: Sequence[T] | Mapping[str, T] | set[T] | frozenset[T],
-        mapper: Callable[[T], U],
-    ) -> Sequence[U] | Mapping[str, U] | set[U] | frozenset[U]:
-        """Map items through mapper - delegates to Collection.map."""
-        return FlextUtilitiesCollection.map(items, mapper)
-
-    @staticmethod
-    def process[T, U](
-        items: Sequence[T],
-        processor: Callable[[T], U],
-        predicate: Callable[[T], bool] | None = None,
-        on_error: str = "fail",
-    ) -> r[list[U]]:
-        """Process items with result-aware function - delegates to Collection.process."""
-        return FlextUtilitiesCollection.process(
-            items,
-            processor,
-            predicate,
-            on_error,
-        )
-
-    # Conversion operations
-    @staticmethod
-    def join(
-        values: Sequence[str],
-        *,
-        separator: str = " ",
-        case: str | None = None,
-    ) -> str:
-        """Join values with separator - delegates to Conversion.join."""
-        return FlextUtilitiesConversion.join(values, separator=separator, case=case)
-
-    # Mapper operations
-    @staticmethod
-    def take[T](
-        data: Mapping[str, object] | object,
-        key: str,
-        *,
-        as_type: type[T] | None = None,
-        default: T | None = None,
-    ) -> T | None:
-        """Take value from data - delegates to Mapper.take."""
-        return FlextUtilitiesMapper.take(data, key, as_type=as_type, default=default)
-
-    @staticmethod
-    def build[T](
-        value: T,
-        *,
-        ops: t.ConfigurationDict | None = None,
-        default: object = None,
-        on_error: str = "stop",
-    ) -> T | object:
-        """Build/transform value with DSL - delegates to Mapper.build."""
-        return FlextUtilitiesMapper.build(
-            value,
-            ops=ops,
-            default=default,
-            on_error=on_error,
-        )
-
-    @staticmethod
-    def construct(
-        spec: t.ConfigurationDict,
-        source: Mapping[str, object] | object | None = None,
-        *,
-        on_error: str = "stop",
-    ) -> t.ConfigurationDict:
-        """Construct object from spec - delegates to Mapper.construct."""
-        return FlextUtilitiesMapper.construct(spec, source, on_error=on_error)
-
-    @staticmethod
-    def agg[T](
-        items: list[T] | tuple[T, ...],
-        field: str | Callable[[T], int | float],
-        *,
-        fn: Callable[[list[int | float]], int | float] | None = None,
-    ) -> int | float:
-        """Aggregate items - delegates to Mapper.agg."""
-        return FlextUtilitiesMapper.agg(items, field, fn=fn)
-
-    # Validation/ResultHelpers operations
-    @staticmethod
-    def ok[T](value: T) -> r[T]:
-        """Create success result - delegates to Validation.ResultHelpers.ok."""
-        return FlextUtilitiesValidation.ResultHelpers.ok(value)
-
-    @staticmethod
-    def fail(error: str) -> r[object]:
-        """Create failure result - delegates to Validation.ResultHelpers.fail."""
-        return FlextUtilitiesValidation.ResultHelpers.fail(error)
-
-    @staticmethod
-    def or_[T](
-        *values: T | None,
-        default: T | None = None,
-    ) -> T | None:
-        """Return first non-None value - delegates to Validation.ResultHelpers.or_."""
-        return FlextUtilitiesValidation.ResultHelpers.or_(*values, default=default)
-
-    @staticmethod
-    def try_[T](
-        func: Callable[[], T],
-        *,
-        default: T | None = None,
-        catch: type[Exception] | tuple[type[Exception], ...] = Exception,
-    ) -> T | None:
-        """Try operation with fallback - delegates to Validation.ResultHelpers.try_."""
-        return FlextUtilitiesValidation.ResultHelpers.try_(
-            func,
-            default=default,
-            catch=catch,
-        )
-
-    @staticmethod
-    def empty(items: object | None) -> bool:
-        """Check if items is empty or None.
-
-        Args:
-            items: Any object to check (None, Sized, or any object)
-
-        Returns:
-            True if items is None, empty, or falsy
-
-        """
-        if items is None:
-            return True
-        if isinstance(items, Sized):
-            return len(items) == 0
-        return not bool(items)
-
-    @staticmethod
-    def any_(*values: object) -> bool:
-        """Check if any value is truthy - delegates to Validation.ResultHelpers.any_."""
-        return FlextUtilitiesValidation.ResultHelpers.any_(*values)
-
-    @staticmethod
-    def not_(value: object) -> bool:
-        """Negate value - delegates to Validation.ResultHelpers.not_."""
-        return FlextUtilitiesValidation.ResultHelpers.not_(value)
-
-    @staticmethod
-    def from_[T](
-        source: t.ConfigurationMapping | object | None,
-        key: str,
-        *,
-        as_type: type[T] | None = None,
-        default: T,
-    ) -> T:
-        """Extract from source with type guard - delegates to Validation.ResultHelpers.from_."""
-        return FlextUtilitiesValidation.ResultHelpers.from_(
-            source,
-            key,
-            as_type=as_type,
-            default=default,
-        )
-
-    @staticmethod
-    def starts(value: str, prefix: str, *prefixes: str) -> bool:
-        """Check if value starts with prefix - delegates to Validation.ResultHelpers.starts."""
-        return FlextUtilitiesValidation.ResultHelpers.starts(value, prefix, *prefixes)
-
-    @staticmethod
-    def ensure[T](
-        value: t.GeneralValueType,
-        *,
-        target_type: str = "auto",
-        default: T | list[T] | dict[str, T] | None = None,
-    ) -> T | list[T] | dict[str, T]:
-        """Ensure value is of target type - delegates to Validation.ensure."""
-        return FlextUtilitiesValidation.ensure(
-            value,
-            target_type=target_type,
-            default=default,
-        )
-
-    # New methods not previously in ResultHelpers
-    @staticmethod
-    def none_(*values: object) -> bool:
-        """Check if all values are None.
-
-        Args:
-            *values: Values to check
-
-        Returns:
-            True if all values are None, False otherwise
-
-        Example:
-            if u.none_(name, email):
-                return r.fail("Name and email are required")
-
-        """
-        return all(v is None for v in values)
-
-    @staticmethod
-    def fields(
-        obj: Mapping[str, object] | object,
-        *field_names: str | Mapping[str, object],
-    ) -> dict[str, object]:
-        """Extract specified fields from object.
-
-        Supports two patterns:
-        1. Simple: u.fields(obj, "name", "email", "id")
-        2. DSL spec: u.fields(obj, {"name": {"default": ""}, ...})
-
-        Args:
-            obj: Object or dict to extract from
-            *field_names: Field names (str) or field specs (dict)
-
-        Returns:
-            Dict with extracted fields
-
-        Example:
-            # Simple extraction
-            data = u.fields(user, "name", "email", "id")
-
-            # With field specs
-            data = u.fields(payload, {
-                "name": {"default": ""},
-                "count": {"default": 0}
-            })
-
-        """
-        result: dict[str, object] = {}
-
-        for spec in field_names:
-            # DSL pattern: dict with field specifications
-            if isinstance(spec, Mapping):
-                for name, field_config in spec.items():
-                    if isinstance(obj, Mapping):
-                        if name in obj:
-                            result[name] = obj[name]
-                        elif isinstance(field_config, Mapping):
-                            # Use default value from spec
-                            result[name] = field_config.get("default")
-                        else:
-                            result[name] = field_config
-                    elif hasattr(obj, name):
-                        result[name] = getattr(obj, name)
-                    elif isinstance(field_config, Mapping):
-                        result[name] = field_config.get("default")
-            # Simple pattern: string field name
-            elif isinstance(spec, str):
-                if isinstance(obj, Mapping):
-                    if spec in obj:
-                        result[spec] = obj[spec]
-                elif hasattr(obj, spec):
-                    result[spec] = getattr(obj, spec)
-
-        return result
-
-    @staticmethod
-    def cast[T](
-        value: object | r[T],
-        target_type: type[T] | None = None,
-        *,
-        default: T | None = None,
-        default_error: str | None = None,
-    ) -> object:
-        """Safe cast with fallback or FlextResult error wrapping.
-
-        Supports two patterns:
-        1. Type casting: u.cast(value, target_type, default=...)
-        2. Result wrapping: u.cast(result, default_error="...")
-
-        Args:
-            value: Value to cast or FlextResult to wrap
-            target_type: Target type (optional for result wrapping)
-            default: Default value if cast fails
-            default_error: Default error message for failed FlextResult
-
-        Returns:
-            Cast value, wrapped FlextResult, or default
-
-        Example:
-            # Type casting
-            port = u.cast(config.get("port"), int, default=8080)
-
-            # Result error wrapping
-            return u.cast(result, default_error="Operation failed")
-
-        """
-        _ = default_error
-        # Pattern 2: FlextResult error wrapping
-        if hasattr(value, "is_success") and hasattr(value, "is_failure"):
-            # value is FlextResult-like, return as-is
-            return value
-
-        # Pattern 1: Type casting
-        if target_type is None:
-            return value
-
-        if isinstance(value, target_type):
-            return value
-        try:
-            # Handle special case for object type which doesn't accept arguments
-            if target_type is object:
-                return value
-            return target_type(value)
-        except (TypeError, ValueError):
-            return default
-
-    @staticmethod
-    def chunk[T](items: Sequence[T], size: int) -> list[Sequence[T]]:
-        """Split sequence into chunks.
-
-        Args:
-            items: Sequence to split
-            size: Chunk size
-
-        Returns:
-            List of chunks
-
-        Example:
-            batches = u.chunk(records, 100)
-
-        """
-        if size <= 0:
-            return [items]
-        return [items[i : i + size] for i in range(0, len(items), size)]
-
-    @staticmethod
-    def mul(*values: float) -> int | float:
-        """Multiply values.
-
-        Args:
-            *values: Values to multiply
-
-        Returns:
-            Product of all values
-
-        Example:
-            total = u.mul(price, quantity, tax_rate)
-
-        """
-        result: int | float = 1
-        for v in values:
-            result *= v
-        return result
-
-    # =========================================================
-    # NEW: Collection convenience aliases (Phase 5)
-    # =========================================================
-
-    @staticmethod
-    def first[T_item](
-        items: Sequence[T_item],
-        predicate: Callable[[T_item], bool] | None = None,
-        default: T_item | None = None,
-    ) -> T_item | None:
-        """Get first item (optionally matching predicate) - delegates to Collection.first."""
-        return FlextUtilitiesCollection.first(items, predicate, default)
-
-    @staticmethod
-    def last[T_item](
-        items: Sequence[T_item],
-        predicate: Callable[[T_item], bool] | None = None,
-        default: T_item | None = None,
-    ) -> T_item | None:
-        """Get last item (optionally matching predicate) - delegates to Collection.last."""
-        return FlextUtilitiesCollection.last(items, predicate, default)
-
-    @staticmethod
-    def group_by[T_item, K](
-        items: Sequence[T_item],
-        key_func: Callable[[T_item], K],
-    ) -> dict[K, list[T_item]]:
-        """Group items by key function - delegates to Collection.group_by."""
-        return FlextUtilitiesCollection.group_by(items, key_func)
-
-    @staticmethod
-    def unique[T_item](
-        items: Sequence[T_item],
-        key_func: Callable[[T_item], object] | None = None,
-    ) -> list[T_item]:
-        """Get unique items preserving order - delegates to Collection.unique."""
-        return FlextUtilitiesCollection.unique(items, key_func)
-
-    @staticmethod
-    def partition[T_item](
-        items: Sequence[T_item],
-        predicate: Callable[[T_item], bool],
-    ) -> tuple[list[T_item], list[T_item]]:
-        """Split items by predicate: (matches, non-matches) - delegates to Collection.partition."""
-        return FlextUtilitiesCollection.partition(items, predicate)
-
-    @staticmethod
-    def flatten[T_item](items: Sequence[Sequence[T_item]]) -> list[T_item]:
-        """Flatten nested sequences - delegates to Collection.flatten."""
-        return FlextUtilitiesCollection.flatten(items)
-
-    # =========================================================
-    # NEW: Mapper convenience aliases (Phase 6)
-    # =========================================================
-
-    @staticmethod
-    def omit[T](data: Mapping[str, T], *keys: str) -> dict[str, T]:
-        """Omit specific keys from mapping - delegates to Mapper.omit."""
-        return FlextUtilitiesMapper.omit(data, *keys)
-
-    @staticmethod
-    def pluck(
-        items: Sequence[Mapping[str, object]],
-        key: str,
-        default: object | None = None,
-    ) -> list[object | None]:
-        """Extract single key from sequence of mappings - delegates to Mapper.pluck."""
-        return FlextUtilitiesMapper.pluck(items, key, default)
-
-    @staticmethod
-    def key_by[T, K](
-        items: Sequence[T],
-        key_func: Callable[[T], K],
-    ) -> dict[K, T]:
-        """Create dict keyed by function result - delegates to Mapper.key_by."""
-        return FlextUtilitiesMapper.key_by(items, key_func)
-
-    # =========================================================
-    # NEW: Pipeline/Reliability convenience aliases (Phase 3)
-    # =========================================================
-
-    @staticmethod
-    def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
-        """Chain multiple operations on FlextResult - delegates to Reliability.flow_result."""
-        return FlextUtilitiesReliability.flow_result(result, *funcs)
-
-    @staticmethod
-    def then[T, U](result: r[T], func: Callable[[T], r[U]]) -> r[U]:
-        """Chain single operation on FlextResult (monadic bind) - delegates to Reliability.then."""
-        return FlextUtilitiesReliability.then(result, func)
-
-    @staticmethod
-    def fold_result[T, U](
-        result: r[T],
-        on_failure: Callable[[str], U],
-        on_success: Callable[[T], U],
-    ) -> U:
-        """Fold FlextResult into single value - delegates to Reliability.fold_result."""
-        return FlextUtilitiesReliability.fold_result(result, on_failure, on_success)
-
-    @staticmethod
-    def tap_result[T](result: r[T], func: Callable[[T], None]) -> r[T]:
-        """Execute side effect on success without changing result - delegates to Reliability.tap_result."""
-        return FlextUtilitiesReliability.tap_result(result, func)
-
-    # =========================================================
-    # NEW: Validation convenience aliases (Phase 4)
-    # =========================================================
-
-    @staticmethod
-    def validate_with(value: object, *validators: ValidatorSpec) -> r[bool]:
-        """Validate value against multiple validators - delegates to Validation.validate_with_validators."""
-        return FlextUtilitiesValidation.validate_with_validators(value, *validators)
-
-    @staticmethod
-    def check_all(value: object, *validators: ValidatorSpec) -> bool:
-        """Check if value passes all validators - delegates to Validation.check_all_validators."""
-        return FlextUtilitiesValidation.check_all_validators(value, *validators)
-
-    @staticmethod
-    def check_any(value: object, *validators: ValidatorSpec) -> bool:
-        """Check if value passes any validator - delegates to Validation.check_any_validator."""
-        return FlextUtilitiesValidation.check_any_validator(value, *validators)
-
-
-u = FlextUtilities  # Runtime alias (not TypeAlias to avoid PYI042)
-u_core = FlextUtilities  # Runtime alias (not TypeAlias to avoid PYI042)
+    # Args
+    get_enum_params = staticmethod(FlextUtilitiesArgs.get_enum_params)
+    parse_kwargs = staticmethod(FlextUtilitiesArgs.parse_kwargs)
+    validated = staticmethod(FlextUtilitiesArgs.validated)
+    validated_with_result = staticmethod(FlextUtilitiesArgs.validated_with_result)
+
+    # Cache
+    clear_object_cache = staticmethod(FlextUtilitiesCache.clear_object_cache)
+    generate_cache_key = staticmethod(FlextUtilitiesCache.generate_cache_key)
+    has_cache_attributes = staticmethod(FlextUtilitiesCache.has_cache_attributes)
+    normalize_component = staticmethod(FlextUtilitiesCache.normalize_component)
+    sort_dict_keys = staticmethod(FlextUtilitiesCache.sort_dict_keys)
+    sort_key = staticmethod(FlextUtilitiesCache.sort_key)
+
+    # Cast
+    cast_callable = staticmethod(FlextUtilitiesCast.callable)
+    cast_direct = staticmethod(FlextUtilitiesCast.direct)
+    cast_general_value = staticmethod(FlextUtilitiesCast.general_value)
+    cast_generic = staticmethod(FlextUtilitiesMapper.cast_generic)
+
+    # Collection
+    batch = staticmethod(FlextUtilitiesCollection.batch)
+    chunk = staticmethod(FlextUtilitiesCollection.chunk)
+    coerce_dict_to_bool = staticmethod(FlextUtilitiesCollection.coerce_dict_to_bool)
+    coerce_dict_to_enum = staticmethod(FlextUtilitiesCollection.coerce_dict_to_enum)
+    coerce_dict_to_float = staticmethod(FlextUtilitiesCollection.coerce_dict_to_float)
+    coerce_dict_to_int = staticmethod(FlextUtilitiesCollection.coerce_dict_to_int)
+    coerce_dict_to_str = staticmethod(FlextUtilitiesCollection.coerce_dict_to_str)
+    coerce_dict_validator = staticmethod(FlextUtilitiesCollection.coerce_dict_validator)
+    coerce_list_to_bool = staticmethod(FlextUtilitiesCollection.coerce_list_to_bool)
+    coerce_list_to_enum = staticmethod(FlextUtilitiesCollection.coerce_list_to_enum)
+    coerce_list_to_float = staticmethod(FlextUtilitiesCollection.coerce_list_to_float)
+    coerce_list_to_int = staticmethod(FlextUtilitiesCollection.coerce_list_to_int)
+    coerce_list_to_str = staticmethod(FlextUtilitiesCollection.coerce_list_to_str)
+    coerce_list_validator = staticmethod(FlextUtilitiesCollection.coerce_list_validator)
+    count = staticmethod(FlextUtilitiesCollection.count)
+    filter = staticmethod(FlextUtilitiesCollection.filter)
+    find = staticmethod(FlextUtilitiesCollection.find)
+    first = staticmethod(FlextUtilitiesCollection.first)
+    flatten = staticmethod(FlextUtilitiesCollection.flatten)
+    group = staticmethod(FlextUtilitiesCollection.group)
+    group_by = staticmethod(FlextUtilitiesCollection.group_by)
+    last = staticmethod(FlextUtilitiesCollection.last)
+    map = staticmethod(FlextUtilitiesCollection.map)
+    merge = staticmethod(FlextUtilitiesCollection.merge)
+    mul = staticmethod(FlextUtilitiesCollection.mul)
+    parse_mapping = staticmethod(FlextUtilitiesCollection.parse_mapping)
+    parse_sequence = staticmethod(FlextUtilitiesCollection.parse_sequence)
+    partition = staticmethod(FlextUtilitiesCollection.partition)
+    process = staticmethod(FlextUtilitiesCollection.process)
+    unique = staticmethod(FlextUtilitiesCollection.unique)
+
+    # Configuration
+    build_options_from_kwargs = staticmethod(
+        FlextUtilitiesConfiguration.build_options_from_kwargs
+    )
+    bulk_register = staticmethod(FlextUtilitiesConfiguration.bulk_register)
+    create_settings_config = staticmethod(
+        FlextUtilitiesConfiguration.create_settings_config
+    )
+    get_parameter = staticmethod(FlextUtilitiesConfiguration.get_parameter)
+    get_singleton = staticmethod(FlextUtilitiesConfiguration.get_singleton)
+    register_factory = staticmethod(FlextUtilitiesConfiguration.register_factory)
+    register_singleton = staticmethod(FlextUtilitiesConfiguration.register_singleton)
+    resolve_env_file = staticmethod(FlextUtilitiesConfiguration.resolve_env_file)
+    set_parameter = staticmethod(FlextUtilitiesConfiguration.set_parameter)
+    set_singleton = staticmethod(FlextUtilitiesConfiguration.set_singleton)
+    validate_config_class = staticmethod(
+        FlextUtilitiesConfiguration.validate_config_class
+    )
+
+    # Context
+    clone_container = staticmethod(FlextUtilitiesContext.clone_container)
+    clone_runtime = staticmethod(FlextUtilitiesContext.clone_runtime)
+    create_datetime_proxy = staticmethod(FlextUtilitiesContext.create_datetime_proxy)
+    create_dict_proxy = staticmethod(FlextUtilitiesContext.create_dict_proxy)
+    create_str_proxy = staticmethod(FlextUtilitiesContext.create_str_proxy)
+
+    # Conversion
+    conversion = staticmethod(FlextUtilitiesConversion.conversion)
+    join = staticmethod(FlextUtilitiesConversion.join)
+    to_str = staticmethod(FlextUtilitiesConversion.to_str)
+    to_str_list = staticmethod(FlextUtilitiesConversion.to_str_list)
+
+    # Deprecation
+    deprecated = staticmethod(FlextUtilitiesDeprecation.deprecated)
+    deprecated_class = staticmethod(FlextUtilitiesDeprecation.deprecated_class)
+    deprecated_parameter = staticmethod(FlextUtilitiesDeprecation.deprecated_parameter)
+    warn_once = staticmethod(FlextUtilitiesDeprecation.warn_once)
+
+    # Domain
+    compare_entities_by_id = staticmethod(FlextUtilitiesDomain.compare_entities_by_id)
+    compare_value_objects_by_value = staticmethod(
+        FlextUtilitiesDomain.compare_value_objects_by_value
+    )
+    hash_entity_by_id = staticmethod(FlextUtilitiesDomain.hash_entity_by_id)
+    hash_value_object_by_value = staticmethod(
+        FlextUtilitiesDomain.hash_value_object_by_value
+    )
+    validate_entity_has_id = staticmethod(FlextUtilitiesDomain.validate_entity_has_id)
+    validate_value_object_immutable = staticmethod(
+        FlextUtilitiesDomain.validate_value_object_immutable
+    )
+
+    # Enum
+    coerce_validator = staticmethod(FlextUtilitiesEnum.coerce_validator)
+    create_discriminated_union = staticmethod(
+        FlextUtilitiesEnum.create_discriminated_union
+    )
+    create_enum = staticmethod(FlextUtilitiesEnum.create_enum)
+    enum = staticmethod(enum)
+    get_enum_values = staticmethod(FlextUtilitiesEnum.get_enum_values)
+    is_enum_member = staticmethod(FlextUtilitiesEnum.is_enum_member)
+    is_member = staticmethod(FlextUtilitiesEnum.is_member)
+    members = staticmethod(FlextUtilitiesEnum.members)
+    names = staticmethod(FlextUtilitiesEnum.names)
+    parse_enum = staticmethod(FlextUtilitiesEnum.parse_enum)
+    values = staticmethod(FlextUtilitiesEnum.values)
+
+    # Generators
+    create_dynamic_type_subclass = staticmethod(
+        FlextUtilitiesGenerators.create_dynamic_type_subclass
+    )
+    ensure_dict = staticmethod(FlextUtilitiesGenerators.ensure_dict)
+    ensure_trace_context = staticmethod(FlextUtilitiesGenerators.ensure_trace_context)
+    generate = staticmethod(FlextUtilitiesGenerators.generate)
+    generate_datetime_utc = staticmethod(FlextUtilitiesGenerators.generate_datetime_utc)
+    generate_iso_timestamp = staticmethod(
+        FlextUtilitiesGenerators.generate_iso_timestamp
+    )
+    generate_operation_id = staticmethod(FlextUtilitiesGenerators.generate_operation_id)
+
+    # Guards
+    chk = staticmethod(FlextUtilitiesGuards.chk)
+    empty = staticmethod(FlextUtilitiesGuards.empty)
+    extract_mapping_or_none = staticmethod(FlextUtilitiesGuards.extract_mapping_or_none)
+    guard = staticmethod(FlextUtilitiesGuards.guard)
+    has = staticmethod(FlextUtilitiesGuards.has)
+    in_ = staticmethod(FlextUtilitiesGuards.in_)
+    is_configuration_dict = staticmethod(FlextUtilitiesGuards.is_configuration_dict)
+    is_configuration_mapping = staticmethod(
+        FlextUtilitiesGuards.is_configuration_mapping
+    )
+    is_dict_non_empty = staticmethod(FlextUtilitiesGuards.is_dict_non_empty)
+    is_general_value_type = staticmethod(FlextUtilitiesGuards.is_general_value_type)
+    is_handler_type = staticmethod(FlextUtilitiesGuards.is_handler_type)
+    is_list = staticmethod(FlextUtilitiesGuards.is_list)
+    is_list_non_empty = staticmethod(FlextUtilitiesGuards.is_list_non_empty)
+    is_pydantic_model = staticmethod(FlextUtilitiesGuards.is_pydantic_model)
+    is_string_non_empty = staticmethod(FlextUtilitiesGuards.is_string_non_empty)
+    is_type = staticmethod(FlextUtilitiesGuards.is_type)
+    none_ = staticmethod(FlextUtilitiesGuards.none_)
+    normalize_to_metadata_value = staticmethod(
+        FlextUtilitiesGuards.normalize_to_metadata_value
+    )
+
+    # Mapper
+    agg = staticmethod(FlextUtilitiesMapper.agg)
+    build = staticmethod(FlextUtilitiesMapper.build)
+    build_flags_dict = staticmethod(FlextUtilitiesMapper.build_flags_dict)
+    collect_active_keys = staticmethod(FlextUtilitiesMapper.collect_active_keys)
+    construct = staticmethod(FlextUtilitiesMapper.construct)
+    convert_dict_to_json = staticmethod(FlextUtilitiesMapper.convert_dict_to_json)
+    convert_list_to_json = staticmethod(FlextUtilitiesMapper.convert_list_to_json)
+    convert_to_json_value = staticmethod(FlextUtilitiesMapper.convert_to_json_value)
+    deep_eq = staticmethod(FlextUtilitiesMapper.deep_eq)
+    ensure = staticmethod(FlextUtilitiesMapper.ensure)
+    ensure_str = staticmethod(FlextUtilitiesMapper.ensure_str)
+    ensure_str_or_none = staticmethod(FlextUtilitiesMapper.ensure_str_or_none)
+    extract = staticmethod(FlextUtilitiesMapper.extract)
+    fields = staticmethod(FlextUtilitiesMapper.fields)
+    fields_multi = staticmethod(FlextUtilitiesMapper.fields_multi)
+    filter_dict = staticmethod(FlextUtilitiesMapper.filter_dict)
+    get = staticmethod(FlextUtilitiesMapper.get)
+    invert_dict = staticmethod(FlextUtilitiesMapper.invert_dict)
+    is_json_primitive = staticmethod(FlextUtilitiesMapper.is_json_primitive)
+    key_by = staticmethod(FlextUtilitiesMapper.key_by)
+    map_dict_keys = staticmethod(FlextUtilitiesMapper.map_dict_keys)
+    normalize_context_values = staticmethod(
+        FlextUtilitiesMapper.normalize_context_values
+    )
+    omit = staticmethod(FlextUtilitiesMapper.omit)
+    pick = staticmethod(FlextUtilitiesMapper.pick)
+    pluck = staticmethod(FlextUtilitiesMapper.pluck)
+    process_context_data = staticmethod(FlextUtilitiesMapper.process_context_data)
+    prop = staticmethod(FlextUtilitiesMapper.prop)
+    take = staticmethod(FlextUtilitiesMapper.take)
+    transform = staticmethod(FlextUtilitiesMapper.transform)
+    transform_values = staticmethod(FlextUtilitiesMapper.transform_values)
+
+    # Model
+    dump = staticmethod(FlextUtilitiesModel.dump)
+    from_dict = staticmethod(FlextUtilitiesModel.from_dict)
+    from_kwargs = staticmethod(FlextUtilitiesModel.from_kwargs)
+    load = staticmethod(FlextUtilitiesModel.load)
+    merge_defaults = staticmethod(FlextUtilitiesModel.merge_defaults)
+    normalize_to_metadata = staticmethod(FlextUtilitiesModel.normalize_to_metadata)
+    to_dict = staticmethod(FlextUtilitiesModel.to_dict)
+    update = staticmethod(FlextUtilitiesModel.update)
+
+    # Pagination
+    build_pagination_response = staticmethod(
+        FlextUtilitiesPagination.build_pagination_response
+    )
+    extract_page_params = staticmethod(FlextUtilitiesPagination.extract_page_params)
+    extract_pagination_config = staticmethod(
+        FlextUtilitiesPagination.extract_pagination_config
+    )
+    prepare_pagination_data = staticmethod(
+        FlextUtilitiesPagination.prepare_pagination_data
+    )
+    validate_pagination_params = staticmethod(
+        FlextUtilitiesPagination.validate_pagination_params
+    )
+
+    # Reliability
+    calculate_delay = staticmethod(FlextUtilitiesReliability.calculate_delay)
+    chain = staticmethod(FlextUtilitiesReliability.chain)
+    compose = staticmethod(FlextUtilitiesReliability.compose)
+    flow = staticmethod(FlextUtilitiesReliability.flow)
+    flow_result = staticmethod(FlextUtilitiesReliability.flow_result)
+    flow_through = staticmethod(FlextUtilitiesReliability.flow_through)
+    fold_result = staticmethod(FlextUtilitiesReliability.fold_result)
+    pipe = staticmethod(FlextUtilitiesReliability.pipe)
+    retry = staticmethod(FlextUtilitiesReliability.retry)
+    tap_result = staticmethod(FlextUtilitiesReliability.tap_result)
+    then = staticmethod(FlextUtilitiesReliability.then)
+    with_timeout = staticmethod(FlextUtilitiesReliability.with_timeout)
+
+    # Runtime
+    is_dict_like = staticmethod(FlextRuntime.is_dict_like)
+    is_list_like = staticmethod(FlextRuntime.is_list_like)
+    normalize_to_general_value = staticmethod(FlextRuntime.normalize_to_general_value)
+    runtime_normalize_to_metadata_value = staticmethod(
+        FlextRuntime.normalize_to_metadata_value
+    )
+    runtime_generate_datetime_utc = staticmethod(FlextRuntime.generate_datetime_utc)
+    generate_id = staticmethod(FlextRuntime.generate_id)
+    generate_prefixed_id = staticmethod(FlextRuntime.generate_prefixed_id)
+
+    # Text
+    clean_text = staticmethod(FlextUtilitiesText.clean_text)
+    format_app_id = staticmethod(FlextUtilitiesText.format_app_id)
+    safe_string = staticmethod(FlextUtilitiesText.safe_string)
+    truncate_text = staticmethod(FlextUtilitiesText.truncate_text)
+
+    # Validation
+    validate = staticmethod(FlextUtilitiesValidation.validate)
+
+    # Validation/ResultHelpers
+    any_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.any_)
+    err = staticmethod(FlextUtilitiesValidation.ResultHelpers.err)
+    fail = staticmethod(FlextUtilitiesValidation.ResultHelpers.fail)
+    from_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.from_)
+    not_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.not_)
+    ok = staticmethod(FlextUtilitiesValidation.ResultHelpers.ok)
+    or_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.or_)
+    result_val = staticmethod(FlextUtilitiesValidation.ResultHelpers.val)
+    starts = staticmethod(FlextUtilitiesValidation.ResultHelpers.starts)
+    try_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.try_)
+    val = staticmethod(FlextUtilitiesValidation.ResultHelpers.val)
+    vals = staticmethod(FlextUtilitiesValidation.ResultHelpers.vals)
+    vals_sequence = staticmethod(FlextUtilitiesValidation.ResultHelpers.vals_sequence)
+
+    # Mapper reference
+    mapper = FlextUtilitiesMapper
+
+
+u = FlextUtilities
+u_core = FlextUtilities
 
 __all__ = [
     "FlextUtilities",
-    "ValidatorSpec",  # Export for flext-ldif and other projects
     "u",
     "u_core",
 ]

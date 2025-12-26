@@ -24,7 +24,9 @@ from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
-from flext_core._models.validation import FlextModelsValidation
+from flext_core._models.validation import (
+    FlextModelsValidation,  # Used in Validation alias
+)
 from flext_core.protocols import p
 
 
@@ -108,19 +110,16 @@ class FlextModels:
     # =========================================================================
 
     class ServiceRuntime(FlextModelsBase.ArbitraryTypesModel):
-        """Runtime quintuple (config, context, container, dispatcher, registry) for services.
+        """Runtime triple (config, context, container) for services.
 
-        Represents the complete application runtime with configuration, context,
-        dependency injection container, command bus dispatcher, and handler registry.
-        Supports zero-config initialization via auto-discovery factories in
-        FlextDispatcher.create() and FlextRegistry.create().
+        Represents the core service runtime with configuration, context,
+        and dependency injection container. CQRS components (dispatcher,
+        registry) should be used directly - not through FlextService.
         """
 
         config: p.Config
         context: p.Ctx
         container: p.DI
-        dispatcher: p.CommandBus
-        registry: p.Registry
 
     # =========================================================================
     # CONTEXT MODELS - Direct access for common usage
@@ -143,28 +142,6 @@ class FlextModels:
     Options: TypeAlias = FlextModelsCollections.Options
     CollectionsParseOptions: TypeAlias = FlextModelsCollections.ParseOptions
     Categories: TypeAlias = CollectionsCategories
-
-    # =========================================================================
-    # VALIDATION FUNCTIONS - Direct access for common usage
-    # =========================================================================
-
-    validate_business_rules = FlextModelsValidation.validate_business_rules
-    validate_cross_fields = FlextModelsValidation.validate_cross_fields
-    validate_performance = FlextModelsValidation.validate_performance
-    validate_batch = FlextModelsValidation.validate_batch
-    validate_domain_invariants = FlextModelsValidation.validate_domain_invariants
-    validate_aggregate_consistency_with_rules = (
-        FlextModelsValidation.validate_aggregate_consistency_with_rules
-    )
-    validate_event_sourcing = FlextModelsValidation.validate_event_sourcing
-    validate_cqrs_patterns = FlextModelsValidation.validate_cqrs_patterns
-    validate_domain_event = FlextModelsValidation.validate_domain_event
-    validate_aggregate_consistency = (
-        FlextModelsValidation.validate_aggregate_consistency
-    )
-    validate_entity_relationships = FlextModelsValidation.validate_entity_relationships
-    validate_uri = FlextModelsValidation.validate_uri
-    validate_port_number = FlextModelsValidation.validate_port_number
 
     # =========================================================================
     # CONFIG CLASSES - Direct access for common usage
@@ -243,7 +220,7 @@ class FlextModels:
     # =========================================================================
 
     type MessageUnion = Annotated[
-        Command | Query | DomainEvent,
+        FlextModels.Command | FlextModels.Query | FlextModels.DomainEvent,
         Discriminator("message_type"),
     ]
 
@@ -272,6 +249,9 @@ class FlextModels:
     Collections: TypeAlias = FlextModelsCollections
     CollectionsStatistics: TypeAlias = FlextModelsCollections.Statistics
 
+    # Validation alias - provides access to validation utilities
+    Validation: TypeAlias = FlextModelsValidation
+
     # Container namespace - aggregates FlextModelsContainer
     class Container:
         """Container-related models aggregated for convenient access."""
@@ -281,9 +261,6 @@ class FlextModels:
         FactoryRegistration: TypeAlias = FlextModelsContainer.FactoryRegistration
         ResourceRegistration: TypeAlias = FlextModelsContainer.ResourceRegistration
         ContainerConfig: TypeAlias = FlextModelsContainer.ContainerConfig
-
-    # Validation namespace - aggregates FlextModelsValidation
-    Validation: TypeAlias = FlextModelsValidation
 
     # Direct aliases for backward compatibility
     ContextData: TypeAlias = FlextModelsContext.ContextData
@@ -296,9 +273,5 @@ class FlextModels:
 # Main alias for direct access
 m = FlextModels
 m_core = FlextModels
-
-# Resolve forward references for Pydantic v2 compatibility
-FlextModels.Identity.model_rebuild()
-FlextModels.IdentityRequest.model_rebuild()
 
 __all__ = ["FlextModels", "m", "m_core"]

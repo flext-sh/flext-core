@@ -50,6 +50,7 @@ from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
+from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -296,11 +297,9 @@ class FlextUtilitiesConfiguration:
             (True, value) if key exists, (False, None) if not dict-like or missing
 
         """
-        if FlextRuntime.is_dict_like(obj):
-            # Type narrowing: is_dict_like ensures obj is Mapping-like
-            obj_mapping = cast("Mapping[str, t.GeneralValueType]", obj)
-            if parameter in obj_mapping:
-                return (True, obj_mapping[parameter])
+        # Type narrowing: is_dict_like ensures obj is Mapping-like
+        if FlextRuntime.is_dict_like(obj) and parameter in obj:
+            return (True, obj[parameter])
         return FlextUtilitiesConfiguration._NOT_FOUND
 
     @staticmethod
@@ -443,9 +442,6 @@ class FlextUtilitiesConfiguration:
             return attr_val
 
         msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-        from flext_core.exceptions import (  # noqa: PLC0415 - Break circular import
-            e,
-        )
         raise e.NotFoundError(msg)
 
     @staticmethod
@@ -579,9 +575,7 @@ class FlextUtilitiesConfiguration:
         msg = (
             f"Class {singleton_class.__name__} does not have get_global_instance method"
         )
-        from flext_core.exceptions import (  # noqa: PLC0415 - Break circular import
-            e,
-        )
+
         raise e.ValidationError(msg)
 
     @staticmethod
@@ -922,6 +916,96 @@ class FlextUtilitiesConfiguration:
             return r[T_Model].fail(
                 f"Unexpected error building {class_name}: {e}",
             )
+
+    @staticmethod
+    def register_singleton(
+        container: p.DI,
+        name: str,
+        instance: t.GeneralValueType,
+    ) -> r[None]:
+        """Register singleton with standard error handling.
+
+        Args:
+            container: Container to register in (must implement DI protocol).
+            name: Service name.
+            instance: Service instance to register.
+
+        Returns:
+            r[None]: Success if registration succeeds, failure otherwise.
+
+        """
+        try:
+            register_result = container.register(name, instance)
+            if register_result.is_failure:
+                return r[None].fail(
+                    register_result.error or "Registration failed",
+                )
+            return r[None].ok(None)
+        except Exception as e:
+            return r[None].fail(f"Registration failed for {name}: {e}")
+
+    @staticmethod
+    def register_factory(
+        container: p.DI,
+        name: str,
+        factory: Callable[[], t.GeneralValueType],
+        *,
+        _cache: bool = False,
+    ) -> r[None]:
+        """Register factory with optional caching.
+
+        Args:
+            container: Container to register in (must implement DI protocol).
+            name: Factory name.
+            factory: Factory function to register.
+            _cache: Reserved for future implementation of cached factory pattern.
+
+        Returns:
+            r[None]: Success if registration succeeds, failure otherwise.
+
+        """
+        try:
+            _ = _cache
+            register_result = container.register_factory(name, factory)
+            if register_result.is_failure:
+                return r[None].fail(
+                    register_result.error or "Factory registration failed",
+                )
+            return r[None].ok(None)
+        except Exception as e:
+            return r[None].fail(
+                f"Factory registration failed for {name}: {e}",
+            )
+
+    @staticmethod
+    def bulk_register(
+        container: p.DI,
+        registrations: Mapping[str, t.GeneralValueType],
+    ) -> r[int]:
+        """Register multiple services at once.
+
+        Args:
+            container: Container to register in (must implement DI protocol).
+            registrations: Mapping of name to service instance or factory.
+
+        Returns:
+            r[int]: Success with count of registered services, or failure.
+
+        """
+        count = 0
+        for name, value in registrations.items():
+            try:
+                register_result = container.register(name, value)
+                if register_result.is_failure:
+                    return r[int].fail(
+                        f"Bulk registration failed at {name}: {register_result.error}",
+                    )
+                count += 1
+            except Exception as e:
+                return r[int].fail(
+                    f"Bulk registration failed at {name}: {e}",
+                )
+        return r[int].ok(count)
 
 
 __all__ = [

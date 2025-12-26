@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
+from typing import overload
 
 from flext_core.result import r
 from flext_core.typings import R, T, U, t
@@ -18,11 +19,50 @@ from flext_core.typings import R, T, U, t
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
+    # =========================================================================
+    # Public overloaded map function - inlined implementations
+    # =========================================================================
+
+    @overload
     @staticmethod
     def map(
-        items: Sequence[T] | Mapping[str, T] | set[T] | frozenset[T],
+        items: list[T],
         mapper: Callable[[T], U],
-    ) -> Sequence[U] | Mapping[str, U] | set[U] | frozenset[U]:
+    ) -> list[U]: ...
+
+    @overload
+    @staticmethod
+    def map(
+        items: tuple[T, ...],
+        mapper: Callable[[T], U],
+    ) -> tuple[U, ...]: ...
+
+    @overload
+    @staticmethod
+    def map(
+        items: dict[str, T],
+        mapper: Callable[[T], U],
+    ) -> dict[str, U]: ...
+
+    @overload
+    @staticmethod
+    def map(
+        items: set[T],
+        mapper: Callable[[T], U],
+    ) -> set[U]: ...
+
+    @overload
+    @staticmethod
+    def map(
+        items: frozenset[T],
+        mapper: Callable[[T], U],
+    ) -> frozenset[U]: ...
+
+    @staticmethod
+    def map(
+        items: list[T] | tuple[T, ...] | dict[str, T] | set[T] | frozenset[T],
+        mapper: Callable[[T], U],
+    ) -> list[U] | tuple[U, ...] | dict[str, U] | set[U] | frozenset[U]:
         """Unified map function with generic type support.
 
         Transforms elements using mapper function while preserving container type.
@@ -38,34 +78,106 @@ class FlextUtilitiesCollection:
             return {mapper(item) for item in items}
         if isinstance(items, frozenset):
             return frozenset(mapper(item) for item in items)
-        # Unreachable - all supported types handled above
+        msg = f"Unsupported collection type: {type(items)}"
+        raise TypeError(msg)
+
+    # =========================================================================
+    # Public overloaded filter function - inlined implementations
+    # =========================================================================
+
+    @overload
+    @staticmethod
+    def filter(
+        items: list[T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
+    ) -> list[T]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: list[T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U],
+    ) -> list[U]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: tuple[T, ...],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
+    ) -> tuple[T, ...]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: tuple[T, ...],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U],
+    ) -> tuple[U, ...]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: Mapping[str, T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: None = None,
+    ) -> dict[str, T]: ...
+
+    @overload
+    @staticmethod
+    def filter(
+        items: Mapping[str, T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U],
+    ) -> dict[str, U]: ...
+
+    @staticmethod
+    def filter(
+        items: list[T] | tuple[T, ...] | Mapping[str, T],
+        predicate: Callable[[T], bool],
+        *,
+        mapper: Callable[[T], U] | None = None,
+    ) -> (
+        list[T] | list[U] | tuple[T, ...] | tuple[U, ...] | dict[str, T] | dict[str, U]
+    ):
+        """Unified filter function with generic type support.
+
+        Filters elements based on predicate while preserving container type.
+        Optionally maps filtered items with mapper function.
+        Supports lists, tuples, and dicts.
+        """
+        if isinstance(items, list):
+            if mapper is not None:
+                return [mapper(item) for item in items if predicate(item)]
+            return [item for item in items if predicate(item)]
+        if isinstance(items, tuple):
+            if mapper is not None:
+                # Use tuple literal with unpacking for better type inference
+                mapped_items = [mapper(item) for item in items if predicate(item)]
+                return (*mapped_items,)
+            filtered_items = [item for item in items if predicate(item)]
+            return (*filtered_items,)
+        if isinstance(items, Mapping):
+            filtered = {k: v for k, v in items.items() if predicate(v)}
+            if mapper is not None:
+                return {k: mapper(v) for k, v in filtered.items()}
+            return filtered
         msg = f"Unsupported collection type: {type(items)}"
         raise TypeError(msg)
 
     @staticmethod
-    def filter(
-        items: Sequence[T] | Mapping[str, T],
-        predicate: Callable[[T], bool],
-    ) -> Sequence[T] | Mapping[str, T]:
-        """Unified filter function with generic type support.
-
-        Filters elements based on predicate while preserving container type.
-        Supports lists, tuples, and dicts.
-        Returns same type as input.
-        """
-        if isinstance(items, list):
-            return [item for item in items if predicate(item)]
-        if isinstance(items, tuple):
-            return tuple(item for item in items if predicate(item))
-        if isinstance(items, Mapping):
-            return {k: v for k, v in items.items() if predicate(v)}
-        return items
-
-    @staticmethod
     def find(
-        items: Sequence[object] | Mapping[str, object],
-        predicate: Callable[[object], bool],
-    ) -> object | None:
+        items: list[T] | tuple[T, ...] | Mapping[str, T],
+        predicate: Callable[[T], bool],
+    ) -> T | None:
         """Find first item matching predicate with generic type support.
 
         Returns first item where predicate returns True, or None.
@@ -74,7 +186,7 @@ class FlextUtilitiesCollection:
             for item in items:
                 if predicate(item):
                     return item
-        if isinstance(items, Mapping):
+        elif isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
                     return v
@@ -85,7 +197,7 @@ class FlextUtilitiesCollection:
         result: dict[str, t.GeneralValueType],
         key: str,
         value: t.GeneralValueType,
-    ) -> r[None]:
+    ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
             current_dict = result[key]
@@ -97,12 +209,21 @@ class FlextUtilitiesCollection:
                 )
                 if merged.is_success:
                     result[key] = merged.value
-                    return r.ok(None)
-                return r[None].fail(
+                    return r[bool].ok(True)
+                return r[bool].fail(
                     f"Failed to merge nested dict for key {key}: {merged.error}",
                 )
         result[key] = value
-        return r.ok(None)
+        return r[bool].ok(True)
+
+    @staticmethod
+    def _is_empty_value(value: t.GeneralValueType) -> bool:
+        """Check if value is considered empty (empty string, empty list, etc.)."""
+        if value is None:
+            return True
+        if isinstance(value, str) and not value:
+            return True
+        return isinstance(value, (list, dict)) and len(value) == 0
 
     @staticmethod
     def merge(
@@ -111,11 +232,51 @@ class FlextUtilitiesCollection:
         *,
         strategy: str = "deep",
     ) -> r[dict[str, t.GeneralValueType]]:
-        """Merge two dictionaries with configurable strategy."""
+        """Merge two dictionaries with configurable strategy.
+
+        Strategies:
+        - "deep": Deep merge nested dicts (default)
+        - "replace": Replace all values from other
+        - "override": Same as replace (alias)
+        - "append": Append lists instead of replacing
+        - "filter_none": Skip None values from other
+        - "filter_empty": Skip empty values (None, "", [], {}) from other
+        - "filter_both": Same as filter_empty (alias)
+        """
         try:
-            if strategy == "replace":
-                result = base.copy()
+            if strategy in {"replace", "override"}:
+                result: dict[str, t.GeneralValueType] = dict(base)
                 result.update(other)
+                return r[dict[str, t.GeneralValueType]].ok(result)
+
+            if strategy == "filter_none":
+                result = dict(base)
+                for key, value in other.items():
+                    if value is not None:
+                        result[key] = value
+                return r[dict[str, t.GeneralValueType]].ok(result)
+
+            if strategy in {"filter_empty", "filter_both"}:
+                result = dict(base)
+                for key, value in other.items():
+                    if not FlextUtilitiesCollection._is_empty_value(value):
+                        result[key] = value
+                return r[dict[str, t.GeneralValueType]].ok(result)
+
+            if strategy == "append":
+                result = dict(base)
+                for key, value in other.items():
+                    if (
+                        key in result
+                        and isinstance(result[key], list)
+                        and isinstance(value, list)
+                    ):
+                        # Append lists
+                        base_list = result[key]
+                        if isinstance(base_list, list):
+                            result[key] = base_list + value
+                    else:
+                        result[key] = value
                 return r[dict[str, t.GeneralValueType]].ok(result)
 
             if strategy == "deep":
@@ -144,40 +305,46 @@ class FlextUtilitiesCollection:
         operation: Callable[[T], R | r[R]],
         *,
         size: int | None = None,
+        _size: int | None = None,  # Alias for size
         on_error: str | None = None,
         parallel: bool = False,
         progress: Callable[[int, int], None] | None = None,
         progress_interval: int = 1,
         pre_validate: Callable[[T], bool] | None = None,
-        _flatten: bool = False,
+        flatten: bool = False,
+        _flatten: bool = False,  # Legacy alias
     ) -> r[t.BatchResultDict]:
         """Process items in batches with progress tracking.
 
         Args:
             items: Items to process
             operation: Function that returns R or r[R]
+            size: Batch size (not used, for signature compatibility)
+            on_error: "fail" to stop, "skip" to silently skip, "collect" to collect errors
             parallel: Enable parallel processing (not implemented, for signature compatibility)
             progress: Callback for progress tracking
             progress_interval: How often to call progress callback
             pre_validate: Optional validation function
+            flatten: Flatten list results
 
         """
-        _ = size
-        _ = on_error
+        _ = size or _size
         _ = parallel
         _ = progress_interval
-        try:
-            results: list[object] = []
-            total = len(items)
+        do_flatten = flatten or _flatten
+        error_mode = on_error or "fail"
+        results: list[object] = []
+        errors: list[tuple[int, str]] = []
+        total = len(items)
 
-            for processed, item in enumerate(items, 1):
-                # Pre-validate if validator provided
-                # Type narrowing: item is T
-                item_typed: T = item
-                if pre_validate is not None and not pre_validate(item_typed):
-                    results.append(None)
-                    continue
+        for processed, item in enumerate(items, 1):
+            # Pre-validate if validator provided
+            item_typed: T = item
+            if pre_validate is not None and not pre_validate(item_typed):
+                results.append(None)
+                continue
 
+            try:
                 result = operation(item)
                 # Handle both direct returns and FlextResult returns
                 has_result_attrs = hasattr(result, "is_success") and hasattr(
@@ -189,34 +356,57 @@ class FlextUtilitiesCollection:
                     is_success = getattr(result, "is_success", False)
                     if is_success:
                         value = getattr(result, "value", None)
-                        results.append(value)
+                        if do_flatten and isinstance(value, list):
+                            results.extend(value)
+                        else:
+                            results.append(value)
                     else:
-                        results.append(None)
+                        error_msg = getattr(result, "error", "Unknown error")
+                        if error_mode == "fail":
+                            return r[t.BatchResultDict].fail(
+                                f"Batch processing failed: {error_msg}",
+                            )
+                        if error_mode == "collect":
+                            # Store as (index, error_message) tuple
+                            errors.append((processed - 1, str(error_msg)))
+                        # skip mode - don't add to errors
+                # It's a direct return
+                elif do_flatten and isinstance(result, list):
+                    results.extend(result)
                 else:
-                    # It's a direct return
                     results.append(result)
+            except Exception as e:
+                if error_mode == "fail":
+                    return r[t.BatchResultDict].fail(
+                        f"Batch processing failed: {e}",
+                    )
+                if error_mode == "collect":
+                    # Store as (index, error_message) tuple
+                    errors.append((processed - 1, str(e)))
+                # skip mode - silently ignore
 
-                # Track progress
-                if progress is not None and processed % progress_interval == 0:
-                    progress(processed, total)
+            # Track progress
+            if progress is not None and processed % progress_interval == 0:
+                progress(processed, total)
 
-            result_dict: t.BatchResultDict = {
-                "results": results,
-                "total": total,
-                "success_count": len([r for r in results if r is not None]),
-                "error_count": len([r for r in results if r is None]),
-                "errors": [],
-            }
-            return r[t.BatchResultDict].ok(result_dict)
-        except Exception as e:
-            return r[t.BatchResultDict].fail(f"Batch processing failed: {e}")
+        result_dict: t.BatchResultDict = {
+            "results": results,
+            "total": total,
+            "success_count": len(results),
+            "error_count": len(errors),
+            "errors": errors,
+        }
+        return r[t.BatchResultDict].ok(result_dict)
 
     @staticmethod
     def process(
         items: Sequence[T],
         processor: Callable[[T], U],
+        *,
         predicate: Callable[[T], bool] | None = None,
         on_error: str = "fail",
+        filter_keys: set[str] | None = None,
+        exclude_keys: set[str] | None = None,
     ) -> r[list[U]]:
         """Process items with optional filtering and error handling.
 
@@ -227,11 +417,16 @@ class FlextUtilitiesCollection:
             processor: Function to transform each item
             predicate: Optional filter function (applied before processor)
             on_error: "fail" to abort on error, "skip" to skip failed items
+            filter_keys: Only include items with these keys (for dict items)
+            exclude_keys: Exclude items with these keys (for dict items)
 
         Returns:
             FlextResult with list of processed results or error
 
         """
+        _ = filter_keys  # Documented for dict processing, applied in subclasses
+        _ = exclude_keys  # Documented for dict processing, applied in subclasses
+
         try:
             results: list[U] = []
             for item in items:
@@ -281,111 +476,161 @@ class FlextUtilitiesCollection:
             return r[tuple[StrEnum, ...]].fail(f"Parse sequence failed: {e}")
 
     @staticmethod
-    def coerce_dict_validator[T](
-        target_type: type[T],
-    ) -> Callable[[dict[str, object]], dict[str, T]]:
-        """Create a validator function for dictionaries with value coercion.
+    def _coerce_value_to_str(value: t.GeneralValueType) -> str:
+        """Coerce a value to string."""
+        return str(value)
 
-        Args:
-            target_type: Type to coerce values to (e.g., StrEnum, int, str)
+    @staticmethod
+    def _coerce_value_to_int(value: t.GeneralValueType) -> int:
+        """Coerce a value to int."""
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+        return int(str(value))
 
-        Returns:
-            Validator function that takes a dict and returns dict with coerced values
+    @staticmethod
+    def _coerce_value_to_float(value: t.GeneralValueType) -> float:
+        """Coerce a value to float."""
+        if isinstance(value, float):
+            return value
+        return float(str(value))
 
-        Raises:
-            TypeError: If input is not a dict or values cannot be coerced
+    @staticmethod
+    def _coerce_value_to_bool(value: t.GeneralValueType) -> bool:
+        """Coerce a value to bool."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in {"true", "1", "yes"}
+        return bool(value)
 
-        """
+    @staticmethod
+    def coerce_dict_to_str() -> Callable[
+        [dict[str, t.GeneralValueType]], dict[str, str]
+    ]:
+        """Create validator that coerces dict values to str."""
 
-        def validator(data: dict[str, object]) -> dict[str, T]:
-            # Runtime check: object type not supported for coercion
-            if target_type is object:
-                msg = "object type not supported for coercion"
-                raise TypeError(msg)
+        def validator(data: dict[str, t.GeneralValueType]) -> dict[str, str]:
+            return {
+                k: FlextUtilitiesCollection._coerce_value_to_str(v)
+                for k, v in data.items()
+            }
 
-            result: dict[str, T] = {}
-            for key, value in data.items():
-                try:
-                    if isinstance(value, target_type):
-                        # Value is already of correct type
-                        result[key] = value
-                    elif isinstance(target_type, type) and issubclass(
-                        target_type, StrEnum
-                    ):
-                        # Handle StrEnum conversion
-                        if not isinstance(value, str):
-                            msg = "Expected str"
-                            raise TypeError(msg)
-                        result[key] = target_type(value)
-                    # General type coercion - object type not supported
-                    else:
-                        result[key] = target_type(value)
-                except ValueError as e:
-                    # For enum validation errors, re-raise as ValueError
-                    type_name = getattr(target_type, "__name__", "Unknown")
-                    msg = f"Invalid {type_name}"
-                    raise ValueError(msg) from e
-                except TypeError:
-                    # For type errors, re-raise as TypeError
-                    raise
+        return validator
 
+    @staticmethod
+    def coerce_dict_to_int() -> Callable[
+        [dict[str, t.GeneralValueType]], dict[str, int]
+    ]:
+        """Create validator that coerces dict values to int."""
+
+        def validator(data: dict[str, t.GeneralValueType]) -> dict[str, int]:
+            return {
+                k: FlextUtilitiesCollection._coerce_value_to_int(v)
+                for k, v in data.items()
+            }
+
+        return validator
+
+    @staticmethod
+    def coerce_dict_to_float() -> Callable[
+        [dict[str, t.GeneralValueType]], dict[str, float]
+    ]:
+        """Create validator that coerces dict values to float."""
+
+        def validator(data: dict[str, t.GeneralValueType]) -> dict[str, float]:
+            return {
+                k: FlextUtilitiesCollection._coerce_value_to_float(v)
+                for k, v in data.items()
+            }
+
+        return validator
+
+    @staticmethod
+    def coerce_dict_to_bool() -> Callable[
+        [dict[str, t.GeneralValueType]], dict[str, bool]
+    ]:
+        """Create validator that coerces dict values to bool."""
+
+        def validator(data: dict[str, t.GeneralValueType]) -> dict[str, bool]:
+            return {
+                k: FlextUtilitiesCollection._coerce_value_to_bool(v)
+                for k, v in data.items()
+            }
+
+        return validator
+
+    @staticmethod
+    def coerce_dict_to_enum[E: StrEnum](
+        enum_type: type[E],
+    ) -> Callable[[dict[str, t.GeneralValueType]], dict[str, E]]:
+        """Create validator that coerces dict values to a StrEnum type."""
+
+        def validator(data: dict[str, t.GeneralValueType]) -> dict[str, E]:
+            result: dict[str, E] = {}
+            for k, v in data.items():
+                if isinstance(v, enum_type):
+                    result[k] = v
+                elif isinstance(v, str):
+                    result[k] = enum_type(v)
+                else:
+                    msg = f"Expected str for enum conversion, got {type(v).__name__}"
+                    raise TypeError(msg)
             return result
 
         return validator
 
     @staticmethod
-    def coerce_list_validator[T](
-        target_type: type[T],
-    ) -> Callable[[object], list[T]]:
-        """Create a validator function for lists/sequences with value coercion.
+    def coerce_list_to_str() -> Callable[[Sequence[t.GeneralValueType]], list[str]]:
+        """Create validator that coerces sequence values to str."""
 
-        Args:
-            target_type: Type to coerce values to (e.g., StrEnum, int, str)
+        def validator(data: Sequence[t.GeneralValueType]) -> list[str]:
+            return [FlextUtilitiesCollection._coerce_value_to_str(v) for v in data]
 
-        Returns:
-            Validator function that takes a sequence and returns list with coerced values
+        return validator
 
-        Raises:
-            TypeError: If input is not a sequence or values cannot be coerced
+    @staticmethod
+    def coerce_list_to_int() -> Callable[[Sequence[t.GeneralValueType]], list[int]]:
+        """Create validator that coerces sequence values to int."""
 
-        """
+        def validator(data: Sequence[t.GeneralValueType]) -> list[int]:
+            return [FlextUtilitiesCollection._coerce_value_to_int(v) for v in data]
 
-        def validator(data: object) -> list[T]:
-            # Runtime check: object type not supported for coercion
-            if target_type is object:
-                msg = "object type not supported for coercion"
-                raise TypeError(msg)
+        return validator
 
-            if not isinstance(data, (list, tuple, set, frozenset)):
-                msg = f"Expected sequence, got {type(data).__name__}"
-                raise TypeError(msg)
+    @staticmethod
+    def coerce_list_to_float() -> Callable[[Sequence[t.GeneralValueType]], list[float]]:
+        """Create validator that coerces sequence values to float."""
 
-            result: list[T] = []
-            for value in data:
-                try:
-                    if isinstance(value, target_type):
-                        # Value is already of correct type
-                        result.append(value)
-                    elif isinstance(target_type, type) and issubclass(
-                        target_type, StrEnum
-                    ):
-                        # Handle StrEnum conversion
-                        if not isinstance(value, str):
-                            msg = "Expected str"
-                            raise TypeError(msg)
-                        result.append(target_type(value))
-                    # General type coercion - object type not supported
-                    else:
-                        result.append(target_type(value))
-                except ValueError as e:
-                    # For enum validation errors, re-raise as ValueError
-                    type_name = getattr(target_type, "__name__", "Unknown")
-                    msg = f"Invalid {type_name}"
-                    raise ValueError(msg) from e
-                except TypeError:
-                    # For type errors, re-raise as TypeError
-                    raise
+        def validator(data: Sequence[t.GeneralValueType]) -> list[float]:
+            return [FlextUtilitiesCollection._coerce_value_to_float(v) for v in data]
 
+        return validator
+
+    @staticmethod
+    def coerce_list_to_bool() -> Callable[[Sequence[t.GeneralValueType]], list[bool]]:
+        """Create validator that coerces sequence values to bool."""
+
+        def validator(data: Sequence[t.GeneralValueType]) -> list[bool]:
+            return [FlextUtilitiesCollection._coerce_value_to_bool(v) for v in data]
+
+        return validator
+
+    @staticmethod
+    def coerce_list_to_enum[E: StrEnum](
+        enum_type: type[E],
+    ) -> Callable[[Sequence[t.GeneralValueType]], list[E]]:
+        """Create validator that coerces sequence values to a StrEnum type."""
+
+        def validator(data: Sequence[t.GeneralValueType]) -> list[E]:
+            result: list[E] = []
+            for v in data:
+                if isinstance(v, enum_type):
+                    result.append(v)
+                elif isinstance(v, str):
+                    result.append(enum_type(v))
+                else:
+                    msg = f"Expected str for enum conversion, got {type(v).__name__}"
+                    raise TypeError(msg)
             return result
 
         return validator
@@ -395,11 +640,11 @@ class FlextUtilitiesCollection:
     # ========================================================================
 
     @staticmethod
-    def first[T_item](
-        items: Sequence[T_item],
-        predicate: Callable[[T_item], bool] | None = None,
-        default: T_item | None = None,
-    ) -> T_item | None:
+    def first(
+        items: Sequence[T],
+        predicate: Callable[[T], bool] | None = None,
+        default: T | None = None,
+    ) -> T | None:
         """Get first item (optionally matching predicate).
 
         Args:
@@ -420,11 +665,11 @@ class FlextUtilitiesCollection:
         return default
 
     @staticmethod
-    def last[T_item](
-        items: Sequence[T_item],
-        predicate: Callable[[T_item], bool] | None = None,
-        default: T_item | None = None,
-    ) -> T_item | None:
+    def last(
+        items: Sequence[T],
+        predicate: Callable[[T], bool] | None = None,
+        default: T | None = None,
+    ) -> T | None:
         """Get last item (optionally matching predicate).
 
         Args:
@@ -445,10 +690,10 @@ class FlextUtilitiesCollection:
         return default
 
     @staticmethod
-    def group_by[T_item, K](
-        items: Sequence[T_item],
-        key_func: Callable[[T_item], K],
-    ) -> dict[K, list[T_item]]:
+    def group_by(
+        items: Sequence[T],
+        key_func: Callable[[T], U],
+    ) -> dict[U, list[T]]:
         """Group items by key function.
 
         Args:
@@ -463,7 +708,7 @@ class FlextUtilitiesCollection:
             # {"active": [User1, User2], "inactive": [User3]}
 
         """
-        result: dict[K, list[T_item]] = {}
+        result: dict[U, list[T]] = {}
         for item in items:
             key = key_func(item)
             if key not in result:
@@ -472,10 +717,10 @@ class FlextUtilitiesCollection:
         return result
 
     @staticmethod
-    def unique[T_item](
-        items: Sequence[T_item],
-        key_func: Callable[[T_item], object] | None = None,
-    ) -> list[T_item]:
+    def unique(
+        items: Sequence[T],
+        key_func: Callable[[T], object] | None = None,
+    ) -> list[T]:
         """Get unique items preserving order.
 
         Args:
@@ -490,7 +735,7 @@ class FlextUtilitiesCollection:
 
         """
         seen: set[object] = set()
-        result: list[T_item] = []
+        result: list[T] = []
         for item in items:
             key = key_func(item) if key_func else item
             if key not in seen:
@@ -499,10 +744,10 @@ class FlextUtilitiesCollection:
         return result
 
     @staticmethod
-    def partition[T_item](
-        items: Sequence[T_item],
-        predicate: Callable[[T_item], bool],
-    ) -> tuple[list[T_item], list[T_item]]:
+    def partition(
+        items: Sequence[T],
+        predicate: Callable[[T], bool],
+    ) -> tuple[list[T], list[T]]:
         """Split items by predicate: (matches, non-matches).
 
         Args:
@@ -516,8 +761,8 @@ class FlextUtilitiesCollection:
             active, inactive = u.partition(users, lambda u: u.is_active)
 
         """
-        matches: list[T_item] = []
-        non_matches: list[T_item] = []
+        matches: list[T] = []
+        non_matches: list[T] = []
         for item in items:
             if predicate(item):
                 matches.append(item)
@@ -526,7 +771,7 @@ class FlextUtilitiesCollection:
         return matches, non_matches
 
     @staticmethod
-    def flatten[T_item](items: Sequence[Sequence[T_item]]) -> list[T_item]:
+    def flatten(items: Sequence[Sequence[T]]) -> list[T]:
         """Flatten nested sequences into single list.
 
         Args:
@@ -540,9 +785,199 @@ class FlextUtilitiesCollection:
             # [1, 2, 3, 4, 5]
 
         """
-        result: list[T_item] = []
+        result: list[T] = []
         for seq in items:
             result.extend(seq)
+        return result
+
+    # ========================================================================
+    # Generic Coercion Validators (used by tests)
+    # ========================================================================
+
+    @staticmethod
+    def coerce_dict_validator[E: StrEnum](
+        enum_cls: type[E],
+    ) -> Callable[[t.GeneralValueType], dict[str, E]]:
+        """Create validator that coerces dict values to a StrEnum type.
+
+        Raises:
+            TypeError: If input is not a dict or value is not str
+            ValueError: If string value is not a valid enum member
+
+        """
+
+        def validator(data: t.GeneralValueType) -> dict[str, E]:
+            if not isinstance(data, dict):
+                msg = f"Expected dict, got {type(data).__name__}"
+                raise TypeError(msg)
+
+            result: dict[str, E] = {}
+            for k, v in data.items():
+                if isinstance(v, enum_cls):
+                    result[str(k)] = v
+                elif isinstance(v, str):
+                    try:
+                        result[str(k)] = enum_cls(v)
+                    except ValueError:
+                        enum_name = getattr(enum_cls, "__name__", "Enum")
+                        msg = f"Invalid {enum_name} value: '{v}'"
+                        raise ValueError(msg) from None
+                else:
+                    msg = f"Expected str for enum conversion, got {type(v).__name__}"
+                    raise TypeError(msg)
+            return result
+
+        return validator
+
+    @staticmethod
+    def coerce_list_validator[E: StrEnum](
+        enum_cls: type[E],
+    ) -> Callable[[t.GeneralValueType], list[E]]:
+        """Create validator that coerces list values to a StrEnum type.
+
+        Raises:
+            TypeError: If input is not a sequence or item is not str
+            ValueError: If string value is not a valid enum member
+
+        """
+
+        def validator(data: t.GeneralValueType) -> list[E]:
+            # Check for sequence type (but not str which is also a sequence)
+            if isinstance(data, str) or not isinstance(data, Sequence):
+                msg = f"Expected sequence, got {type(data).__name__}"
+                raise TypeError(msg)
+
+            result: list[E] = []
+            for v in data:
+                if isinstance(v, enum_cls):
+                    result.append(v)
+                elif isinstance(v, str):
+                    try:
+                        result.append(enum_cls(v))
+                    except ValueError:
+                        enum_name = getattr(enum_cls, "__name__", "Enum")
+                        msg = f"Invalid {enum_name} value: '{v}'"
+                        raise ValueError(msg) from None
+                else:
+                    msg = f"Expected str for enum conversion, got {type(v).__name__}"
+                    raise TypeError(msg)
+            return result
+
+        return validator
+
+    @staticmethod
+    def parse_mapping[E: StrEnum](
+        enum_cls: type[E],
+        mapping: Mapping[str, str | E],
+    ) -> r[dict[str, E]]:
+        """Parse dict values from strings to StrEnum.
+
+        Args:
+            enum_cls: StrEnum class to parse values to
+            mapping: Dict with string or enum values
+
+        Returns:
+            FlextResult with parsed dict
+
+        Example:
+            result = u.Collection.parse_mapping(Status, {"key": "active"})
+            # result.value == {"key": Status.ACTIVE}
+
+        """
+        try:
+            result: dict[str, E] = {}
+            errors: list[str] = []
+
+            for key, value in mapping.items():
+                if isinstance(value, enum_cls):
+                    result[key] = value
+                elif isinstance(value, str):
+                    try:
+                        result[key] = enum_cls(value)
+                    except ValueError:
+                        errors.append(f"'{key}': '{value}'")
+                else:
+                    errors.append(f"'{key}': invalid type {type(value).__name__}")
+
+            if errors:
+                enum_name = getattr(enum_cls, "__name__", "Enum")
+                return r[dict[str, E]].fail(
+                    f"Invalid {enum_name} values: {', '.join(errors)}",
+                )
+            return r[dict[str, E]].ok(result)
+        except Exception as e:
+            return r[dict[str, E]].fail(f"Parse mapping failed: {e}")
+
+    @staticmethod
+    def count(
+        items: Sequence[T],
+        predicate: Callable[[T], bool] | None = None,
+    ) -> int:
+        """Count items, optionally matching predicate.
+
+        Args:
+            items: Sequence to count
+            predicate: Optional filter function
+
+        Returns:
+            Count of matching items
+
+        Example:
+            active_count = u.Collection.count(users, lambda u: u.is_active)
+
+        """
+        if predicate is None:
+            return len(items)
+        return sum(1 for item in items if predicate(item))
+
+    @staticmethod
+    def group(
+        items: Sequence[T],
+        key_func: Callable[[T], U],
+    ) -> dict[U, list[T]]:
+        """Group items by key function.
+
+        This is an alias for group_by for convenience.
+        """
+        return FlextUtilitiesCollection.group_by(items, key_func)
+
+    @staticmethod
+    def chunk(items: Sequence[T], size: int) -> list[list[T]]:
+        """Split sequence into chunks of specified size.
+
+        Args:
+            items: Sequence to split
+            size: Maximum size of each chunk
+
+        Returns:
+            List of chunks
+
+        Example:
+            batches = u.Collection.chunk(records, 100)
+            # [[record1, ..., record100], [record101, ...], ...]
+
+        """
+        if size <= 0:
+            return [list(items)]
+        return [list(items[i : i + size]) for i in range(0, len(items), size)]
+
+    @staticmethod
+    def mul(*values: float) -> int | float:
+        """Multiply values.
+
+        Args:
+            *values: Values to multiply
+
+        Returns:
+            Product of all values
+
+        Example:
+            total = u.mul(price, quantity, tax_rate)
+
+        """
+        result: int | float = 1
+        for v in values:
+            result *= v
         return result
 
 

@@ -25,17 +25,17 @@ class AutoStrEnum(StrEnum):
     @staticmethod
     def _generate_next_value_(
         name: str,
-        _start: int,
-        _count: int,
-        _last_values: list[str],
+        start: int,  # noqa: ARG004 - required by parent signature
+        count: int,  # noqa: ARG004 - required by parent signature
+        last_values: list[str],  # noqa: ARG004 - required by parent signature
     ) -> str:
         """Generate enum value from member name.
 
         Args:
             name: The member name to convert.
-            _start: Start value (unused).
-            _count: Count value (unused).
-            _last_values: Last values list (unused).
+            start: Start value (unused).
+            count: Count value (unused).
+            last_values: Last values list (unused).
 
         Returns:
             The lowercased member name.
@@ -141,7 +141,7 @@ _DEFAULT_HOUR_IN_SECONDS: Final[int] = 3600
 
 
 class FlextConstants:
-    """Centralized constants for the FLEXT ecosystem.
+    """Centralized constants for the FLEXT ecosystem (Layer 0).
 
     Provides immutable, namespace-organized constants for system configuration,
     validation limits, error handling, and operational defaults.
@@ -619,6 +619,16 @@ class FlextConstants:
         ASYNC_QUEUE_SIZE: Final[int] = 10000
         ASYNC_WORKERS: Final[int] = 1
         ASYNC_BLOCK_ON_FULL: Final[bool] = False
+
+        # Log level hierarchy for level-based context filtering
+        LEVEL_HIERARCHY: Final[MappingProxyType[str, int]] = MappingProxyType({
+            "debug": 10,
+            "info": 20,
+            "warning": 30,
+            "error": 40,
+            "critical": 50,
+        })
+        """Numeric log levels for comparison (lower = more verbose)."""
 
         class ContextOperation(StrEnum):
             """Context operation types enumeration."""

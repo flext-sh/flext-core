@@ -21,7 +21,9 @@ APPROVED_MODULES: Final[frozenset[str]] = frozenset({
 })
 
 
-def warn_direct_module_access(module_name: str, facade_method: str | None = None) -> None:
+def warn_direct_module_access(
+    module_name: str, facade_method: str | None = None
+) -> None:
     """Warn if internal module is accessed from non-approved caller.
 
     Args:
@@ -38,9 +40,7 @@ def warn_direct_module_access(module_name: str, facade_method: str | None = None
     frame = inspect.currentframe()
     if frame and frame.f_back and frame.f_back.f_back:
         caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
-        if not any(
-            caller_module.startswith(approved) for approved in APPROVED_MODULES
-        ):
+        if not any(caller_module.startswith(approved) for approved in APPROVED_MODULES):
             # Build the suggestion message
             if facade_method is None:
                 # Convert module_name to title case for class name

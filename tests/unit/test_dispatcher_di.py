@@ -46,22 +46,19 @@ class TestDispatcherDI:
         assert isinstance(dispatcher._timeout_enforcer, TimeoutEnforcer)
         assert isinstance(dispatcher._retry_policy, RetryPolicy)
 
-    def test_dispatcher_accepts_container(self) -> None:
-        """Test dispatcher accepts container parameter."""
-        # Arrange
-        container = FlextContainer.create()
+    def test_dispatcher_has_container(self) -> None:
+        """Test dispatcher has container from FlextService inheritance."""
+        # Act - FlextService creates container internally
+        dispatcher = FlextDispatcher()
 
-        # Act
-        dispatcher = FlextDispatcher(container=container)
-
-        # Assert - dispatcher stores container
+        # Assert - dispatcher has container from FlextService
         assert dispatcher._container is not None
-        assert dispatcher._container is container
+        assert hasattr(dispatcher._container, "get")
+        assert hasattr(dispatcher._container, "register")
 
-    def test_reliability_managers_injected(self) -> None:
-        """Test dispatcher uses injected managers from container."""
-        # Arrange - custom managers via DI
-        container = FlextContainer.create()
+    def test_reliability_managers_injected_direct(self) -> None:
+        """Test dispatcher uses directly injected managers."""
+        # Arrange - custom managers passed directly
         custom_breaker = CircuitBreakerManager(
             threshold=5, recovery_timeout=10.0, success_threshold=2
         )
@@ -69,13 +66,13 @@ class TestDispatcherDI:
         custom_timeout = TimeoutEnforcer(use_timeout_executor=True, executor_workers=4)
         custom_retry = RetryPolicy(max_attempts=5, retry_delay=2.0)
 
-        container.register("circuit_breaker", custom_breaker)
-        container.register("rate_limiter", custom_rate_limiter)
-        container.register("timeout_enforcer", custom_timeout)
-        container.register("retry_policy", custom_retry)
-
-        # Act
-        dispatcher = FlextDispatcher(container=container)
+        # Act - pass managers directly to constructor
+        dispatcher = FlextDispatcher(
+            circuit_breaker=custom_breaker,
+            rate_limiter=custom_rate_limiter,
+            timeout_enforcer=custom_timeout,
+            retry_policy=custom_retry,
+        )
 
         # Assert - dispatcher uses injected managers
         assert dispatcher._circuit_breaker is custom_breaker
@@ -107,22 +104,19 @@ class TestDispatcherDI:
         assert dispatcher._timeout_enforcer is custom_timeout
         assert dispatcher._retry_policy is custom_retry
 
-    def test_dispatcher_resolves_managers_from_container(self) -> None:
-        """Test dispatcher resolves managers from container when not provided directly."""
-        # Arrange - register managers in container
-        container = FlextContainer.create()
-        custom_breaker = CircuitBreakerManager(
-            threshold=7,
-            recovery_timeout=10.0,
-            success_threshold=2,
-        )
-        container.register("circuit_breaker", custom_breaker)
+    def test_dispatcher_creates_default_managers_when_not_provided(self) -> None:
+        """Test dispatcher creates default managers when not provided."""
+        # Act - dispatcher should create default managers
+        dispatcher = FlextDispatcher()
 
-        # Act - dispatcher should resolve from container
-        dispatcher = FlextDispatcher(container=container)
+        # Assert - dispatcher has default managers with default config
+        assert dispatcher._circuit_breaker is not None
+        assert dispatcher._rate_limiter is not None
+        assert dispatcher._timeout_enforcer is not None
+        assert dispatcher._retry_policy is not None
 
-        # Assert - dispatcher resolved manager from container
-        assert dispatcher._container is container
-        # Verify dispatcher uses the manager from container
-        assert dispatcher._circuit_breaker is custom_breaker
-        assert dispatcher._circuit_breaker._threshold == 7
+        # Verify default values are applied
+        assert isinstance(dispatcher._circuit_breaker, CircuitBreakerManager)
+        assert isinstance(dispatcher._rate_limiter, RateLimiterManager)
+        assert isinstance(dispatcher._timeout_enforcer, TimeoutEnforcer)
+        assert isinstance(dispatcher._retry_policy, RetryPolicy)

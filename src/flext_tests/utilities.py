@@ -1084,36 +1084,35 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_dispatcher(
-                processors: dict[str, p.Processor] | None = None,
+                handlers: dict[str, t.HandlerType] | None = None,
             ) -> FlextDispatcher:
-                """Create a test dispatcher instance with optional processors.
+                """Create a test dispatcher instance with optional handlers.
 
                 Args:
-                    processors: Optional dict of processor name -> processor instance
+                    handlers: Optional dict of handler name -> handler instance
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    New FlextDispatcher instance with registered processors
+                    New FlextDispatcher instance with registered handlers
 
                 """
                 dispatcher = FlextDispatcher()
-                if processors:
-                    for name, processor in processors.items():
-                        _ = dispatcher.register_processor(name, processor)
+                if handlers:
+                    for name, handler in handlers.items():
+                        _ = dispatcher.register_handler(name, handler)
                 return dispatcher
 
             @staticmethod
-            def assert_processor_result(
+            def assert_handler_result(
                 result: p.Result[t.GeneralValueType],
                 *,
                 expected_success: bool = True,
                 expected_value: t.GeneralValueType | None = None,
                 expected_error: str | None = None,
             ) -> None:
-                """Assert processor result matches expectations.
+                """Assert handler result matches expectations.
 
                 Args:
-                    result: FlextResult from processor
+                    result: FlextResult from handler
                     expected_success: Whether result should be success
                     expected_value: Expected value if success
                     expected_error: Expected error substring if failure

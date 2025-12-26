@@ -3,30 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import ClassVar, cast
+from typing import cast
 
 import pytest
 
 from flext_core import e, p, r, s, t
 from flext_tests import u
-
-
-class AutoSuccessService(s[str]):
-    """Service that auto-executes and returns a value."""
-
-    auto_execute: ClassVar[bool] = True
-
-    def execute(self) -> r[str]:
-        return r[str].ok("auto_ok")
-
-
-class AutoFailService(s[str]):
-    """Service that auto-executes and raises BaseError on failure."""
-
-    auto_execute: ClassVar[bool] = True
-
-    def execute(self) -> r[str]:
-        return r[str].fail("auto_fail")
 
 
 class RuntimeCloneService(s[str]):
@@ -41,18 +23,6 @@ class RuntimeCloneService(s[str]):
         if not self.flag:
             return r[bool].fail("bad flag")
         return r[bool].ok(True)
-
-
-def test_auto_execute_returns_value() -> None:
-    """auto_execute=True should return the execution value directly."""
-    result_value = AutoSuccessService()
-    assert result_value == "auto_ok"
-
-
-def test_auto_execute_failure_raises_base_error() -> None:
-    """Failed auto_execute should raise BaseError with message."""
-    with pytest.raises(e.BaseError, match="auto_fail"):
-        _ = AutoFailService()
 
 
 def test_is_valid_handles_validation_exception() -> None:
@@ -103,25 +73,6 @@ def test_clone_runtime_creates_isolated_scope() -> None:
     assert resolved_result.value == "data"
 
 
-def test_access_facade_exposes_components() -> None:
-    """Service access facade should expose registry/config/context/result."""
-    service = RuntimeCloneService()
-    # Type narrowing: access returns _ServiceAccess, not Callable
-    # Access is a property that returns _ServiceAccess instance
-    access = service.access
-    # Type annotation: access is _ServiceAccess (not Callable)
-    # Use type: ignore[attr-defined] because mypy doesn't recognize _ServiceAccess attributes
-    # but they exist at runtime (computed_field properties)
-    assert access.cqrs is not None
-    assert access.config is service.config
-    assert access.context is service.context
-    assert access.result is r
-    registry = access.registry
-    assert registry is not None
-    info: Mapping[str, t.FlexibleValue] = service.get_service_info()
-    assert info["service_type"] == "RuntimeCloneService"
-
-
 def test_result_property_raises_on_failure() -> None:
     """Result property should raise BaseError on failed execution."""
 
@@ -132,3 +83,10 @@ def test_result_property_raises_on_failure() -> None:
     service = FailingOnResultService()
     with pytest.raises(e.BaseError, match="fail_exec"):
         _ = service.result
+
+
+def test_get_service_info() -> None:
+    """Service should return basic service info."""
+    service = RuntimeCloneService()
+    info: Mapping[str, t.FlexibleValue] = service.get_service_info()
+    assert info["service_type"] == "RuntimeCloneService"

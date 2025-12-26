@@ -19,7 +19,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel, Field
@@ -460,7 +460,7 @@ class CollectionUtilitiesScenarios:
             name="tuple_ints",
             items=(1, 2, 3),
             mapper=lambda x: x * 2,
-            expected_result=[2, 4, 6],
+            expected_result=(2, 4, 6),
         ),
         MapScenario(
             name="set_ints",
@@ -471,33 +471,20 @@ class CollectionUtilitiesScenarios:
         MapScenario(
             name="dict_values",
             items={"a": 1, "b": 2},
-            mapper=lambda k, v: v * 2,
+            mapper=lambda v: v * 2,
             expected_result={"a": 2, "b": 4},
-        ),
-        MapScenario(
-            name="result_success",
-            items=r.ok(10),
-            mapper=lambda x: x * 2,
-            expected_result=r.ok(20),
-        ),
-        MapScenario(
-            name="result_failure",
-            items=FlextResult[str].fail("error"),
-            mapper=lambda x: x * 2,
-            expected_result=FlextResult[str].fail("error"),
-            expected_failure=True,
-        ),
-        MapScenario(
-            name="single_item",
-            items=10,
-            mapper=lambda x: x * 2,
-            expected_result=[20],
         ),
         MapScenario(
             name="frozenset_ints",
             items=frozenset({1, 2, 3}),
             mapper=lambda x: x * 2,
             expected_result=frozenset({2, 4, 6}),
+        ),
+        MapScenario(
+            name="strings_upper",
+            items=["hello", "world"],
+            mapper=lambda x: x.upper(),
+            expected_result=["HELLO", "WORLD"],
         ),
     ]
 
@@ -517,21 +504,14 @@ class CollectionUtilitiesScenarios:
         FindScenario(
             name="dict_find_value",
             items={"a": 1, "b": 2},
-            predicate=lambda k, v: v == 2,
+            predicate=lambda v: v == 2,
             expected_result=2,
         ),
         FindScenario(
-            name="dict_find_key_value",
-            items={"a": 1, "b": 2},
-            predicate=lambda k, v: k == "a" and v == 1,
-            expected_result=1,
-        ),
-        FindScenario(
-            name="dict_find_return_key",
-            items={"a": 1, "b": 2},
-            predicate=lambda k, v: v == 2,
-            expected_result=("b", 2),
-            return_key=True,
+            name="dict_find_other",
+            items={"x": 10, "y": 20},
+            predicate=lambda v: v > 15,
+            expected_result=20,
         ),
     ]
 
@@ -552,27 +532,27 @@ class CollectionUtilitiesScenarios:
         FilterScenario(
             name="dict_filter",
             items={"a": 1, "b": 2, "c": 3},
-            predicate=lambda k, v: v % 2 != 0,
+            predicate=lambda v: v % 2 != 0,
             expected_result={"a": 1, "c": 3},
         ),
         FilterScenario(
             name="dict_filter_map",
             items={"a": 1, "b": 4},
-            predicate=lambda k, v: v > 2,
-            mapper=lambda k, v: v * 2,
+            predicate=lambda v: v > 2,
+            mapper=lambda v: v * 2,
             expected_result={"b": 8},
         ),
         FilterScenario(
-            name="single_filter_match",
-            items=10,
-            predicate=lambda x: x > 5,
-            expected_result=[10],
+            name="list_filter_empty",
+            items=[1, 3, 5],
+            predicate=lambda x: x > 10,
+            expected_result=[],
         ),
         FilterScenario(
-            name="single_filter_no_match",
-            items=1,
-            predicate=lambda x: x > 5,
-            expected_result=[],
+            name="list_filter_all",
+            items=[2, 4, 6],
+            predicate=lambda x: x % 2 == 0,
+            expected_result=[2, 4, 6],
         ),
     ]
 
@@ -605,16 +585,16 @@ class CollectionUtilitiesScenarios:
             predicate=lambda x: x > 1,
         ),
         ProcessScenario(
-            name="process_dict",
-            items={"a": 1, "b": 2},
-            processor=lambda k, v: v * 2,
-            expected_result={"a": 2, "b": 4},
+            name="process_strings",
+            items=["a", "b", "c"],
+            processor=lambda x: x.upper(),
+            expected_result=["A", "B", "C"],
         ),
         ProcessScenario(
-            name="process_single",
-            items=10,
+            name="process_empty",
+            items=[],
             processor=lambda x: x * 2,
-            expected_result=[20],
+            expected_result=[],
         ),
     ]
 
@@ -622,8 +602,7 @@ class CollectionUtilitiesScenarios:
         GroupScenario(
             name="group_by_len",
             items=["cat", "dog", "house"],
-            # len is Callable[[Sized], int], but GroupScenario.key expects Callable[[object], object]
-            key=cast("Callable[[object], object]", len),
+            key=lambda x: len(x),
             expected_result={3: ["cat", "dog"], 5: ["house"]},
         ),
     ]
@@ -883,28 +862,18 @@ class TestuCollectionMap:
     )
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
-        # u.Collection.map expects r[T], but scenario.items is object
-        # Cast to r[object] to match expected type
-        items_result: r[object] = cast("r[object]", scenario.items)
+        # Skip scenarios that use FlextResult objects as items
+        # Collection.map() works on raw collections, not FlextResult
+        if isinstance(scenario.items, (r, FlextRuntime.RuntimeResult)):
+            pytest.skip("Collection.map() does not handle FlextResult items")
+
         result = u.Collection.map(
-            items_result,
+            scenario.items,
             scenario.mapper,
-            default_error=scenario.default_error,
         )
 
-        if scenario.expected_failure:
-            # collection.py returns RuntimeResult, check for both types
-            assert isinstance(result, (r, FlextRuntime.RuntimeResult))
-            assertion_helpers.assert_flext_result_failure(result)
-            if scenario.error_contains:
-                assert scenario.error_contains in str(result.error)
-        elif isinstance(scenario.expected_result, (r, FlextRuntime.RuntimeResult)):
-            # collection.py returns RuntimeResult, check for both types
-            assert isinstance(result, (r, FlextRuntime.RuntimeResult))
-            assertion_helpers.assert_flext_result_success(result)
-            assert result.value == scenario.expected_result.value
-        else:
-            assert result == scenario.expected_result
+        # Collection.map() returns the mapped collection directly
+        assert result == scenario.expected_result
 
 
 class TestuCollectionFind:
@@ -917,18 +886,10 @@ class TestuCollectionFind:
     )
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
-        # u.Collection.find expects list[T] | tuple[T, ...] | set[T] | frozenset[T]
-        # but scenario.items is object, cast to list[object]
-        items: list[object] | tuple[object, ...] | set[object] | frozenset[object] = (
-            cast(
-                "list[object] | tuple[object, ...] | set[object] | frozenset[object]",
-                scenario.items,
-            )
-        )
+        # Collection.find works on lists, tuples, and dicts
         result = u.Collection.find(
-            items,
+            scenario.items,
             scenario.predicate,
-            return_key=scenario.return_key,
         )
         assert result == scenario.expected_result
 
@@ -943,14 +904,9 @@ class TestuCollectionFilter:
     )
     def test_filter(self, scenario: FilterScenario) -> None:
         """Test filter with various scenarios."""
-        # u.Collection.filter expects list[T] | tuple[T, ...]
-        # but scenario.items is object, cast to list[object]
-        items: list[object] | tuple[object, ...] = cast(
-            "list[object] | tuple[object, ...]",
-            scenario.items,
-        )
+        # Collection.filter works on lists, tuples, and dicts
         result = u.Collection.filter(
-            items,
+            scenario.items,
             scenario.predicate,
             mapper=scenario.mapper,
         )
@@ -967,14 +923,8 @@ class TestuCollectionCount:
     )
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
-        # u.Collection.count expects list[T] | tuple[T, ...] | Iterable[T]
-        # but scenario.items is object, cast to Iterable[object]
-        items: list[object] | tuple[object, ...] | Iterable[object] = cast(
-            "list[object] | tuple[object, ...] | Iterable[object]",
-            scenario.items,
-        )
         result = u.Collection.count(
-            items,
+            scenario.items,
             scenario.predicate,
         )
         assert result == scenario.expected_count
@@ -1100,37 +1050,17 @@ class TestuCollectionMerge:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base = {"a": 1, "b": {"x": 1}}
-        other = {"b": {"y": 2}, "c": 3}
-        # u.Collection.merge expects t.ConfigurationMapping
-        # but base and other are dict[str, object], cast to ConfigurationMapping
-        base_mapping: t.ConfigurationMapping = cast(
-            "t.ConfigurationMapping",
-            base,
-        )
-        other_mapping: t.ConfigurationMapping = cast(
-            "t.ConfigurationMapping",
-            other,
-        )
-        result = u.Collection.merge(base_mapping, other_mapping)
+        base: t.Types.ConfigurationMapping = {"a": 1, "b": {"x": 1}}
+        other: t.Types.ConfigurationMapping = {"b": {"y": 2}, "c": 3}
+        result = u.Collection.merge(base, other)
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"x": 1, "y": 2}, "c": 3}
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base = {"a": 1, "b": {"x": 1}}
-        other = {"b": {"y": 2}, "c": 3}
-        # u.Collection.merge expects t.ConfigurationMapping
-        # but base and other are dict[str, object], cast to ConfigurationMapping
-        base_mapping: t.ConfigurationMapping = cast(
-            "t.ConfigurationMapping",
-            base,
-        )
-        other_mapping: t.ConfigurationMapping = cast(
-            "t.ConfigurationMapping",
-            other,
-        )
-        result = u.Collection.merge(base_mapping, other_mapping, strategy="override")
+        base: t.Types.ConfigurationMapping = {"a": 1, "b": {"x": 1}}
+        other: t.Types.ConfigurationMapping = {"b": {"y": 2}, "c": 3}
+        result = u.Collection.merge(base, other, strategy="override")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"y": 2}, "c": 3}
 

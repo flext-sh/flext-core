@@ -600,7 +600,7 @@ class FlextModelsCollections:
             # Create new instance from normalized dict
             return cls(**normalized_result)
 
-    class Config(FlextModelsBase.ArbitraryTypesModel):  # noqa: PLW1641
+    class Config(FlextModelsBase.ArbitraryTypesModel):
         """Base for configuration models - mutable Pydantic v2 model.
 
         Pydantic v2 models are not hashable by default when not frozen.
@@ -614,8 +614,14 @@ class FlextModelsCollections:
             extra="forbid",
             validate_assignment=True,
         )
-        # Note: Pydantic v2 automatically makes non-frozen models unhashable
-        # No need to explicitly set __hash__ = None
+
+        def __hash__(self) -> int:
+            """Raise TypeError to indicate this class is not hashable.
+
+            Config models are mutable and should not be used as dict keys or set elements.
+            """
+            msg = f"{self.__class__.__name__} objects are not hashable"
+            raise TypeError(msg)
 
         @classmethod
         def from_mapping(

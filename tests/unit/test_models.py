@@ -624,7 +624,7 @@ class TestFlextModels:
             name: str
             _invariants: ClassVar[list[Callable[[], bool]]] = [failing_invariant]
 
-        with pytest.raises(FlextExceptions.ValidationError, match="Invariant violated"):
+        with pytest.raises(ValidationError, match="Invariant violated"):
             _ = FailingAggregate(name="test")
 
     def test_value_object_immutability(self) -> None:

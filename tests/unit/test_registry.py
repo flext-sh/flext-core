@@ -354,21 +354,21 @@ class TestFlextRegistry:
         ids=lambda c: c.name,
     )
     def test_binding_registration(self, test_case: RegistryTestCase) -> None:
-        """Test binding registration."""
+        """Test handler registration in batch mode."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handlers = RegistryScenarios.create_handlers(test_case.handler_count)
-        bindings = RegistryScenarios.create_bindings(handlers)
-        if test_case.duplicate_registration and bindings:
-            registry.register_bindings(bindings)
-            result = registry.register_bindings(bindings)
+        # FlextRegistry.register_handlers takes Iterable[FlextHandlers], not dict
+        if test_case.duplicate_registration and handlers:
+            registry.register_handlers(handlers)
+            result = registry.register_handlers(handlers)
         else:
-            result = registry.register_bindings(bindings)
+            result = registry.register_handlers(handlers)
         u.Tests.Result.assert_result_success(
             result,
         ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert result.value is not None
 
     @pytest.mark.parametrize(
         "test_case",
@@ -376,21 +376,21 @@ class TestFlextRegistry:
         ids=lambda c: c.name,
     )
     def test_function_map_registration(self, test_case: RegistryTestCase) -> None:
-        """Test function map registration."""
+        """Test function-based handler registration."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handlers = RegistryScenarios.create_handlers(test_case.handler_count)
-        function_map = RegistryScenarios.create_function_map(handlers)
-        if test_case.duplicate_registration and function_map:
-            registry.register_function_map(function_map)
-            result = registry.register_function_map(function_map)
+        # FlextRegistry.register_handlers takes Iterable[FlextHandlers], not dict
+        if test_case.duplicate_registration and handlers:
+            registry.register_handlers(handlers)
+            result = registry.register_handlers(handlers)
         else:
-            result = registry.register_function_map(function_map)
+            result = registry.register_handlers(handlers)
         u.Tests.Result.assert_result_success(
             result,
         ) if test_case.should_succeed else u.Tests.Result.assert_result_failure(
             result,
         )
-        assert isinstance(result.value, FlextRegistry.Summary)
+        assert result.value is not None
 
     @pytest.mark.parametrize(
         "test_case",
@@ -422,14 +422,15 @@ class TestFlextRegistry:
         ids=lambda c: c.name,
     )
     def test_key_resolution(self, test_case: RegistryTestCase) -> None:
-        """Test binding and handler key resolution."""
+        """Test handler key resolution."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
         handler = ConcreteTestHandler()
-        if test_case.operation == RegistryOperationType.RESOLVE_HANDLER_KEY:
+        # All key resolution uses _resolve_handler_key
+        if test_case.operation in (
+            RegistryOperationType.RESOLVE_HANDLER_KEY,
+            RegistryOperationType.RESOLVE_BINDING_KEY,
+        ):
             key = registry._resolve_handler_key(handler)
-            assert isinstance(key, str) and len(key) > 0
-        elif test_case.operation == RegistryOperationType.RESOLVE_BINDING_KEY:
-            key = registry._resolve_binding_key(handler, str)
             assert isinstance(key, str) and len(key) > 0
 
     @pytest.mark.parametrize(

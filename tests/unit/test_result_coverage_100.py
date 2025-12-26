@@ -249,7 +249,7 @@ class TestrCoverage:
         result = r[int].ok(5).filter(lambda x: x > 10)
         u.Tests.Result.assert_failure_with_error(
             result,
-            "Filter predicate failed",
+            "did not pass filter",
         )
 
     def test_filter_failure_skips_predicate(self) -> None:

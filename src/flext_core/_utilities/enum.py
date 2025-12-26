@@ -409,6 +409,54 @@ class FlextUtilitiesEnum:
         inverse = {v: k for k, v in data.items()}
         return forward, inverse
 
+    @staticmethod
+    def create_enum(name: str, values: dict[str, str]) -> type[StrEnum]:
+        """Create StrEnum dynamically from values dict.
+
+        Factory method for reducing StrEnum boilerplate during constants refactoring.
+        Enables transitioning from class definitions to alias-based constants.
+
+        Python 3.13+ recommended pattern for dynamic enum creation.
+
+        Args:
+            name: StrEnum class name (will be used as __name__)
+            values: Dictionary mapping member names to string values
+
+        Returns:
+            Newly created StrEnum class with specified members
+
+        Example:
+            >>> OutputFormat = FlextUtilitiesEnum.create_enum(
+            ...     "OutputFormat", {"JSON": "json", "YAML": "yaml", "CSV": "csv"}
+            ... )
+            >>> assert OutputFormat.JSON.value == "json"
+            >>> assert isinstance(OutputFormat.JSON, StrEnum)
+
+        Note:
+            This method is used during v0.10 → v0.11 constants refactoring
+            to reduce boilerplate code in FlextConstants and dependent projects.
+            After refactoring completes, prefer explicit StrEnum class definitions.
+
+        """
+        return type(
+            name,
+            (StrEnum,),
+            {"__members__": {k: StrEnum(k, v) for k, v in values.items()}},
+        )
+
+    @staticmethod
+    def is_enum_member[E: StrEnum](
+        value: t.GeneralValueType,
+        enum_cls: type[E],
+    ) -> TypeIs[E]:
+        """Check if value is enum member. Shortcut for is_member()."""
+        return FlextUtilitiesEnum.is_member(enum_cls, value)
+
+    @staticmethod
+    def parse_enum[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
+        """Parse value to enum. Shortcut for parse()."""
+        return FlextUtilitiesEnum.parse(enum_cls, value)
+
 
 # ─────────────────────────────────────────────────────────────
 # GENERALIZED PUBLIC FUNCTION PATTERN

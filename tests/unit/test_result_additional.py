@@ -2,10 +2,8 @@
 
 Exercises edge/error paths not covered in the base suite:
 - ok(None) guard
-- IOResult conversions (invalid/exception paths)
 - map_error identity/transform
 - flow_through short-circuit on failure
-- parallel_map fail-fast vs accumulate
 - create_from_callable None/exception handling
 - to_io_result failure path and __repr__
 """
@@ -16,9 +14,9 @@ from collections.abc import Callable
 from typing import cast
 
 import pytest
-from returns.io import IOFailure, IOResult
+from returns.io import IOFailure
 
-from flext_core import r, t
+from flext_core import r
 from flext_tests import u
 
 
@@ -47,17 +45,6 @@ def test_ok_raises_on_none() -> None:
     """Ensure None successes are rejected."""
     with pytest.raises(ValueError):
         r[object].ok(None)
-
-
-def test_from_io_result_invalid_type() -> None:
-    """Cover invalid IOResult type path."""
-    invalid: IOResult[t.GeneralValueType, str] = cast(
-        "IOResult[t.GeneralValueType, str]",
-        "not_io_result",
-    )
-    invalid_result = r.from_io_result(invalid)
-    u.Tests.Result.assert_result_failure(invalid_result)
-    assert "Invalid IO result type" in (invalid_result.error or "")
 
 
 def test_map_error_identity_and_transform() -> None:
@@ -93,30 +80,6 @@ def test_flow_through_short_circuits_on_failure() -> None:
     result = r[int].ok(1).flow_through(step1, fail_step, unreachable)
     u.Tests.Result.assert_failure_with_error(result, "stop")
     assert visited == [1]
-
-
-def test_parallel_map_fail_fast_and_accumulate() -> None:
-    """Cover both fail-fast and accumulate_errors branches."""
-    items = [1, 2]
-
-    def fn(value: int) -> r[int]:
-        if value == 2:
-            return r[int].fail("boom")
-        return r[int].ok(value * 2)
-
-    fast = r.parallel_map(items, fn, fail_fast=True)
-    u.Tests.Result.assert_result_failure(fast)
-    assert "boom" in (fast.error or "")
-
-    accumulated = r.parallel_map(items, fn, fail_fast=False)
-    u.Tests.Result.assert_result_failure(accumulated)
-    assert "boom" in (accumulated.error or "")
-
-    all_success = r.parallel_map([3, 4], lambda v: r[int].ok(v + 1))
-    u.Tests.Result.assert_success_with_value(
-        all_success,
-        [4, 5],
-    )
 
 
 def test_create_from_callable_and_repr() -> None:

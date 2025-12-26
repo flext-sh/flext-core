@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from flext_core.constants import c
 from flext_core.exceptions import e
@@ -264,9 +264,13 @@ class FlextHandlers[MessageT_contra, ResultT](
             def handle(self, message: object) -> r[t.GeneralValueType]:
                 """Execute the wrapped callable."""
                 try:
-                    # Type assertion: Assume message is compatible with handler function
-                    # Handler functions are user-provided and may accept various types
-                    result = self._handler_fn(cast("t.GeneralValueType", message))
+                    # Validate message is compatible with handler function
+                    if not u.Guards.is_general_value_type(message):
+                        return r[t.GeneralValueType].fail(
+                            "Message is not a valid GeneralValueType"
+                        )
+                    # TypeGuard narrows message to t.GeneralValueType
+                    result = self._handler_fn(message)
                     # If result is already r, return it directly
                     if isinstance(result, r):
                         return result
@@ -868,15 +872,15 @@ class FlextHandlers[MessageT_contra, ResultT](
                 if name.startswith("_"):
                     continue
                 func = getattr(module, name, None)
-                if callable(func) and hasattr(func, c.Discovery.HANDLER_ATTR):
+                if u.Guards.is_handler_callable(func) and hasattr(
+                    func, c.Discovery.HANDLER_ATTR
+                ):
                     config: m.Handler.DecoratorConfig = getattr(
                         func,
                         c.Discovery.HANDLER_ATTR,
                     )
-                    # Type assertion: callable(func) confirms it's a function
-                    # Type narrowing: func is callable with handler decorator
-                    handler_func: t.HandlerCallable = func
-                    handlers.append((name, handler_func, config))
+                    # TypeGuard narrows func to t.HandlerCallable
+                    handlers.append((name, func, config))
 
             # Sort by priority (descending), then by name for stability
             return sorted(

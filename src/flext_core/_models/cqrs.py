@@ -17,7 +17,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
-from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -127,7 +126,7 @@ class FlextModelsCqrs:
             default_factory=dict,
         )
         query_id: str = Field(
-            default_factory=lambda: FlextUtilitiesGenerators().generate("query"),
+            default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
         )
         query_type: str | None = None
 
@@ -164,34 +163,6 @@ class FlextModelsCqrs:
                     return result_cls
             return FlextModelsCqrs.Pagination
 
-        @staticmethod
-        def _convert_dict_to_pagination(
-            v: t.StringIntDict | t.StringDict,
-            pagination_cls: type[FlextModelsCqrs.Pagination],
-        ) -> FlextModelsCqrs.Pagination:
-            """Convert dict to Pagination instance."""
-            page = FlextUtilitiesParser().convert(
-                FlextUtilitiesMapper().get(
-                    v,
-                    "page",
-                    default=c.Pagination.DEFAULT_PAGE_NUMBER,
-                )
-                or c.Pagination.DEFAULT_PAGE_NUMBER,
-                int,
-                default=c.Pagination.DEFAULT_PAGE_NUMBER,
-            )
-            size = FlextUtilitiesParser().convert(
-                FlextUtilitiesMapper().get(
-                    v,
-                    "size",
-                    default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                )
-                or c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                int,
-                default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-            )
-            return pagination_cls(page=page, size=size)
-
         @field_validator("pagination", mode="before")
         @classmethod
         def validate_pagination(
@@ -204,126 +175,28 @@ class FlextModelsCqrs:
                 return v
 
             # Convert dict to Pagination
-            if FlextRuntime.is_dict_like(v):
-                # TypeGuard narrows v to Mapping[str, t.GeneralValueType]
-                # No cast needed - TypeGuard already narrows the type
-                v_dict = v
-                # .get() returns t.GeneralValueType | None, pass directly
-                # (None is valid t.GeneralValueType)
-                page = FlextUtilitiesParser().convert(
-                    FlextUtilitiesMapper().get(
-                        v_dict,
-                        "page",
-                        default=c.Pagination.DEFAULT_PAGE_NUMBER,
-                    )
-                    or c.Pagination.DEFAULT_PAGE_NUMBER,
-                    int,
-                    default=c.Pagination.DEFAULT_PAGE_NUMBER,
-                )
-                size = FlextUtilitiesParser().convert(
-                    FlextUtilitiesMapper().get(
-                        v_dict,
-                        "size",
-                        default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                    )
-                    or c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                    int,
-                    default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                )
+            if FlextRuntime.is_dict_like(v) and isinstance(v, Mapping):
+                page_raw = v.get("page", c.Pagination.DEFAULT_PAGE_NUMBER)
+                size_raw = v.get("size", c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE)
+                # Type-safe int conversion
+                page: int = c.Pagination.DEFAULT_PAGE_NUMBER
+                size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
+                if isinstance(page_raw, int):
+                    page = page_raw
+                elif (isinstance(page_raw, str) and page_raw.isdigit()) or isinstance(
+                    page_raw, float
+                ):
+                    page = int(page_raw)
+                if isinstance(size_raw, int):
+                    size = size_raw
+                elif (isinstance(size_raw, str) and size_raw.isdigit()) or isinstance(
+                    size_raw, float
+                ):
+                    size = int(size_raw)
                 return pagination_cls(page=page, size=size)
 
             # Default empty Pagination
             return pagination_cls()
-
-        @classmethod
-        def validate_query(
-            cls,
-            query_payload: t.ConfigurationMapping,
-        ) -> r[FlextModelsCqrs.Query]:
-            """Validate and create Query from payload."""
-            try:
-                # Fast fail: filters and pagination must be dict or None
-                # mapper().get() without default returns T | None directly
-                filters_raw = FlextUtilitiesMapper().get(query_payload, "filters")
-                # TypeGuard narrows to Mapping[str, t.GeneralValueType] when
-                # is_dict_like is True
-                if filters_raw is not None and FlextRuntime.is_dict_like(filters_raw):
-                    # Type narrowing: is_dict_like confirms filters_raw is Mapping
-                    # Convert Mapping to dict for type safety
-                    if isinstance(filters_raw, dict):
-                        filters = filters_raw
-                    elif isinstance(filters_raw, Mapping):
-                        filters = dict(filters_raw)
-                    else:
-                        filters = {}
-                else:
-                    filters = {}
-                pagination_raw = FlextUtilitiesMapper().get(query_payload, "pagination")
-                # TypeGuard narrows to Mapping[str, t.GeneralValueType] when is_dict_like is True
-                if pagination_raw is not None and FlextRuntime.is_dict_like(
-                    pagination_raw,
-                ):
-                    # Type narrowing: is_dict_like ensures pagination_raw is ConfigurationMapping
-                    # Explicit type assertion after type guard
-                    if isinstance(pagination_raw, Mapping):
-                        pagination_data: t.ConfigurationMapping = pagination_raw
-                    else:
-                        pagination_data = {}
-                else:
-                    pagination_data = {}
-                if FlextRuntime.is_dict_like(pagination_data):
-                    pagination_dict = pagination_data
-                    # Use Parser.convert() for concise type conversion
-                    page = FlextUtilitiesParser().convert(
-                        FlextUtilitiesMapper().get(
-                            pagination_dict,
-                            "page",
-                            default=c.Pagination.DEFAULT_PAGE_NUMBER,
-                        )
-                        or c.Pagination.DEFAULT_PAGE_NUMBER,
-                        int,
-                        default=c.Pagination.DEFAULT_PAGE_NUMBER,
-                    )
-                    size = FlextUtilitiesParser().convert(
-                        FlextUtilitiesMapper().get(
-                            pagination_dict,
-                            "size",
-                            default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                        )
-                        or c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                        int,
-                        default=c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                    )
-                    pagination: t.StringIntDict = {"page": page, "size": size}
-                else:
-                    pagination = {
-                        "page": c.Pagination.DEFAULT_PAGE_NUMBER,
-                        "size": c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
-                    }
-                # Fast fail: query_id must be str or None
-                # mapper().get() without default returns T | None directly
-                query_id_raw = FlextUtilitiesMapper().get(query_payload, "query_id")
-                query_id: str = (
-                    FlextUtilitiesGenerators().generate("query")
-                    if query_id_raw is None
-                    else str(query_id_raw)
-                )
-                query_type: t.GeneralValueType | None = query_payload.get(
-                    "query_type",
-                )
-                # filters is already guaranteed to be ConfigurationMapping from earlier validation
-                # Convert Mapping to dict for Pydantic model compatibility
-                query = cls(
-                    filters=dict(filters),
-                    pagination=pagination,
-                    query_id=query_id,
-                    query_type=str(query_type) if query_type is not None else None,
-                )
-                return r[FlextModelsCqrs.Query].ok(query)
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                return r[FlextModelsCqrs.Query].fail(
-                    f"Query validation failed: {e}",
-                )
 
     class Bus(BaseModel):
         """Dispatcher configuration model for CQRS routing."""
@@ -422,7 +295,7 @@ class FlextModelsCqrs:
             def __init__(self, handler_type: c.Cqrs.HandlerType) -> None:
                 """Initialize builder with required handler_type."""
                 super().__init__()
-                handler_short_id = FlextUtilitiesGenerators().generate("ulid", length=8)
+                handler_short_id = FlextRuntime.generate_prefixed_id("", length=8)
                 self._data: t.ConfigurationDict = {
                     "handler_type": handler_type,
                     "handler_mode": (

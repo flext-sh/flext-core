@@ -25,11 +25,8 @@ from enum import StrEnum
 from typing import ClassVar, Never, cast
 
 import pytest
-from returns.io import IO, IOFailure, IOResult, IOSuccess
-from returns.maybe import Nothing, Some
-from returns.result import Success
 
-from flext_core import c, e, r, t
+from flext_core import c, r, t
 from flext_tests import FlextTestsUtilities, u
 from tests.test_utils import assertion_helpers
 
@@ -505,56 +502,6 @@ class Testr:
             "actual_value",
         )
 
-    def test_to_io_success(self) -> None:
-        """Test to_io conversion for success result."""
-        result = r[str].ok("test_value")
-        io_result = result.to_io()
-        assert isinstance(io_result, IO)
-        # IO wraps the value, need to unwrap to access
-        assert io_result._inner_value == "test_value"
-
-    def test_to_io_failure(self) -> None:
-        """Test to_io conversion raises ValidationError for failure."""
-        result = r[str].fail("error")
-        with pytest.raises(e.ValidationError, match="Cannot convert failure to IO"):
-            result.to_io()
-
-    def test_from_io_result_success(self) -> None:
-        """Test from_io_result with IOSuccess."""
-        # IOSuccess wraps a Success in its _inner_value
-        io_success = IOSuccess("test_value")
-        result = r.from_io_result(io_success)
-        assertion_helpers.assert_flext_result_success(result)
-        # IOSuccess._inner_value is a Success object (from returns library)
-        # The implementation stores this Success object as the FlextResult value
-        value = result.value
-        assert isinstance(value, Success)
-        # Access inner value via _inner_value attribute of the Success
-        assert value._inner_value == "test_value"
-
-    def test_from_io_result_invalid_type(self) -> None:
-        """Test from_io_result with invalid IO result type."""
-
-        class InvalidIOResult:
-            pass
-
-        invalid_io = InvalidIOResult()
-        # from_io_result expects IOResult[t.GeneralValueType, str]
-        # InvalidIOResult is not IOResult, but method handles it at runtime
-        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", invalid_io))
-        assertion_helpers.assert_flext_result_failure(result)
-        assert result.error is not None
-        assert "Invalid IO result type" in str(result.error)
-
-    def test_from_io_result_failure(self) -> None:
-        """Test from_io_result with IOFailure."""
-        io_failure = IOFailure("error_message")
-        result = r.from_io_result(io_failure)
-        assertion_helpers.assert_flext_result_failure(result)
-        # IOFailure._inner_value may be a Failure object, converted to string
-        # The error should contain the error message
-        assert "error_message" in str(result.error)
-
     def test_safe_decorator(self) -> None:
         """Test safe decorator wraps function in try/except."""
 
@@ -665,26 +612,29 @@ class Testr:
         assert "error1" in str(accumulated.error)
         assert "error2" in str(accumulated.error)
 
-    def test_parallel_map_fail_fast(self) -> None:
-        """Test parallel_map with fail_fast=True."""
+    def test_traverse_fail_fast_true(self) -> None:
+        """Test traverse with fail_fast=True (default) stops on first failure."""
         items = [1, 2, 3]
-        result = r.parallel_map(
+        result = r.traverse(
             items,
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
+            fail_fast=True,
         )
         assertion_helpers.assert_flext_result_failure(result)
+        assert result.error == "error"
 
-    def test_parallel_map_no_fail_fast(self) -> None:
-        """Test parallel_map with fail_fast=False."""
+    def test_traverse_fail_fast_false(self) -> None:
+        """Test traverse with fail_fast=False collects all errors."""
         items = [1, 2, 3]
-        result = r.parallel_map(
+        result = r.traverse(
             items,
-            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
+            lambda x: r[int].fail(f"error_{x}") if x in (2, 3) else r[int].ok(x),
             fail_fast=False,
         )
         assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
-        assert "error" in str(result.error)
+        assert "error_2" in str(result.error)
+        assert "error_3" in str(result.error)
 
     def test_with_resource(self) -> None:
         """Test with_resource manages resource lifecycle."""
@@ -729,64 +679,6 @@ class Testr:
         repr_str = repr(result)
         assert "r.fail" in repr_str
         assert "error" in repr_str
-
-    def test_to_io_result_success(self) -> None:
-        """Test to_io_result for success."""
-        result = r[str].ok("value")
-        io_result = result.to_io_result()
-        assert isinstance(io_result, IOSuccess)
-        # IOSuccess contains a Success with the value
-        assert io_result._inner_value._inner_value == "value"
-
-    def test_to_io_result_failure(self) -> None:
-        """Test to_io_result for failure."""
-        result = r[str].fail("error")
-        io_result = result.to_io_result()
-        assert isinstance(io_result, IOFailure)
-
-    def test_from_io_result_unwrap_exception(self) -> None:
-        """Test from_io_result handles unwrap exceptions - tests lines 106-107.
-
-        Note: Testing exception path in from_io_result is difficult because
-        IOSuccess is immutable. The exception handling (lines 106-107) is
-        defensive code that's hard to trigger without complex mocking.
-        We verify the code path exists and works with normal IOSuccess.
-        """
-        # Test normal IOSuccess path works
-        io_value = IO("test_value")
-        real_io = IOSuccess(io_value)
-        # from_io_result expects IOResult[t.GeneralValueType, str]
-        # IOSuccess[IO[str]] is compatible at runtime but type system doesn't know
-        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", real_io))
-        assertion_helpers.assert_flext_result_success(result)
-
-        # The exception path (lines 106-107) is defensive code that catches
-        # exceptions during unwrap(). Since IOSuccess is immutable and can't be
-        # mocked easily, this path is tested implicitly through integration tests.
-        # Adding pragma comment for coverage exemption on defensive code.
-
-    def test_from_io_result_general_exception(self) -> None:
-        """Test from_io_result handles general exceptions."""
-
-        # This tests lines 117-118
-        class ExceptionRaisingIO:
-            def __init__(self) -> None:
-                error_msg = "General exception"
-                raise RuntimeError(error_msg)
-
-        # Create object that raises on isinstance check
-        class BadIO:
-            def __init__(self) -> None:
-                pass
-
-        bad_io = BadIO()
-        # from_io_result expects IOResult[t.GeneralValueType, str]
-        # BadIO is not IOResult, but method handles it at runtime
-        result = r.from_io_result(cast("IOResult[t.GeneralValueType, str]", bad_io))
-        assertion_helpers.assert_flext_result_failure(result)
-        error_msg = result.error
-        assert error_msg is not None
-        assert "Invalid IO result type" in error_msg
 
     def test_value_property_failure(self) -> None:
         """Test value property raises RuntimeError on failure."""
@@ -846,13 +738,6 @@ class Testr:
         assert final.is_success
         assert final.value == 5
 
-    def test_parallel_map_all_success(self) -> None:
-        """Test parallel_map with all successes."""
-        items = [1, 2, 3]
-        result = r.parallel_map(items, lambda x: r[int].ok(x * 2), fail_fast=True)
-        assertion_helpers.assert_flext_result_success(result)
-        assert result.value == [2, 4, 6]
-
     def test_ok_with_none_raises(self) -> None:
         """Test ok() raises ValueError for None value."""
         # ok() rejects None values - this is correct behavior
@@ -862,33 +747,6 @@ class Testr:
             match="Cannot create success result with None value",
         ):
             r[str].ok(None)
-
-    def test_to_maybe_success(self) -> None:
-        """Test to_maybe converts success to Some."""
-        result = r[str].ok("value")
-        maybe = result.to_maybe()
-        assert isinstance(maybe, Some)
-        assert maybe.unwrap() == "value"
-
-    def test_to_maybe_failure(self) -> None:
-        """Test to_maybe converts failure to Nothing."""
-        result = r[str].fail("error")
-        maybe = result.to_maybe()
-        assert maybe is Nothing
-
-    def test_from_maybe_some(self) -> None:
-        """Test from_maybe with Some."""
-        maybe = Some("value")
-        result = r.from_maybe(maybe)
-        assertion_helpers.assert_flext_result_success(result)
-        assert result.value == "value"
-
-    def test_from_maybe_nothing(self) -> None:
-        """Test from_maybe with Nothing."""
-        maybe = Nothing
-        result = r.from_maybe(maybe, error="Custom error")
-        assertion_helpers.assert_flext_result_failure(result)
-        assert result.error == "Custom error"
 
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops when function returns failure."""
@@ -942,6 +800,73 @@ class Testr:
         error_msg = result.error
         assert error_msg is not None
         assert "Callable failed" in error_msg
+
+    # =========================================================================
+    # New Advanced Methods Tests (map_or, fold, get_or_else)
+    # =========================================================================
+
+    def test_map_or_success_without_func(self) -> None:
+        """Test map_or returns value on success when func is None."""
+        result: r[str] = r[str].ok("hello")
+        value = result.map_or(None)
+        assert value == "hello"
+
+    def test_map_or_failure_without_func(self) -> None:
+        """Test map_or returns default on failure when func is None."""
+        result: r[str] = r[str].fail("error")
+        value = result.map_or("default")
+        assert value == "default"
+
+    def test_map_or_success_with_func(self) -> None:
+        """Test map_or applies func on success."""
+        result: r[str] = r[str].ok("hello")
+        length = result.map_or(0, len)
+        assert length == 5
+
+    def test_map_or_failure_with_func(self) -> None:
+        """Test map_or returns default on failure even with func."""
+        result: r[str] = r[str].fail("error")
+        length = result.map_or(0, len)
+        assert length == 0
+
+    def test_fold_success(self) -> None:
+        """Test fold applies on_success function."""
+        result: r[str] = r[str].ok("hello")
+        message = result.fold(
+            on_success=lambda v: f"Got: {v}",
+            on_failure=lambda e: f"Error: {e}",
+        )
+        assert message == "Got: hello"
+
+    def test_fold_failure(self) -> None:
+        """Test fold applies on_failure function."""
+        result: r[str] = r[str].fail("something broke")
+        message = result.fold(
+            on_success=lambda v: f"Got: {v}",
+            on_failure=lambda e: f"Error: {e}",
+        )
+        assert message == "Error: something broke"
+
+    def test_fold_different_return_types(self) -> None:
+        """Test fold can return different types than input."""
+        result: r[str] = r[str].ok("hello")
+        response: dict[str, object] = result.fold(
+            on_success=lambda v: {"status": 200, "data": v},
+            on_failure=lambda e: {"status": 400, "error": e},
+        )
+        assert response == {"status": 200, "data": "hello"}
+
+    def test_get_or_else_success(self) -> None:
+        """Test get_or_else returns value on success."""
+        result: r[str] = r[str].ok("hello")
+        value = result.get_or_else("default")
+        assert value == "hello"
+
+    def test_get_or_else_failure(self) -> None:
+        """Test get_or_else returns default on failure."""
+        result: r[str] = r[str].fail("error")
+        value = result.get_or_else("default")
+        assert value == "default"
 
 
 __all__ = ["Testr"]

@@ -408,7 +408,7 @@ class AutomationService(FlextService[t.ServiceMetadataMapping]):
             "worker_count": FlextConstants.Container.DEFAULT_WORKERS,
         }
         success_result = FlextResult[t.ServiceMetadataMapping].ok(existing)
-        cached = success_result.value if success_result.is_success else create_engine()
+        cached = success_result.map_or(create_engine())
         cached_id = str(cached.get("engine_id", "unknown"))
         print(f"✅ Existing engine used: {cached_id}")
 

@@ -16,15 +16,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
-from flext_core._utilities.configuration import FlextUtilitiesConfiguration
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.result import r
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-# NOTE: models.py cannot import utilities - use direct imports from _utilities/* instead
 
 
 class FlextModelsConfig:
@@ -42,7 +37,7 @@ class FlextModelsConfig:
             int: Numeric logging level (e.g., logging.INFO = 20)
 
         """
-        return FlextUtilitiesConfiguration.get_log_level_from_config()
+        return FlextRuntime.get_log_level_from_config()
 
     class ProcessingRequest(FlextModelsBase.ArbitraryTypesModel):
         """Enhanced processing request with advanced validation."""
@@ -56,7 +51,7 @@ class FlextModelsConfig:
         # Note: default_factory requires a callable that returns a value
         # Using lambda is necessary here as Pydantic calls the factory function
         operation_id: str = Field(
-            default_factory=FlextUtilitiesGenerators.generate,
+            default_factory=FlextRuntime.generate_id,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
@@ -79,27 +74,17 @@ class FlextModelsConfig:
         @field_validator("context", mode="before")
         @classmethod
         def validate_context(cls, v: t.GeneralValueType) -> t.StringDict:
-            """Ensure context has required fields (using FlextUtilitiesGenerators).
+            """Ensure context has required fields (using FlextRuntime).
 
             Returns t.StringDict because ensure_trace_context generates
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """
-            return FlextUtilitiesGenerators.ensure_trace_context(
+            return FlextRuntime.ensure_trace_context(
                 v,
                 include_correlation_id=True,
                 include_timestamp=True,
             )
-
-        def validate_processing_constraints(self) -> r[bool]:
-            """Validate constraints that should be checked during processing."""
-            max_timeout_seconds = c.Utilities.MAX_TIMEOUT_SECONDS
-            if self.timeout_seconds > max_timeout_seconds:
-                return r[bool].fail(
-                    f"Timeout cannot exceed {max_timeout_seconds} seconds",
-                )
-
-            return r[bool].ok(True)
 
     class RetryConfiguration(FlextModelsBase.ArbitraryTypesModel):
         """Retry configuration with advanced validation."""
@@ -144,9 +129,7 @@ class FlextModelsConfig:
             # removed from flext-core per domain violation rules
             # Convert to list[object] for validation function (accepts object)
             codes_for_validation: list[object] = list(v)
-            result = FlextUtilitiesValidation.validate_http_status_codes(
-                codes_for_validation,
-            )
+            result = FlextRuntime.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
                 error_msg = (
@@ -380,7 +363,7 @@ class FlextModelsConfig:
         """
 
         log_level: int = Field(
-            default_factory=FlextUtilitiesConfiguration.get_log_level_from_config,
+            default_factory=FlextRuntime.get_log_level_from_config,
             ge=c.ZERO,
             le=c.Validation.MAX_CUSTOM_VALIDATORS,
             description=(

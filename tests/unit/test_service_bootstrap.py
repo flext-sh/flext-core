@@ -7,8 +7,7 @@ Tests service bootstrap functionality with real implementations:
 - _runtime_bootstrap_options() method returns correct options
 - _create_runtime() creates ServiceRuntime with all components
 - _create_initial_runtime() uses bootstrap options
-- Config, context, container, dispatcher, registry creation
-- Auto-execute pattern with runtime bootstrap
+- Config, context, container creation
 
 Uses real implementations (no mocks) and flext_tests helpers.
 
@@ -63,8 +62,6 @@ class TestServiceBootstrap:
         assert runtime.config is not None
         assert runtime.context is not None
         assert runtime.container is not None
-        assert runtime.dispatcher is not None
-        assert runtime.registry is not None
 
         # Verify types
         assert isinstance(runtime.config, FlextSettings)

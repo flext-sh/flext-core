@@ -12,19 +12,33 @@ from __future__ import annotations
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.__version__ import __version__, __version_info__
+
+# Tier 0: Foundation (ZERO internal dependencies)
 from flext_core.constants import FlextConstants, c
+
+# Tier 2.5: DI and Services
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
+
+# Tier 3: Application Layer
 from flext_core.decorators import FlextDecorators, d
 from flext_core.dispatcher import FlextDispatcher
+
+# Tier 1: Core Abstractions
 from flext_core.exceptions import FlextExceptions, e
 from flext_core.handlers import FlextHandlers, h
+
+# Tier 1.5: Logging (uses Tier 0-1)
 from flext_core.loggings import FlextLogger
+
+# Tier 2: Domain Foundation
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels, m
 from flext_core.protocols import FlextProtocols, p
 from flext_core.registry import FlextRegistry
 from flext_core.result import FlextResult, r
+
+# Tier 0.5: Runtime Bridge
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService, s
 from flext_core.settings import FlextSettings
