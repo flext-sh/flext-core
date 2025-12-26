@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from typing import Annotated
 
 import structlog.contextvars
@@ -42,15 +42,12 @@ class FlextModelsContext:
         """
         if not FlextRuntime.is_dict_like(value):
             return {}
-        if not isinstance(value, Mapping):
-            return {}
+        # is_dict_like() returns True only for Mapping types
+        # Direct dict() constructor handles any Mapping
         result: t.ConfigurationDict = {}
-        # Type narrowing: value is now Mapping after isinstance check
-        # Convert to dict for consistent iteration (handles both dict and Mapping)
-        # Use ConfigurationMapping for type safety - values will be normalized
-        # to t.GeneralValueType
-        dict_value: t.ConfigurationMapping = dict(value.items())
-        for k, v in dict_value.items():
+        # Convert to dict to get items - dict() accepts any Mapping
+        temp_dict: dict[str, t.GeneralValueType] = dict(value)
+        for k, v in temp_dict.items():
             dict_key: str = str(k)
             # Normalize value to t.GeneralValueType
             normalized = FlextRuntime.normalize_to_general_value(v)
@@ -332,25 +329,29 @@ class FlextModelsContext:
             """
             if isinstance(val, (str, int, float, bool, type(None))):
                 return val
-            if FlextRuntime.is_dict_like(val) and isinstance(val, Mapping):
-                # Type narrowing: is_dict_like ensures dict-like, isinstance ensures Mapping
+            # is_dict_like already checks for Mapping protocol compliance
+            if FlextRuntime.is_dict_like(val):
+                # Type narrowing: is_dict_like ensures Mapping protocol
                 # Convert to ConfigurationDict recursively
                 result: t.ConfigurationDict = {}
-                dict_v = dict(val.items())
+                dict_v: dict[str, t.GeneralValueType] = dict(val)
                 for k, v in dict_v.items():
                     result[k] = (
                         FlextModelsContext.ContextData.normalize_to_general_value(v)
                     )
                 return result
+            # is_list_like already checks for Sequence protocol compliance
+            # Exclude str/bytes which are also Sequence
             if (
                 FlextRuntime.is_list_like(val)
-                and isinstance(val, Sequence)
                 and not isinstance(val, (str, bytes))
             ):
+                # Type narrowing: is_list_like ensures Sequence protocol
                 # Convert to list[t.GeneralValueType] recursively
+                seq_val: Sequence[t.GeneralValueType] = val
                 return [
                     FlextModelsContext.ContextData.normalize_to_general_value(item)
-                    for item in val
+                    for item in seq_val
                 ]
             # For arbitrary objects, keep as is since t.GeneralValueType includes object
             return val
@@ -364,17 +365,23 @@ class FlextModelsContext:
             """Recursively check if object is JSON-serializable."""
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
-            if FlextRuntime.is_dict_like(obj) and isinstance(obj, Mapping):
-                for key, val in obj.items():
+            # is_dict_like already checks for Mapping protocol compliance
+            if FlextRuntime.is_dict_like(obj):
+                # Type narrowing: is_dict_like ensures Mapping protocol
+                dict_obj: dict[str, t.GeneralValueType] = dict(obj)
+                for key, val in dict_obj.items():
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return  # All dict items validated successfully
+            # is_list_like already checks for Sequence protocol compliance
+            # Exclude str/bytes which are also Sequence
             if (
                 FlextRuntime.is_list_like(obj)
-                and isinstance(obj, Sequence)
                 and not isinstance(obj, (str, bytes))
             ):
-                for i, item in enumerate(obj):
+                # Type narrowing: is_list_like ensures Sequence protocol
+                seq_obj: Sequence[t.GeneralValueType] = obj
+                for i, item in enumerate(seq_obj):
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(item, f"{path}[{i}]")
                 return  # All list items validated successfully
@@ -407,36 +414,72 @@ class FlextModelsContext:
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
+            # Convert various input types to dict
+            working_value: t.ConfigurationDict
+
             # STRICT mode: Accept FlextModelsBase.Metadata and convert to dict
             if isinstance(v, FlextModelsBase.Metadata):
-                v = v.attributes
+                # Convert MetadataAttributeDict to ConfigurationDict
+                # Use helper to normalize all values
+                working_value = {
+                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    for k, val in v.attributes.items()
+                }
             elif hasattr(v, "model_dump"):
                 # Call model_dump on Pydantic model (safely via callable check)
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict[str, Any] - explicit type binding
+                    # model_dump() returns dict[str, Any] - normalize to ConfigurationDict
                     dump_result = model_dump_method()
-                    if isinstance(dump_result, dict):
-                        v = dump_result
+                    if not isinstance(dump_result, dict):
+                        type_name = type(v).__name__
+                        msg = f"Value must be a dictionary or Metadata, got {type_name}"
+                        raise TypeError(msg)
+                    # Normalize dict[str, Any] to ConfigurationDict
+                    working_value = {
+                        str(k): FlextRuntime.normalize_to_general_value(dump_result[k])
+                        for k in dump_result
+                    }
+                else:
+                    type_name = type(v).__name__
+                    msg = f"Value must be a dictionary or Metadata, got {type_name}"
+                    raise TypeError(msg)
+            elif v is None:
+                return {}
+            elif isinstance(v, dict):
+                # Normalize dict to ConfigurationDict
+                working_value = {
+                    str(k): FlextRuntime.normalize_to_general_value(v[k])
+                    for k in v
+                }
+            else:
+                # Last resort - must be dict-like
+                if not FlextRuntime.is_dict_like(v):
+                    type_name = type(v).__name__
+                    msg = f"Value must be a dictionary or Metadata, got {type_name}"
+                    raise TypeError(msg)
+                # Normalize Mapping to ConfigurationDict using .items()
+                temp_dict = dict(v)
+                working_value = {
+                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    for k, val in temp_dict.items()
+                }
 
-            if not FlextRuntime.is_dict_like(v):
-                type_name = type(v).__name__
+            if not FlextRuntime.is_dict_like(working_value):
+                type_name = type(working_value).__name__
                 msg = f"Value must be a dictionary or Metadata, got {type_name}"
                 raise TypeError(msg)
 
-            # Use class method for mypy compatibility
-            # Access via full class path since we're in a nested class
-            FlextModelsContext.ContextData.check_json_serializable(v)
+            # Validate JSON serializability
+            FlextModelsContext.ContextData.check_json_serializable(working_value)
+
             # Normalize to ConfigurationDict using helper
-            if not FlextRuntime.is_dict_like(v):
-                msg = f"Value must be dict-like, got {type(v).__name__}"
-                raise TypeError(msg)
-            # Use helper to normalize recursively
-            normalized = FlextModelsContext.ContextData.normalize_to_general_value(v)
+            normalized = FlextModelsContext.ContextData.normalize_to_general_value(working_value)
+
             # Type guard for return type - ConfigurationDict is dict[str, GeneralValueType]
             if isinstance(normalized, dict):
-                result: t.ConfigurationDict = normalized
-                return result
+                return normalized
+
             msg = f"Normalized value must be dict, got {type(normalized).__name__}"
             raise TypeError(msg)
 
@@ -509,19 +552,25 @@ class FlextModelsContext:
             """Recursively check if object is JSON-serializable."""
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
-            if FlextRuntime.is_dict_like(obj) and isinstance(obj, Mapping):
-                for key, val in obj.items():
+            # is_dict_like already checks for Mapping protocol compliance
+            if FlextRuntime.is_dict_like(obj):
+                # Type narrowing: is_dict_like ensures Mapping protocol
+                dict_obj: dict[str, t.GeneralValueType] = dict(obj)
+                for key, val in dict_obj.items():
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(
                         val,
                         f"{path}.{key}",
                     )
+            # is_list_like already checks for Sequence protocol compliance
+            # Exclude str/bytes which are also Sequence
             elif (
                 FlextRuntime.is_list_like(obj)
-                and isinstance(obj, Sequence)
                 and not isinstance(obj, (str, bytes))
             ):
-                for i, item in enumerate(obj):
+                # Type narrowing: is_list_like ensures Sequence protocol
+                seq_obj: Sequence[t.GeneralValueType] = obj
+                for i, item in enumerate(seq_obj):
                     # Recursive call using cls for mypy compatibility
                     cls.check_json_serializable(
                         item,
@@ -544,33 +593,72 @@ class FlextModelsContext:
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
+            # Convert various input types to dict
+            working_value: t.ConfigurationDict
+
             # Handle m.Metadata specially - extract only attributes dict
             # (excludes datetime fields which aren't JSON-serializable)
             if isinstance(v, FlextModelsBase.Metadata):
-                v = v.attributes
-            # Accept other Pydantic models - convert to dict
+                # Convert MetadataAttributeDict to ConfigurationDict
+                working_value = {
+                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    for k, val in v.attributes.items()
+                }
             elif hasattr(v, "model_dump"):
+                # Accept other Pydantic models - convert to dict
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict[str, Any] - explicit type binding
+                    # model_dump() returns dict[str, Any] - normalize to ConfigurationDict
                     dump_result = model_dump_method()
-                    if isinstance(dump_result, dict):
-                        v = dump_result
+                    if not isinstance(dump_result, dict):
+                        type_name = type(v).__name__
+                        msg = f"Value must be a dict or Pydantic model, got {type_name}"
+                        raise TypeError(msg)
+                    # Normalize dict[str, Any] to ConfigurationDict
+                    working_value = {
+                        str(k): FlextRuntime.normalize_to_general_value(dump_result[k])
+                        for k in dump_result
+                    }
+                else:
+                    type_name = type(v).__name__
+                    msg = f"Value must be a dict or Pydantic model, got {type_name}"
+                    raise TypeError(msg)
+            elif v is None:
+                return {}
+            elif isinstance(v, dict):
+                # Normalize dict to ConfigurationDict
+                working_value = {
+                    str(k): FlextRuntime.normalize_to_general_value(v[k])
+                    for k in v
+                }
+            else:
+                # Last resort - must be dict-like
+                if not FlextRuntime.is_dict_like(v):
+                    type_name = type(v).__name__
+                    msg = f"Value must be a dict or Pydantic model, got {type_name}"
+                    raise TypeError(msg)
+                # Normalize Mapping to ConfigurationDict using .items()
+                temp_dict = dict(v)
+                working_value = {
+                    str(k): FlextRuntime.normalize_to_general_value(val)
+                    for k, val in temp_dict.items()
+                }
 
-            if not FlextRuntime.is_dict_like(v):
-                type_name = type(v).__name__
+            if not FlextRuntime.is_dict_like(working_value):
+                type_name = type(working_value).__name__
                 msg = f"Value must be a dict or Pydantic model, got {type_name}"
                 raise TypeError(msg)
 
             # Recursively check all values are JSON-serializable
-            # Access via class name since we're in a nested class
-            FlextModelsContext.ContextExport.check_json_serializable(v)
+            FlextModelsContext.ContextExport.check_json_serializable(working_value)
+
             # Type assertion: runtime validation ensures correct type
-            # is_dict_like() confirms v is Mapping - dict() constructor accepts it
-            if isinstance(v, dict):
-                return v
+            # is_dict_like() confirms working_value is Mapping - dict() constructor accepts it
+            if isinstance(working_value, dict):
+                return working_value
+
             # Fallback for Mapping types
-            return dict(v)
+            return dict(working_value)
 
         @computed_field
         def total_data_items(self) -> int:

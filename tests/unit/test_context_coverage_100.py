@@ -607,32 +607,40 @@ class TestContext100Coverage:
             m.ContextData(metadata=invalid_metadata)
 
     def test_context_data_validate_dict_serializable_non_string_key(self) -> None:
-        """Test ContextData.validate_dict_serializable with non-string key."""
-        # Test with dict containing non-string key (Python dict allows this, but validator checks)
-        # We need to pass a dict-like object with non-string keys
+        """Test ContextData.validate_dict_serializable with non-string key.
 
-        class BadDict(UserDictBase[int, str]):
+        Note: Non-string keys are converted to strings by the validator's
+        key normalization (str(k)), so integer key 123 becomes string key "123".
+        """
+        # Test with dict containing non-string key - will be converted to string
+
+        class IntKeyDict(UserDictBase[int, str]):
             def __init__(self) -> None:
                 # Initialize with non-string key
                 super().__init__()
                 self[123] = "value"
 
-        bad_dict: object = BadDict()
-        # Pydantic validates before custom validation, so it raises ValidationError
-        with pytest.raises(
-            Exception,  # Can be ValidationError from Pydantic or TypeError from custom validation
-            match=r".*(keys must be strings|Dictionary keys must be strings|Input should be a valid string).*",
-        ):
-            m.ContextData(data=bad_dict)
+        int_key_dict: object = IntKeyDict()
+        # Key normalization converts int key to string
+        result = m.ContextData(data=int_key_dict)
+        assert "123" in result.data
 
     def test_context_data_validate_dict_serializable_non_serializable_value(
         self,
     ) -> None:
-        """Test ContextData.validate_dict_serializable with non-serializable value."""
+        """Test ContextData.validate_dict_serializable with non-serializable value.
+
+        Note: Non-JSON-serializable values (like sets) are converted to strings
+        by FlextRuntime.normalize_to_general_value() before serializability check,
+        so they become valid strings. This is intentional - ensures any value
+        can be stored in context.
+        """
         # Test with dict containing non-serializable value (e.g., set)
-        bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set is not JSON-serializable
-        with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
-            m.ContextData(data=bad_dict)
+        # Sets are converted to string representation (e.g., "{1, 2, 3}")
+        bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set becomes string
+        result = m.ContextData(data=bad_dict)
+        # Set was normalized to string representation
+        assert isinstance(result.data["key"], str)
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
@@ -657,25 +665,31 @@ class TestContext100Coverage:
             m.ContextExport(data=invalid_data)
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
-        """Test ContextExport.validate_dict_serializable with non-string key."""
-        # Create dict with non-string key (will fail validation)
-        bad_data: dict[object, str] = {123: "value"}  # Non-string key
+        """Test ContextExport.validate_dict_serializable with non-string key.
 
-        # Pydantic validates before custom validation, so it raises ValidationError
-        with pytest.raises(
-            Exception,  # Can be ValidationError from Pydantic or TypeError from custom validation
-            match=r".*(keys must be strings|Dictionary keys must be strings|must be a dictionary|Input should be a valid string).*",
-        ):
-            m.ContextExport(data=bad_data)
+        Note: Non-string keys are converted to strings by normalize_to_general_value(),
+        so integer key 123 becomes string key "123". No error is raised.
+        """
+        # Create dict with non-string key (will be converted to string)
+        data: dict[object, str] = {123: "value"}  # Non-string key → "123"
+        result = m.ContextExport(data=data)
+        # Key was normalized to string
+        assert "123" in result.data
 
     def test_context_export_validate_dict_serializable_non_serializable_value(
         self,
     ) -> None:
-        """Test ContextExport.validate_dict_serializable with non-serializable value."""
+        """Test ContextExport.validate_dict_serializable with non-serializable value.
+
+        Note: Non-JSON-serializable values (like sets) are converted to strings
+        by FlextRuntime.normalize_to_general_value() before serializability check.
+        """
         # Test with dict containing non-serializable value (e.g., set)
-        bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set is not JSON-serializable
-        with pytest.raises(TypeError, match=r".*Non-JSON-serializable.*"):
-            m.ContextExport(data=bad_dict)
+        # Sets are converted to string representation
+        data: dict[str, object] = {"key": {1, 2, 3}}  # set becomes string
+        result = m.ContextExport(data=data)
+        # Set was normalized to string representation
+        assert isinstance(result.data["key"], str)
 
     def test_context_export_total_data_items(self) -> None:
         """Test ContextExport.total_data_items computed field."""

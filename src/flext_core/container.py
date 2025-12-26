@@ -16,7 +16,7 @@ import sys
 import threading
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import Self
+from typing import Self, TypeGuard
 
 from pydantic import BaseModel
 
@@ -49,6 +49,7 @@ class FlextContainer(FlextRuntime, p.DI):
     # Instance attributes (initialized in __init__)
     _context: p.Ctx | None = None
     _config: p.Config | None = None
+    _user_overrides: t.ConfigurationDict
 
     def __new__(
         cls,
@@ -179,12 +180,26 @@ class FlextContainer(FlextRuntime, p.DI):
                     factories = FactoryDecoratorsDiscovery.scan_module(caller_module)
                     for factory_name, factory_config in factories:
                         # Get actual factory function from module
-                        factory_func = getattr(caller_module, factory_name, None)
-                        if factory_func and callable(factory_func):
+                        factory_func_raw = getattr(caller_module, factory_name, None)
+                        # Type narrowing: Factory functions decorated with @factory()
+                        # are expected to return RegisterableService, but getattr returns object
+                        if callable(factory_func_raw):
+                            # Type narrow: @factory() decorated functions return GeneralValueType
+                            factory_fn: Callable[..., t.GeneralValueType] = factory_func_raw
+
+                            # Create wrapper that satisfies ServiceFactory signature
+                            # The @factory() decorator validates return type at runtime
+                            # Bind factory_fn via default arg to avoid closure issue (B023)
+                            def factory_wrapper(
+                                _fn: Callable[..., t.GeneralValueType] = factory_fn,
+                            ) -> t.GeneralValueType:
+                                # Runtime validation ensures RegisterableService contract
+                                return _fn()
+
                             # Register using the name from decorator config
                             _ = instance.register_factory(
                                 factory_config.name,
-                                factory_func,
+                                factory_wrapper,
                             )
 
         return instance
@@ -384,10 +399,13 @@ class FlextContainer(FlextRuntime, p.DI):
         # Apply user overrides
         # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
         # (initialized as user_overrides or {}), so it's never None after __init__
-        user_overrides_dict: t.ConfigurationDict = (
-            self._user_overrides if self._user_overrides is not None else {}
-        )
-        self._user_config_provider.from_dict(dict(user_overrides_dict))
+        if self._user_overrides is None:
+            user_overrides_dict: t.ConfigurationDict = {}
+        else:
+            user_overrides_dict = self._user_overrides
+        # Convert to dict for from_dict() which expects dict not Mapping
+        user_overrides_plain: dict[str, t.GeneralValueType] = dict(user_overrides_dict)
+        self._user_config_provider.from_dict(user_overrides_plain)
 
         # Register namespace configs as factories
         # Access namespace registry via FlextSettings (self._config), not ContainerConfig
@@ -512,9 +530,12 @@ class FlextContainer(FlextRuntime, p.DI):
         # Register logger factory if not already registered
         # ServiceRegistration now uses SkipValidation - can store any service type
         if not self.has_service("logger"):
-            # FlextLogger implements p.Log protocol structurally
-            logger_instance = FlextLogger.create_module_logger("flext_core")
-            _ = self.register("logger", logger_instance)
+            # FlextLogger implements p.Log.StructlogLogger protocol structurally
+            # ServiceRegistration.service field uses SkipValidation for protocols
+            _ = self.register(
+                "logger",
+                FlextLogger.create_module_logger("flext_core"),
+            )
 
         # Register context if not already registered
         # ServiceRegistration uses SkipValidation - can register any service type
@@ -546,9 +567,7 @@ class FlextContainer(FlextRuntime, p.DI):
             # Simple merge: override strategy - new values override existing ones
             # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
             # (initialized as user_overrides or {}), so it's never None after __init__
-            user_overrides_dict: t.ConfigurationDict = (
-                self._user_overrides if self._user_overrides is not None else {}
-            )
+            user_overrides_dict: t.ConfigurationDict = self._user_overrides
             merged: t.ConfigurationDict = dict(user_overrides_dict)
             merged.update(processed_dict)
             self._user_overrides = merged
@@ -792,6 +811,20 @@ class FlextContainer(FlextRuntime, p.DI):
 
         return r[p.RegisterableService].fail(f"Service '{name}' not found")
 
+    @staticmethod
+    def _is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
+        """Type guard to narrow object to specific type T.
+
+        Args:
+            value: Value to check.
+            type_cls: Type class to check against.
+
+        Returns:
+            True if value is instance of type_cls, with type narrowed to T.
+
+        """
+        return isinstance(value, type_cls)
+
     def get_typed[T](self, name: str, type_cls: type[T]) -> r[T]:
         """Resolve a service by name and validate its runtime type.
 
@@ -810,16 +843,18 @@ class FlextContainer(FlextRuntime, p.DI):
         # Try service first with runtime type validation
         if name in self._services:
             service = self._services[name].service
-            if not isinstance(service, type_cls):
+            if not self._is_instance_of(service, type_cls):
                 return r[T].fail(f"Service '{name}' is not of type {type_cls.__name__}")
+            # TypeGuard narrows service to type T
             return r[T].ok(service)
 
         # Try factory with runtime type validation
         if name in self._factories:
             try:
                 resolved = self._factories[name].factory()
-                if not isinstance(resolved, type_cls):
+                if not self._is_instance_of(resolved, type_cls):
                     return r[T].fail(f"Factory '{name}' returned wrong type")
+                # TypeGuard narrows resolved to type T
                 return r[T].ok(resolved)
             except Exception as e:
                 return r[T].fail(str(e))
@@ -828,8 +863,9 @@ class FlextContainer(FlextRuntime, p.DI):
         if name in self._resources:
             try:
                 resolved = self._resources[name].factory()
-                if not isinstance(resolved, type_cls):
+                if not self._is_instance_of(resolved, type_cls):
                     return r[T].fail(f"Resource '{name}' returned wrong type")
+                # TypeGuard narrows resolved to type T
                 return r[T].ok(resolved)
             except Exception as e:
                 return r[T].fail(str(e))
@@ -1090,9 +1126,10 @@ class FlextContainer(FlextRuntime, p.DI):
         # cloned_services, cloned_factories, cloned_resources already have correct types
         # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
         # (initialized as user_overrides or {}), so it's never None after __init__
-        user_overrides_dict: t.ConfigurationDict = (
-            self._user_overrides if self._user_overrides is not None else {}
-        )
+        if self._user_overrides is None:
+            user_overrides_dict: t.ConfigurationDict = {}
+        else:
+            user_overrides_dict = self._user_overrides
         user_overrides_copy: t.ConfigurationDict = user_overrides_dict.copy()
         return FlextContainer._create_scoped_instance(
             config=base_config,

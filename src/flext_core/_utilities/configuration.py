@@ -431,7 +431,8 @@ class FlextUtilitiesConfiguration:
             # Type narrowing: when found is True, attr_val is t.GeneralValueType (not None)
             return attr_val
 
-        msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
+        class_name = getattr(type(obj), "__name__", "unknown")
+        msg = f"Parameter '{parameter}' is not defined in {class_name}"
         raise e.NotFoundError(msg)
 
     @staticmethod
@@ -480,9 +481,10 @@ class FlextUtilitiesConfiguration:
         """
         try:
             # Check if parameter exists in model fields for Pydantic objects
-            if isinstance(obj, p.HasModelFields):
-                # Access model_fields from class, not instance (Pydantic 2.11+ compatibility)
-                model_fields_dict = getattr(type(obj), "model_fields", {})
+            # Access model_fields from class directly (Pydantic 2.11+ compatibility)
+            obj_class = type(obj)
+            if hasattr(obj_class, "model_fields"):
+                model_fields_dict = getattr(obj_class, "model_fields", {})
                 if (
                     not FlextUtilitiesGuards.is_type(model_fields_dict, dict)
                     or parameter not in model_fields_dict

@@ -95,8 +95,9 @@ class FlextModelsEntity:
         @override
         def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities."""
-            if not isinstance(other, p.HasModelDump):
+            if not FlextRuntime.is_base_model(other):
                 return NotImplemented
+            # Type narrowed to BaseModel via TypeGuard (part of GeneralValueType)
             return FlextRuntime.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
@@ -129,7 +130,7 @@ class FlextModelsEntity:
                 FlextResult with the created DomainEvent or error
 
             """
-            if not event_type or not isinstance(event_type, str):
+            if not event_type:
                 return r[FlextModelsEntity.DomainEvent].fail(
                     "Domain event name must be a non-empty string",
                 )
@@ -193,7 +194,7 @@ class FlextModelsEntity:
 
             # Validate all event names first
             for event_type, _ in event_items:
-                if not event_type or not isinstance(event_type, str):
+                if not event_type:
                     return r[list[FlextModelsEntity.DomainEvent]].fail(
                         "Event name must be non-empty string",
                     )
@@ -230,8 +231,9 @@ class FlextModelsEntity:
         @override
         def __eq__(self: Self, other: object) -> bool:
             """Compare by value."""
-            if not isinstance(other, p.HasModelDump):
+            if not FlextRuntime.is_base_model(other):
                 return NotImplemented
+            # Type narrowed to BaseModel via TypeGuard (part of GeneralValueType)
             return FlextRuntime.compare_value_objects_by_value(self, other)
 
         def __hash__(self) -> int:

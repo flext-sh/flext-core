@@ -36,6 +36,125 @@ from flext_core.utilities import u
 # =============================================================================
 
 
+def _extract_mapping_items[K, V](
+    mapping: Mapping[K, V],
+) -> list[tuple[str, t.GeneralValueType]]:
+    """Extract mapping items as typed list for iteration.
+
+    Helper function to properly type narrow Mapping.items() for pyright.
+    Converts keys to strings and values to GeneralValueType.
+    """
+    result: list[tuple[str, t.GeneralValueType]] = []
+    items_iter = mapping.items()
+    for item_tuple in items_iter:
+        key_obj: object = item_tuple[0]
+        value_raw: object = item_tuple[1]
+        key_str: str = str(key_obj)
+        # Convert to GeneralValueType using runtime helper
+        value_typed: t.GeneralValueType = _to_general_value_type(value_raw)
+        result.append((key_str, value_typed))
+    return result
+
+
+def _to_general_value_type(value: object) -> t.GeneralValueType:
+    """Convert object to GeneralValueType with runtime check.
+
+    If value is already a GeneralValueType, return it.
+    Otherwise convert to string representation.
+    """
+    # Check known types that are part of GeneralValueType
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, BaseModel):
+        return value
+    if isinstance(value, Path):
+        return value
+    if callable(value):
+        # Callable[..., GeneralValueType] - return as-is
+        callable_typed: Callable[..., t.GeneralValueType] = value
+        return callable_typed
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        # Sequence[GeneralValueType]
+        return value  # type: ignore[return-value]
+    if isinstance(value, Mapping):
+        # Mapping[str, GeneralValueType]
+        return value  # type: ignore[return-value]
+    # Fallback: convert to string
+    return str(value)
+
+
+def _to_flexible_value(value: t.GeneralValueType) -> t.FlexibleValue | None:
+    """Convert GeneralValueType to FlexibleValue if compatible.
+
+    FlexibleValue is a subset of GeneralValueType that excludes
+    BaseModel, Path, and Callable types.
+
+    Returns None if the value is not FlexibleValue-compatible.
+    """
+    # FlexibleValue = str | int | float | bool | datetime | None
+    #                | Sequence[scalar] | Mapping[str, scalar]
+    # where scalar = str | int | float | bool | datetime | None
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, datetime):
+        return value
+    # Exclude BaseModel, Path, Callable - these are not FlexibleValue
+    if isinstance(value, BaseModel):
+        return None
+    if isinstance(value, Path):
+        return None
+    if callable(value):
+        return None
+    # Check for simple sequences (not nested GeneralValueType)
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        # Can't easily validate element types at runtime, assume compatible
+        return None  # Skip complex sequences for safety
+    if isinstance(value, Mapping):
+        # Can't easily validate value types at runtime, assume compatible
+        return None  # Skip complex mappings for safety
+    return None
+
+
+def _extract_callable_mapping[K, V](
+    mapping: Mapping[K, V],
+) -> dict[str, Callable[[], t.GeneralValueType]]:
+    """Extract mapping of callables for resources/factories.
+
+    Helper function to properly type narrow callable mappings for pyright.
+    Filters to only callable values and converts to proper signature.
+    """
+    result: dict[str, Callable[[], t.GeneralValueType]] = {}
+    items_iter = mapping.items()
+    for item_tuple in items_iter:
+        key_obj: object = item_tuple[0]
+        value_raw: object = item_tuple[1]
+        if callable(value_raw):
+            key_str: str = str(key_obj)
+            # Create wrapper function with explicit return type
+            # This ensures type safety - container validates at runtime
+            # Type narrow: callable() narrows value_raw to Callable
+            callable_fn: Callable[..., t.GeneralValueType] = value_raw
+
+            def _wrap_callable(
+                fn: Callable[..., t.GeneralValueType] = callable_fn,
+            ) -> Callable[[], t.GeneralValueType]:
+                """Wrap callable with proper return type signature."""
+
+                def _wrapped() -> t.GeneralValueType:
+                    return fn()
+
+                return _wrapped
+
+            result[key_str] = _wrap_callable()
+    return result
+
+
 def require_initialized[T](value: T | None, name: str) -> T:
     """Guard function that raises RuntimeError if value is None.
 
@@ -168,17 +287,23 @@ class FlextMixins(FlextRuntime):
                 # Use isinstance for proper type narrowing (TypeGuard)
                 if isinstance(normalized, Mapping):
                     # Type narrowing: Mapping is compatible with ContextMetadataMapping
-                    return dict(normalized)
+                    result: dict[str, t.GeneralValueType] = {}
+                    for k, v in normalized.items():
+                        key_str: str = str(k)
+                        val_typed: t.GeneralValueType = v if u.is_general_value_type(v) else str(v)
+                        result[key_str] = val_typed
+                    return result
                 # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
                 return {"value": normalized}
             # For Mapping, normalize each value
             try:
-                normalized_dict = {}
+                normalized_dict: dict[str, t.GeneralValueType] = {}
                 for k, v in obj.items():
-                    normalized_dict[k] = FlextRuntime.normalize_to_general_value(v)
-                process_result = r[t.ContextMetadataMapping].ok(normalized_dict)
+                    key: str = str(k)
+                    normalized_dict[key] = FlextRuntime.normalize_to_general_value(v)
+                process_result: r[dict[str, t.GeneralValueType]] = r[dict[str, t.GeneralValueType]].ok(normalized_dict)
             except Exception as e:
-                process_result = r[t.ContextMetadataMapping].fail(
+                process_result = r[dict[str, t.GeneralValueType]].fail(
                     f"Failed to normalize mapping: {e}",
                 )
 
@@ -186,9 +311,8 @@ class FlextMixins(FlextRuntime):
                 # Type narrowing: ConfigurationDict is dict[str, t.GeneralValueType]
                 # ContextMetadataMapping is Mapping[str, t.GeneralValueType]
                 # Since dict is a subtype of Mapping, ConfigurationDict is compatible with ContextMetadataMapping
-                result_value = process_result.value
-                if isinstance(result_value, dict):
-                    return result_value
+                result_value: dict[str, t.GeneralValueType] = process_result.value
+                return result_value
             return {}
 
     # =========================================================================
@@ -200,14 +324,20 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def ensure_result[T](value: T | r[T]) -> r[T]:
-            """Wrap value in r if not already wrapped."""
+            """Wrap value in r if not already wrapped.
+
+            Args:
+                value: Either a raw value of type T or a FlextResult[T]
+
+            Returns:
+                FlextResult[T]: The value wrapped in a result
+
+            """
             # Check if value is already a r
-            # Use type guard for proper type narrowing
             if isinstance(value, r):
-                # Type narrowing: value is r[T] after isinstance check
+                # Already wrapped - return as-is
                 return value
             # Wrap non-result value in r.ok()
-            # Type narrowing: value is T after isinstance check (not a Result)
             return r[T].ok(value)
 
     # =========================================================================
@@ -280,9 +410,14 @@ class FlextMixins(FlextRuntime):
         # Use dict interface - TypedDict keys accessed via .get() at runtime
         # RuntimeBootstrapOptions is TypedDict - use ConfigurationDict for type safety
         # ConfigurationDict = dict[str, GeneralValueType] which is the proper FLEXT type
-        options: t.ConfigurationDict = (
-            dict(options_raw) if isinstance(options_raw, dict) else {}
-        )
+        if isinstance(options_raw, dict):
+            # Narrow keys to str and values to GeneralValueType
+            options: t.ConfigurationDict = {}
+            items = _extract_mapping_items(options_raw)
+            for k_str, v_typed in items:
+                options[k_str] = v_typed
+        else:
+            options = {}
         # Use factory methods directly - Clean Architecture pattern
         # Each class knows how to instantiate itself
         # u.Mapper.get() returns GeneralValueType, narrow to class type
@@ -295,11 +430,15 @@ class FlextMixins(FlextRuntime):
         config_overrides_typed: Mapping[str, t.FlexibleValue] | None = None
         if isinstance(config_overrides_raw, Mapping):
             # Filter mapping to only include FlexibleValue-compatible types
-            flexible_overrides: dict[str, t.FlexibleValue] = {
-                k: v for k, v in config_overrides_raw.items() if u.is_flexible_value(v)
-            }
-            if flexible_overrides:
-                config_overrides_typed = flexible_overrides
+            items = _extract_mapping_items(config_overrides_raw)
+            # Build dict with helper function for type narrowing
+            flexible_dict: dict[str, t.FlexibleValue] = {}
+            for k_str, v_typed in items:
+                narrowed = _to_flexible_value(v_typed)
+                if narrowed is not None:
+                    flexible_dict[k_str] = narrowed
+            if flexible_dict:
+                config_overrides_typed = flexible_dict
         # config_cls is FlextSettings or subclass - type narrowing via isinstance
         config_cls_typed: type[FlextSettings] = (
             config_cls
@@ -332,12 +471,8 @@ class FlextMixins(FlextRuntime):
         services_typed: Mapping[str, t.GeneralValueType] | None = None
         if isinstance(services_raw, Mapping):
             # Build typed dict with GeneralValueType values
-            typed_services: dict[str, t.GeneralValueType] = {}
-            for k, v in services_raw.items():
-                if u.is_general_value_type(v):
-                    typed_services[str(k)] = v
-                else:
-                    typed_services[str(k)] = str(v)
+            items = _extract_mapping_items(services_raw)
+            typed_services: dict[str, t.GeneralValueType] = dict(items)
             if typed_services:
                 services_typed = typed_services
 
@@ -353,25 +488,19 @@ class FlextMixins(FlextRuntime):
 
         # Get resources and narrow to Mapping using isinstance
         resources_raw = u.Mapper.get(options, "resources")
-        resources_typed: Mapping[str, t.ResourceCallable] | None = None
+        resources_typed: Mapping[str, Callable[[], t.GeneralValueType]] | None = None
         if isinstance(resources_raw, Mapping):
             # Build typed dict with callable resource factories
-            resource_factories: dict[str, t.ResourceCallable] = {}
-            for k, v in resources_raw.items():
-                if callable(v):
-                    resource_factories[str(k)] = v
+            resource_factories = _extract_callable_mapping(resources_raw)
             if resource_factories:
                 resources_typed = resource_factories
 
         # isinstance narrowing for factories mapping
         # Validate values are callable for factory pattern
-        factories_typed: Mapping[str, t.FactoryCallable] | None = None
+        factories_typed: Mapping[str, Callable[[], t.GeneralValueType]] | None = None
         if isinstance(factories_raw, Mapping):
             # Build typed dict with only callable values
-            callable_factories: dict[str, t.FactoryCallable] = {}
-            for k, v in factories_raw.items():
-                if callable(v):
-                    callable_factories[str(k)] = v
+            callable_factories = _extract_callable_mapping(factories_raw)
             if callable_factories:
                 factories_typed = callable_factories
 
@@ -387,28 +516,44 @@ class FlextMixins(FlextRuntime):
         container_overrides_raw = options.get("container_overrides")
         if isinstance(container_overrides_raw, Mapping):
             # Build typed dict with GeneralValueType values
-            overrides: dict[str, t.GeneralValueType] = {}
-            for k, v in container_overrides_raw.items():
-                if u.is_general_value_type(v):
-                    overrides[str(k)] = v
-                else:
-                    overrides[str(k)] = str(v)
+            items = _extract_mapping_items(container_overrides_raw)
+            overrides: dict[str, t.GeneralValueType] = dict(items)
             if overrides:
                 runtime_container.configure(overrides)
 
         wire_modules_raw = options.get("wire_modules")
         wire_packages_raw = options.get("wire_packages")
         wire_classes_raw = options.get("wire_classes")
-        # Type narrow to sequences
-        wire_modules: Sequence[ModuleType] | None = (
-            wire_modules_raw if isinstance(wire_modules_raw, Sequence) else None
-        )
-        wire_packages: Sequence[str] | None = (
-            wire_packages_raw if isinstance(wire_packages_raw, Sequence) else None
-        )
-        wire_classes: Sequence[type] | None = (
-            wire_classes_raw if isinstance(wire_classes_raw, Sequence) else None
-        )
+        # Type narrow to sequences - explicit type annotations for list comprehensions
+        wire_modules: Sequence[ModuleType] | None = None
+        if isinstance(wire_modules_raw, Sequence) and not isinstance(wire_modules_raw, str):
+            # Build list with explicit type to ensure proper narrowing
+            modules_list: list[ModuleType] = []
+            for item in wire_modules_raw:
+                if isinstance(item, ModuleType):
+                    modules_list.append(item)
+            if len(modules_list) == len(wire_modules_raw):
+                wire_modules = modules_list
+
+        wire_packages: Sequence[str] | None = None
+        if isinstance(wire_packages_raw, Sequence) and not isinstance(wire_packages_raw, str):
+            # Build list with explicit type to ensure proper narrowing
+            packages_list: list[str] = []
+            for item in wire_packages_raw:
+                if isinstance(item, str):
+                    packages_list.append(item)
+            if len(packages_list) == len(wire_packages_raw):
+                wire_packages = packages_list
+
+        wire_classes: Sequence[type] | None = None
+        if isinstance(wire_classes_raw, Sequence) and not isinstance(wire_classes_raw, str):
+            # Build list with explicit type to ensure proper narrowing
+            classes_list: list[type] = []
+            for item in wire_classes_raw:
+                if isinstance(item, type):
+                    classes_list.append(item)
+            if len(classes_list) == len(wire_classes_raw):
+                wire_classes = classes_list
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire_modules(
                 modules=wire_modules,
@@ -446,9 +591,7 @@ class FlextMixins(FlextRuntime):
 
         # Increment operation count - use cast for type safety
         op_count_raw = u.Mapper.get(stats, "operation_count", default=0)
-        stats["operation_count"] = (
-            int(op_count_raw if isinstance(op_count_raw, (int, float, str)) else 0) + 1
-        )
+        stats["operation_count"] = int(op_count_raw) + 1
 
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
@@ -464,35 +607,20 @@ class FlextMixins(FlextRuntime):
                             default=0.0,
                         )
                         dur_ms_raw = u.Mapper.get(metrics, "duration_ms", default=0.0)
-                        total_dur = float(
-                            total_dur_raw
-                            if isinstance(total_dur_raw, (int, float, str))
-                            else 0.0,
-                        )
-                        dur_ms = float(
-                            dur_ms_raw
-                            if isinstance(dur_ms_raw, (int, float, str))
-                            else 0.0,
-                        )
+                        total_dur = float(total_dur_raw)
+                        dur_ms = float(dur_ms_raw)
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except Exception:
                     # Failure - increment error count
                     err_raw = u.Mapper.get(stats, "error_count", default=0)
-                    stats["error_count"] = (
-                        int(err_raw if isinstance(err_raw, (int, float, str)) else 0)
-                        + 1
-                    )
+                    stats["error_count"] = int(err_raw) + 1
                     raise
                 finally:
                     # Calculate success rate
                     op_raw = u.Mapper.get(stats, "operation_count", default=1)
                     err_raw2 = u.Mapper.get(stats, "error_count", default=0)
-                    op_count = int(
-                        op_raw if isinstance(op_raw, (int, float, str)) else 1,
-                    )
-                    err_count = int(
-                        err_raw2 if isinstance(err_raw2, (int, float, str)) else 0,
-                    )
+                    op_count = int(op_raw)
+                    err_count = int(err_raw2)
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
                         total_raw = u.Mapper.get(
@@ -500,11 +628,7 @@ class FlextMixins(FlextRuntime):
                             "total_duration_ms",
                             default=0.0,
                         )
-                        total_dur_final = float(
-                            total_raw
-                            if isinstance(total_raw, (int, float, str))
-                            else 0.0,
-                        )
+                        total_dur_final = float(total_raw)
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     # Update metrics with final stats
                     # stats values are already t.GeneralValueType (int, float)
@@ -531,12 +655,8 @@ class FlextMixins(FlextRuntime):
                     self,
                 )
             else:
-                # Fallback: wrap non-BaseModel service in dict with model_dump if available
-                service_data: t.GeneralValueType = (
-                    self.model_dump()
-                    if hasattr(self, "model_dump")
-                    else {"_service": str(type(self).__name__)}
-                )
+                # Fallback: wrap non-BaseModel service in dict
+                service_data: dict[str, str] = {"_service": str(type(self).__name__)}
                 result = self.container.register(service_name, service_data)
             # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
@@ -564,10 +684,8 @@ class FlextMixins(FlextRuntime):
         # Check cache first (thread-safe)
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
-                # Cache stores FlextLogger - narrow from object via isinstance
-                cached = cls._logger_cache[logger_name]
-                if isinstance(cached, FlextLogger):
-                    return cached
+                # Cache stores FlextLogger - return directly
+                return cls._logger_cache[logger_name]
 
         # Try to get from DI container
         try:
@@ -896,10 +1014,9 @@ class FlextMixins(FlextRuntime):
                         }
                         return r[t.ConfigurationDict].ok(context_dict)
                     # If it's already a dict, return as-is
-                    if isinstance(popped, dict):
-                        return r[t.ConfigurationDict].ok(popped)
-                    # Fallback for unexpected types
-                    return r[t.ConfigurationDict].fail("Invalid context type in stack")
+                    # Type is already narrowed to dict by the union type
+                    popped_dict: t.ConfigurationDict = popped
+                    return r[t.ConfigurationDict].ok(popped_dict)
                 return r[t.ConfigurationDict].ok({})
 
             def current_context(self) -> m.Handler.ExecutionContext | None:

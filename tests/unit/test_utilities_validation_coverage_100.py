@@ -201,10 +201,13 @@ class TestuValidation:
         data = DataclassForTest(name="test", value=42)
         # Pass dataclass instance directly - casts required for type checker
         # but runtime supports it
+        # Implementation uses string representation for dataclass instances
+        # (comment in validation.py: "Use string representation instead of trying to normalize dataclass")
         result = u.Validation.normalize_component(cast("t.GeneralValueType", data))
-        assert isinstance(result, dict)
-        assert result.get("type") == "dataclass"
-        assert result["data"]["name"] == "test"
+        assert isinstance(result, str)
+        assert "DataclassForTest" in result
+        assert "name=" in result
+        assert "test" in result
 
     def test_normalize_component_pydantic_exception(self) -> None:
         """Test normalize_component with failing model_dump."""

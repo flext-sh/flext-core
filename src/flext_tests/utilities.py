@@ -32,7 +32,7 @@ from flext_core import (
     r,
     t,
 )
-from flext_core.models import FlextModels as FlextModelsBase
+from flext_core._models.base import FlextModelsBase
 from flext_core.utilities import u as u_core
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -384,7 +384,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_complex_service(
-                validation_result: p.Result[bool],
+                validation_result: r[bool],
             ) -> r[t.GeneralValueType]:
                 """Execute complex service operation.
 

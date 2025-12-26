@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Self, TypeIs, TypeVar, overload
+from typing import Protocol, Self, TypeIs, TypeVar, overload, runtime_checkable
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -25,6 +25,13 @@ from flext_core.typings import U, t
 T = TypeVar("T")
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
 E = TypeVar("E", default=str)
+
+
+@runtime_checkable
+class _HasErrorsMethod(Protocol):
+    """Protocol for exceptions with errors() method (like Pydantic ValidationError)."""
+
+    def errors(self) -> list[dict[str, object]]: ...
 
 
 def is_success_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:
@@ -146,12 +153,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return FlextResult[T](Success(value))
 
     @classmethod
-    def fail[T](
+    def fail(
         cls,
         error: str | None,
         error_code: str | None = None,
         error_data: t.ConfigurationMapping | None = None,
-    ) -> FlextResult[T]:
+    ) -> FlextResult[T_co]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
         Business Rule: Creates failed FlextResult with error message, optional error
@@ -180,7 +187,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         # Use returns library Failure wrapper for railway-oriented programming
         result = Failure(error_msg)
-        return FlextResult[T](result, error_code=error_code, error_data=error_data)
+        return FlextResult[T_co](result, error_code=error_code, error_data=error_data)
 
     @staticmethod
     def safe[T](
@@ -345,22 +352,22 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 validation errors.
 
         """
-        # Check if model is a BaseModel subclass before calling model_validate
-        if not issubclass(model, BaseModel):
-            return FlextResult[T_BaseModel].fail(
-                f"Type {model} is not a BaseModel subclass",
-            )
         # Use model directly - validated result is guaranteed to be T_BaseModel
         # since model_validate returns an instance of the model class
+        # Note: T_BaseModel is bound to BaseModel, so no runtime check needed
         try:
             validated = model.model_validate(data)
             # validated is instance of model which is T_BaseModel
             return cls.ok(validated)
         except Exception as e:
             # Extract error message from Pydantic ValidationError if available
-            if hasattr(e, "errors") and callable(getattr(e, "errors", None)):
+            error_msg: str
+            if isinstance(e, _HasErrorsMethod):
+                # Type narrowing via protocol - e has errors() method
+                errors_list = e.errors()
                 error_msg = "; ".join(
-                    f"{err.get('loc', [])}: {err.get('msg', '')}" for err in e.errors()
+                    f"{err.get('loc', [])!s}: {err.get('msg', '')}"
+                    for err in errors_list
                 )
             else:
                 error_msg = str(e)
@@ -501,25 +508,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     ) -> T_co | None: ...
 
     @overload
-    def map_or[K, V](
+    def map_or[U](
         self,
-        default: dict[K, V],
+        default: U,
         func: None = None,
-    ) -> T_co | dict[K, V]: ...
-
-    @overload
-    def map_or[V](
-        self,
-        default: list[V],
-        func: None = None,
-    ) -> T_co | list[V]: ...
-
-    @overload
-    def map_or(
-        self,
-        default: T_co,
-        func: None = None,
-    ) -> T_co: ...
+    ) -> T_co | U: ...
 
     @overload
     def map_or[U](

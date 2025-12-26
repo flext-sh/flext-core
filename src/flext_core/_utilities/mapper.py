@@ -60,10 +60,8 @@ class FlextUtilitiesMapper:
         """Type guard for ConfigurationDict (dict with str keys and t.GeneralValueType values)."""
         if not isinstance(value, dict):
             return False
-        # Explicitly type the dict first to help pyright infer key types
-        value_dict: dict[object, object] = value
-        keys: list[object] = list(value_dict.keys())
-        return all(isinstance(k, str) for k in keys)
+        # Check all keys are strings
+        return all(isinstance(k, str) for k in value)
 
     @staticmethod
     def _is_configuration_mapping(
@@ -72,9 +70,8 @@ class FlextUtilitiesMapper:
         """Type guard for ConfigurationMapping."""
         if not isinstance(value, Mapping):
             return False
-        # Explicitly type keys from Mapping.keys()
-        keys: list[object] = list(value.keys())
-        return all(isinstance(k, str) for k in keys)
+        # Check all keys are strings
+        return all(isinstance(k, str) for k in value)
 
     @staticmethod
     def _narrow_to_configuration_dict(value: object) -> t.ConfigurationDict:
@@ -93,13 +90,19 @@ class FlextUtilitiesMapper:
         Uses TypeGuard pattern for proper type narrowing.
         """
         if isinstance(value, dict):
-            # Narrow dict values to GeneralValueType
+            # Narrow dict values to GeneralValueType with explicit type annotations
             result: t.ConfigurationDict = {}
-            for k, v in value.items():
-                if FlextUtilitiesGuards.is_general_value_type(v):
-                    result[str(k)] = v
+            # Iterate over items with explicit key and value types
+            key: object
+            val: object
+            for key, val in value.items():
+                # Convert key to string
+                str_key = str(key)
+                # Validate and convert value
+                if FlextUtilitiesGuards.is_general_value_type(val):
+                    result[str_key] = val
                 else:
-                    result[str(k)] = str(v)
+                    result[str_key] = str(val)
             return result
         error_msg = f"Cannot narrow {type(value)} to ConfigurationDict"
         raise TypeError(error_msg)
@@ -117,10 +120,13 @@ class FlextUtilitiesMapper:
     def _narrow_to_sequence(value: object) -> Sequence[t.GeneralValueType]:
         """Safely narrow object to Sequence[t.GeneralValueType]."""
         if isinstance(value, (list, tuple)):
-            return [
-                FlextUtilitiesMapper._narrow_to_general_value_type(item)
-                for item in value
-            ]
+            # Explicit type annotation for narrowing items
+            narrowed_items: list[t.GeneralValueType] = []
+            item: object
+            for item in value:
+                narrowed_item = FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                narrowed_items.append(narrowed_item)
+            return narrowed_items
         error_msg = f"Cannot narrow {type(value)} to Sequence"
         raise TypeError(error_msg)
 
@@ -433,10 +439,12 @@ class FlextUtilitiesMapper:
             # Convert any dict to JSON-compatible format
             # Purpose: CONVERT arbitrary dicts (even with non-GeneralValueType values)
             # to JSON-safe format by recursively calling convert_to_json_value
-            return {
-                str(k): FlextUtilitiesMapper.convert_to_json_value(v)
-                for k, v in value.items()
-            }
+            result_dict: dict[str, t.GeneralValueType] = {}
+            key: object
+            val: object
+            for key, val in value.items():
+                result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_value(val)
+            return result_dict
         # Use isinstance for sequence type narrowing
         if isinstance(value, Sequence) and not isinstance(value, str):
             # NOTE: Cannot use u.map() here due to circular import
@@ -2601,37 +2609,39 @@ class FlextUtilitiesMapper:
         result: t.ConfigurationDict = {}
 
         # Process primary data
-        if primary_data is not None and FlextRuntime.is_dict_like(primary_data):
-            # TypeGuard narrows primary_data to ConfigurationMapping
-            primary_dict: t.ConfigurationDict = FlextUtilitiesMapper.to_dict(
-                primary_data,
-            )
-            transformed_primary = FlextUtilitiesMapper.transform_values(
-                primary_dict,
-                transformer,
-            )
-            result.update(transformed_primary)
+        if primary_data is not None:
+            # Narrow to GeneralValueType first, then check if dict-like
+            primary_general = FlextUtilitiesMapper._narrow_to_general_value_type(primary_data)
+            if FlextRuntime.is_dict_like(primary_general):
+                # TypeGuard narrows primary_general to ConfigurationMapping
+                primary_dict: t.ConfigurationDict = FlextUtilitiesMapper.to_dict(
+                    primary_general,
+                )
+                transformed_primary = FlextUtilitiesMapper.transform_values(
+                    primary_dict,
+                    transformer,
+                )
+                result.update(transformed_primary)
 
         # Process secondary data based on merge strategy
-        if (
-            secondary_data is not None
-            and merge_strategy != "primary_only"
-            and FlextRuntime.is_dict_like(secondary_data)
-        ):
-            # TypeGuard narrows secondary_data to ConfigurationMapping
-            secondary_dict: t.ConfigurationDict = FlextUtilitiesMapper.to_dict(
-                secondary_data,
-            )
-            transformed_secondary = FlextUtilitiesMapper.transform_values(
-                secondary_dict,
-                transformer,
-            )
+        if secondary_data is not None and merge_strategy != "primary_only":
+            # Narrow to GeneralValueType first, then check if dict-like
+            secondary_general = FlextUtilitiesMapper._narrow_to_general_value_type(secondary_data)
+            if FlextRuntime.is_dict_like(secondary_general):
+                # TypeGuard narrows secondary_general to ConfigurationMapping
+                secondary_dict: t.ConfigurationDict = FlextUtilitiesMapper.to_dict(
+                    secondary_general,
+                )
+                transformed_secondary = FlextUtilitiesMapper.transform_values(
+                    secondary_dict,
+                    transformer,
+                )
 
-            if merge_strategy == "secondary_only":
-                result = transformed_secondary
-            elif merge_strategy == "merge":
-                result.update(transformed_secondary)
-            # For other strategies, secondary data is ignored
+                if merge_strategy == "secondary_only":
+                    result = transformed_secondary
+                elif merge_strategy == "merge":
+                    result.update(transformed_secondary)
+                # For other strategies, secondary data is ignored
 
         # Apply field overrides
         if field_overrides:
@@ -2800,29 +2810,40 @@ class FlextUtilitiesMapper:
         """
         result: t.ConfigurationDict = {}
 
-        for spec in field_names:
+        spec_item: str | Mapping[str, t.GeneralValueType]
+        for spec_item in field_names:
             # DSL pattern: dict with field specifications
-            if isinstance(spec, Mapping):
-                for name, field_config in spec.items():
+            if isinstance(spec_item, Mapping):
+                name: str
+                field_config: t.GeneralValueType
+                for name, field_config in spec_item.items():
                     if isinstance(obj, Mapping):
                         if name in obj:
                             result[name] = obj[name]
                         elif isinstance(field_config, Mapping):
-                            # Use default value from spec
-                            result[name] = field_config.get("default")
+                            # Use default value from spec - narrow the type explicitly
+                            default_value = field_config.get("default")
+                            if default_value is not None:
+                                result[name] = default_value
                         else:
                             result[name] = field_config
                     elif hasattr(obj, name):
                         result[name] = getattr(obj, name)
                     elif isinstance(field_config, Mapping):
-                        result[name] = field_config.get("default")
-            # Simple pattern: string field name
-            elif isinstance(spec, str):
+                        # Use default value from spec - narrow the type explicitly
+                        default_value = field_config.get("default")
+                        if default_value is not None:
+                            result[name] = default_value
+            # Simple pattern: string field name (spec_item is str after isinstance check)
+            else:
+                # After isinstance(spec_item, Mapping) is False, and field_names is
+                # typed as Sequence[str | Mapping[...]], spec_item must be str
+                field_name: str = spec_item
                 if isinstance(obj, Mapping):
-                    if spec in obj:
-                        result[spec] = obj[spec]
-                elif hasattr(obj, spec):
-                    result[spec] = getattr(obj, spec)
+                    if field_name in obj:
+                        result[field_name] = obj[field_name]
+                elif hasattr(obj, field_name):
+                    result[field_name] = getattr(obj, field_name)
 
         return result
 

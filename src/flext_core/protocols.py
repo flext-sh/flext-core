@@ -9,113 +9,14 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType, TracebackType
-from typing import ParamSpec, Protocol, Self, Union, runtime_checkable
+from typing import Protocol, Self, Union, runtime_checkable
 
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
-from flext_core.typings import T_co, t
-
-P_HandlerFunc = ParamSpec("P_HandlerFunc")
+from flext_core.typings import P, T_co, t
 
 
-# Module-level protocol definitions for p.Log namespace
-@runtime_checkable
-class _StructlogLoggerProtocol(BindableLogger, Protocol):
-    """Protocol for structlog logger with all logging methods.
-
-    Extends BindableLogger to add explicit method signatures for
-    logging methods (debug, info, warning, error, etc.) that are
-    available via __getattr__ at runtime.
-    """
-
-    def debug(
-        self,
-        msg: str | t.GeneralValueType,
-        *args: t.GeneralValueType | Exception,
-        **kw: t.GeneralValueType | Exception,
-    ) -> None:
-        """Log debug message."""
-        ...
-
-    def info(
-        self,
-        msg: str | t.GeneralValueType,
-        *args: t.GeneralValueType,
-        **kw: t.GeneralValueType | Exception,
-    ) -> None:
-        """Log info message."""
-        ...
-
-    def warning(
-        self,
-        msg: str | t.GeneralValueType,
-        *args: t.GeneralValueType,
-        **kw: t.GeneralValueType | Exception,
-    ) -> None:
-        """Log warning message."""
-        ...
-
-    def warn(
-        self,
-        msg: str | t.GeneralValueType,
-        *args: t.GeneralValueType,
-        **kw: t.GeneralValueType,
-    ) -> None:
-        """Log warning message (alias)."""
-        ...
-
-    def error(
-        self,
-        msg: str | t.GeneralValueType,
-        *args: t.GeneralValueType,
-        **kw: t.GeneralValueType | Exception,
-    ) -> None:
-        """Log error message."""
-        ...
-
-    def critical(
-        self,
-        msg: str | t.GeneralValueType,
-        *args: t.GeneralValueType,
-        **kw: t.GeneralValueType | Exception,
-    ) -> None:
-        """Log critical message."""
-        ...
-
-    def exception(
-        self,
-        msg: str | t.GeneralValueType,
-        *args: t.GeneralValueType,
-        **kw: t.GeneralValueType | Exception,
-    ) -> None:
-        """Log exception with traceback."""
-        ...
-
-
-@runtime_checkable
-class _MetadataProtocol(Protocol):
-    """Metadata object protocol."""
-
-    @property
-    def created_at(self) -> datetime:
-        """Creation timestamp."""
-        ...
-
-    @property
-    def updated_at(self) -> datetime:
-        """Update timestamp."""
-        ...
-
-    @property
-    def version(self) -> str:
-        """Version string."""
-        ...
-
-    @property
-    def attributes(self) -> t.ConfigurationMapping:
-        """Metadata attributes."""
-        ...
 
 
 class FlextProtocols:
@@ -795,7 +696,7 @@ class FlextProtocols:
 
         @staticmethod
         def create_handler_from_function(
-            handler_func: Callable[P_HandlerFunc, t.GeneralValueType],
+            handler_func: Callable[P, t.GeneralValueType],
             handler_config: Mapping[str, t.FlexibleValue] | None = None,
             mode: str = ...,
         ) -> FlextProtocols.Result[FlextProtocols.Handler]:
@@ -943,12 +844,102 @@ class FlextProtocols:
         - p.Log.Metadata - metadata protocol
         """
 
-        StructlogLogger = _StructlogLoggerProtocol
-        Metadata = _MetadataProtocol
+        @runtime_checkable
+        class StructlogLogger(BindableLogger, Protocol):
+            """Protocol for structlog logger with all logging methods.
 
-    # Backward compatibility aliases at FlextProtocols level
-    StructlogLogger = _StructlogLoggerProtocol
-    Metadata = _MetadataProtocol
+            Extends BindableLogger to add explicit method signatures for
+            logging methods (debug, info, warning, error, etc.) that are
+            available via __getattr__ at runtime.
+            """
+
+            def debug(
+                self,
+                msg: str | t.GeneralValueType,
+                *args: t.GeneralValueType | Exception,
+                **kw: t.GeneralValueType | Exception,
+            ) -> None:
+                """Log debug message."""
+                ...
+
+            def info(
+                self,
+                msg: str | t.GeneralValueType,
+                *args: t.GeneralValueType,
+                **kw: t.GeneralValueType | Exception,
+            ) -> None:
+                """Log info message."""
+                ...
+
+            def warning(
+                self,
+                msg: str | t.GeneralValueType,
+                *args: t.GeneralValueType,
+                **kw: t.GeneralValueType | Exception,
+            ) -> None:
+                """Log warning message."""
+                ...
+
+            def warn(
+                self,
+                msg: str | t.GeneralValueType,
+                *args: t.GeneralValueType,
+                **kw: t.GeneralValueType,
+            ) -> None:
+                """Log warning message (alias)."""
+                ...
+
+            def error(
+                self,
+                msg: str | t.GeneralValueType,
+                *args: t.GeneralValueType,
+                **kw: t.GeneralValueType | Exception,
+            ) -> None:
+                """Log error message."""
+                ...
+
+            def critical(
+                self,
+                msg: str | t.GeneralValueType,
+                *args: t.GeneralValueType,
+                **kw: t.GeneralValueType | Exception,
+            ) -> None:
+                """Log critical message."""
+                ...
+
+            def exception(
+                self,
+                msg: str | t.GeneralValueType,
+                *args: t.GeneralValueType,
+                **kw: t.GeneralValueType | Exception,
+            ) -> None:
+                """Log exception with traceback."""
+                ...
+
+        @runtime_checkable
+        class Metadata(Protocol):
+            """Metadata object protocol."""
+
+            @property
+            def created_at(self) -> datetime:
+                """Creation timestamp."""
+                ...
+
+            @property
+            def updated_at(self) -> datetime:
+                """Update timestamp."""
+                ...
+
+            @property
+            def version(self) -> str:
+                """Version string."""
+                ...
+
+            @property
+            def attributes(self) -> t.ConfigurationMapping:
+                """Metadata attributes."""
+                ...
+
 
     @runtime_checkable
     class Connection(Protocol):
@@ -1155,8 +1146,8 @@ class FlextProtocols:
         "FlextProtocols.DI",
         # Domain service protocol
         "FlextProtocols.Service[t.GeneralValueType]",
-        # Logger protocols (BindableLogger covers FlextLogger which extends FlextRuntime)
-        "FlextProtocols.Log",
+        # Logger protocols (StructlogLogger covers FlextLogger structural typing)
+        "FlextProtocols.Log.StructlogLogger",
         BindableLogger,
         # Handler protocol
         "FlextProtocols.Handler",

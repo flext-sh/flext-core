@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import overload
+from typing import TypeGuard, overload
 
 from flext_core.result import r
 from flext_core.typings import R, T, U, t
@@ -18,6 +18,24 @@ from flext_core.typings import R, T, U, t
 
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
+
+    # =========================================================================
+    # Type Guards for Runtime Type Narrowing
+    # =========================================================================
+
+    @staticmethod
+    def _is_general_value_dict(
+        value: object,
+    ) -> TypeGuard[dict[str, t.GeneralValueType]]:
+        """Type guard to narrow dict to GeneralValueType dict."""
+        return isinstance(value, dict)
+
+    @staticmethod
+    def _is_general_value_list(
+        value: object,
+    ) -> TypeGuard[list[t.GeneralValueType]]:
+        """Type guard to narrow list to GeneralValueType list."""
+        return isinstance(value, list)
 
     # =========================================================================
     # Public overloaded map function - inlined implementations
@@ -76,10 +94,8 @@ class FlextUtilitiesCollection:
             return {k: mapper(v) for k, v in items.items()}
         if isinstance(items, set):
             return {mapper(item) for item in items}
-        if isinstance(items, frozenset):
-            return frozenset(mapper(item) for item in items)
-        msg = f"Unsupported collection type: {type(items)}"
-        raise TypeError(msg)
+        # isinstance check removed - type is already narrowed to frozenset[T]
+        return frozenset(mapper(item) for item in items)
 
     # =========================================================================
     # Public overloaded filter function - inlined implementations
@@ -165,13 +181,11 @@ class FlextUtilitiesCollection:
                 return (*mapped_items,)
             filtered_items = [item for item in items if predicate(item)]
             return (*filtered_items,)
-        if isinstance(items, Mapping):
-            filtered = {k: v for k, v in items.items() if predicate(v)}
-            if mapper is not None:
-                return {k: mapper(v) for k, v in filtered.items()}
-            return filtered
-        msg = f"Unsupported collection type: {type(items)}"
-        raise TypeError(msg)
+        # isinstance check removed - type is already narrowed to Mapping[str, T]
+        filtered: dict[str, T] = {k: v for k, v in items.items() if predicate(v)}
+        if mapper is not None:
+            return {k: mapper(v) for k, v in filtered.items()}
+        return filtered
 
     @staticmethod
     def find(
@@ -186,10 +200,11 @@ class FlextUtilitiesCollection:
             for item in items:
                 if predicate(item):
                     return item
-        elif isinstance(items, Mapping):
-            for v in items.values():
-                if predicate(v):
-                    return v
+            return None
+        # isinstance check removed - type is already narrowed to Mapping[str, T]
+        for v in items.values():
+            if predicate(v):
+                return v
         return None
 
     @staticmethod
@@ -199,20 +214,23 @@ class FlextUtilitiesCollection:
         value: t.GeneralValueType,
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            current_dict = result[key]
-            if isinstance(current_dict, dict):
-                merged = FlextUtilitiesCollection.merge(
-                    current_dict,
-                    value,
-                    strategy="deep",
-                )
-                if merged.is_success:
-                    result[key] = merged.value
-                    return r[bool].ok(True)
-                return r[bool].fail(
-                    f"Failed to merge nested dict for key {key}: {merged.error}",
-                )
+        current_val = result.get(key)
+        if (
+            current_val is not None
+            and FlextUtilitiesCollection._is_general_value_dict(current_val)
+            and FlextUtilitiesCollection._is_general_value_dict(value)
+        ):
+            merged = FlextUtilitiesCollection.merge(
+                current_val,
+                value,
+                strategy="deep",
+            )
+            if merged.is_success:
+                result[key] = merged.value
+                return r[bool].ok(True)
+            return r[bool].fail(
+                f"Failed to merge nested dict for key {key}: {merged.error}",
+            )
         result[key] = value
         return r[bool].ok(True)
 
@@ -221,9 +239,13 @@ class FlextUtilitiesCollection:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
             return True
-        if isinstance(value, str) and not value:
-            return True
-        return isinstance(value, (list, dict)) and len(value) == 0
+        if isinstance(value, str):
+            return not value
+        if FlextUtilitiesCollection._is_general_value_list(value):
+            return len(value) == 0
+        if FlextUtilitiesCollection._is_general_value_dict(value):
+            return len(value) == 0
+        return False
 
     @staticmethod
     def merge(
@@ -266,15 +288,14 @@ class FlextUtilitiesCollection:
             if strategy == "append":
                 result = dict(base)
                 for key, value in other.items():
+                    current_val = result.get(key)
                     if (
-                        key in result
-                        and isinstance(result[key], list)
+                        current_val is not None
+                        and isinstance(current_val, list)
                         and isinstance(value, list)
                     ):
-                        # Append lists
-                        base_list = result[key]
-                        if isinstance(base_list, list):
-                            result[key] = base_list + value
+                        # Append lists - both are now properly typed as lists
+                        result[key] = current_val + value
                     else:
                         result[key] = value
                 return r[dict[str, t.GeneralValueType]].ok(result)
@@ -355,8 +376,9 @@ class FlextUtilitiesCollection:
                     # It's a FlextResult - use getattr for safe access
                     is_success = getattr(result, "is_success", False)
                     if is_success:
-                        value = getattr(result, "value", None)
+                        value: object = getattr(result, "value", None)
                         if do_flatten and isinstance(value, list):
+                            # Extend results with all items from the list
                             results.extend(value)
                         else:
                             results.append(value)
@@ -372,6 +394,7 @@ class FlextUtilitiesCollection:
                         # skip mode - don't add to errors
                 # It's a direct return
                 elif do_flatten and isinstance(result, list):
+                    # Extend results with all items from the list
                     results.extend(result)
                 else:
                     results.append(result)
@@ -816,18 +839,24 @@ class FlextUtilitiesCollection:
                 raise TypeError(msg)
 
             result: dict[str, E] = {}
-            for k, v in data.items():
-                if isinstance(v, enum_cls):
-                    result[str(k)] = v
-                elif isinstance(v, str):
+            # Iterate directly using items() - pyright reports partial unknown for GeneralValueType
+            # This is acceptable as we validate each value with isinstance checks
+            for k_raw in data:
+                v_raw = data[k_raw]
+                # Convert key to string
+                k = str(k_raw)
+                # Check value type with isinstance to narrow
+                if isinstance(v_raw, enum_cls):
+                    result[k] = v_raw
+                elif isinstance(v_raw, str):
                     try:
-                        result[str(k)] = enum_cls(v)
+                        result[k] = enum_cls(v_raw)
                     except ValueError:
                         enum_name = getattr(enum_cls, "__name__", "Enum")
-                        msg = f"Invalid {enum_name} value: '{v}'"
+                        msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
                 else:
-                    msg = f"Expected str for enum conversion, got {type(v).__name__}"
+                    msg = f"Expected str for enum conversion, got {type(v_raw).__name__}"
                     raise TypeError(msg)
             return result
 
@@ -852,18 +881,20 @@ class FlextUtilitiesCollection:
                 raise TypeError(msg)
 
             result: list[E] = []
-            for v in data:
-                if isinstance(v, enum_cls):
-                    result.append(v)
-                elif isinstance(v, str):
+            # Iterate directly - pyright reports partial unknown for GeneralValueType
+            # This is acceptable as we validate each value with isinstance checks
+            for v_raw in data:
+                if isinstance(v_raw, enum_cls):
+                    result.append(v_raw)
+                elif isinstance(v_raw, str):
                     try:
-                        result.append(enum_cls(v))
+                        result.append(enum_cls(v_raw))
                     except ValueError:
                         enum_name = getattr(enum_cls, "__name__", "Enum")
-                        msg = f"Invalid {enum_name} value: '{v}'"
+                        msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
                 else:
-                    msg = f"Expected str for enum conversion, got {type(v).__name__}"
+                    msg = f"Expected str for enum conversion, got {type(v_raw).__name__}"
                     raise TypeError(msg)
             return result
 
@@ -892,16 +923,16 @@ class FlextUtilitiesCollection:
             result: dict[str, E] = {}
             errors: list[str] = []
 
-            for key, value in mapping.items():
-                if isinstance(value, enum_cls):
-                    result[key] = value
-                elif isinstance(value, str):
-                    try:
-                        result[key] = enum_cls(value)
-                    except ValueError:
-                        errors.append(f"'{key}': '{value}'")
-                else:
-                    errors.append(f"'{key}': invalid type {type(value).__name__}")
+            for key, value_raw in mapping.items():
+                # StrEnum is a subclass of str, so value can be str or StrEnum
+                # Try conversion - enum_cls(str_value) creates enum, enum_cls(enum_value) returns same enum
+                try:
+                    # value_raw is str | StrEnum due to function signature
+                    # pyright warns isinstance is unnecessary since StrEnum extends str
+                    # We just try the conversion which works for both
+                    result[key] = enum_cls(value_raw)
+                except (ValueError, TypeError) as e:
+                    errors.append(f"'{key}': {e}")
 
             if errors:
                 enum_name = getattr(enum_cls, "__name__", "Enum")

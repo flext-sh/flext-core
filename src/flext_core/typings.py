@@ -105,7 +105,7 @@ class FlextTypes:
     LaxStr compatibility for ldap3 integration
     """
 
-    LaxStr: TypeAlias = str | bytes | bytearray
+    type LaxStr = str | bytes | bytearray
 
     # =====================================================================
     # COMPLEX TYPE ALIASES (Python 3.13+ PEP 695 strict)
@@ -813,17 +813,35 @@ class FlextTypes:
 
     @runtime_checkable
     class ContextLike(Protocol):
-        """Minimal context protocol for type safety without circular imports.
+        """Context protocol for type safety without circular imports.
 
         Defined in typings.py (Tier t) to allow RuntimeBootstrapOptions
         to use proper typing instead of `object`. Full context protocol
         p.Context.Ctx in protocols.py (Tier p) extends this.
 
-        Methods use minimal signatures for structural compatibility.
+        Methods use generic return types (object) for structural compatibility
+        with p.Ctx which uses ResultLike[T] (also covariant with object).
         """
 
         def clone(self) -> Self:
             """Clone context for isolated execution."""
+            ...
+
+        def set(
+            self,
+            key: str,
+            value: FlextTypes.GeneralValueType,
+            scope: str = ...,
+        ) -> object:
+            """Set a context value. Returns Result-like object."""
+            ...
+
+        def get(
+            self,
+            key: str,
+            scope: str = ...,
+        ) -> object:
+            """Get a context value. Returns Result-like object."""
             ...
 
     class RuntimeBootstrapOptions(TypedDict, total=False):

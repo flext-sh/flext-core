@@ -16,7 +16,7 @@ import inspect
 import time
 import traceback
 import types
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Literal, Self, overload
@@ -121,9 +121,9 @@ class FlextLogger(FlextRuntime):
             return r[bool].ok(True)
         if operation == c.Logging.ContextOperation.UNBIND:
             keys_raw = u.Mapper.get(kwargs, "keys", default=[])
-            # Type narrowing: ensure keys is list[str]
-            keys: list[str] = keys_raw if isinstance(keys_raw, list) else []
-            if isinstance(keys, Sequence):
+            # Type narrowing: ensure keys is list[str] by converting each element
+            if isinstance(keys_raw, list):
+                keys: list[str] = [str(k) for k in keys_raw]
                 FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
             return r[bool].ok(True)
         if operation == c.Logging.ContextOperation.CLEAR:
@@ -314,7 +314,9 @@ class FlextLogger(FlextRuntime):
                 strategy="deep",
             )
             if merge_result.is_success:
-                cls._scoped_contexts[scope] = merge_result.value
+                # merge_result.value is dict[str, GeneralValueType] which matches the expected type
+                merged_context: dict[str, t.GeneralValueType] = merge_result.value
+                cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
@@ -731,20 +733,32 @@ class FlextLogger(FlextRuntime):
         self._tracking: t.ConfigurationDict = {}
 
     @classmethod
-    def _create_bound_logger(
+    def create_bound_logger(
         cls,
         name: str,
         bound_logger: p.Log.StructlogLogger,
-    ) -> FlextLogger:
+    ) -> Self:
         """Internal factory for creating logger with pre-bound structlog instance."""
         instance = cls.__new__(cls)
         instance.name = name
         instance.logger = bound_logger
         return instance
 
-    def bind(self, **context: t.GeneralValueType) -> FlextLogger:
+    def bind(self, **context: t.GeneralValueType) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
-        return FlextLogger._create_bound_logger(self.name, self.logger.bind(**context))
+        return type(self).create_bound_logger(self.name, self.logger.bind(**context))
+
+    def new(self, **context: t.GeneralValueType) -> Self:
+        """Create new logger with context - implements BindableLogger protocol."""
+        return self.bind(**context)
+
+    def unbind(self, *keys: str) -> Self:
+        """Unbind keys from logger - implements BindableLogger protocol."""
+        return type(self).create_bound_logger(self.name, self.logger.unbind(*keys))
+
+    def try_unbind(self, *keys: str) -> Self:
+        """Try to unbind keys from logger - implements BindableLogger protocol."""
+        return type(self).create_bound_logger(self.name, self.logger.try_unbind(*keys))
 
     def with_result(self) -> FlextLogger.ResultAdapter:
         """Get a result-returning logger adapter.
@@ -1119,6 +1133,15 @@ class FlextLogger(FlextRuntime):
         )
         return result if return_result else None
 
+    def warn(
+        self,
+        message: str,
+        *args: t.GeneralValueType,
+        **context: t.GeneralValueType,
+    ) -> None:
+        """Alias for warning() - implements p.Log.StructlogLogger protocol."""
+        self.warning(message, *args, return_result=False, **context)
+
     @overload
     def error(
         self,
@@ -1275,7 +1298,9 @@ class FlextLogger(FlextRuntime):
                 }
                 merge_result = u.merge(kwargs, exception_data, strategy="deep")
                 if merge_result.is_success:
-                    kwargs = merge_result.value
+                    # merge_result.value is dict[str, GeneralValueType] which matches kwargs type
+                    merged_kwargs: dict[str, t.GeneralValueType] = merge_result.value
+                    kwargs = merged_kwargs
                 if include_stack_trace:
                     kwargs["stack_trace"] = "".join(
                         traceback.format_exception(

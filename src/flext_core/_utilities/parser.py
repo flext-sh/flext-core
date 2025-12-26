@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import overload
+from typing import cast as typing_cast, overload
 
 import structlog
 from pydantic import BaseModel
@@ -56,7 +56,7 @@ class FlextUtilitiesParser:
         self.logger = structlog.get_logger(__name__)
 
     @staticmethod
-    def _safe_text_length(text: t.GeneralValueType) -> str | int:
+    def _safe_text_length(text: object) -> str | int:
         """Safely get text length for logging."""
         try:
             if isinstance(text, (str, bytes)):
@@ -95,7 +95,7 @@ class FlextUtilitiesParser:
                 operation="parse_delimited",
             )
             # Filter out invalid components instead of failing
-            valid_components = []
+            valid_components: list[str] = []
             for comp in components:
                 if validator(comp):
                     valid_components.append(comp)
@@ -590,7 +590,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _extract_key_from_mapping(
-        obj: t.ConfigurationMapping,
+        obj: Mapping[str, object],
     ) -> str | None:
         """Extract key from mapping object (Strategy 2).
 
@@ -611,7 +611,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _extract_key_from_attributes(
-        obj: t.GeneralValueType,
+        obj: object,
     ) -> str | None:
         """Extract key from object attributes (Strategy 3).
 
@@ -630,7 +630,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _extract_key_from_str_conversion(
-        obj: t.GeneralValueType,
+        obj: object,
     ) -> str | None:
         """Extract key from string conversion (Strategy 5).
 
@@ -649,7 +649,7 @@ class FlextUtilitiesParser:
             pass
         return None
 
-    def get_object_key(self, obj: t.GeneralValueType) -> str:
+    def get_object_key(self, obj: object) -> str:
         """Get comparable string key from object (generic helper).
 
         This generic helper consolidates object-to-key conversion logic from
@@ -705,19 +705,21 @@ class FlextUtilitiesParser:
         elif isinstance(dunder_name := getattr(obj, "__name__", None), str):
             key = dunder_name
         # Strategy 2: Try dict 'name' or 'id' key values (for dict-like objects)
-        elif (
-            isinstance(obj, Mapping)
-            and (mapping_key := self._extract_key_from_mapping(obj)) is not None
-        ):
-            key = mapping_key
+        elif isinstance(obj, Mapping):
+            # Narrow type to Mapping[str, object] for _extract_key_from_mapping
+            obj_mapping = typing_cast("Mapping[str, object]", obj)
+            mapping_key = self._extract_key_from_mapping(obj_mapping)
+            if mapping_key is not None:
+                key = mapping_key
+            else:
+                # No key found in mapping, use class name from casted variable
+                key = obj_mapping.__class__.__name__
         # Strategy 3: Try 'name' or 'id' attribute on instances
         elif (attr_key := self._extract_key_from_attributes(obj)) is not None:
             key = attr_key
         # Strategy 4: Try object class name
-        elif (
-            class_name := obj.__class__.__name__ if hasattr(obj, "__class__") else None
-        ) is not None:
-            key = class_name
+        elif hasattr(obj, "__class__"):
+            key = obj.__class__.__name__
         # Strategy 5: Try str conversion
         elif (str_key := self._extract_key_from_str_conversion(obj)) is not None:
             key = str_key
@@ -1005,50 +1007,43 @@ class FlextUtilitiesParser:
         case_insensitive: bool,
     ) -> r[T] | None:
         """Parse StrEnum with optional case-insensitivity. Returns None if not enum."""
-        # Type narrowing: check if target is a StrEnum subclass
-        if not issubclass(target, StrEnum):
-            return None
+        # T is already bound to StrEnum, so target is guaranteed to be StrEnum subclass
+        # Get __members__ - returns MappingProxyType[str, T]
+        members_proxy = target.__members__
+        # Convert to dict for easier iteration
+        members: dict[str, T] = dict(members_proxy)
+
         # Case-insensitive matching using members lookup
         if case_insensitive:
-            # Get __members__ from target (which is type[T] where T: StrEnum)
-            members_raw = getattr(target, "__members__", {})
-            # Use Mapping for type narrowing - __members__ returns mappingproxy
-            if isinstance(members_raw, Mapping):
-                for member_name, member_value in members_raw.items():
-                    # Check name or value match (case-insensitive)
-                    name_matches = FlextUtilitiesParser._parse_normalize_compare(
-                        member_name,
+            for member_name, member_value in members.items():
+                # Check name or value match (case-insensitive)
+                name_matches = FlextUtilitiesParser._parse_normalize_compare(
+                    member_name,
+                    value,
+                )
+                value_attr = getattr(member_value, "value", None)
+                value_matches = (
+                    value_attr is not None
+                    and FlextUtilitiesParser._parse_normalize_compare(
+                        value_attr,
                         value,
                     )
-                    value_attr = getattr(member_value, "value", None)
-                    value_matches = (
-                        value_attr is not None
-                        and FlextUtilitiesParser._parse_normalize_compare(
-                            value_attr,
-                            value,
-                        )
-                    )
-                    if (name_matches or value_matches) and isinstance(
-                        member_value,
-                        target,
-                    ):
-                        return r[T].ok(member_value)
+                )
+                if name_matches or value_matches:
+                    return r[T].ok(member_value)
+
         # Case-sensitive: direct lookup in __members__
-        # target is type[T] where T: StrEnum (confirmed by issubclass check)
-        members_raw = getattr(target, "__members__", {})
-        if isinstance(members_raw, Mapping) and value in members_raw:
-            member_value = members_raw[value]
-            if isinstance(member_value, target):
-                return r[T].ok(member_value)
+        if value in members:
+            return r[T].ok(members[value])
+
         # Try parsing value as enum value (not name)
-        for _member_name, member_instance in (
-            members_raw.items() if isinstance(members_raw, Mapping) else []
-        ):
+        for member_instance in members.values():
             member_val = getattr(member_instance, "value", None)
-            if member_val == value and isinstance(member_instance, target):
+            if member_val == value:
                 return r[T].ok(member_instance)
+
         return r[T].fail(
-            f"Cannot parse '{value}' as {getattr(target, '__name__', 'enum')}",
+            f"Cannot parse '{value}' as {target.__name__}",
         )
 
     @staticmethod
@@ -1067,7 +1062,10 @@ class FlextUtilitiesParser:
             return r[T].fail(
                 f"{field_prefix}Expected dict for model, got {type(value).__name__}",
             )
-        result = FlextUtilitiesModel.from_dict(target, dict(value), strict=strict)
+        # Convert Mapping to dict - FlextUtilitiesModel.from_dict expects Mapping[str, FlexibleValue]
+        # We use cast here because we know the mapping contains valid model data
+        value_mapping = typing_cast("Mapping[str, t.FlexibleValue]", value)
+        result = FlextUtilitiesModel.from_dict(target, value_mapping, strict=strict)
         if result.is_success:
             return r[T].ok(result.value)
         return r[T].fail(
@@ -1144,53 +1142,37 @@ class FlextUtilitiesParser:
         # Early return if not a StrEnum subclass
         if not issubclass(target, StrEnum):
             return None
-        # Get members dict - use target directly to preserve T typing
-        # target.__members__ is typed as dict[str, T] for Enum[T]
-        members_raw = getattr(target, "__members__", None)
-        if members_raw is None or not isinstance(members_raw, Mapping):
-            return None
-        # Assign to new variable after type narrowing for nested function access
-        members: Mapping[str, T] = members_raw
+        # Get members - returns MappingProxyType[str, T]
+        members_proxy = target.__members__
+        # Convert to dict for easier iteration
+        members: dict[str, T] = dict(members_proxy)
         value_str = str(value)
-
-        def _lookup_member(name: str) -> T | None:
-            """Lookup member by name, preserving T type from target."""
-            # Access the narrowed members variable
-            return members.get(name)
 
         # Case-insensitive matching
         if case_insensitive:
             value_lower = value_str.lower()
-            for member_name in members:
+            for member_name, member_value in members.items():
                 if member_name.lower() == value_lower:
-                    matched = _lookup_member(member_name)
-                    if matched is not None:
-                        return r[T].ok(matched)
+                    return r[T].ok(member_value)
                 # Also check by value
-                member = _lookup_member(member_name)
-                if member is not None:
-                    member_val = getattr(member, "value", None)
-                    if (
-                        member_val is not None
-                        and str(member_val).lower() == value_lower
-                    ):
-                        return r[T].ok(member)
+                member_val = getattr(member_value, "value", None)
+                if (
+                    member_val is not None
+                    and str(member_val).lower() == value_lower
+                ):
+                    return r[T].ok(member_value)
         else:
             # Case-sensitive lookup by name
-            matched = _lookup_member(value_str)
-            if matched is not None:
-                return r[T].ok(matched)
+            if value_str in members:
+                return r[T].ok(members[value_str])
             # Try matching by value
-            for member_name in members:
-                member = _lookup_member(member_name)
-                if member is not None:
-                    member_val = getattr(member, "value", None)
-                    if member_val == value_str:
-                        return r[T].ok(member)
+            for member_value in members.values():
+                member_val = getattr(member_value, "value", None)
+                if member_val == value_str:
+                    return r[T].ok(member_value)
+
         # No match found - return default or error
-        error_msg = (
-            f"Cannot parse '{value_str}' as {getattr(target, '__name__', 'enum')}"
-        )
+        error_msg = f"Cannot parse '{value_str}' as {target.__name__}"
         return FlextUtilitiesParser._parse_with_default(
             default,
             default_factory,
@@ -1315,9 +1297,10 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Cannot construct 'object' type directly",
             )
         try:
-            # Call target directly as type constructor
-            # After excluding 'object', target is a constructible type
-            parsed_result: T = target(value)
+            # Try calling target as a type constructor
+            # Use typing.cast to tell type checker we're calling it as a callable
+            constructor = typing_cast("Callable[[object], T]", target)
+            parsed_result: T = constructor(value)
             return r[T].ok(parsed_result)
         except Exception as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
@@ -1417,7 +1400,7 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: t.GeneralValueType,
+        value: object,
         target_type: type[bool],
         default: bool,
     ) -> bool: ...
@@ -1425,7 +1408,7 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: t.GeneralValueType,
+        value: object,
         target_type: type[int],
         default: int,
     ) -> int: ...
@@ -1433,7 +1416,7 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: t.GeneralValueType,
+        value: object,
         target_type: type[float],
         default: float,
     ) -> float: ...
@@ -1441,7 +1424,7 @@ class FlextUtilitiesParser:
     @overload
     @staticmethod
     def convert(
-        value: t.GeneralValueType,
+        value: object,
         target_type: type[str],
         default: str,
     ) -> str: ...
@@ -1450,7 +1433,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def convert(
-        value: t.GeneralValueType,
+        value: object,
         target_type: type[int | float | str | bool | object],
         default: float | str | bool | object,
     ) -> int | float | str | bool | object:
@@ -1498,7 +1481,7 @@ class FlextUtilitiesParser:
         return default
 
     @staticmethod
-    def _convert_to_int(value: t.GeneralValueType, *, default: int) -> int:
+    def _convert_to_int(value: object, *, default: int) -> int:
         """Convert value to int with fallback."""
         if isinstance(value, int) and not isinstance(value, bool):
             return value
@@ -1512,7 +1495,7 @@ class FlextUtilitiesParser:
         return default
 
     @staticmethod
-    def _convert_to_float(value: t.GeneralValueType, *, default: float) -> float:
+    def _convert_to_float(value: object, *, default: float) -> float:
         """Convert value to float with fallback."""
         if isinstance(value, float):
             return value
@@ -1524,7 +1507,7 @@ class FlextUtilitiesParser:
         return default
 
     @staticmethod
-    def _convert_to_str(value: t.GeneralValueType, *, default: str) -> str:
+    def _convert_to_str(value: object, *, default: str) -> str:
         """Convert value to str with fallback."""
         if isinstance(value, str):
             return value
@@ -1536,7 +1519,7 @@ class FlextUtilitiesParser:
             return default
 
     @staticmethod
-    def _convert_to_bool(value: t.GeneralValueType, *, default: bool) -> bool:
+    def _convert_to_bool(value: object, *, default: bool) -> bool:
         """Convert value to bool with fallback."""
         if isinstance(value, bool):
             return value
@@ -1549,19 +1532,18 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _convert_fallback[T](
-        value: t.GeneralValueType,
+        value: object,
         target_type: type[T],
         default: T,
     ) -> T:
         """Fallback: try direct type constructor."""
         try:
             # Try to call target_type as constructor
-            # Dynamic type construction - value passed as object
-            if callable(target_type):
-                constructor: Callable[[object], T] = target_type
-                result = constructor(value)
-                if isinstance(result, target_type):
-                    return result
+            # Use typing.cast to tell type checker we're calling it as a callable
+            constructor = typing_cast("Callable[[object], T]", target_type)
+            result = constructor(value)
+            if isinstance(result, target_type):
+                return result
             return default
         except (ValueError, TypeError, Exception):
             return default
@@ -1571,7 +1553,7 @@ class FlextUtilitiesParser:
     # =========================================================================
 
     @staticmethod
-    def conv_str(value: t.GeneralValueType, *, default: str = "") -> str:
+    def conv_str(value: object, *, default: str = "") -> str:
         """Convert to string (builder: conv().str()).
 
         Mnemonic: conv = convert, str = string
@@ -1595,7 +1577,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def conv_str_list(
-        value: t.GeneralValueType,
+        value: object,
         *,
         default: list[str] | None = None,
     ) -> list[str]:
@@ -1616,15 +1598,20 @@ class FlextUtilitiesParser:
         if value is None:
             return default
         if isinstance(value, list):
-            return [str(v) for v in value]
+            # Type narrowing - use typing_cast for list[object]
+            value_list = typing_cast("list[object]", value)
+            return [str(item) for item in value_list]
         if isinstance(value, str):
             return [value] if value else default
         if isinstance(value, (tuple, set, frozenset)):
-            return [str(v) for v in value]
+            # Iterate items as objects and convert to strings
+            # Use typing_cast to narrow the type for iteration
+            value_iter = typing_cast("tuple[object, ...] | set[object] | frozenset[object]", value)
+            return [str(item) for item in value_iter]
         return [str(value)]
 
     @staticmethod
-    def conv_int(value: t.GeneralValueType, *, default: int = 0) -> int:
+    def conv_int(value: object, *, default: int = 0) -> int:
         """Convert to int (builder: conv().int()).
 
         Mnemonic: conv = convert, int = integer
@@ -1641,7 +1628,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def conv_str_list_truthy(
-        value: t.GeneralValueType | None,
+        value: object | None,
         *,
         default: list[str] | None = None,
     ) -> list[str]:
@@ -1658,10 +1645,10 @@ class FlextUtilitiesParser:
 
         """
         result = FlextUtilitiesParser.conv_str_list(value, default=default)
-        return [v for v in result if v]
+        return [item for item in result if item]
 
     @staticmethod
-    def conv_str_list_safe(value: t.GeneralValueType | None) -> list[str]:
+    def conv_str_list_safe(value: object | None) -> list[str]:
         """Safe str_list conversion.
 
         Mnemonic: conv_str_list_safe = convert + safe mode
@@ -1683,7 +1670,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_str(
-        value: t.GeneralValueType,
+        value: object,
         *,
         case: str | None = None,
         default: str = "",
@@ -1729,7 +1716,7 @@ class FlextUtilitiesParser:
 
         """
         if isinstance(items, dict):
-            dict_items: t.StringDict = items
+            dict_items: dict[str, str] = items
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {
@@ -1737,11 +1724,12 @@ class FlextUtilitiesParser:
                 for k, v in dict_items.items()
             }
 
-        list_items: list[str] = list(items) if not isinstance(items, list) else items
+        # items is list[str] here
+        list_items = items
         if filter_truthy:
-            list_items = [v for v in list_items if v]
+            list_items = [item for item in list_items if item]
 
-        normalized = [FlextUtilitiesParser.norm_str(v, case=case) for v in list_items]
+        normalized = [FlextUtilitiesParser.norm_str(item, case=case) for item in list_items]
         if to_set:
             return set(normalized)
         return normalized
@@ -1787,19 +1775,15 @@ class FlextUtilitiesParser:
             bool: True if normalized value in normalized items
 
         """
-        # Type narrowing: items can be Mapping[str, T] | list[str]
+        # Type narrowing: items can be Mapping[str, object] | list[str]
         items_to_check: list[str]
         if isinstance(items, Mapping):
-            # items is Mapping[str, T], convert keys to list
-            # Use isinstance for proper type narrowing
-            items_mapping: Mapping[str, object] = items
-            items_to_check = [str(k) for k in items_mapping if isinstance(k, str)]
-        elif isinstance(items, list):
-            # items is list[str] - use isinstance for proper type narrowing
-            items_to_check = [str(item) for item in items if isinstance(item, str)]
+            # items is Mapping, convert keys to list
+            items_to_check = [str(k) for k in items]
         else:
-            # items is tuple, set, or other Sequence
-            items_to_check = [str(item) for item in items]
+            # items is list[str]
+            items_to_check = items
+
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = FlextUtilitiesParser.norm_list(
             items_to_check,

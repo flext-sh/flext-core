@@ -649,13 +649,13 @@ class FlextRegistry(FlextService[bool]):
     # ------------------------------------------------------------------
     # Generic Plugin Registry API
     # ------------------------------------------------------------------
-    def register_plugin[T](
+    def register_plugin(
         self,
         category: str,
         name: str,
-        plugin: T,
+        plugin: t.GeneralValueType,
         *,
-        validate: Callable[..., r[bool]] | None = None,
+        validate: Callable[[t.GeneralValueType], r[bool]] | None = None,
     ) -> r[bool]:
         """Register a plugin with optional validation.
 
@@ -696,13 +696,8 @@ class FlextRegistry(FlextService[bool]):
             return r[bool].ok(True)
 
         # Store plugin in container for retrieval
-        # Use TypeGuard to narrow plugin to GeneralValueType for container.register()
-        if u.is_general_value_type(plugin):
-            self.container.register(key, plugin)
-        else:
-            # Convert to string representation for non-GeneralValueType plugins
-            plugin_str = str(plugin)
-            self.container.register(key, plugin_str)
+        # plugin is already t.GeneralValueType from method signature
+        self.container.register(key, plugin)
         self._registered_keys.add(key)
         self.logger.info("Registered %s: %s", category, name)
         return r[bool].ok(True)
@@ -735,7 +730,13 @@ class FlextRegistry(FlextService[bool]):
             return r[t.GeneralValueType].fail(
                 f"Failed to retrieve {category} '{name}': {raw_result.error}",
             )
-        return r[t.GeneralValueType].ok(raw_result.value)
+        # container.get() returns r[p.RegisterableService]
+        # Use TypeGuard to narrow to GeneralValueType
+        plugin_value = raw_result.value
+        if u.is_general_value_type(plugin_value):
+            return r[t.GeneralValueType].ok(plugin_value)
+        # If not a GeneralValueType, convert to string representation
+        return r[t.GeneralValueType].ok(str(plugin_value))
 
     def list_plugins(self, category: str) -> r[list[str]]:
         """List all plugins in a category.
@@ -776,11 +777,11 @@ class FlextRegistry(FlextService[bool]):
     # ------------------------------------------------------------------
     # Class-Level Plugin Registry API (for auto-discovery patterns)
     # ------------------------------------------------------------------
-    def register_class_plugin[T](
+    def register_class_plugin(
         self,
         category: str,
         name: str,
-        plugin: T,
+        plugin: t.GeneralValueType,
     ) -> r[bool]:
         """Register plugin to class-level storage (shared across all instances).
 
@@ -944,24 +945,8 @@ class FlextRegistry(FlextService[bool]):
         if isinstance(validated_metadata, Mapping):
             # Type narrowing: validated_metadata is Mapping after isinstance check
             # Log metadata with service name for observability
-            # Use guard with return_value=True and default for concise dict conversion
-            metadata_dict_raw = u.guard(
-                validated_metadata,
-                dict,
-                default=dict(validated_metadata.items()),
-                return_value=True,
-            )
-            # Type narrowing: guard returns r[dict] | dict | None when return_value=True
-            if isinstance(metadata_dict_raw, r):
-                metadata_dict = (
-                    metadata_dict_raw.value
-                    if isinstance(metadata_dict_raw.value, dict)
-                    else {}
-                )
-            elif isinstance(metadata_dict_raw, dict):
-                metadata_dict = metadata_dict_raw
-            else:
-                metadata_dict = {}
+            # Convert Mapping to dict for logging
+            metadata_dict: dict[str, t.GeneralValueType] = dict(validated_metadata.items())
             metadata_keys: list[str] = list(metadata_dict.keys())
             self.logger.debug(
                 "Registering service with metadata",

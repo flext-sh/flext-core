@@ -74,7 +74,7 @@ class FlextUtilitiesConversion:
         if isinstance(value, (list, tuple, set, frozenset)):
             return [str(item) for item in value if item is not None]
         # For other sequences, check if list-like and iterable
-        if FlextRuntime.is_list_like(value) and isinstance(value, Sequence):
+        if FlextRuntime.is_list_like(value):
             return [str(item) for item in value if item is not None]
         return [str(value)]
 
