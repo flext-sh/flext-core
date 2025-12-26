@@ -306,10 +306,19 @@ class FlextModelsContainer:
 
 # Rebuild models with forward references to protocols
 # Required for Pydantic to resolve FlextProtocols.* references
-FlextModelsContainer.ServiceRegistration.model_rebuild()
-FlextModelsContainer.FactoryRegistration.model_rebuild()
-FlextModelsContainer.ResourceRegistration.model_rebuild()
-FlextModelsContainer.ServiceRuntimeOptions.model_rebuild()
-FlextModelsContainer.ScopedContainerOptions.model_rebuild()
+# Import FlextProtocols for namespace resolution
+from flext_core.protocols import FlextProtocols  # noqa: E402
+
+_rebuild_ns = {
+    "FlextProtocols": FlextProtocols,
+    "t": t,
+    "c": c,
+    "p": p,
+}
+FlextModelsContainer.ServiceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
+FlextModelsContainer.FactoryRegistration.model_rebuild(_types_namespace=_rebuild_ns)
+FlextModelsContainer.ResourceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
+FlextModelsContainer.ServiceRuntimeOptions.model_rebuild(_types_namespace=_rebuild_ns)
+FlextModelsContainer.ScopedContainerOptions.model_rebuild(_types_namespace=_rebuild_ns)
 
 __all__ = ["FlextModelsContainer"]
