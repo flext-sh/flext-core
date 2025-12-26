@@ -11,13 +11,19 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
+
+# Use centralized version from _utilities/cast.py
+_to_general_value_type = FlextUtilitiesCast.to_general_value_type
 
 
 class FlextModelsCollections:
@@ -186,11 +192,13 @@ class FlextModelsCollections:
             result: t.StringSequenceGeneralValueDict = {}
             for key, value_list in self.categories.items():
                 # Normalize each item in the list to t.GeneralValueType
-                # Assume T is compatible or use runtime normalization
+                # First convert T to GeneralValueType, then normalize
                 normalized_list: list[t.GeneralValueType] = []
                 for item in value_list:
-                    # normalize_to_general_value accepts any object
-                    normalized = FlextRuntime.normalize_to_general_value(item)
+                    # Convert T to GeneralValueType first
+                    general_value = _to_general_value_type(item)
+                    # Then normalize recursively
+                    normalized = FlextRuntime.normalize_to_general_value(general_value)
                     normalized_list.append(normalized)
                 result[key] = normalized_list
             return result
@@ -238,7 +246,7 @@ class FlextModelsCollections:
                             item
                             for item in v
                             if isinstance(
-                                item, (str, int, float, bool, datetime, type(None))
+                                item, (str, int, float, bool, datetime, type(None)),
                             )
                         )
                 return combined
@@ -318,7 +326,7 @@ class FlextModelsCollections:
                         item
                         for item in value
                         if isinstance(
-                            item, (str, int, float, bool, datetime, type(None))
+                            item, (str, int, float, bool, datetime, type(None)),
                         )
                     ]
                     normalized_result[key] = filtered
@@ -341,7 +349,7 @@ class FlextModelsCollections:
                 Merged rules instance
 
             """
-            merged_data: t.ConfigurationDict = {}
+            merged_data: dict[str, t.GeneralValueType] = {}
             for rule in rules:
                 merged_data.update(rule.model_dump())
             return cls(**merged_data)
@@ -392,7 +400,7 @@ class FlextModelsCollections:
                         item
                         for item in v
                         if isinstance(
-                            item, (str, int, float, bool, datetime, type(None))
+                            item, (str, int, float, bool, datetime, type(None)),
                         )
                     )
             return combined
@@ -436,7 +444,7 @@ class FlextModelsCollections:
                     for key, val in v.items():
                         # Only add values that match the dict value types
                         if isinstance(
-                            val, (str, int, float, bool, datetime, type(None))
+                            val, (str, int, float, bool, datetime, type(None)),
                         ):
                             merged[str(key)] = val
                         elif isinstance(val, list):
@@ -447,7 +455,7 @@ class FlextModelsCollections:
                                 item
                                 for item in val
                                 if isinstance(
-                                    item, (str, int, float, bool, datetime, type(None))
+                                    item, (str, int, float, bool, datetime, type(None)),
                                 )
                             ]
                             merged[str(key)] = filtered
@@ -511,7 +519,7 @@ class FlextModelsCollections:
                 Combined results instance
 
             """
-            combined_data: t.ConfigurationDict = {}
+            combined_data: dict[str, t.GeneralValueType] = {}
             for result in results:
                 combined_data.update(result.model_dump())
             return cls(**combined_data)
@@ -540,7 +548,7 @@ class FlextModelsCollections:
                 return {}
 
             # Start with first result as base
-            result: t.ConfigurationDict = {}
+            result: dict[str, t.GeneralValueType] = {}
             for res in results_list:
                 res_dict = res.model_dump()
                 for key, value in res_dict.items():
@@ -644,7 +652,7 @@ class FlextModelsCollections:
                 return cls()
 
             # Start with first options as base
-            result: t.ConfigurationDict = {}
+            result: dict[str, t.GeneralValueType] = {}
             for opt in options:
                 opt_dict = opt.model_dump()
                 for key, value in opt_dict.items():
@@ -655,7 +663,7 @@ class FlextModelsCollections:
                         result[key] = cls._resolve_merge_conflict(result[key], value)
 
             # Normalize result dict to t.GeneralValueType and create instance
-            normalized_result: t.ConfigurationDict = {}
+            normalized_result: dict[str, t.GeneralValueType] = {}
             for key, value in result.items():
                 normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
             # Create new instance from normalized dict

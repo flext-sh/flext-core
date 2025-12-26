@@ -697,7 +697,7 @@ class FlextUtilitiesConfiguration:
         env_prefix: str,
         env_file: str | None = None,
         env_nested_delimiter: str = "__",
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Create a SettingsConfigDict for environment binding.
 
         Business Rule: Pydantic v2 Environment Binding Configuration
@@ -841,7 +841,7 @@ class FlextUtilitiesConfiguration:
             # Step 3: Get valid field names from model class
             # Access model_fields as class attribute for type safety
             model_fields_attr = getattr(model_class, "model_fields", {})
-            model_fields: t.ConfigurationDict = (
+            model_fields: dict[str, t.GeneralValueType] = (
                 model_fields_attr
                 if FlextUtilitiesGuards.is_type(model_fields_attr, dict)
                 else {}
@@ -849,7 +849,7 @@ class FlextUtilitiesConfiguration:
             valid_field_names = set(model_fields.keys())
 
             # Step 4: Filter kwargs to only valid field names
-            valid_kwargs: t.ConfigurationDict = {}
+            valid_kwargs: dict[str, t.GeneralValueType] = {}
             invalid_kwargs: list[str] = []
 
             for key, value in kwargs.items():

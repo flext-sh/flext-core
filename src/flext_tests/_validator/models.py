@@ -25,7 +25,7 @@ class FlextValidatorModels(m):
     # Re-export Severity from constants for convenience
     Severity = c.Tests.Validator.Severity
 
-    class Violation(m.Value):
+    class Violation(m.ValueObject):
         """A detected architecture violation."""
 
         file_path: Path
@@ -51,7 +51,7 @@ class FlextValidatorModels(m):
                 line=self.line_number,
             )
 
-    class ScanResult(m.Value):
+    class ScanResult(m.ValueObject):
         """Result of a validation scan."""
 
         validator_name: str
@@ -85,7 +85,7 @@ class FlextValidatorModels(m):
                 count=self.files_scanned,
             )
 
-    class ScanConfig(m.Value):
+    class ScanConfig(m.ValueObject):
         """Configuration for validation scan."""
 
         target_path: Path

@@ -11,12 +11,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import get_origin, get_type_hints
+from typing import TYPE_CHECKING, get_origin, get_type_hints
 
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.protocols import p
+    from flext_core.typings import t
 
 
 class FlextUtilitiesChecker:
@@ -87,7 +89,7 @@ class FlextUtilitiesChecker:
             if origin and origin.__name__ in {"h", "FlextHandlers"}:
                 # Use FlextRuntime.extract_generic_args() from Layer 0.5 (defined in runtime.pyi stub)
                 args = FlextRuntime.extract_generic_args(base)
-                # Accept all type forms: plain types, generic aliases (e.g., t.ConfigurationDict),
+                # Accept all type forms: plain types, generic aliases (e.g., dict[str, t.GeneralValueType]),
                 # and string type references. The _evaluate_type_compatibility method
                 # handles all these forms correctly.
                 # args[0] is never None - extract_generic_args returns tuple of types/strings
@@ -113,7 +115,7 @@ class FlextUtilitiesChecker:
         cls,
         handle_method: t.HandlerCallable,
         handler_class: type,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(
@@ -128,7 +130,7 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: t.ConfigurationDict,
+        type_hints: dict[str, t.GeneralValueType],
         param_name: str,
     ) -> t.MessageTypeSpecifier | None:
         """Extract message type from parameter hints or annotation."""
@@ -267,15 +269,15 @@ class FlextUtilitiesChecker:
             True if dict compatible, None if not dict types
 
         """
-        # Handle dict/t.ConfigurationDict compatibility
-        # If expected is dict or t.ConfigurationDict, accept dict instances
+        # Handle dict/dict[str, t.GeneralValueType] compatibility
+        # If expected is dict or dict[str, t.GeneralValueType], accept dict instances
         if origin_type is dict and (
             message_origin is dict
             or (isinstance(message_type, type) and issubclass(message_type, dict))
         ):
             return True
 
-        # If message is dict or t.ConfigurationDict, and expected is also dict-like
+        # If message is dict or dict[str, t.GeneralValueType], and expected is also dict-like
         if (
             isinstance(message_type, type)
             and issubclass(message_type, dict)

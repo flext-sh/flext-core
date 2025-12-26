@@ -10,9 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from typing import TYPE_CHECKING
 
-from flext_core._models.container import FlextModelsContainer
 from flext_core.constants import c
+
+if TYPE_CHECKING:
+    from flext_core._models.container import FlextModelsContainer
 
 
 class FactoryDecoratorsDiscovery:

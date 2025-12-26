@@ -9,14 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from enum import StrEnum
-from typing import Final, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
 from flext_core.constants import FlextConstants
 
 # Import t at runtime - no circular dependency since typings.py doesn't import constants
-from flext_tests.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from flext_tests.typings import t
 
 
 class FlextTestsConstants(FlextConstants):

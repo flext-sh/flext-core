@@ -18,13 +18,15 @@ import warnings
 from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
-from typing import TypeGuard
+from typing import TYPE_CHECKING, TypeGuard
 
 from pydantic import BaseModel
 
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 class FlextUtilitiesGuards:
@@ -337,24 +339,26 @@ class FlextUtilitiesGuards:
         return True
 
     @staticmethod
-    def is_configuration_dict(value: object) -> TypeGuard[t.ConfigurationDict]:
-        """Check if value is a valid t.ConfigurationDict.
+    def is_configuration_dict(
+        value: object,
+    ) -> TypeGuard[dict[str, t.GeneralValueType]]:
+        """Check if value is a valid dict[str, t.GeneralValueType].
 
-        t.ConfigurationDict = dict[str, t.GeneralValueType]
+        dict[str, t.GeneralValueType] = dict[str, t.GeneralValueType]
 
-        This TypeGuard enables type narrowing without cast() for t.ConfigurationDict.
+        This TypeGuard enables type narrowing without cast() for dict[str, t.GeneralValueType].
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[t.ConfigurationDict]: True if value matches ConfigurationDict structure
+            TypeGuard[dict[str, t.GeneralValueType]]: True if value matches ConfigurationDict structure
 
         Example:
             >>> from flext_core.utilities import u
             >>> if u.Guards.is_configuration_dict(config):
-            ...     # config is now typed as t.ConfigurationDict
+            ...     # config is now typed as dict[str, t.GeneralValueType]
             ...     config["key"] = "value"
 
         """
@@ -402,7 +406,9 @@ class FlextUtilitiesGuards:
             # Iterate with explicit type annotation to satisfy pyright
             item: object
             for item in value:
-                if not (item is None or isinstance(item, (str, int, float, bool, datetime))):
+                if not (
+                    item is None or isinstance(item, (str, int, float, bool, datetime))
+                ):
                     return False
             return True
         # Mapping of str to scalars
@@ -689,7 +695,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, str)
 
     @staticmethod
-    def _is_dict(value: object) -> TypeGuard[t.ConfigurationDict]:
+    def _is_dict(value: object) -> TypeGuard[dict[str, t.GeneralValueType]]:
         """Check if value is dict[str, t.GeneralValueType].
 
         Type guard for dictionary types. Returns ConfigurationDict for type safety.
@@ -953,7 +959,7 @@ class FlextUtilitiesGuards:
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
             # Map string names to private method names
-            method_map: t.StringDict = {
+            method_map: dict[str, str] = {
                 # Protocol checks
                 "config": "_is_config",
                 "context": "_is_context",
@@ -1016,8 +1022,7 @@ class FlextUtilitiesGuards:
             # Use type() to get class safely without accessing __class__
             type_class = type(type_spec)
             if hasattr(type_spec, "__protocol_attrs__") or (
-                hasattr(type_spec, "__module__")
-                and "Protocol" in str(type_class)
+                hasattr(type_spec, "__module__") and "Protocol" in str(type_class)
             ):
                 # Protocol check - try isinstance first
                 try:
@@ -1084,9 +1089,8 @@ class FlextUtilitiesGuards:
             The value as ConfigurationMapping if it's a Mapping, None otherwise
 
         """
-        if (
-            isinstance(value, Mapping)
-            and FlextUtilitiesGuards.is_configuration_mapping(value)
+        if isinstance(value, Mapping) and FlextUtilitiesGuards.is_configuration_mapping(
+            value,
         ):
             return value
         return None
@@ -1190,14 +1194,14 @@ class FlextUtilitiesGuards:
         gte: float | None = None,
         lt: float | None = None,
         lte: float | None = None,
-        is_: type[t.GeneralValueType] | None = None,
-        not_: type[t.GeneralValueType] | None = None,
-        in_: Sequence[t.GeneralValueType] | None = None,
-        not_in: Sequence[t.GeneralValueType] | None = None,
+        is_: type[object] | None = None,
+        not_: type[object] | None = None,
+        in_: Sequence[object] | None = None,
+        not_in: Sequence[object] | None = None,
         none: bool | None = None,
         empty: bool | None = None,
         match: str | None = None,
-        contains: str | t.GeneralValueType | None = None,
+        contains: object | None = None,
         starts: str | None = None,
         ends: str | None = None,
     ) -> bool:

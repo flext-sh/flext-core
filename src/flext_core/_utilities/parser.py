@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import cast as typing_cast, overload
+from typing import TYPE_CHECKING, overload
 
 import structlog
 from pydantic import BaseModel
@@ -23,7 +23,9 @@ from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.result import r
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 class FlextUtilitiesParser:
@@ -706,14 +708,9 @@ class FlextUtilitiesParser:
             key = dunder_name
         # Strategy 2: Try dict 'name' or 'id' key values (for dict-like objects)
         elif isinstance(obj, Mapping):
-            # Narrow type to Mapping[str, object] for _extract_key_from_mapping
-            obj_mapping = typing_cast("Mapping[str, object]", obj)
-            mapping_key = self._extract_key_from_mapping(obj_mapping)
-            if mapping_key is not None:
-                key = mapping_key
-            else:
-                # No key found in mapping, use class name from casted variable
-                key = obj_mapping.__class__.__name__
+            # After isinstance, obj is Mapping - use directly
+            mapping_key = self._extract_key_from_mapping(obj)
+            key = mapping_key if mapping_key is not None else obj.__class__.__name__
         # Strategy 3: Try 'name' or 'id' attribute on instances
         elif (attr_key := self._extract_key_from_attributes(obj)) is not None:
             key = attr_key
@@ -1063,9 +1060,9 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Expected dict for model, got {type(value).__name__}",
             )
         # Convert Mapping to dict - FlextUtilitiesModel.from_dict expects Mapping[str, FlexibleValue]
-        # We use cast here because we know the mapping contains valid model data
-        value_mapping = typing_cast("Mapping[str, t.FlexibleValue]", value)
-        result = FlextUtilitiesModel.from_dict(target, value_mapping, strict=strict)
+        # After isinstance check, value is Mapping - convert keys to str for proper typing
+        value_dict: dict[str, t.FlexibleValue] = {str(k): v for k, v in value.items()}
+        result = FlextUtilitiesModel.from_dict(target, value_dict, strict=strict)
         if result.is_success:
             return r[T].ok(result.value)
         return r[T].fail(
@@ -1156,10 +1153,7 @@ class FlextUtilitiesParser:
                     return r[T].ok(member_value)
                 # Also check by value
                 member_val = getattr(member_value, "value", None)
-                if (
-                    member_val is not None
-                    and str(member_val).lower() == value_lower
-                ):
+                if member_val is not None and str(member_val).lower() == value_lower:
                     return r[T].ok(member_value)
         else:
             # Case-sensitive lookup by name
@@ -1298,8 +1292,9 @@ class FlextUtilitiesParser:
             )
         try:
             # Try calling target as a type constructor
-            # Use typing.cast to tell type checker we're calling it as a callable
-            constructor = typing_cast("Callable[[object], T]", target)
+            # target is type[T] and we've already excluded object type above
+            # The type call is safe because the guard prevents object(value)
+            constructor: Callable[[object], T] = target
             parsed_result: T = constructor(value)
             return r[T].ok(parsed_result)
         except Exception as e:
@@ -1537,10 +1532,13 @@ class FlextUtilitiesParser:
         default: T,
     ) -> T:
         """Fallback: try direct type constructor."""
+        # Guard: object type doesn't accept constructor arguments
+        if target_type is object:
+            return default
         try:
             # Try to call target_type as constructor
-            # Use typing.cast to tell type checker we're calling it as a callable
-            constructor = typing_cast("Callable[[object], T]", target_type)
+            # target_type is type[T] and we've already excluded object type above
+            constructor: Callable[[object], T] = target_type
             result = constructor(value)
             if isinstance(result, target_type):
                 return result
@@ -1598,16 +1596,13 @@ class FlextUtilitiesParser:
         if value is None:
             return default
         if isinstance(value, list):
-            # Type narrowing - use typing_cast for list[object]
-            value_list = typing_cast("list[object]", value)
-            return [str(item) for item in value_list]
+            # After isinstance, value is list - iterate directly
+            return [str(item) for item in value]
         if isinstance(value, str):
             return [value] if value else default
         if isinstance(value, (tuple, set, frozenset)):
-            # Iterate items as objects and convert to strings
-            # Use typing_cast to narrow the type for iteration
-            value_iter = typing_cast("tuple[object, ...] | set[object] | frozenset[object]", value)
-            return [str(item) for item in value_iter]
+            # After isinstance check, value is iterable - iterate directly
+            return [str(item) for item in value]
         return [str(value)]
 
     @staticmethod
@@ -1695,12 +1690,12 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: list[str] | t.StringDict,
+        items: list[str] | dict[str, str],
         *,
         case: str | None = None,
         filter_truthy: bool = False,
         to_set: bool = False,
-    ) -> list[str] | set[str] | t.StringDict:
+    ) -> list[str] | set[str] | dict[str, str]:
         """Normalize list/dict (builder: norm().list()).
 
         Mnemonic: norm = normalize, list = list[str]
@@ -1729,7 +1724,9 @@ class FlextUtilitiesParser:
         if filter_truthy:
             list_items = [item for item in list_items if item]
 
-        normalized = [FlextUtilitiesParser.norm_str(item, case=case) for item in list_items]
+        normalized = [
+            FlextUtilitiesParser.norm_str(item, case=case) for item in list_items
+        ]
         if to_set:
             return set(normalized)
         return normalized

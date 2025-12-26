@@ -7,14 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime
-from types import ModuleType, TracebackType
-from typing import Protocol, Self, Union, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, Union, runtime_checkable
 
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
 from flext_core.typings import P, T_co, t
+
+if TYPE_CHECKING:
+    from datetime import datetime
+    from types import ModuleType, TracebackType
 
 
 class FlextProtocols:
@@ -1102,7 +1104,7 @@ class FlextProtocols:
         class CallableWithHints(Protocol):
             """Protocol for callables that support type hints introspection."""
 
-            __annotations__: t.ConfigurationDict
+            __annotations__: dict[str, t.GeneralValueType]
 
     # =========================================================================
     # TYPE ALIASES FOR UTILITIES
@@ -1112,15 +1114,7 @@ class FlextProtocols:
     # Supports: ConfigurationDict (GeneralValueType), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
-        t.ConfigurationDict
-        | dict[str, t.JsonValue]
-        | dict[str, t.GeneralValueType]
-        | t.ConfigurationMapping
-        | Mapping[str, t.JsonValue]
-        | Mapping[str, t.GeneralValueType]
-        | BaseModel
-        | "FlextProtocols.HasModelDump"
-        | "FlextProtocols.ValidatorSpec"
+        dict[str, t.GeneralValueType] | dict[str, t.JsonValue] | t.ConfigurationMapping | Mapping[str, t.JsonValue] | Mapping[str, t.GeneralValueType] | BaseModel | "FlextProtocols.HasModelDump" | "FlextProtocols.ValidatorSpec"
     )
 
     # =========================================================================

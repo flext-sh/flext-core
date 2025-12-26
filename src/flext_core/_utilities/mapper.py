@@ -9,16 +9,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TypeGuard, overload
+from typing import TYPE_CHECKING, TypeGuard, overload
 
 from pydantic import BaseModel
 
 from flext_core._utilities.cache import FlextUtilitiesCache
+from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.protocols import p
+
+# Use centralized version from cast.py
+_to_general_value_type = FlextUtilitiesCast.to_general_value_type
 
 
 class FlextUtilitiesMapper:
@@ -56,7 +62,9 @@ class FlextUtilitiesMapper:
     # =========================================================================
 
     @staticmethod
-    def _is_configuration_dict(value: object) -> TypeGuard[t.ConfigurationDict]:
+    def _is_configuration_dict(
+        value: object,
+    ) -> TypeGuard[dict[str, t.GeneralValueType]]:
         """Type guard for ConfigurationDict (dict with str keys and t.GeneralValueType values)."""
         if not isinstance(value, dict):
             return False
@@ -74,7 +82,7 @@ class FlextUtilitiesMapper:
         return all(isinstance(k, str) for k in value)
 
     @staticmethod
-    def _narrow_to_configuration_dict(value: object) -> t.ConfigurationDict:
+    def _narrow_to_configuration_dict(value: object) -> dict[str, t.GeneralValueType]:
         """Safely narrow object to ConfigurationDict with runtime validation."""
         # Use TypeGuard for proper type narrowing without cast
         if FlextUtilitiesGuards.is_configuration_dict(value):
@@ -83,7 +91,9 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_string_keyed_dict(value: t.GeneralValueType) -> t.ConfigurationDict:
+    def _narrow_to_string_keyed_dict(
+        value: t.GeneralValueType,
+    ) -> dict[str, t.GeneralValueType]:
         """Narrow GeneralValueType to ConfigurationDict (for conversion purposes).
 
         Validates that the value is a dict with string keys and GeneralValueType values.
@@ -91,7 +101,7 @@ class FlextUtilitiesMapper:
         """
         if isinstance(value, dict):
             # Narrow dict values to GeneralValueType with explicit type annotations
-            result: t.ConfigurationDict = {}
+            result: dict[str, t.GeneralValueType] = {}
             # Iterate over items with explicit key and value types
             key: object
             val: object
@@ -145,7 +155,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_str_from_dict(
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
         key: str,
         default: str = "",
     ) -> str:
@@ -157,7 +167,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_callable_from_dict(
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
         key: str,
     ) -> Callable[..., t.GeneralValueType] | None:
         """Safely extract Callable from ConfigurationDict.
@@ -182,11 +192,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def map_dict_keys(
-        source: t.ConfigurationDict,
+        source: dict[str, t.GeneralValueType],
         key_mapping: t.StringMapping,
         *,
         keep_unmapped: bool = True,
-    ) -> r[t.ConfigurationDict]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Map dictionary keys using mapping specification.
 
         **Generic replacement for**: Key renaming in dicts
@@ -209,7 +219,7 @@ class FlextUtilitiesMapper:
 
         """
         try:
-            result: t.ConfigurationDict = {}
+            result: dict[str, t.GeneralValueType] = {}
 
             for key, value in source.items():
                 new_key = key_mapping.get(key)
@@ -218,10 +228,12 @@ class FlextUtilitiesMapper:
                 elif keep_unmapped:
                     result[key] = value
 
-            return r[t.ConfigurationDict].ok(result)
+            return r[dict[str, t.GeneralValueType]].ok(result)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[t.ConfigurationDict].fail(f"Failed to map dict keys: {e}")
+            return r[dict[str, t.GeneralValueType]].fail(
+                f"Failed to map dict keys: {e}",
+            )
 
     @staticmethod
     def build_flags_dict(
@@ -229,7 +241,7 @@ class FlextUtilitiesMapper:
         flag_mapping: t.StringMapping,
         *,
         default_value: bool = False,
-    ) -> r[t.StringBoolDict]:
+    ) -> r[dict[str, bool]]:
         """Build boolean flags dictionary from list of active flags.
 
         **Generic replacement for**: Permission building, feature flags
@@ -255,7 +267,7 @@ class FlextUtilitiesMapper:
 
         """
         try:
-            result: t.StringBoolDict = {}
+            result: dict[str, bool] = {}
 
             # Initialize all flags to default
             for output_key in flag_mapping.values():
@@ -309,12 +321,12 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def transform_values(
-        source: t.ConfigurationDict,
+        source: dict[str, t.GeneralValueType],
         transformer: Callable[
             [t.GeneralValueType],
             t.GeneralValueType,
         ],
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Transform all values in dict using transformer function.
 
         **Generic replacement for**: Manual dict value transformations
@@ -341,9 +353,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def filter_dict(
-        source: t.ConfigurationDict,
+        source: dict[str, t.GeneralValueType],
         predicate: Callable[[str, t.GeneralValueType], bool],
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Filter dict by predicate function on key-value pairs.
 
         Args:
@@ -391,7 +403,7 @@ class FlextUtilitiesMapper:
 
         """
         if handle_collisions == "first":
-            result: t.StringDict = {}
+            result: dict[str, str] = {}
             for k, v in source.items():
                 if v not in result:
                     result[v] = k
@@ -443,7 +455,11 @@ class FlextUtilitiesMapper:
             key: object
             val: object
             for key, val in value.items():
-                result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_value(val)
+                # Convert object to GeneralValueType before recursive call
+                val_typed = _to_general_value_type(val)
+                result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_value(
+                    val_typed,
+                )
             return result_dict
         # Use isinstance for sequence type narrowing
         if isinstance(value, Sequence) and not isinstance(value, str):
@@ -459,8 +475,8 @@ class FlextUtilitiesMapper:
     @classmethod
     def convert_dict_to_json(
         cls,
-        data: t.ConfigurationDict,
-    ) -> t.ConfigurationDict:
+        data: dict[str, t.GeneralValueType],
+    ) -> dict[str, t.GeneralValueType]:
         """Convert dict with any values to JSON-compatible dict.
 
         **Generic replacement for**: Manual dict-to-JSON conversion loops
@@ -483,7 +499,7 @@ class FlextUtilitiesMapper:
     def convert_list_to_json(
         cls,
         data: Sequence[object],
-    ) -> list[t.ConfigurationDict]:
+    ) -> list[dict[str, t.GeneralValueType]]:
         """Convert list of dict-like items to JSON-compatible list.
 
         **Generic replacement for**: Manual list-to-JSON conversion loops
@@ -637,7 +653,7 @@ class FlextUtilitiesMapper:
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
                 if isinstance(model_dict, dict) and key_part in model_dict:
-                    model_dict_typed: t.ConfigurationDict = (
+                    model_dict_typed: dict[str, t.GeneralValueType] = (
                         FlextUtilitiesMapper._narrow_to_configuration_dict(model_dict)
                     )
                     return model_dict_typed[key_part], True
@@ -1098,7 +1114,7 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         *keys: str,
         as_dict: bool = True,
-    ) -> t.ConfigurationDict | list[t.GeneralValueType | None]:
+    ) -> dict[str, t.GeneralValueType] | list[t.GeneralValueType | None]:
         """Pick multiple fields at once (mnemonic: pick = select fields).
 
         Generic replacement for: Multiple get() calls
@@ -1269,7 +1285,7 @@ class FlextUtilitiesMapper:
         if isinstance(item, dict):
             # Type narrowing: item is dict at this point
             # Use ConfigurationDict which is dict[str, t.GeneralValueType]
-            dict_item: t.ConfigurationDict = (
+            dict_item: dict[str, t.GeneralValueType] = (
                 FlextUtilitiesMapper._narrow_to_configuration_dict(item)
             )
             return dict_item.get(field_name)
@@ -1347,7 +1363,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_ensure(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply ensure operation."""
         if "ensure" not in ops:
@@ -1355,7 +1371,7 @@ class FlextUtilitiesMapper:
         ensure_type = FlextUtilitiesMapper._get_str_from_dict(ops, "ensure", "")
         ensure_default_val = ops.get("ensure_default")
         # Default values by type
-        default_map: t.ConfigurationDict = {
+        default_map: dict[str, t.GeneralValueType] = {
             "str_list": [],
             "dict": {},
             "list": [],
@@ -1411,7 +1427,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_filter(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
         default: t.GeneralValueType,
     ) -> t.GeneralValueType:
         """Helper: Apply filter operation."""
@@ -1432,7 +1448,7 @@ class FlextUtilitiesMapper:
             ]
         if isinstance(current, dict):
             # Type narrowing: current is dict, use ConfigurationDict
-            current_dict: t.ConfigurationDict = (
+            current_dict: dict[str, t.GeneralValueType] = (
                 FlextUtilitiesMapper._narrow_to_configuration_dict(current)
             )
             # Use filter_dict for consistency
@@ -1446,7 +1462,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_map(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply map operation."""
         if "map" not in ops:
@@ -1465,7 +1481,7 @@ class FlextUtilitiesMapper:
             ]
         if isinstance(current, dict):
             # Type narrowing: current is dict, use ConfigurationDict
-            current_dict: t.ConfigurationDict = (
+            current_dict: dict[str, t.GeneralValueType] = (
                 FlextUtilitiesMapper._narrow_to_configuration_dict(current)
             )
             # ConfigurationDict values are t.GeneralValueType, so map_func works directly
@@ -1477,7 +1493,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_normalize(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply normalize operation."""
         if "normalize" not in ops:
@@ -1505,7 +1521,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_convert(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
@@ -1521,7 +1537,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_transform_options(
-        transform_opts: t.ConfigurationDict,
+        transform_opts: dict[str, t.GeneralValueType],
     ) -> tuple[
         bool,
         bool,
@@ -1570,10 +1586,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_normalize(
-        result: t.ConfigurationDict,
+        result: dict[str, t.GeneralValueType],
         *,
         normalize: bool,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Apply normalize step."""
         if normalize:
             normalized = FlextUtilitiesCache.normalize_component(result)
@@ -1583,10 +1599,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_map_keys(
-        result: t.ConfigurationDict,
+        result: dict[str, t.GeneralValueType],
         *,
         map_keys: t.StringMapping | None,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Apply map keys step."""
         if map_keys:
             mapped = FlextUtilitiesMapper.map_dict_keys(result, map_keys)
@@ -1596,13 +1612,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_filter_keys(
-        result: t.ConfigurationDict,
+        result: dict[str, t.GeneralValueType],
         *,
         filter_keys: set[str] | None,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Apply filter keys step."""
         if filter_keys:
-            filtered_dict: t.ConfigurationDict = {}
+            filtered_dict: dict[str, t.GeneralValueType] = {}
             for key in filter_keys:
                 if key in result:
                     filtered_dict[key] = result[key]
@@ -1611,10 +1627,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_exclude_keys(
-        result: t.ConfigurationDict,
+        result: dict[str, t.GeneralValueType],
         *,
         exclude_keys: set[str] | None,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Apply exclude keys step."""
         if exclude_keys:
             for key in exclude_keys:
@@ -1623,10 +1639,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_none(
-        result: t.ConfigurationDict,
+        result: dict[str, t.GeneralValueType],
         *,
         strip_none: bool,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Apply strip none step."""
         if strip_none:
             # Use filter_dict for consistency
@@ -1638,10 +1654,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_empty(
-        result: t.ConfigurationDict,
+        result: dict[str, t.GeneralValueType],
         *,
         strip_empty: bool,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Apply strip empty step."""
         if strip_empty:
             # Use filter_dict for consistency
@@ -1653,10 +1669,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_to_json(
-        result: t.ConfigurationDict,
+        result: dict[str, t.GeneralValueType],
         *,
         to_json: bool,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Apply to JSON step."""
         if to_json:
             return FlextUtilitiesMapper.convert_dict_to_json(result)
@@ -1664,7 +1680,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_transform_steps(
-        result: t.ConfigurationDict,
+        result: dict[str, t.GeneralValueType],
         *,
         normalize: bool,
         map_keys: t.StringMapping | None,
@@ -1673,7 +1689,7 @@ class FlextUtilitiesMapper:
         strip_none: bool,
         strip_empty: bool,
         to_json: bool,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Apply transform steps to result dict."""
         result = FlextUtilitiesMapper._apply_normalize(result, normalize=normalize)
         result = FlextUtilitiesMapper._apply_map_keys(result, map_keys=map_keys)
@@ -1695,7 +1711,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_transform(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
         default: t.GeneralValueType,
         on_error: str,
     ) -> t.GeneralValueType:
@@ -1710,7 +1726,7 @@ class FlextUtilitiesMapper:
             return current
         # transform_opts_raw is dict after isinstance check
         # Type narrowing: transform_opts_raw is dict[str, t.GeneralValueType]
-        transform_opts: t.ConfigurationDict = transform_opts_raw
+        transform_opts: dict[str, t.GeneralValueType] = transform_opts_raw
         # Extract transform options
         (
             normalize_bool,
@@ -1730,7 +1746,7 @@ class FlextUtilitiesMapper:
             # Type narrowing: current_dict is ConfigurationMapping, dict() returns ConfigurationDict
             # dict() constructor returns dict[str, t.GeneralValueType] which is ConfigurationDict
             # Type narrowing: dict() returns ConfigurationDict
-            result: t.ConfigurationDict = dict(current_dict)
+            result: dict[str, t.GeneralValueType] = dict(current_dict)
             return FlextUtilitiesMapper._apply_transform_steps(
                 result,
                 normalize=normalize_bool,
@@ -1749,7 +1765,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_process(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
         default: t.GeneralValueType,
         on_error: str,
     ) -> t.GeneralValueType:
@@ -1773,7 +1789,7 @@ class FlextUtilitiesMapper:
                 ]
             if isinstance(current, dict):
                 # Type narrowing: current is dict, use ConfigurationDict
-                current_dict: t.ConfigurationDict = (
+                current_dict: dict[str, t.GeneralValueType] = (
                     FlextUtilitiesMapper._narrow_to_configuration_dict(current)
                 )
                 # ConfigurationDict values are t.GeneralValueType, so process_func works directly
@@ -1790,7 +1806,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_group(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply group operation."""
         if "group" not in ops:
@@ -1832,7 +1848,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_sort(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
@@ -1903,7 +1919,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_unique(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
@@ -1932,7 +1948,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_slice(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
@@ -1965,7 +1981,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_chunk(
         current: t.GeneralValueType,
-        ops: t.ConfigurationDict,
+        ops: dict[str, t.GeneralValueType],
     ) -> t.GeneralValueType:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
@@ -1988,7 +2004,7 @@ class FlextUtilitiesMapper:
     def build(
         value: t.GeneralValueType,
         *,
-        ops: t.ConfigurationDict | None = None,
+        ops: dict[str, t.GeneralValueType] | None = None,
         default: t.GeneralValueType | None = None,
         on_error: str = "stop",
     ) -> t.GeneralValueType:
@@ -2073,7 +2089,7 @@ class FlextUtilitiesMapper:
         *,
         default: t.GeneralValueType | None = None,
         required: bool = False,
-        ops: t.ConfigurationDict | None = None,
+        ops: dict[str, t.GeneralValueType] | None = None,
     ) -> t.GeneralValueType | None:
         """Extract single field from source with optional DSL processing.
 
@@ -2123,8 +2139,8 @@ class FlextUtilitiesMapper:
     @staticmethod
     def fields_multi(
         source: p.AccessibleData,
-        spec: t.ConfigurationDict,
-    ) -> t.ConfigurationDict:
+        spec: dict[str, t.GeneralValueType],
+    ) -> dict[str, t.GeneralValueType]:
         """Extract multiple fields using specification dict.
 
         FLEXT Pattern: Simplified multi-field extraction (split from overloaded fields).
@@ -2143,7 +2159,7 @@ class FlextUtilitiesMapper:
             )
 
         """
-        result: t.ConfigurationDict = {}
+        result: dict[str, t.GeneralValueType] = {}
         for field_name, field_default in spec.items():
             value: t.GeneralValueType = FlextUtilitiesMapper.get(
                 source,
@@ -2156,10 +2172,10 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _fields_multi(
         source: t.ConfigurationMapping | BaseModel,
-        spec: t.StringConfigurationDictDict | t.ConfigurationDict,
+        spec: t.StringConfigurationDictDict | dict[str, t.GeneralValueType],
         *,
         on_error: str = "stop",
-    ) -> t.ConfigurationDict | r[t.ConfigurationDict]:
+    ) -> dict[str, t.GeneralValueType] | r[dict[str, t.GeneralValueType]]:
         """Extract multiple fields using DSL mnemonic specification.
 
         Args:
@@ -2171,7 +2187,7 @@ class FlextUtilitiesMapper:
             ConfigurationDict with extracted values
 
         """
-        result: t.ConfigurationDict = {}
+        result: dict[str, t.GeneralValueType] = {}
         errors: list[str] = []
 
         for field_name, field_spec in spec.items():
@@ -2184,7 +2200,7 @@ class FlextUtilitiesMapper:
             if isinstance(field_spec, dict):
                 # Type annotations for .get() results to help pyright inference
                 # Type narrowing: isinstance provides type narrowing to ConfigurationDict
-                field_spec_dict: t.ConfigurationDict = field_spec
+                field_spec_dict: dict[str, t.GeneralValueType] = field_spec
                 # Type inference: .get() returns t.GeneralValueType | None
                 # Variables already declared above, just assign values
                 # Use dict.get() directly - field_spec_dict is ConfigurationDict (dict subclass)
@@ -2192,14 +2208,8 @@ class FlextUtilitiesMapper:
                 # Use Mapping.get() to avoid confusion with static method
                 # field_spec_dict is already ConfigurationDict (dict subclass), use .get() directly
                 # Access via dict.get() for cleaner code
-                field_default_raw: t.GeneralValueType | None = field_spec_dict.get(
-                    "default",
-                    None,
-                )
-                field_ops_raw: t.GeneralValueType | None = field_spec_dict.get(
-                    "ops",
-                    None,
-                )
+                field_default_raw: t.GeneralValueType | None = field_spec_dict.get("default")
+                field_ops_raw: t.GeneralValueType | None = field_spec_dict.get("ops")
                 field_default = field_default_raw
                 field_ops = field_ops_raw
                 field_required = (
@@ -2228,7 +2238,7 @@ class FlextUtilitiesMapper:
                 if not isinstance(field_ops, dict):
                     extracted = None
                 else:
-                    field_ops_dict: t.ConfigurationDict = (
+                    field_ops_dict: dict[str, t.GeneralValueType] = (
                         FlextUtilitiesMapper._narrow_to_configuration_dict(field_ops)
                     )
                     # Type narrowing: value is GeneralValueType | None
@@ -2254,7 +2264,7 @@ class FlextUtilitiesMapper:
             if extracted is None and field_required:
                 error_msg = f"Required field '{field_name}' is missing"
                 if on_error == "stop":
-                    return r[t.ConfigurationDict].fail(error_msg)
+                    return r[dict[str, t.GeneralValueType]].fail(error_msg)
                 if on_error == "collect":
                     errors.append(error_msg)
                     continue
@@ -2263,7 +2273,7 @@ class FlextUtilitiesMapper:
             result[field_name] = extracted
 
         if errors and on_error == "collect":
-            return r[t.ConfigurationDict].fail(
+            return r[dict[str, t.GeneralValueType]].fail(
                 f"Field extraction errors: {', '.join(errors)}",
             )
 
@@ -2275,11 +2285,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def construct(
-        spec: t.ConfigurationDict,
+        spec: dict[str, t.GeneralValueType],
         source: t.ConfigurationMapping | BaseModel | None = None,
         *,
         on_error: str = "stop",
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Construct object using mnemonic specification pattern.
 
         Builds object from mnemonic spec that maps target keys to source
@@ -2308,7 +2318,7 @@ class FlextUtilitiesMapper:
             )
 
         """
-        constructed: t.ConfigurationDict = {}
+        constructed: dict[str, t.GeneralValueType] = {}
 
         for target_key, target_spec in spec.items():
             try:
@@ -2357,7 +2367,7 @@ class FlextUtilitiesMapper:
                 # Apply ops if provided
                 if field_ops is not None and extracted_raw is not None:
                     if isinstance(field_ops, dict):
-                        field_ops_dict: t.ConfigurationDict = (
+                        field_ops_dict: dict[str, t.GeneralValueType] = (
                             FlextUtilitiesMapper._narrow_to_configuration_dict(
                                 field_ops,
                             )
@@ -2390,7 +2400,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def transform(
-        source: t.ConfigurationDict | t.ConfigurationMapping,
+        source: dict[str, t.GeneralValueType] | t.ConfigurationMapping,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -2399,7 +2409,7 @@ class FlextUtilitiesMapper:
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
         to_json: bool = False,
-    ) -> r[t.ConfigurationDict]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Transform dictionary with multiple options.
 
         Args:
@@ -2426,7 +2436,7 @@ class FlextUtilitiesMapper:
         """
         try:
             # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
-            source_dict: t.ConfigurationDict = dict(source)
+            source_dict: dict[str, t.GeneralValueType] = dict(source)
 
             # Apply transform steps
             transformed = FlextUtilitiesMapper._apply_transform_steps(
@@ -2440,9 +2450,9 @@ class FlextUtilitiesMapper:
                 to_json=to_json,
             )
 
-            return r[t.ConfigurationDict].ok(transformed)
+            return r[dict[str, t.GeneralValueType]].ok(transformed)
         except Exception as e:
-            return r[t.ConfigurationDict].fail(f"Transform failed: {e}")
+            return r[dict[str, t.GeneralValueType]].fail(f"Transform failed: {e}")
 
     @staticmethod
     def to_dict[T](mapping: Mapping[str, T]) -> dict[str, T]:
@@ -2466,8 +2476,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def deep_eq(
-        a: t.ConfigurationDict,
-        b: t.ConfigurationDict,
+        a: dict[str, t.GeneralValueType],
+        b: dict[str, t.GeneralValueType],
     ) -> bool:
         """Deep equality comparison for nested structures.
 
@@ -2504,12 +2514,11 @@ class FlextUtilitiesMapper:
         if len(a) != len(b):
             return False
 
-        # Recursive comparison
-        for key in a:
+        # Recursive comparison using .items() for proper dict iteration
+        for key, val_a in a.items():
             if key not in b:
                 return False
 
-            val_a = a[key]
             val_b = b[key]
 
             # None comparison
@@ -2549,11 +2558,11 @@ class FlextUtilitiesMapper:
         secondary_data: t.ConfigurationMapping | object | None = None,
         *,
         transformer: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
-        field_overrides: t.ConfigurationDict | None = None,
+        field_overrides: dict[str, t.GeneralValueType] | None = None,
         merge_strategy: str = "merge",
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Process and merge contextual data with flexible transformation options.
 
         Generic utility for processing context data across the FLEXT ecosystem.
@@ -2606,16 +2615,20 @@ class FlextUtilitiesMapper:
 
             transformer = identity_transformer
 
-        result: t.ConfigurationDict = {}
+        result: dict[str, t.GeneralValueType] = {}
 
         # Process primary data
         if primary_data is not None:
             # Narrow to GeneralValueType first, then check if dict-like
-            primary_general = FlextUtilitiesMapper._narrow_to_general_value_type(primary_data)
+            primary_general = FlextUtilitiesMapper._narrow_to_general_value_type(
+                primary_data,
+            )
             if FlextRuntime.is_dict_like(primary_general):
                 # TypeGuard narrows primary_general to ConfigurationMapping
-                primary_dict: t.ConfigurationDict = FlextUtilitiesMapper.to_dict(
-                    primary_general,
+                primary_dict: dict[str, t.GeneralValueType] = (
+                    FlextUtilitiesMapper.to_dict(
+                        primary_general,
+                    )
                 )
                 transformed_primary = FlextUtilitiesMapper.transform_values(
                     primary_dict,
@@ -2626,11 +2639,15 @@ class FlextUtilitiesMapper:
         # Process secondary data based on merge strategy
         if secondary_data is not None and merge_strategy != "primary_only":
             # Narrow to GeneralValueType first, then check if dict-like
-            secondary_general = FlextUtilitiesMapper._narrow_to_general_value_type(secondary_data)
+            secondary_general = FlextUtilitiesMapper._narrow_to_general_value_type(
+                secondary_data,
+            )
             if FlextRuntime.is_dict_like(secondary_general):
                 # TypeGuard narrows secondary_general to ConfigurationMapping
-                secondary_dict: t.ConfigurationDict = FlextUtilitiesMapper.to_dict(
-                    secondary_general,
+                secondary_dict: dict[str, t.GeneralValueType] = (
+                    FlextUtilitiesMapper.to_dict(
+                        secondary_general,
+                    )
                 )
                 transformed_secondary = FlextUtilitiesMapper.transform_values(
                     secondary_dict,
@@ -2670,7 +2687,7 @@ class FlextUtilitiesMapper:
         context: t.ConfigurationMapping | None,
         extra_kwargs: t.ConfigurationMapping,
         **specific_fields: t.MetadataAttributeValue,
-    ) -> t.MetadataAttributeDict:
+    ) -> dict[str, t.MetadataAttributeValue]:
         """Normalize and merge context values for exception handling.
 
         Convenience method for exception context processing.
@@ -2686,17 +2703,19 @@ class FlextUtilitiesMapper:
 
         """
         # Convert specific_fields to ConfigurationDict for process_context_data
-        field_overrides_config: t.ConfigurationDict = dict(specific_fields)
-        raw_result: t.ConfigurationDict = FlextUtilitiesMapper.process_context_data(
-            primary_data=context,
-            secondary_data=extra_kwargs,
-            transformer=FlextRuntime.normalize_to_metadata_value,
-            field_overrides=field_overrides_config,
-            merge_strategy="merge",
+        field_overrides_config: dict[str, t.GeneralValueType] = dict(specific_fields)
+        raw_result: dict[str, t.GeneralValueType] = (
+            FlextUtilitiesMapper.process_context_data(
+                primary_data=context,
+                secondary_data=extra_kwargs,
+                transformer=FlextRuntime.normalize_to_metadata_value,
+                field_overrides=field_overrides_config,
+                merge_strategy="merge",
+            )
         )
         # Transformer ensures all values are MetadataAttributeValue
         # Build result with explicit type
-        result: t.MetadataAttributeDict = {}
+        result: dict[str, t.MetadataAttributeValue] = {}
         for k, v in raw_result.items():
             result[k] = FlextRuntime.normalize_to_metadata_value(v)
         return result
@@ -2783,7 +2802,7 @@ class FlextUtilitiesMapper:
     def fields(
         obj: t.ConfigurationMapping | Mapping[str, t.GeneralValueType] | object,
         *field_names: str | Mapping[str, t.GeneralValueType],
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Extract specified fields from object.
 
         Supports two patterns:
@@ -2808,7 +2827,7 @@ class FlextUtilitiesMapper:
             })
 
         """
-        result: t.ConfigurationDict = {}
+        result: dict[str, t.GeneralValueType] = {}
 
         spec_item: str | Mapping[str, t.GeneralValueType]
         for spec_item in field_names:

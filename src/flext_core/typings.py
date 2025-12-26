@@ -14,13 +14,12 @@ from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from re import Pattern
-from types import ModuleType
 from typing import (
+    TYPE_CHECKING,
     Annotated,
     ParamSpec,
     Protocol,
     Self,
-    TypeAlias,
     TypedDict,
     TypeVar,
     Union,
@@ -29,6 +28,9 @@ from typing import (
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 # LaxStr compatibility for external integrations (LDAP, etc.)
 
@@ -140,7 +142,7 @@ class FlextTypes:
         | None
         | list[str | int | float | bool | None]
         | dict[
-            str, str | int | float | bool | list[str | int | float | bool | None] | None
+            str, str | int | float | bool | list[str | int | float | bool | None] | None,
         ]
     )
     type PydanticConfigDict = dict[str, FlextTypes.PydanticConfigValue]
@@ -183,7 +185,7 @@ class FlextTypes:
     # Used for type-safe constant access via __getitem__ method
     # Includes all types that can be stored as constants: primitives, collections,
     # Pydantic ConfigDict, SettingsConfigDict, and StrEnum types
-    ConstantValue: TypeAlias = (
+    type ConstantValue = (
         str
         | int
         | float
@@ -616,10 +618,7 @@ class FlextTypes:
     # Service instance type - union of all types accepted by container.register()
     # ARCHITECTURAL EXCEPTION: DI containers must accept any Python object
     # This uses GeneralValueType + Protocol for type-safe service storage
-    ServiceInstanceType: TypeAlias = Union[
-        "FlextTypes.GeneralValueType",
-        Callable[..., "FlextTypes.GeneralValueType"],
-    ]
+    type ServiceInstanceType = "FlextTypes.GeneralValueType" | Callable[..., FlextTypes.GeneralValueType]
     """Type for service instances accepted by FlextContainer.register().
 
     Includes all GeneralValueType members plus Callables:

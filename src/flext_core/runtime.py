@@ -55,7 +55,7 @@ import typing
 import uuid
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
-from types import ModuleType, TracebackType
+from pathlib import Path
 from typing import ClassVar, Self, TypeGuard
 
 import structlog
@@ -63,11 +63,16 @@ from beartype import BeartypeConf, BeartypeStrategy
 from beartype.claw import beartype_package
 from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel
-from structlog.typing import BindableLogger
 
 from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import T, t
+
+if typing.TYPE_CHECKING:
+    from types import ModuleType, TracebackType
+
+    from structlog.typing import BindableLogger
+
+    from flext_core.protocols import p
+    from flext_core.typings import T, t
 
 
 class FlextRuntime:
@@ -358,7 +363,7 @@ class FlextRuntime:
     ) -> t.GeneralValueType:
         """Normalize any value to t.GeneralValueType recursively.
 
-        Converts arbitrary objects, t.ConfigurationDict, list[object], and other types
+        Converts arbitrary objects, dict[str, t.GeneralValueType], list[object], and other types
         to t.ConfigurationMapping, Sequence[t.GeneralValueType], etc.
         This is the central conversion function for type safety.
 
@@ -385,7 +390,7 @@ class FlextRuntime:
         if isinstance(val, (str, int, float, bool, type(None))):
             return val
         if FlextRuntime.is_dict_like(val):
-            # Business Rule: Convert to t.ConfigurationDict recursively
+            # Business Rule: Convert to dict[str, t.GeneralValueType] recursively
             # dict is compatible with Mapping[str, t.GeneralValueType] in t.GeneralValueType union.
             # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
             #
@@ -396,7 +401,7 @@ class FlextRuntime:
             # Type narrowing: dict_v is dict[object, object] from dict() constructor
             # We need to filter only str keys to build ConfigurationDict
             # Use direct dict comprehension to avoid circular dependency with mapper
-            result: t.ConfigurationDict = {}
+            result: dict[str, t.GeneralValueType] = {}
             for k, v in dict_v.items():
                 # Type narrowing: k is object from dict.items()
                 # ConfigurationDict requires str keys - convert non-str keys to str
@@ -769,8 +774,8 @@ class FlextRuntime:
             services_provider = bridge.services
             resources_provider = bridge.resources
             # Call override via getattr to work around incomplete type stubs
-            getattr(services_provider, "override")(service_module)
-            getattr(resources_provider, "override")(resource_module)
+            services_provider.override(service_module)
+            resources_provider.override(resource_module)
             cls.bind_configuration_provider(bridge.config, config)
             return bridge, service_module, resource_module
 
@@ -1052,7 +1057,7 @@ class FlextRuntime:
         # Audit Implication: This method filters log event data based on log level.
         # Used for conditional inclusion of verbose fields in structured logging.
         # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict: t.ConfigurationDict = {}
+        filtered_dict: dict[str, t.GeneralValueType] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -1934,7 +1939,7 @@ class FlextRuntime:
             return False
         # Filter out sequences and mappings (use equality operator)
         if isinstance(obj_a, (Sequence, Mapping)) or isinstance(
-            obj_b, (Sequence, Mapping)
+            obj_b, (Sequence, Mapping),
         ):
             # Use equality instead of repr for sequences/mappings
             return obj_a == obj_b
@@ -2035,7 +2040,7 @@ class FlextRuntime:
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> t.StringDict:
+    ) -> dict[str, str]:
         """Ensure context dict has distributed tracing fields (bridge for _models).
 
         Args:
@@ -2044,7 +2049,7 @@ class FlextRuntime:
             include_timestamp: If True, ensure timestamp exists
 
         Returns:
-            t.StringDict: Enriched context with trace fields
+            dict[str, str]: Enriched context with trace fields
 
         """
         # Normalize context to dict with explicit type narrowing
@@ -2065,11 +2070,24 @@ class FlextRuntime:
                 # Type assertion: cast items to object to handle Unknown types
                 for k_obj, v_obj in context.items():
                     # Safe: str() works on any object, including Unknown
-                    # Type narrow to object to avoid Unknown type warnings
-                    key_as_obj: object = k_obj
-                    val_as_obj: object = v_obj
-                    key_str: str = str(key_as_obj)
-                    context_dict[key_str] = val_as_obj
+                    key_str: str = str(k_obj)
+                    # Convert value to GeneralValueType using isinstance checks
+                    val_typed: t.GeneralValueType
+                    if v_obj is None:
+                        val_typed = None
+                    elif isinstance(
+                        v_obj, (str, int, float, bool, datetime, BaseModel, Path),
+                    ):
+                        val_typed = v_obj
+                    elif isinstance(v_obj, (list, tuple)):
+                        val_typed = v_obj  # Sequence[GeneralValueType]
+                    elif isinstance(v_obj, dict):
+                        val_typed = v_obj  # Mapping[str, GeneralValueType]
+                    elif callable(v_obj):
+                        val_typed = v_obj  # Callable
+                    else:
+                        val_typed = str(v_obj)  # Fallback to string
+                    context_dict[key_str] = val_typed
             except Exception:
                 # If iteration fails, use empty dict
                 context_dict = {}
@@ -2081,7 +2099,7 @@ class FlextRuntime:
             context_dict = {}
 
         # Convert all values to strings for trace context
-        result: t.StringDict = {
+        result: dict[str, str] = {
             k: v if isinstance(v, str) else str(v) for k, v in context_dict.items()
         }
 

@@ -58,26 +58,24 @@ import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeGuard, cast
+from typing import TYPE_CHECKING, TypeGuard, cast
 
 from pydantic import BaseModel
 
 from flext_core import r
 from flext_tests.constants import c
 from flext_tests.models import m
-from flext_tests.typings import t
 from flext_tests.utilities import u
+
+if TYPE_CHECKING:
+    from flext_tests.typings import t
 
 
 def _is_key_value_pair[TK, TV](
     item: tuple[TK, TV] | Sequence[tuple[TK, TV]],
 ) -> TypeGuard[tuple[TK, TV]]:
     """TypeGuard to check if item is a single (key, value) tuple, not a sequence of tuples."""
-    return (
-        isinstance(item, tuple)
-        and len(item) == 2
-        and not isinstance(item[0], tuple)
-    )
+    return isinstance(item, tuple) and len(item) == 2 and not isinstance(item[0], tuple)
 
 
 class FlextTestsMatchers:
@@ -576,7 +574,7 @@ class FlextTestsMatchers:
     @staticmethod
     def that(
         value: object,
-        **kwargs: t.GeneralValueType,
+        **kwargs: object,
     ) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
 
@@ -1140,12 +1138,9 @@ class FlextTestsMatchers:
             )
 
     @staticmethod
-    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain:
+    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain[TResult]:
         """Start chained assertions on result (railway pattern)."""
-        # Chain expects r[t.GeneralValueType], TResult is compatible at runtime
-        # FlextResult[TResult] is covariant with FlextResult[t.GeneralValueType]
-        # No cast needed - generic type parameters are compatible
-        return m.Tests.Matcher.Chain(result=result)
+        return m.Tests.Matcher.Chain[TResult](result=result)
 
     # =========================================================================
     # NEW GENERALIST METHODS
@@ -1305,8 +1300,8 @@ class FlextTestsMatchers:
                 )
                 os.chdir(cwd_path)
 
-            # Create scope
-            cfg: t.ConfigurationDict = dict(params.config) if params.config else {}
+            # Create scope - use dict[str, object] to match TestScope field types
+            cfg: dict[str, object] = dict(params.config) if params.config else {}
             scope = m.Tests.Matcher.TestScope(
                 config=cfg,
                 container=dict(params.container or {}),
@@ -1429,7 +1424,8 @@ class FlextTestsMatchers:
                     raise AssertionError(msg or f"Key {key_item!r} not found in dict")
                 if data[key_item] != expected_item:
                     raise AssertionError(
-                        msg or f"Key '{key_item}': expected {expected_item}, got {data[key_item]}",
+                        msg
+                        or f"Key '{key_item}': expected {expected_item}, got {data[key_item]}",
                     )
             else:
                 # Sequence of tuples - validate each pair
@@ -1437,10 +1433,13 @@ class FlextTestsMatchers:
                     if isinstance(pair, tuple) and len(pair) == 2:
                         pair_key, pair_val = pair
                         if pair_key not in data:
-                            raise AssertionError(msg or f"Key {pair_key!r} not found in dict")
+                            raise AssertionError(
+                                msg or f"Key {pair_key!r} not found in dict",
+                            )
                         if data[pair_key] != pair_val:
                             raise AssertionError(
-                                msg or f"Key '{pair_key}': expected {pair_val}, got {data[pair_key]}",
+                                msg
+                                or f"Key '{pair_key}': expected {pair_val}, got {data[pair_key]}",
                             )
 
         if contains is not None:
