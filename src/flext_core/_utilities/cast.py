@@ -128,11 +128,6 @@ class FlextUtilitiesCast:
         raise ValueError(error_msg)
 
 
-# Backward compatibility alias
-cast_safe = FlextUtilitiesCast.safe
-
-
 __all__ = [
     "FlextUtilitiesCast",
-    "cast_safe",
 ]

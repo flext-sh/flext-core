@@ -22,7 +22,7 @@ from flext_core._utilities.context import FlextUtilitiesContext
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
 from flext_core._utilities.domain import FlextUtilitiesDomain
-from flext_core._utilities.enum import FlextUtilitiesEnum, enum
+from flext_core._utilities.enum import FlextUtilitiesEnum
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -234,7 +234,6 @@ class FlextUtilities:
         FlextUtilitiesEnum.create_discriminated_union
     )
     create_enum = staticmethod(FlextUtilitiesEnum.create_enum)
-    enum = staticmethod(enum)
     get_enum_values = staticmethod(FlextUtilitiesEnum.get_enum_values)
     is_enum_member = staticmethod(FlextUtilitiesEnum.is_enum_member)
     is_member = staticmethod(FlextUtilitiesEnum.is_member)

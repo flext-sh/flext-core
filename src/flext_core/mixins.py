@@ -11,10 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from functools import partial
-from typing import ClassVar, cast
+from types import ModuleType
+from typing import ClassVar
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -234,7 +235,7 @@ class FlextMixins(FlextRuntime):
         return self._get_runtime().context
 
     @property
-    def logger(self) -> p.Log.StructlogLogger:
+    def logger(self) -> FlextLogger:
         """Get FlextLogger instance (DI-backed with caching)."""
         return self._get_or_create_logger()
 
@@ -275,10 +276,10 @@ class FlextMixins(FlextRuntime):
             runtime_options_callable() if callable(runtime_options_callable) else {}
         )
         # Type narrowing: isinstance check ensures options_raw is dict
-        # Cast to RuntimeBootstrapOptions - TypedDict can't be narrowed by isinstance
-        options: t.RuntimeBootstrapOptions = cast(
-            "t.RuntimeBootstrapOptions",
-            options_raw if isinstance(options_raw, dict) else {},
+        # Use dict interface - TypedDict keys accessed via .get() at runtime
+        # RuntimeBootstrapOptions is TypedDict, but runtime data is untyped dict
+        options: dict[str, object] = (
+            dict(options_raw) if isinstance(options_raw, dict) else {}
         )
         # Use factory methods directly - Clean Architecture pattern
         # Each class knows how to instantiate itself
@@ -288,10 +289,10 @@ class FlextMixins(FlextRuntime):
         )
         config_cls = config_type or FlextSettings
         config_overrides_raw = u.mapper().get(options, "config_overrides")
-        # isinstance check narrows to dict/Mapping, cast refines value type
+        # TypeGuard-based narrowing - is_configuration_mapping returns TypeGuard[ConfigurationMapping]
         config_overrides_typed: Mapping[str, t.FlexibleValue] | None = (
-            cast("Mapping[str, t.FlexibleValue]", config_overrides_raw)
-            if isinstance(config_overrides_raw, (dict, Mapping))
+            config_overrides_raw
+            if u.Guards.is_configuration_mapping(config_overrides_raw)
             else None
         )
         # config_cls is FlextSettings or subclass - type narrowing via isinstance
@@ -322,15 +323,13 @@ class FlextMixins(FlextRuntime):
         services_raw = (
             u.mapper().get(options, "services") if "services" in options else None
         )
-        # isinstance narrows to Mapping, then cast refines value type
+        # TypeGuard-based narrowing - _is_mapping returns TypeGuard[Mapping[str, object]]
         services_typed: Mapping[str, object] | None = (
-            cast("Mapping[str, object]", services_raw)
-            if isinstance(services_raw, (dict, Mapping))
-            else None
+            services_raw if u.Guards.is_mapping(services_raw) else None
         )
 
-        # FlextContext implements p.Ctx protocol - cast for protocol compatibility
-        context_typed: p.Ctx | None = cast("p.Ctx", runtime_context)
+        # FlextContext implements p.Ctx protocol - direct assignment (structural typing)
+        context_typed: p.Ctx | None = runtime_context
         factories_raw = options.get("factories")
 
         # Get subproject and narrow to str
@@ -339,33 +338,49 @@ class FlextMixins(FlextRuntime):
             subproject_raw if isinstance(subproject_raw, str) else None
         )
 
-        # Get resources and narrow to Mapping
+        # Get resources and narrow to Mapping using TypeGuard
         resources_raw = u.mapper().get(options, "resources")
         resources_typed: Mapping[str, object] | None = (
-            cast("Mapping[str, object]", resources_raw)
-            if isinstance(resources_raw, (dict, Mapping))
-            else None
+            resources_raw if u.Guards.is_mapping(resources_raw) else None
         )
+
+        # TypeGuard narrowing for factories mapping
+        # Validate values are callable for factory pattern
+        factories_typed: Mapping[str, Callable[[], object]] | None = None
+        if u.Guards.is_mapping(factories_raw):
+            # Build typed dict with only callable values using dict comprehension
+            callable_factories: dict[str, Callable[[], object]] = {
+                k: v for k, v in factories_raw.items() if callable(v)
+            }
+            if callable_factories:
+                factories_typed = callable_factories
 
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
             context=context_typed,
             subproject=subproject_typed,
             services=services_typed,
-            # isinstance narrows to dict/Mapping, cast refines callable signature
-            factories=cast("Mapping[str, Callable[[], object]]", factories_raw)
-            if isinstance(factories_raw, (dict, Mapping))
-            else None,
+            factories=factories_typed,
             resources=resources_typed,
         )
 
-        container_overrides = options.get("container_overrides")
-        if container_overrides:
-            runtime_container.configure(container_overrides)
+        container_overrides_raw = options.get("container_overrides")
+        if u.Guards.is_mapping(container_overrides_raw):
+            runtime_container.configure(container_overrides_raw)
 
-        wire_modules = options.get("wire_modules")
-        wire_packages = options.get("wire_packages")
-        wire_classes = options.get("wire_classes")
+        wire_modules_raw = options.get("wire_modules")
+        wire_packages_raw = options.get("wire_packages")
+        wire_classes_raw = options.get("wire_classes")
+        # Type narrow to sequences
+        wire_modules: Sequence[ModuleType] | None = (
+            wire_modules_raw if isinstance(wire_modules_raw, Sequence) else None
+        )
+        wire_packages: Sequence[str] | None = (
+            wire_packages_raw if isinstance(wire_packages_raw, Sequence) else None
+        )
+        wire_classes: Sequence[type] | None = (
+            wire_classes_raw if isinstance(wire_classes_raw, Sequence) else None
+        )
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire_modules(
                 modules=wire_modules,
@@ -504,7 +519,7 @@ class FlextMixins(FlextRuntime):
         _ = FlextContext.Utilities.ensure_correlation_id()
 
     @classmethod
-    def _get_or_create_logger(cls) -> p.Log.StructlogLogger:
+    def _get_or_create_logger(cls) -> FlextLogger:
         """Get or create DI-injected logger with fallback to direct creation."""
         # Generate unique logger name based on module and class
         logger_name = f"{cls.__module__}.{cls.__name__}"
@@ -512,9 +527,10 @@ class FlextMixins(FlextRuntime):
         # Check cache first (thread-safe)
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
-                # Cache stores object to avoid circular imports, cast to protocol
-                cached_logger = cls._logger_cache[logger_name]
-                return cast("p.Log.StructlogLogger", cached_logger)
+                # Cache stores FlextLogger - narrow from object via isinstance
+                cached = cls._logger_cache[logger_name]
+                if isinstance(cached, FlextLogger):
+                    return cached
 
         # Try to get from DI container
         try:
@@ -530,8 +546,8 @@ class FlextMixins(FlextRuntime):
                 # Cache the result
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger
-                # FlextLogger → p.Log.StructlogLogger protocol conversion
-                return cast("p.Log.StructlogLogger", logger)
+                # FlextLogger satisfies p.Log.StructlogLogger via structural typing
+                return logger
 
             # Logger not in container - create and register
             logger = FlextLogger(logger_name)
@@ -552,16 +568,16 @@ class FlextMixins(FlextRuntime):
             with cls._cache_lock:
                 cls._logger_cache[logger_name] = logger
 
-            # FlextLogger → p.Log.StructlogLogger protocol conversion
-            return cast("p.Log.StructlogLogger", logger)
+            # FlextLogger satisfies p.Log.StructlogLogger via structural typing
+            return logger
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # Fallback: create logger without DI if container unavailable
             logger = FlextLogger(logger_name)
             with cls._cache_lock:
                 cls._logger_cache[logger_name] = logger
-            # FlextLogger → p.Log.StructlogLogger protocol conversion
-            return cast("p.Log.StructlogLogger", logger)
+            # FlextLogger satisfies p.Log.StructlogLogger via structural typing
+            return logger
 
     def _log_with_context(
         self,
@@ -797,16 +813,22 @@ class FlextMixins(FlextRuntime):
                         else "unknown"
                     )
                     handler_mode_raw = ctx.get("handler_mode", "operation")
-                    # Cast to Literal type expected by create_for_handler
                     handler_mode_str: str = (
                         str(handler_mode_raw)
                         if handler_mode_raw is not None
                         else "operation"
                     )
-                    # Literal type narrowing - cast str to Literal for mypy
-                    # Runtime validates via str conversion above
-                    handler_mode_literal: c.Cqrs.HandlerTypeLiteral = cast(
-                        "c.Cqrs.HandlerTypeLiteral", handler_mode_str
+                    # Match statement for Literal type narrowing (no cast needed)
+                    handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
+                        "command"
+                        if handler_mode_str == "command"
+                        else "query"
+                        if handler_mode_str == "query"
+                        else "event"
+                        if handler_mode_str == "event"
+                        else "saga"
+                        if handler_mode_str == "saga"
+                        else "operation"
                     )
                     execution_ctx = m.Handler.ExecutionContext.create_for_handler(
                         handler_name=handler_name,

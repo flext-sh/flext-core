@@ -16,7 +16,7 @@ import json
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Final, Self, cast, overload
+from typing import Final, Self, overload
 
 from pydantic import BaseModel
 
@@ -982,18 +982,12 @@ class FlextContext(FlextRuntime):
                 for k, v in metadata_dict.items()
             }
 
-        # Type narrowing: normalized_metadata is dict after normalization
-        # Use isinstance to narrow to ConfigurationDict (dict[str, t.GeneralValueType])
-        if isinstance(normalized_metadata, dict) and all(
-            isinstance(k, str) for k in normalized_metadata
-        ):
-            # Cast: MetadataAttributeDict widens to ConfigurationDict (invariant dict variance)
-            metadata_general: t.ConfigurationDict | None = cast(
-                "t.ConfigurationDict | None",
-                normalized_metadata,
-            )
-        else:
-            metadata_general = None
+        # TypeGuard-based narrowing - is_configuration_dict returns TypeGuard[ConfigurationDict]
+        metadata_general: t.ConfigurationDict | None = (
+            normalized_metadata
+            if u.Guards.is_configuration_dict(normalized_metadata)
+            else None
+        )
 
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, t.GeneralValueType])
@@ -1263,18 +1257,12 @@ class FlextContext(FlextRuntime):
                 # Normalize t.GeneralValueType to t.MetadataAttributeValue
                 normalized_metadata[k] = FlextRuntime.normalize_to_metadata_value(v)
 
-        # Type narrowing: normalized_metadata is dict after normalization
-        # Use isinstance to narrow to ConfigurationDict (dict[str, t.GeneralValueType])
-        if isinstance(normalized_metadata, dict) and all(
-            isinstance(k, str) for k in normalized_metadata
-        ):
-            # Cast: MetadataAttributeDict widens to ConfigurationDict (invariant dict variance)
-            metadata_general: t.ConfigurationDict | None = cast(
-                "t.ConfigurationDict | None",
-                normalized_metadata,
-            )
-        else:
-            metadata_general = None
+        # TypeGuard-based narrowing - is_configuration_dict returns TypeGuard[ConfigurationDict]
+        metadata_general: t.ConfigurationDict | None = (
+            normalized_metadata
+            if u.Guards.is_configuration_dict(normalized_metadata)
+            else None
+        )
 
         # Get statistics as dict
         stats_dict: t.ConfigurationDict = {}
@@ -1588,7 +1576,7 @@ class FlextContext(FlextRuntime):
         @staticmethod
         def get_service(
             service_name: str,
-        ) -> p.Result[t.GeneralValueType]:
+        ) -> p.ResultLike[t.GeneralValueType]:
             """Resolve service from global container using FlextResult.
 
             Provides unified service resolution pattern across the ecosystem
@@ -1598,18 +1586,17 @@ class FlextContext(FlextRuntime):
                 service_name: Name of the service to retrieve
 
             Returns:
-                Result protocol containing the service instance or error
+                Result containing the service instance or error.
+                Use isinstance() or get_typed() for type narrowing.
 
             Example:
                 >>> result = FlextContext.Service.get_service("logger")
-                >>> if result.is_success:
-                ...     logger = result.value
-                ...     logger.info("Service retrieved")
+                >>> if result.is_success and isinstance(result.value, FlextLogger):
+                ...     result.value.info("Service retrieved")
 
             """
             # get_container is a classmethod on FlextContext, access via class
             container = FlextContext.get_container()
-            # Returns Result[T] protocol for compatibility
             return container.get(service_name)
 
         @staticmethod

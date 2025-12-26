@@ -46,7 +46,6 @@ import logging
 import os
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import cast
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
@@ -340,18 +339,9 @@ class FlextUtilitiesConfiguration:
             return FlextUtilitiesConfiguration._NOT_FOUND
         try:
             model_data = model_dump_fn()
-            if isinstance(model_data, dict):
-                # model_dump() returns dict[str, t.GeneralValueType] which is ConfigurationDict
-                # Use cast to help pyright infer the correct type
-                model_data_dict: t.ConfigurationDict = cast(
-                    "t.ConfigurationDict",
-                    model_data,
-                )
-                if parameter in model_data_dict:
-                    return (
-                        True,
-                        model_data_dict[parameter],
-                    )
+            if isinstance(model_data, dict) and parameter in model_data:
+                # isinstance narrows to dict, direct access works
+                return (True, model_data[parameter])
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
         return FlextUtilitiesConfiguration._NOT_FOUND
@@ -559,11 +549,8 @@ class FlextUtilitiesConfiguration:
             if get_global_instance_attr is not None and callable(
                 get_global_instance_attr,
             ):
-                get_global_instance_method: Callable[[], object] = cast(
-                    "Callable[[], object]",
-                    get_global_instance_attr,
-                )
-                instance = get_global_instance_method()
+                # callable() check ensures this is callable - call directly
+                instance = get_global_instance_attr()
                 if isinstance(instance, p.HasModelDump):
                     # Type narrowing: instance is HasModelDump
                     has_model_dump_instance: p.HasModelDump = instance
@@ -628,12 +615,8 @@ class FlextUtilitiesConfiguration:
                 f"get_global_instance is not callable on {singleton_class.__name__}",
             )
 
-        get_global_instance_method: Callable[[], object] = cast(
-            "Callable[[], object]",
-            get_global_instance_attr,
-        )
-
-        instance = get_global_instance_method()
+        # callable() check above ensures this is callable - call directly
+        instance = get_global_instance_attr()
         if not isinstance(instance, p.HasModelDump):
             return r[bool].fail(
                 "Instance does not implement HasModelDump protocol",

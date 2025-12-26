@@ -413,14 +413,11 @@ class FlextDecorators(FlextRuntime):
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
                         # Get from container using the service key
-                        result: p.Result[object] = container.get(service_key)
+                        result = container.get(service_key)
                         if result.is_success:
                             # Use .value directly - FlextResult never returns None on success
                             kwargs[name] = result.value
-                        else:
-                            # If resolution fails, let the function handle it
-                            # or fail with missing parameter
-                            pass
+                        # If resolution fails, let the function handle missing parameter
 
                 return func(*args, **kwargs)
 
@@ -1331,8 +1328,12 @@ class FlextDecorators(FlextRuntime):
                 railway_result = FlextDecorators.railway(error_code=error_code)(
                     decorated,
                 )
-                # Cast to preserve type signature - railway wraps R in FlextResult[R]
-                # but combined() maintains original signature for caller convenience
+                # INTENTIONAL CAST: railway wraps R in FlextResult[R], but combined()
+                # maintains original Callable[P, R] signature for caller convenience.
+                # This is a type-level convenience - at runtime, the function returns
+                # FlextResult[R]. Callers using combined() with use_railway=True must
+                # handle the FlextResult wrapper. An overload-based solution would be
+                # more type-safe but significantly more complex.
                 decorated = cast("Callable[P, R]", railway_result)
 
             # Apply dependency injection

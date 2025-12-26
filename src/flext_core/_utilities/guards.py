@@ -521,7 +521,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, Sequence) and not isinstance(value, str)
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+    def is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
         """Check if value is Mapping[str, object].
 
         Type guard for mapping types used in validation.
@@ -622,6 +622,26 @@ class FlextUtilitiesGuards:
 
         """
         return isinstance(value, dict)
+
+    @staticmethod
+    def _is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+        """Check if value is a Mapping (dict-like).
+
+        Type guard for Mapping types (dict, ChainMap, MappingProxyType, etc.).
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[Mapping[str, object]]: True if value is a Mapping
+
+        Example:
+            >>> if FlextUtilitiesGuards._is_mapping(config):
+            ...     # config is now typed as Mapping[str, object]
+            ...     value = config.get("key")
+
+        """
+        return isinstance(value, Mapping)
 
     @staticmethod
     def _is_int(value: object) -> TypeGuard[int]:

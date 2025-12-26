@@ -99,7 +99,7 @@ class FlextProtocols:
             """Chain operations returning Result."""
             ...
 
-        def map_error(self, func: Callable[[str], str]) -> FlextProtocols.Result[T]:
+        def map_error(self, func: Callable[[str], str]) -> Self:
             """Transform error message on failure.
 
             Returns self on success, new Result with transformed error on failure.
@@ -109,7 +109,7 @@ class FlextProtocols:
         def filter(
             self,
             predicate: Callable[[T], bool],
-        ) -> FlextProtocols.Result[T]:
+        ) -> Self:
             """Filter success value using predicate.
 
             Returns self if predicate passes or result is failure,
@@ -127,14 +127,14 @@ class FlextProtocols:
         def alt(
             self,
             func: Callable[[str], str],
-        ) -> FlextProtocols.Result[T]:
+        ) -> Self:
             """Apply alternative function on failure."""
             ...
 
         def lash(
             self,
             func: Callable[[str], FlextProtocols.Result[T]],
-        ) -> FlextProtocols.Result[T]:
+        ) -> Self:
             """Apply recovery function on failure."""
             ...
 
@@ -208,7 +208,7 @@ class FlextProtocols:
             """Resource management with automatic cleanup."""
             ...
 
-        def __enter__(self) -> FlextProtocols.Result[T]:
+        def __enter__(self) -> Self:
             """Context manager entry."""
             ...
 
@@ -410,9 +410,9 @@ class FlextProtocols:
             config: FlextProtocols.Config | None = None,
             context: FlextProtocols.Ctx | None = None,
             subproject: str | None = None,
-            services: Mapping[str, object] | None = None,
-            factories: Mapping[str, Callable[[], object]] | None = None,
-            resources: Mapping[str, Callable[[], object]] | None = None,
+            services: Mapping[str, t.GeneralValueType] | None = None,
+            factories: Mapping[str, t.FactoryCallable] | None = None,
+            resources: Mapping[str, t.ResourceCallable] | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...
@@ -438,8 +438,8 @@ class FlextProtocols:
         def register(
             self,
             name: str,
-            service: object,
-        ) -> FlextProtocols.Result[bool]:
+            service: t.GeneralValueType,
+        ) -> FlextProtocols.ResultLike[bool]:
             """Register a service instance."""
             ...
 
@@ -447,7 +447,7 @@ class FlextProtocols:
             self,
             name: str,
             factory: Callable[[], t.GeneralValueType],
-        ) -> FlextProtocols.Result[bool]:
+        ) -> FlextProtocols.ResultLike[bool]:
             """Register a service factory."""
             ...
 
@@ -467,12 +467,11 @@ class FlextProtocols:
             """Fluent interface for factory registration."""
             ...
 
-        def get[T](self, name: str) -> FlextProtocols.Result[T]:
-            """Get service by name with type safety.
+        def get(self, name: str) -> FlextProtocols.ResultLike[t.GeneralValueType]:
+            """Get service by name.
 
-            Reflects real implementations like FlextContainer which uses
-            generic type parameter for type-safe resolution.
-            Returns r[T] directly (not wrapped in another Result).
+            Returns the resolved service as GeneralValueType. For type-safe
+            resolution with runtime validation, use get_typed[T](name, type_cls).
             """
             ...
 
@@ -480,7 +479,7 @@ class FlextProtocols:
             self,
             name: str,
             type_cls: type[T],
-        ) -> FlextProtocols.Result[T]:
+        ) -> FlextProtocols.ResultLike[T]:
             """Get service with type safety and runtime validation.
 
             Reflects real implementations like FlextContainer.get_typed()

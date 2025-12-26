@@ -46,7 +46,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields, is_dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, TypeGuard, cast
+from typing import ClassVar, TypeGuard
 
 import orjson
 from pydantic import (
@@ -346,9 +346,14 @@ class FlextUtilitiesValidation:
     ) -> t.ConfigurationDict:
         """Convert items() result to dict with normalization."""
         if isinstance(items_result, (list, tuple)):
-            # Cast needed: pyrefly loses generic type after isinstance check
-            items_seq = cast("Sequence[tuple[str, t.GeneralValueType]]", items_result)
-            return dict(items_seq)
+            # Iterate and build dict with type-safe unpacking
+            result_dict: t.ConfigurationDict = {}
+            for item in items_result:
+                if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
+                    key, value = item
+                    if isinstance(key, str):
+                        result_dict[key] = value
+            return result_dict
 
         if isinstance(items_result, Mapping):
             # items_result is already t.ConfigurationMapping
@@ -425,12 +430,17 @@ class FlextUtilitiesValidation:
 
         """
         if isinstance(items_result, (list, tuple)):
-            # Cast needed: pyrefly loses generic type after isinstance check
-            items_seq = cast("Sequence[tuple[str, t.GeneralValueType]]", items_result)
-            return dict(items_seq)
+            # Iterate and build dict with type-safe unpacking
+            result_dict: t.ConfigurationDict = {}
+            for item in items_result:
+                if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
+                    key, value = item
+                    if isinstance(key, str):
+                        result_dict[key] = value
+            return result_dict
 
         if isinstance(items_result, Mapping):
-            # items_result is already a Mapping - convert to dict
+            # items_result is already a Mapping - convert via dict()
             return dict(items_result)
 
         # Use isinstance for type narrowing (pyrefly requires this)

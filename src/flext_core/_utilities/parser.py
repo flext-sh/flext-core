@@ -736,18 +736,18 @@ class FlextUtilitiesParser:
         tuple_len = len(pattern_tuple)
 
         if tuple_len == self.PATTERN_TUPLE_MIN_LENGTH:
-            # Type narrowing: tuple[str, str]
-            pattern: str = pattern_tuple[0]
-            replacement: str = pattern_tuple[1]
-            flags: int = 0
+            # Two-element tuple: (pattern, replacement)
+            pattern, replacement = pattern_tuple[0], pattern_tuple[1]
+            flags = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
-            # Type narrowing: tuple[str, str, int] - access via indexing
-            # Cast to 3-element tuple after length check (type checker needs help)
-            pattern_tuple_3 = cast("tuple[str, str, int]", pattern_tuple)
-            pattern = str(pattern_tuple_3[0])
-            replacement = str(pattern_tuple_3[1])
-            # Access third element - guaranteed to exist due to length check
-            flags = int(pattern_tuple_3[2])
+            # Convert to list for dynamic indexing that pyrefly understands
+            elements = list(pattern_tuple)
+            pattern = str(elements[0])
+            replacement = str(elements[1])
+            # Third element guaranteed by length check - convert to int
+            # elements[2] is object type, convert to str first then to int
+            third_element = elements[2] if len(elements) >= self.PATTERN_TUPLE_MAX_LENGTH else 0
+            flags = int(str(third_element)) if third_element != 0 else 0
         else:
             return r[tuple[str, str, int]].fail(
                 f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
@@ -1042,17 +1042,21 @@ class FlextUtilitiesParser:
                 )
 
             found = FlextUtilitiesParser._parse_find_first(members_list, match_member)
-            if found is not None:
-                # Type narrowing: found is StrEnum member from members_list
-                # Since target is type[T] and T extends StrEnum, found is compatible with T
-                # This is a legitimate generic conversion case -  may be required
-                # But we can use type narrowing: members_list contains StrEnum instances
-                # and T extends StrEnum, so found is T-compatible
-                found_enum: T = cast("T", found)
+            if found is not None and isinstance(found, enum_type):
+                # JUSTIFIED cast: We checked issubclass(target, StrEnum), so T IS a StrEnum type
+                # found is from enum_type.__members__.values(), guaranteed to be instance of target
+                # Mypy limitation: can't infer that issubclass check bounds T to StrEnum
+                found_enum = cast(T, found)
                 return r[T].ok(found_enum)
-        result = FlextUtilitiesEnum.parse(target, value)
+        # Type narrowing: target is type[StrEnum] after issubclass check
+        # Call parse with enum_type
+        result = FlextUtilitiesEnum.parse(enum_type, value)
         if result.is_success:
-            return r[T].ok(result.value)
+            # JUSTIFIED cast: We checked issubclass(target, StrEnum), so T IS a StrEnum type
+            # result.value comes from enum_type members, guaranteed to be instance of target
+            # Mypy limitation: can't infer that issubclass check bounds T to StrEnum
+            parsed_enum = cast(T, result.value)
+            return r[T].ok(parsed_enum)
         return r[T].fail(
             FlextUtilitiesParser._parse_result_error(result, "Enum parse failed"),
         )
@@ -1116,19 +1120,24 @@ class FlextUtilitiesParser:
         return r[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_primitive[T](value: object, target: type[T]) -> r[T] | None:
+    def _coerce_to_str(value: object) -> r[str]:
+        """Coerce value to string - returns FlextResult[str]."""
+        return r[str].ok(str(value))
+
+    @staticmethod
+    def _coerce_primitive(
+        value: object,
+        target: type[int | float | str | bool],
+    ) -> r[int] | r[float] | r[str] | r[bool] | None:
         """Coerce primitive types. Returns None if no coercion applied."""
         if target is int:
-            int_result = FlextUtilitiesParser._coerce_to_int(value)
-            return cast("r[T]", int_result) if int_result is not None else None
+            return FlextUtilitiesParser._coerce_to_int(value)
         if target is float:
-            float_result = FlextUtilitiesParser._coerce_to_float(value)
-            return cast("r[T]", float_result) if float_result is not None else None
+            return FlextUtilitiesParser._coerce_to_float(value)
         if target is str:
-            return cast("r[T]", r[str].ok(str(value)))
+            return FlextUtilitiesParser._coerce_to_str(value)
         if target is bool:
-            bool_result = FlextUtilitiesParser._coerce_to_bool(value)
-            return cast("r[T]", bool_result) if bool_result is not None else None
+            return FlextUtilitiesParser._coerce_to_bool(value)
         return None
 
     @staticmethod
@@ -1185,29 +1194,120 @@ class FlextUtilitiesParser:
         )
 
     @staticmethod
-    def _parse_try_primitive[T](
+    def _is_primitive_type(target: type[object]) -> bool:
+        """Check if target is a primitive type."""
+        return target in {int, float, str, bool}
+
+    @staticmethod
+    def _try_coerce_to_primitive(
         value: object,
-        target: type[T],
-        default: T | None,
-        default_factory: Callable[[], T] | None,
+        target: type[int | float | str | bool],
+    ) -> r[int] | r[float] | r[str] | r[bool] | None:
+        """Try to coerce value to primitive type."""
+        if target is int:
+            return FlextUtilitiesParser._coerce_to_int(value)
+        if target is float:
+            return FlextUtilitiesParser._coerce_to_float(value)
+        if target is str:
+            return FlextUtilitiesParser._coerce_to_str(value)
+        if target is bool:
+            return FlextUtilitiesParser._coerce_to_bool(value)
+        return None
+
+    # Note: bool must come before int because bool is subclass of int in Python
+    @overload
+    @staticmethod
+    def _parse_try_primitive(
+        value: object,
+        target: type[bool],
+        default: bool | None,
+        default_factory: Callable[[], bool] | None,
         field_prefix: str,
-    ) -> r[T] | None:
+    ) -> r[bool] | None: ...
+
+    @overload
+    @staticmethod
+    def _parse_try_primitive(
+        value: object,
+        target: type[int],
+        default: int | None,
+        default_factory: Callable[[], int] | None,
+        field_prefix: str,
+    ) -> r[int] | None: ...
+
+    @overload
+    @staticmethod
+    def _parse_try_primitive(
+        value: object,
+        target: type[float],
+        default: float | None,
+        default_factory: Callable[[], float] | None,
+        field_prefix: str,
+    ) -> r[float] | None: ...
+
+    @overload
+    @staticmethod
+    def _parse_try_primitive(
+        value: object,
+        target: type[str],
+        default: str | None,
+        default_factory: Callable[[], str] | None,
+        field_prefix: str,
+    ) -> r[str] | None: ...
+
+    # Note: Generic [T] overload removed - not needed as we have specific overloads for all primitives
+
+    @staticmethod
+    def _parse_try_primitive(
+        value: object,
+        target: type[int | float | str | bool | object],
+        default: float | str | bool | object | None,
+        default_factory: Callable[[], object] | None,
+        field_prefix: str,
+    ) -> r[int] | r[float] | r[str] | r[bool] | r[object] | None:
         """Helper: Try primitive coercion."""
+        # Only coerce primitive types
+        if not FlextUtilitiesParser._is_primitive_type(target):
+            return None
         try:
-            prim_result = FlextUtilitiesParser._coerce_primitive(value, target)
-            if prim_result is not None:
-                return prim_result
+            # Dispatch to concrete primitive coercion
+            if target is int:
+                result = FlextUtilitiesParser._coerce_to_int(value)
+                if result is not None:
+                    return result
+            elif target is float:
+                result = FlextUtilitiesParser._coerce_to_float(value)
+                if result is not None:
+                    return result
+            elif target is str:
+                return FlextUtilitiesParser._coerce_to_str(value)
+            elif target is bool:
+                result = FlextUtilitiesParser._coerce_to_bool(value)
+                if result is not None:
+                    return result
         except (ValueError, TypeError) as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
                 target,
                 "__name__",
                 "type",
             )
-            return FlextUtilitiesParser._parse_with_default(
-                default,
-                default_factory,
-                f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}",
-            )
+            # For error case, return failure wrapped in appropriate type
+            if target is int and isinstance(default, int):
+                return r[int].fail(
+                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}"
+                )
+            if target is float and isinstance(default, float):
+                return r[float].fail(
+                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}"
+                )
+            if target is str and isinstance(default, str):
+                return r[str].fail(
+                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}"
+                )
+            if target is bool and isinstance(default, bool):
+                return r[bool].fail(
+                    f"{field_prefix}Cannot coerce {type(value).__name__} to {target_name}: {e}"
+                )
         return None
 
     @staticmethod
@@ -1222,15 +1322,10 @@ class FlextUtilitiesParser:
         try:
             # Call target directly as type constructor - target is type[T]
             # Type narrowing: type[T] is callable, so we can call it directly
-            # When target is type[T], calling target(value) returns T
-            # This is a legitimate generic conversion case - type checker cannot infer T from object
-            # But we can use type narrowing: target(value) returns T when target is type[T]
-            # Cast target to Callable to avoid "too many arguments" error
-            parsed_raw = cast("Callable[[object], T]", target)(value)
-            # Type narrowing: parsed_raw is T after successful call to type[T]
-            # This is a mandatory conversion case where type checker cannot infer T from object
-            parsed_typed: T = parsed_raw  # target(value) returns T
-            return r[T].ok(parsed_typed)
+            # target is type[T], calling target(value) returns T
+            # Direct call - type[T] is callable and returns T
+            parsed_result: T = target(value)
+            return r[T].ok(parsed_result)
         except Exception as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
                 target,
@@ -1335,14 +1430,48 @@ class FlextUtilitiesParser:
     # CONVERT METHODS - Type conversion with safe fallback
     # =========================================================================
 
+    # Note: bool must come before int because bool is subclass of int in Python
+    @overload
     @staticmethod
-    @staticmethod
-    def convert[T](
+    def convert(
         value: t.GeneralValueType,
-        target_type: type[T],
-        default: T,
-    ) -> T:
-        """Unified type conversion with safe fallback using match/case.
+        target_type: type[bool],
+        default: bool,
+    ) -> bool: ...
+
+    @overload
+    @staticmethod
+    def convert(
+        value: t.GeneralValueType,
+        target_type: type[int],
+        default: int,
+    ) -> int: ...
+
+    @overload
+    @staticmethod
+    def convert(
+        value: t.GeneralValueType,
+        target_type: type[float],
+        default: float,
+    ) -> float: ...
+
+    @overload
+    @staticmethod
+    def convert(
+        value: t.GeneralValueType,
+        target_type: type[str],
+        default: str,
+    ) -> str: ...
+
+    # Note: Generic [T] overload removed - not needed as we have specific overloads for all primitives
+
+    @staticmethod
+    def convert(
+        value: t.GeneralValueType,
+        target_type: type[int | float | str | bool | object],
+        default: float | str | bool | object,
+    ) -> int | float | str | bool | object:
+        """Unified type conversion with safe fallback.
 
         Automatically handles common type conversions (int, str, float, bool) with
         safe fallback to default value on conversion failure.
@@ -1373,117 +1502,66 @@ class FlextUtilitiesParser:
         if isinstance(value, target_type):
             return value
 
-        # Use match/case for unified type dispatch
-        match target_type:
-            case _ if target_type is int:
-                return FlextUtilitiesParser._convert_to_int(value, default=default)
-            case _ if target_type is float:
-                return FlextUtilitiesParser._convert_to_float(value, default=default)
-            case _ if target_type is str:
-                return FlextUtilitiesParser._convert_to_str(value, default=default)
-            case _ if target_type is bool:
-                return FlextUtilitiesParser._convert_to_bool(value, default=default)
-            case _:
-                return FlextUtilitiesParser._convert_fallback(
-                    value,
-                    target_type,
-                    default,
-                )
-
-    @staticmethod
-    @overload
-    def _convert_to_int(value: t.GeneralValueType, *, default: int) -> int: ...
-
-    @staticmethod
-    @overload
-    def _convert_to_int[T](value: t.GeneralValueType, *, default: T) -> T: ...
-
-    @staticmethod
-    def _convert_to_int[T](value: t.GeneralValueType, *, default: T) -> T:
-        """Convert value to int with fallback using t.GeneralValueType from lower layer."""
-        # Use ScalarValue from lower layer - int is part of ScalarValue
-        if isinstance(value, int) and not isinstance(value, bool):
-            # Type narrowing: value is int, and when default is int, T is int
-            return cast("T", value if isinstance(default, int) else default)
-        if isinstance(value, str):
-            try:
-                converted: int = int(value)
-                return cast("T", converted if isinstance(default, int) else default)
-            except ValueError:
-                return default
-        if isinstance(value, float):
-            converted_int: int = int(value)
-            return cast("T", converted_int if isinstance(default, int) else default)
+        # Type dispatch for primitives
+        if target_type is int and isinstance(default, int):
+            return FlextUtilitiesParser._convert_to_int(value, default=default)
+        if target_type is float and isinstance(default, float):
+            return FlextUtilitiesParser._convert_to_float(value, default=default)
+        if target_type is str and isinstance(default, str):
+            return FlextUtilitiesParser._convert_to_str(value, default=default)
+        if target_type is bool and isinstance(default, bool):
+            return FlextUtilitiesParser._convert_to_bool(value, default=default)
+        # Fallback for other types
         return default
 
     @staticmethod
-    @overload
-    def _convert_to_float(value: t.GeneralValueType, *, default: float) -> float: ...
-
-    @staticmethod
-    @overload
-    def _convert_to_float[T](value: t.GeneralValueType, *, default: T) -> T: ...
-
-    @staticmethod
-    def _convert_to_float[T](value: t.GeneralValueType, *, default: T) -> T:
-        """Convert value to float with fallback using t.GeneralValueType from lower layer."""
-        # Use ScalarValue from lower layer - float is part of ScalarValue
+    def _convert_to_int(value: t.GeneralValueType, *, default: int) -> int:
+        """Convert value to int with fallback."""
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                return default
         if isinstance(value, float):
-            # Type narrowing: value is float, and when default is float, T is float
-            return cast("T", value if isinstance(default, float) else default)
+            return int(value)
+        return default
+
+    @staticmethod
+    def _convert_to_float(value: t.GeneralValueType, *, default: float) -> float:
+        """Convert value to float with fallback."""
+        if isinstance(value, float):
+            return value
         if isinstance(value, (int, str)):
             try:
-                converted: float = float(value)
-                return cast("T", converted if isinstance(default, float) else default)
+                return float(value)
             except (ValueError, TypeError):
                 return default
         return default
 
     @staticmethod
-    @overload
-    def _convert_to_str(value: t.GeneralValueType, *, default: str) -> str: ...
-
-    @staticmethod
-    @overload
-    def _convert_to_str[T](value: t.GeneralValueType, *, default: T) -> T: ...
-
-    @staticmethod
-    def _convert_to_str[T](value: t.GeneralValueType, *, default: T) -> T:
-        """Convert value to str with fallback using t.GeneralValueType from lower layer."""
-        # Use ScalarValue from lower layer - str is part of ScalarValue
+    def _convert_to_str(value: t.GeneralValueType, *, default: str) -> str:
+        """Convert value to str with fallback."""
         if isinstance(value, str):
-            # Type narrowing: value is str, and when default is str, T is str
-            return cast("T", value if isinstance(default, str) else default)
+            return value
         if value is None:
             return default
         try:
-            converted: str = str(value)
-            return cast("T", converted if isinstance(default, str) else default)
+            return str(value)
         except (ValueError, TypeError):
             return default
 
     @staticmethod
-    @overload
-    def _convert_to_bool(value: t.GeneralValueType, *, default: bool) -> bool: ...
-
-    @staticmethod
-    @overload
-    def _convert_to_bool[T](value: t.GeneralValueType, *, default: T) -> T: ...
-
-    @staticmethod
-    def _convert_to_bool[T](value: t.GeneralValueType, *, default: T) -> T:
-        """Convert value to bool with fallback using t.GeneralValueType from lower layer."""
-        # Use ScalarValue from lower layer - bool is part of ScalarValue
+    def _convert_to_bool(value: t.GeneralValueType, *, default: bool) -> bool:
+        """Convert value to bool with fallback."""
         if isinstance(value, bool):
-            # Type narrowing: value is bool, and when default is bool, T is bool
-            return cast("T", value if isinstance(default, bool) else default)
+            return value
         if isinstance(value, str):
             normalized = FlextUtilitiesParser._parse_normalize_str(value, case="lower")
-            converted: bool = normalized in {"true", "1", "yes", "on"}
-            return cast("T", converted if isinstance(default, bool) else default)
+            return normalized in {"true", "1", "yes", "on"}
         if isinstance(value, (int, float)):
-            converted_bool: bool = bool(value)
-            return cast("T", converted_bool if isinstance(default, bool) else default)
+            return bool(value)
         return default
 
     @staticmethod

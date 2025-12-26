@@ -60,7 +60,7 @@ class ContainerScenarios:
 
     SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
         ServiceScenario("test_service", {"key": "value"}, "Simple dict service"),
-        ServiceScenario("service_instance", object(), "Generic object instance"),
+        ServiceScenario("service_instance", {"instance_id": 123}, "Dict service instance"),
         ServiceScenario("string_service", "test_value", "String service"),
     ]
 
