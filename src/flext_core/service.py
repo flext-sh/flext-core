@@ -19,7 +19,6 @@ from types import ModuleType
 from typing import override
 
 from pydantic import (
-    BaseModel,
     ConfigDict,
     PrivateAttr,
     computed_field,
@@ -176,7 +175,7 @@ class FlextService[TDomainResult](
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
         context: p.Ctx | None = None,
         subproject: str | None = None,
-        services: Mapping[str, t.GeneralValueType | BaseModel | object] | None = None,
+        services: Mapping[str, t.GeneralValueType] | None = None,
         factories: Mapping[
             str,
             Callable[

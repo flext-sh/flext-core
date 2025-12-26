@@ -92,7 +92,9 @@ class FlextUtilitiesDomain:
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def compare_value_objects_by_value(obj_a: object, obj_b: object) -> bool:
+    def compare_value_objects_by_value(
+        obj_a: t.GeneralValueType, obj_b: t.GeneralValueType
+    ) -> bool:
         """Compare two value objects by their values (all attributes).
 
         Generic comparison for DDD Value Objects - compares by value, not identity.
@@ -134,7 +136,7 @@ class FlextUtilitiesDomain:
             return repr(obj_a) == repr(obj_b)
 
     @staticmethod
-    def hash_value_object_by_value(obj: object) -> int:
+    def hash_value_object_by_value(obj: t.GeneralValueType) -> int:
         """Generate hash for value object based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
@@ -163,7 +165,7 @@ class FlextUtilitiesDomain:
         try:
             obj_dict = obj.__dict__
             # Filter out non-hashable values and convert to tuple
-            hashable_items: list[tuple[str, object]] = []
+            hashable_items: list[tuple[str, t.GeneralValueType]] = []
             for key, value in sorted(obj_dict.items()):
                 if isinstance(value, Hashable):
                     hashable_items.append((key, value))
@@ -178,7 +180,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_entity_has_id(
-        entity: object,
+        entity: t.GeneralValueType,
         id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Validate that entity has a non-None unique ID.

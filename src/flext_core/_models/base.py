@@ -19,7 +19,6 @@ from datetime import UTC, datetime
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
 from flext_core.constants import c
-from flext_core.typings import t
 
 
 # Renamed to FlextModelFoundation for better clarity
@@ -180,7 +179,11 @@ class FlextModelFoundation:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        attributes: t.ConfigurationDict = Field(default_factory=dict)
+        # Use non-recursive type - t.ConfigurationDict uses GeneralValueType which
+        # has recursive Sequence/Mapping that Pydantic can't schema-generate
+        attributes: dict[
+            str, str | int | float | bool | None | list[str | int | float | bool | None]
+        ] = Field(default_factory=dict)
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

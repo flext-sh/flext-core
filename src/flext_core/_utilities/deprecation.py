@@ -16,7 +16,7 @@ import warnings
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core.typings import P, R
+from flext_core.typings import P, R, t
 
 
 class FlextUtilitiesDeprecation:
@@ -147,13 +147,21 @@ class FlextUtilitiesDeprecation:
             original_init = getattr(cls, "__init__", None)
             if original_init is None:
                 # If no __init__, create a no-op one
-                def noop_init(self: object, *args: object, **kwargs: object) -> None:
+                def noop_init(
+                    self: t.GeneralValueType,
+                    *args: t.GeneralValueType,
+                    **kwargs: t.GeneralValueType,
+                ) -> None:
                     pass
 
                 original_init = noop_init
 
             @functools.wraps(original_init)
-            def new_init(self: object, *args: object, **kwargs: object) -> None:
+            def new_init(
+                self: t.GeneralValueType,
+                *args: t.GeneralValueType,
+                **kwargs: t.GeneralValueType,
+            ) -> None:
                 message_parts = [f"{cls.__name__} is deprecated"]
                 if version:
                     message_parts.append(f"since version {version}")

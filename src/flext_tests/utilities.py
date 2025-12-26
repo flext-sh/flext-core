@@ -19,6 +19,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
 
+from pydantic import BaseModel
+
 from flext_core import (
     FlextContext,
     FlextDispatcher,
@@ -2065,7 +2067,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def match(
-                obj: object,
+                obj: BaseModel | Mapping[str, t.GeneralValueType],
                 spec: Mapping[str, object | Callable[[object], bool]],
                 *,
                 path_sep: str = ".",
@@ -2076,7 +2078,7 @@ class FlextTestsUtilities(FlextUtilities):
                 Supports unlimited nesting depth via dot notation paths.
 
                 Args:
-                    obj: Object to match against (dict, Pydantic model, or object)
+                    obj: Object to match against (dict or Pydantic model)
                     spec: DeepSpec mapping of path -> expected value or predicate
                     path_sep: Path separator (default: ".")
 

@@ -205,7 +205,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
         description="Exception failure level",
     )
 
-    def __new__(cls, **_kwargs: object) -> Self:
+    def __new__(cls, **_kwargs: t.GeneralValueType) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -235,7 +235,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             if cls in cls._instances:
                 del cls._instances[cls]
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs: t.GeneralValueType) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -270,7 +270,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as object to avoid direct dependency-injector import in this module
-        self._di_provider: object | None = None
+        self._di_provider: t.GeneralValueType | None = None
 
     @model_validator(mode="after")
     def validate_configuration(self) -> Self:

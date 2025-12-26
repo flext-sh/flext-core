@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validat
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -84,15 +85,13 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Service identifier/name",
         )
-        # Service instance - uses SkipValidation for DI container flexibility
-        # ARCHITECTURAL NOTE: DI containers must accept any Python object.
-        # SkipValidation tells Pydantic to accept any value without type validation.
+        # Service instance - uses RegisterableService Protocol union type
+        # ARCHITECTURAL NOTE: DI containers accept any registerable service.
+        # SkipValidation needed because Protocol types can't be validated by Pydantic.
         # Type safety is enforced at container API level via get_typed().
-        service: Annotated[t.ServiceInstanceType, SkipValidation] = Field(
+        service: Annotated[p.RegisterableService, SkipValidation] = Field(
             ...,
-            description=(
-                "Service instance (any Python object - primitives, services, callables)"
-            ),
+            description="Service instance (protocols, models, callables)",
         )
         registration_time: datetime = Field(
             default_factory=_generate_datetime_utc,
@@ -139,8 +138,9 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Factory identifier/name",
         )
-        # Factory returns GeneralValueType for type-safe factory resolution
-        factory: Callable[[], t.GeneralValueType] = Field(
+        # Factory returns RegisterableService for type-safe factory resolution
+        # Supports all registerable types: GeneralValueType, protocols, callables
+        factory: Annotated[p.ServiceFactory, SkipValidation] = Field(
             ...,
             description="Factory function that creates service instances",
         )

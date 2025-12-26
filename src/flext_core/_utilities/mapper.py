@@ -11,6 +11,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeGuard, overload
 
+from pydantic import BaseModel
+
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.protocols import p
@@ -84,16 +86,22 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_string_keyed_dict(value: object) -> dict[str, object]:
-        """Narrow object to dict with string keys (for conversion purposes).
+    def _narrow_to_string_keyed_dict(value: t.GeneralValueType) -> t.ConfigurationDict:
+        """Narrow GeneralValueType to ConfigurationDict (for conversion purposes).
 
-        Less strict than _narrow_to_configuration_dict - only validates that
-        the object is a dict with string keys. Values can be any type since
-        the purpose is to convert them to JSON-compatible format.
+        Validates that the value is a dict with string keys and GeneralValueType values.
+        Uses TypeGuard pattern for proper type narrowing.
         """
-        if isinstance(value, dict) and all(isinstance(k, str) for k in value):
-            return value
-        error_msg = f"Cannot narrow {type(value)} to string-keyed dict"
+        if isinstance(value, dict):
+            # Narrow dict values to GeneralValueType
+            result: t.ConfigurationDict = {}
+            for k, v in value.items():
+                if FlextUtilitiesGuards.is_general_value_type(v):
+                    result[str(k)] = v
+                else:
+                    result[str(k)] = str(v)
+            return result
+        error_msg = f"Cannot narrow {type(value)} to ConfigurationDict"
         raise TypeError(error_msg)
 
     @staticmethod
@@ -106,11 +114,13 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_sequence(value: object) -> Sequence[object]:
-        """Safely narrow object to Sequence[object] with runtime validation."""
-        # isinstance with (list, tuple) provides Sequence type narrowing
+    def _narrow_to_sequence(value: object) -> Sequence[t.GeneralValueType]:
+        """Safely narrow object to Sequence[t.GeneralValueType]."""
         if isinstance(value, (list, tuple)):
-            return value
+            return [
+                FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                for item in value
+            ]
         error_msg = f"Cannot narrow {type(value)} to Sequence"
         raise TypeError(error_msg)
 
@@ -441,7 +451,7 @@ class FlextUtilitiesMapper:
     @classmethod
     def convert_dict_to_json(
         cls,
-        data: dict[str, object],
+        data: t.ConfigurationDict,
     ) -> t.ConfigurationDict:
         """Convert dict with any values to JSON-compatible dict.
 
@@ -595,15 +605,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_get_value(
-        current: object,
+        current: t.GeneralValueType | BaseModel,
         key_part: str,
-    ) -> tuple[object, bool]:
+    ) -> tuple[t.GeneralValueType | None, bool]:
         """Helper: Get raw value from dict/object/model."""
-        # Handle Mapping (dict)
-        # Use isinstance for type narrowing
         if isinstance(current, Mapping):
-            # Type narrowing: current is Mapping after isinstance check
-            # Use helper for safe narrowing to ConfigurationMapping
             current_mapping: t.ConfigurationMapping = (
                 FlextUtilitiesMapper._narrow_to_configuration_mapping(current)
             )
@@ -611,19 +617,15 @@ class FlextUtilitiesMapper:
                 return current_mapping[key_part], True
             return None, False
 
-        # Handle object attribute
         if hasattr(current, key_part):
-            return getattr(current, key_part), True
+            attr_val = getattr(current, key_part)
+            return FlextUtilitiesMapper._narrow_to_general_value_type(attr_val), True
 
-        # Handle Pydantic model
         if hasattr(current, "model_dump"):
             model_dump_attr = getattr(current, "model_dump", None)
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
-                # Use isinstance for type narrowing and combine conditions
                 if isinstance(model_dict, dict) and key_part in model_dict:
-                    # Type narrowing: model_dict is dict after isinstance check
-                    # model_dump() returns dict[str, t.GeneralValueType] which is ConfigurationDict
                     model_dict_typed: t.ConfigurationDict = (
                         FlextUtilitiesMapper._narrow_to_configuration_dict(model_dict)
                     )
@@ -633,18 +635,17 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_handle_array_index(
-        current: object,
+        current: t.GeneralValueType,
         array_match: str,
-    ) -> tuple[object, str | None]:
+    ) -> tuple[t.GeneralValueType | None, str | None]:
         """Helper: Handle array indexing with support for negative indices."""
-        # Use isinstance for type narrowing
         if not isinstance(current, (list, tuple)):
             return None, "Not a sequence"
-        # Type narrowing: current is Sequence[object] after isinstance check
-        sequence: Sequence[object] = FlextUtilitiesMapper._narrow_to_sequence(current)
+        sequence: Sequence[t.GeneralValueType] = (
+            FlextUtilitiesMapper._narrow_to_sequence(current)
+        )
         try:
             idx = int(array_match)
-            # Support negative indices (Python-style: -1 is last element)
             if idx < 0:
                 idx = len(sequence) + idx
             if 0 <= idx < len(sequence):
@@ -654,14 +655,14 @@ class FlextUtilitiesMapper:
             return None, f"Invalid index {array_match}"
 
     @staticmethod
-    def extract[T](
-        data: t.ConfigurationMapping | object,
+    def extract(
+        data: t.ConfigurationMapping | BaseModel,
         path: str,
         *,
-        default: T | None = None,
+        default: t.GeneralValueType | None = None,
         required: bool = False,
         separator: str = ".",
-    ) -> r[T | None]:
+    ) -> r[t.GeneralValueType | None]:
         """Safe nested data extraction with dot notation.
 
         Business Rule: Extracts nested values using dot notation paths.
@@ -687,31 +688,29 @@ class FlextUtilitiesMapper:
         """
         try:
             parts = path.split(separator)
-            # Use t.GeneralValueType internally instead of object for better type safety
-            # ConfigurationMapping values are t.GeneralValueType, and object attributes
-            # extracted will be narrowed to t.GeneralValueType
-            current: t.GeneralValueType | object = data
+            # current starts as input data and gets narrowed during traversal
+            current: t.GeneralValueType | BaseModel | None = (
+                data
+                if isinstance(data, BaseModel)
+                else FlextUtilitiesMapper._narrow_to_general_value_type(data)
+            )
 
             for i, part in enumerate(parts):
                 if current is None:
-                    # Business rule: Cannot traverse None in path
-                    # Return default if provided, otherwise fail
                     if required:
-                        return r[T | None].fail(
+                        return r[t.GeneralValueType | None].fail(
                             f"Path '{separator.join(parts[:i])}' is None",
                         )
                     if default is None:
-                        return r[T | None].fail(
+                        return r[t.GeneralValueType | None].fail(
                             f"Path '{separator.join(parts[:i])}' is None and default is None",
                         )
-                    return r[T | None].ok(default)
+                    return r[t.GeneralValueType | None].ok(default)
 
-                # Handle array indexing (e.g., "items[0]")
                 key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(
                     part,
                 )
 
-                # Get value from dict, object, or Pydantic model
                 value, found = FlextUtilitiesMapper._extract_get_value(
                     current,
                     key_part,
@@ -720,14 +719,14 @@ class FlextUtilitiesMapper:
                 if not found:
                     path_context = separator.join(parts[:i])
                     if required:
-                        return r[T | None].fail(
+                        return r[t.GeneralValueType | None].fail(
                             f"Key '{key_part}' not found at '{path_context}'",
                         )
                     if default is None:
-                        return r[T | None].fail(
+                        return r[t.GeneralValueType | None].fail(
                             f"Key '{key_part}' not found at '{path_context}' and default is None",
                         )
-                    return r[T | None].ok(default)
+                    return r[t.GeneralValueType | None].ok(default)
 
                 current = value
 
@@ -739,53 +738,61 @@ class FlextUtilitiesMapper:
                     )
                     if error:
                         if required:
-                            return r[T | None].fail(
+                            return r[t.GeneralValueType | None].fail(
                                 f"Array error at '{key_part}': {error}",
                             )
                         if default is None:
-                            return r[T | None].fail(
+                            return r[t.GeneralValueType | None].fail(
                                 f"Array error at '{key_part}': {error} and default is None",
                             )
-                        return r[T | None].ok(default)
+                        return r[t.GeneralValueType | None].ok(default)
                     current = value
 
             if current is None:
                 if required:
-                    return r[T | None].fail("Extracted value is None")
+                    return r[t.GeneralValueType | None].fail("Extracted value is None")
                 if default is None:
-                    return r[T | None].fail(
+                    return r[t.GeneralValueType | None].fail(
                         "Extracted value is None and default is None",
                     )
-                return r[T | None].ok(default)
+                return r[t.GeneralValueType | None].ok(default)
 
-            # Type narrowing: current is T after successful extraction
-            # Use _narrow_to_general_value_type for proper type narrowing
-            # T is bounded to GeneralValueType-compatible types when used with ConfigurationMapping
-            current_as_general: t.GeneralValueType = (
-                FlextUtilitiesMapper._narrow_to_general_value_type(current)
-            )
-
-            # Return directly - T is bounded to GeneralValueType-compatible types
-            return r[T | None].ok(current_as_general)
+            # Type narrowing: use TypeGuard to ensure current is GeneralValueType
+            if FlextUtilitiesGuards.is_general_value_type(current):
+                return r[t.GeneralValueType | None].ok(current)
+            # Fallback: convert to string representation for non-GeneralValueType
+            return r[t.GeneralValueType | None].ok(str(current))
 
         except Exception as e:
-            return r[T | None].fail(f"Extract failed: {e}")
+            return r[t.GeneralValueType | None].fail(f"Extract failed: {e}")
 
     # =========================================================================
     # GET METHODS - Unified get function for dict/object access
     # =========================================================================
 
+    # Type for data sources that mapper.get can access
+    # Includes Mappings (with various value types), Pydantic models, and Protocol objects
+    # Supports: ConfigurationMapping (GeneralValueType), JsonMapping (JsonValue), and object dicts
+    type _AccessibleData = (
+        t.ConfigurationMapping
+        | Mapping[str, t.JsonValue]
+        | Mapping[str, object]
+        | BaseModel
+        | p.HasModelDump
+        | p.ValidatorSpec
+    )
+
     @staticmethod
     @overload
     def get(
-        data: t.ConfigurationMapping | object,
+        data: _AccessibleData,
         key: str,
     ) -> t.GeneralValueType | None: ...
 
     @staticmethod
     @overload
     def get(
-        data: t.ConfigurationMapping | object,
+        data: _AccessibleData,
         key: str,
         *,
         default: str,
@@ -793,29 +800,47 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     @overload
-    def get[T](
-        data: t.ConfigurationMapping | object,
+    def get(
+        data: _AccessibleData,
         key: str,
         *,
-        default: list[T],
-    ) -> list[T]: ...
+        default: bool,
+    ) -> bool: ...
 
     @staticmethod
     @overload
-    def get[T](
-        data: t.ConfigurationMapping | object,
+    def get(
+        data: _AccessibleData,
         key: str,
         *,
-        default: T,
-    ) -> T: ...
+        default: int,
+    ) -> int: ...
+
+    @staticmethod
+    @overload
+    def get(
+        data: _AccessibleData,
+        key: str,
+        *,
+        default: float,
+    ) -> float: ...
+
+    @staticmethod
+    @overload
+    def get(
+        data: _AccessibleData,
+        key: str,
+        *,
+        default: t.GeneralValueType,
+    ) -> t.GeneralValueType: ...
 
     @staticmethod
     def get(
-        data: t.ConfigurationMapping | object,
+        data: _AccessibleData,
         key: str,
         *,
-        default: object = None,
-    ) -> object:
+        default: t.GeneralValueType | None = None,
+    ) -> t.GeneralValueType:
         """Unified get function for dict/object access with default.
 
         Generic replacement for: get(), get_str(), get_list()
@@ -849,25 +874,26 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_raw(
-        data: t.ConfigurationMapping | object,
+        data: _AccessibleData,
         key: str,
         *,
-        default: object = None,
-    ) -> object:
+        default: t.GeneralValueType | None = None,
+    ) -> t.GeneralValueType:
         """Internal helper for raw get without DSL conversion."""
         match data:
             case dict() | Mapping():
-                # Work with any dict/Mapping - utility method should be flexible
-                # Don't require strict ConfigurationMapping - allow any value types
                 raw_value = data.get(key)
                 if raw_value is None:
-                    return default
-                return raw_value
+                    return default if default is not None else ""
+                return FlextUtilitiesMapper._narrow_to_general_value_type(raw_value)
             case _:
-                return getattr(data, key, default)
+                attr_val = getattr(data, key, default)
+                return FlextUtilitiesMapper._narrow_to_general_value_type(attr_val)
 
     @staticmethod
-    def prop(key: str) -> Callable[[object], object]:
+    def prop(
+        key: str,
+    ) -> Callable[[t.ConfigurationMapping | BaseModel], t.GeneralValueType]:
         """Create a property accessor function (functional pattern).
 
         Returns a function that extracts a property/attribute from an object.
@@ -889,13 +915,11 @@ class FlextUtilitiesMapper:
         """
 
         def accessor(
-            obj: Mapping[str, t.GeneralValueType] | object,
-        ) -> object:
+            obj: t.ConfigurationMapping | BaseModel,
+        ) -> t.GeneralValueType:
             """Access property from object."""
             result = FlextUtilitiesMapper.get(obj, key)
-            # get() returns T | None, but for prop() we return t.GeneralValueType
-            # This is safe because get() extracts from ConfigurationMapping or object attributes
-            return result if result is not None else None
+            return result if result is not None else ""
 
         return accessor
 
@@ -1028,7 +1052,14 @@ class FlextUtilitiesMapper:
         # Detect operation mode based on key_or_n type
         if isinstance(key_or_n, str):
             # Extraction mode: extract value from dict/object
-            data: Mapping[str, object] | object = data_or_items
+            # Type narrowing: data must be accessible data for get() call
+            if FlextUtilitiesGuards.is_configuration_mapping(data_or_items):
+                data: FlextUtilitiesMapper._AccessibleData = data_or_items
+            elif isinstance(data_or_items, BaseModel):
+                data = data_or_items
+            else:
+                # Fallback: not accessible, return default
+                return default
             key = key_or_n
             value = FlextUtilitiesMapper.get(data, key, default=default)
             if value is None:
@@ -1058,10 +1089,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def pick(
-        data: t.ConfigurationMapping | object,
+        data: _AccessibleData,
         *keys: str,
         as_dict: bool = True,
-    ) -> t.ConfigurationDict | list[object]:
+    ) -> t.ConfigurationDict | list[t.GeneralValueType | None]:
         """Pick multiple fields at once (mnemonic: pick = select fields).
 
         Generic replacement for: Multiple get() calls
@@ -1742,90 +1773,87 @@ class FlextUtilitiesMapper:
             return default if on_error == "stop" else current
 
     @staticmethod
-    def _build_apply_group(current: object, ops: t.ConfigurationDict) -> object:
+    def _build_apply_group(
+        current: t.GeneralValueType,
+        ops: t.ConfigurationDict,
+    ) -> t.GeneralValueType:
         """Helper: Apply group operation."""
         if "group" not in ops:
             return current
         if not isinstance(current, (list, tuple)):
             return current
         group_spec = ops["group"]
-        # Type narrowing: current is Sequence[object], convert to list[object]
-        current_list: list[object] = list(current)
+        # Type narrowing: convert to list with proper type
+        current_list: list[t.GeneralValueType] = [
+            FlextUtilitiesMapper._narrow_to_general_value_type(item) for item in current
+        ]
         # Group by field name (str) or key function (callable)
+        # Returns dict[str, list[GeneralValueType]] which is ConfigurationDict-compatible
         if isinstance(group_spec, str):
-            grouped: dict[t.GeneralValueType, list[object]] = {}
+            grouped: dict[str, list[t.GeneralValueType]] = {}
             for item in current_list:
-                # FlextUtilitiesMapper.get returns str, so key is always str
-                key_raw = FlextUtilitiesMapper.get(item, group_spec)
+                if isinstance(item, (Mapping, BaseModel)):
+                    key_raw = FlextUtilitiesMapper.get(item, group_spec)
+                else:
+                    continue
                 if key_raw is None:
                     continue
                 key: str = str(key_raw)
-                key_typed: t.GeneralValueType = (
-                    FlextUtilitiesMapper._narrow_to_general_value_type(key)
-                )
-                if key_typed not in grouped:
-                    grouped[key_typed] = []
-                grouped[key_typed].append(item)
+                if key not in grouped:
+                    grouped[key] = []
+                grouped[key].append(item)
             return grouped
         if callable(group_spec):
-            grouped_by_func = {}
+            grouped_by_func: dict[str, list[t.GeneralValueType]] = {}
             for item in current_list:
-                # group_spec is callable, return type is unknown, so narrow to t.GeneralValueType
                 item_key_raw = group_spec(item)
-                item_key: t.GeneralValueType = (
-                    FlextUtilitiesMapper._narrow_to_general_value_type(item_key_raw)
-                )
-                item_key_typed: t.GeneralValueType = (
-                    item_key
-                    if item_key is not None
-                    else FlextUtilitiesMapper._narrow_to_general_value_type("")
-                )
-                if item_key_typed not in grouped_by_func:
-                    grouped_by_func[item_key_typed] = []
-                grouped_by_func[item_key_typed].append(item)
-            # Type annotation: return dict with list[object] values
+                item_key: str = str(item_key_raw) if item_key_raw is not None else ""
+                if item_key not in grouped_by_func:
+                    grouped_by_func[item_key] = []
+                grouped_by_func[item_key].append(item)
             return grouped_by_func
         return current
 
     @staticmethod
-    def _build_apply_sort(current: object, ops: t.ConfigurationDict) -> object:
+    def _build_apply_sort(
+        current: t.GeneralValueType,
+        ops: t.ConfigurationDict,
+    ) -> t.GeneralValueType:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
             return current
         if not isinstance(current, (list, tuple)):
             return current
         sort_spec = ops["sort"]
-        # Type narrowing: current is Sequence[object], convert to list[object]
-        current_list: list[object] = list(current)
+        # Type narrowing: convert to list with proper type
+        current_list: list[t.GeneralValueType] = [
+            FlextUtilitiesMapper._narrow_to_general_value_type(item) for item in current
+        ]
         if isinstance(sort_spec, str):
-            # Sort by field name
             field_name: str = sort_spec
 
-            def key_func(item: object) -> str:
-                # get() with default="" returns str (never None), so is not None check is redundant
+            def key_func(item: t.GeneralValueType) -> str:
                 result = FlextUtilitiesMapper.get(item, field_name, default="")
                 return str(result)
 
-            sorted_list_key: list[object] = sorted(current_list, key=key_func)
+            sorted_list_key: list[t.GeneralValueType] = sorted(
+                current_list, key=key_func
+            )
             return (
                 list(sorted_list_key)
                 if isinstance(current, list)
                 else tuple(sorted_list_key)
             )
         if callable(sort_spec):
-            # sort_spec accepts t.GeneralValueType since items are t.GeneralValueType
             sort_fn = sort_spec
 
-            def key_func_wrapper(item: object) -> str | int | float:
-                # Type narrowing: item is object, sort_fn expects t.GeneralValueType
-                # Pass item directly since object is compatible with t.GeneralValueType
+            def key_func_wrapper(item: t.GeneralValueType) -> str | int | float:
                 key_value = sort_fn(item)
-                # ScalarValue (str | int | float | bool | datetime | None) is part of t.GeneralValueType
                 if isinstance(key_value, (str, int, float)):
                     return key_value
                 return str(key_value)
 
-            sorted_list_wrapper: list[object] = sorted(
+            sorted_list_wrapper: list[t.GeneralValueType] = sorted(
                 current_list,
                 key=key_func_wrapper,
             )
@@ -1835,8 +1863,6 @@ class FlextUtilitiesMapper:
                 else tuple(sorted_list_wrapper)
             )
         if sort_spec is True:
-            # Natural sort - use t.GeneralValueType from lower layer
-            # ScalarValue (str | int | float | bool | datetime | None) is part of t.GeneralValueType
             comparable_items: list[t.GeneralValueType] = [
                 FlextUtilitiesMapper._narrow_to_general_value_type(
                     item
@@ -1849,28 +1875,28 @@ class FlextUtilitiesMapper:
                 comparable_items,
                 key=str,
             )
-            # Return using t.GeneralValueType from lower layer
             if isinstance(current, list):
                 return sorted_comparable
             return tuple(sorted_comparable)
         return current
 
     @staticmethod
-    def _build_apply_unique(current: object, ops: t.ConfigurationDict) -> object:
+    def _build_apply_unique(
+        current: t.GeneralValueType,
+        ops: t.ConfigurationDict,
+    ) -> t.GeneralValueType:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        # Remove duplicates while preserving order
-        # Type narrowing: current is Sequence, convert to list using t.GeneralValueType
+        # Type narrowing: convert to list with proper type
         current_list_unique: list[t.GeneralValueType] = [
             FlextUtilitiesMapper._narrow_to_general_value_type(item) for item in current
         ]
         seen: set[t.GeneralValueType | str] = set()
         unique_list: list[t.GeneralValueType] = []
         for item in current_list_unique:
-            # Use t.GeneralValueType from lower layer - ScalarValue types are hashable
             item_hashable: t.GeneralValueType | str = (
                 item
                 if isinstance(item, (str, int, float, bool, type(None)))
@@ -1884,7 +1910,10 @@ class FlextUtilitiesMapper:
         return tuple(unique_list)
 
     @staticmethod
-    def _build_apply_slice(current: object, ops: t.ConfigurationDict) -> object:
+    def _build_apply_slice(
+        current: t.GeneralValueType,
+        ops: t.ConfigurationDict,
+    ) -> t.GeneralValueType:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
             return current
@@ -1900,15 +1929,12 @@ class FlextUtilitiesMapper:
             end_raw = slice_spec[1]
             start: int | None = start_raw if isinstance(start_raw, int) else None
             end: int | None = end_raw if isinstance(end_raw, int) else None
-            # Type narrowing: current is Sequence, slice returns same sequence type
-            # Use t.GeneralValueType from lower layer for proper type safety
             if isinstance(current, list):
                 sliced_list: list[t.GeneralValueType] = [
                     FlextUtilitiesMapper._narrow_to_general_value_type(item)
                     for item in current[start:end]
                 ]
                 return sliced_list
-            # tuple case
             sliced_tuple: tuple[t.GeneralValueType, ...] = tuple(
                 FlextUtilitiesMapper._narrow_to_general_value_type(item)
                 for item in current[start:end]
@@ -1917,7 +1943,10 @@ class FlextUtilitiesMapper:
         return current
 
     @staticmethod
-    def _build_apply_chunk(current: object, ops: t.ConfigurationDict) -> object:
+    def _build_apply_chunk(
+        current: t.GeneralValueType,
+        ops: t.ConfigurationDict,
+    ) -> t.GeneralValueType:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
             return current
@@ -1926,16 +1955,13 @@ class FlextUtilitiesMapper:
         chunk_size = ops["chunk"]
         if not isinstance(chunk_size, int) or chunk_size <= 0:
             return current
-        # Type narrowing: current is Sequence, convert to list using t.GeneralValueType
         current_list: list[t.GeneralValueType] = [
             FlextUtilitiesMapper._narrow_to_general_value_type(item) for item in current
         ]
         chunked: list[list[t.GeneralValueType]] = []
         for i in range(0, len(current_list), chunk_size):
-            # Slice returns list[t.GeneralValueType]
             chunk: list[t.GeneralValueType] = current_list[i : i + chunk_size]
             chunked.append(chunk)
-        # Return list of lists using t.GeneralValueType from lower layer
         return chunked
 
     @staticmethod
@@ -2022,7 +2048,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def field[T](
-        source: Mapping[str, object] | object,
+        source: _AccessibleData,
         name: str,
         *,
         default: T | None = None,
@@ -2082,7 +2108,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def fields_multi(
-        source: Mapping[str, object] | object,
+        source: _AccessibleData,
         spec: t.ConfigurationDict,
     ) -> t.ConfigurationDict:
         """Extract multiple fields using specification dict.
@@ -2114,24 +2140,24 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def _fields_multi[T](
-        source: Mapping[str, object] | object,
-        spec: t.StringConfigurationDictDict | dict[str, T | None],
+    def _fields_multi(
+        source: t.ConfigurationMapping | BaseModel,
+        spec: t.StringConfigurationDictDict | t.ConfigurationDict,
         *,
         on_error: str = "stop",
-    ) -> dict[str, T | None] | r[dict[str, T]]:
+    ) -> t.ConfigurationDict | r[t.ConfigurationDict]:
         """Extract multiple fields using DSL mnemonic specification.
 
         Args:
-            source: Source data (dict or object)
+            source: Source data (ConfigurationMapping or BaseModel)
             spec: Field specification dict
             on_error: Error handling ("stop", "skip", "collect")
 
         Returns:
-            dict[str, T | None] with extracted values
+            ConfigurationDict with extracted values
 
         """
-        result: dict[str, T | None] = {}
+        result: t.ConfigurationDict = {}
         errors: list[str] = []
 
         for field_name, field_spec in spec.items():
@@ -2183,7 +2209,7 @@ class FlextUtilitiesMapper:
                 default=field_default,
             )
             if value is None and field_required:
-                extracted: T | None = None
+                extracted: t.GeneralValueType | None = None
             elif field_ops is not None:
                 if not isinstance(field_ops, dict):
                     extracted = None
@@ -2191,39 +2217,30 @@ class FlextUtilitiesMapper:
                     field_ops_dict: t.ConfigurationDict = (
                         FlextUtilitiesMapper._narrow_to_configuration_dict(field_ops)
                     )
-                    # Type narrowing: value is T | None, but build requires t.GeneralValueType
+                    # Type narrowing: value is GeneralValueType | None
                     value_for_build: t.GeneralValueType = (
                         FlextUtilitiesMapper._narrow_to_general_value_type(value)
                         if value is not None
-                        else FlextUtilitiesMapper._narrow_to_general_value_type("")
+                        else ""
                     )
                     build_result = FlextUtilitiesMapper.build(
                         value_for_build,
                         ops=field_ops_dict,
                         on_error="stop",
                     )
-                    # build_result is r[T], use .value if success
-                    # Type annotation: build_result.value is T when success
-                    # Type narrowing: build_result is r[T] and is_success is True, so value is T
-                    build_result_value_raw = (
-                        getattr(build_result, "value", None)
-                        if isinstance(build_result, r) and build_result.is_success
-                        else None
-                    )
-                    if build_result_value_raw is None:
-                        extracted = None
+                    # build_result is r[GeneralValueType], use .value if success
+                    if isinstance(build_result, r) and build_result.is_success:
+                        extracted = build_result.value
                     else:
-                        # Type narrowing: result.value is T when success
-                        extracted = build_result_value_raw
+                        extracted = None
             else:
-                # Type annotation: value is T | None
-                # Type inference: value is already T | None, no cast needed
+                # value is already GeneralValueType | None
                 extracted = value
 
             if extracted is None and field_required:
                 error_msg = f"Required field '{field_name}' is missing"
                 if on_error == "stop":
-                    return r[dict[str, T]].fail(error_msg)
+                    return r[t.ConfigurationDict].fail(error_msg)
                 if on_error == "collect":
                     errors.append(error_msg)
                     continue
@@ -2232,7 +2249,7 @@ class FlextUtilitiesMapper:
             result[field_name] = extracted
 
         if errors and on_error == "collect":
-            return r[dict[str, T]].fail(
+            return r[t.ConfigurationDict].fail(
                 f"Field extraction errors: {', '.join(errors)}",
             )
 
@@ -2245,7 +2262,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def construct(
         spec: t.ConfigurationDict,
-        source: Mapping[str, object] | object | None = None,
+        source: t.ConfigurationMapping | BaseModel | None = None,
         *,
         on_error: str = "stop",
     ) -> t.ConfigurationDict:
@@ -2740,9 +2757,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def fields(
-        obj: Mapping[str, object] | object,
-        *field_names: str | Mapping[str, object],
-    ) -> dict[str, object]:
+        obj: t.ConfigurationMapping | Mapping[str, t.GeneralValueType] | object,
+        *field_names: str | Mapping[str, t.GeneralValueType],
+    ) -> t.ConfigurationDict:
         """Extract specified fields from object.
 
         Supports two patterns:
@@ -2754,7 +2771,7 @@ class FlextUtilitiesMapper:
             *field_names: Field names (str) or field specs (dict)
 
         Returns:
-            Dict with extracted fields
+            Dict with extracted fields (dict[str, GeneralValueType])
 
         Example:
             # Simple extraction
@@ -2767,7 +2784,7 @@ class FlextUtilitiesMapper:
             })
 
         """
-        result: dict[str, object] = {}
+        result: t.ConfigurationDict = {}
 
         for spec in field_names:
             # DSL pattern: dict with field specifications

@@ -26,7 +26,8 @@ from typing import Never, TypeVar, cast
 
 from pydantic import BaseModel as _BaseModel
 
-from flext_core import FlextResult, p, r
+from flext_core import FlextResult, r
+from flext_core.protocols import p
 from flext_core.typings import t as t_core
 from flext_tests.base import su
 from flext_tests.constants import c

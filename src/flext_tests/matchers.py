@@ -60,6 +60,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import cast
 
+from pydantic import BaseModel
+
 from flext_core import r
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -180,6 +182,12 @@ class FlextTestsMatchers:
                 path_str: str = params.path
             else:
                 path_str = ".".join(params.path)
+            # Mapper.extract requires BaseModel or Mapping - type narrow first
+            if not isinstance(result_value, (BaseModel, Mapping)):
+                raise AssertionError(
+                    params.msg
+                    or f"Path extraction requires dict or model, got {type(result_value).__name__}",
+                )
             extracted = u.Mapper.extract(result_value, path_str)
             if extracted.is_failure:
                 raise AssertionError(
@@ -319,6 +327,12 @@ class FlextTestsMatchers:
 
         # Deep matching (delegate to u.Tests.DeepMatch)
         if params.deep is not None:
+            # Type narrow for DeepMatch.match which requires BaseModel or Mapping
+            if not isinstance(result_value, (BaseModel, Mapping)):
+                raise AssertionError(
+                    params.msg
+                    or f"Deep matching requires dict or model, got {type(result_value).__name__}",
+                )
             match_result = u.Tests.DeepMatch.match(result_value, params.deep)
             if not match_result.matched:
                 raise AssertionError(
@@ -1107,7 +1121,15 @@ class FlextTestsMatchers:
 
         # Deep matching (delegate to u.Tests.DeepMatch)
         if params.deep is not None:
-            match_result = u.Tests.DeepMatch.match(value, params.deep)
+            # Type narrow for DeepMatch.match which requires BaseModel or Mapping
+            if not isinstance(value, (BaseModel, Mapping)):
+                raise AssertionError(
+                    params.msg
+                    or f"Deep matching requires dict or model, got {type(value).__name__}",
+                )
+            # Explicit type binding after isinstance check for pyrefly
+            deep_value: BaseModel | Mapping[str, t.GeneralValueType] = value
+            match_result = u.Tests.DeepMatch.match(deep_value, params.deep)
             if not match_result.matched:
                 raise AssertionError(
                     params.msg

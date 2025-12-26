@@ -509,11 +509,11 @@ class FlextDispatcher(FlextService[bool]):
             return r[bool].ok(True)
 
         # Type hint: HandlerType is StrEnum class, so __members__ exists
-        # Use u.mapper().get() for unified attribute access (DSL pattern)
+        # Use getattr for type attribute access (not mapper.get which is for dict/model access)
         # __members__ returns mappingproxy[str, HandlerType], which is compatible with HandlerTypeDict
         handler_type_members_raw: (
             Mapping[str, t.HandlerType] | dict[str, t.HandlerType]
-        ) = u.mapper().get(c.Cqrs.HandlerType, "__members__", default={}) or {}
+        ) = getattr(c.Cqrs.HandlerType, "__members__", {})
         # __members__ returns mappingproxy[str, HandlerType], cast to HandlerTypeDict
         # HandlerTypeDict is dict[str, HandlerType], which matches __members__ structure
 
@@ -695,12 +695,8 @@ class FlextDispatcher(FlextService[bool]):
 
         """
         handler_class = type(handler)
-        # Use u.mapper().get() for unified attribute access (DSL pattern)
-        handler_class_name = u.mapper().get(
-            handler_class,
-            "__name__",
-            default="Unknown",
-        )
+        # Use getattr for type attribute access (not mapper.get which is for dict/model access)
+        handler_class_name = getattr(handler_class, "__name__", "Unknown")
         self.logger.debug(
             "Delegating to handler",
             operation="execute_handler",
@@ -903,8 +899,8 @@ class FlextDispatcher(FlextService[bool]):
 
         Fast fail: Middleware must have process() method. No fallback to callable.
         """
-        # Use u.mapper().get() for unified attribute access (DSL pattern)
-        process_method = u.mapper().get(middleware, "process", default=None)
+        # Use getattr for object attribute access (middleware may be callable/class instance)
+        process_method = getattr(middleware, "process", None)
         if not callable(process_method):
             return r[bool].fail(
                 "Middleware must have callable 'process' method",
@@ -1590,8 +1586,8 @@ class FlextDispatcher(FlextService[bool]):
         """
         if not path:
             return None
-        # Try extract for dict-like objects first
-        if u.is_type(obj, "mapping"):
+        # Try extract for dict-like objects first (isinstance for proper type narrowing)
+        if isinstance(obj, Mapping):
             path_str = ".".join(path)
             result = u.mapper().extract(obj, path_str, default=None, required=False)
             # Use .value directly - FlextResult never returns None on success
@@ -1653,7 +1649,7 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _normalize_request_to_dict(
-        request: t.GeneralValueType | Mapping[str, object],
+        request: t.GeneralValueType | t.ConfigurationMapping,
     ) -> r[t.ConfigurationDict]:
         """Normalize request to t.GeneralValueType dict.
 
@@ -1695,8 +1691,9 @@ class FlextDispatcher(FlextService[bool]):
             if process_result.is_success:
                 # Use processed values directly - handlers already preserved, others normalized
                 # Don't re-normalize or handler objects become strings
+                # Use TypeGuard to narrow values to GeneralValueType
                 request_dict = {
-                    str(k): v
+                    str(k): (v if u.Guards.is_general_value_type(v) else str(v))
                     for k, v in zip(request.keys(), process_result.value, strict=False)
                 }
             else:
@@ -1855,7 +1852,7 @@ class FlextDispatcher(FlextService[bool]):
 
     def _register_handler_with_request(
         self,
-        request: t.GeneralValueType | Mapping[str, object],
+        request: t.GeneralValueType | t.ConfigurationMapping,
     ) -> r[t.ConfigurationMapping]:
         """Internal: Register handler using structured request model.
 
@@ -1868,8 +1865,7 @@ class FlextDispatcher(FlextService[bool]):
 
         Args:
             request: Dict or Pydantic model containing registration details.
-                     Accepts Mapping[str, object] to support handler instances
-                     which aren't part of GeneralValueType.
+                     Accepts ConfigurationMapping (Mapping[str, GeneralValueType]).
 
         Returns:
             r with registration details or error

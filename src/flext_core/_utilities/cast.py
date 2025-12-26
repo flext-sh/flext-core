@@ -10,6 +10,11 @@ from __future__ import annotations
 
 import inspect
 import warnings
+from typing import TypeVar
+
+from flext_core.typings import t
+
+T = TypeVar("T")
 
 
 class FlextUtilitiesCast:
@@ -40,7 +45,7 @@ class FlextUtilitiesCast:
                 )
 
     @staticmethod
-    def direct(value: object, target_type: type) -> object:
+    def direct[T](value: t.GeneralValueType, target_type: type[T]) -> T:
         """Direct cast - assumes value is already of target type."""
         if isinstance(value, target_type):
             return value
@@ -49,7 +54,9 @@ class FlextUtilitiesCast:
         raise TypeError(error_msg)
 
     @staticmethod
-    def general_value(value: object, target_type: type) -> object:
+    def general_value(
+        value: t.GeneralValueType, target_type: type
+    ) -> t.GeneralValueType:
         """Cast general value type to target type."""
         if isinstance(value, target_type):
             return value
@@ -81,15 +88,13 @@ class FlextUtilitiesCast:
         raise TypeError(error_msg)
 
     @staticmethod
-    def callable(value: object, target_type: type) -> object:
+    def callable(value: t.GeneralValueType, target_type: type) -> t.GeneralValueType:
         """Cast callable to target type."""
         if isinstance(value, target_type):
             return value
         if callable(value):
             try:
-                if target_type is object:
-                    return value
-                return target_type(value)
+                return target_type(value)  # type: ignore[call-arg]
             except (TypeError, ValueError) as err:
                 target_name = getattr(target_type, "__name__", str(target_type))
                 error_msg = f"Cannot cast callable to {target_name}: {err}"
@@ -100,7 +105,9 @@ class FlextUtilitiesCast:
         raise TypeError(error_msg)
 
     @staticmethod
-    def safe(value: object, target_type: type, *, mode: str = "direct") -> object:
+    def safe(
+        value: t.GeneralValueType, target_type: type, *, mode: str = "direct"
+    ) -> t.GeneralValueType:
         """Type-safe casting with routing.
 
         Args:

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Self, TypeIs, TypeVar, cast
+from typing import Self, TypeIs, TypeVar
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -246,24 +246,29 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     ) -> FlextResult[U]:
         """Chain operations returning FlextResult.
 
-        Overrides RuntimeResult.flat_map to properly handle RuntimeResult returns.
-        The function may return RuntimeResult, FlextResult, or returns.Result.
+        Applies func to the success value and returns the result directly.
+        If this result is a failure, returns a new failure with the same error.
+
+        Args:
+            func: Function that takes the success value and returns a FlextResult.
+
+        Returns:
+            FlextResult[U]: The result from func on success, or failure propagated.
+
+        Example:
+            result = r[int].ok(42).flat_map(lambda x: r[str].ok(str(x)))
+
         """
         if self.is_success:
-            result = func(self.value)
-            # Handle RuntimeResult/FlextResult (has is_success property)
-            if hasattr(result, "is_success"):
-                if result.is_success:
-                    return FlextResult[U].ok(result.value)
-                return FlextResult[U].fail(result.error or "")
-            # Handle returns.Result (Success/Failure) with proper type narrowing
-            if isinstance(result, Success):
-                return FlextResult[U].ok(result.unwrap())
-            if isinstance(result, Failure):
-                return FlextResult[U].fail(result.failure())
-            # Fallback for unknown types - should not happen in practice
-            return FlextResult[U].fail("Unknown result type from flat_map function")
-        return FlextResult[U](Failure(self.error or ""))
+            inner_result = func(self.value)
+            # Convert RuntimeResult to FlextResult if needed
+            if isinstance(inner_result, FlextResult):
+                return inner_result
+            # Wrap RuntimeResult in FlextResult
+            if inner_result.is_success:
+                return FlextResult[U].ok(inner_result.value)
+            return FlextResult[U].fail(inner_result.error or "")
+        return FlextResult[U].fail(self.error or "")
 
     def and_then[U](
         self,
@@ -276,7 +281,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         conventions.
 
         Args:
-            func: Function that takes the success value and returns a new FlextResult.
+            func: Function that takes the success value and returns a RuntimeResult.
 
         Returns:
             FlextResult[U]: New result from the function application.
@@ -322,7 +327,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     @classmethod
     def from_validation[T_BaseModel: BaseModel](
-        cls, data: object, model: type[T_BaseModel]
+        cls, data: t.GeneralValueType, model: type[T_BaseModel]
     ) -> FlextResult[T_BaseModel]:
         """Create result from Pydantic validation.
 
@@ -407,23 +412,28 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     ) -> FlextResult[T_co]:
         """Apply recovery function on failure.
 
-        Overrides RuntimeResult.lash to return FlextResult for type consistency.
-        The function may return RuntimeResult, FlextResult, or returns.Result.
+        Applies func to the error message on failure and returns the result directly.
+        If this result is a success, returns self unchanged.
+
+        Args:
+            func: Function that takes the error message and returns a RuntimeResult.
+
+        Returns:
+            FlextResult[T_co]: Self if success, or result from func on failure.
+
+        Example:
+            result = r[int].fail("error").lash(lambda e: r[int].ok(0))
+
         """
         if self.is_failure:
-            result = func(self.error or "")
-            # Handle RuntimeResult/FlextResult (has is_success property)
-            if hasattr(result, "is_success"):
-                if result.is_success:
-                    return FlextResult[T_co].ok(result.value)
-                return FlextResult[T_co].fail(result.error or "")
-            # Handle returns.Result (Success/Failure) with proper type narrowing
-            if isinstance(result, Success):
-                return FlextResult[T_co].ok(result.unwrap())
-            if isinstance(result, Failure):
-                return FlextResult[T_co].fail(result.failure())
-            # Fallback for unknown types - should not happen in practice
-            return FlextResult[T_co].fail("Unknown result type from lash function")
+            inner_result = func(self.error or "")
+            # Convert RuntimeResult to FlextResult if needed
+            if isinstance(inner_result, FlextResult):
+                return inner_result
+            # Wrap RuntimeResult in FlextResult
+            if inner_result.is_success:
+                return FlextResult[T_co].ok(inner_result.value)
+            return FlextResult[T_co].fail(inner_result.error or "")
         return self
 
     # Alias for lash - RFC-standard name for recovery
@@ -513,14 +523,21 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if self.is_success and self.value is not None:
             if func is not None:
                 return func(self.value)
-            # INTENTIONAL CAST: When func is None, this is a type-erasing pattern
-            # where the caller is responsible for ensuring T_co is assignable to U.
-            # This pattern is widely used (75+ usages) for cases like:
-            #   result.map_or(None)  - returns value | None
-            #   result.map_or({})    - returns value | dict
-            # The type system cannot express "T_co == U when func is None", so
-            # cast is necessary. Alternative would be split into separate methods.
-            return cast("U", self.value)
+            # INTENTIONAL: Type-erasing pattern when func is None
+            # This is a documented design choice where the caller ensures type compatibility.
+            # The pattern is used 75+ times across codebase for cases like:
+            #   result.map_or(None)  - returns value | None when T_co allows None
+            #   result.map_or({})    - returns value | dict when T_co == dict
+            #
+            # Alternative (split into separate methods) would be:
+            #   - unwrap_or(default: T_co) -> T_co  (type-preserving)
+            #   - map_or(default: U, func: Callable) -> U  (requires func)
+            # Current design favors ergonomics over strict type safety for this edge case.
+            #
+            # Type safety is caller's responsibility: ensure default type matches T_co.
+            # Pyright/mypy cannot infer "T_co == U when func is None", requiring
+            # either cast() here or @overload (adds complexity for marginal benefit).
+            return self.value  # type: ignore[return-value]  # Documented: caller ensures type compatibility
         return default
 
     def filter(

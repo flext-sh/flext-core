@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import tomllib
 from pathlib import Path
-from typing import cast
 
 from flext_core.result import r
 from flext_tests.constants import c
@@ -136,15 +135,17 @@ class FlextValidatorSettings:
         """Check mypy configuration for violations."""
         violations: list[m.Tests.Validator.Violation] = []
 
-        # Type annotations for .get() results to help pyright inference
+        # Type narrowing: dict.get() returns object, validate with isinstance
         tool_data_raw: object = data.get("tool", {})
         if not isinstance(tool_data_raw, dict):
             return violations
-        tool_data: dict[str, object] = tool_data_raw
+        # isinstance narrows tool_data_raw to dict[str, object]
+        tool_data = tool_data_raw
         mypy_config_raw: object = tool_data.get("mypy", {})
         if not isinstance(mypy_config_raw, dict):
             return violations
-        mypy_config: dict[str, object] = mypy_config_raw
+        # isinstance narrows mypy_config_raw to dict[str, object]
+        mypy_config = mypy_config_raw
 
         # Check global ignore_errors
         if (
@@ -250,28 +251,25 @@ class FlextValidatorSettings:
         tool_data = data.get("tool", {})
         if not isinstance(tool_data, dict):
             return violations
-        # Type annotations for .get() results to help pyright inference
-        # tool_data.get() returns object, need type narrowing
+        # Type narrowing: dict.get() returns object, validate with isinstance
         ruff_config_raw = tool_data.get("ruff", {})
-        # Type narrowing: isinstance check ensures ruff_config_raw is dict
         if not isinstance(ruff_config_raw, dict):
             return violations
-        # Type narrowing: ruff_config_raw is dict after isinstance check
-        # Use cast to help pyright infer type (dict[str, object] is compatible)
-        ruff_config: dict[str, object] = cast("dict[str, object]", ruff_config_raw)
+        # isinstance narrows ruff_config_raw to dict[str, object]
+        ruff_config = ruff_config_raw
         lint_config_raw = ruff_config.get("lint", {})
         if not isinstance(lint_config_raw, dict):
             return violations
-        # Type narrowing: lint_config_raw is dict after isinstance check
-        lint_config: dict[str, object] = cast("dict[str, object]", lint_config_raw)
+        # isinstance narrows lint_config_raw to dict[str, object]
+        lint_config = lint_config_raw
 
         # Check for custom ignores beyond approved list
         ignores_raw = lint_config.get("ignore", [])
         if isinstance(ignores_raw, list):
-            # Type narrowing: ignores_raw is list[object], need to check each item
+            # Type narrowing: isinstance narrows ignores_raw to list
             approved_ignores = c.Tests.Validator.Approved.RUFF_IGNORES
-            # Type narrowing: ignores_raw is list after isinstance check
-            ignores_list: list[object] = cast("list[object]", ignores_raw)
+            # isinstance check above narrows type to list
+            ignores_list = ignores_raw
             for ignore_raw in ignores_list:
                 # Type narrowing: ignore_raw is object, convert to str for comparison
                 ignore_str: str = str(ignore_raw)
@@ -305,17 +303,12 @@ class FlextValidatorSettings:
         tool_data = data.get("tool", {})
         if not isinstance(tool_data, dict):
             return violations
-        # Type narrowing: tool_data.get() returns object, need to check type
+        # Type narrowing: dict.get() returns object, validate with isinstance
         pyright_config_raw = tool_data.get("pyright", {})
-        # Type narrowing: isinstance check ensures pyright_config_raw is dict
         if not isinstance(pyright_config_raw, dict):
             return violations
-        # Type narrowing: pyright_config_raw is dict after isinstance check
-        # Use cast to help pyright infer type (dict[str, object] is compatible)
-        pyright_config: dict[str, object] = cast(
-            "dict[str, object]",
-            pyright_config_raw,
-        )
+        # isinstance narrows pyright_config_raw to dict[str, object]
+        pyright_config = pyright_config_raw
 
         # Check reportPrivateUsage
         if (

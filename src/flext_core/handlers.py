@@ -299,9 +299,9 @@ class FlextHandlers[MessageT_contra, ResultT](
         elif handler_type is not None:
             resolved_type = handler_type
 
-        # Use get() for concise attribute extraction
+        # Use getattr for callable attribute access (not mapper.get which is for dict/model)
         resolved_name: str = handler_name or str(
-            u.mapper().get(handler_callable, "__name__", default="unknown_handler")
+            getattr(handler_callable, "__name__", "unknown_handler")
             or "unknown_handler",
         )
 

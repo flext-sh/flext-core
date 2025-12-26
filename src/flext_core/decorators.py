@@ -16,7 +16,6 @@ import warnings
 from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
-from typing import cast
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
@@ -67,16 +66,18 @@ def deprecated(message: str) -> Callable[[object], object]:
     """
 
     def decorator(
-        func_or_value: Callable[..., object] | object,
-    ) -> Callable[..., object] | object:
+        func_or_value: Callable[..., t.GeneralValueType] | t.GeneralValueType,
+    ) -> Callable[..., t.GeneralValueType] | t.GeneralValueType:
         """Apply deprecation warning to callable."""
         if callable(func_or_value):
             # Callable (function/method) - type narrowed by callable() check
             # Assignment ensures type narrowing propagates through wraps() and closure
-            func_callable: Callable[..., object] = func_or_value
+            func_callable: Callable[..., t.GeneralValueType] = func_or_value
 
             @wraps(func_callable)
-            def wrapper(*args: object, **kwargs: object) -> object:
+            def wrapper(
+                *args: t.GeneralValueType, **kwargs: t.GeneralValueType
+            ) -> t.GeneralValueType:
                 """Wrapper that emits warning before execution."""
                 warnings.warn(
                     message,
@@ -1328,13 +1329,18 @@ class FlextDecorators(FlextRuntime):
                 railway_result = FlextDecorators.railway(error_code=error_code)(
                     decorated,
                 )
-                # INTENTIONAL CAST: railway wraps R in FlextResult[R], but combined()
-                # maintains original Callable[P, R] signature for caller convenience.
-                # This is a type-level convenience - at runtime, the function returns
-                # FlextResult[R]. Callers using combined() with use_railway=True must
-                # handle the FlextResult wrapper. An overload-based solution would be
-                # more type-safe but significantly more complex.
-                decorated = cast("Callable[P, R]", railway_result)
+                # INTENTIONAL: Railway pattern type transformation
+                # railway() transforms Callable[P, R] -> Callable[P, FlextResult[R]]
+                # Combined() maintains original signature Callable[P, R] for ergonomics.
+                #
+                # Runtime behavior: Function returns FlextResult[R] when use_railway=True
+                # Type signature: Preserved as Callable[P, R] for caller convenience
+                #
+                # Callers using combined(use_railway=True) must handle FlextResult wrapper.
+                # Alternative: @overload for each combination of flags (exponential complexity)
+                #
+                # Design trade-off: Ergonomics > strict type safety for this decorator combinator.
+                decorated = railway_result  # type: ignore[assignment]  # Documented: type transform
 
             # Apply dependency injection
             if inject_deps:
