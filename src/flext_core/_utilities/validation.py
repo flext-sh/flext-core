@@ -45,6 +45,7 @@ import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields, is_dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import ClassVar, TypeGuard, cast
 
 import orjson
@@ -1020,7 +1021,27 @@ class FlextUtilitiesValidation:
         # Handle tuple first (tuple is a Sequence but needs special handling)
         if isinstance(obj, tuple):
             # obj is confirmed to be tuple, iterate directly
-            return tuple(FlextUtilitiesValidation._sort_dict_keys(item) for item in obj)
+            # GeneralValueType includes Sequence[GeneralValueType], so tuple elements are GVT
+            tuple_items: list[t.GeneralValueType] = [
+                FlextUtilitiesValidation._sort_dict_keys(item)
+                for item in obj
+                if isinstance(
+                    item,
+                    (
+                        str,
+                        int,
+                        float,
+                        bool,
+                        type(None),
+                        Sequence,
+                        Mapping,
+                        datetime,
+                        Path,
+                    ),
+                )
+                or item is None
+            ]
+            return (*tuple_items,)
         # Handle other Sequences (but not str, bytes, or tuple)
         if isinstance(obj, (list, tuple)):
             # obj is Sequence[t.GeneralValueType] - use directly

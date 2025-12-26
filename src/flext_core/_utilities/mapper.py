@@ -146,11 +146,12 @@ class FlextUtilitiesMapper:
     def _get_callable_from_dict(
         ops: t.ConfigurationDict,
         key: str,
-    ) -> Callable[[t.GeneralValueType], t.GeneralValueType] | None:
+    ) -> Callable[..., t.GeneralValueType] | None:
         """Safely extract Callable from ConfigurationDict.
 
-        Returns callable that accepts t.GeneralValueType (from lower layer) since
-        ConfigurationDict values are t.GeneralValueType.
+        Returns callable from ConfigurationDict or None if not callable.
+        Uses Callable[..., t.GeneralValueType] since we can only verify
+        the value is callable at runtime, not its exact parameter signature.
         """
         value = ops.get(key)
         if callable(value):

@@ -56,7 +56,7 @@ import uuid
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from types import ModuleType
-from typing import ClassVar, TypeGuard, cast
+from typing import ClassVar, TypeGuard
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -450,18 +450,19 @@ class FlextRuntime:
             # Type narrowing: dict_v is dict[object, object] from dict() constructor
             # We need to filter only str keys to build MetadataAttributeDict
             # Use direct dict comprehension to avoid circular dependency with mapper
-            result: t.MetadataAttributeDict = {}
+            result_dict: dict[str, t.MetadataAttributeValue] = {}
             for k, v in dict_v.items():
-                # Type narrowing: k is object from dict.items(), check if str for MetadataAttributeDict
+                # Type narrowing: k is object from dict.items(), check if str for dict
                 if isinstance(k, str):
                     if isinstance(v, (str, int, float, bool, type(None))):
-                        result[k] = v
+                        result_dict[k] = v
                     else:
-                        result[k] = str(v)
-            # Return type is t.MetadataAttributeValue (dict type)
-            # dict[str, ScalarValue] is compatible with Mapping[str, ScalarValue] in MetadataAttributeValue union
-            # Explicit cast needed because dict is mutable but Mapping is read-only interface
-            return cast("t.MetadataAttributeValue", result)
+                        result_dict[k] = str(v)
+            # Return type is t.MetadataAttributeValue (Mapping type)
+            # dict[str, MetadataAttributeValue] is compatible with Mapping[str, MetadataAttributeValue]
+            # which is part of the MetadataAttributeValue union
+            result_mapping: t.MetadataAttributeValue = result_dict
+            return result_mapping
         if FlextRuntime.is_list_like(val):
             # Convert to list[t.MetadataAttributeValue]
             result_list: list[str | int | float | bool | None] = []
@@ -847,25 +848,13 @@ class FlextRuntime:
 
             if resources:
                 for name, resource_factory in resources.items():
-                    # register_resource is generic with TypeVar T
-                    # resource_factory is Callable[[], t.GeneralValueType] from resources parameter
-                    # TypeVar T in register_resource can be inferred as t.GeneralValueType
-                    # t.GeneralValueType is compatible with T (TypeVar) at runtime
-                    # Cast resource_factory to Callable[[], T] for type compatibility
-                    # Access via DependencyIntegration nested class
-                    # cls is DependencyIntegration class, register_resource is a staticmethod
-                    # Use cls directly since we're inside DependencyIntegration.create_container
-                    # register_resource expects Callable[[], T] but resource_factory is Callable[[], t.GeneralValueType]
-                    # This is safe because t.GeneralValueType is compatible with any T
-                    # Use cast to convert Callable[[], t.GeneralValueType] to Callable[[], T]
-                    resource_factory_typed: Callable[[], T] = cast(
-                        "Callable[[], T]",
-                        resource_factory,
-                    )
+                    # register_resource[T] accepts Callable[[], T] and infers T
+                    # resource_factory is Callable[[], t.GeneralValueType] from resources
+                    # T is inferred as t.GeneralValueType, which is valid
                     cls.register_resource(
                         di_container,
                         name,
-                        resource_factory_typed,
+                        resource_factory,
                     )
 
             if wire_modules or wire_packages or wire_classes:
@@ -1201,24 +1190,22 @@ class FlextRuntime:
         )
 
         # Determine logger factory (handle async buffering)
-        factory_arg = logger_factory
+        # Use object type for factory_arg - structlog accepts various factory types
+        factory_arg: object = logger_factory
         if factory_arg is None:
             # Default factory handling
             if async_logging:
                 # Use cached async writer or create new one
                 if cls._async_writer is None:
                     cls._async_writer = cls._AsyncLogWriter(sys.stdout)
-                factory_arg = cast(
-                    "Callable[[], BindableLogger]",
-                    module.PrintLoggerFactory(
-                        file=cast("typing.TextIO", cls._async_writer),
-                    ),
-                )
+                # PrintLoggerFactory accepts file-like objects with write method
+                # _AsyncLogWriter has write/flush methods (duck-typed TextIO)
+                # Use getattr to call PrintLoggerFactory with duck-typed file arg
+                print_logger_factory = getattr(module, "PrintLoggerFactory", None)
+                if print_logger_factory is not None:
+                    factory_arg = print_logger_factory(file=cls._async_writer)
             else:
-                factory_arg = cast(
-                    "Callable[[], BindableLogger]",
-                    module.PrintLoggerFactory(),
-                )
+                factory_arg = module.PrintLoggerFactory()
 
         # Call configure directly with constructed arguments
         # Processors are dynamically constructed callables that match structlog's Processor protocol
@@ -1445,9 +1432,17 @@ class FlextRuntime:
                 msg = f"Cannot access value of failed result: {self._error}"
                 raise RuntimeError(msg)
             # Type narrowing: if is_success is True, _value is guaranteed to be T
-            # Allow None for r[None] type compatibility
-            # Cast to T for type checker (runtime guarantees T when is_success is True)
-            return cast("T", self._value)
+            # When is_success=True, _value holds the actual value of type T
+            # For RuntimeResult[None], T=None and _value=None is valid
+            # Runtime invariant guarantees _value is T when is_success=True
+            # Python typing limitation: cannot express dependent types (T iff is_success)
+            # Return _value directly - mypy will report T | None vs T mismatch
+            # but runtime behavior is correct per class invariants
+            if self._value is not None:
+                return self._value
+            # For RuntimeResult[None], return None as T
+            # This is correct when T is the None type itself
+            return None  # pyright: T when T=None
 
         @property
         def data(self) -> T:
@@ -1626,8 +1621,14 @@ class FlextRuntime:
         def flow_through[U](
             self,
             *funcs: Callable[[T | U], FlextRuntime.RuntimeResult[U]],
-        ) -> FlextRuntime.RuntimeResult[U]:
-            """Chain multiple operations in sequence."""
+        ) -> FlextRuntime.RuntimeResult[T] | FlextRuntime.RuntimeResult[U]:
+            """Chain multiple operations in sequence.
+
+            Returns:
+                RuntimeResult[T] if chain short-circuits on first failure or no funcs,
+                RuntimeResult[U] if all funcs applied successfully.
+
+            """
             # Start with self (RuntimeResult[T])
             current: FlextRuntime.RuntimeResult[T] | FlextRuntime.RuntimeResult[U] = (
                 self
@@ -1643,8 +1644,8 @@ class FlextRuntime:
                         break
                 else:
                     break
-            # Final type narrowing: current is now RuntimeResult[U] after all transformations
-            return cast("FlextRuntime.RuntimeResult[U]", current)
+            # Return the current result - either T (original/failed) or U (transformed)
+            return current
 
         def __or__(self, default: T) -> T:
             """Operator overload for default values."""
@@ -1998,10 +1999,12 @@ class FlextRuntime:
 
         """
         # Normalize context to dict
+        context_dict: dict[str, object]
         if isinstance(context, dict):
-            context_dict: t.ConfigurationDict = cast("t.ConfigurationDict", context)
+            # dict might have unknown key/value types, normalize to string keys
+            context_dict = {str(k): v for k, v in context.items()}
         elif isinstance(context, Mapping):
-            context_dict = dict(context.items())
+            context_dict = {str(k): v for k, v in context.items()}
         elif isinstance(context, BaseModel):
             context_dict = context.model_dump()
         elif hasattr(context, "__dict__"):

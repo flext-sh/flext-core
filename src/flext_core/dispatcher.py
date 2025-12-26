@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import Self, cast, override
+from typing import Self, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -945,9 +945,9 @@ class FlextDispatcher(FlextService[bool]):
     ) -> r[bool]:
         """Handle middleware execution result."""
         if isinstance(result, r) and result.is_failure:
-            # Use u.err() for unified error extraction (DSL pattern)
-            # result is r[bool] which satisfies p.Result[T] protocol generically
-            error_msg = u.err(result, default="Unknown error")
+            # Extract error directly from result.error property
+            # result is r[t.GeneralValueType] after isinstance narrowing
+            error_msg = result.error or "Unknown error"
             self.logger.warning(
                 "Middleware rejected command - command processing stopped",
                 operation="execute_middleware",
@@ -1578,14 +1578,19 @@ class FlextDispatcher(FlextService[bool]):
     # ------------------------------------------------------------------
     @staticmethod
     def _get_nested_attr(
-        obj: t.GeneralValueType,
+        obj: t.GeneralValueType | t.HandlerType,
         *path: str,
-    ) -> t.GeneralValueType | None:
+    ) -> t.GeneralValueType | t.HandlerType | None:
         """Get nested attribute safely (e.g., obj.attr1.attr2).
 
         Returns None if any attribute in path doesn't exist or is None.
         Uses u.extract() for dict-like objects, falls back to
         attribute access for objects.
+
+        Args:
+            obj: Object to traverse (can be handler or general value)
+            *path: Sequence of attribute names to traverse
+
         """
         if not path:
             return None
@@ -1608,13 +1613,13 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _extract_handler_name(
-        handler: t.GeneralValueType,
+        handler: t.GeneralValueType | t.HandlerType,
         request_dict: t.ConfigurationMapping,
     ) -> str:
         """Extract handler_name from request or handler config.
 
         Args:
-            handler: Handler instance
+            handler: Handler instance (HandlerType or GeneralValueType)
             request_dict: Request dictionary
 
         Returns:
@@ -1652,7 +1657,7 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _normalize_request_to_dict(
-        request: t.GeneralValueType,
+        request: t.GeneralValueType | Mapping[str, object],
     ) -> r[t.ConfigurationDict]:
         """Normalize request to t.GeneralValueType dict.
 
@@ -1692,8 +1697,9 @@ class FlextDispatcher(FlextService[bool]):
             )
             # Reconstruct dict from processed items
             if process_result.is_success:
+                # Normalize each value to GeneralValueType for type safety
                 request_dict = {
-                    str(k): v
+                    str(k): FlextRuntime.normalize_to_general_value(v)
                     for k, v in zip(request.keys(), process_result.value, strict=False)
                 }
             else:
@@ -1710,7 +1716,7 @@ class FlextDispatcher(FlextService[bool]):
     def _validate_and_extract_handler(
         self,
         request_dict: t.ConfigurationMapping,
-    ) -> r[tuple[t.GeneralValueType, str]]:
+    ) -> r[tuple[t.HandlerType, str]]:
         """Validate handler and extract handler name.
 
         Args:
@@ -1722,13 +1728,13 @@ class FlextDispatcher(FlextService[bool]):
         """
         handler_raw = request_dict.get("handler")
         if not handler_raw:
-            return r[tuple[t.GeneralValueType, str]].fail(
+            return r[tuple[t.HandlerType, str]].fail(
                 "Handler is required",
             )
 
         # Type narrowing using TypeGuard for handler validation
         if not u.Guards.is_handler_type(handler_raw):
-            return r[tuple[t.GeneralValueType, str]].fail(
+            return r[tuple[t.HandlerType, str]].fail(
                 "Handler must be callable, mapping, or BaseModel",
             )
 
@@ -1738,22 +1744,19 @@ class FlextDispatcher(FlextService[bool]):
             handler_context="registered handler",
         )
         if validation_result.is_failure:
-            return r[tuple[t.GeneralValueType, str]].fail(
+            return r[tuple[t.HandlerType, str]].fail(
                 validation_result.error or "Handler validation failed",
             )
 
-        # handler_raw is t.HandlerType which includes Mapping[str, GeneralValueType]
-        # Use the original request_dict value for extraction
+        # handler_raw is t.HandlerType (validated by TypeGuard above)
         handler_name = self._extract_handler_name(handler_raw, request_dict)
         if not handler_name:
-            return r[tuple[t.GeneralValueType, str]].fail(
+            return r[tuple[t.HandlerType, str]].fail(
                 "handler_name is required",
             )
 
-        # Return handler as GeneralValueType (mapping part of HandlerType IS GeneralValueType)
-        # HandlerType = HandlerCallable | Mapping[str, GeneralValueType]
-        # Mapping[str, GeneralValueType] is a subtype of GeneralValueType
-        return r[tuple[t.GeneralValueType, str]].ok(
+        # Return handler with its proper type
+        return r[tuple[t.HandlerType, str]].ok(
             (handler_raw, handler_name),
         )
 
@@ -1855,7 +1858,7 @@ class FlextDispatcher(FlextService[bool]):
 
     def register_handler_with_request(
         self,
-        request: t.GeneralValueType,
+        request: t.GeneralValueType | Mapping[str, object],
     ) -> r[t.ConfigurationMapping]:
         """Register handler using structured request model.
 
@@ -1867,7 +1870,9 @@ class FlextDispatcher(FlextService[bool]):
         what they can handle) and static routing (pre-registered type mappings).
 
         Args:
-            request: Dict or Pydantic model containing registration details
+            request: Dict or Pydantic model containing registration details.
+                     Accepts Mapping[str, object] to support handler instances
+                     which aren't part of GeneralValueType.
 
         Returns:
             r with registration details or error
@@ -1901,15 +1906,8 @@ class FlextDispatcher(FlextService[bool]):
             return r[t.ConfigurationMapping].fail(
                 handler_result.error or "Handler validation failed",
             )
-        # Use .value directly - FlextResult never returns None on success
-        handler_general, handler_name = handler_result.value
-        # Validate handler type before registration
-        if u.Guards.is_handler_type(handler_general):
-            handler = handler_general
-        else:
-            return r[t.ConfigurationMapping].fail(
-                f"Invalid handler type: {type(handler_general).__name__}",
-            )
+        # handler_result.value is tuple[t.HandlerType, str] (already validated by TypeGuard)
+        handler, handler_name = handler_result.value
 
         # Determine registration mode and register
         can_handle_attr = getattr(handler, "can_handle", None)
@@ -2198,11 +2196,14 @@ class FlextDispatcher(FlextService[bool]):
 
         # Simple registration for basic test compatibility
         if not handler_config:
-            # Cast handler_func to HandlerType for assignment
-            handler_func_typed: t.HandlerType = cast("t.HandlerType", handler_func)
-            # Access __name__ attribute safely - type objects have this attribute
+            # Validate handler_func is a valid HandlerType via TypeGuard
+            if not u.Guards.is_handler_type(handler_func):
+                return r[t.GeneralValueType].fail(
+                    "handler_func must be callable, mapping, or BaseModel",
+                )
+            # handler_func is now narrowed to t.HandlerType by TypeGuard
             handler_key = getattr(message_type, "__name__", str(message_type))
-            self._handlers[handler_key] = handler_func_typed
+            self._handlers[handler_key] = handler_func
             return r[t.GeneralValueType].ok({
                 "status": "registered",
                 "mode": mode,
@@ -2210,13 +2211,17 @@ class FlextDispatcher(FlextService[bool]):
 
         # Create handler from function
         # Wrap generic handler_func to match HandlerCallableType signature
+        # Store handler_func as Callable[..., object] for bridge - avoids generic param issue
+        bridge_func: Callable[..., object] = handler_func
+
         def wrapped_handler(
             msg: t.GeneralValueType,
         ) -> t.GeneralValueType:
-            # handler_func is callable, accept any arguments and convert result
-            # Cast msg to TMessage for handler_func call
-            msg_typed: TMessage = cast("TMessage", msg)
-            result_raw = handler_func(msg_typed) if callable(handler_func) else msg
+            # Bridge between GeneralValueType interface and TMessage handler
+            # bridge_func is typed as Callable[..., object] to accept GeneralValueType
+            # Message type compatibility is caller's responsibility - dispatcher
+            # routes messages to handlers registered for their type
+            result_raw = bridge_func(msg) if callable(bridge_func) else msg
             # Convert result to t.GeneralValueType
             if isinstance(
                 result_raw,
@@ -2225,6 +2230,7 @@ class FlextDispatcher(FlextService[bool]):
                 return result_raw
             return str(result_raw)
 
+        # Create FlextHandlers wrapper for advanced features (validation, metrics)
         handler_result = self.create_handler_from_function(
             wrapped_handler,
             handler_config,
@@ -2236,12 +2242,13 @@ class FlextDispatcher(FlextService[bool]):
                 f"Handler creation failed: {handler_result.error}",
             )
 
-        # Register the created handler directly without going through request dict
-        # This avoids type annotation issues with FlextHandlers not being GeneralValueType
+        # Get message type name for registration
         message_type_name = getattr(message_type, "__name__", str(message_type))
 
-        # Store handler directly in registry
-        self._handlers[message_type_name] = handler_result.value
+        # Store wrapped_handler in registry - matches HandlerCallable type signature
+        # FlextHandlers instance from handler_result.value is created for advanced
+        # features but simple dispatch uses the plain callable wrapped_handler
+        self._handlers[message_type_name] = wrapped_handler
         self.logger.info(
             "Handler registered for message type",
             message_type=message_type_name,
@@ -2943,11 +2950,9 @@ class FlextDispatcher(FlextService[bool]):
         # Check pre-dispatch conditions (circuit breaker + rate limiting)
         conditions_check = self._check_pre_dispatch_conditions(message_type)
         if conditions_check.is_failure:
-            # Use u.err() for unified error extraction (DSL pattern)
-            # conditions_check is r[bool] which satisfies p.Result[T] protocol generically
-            error_msg = u.err(
-                conditions_check,
-                default="Pre-dispatch conditions check failed",
+            # Extract error directly from conditions_check.error property
+            error_msg = (
+                conditions_check.error or "Pre-dispatch conditions check failed"
             )
             return r[t.GeneralValueType].fail(
                 error_msg,
@@ -3134,14 +3139,11 @@ class FlextDispatcher(FlextService[bool]):
         """Execute a single dispatch attempt with timeout."""
         try:
             # Create structured request
-            if options.metadata and u.is_type(options.metadata, "mapping"):
-                # Use process() for concise conversion (transform values)
-                # Type narrowing: options.metadata is mapping, cast to Mapping[str, t.GeneralValueType]
-                metadata_mapping: Mapping[str, t.GeneralValueType] = cast(
-                    "Mapping[str, t.GeneralValueType]", options.metadata
-                )
+            # Use TypeGuard for proper type narrowing of metadata mapping
+            if options.metadata and u.Guards.is_configuration_mapping(options.metadata):
+                # options.metadata is now narrowed to t.ConfigurationMapping via TypeGuard
                 transform_result = u.Collection.process(
-                    list(metadata_mapping.items()),
+                    list(options.metadata.items()),
                     lambda kv: (kv[0], str(kv[1])),
                     on_error="collect",
                 )
@@ -3436,7 +3438,10 @@ class FlextDispatcher(FlextService[bool]):
                     for _handler_name, handler_func, handler_config in handlers:
                         # Get actual handler function from module
                         # Check if handler_func is not None before checking callable
-                        if handler_func is not None and callable(handler_func):
+                        # Use TypeGuard for proper handler type validation
+                        if handler_func is not None and u.Guards.is_handler_type(
+                            handler_func
+                        ):
                             # Register handler with dispatcher
                             # Register under the handler command type name for routing
                             command_type_name = (
@@ -3447,13 +3452,11 @@ class FlextDispatcher(FlextService[bool]):
                                 if handler_config.command is not None
                                 else "unknown"
                             )
-                            # Cast handler_func to expected type for register_handler
-                            handler_typed: t.GeneralValueType = cast(
-                                "t.GeneralValueType", handler_func
-                            )
+                            # handler_func is narrowed to t.HandlerType by TypeGuard
+                            # register_handler accepts t.HandlerType | t.GeneralValueType
                             _ = instance.register_handler(
                                 command_type_name,
-                                handler_typed,
+                                handler_func,
                             )
 
         return instance
