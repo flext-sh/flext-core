@@ -140,7 +140,7 @@ class FlextTypes:
     # Used for type-safe constant access via __getitem__ method
     # Includes all types that can be stored as constants: primitives, collections,
     # Pydantic ConfigDict, SettingsConfigDict, and StrEnum types
-    ConstantValue = Union[
+    ConstantValue = Union[  # type: ignore[explicit-any]
         str,
         int,
         float,

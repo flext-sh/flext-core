@@ -304,4 +304,12 @@ class FlextModelsContainer:
         )
 
 
+# Rebuild models with forward references to protocols
+# Required for Pydantic to resolve FlextProtocols.* references
+FlextModelsContainer.ServiceRegistration.model_rebuild()
+FlextModelsContainer.FactoryRegistration.model_rebuild()
+FlextModelsContainer.ResourceRegistration.model_rebuild()
+FlextModelsContainer.ServiceRuntimeOptions.model_rebuild()
+FlextModelsContainer.ScopedContainerOptions.model_rebuild()
+
 __all__ = ["FlextModelsContainer"]
