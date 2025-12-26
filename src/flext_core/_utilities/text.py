@@ -87,6 +87,26 @@ class FlextUtilitiesText:
             raise ValueError(msg)
         return stripped
 
+    @staticmethod
+    def format_app_id(name: str) -> str:
+        """Format application ID.
+
+        Converts a name to a valid application ID by lowercasing
+        and replacing spaces and underscores with hyphens.
+
+        Args:
+            name: Application name to format
+
+        Returns:
+            Formatted application ID (lowercase, hyphens)
+
+        Example:
+            app_id = u.format_app_id("My Application_Name")
+            # → "my-application-name"
+
+        """
+        return name.lower().replace(" ", "-").replace("_", "-")
+
 
 __all__ = [
     "FlextUtilitiesText",

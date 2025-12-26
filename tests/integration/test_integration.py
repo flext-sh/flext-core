@@ -138,7 +138,7 @@ class TestLibraryIntegration:
             # Use functional service processing - real behavior
             process_result = mock_external_service.process(input_data)
             # Unwrap FlextResult to return t.GeneralValueType (str)
-            return process_result.value if process_result.is_success else ""
+            return process_result.unwrap_or("")
 
         # Act - Register factory in container
         register_result = clean_container.with_factory(

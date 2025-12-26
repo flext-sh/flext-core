@@ -2418,9 +2418,7 @@ class FlextUtilitiesMapper:
             ...     map_keys={"old": "new"},
             ...     strip_none=True,
             ... )
-            >>> transformed = (
-            ...     result.value if result.is_success else {}
-            ... )  # {"new": "value"}
+            >>> transformed = result.map_or({})  # {"new": "value"}
 
         """
         try:
@@ -2608,8 +2606,11 @@ class FlextUtilitiesMapper:
         result: t.ConfigurationDict = {}
 
         # Process primary data
-        if primary_data is not None:
-            primary_dict = FlextUtilitiesMapper.to_dict(primary_data)
+        if primary_data is not None and FlextRuntime.is_dict_like(primary_data):
+            # TypeGuard narrows primary_data to ConfigurationMapping
+            primary_dict: t.ConfigurationDict = FlextUtilitiesMapper.to_dict(
+                primary_data
+            )
             transformed_primary = FlextUtilitiesMapper.transform_values(
                 primary_dict,
                 transformer,
@@ -2617,8 +2618,15 @@ class FlextUtilitiesMapper:
             result.update(transformed_primary)
 
         # Process secondary data based on merge strategy
-        if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_dict = FlextUtilitiesMapper.to_dict(secondary_data)
+        if (
+            secondary_data is not None
+            and merge_strategy != "primary_only"
+            and FlextRuntime.is_dict_like(secondary_data)
+        ):
+            # TypeGuard narrows secondary_data to ConfigurationMapping
+            secondary_dict: t.ConfigurationDict = FlextUtilitiesMapper.to_dict(
+                secondary_data,
+            )
             transformed_secondary = FlextUtilitiesMapper.transform_values(
                 secondary_dict,
                 transformer,
@@ -2633,7 +2641,9 @@ class FlextUtilitiesMapper:
         # Apply field overrides
         if field_overrides:
             for key, value in field_overrides.items():
-                result[key] = transformer(value) if callable(transformer) else value
+                # transformer is guaranteed to be callable after the None check above
+                transformed_value: t.GeneralValueType = transformer(value)
+                result[key] = transformed_value
 
         # Apply filtering
         if filter_keys:
@@ -2755,6 +2765,94 @@ class FlextUtilitiesMapper:
 
         """
         return {key_func(item): item for item in items}
+
+    @staticmethod
+    def fields(
+        obj: Mapping[str, object] | object,
+        *field_names: str | Mapping[str, object],
+    ) -> dict[str, object]:
+        """Extract specified fields from object.
+
+        Supports two patterns:
+        1. Simple: u.fields(obj, "name", "email", "id")
+        2. DSL spec: u.fields(obj, {"name": {"default": ""}, ...})
+
+        Args:
+            obj: Object or dict to extract from
+            *field_names: Field names (str) or field specs (dict)
+
+        Returns:
+            Dict with extracted fields
+
+        Example:
+            # Simple extraction
+            data = u.fields(user, "name", "email", "id")
+
+            # With field specs
+            data = u.fields(payload, {
+                "name": {"default": ""},
+                "count": {"default": 0}
+            })
+
+        """
+        result: dict[str, object] = {}
+
+        for spec in field_names:
+            # DSL pattern: dict with field specifications
+            if isinstance(spec, Mapping):
+                for name, field_config in spec.items():
+                    if isinstance(obj, Mapping):
+                        if name in obj:
+                            result[name] = obj[name]
+                        elif isinstance(field_config, Mapping):
+                            # Use default value from spec
+                            result[name] = field_config.get("default")
+                        else:
+                            result[name] = field_config
+                    elif hasattr(obj, name):
+                        result[name] = getattr(obj, name)
+                    elif isinstance(field_config, Mapping):
+                        result[name] = field_config.get("default")
+            # Simple pattern: string field name
+            elif isinstance(spec, str):
+                if isinstance(obj, Mapping):
+                    if spec in obj:
+                        result[spec] = obj[spec]
+                elif hasattr(obj, spec):
+                    result[spec] = getattr(obj, spec)
+
+        return result
+
+    @staticmethod
+    def cast_generic[T](
+        value: object,
+        target_type: Callable[[object], T] | None = None,
+        *,
+        default: T | None = None,
+    ) -> T | object:
+        """Safe cast with fallback.
+
+        Args:
+            value: Value to cast
+            target_type: Callable/type that converts object to T (optional)
+            default: Default value if cast fails
+
+        Returns:
+            Cast value or default
+
+        Example:
+            port = u.cast_generic(config.get("port"), int, default=8080)
+
+        """
+        if target_type is None:
+            return value
+
+        try:
+            return target_type(value)
+        except (TypeError, ValueError):
+            if default is not None:
+                return default
+            return value
 
 
 __all__ = [

@@ -155,7 +155,8 @@ class TestAutomatedFlextRegistry:
             if hasattr(instance, "process"):
                 return instance.process(input_data)
             if hasattr(instance, "execute"):
-                return instance.execute(input_data)
+                # FlextRegistry.execute() takes no arguments
+                return instance.execute()
             if hasattr(instance, "handle"):
                 return instance.handle(input_data)
             # Fallback: if no methods found, return the instance itself as success

@@ -13,8 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 import warnings
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from typing import TypeGuard
 
@@ -220,7 +221,7 @@ class FlextUtilitiesGuards:
     def is_handler_type(value: object) -> TypeGuard[t.HandlerType]:
         """Check if value is a valid t.HandlerType.
 
-        t.HandlerType = Callable | BaseModel | type[BaseModel] | object with handle/can_handle
+        t.HandlerType = HandlerCallable | Mapping[str, GeneralValueType] | BaseModel
 
         This TypeGuard enables type narrowing without cast() for t.HandlerType.
         Uses structural typing to validate at runtime.
@@ -238,8 +239,11 @@ class FlextUtilitiesGuards:
             ...     result = container.register("my_handler", handler)
 
         """
-        # Check if callable (most common case)
+        # Check if callable (most common case - HandlerCallable)
         if callable(value):
+            return True
+        # Check if Mapping (handler mapping)
+        if isinstance(value, Mapping):
             return True
         # Check if BaseModel instance or class
         if isinstance(value, (BaseModel, type)) and (
@@ -248,6 +252,30 @@ class FlextUtilitiesGuards:
             return True
         # Check for handler protocol methods (duck typing)
         return hasattr(value, "handle") or hasattr(value, "can_handle")
+
+    @staticmethod
+    def is_handler_callable(value: object) -> TypeGuard[t.HandlerCallable]:
+        """Check if value is a valid t.HandlerCallable.
+
+        t.HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
+
+        This TypeGuard enables type narrowing without cast() for handler functions.
+        Checks if value is callable and has the handler decorator attribute.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[t.HandlerCallable]: True if value is a decorated handler callable
+
+        Example:
+            >>> from flext_core.utilities import u
+            >>> if u.Guards.is_handler_callable(func):
+            ...     # func is now typed as t.HandlerCallable
+            ...     result = func(message)
+
+        """
+        return callable(value)
 
     @staticmethod
     def is_configuration_mapping(
@@ -413,7 +441,11 @@ class FlextUtilitiesGuards:
     def _is_result(obj: object) -> TypeGuard[p.Result[t.GeneralValueType]]:
         """Check if object satisfies the Result protocol.
 
-        Enables type narrowing for result objects without .
+        Enables type narrowing for result objects.
+
+        Uses attribute-based checking instead of isinstance() because
+        p.Result has optional methods (from_maybe, to_io, etc.) that
+        may not be implemented by all Result classes.
 
         Args:
             obj: Object to check
@@ -422,7 +454,13 @@ class FlextUtilitiesGuards:
             TypeGuard[p.Result]: True if obj satisfies Result protocol
 
         """
-        return isinstance(obj, p.Result)
+        # Check for core result properties
+        return (
+            hasattr(obj, "is_success")
+            and hasattr(obj, "is_failure")
+            and hasattr(obj, "value")
+            and hasattr(obj, "error")
+        )
 
     @staticmethod
     def _is_service(obj: object) -> TypeGuard[p.Service[t.GeneralValueType]]:
@@ -919,6 +957,244 @@ class FlextUtilitiesGuards:
         return hasattr(value, "model_dump") and callable(
             getattr(value, "model_dump", None),
         )
+
+    @staticmethod
+    def extract_mapping_or_none(
+        value: object,
+    ) -> t.ConfigurationMapping | None:
+        """Extract a mapping from a value or return None.
+
+        Used for type narrowing when a generic parameter could be a Mapping
+        or another type. Returns the value as ConfigurationMapping if it's
+        a Mapping, otherwise returns None.
+
+        Args:
+            value: Value that may or may not be a Mapping
+
+        Returns:
+            The value as ConfigurationMapping if it's a Mapping, None otherwise
+
+        """
+        if isinstance(value, Mapping):
+            return value
+        return None
+
+    # =========================================================================
+    # Guard Methods - Moved from utilities.py
+    # =========================================================================
+
+    @staticmethod
+    def guard(
+        value: object,
+        validator: Callable[[object], bool] | type | object = None,
+        *,
+        default: object | None = None,
+        return_value: bool = False,
+    ) -> object | None:
+        """Simple guard method for validation. Returns value if valid, default if not.
+
+        Args:
+            value: Value to validate
+            validator: Callable, type, or tuple of types to validate against
+            default: Default value to return if validation fails
+            return_value: If True, return the value itself; if False, return True/default
+
+        Returns:
+            Validated value, True, or default value
+
+        """
+        try:
+            if callable(validator):
+                if validator(value):
+                    return value if return_value else True
+            elif isinstance(validator, (type, tuple)):
+                if isinstance(value, validator):
+                    return value if return_value else True
+            # Default validation - check if value is truthy
+            elif value:
+                return value if return_value else True
+            return default
+        except Exception:
+            return default
+
+    @staticmethod
+    def in_(value: object, container: object) -> bool:
+        """Check if value is in container."""
+        if isinstance(container, (list, tuple, set, dict)):
+            try:
+                return value in container
+            except TypeError:
+                return False
+        return False
+
+    @staticmethod
+    def has(obj: object, key: str) -> bool:
+        """Check if object has attribute/key."""
+        if isinstance(obj, dict):
+            return key in obj
+        return hasattr(obj, key)
+
+    @staticmethod
+    def empty(items: object | None) -> bool:
+        """Check if items is empty or None.
+
+        Args:
+            items: Any object to check (None, Sized, or any object)
+
+        Returns:
+            True if items is None, empty, or falsy
+
+        """
+        if items is None:
+            return True
+        if isinstance(items, Sized):
+            return len(items) == 0
+        return not bool(items)
+
+    @staticmethod
+    def none_(*values: object) -> bool:
+        """Check if all values are None.
+
+        Args:
+            *values: Values to check
+
+        Returns:
+            True if all values are None, False otherwise
+
+        Example:
+            if u.none_(name, email):
+                return r.fail("Name and email are required")
+
+        """
+        return all(v is None for v in values)
+
+    @staticmethod
+    def chk(
+        value: object,
+        *,
+        eq: object | None = None,
+        ne: object | None = None,
+        gt: float | None = None,
+        gte: float | None = None,
+        lt: float | None = None,
+        lte: float | None = None,
+        is_: type[object] | None = None,
+        not_: type[object] | None = None,
+        in_: Sequence[object] | None = None,
+        not_in: Sequence[object] | None = None,
+        none: bool | None = None,
+        empty: bool | None = None,
+        match: str | None = None,
+        contains: str | object | None = None,
+        starts: str | None = None,
+        ends: str | None = None,
+    ) -> bool:
+        """Universal check - single method for ALL validation scenarios.
+
+        Args:
+            value: Value to check
+            eq: Check value == eq
+            ne: Check value != ne
+            gt/gte/lt/lte: Numeric comparisons (works with len for sequences)
+            is_: Check isinstance(value, is_)
+            not_: Check not isinstance(value, not_)
+            in_: Check value in in_
+            not_in: Check value not in not_in
+            none: Check value is None (True) or is not None (False)
+            empty: Check if empty (True) or not empty (False)
+            match: Check regex pattern match (strings)
+            contains: Check if value contains item
+            starts/ends: Check string prefix/suffix
+
+        Returns:
+            True if ALL conditions pass, False otherwise.
+
+        Examples:
+            u.chk(x, gt=0, lt=100)             # 0 < x < 100
+            u.chk(s, empty=False, match="[0-9]+")  # non-empty and has digits
+            u.chk(lst, gte=1, lte=10)          # 1 <= len(lst) <= 10
+            u.chk(v, is_=str, none=False)      # is string and not None
+
+        """
+        # None checks
+        if none is True and value is not None:
+            return False
+        if none is False and value is None:
+            return False
+
+        # Type checks
+        if is_ is not None and not isinstance(value, is_):
+            return False
+        if not_ is not None and isinstance(value, not_):
+            return False
+
+        # Equality checks
+        if eq is not None and value != eq:
+            return False
+        if ne is not None and value == ne:
+            return False
+
+        # Membership checks
+        if in_ is not None and value not in in_:
+            return False
+        if not_in is not None and value in not_in:
+            return False
+
+        # Length/numeric checks - use len() for sequences, direct for numbers
+        check_val: int | float
+        if isinstance(value, (int, float)):
+            check_val = value
+        elif isinstance(value, (Sequence, Mapping)) or (
+            value is not None and isinstance(value, Sized)
+        ):
+            check_val = len(value)
+        else:
+            check_val = 0
+
+        if gt is not None and check_val <= gt:
+            return False
+        if gte is not None and check_val < gte:
+            return False
+        if lt is not None and check_val >= lt:
+            return False
+        if lte is not None and check_val > lte:
+            return False
+
+        # Empty checks (after len is computed)
+        if empty is True and check_val != 0:
+            return False
+        if empty is False and check_val == 0:
+            return False
+
+        # String-specific checks
+        if isinstance(value, str):
+            if match is not None and not re.search(match, value):
+                return False
+            if starts is not None and not value.startswith(starts):
+                return False
+            if ends is not None and not value.endswith(ends):
+                return False
+            if (
+                contains is not None
+                and isinstance(contains, str)
+                and contains not in value
+            ):
+                return False
+        elif contains is not None:
+            # Generic containment for sequences/dicts
+            if isinstance(value, dict):
+                if contains not in value:
+                    return False
+            elif value is not None and hasattr(value, "__contains__"):
+                contains_method = getattr(value, "__contains__", None)
+                if contains_method is not None:
+                    try:
+                        if not contains_method(contains):
+                            return False
+                    except (TypeError, ValueError):
+                        return False
+
+        return True
 
     def __getattribute__(self, name: str) -> object:
         """Intercept attribute access to warn about direct usage.

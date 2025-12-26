@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Annotated
+from typing import Annotated, cast
 
 import structlog.contextvars
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
@@ -20,6 +20,35 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+
+def _normalize_to_metadata(v: t.GeneralValueType) -> FlextModelsBase.Metadata:
+    """Normalize value to Metadata.
+
+    Inlined to avoid circular dependency with utilities.
+    """
+    # Handle None - return empty Metadata
+    if v is None:
+        return FlextModelsBase.Metadata(attributes={})
+
+    # Handle existing Metadata instance - return as-is
+    if isinstance(v, FlextModelsBase.Metadata):
+        return v
+
+    # Handle dict-like values
+    if FlextRuntime.is_dict_like(v) and isinstance(v, dict):
+        # Normalize each value using FlextRuntime.normalize_to_metadata_value
+        attributes: dict[str, t.MetadataAttributeValue] = {}
+        for key, val in v.items():
+            attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
+        return FlextModelsBase.Metadata(attributes=attributes)
+
+    # Invalid type - raise TypeError
+    msg = (
+        f"metadata must be None, dict, or FlextModelsBase.Metadata, "
+        f"got {type(v).__name__}"
+    )
+    raise TypeError(msg)
 
 
 class FlextModelsContext:
@@ -176,7 +205,7 @@ class FlextModelsContext:
             typed_context: dict[str, t.GeneralValueType] = structlog_context
             # value is t.GeneralValueType | None, T is bounded to GeneralValueType
             # Structural typing: value type matches T parameter
-            return typed_context.get(self._key, self._default)
+            return cast("T | None", typed_context.get(self._key, self._default))
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.
@@ -194,7 +223,7 @@ class FlextModelsContext:
             if value is not None:
                 # T is bounded to GeneralValueType in generic contract
                 # Store directly - type parameter constraint guarantees compatibility
-                stored_value: t.GeneralValueType = value
+                stored_value: t.GeneralValueType = cast("t.GeneralValueType", value)
                 _ = structlog.contextvars.bind_contextvars(**{
                     self._key: stored_value,
                 })
@@ -216,7 +245,7 @@ class FlextModelsContext:
             else:
                 # For datetime and other objects, T is bounded to GeneralValueType
                 # Structural typing: current_value matches T which extends GeneralValueType
-                prev_value = current_value
+                prev_value = cast("t.GeneralValueType | None", current_value)
 
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key,
@@ -398,11 +427,9 @@ class FlextModelsContext:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses u.Model.normalize_to_metadata() for centralized
-            normalization.
+            Uses _normalize_to_metadata() helper.
             """
-            from flext_core.utilities import u  # noqa: PLC0415
-            return u.Model.normalize_to_metadata(v)
+            return _normalize_to_metadata(v)
 
         @field_validator("data", mode="before")
         @classmethod
@@ -503,11 +530,9 @@ class FlextModelsContext:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses u.Model.normalize_to_metadata() for centralized
-            normalization.
+            Uses _normalize_to_metadata() helper.
             """
-            from flext_core.utilities import u  # noqa: PLC0415
-            return u.Model.normalize_to_metadata(v)
+            return _normalize_to_metadata(v)
 
         @classmethod
         def check_json_serializable(

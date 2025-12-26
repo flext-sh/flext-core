@@ -10,9 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
 
 from flext_core._models.context import FlextModelsContext
+from flext_core.protocols import p
 
 # Import FlextTypes class directly for type aliases access
 from flext_core.typings import FlextTypes
@@ -114,6 +116,73 @@ class FlextUtilitiesContext:
             default=default,
         )
         return proxy
+
+    @staticmethod
+    def clone_runtime[T](
+        runtime: T,
+        *,
+        context: p.Ctx | None = None,
+        config_overrides: dict[str, object] | None = None,
+    ) -> T:
+        """Clone runtime with optional overrides.
+
+        Creates a new runtime instance with the same dispatcher and registry,
+        but with optional context and config overrides.
+
+        Args:
+            runtime: Runtime instance to clone (must implement Runtime protocol).
+            context: Optional new context. If not provided, uses runtime's context.
+            config_overrides: Optional config field overrides.
+
+        Returns:
+            T: Cloned runtime instance.
+
+        """
+        cloned: T = runtime.__class__.__new__(runtime.__class__)
+        if hasattr(runtime, "_dispatcher"):
+            dispatcher_attr = "_dispatcher"
+            setattr(cloned, dispatcher_attr, getattr(runtime, dispatcher_attr))
+        if hasattr(runtime, "_registry"):
+            registry_attr = "_registry"
+            setattr(cloned, registry_attr, getattr(runtime, registry_attr))
+        if hasattr(runtime, "_context"):
+            context_attr = "_context"
+            cloned_context = context or getattr(runtime, context_attr)
+            setattr(cloned, context_attr, cloned_context)
+        if hasattr(runtime, "_config"):
+            config_attr = "_config"
+            runtime_config = getattr(runtime, config_attr)
+            if config_overrides:
+                cloned_config = runtime_config.model_copy(update=config_overrides)
+                setattr(cloned, config_attr, cloned_config)
+            else:
+                setattr(cloned, config_attr, runtime_config)
+        return cloned
+
+    @staticmethod
+    def clone_container(
+        container: p.DI,
+        *,
+        scope_id: str | None = None,
+        overrides: Mapping[str, object] | None = None,
+    ) -> p.DI:
+        """Clone container with scoping.
+
+        Creates a scoped container instance with optional service overrides.
+
+        Args:
+            container: Container instance to clone (must implement DI protocol).
+            scope_id: Optional scope identifier.
+            overrides: Optional service overrides.
+
+        Returns:
+            p.DI: Scoped container instance.
+
+        """
+        return container.scoped(
+            subproject=scope_id,
+            services=overrides,
+        )
 
 
 uContext = FlextUtilitiesContext

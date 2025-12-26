@@ -19,18 +19,42 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-from flext_core.utilities import u
 
 
 def _generate_datetime_utc() -> datetime:
     """Generate UTC datetime."""
-    return u.Generators.generate_datetime_utc()
+    return FlextRuntime.generate_datetime_utc()
 
 
 def _normalize_to_metadata(v: t.GeneralValueType) -> FlextModelsBase.Metadata:
-    """Normalize value to Metadata."""
-    return u.Model.normalize_to_metadata(v)
+    """Normalize value to Metadata.
+
+    Inlined to avoid circular dependency with utilities.
+    """
+    # Handle None - return empty Metadata
+    if v is None:
+        return FlextModelsBase.Metadata(attributes={})
+
+    # Handle existing Metadata instance - return as-is
+    if isinstance(v, FlextModelsBase.Metadata):
+        return v
+
+    # Handle dict-like values
+    if FlextRuntime.is_dict_like(v) and isinstance(v, dict):
+        # Normalize each value using FlextRuntime.normalize_to_metadata_value
+        attributes: dict[str, t.MetadataAttributeValue] = {}
+        for key, val in v.items():
+            attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
+        return FlextModelsBase.Metadata(attributes=attributes)
+
+    # Invalid type - raise TypeError
+    msg = (
+        f"metadata must be None, dict, or FlextModelsBase.Metadata, "
+        f"got {type(v).__name__}"
+    )
+    raise TypeError(msg)
 
 
 class FlextModelsContainer:

@@ -144,7 +144,7 @@ class TestFlextContext:
         # context.get() returns ResultProtocol, use is_success/value pattern
         default_value = "default_value"
         # ResultProtocol pattern: use is_success and value directly
-        value = result.value if result.is_success else default_value
+        value = result.map_or(default_value)
         assert value == default_value
 
     def test_context_has_value(self, test_context: FlextContext) -> None:
@@ -593,7 +593,7 @@ class TestFlextContext:
         # context.get_metadata() returns ResultProtocol, use is_success/value pattern
         default_value = "default_value"
         # ResultProtocol pattern: use is_success and value directly
-        value = result.value if result.is_success else default_value
+        value = result.map_or(default_value)
         assert value == default_value
 
     def test_context_set_get_metadata(self, test_context: FlextContext) -> None:

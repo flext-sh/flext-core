@@ -45,7 +45,7 @@ import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields, is_dataclass
 from datetime import datetime
-from typing import ClassVar, Never, TypeGuard, cast
+from typing import ClassVar, TypeGuard, cast
 
 import orjson
 from pydantic import (
@@ -53,10 +53,8 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core._models.validation import FlextModelsValidation
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core._utilities.validators import ValidatorSpec
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
@@ -94,7 +92,19 @@ class FlextUtilitiesValidation:
             context: str = "URI",
         ) -> r[str]:
             """Validate URI format."""
-            return FlextModelsValidation.validate_uri(uri, allowed_schemes, context)
+            if uri is None:
+                return r[str].fail(f"{context} cannot be None")
+            if not uri.strip():
+                return r[str].fail(f"{context} cannot be empty")
+            # Basic URI validation
+            if "://" not in uri:
+                return r[str].fail(f"{context} must contain scheme (e.g., http://)")
+            scheme = uri.split("://")[0].lower()
+            if allowed_schemes and scheme not in allowed_schemes:
+                return r[str].fail(
+                    f"{context} scheme '{scheme}' not in allowed: {allowed_schemes}"
+                )
+            return r[str].ok(uri)
 
         @staticmethod
         def validate_port_number(
@@ -102,7 +112,15 @@ class FlextUtilitiesValidation:
             context: str = "Port",
         ) -> r[int]:
             """Validate port number (1-65535)."""
-            return FlextModelsValidation.validate_port_number(port, context)
+            if port is None:
+                return r[int].fail(f"{context} cannot be None")
+            if not isinstance(port, int):
+                return r[int].fail(f"{context} must be integer")
+            if port < 1 or port > c.Network.MAX_PORT:
+                return r[int].fail(
+                    f"{context} must be between 1 and {c.Network.MAX_PORT}"
+                )
+            return r[int].ok(port)
 
         @staticmethod
         def validate_hostname(
@@ -327,8 +345,9 @@ class FlextUtilitiesValidation:
     ) -> t.ConfigurationDict:
         """Convert items() result to dict with normalization."""
         if isinstance(items_result, (list, tuple)):
-            # items_result is Sequence[tuple[str, t.GeneralValueType]]
-            return dict(items_result)
+            # Cast needed: pyrefly loses generic type after isinstance check
+            items_seq = cast("Sequence[tuple[str, t.GeneralValueType]]", items_result)
+            return dict(items_seq)
 
         if isinstance(items_result, Mapping):
             # items_result is already t.ConfigurationMapping
@@ -405,8 +424,9 @@ class FlextUtilitiesValidation:
 
         """
         if isinstance(items_result, (list, tuple)):
-            # items() returned list/tuple of pairs - convert to dict
-            return dict(items_result)
+            # Cast needed: pyrefly loses generic type after isinstance check
+            items_seq = cast("Sequence[tuple[str, t.GeneralValueType]]", items_result)
+            return dict(items_seq)
 
         if isinstance(items_result, Mapping):
             # items_result is already a Mapping - convert to dict
@@ -1950,7 +1970,7 @@ class FlextUtilitiesValidation:
     # ═══════════════════════════════════════════════════════════════════
 
     @staticmethod
-    def _validate_get_desc(v: ValidatorSpec) -> str:
+    def _validate_get_desc(v: p.ValidatorSpec) -> str:
         """Extract validator description (helper for validate)."""
         # Try to extract description from predicate if it's a Validator (preferred)
         predicate = FlextUtilitiesMapper.get(v, "predicate", default=None)
@@ -1969,7 +1989,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _validate_check_any[T](
         value: T,
-        validators: tuple[ValidatorSpec, ...],
+        validators: tuple[p.ValidatorSpec, ...],
         field_prefix: str,
     ) -> FlextRuntime.RuntimeResult[T]:
         """Check if any validator passes (helper for validate)."""
@@ -1986,7 +2006,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _validate_check_all[T](
         value: T,
-        validators: tuple[ValidatorSpec, ...],
+        validators: tuple[p.ValidatorSpec, ...],
         field_prefix: str,
         *,
         fail_fast: bool,
@@ -1994,7 +2014,7 @@ class FlextUtilitiesValidation:
     ) -> FlextRuntime.RuntimeResult[T]:
         """Check if all validators pass (helper for validate)."""
 
-        def validator_failed(v: ValidatorSpec) -> bool:
+        def validator_failed(v: p.ValidatorSpec) -> bool:
             """Check if validator failed."""
             return not v(value)
 
@@ -2020,7 +2040,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate[T](
         value: T,
-        *validators: ValidatorSpec,
+        *validators: p.ValidatorSpec,
         mode: str = "all",
         fail_fast: bool = True,
         collect_errors: bool = False,
@@ -2038,7 +2058,7 @@ class FlextUtilitiesValidation:
 
         Args:
             value: The value to validate.
-            *validators: One or more ValidatorSpec instances (from V namespace
+            *validators: One or more p.ValidatorSpec instances (from V namespace
                 or custom validators).
             mode: Composition mode:
                 - "all": ALL validators must pass (AND) - default
@@ -2098,6 +2118,108 @@ class FlextUtilitiesValidation:
             collect_errors=collect_errors,
         )
 
+    # =========================================================================
+    # CONVENIENCE METHODS - Simple validation utilities
+    # =========================================================================
+
+    @staticmethod
+    def check[T](value: T, *validators: p.ValidatorSpec) -> r[T]:
+        """Check value against validators (all must pass)."""
+        result = FlextUtilitiesValidation.validate(value, *validators, mode="all")
+        return r[T].ok(value) if result.is_success else r[T].fail(result.error or "")
+
+    @staticmethod
+    def check_any[T](value: T, *validators: p.ValidatorSpec) -> r[T]:
+        """Check value against validators (any must pass)."""
+        result = FlextUtilitiesValidation.validate(value, *validators, mode="any")
+        return r[T].ok(value) if result.is_success else r[T].fail(result.error or "")
+
+    @staticmethod
+    def entity(entity_value: p.Model) -> r[p.Model]:
+        """Validate entity is not None and has id."""
+        if entity_value is None:
+            return r[p.Model].fail("Entity cannot be None")
+        if hasattr(entity_value, "id") and getattr(entity_value, "id") is None:
+            return r[p.Model].fail("Entity must have id")
+        return r[p.Model].ok(entity_value)
+
+    @staticmethod
+    def in_range(
+        value: float,
+        min_val: float,
+        max_val: float,
+        context: str = "Value",
+    ) -> r[int | float]:
+        """Validate value is in range [min_val, max_val]."""
+        if value < min_val or value > max_val:
+            return r[int | float].fail(
+                f"{context} must be between {min_val} and {max_val}"
+            )
+        return r[int | float].ok(value)
+
+    @staticmethod
+    def matches(value: str, pattern: str, context: str = "Value") -> r[str]:
+        """Validate value matches regex pattern."""
+        if not re.match(pattern, value):
+            return r[str].fail(f"{context} does not match pattern")
+        return r[str].ok(value)
+
+    @staticmethod
+    def non_empty(value: str | None, context: str = "Value") -> r[str]:
+        """Validate value is non-empty string."""
+        if value is None or not value.strip():
+            return r[str].fail(f"{context} cannot be empty")
+        return r[str].ok(value)
+
+    @staticmethod
+    def positive(value: float, context: str = "Value") -> r[int | float]:
+        """Validate value is positive (> 0)."""
+        if value <= 0:
+            return r[int | float].fail(f"{context} must be positive")
+        return r[int | float].ok(value)
+
+    @staticmethod
+    def validate_all[T](
+        values: list[T],
+        predicate: Callable[[T], bool],
+        error: str = "Validation failed",
+        *,
+        fail_fast: bool = True,
+    ) -> r[list[T]]:
+        """Validate all values in list."""
+        errors: list[str] = []
+        for val in values:
+            if not predicate(val):
+                if fail_fast:
+                    return r[list[T]].fail(error)
+                errors.append(error)
+        if errors:
+            return r[list[T]].fail("; ".join(errors))
+        return r[list[T]].ok(values)
+
+    @staticmethod
+    def validate_timestamp_format(timestamp: str) -> bool:
+        """Validate timestamp is in ISO 8601 format (returns bool).
+
+        Used by Pydantic validators that need a bool check.
+
+        Args:
+            timestamp: Timestamp string to validate
+
+        Returns:
+            True if valid ISO 8601 format, False otherwise
+
+        """
+        if not timestamp:
+            return True  # Empty strings are allowed
+        try:
+            # Normalize Z to +00:00 for fromisoformat compatibility
+            normalized = timestamp.replace("Z", "+00:00")
+            datetime.fromisoformat(normalized)
+            return True
+        except ValueError:
+            return False
+
     @staticmethod
     def _guard_check_type(
         value: object,
@@ -2120,11 +2242,11 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _guard_check_validator(
         value: object,
-        condition: ValidatorSpec,
+        condition: p.ValidatorSpec,
         context_name: str,
         error_msg: str | None,
     ) -> str | None:
-        """Helper: Check ValidatorSpec condition."""
+        """Helper: Check p.ValidatorSpec condition."""
         if not condition(value):
             if error_msg is None:
                 # Use Mapper.get for unified attribute access
@@ -2151,26 +2273,22 @@ class FlextUtilitiesValidation:
             context_name,
         )
         if shortcut_result.is_failure:
-            # Use ResultHelpers.err for unified error extraction
+            # Access error directly from result - RuntimeResult implements p.Result
             default_err = "Guard check failed"
-            # Cast to help type checker understand Result protocol compatibility
-            result_protocol = cast("p.Result[Never]", shortcut_result)
-            return error_msg or FlextUtilitiesValidation.ResultHelpers.err(
-                result_protocol,
-                default=default_err,
-            )
+            error_str = shortcut_result.error or default_err
+            return error_msg or error_str
         return None
 
     @staticmethod
     def _guard_check_predicate(
         value: object,
-        condition: Callable[[object], bool],
+        condition: Callable[..., object],
         context_name: str,
         error_msg: str | None,
     ) -> str | None:
         """Helper: Check custom predicate condition."""
         try:
-            if not condition(value):
+            if not bool(condition(value)):
                 if error_msg is None:
                     # Use Mapper.get for unified attribute access
                     func_name = FlextUtilitiesMapper.get(
@@ -2187,12 +2305,12 @@ class FlextUtilitiesValidation:
         return None
 
     @staticmethod
-    def _guard_check_condition(
-        value: object,
-        condition: type[object]
-        | tuple[type[object], ...]
-        | Callable[[object], bool]
-        | ValidatorSpec
+    def _guard_check_condition[T](
+        value: T,
+        condition: type[T]
+        | tuple[type[T], ...]
+        | Callable[[T], bool]
+        | p.ValidatorSpec
         | str,
         context_name: str,
         error_msg: str | None,
@@ -2217,12 +2335,11 @@ class FlextUtilitiesValidation:
                 error_msg,
             )
 
-        # ValidatorSpec: Validator DSL (has __and__ method for composition)
-        if callable(condition) and hasattr(condition, "__and__"):
-            validator_condition = cast("ValidatorSpec", condition)
+        # p.ValidatorSpec: Validator DSL (has __and__ method for composition)
+        if isinstance(condition, p.ValidatorSpec):
             return FlextUtilitiesValidation._guard_check_validator(
                 value,
-                validator_condition,
+                condition,
                 context_name,
                 error_msg,
             )
@@ -2359,7 +2476,7 @@ class FlextUtilitiesValidation:
     def guard[T](
         value: T,
         *conditions: (
-            type[T] | tuple[type[T], ...] | Callable[[T], bool] | ValidatorSpec | str
+            type[T] | tuple[type[T], ...] | Callable[[T], bool] | p.ValidatorSpec | str
         ),
         error_message: str | None = None,
         context: str | None = None,
@@ -2371,7 +2488,7 @@ class FlextUtilitiesValidation:
         Business Rule: Provides unified interface for type checking, validation,
         and custom predicates. Supports multiple validation strategies:
         - Type guards: isinstance checks (type or tuple of types)
-        - Validators: ValidatorSpec instances (V.string.non_empty, etc.)
+        - Validators: p.ValidatorSpec instances (V.string.non_empty, etc.)
         - Custom predicates: Callable[[T], bool] functions
         - String shortcuts: "non_empty", "positive", "dict", "list", etc.
 
@@ -2383,7 +2500,7 @@ class FlextUtilitiesValidation:
             value: The value to guard/validate
             *conditions: One or more guard conditions:
                 - type or tuple[type, ...]: isinstance check
-                - ValidatorSpec: Validator DSL instance (V.string.non_empty)
+                - p.ValidatorSpec: Validator DSL instance (V.string.non_empty)
                 - Callable[[T], bool]: Custom predicate function
                 - str: Shortcut name ("non_empty", "positive", "dict", "list")
             error_message: Custom error message (default: auto-generated)
@@ -2420,12 +2537,10 @@ class FlextUtilitiesValidation:
 
         for condition in conditions:
             # Type narrowing: condition is one of the supported types per annotation
+            # T is bounded by object, so condition is compatible with object-based types
             check_result = FlextUtilitiesValidation._guard_check_condition(
                 value,
-                cast(
-                    "type[object] | tuple[type[object], ...] | Callable[[object], bool] | ValidatorSpec | str",
-                    condition,
-                ),
+                condition,
                 context_name,
                 error_msg,
             )
@@ -2536,7 +2651,9 @@ class FlextUtilitiesValidation:
                 data = ResultHelpers.val(result, default={})
 
             """
-            return result.value if result.is_success else default
+            if result.is_success:
+                return result.value
+            return default
 
         @staticmethod
         def vals[T](
@@ -2557,18 +2674,14 @@ class FlextUtilitiesValidation:
                 plugins = ResultHelpers.vals(plugins_result)
 
             """
-            rh = FlextUtilitiesValidation.ResultHelpers
             # Handle r[dict[str, T]] or dict[str, T]
             items_dict: dict[str, T]
             if isinstance(items, r):
-                # Cast FlextResult to protocol type for ResultHelpers
-                items_dict = (
-                    rh.val(
-                        cast("p.Result[dict[str, T]]", items),
-                        default={},
-                    )
-                    or {}
-                )
+                # FlextResult - access value directly since it implements p.Result
+                if items.is_success and items.value is not None:
+                    items_dict = items.value
+                else:
+                    items_dict = {}
             else:
                 items_dict = items
 
@@ -2576,6 +2689,27 @@ class FlextUtilitiesValidation:
                 return list(items_dict.values())
 
             return default if default is not None else []
+
+        @staticmethod
+        def vals_sequence[T](results: Sequence[p.Result[T]]) -> list[T]:
+            """Extract values from sequence of results, skipping failures.
+
+            Unlike vals() which processes dict values, this method processes
+            a sequence of Result objects and returns only successful values.
+
+            Args:
+                results: Sequence of Result objects
+
+            Returns:
+                List of values from successful results
+
+            Example:
+                results = [r[int].ok(1), r[int].fail("error"), r[int].ok(3)]
+                values = ResultHelpers.vals_sequence(results)
+                # → [1, 3]
+
+            """
+            return [result.value for result in results if result.is_success]
 
         @staticmethod
         def or_[T](
@@ -3019,15 +3153,15 @@ class FlextUtilitiesValidation:
         return {"value": value}
 
     @staticmethod
-    def ensure[T](
+    def ensure(
         value: t.GeneralValueType,
         *,
         target_type: str = "auto",
-        default: T | list[T] | dict[str, T] | None = None,
-    ) -> T | list[T] | dict[str, T]:
+        default: str | list[t.GeneralValueType] | t.ConfigurationDict | None = None,
+    ) -> str | list[t.GeneralValueType] | t.ConfigurationDict:
         """Unified ensure function that auto-detects or enforces target type.
 
-        Generic replacement for: ensure_list(), ensure_dict(), ensure_str()
+        Replacement for: ensure_list(), ensure_dict(), ensure_str()
 
         Automatically detects if value should be list or dict, or enforces
         target_type. Converts single values, tuples, None to appropriate type.
@@ -3056,45 +3190,33 @@ class FlextUtilitiesValidation:
         # Handle string conversions first
         if target_type == "str":
             str_default = default if isinstance(default, str) else ""
-            return cast(
-                "T",
-                FlextUtilitiesMapper.ensure_str(value, default=str_default),
-            )
+            return FlextUtilitiesMapper.ensure_str(value, default=str_default)
 
         if target_type == "str_list":
-            str_list_default = default if isinstance(default, list) else None
-            return cast(
-                "list[T]",
-                FlextUtilitiesMapper.ensure(
-                    value,
-                    default=cast("list[str] | None", str_list_default),
-                ),
+            # FlextUtilitiesMapper.ensure returns list[str] - coerce to GeneralValueType
+            str_list_default: list[str] | None = None
+            if isinstance(default, list):
+                str_list_default = [str(x) for x in default]
+            result: list[t.GeneralValueType] = list(
+                FlextUtilitiesMapper.ensure(value, default=str_list_default),
             )
+            return result
 
         if target_type == "dict":
-            # When target_type is dict, the return type is dict[str, GeneralValueType]
-            # which means T is GeneralValueType in this context
-            dict_default_typed = default if isinstance(default, dict) else None
-            return cast(
-                "dict[str, T]",
-                FlextUtilitiesValidation._ensure_to_dict(
-                    value,
-                        cast("list[t.GeneralValueType] | None", dict_default_typed),
-                ),
+            # When target_type is dict, return ConfigurationDict
+            dict_default: t.ConfigurationDict | None = (
+                default if isinstance(default, dict) else None
             )
+            return FlextUtilitiesValidation._ensure_to_dict(value, dict_default)
 
         if target_type == "auto" and isinstance(value, dict):
             return value
 
         # Handle list or fallback
-        list_default_fallback = default if isinstance(default, list) else None
-        return cast(
-            "list[T]",
-            FlextUtilitiesValidation._ensure_to_list(
-                value,
-                cast("list[t.GeneralValueType] | None", list_default_fallback),
-            ),
+        list_default: list[t.GeneralValueType] | None = (
+            default if isinstance(default, list) else None
         )
+        return FlextUtilitiesValidation._ensure_to_list(value, list_default)
 
     # ═══════════════════════════════════════════════════════════════════
     # TYPEADAPTER UTILITIES (Pydantic v2 dynamic validation)
@@ -3239,7 +3361,9 @@ class FlextUtilitiesValidation:
     # ========================================================================
 
     @staticmethod
-    def validate_with_validators(value: object, *validators: ValidatorSpec) -> r[bool]:
+    def validate_with_validators(
+        value: object, *validators: p.ValidatorSpec
+    ) -> r[bool]:
         """Validate value against multiple validators.
 
         Returns r[bool].ok(True) if all validators pass,
@@ -3247,7 +3371,7 @@ class FlextUtilitiesValidation:
 
         Args:
             value: Value to validate
-            *validators: ValidatorSpec instances to apply
+            *validators: p.ValidatorSpec instances to apply
 
         Returns:
             r[bool] with success or first validation error
@@ -3272,14 +3396,14 @@ class FlextUtilitiesValidation:
         return r[bool].ok(True)
 
     @staticmethod
-    def check_all_validators(value: object, *validators: ValidatorSpec) -> bool:
+    def check_all_validators(value: object, *validators: p.ValidatorSpec) -> bool:
         """Check if value passes all validators.
 
         Simple boolean check without result wrapping.
 
         Args:
             value: Value to check
-            *validators: ValidatorSpec instances to apply
+            *validators: p.ValidatorSpec instances to apply
 
         Returns:
             True if all validators pass, False otherwise
@@ -3292,14 +3416,14 @@ class FlextUtilitiesValidation:
         return all(v(value) for v in validators)
 
     @staticmethod
-    def check_any_validator(value: object, *validators: ValidatorSpec) -> bool:
+    def check_any_validator(value: object, *validators: p.ValidatorSpec) -> bool:
         """Check if value passes any validator.
 
         Simple boolean check without result wrapping.
 
         Args:
             value: Value to check
-            *validators: ValidatorSpec instances to apply
+            *validators: p.ValidatorSpec instances to apply
 
         Returns:
             True if any validator passes, False otherwise

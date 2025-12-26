@@ -255,21 +255,18 @@ class FlextSettings(BaseSettings, FlextRuntime):
                         object.__setattr__(self, key, value)
             return
 
-        # First initialization - call BaseSettings.__init__() without kwargs
-        # BaseSettings loads from environment/files first
-        # Pydantic v2 handles validation automatically via field_validator decorators
-        # Note: In Pydantic v2, model_config is a class attribute and cannot be
-        # modified per-instance. However, BaseSettings.__init__() will automatically
-        # look for .env files in the current working directory, so changing directories
-        # in tests will work correctly. The env_file in model_config is a fallback.
+        # First initialization - call BaseSettings.__init__() without kwargs.
+        # BaseSettings will load values from environment variables and .env files.
+        # Then we apply any explicit kwargs to override those loaded values.
+        # This avoids mypy errors about dict[str, object] not matching BaseSettings params.
         super().__init__()
 
-        # Apply explicit kwargs to model fields after initialization
-        # This allows overriding env-loaded values with explicit values
-        if kwargs:
-            for key, value in kwargs.items():
-                if key in self.__class__.model_fields:
-                    object.__setattr__(self, key, value)
+        # Apply explicit kwargs to override environment-loaded values
+        # Uses object.__setattr__ to bypass per-field validation during bulk updates
+        model_fields = self.__class__.model_fields
+        for key, value in kwargs.items():
+            if key in model_fields:
+                object.__setattr__(self, key, value)
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as object to avoid direct dependency-injector import in this module

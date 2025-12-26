@@ -1,7 +1,7 @@
-"""Dispatcher-aware mixins for reusable service infrastructure.
+"""Reusable mixins for service infrastructure.
 
-Provide shared behaviors for services and handlers that rely on dispatcher-
-first CQRS execution, structured logging, and DI-backed context handling.
+Provide shared behaviors for services and handlers including structured
+logging, DI-backed context handling, and operation tracking.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,20 +14,16 @@ import threading
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager, suppress
 from functools import partial
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from pydantic import BaseModel, PrivateAttr
 
 from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-
-# from flext_core.dispatcher import FlextDispatcher  # Local import to avoid circular dependency
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
 from flext_core.protocols import p
-
-# from flext_core.registry import FlextRegistry  # Local import to avoid circular dependency
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
@@ -143,7 +139,6 @@ class FlextMixins(FlextRuntime):
         )
 
     traverse = staticmethod(r.traverse)
-    parallel_map = staticmethod(r.parallel_map)
     accumulate_errors = staticmethod(r.accumulate_errors)
 
     # =========================================================================
@@ -169,12 +164,10 @@ class FlextMixins(FlextRuntime):
                 dumped = obj.model_dump()
                 # Recursively normalize to ensure t.GeneralValueType compliance
                 normalized = FlextRuntime.normalize_to_general_value(dumped)
-                # Use isinstance for type checking - returns dict or None
-                dict_result = normalized if u.is_type(normalized, dict) else None
-                if dict_result is not None:
-                    # Type narrowing: dict is a subtype of Mapping[str, t.GeneralValueType]
-                    # ConfigurationDict (dict[str, t.GeneralValueType]) is compatible with ContextMetadataMapping
-                    return dict_result
+                # Use isinstance for proper type narrowing (TypeGuard)
+                if isinstance(normalized, Mapping):
+                    # Type narrowing: Mapping is compatible with ContextMetadataMapping
+                    return dict(normalized)
                 # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
                 return {"value": normalized}
             # For Mapping, normalize each value
@@ -246,12 +239,12 @@ class FlextMixins(FlextRuntime):
         return self._get_or_create_logger()
 
     @property
-    def config(self) -> FlextSettings:
+    def config(self) -> p.Config:
         """Return the runtime configuration associated with this component.
 
-        INTENTIONAL CAST: ServiceRuntime.config is typed as p.Config (protocol)
-        but guaranteed to be FlextSettings in practice. This cast enables
-        concrete attribute access without breaking protocol abstraction.
+        Returns p.Config protocol type for type safety. In practice, this is
+        FlextSettings - callers needing concrete attributes can use isinstance
+        checks for type narrowing.
         """
         return self._get_runtime().config
 
@@ -272,11 +265,7 @@ class FlextMixins(FlextRuntime):
         # Check if _runtime is actually a ServiceRuntime instance
         runtime = getattr(self, "_runtime", None)
         # Verify it's actually a ServiceRuntime, not the PrivateAttr descriptor
-        if (
-            runtime is not None
-            and hasattr(runtime, "config")
-            and hasattr(runtime, "container")
-        ):
+        if isinstance(runtime, m.ServiceRuntime):
             return runtime
 
         runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
@@ -285,67 +274,89 @@ class FlextMixins(FlextRuntime):
         options_raw: object = (
             runtime_options_callable() if callable(runtime_options_callable) else {}
         )
-        # Type narrowing: isinstance check ensures options_raw is dict, compatible with RuntimeBootstrapOptions
-        options: t.RuntimeBootstrapOptions = (
-            options_raw if isinstance(options_raw, dict) else {}
+        # Type narrowing: isinstance check ensures options_raw is dict
+        # Cast to RuntimeBootstrapOptions - TypedDict can't be narrowed by isinstance
+        options: t.RuntimeBootstrapOptions = cast(
+            "t.RuntimeBootstrapOptions",
+            options_raw if isinstance(options_raw, dict) else {},
         )
         # Use factory methods directly - Clean Architecture pattern
         # Each class knows how to instantiate itself
         # u.mapper().get() returns GeneralValueType, narrow to class type
         config_type = (
-            u.mapper().get(options, "config_type")
-            if "config_type" in options
-            else None
+            u.mapper().get(options, "config_type") if "config_type" in options else None
         )
         config_cls = config_type or FlextSettings
         config_overrides_raw = u.mapper().get(options, "config_overrides")
         # isinstance check narrows to dict/Mapping, cast refines value type
         config_overrides_typed: Mapping[str, t.FlexibleValue] | None = (
-            config_overrides_raw
+            cast("Mapping[str, t.FlexibleValue]", config_overrides_raw)
             if isinstance(config_overrides_raw, (dict, Mapping))
             else None
         )
-        runtime_config = config_cls.materialize(
+        # config_cls is FlextSettings or subclass - type narrowing via isinstance
+        config_cls_typed: type[FlextSettings] = (
+            config_cls
+            if isinstance(config_cls, type) and issubclass(config_cls, FlextSettings)
+            else FlextSettings
+        )
+        runtime_config = config_cls_typed.materialize(
             config_overrides=config_overrides_typed,
         )
 
-        # u.mapper().get() returns GeneralValueType, narrow to protocol type
+        # u.mapper().get() returns GeneralValueType, narrow to FlextContext
         context_option = (
-            u.mapper().get(options, "context")
-            if "context" in options
-            else None
+            u.mapper().get(options, "context") if "context" in options else None
         )
-        runtime_context = (
-            context_option if context_option is not None else FlextContext.create()
+        # isinstance narrows to FlextContext (which implements p.Ctx)
+        runtime_context: FlextContext = (
+            context_option
+            if isinstance(context_option, FlextContext)
+            else FlextContext.create()
         )
 
         # FlextSettings already implements p.Config protocol
         runtime_config_typed: p.Config = runtime_config
+
         # u.mapper().get() returns GeneralValueType, narrow to service mapping type
-        services_option = (
-            u.mapper().get(options, "services")
-            if "services" in options
+        services_raw = (
+            u.mapper().get(options, "services") if "services" in options else None
+        )
+        # isinstance narrows to Mapping, then cast refines value type
+        services_typed: Mapping[str, object] | None = (
+            cast("Mapping[str, object]", services_raw)
+            if isinstance(services_raw, (dict, Mapping))
             else None
         )
 
-        # FlextContext already implements p.Ctx protocol
-        context_typed: p.Ctx | None = runtime_context
+        # FlextContext implements p.Ctx protocol - cast for protocol compatibility
+        context_typed: p.Ctx | None = cast("p.Ctx", runtime_context)
         factories_raw = options.get("factories")
+
+        # Get subproject and narrow to str
+        subproject_raw = u.mapper().get(options, "subproject")
+        subproject_typed: str | None = (
+            subproject_raw if isinstance(subproject_raw, str) else None
+        )
+
+        # Get resources and narrow to Mapping
+        resources_raw = u.mapper().get(options, "resources")
+        resources_typed: Mapping[str, object] | None = (
+            cast("Mapping[str, object]", resources_raw)
+            if isinstance(resources_raw, (dict, Mapping))
+            else None
+        )
 
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
             context=context_typed,
-            # mapper().get() returns GeneralValueType, narrow to str | None
-            subproject=u.mapper().get(options, "subproject"),
-            services=services_option,
+            subproject=subproject_typed,
+            services=services_typed,
             # isinstance narrows to dict/Mapping, cast refines callable signature
-            factories=factories_raw
+            factories=cast("Mapping[str, Callable[[], object]]", factories_raw)
             if isinstance(factories_raw, (dict, Mapping))
             else None,
-            # mapper().get() returns GeneralValueType, narrow to resource mapping
-            resources=u.mapper().get(options, "resources")
-            if isinstance(u.mapper().get(options, "resources"), (dict, Mapping))
-            else None,
+            resources=resources_typed,
         )
 
         container_overrides = options.get("container_overrides")
@@ -362,22 +373,10 @@ class FlextMixins(FlextRuntime):
                 classes=wire_classes,
             )
 
-        # Create dispatcher and registry with auto-discovery
-        from flext_core.dispatcher import (  # noqa: PLC0415
-            FlextDispatcher,  # Local import to avoid circular dependency
-        )
-        from flext_core.registry import (  # noqa: PLC0415
-            FlextRegistry,  # Local import to avoid circular dependency
-        )
-        runtime_dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
-        runtime_registry = FlextRegistry.create(auto_discover_handlers=True)
-
         runtime = m.ServiceRuntime.model_construct(
             config=runtime_config,
             context=runtime_context,
             container=runtime_container,
-            dispatcher=runtime_dispatcher,
-            registry=runtime_registry,
         )
         self._runtime = runtime
         return runtime
@@ -482,12 +481,10 @@ class FlextMixins(FlextRuntime):
         # Use r.create_from_callable() for unified error handling (DSL pattern)
         def register() -> bool:
             """Register service in container."""
-            # self is Pydantic model, narrow to service type for container
-            service: t.GeneralValueType | BaseModel = self
+            # Container.register accepts object, pass self directly
             result = self.container.register(
                 service_name,
-                # Narrow BaseModel to FlexibleValue for container registration
-                service,
+                self,
             )
             # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
@@ -515,8 +512,9 @@ class FlextMixins(FlextRuntime):
         # Check cache first (thread-safe)
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
-                # FlextLogger → p.Log.StructlogLogger protocol conversion
-                return cls._logger_cache[logger_name]
+                # Cache stores object to avoid circular imports, cast to protocol
+                cached_logger = cls._logger_cache[logger_name]
+                return cast("p.Log.StructlogLogger", cached_logger)
 
         # Try to get from DI container
         try:
@@ -533,7 +531,7 @@ class FlextMixins(FlextRuntime):
                 with cls._cache_lock:
                     cls._logger_cache[logger_name] = logger
                 # FlextLogger → p.Log.StructlogLogger protocol conversion
-                return logger
+                return cast("p.Log.StructlogLogger", logger)
 
             # Logger not in container - create and register
             logger = FlextLogger(logger_name)
@@ -555,7 +553,7 @@ class FlextMixins(FlextRuntime):
                 cls._logger_cache[logger_name] = logger
 
             # FlextLogger → p.Log.StructlogLogger protocol conversion
-            return logger
+            return cast("p.Log.StructlogLogger", logger)
 
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # Fallback: create logger without DI if container unavailable
@@ -563,7 +561,7 @@ class FlextMixins(FlextRuntime):
             with cls._cache_lock:
                 cls._logger_cache[logger_name] = logger
             # FlextLogger → p.Log.StructlogLogger protocol conversion
-            return logger
+            return cast("p.Log.StructlogLogger", logger)
 
     def _log_with_context(
         self,
@@ -805,8 +803,11 @@ class FlextMixins(FlextRuntime):
                         if handler_mode_raw is not None
                         else "operation"
                     )
-                    # Literal type narrowing - runtime validated via str conversion
-                    handler_mode_literal = handler_mode_str
+                    # Literal type narrowing - cast str to Literal for mypy
+                    # Runtime validates via str conversion above
+                    handler_mode_literal: c.Cqrs.HandlerTypeLiteral = cast(
+                        "c.Cqrs.HandlerTypeLiteral", handler_mode_str
+                    )
                     execution_ctx = m.Handler.ExecutionContext.create_for_handler(
                         handler_name=handler_name,
                         handler_mode=handler_mode_literal,

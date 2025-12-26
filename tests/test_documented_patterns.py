@@ -1,4 +1,4 @@
-"""Test all patterns documented in FLEXT_SERVICE_ARCHITECTURE.md V6.1.
+"""Test all patterns documented in FLEXT_SERVICE_ARCHITECTURE.md.
 
 This module validates ALL patterns documented in the architecture guide using advanced Python 3.13 patterns,
 factories, and helpers to reduce code size while maintaining and expanding functionality. Tests all edge cases
@@ -7,14 +7,12 @@ with minimal code duplication through unified class architecture and reusable te
 Patterns tested:
 - Pattern 1: V1 Explícito (.execute().value)
 - Pattern 2: V2 Property (.result)
-- Pattern 3: V2 Auto (auto_execute = True)
-- Pattern 4: Railway Pattern em V1
-- Pattern 5: Railway Pattern em V2 Property
-- Pattern 6: Railway Pattern em V2 Auto (auto_execute = False)
-- Pattern 7: Composição Monadic (map, and_then, filter, tap)
-- Pattern 8: Error Handling Pythonic (try/except)
-- Pattern 9: Infraestrutura Automática (config, logger, container)
-- Pattern 10: Múltiplas Operações (operation field)
+- Pattern 3: Railway Pattern em V1
+- Pattern 4: Railway Pattern em V2 Property
+- Pattern 5: Composição Monadic (map, and_then, filter, tap)
+- Pattern 6: Error Handling Pythonic (try/except)
+- Pattern 7: Infraestrutura Automática (config, logger, container)
+- Pattern 8: Múltiplas Operações (operation field)
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,7 +22,7 @@ from __future__ import annotations
 
 import operator
 from dataclasses import dataclass, field
-from typing import ClassVar, cast
+from typing import cast
 
 import pytest
 from pydantic import BaseModel
@@ -75,10 +73,6 @@ class ServiceTestCase:
     def create_user_service(self) -> GetUserService:
         """Create GetUserService instance for this test case."""
         return GetUserService(user_id=self.user_id)
-
-    def create_auto_user_service(self) -> AutoGetUserService:
-        """Create AutoGetUserService instance for this test case."""
-        return AutoGetUserService(user_id=self.user_id)
 
 
 @dataclass(frozen=True, slots=True)
@@ -240,26 +234,6 @@ class GetUserService(FlextService[User]):
         )
 
 
-class AutoGetUserService(FlextService[User]):
-    """Service with auto_execute enabled - V2 Auto pattern."""
-
-    auto_execute: ClassVar[bool] = True  # Enable V2 Auto pattern
-    user_id: str
-
-    def execute(self) -> FlextResult[User]:
-        """Get user by ID."""
-        if self.user_id in {"invalid", ""}:
-            return FlextResult.fail("User not found")
-
-        return FlextResult.ok(
-            User(
-                unique_id=self.user_id,
-                name=f"User {self.user_id}",
-                email=f"user{self.user_id}@example.com",
-            ),
-        )
-
-
 class SendEmailService(FlextService[EmailResponse]):
     """Service to send email."""
 
@@ -395,52 +369,12 @@ class TestPattern2V2Property:
 
 
 # ============================================================================
-# Pattern 3: V2 Auto (auto_execute = True)
+# Pattern 3: Railway Pattern em V1
 # ============================================================================
 
 
-class TestPattern3V2Auto:
-    """Test Pattern 3: V2 Auto (auto_execute = True)."""
-
-    @pytest.mark.parametrize("case", TestFactories.success_cases())
-    def test_v2_auto_returns_value_directly(self, case: ServiceTestCase) -> None:
-        """V2 Auto: Returns value directly when auto_execute=True."""
-        # When auto_execute=True, __new__ returns result.value directly
-        # So create_auto_user_service() returns User, not AutoGetUserService
-        user = case.create_auto_user_service()
-
-        # Returns User directly (not service instance)
-        assert isinstance(user, User)
-        assert not isinstance(user, AutoGetUserService)
-        assert user.unique_id == case.user_id
-
-    @pytest.mark.parametrize("case", TestFactories.failure_cases())
-    def test_v2_auto_failure_raises(self, case: ServiceTestCase) -> None:
-        """V2 Auto: Failure raises exception when auto_execute=True."""
-        # When auto_execute=True and execution fails, __new__ raises exception
-        # So create_auto_user_service() raises FlextExceptions.BaseError
-        with pytest.raises(FlextExceptions.BaseError):
-            _ = case.create_auto_user_service()
-
-    @pytest.mark.parametrize("case", TestFactories.success_cases())
-    def test_v2_auto_manual_service_returns_instance(
-        self,
-        case: ServiceTestCase,
-    ) -> None:
-        """V2 Auto: Default (auto_execute=False) returns service instance."""
-        service = case.create_user_service()
-
-        assert isinstance(service, GetUserService)
-        assert not isinstance(service, User)
-
-
-# ============================================================================
-# Pattern 4: Railway Pattern em V1
-# ============================================================================
-
-
-class TestPattern4RailwayV1:
-    """Test Pattern 4: Railway Pattern em V1."""
+class TestPattern3RailwayV1:
+    """Test Pattern 3: Railway Pattern em V1."""
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v1_railway_complex_pipeline(self, case: RailwayTestCase) -> None:
@@ -461,12 +395,12 @@ class TestPattern4RailwayV1:
 
 
 # ============================================================================
-# Pattern 5: Railway Pattern em V2 Property
+# Pattern 4: Railway Pattern em V2 Property
 # ============================================================================
 
 
-class TestPattern5RailwayV2Property:
-    """Test Pattern 5: Railway Pattern em V2 Property."""
+class TestPattern4RailwayV2Property:
+    """Test Pattern 4: Railway Pattern em V2 Property."""
 
     @pytest.mark.parametrize("case", TestFactories.railway_success_cases())
     def test_v2_property_can_use_execute_for_railway(
@@ -503,46 +437,12 @@ class TestPattern5RailwayV2Property:
 
 
 # ============================================================================
-# Pattern 6: Railway Pattern em V2 Auto (auto_execute = False)
+# Pattern 5: Composição Monadic (map, and_then, filter, tap)
 # ============================================================================
 
 
-class TestPattern6RailwayV2Auto:
-    """Test Pattern 6: Railway Pattern em V2 Auto (auto_execute = False)."""
-
-    def test_v2_auto_with_manual_mode_supports_railway(self) -> None:
-        """V2 Auto: Manual mode (auto_execute=False) supports railway."""
-
-        class ManualService(FlextService[User]):
-            """Service with auto_execute = False for railway."""
-
-            auto_execute: ClassVar[bool] = False  # Manual mode for railway
-            user_id: str
-
-            def execute(self) -> FlextResult[User]:
-                """Get user."""
-                return FlextResult.ok(
-                    User(unique_id=self.user_id, name="Test", email="test@example.com"),
-                )
-
-        # With auto_execute = False, returns service instance
-        service = ManualService(user_id="789")
-        assert isinstance(service, ManualService)
-
-        # Can use railway pattern
-        result = service.execute().map(lambda u: u.email)
-
-        assertion_helpers.assert_flext_result_success(result)
-        assert result.value == "test@example.com"
-
-
-# ============================================================================
-# Pattern 7: Composição Monadic (map, and_then, filter, tap)
-# ============================================================================
-
-
-class TestPattern7MonadicComposition:
-    """Test Pattern 7: Composição Monadic."""
+class TestPattern5MonadicComposition:
+    """Test Pattern 5: Composição Monadic."""
 
     def test_monadic_map(self) -> None:
         """Monadic: map transforms value."""
@@ -601,12 +501,12 @@ class TestPattern7MonadicComposition:
 
 
 # ============================================================================
-# Pattern 8: Error Handling Pythonic (try/except)
+# Pattern 6: Error Handling Pythonic (try/except)
 # ============================================================================
 
 
-class TestPattern8ErrorHandling:
-    """Test Pattern 8: Error Handling Pythonic."""
+class TestPattern6ErrorHandling:
+    """Test Pattern 6: Error Handling Pythonic."""
 
     def test_error_handling_try_except_v2_property(self) -> None:
         """Error Handling: try/except with V2 Property."""
@@ -623,16 +523,6 @@ class TestPattern8ErrorHandling:
             GetUserService(user_id="invalid").result
         assert "not found" in str(exc_info.value).lower()
 
-    def test_error_handling_try_except_v2_auto(self) -> None:
-        """Error Handling: try/except with V2 Auto (auto_execute returns value directly)."""
-        # With auto_execute=True, the service returns the value directly, not the service instance
-        try:
-            user = AutoGetUserService(user_id="789")
-            assert isinstance(user, User)
-            assert user.unique_id == "789"
-        except FlextExceptions.BaseError:
-            pytest.fail("Should not raise")
-
     def test_error_handling_graceful_degradation(self) -> None:
         """Error Handling: Graceful degradation pattern."""
         try:
@@ -646,12 +536,12 @@ class TestPattern8ErrorHandling:
 
 
 # ============================================================================
-# Pattern 9: Infraestrutura Automática (config, logger, container)
+# Pattern 7: Infraestrutura Automática (config, logger, container)
 # ============================================================================
 
 
-class TestPattern9AutomaticInfrastructure:
-    """Test Pattern 9: Infraestrutura Automática."""
+class TestPattern7AutomaticInfrastructure:
+    """Test Pattern 7: Infraestrutura Automática."""
 
     def test_infrastructure_config_automatic(self) -> None:
         """Infrastructure: Config available automatically."""
@@ -690,12 +580,12 @@ class TestPattern9AutomaticInfrastructure:
 
 
 # ============================================================================
-# Pattern 10: Múltiplas Operações (operation field)
+# Pattern 8: Múltiplas Operações (operation field)
 # ============================================================================
 
 
-class TestPattern10MultipleOperations:
-    """Test Pattern 10: Múltiplas Operações."""
+class TestPattern8MultipleOperations:
+    """Test Pattern 8: Múltiplas Operações."""
 
     @pytest.mark.parametrize(
         ("operation", "value", "expected"),
@@ -751,7 +641,7 @@ class TestPattern10MultipleOperations:
 class TestAllPatternsIntegration:
     """Integration tests combining multiple patterns."""
 
-    def test_v1_v2_property_v2_auto_interoperability(self) -> None:
+    def test_v1_v2_property_interoperability(self) -> None:
         """All patterns work together seamlessly."""
         # V1: Explicit
         v1_result = GetUserService(user_id="123").execute()
@@ -762,19 +652,12 @@ class TestAllPatternsIntegration:
         assert isinstance(v2_user_result, User)
         assert v2_user_result.unique_id == "456"
 
-        # V2 Auto: Zero ceremony (returns value directly when auto_execute=True)
-        # When auto_execute=True, __new__ returns result.value directly
-        auto_user = AutoGetUserService(user_id="789")
-        assert isinstance(auto_user, User)
-        assert auto_user.unique_id == "789"
-
-        # All return same type
+        # Both return same type
         assert isinstance(v1_result.value, User)
         assert isinstance(v2_user_result, User)
-        assert isinstance(auto_user, User)
 
     def test_railway_pattern_works_in_all_versions(self) -> None:
-        """Railway pattern works in V1, V2 Property, and V2 Auto (manual mode)."""
+        """Railway pattern works in V1 and V2 Property."""
         # V1: Railway
         v1_pipeline = GetUserService(user_id="123").execute().map(lambda u: u.email)
         assert v1_pipeline.is_success
@@ -783,9 +666,8 @@ class TestAllPatternsIntegration:
         v2_pipeline = GetUserService(user_id="456").execute().map(lambda u: u.email)
         assert v2_pipeline.is_success
 
-        # V2 Auto (manual): Railway
-        class ManualService(FlextService[User]):
-            auto_execute: ClassVar[bool] = False
+        # Custom service with railway pattern
+        class CustomService(FlextService[User]):
             user_id: str
 
             def execute(self) -> FlextResult[User]:
@@ -793,8 +675,8 @@ class TestAllPatternsIntegration:
                     User(unique_id=self.user_id, name="Test", email="test@example.com"),
                 )
 
-        v2_auto_pipeline = ManualService(user_id="789").execute().map(lambda u: u.email)
-        assert v2_auto_pipeline.is_success
+        custom_pipeline = CustomService(user_id="789").execute().map(lambda u: u.email)
+        assert custom_pipeline.is_success
 
     def test_complete_real_world_scenario(self) -> None:
         """Complete scenario using multiple patterns."""

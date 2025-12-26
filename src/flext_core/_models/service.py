@@ -9,15 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
 from typing import Annotated
 
 from pydantic import Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import c
 from flext_core.protocols import p
+from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
@@ -53,28 +53,37 @@ class FlextModelsService:
         @field_validator("context", mode="before")
         @classmethod
         def validate_context(cls, v: t.GeneralValueType) -> t.StringDict:
-            """Ensure context has required fields (using FlextUtilitiesGenerators).
+            """Ensure context has required fields (using FlextRuntime).
 
             Returns t.StringDict because ensure_trace_context generates string trace IDs.
             This is compatible with the field type t.ConfigurationDict since str is a subtype.
             """
-            # ensure_trace_context already returns t.StringDict
-            return FlextUtilitiesGenerators.ensure_trace_context(v)
+            # Normalize input to dict
+            if v is None:
+                context_dict: t.StringDict = {}
+            elif FlextRuntime.is_dict_like(v) and isinstance(v, dict):
+                context_dict = {k: str(val) for k, val in v.items()}
+            else:
+                context_dict = {}
+
+            # Ensure trace_id and span_id exist
+            if "trace_id" not in context_dict:
+                context_dict["trace_id"] = str(uuid.uuid4())
+            if "span_id" not in context_dict:
+                context_dict["span_id"] = str(uuid.uuid4())
+            return context_dict
 
         @field_validator("timeout_seconds", mode="after")
         @classmethod
         def validate_timeout(cls, v: int) -> int:
-            """Validate timeout is reasonable (using FlextUtilitiesValidation)."""
+            """Validate timeout is reasonable (using FlextRuntime)."""
             max_timeout_seconds = c.Performance.MAX_TIMEOUT_SECONDS
-            result = FlextUtilitiesValidation.validate_timeout(v, max_timeout_seconds)
-            if result.is_failure:
-                base_msg = "Timeout validation failed"
-                error_msg = (
-                    f"{base_msg}: {result.error}"
-                    if result.error
-                    else f"{base_msg} (invalid timeout value)"
-                )
-                raise ValueError(error_msg)
+            if v <= 0:
+                msg = "Timeout must be positive"
+                raise ValueError(msg)
+            if v > max_timeout_seconds:
+                msg = f"Timeout {v}s exceeds maximum {max_timeout_seconds}s"
+                raise ValueError(msg)
             return v
 
     class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):

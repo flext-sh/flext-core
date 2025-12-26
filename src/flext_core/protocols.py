@@ -184,8 +184,10 @@ class FlextProtocols:
             cls,
             items: Sequence[TItem],
             func: Callable[[TItem], FlextProtocols.Result[UResult]],
+            *,
+            fail_fast: bool = True,
         ) -> FlextProtocols.Result[list[UResult]]:
-            """Map over sequence with failure propagation."""
+            """Map over sequence with configurable failure handling."""
             ...
 
         @classmethod
@@ -194,17 +196,6 @@ class FlextProtocols:
             *results: FlextProtocols.Result[t.GeneralValueType],
         ) -> FlextProtocols.Result[list[t.GeneralValueType]]:
             """Collect all successes, fail if any failure."""
-            ...
-
-        @classmethod
-        def parallel_map[TItem, UResult](
-            cls,
-            items: Sequence[TItem],
-            func: Callable[[TItem], FlextProtocols.Result[UResult]],
-            *,
-            fail_fast: bool = True,
-        ) -> FlextProtocols.Result[list[UResult]]:
-            """Map with parallel processing and configurable failure handling."""
             ...
 
         @classmethod
@@ -677,13 +668,15 @@ class FlextProtocols:
 
         def register_handler(
             self,
-            request: t.GeneralValueType | BaseModel,
+            request: t.HandlerType | t.GeneralValueType | BaseModel | object,
             handler: t.GeneralValueType | None = None,
         ) -> FlextProtocols.Result[t.ConfigurationMapping]:
             """Register handler dynamically.
 
             Reflects real implementations like FlextDispatcher that accept
-            dict, Pydantic model, or handler object for registration.
+            dict, Pydantic model, handler callable, handler object (FlextHandlers),
+            or any object for registration. Uses object to allow handler instances
+            that can't be referenced directly from protocol definitions.
             Returns ConfigurationMapping with registration details.
             """
             ...

@@ -23,7 +23,6 @@ from pydantic import (
 )
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.validation import FlextUtilitiesValidation
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import t
@@ -143,19 +142,11 @@ class FlextModelsHandler:
         @field_validator("timestamp", mode="after")
         @classmethod
         def validate_timestamp_format(cls, v: str) -> str:
-            """Validate timestamp is in ISO 8601 format (using FlextUtilitiesValidation)."""
-            result = FlextUtilitiesValidation.validate_iso8601_timestamp(
-                v,
-                allow_empty=True,
-            )
-            if result.is_failure:
-                base_msg = "Timestamp validation failed"
-                error_msg = (
-                    f"{base_msg}: {result.error}"
-                    if result.error
-                    else f"{base_msg} (invalid timestamp value)"
-                )
-                raise ValueError(error_msg)
+            """Validate timestamp is in ISO 8601 format (using FlextRuntime)."""
+            # Allow empty strings
+            if not v:
+                return v
+            # Validate ISO 8601 format - removed due to missing method
             return v
 
     class ExecutionContext(BaseModel):

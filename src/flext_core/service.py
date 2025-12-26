@@ -1,9 +1,11 @@
 """Domain service base class for FLEXT applications.
 
 FlextService[T] supplies validation, dependency injection, and railway-style
-result handling for domain services that participate in CQRS flows. It relies
-on structural typing to satisfy ``p.Service`` and aligns with the
-dispatcher-centric architecture.
+result handling for domain services. It relies on structural typing to satisfy
+``p.Service`` and provides a clean service lifecycle.
+
+Note: CQRS components (FlextDispatcher, FlextRegistry) should be used directly,
+not through FlextService. This keeps FlextService focused on service concerns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,12 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import Self, override
+from typing import cast, override
 
 from pydantic import (
     BaseModel,
@@ -24,21 +24,14 @@ from pydantic import (
     PrivateAttr,
     computed_field,
 )
-from pydantic.fields import ModelPrivateAttr
 
-from flext_core._dispatcher import CircuitBreakerManager, RateLimiterManager
-from flext_core._models.base import FlextModelsBase
-from flext_core.constants import c
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins as x, require_initialized
 from flext_core.models import m
 from flext_core.protocols import p
-from flext_core.registry import FlextRegistry
 from flext_core.result import r
 from flext_core.settings import FlextSettings
 from flext_core.typings import t
@@ -50,7 +43,7 @@ class FlextService[TDomainResult](
     x,
     ABC,
 ):
-    """Base class for domain services used in CQRS flows.
+    """Base class for domain services in FLEXT applications.
 
     Subclasses implement ``execute`` to run business logic and return
     ``FlextResult`` values. The base inherits :class:`FlextMixins` (which extends
@@ -58,19 +51,16 @@ class FlextService[TDomainResult](
     scoped config/context/container triples via :meth:`create_service_runtime`
     while remaining protocol compliant via structural typing.
 
-    **V2 Auto-Execute Pattern**:
-    Services can use the auto-execute pattern by setting ``auto_execute = True``
-    as a class variable. When enabled, instantiating the service automatically
-    executes it and returns the domain result directly instead of the service instance.
-
     Example:
         class UserService(FlextService[User]):
-            auto_execute = True  # Returns User directly, not service instance
-
             def execute(self) -> r[User]:
                 return r.ok(User(id="123", name="Alice"))
 
-        # Usage: user = UserService()  # Returns User object directly
+        # Usage
+        service = UserService()
+        result = service.execute()
+        if result.is_success:
+            user = result.value
 
     """
 
@@ -80,72 +70,6 @@ class FlextService[TDomainResult](
         use_enum_values=True,
         validate_assignment=True,
     )
-
-    def __new__(
-        cls,
-        **kwargs: t.GeneralValueType,
-    ) -> Self:
-        """Create service instance.
-
-        For services with auto_execute = True, returns the execution result directly.
-        For services without auto_execute, returns the service instance.
-
-        Args:
-            **kwargs: Configuration parameters for service initialization
-
-        Returns:
-            Self | TDomainResult: Service instance or execution result
-
-        Note:
-            This method uses a union return type to support the auto-execute pattern.
-            When auto_execute=True, the method returns TDomainResult directly.
-            When auto_execute=False, the method returns Self (the service instance).
-
-        """
-        instance = super().__new__(cls)
-        # Check for auto_execute ClassVar
-        auto_execute = getattr(cls, "auto_execute", False)
-        if auto_execute:
-            # Verify class is concrete (not abstract)
-            if inspect.isabstract(cls):
-                msg = (
-                    f"Class {cls.__name__} has auto_execute=True but is still abstract. "
-                    "Implement all abstract methods in the concrete class."
-                )
-                raise TypeError(msg)
-            # Initialize the instance
-            # Use type(instance) to avoid mypy error about accessing __init__ on instance
-            type(instance).__init__(instance, **kwargs)
-            # Execute and get result (V2 Auto pattern)
-            # Concrete classes with auto_execute=True must implement execute()
-            # After isabstract check, we know execute() exists on concrete class
-            execute_method = getattr(instance, c.Mixins.METHOD_EXECUTE, None)
-            if not callable(execute_method):
-                msg = f"Class {cls.__name__} must implement execute() method"
-                raise TypeError(msg)
-            # Type narrowing: execute_method is callable and returns r[TDomainResult]
-            # execute() is abstract method that returns r[TDomainResult] per class definition
-            result_raw = execute_method()
-            if not isinstance(result_raw, r):
-                msg = f"execute() must return r, got {type(result_raw).__name__}"
-                raise TypeError(msg)
-            # Type narrowing: result_raw is r, and execute() signature guarantees r[TDomainResult]
-            # isinstance() check confirms type but doesn't preserve generic type parameter
-            result: r[TDomainResult] = result_raw
-            # For auto_execute=True, return the result value directly (V2 Auto pattern)
-            # This allows: user = AutoGetUserService(user_id="123") to get User object
-            if result.is_failure:
-                error_msg = result.error or "Service execution failed"
-                raise FlextExceptions.BaseError(error_msg)
-            # Return the unwrapped value directly (breaks static typing but is intended behavior)
-            # Type narrowing: result.value is TDomainResult, which may be Self in some cases
-            # This is a runtime pattern where TDomainResult can be the service instance itself
-            # Type narrowing: result.is_success confirmed above, so result.value is TDomainResult
-            return result.value  # type: ignore[return-value]
-        # For auto_execute=False, return instance (normal pattern)
-        # Pydantic BaseModel calls __init__ automatically after __new__,
-        # so we don't need to call it manually here
-        return instance
 
     @property
     def result(self) -> TDomainResult:
@@ -230,7 +154,6 @@ class FlextService[TDomainResult](
     _discovered_handlers: list[tuple[str, m.HandlerDecoratorConfig]] = PrivateAttr(
         default_factory=list,
     )
-    _auto_result: TDomainResult | None = None
 
     @classmethod
     def _get_service_config_type(cls) -> type[FlextSettings]:
@@ -333,18 +256,10 @@ class FlextService[TDomainResult](
                 classes=wire_classes,
             )
 
-        # 4. Dispatcher creation with auto-discovery
-        runtime_dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
-
-        # 5. Registry creation
-        runtime_registry = FlextRegistry.create(auto_discover_handlers=True)
-
         return m.ServiceRuntime.model_construct(
             config=runtime_config,
             context=runtime_context_typed,
             container=runtime_container,
-            dispatcher=runtime_dispatcher,  # type: ignore[arg-type]
-            registry=runtime_registry,
         )
 
     @classmethod
@@ -364,18 +279,19 @@ class FlextService[TDomainResult](
             and isinstance(config_type_raw, type)
             and issubclass(config_type_raw, FlextSettings)
         ):
-            config_type_val = config_type_raw
+            # Cast needed - isinstance + issubclass narrows but mypy can't verify
+            config_type_val = cast("type[FlextSettings]", config_type_raw)
         else:
             config_type_val = config_type
 
         config_overrides_raw = u.mapper().get(options, "config_overrides")
         # Type narrowing: Check if config_overrides_raw is a Mapping
-        # isinstance() confirms type, use type: ignore for Mapping check
+        # isinstance() confirms Mapping, cast refines value type
         if config_overrides_raw is not None and isinstance(
             config_overrides_raw, Mapping
         ):
-            config_overrides_val: Mapping[str, t.FlexibleValue] | None = (
-                config_overrides_raw  # type: ignore[assignment]
+            config_overrides_val: Mapping[str, t.FlexibleValue] | None = cast(
+                "Mapping[str, t.FlexibleValue]", config_overrides_raw
             )
         else:
             config_overrides_val = None
@@ -384,9 +300,9 @@ class FlextService[TDomainResult](
             u.mapper().get(options, "context") if "context" in options else None
         )
         # Type narrowing: context_raw should implement p.Ctx protocol if present
-        # Since we can't check protocol conformance at runtime, use type: ignore
+        # Protocol conformance can't be checked at runtime, cast for type safety
         if context_raw is not None:
-            context_val: p.Ctx | None = context_raw  # type: ignore[assignment]
+            context_val: p.Ctx | None = cast("p.Ctx", context_raw)
         else:
             context_val = None
 
@@ -397,51 +313,85 @@ class FlextService[TDomainResult](
         )
 
         services_raw = options.get("services") if "services" in options else None
-        # Type narrowing: isinstance() confirms Mapping type
+        # Type narrowing: isinstance() confirms Mapping, cast refines value type
         if services_raw is not None and isinstance(services_raw, Mapping):
-            services_val: Mapping[str, t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType]] | None = services_raw  # type: ignore[assignment]
+            services_val: (
+                Mapping[
+                    str,
+                    t.GeneralValueType
+                    | BaseModel
+                    | p.VariadicCallable[t.GeneralValueType],
+                ]
+                | None
+            ) = cast(
+                "Mapping[str, t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType]]",
+                services_raw,
+            )
         else:
             services_val = None
 
         factories_raw = options.get("factories")
         # Type narrowing: isinstance() confirms Mapping type
         if factories_raw is not None and isinstance(factories_raw, Mapping):
-            factories_val: Mapping[str, Callable[[], t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]]] | None = factories_raw  # type: ignore[assignment]
+            factories_val: (
+                Mapping[
+                    str,
+                    Callable[
+                        [],
+                        t.ScalarValue
+                        | Sequence[t.ScalarValue]
+                        | Mapping[str, t.ScalarValue],
+                    ],
+                ]
+                | None
+            ) = factories_raw  # isinstance already narrowed type
         else:
             factories_val = None
 
         resources_raw = u.mapper().get(options, "resources")
-        # Type narrowing: isinstance() confirms Mapping type
+        # Type narrowing: isinstance() confirms Mapping, cast refines callable type
         if resources_raw is not None and isinstance(resources_raw, Mapping):
-            resources_val: Mapping[str, Callable[[], t.GeneralValueType]] | None = resources_raw  # type: ignore[assignment]
+            resources_val: Mapping[str, Callable[[], t.GeneralValueType]] | None = cast(
+                "Mapping[str, Callable[[], t.GeneralValueType]]", resources_raw
+            )
         else:
             resources_val = None
 
         container_overrides_raw = u.mapper().get(options, "container_overrides")
-        # Type narrowing: isinstance() confirms Mapping type
-        if container_overrides_raw is not None and isinstance(container_overrides_raw, Mapping):
-            container_overrides_val: Mapping[str, t.FlexibleValue] | None = container_overrides_raw  # type: ignore[assignment]
+        # Type narrowing: isinstance() confirms Mapping, cast refines value type
+        if container_overrides_raw is not None and isinstance(
+            container_overrides_raw, Mapping
+        ):
+            container_overrides_val: Mapping[str, t.FlexibleValue] | None = cast(
+                "Mapping[str, t.FlexibleValue]", container_overrides_raw
+            )
         else:
             container_overrides_val = None
 
         wire_modules_raw = u.mapper().get(options, "wire_modules")
-        # Type narrowing: isinstance() confirms Sequence type
+        # Type narrowing: isinstance() confirms Sequence, cast refines element type
         if wire_modules_raw is not None and isinstance(wire_modules_raw, Sequence):
-            wire_modules_val: Sequence[ModuleType] | None = wire_modules_raw  # type: ignore[assignment]
+            wire_modules_val: Sequence[ModuleType] | None = cast(
+                "Sequence[ModuleType]", wire_modules_raw
+            )
         else:
             wire_modules_val = None
 
         wire_packages_raw = u.mapper().get(options, "wire_packages")
-        # Type narrowing: isinstance() confirms Sequence type
+        # Type narrowing: isinstance() confirms Sequence, cast refines element type
         if wire_packages_raw is not None and isinstance(wire_packages_raw, Sequence):
-            wire_packages_val: Sequence[str] | None = wire_packages_raw  # type: ignore[assignment]
+            wire_packages_val: Sequence[str] | None = cast(
+                "Sequence[str]", wire_packages_raw
+            )
         else:
             wire_packages_val = None
 
         wire_classes_raw = u.mapper().get(options, "wire_classes")
-        # Type narrowing: isinstance() confirms Sequence type
+        # Type narrowing: isinstance() confirms Sequence, cast refines element type
         if wire_classes_raw is not None and isinstance(wire_classes_raw, Sequence):
-            wire_classes_val: Sequence[type] | None = wire_classes_raw  # type: ignore[assignment]
+            wire_classes_val: Sequence[type] | None = cast(
+                "Sequence[type]", wire_classes_raw
+            )
         else:
             wire_classes_val = None
 
@@ -516,18 +466,10 @@ class FlextService[TDomainResult](
             factories=container_factories,
         )
 
-        # Create dispatcher with auto-discovery enabled
-        runtime_dispatcher = FlextDispatcher.create(auto_discover_handlers=True)
-
-        # Create registry with auto-discovery and deduplication enabled
-        runtime_registry = FlextRegistry.create(auto_discover_handlers=True)
-
         return m.ServiceRuntime.model_construct(
             config=cloned_config,
             context=runtime_context,
             container=scoped_container,
-            dispatcher=runtime_dispatcher,
-            registry=runtime_registry,
         )
 
     @computed_field
@@ -664,455 +606,6 @@ class FlextService[TDomainResult](
         return {
             "service_type": self.__class__.__name__,
         }
-
-    @computed_field
-    def access(self) -> _ServiceAccess:
-        """Unified access to FLEXT infrastructure components.
-
-        Provides on-demand access to CQRS models, registry, configuration,
-        result helpers, context, and container utilities through a single
-        gateway attached to every service instance. The access facade is
-        intentionally lightweight and lazily constructed to avoid importing
-        individual modules across handlers or other services.
-
-        Returns:
-            _ServiceAccess: Facade exposing commonly used FLEXT utilities
-
-        Example:
-            >>> service = MyService()
-            >>> registry = service.access.registry
-            >>> nested = service.access.clone_config(app_name="test")
-
-        """
-        # Direct access - _ServiceAccess accepts any FlextService instance
-        # Type narrowing: self is FlextService[TDomainResult], which is compatible with
-        # FlextService[t.GeneralValueType] because t.GeneralValueType covers all domain results
-        # Type assertion: TypeVar variance issue - TDomainResult is not covariant
-        service_typed: FlextService[t.GeneralValueType] = self  # type: ignore[assignment]
-        # _ServiceAccess(service_typed) already returns _ServiceAccess instance
-        return _ServiceAccess(service_typed)
-
-    @classmethod
-    def from_parent(
-        cls,
-        parent: FlextService[t.GeneralValueType],
-        *,
-        config_overrides: dict[str, object] | None = None,
-        context_overrides: dict[str, object] | None = None,
-    ) -> Self:
-        """Create child service inheriting parent's infrastructure.
-
-        Enables service composition by creating a new service instance that
-        inherits the parent's config, context, and container with optional
-        overrides. Useful for orchestrating multiple services in a workflow.
-
-        Args:
-            parent: Parent service to inherit from.
-            config_overrides: Optional configuration overrides.
-            context_overrides: Optional context data overrides.
-
-        Returns:
-            T: New service instance inheriting parent's infrastructure.
-
-        Example:
-            >>> parent = OrderService()
-            >>> child = PaymentService.from_parent(
-            ...     parent,
-            ...     config_overrides={"timeout": 30},
-            ... )
-            >>> # child inherits parent's container, context, etc.
-
-        """
-        # Build config with overrides
-        parent_config = parent.config
-        if config_overrides:
-            merged_config = parent_config.model_copy(update=config_overrides)
-        else:
-            merged_config = parent_config
-
-        # Build context with overrides
-        parent_context = parent.context
-        if context_overrides and isinstance(parent_context, FlextContext):
-            # Type narrowing: parent_context is FlextContext, which has model_copy
-            # isinstance check already narrows type to FlextContext
-            # FlextContext is a Pydantic model (inherits from FlextRuntime which inherits from BaseModel)
-            flext_context_var = parent_context
-            # Use getattr for model_copy to avoid type checker issues with protocol intersection
-            model_copy_method = getattr(flext_context_var, "model_copy", None)
-            if model_copy_method is not None:
-                merged_context_pydantic = model_copy_method(update=context_overrides)
-            else:
-                # Fallback if model_copy not available
-                merged_context_pydantic = flext_context_var
-            # merged_context_pydantic is FlextContext which implements p.Ctx structurally
-            merged_context: p.Ctx = merged_context_pydantic
-        else:
-            merged_context = parent_context
-
-        # Create child with inherited infrastructure
-        # Type narrowing: cls is FlextService subclass, merged_config is FlextSettings
-        # Pass as **kwargs since __init__ accepts **data: t.GeneralValueType
-        # Cast is intentional: Infrastructure objects (FlextSettings, FlextContext, FlextContainer)
-        # are not strictly t.GeneralValueType, but __init__ accepts them via protocol dispatch
-        merged_data: dict[str, t.GeneralValueType | object] = {
-            "config": merged_config,
-            "context": merged_context,
-            "container": parent.container,
-        }
-        # Type: merged_data contains FlextSettings/FlextContext/FlextContainer objects
-        # which satisfy __init__ signature via protocol dispatch
-        return cls(**merged_data)  # type: ignore[arg-type]
-
-
-class _ServiceExecutionScope(FlextModelsBase.ArbitraryTypesModel):
-    """Immutable view of nested execution resources for a service."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    cqrs: type
-    registry: FlextRegistry
-    config: p.Config
-    result: type
-    context: p.Ctx
-    runtime: m.ServiceRuntime
-    service_data: t.ConfigurationMapping
-
-
-class _ServiceAccess(m.ArbitraryTypesModel):
-    """Gateway for service-level infrastructure access and cloning.
-
-    Centralizes access to core FLEXT components (CQRS models, registry,
-    configuration, result helpers, context, and container) and supports
-    cloning of configuration plus nested execution scopes with isolated
-
-    Note: Accesses protected attributes of FlextService (_config, _runtime, etc.)
-    This is intentional as _ServiceAccess is an internal helper class.
-    context.
-    """
-
-    # ConfigDict is a TypedDict - use explicit type annotation to help type checker
-    # ConfigDict works correctly at runtime, type annotation helps with overload resolution
-    # Match ArbitraryTypesModel pattern: direct assignment, not ClassVar
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        # Suppress Pydantic warnings for runtime field during serialization
-        # Runtime may be ModelPrivateAttr if not initialized, which causes warnings
-        # This is expected behavior - runtime is only available after create_service_runtime()
-        # Note: repr parameter removed - not supported in Pydantic v2 ConfigDict
-    )
-
-    # Use class attributes (not PrivateAttr) for consistency with FlextService
-    _registry: FlextRegistry | None = None
-    # s is defined at end of file, use FlextService directly to avoid forward reference issue
-    _service: FlextService[t.GeneralValueType]
-
-    def __init__(self, service: FlextService[t.GeneralValueType]) -> None:
-        super().__init__()
-        # Accept any FlextService instance - t.GeneralValueType covers all domain results
-        # Set attributes directly (no PrivateAttr needed)
-        # service is never None after __init__, so we can use non-optional type
-        self._service = service
-        self._registry = FlextRegistry()
-
-    @computed_field
-    def cqrs(self) -> type:
-        """CQRS facade from m.
-
-        Note: Cannot be @staticmethod because @computed_field requires instance method
-        signature for Pydantic field computation, even if self is not used.
-        """
-        return m.Cqrs
-
-    @computed_field
-    def registry(self) -> FlextRegistry:
-        """Registry singleton for service discovery."""
-        return require_initialized(self._registry, "Registry")
-
-    @computed_field
-    def config(self) -> p.Config:
-        """Global configuration instance for the service."""
-        # Use public property instead of private attribute
-        return self._service.config
-
-    @computed_field
-    def runtime(
-        self,
-    ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
-        """Protocol-backed runtime triple for the bound service."""
-        # Check if runtime is initialized before accessing
-        # During Pydantic serialization, _runtime may be ModelPrivateAttr
-        # Access _runtime directly to check initialization status
-        runtime_attr = getattr(self._service, "_runtime", None)
-        if runtime_attr is None or isinstance(runtime_attr, ModelPrivateAttr):
-            # Runtime not initialized - raise error to prevent Pydantic from serializing ModelPrivateAttr
-            # This prevents the warning about unexpected value type
-            msg = "Runtime not initialized. Call create_service_runtime() first."
-            raise RuntimeError(msg)
-        # Use require_initialized to get runtime (same as FlextService.runtime)
-        # This ensures consistent behavior and proper error handling
-        # Type narrowing: runtime_attr is m.ServiceRuntime after require_initialized
-        result = require_initialized(runtime_attr, "Runtime")
-        # Type narrowing: result is m.ServiceRuntime (runtime_attr type after require_initialized)
-        if not isinstance(result, m.ServiceRuntime):
-            msg = f"Expected m.ServiceRuntime, got {type(result).__name__}"
-            raise TypeError(msg)
-        return result
-
-    @computed_field
-    def result(
-        self,
-    ) -> type:  # pragma: no cover
-        """Result factory shortcuts.
-
-        Note: Decorator @computed_field requires instance method but value is static.
-        Using minimal self reference to satisfy PLR6301.
-        """
-        _ = type(self)  # Required for @computed_field compliance
-        return r
-
-    @computed_field
-    def context(self) -> p.Ctx:
-        """Context manager for correlation and tracing."""
-        # Use public property instead of private attribute
-        return self._service.context
-
-    @computed_field
-    def container(self) -> p.DI:
-        """Dependency injection container bound to the service."""
-        # Use public property instead of private attribute
-        return self._service.container
-
-    @computed_field
-    def logger(self) -> FlextLogger:
-        """Scoped logger for this service.
-
-        Returns a logger instance bound to the service's container and context,
-        enabling container-scoped logging configuration and context propagation.
-
-        Returns:
-            FlextLogger: Logger instance bound to service container.
-
-        """
-        # Create logger scoped to service module
-        service_name = self._service.__class__.__name__
-        return FlextLogger.create_module_logger(
-            f"{self._service.__class__.__module__}.{service_name}",
-        )
-
-    @property
-    def metrics(self) -> FlextDispatcher:
-        """Metrics collector for this service.
-
-        Returns the MetricsTracker from the service's dispatcher runtime,
-        enabling metrics collection for service operations.
-
-        Returns:
-            FlextDispatcher: Dispatcher instance which inherits from MetricsTracker mixin.
-
-        Note:
-            The dispatcher inherits from FlextMixins.CQRS.MetricsTracker, so it
-            can be used directly for metrics collection.
-
-        """
-        # Access dispatcher from runtime through service
-        # Type narrowing: Check runtime initialization status
-        runtime_attr = getattr(self._service, "_runtime", None)
-        if runtime_attr is None or isinstance(runtime_attr, ModelPrivateAttr):
-            msg = "Runtime not initialized. Call create_service_runtime() first."
-            raise TypeError(msg)
-        # Type narrowing: runtime_attr is m.ServiceRuntime after check
-        # runtime.dispatcher is p.CommandBus protocol, but we need FlextDispatcher for metrics
-        # Dispatcher inherits from FlextMixins.CQRS.MetricsTracker
-        return runtime_attr.dispatcher  # type: ignore[return-value]
-
-    @property
-    def rate_limiter(self) -> RateLimiterManager:
-        """Rate limiter manager for this service.
-
-        Returns the RateLimiterManager from the service's dispatcher runtime,
-        enabling rate limiting for service operations.
-
-        Returns:
-            RateLimiterManager: Rate limiter manager instance from dispatcher.
-
-        """
-        # Access dispatcher from runtime through service
-        # Type narrowing: Check runtime initialization status
-        runtime_attr = getattr(self._service, "_runtime", None)
-        if runtime_attr is None or isinstance(runtime_attr, ModelPrivateAttr):
-            msg = "Runtime not initialized. Call create_service_runtime() first."
-            raise TypeError(msg)
-        # Type narrowing: runtime_attr is m.ServiceRuntime after check
-        # runtime.dispatcher is p.CommandBus protocol, but we need FlextDispatcher for rate_limiter
-        # Dispatcher has _rate_limiter private attribute
-        dispatcher = runtime_attr.dispatcher  # type: ignore[assignment]
-        # Access private attribute (dispatcher._rate_limiter is private)
-        # Type assertion: dispatcher has _rate_limiter attribute
-        return dispatcher._rate_limiter  # type: ignore[attr-defined]
-
-    @property
-    def circuit_breaker(self) -> CircuitBreakerManager:
-        """Circuit breaker manager for this service.
-
-        Returns the CircuitBreakerManager from the service's dispatcher runtime,
-        enabling circuit breaking for service operations.
-
-        Returns:
-            CircuitBreakerManager: Circuit breaker manager instance from dispatcher.
-
-        """
-        # Access dispatcher from runtime through service
-        # Type narrowing: Check runtime initialization status
-        runtime_attr = getattr(self._service, "_runtime", None)
-        if runtime_attr is None or isinstance(runtime_attr, ModelPrivateAttr):
-            msg = "Runtime not initialized. Call create_service_runtime() first."
-            raise TypeError(msg)
-        # Type narrowing: runtime_attr is m.ServiceRuntime after check
-        # runtime.dispatcher is p.CommandBus protocol, but we need FlextDispatcher for circuit_breaker
-        # Dispatcher has _circuit_breaker private attribute
-        dispatcher = runtime_attr.dispatcher  # type: ignore[assignment]
-        # Access private attribute (dispatcher._circuit_breaker is private)
-        # Type assertion: dispatcher has _circuit_breaker attribute
-        return dispatcher._circuit_breaker  # type: ignore[attr-defined]
-
-    def container_scope(
-        self,
-        *,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Ctx | None = None,
-        subproject: str | None = None,
-        services: Mapping[str, t.FlexibleValue] | None = None,
-        factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
-    ) -> p.DI:
-        """Create a container scope with cloned config and optional overrides."""
-        return self.runtime_scope(
-            config_overrides=config_overrides,
-            context=context,
-            subproject=subproject,
-            container_services=services,
-            container_factories=factories,
-        ).container
-
-    def runtime_scope(
-        self,
-        *,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Ctx | None = None,
-        subproject: str | None = None,
-        services: Mapping[str, t.FlexibleValue] | None = None,
-        factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
-        container_services: Mapping[str, t.FlexibleValue] | None = None,
-        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
-    ) -> m.ServiceRuntime:
-        """Clone the service runtime triple using protocol-backed models."""
-        # Type narrowing: @property/@computed_field returns protocol types
-        # mypy infers property as Callable, use type: ignore for the assignment
-        config: p.Config = self.config  # type: ignore[assignment]
-        ctx: p.Ctx = self.context  # type: ignore[assignment]
-        container: p.DI = self.container  # type: ignore[assignment]
-
-        # Clone config with overrides using Pydantic's model_copy
-        cloned_config = config.model_copy(
-            update=config_overrides or {},
-            deep=True,
-        )
-
-        # Clone context - Ctx implementations have clone() method
-        runtime_context = context.clone() if context is not None else ctx.clone()
-
-        # Create scoped container using public API
-        scoped_container = container.scoped(
-            config=cloned_config,
-            context=runtime_context,
-            subproject=subproject,
-            services=container_services or services,
-            factories=container_factories or factories,
-        )
-
-        # Construct ServiceRuntime using model_construct
-        return m.ServiceRuntime.model_construct(
-            config=cloned_config,
-            context=runtime_context,
-            container=scoped_container,
-        )
-
-    def clone_config(self, **overrides: t.FlexibleValue) -> p.Config:
-        """Create a deep copy of the service configuration with overrides.
-
-        Args:
-            **overrides: Field overrides applied to the cloned configuration.
-
-        Returns:
-            Config: Cloned configuration instance with updates applied.
-
-        """
-        # Type narrowing: @property returns protocol type
-        config: p.Config = self.config  # type: ignore[assignment]
-        return config.model_copy(update=overrides, deep=True)
-
-    @contextmanager
-    def nested_execution(
-        self,
-        *,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        service_name: str | None = None,
-        version: str | None = None,
-        correlation_id: str | None = None,
-        container_services: Mapping[str, t.FlexibleValue] | None = None,
-        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
-    ) -> Iterator[_ServiceExecutionScope]:
-        """Create a nested execution scope with cloned config and context.
-
-        Yields a frozen view of the cloned configuration, registry, container,
-        context, and CQRS facade. The nested context is correlation-aware and
-        isolated from the parent, enabling containerized execution flows without
-        mutating global state.
-        """
-        # Type narrowing: @computed_field returns concrete runtime type
-        base_runtime: m.ServiceRuntime = self.runtime  # type: ignore[assignment]
-        # Type narrowing: base_runtime.context is FlextContext for nested class access
-        # Protocol (p.Ctx) doesn't expose nested classes (.Correlation, .Service)
-        base_context: FlextContext = base_runtime.context  # type: ignore[assignment]
-        original_correlation = base_context.Correlation.get_correlation_id()
-
-        # base_context implements Ctx structurally
-        runtime = self.runtime_scope(
-            config_overrides=config_overrides,
-            context=base_context,  # type: ignore[arg-type]
-            container_services=container_services,
-            container_factories=container_factories,
-        )
-
-        # Type narrowing: runtime.context is FlextContext
-        runtime_context: FlextContext = runtime.context  # type: ignore[assignment]
-        if correlation_id:
-            runtime_context.Correlation.set_correlation_id(correlation_id)
-        else:
-            _ = runtime_context.Utilities.ensure_correlation_id()
-
-        service_data: t.ConfigurationMapping = {
-            "service_type": self._service.__class__.__name__,
-            "payload": {},
-        }
-
-        scope = _ServiceExecutionScope.model_construct(
-            cqrs=self.cqrs,
-            registry=self.registry,
-            result=self.result,
-            runtime=runtime,
-            service_data=service_data,
-        )
-
-        with runtime_context.Service.service_context(
-            service_name or self._service.__class__.__name__,
-            version or runtime.config.version,
-        ):
-            yield scope
-
-        if original_correlation is None:
-            base_context.Correlation.reset_correlation_id()
-        else:
-            base_context.Correlation.set_correlation_id(original_correlation)
 
 
 s = FlextService

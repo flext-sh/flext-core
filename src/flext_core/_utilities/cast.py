@@ -11,32 +11,33 @@ from __future__ import annotations
 import inspect
 import warnings
 
-# Approved modules that can import directly (for testing, internal use)
-_APPROVED_MODULES = frozenset({
-    "flext_core.utilities",
-    "flext_core._utilities",
-    "tests.",
-})
-
-
-def _check_direct_access() -> None:
-    """Warn if accessed from non-approved module."""
-    frame = inspect.currentframe()
-    if frame and frame.f_back and frame.f_back.f_back:
-        caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
-        if not any(
-            caller_module.startswith(approved) for approved in _APPROVED_MODULES
-        ):
-            warnings.warn(
-                "Direct import from _utilities.cast is deprecated. "
-                "Use 'from flext_core import u; u.cast_safe(...)' instead.",
-                DeprecationWarning,
-                stacklevel=4,
-            )
-
 
 class FlextUtilitiesCast:
     """Utilities for type-safe casting operations."""
+
+    # Approved modules that can import directly (for testing, internal use)
+    _APPROVED_MODULES: frozenset[str] = frozenset({
+        "flext_core.utilities",
+        "flext_core._utilities",
+        "tests.",
+    })
+
+    @staticmethod
+    def _check_direct_access() -> None:
+        """Warn if accessed from non-approved module."""
+        frame = inspect.currentframe()
+        if frame and frame.f_back and frame.f_back.f_back:
+            caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
+            if not any(
+                caller_module.startswith(approved)
+                for approved in FlextUtilitiesCast._APPROVED_MODULES
+            ):
+                warnings.warn(
+                    "Direct import from _utilities.cast is deprecated. "
+                    "Use 'from flext_core import u; u.Cast.safe(...)' instead.",
+                    DeprecationWarning,
+                    stacklevel=4,
+                )
 
     @staticmethod
     def direct(value: object, target_type: type) -> object:
@@ -98,19 +99,37 @@ class FlextUtilitiesCast:
         error_msg = f"Cannot cast {source_name} to {target_name}"
         raise TypeError(error_msg)
 
+    @staticmethod
+    def safe(value: object, target_type: type, *, mode: str = "direct") -> object:
+        """Type-safe casting with routing.
 
-def cast_safe(value: object, target_type: type, *, mode: str = "direct") -> object:
-    """Type-safe casting with routing."""
-    _check_direct_access()
+        Args:
+            value: Value to cast
+            target_type: Target type to cast to
+            mode: Casting mode - 'direct', 'general_value', or 'callable'
 
-    if mode == "direct":
-        return FlextUtilitiesCast.direct(value, target_type)
-    if mode == "general_value":
-        return FlextUtilitiesCast.general_value(value, target_type)
-    if mode == "callable":
-        return FlextUtilitiesCast.callable(value, target_type)
-    error_msg = f"Unknown mode: {mode}"
-    raise ValueError(error_msg)
+        Returns:
+            Cast value
+
+        Raises:
+            TypeError: If cast is not possible
+            ValueError: If unknown mode is provided
+
+        """
+        FlextUtilitiesCast._check_direct_access()
+
+        if mode == "direct":
+            return FlextUtilitiesCast.direct(value, target_type)
+        if mode == "general_value":
+            return FlextUtilitiesCast.general_value(value, target_type)
+        if mode == "callable":
+            return FlextUtilitiesCast.callable(value, target_type)
+        error_msg = f"Unknown mode: {mode}"
+        raise ValueError(error_msg)
+
+
+# Backward compatibility alias
+cast_safe = FlextUtilitiesCast.safe
 
 
 __all__ = [

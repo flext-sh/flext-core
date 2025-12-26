@@ -52,7 +52,9 @@ import string
 import sys
 import threading
 import typing
+import uuid
 from collections.abc import Callable, Mapping, Sequence
+from datetime import UTC, datetime
 from types import ModuleType
 from typing import ClassVar, TypeGuard, cast
 
@@ -66,71 +68,6 @@ from structlog.typing import BindableLogger
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import T, t
-
-
-class _AsyncLogWriter:
-    """Background log writer using a queue and a separate thread.
-
-    Provides non-blocking logging by buffering log messages to a queue
-    and writing them to the destination stream in a background thread.
-    """
-
-    def __init__(self, stream: typing.TextIO) -> None:
-        self.stream = stream
-        self.queue: queue.Queue[str | None] = queue.Queue(
-            maxsize=c.Logging.ASYNC_QUEUE_SIZE,
-        )
-        self.stop_event = threading.Event()
-        self.thread = threading.Thread(
-            target=self._worker,
-            daemon=True,
-            name="flext-async-log-writer",
-        )
-        self.thread.start()
-        atexit.register(self.shutdown)
-
-    def write(self, message: str) -> None:
-        """Write message to queue (non-blocking)."""
-        with contextlib.suppress(queue.Full):
-            self.queue.put(
-                message,
-                block=c.Logging.ASYNC_BLOCK_ON_FULL,
-            )
-
-    def flush(self) -> None:
-        """Flush stream (best effort)."""
-        if hasattr(self.stream, "flush"):
-            with contextlib.suppress(OSError, ValueError):
-                self.stream.flush()
-
-    def shutdown(self) -> None:
-        """Stop worker thread and flush remaining messages."""
-        if self.stop_event.is_set():
-            return
-        self.stop_event.set()
-        self.queue.put(None)  # Sentinel
-        self.thread.join(timeout=2.0)
-        self.flush()
-
-    def _worker(self) -> None:
-        """Worker thread processing log queue."""
-        while True:
-            try:
-                msg = self.queue.get(timeout=0.1)
-                if msg is None:
-                    break
-                self.stream.write(msg)
-                if hasattr(self.stream, "flush"):
-                    self.stream.flush()
-                self.queue.task_done()
-            except queue.Empty:
-                if self.stop_event.is_set():
-                    break
-                continue
-            except Exception:
-                # Fallback to direct write if queue processing fails
-                with contextlib.suppress(Exception):
-                    self.stream.write("Error in async log writer\n")
 
 
 class FlextRuntime:
@@ -211,6 +148,71 @@ class FlextRuntime:
     """
 
     _structlog_configured: ClassVar[bool] = False
+
+    class _AsyncLogWriter:
+        """Background log writer using a queue and a separate thread.
+
+        Provides non-blocking logging by buffering log messages to a queue
+        and writing them to the destination stream in a background thread.
+        """
+
+        def __init__(self, stream: typing.TextIO) -> None:
+            self.stream = stream
+            self.queue: queue.Queue[str | None] = queue.Queue(
+                maxsize=c.Logging.ASYNC_QUEUE_SIZE,
+            )
+            self.stop_event = threading.Event()
+            self.thread = threading.Thread(
+                target=self._worker,
+                daemon=True,
+                name="flext-async-log-writer",
+            )
+            self.thread.start()
+            atexit.register(self.shutdown)
+
+        def write(self, message: str) -> None:
+            """Write message to queue (non-blocking)."""
+            with contextlib.suppress(queue.Full):
+                self.queue.put(
+                    message,
+                    block=c.Logging.ASYNC_BLOCK_ON_FULL,
+                )
+
+        def flush(self) -> None:
+            """Flush stream (best effort)."""
+            if hasattr(self.stream, "flush"):
+                with contextlib.suppress(OSError, ValueError):
+                    self.stream.flush()
+
+        def shutdown(self) -> None:
+            """Stop worker thread and flush remaining messages."""
+            if self.stop_event.is_set():
+                return
+            self.stop_event.set()
+            self.queue.put(None)  # Sentinel
+            self.thread.join(timeout=2.0)
+            self.flush()
+
+        def _worker(self) -> None:
+            """Worker thread processing log queue."""
+            while True:
+                try:
+                    msg = self.queue.get(timeout=0.1)
+                    if msg is None:
+                        break
+                    self.stream.write(msg)
+                    if hasattr(self.stream, "flush"):
+                        self.stream.flush()
+                    self.queue.task_done()
+                except queue.Empty:
+                    if self.stop_event.is_set():
+                        break
+                    continue
+                except Exception:
+                    # Fallback to direct write if queue processing fails
+                    with contextlib.suppress(Exception):
+                        self.stream.write("Error in async log writer\n")
+
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
     @classmethod
@@ -905,11 +907,17 @@ class FlextRuntime:
 
         @staticmethod
         def register_object(
-            di_container: containers.DynamicContainer,
+            di_container: object,
             name: str,
             instance: T,
         ) -> providers.Provider[T]:
-            """Register a concrete instance using ``providers.Object``."""
+            """Register a concrete instance using ``providers.Object``.
+
+            Args:
+                di_container: DynamicContainer instance (typed as object to avoid
+                    importing dependency-injector types in calling modules).
+
+            """
             if hasattr(di_container, name):
                 msg = f"Provider '{name}' is already registered"
                 raise ValueError(msg)
@@ -919,13 +927,19 @@ class FlextRuntime:
 
         @staticmethod
         def register_factory(
-            di_container: containers.DynamicContainer,
+            di_container: object,
             name: str,
             factory: Callable[[], T],
             *,
             cache: bool = True,
         ) -> providers.Provider[T]:
-            """Register a factory using Singleton/Factory providers."""
+            """Register a factory using Singleton/Factory providers.
+
+            Args:
+                di_container: DynamicContainer instance (typed as object to avoid
+                    importing dependency-injector types in calling modules).
+
+            """
             if hasattr(di_container, name):
                 msg = f"Provider '{name}' is already registered"
                 raise ValueError(msg)
@@ -937,11 +951,17 @@ class FlextRuntime:
 
         @staticmethod
         def register_resource(
-            di_container: containers.DynamicContainer,
+            di_container: object,
             name: str,
             factory: Callable[[], T],
         ) -> providers.Provider[T]:
-            """Register a resource provider for lifecycle-managed dependencies."""
+            """Register a resource provider for lifecycle-managed dependencies.
+
+            Args:
+                di_container: DynamicContainer instance (typed as object to avoid
+                    importing dependency-injector types in calling modules).
+
+            """
             if hasattr(di_container, name):
                 msg = f"Provider '{name}' is already registered"
                 raise ValueError(msg)
@@ -1187,7 +1207,7 @@ class FlextRuntime:
             if async_logging:
                 # Use cached async writer or create new one
                 if cls._async_writer is None:
-                    cls._async_writer = _AsyncLogWriter(sys.stdout)
+                    cls._async_writer = cls._AsyncLogWriter(sys.stdout)
                 factory_arg = cast(
                     "Callable[[], BindableLogger]",
                     module.PrintLoggerFactory(
@@ -1847,6 +1867,75 @@ class FlextRuntime:
                 correlation_enabled=enable_context_correlation,
             )
 
+    # =========================================================================
+    # MODEL SUPPORT METHODS (Tier 0.5 - used by _models to avoid circular imports)
+    # =========================================================================
+
+    @staticmethod
+    def generate_datetime_utc() -> datetime:
+        """Generate current UTC datetime for _models/container.py timestamps."""
+        return datetime.now(UTC)
+
+    @staticmethod
+    def generate_id() -> str:
+        """Generate unique ID using UUID4 for _models."""
+        return str(uuid.uuid4())
+
+    @staticmethod
+    def generate_prefixed_id(prefix: str, length: int | None = None) -> str:
+        """Generate prefixed ID for _models (e.g., 'query_abc123')."""
+        base_id = str(uuid.uuid4()).replace("-", "")
+        if length is not None:
+            base_id = base_id[:length]
+        return f"{prefix}_{base_id}" if prefix else base_id
+
+    @staticmethod
+    def compare_entities_by_id(
+        entity_a: object,
+        entity_b: object,
+        id_attr: str = "unique_id",
+    ) -> bool:
+        """Compare two entities by unique ID attribute."""
+        if not isinstance(entity_b, entity_a.__class__):
+            return False
+        id_a = getattr(entity_a, id_attr, None)
+        id_b = getattr(entity_b, id_attr, None)
+        return id_a is not None and id_a == id_b
+
+    @staticmethod
+    def hash_entity_by_id(
+        entity: object,
+        id_attr: str = "unique_id",
+    ) -> int:
+        """Hash entity based on unique ID and type."""
+        entity_id = getattr(entity, id_attr, None)
+        if entity_id is None:
+            return hash(id(entity))
+        return hash((entity.__class__.__name__, entity_id))
+
+    @staticmethod
+    def compare_value_objects_by_value(obj_a: object, obj_b: object) -> bool:
+        """Compare value objects by their values (all attributes)."""
+        if not isinstance(obj_b, obj_a.__class__):
+            return False
+        if hasattr(obj_a, "model_dump") and hasattr(obj_b, "model_dump"):
+            dump_a: dict[str, object] = obj_a.model_dump()
+            dump_b: dict[str, object] = obj_b.model_dump()
+            return dump_a == dump_b
+        if hasattr(obj_a, "__dict__") and hasattr(obj_b, "__dict__"):
+            return bool(obj_a.__dict__ == obj_b.__dict__)
+        return repr(obj_a) == repr(obj_b)
+
+    @staticmethod
+    def hash_value_object_by_value(obj: object) -> int:
+        """Hash value object based on all attribute values."""
+        if hasattr(obj, "model_dump"):
+            data = obj.model_dump()
+            return hash(tuple(sorted(data.items())))
+        if hasattr(obj, "__dict__"):
+            return hash(tuple(sorted(obj.__dict__.items())))
+        return hash(repr(obj))
+
     class Bootstrap:
         """Bootstrap utility for creating instances via object.__new__.
 
@@ -1874,6 +1963,113 @@ class FlextRuntime:
 
             """
             return FlextRuntime.create_instance(class_type)
+
+    # =========================================================================
+    # Configuration Bridge Methods (for _models)
+    # =========================================================================
+
+    @staticmethod
+    def get_log_level_from_config() -> int:
+        """Get log level from default constant (bridge for _models).
+
+        Returns:
+            int: Numeric logging level (e.g., logging.INFO = 20)
+
+        """
+        default_log_level = c.Logging.DEFAULT_LEVEL.upper()
+        return int(getattr(logging, default_log_level, logging.INFO))
+
+    @staticmethod
+    def ensure_trace_context(
+        context: t.StringMapping | object,
+        *,
+        include_correlation_id: bool = False,
+        include_timestamp: bool = False,
+    ) -> t.StringDict:
+        """Ensure context dict has distributed tracing fields (bridge for _models).
+
+        Args:
+            context: Context dictionary or object to enrich
+            include_correlation_id: If True, ensure correlation_id exists
+            include_timestamp: If True, ensure timestamp exists
+
+        Returns:
+            t.StringDict: Enriched context with trace fields
+
+        """
+        # Normalize context to dict
+        if isinstance(context, dict):
+            context_dict: t.ConfigurationDict = cast("t.ConfigurationDict", context)
+        elif isinstance(context, Mapping):
+            context_dict = dict(context.items())
+        elif isinstance(context, BaseModel):
+            context_dict = context.model_dump()
+        elif hasattr(context, "__dict__"):
+            context_dict = dict(context.__dict__)
+        else:
+            context_dict = {}
+
+        # Convert all values to strings for trace context
+        result: t.StringDict = {
+            k: v if isinstance(v, str) else str(v) for k, v in context_dict.items()
+        }
+
+        # Ensure trace fields
+        if "trace_id" not in result:
+            result["trace_id"] = FlextRuntime.generate_id()
+        if "span_id" not in result:
+            result["span_id"] = FlextRuntime.generate_id()
+
+        # Optional fields
+        if include_correlation_id and "correlation_id" not in result:
+            result["correlation_id"] = FlextRuntime.generate_id()
+
+        if include_timestamp and "timestamp" not in result:
+            result["timestamp"] = FlextRuntime.generate_datetime_utc().isoformat()
+
+        return result
+
+    @staticmethod
+    def validate_http_status_codes(
+        codes: list[object],
+        min_code: int | None = None,
+        max_code: int | None = None,
+    ) -> RuntimeResult[list[int]]:
+        """Validate and normalize HTTP status codes (bridge for _models).
+
+        Args:
+            codes: List of status codes (int or str) to validate
+            min_code: Minimum valid HTTP status code (default: 100)
+            max_code: Maximum valid HTTP status code (default: 599)
+
+        Returns:
+            RuntimeResult[list[int]]: Success with normalized codes or failure
+
+        """
+        min_val = min_code if min_code is not None else c.Network.HTTP_STATUS_MIN
+        max_val = max_code if max_code is not None else c.Network.HTTP_STATUS_MAX
+
+        validated_codes: list[int] = []
+        for code in codes:
+            try:
+                if isinstance(code, (int, str)):
+                    code_int = int(str(code))
+                    if not min_val <= code_int <= max_val:
+                        return FlextRuntime.RuntimeResult[list[int]].fail(
+                            f"Invalid HTTP status code: {code} "
+                            f"(must be {min_val}-{max_val})"
+                        )
+                    validated_codes.append(code_int)
+                else:
+                    return FlextRuntime.RuntimeResult[list[int]].fail(
+                        f"Invalid HTTP status code type: {type(code).__name__}"
+                    )
+            except ValueError:
+                return FlextRuntime.RuntimeResult[list[int]].fail(
+                    f"Cannot convert to integer: {code}"
+                )
+
+        return FlextRuntime.RuntimeResult[list[int]].ok(validated_codes)
 
 
 __all__ = ["FlextRuntime"]
