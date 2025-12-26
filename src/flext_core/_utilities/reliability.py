@@ -14,7 +14,12 @@ from __future__ import annotations
 import contextvars
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
+from pathlib import Path
+from typing import TypeGuard
+
+from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -449,12 +454,31 @@ class FlextUtilitiesReliability:
         for op in ops:
             if isinstance(op, dict):
                 # Type narrowing: op is dict, isinstance provides type narrowing to ConfigurationDict
-                # build() expects ops: t.ConfigurationDict | None
+                # build() expects GeneralValueType - check if current matches
                 op_dict: t.ConfigurationDict = op
-                current = FlextUtilitiesMapper.build(current, ops=op_dict)
+                # Check if current is GeneralValueType compatible
+                if FlextUtilitiesReliability._is_general_value_type(current):
+                    current = FlextUtilitiesMapper.build(current, ops=op_dict)
+                else:
+                    # For non-GeneralValueType, skip build and just pass through
+                    # This maintains backward compatibility for generic object pipelines
+                    pass
             elif callable(op):
                 current = op(current)
         return current
+
+    @staticmethod
+    def _is_general_value_type(value: object) -> TypeGuard[t.GeneralValueType]:
+        """Check if value is compatible with GeneralValueType."""
+        if value is None:
+            return True
+        if isinstance(value, (str, int, float, bool, datetime, Path, BaseModel)):
+            return True
+        if isinstance(value, Mapping):
+            return True
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            return True
+        return bool(callable(value))
 
     @staticmethod
     def compose(

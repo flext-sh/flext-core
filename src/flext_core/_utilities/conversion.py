@@ -217,7 +217,9 @@ class FlextUtilitiesConversion:
             # Strings are valid sequences (of characters)
             str_values: list[str] = [str(v) for v in value]
             return FlextUtilitiesConversion.join(
-                str_values, separator=separator, case=case
+                str_values,
+                separator=separator,
+                case=case,
             )
         error_msg = f"Unknown mode: {mode}"
         raise ValueError(error_msg)

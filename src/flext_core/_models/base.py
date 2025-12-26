@@ -1,7 +1,6 @@
 """Base Pydantic models - Foundation for FLEXT ecosystem.
 
-TIER 0: ZERO imports from flext_core (avoids cycles via __init__.py).
-Uses only: stdlib (uuid, datetime) + pydantic.
+TIER 0: Uses only stdlib, pydantic, and Tier 0 modules (constants, typings).
 
 This module provides the fundamental base classes for all Pydantic models
 in the FLEXT ecosystem. All classes are nested inside FlextModelsBase
@@ -19,6 +18,7 @@ from datetime import UTC, datetime
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
 from flext_core.constants import c
+from flext_core.typings import FlextTypes as t
 
 
 # Renamed to FlextModelFoundation for better clarity
@@ -31,6 +31,20 @@ class FlextModelFoundation:
         model_config = ConfigDict(
             validate_assignment=True,
             extra=c.ModelConfig.EXTRA_FORBID,
+            arbitrary_types_allowed=True,
+            use_enum_values=True,
+        )
+
+    class DynamicConfigModel(BaseModel):
+        """Model for dynamic configuration - allows extra fields.
+
+        Use this for parameters, filters, context, and other dynamic data
+        where the exact fields are not known at compile time.
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="allow",
             arbitrary_types_allowed=True,
             use_enum_values=True,
         )
@@ -179,11 +193,8 @@ class FlextModelFoundation:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        # Use non-recursive type - t.ConfigurationDict uses GeneralValueType which
-        # has recursive Sequence/Mapping that Pydantic can't schema-generate
-        attributes: dict[
-            str, str | int | float | bool | None | list[str | int | float | bool | None]
-        ] = Field(default_factory=dict)
+        # Use t.MetadataAttributeDict for Pydantic-safe config with nested dict support
+        attributes: t.MetadataAttributeDict = Field(default_factory=dict)
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

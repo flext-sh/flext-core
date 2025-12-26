@@ -572,7 +572,8 @@ class FlextUtilitiesEnum:
         if mode == "is_member":
             if by_name and isinstance(value, str):
                 is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
-                    value, enum_cls
+                    value,
+                    enum_cls,
                 )
                 return is_member_result
             result_bool: bool = FlextUtilitiesEnum._is_member_by_value(value, enum_cls)

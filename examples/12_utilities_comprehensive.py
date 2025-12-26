@@ -103,7 +103,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
 
         # Email validation using u
         email = str(TEST_DATA["email"])
-        email_result = u.Validation.validate_pattern(
+        email_result = u.validate_pattern(
             email,
             FlextConstants.Platform.PATTERN_EMAIL,
             "email",
@@ -112,7 +112,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
 
         # String validation using FlextConstants limits
         name = "test"
-        name_result = u.Validation.validate_length(
+        name_result = u.validate_length(
             name,
             min_length=FlextConstants.Validation.MIN_USERNAME_LENGTH,
             max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
@@ -121,18 +121,18 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
 
         # URI validation
         uri = str(TEST_DATA["uri"])
-        uri_result = u.Validation.Network.validate_uri(uri)
+        uri_result = u.validate_uri(uri)
         print(f"✅ URI validation: {uri} -> {uri_result.is_success}")
 
         # Port validation
         port_value = TEST_DATA["port"]
         if isinstance(port_value, int):
-            port_result = u.Validation.Network.validate_port_number(port_value)
+            port_result = u.validate_port_number(port_value)
             print(f"✅ Port validation: {port_value} -> {port_result.is_success}")
 
         # Hostname validation
         hostname = str(TEST_DATA["hostname"])
-        hostname_result = u.Validation.Network.validate_hostname(hostname)
+        hostname_result = u.validate_hostname(hostname)
         print(f"✅ Hostname validation: {hostname} -> {hostname_result.is_success}")
 
     @staticmethod
@@ -147,7 +147,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
         )
 
         # Short ID using u
-        short_id = u.Generators.Random.generate_short_id()
+        short_id = u.generate_short_id()
         print(
             f"✅ Short ID: {short_id[: c.Utilities.SHORT_UUID_LENGTH]}...",
         )
@@ -190,16 +190,16 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
         print("\n=== Caching Utilities ===")
 
         # Cache key generation using normalization
-        test_data_normalized = u.Cache.normalize_component(TEST_DATA)
+        test_data_normalized = u.normalize_component(TEST_DATA)
         print(f"✅ Data normalization: {type(test_data_normalized).__name__}")
 
         # Sort dictionary keys for consistent cache keys (DRY)
-        sorted_data = u.Cache.sort_dict_keys(TEST_DATA)
+        sorted_data = u.sort_dict_keys(TEST_DATA)
         if isinstance(sorted_data, Mapping):
             print(f"✅ Sorted keys: {list(sorted_data.keys())}")
 
         # Clear object cache
-        clear_result = u.Cache.clear_object_cache(TEST_DATA)
+        clear_result = u.clear_object_cache(TEST_DATA)
         print(f"✅ Cache clearing: {clear_result.is_success}")
 
     @staticmethod
@@ -211,7 +211,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
         def operation() -> FlextResult[str]:
             return FlextResult[str].ok("success")
 
-        retry_result: FlextResult[str] = u.Reliability.retry(
+        retry_result: FlextResult[str] = u.retry(
             operation,
             max_attempts=3,
             delay_seconds=0.1,
@@ -219,7 +219,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
         print(f"✅ Retry logic: {retry_result.is_success}")
 
         # Timeout handling
-        timeout_result = u.Reliability.with_timeout(
+        timeout_result = u.with_timeout(
             operation,
             timeout_seconds=1.0,
         )
@@ -252,7 +252,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
         print("\n=== Collection Operations ===")
 
         # Parse sequence of StrEnum values using railway pattern (DRY)
-        u.Collection.parse_sequence(
+        u.parse_sequence(
             c.Cqrs.HandlerType,
             ["validation", "id_generation"],
         ).map(
@@ -267,7 +267,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
         print("\n=== Type Checking ===")
 
         # Compute accepted message types for a handler class
-        message_types = u.Checker.compute_accepted_message_types(UtilitiesService)
+        message_types = u.compute_accepted_message_types(UtilitiesService)
         print(f"✅ Message types computed: {len(message_types)} types")
 
 

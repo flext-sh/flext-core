@@ -105,7 +105,7 @@ class CreateUserCommandHandler(
 
     def __init__(self) -> None:
         """Initialize create user command handler."""
-        config = FlextModels.Cqrs.Handler(
+        config = FlextModels.Handler(
             handler_id="create_user_handler",
             handler_name="Create User Handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,
@@ -158,7 +158,7 @@ class UpdateUserCommandHandler(
 
     def __init__(self) -> None:
         """Initialize update user command handler."""
-        config = FlextModels.Cqrs.Handler(
+        config = FlextModels.Handler(
             handler_id="update_user_handler",
             handler_name="Update User Handler",
             handler_type=FlextConstants.Cqrs.HandlerType.COMMAND,

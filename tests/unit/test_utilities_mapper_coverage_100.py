@@ -308,12 +308,13 @@ class TestuMapperBuild:
         assert res == ["a", "b"]
 
     def test_build_group(self) -> None:
-        """Test build group."""
+        """Test build group - keys are converted to strings for ConfigurationDict."""
         res = u.mapper().build(
             ["cat", "dog", "ant"],
             ops=cast("t.ConfigurationDict | None", {"group": len}),
         )
-        assert res == {3: ["cat", "dog", "ant"]}
+        # Keys are converted to strings because result is ConfigurationDict
+        assert res == {"3": ["cat", "dog", "ant"]}
 
     def test_build_chunk(self) -> None:
         """Test build chunk."""

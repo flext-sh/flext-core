@@ -17,7 +17,6 @@ from pydantic import Field, field_validator
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.protocols import p
-from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
@@ -27,6 +26,42 @@ class FlextModelsService:
     This class acts as a namespace container for domain service patterns.
     All nested classes are accessed via FlextModels.Service.* in the main models.py.
     """
+
+    # =========================================================================
+    # SUPPORTING MODELS - Base classes for dynamic configuration
+    # =========================================================================
+
+    class TraceContext(FlextModelsBase.FrozenStrictModel):
+        """Trace context for distributed tracing."""
+
+        trace_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+        span_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+        parent_span_id: str | None = None
+
+    class RetryConfiguration(FlextModelsBase.FrozenStrictModel):
+        """Retry configuration for operations."""
+
+        max_retries: int = Field(default=c.Reliability.DEFAULT_MAX_RETRIES, ge=0)
+        initial_delay_seconds: float = Field(default=1.0, gt=0)
+        max_delay_seconds: float = Field(default=60.0, gt=0)
+        exponential_base: float = Field(default=2.0, ge=1.0)
+        retry_on_timeout: bool = True
+
+    class ServiceParameters(FlextModelsBase.DynamicConfigModel):
+        """Dynamic parameters for service methods - allows extra fields."""
+
+    class ServiceFilters(FlextModelsBase.DynamicConfigModel):
+        """Filter criteria for queries - allows extra fields."""
+
+    class ServiceData(FlextModelsBase.DynamicConfigModel):
+        """Operation data model - allows extra fields."""
+
+    class ServiceContext(FlextModelsBase.DynamicConfigModel):
+        """Service execution context - allows extra fields."""
+
+    # =========================================================================
+    # REQUEST/RESPONSE MODELS
+    # =========================================================================
 
     class DomainServiceExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service execution request with advanced validation."""
@@ -39,8 +74,12 @@ class FlextModelsService:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Method to execute",
         )
-        parameters: t.ConfigurationDict = Field(default_factory=dict)
-        context: t.ConfigurationDict = Field(default_factory=dict)
+        parameters: FlextModelsService.ServiceParameters = Field(
+            default_factory=lambda: FlextModelsService.ServiceParameters(),
+        )
+        context: FlextModelsService.TraceContext = Field(
+            default_factory=lambda: FlextModelsService.TraceContext(),
+        )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -50,33 +89,10 @@ class FlextModelsService:
         execution: bool = False
         enable_validation: bool = True
 
-        @field_validator("context", mode="before")
-        @classmethod
-        def validate_context(cls, v: t.GeneralValueType) -> t.StringDict:
-            """Ensure context has required fields (using FlextRuntime).
-
-            Returns t.StringDict because ensure_trace_context generates string trace IDs.
-            This is compatible with the field type t.ConfigurationDict since str is a subtype.
-            """
-            # Normalize input to dict
-            if v is None:
-                context_dict: t.StringDict = {}
-            elif FlextRuntime.is_dict_like(v) and isinstance(v, dict):
-                context_dict = {k: str(val) for k, val in v.items()}
-            else:
-                context_dict = {}
-
-            # Ensure trace_id and span_id exist
-            if "trace_id" not in context_dict:
-                context_dict["trace_id"] = str(uuid.uuid4())
-            if "span_id" not in context_dict:
-                context_dict["span_id"] = str(uuid.uuid4())
-            return context_dict
-
         @field_validator("timeout_seconds", mode="after")
         @classmethod
-        def validate_timeout(cls, v: int) -> int:
-            """Validate timeout is reasonable (using FlextRuntime)."""
+        def validate_timeout(cls, v: float) -> float:
+            """Validate timeout is reasonable."""
             max_timeout_seconds = c.Performance.MAX_TIMEOUT_SECONDS
             if v <= 0:
                 msg = "Timeout must be positive"
@@ -86,11 +102,19 @@ class FlextModelsService:
                 raise ValueError(msg)
             return v
 
+    class BatchOperation(FlextModelsBase.ArbitraryTypesModel):
+        """Single operation in a batch."""
+
+        operation_name: str = Field(min_length=1)
+        parameters: FlextModelsService.ServiceParameters = Field(
+            default_factory=lambda: FlextModelsService.ServiceParameters(),
+        )
+
     class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service batch request."""
 
         service_name: str
-        operations: list[t.ConfigurationDict] = Field(
+        operations: list[FlextModelsService.BatchOperation] = Field(
             default_factory=list,
             min_length=c.Reliability.RETRY_COUNT_MIN,
             max_length=c.Performance.MAX_BATCH_OPERATIONS,
@@ -103,7 +127,7 @@ class FlextModelsService:
         )
         timeout_per_operation: float = Field(
             default=c.Defaults.TIMEOUT,
-            description="Timeout per operation from FlextSettings (Config has priority over Constants)",
+            description="Timeout per operation from FlextSettings",
         )
 
     class DomainServiceMetricsRequest(FlextModelsBase.ArbitraryTypesModel):
@@ -122,7 +146,9 @@ class FlextModelsService:
             default_factory=lambda: c.Cqrs.Aggregation.AVG,
         )
         group_by: list[str] = Field(default_factory=list)
-        filters: t.ConfigurationDict = Field(default_factory=dict)
+        filters: FlextModelsService.ServiceFilters = Field(
+            default_factory=lambda: FlextModelsService.ServiceFilters(),
+        )
 
     class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service resource request."""
@@ -135,8 +161,12 @@ class FlextModelsService:
         resource_id: str | None = None
         resource_limit: int = Field(c.Performance.MAX_BATCH_SIZE, gt=c.ZERO)
         action: str = Field(default_factory=lambda: c.Cqrs.Action.GET)
-        data: t.ConfigurationDict = Field(default_factory=dict)
-        filters: t.ConfigurationDict = Field(default_factory=dict)
+        data: FlextModelsService.ServiceData = Field(
+            default_factory=lambda: FlextModelsService.ServiceData(),
+        )
+        filters: FlextModelsService.ServiceFilters = Field(
+            default_factory=lambda: FlextModelsService.ServiceFilters(),
+        )
 
     class AclResponse(FlextModelsBase.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
@@ -153,8 +183,8 @@ class FlextModelsService:
             default_factory=list,
             description="Denied permissions",
         )
-        context: t.ConfigurationDict = Field(
-            default_factory=dict,
+        context: FlextModelsService.ServiceContext = Field(
+            default_factory=lambda: FlextModelsService.ServiceContext(),
             description="Additional context",
         )
 
@@ -167,9 +197,11 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: p.VariadicCallable[p.ResultLike[t.GeneralValueType]]
-        arguments: t.ConfigurationDict = Field(default_factory=dict)
-        keyword_arguments: t.ConfigurationDict = Field(
-            default_factory=dict,
+        arguments: FlextModelsService.ServiceParameters = Field(
+            default_factory=lambda: FlextModelsService.ServiceParameters(),
+        )
+        keyword_arguments: FlextModelsService.ServiceParameters = Field(
+            default_factory=lambda: FlextModelsService.ServiceParameters(),
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
@@ -177,8 +209,8 @@ class FlextModelsService:
             le=c.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextSettings (Config has priority over Constants)",
         )
-        retry_config: t.ConfigurationDict = Field(
-            default_factory=dict,
+        retry_config: FlextModelsService.RetryConfiguration = Field(
+            default_factory=lambda: FlextModelsService.RetryConfiguration(),
         )
 
         @field_validator("operation_callable", mode="after")
@@ -187,14 +219,5 @@ class FlextModelsService:
             cls,
             v: p.VariadicCallable[p.ResultLike[t.GeneralValueType]],
         ) -> p.VariadicCallable[p.ResultLike[t.GeneralValueType]]:
-            """Validate operation is callable.
-
-            With mode="after", Pydantic has already validated v as VariadicCallable type.
-            Protocol types are always callable, so no additional check needed.
-            """
-            # v is already validated as VariadicCallable by Pydantic
-            # Protocol types guarantee callable interface
+            """Validate operation is callable."""
             return v
-
-
-__all__ = ["FlextModelsService"]

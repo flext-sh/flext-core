@@ -59,17 +59,16 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_success[TResult](
-                result: p.Result[TResult],
+                result: r[TResult] | p.Result[TResult],
                 error_msg: str | None = None,
             ) -> TResult:
                 """Assert result is success and return unwrapped value.
 
                 Args:
-                    result: FlextResult to check
+                    result: FlextResult or Result protocol to check
                     error_msg: Optional custom error message
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
                     Unwrapped value from result
 
                 Raises:
@@ -81,21 +80,22 @@ class FlextTestsUtilities(FlextUtilities):
                         error_msg or f"Expected success but got failure: {result.error}"
                     )
                     raise AssertionError(msg)
-                return result.value
+                # Protocol guarantees value property exists
+                value: TResult = result.value
+                return value
 
             @staticmethod
             def assert_failure[TResult](
-                result: p.Result[TResult],
+                result: r[TResult] | p.Result[TResult],
                 expected_error: str | None = None,
             ) -> str:
                 """Assert result is failure and return error message.
 
                 Args:
-                    result: FlextResult to check
+                    result: FlextResult or Result protocol to check
                     expected_error: Optional expected error substring
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
                     Error message from result
 
                 Raises:
@@ -118,13 +118,13 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_success_with_value[T](
-                result: p.Result[T],
+                result: r[T] | p.Result[T],
                 expected_value: T,
             ) -> None:
                 """Assert result is success and has expected value.
 
                 Args:
-                    result: FlextResult to check
+                    result: FlextResult or Result protocol to check
                     expected_value: Expected value
 
                 Raises:
@@ -138,13 +138,13 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_failure_with_error[T](
-                result: p.Result[T],
+                result: r[T] | p.Result[T],
                 expected_error: str | None = None,
             ) -> None:
                 """Assert result is failure and has expected error.
 
                 Args:
-                    result: FlextResult to check
+                    result: FlextResult or Result protocol to check
                     expected_error: Optional expected error substring
 
                 Raises:
@@ -496,7 +496,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_success_with_value[T](
-                result: p.Result[T],
+                result: r[T],
                 expected_value: T,
             ) -> None:
                 """Assert result is success with expected value (compat)."""
@@ -507,7 +507,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_failure_with_error[T](
-                result: p.Result[T],
+                result: r[T],
                 expected_error: str | None = None,
             ) -> None:
                 """Assert result is failure with expected error (compat)."""
@@ -518,7 +518,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_success_and_unwrap[T](
-                result: p.Result[T],
+                result: r[T],
             ) -> T:
                 """Assert result is success and return unwrapped value.
 
@@ -538,7 +538,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_failure_with_error[T](
-                result: p.Result[T],
+                result: r[T],
                 expected_error: str,
             ) -> None:
                 """Assert result failure with error (compat alias).
@@ -558,7 +558,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_success_and_type[T](
-                result: p.Result[T],
+                result: r[T],
                 expected_type: str | type[object] | None = None,
             ) -> T:
                 """Assert result is success and return unwrapped value (type-safe).
@@ -720,7 +720,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_chain[T](
-                results: list[p.Result[T]],
+                results: list[r[T]],
                 expected_successes: int | None = None,
                 expected_failures: int | None = None,
                 expected_success_count: int | None = None,
@@ -1488,7 +1488,8 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise error on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return super().__getattribute__(name)
+                        result: t.GeneralValueType = super().__getattribute__(name)
+                        return result
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
 
@@ -1499,7 +1500,8 @@ class FlextTestsUtilities(FlextUtilities):
                     """Raise TypeError on attribute access - test helper for error testing."""
                     # Skip __class__ and other special attributes
                     if name.startswith("__") and name.endswith("__"):
-                        return super().__getattribute__(name)
+                        result: t.GeneralValueType = super().__getattribute__(name)
+                        return result
                     msg = f"Bad config type: {name}"
                     raise TypeError(msg)
 
@@ -1547,7 +1549,7 @@ class FlextTestsUtilities(FlextUtilities):
             """Common assertion helpers for tests."""
 
             @staticmethod
-            def assert_result_success(result: p.Result[T]) -> T:
+            def assert_result_success(result: r[T]) -> T:
                 """Assert result is success and return value.
 
                 Args:
@@ -1568,7 +1570,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_failure(
-                result: p.Result[T],
+                result: r[T],
                 expected_error: str | None = None,
             ) -> str:
                 """Assert result is failure and optionally check error message.
@@ -1597,7 +1599,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_failure_with_error(
-                result: p.Result[T],
+                result: r[T],
                 expected_error: str,
             ) -> None:
                 """Assert result is failure with specific error message.

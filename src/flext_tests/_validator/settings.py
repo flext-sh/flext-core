@@ -12,6 +12,7 @@ import tomllib
 from pathlib import Path
 
 from flext_core.result import r
+from flext_core.typings import t
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.utilities import u
@@ -128,23 +129,23 @@ class FlextValidatorSettings:
     def _check_mypy_settings(
         cls,
         file_path: Path,
-        data: dict[str, object],
+        data: dict[str, t.GeneralValueType],
         lines: list[str],
         approved: dict[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
         """Check mypy configuration for violations."""
         violations: list[m.Tests.Validator.Violation] = []
 
-        # Type narrowing: dict.get() returns object, validate with isinstance
-        tool_data_raw: object = data.get("tool", {})
+        # Type narrowing: dict.get() returns t.GeneralValueType, validate with isinstance
+        tool_data_raw: t.GeneralValueType = data.get("tool", {})
         if not isinstance(tool_data_raw, dict):
             return violations
-        # isinstance narrows tool_data_raw to dict[str, object]
+        # isinstance narrows tool_data_raw to dict[str, t.GeneralValueType]
         tool_data = tool_data_raw
-        mypy_config_raw: object = tool_data.get("mypy", {})
+        mypy_config_raw: t.GeneralValueType = tool_data.get("mypy", {})
         if not isinstance(mypy_config_raw, dict):
             return violations
-        # isinstance narrows mypy_config_raw to dict[str, object]
+        # isinstance narrows mypy_config_raw to dict[str, t.GeneralValueType]
         mypy_config = mypy_config_raw
 
         # Check global ignore_errors
@@ -165,15 +166,15 @@ class FlextValidatorSettings:
 
         # Check per-module overrides
         # Type annotations for .get() results to help pyright inference
-        overrides_raw: object = mypy_config.get("overrides", [])
+        overrides_raw: t.GeneralValueType = mypy_config.get("overrides", [])
         if not isinstance(overrides_raw, list):
             return violations
-        overrides: list[object] = overrides_raw
+        overrides: list[t.GeneralValueType] = overrides_raw
         for override in overrides:
             if not isinstance(override, dict):
                 continue
-            # Type narrowing: override is dict[str, object]
-            override_dict: dict[str, object] = override
+            # Type narrowing: override is dict[str, t.GeneralValueType]
+            override_dict: dict[str, t.GeneralValueType] = override
             module_raw = override_dict.get("module", "unknown")
             module: str = str(module_raw) if module_raw is not None else "unknown"
             is_approved = u.Tests.Validator.is_approved(
@@ -238,7 +239,7 @@ class FlextValidatorSettings:
     def _check_ruff_settings(
         cls,
         file_path: Path,
-        data: dict[str, object],
+        data: dict[str, t.GeneralValueType],
         lines: list[str],
         approved: dict[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
@@ -251,16 +252,16 @@ class FlextValidatorSettings:
         tool_data = data.get("tool", {})
         if not isinstance(tool_data, dict):
             return violations
-        # Type narrowing: dict.get() returns object, validate with isinstance
+        # Type narrowing: dict.get() returns t.GeneralValueType, validate with isinstance
         ruff_config_raw = tool_data.get("ruff", {})
         if not isinstance(ruff_config_raw, dict):
             return violations
-        # isinstance narrows ruff_config_raw to dict[str, object]
+        # isinstance narrows ruff_config_raw to dict[str, t.GeneralValueType]
         ruff_config = ruff_config_raw
         lint_config_raw = ruff_config.get("lint", {})
         if not isinstance(lint_config_raw, dict):
             return violations
-        # isinstance narrows lint_config_raw to dict[str, object]
+        # isinstance narrows lint_config_raw to dict[str, t.GeneralValueType]
         lint_config = lint_config_raw
 
         # Check for custom ignores beyond approved list
@@ -293,7 +294,7 @@ class FlextValidatorSettings:
     def _check_pyright_settings(
         cls,
         file_path: Path,
-        data: dict[str, object],
+        data: dict[str, t.GeneralValueType],
         lines: list[str],
         approved: dict[str, list[str]],
     ) -> list[m.Tests.Validator.Violation]:
@@ -303,11 +304,11 @@ class FlextValidatorSettings:
         tool_data = data.get("tool", {})
         if not isinstance(tool_data, dict):
             return violations
-        # Type narrowing: dict.get() returns object, validate with isinstance
+        # Type narrowing: dict.get() returns t.GeneralValueType, validate with isinstance
         pyright_config_raw = tool_data.get("pyright", {})
         if not isinstance(pyright_config_raw, dict):
             return violations
-        # isinstance narrows pyright_config_raw to dict[str, object]
+        # isinstance narrows pyright_config_raw to dict[str, t.GeneralValueType]
         pyright_config = pyright_config_raw
 
         # Check reportPrivateUsage

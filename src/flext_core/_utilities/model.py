@@ -296,6 +296,69 @@ class FlextUtilitiesModel:
         except ValidationError as e:
             return r[T_Model].fail(f"Model validation failed: {e}")
 
+    @staticmethod
+    def normalize_to_pydantic_dict(
+        data: t.EventDataMapping | None,
+    ) -> t.PydanticConfigDict:
+        """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
+
+        Normalizes GeneralValueType values to the restricted PydanticConfigValue type
+        that Pydantic can generate schemas for without recursion issues.
+
+        Args:
+            data: EventDataMapping (Mapping[str, GeneralValueType]) or None
+
+        Returns:
+            t.PydanticConfigDict: Dict with Pydantic-safe values
+
+        Example:
+            >>> u.Model.normalize_to_pydantic_dict(None)
+            {}
+            >>> u.Model.normalize_to_pydantic_dict({"key": "value"})
+            {"key": "value"}
+            >>> u.Model.normalize_to_pydantic_dict({"obj": SomeModel()})
+            {"obj": "SomeModel(...)"}  # Complex types converted to string
+
+        """
+        if not data:
+            return {}
+        result: t.PydanticConfigDict = {}
+        for key, value in data.items():
+            result[key] = FlextUtilitiesModel._normalize_to_pydantic_value(value)
+        return result
+
+    @staticmethod
+    def _normalize_to_pydantic_value(
+        value: t.GeneralValueType,
+    ) -> t.PydanticConfigValue:
+        """Normalize GeneralValueType to Pydantic-safe PydanticConfigValue.
+
+        Converts complex types to strings, preserves primitives.
+
+        Args:
+            value: GeneralValueType value to normalize
+
+        Returns:
+            t.PydanticConfigValue: Pydantic-safe value
+
+        """
+        if value is None:
+            return None
+        if isinstance(value, bool):  # Check bool before int (bool is subclass of int)
+            return value
+        if isinstance(value, (int, float, str)):
+            return value
+        if isinstance(value, (list, tuple)):
+            # Convert list items to primitives
+            return [
+                item
+                if isinstance(item, (str, int, float, bool, type(None)))
+                else str(item)
+                for item in value
+            ]
+        # Convert any other type to string representation
+        return str(value)
+
 
 uModel = FlextUtilitiesModel
 

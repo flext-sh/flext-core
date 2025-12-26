@@ -22,7 +22,8 @@ APPROVED_MODULES: Final[frozenset[str]] = frozenset({
 
 
 def warn_direct_module_access(
-    module_name: str, facade_method: str | None = None
+    module_name: str,
+    facade_method: str | None = None,
 ) -> None:
     """Warn if internal module is accessed from non-approved caller.
 

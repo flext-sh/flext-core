@@ -77,10 +77,9 @@ class FlextTestsDomains:
             service_type=service_type,
             environment=environment,
         )
-        # Type narrowing: tt.model("config") returns m.Tests.Factory.Config
-        # Since tt.model() can return various types, we need to handle it safely
         # Extract attributes using getattr with defaults for type safety
-        config_dict: dict[str, object] = {
+        # Use t.ConfigurationDict directly instead of dict[str, t.GeneralValueType]
+        base_config: t.ConfigurationDict = {
             "service_type": getattr(config_result, "service_type", service_type),
             "environment": getattr(config_result, "environment", environment),
             "debug": getattr(config_result, "debug", False),
@@ -92,11 +91,6 @@ class FlextTestsDomains:
             "enable_caching": True,
             "cache_ttl": 300,
         }
-        # Type narrowing: config_dict is dict[str, object], which is compatible with ConfigurationDict
-        # ConfigurationDict = dict[str, t.GeneralValueType] where t.GeneralValueType includes object
-        base_config: t.ConfigurationDict = dict(
-            config_dict
-        )  # Safe: object is assignable to GeneralValueType
         base_config.update(overrides)
         return base_config
 

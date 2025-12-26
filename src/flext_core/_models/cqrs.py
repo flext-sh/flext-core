@@ -184,13 +184,15 @@ class FlextModelsCqrs:
                 if isinstance(page_raw, int):
                     page = page_raw
                 elif (isinstance(page_raw, str) and page_raw.isdigit()) or isinstance(
-                    page_raw, float
+                    page_raw,
+                    float,
                 ):
                     page = int(page_raw)
                 if isinstance(size_raw, int):
                     size = size_raw
                 elif (isinstance(size_raw, str) and size_raw.isdigit()) or isinstance(
-                    size_raw, float
+                    size_raw,
+                    float,
                 ):
                     size = int(size_raw)
                 return pagination_cls(page=page, size=size)

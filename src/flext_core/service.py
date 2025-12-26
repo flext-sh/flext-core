@@ -280,10 +280,10 @@ class FlextService[TDomainResult](
         # config_overrides: TypedDict typed as Mapping[str, FlexibleValue]
         config_overrides_val = options.get("config_overrides")
 
-        # context: TypedDict typed as object, use TypeGuard for protocol narrowing
+        # context: TypedDict typed as ContextLike, narrowed to p.Ctx via TypeGuard
         context_raw = options.get("context")
         context_val: p.Ctx | None = None
-        if context_raw is not None and u.Guards._is_context(context_raw):
+        if context_raw is not None and u.is_context(context_raw):
             context_val = context_raw
 
         # subproject: TypedDict typed as str

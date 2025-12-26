@@ -804,7 +804,7 @@ class FlextUtilitiesConfiguration:
                         raise AttributeError(msg)
                     return to_write_options()
 
-                options_result = u.Configuration.build_options_from_kwargs(
+                options_result = FlextUtilitiesConfiguration.build_options_from_kwargs(
                     model_class=WriteFormatOptions,
                     explicit_options=format_options,
                     default_factory=get_ldif_config_default,

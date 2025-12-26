@@ -43,7 +43,7 @@ class FlextExceptions:
             *,
             error_code: str = c.Errors.UNKNOWN_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
-            metadata: p.Log.Metadata
+            metadata: p.Metadata
             | Mapping[str, t.MetadataAttributeValue]
             | t.GeneralValueType
             | None = None,
@@ -93,7 +93,7 @@ class FlextExceptions:
             # Convert metadata to proper type for _normalize_metadata
             # _normalize_metadata expects _Metadata | Mapping[str, t.MetadataAttributeValue] | t.GeneralValueType | None
             metadata_for_normalize: (
-                p.Log.Metadata
+                p.Metadata
                 | Mapping[str, t.MetadataAttributeValue]
                 | t.GeneralValueType
                 | None
@@ -140,7 +140,8 @@ class FlextExceptions:
             merged_kwargs: t.MetadataAttributeDict,
         ) -> _Metadata:
             """Normalize metadata from dict-like object."""
-            merged_attrs: t.ConfigurationDict = {}
+            # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
+            merged_attrs: t.MetadataAttributeDict = {}
 
             # Normalize metadata_dict values
             for k, v in metadata_dict.items():
@@ -155,7 +156,7 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: p.Log.Metadata
+            metadata: p.Metadata
             | Mapping[str, t.MetadataAttributeValue]
             | t.GeneralValueType
             | None,
@@ -183,24 +184,21 @@ class FlextExceptions:
             if isinstance(metadata, _Metadata):
                 if merged_kwargs:
                     existing_attrs = metadata.attributes
-                    new_attrs: t.ConfigurationDict = {}
+                    # Use MetadataAttributeDict - normalize_to_metadata_value returns MetadataAttributeValue
+                    new_attrs: t.MetadataAttributeDict = {}
 
-                    # Combine attributes - both are t.GeneralValueType compatible
-                    # Type alias cannot be called - use dict() constructor directly
+                    # Combine attributes - use ConfigurationDict for combining then normalize
                     combined_attrs: t.ConfigurationDict = dict(existing_attrs)
-                    # merged_kwargs values are MetadataAttributeValue (subset of t.GeneralValueType)
+                    # merged_kwargs values are MetadataAttributeValue (subset of GeneralValueType)
                     # Add merged_kwargs with explicit type handling
                     for k, v_merged in merged_kwargs.items():
                         combined_attrs[k] = v_merged
-                    # Normalize all values with explicit type handling
+                    # Normalize all values - result is MetadataAttributeValue
                     for k, v_combined in combined_attrs.items():
-                        # Always normalize - normalize_to_metadata_value handles all t.GeneralValueType
-                        normalized_value = FlextRuntime.normalize_to_metadata_value(
+                        # normalize_to_metadata_value returns MetadataAttributeValue
+                        new_attrs[k] = FlextRuntime.normalize_to_metadata_value(
                             v_combined,
                         )
-                        # normalize_to_metadata_value returns t.GeneralValueType
-                        new_attrs[k] = normalized_value
-                    # new_attrs is already t.ConfigurationDict from loop
                     return _Metadata(attributes=new_attrs)
                 return metadata
 
@@ -245,7 +243,7 @@ class FlextExceptions:
                 validation_context["field"] = field
             if value is not None:
                 validation_context["value"] = FlextRuntime.normalize_to_metadata_value(
-                    value
+                    value,
                 )
 
             super().__init__(
@@ -541,7 +539,8 @@ class FlextExceptions:
                 }
                 for k, v in context.items():
                     if k not in excluded_keys and isinstance(
-                        v, (str, int, float, bool, type(None), list, dict)
+                        v,
+                        (str, int, float, bool, type(None), list, dict),
                     ):
                         notfound_kwargs[k] = v
 
@@ -555,7 +554,7 @@ class FlextExceptions:
             resource_id: str | None = None,
             error_code: str = c.Errors.NOT_FOUND_ERROR,
             context: Mapping[str, t.MetadataAttributeValue] | None = None,
-            metadata: p.Log.Metadata
+            metadata: p.Metadata
             | Mapping[str, t.MetadataAttributeValue]
             | t.GeneralValueType
             | None = None,
@@ -1033,7 +1032,7 @@ class FlextExceptions:
         kwargs: Mapping[str, t.MetadataAttributeValue],
     ) -> tuple[
         str | None,
-        p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
+        p.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
     ]:
         """Extract correlation_id and metadata from kwargs.
 
@@ -1046,7 +1045,7 @@ class FlextExceptions:
         )
         metadata_raw = kwargs.get("metadata")
         # Return metadata as-is if it's Metadata or dict-like, otherwise None
-        metadata: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None = None
+        metadata: p.Metadata | Mapping[str, t.MetadataAttributeValue] | None = None
         if metadata_raw is not None:
             if isinstance(metadata_raw, _Metadata):
                 metadata = metadata_raw
@@ -1128,7 +1127,7 @@ class FlextExceptions:
 
     @staticmethod
     def _prepare_metadata_value(
-        meta: p.Log.Metadata | None,
+        meta: p.Metadata | None,
     ) -> t.ConfigurationMapping | None:
         """Prepare metadata value for error creation."""
         return meta.attributes if meta is not None else None
@@ -1197,10 +1196,7 @@ class FlextExceptions:
     @staticmethod
     def _merge_metadata_into_context(
         context: t.MetadataAttributeDict,
-        metadata_obj: p.Log.Metadata
-        | Mapping[str, t.MetadataAttributeValue]
-        | t.GeneralValueType
-        | None,
+        metadata_obj: p.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
     ) -> None:
         """Merge metadata object into context dictionary."""
         if metadata_obj is None:
@@ -1209,23 +1205,29 @@ class FlextExceptions:
         if isinstance(metadata_obj, _Metadata):
             # Extract attributes from _Metadata model
             for k, v in metadata_obj.attributes.items():
-                context[k] = FlextRuntime.normalize_to_metadata_value(v)
+                normalized: t.MetadataAttributeValue = (
+                    FlextRuntime.normalize_to_metadata_value(v)
+                )
+                context[k] = normalized
         elif isinstance(metadata_obj, dict):
             # Direct dict - normalize values and update
             for k, v in metadata_obj.items():
-                context[k] = FlextRuntime.normalize_to_metadata_value(v)
+                normalized_dict: t.MetadataAttributeValue = (
+                    FlextRuntime.normalize_to_metadata_value(v)
+                )
+                context[k] = normalized_dict
         elif isinstance(metadata_obj, Mapping):
             # Mapping object - normalize and update
             for k, v in metadata_obj.items():
-                context[k] = FlextRuntime.normalize_to_metadata_value(v)
+                normalized_mapping: t.MetadataAttributeValue = (
+                    FlextRuntime.normalize_to_metadata_value(v)
+                )
+                context[k] = normalized_mapping
 
     @staticmethod
     def _build_error_context(
         correlation_id: str | None,
-        metadata_obj: p.Log.Metadata
-        | Mapping[str, t.MetadataAttributeValue]
-        | t.GeneralValueType
-        | None,
+        metadata_obj: p.Metadata | Mapping[str, t.MetadataAttributeValue] | None,
         kwargs: t.MetadataAttributeDict,
     ) -> t.MetadataAttributeDict:
         """Build error context dictionary."""

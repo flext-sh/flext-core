@@ -19,45 +19,11 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
 from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-
-def _generate_datetime_utc() -> datetime:
-    """Generate UTC datetime."""
-    return FlextRuntime.generate_datetime_utc()
-
-
-def _normalize_to_metadata(v: t.GeneralValueType) -> FlextModelsBase.Metadata:
-    """Normalize value to Metadata.
-
-    Inlined to avoid circular dependency with utilities.
-    """
-    # Handle None - return empty Metadata
-    if v is None:
-        return FlextModelsBase.Metadata(attributes={})
-
-    # Handle existing Metadata instance - return as-is
-    if isinstance(v, FlextModelsBase.Metadata):
-        return v
-
-    # Handle dict-like values
-    if FlextRuntime.is_dict_like(v) and isinstance(v, dict):
-        # Normalize each value using FlextRuntime.normalize_to_metadata_value
-        # Use GeneralValueType for compatibility with Metadata.attributes (ConfigurationDict)
-        attributes: dict[str, t.GeneralValueType] = {}
-        for key, val in v.items():
-            attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
-        return FlextModelsBase.Metadata(attributes=attributes)
-
-    # Invalid type - raise TypeError
-    msg = (
-        f"metadata must be None, dict, or FlextModelsBase.Metadata, "
-        f"got {type(v).__name__}"
-    )
-    raise TypeError(msg)
 
 
 class FlextModelsContainer:
@@ -94,7 +60,7 @@ class FlextModelsContainer:
             description="Service instance (protocols, models, callables)",
         )
         registration_time: datetime = Field(
-            default_factory=_generate_datetime_utc,
+            default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
         metadata: FlextModelsBase.Metadata | t.ServiceMetadataMapping | None = Field(
@@ -116,9 +82,9 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses u.Model.normalize_to_metadata() for centralized normalization.
+            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
             """
-            return _normalize_to_metadata(v)
+            return FlextUtilitiesModel.normalize_to_metadata(v)
 
     class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
@@ -145,7 +111,7 @@ class FlextModelsContainer:
             description="Factory function that creates service instances",
         )
         registration_time: datetime = Field(
-            default_factory=_generate_datetime_utc,
+            default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when factory was registered",
         )
         is_singleton: bool = Field(
@@ -172,9 +138,9 @@ class FlextModelsContainer:
             """Validate and normalize metadata to Metadata (STRICT mode).
 
             Accepts: None, dict, or Metadata. Always returns Metadata.
-            Uses u.Model.normalize_to_metadata() for centralized normalization.
+            Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
             """
-            return _normalize_to_metadata(v)
+            return FlextUtilitiesModel.normalize_to_metadata(v)
 
     class ResourceRegistration(BaseModel):
         """Model for lifecycle-managed resource registrations.
@@ -200,7 +166,7 @@ class FlextModelsContainer:
             description="Factory returning the lifecycle-managed resource",
         )
         registration_time: datetime = Field(
-            default_factory=_generate_datetime_utc,
+            default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when resource was registered",
         )
         metadata: FlextModelsBase.Metadata | t.ServiceMetadataMapping | None = Field(
@@ -212,7 +178,7 @@ class FlextModelsContainer:
         @classmethod
         def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
             """Normalize resource metadata to Metadata model."""
-            return _normalize_to_metadata(v)
+            return FlextUtilitiesModel.normalize_to_metadata(v)
 
     class ContainerConfig(BaseModel):
         """Model for container configuration.
@@ -318,7 +284,7 @@ _rebuild_ns = {
 FlextModelsContainer.ServiceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
 FlextModelsContainer.FactoryRegistration.model_rebuild(_types_namespace=_rebuild_ns)
 FlextModelsContainer.ResourceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.ServiceRuntimeOptions.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.ScopedContainerOptions.model_rebuild(_types_namespace=_rebuild_ns)
+FlextModelsContainer.ContainerConfig.model_rebuild(_types_namespace=_rebuild_ns)
+FlextModelsContainer.FactoryDecoratorConfig.model_rebuild(_types_namespace=_rebuild_ns)
 
 __all__ = ["FlextModelsContainer"]

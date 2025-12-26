@@ -58,8 +58,8 @@ class Order(FlextModels.AggregateRoot):
 
     customer_id: str
     items: list[str] = Field(default_factory=list)
-    status: FlextConstants.Domain.Status = Field(
-        default=FlextConstants.Domain.Status.PENDING,
+    status: FlextConstants.Cqrs.CommonStatus = Field(
+        default=FlextConstants.Cqrs.CommonStatus.PENDING,
     )
 
 
@@ -230,7 +230,7 @@ class IntegrationService(s[t.ServiceMetadataMapping]):
         print("\n=== u Integration ===")
 
         # Validation
-        email_result = u.Validation.validate_pattern(
+        email_result = u.validate_pattern(
             "test@example.com",
             FlextConstants.Platform.PATTERN_EMAIL,
             "email",
@@ -243,7 +243,7 @@ class IntegrationService(s[t.ServiceMetadataMapping]):
         print(f"✅ ID generation: {correlation_id[:12]}...")
 
         # Text processing
-        cleaned = u.Text.clean_text("  test  ")
+        cleaned = u.clean_text("  test  ")
         print(f"✅ Text processing: '{cleaned}'")
 
 

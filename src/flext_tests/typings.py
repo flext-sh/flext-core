@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal, TypeVar
+from typing import Literal, TypeGuard, TypeVar
 
 from pydantic import BaseModel
 
@@ -567,6 +567,87 @@ class FlextTestsTypes(FlextTypes):
             Examples:
                 env={"API_KEY": "test", "DEBUG": "true"}
             """
+
+    class Guards:
+        """TypeGuard functions for type narrowing without cast().
+
+        Provides static methods for safe type narrowing in test builders,
+        factories, and matchers. Use these instead of cast() for proper
+        type safety with Python 3.13+.
+        """
+
+        @staticmethod
+        def is_builder_value(
+            value: object,
+        ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderValue]:
+            """Check if value is a valid BuilderValue."""
+            if value is None:
+                return True
+            if isinstance(value, (str, int, float, bool, bytes)):
+                return True
+            if isinstance(value, BaseModel):
+                return True
+            if isinstance(value, (list, dict)):
+                return True
+            # Check for FlextResult pattern (has is_success attribute)
+            return hasattr(value, "is_success") and hasattr(value, "value")
+
+        @staticmethod
+        def is_sequence(
+            value: object,
+        ) -> TypeGuard[Sequence[t.GeneralValueType]]:
+            """Check if value is a Sequence of GeneralValueType."""
+            return isinstance(value, (list, tuple)) and not isinstance(
+                value, (str, bytes)
+            )
+
+        @staticmethod
+        def is_mapping(
+            value: object,
+        ) -> TypeGuard[Mapping[str, t.GeneralValueType]]:
+            """Check if value is a Mapping of str to GeneralValueType."""
+            return isinstance(value, dict)
+
+        @staticmethod
+        def is_builder_dict(
+            value: object,
+        ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderDict]:
+            """Check if value is a BuilderDict."""
+            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
+
+        @staticmethod
+        def is_test_result_value(
+            value: object,
+        ) -> TypeGuard[FlextTestsTypes.Tests.TestResultValue]:
+            """Check if value is a valid TestResultValue."""
+            if value is None:
+                return True
+            if isinstance(value, (str, int, float, bool)):
+                return True
+            if isinstance(value, (list, tuple)):
+                return True
+            return isinstance(value, dict)
+
+        @staticmethod
+        def is_model_kind(
+            value: str,
+        ) -> TypeGuard[Literal["user", "config", "service", "entity", "value"]]:
+            """Check if value is a valid model kind literal."""
+            return value in {"user", "config", "service", "entity", "value"}
+
+        @staticmethod
+        def is_configuration_dict(
+            value: object,
+        ) -> TypeGuard[t.ConfigurationDict]:
+            """Check if value is a ConfigurationDict."""
+            return isinstance(value, dict) and all(isinstance(k, str) for k in value)
+
+        @staticmethod
+        def is_configuration_mapping(
+            value: object,
+        ) -> TypeGuard[t.ConfigurationMapping]:
+            """Check if value is a ConfigurationMapping."""
+            return isinstance(value, Mapping) and all(isinstance(k, str) for k in value)
 
 
 t = FlextTestsTypes

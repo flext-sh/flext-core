@@ -52,7 +52,7 @@ class TestsFlextModels:
     type DomainInputValue = (
         FlextTypes.GeneralValueType | FlextProtocols.HasModelDump | object
     )
-    type DomainInputMapping = Mapping[str, DomainInputValue]
+    type DomainInputMapping = Mapping[str, TestsFlextCoreModels.DomainInputValue]
     type DomainExpectedResult = (
         FlextTypes.GeneralValueType | type[FlextTypes.GeneralValueType]
     )

@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import overload
+
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.cast import FlextUtilitiesCast
@@ -32,7 +34,9 @@ from flext_core._utilities.parser import FlextUtilitiesParser
 from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core._utilities.text import FlextUtilitiesText
 from flext_core._utilities.validation import FlextUtilitiesValidation
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import t
 
 
 class FlextUtilities:
@@ -54,7 +58,7 @@ class FlextUtilities:
 
         # Or use short alias
         from flext_core.utilities import u
-        result = u.Parser.parse(value, int)
+        result = u.parse(value, int)
     """
 
     # === FACADE CLASSES - Real inheritance ===
@@ -175,13 +179,18 @@ class FlextUtilities:
     process = staticmethod(FlextUtilitiesCollection.process)
     unique = staticmethod(FlextUtilitiesCollection.unique)
 
+    # Checker
+    compute_accepted_message_types = staticmethod(
+        FlextUtilitiesChecker.compute_accepted_message_types,
+    )
+
     # Configuration
     build_options_from_kwargs = staticmethod(
-        FlextUtilitiesConfiguration.build_options_from_kwargs
+        FlextUtilitiesConfiguration.build_options_from_kwargs,
     )
     bulk_register = staticmethod(FlextUtilitiesConfiguration.bulk_register)
     create_settings_config = staticmethod(
-        FlextUtilitiesConfiguration.create_settings_config
+        FlextUtilitiesConfiguration.create_settings_config,
     )
     get_parameter = staticmethod(FlextUtilitiesConfiguration.get_parameter)
     get_singleton = staticmethod(FlextUtilitiesConfiguration.get_singleton)
@@ -191,7 +200,7 @@ class FlextUtilities:
     set_parameter = staticmethod(FlextUtilitiesConfiguration.set_parameter)
     set_singleton = staticmethod(FlextUtilitiesConfiguration.set_singleton)
     validate_config_class = staticmethod(
-        FlextUtilitiesConfiguration.validate_config_class
+        FlextUtilitiesConfiguration.validate_config_class,
     )
 
     # Context
@@ -217,26 +226,27 @@ class FlextUtilities:
     # Domain
     compare_entities_by_id = staticmethod(FlextUtilitiesDomain.compare_entities_by_id)
     compare_value_objects_by_value = staticmethod(
-        FlextUtilitiesDomain.compare_value_objects_by_value
+        FlextUtilitiesDomain.compare_value_objects_by_value,
     )
     hash_entity_by_id = staticmethod(FlextUtilitiesDomain.hash_entity_by_id)
     hash_value_object_by_value = staticmethod(
-        FlextUtilitiesDomain.hash_value_object_by_value
+        FlextUtilitiesDomain.hash_value_object_by_value,
     )
     validate_entity_has_id = staticmethod(FlextUtilitiesDomain.validate_entity_has_id)
     validate_value_object_immutable = staticmethod(
-        FlextUtilitiesDomain.validate_value_object_immutable
+        FlextUtilitiesDomain.validate_value_object_immutable,
     )
 
     # Enum
     coerce_validator = staticmethod(FlextUtilitiesEnum.coerce_validator)
     create_discriminated_union = staticmethod(
-        FlextUtilitiesEnum.create_discriminated_union
+        FlextUtilitiesEnum.create_discriminated_union,
     )
     create_enum = staticmethod(FlextUtilitiesEnum.create_enum)
     get_enum_values = staticmethod(FlextUtilitiesEnum.get_enum_values)
     is_enum_member = staticmethod(FlextUtilitiesEnum.is_enum_member)
     is_member = staticmethod(FlextUtilitiesEnum.is_member)
+    is_subset = staticmethod(FlextUtilitiesEnum.is_subset)
     members = staticmethod(FlextUtilitiesEnum.members)
     names = staticmethod(FlextUtilitiesEnum.names)
     parse_enum = staticmethod(FlextUtilitiesEnum.parse_enum)
@@ -244,16 +254,17 @@ class FlextUtilities:
 
     # Generators
     create_dynamic_type_subclass = staticmethod(
-        FlextUtilitiesGenerators.create_dynamic_type_subclass
+        FlextUtilitiesGenerators.create_dynamic_type_subclass,
     )
     ensure_dict = staticmethod(FlextUtilitiesGenerators.ensure_dict)
     ensure_trace_context = staticmethod(FlextUtilitiesGenerators.ensure_trace_context)
     generate = staticmethod(FlextUtilitiesGenerators.generate)
     generate_datetime_utc = staticmethod(FlextUtilitiesGenerators.generate_datetime_utc)
     generate_iso_timestamp = staticmethod(
-        FlextUtilitiesGenerators.generate_iso_timestamp
+        FlextUtilitiesGenerators.generate_iso_timestamp,
     )
     generate_operation_id = staticmethod(FlextUtilitiesGenerators.generate_operation_id)
+    generate_short_id = staticmethod(FlextUtilitiesGenerators.Random.generate_short_id)
 
     # Guards
     chk = staticmethod(FlextUtilitiesGuards.chk)
@@ -264,19 +275,23 @@ class FlextUtilities:
     in_ = staticmethod(FlextUtilitiesGuards.in_)
     is_configuration_dict = staticmethod(FlextUtilitiesGuards.is_configuration_dict)
     is_configuration_mapping = staticmethod(
-        FlextUtilitiesGuards.is_configuration_mapping
+        FlextUtilitiesGuards.is_configuration_mapping,
     )
+    is_context = staticmethod(FlextUtilitiesGuards.is_context)
     is_dict_non_empty = staticmethod(FlextUtilitiesGuards.is_dict_non_empty)
     is_general_value_type = staticmethod(FlextUtilitiesGuards.is_general_value_type)
     is_handler_type = staticmethod(FlextUtilitiesGuards.is_handler_type)
+    is_handler_callable = staticmethod(FlextUtilitiesGuards.is_handler_callable)
     is_list = staticmethod(FlextUtilitiesGuards.is_list)
     is_list_non_empty = staticmethod(FlextUtilitiesGuards.is_list_non_empty)
     is_pydantic_model = staticmethod(FlextUtilitiesGuards.is_pydantic_model)
     is_string_non_empty = staticmethod(FlextUtilitiesGuards.is_string_non_empty)
     is_type = staticmethod(FlextUtilitiesGuards.is_type)
+    is_flexible_value = staticmethod(FlextUtilitiesGuards.is_flexible_value)
+    is_mapping = staticmethod(FlextUtilitiesGuards.is_mapping)
     none_ = staticmethod(FlextUtilitiesGuards.none_)
     normalize_to_metadata_value = staticmethod(
-        FlextUtilitiesGuards.normalize_to_metadata_value
+        FlextUtilitiesGuards.normalize_to_metadata_value,
     )
 
     # Mapper
@@ -296,19 +311,83 @@ class FlextUtilities:
     fields = staticmethod(FlextUtilitiesMapper.fields)
     fields_multi = staticmethod(FlextUtilitiesMapper.fields_multi)
     filter_dict = staticmethod(FlextUtilitiesMapper.filter_dict)
-    get = staticmethod(FlextUtilitiesMapper.get)
+
+    # get - with overloads for proper type inference
+    @staticmethod
+    @overload
+    def get(
+        data: p.AccessibleData,
+        key: str,
+    ) -> t.GeneralValueType | None: ...
+
+    @staticmethod
+    @overload
+    def get(
+        data: p.AccessibleData,
+        key: str,
+        *,
+        default: str,
+    ) -> str: ...
+
+    @staticmethod
+    @overload
+    def get(
+        data: p.AccessibleData,
+        key: str,
+        *,
+        default: bool,
+    ) -> bool: ...
+
+    @staticmethod
+    @overload
+    def get(
+        data: p.AccessibleData,
+        key: str,
+        *,
+        default: int,
+    ) -> int: ...
+
+    @staticmethod
+    @overload
+    def get(
+        data: p.AccessibleData,
+        key: str,
+        *,
+        default: float,
+    ) -> float: ...
+
+    @staticmethod
+    @overload
+    def get(
+        data: p.AccessibleData,
+        key: str,
+        *,
+        default: t.GeneralValueType | None,
+    ) -> t.GeneralValueType | None: ...
+
+    @staticmethod
+    def get(
+        data: p.AccessibleData,
+        key: str,
+        *,
+        default: t.GeneralValueType | None = None,
+    ) -> t.GeneralValueType | None:
+        """Unified get function for dict/object access with default."""
+        return FlextUtilitiesMapper.get(data, key, default=default)
+
     invert_dict = staticmethod(FlextUtilitiesMapper.invert_dict)
     is_json_primitive = staticmethod(FlextUtilitiesMapper.is_json_primitive)
     key_by = staticmethod(FlextUtilitiesMapper.key_by)
     map_dict_keys = staticmethod(FlextUtilitiesMapper.map_dict_keys)
     normalize_context_values = staticmethod(
-        FlextUtilitiesMapper.normalize_context_values
+        FlextUtilitiesMapper.normalize_context_values,
     )
     omit = staticmethod(FlextUtilitiesMapper.omit)
     pick = staticmethod(FlextUtilitiesMapper.pick)
     pluck = staticmethod(FlextUtilitiesMapper.pluck)
     process_context_data = staticmethod(FlextUtilitiesMapper.process_context_data)
     prop = staticmethod(FlextUtilitiesMapper.prop)
+    # NOTE: take has complex overloads - use u.Mapper.take() for type inference
     take = staticmethod(FlextUtilitiesMapper.take)
     transform = staticmethod(FlextUtilitiesMapper.transform)
     transform_values = staticmethod(FlextUtilitiesMapper.transform_values)
@@ -325,17 +404,17 @@ class FlextUtilities:
 
     # Pagination
     build_pagination_response = staticmethod(
-        FlextUtilitiesPagination.build_pagination_response
+        FlextUtilitiesPagination.build_pagination_response,
     )
     extract_page_params = staticmethod(FlextUtilitiesPagination.extract_page_params)
     extract_pagination_config = staticmethod(
-        FlextUtilitiesPagination.extract_pagination_config
+        FlextUtilitiesPagination.extract_pagination_config,
     )
     prepare_pagination_data = staticmethod(
-        FlextUtilitiesPagination.prepare_pagination_data
+        FlextUtilitiesPagination.prepare_pagination_data,
     )
     validate_pagination_params = staticmethod(
-        FlextUtilitiesPagination.validate_pagination_params
+        FlextUtilitiesPagination.validate_pagination_params,
     )
 
     # Reliability
@@ -350,6 +429,7 @@ class FlextUtilities:
     retry = staticmethod(FlextUtilitiesReliability.retry)
     tap_result = staticmethod(FlextUtilitiesReliability.tap_result)
     then = staticmethod(FlextUtilitiesReliability.then)
+    with_retry = staticmethod(FlextUtilitiesReliability.with_retry)
     with_timeout = staticmethod(FlextUtilitiesReliability.with_timeout)
 
     # Runtime
@@ -357,7 +437,7 @@ class FlextUtilities:
     is_list_like = staticmethod(FlextRuntime.is_list_like)
     normalize_to_general_value = staticmethod(FlextRuntime.normalize_to_general_value)
     runtime_normalize_to_metadata_value = staticmethod(
-        FlextRuntime.normalize_to_metadata_value
+        FlextRuntime.normalize_to_metadata_value,
     )
     runtime_generate_datetime_utc = staticmethod(FlextRuntime.generate_datetime_utc)
     generate_id = staticmethod(FlextRuntime.generate_id)
@@ -369,8 +449,29 @@ class FlextUtilities:
     safe_string = staticmethod(FlextUtilitiesText.safe_string)
     truncate_text = staticmethod(FlextUtilitiesText.truncate_text)
 
-    # Validation
+    # Parser - Direct access aliases (u.parse, u.convert, u.conv_*, u.norm_*)
+    parse = staticmethod(FlextUtilitiesParser.parse)
+    convert = staticmethod(FlextUtilitiesParser.convert)
+    conv_str = staticmethod(FlextUtilitiesParser.conv_str)
+    conv_int = staticmethod(FlextUtilitiesParser.conv_int)
+    conv_str_list = staticmethod(FlextUtilitiesParser.conv_str_list)
+    conv_str_list_truthy = staticmethod(FlextUtilitiesParser.conv_str_list_truthy)
+    conv_str_list_safe = staticmethod(FlextUtilitiesParser.conv_str_list_safe)
+    norm_str = staticmethod(FlextUtilitiesParser.norm_str)
+    norm_list = staticmethod(FlextUtilitiesParser.norm_list)
+    norm_join = staticmethod(FlextUtilitiesParser.norm_join)
+    norm_in = staticmethod(FlextUtilitiesParser.norm_in)
+
+    # Validation - Core
     validate = staticmethod(FlextUtilitiesValidation.validate)
+    validate_pattern = staticmethod(FlextUtilitiesValidation.validate_pattern)
+    validate_length = staticmethod(FlextUtilitiesValidation.validate_length)
+    validate_positive = staticmethod(FlextUtilitiesValidation.Numeric.validate_positive)
+    validate_uri = staticmethod(FlextUtilitiesValidation.Network.validate_uri)
+    validate_port_number = staticmethod(
+        FlextUtilitiesValidation.Network.validate_port_number,
+    )
+    validate_hostname = staticmethod(FlextUtilitiesValidation.Network.validate_hostname)
 
     # Validation/ResultHelpers
     any_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.any_)

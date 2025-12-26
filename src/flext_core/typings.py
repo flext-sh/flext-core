@@ -16,6 +16,7 @@ from pathlib import Path
 from re import Pattern
 from types import ModuleType
 from typing import (
+    Annotated,
     ParamSpec,
     Protocol,
     Self,
@@ -26,7 +27,7 @@ from typing import (
     runtime_checkable,
 )
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # LaxStr compatibility for external integrations (LDAP, etc.)
@@ -111,50 +112,92 @@ class FlextTypes:
     # =====================================================================
     # Complex types that require composition or domain-specific logic
 
-    # Core scalar and value types using Python 3.13+ PEP 695 strict syntax
+    # =========================================================================
+    # ALIGNED TYPE HIERARCHY (Pydantic-safe, no 'object' types)
+    # =========================================================================
+    # Business Rule: All value types are JSON-serializable and Pydantic-compatible.
+    # Types are aligned from MetadataAttributeValue up to GeneralValueType.
+
+    # Tier 1: Scalar primitives (immutable, JSON-safe)
     type ScalarValue = str | int | float | bool | datetime | None
 
-    # Recursive general value type - PEP 695 syntax for Pydantic compatibility
-    # Supports JSON-serializable values: primitives, sequences, mappings, and callables
-    # Note: Recursive type uses forward reference (managed by __future__ annotations)
-    # Reuses ScalarValue defined above
-    # PEP 695 recursive types work with __future__ annotations
-    # Use string forward reference for recursive types to avoid pyrefly errors
-    # Includes callables for DI container factory support
-    # Temporarily simplified to avoid recursion issues
-    GeneralValueType = Union[  # type: ignore[explicit-any]
+    # Tier 2: Pydantic-safe metadata values (used in Metadata.attributes)
+    # Must match _ConfigValue in _models/base.py for Pydantic schema compatibility
+    type MetadataScalarValue = str | int | float | bool | None
+    type MetadataListValue = list[str | int | float | bool | None]
+    type MetadataNestedDict = dict[
         str,
-        int,
-        float,
-        bool,
-        datetime,
-        None,
-        BaseModel,
-        Path,
-        Callable[..., object],  # Simplified to avoid recursion
-        Sequence[object],       # Simplified to avoid recursion
-        Mapping[str, object],   # Simplified to avoid recursion
+        str | int | float | bool | list[str | int | float | bool | None] | None,
     ]
+
+    # Tier 2.5: Pydantic-safe config types for Field() annotations
+    # These types avoid recursion issues in Pydantic schema generation
+    type PydanticConfigValue = (
+        str
+        | int
+        | float
+        | bool
+        | None
+        | list[str | int | float | bool | None]
+        | dict[
+            str, str | int | float | bool | list[str | int | float | bool | None] | None
+        ]
+    )
+    type PydanticConfigDict = dict[str, FlextTypes.PydanticConfigValue]
+
+    # Tier 3: General value types (superset including BaseModel, Path, datetime)
+    # Used throughout the codebase for flexible value handling
+    type GeneralScalarValue = str | int | float | bool | datetime | None
+    type GeneralListValue = list[str | int | float | bool | datetime | None]
+    type GeneralNestedDict = dict[
+        str,
+        str
+        | int
+        | float
+        | bool
+        | datetime
+        | None
+        | list[str | int | float | bool | datetime | None],
+    ]
+
+    # =========================================================================
+    # GeneralValueType - RECURSIVE type for JSON-like values (PEP 695)
+    # =========================================================================
+    # Python 3.13+ recursive type using forward reference
+    # Allows Mapping[str, GeneralValueType] to be a GeneralValueType
+    type GeneralValueType = (
+        str
+        | int
+        | float
+        | bool
+        | datetime
+        | None
+        | BaseModel
+        | Path
+        | Sequence[FlextTypes.GeneralValueType]  # Recursive: lists of values
+        | Mapping[str, FlextTypes.GeneralValueType]  # Recursive: dicts of values
+        | Callable[..., FlextTypes.GeneralValueType]  # Callables returning values
+    )
 
     # Constant value type - all possible constant types in FlextConstants
     # Used for type-safe constant access via __getitem__ method
     # Includes all types that can be stored as constants: primitives, collections,
     # Pydantic ConfigDict, SettingsConfigDict, and StrEnum types
-    ConstantValue = Union[  # type: ignore[explicit-any]
-        str,
-        int,
-        float,
-        bool,
-        ConfigDict,
-        SettingsConfigDict,
-        frozenset[str],
-        tuple[str, ...],
-        Mapping[str, str | int],
-        StrEnum,
-        type[StrEnum],
-        Pattern[str],  # For regex pattern constants
-        type,  # For nested namespace classes (e.g., FlextConstants.Network)
-    ]
+    ConstantValue: TypeAlias = (
+        str
+        | int
+        | float
+        | bool
+        | ConfigDict
+        | SettingsConfigDict
+        | frozenset[str]
+        | tuple[str, ...]
+        | Mapping[str, str | int]
+        | StrEnum
+        | type[StrEnum]
+        | Pattern[str]
+        | type
+    )
 
     # Object list type - sequence of general value types for batch operations
     # Reuses "FlextTypes.GeneralValueType" (forward reference managed by __future__ annotations)
@@ -179,23 +222,27 @@ class FlextTypes:
         str | int | float | Mapping[str, FlextTypes.SortableObjectType]
     )
 
-    # Metadata-compatible attribute value type - composed for strict
-    # validation
-    # Reuses ScalarValue defined above (forward reference managed by
-    # __future__ annotations)
-    # Includes Callable for consistency with GeneralValueType
-    MetadataAttributeValue = Union[  # type: ignore[explicit-any]
+    # MetadataAttributeValue - ALIGNED with GeneralValueType primitive types
+    # Includes datetime for proper subtyping (MetadataAttributeValue <: GeneralValueType)
+    # Excludes: BaseModel, Path, Callable (those are GeneralValueType extensions)
+    MetadataAttributeValue = Union[  # noqa: UP007 - Union required for TypeAlias compatibility
         str,
         int,
         float,
         bool,
-        datetime,
-        BaseModel,
-        Path,
+        datetime,  # CRITICAL: Must include datetime for subtype compatibility
         None,
-        Callable[..., "FlextTypes.GeneralValueType"],
-        Sequence["FlextTypes.MetadataAttributeValue"],
-        Mapping[str, "FlextTypes.MetadataAttributeValue"],
+        list[str | int | float | bool | datetime | None],
+        dict[
+            str,
+            str
+            | int
+            | float
+            | bool
+            | datetime
+            | None
+            | list[str | int | float | bool | datetime | None],
+        ],
     ]
 
     # Generic metadata dictionary type - read-only interface for metadata containers
@@ -489,7 +536,8 @@ class FlextTypes:
     """Mutable dict for general value types (alias for ConfigurationDict)."""
 
     type DecoratorType = Callable[
-        [FlextTypes.HandlerCallable], FlextTypes.HandlerCallable
+        [FlextTypes.HandlerCallable],
+        FlextTypes.HandlerCallable,
     ]
     """Type for decorators that wrap handler callables."""
 
@@ -502,10 +550,10 @@ class FlextTypes:
     type HandlerCallableDict = dict[str, FlextTypes.HandlerCallable]
     """Mutable dict for handler callable mappings."""
 
-    type StringFlextLoggerDict = dict[str, object]
+    type StringFlextLoggerDict = dict[str, FlextTypes.GeneralValueType]
     """Mutable dict for string-to-logger mappings.
 
-    Note: Uses 'object' as base type to allow any logger type
+    Note: Uses GeneralValueType as base type to allow any logger type
     (typically FlextLogger) without circular import.
     """
 
@@ -550,7 +598,8 @@ class FlextTypes:
     """Mapping for string-to-sequence-of-t.FlextTypes.GeneralValueType associations."""
 
     type StringSequenceGeneralValueDict = dict[
-        str, Sequence[FlextTypes.GeneralValueType]
+        str,
+        Sequence[FlextTypes.GeneralValueType],
     ]
     """Mutable dict for string-to-sequence-of-t.FlextTypes.GeneralValueType associations."""
 
@@ -567,7 +616,7 @@ class FlextTypes:
     # Service instance type - union of all types accepted by container.register()
     # ARCHITECTURAL EXCEPTION: DI containers must accept any Python object
     # This uses GeneralValueType + Protocol for type-safe service storage
-    ServiceInstanceType = Union[  # type: ignore[explicit-any]
+    ServiceInstanceType: TypeAlias = Union[
         "FlextTypes.GeneralValueType",
         Callable[..., "FlextTypes.GeneralValueType"],
     ]
@@ -629,17 +678,17 @@ class FlextTypes:
     type ResourceMapping = Mapping[str, FlextTypes.ResourceCallable]
     """Mapping type for resource registrations in scoped container creation."""
 
-    type ServiceRegistrationDict = dict[str, object]
+    type ServiceRegistrationDict = dict[str, FlextTypes.GeneralValueType]
     """Mutable dict for service registration mappings.
 
-    Note: Uses 'object' as base type to allow any service registration type
+    Note: Uses GeneralValueType as base type to allow any service registration type
     (typically m.ContainerServiceRegistration) without circular import.
     """
 
-    type FactoryRegistrationDict = dict[str, object]
+    type FactoryRegistrationDict = dict[str, FlextTypes.GeneralValueType]
     """Mutable dict for factory registration mappings.
 
-    Note: Uses 'object' as base type to allow any factory registration type
+    Note: Uses GeneralValueType as base type to allow any factory registration type
     (typically m.ContainerFactoryRegistration) without circular import.
     """
 
@@ -658,10 +707,10 @@ class FlextTypes:
     ]
     """Mapping for consistency rules (rule names to validator returning Result-like)."""
 
-    type ResourceRegistrationDict = dict[str, object]
+    type ResourceRegistrationDict = dict[str, FlextTypes.GeneralValueType]
     """Mutable dict for resource registration mappings.
 
-    Uses object to avoid circular imports (typically ResourceRegistration).
+    Uses GeneralValueType to avoid circular imports (typically ResourceRegistration).
     """
 
     type EventValidatorMapping = Mapping[
@@ -841,6 +890,29 @@ class FlextTypes:
 
         wire_classes: Sequence[type]
         """Classes to wire for dependency injection."""
+
+    # =====================================================================
+    # VALIDATION TYPES (Python 3.13+ Annotated with Pydantic constraints)
+    # =====================================================================
+
+    class Validation:
+        """Validation type aliases with Pydantic constraints."""
+
+        # Port number type with constraints (1-65535)
+        type PortNumber = Annotated[int, Field(ge=1, le=65535)]
+        """Port number type alias (1-65535)."""
+
+        # Timeout type with constraints (positive float)
+        type PositiveTimeout = Annotated[float, Field(gt=0.0, le=300.0)]
+        """Positive timeout in seconds (0-300)."""
+
+        # Retry count type with constraints
+        type RetryCount = Annotated[int, Field(ge=0, le=10)]
+        """Retry count (0-10)."""
+
+        # Worker count type with constraints
+        type WorkerCount = Annotated[int, Field(ge=1, le=100)]
+        """Worker count (1-100)."""
 
     # Commonly used type aliases
 

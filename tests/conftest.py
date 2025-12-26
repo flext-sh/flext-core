@@ -16,7 +16,15 @@ from typing import TypeVar
 
 import pytest
 
-from flext_core import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextResult,
+    FlextSettings,
+    FlextTypes as t,
+    m,
+    r,
+)
 from flext_core._models import entity as flext_models_entity
 from tests.helpers import factories  # Import for User model rebuild
 from tests.test_utils import assertion_helpers
@@ -37,7 +45,9 @@ class TestAutomationFramework:
     """
 
     @staticmethod
-    def assert_result_success(result: TestResult[object], context: str = "") -> object:
+    def assert_result_success[TResult](
+        result: FlextResult[TResult], context: str = ""
+    ) -> TResult:
         """Assert FlextResult is success and return value.
 
         Args:
@@ -58,8 +68,8 @@ class TestAutomationFramework:
         return result.value
 
     @staticmethod
-    def assert_result_failure(
-        result: TestResult[object],
+    def assert_result_failure[TResult](
+        result: FlextResult[TResult],
         expected_error: str | None = None,
         context: str = "",
     ) -> str:
@@ -172,7 +182,9 @@ class TestAutomationFramework:
             return r[object].fail(f"Execution failed: {e}")
 
     @staticmethod
-    def parametrize_real_data(*test_cases: dict[str, object]) -> pytest.MarkDecorator:
+    def parametrize_real_data(
+        *test_cases: dict[str, t.GeneralValueType],
+    ) -> pytest.MarkDecorator:
         """Parametrize test with real data following architecture rules.
 
         Args:
@@ -324,7 +336,7 @@ def mock_external_service() -> FunctionalExternalService:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, object]:
+def sample_data() -> dict[str, t.GeneralValueType]:
     """Provide sample test data for integration tests."""
     return {
         "string": "test_value",
