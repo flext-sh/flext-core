@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TypeGuard, cast, overload
+from typing import TypeGuard, overload
 
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -77,43 +77,40 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _narrow_to_configuration_dict(value: object) -> t.ConfigurationDict:
         """Safely narrow object to ConfigurationDict with runtime validation."""
-        if not isinstance(value, dict):
-            error_msg = f"Cannot narrow {type(value)} to ConfigurationDict"
-            raise TypeError(error_msg)
-        # Explicit cast after isinstance - helps Pyright track type narrowing
-        dict_typed: dict[str, object] = value
-        # Verify keys are strings
-        keys: list[object] = list(dict_typed.keys())
-        if not all(isinstance(k, str) for k in keys):
-            error_msg = f"Cannot narrow {type(value)} to ConfigurationDict - non-string keys found"
-            raise TypeError(error_msg)
-        # Type narrowing: dict is confirmed, keys are strings
-        return cast("t.ConfigurationDict", value)
+        # Use TypeGuard for proper type narrowing without cast
+        if FlextUtilitiesGuards.is_configuration_dict(value):
+            return value
+        error_msg = f"Cannot narrow {type(value)} to ConfigurationDict"
+        raise TypeError(error_msg)
+
+    @staticmethod
+    def _narrow_to_string_keyed_dict(value: object) -> dict[str, object]:
+        """Narrow object to dict with string keys (for conversion purposes).
+
+        Less strict than _narrow_to_configuration_dict - only validates that
+        the object is a dict with string keys. Values can be any type since
+        the purpose is to convert them to JSON-compatible format.
+        """
+        if isinstance(value, dict) and all(isinstance(k, str) for k in value):
+            return value
+        error_msg = f"Cannot narrow {type(value)} to string-keyed dict"
+        raise TypeError(error_msg)
 
     @staticmethod
     def _narrow_to_configuration_mapping(value: object) -> t.ConfigurationMapping:
         """Safely narrow object to ConfigurationMapping with runtime validation."""
-        if not isinstance(value, Mapping):
-            error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping"
-            raise TypeError(error_msg)
-        # Explicit cast after isinstance - helps Pyright track type narrowing
-        mapping_typed: Mapping[str, object] = value
-        # Verify keys are strings
-        keys: list[object] = list(mapping_typed.keys())
-        if not all(isinstance(k, str) for k in keys):
-            error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping - non-string keys found"
-            raise TypeError(error_msg)
-        # Type narrowing: Mapping is confirmed, keys are strings
-        return cast("t.ConfigurationMapping", value)
+        # Use TypeGuard for proper type narrowing without cast
+        if FlextUtilitiesGuards.is_configuration_mapping(value):
+            return value
+        error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping"
+        raise TypeError(error_msg)
 
     @staticmethod
     def _narrow_to_sequence(value: object) -> Sequence[object]:
         """Safely narrow object to Sequence[object] with runtime validation."""
+        # isinstance with (list, tuple) provides Sequence type narrowing
         if isinstance(value, (list, tuple)):
-            return cast(
-                "Sequence[object]",
-                value,
-            )  # Type narrowing via isinstance + cast
+            return value
         error_msg = f"Cannot narrow {type(value)} to Sequence"
         raise TypeError(error_msg)
 
@@ -423,14 +420,12 @@ class FlextUtilitiesMapper:
             return value
         # Use isinstance for type narrowing (is_type() doesn't return TypeGuard)
         if isinstance(value, dict):
-            # Type narrowing: value is dict after isinstance check
-            # Use helper for safe narrowing to ConfigurationDict
-            value_dict: t.ConfigurationDict = (
-                FlextUtilitiesMapper._narrow_to_configuration_dict(value)
-            )
+            # Convert any dict to JSON-compatible format
+            # Purpose: CONVERT arbitrary dicts (even with non-GeneralValueType values)
+            # to JSON-safe format by recursively calling convert_to_json_value
             return {
                 str(k): FlextUtilitiesMapper.convert_to_json_value(v)
-                for k, v in value_dict.items()
+                for k, v in value.items()
             }
         # Use isinstance for sequence type narrowing
         if isinstance(value, Sequence) and not isinstance(value, str):
@@ -446,14 +441,14 @@ class FlextUtilitiesMapper:
     @classmethod
     def convert_dict_to_json(
         cls,
-        data: t.ConfigurationDict,
+        data: dict[str, object],
     ) -> t.ConfigurationDict:
         """Convert dict with any values to JSON-compatible dict.
 
         **Generic replacement for**: Manual dict-to-JSON conversion loops
 
         Args:
-            data: Source dictionary with any values
+            data: Source dictionary with any values (must have string keys)
 
         Returns:
             Dictionary with all values converted to JSON-compatible types
@@ -464,13 +459,12 @@ class FlextUtilitiesMapper:
             >>> # {"name": "test", "value": "str(CustomObject())"}
 
         """
-        # ConfigurationDict keys are always str, so isinstance is redundant
         return {key: cls.convert_to_json_value(value) for key, value in data.items()}
 
     @classmethod
     def convert_list_to_json(
         cls,
-        data: Sequence[t.GeneralValueType],
+        data: Sequence[object],
     ) -> list[t.ConfigurationDict]:
         """Convert list of dict-like items to JSON-compatible list.
 
@@ -487,10 +481,9 @@ class FlextUtilitiesMapper:
             >>> result = FlextUtilitiesMapper.convert_list_to_json(data)
 
         """
-        # Use list comprehension for better performance
         return [
             FlextUtilitiesMapper.convert_dict_to_json(
-                FlextUtilitiesMapper._narrow_to_configuration_dict(item),
+                FlextUtilitiesMapper._narrow_to_string_keyed_dict(item),
             )
             for item in data
             if isinstance(item, dict)
@@ -766,17 +759,14 @@ class FlextUtilitiesMapper:
                 return r[T | None].ok(default)
 
             # Type narrowing: current is T after successful extraction
-            # Use t.GeneralValueType from lower layer for proper type narrowing
-            # Since we extract from ConfigurationMapping (dict[str, t.GeneralValueType]),
-            # the extracted value is always t.GeneralValueType compatible
-            # For generic T, we rely on type compatibility: T must be compatible with
-            # t.GeneralValueType when extracting from ConfigurationMapping
+            # Use _narrow_to_general_value_type for proper type narrowing
+            # T is bounded to GeneralValueType-compatible types when used with ConfigurationMapping
             current_as_general: t.GeneralValueType = (
                 FlextUtilitiesMapper._narrow_to_general_value_type(current)
             )
 
-            # Cast to T | None for type safety - ConfigurationMapping guarantees compatibility
-            return r[T | None].ok(cast("T | None", current_as_general))
+            # Return directly - T is bounded to GeneralValueType-compatible types
+            return r[T | None].ok(current_as_general)
 
         except Exception as e:
             return r[T | None].fail(f"Extract failed: {e}")
@@ -867,22 +857,12 @@ class FlextUtilitiesMapper:
         """Internal helper for raw get without DSL conversion."""
         match data:
             case dict() | Mapping():
-                # Type narrowing: data is dict or Mapping
-                # Use helper for safe narrowing to ConfigurationMapping
-                data_mapping: t.ConfigurationMapping = (
-                    FlextUtilitiesMapper._narrow_to_configuration_mapping(data)
-                )
-                # Get value from mapping, use default if key not found
-                raw_value = data_mapping.get(key)
+                # Work with any dict/Mapping - utility method should be flexible
+                # Don't require strict ConfigurationMapping - allow any value types
+                raw_value = data.get(key)
                 if raw_value is None:
                     return default
-                # Type narrowing: raw_value is GeneralValueType
-                # ConfigurationMapping always returns GeneralValueType-compatible values
-                if FlextUtilitiesGuards.is_general_value_type(raw_value):
-                    # TypeGuard ensures type narrowing to GeneralValueType
-                    return raw_value
-                # Raw value not compatible with GeneralValueType, return default
-                return default
+                return raw_value
             case _:
                 return getattr(data, key, default)
 
@@ -1397,14 +1377,10 @@ class FlextUtilitiesMapper:
         """Helper: Apply filter operation."""
         if "filter" not in ops:
             return current
-        filter_pred_raw = FlextUtilitiesMapper._get_callable_from_dict(ops, "filter")
-        if filter_pred_raw is None:
+        filter_pred = FlextUtilitiesMapper._get_callable_from_dict(ops, "filter")
+        if filter_pred is None:
             return current
-        # Cast the callable to proper filter predicate type
-        filter_pred: Callable[[object], bool] = cast(
-            "Callable[[object], bool]",
-            filter_pred_raw,
-        )
+        # filter_pred returns GeneralValueType, used as truthy check in filter context
         # Handle collections
         if isinstance(current, (list, tuple)):
             # Type narrowing: current is Sequence[object], x is t.GeneralValueType
@@ -1422,7 +1398,7 @@ class FlextUtilitiesMapper:
             # Use filter_dict for consistency
             return FlextUtilitiesMapper.filter_dict(
                 current_dict,
-                lambda _k, v: filter_pred(v),
+                lambda _k, v: bool(filter_pred(v)),
             )
         # Single value
         return default if not filter_pred(current) else current
@@ -1520,16 +1496,12 @@ class FlextUtilitiesMapper:
         )
         map_keys_val = transform_opts.get("map_keys")
         # Type narrowing: ensure dict values are strings for StringMapping
+        map_keys_dict: t.StringMapping | None = None
         if isinstance(map_keys_val, dict) and all(
             isinstance(v, str) for v in map_keys_val.values()
         ):
-            # Runtime check ensures all values are str, so cast to StringMapping is safe
-            map_keys_dict: t.StringMapping | None = cast(
-                "t.StringMapping",
-                map_keys_val,
-            )
-        else:
-            map_keys_dict = None
+            # Build StringMapping from validated dict - all keys/values confirmed as str
+            map_keys_dict = {str(k): str(v) for k, v in map_keys_val.items()}
         filter_keys_val = transform_opts.get("filter_keys")
         filter_keys_set: set[str] | None = (
             filter_keys_val if isinstance(filter_keys_val, set) else None
@@ -2203,13 +2175,12 @@ class FlextUtilitiesMapper:
                 field_required = field_spec is None
 
             # Extract field
-            # Cast for type safety - ConfigurationMapping guarantees GeneralValueType compatibility
-            field_default_typed: T | None = cast("T | None", field_default)
+            # field_default is GeneralValueType | None, compatible with T | None
             # Use overload without type parameter - type inference will work from default
-            value: T | None = FlextUtilitiesMapper.get(
+            value: t.GeneralValueType | None = FlextUtilitiesMapper.get(
                 source,
                 field_name,
-                default=field_default_typed,
+                default=field_default,
             )
             if value is None and field_required:
                 extracted: T | None = None

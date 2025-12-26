@@ -700,7 +700,7 @@ class FlextRegistry(FlextService[bool]):
         self.logger.info(f"Registered {category}: {name}")
         return r[bool].ok(True)
 
-    def get_plugin(self, category: str, name: str) -> r[object]:
+    def get_plugin(self, category: str, name: str) -> r[t.GeneralValueType]:
         """Get a registered plugin by category and name.
 
         Args:
@@ -708,7 +708,7 @@ class FlextRegistry(FlextService[bool]):
             name: Plugin name
 
         Returns:
-            r[object]: Success with plugin or failure if not found.
+            r[t.GeneralValueType]: Success with plugin or failure if not found.
                 Caller should validate/narrow the type as needed.
 
         """
@@ -719,16 +719,16 @@ class FlextRegistry(FlextService[bool]):
                 for k in self._registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[object].fail(
+            return r[t.GeneralValueType].fail(
                 f"{category} '{name}' not found. Available: {available}"
             )
 
-        raw_result: p.Result[t.GeneralValueType] = self.container.get(key)
+        raw_result = self.container.get(key)
         if raw_result.is_failure:
-            return r[object].fail(
+            return r[t.GeneralValueType].fail(
                 f"Failed to retrieve {category} '{name}': {raw_result.error}"
             )
-        return r[object].ok(raw_result.value)
+        return r[t.GeneralValueType].ok(raw_result.value)
 
     def list_plugins(self, category: str) -> r[list[str]]:
         """List all plugins in a category.

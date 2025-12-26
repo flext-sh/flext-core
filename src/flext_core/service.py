@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import cast, override
+from typing import override
 
 from pydantic import (
     BaseModel,
@@ -176,11 +176,7 @@ class FlextService[TDomainResult](
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
         context: p.Ctx | None = None,
         subproject: str | None = None,
-        services: Mapping[
-            str,
-            t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType],
-        ]
-        | None = None,
+        services: Mapping[str, t.GeneralValueType | BaseModel | object] | None = None,
         factories: Mapping[
             str,
             Callable[
@@ -268,135 +264,56 @@ class FlextService[TDomainResult](
         config_type = cls._get_service_config_type()
         options = cls._runtime_bootstrap_options()
         # Delegate to _create_runtime with options from _runtime_bootstrap_options
-        # Extract values from options using u.mapper()
-        config_type_raw = (
-            u.mapper().get(options, "config_type") if "config_type" in options else None
-        )
-        # Type narrowing: Check if config_type_raw is a type subclass of FlextSettings
+        # Direct TypedDict access preserves types from t.RuntimeBootstrapOptions
+
+        # config_type: TypedDict defines as type[BaseModel], narrow to FlextSettings
+        config_type_raw = options.get("config_type")
         config_type_val: type[FlextSettings] | None
         if (
             config_type_raw is not None
             and isinstance(config_type_raw, type)
             and issubclass(config_type_raw, FlextSettings)
         ):
-            # Cast needed - isinstance + issubclass narrows but mypy can't verify
-            config_type_val = cast("type[FlextSettings]", config_type_raw)
+            config_type_val = config_type_raw
         else:
             config_type_val = config_type
 
-        config_overrides_raw = u.mapper().get(options, "config_overrides")
-        # Type narrowing: Check if config_overrides_raw is a Mapping
-        # isinstance() confirms Mapping, cast refines value type
-        if config_overrides_raw is not None and isinstance(
-            config_overrides_raw, Mapping
-        ):
-            config_overrides_val: Mapping[str, t.FlexibleValue] | None = cast(
-                "Mapping[str, t.FlexibleValue]", config_overrides_raw
-            )
-        else:
-            config_overrides_val = None
+        # config_overrides: TypedDict typed as Mapping[str, FlexibleValue]
+        config_overrides_val = options.get("config_overrides")
 
-        context_raw = (
-            u.mapper().get(options, "context") if "context" in options else None
-        )
-        # Type narrowing: context_raw should implement p.Ctx protocol if present
-        # Protocol conformance can't be checked at runtime, cast for type safety
-        if context_raw is not None:
-            context_val: p.Ctx | None = cast("p.Ctx", context_raw)
-        else:
-            context_val = None
+        # context: TypedDict typed as object, use TypeGuard for protocol narrowing
+        context_raw = options.get("context")
+        context_val: p.Ctx | None = None
+        if context_raw is not None and u.Guards._is_context(context_raw):
+            context_val = context_raw
 
-        # Type narrowing: Check if subproject is a string
-        subproject_raw = u.mapper().get(options, "subproject")
-        subproject_val: str | None = (
-            subproject_raw if isinstance(subproject_raw, str) else None
-        )
+        # subproject: TypedDict typed as str
+        subproject_val = options.get("subproject")
 
-        services_raw = options.get("services") if "services" in options else None
-        # Type narrowing: isinstance() confirms Mapping, cast refines value type
-        if services_raw is not None and isinstance(services_raw, Mapping):
-            services_val: (
-                Mapping[
-                    str,
-                    t.GeneralValueType
-                    | BaseModel
-                    | p.VariadicCallable[t.GeneralValueType],
-                ]
-                | None
-            ) = cast(
-                "Mapping[str, t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType]]",
-                services_raw,
-            )
-        else:
-            services_val = None
+        # services: TypedDict uses object placeholder for p.VariadicCallable (circular import)
+        # Access directly - TypedDict provides Mapping[str, GeneralValueType | BaseModel | object]
+        services_val = options.get("services")
 
-        factories_raw = options.get("factories")
-        # Type narrowing: isinstance() confirms Mapping type
-        if factories_raw is not None and isinstance(factories_raw, Mapping):
-            factories_val: (
-                Mapping[
-                    str,
-                    Callable[
-                        [],
-                        t.ScalarValue
-                        | Sequence[t.ScalarValue]
-                        | Mapping[str, t.ScalarValue],
-                    ],
-                ]
-                | None
-            ) = factories_raw  # isinstance already narrowed type
-        else:
-            factories_val = None
+        # factories: TypedDict typed as Mapping with callable values
+        factories_val = options.get("factories")
 
-        resources_raw = u.mapper().get(options, "resources")
-        # Type narrowing: isinstance() confirms Mapping, cast refines callable type
-        if resources_raw is not None and isinstance(resources_raw, Mapping):
-            resources_val: Mapping[str, Callable[[], t.GeneralValueType]] | None = cast(
-                "Mapping[str, Callable[[], t.GeneralValueType]]", resources_raw
-            )
-        else:
-            resources_val = None
+        # resources: TypedDict typed as Mapping[str, Callable[[], GeneralValueType]]
+        resources_val = options.get("resources")
 
-        container_overrides_raw = u.mapper().get(options, "container_overrides")
-        # Type narrowing: isinstance() confirms Mapping, cast refines value type
-        if container_overrides_raw is not None and isinstance(
-            container_overrides_raw, Mapping
-        ):
-            container_overrides_val: Mapping[str, t.FlexibleValue] | None = cast(
-                "Mapping[str, t.FlexibleValue]", container_overrides_raw
-            )
-        else:
-            container_overrides_val = None
+        # container_overrides: TypedDict typed as Mapping[str, FlexibleValue]
+        container_overrides_val = options.get("container_overrides")
 
-        wire_modules_raw = u.mapper().get(options, "wire_modules")
-        # Type narrowing: isinstance() confirms Sequence, cast refines element type
-        if wire_modules_raw is not None and isinstance(wire_modules_raw, Sequence):
-            wire_modules_val: Sequence[ModuleType] | None = cast(
-                "Sequence[ModuleType]", wire_modules_raw
-            )
-        else:
-            wire_modules_val = None
+        # wire_modules: TypedDict typed as Sequence[ModuleType]
+        wire_modules_val = options.get("wire_modules")
 
-        wire_packages_raw = u.mapper().get(options, "wire_packages")
-        # Type narrowing: isinstance() confirms Sequence, cast refines element type
-        if wire_packages_raw is not None and isinstance(wire_packages_raw, Sequence):
-            wire_packages_val: Sequence[str] | None = cast(
-                "Sequence[str]", wire_packages_raw
-            )
-        else:
-            wire_packages_val = None
+        # wire_packages: TypedDict typed as Sequence[str]
+        wire_packages_val = options.get("wire_packages")
 
-        wire_classes_raw = u.mapper().get(options, "wire_classes")
-        # Type narrowing: isinstance() confirms Sequence, cast refines element type
-        if wire_classes_raw is not None and isinstance(wire_classes_raw, Sequence):
-            wire_classes_val: Sequence[type] | None = cast(
-                "Sequence[type]", wire_classes_raw
-            )
-        else:
-            wire_classes_val = None
+        # wire_classes: TypedDict typed as Sequence[type]
+        wire_classes_val = options.get("wire_classes")
 
         return cls._create_runtime(
-            config_type=config_type_val,  # Already typed as type[FlextSettings] | None
+            config_type=config_type_val,
             config_overrides=config_overrides_val,
             context=context_val,
             subproject=subproject_val,

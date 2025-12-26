@@ -256,8 +256,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 if result.is_success:
                     return FlextResult[U].ok(result.value)
                 return FlextResult[U].fail(result.error or "")
-            # Handle returns.Result (Success/Failure)
-            return FlextResult[U](cast("Result[U, str]", result))
+            # Handle returns.Result (Success/Failure) with proper type narrowing
+            if isinstance(result, Success):
+                return FlextResult[U].ok(result.unwrap())
+            if isinstance(result, Failure):
+                return FlextResult[U].fail(result.failure())
+            # Fallback for unknown types - should not happen in practice
+            return FlextResult[U].fail("Unknown result type from flat_map function")
         return FlextResult[U](Failure(self.error or ""))
 
     def and_then[U](
@@ -316,7 +321,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     # __or__, __bool__, __repr__, __enter__, __exit__ are inherited from RuntimeResult
 
     @classmethod
-    def from_validation[T_BaseModel](
+    def from_validation[T_BaseModel: BaseModel](
         cls, data: object, model: type[T_BaseModel]
     ) -> FlextResult[T_BaseModel]:
         """Create result from Pydantic validation.
@@ -335,19 +340,15 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         """
         # Check if model is a BaseModel subclass before calling model_validate
         if not issubclass(model, BaseModel):
-            return cast(
-                "FlextResult[T_BaseModel]",
-                cls.fail(
-                    f"Type {model} is not a BaseModel subclass",
-                ),
+            return FlextResult[T_BaseModel].fail(
+                f"Type {model} is not a BaseModel subclass",
             )
-        # After issubclass check, model is guaranteed to be BaseModel subclass
-        # Type narrowing: model is now known to be BaseModel subclass
-        model_typed: type[BaseModel] = model
+        # Use model directly - validated result is guaranteed to be T_BaseModel
+        # since model_validate returns an instance of the model class
         try:
-            validated = model_typed.model_validate(data)
-            # T_co is covariant, T is subtype compatible
-            return cls.ok(cast("T_BaseModel", validated))
+            validated = model.model_validate(data)
+            # validated is instance of model which is T_BaseModel
+            return cls.ok(validated)
         except Exception as e:
             # Extract error message from Pydantic ValidationError if available
             if hasattr(e, "errors") and callable(getattr(e, "errors", None)):
@@ -356,8 +357,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 )
             else:
                 error_msg = str(e)
-            # RuntimeResult[T] returns FlextResult[T] via covariance
-            return cls.fail(f"Validation failed: {error_msg}")
+            return FlextResult[T_BaseModel].fail(f"Validation failed: {error_msg}")
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
         """Convert successful value to Pydantic model.
@@ -384,20 +384,17 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     # alt and lash are inherited from RuntimeResult
     # But we override to return FlextResult for type consistency
-    def alt(self, func: Callable[[str], str]) -> Self:
+    def alt(self, func: Callable[[str], str]) -> FlextResult[T_co]:
         """Apply alternative function on failure.
 
         Overrides RuntimeResult.alt to return FlextResult for type consistency.
         """
         if self.is_failure:
             transformed_error = func(self.error or "")
-            return cast(
-                "Self",
-                type(self).fail(
-                    transformed_error,
-                    error_code=self.error_code,
-                    error_data=self.error_data,
-                ),
+            return FlextResult[T_co].fail(
+                transformed_error,
+                error_code=self.error_code,
+                error_data=self.error_data,
             )
         return self
 
@@ -420,8 +417,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 if result.is_success:
                     return FlextResult[T_co].ok(result.value)
                 return FlextResult[T_co].fail(result.error or "")
-            # Handle returns.Result (Success/Failure)
-            return FlextResult[T_co](cast("Result[T_co, str]", result))
+            # Handle returns.Result (Success/Failure) with proper type narrowing
+            if isinstance(result, Success):
+                return FlextResult[T_co].ok(result.unwrap())
+            if isinstance(result, Failure):
+                return FlextResult[T_co].fail(result.failure())
+            # Fallback for unknown types - should not happen in practice
+            return FlextResult[T_co].fail("Unknown result type from lash function")
         return self
 
     # Alias for lash - RFC-standard name for recovery
@@ -511,8 +513,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if self.is_success and self.value is not None:
             if func is not None:
                 return func(self.value)
-            # Without func, return value cast to U. Caller ensures type compatibility
-            # when using map_or without func (value type should match default type)
+            # INTENTIONAL CAST: When func is None, this is a type-erasing pattern
+            # where the caller is responsible for ensuring T_co is assignable to U.
+            # This pattern is widely used (75+ usages) for cases like:
+            #   result.map_or(None)  - returns value | None
+            #   result.map_or({})    - returns value | dict
+            # The type system cannot express "T_co == U when func is None", so
+            # cast is necessary. Alternative would be split into separate methods.
             return cast("U", self.value)
         return default
 

@@ -180,10 +180,9 @@ class FlextDispatcher(FlextService[bool]):
             CircuitBreakerManager instance from container or newly created.
 
         """
-        # Try to resolve from container (use public property for type safety)
-        result: p.Result[object] = self.container.get("circuit_breaker")
-        # Use protocol type - container.get returns p.Result[object]
-        if result.is_success and isinstance(result.value, CircuitBreakerManager):
+        # Try to resolve from container with typed resolution
+        result = self.container.get_typed("circuit_breaker", CircuitBreakerManager)
+        if result.is_success:
             return result.value
 
         # Create with defaults from config
@@ -209,10 +208,9 @@ class FlextDispatcher(FlextService[bool]):
             RateLimiterManager instance from container or newly created.
 
         """
-        # Try to resolve from container (use public property for type safety)
-        result: p.Result[object] = self.container.get("rate_limiter")
-        # Use protocol type - container.get returns p.Result[object]
-        if result.is_success and isinstance(result.value, RateLimiterManager):
+        # Try to resolve from container with typed resolution
+        result = self.container.get_typed("rate_limiter", RateLimiterManager)
+        if result.is_success:
             return result.value
 
         # Create with defaults from config
@@ -243,10 +241,9 @@ class FlextDispatcher(FlextService[bool]):
             TimeoutEnforcer instance from container or newly created.
 
         """
-        # Try to resolve from container (use public property for type safety)
-        result: p.Result[object] = self.container.get("timeout_enforcer")
-        # Use protocol type - container.get returns p.Result[object]
-        if result.is_success and isinstance(result.value, TimeoutEnforcer):
+        # Try to resolve from container with typed resolution
+        result = self.container.get_typed("timeout_enforcer", TimeoutEnforcer)
+        if result.is_success:
             return result.value
 
         # Create with defaults from config
@@ -274,10 +271,9 @@ class FlextDispatcher(FlextService[bool]):
             RetryPolicy instance from container or newly created.
 
         """
-        # Try to resolve from container (use public property for type safety)
-        result: p.Result[object] = self.container.get("retry_policy")
-        # Use protocol type - container.get returns p.Result[object]
-        if result.is_success and isinstance(result.value, RetryPolicy):
+        # Try to resolve from container with typed resolution
+        result = self.container.get_typed("retry_policy", RetryPolicy)
+        if result.is_success:
             return result.value
 
         # Create with defaults from config
@@ -977,11 +973,11 @@ class FlextDispatcher(FlextService[bool]):
 
     # ==================== LAYER 1 PUBLIC API: CQRS ROUTING & MIDDLEWARE ====================
 
-    def dispatch_command(
+    def _dispatch_command(
         self,
         command: t.GeneralValueType,
     ) -> r[t.GeneralValueType]:
-        """Execute command/query through the CQRS dispatcher routing layer.
+        """Internal: Execute command/query through the CQRS dispatcher routing layer.
 
         This Layer 1 entry point performs routing with caching and middleware.
         For reliability patterns (circuit breaker, rate limit, retry, timeout),
@@ -1090,11 +1086,11 @@ class FlextDispatcher(FlextService[bool]):
 
             return result
 
-    def layer1_register_handler(
+    def _layer1_register_handler(
         self,
         *args: t.HandlerType | t.GeneralValueType,
     ) -> r[bool]:
-        """Register handler with dual-mode support (from FlextDispatcher).
+        """Internal: Register handler with dual-mode support.
 
         Supports:
         - Single-arg: register_handler(handler) - Auto-discovery with can_handle()
@@ -1446,8 +1442,8 @@ class FlextDispatcher(FlextService[bool]):
 
     # ==================== LAYER 1 EVENT PUBLISHING PROTOCOL ====================
 
-    def publish_event(self, event: t.GeneralValueType) -> r[bool]:
-        """Publish domain event to subscribers (from FlextDispatcher).
+    def _publish_event(self, event: t.GeneralValueType) -> r[bool]:
+        """Internal: Publish single domain event to subscribers.
 
         Args:
             event: Domain event to publish
@@ -1458,7 +1454,7 @@ class FlextDispatcher(FlextService[bool]):
         """
         try:
             # Use dispatch_command mechanism for event publishing
-            result = self.dispatch_command(event)
+            result = self._dispatch_command(event)
 
             if result.is_failure:
                 return r[bool].fail(f"Event publishing failed: {result.error}")
@@ -1488,7 +1484,7 @@ class FlextDispatcher(FlextService[bool]):
         try:
             # layer1_register_handler accepts t.HandlerType | t.GeneralValueType
             # event_type is str, handler is t.HandlerType - both are valid args
-            return self.layer1_register_handler(event_type, handler)
+            return self._layer1_register_handler(event_type, handler)
         except (TypeError, AttributeError, ValueError) as e:
             # TypeError: invalid handler type
             # AttributeError: handler missing required attributes
@@ -1557,13 +1553,13 @@ class FlextDispatcher(FlextService[bool]):
                 "data": data,
                 "timestamp": time.time(),
             }
-            return self.publish_event(event_dict)
+            return self._publish_event(event_dict)
 
         # Handle batch events
         if isinstance(event, list):
             errors: list[str] = []
             for evt in event:
-                result = self.publish_event(evt)
+                result = self._publish_event(evt)
                 if result.is_failure:
                     errors.append(result.error or "Unknown error")
             if errors:
@@ -1571,7 +1567,7 @@ class FlextDispatcher(FlextService[bool]):
             return r[bool].ok(True)
 
         # Handle single event
-        return self.publish_event(event)
+        return self._publish_event(event)
 
     # ------------------------------------------------------------------
     # Registration methods using structured models
@@ -1697,9 +1693,10 @@ class FlextDispatcher(FlextService[bool]):
             )
             # Reconstruct dict from processed items
             if process_result.is_success:
-                # Normalize each value to GeneralValueType for type safety
+                # Use processed values directly - handlers already preserved, others normalized
+                # Don't re-normalize or handler objects become strings
                 request_dict = {
-                    str(k): FlextRuntime.normalize_to_general_value(v)
+                    str(k): v
                     for k, v in zip(request.keys(), process_result.value, strict=False)
                 }
             else:
@@ -1856,11 +1853,11 @@ class FlextDispatcher(FlextService[bool]):
             "mode": "explicit",
         })
 
-    def register_handler_with_request(
+    def _register_handler_with_request(
         self,
         request: t.GeneralValueType | Mapping[str, object],
     ) -> r[t.ConfigurationMapping]:
-        """Register handler using structured request model.
+        """Internal: Register handler using structured request model.
 
         Business Rule: Handler registration supports two modes:
         1. Auto-discovery: handlers with can_handle() method are queried at dispatch time
@@ -1979,7 +1976,7 @@ class FlextDispatcher(FlextService[bool]):
                 command_name = str(request)
             # Register the handler with command name
             # handler is HandlerType | GeneralValueType - layer1 accepts both
-            result = self.layer1_register_handler(command_name, handler)
+            result = self._layer1_register_handler(command_name, handler)
             if result.is_failure:
                 return r[t.ConfigurationMapping].fail(
                     result.error or "Registration failed",
@@ -1994,7 +1991,7 @@ class FlextDispatcher(FlextService[bool]):
         if isinstance(request, BaseModel) or FlextRuntime.is_dict_like(request):
             # Delegate to register_handler_with_request (eliminates ~100 lines of duplication)
             # request is already t.GeneralValueType, no cast needed
-            return self.register_handler_with_request(request)
+            return self._register_handler_with_request(request)
 
         # Single handler object - delegate to layer1_register_handler
         # Validate request is HandlerType before passing to layer1_register_handler
@@ -2002,7 +1999,7 @@ class FlextDispatcher(FlextService[bool]):
             return r[t.ConfigurationMapping].fail(
                 f"Invalid handler type: {type(request).__name__}",
             )
-        result = self.layer1_register_handler(request)
+        result = self._layer1_register_handler(request)
         if result.is_failure:
             return r[t.ConfigurationMapping].fail(
                 result.error or "Registration failed",
@@ -2072,272 +2069,6 @@ class FlextDispatcher(FlextService[bool]):
             "handlers": registered,
         })
 
-    def _register_handler[TMessage, TResult](
-        self,
-        message_type: type[TMessage],
-        handler: FlextHandlers[TMessage, TResult],
-        handler_mode: str,
-        handler_config: t.ConfigurationMapping | None = None,
-    ) -> r[t.GeneralValueType]:
-        """Register handler with specific mode (DRY helper).
-
-        Eliminates duplication between register_command and register_query.
-        Both methods follow identical pattern: create request dict then call
-        register_handler_with_request().
-
-        Args:
-            message_type: Command or query message type
-            handler: Handler instance
-            handler_mode: Handler mode constant (COMMAND or QUERY)
-            handler_config: Optional handler configuration
-
-        Returns:
-            r with registration details or error
-
-        """
-        # Convert message_type (type[TMessage]) to string name to avoid type variable scope issue
-        message_type_name = getattr(message_type, "__name__", str(message_type))
-        # Request dict holds handler as object - handlers are validated via TypeGuard in
-        # _validate_and_extract_handler. Using dict[str, object] to hold handler instances.
-        request: dict[str, object] = {
-            "handler": handler,
-            "message_type": message_type_name,
-            "handler_mode": handler_mode,
-            "handler_config": handler_config,
-        }
-
-        result = self.register_handler_with_request(
-            request,
-        )
-        # Type narrowing: ConfigurationMapping is a subtype of t.GeneralValueType
-        # (ConfigurationMapping = Mapping[str, t.GeneralValueType], which is part of t.GeneralValueType union)
-        if result.is_success:
-            # result.value is ConfigurationMapping, which is already t.GeneralValueType
-            return r[t.GeneralValueType].ok(result.value)
-        return r[t.GeneralValueType].fail(
-            result.error or "Registration failed",
-        )
-
-    def register_command[TCommand, TResult](
-        self,
-        command_type: type[TCommand],
-        handler: FlextHandlers[TCommand, TResult],
-        *,
-        handler_config: t.ConfigurationMapping | None = None,
-    ) -> r[t.GeneralValueType]:
-        """Register command handler using structured model internally.
-
-        Args:
-            command_type: Command message type
-            handler: Handler instance
-            handler_config: Optional handler configuration
-
-        Returns:
-            r with registration details or error
-
-        """
-        return self._register_handler(
-            command_type,
-            handler,
-            c.Dispatcher.HANDLER_MODE_COMMAND,
-            handler_config,
-        )
-
-    def register_query[TQuery, TResult](
-        self,
-        query_type: type[TQuery],
-        handler: FlextHandlers[TQuery, TResult],
-        *,
-        handler_config: t.ConfigurationMapping | None = None,
-    ) -> r[t.GeneralValueType]:
-        """Register query handler using structured model internally.
-
-        Args:
-            query_type: Query message type
-            handler: Handler instance
-            handler_config: Optional handler configuration
-
-        Returns:
-            r with registration details or error
-
-        """
-        return self._register_handler(
-            query_type,
-            handler,
-            c.Dispatcher.HANDLER_MODE_QUERY,
-            handler_config,
-        )
-
-    def register_function[TMessage, TResult](
-        self,
-        message_type: type[TMessage],
-        handler_func: Callable[[TMessage], TResult],
-        *,
-        handler_config: t.ConfigurationMapping | None = None,
-        mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
-    ) -> r[t.GeneralValueType]:
-        """Register function as handler using factory pattern.
-
-        Args:
-            message_type: Message type to handle
-            handler_func: Function to wrap as handler
-            handler_config: Optional handler configuration
-            mode: Handler mode (command/query)
-
-        Returns:
-            r with registration details or error
-
-        """
-        # Validate mode
-        if mode not in c.Dispatcher.VALID_HANDLER_MODES:
-            return r[t.GeneralValueType].fail(
-                c.Dispatcher.ERROR_INVALID_HANDLER_MODE,
-            )
-
-        # Simple registration for basic test compatibility
-        if not handler_config:
-            # Validate handler_func is a valid HandlerType via TypeGuard
-            if not u.Guards.is_handler_type(handler_func):
-                return r[t.GeneralValueType].fail(
-                    "handler_func must be callable, mapping, or BaseModel",
-                )
-            # handler_func is now narrowed to t.HandlerType by TypeGuard
-            handler_key = getattr(message_type, "__name__", str(message_type))
-            self._handlers[handler_key] = handler_func
-            return r[t.GeneralValueType].ok({
-                "status": "registered",
-                "mode": mode,
-            })
-
-        # Create handler from function
-        # Wrap generic handler_func to match HandlerCallableType signature
-        # Store handler_func as Callable[..., object] for bridge - avoids generic param issue
-        bridge_func: Callable[..., object] = handler_func
-
-        def wrapped_handler(
-            msg: t.GeneralValueType,
-        ) -> t.GeneralValueType:
-            # Bridge between GeneralValueType interface and TMessage handler
-            # bridge_func is typed as Callable[..., object] to accept GeneralValueType
-            # Message type compatibility is caller's responsibility - dispatcher
-            # routes messages to handlers registered for their type
-            result_raw = bridge_func(msg) if callable(bridge_func) else msg
-            # Convert result to t.GeneralValueType
-            if isinstance(
-                result_raw,
-                (str, int, float, bool, type(None), list, dict, Mapping, Sequence),
-            ):
-                return result_raw
-            return str(result_raw)
-
-        # Create FlextHandlers wrapper for advanced features (validation, metrics)
-        handler_result = self.create_handler_from_function(
-            wrapped_handler,
-            handler_config,
-            mode,
-        )
-
-        if handler_result.is_failure:
-            return r[t.GeneralValueType].fail(
-                f"Handler creation failed: {handler_result.error}",
-            )
-
-        # Get message type name for registration
-        message_type_name = getattr(message_type, "__name__", str(message_type))
-
-        # Store wrapped_handler in registry - matches HandlerCallable type signature
-        # FlextHandlers instance from handler_result.value is created for advanced
-        # features but simple dispatch uses the plain callable wrapped_handler
-        self._handlers[message_type_name] = wrapped_handler
-        self.logger.info(
-            "Handler registered for message type",
-            message_type=message_type_name,
-            handler_mode=mode.value if hasattr(mode, "value") else str(mode),
-        )
-
-        # Return success with registration details
-        result_dict: t.ConfigurationMapping = {
-            "handler_name": message_type_name,
-            "message_type": message_type_name,
-            "status": "registered",
-            "mode": mode.value if hasattr(mode, "value") else str(mode),
-        }
-        return r[t.GeneralValueType].ok(result_dict)
-
-    @staticmethod
-    def create_handler_from_function(
-        handler_func: Callable[[t.GeneralValueType], t.GeneralValueType],
-        _handler_config: t.ConfigurationMapping | None = None,
-        mode: c.Cqrs.HandlerType = c.Cqrs.HandlerType.COMMAND,
-    ) -> r[
-        FlextHandlers[
-            t.GeneralValueType,
-            t.GeneralValueType,
-        ]
-    ]:
-        """Create handler from function using FlextHandlers constructor.
-
-        Args:
-            handler_func: Function to wrap (any callable accepting GeneralValueType)
-            _handler_config: Optional configuration (reserved for future use)
-            mode: Handler mode
-
-        Returns:
-            r with handler instance or error
-
-        """
-        try:
-            # Create concrete handler class that implements handle method
-            handler_name = getattr(handler_func, "__name__", "FunctionHandler")
-
-            class FunctionHandler(
-                FlextHandlers[
-                    t.GeneralValueType,
-                    t.GeneralValueType,
-                ],
-            ):
-                """Concrete handler implementation for function-based handlers."""
-
-                def handle(
-                    self,
-                    message: t.GeneralValueType,
-                ) -> r[t.GeneralValueType]:
-                    """Handle message by calling the wrapped function.
-
-                    Note: self is required for protocol compliance (h),
-                    even though handler_func is captured from closure.
-                    """
-                    result = handler_func(message)
-                    # Ensure result is r
-                    if isinstance(result, r):
-                        return result
-                    # Wrap non-r return values
-                    return r.ok(result)
-
-            # Create handler config with name and type
-            handler_config = m.Handler(
-                handler_id=f"function_{id(handler_func)}",
-                handler_name=handler_name,
-                handler_mode=mode,
-            )
-            handler = FunctionHandler(config=handler_config)
-            return r[
-                FlextHandlers[
-                    t.GeneralValueType,
-                    t.GeneralValueType,
-                ]
-            ].ok(handler)
-
-        except Exception as error:
-            return r[
-                FlextHandlers[
-                    t.GeneralValueType,
-                    t.GeneralValueType,
-                ]
-            ].fail(
-                f"Handler creation failed: {error}",
-            )
-
     @staticmethod
     def _ensure_handler(
         handler: t.GeneralValueType,
@@ -2371,10 +2102,12 @@ class FlextDispatcher(FlextService[bool]):
 
         # If callable, convert to FlextHandlers
         if callable(handler):
-            return FlextDispatcher.create_handler_from_function(
-                handler_func=handler,
-                mode=mode,
-            )
+            return r[
+                FlextHandlers[
+                    t.GeneralValueType,
+                    t.GeneralValueType,
+                ]
+            ].ok(FlextHandlers.create_from_callable(handler, mode=mode))
 
         # Invalid handler type
         return r[
@@ -2951,9 +2684,7 @@ class FlextDispatcher(FlextService[bool]):
         conditions_check = self._check_pre_dispatch_conditions(message_type)
         if conditions_check.is_failure:
             # Extract error directly from conditions_check.error property
-            error_msg = (
-                conditions_check.error or "Pre-dispatch conditions check failed"
-            )
+            error_msg = conditions_check.error or "Pre-dispatch conditions check failed"
             return r[t.GeneralValueType].fail(
                 error_msg,
                 error_code=conditions_check.error_code,
@@ -3097,8 +2828,8 @@ class FlextDispatcher(FlextService[bool]):
                     context_metadata,
                     correlation_id,
                 ):
-                    return self.dispatch_command(message)
-            return self.dispatch_command(message)
+                    return self._dispatch_command(message)
+            return self._dispatch_command(message)
 
         return execute_with_context
 

@@ -56,7 +56,7 @@ import uuid
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from types import ModuleType
-from typing import ClassVar, TypeGuard
+from typing import ClassVar, Self, TypeGuard
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -1431,18 +1431,13 @@ class FlextRuntime:
             if not self._is_success:
                 msg = f"Cannot access value of failed result: {self._error}"
                 raise RuntimeError(msg)
-            # Type narrowing: if is_success is True, _value is guaranteed to be T
-            # When is_success=True, _value holds the actual value of type T
-            # For RuntimeResult[None], T=None and _value=None is valid
-            # Runtime invariant guarantees _value is T when is_success=True
-            # Python typing limitation: cannot express dependent types (T iff is_success)
-            # Return _value directly - mypy will report T | None vs T mismatch
-            # but runtime behavior is correct per class invariants
-            if self._value is not None:
-                return self._value
-            # For RuntimeResult[None], return None as T
-            # This is correct when T is the None type itself
-            return None  # pyright: T when T=None
+            # ARCHITECTURAL INVARIANT: FlextCore never returns None on success
+            # When is_success=True, _value MUST be non-None and of type T
+            # This is enforced by all factory methods (ok(), success(), from_*())
+            if self._value is None:
+                msg = "Invariant violation: successful result has None value"
+                raise RuntimeError(msg)
+            return self._value
 
         @property
         def data(self) -> T:
@@ -1661,7 +1656,7 @@ class FlextRuntime:
                 return f"r.ok({self.value!r})"
             return f"r.fail({self.error!r})"
 
-        def __enter__(self) -> FlextRuntime.RuntimeResult[T]:
+        def __enter__(self) -> Self:
             """Context manager entry."""
             return self
 

@@ -14,8 +14,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
@@ -44,7 +45,8 @@ def _normalize_to_metadata(v: t.GeneralValueType) -> FlextModelsBase.Metadata:
     # Handle dict-like values
     if FlextRuntime.is_dict_like(v) and isinstance(v, dict):
         # Normalize each value using FlextRuntime.normalize_to_metadata_value
-        attributes: dict[str, t.MetadataAttributeValue] = {}
+        # Use GeneralValueType for compatibility with Metadata.attributes (ConfigurationDict)
+        attributes: dict[str, t.GeneralValueType] = {}
         for key, val in v.items():
             attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
         return FlextModelsBase.Metadata(attributes=attributes)
@@ -82,11 +84,14 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Service identifier/name",
         )
-        # Service instance with specific types for DI container
-        service: object = Field(
+        # Service instance - uses SkipValidation for DI container flexibility
+        # ARCHITECTURAL NOTE: DI containers must accept any Python object.
+        # SkipValidation tells Pydantic to accept any value without type validation.
+        # Type safety is enforced at container API level via get_typed().
+        service: Annotated[t.ServiceInstanceType, SkipValidation] = Field(
             ...,
             description=(
-                "Service instance (primitives, BaseModel, callable, or any object)"
+                "Service instance (any Python object - primitives, services, callables)"
             ),
         )
         registration_time: datetime = Field(
@@ -134,8 +139,8 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Factory identifier/name",
         )
-        # Factory returns 'object' to support BaseModel, protocols, loggers, etc.
-        factory: Callable[[], object] = Field(
+        # Factory returns GeneralValueType for type-safe factory resolution
+        factory: Callable[[], t.GeneralValueType] = Field(
             ...,
             description="Factory function that creates service instances",
         )
@@ -189,8 +194,8 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Resource identifier/name",
         )
-        # Factory returns 'object' to support any resource type (connections, pools, etc.)
-        factory: Callable[[], object] = Field(
+        # Factory returns GeneralValueType for type-safe resource resolution
+        factory: Callable[[], t.GeneralValueType] = Field(
             ...,
             description="Factory returning the lifecycle-managed resource",
         )

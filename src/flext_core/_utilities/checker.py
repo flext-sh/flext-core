@@ -144,9 +144,8 @@ class FlextUtilitiesChecker:
                 return hint
             if isinstance(hint, type):
                 # Type narrowing: hint is type after isinstance check
-                # type objects are valid MessageTypeSpecifier - return directly
-                # MessageTypeSpecifier = str | type[GeneralValueType]
-                # type is compatible after isinstance check
+                # Return the type directly - type is a valid MessageTypeSpecifier component
+                # The return value will be str (from annotation branch) or type object
                 return hint
             # For other types (Sequence, Mapping), convert to string
             # string is valid MessageTypeSpecifier

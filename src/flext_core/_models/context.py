@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Annotated, cast
+from typing import Annotated
 
 import structlog.contextvars
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
@@ -205,7 +205,9 @@ class FlextModelsContext:
             typed_context: dict[str, t.GeneralValueType] = structlog_context
             # value is t.GeneralValueType | None, T is bounded to GeneralValueType
             # Structural typing: value type matches T parameter
-            return cast("T | None", typed_context.get(self._key, self._default))
+            result = typed_context.get(self._key, self._default)
+            # T bounded to GeneralValueType - direct return is type-compatible
+            return result if result is not None else self._default
 
         def set(self, value: T | None) -> FlextModelsContext.StructlogProxyToken:
             """Set value in structlog context.
@@ -223,9 +225,8 @@ class FlextModelsContext:
             if value is not None:
                 # T is bounded to GeneralValueType in generic contract
                 # Store directly - type parameter constraint guarantees compatibility
-                stored_value: t.GeneralValueType = cast("t.GeneralValueType", value)
                 _ = structlog.contextvars.bind_contextvars(**{
-                    self._key: stored_value,
+                    self._key: value,
                 })
             else:
                 # Unbind if setting to None
@@ -233,19 +234,8 @@ class FlextModelsContext:
 
             # Create token for reset functionality
             # Normalize current_value to t.GeneralValueType for storage
-            if current_value is None:
-                prev_value: t.GeneralValueType | None = None
-            elif isinstance(
-                current_value,
-                (str, int, float, bool, dict, list),
-            ):
-                # Type narrowing: isinstance confirms current_value is GeneralValueType
-                # isinstance check validates type - assign directly
-                prev_value = current_value
-            else:
-                # For datetime and other objects, T is bounded to GeneralValueType
-                # Structural typing: current_value matches T which extends GeneralValueType
-                prev_value = cast("t.GeneralValueType | None", current_value)
+            # T is bounded to GeneralValueType, so current_value is already compatible
+            prev_value: t.GeneralValueType | None = current_value
 
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key,
