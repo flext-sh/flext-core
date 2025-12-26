@@ -11,14 +11,16 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
-from typing import Annotated, Self
+from typing import TYPE_CHECKING, Annotated, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 class FlextModelsCqrs:
@@ -122,7 +124,7 @@ class FlextModelsCqrs:
         )
 
         filters: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        pagination: FlextModelsCqrs.Pagination | t.StringIntDict = Field(
+        pagination: FlextModelsCqrs.Pagination | dict[str, int] = Field(
             default_factory=dict,
         )
         query_id: str = Field(
@@ -167,7 +169,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination | t.StringIntDict | t.StringDict | None,
+            v: FlextModelsCqrs.Pagination | dict[str, int] | dict[str, str] | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
@@ -298,7 +300,7 @@ class FlextModelsCqrs:
                 """Initialize builder with required handler_type."""
                 super().__init__()
                 handler_short_id = FlextRuntime.generate_prefixed_id("", length=8)
-                self._data: t.ConfigurationDict = {
+                self._data: dict[str, t.GeneralValueType] = {
                     "handler_type": handler_type,
                     "handler_mode": (
                         c.Dispatcher.HANDLER_MODE_COMMAND
@@ -335,7 +337,7 @@ class FlextModelsCqrs:
             def with_metadata(self, metadata: FlextModelsBase.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
                 # Convert Metadata model to dict for t.GeneralValueType compatibility
-                metadata_dict: t.ConfigurationDict = dict(
+                metadata_dict: dict[str, t.GeneralValueType] = dict(
                     metadata.model_dump().items(),
                 )
                 self._data["metadata"] = metadata_dict

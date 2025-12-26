@@ -41,7 +41,6 @@ import yaml
 from pydantic import BaseModel
 
 from flext_core import r
-from flext_core.typings import t as core_t
 from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -409,7 +408,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
         # Auto-detect format using utilities
         # Build content_for_detect with explicit type handling for pyrefly
-        content_for_detect: str | bytes | Mapping[str, object] | list[list[str]]
+        content_for_detect: (
+            str | bytes | Mapping[str, t.GeneralValueType] | list[list[str]]
+        )
         if isinstance(actual_content, (str, bytes, dict)):
             content_for_detect = actual_content
         elif isinstance(actual_content, Mapping):
@@ -1075,7 +1076,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         Uses u.Collection.batch() for batch processing with error handling.
 
         Args:
-            files: Mapping[str, core_t.FileContent] or Sequence[tuple[str, core_t.FileContent]]
+            files: Mapping[str, t.FileContent] or Sequence[tuple[str, t.FileContent]]
             directory: Target directory for create operations
             operation: "create", "read", or "delete"
             model: Optional model class for read operations
@@ -1121,7 +1122,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         params = params_result.value
 
         # Convert BatchFiles to dict - BatchFiles can be Mapping or Sequence
-        files_dict: dict[str, core_t.FileContent]
+        files_dict: dict[str, t.FileContent]
         if isinstance(params.files, Mapping):
             # Already a Mapping - convert to dict if needed
             files_dict = (
@@ -1132,7 +1133,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         elif isinstance(params.files, Sequence):
             # BatchFiles is Sequence[tuple[str, FileContent]] - convert to dict
             # Cast sequence to proper tuple format for dict constructor
-            files_list = cast("Sequence[tuple[str, core_t.FileContent]]", params.files)
+            files_list = cast("Sequence[tuple[str, t.FileContent]]", params.files)
             files_dict = dict(files_list)
         else:
             # Invalid type - should not happen due to BatchParams validation
@@ -1144,7 +1145,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         error_mode_str = "collect" if params.on_error == "collect" else "fail"
 
         def process_one(
-            name_and_content: tuple[str, core_t.FileContent],
+            name_and_content: tuple[str, t.FileContent],
         ) -> r[Path]:
             """Process single file operation."""
             name, content = name_and_content
@@ -1206,7 +1207,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         items_list = list(files_dict.items())
         # Explicit type annotation helps mypy infer the generic R parameter
         operation_fn: Callable[
-            [tuple[str, core_t.FileContent]],
+            [tuple[str, t.FileContent]],
             Path | r[Path],
         ] = process_one
         batch_result_dict = u.Collection.batch(
@@ -1525,7 +1526,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
     @contextmanager
     def temporary_files(
         cls,
-        files: t.StringDict,
+        files: dict[str, str],
         extension: str = c.Tests.Files.DEFAULT_EXTENSION,
     ) -> Generator[t.StringPathDict]:
         """Create temporary files. DEPRECATED: Use tf.files() instead."""
@@ -1601,7 +1602,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # Use u.is_type() for type-safe checking with proper type narrowing
         if extract_result and u.is_type(content, "result"):
             # Type narrowing: content is r[T] here
-            content_result = cast("r[core_t.FileContent]", content)
+            content_result = cast("r[t.FileContent]", content)
             if content_result.is_failure:
                 error_msg = content_result.error or "FlextResult failure"
                 raise ValueError(
@@ -1611,8 +1612,8 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             # The return type matches FileContent union type
             # unwrapped is already FileContent type from r[FileContent]
             return content_result.value
-        # Content is already core_t.FileContent type (not wrapped in Result)
-        return cast("core_t.FileContent", content)
+        # Content is already t.FileContent type (not wrapped in Result)
+        return cast("t.FileContent", content)
 
     def _parse_content_metadata(
         self,

@@ -17,17 +17,19 @@ import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TypeGuard
+from typing import TYPE_CHECKING, TypeGuard
 
 from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.protocols import p
+    from flext_core.typings import t
 
 
 class FlextUtilitiesReliability:
@@ -217,7 +219,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def calculate_delay(
         attempt: int,
-        config: t.ConfigurationDict | None,
+        config: dict[str, t.GeneralValueType] | None,
     ) -> float:
         """Calculate delay for retry attempt using configuration.
 
@@ -230,7 +232,7 @@ class FlextUtilitiesReliability:
 
         """
         # Extract configuration values safely with proper type conversion
-        # config is t.ConfigurationDict | None, use dict.get() instead of getattr()
+        # config is dict[str, t.GeneralValueType] | None, use dict.get() instead of getattr()
         if config is None:
             config = {}
         # Type narrowing: ensure values are numeric before conversion
@@ -427,7 +429,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def flow(
         value: object,
-        *ops: t.ConfigurationDict | Callable[[object], object],
+        *ops: dict[str, t.GeneralValueType] | Callable[[object], object],
     ) -> object:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
@@ -455,7 +457,7 @@ class FlextUtilitiesReliability:
             if isinstance(op, dict):
                 # Type narrowing: op is dict, isinstance provides type narrowing to ConfigurationDict
                 # build() expects GeneralValueType - check if current matches
-                op_dict: t.ConfigurationDict = op
+                op_dict: dict[str, t.GeneralValueType] = op
                 # Check if current is GeneralValueType compatible
                 if FlextUtilitiesReliability._is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)

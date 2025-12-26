@@ -13,10 +13,12 @@ from __future__ import annotations
 import functools
 import pathlib
 import warnings
-from collections.abc import Callable
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core.typings import P, R, t
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core.typings import P, R, t
 
 
 class FlextUtilitiesDeprecation:

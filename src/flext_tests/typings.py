@@ -598,7 +598,7 @@ class FlextTestsTypes(FlextTypes):
         ) -> TypeGuard[Sequence[t.GeneralValueType]]:
             """Check if value is a Sequence of GeneralValueType."""
             return isinstance(value, (list, tuple)) and not isinstance(
-                value, (str, bytes)
+                value, (str, bytes),
             )
 
         @staticmethod
@@ -638,7 +638,7 @@ class FlextTestsTypes(FlextTypes):
         @staticmethod
         def is_configuration_dict(
             value: object,
-        ) -> TypeGuard[t.ConfigurationDict]:
+        ) -> TypeGuard[dict[str, t.GeneralValueType]]:
             """Check if value is a ConfigurationDict."""
             return isinstance(value, dict) and all(isinstance(k, str) for k in value)
 

@@ -47,7 +47,7 @@ from flext_tests import u
 
 
 # Test models using FlextModelsEntity base
-class PydanticModelForTest(m.Value):
+class PydanticModelForTest(m.ValueObject):
     """Test Pydantic model for normalization."""
 
     name: str

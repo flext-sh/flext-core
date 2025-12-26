@@ -39,7 +39,7 @@ class ConfigModelForTest(BaseModel):
     enabled: bool = True
 
 
-class OptionsModelForTest(m.Value):
+class OptionsModelForTest(m.ValueObject):
     """Test options model for build_options_from_kwargs."""
 
     format: str = "json"
@@ -47,7 +47,7 @@ class OptionsModelForTest(m.Value):
     sort_keys: bool = False
 
 
-class StrictOptionsForTest(m.Value):
+class StrictOptionsForTest(m.ValueObject):
     """Strict options with validation."""
 
     value: int = Field(ge=0, le=100)
@@ -146,7 +146,7 @@ class BadConfigForTest(BaseModel):
         raise ValueError(msg)
 
 
-class FailingOptionsForTest(m.Value):
+class FailingOptionsForTest(m.ValueObject):
     """Options that fail on model_dump."""
 
     value: str = "test"

@@ -41,14 +41,17 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.protocols import p
+    from flext_core.typings import t
 
 
 class FlextUtilitiesCache:
@@ -224,7 +227,7 @@ class FlextUtilitiesCache:
         """
         if FlextRuntime.is_dict_like(data):
             # Type narrowing: data is now Mapping[str, t.GeneralValueType]
-            result: t.ConfigurationDict = {}
+            result: dict[str, t.GeneralValueType] = {}
             for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data[k]
                 # Handle None values - convert to empty dict for consistency
@@ -283,7 +286,7 @@ class FlextUtilitiesCache:
                 if hasattr(obj, attr_name):
                     cache_attr = getattr(obj, attr_name, None)
                     if cache_attr is not None:
-                        # Clear t.ConfigurationDict-like caches
+                        # Clear dict[str, t.GeneralValueType]-like caches
                         if hasattr(cache_attr, "clear") and callable(
                             cache_attr.clear,
                         ):

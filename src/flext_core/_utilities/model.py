@@ -8,15 +8,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from flext_core.typings import t
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
 
@@ -67,7 +70,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
-        **kwargs: t.GeneralValueType,
+        **kwargs: object,
     ) -> r[M]:
         """Create Pydantic model from kwargs with r.
 
@@ -230,7 +233,7 @@ class FlextUtilitiesModel:
         exclude_defaults: bool = False,
         include: set[str] | None = None,
         exclude: set[str] | None = None,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.

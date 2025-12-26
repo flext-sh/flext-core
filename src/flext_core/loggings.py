@@ -15,19 +15,22 @@ from __future__ import annotations
 import inspect
 import time
 import traceback
-import types
-from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Literal, Self, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, Self, overload
 
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
-from flext_core.typings import t
 from flext_core.utilities import u
+
+if TYPE_CHECKING:
+    import types
+    from collections.abc import Iterator, Mapping
+
+    from flext_core.protocols import p
+    from flext_core.typings import t
 
 # Use t.GeneralValueType directly - no aliases
 
@@ -112,8 +115,8 @@ class FlextLogger(FlextRuntime):
     def _execute_context_op(
         cls,
         operation: str,
-        kwargs: t.ConfigurationDict,
-    ) -> r[bool] | t.ConfigurationDict:
+        kwargs: dict[str, t.GeneralValueType],
+    ) -> r[bool] | dict[str, t.GeneralValueType]:
         """Execute context operation by name."""
         # Compare with StrEnum values directly - StrEnum comparison works with strings
         if operation == c.Logging.ContextOperation.BIND:
@@ -243,7 +246,7 @@ class FlextLogger(FlextRuntime):
     # =========================================================================
 
     # Scoped context mapping for DRY binding
-    _SCOPE_BINDERS: ClassVar[t.StringDict] = {
+    _SCOPE_BINDERS: ClassVar[dict[str, str]] = {
         c.Context.SCOPE_APPLICATION: c.Context.SCOPE_APPLICATION,
         c.Context.SCOPE_REQUEST: c.Context.SCOPE_REQUEST,
         c.Context.SCOPE_OPERATION: c.Context.SCOPE_OPERATION,
@@ -729,8 +732,8 @@ class FlextLogger(FlextRuntime):
         self.logger = FlextRuntime.get_logger(name).bind(**context)
 
         # Initialize optional state variables
-        self._context: t.ConfigurationDict = {}
-        self._tracking: t.ConfigurationDict = {}
+        self._context: dict[str, t.GeneralValueType] = {}
+        self._tracking: dict[str, t.GeneralValueType] = {}
 
     @classmethod
     def create_bound_logger(
@@ -986,7 +989,7 @@ class FlextLogger(FlextRuntime):
             _context: Optional context mapping
 
         """
-        context_dict: t.ConfigurationDict = dict(_context) if _context else {}
+        context_dict: dict[str, t.GeneralValueType] = dict(_context) if _context else {}
         # Convert level string to LogLevel enum if possible
         level_enum: c.Settings.LogLevel | str = level
         with suppress(ValueError, AttributeError):
@@ -1292,7 +1295,7 @@ class FlextLogger(FlextRuntime):
 
             # Add exception details using conditional mapping
             if exception is not None:
-                exception_data: t.ConfigurationDict = {
+                exception_data: dict[str, t.GeneralValueType] = {
                     "exception_type": type(exception).__name__,
                     "exception_message": str(exception),
                 }
@@ -1353,7 +1356,7 @@ class FlextLogger(FlextRuntime):
             status = "success" if is_success else "failed"
             log_method = self.logger.info if is_success else self.logger.error
 
-            context: t.ConfigurationDict = {
+            context: dict[str, t.GeneralValueType] = {
                 "duration_seconds": elapsed,
                 "operation": self._operation_name,
                 "status": status,
@@ -1576,7 +1579,7 @@ class FlextLogger(FlextRuntime):
         ) -> r[bool]:
             """Log exception with traceback returning FlextResult."""
             # Convert exception to string for context if provided
-            context: t.ConfigurationDict = kwargs
+            context: dict[str, t.GeneralValueType] = kwargs
             if exception is not None:
                 context["exception"] = str(exception)
                 context["exception_type"] = type(exception).__name__

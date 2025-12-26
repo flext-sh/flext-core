@@ -10,14 +10,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from pydantic import Field, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.protocols import p
+    from flext_core.typings import t
 
 
 class FlextModelsService:
@@ -75,10 +77,10 @@ class FlextModelsService:
             description="Method to execute",
         )
         parameters: FlextModelsService.ServiceParameters = Field(
-            default_factory=lambda: FlextModelsService.ServiceParameters(),
+            default_factory=FlextModelsService.ServiceParameters,
         )
         context: FlextModelsService.TraceContext = Field(
-            default_factory=lambda: FlextModelsService.TraceContext(),
+            default_factory=FlextModelsService.TraceContext,
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
@@ -107,7 +109,7 @@ class FlextModelsService:
 
         operation_name: str = Field(min_length=1)
         parameters: FlextModelsService.ServiceParameters = Field(
-            default_factory=lambda: FlextModelsService.ServiceParameters(),
+            default_factory=FlextModelsService.ServiceParameters,
         )
 
     class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):
@@ -147,7 +149,7 @@ class FlextModelsService:
         )
         group_by: list[str] = Field(default_factory=list)
         filters: FlextModelsService.ServiceFilters = Field(
-            default_factory=lambda: FlextModelsService.ServiceFilters(),
+            default_factory=FlextModelsService.ServiceFilters,
         )
 
     class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
@@ -162,10 +164,10 @@ class FlextModelsService:
         resource_limit: int = Field(c.Performance.MAX_BATCH_SIZE, gt=c.ZERO)
         action: str = Field(default_factory=lambda: c.Cqrs.Action.GET)
         data: FlextModelsService.ServiceData = Field(
-            default_factory=lambda: FlextModelsService.ServiceData(),
+            default_factory=FlextModelsService.ServiceData,
         )
         filters: FlextModelsService.ServiceFilters = Field(
-            default_factory=lambda: FlextModelsService.ServiceFilters(),
+            default_factory=FlextModelsService.ServiceFilters,
         )
 
     class AclResponse(FlextModelsBase.ArbitraryTypesModel):
@@ -184,7 +186,7 @@ class FlextModelsService:
             description="Denied permissions",
         )
         context: FlextModelsService.ServiceContext = Field(
-            default_factory=lambda: FlextModelsService.ServiceContext(),
+            default_factory=FlextModelsService.ServiceContext,
             description="Additional context",
         )
 
@@ -198,10 +200,10 @@ class FlextModelsService:
         )
         operation_callable: p.VariadicCallable[p.ResultLike[t.GeneralValueType]]
         arguments: FlextModelsService.ServiceParameters = Field(
-            default_factory=lambda: FlextModelsService.ServiceParameters(),
+            default_factory=FlextModelsService.ServiceParameters,
         )
         keyword_arguments: FlextModelsService.ServiceParameters = Field(
-            default_factory=lambda: FlextModelsService.ServiceParameters(),
+            default_factory=FlextModelsService.ServiceParameters,
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
@@ -210,7 +212,7 @@ class FlextModelsService:
             description="Timeout from FlextSettings (Config has priority over Constants)",
         )
         retry_config: FlextModelsService.RetryConfiguration = Field(
-            default_factory=lambda: FlextModelsService.RetryConfiguration(),
+            default_factory=FlextModelsService.RetryConfiguration,
         )
 
         @field_validator("operation_callable", mode="after")

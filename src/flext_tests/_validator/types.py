@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import ast
 import re
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core.result import r
 from flext_tests.constants import c
 from flext_tests.models import m
 from flext_tests.utilities import u
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FlextValidatorTypes:

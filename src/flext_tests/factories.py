@@ -47,7 +47,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
 
     Architecture:
         - Extends FlextService for consistent service patterns
-        - Uses FlextModels (m.Value, m.Entity) for domain models
+        - Uses FlextModels (m.ValueObject, m.Entity) for domain models
         - Returns FlextResult[T] for operations that can fail
         - Provides both static and instance methods
 
@@ -183,7 +183,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 )
 
             if params.kind == "user":
-                user_data: t.ConfigurationDict = {
+                user_data: dict[str, t.GeneralValueType] = {
                     "id": params.model_id or u.Tests.Factory.generate_id(),
                     "name": params.name or c.Tests.Factory.DEFAULT_USER_NAME,
                     "email": params.email
@@ -196,14 +196,16 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 }
                 if params.overrides:
                     # Convert overrides to ConfigurationDict for merge
-                    user_overrides: t.ConfigurationDict = dict(params.overrides)
+                    user_overrides: dict[str, t.GeneralValueType] = dict(
+                        params.overrides,
+                    )
                     merge_result = u.merge(user_data, user_overrides, strategy="deep")
                     if merge_result.is_success:
                         user_data = merge_result.value
                 return m.Tests.Factory.User.model_validate(user_data)
 
             if params.kind == "config":
-                config_data: t.ConfigurationDict = {
+                config_data: dict[str, t.GeneralValueType] = {
                     "service_type": params.service_type
                     or c.Tests.Factory.DEFAULT_SERVICE_TYPE,
                     "environment": params.environment
@@ -221,7 +223,9 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 }
                 if params.overrides:
                     # Convert overrides to ConfigurationDict for merge
-                    config_overrides: t.ConfigurationDict = dict(params.overrides)
+                    config_overrides: dict[str, t.GeneralValueType] = dict(
+                        params.overrides,
+                    )
                     merge_result = u.merge(
                         config_data,
                         config_overrides,
@@ -271,13 +275,11 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             )
 
         # Create single instance
-        instance = _create_single()
+        instance: _BaseModel = _create_single()
 
         # Apply transform if provided
         if params.transform:
-            transformed = params.transform(instance)
-            # Type annotation - transform returns compatible type
-            instance = transformed
+            instance = params.transform(instance)
 
         # Apply validation if provided
         if params.validate_fn and not params.validate_fn(instance):
@@ -297,11 +299,15 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                     # Transform returns _BaseModel, assign directly
                     new_instance_base: _BaseModel = transformed
                     if params.validate_fn and not params.validate_fn(new_instance_base):
-                        return r[list[_BaseModel]].fail(c.Tests.Factory.ERROR_VALIDATION)
+                        return r[list[_BaseModel]].fail(
+                            c.Tests.Factory.ERROR_VALIDATION,
+                        )
                     instances.append(new_instance_base)
                 else:
                     if params.validate_fn and not params.validate_fn(new_instance):
-                        return r[list[_BaseModel]].fail(c.Tests.Factory.ERROR_VALIDATION)
+                        return r[list[_BaseModel]].fail(
+                            c.Tests.Factory.ERROR_VALIDATION,
+                        )
                     instances.append(new_instance)
 
             # Handle as_dict
@@ -379,13 +385,13 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         return typed_instance
 
     @classmethod
-    def res[TValue](
+    def res(
         cls,
         kind: t.Tests.Factory.ResultKind = "ok",
-        value: TValue | None = None,
+        value: t.GeneralValueType = None,
         # All parameters via kwargs - will be validated by ResultFactoryParams
         **kwargs: t.Tests.TestResultValue,
-    ) -> r[TValue] | builtins.list[r[TValue]]:
+    ) -> r[t.GeneralValueType] | builtins.list[r[t.GeneralValueType]]:
         """Unified result factory - creates FlextResult with full customization.
 
         This is the preferred way to create test results. Use tt.res() instead of
@@ -433,32 +439,34 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         )
         if params_result.is_failure:
             # Return validation error as FlextResult
-            return r[TValue].fail(f"Invalid parameters: {params_result.error}")
+            return r[t.GeneralValueType].fail(
+                f"Invalid parameters: {params_result.error}",
+            )
         params = params_result.value
 
         # Handle batch creation with mix_pattern
         if params.mix_pattern is not None and (
             params.values is not None or params.errors is not None
         ):
-            result_list: builtins.list[r[TValue]] = []
+            result_list: builtins.list[r[t.GeneralValueType]] = []
             val_idx = 0
             err_idx = 0
             for is_success in params.mix_pattern:
                 if is_success:
                     if params.values and val_idx < len(params.values):
-                        val: TValue = params.values[val_idx]
+                        mix_val = params.values[val_idx]
                         if params.transform:
-                            val = params.transform(val)
-                        result_list.append(r[TValue].ok(val))
+                            mix_val = params.transform(mix_val)
+                        result_list.append(r[t.GeneralValueType].ok(mix_val))
                         val_idx += 1
                     elif params.value is not None:
-                        val: TValue = params.value
+                        mix_val_single: t.GeneralValueType = params.value
                         if params.transform:
-                            val = params.transform(val)
-                        result_list.append(r[TValue].ok(val))
+                            mix_val_single = params.transform(mix_val_single)
+                        result_list.append(r[t.GeneralValueType].ok(mix_val_single))
                 elif params.errors and err_idx < len(params.errors):
                     result_list.append(
-                        r[TValue].fail(
+                        r[t.GeneralValueType].fail(
                             params.errors[err_idx],
                             error_code=params.error_code,
                         ),
@@ -466,7 +474,9 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                     err_idx += 1
                 else:
                     result_list.append(
-                        r[TValue].fail(params.error, error_code=params.error_code),
+                        r[t.GeneralValueType].fail(
+                            params.error, error_code=params.error_code,
+                        ),
                     )
             return result_list
 
@@ -476,61 +486,63 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             if params.values:
                 for raw_val in params.values:
                     # raw_val is t.GeneralValueType, transform if needed
-                    transformed_val: TValue = (
+                    batch_val = (
                         params.transform(raw_val) if params.transform else raw_val
                     )
-                    result_list.append(r[TValue].ok(transformed_val))
+                    result_list.append(r[t.GeneralValueType].ok(batch_val))
             if params.errors:
                 for err in params.errors:
                     result_list.append(
-                        r[TValue].fail(err, error_code=params.error_code),
+                        r[t.GeneralValueType].fail(err, error_code=params.error_code),
                     )
             if params.count > 1 and not params.values and not params.errors:
                 # Create multiple results from single value
                 for _ in range(params.count):
                     if params.value is None:
                         # None value always results in failure
-                        error_msg = params.error_on_none or c.Tests.Factory.ERROR_VALUE_NONE
-                        result_list.append(r[TValue].fail(error_msg))
+                        error_msg = (
+                            params.error_on_none or c.Tests.Factory.ERROR_VALUE_NONE
+                        )
+                        result_list.append(r[t.GeneralValueType].fail(error_msg))
                     else:
-                        val: TValue = params.value
+                        count_val: t.GeneralValueType = params.value
                         if params.transform:
-                            val = params.transform(val)
-                        result_list.append(r[TValue].ok(val))
+                            count_val = params.transform(count_val)
+                        result_list.append(r[t.GeneralValueType].ok(count_val))
             if result_list:
                 return result_list
             # Empty list case
             if params.value is not None:
-                typed_val: TValue = params.value
-                return [r[TValue].ok(typed_val)]
-            return [r[TValue].fail(params.error_on_none or params.error)]
+                empty_case_val = params.value
+                return [r[t.GeneralValueType].ok(empty_case_val)]
+            return [r[t.GeneralValueType].fail(params.error_on_none or params.error)]
 
         # Single result creation
         if params.kind == "ok":
             if params.value is None:
                 # None value with kind="ok" returns failure with meaningful message
-                return r[TValue].fail(
+                return r[t.GeneralValueType].fail(
                     params.error_on_none or c.Tests.Factory.ERROR_VALUE_NONE,
                 )
-            raw_value: TValue = params.value
-            transformed_value: TValue = (
-                params.transform(raw_value) if params.transform else raw_value
-            )
-            return r[TValue].ok(transformed_value)
+            ok_raw = params.value
+            ok_transformed = params.transform(ok_raw) if params.transform else ok_raw
+            return r[t.GeneralValueType].ok(ok_transformed)
 
         if params.kind == "fail":
-            return r[TValue].fail(params.error, error_code=params.error_code)
+            return r[t.GeneralValueType].fail(
+                params.error, error_code=params.error_code,
+            )
 
         # params.kind == "from_value"
         if params.value is None:
-            return r[TValue].fail(
+            return r[t.GeneralValueType].fail(
                 params.error_on_none or c.Tests.Factory.ERROR_VALUE_NONE,
             )
-        raw_value: TValue = params.value
-        transformed_value: TValue = (
-            params.transform(raw_value) if params.transform else raw_value
+        from_val_raw = params.value
+        from_val_transformed = (
+            params.transform(from_val_raw) if params.transform else from_val_raw
         )
-        return r[TValue].ok(transformed_value)
+        return r[t.GeneralValueType].ok(from_val_transformed)
 
     @classmethod
     def op(
@@ -763,12 +775,16 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         return result_list
 
     @classmethod
-    def list[T](
+    def list(
         cls,
-        source: (Sequence[T] | Callable[[], T] | t.Tests.Factory.ModelKind) = "user",
+        source: (
+            Sequence[t.GeneralValueType]
+            | Callable[[], t.GeneralValueType]
+            | t.Tests.Factory.ModelKind
+        ) = "user",
         # All parameters via kwargs - will be validated by ListFactoryParams
         **kwargs: t.Tests.TestResultValue,
-    ) -> builtins.list[T] | r[builtins.list[T]]:
+    ) -> builtins.list[t.GeneralValueType] | r[builtins.list[t.GeneralValueType]]:
         """Create typed list from source.
 
         This is the preferred way to create lists of test data.
@@ -821,12 +837,12 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         )
         if params_result.is_failure:
             # Return validation error as FlextResult
-            return r[builtins.list[T]].fail(
+            return r[builtins.list[t.GeneralValueType]].fail(
                 f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
 
-        items: builtins.list[T] = []
+        items: builtins.list[t.GeneralValueType] = []
 
         # Handle different source types - use list[object] for intermediate storage
         # then convert to list[T] at the end for proper type inference
@@ -834,9 +850,23 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
 
         if isinstance(params.source, str):
             # ModelKind string - delegate to tt.model()
-            model_kind = params.source
-            if model_kind not in {"user", "config", "service", "entity", "value", "command", "query", "event"}:
-                return r[builtins.list[T]].fail(f"Invalid model kind: {model_kind}")
+            model_kind_str = params.source
+            # Use Literal mapping for type-safe conversion
+            kind_map: dict[str, t.Tests.Factory.ModelKind] = {
+                "user": "user",
+                "config": "config",
+                "service": "service",
+                "entity": "entity",
+                "value": "value",
+                "command": "command",
+                "query": "query",
+                "event": "event",
+            }
+            if model_kind_str not in kind_map:
+                return r[builtins.list[t.GeneralValueType]].fail(
+                    f"Invalid model kind: {model_kind_str}",
+                )
+            model_kind = kind_map[model_kind_str]
             for _ in range(params.count):
                 model_result = cls.model(model_kind)
                 # Extract item from model result
@@ -883,7 +913,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         # Ensure uniqueness if requested
         if params.unique and items:
             seen: set[object] = set()
-            unique_items: builtins.list[T] = []
+            unique_items: builtins.list[t.GeneralValueType] = []
             for item in items:
                 item_hash = (
                     hash(item)
@@ -896,7 +926,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             items = unique_items
 
         if params.as_result:
-            return r[builtins.list[T]].ok(items)
+            return r[builtins.list[t.GeneralValueType]].ok(items)
         return items
 
     @classmethod
@@ -968,7 +998,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         if params_result.is_failure:
             # Return validation error as FlextResult
             return r[dict[str, t.GeneralValueType]].fail(
-                f"Invalid parameters: {params_result.error}"
+                f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
 
@@ -1000,9 +1030,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 case _:
                     model_kind = "user"  # fallback
             for i in range(params.count):
-                key: str = (
-                    params.key_factory(i) if params.key_factory else f"item_{i}"
-                )
+                key: str = params.key_factory(i) if params.key_factory else f"item_{i}"
 
                 # Create model instance
                 model_result = cls.model(model_kind, count=1)
@@ -1029,13 +1057,13 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             source_callable = params.source
             for i in range(params.count):
                 key_val, value_val = source_callable()
-                key = key_val
-                value: t.GeneralValueType = value_val
+                call_key = key_val
+                call_value = value_val
                 if params.key_factory:
-                    key = params.key_factory(i)
+                    call_key = params.key_factory(i)
                 if params.value_factory:
-                    value = params.value_factory(key)
-                result_dict[key] = value
+                    call_value = params.value_factory(call_key)
+                result_dict[call_key] = call_value
 
         elif u.is_type(params.source, "mapping") and not u.is_type(
             params.source,
@@ -1215,7 +1243,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             User model instance
 
         """
-        user_data: t.ConfigurationDict = {
+        user_data: dict[str, t.GeneralValueType] = {
             "id": user_id or u.Tests.Factory.generate_id(),
             "name": name or c.Tests.Factory.DEFAULT_USER_NAME,
             "email": email
@@ -1223,7 +1251,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             "active": c.Tests.Factory.DEFAULT_USER_ACTIVE,
         }
         # Convert overrides dict to ConfigurationDict
-        overrides_dict: t.ConfigurationDict = dict(overrides)
+        overrides_dict: dict[str, t.GeneralValueType] = dict(overrides)
         merge_result = u.merge(user_data, overrides_dict, strategy="deep")
         if merge_result.is_success:
             user_data = merge_result.value
@@ -1251,12 +1279,12 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
             DeprecationWarning,
             stacklevel=2,
         )
-        config_data: t.ConfigurationDict = {
+        config_data: dict[str, t.GeneralValueType] = {
             "service_type": service_type,
             "environment": environment,
         }
         # Convert overrides dict to ConfigurationDict
-        overrides_dict: t.ConfigurationDict = dict(overrides)
+        overrides_dict: dict[str, t.GeneralValueType] = dict(overrides)
         merge_result = u.merge(config_data, overrides_dict, strategy="deep")
         if merge_result.is_success:
             config_data = merge_result.value

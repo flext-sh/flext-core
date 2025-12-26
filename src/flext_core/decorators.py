@@ -13,10 +13,9 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
-from typing import overload
+from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
@@ -25,11 +24,15 @@ from flext_core.context import FlextContext
 from flext_core.exceptions import e
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
-from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T, t
 from flext_core.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core.protocols import p
 
 
 def deprecated(
@@ -255,7 +258,9 @@ class FlextDecorators(FlextRuntime):
         ...         delay_seconds=1.0,
         ...         backoff_strategy="exponential",
         ...     )
-        ...     def call_external_api(self, endpoint: str) -> t.ConfigurationDict:
+        ...     def call_external_api(
+        ...         self, endpoint: str
+        ...     ) -> dict[str, t.GeneralValueType]:
         ...         # Automatically retries on failure with backoff
         ...         return requests.get(endpoint).json()
 
@@ -327,7 +332,7 @@ class FlextDecorators(FlextRuntime):
 
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
-        ... def business_operation() -> t.ConfigurationDict:
+        ... def business_operation() -> dict[str, t.GeneralValueType]:
         ...     # All exceptions become FlextResult.fail()
         ...     return process_business_logic()
         >>>
@@ -501,7 +506,7 @@ class FlextDecorators(FlextRuntime):
                 start_time = time.perf_counter() if track_perf else 0.0
 
                 try:
-                    start_extra: t.ConfigurationDict = {
+                    start_extra: dict[str, t.GeneralValueType] = {
                         "function": func.__name__,
                         "func_module": func.__module__,
                     }
@@ -524,7 +529,7 @@ class FlextDecorators(FlextRuntime):
 
                     result = func(*args, **kwargs)
 
-                    completion_extra: t.ConfigurationDict = {
+                    completion_extra: dict[str, t.GeneralValueType] = {
                         "function": func.__name__,
                         "success": True,
                     }
@@ -560,7 +565,7 @@ class FlextDecorators(FlextRuntime):
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: t.ConfigurationDict = {
+                    failure_extra: dict[str, t.GeneralValueType] = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
@@ -680,7 +685,7 @@ class FlextDecorators(FlextRuntime):
                     result = func(*args, **kwargs)
                     duration = time.perf_counter() - start_time
 
-                    success_extra: t.ConfigurationDict = {
+                    success_extra: dict[str, t.GeneralValueType] = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -702,7 +707,7 @@ class FlextDecorators(FlextRuntime):
                 ) as e:
                     duration = time.perf_counter() - start_time
 
-                    failure_extra: t.ConfigurationDict = {
+                    failure_extra: dict[str, t.GeneralValueType] = {
                         "operation": op_name,
                         "duration_ms": duration * c.MILLISECONDS_MULTIPLIER,
                         "duration_seconds": duration,
@@ -845,7 +850,7 @@ class FlextDecorators(FlextRuntime):
                     delay_seconds=2.0,
                     backoff_strategy=c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
                 )
-                def unreliable_operation(self) -> t.ConfigurationDict:
+                def unreliable_operation(self) -> dict[str, t.GeneralValueType]:
                     # Automatically retries on failure with exponential backoff
                     return self._make_api_call()
             ```
@@ -1156,7 +1161,7 @@ class FlextDecorators(FlextRuntime):
             extra_payload_raw = fallback_kwargs["extra"]
             # Type narrowing: object to ConfigurationDict for is_dict_like
             if isinstance(extra_payload_raw, dict):
-                extra_payload: t.ConfigurationDict = extra_payload_raw
+                extra_payload: dict[str, t.GeneralValueType] = extra_payload_raw
             else:
                 extra_payload = {}
             if FlextRuntime.is_dict_like(extra_payload):
@@ -1195,7 +1200,7 @@ class FlextDecorators(FlextRuntime):
 
             class MyService:
                 @FlextDecorators.timeout(timeout_seconds=30.0)
-                def long_running_operation(self) -> t.ConfigurationDict:
+                def long_running_operation(self) -> dict[str, t.GeneralValueType]:
                     # Automatically raises TimeoutError if exceeds 30 seconds
                     return self._process_data()
             ```
@@ -1276,7 +1281,7 @@ class FlextDecorators(FlextRuntime):
         inject_deps: t.StringMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
-        use_railway: bool = False,
+        use_railway: Literal[False] = False,
         error_code: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
@@ -1287,7 +1292,7 @@ class FlextDecorators(FlextRuntime):
         inject_deps: t.StringMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
-        use_railway: bool = True,
+        use_railway: Literal[True] = ...,
         error_code: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
 

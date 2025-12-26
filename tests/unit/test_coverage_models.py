@@ -39,7 +39,7 @@ class TestValueObjects:
     def test_value_object_creation(self) -> None:
         """Test creating a value object."""
 
-        class Money(m.Value):
+        class Money(m.ValueObject):
             """Money value object."""
 
             amount: float
@@ -52,7 +52,7 @@ class TestValueObjects:
     def test_value_object_immutability(self) -> None:
         """Test value object is immutable."""
 
-        class Point(m.Value):
+        class Point(m.ValueObject):
             """Point value object."""
 
             x: float
@@ -65,7 +65,7 @@ class TestValueObjects:
     def test_value_object_equality_by_value(self) -> None:
         """Test value objects compared by value."""
 
-        class Color(m.Value):
+        class Color(m.ValueObject):
             """Color value object."""
 
             red: int
@@ -79,7 +79,7 @@ class TestValueObjects:
     def test_value_object_validation(self) -> None:
         """Test value object validation."""
 
-        class Email(m.Value):
+        class Email(m.ValueObject):
             """Email value object with validation."""
 
             address: str
@@ -100,7 +100,7 @@ class TestValueObjects:
     def test_value_object_hashable(self) -> None:
         """Test value objects are hashable."""
 
-        class ISBN(m.Value):
+        class ISBN(m.ValueObject):
             """ISBN value object."""
 
             code: str

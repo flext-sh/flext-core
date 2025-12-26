@@ -183,7 +183,7 @@ class FlextModelsContainer:
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 
-        Replaces: t.ConfigurationDict for container configuration storage.
+        Replaces: dict[str, t.GeneralValueType] for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 

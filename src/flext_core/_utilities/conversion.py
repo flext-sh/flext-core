@@ -8,11 +8,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Literal, overload
+from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 class FlextUtilitiesConversion:
@@ -223,6 +227,89 @@ class FlextUtilitiesConversion:
             )
         error_msg = f"Unknown mode: {mode}"
         raise ValueError(error_msg)
+
+    @staticmethod
+    def to_general_value_type(value: object) -> t.GeneralValueType:
+        """Convert object to GeneralValueType with runtime check.
+
+        If value is already a GeneralValueType, return it.
+        Otherwise convert to string representation.
+
+        Args:
+            value: Object to convert
+
+        Returns:
+            GeneralValueType: Converted value
+
+        """
+        # Check known types that are part of GeneralValueType
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, datetime):
+            return value
+        if FlextRuntime.is_base_model(value):
+            return value
+        if isinstance(value, Path):
+            return value
+        if callable(value):
+            # Callable[..., GeneralValueType] - return as-is
+            callable_typed: Callable[..., t.GeneralValueType] = value
+            return callable_typed
+        if isinstance(value, list):
+            # list is Sequence[GeneralValueType] compatible
+            seq_result: Sequence[t.GeneralValueType] = value
+            return seq_result
+        if isinstance(value, tuple):
+            # tuple is Sequence[GeneralValueType] compatible
+            seq_tuple: Sequence[t.GeneralValueType] = value
+            return seq_tuple
+        if isinstance(value, dict):
+            # dict is Mapping[str, GeneralValueType] compatible
+            map_result: Mapping[str, t.GeneralValueType] = value
+            return map_result
+        # Fallback: convert to string
+        return str(value)
+
+    @staticmethod
+    def to_flexible_value(value: t.GeneralValueType) -> t.FlexibleValue | None:
+        """Convert GeneralValueType to FlexibleValue if compatible.
+
+        FlexibleValue is a subset of GeneralValueType that excludes
+        BaseModel, Path, and Callable types.
+
+        Args:
+            value: GeneralValueType to convert
+
+        Returns:
+            FlexibleValue or None if not compatible
+
+        """
+        # FlexibleValue = str | int | float | bool | datetime | None
+        #                | Sequence[scalar] | Mapping[str, scalar]
+        # where scalar = str | int | float | bool | datetime | None
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, datetime):
+            return value
+        # Exclude BaseModel, Path, Callable - these are not FlexibleValue
+        if FlextRuntime.is_base_model(value):
+            return None
+        if isinstance(value, Path):
+            return None
+        if callable(value):
+            return None
+        # Check for simple sequences (not nested GeneralValueType)
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            # Can't easily validate element types at runtime, assume compatible
+            return None  # Skip complex sequences for safety
+        if isinstance(value, Mapping):
+            # Can't easily validate value types at runtime, assume compatible
+            return None  # Skip complex mappings for safety
+        return None
 
 
 conversion = FlextUtilitiesConversion.conversion

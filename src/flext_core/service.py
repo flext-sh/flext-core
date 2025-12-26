@@ -14,9 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping, Sequence
-from types import ModuleType
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from pydantic import (
     ConfigDict,
@@ -28,13 +26,18 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.mixins import FlextMixins as x, require_initialized
+from flext_core.mixins import FlextMixins as x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.settings import FlextSettings
-from flext_core.typings import t
 from flext_core.utilities import u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping, Sequence
+    from types import ModuleType
+
+    from flext_core.typings import t
 
 
 class FlextService[TDomainResult](
@@ -269,10 +272,7 @@ class FlextService[TDomainResult](
         # config_type: TypedDict defines as type[BaseModel], narrow to FlextSettings
         config_type_raw = options.get("config_type")
         config_type_val: type[FlextSettings] | None
-        if (
-            config_type_raw is not None
-            and issubclass(config_type_raw, FlextSettings)
-        ):
+        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_type_val = config_type_raw
         else:
             config_type_val = config_type
@@ -364,9 +364,9 @@ class FlextService[TDomainResult](
         container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> m.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
-        config: FlextSettings = require_initialized(self._config, "Config")
-        ctx: p.Ctx = require_initialized(self._context, "Context")
-        container: p.DI = require_initialized(self._container, "Container")
+        config: FlextSettings = u.require_initialized(self._config, "Config")
+        ctx: p.Ctx = u.require_initialized(self._context, "Context")
+        container: p.DI = u.require_initialized(self._container, "Container")
         cloned_config = config.model_copy(
             update=config_overrides or {},
             deep=True,
@@ -393,22 +393,22 @@ class FlextService[TDomainResult](
         self,
     ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
         """View of the runtime triple for this service instance."""
-        return require_initialized(self._runtime, "Runtime")
+        return u.require_initialized(self._runtime, "Runtime")
 
     @property
     def context(self) -> p.Ctx:
         """Service-scoped execution context."""
-        return require_initialized(self._context, "Context")
+        return u.require_initialized(self._context, "Context")
 
     @property
     def config(self) -> FlextSettings:
         """Service-scoped configuration clone."""
-        return require_initialized(self._config, "Config")
+        return u.require_initialized(self._config, "Config")
 
     @property
     def container(self) -> p.DI:
         """Container bound to the service context/config."""
-        return require_initialized(self._container, "Container")
+        return u.require_initialized(self._container, "Container")
 
     @abstractmethod
     def execute(self) -> r[TDomainResult]:

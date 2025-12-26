@@ -16,13 +16,16 @@ import time
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 class FlextUtilitiesGenerators:
@@ -112,15 +115,15 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: t.ConfigurationDict | object,
-    ) -> t.ConfigurationDict:
+        context: dict[str, t.GeneralValueType] | object,
+    ) -> dict[str, t.GeneralValueType]:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            t.ConfigurationDict: Normalized context dict
+            dict[str, t.GeneralValueType]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -128,12 +131,14 @@ class FlextUtilitiesGenerators:
         """
         if isinstance(context, dict):
             # Type narrowing: context is dict, isinstance provides type narrowing to ConfigurationDict
-            context_dict_result: t.ConfigurationDict = context
+            context_dict_result: dict[str, t.GeneralValueType] = context
             return context_dict_result
         if isinstance(context, Mapping):
             try:
                 # Type narrowing: context is Mapping, convert to dict
-                context_dict_mapping: t.ConfigurationDict = dict(context.items())
+                context_dict_mapping: dict[str, t.GeneralValueType] = dict(
+                    context.items(),
+                )
                 return context_dict_mapping
             except (AttributeError, TypeError) as e:
                 msg = (
@@ -163,7 +168,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _enrich_context_fields(
-        context_dict: t.StringDict,
+        context_dict: dict[str, str],
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -197,7 +202,7 @@ class FlextUtilitiesGenerators:
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> t.StringDict:
+    ) -> dict[str, str]:
         """Ensure context dict has distributed tracing fields (trace_id, span_id, etc).
 
         This generic helper consolidates duplicate context enrichment logic
@@ -213,7 +218,7 @@ class FlextUtilitiesGenerators:
             include_timestamp: If True, ensure timestamp exists (ISO 8601)
 
         Returns:
-            t.StringDict: Enriched context with requested fields (all string values)
+            dict[str, str]: Enriched context with requested fields (all string values)
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -237,7 +242,7 @@ class FlextUtilitiesGenerators:
         """
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
         # Convert all values to strings for trace context (trace_id, span_id, etc. are strings)
-        context_dict: t.StringDict = {
+        context_dict: dict[str, str] = {
             k: v if isinstance(v, str) else str(v) for k, v in normalized_dict.items()
         }
         FlextUtilitiesGenerators._enrich_context_fields(
@@ -250,8 +255,8 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def ensure_dict(
         value: t.GeneralValueType,
-        default: t.ConfigurationDict | None = None,
-    ) -> t.ConfigurationDict:
+        default: dict[str, t.GeneralValueType] | None = None,
+    ) -> dict[str, t.GeneralValueType]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -271,7 +276,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            t.ConfigurationDict: Normalized dict or default
+            dict[str, t.GeneralValueType]: Normalized dict or default
 
         Raises:
             TypeError: If value is None (and no default) or cannot be converted
@@ -301,7 +306,7 @@ class FlextUtilitiesGenerators:
             result = value.model_dump()
             if FlextUtilitiesGuards.is_type(result, dict):
                 # normalize_to_general_value preserves dict structure
-                # so normalized will be t.ConfigurationDict
+                # so normalized will be dict[str, t.GeneralValueType]
                 normalized = FlextRuntime.normalize_to_general_value(result)
                 # Type narrowing: isinstance narrows normalized to dict
                 if isinstance(normalized, dict):
@@ -357,7 +362,7 @@ class FlextUtilitiesGenerators:
         if kind is None:
             return None
 
-        kind_prefix_map: t.StringDict = {
+        kind_prefix_map: dict[str, str] = {
             "correlation": "corr",
             "entity": "ent",
             "batch": c.Cqrs.ProcessingMode.BATCH,
@@ -483,7 +488,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: t.ConfigurationMapping | t.ConfigurationDict,
+        attributes: t.ConfigurationMapping | dict[str, t.GeneralValueType],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 
@@ -505,7 +510,7 @@ class FlextUtilitiesGenerators:
         # Type system ensures base_class is a type, so no runtime check needed
         # ConfigurationMapping and ConfigurationDict are both Mapping, so isinstance is redundant
         # Convert to dict for type() call
-        attributes_dict: t.ConfigurationDict = dict(attributes)
+        attributes_dict: dict[str, t.GeneralValueType] = dict(attributes)
         base_type: type = base_class
         return type(name, (base_type,), attributes_dict)
 
