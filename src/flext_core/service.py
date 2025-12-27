@@ -14,7 +14,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, override
+from collections.abc import Callable, Mapping, Sequence
+from types import ModuleType
+from typing import override
 
 from pydantic import (
     ConfigDict,
@@ -31,13 +33,8 @@ from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.settings import FlextSettings
+from flext_core.typings import t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
-    from types import ModuleType
-
-    from flext_core.typings import t
 
 
 class FlextService[TDomainResult](
@@ -127,8 +124,8 @@ class FlextService[TDomainResult](
 
         # Set attributes directly - PrivateAttr allows assignment without validation
         self._context = runtime.context
-        # Type narrowing: runtime.config is p.Config, but we need FlextSettings
-        # All implementations of p.Config in FLEXT are FlextSettings or subclasses
+        # Type narrowing: runtime.config is "p.Config", but we need FlextSettings
+        # All implementations of "p.Config" in FLEXT are FlextSettings or subclasses
         # Use isinstance check for type narrowing since FlextSettings is concrete class
         if not isinstance(runtime.config, FlextSettings):
             msg = f"Expected FlextSettings, got {type(runtime.config).__name__}"
@@ -223,18 +220,18 @@ class FlextService[TDomainResult](
 
         # 2. Context creation with initial data
         # context parameter is t.ContextLike (minimal protocol)
-        # Use TypeGuard to narrow to p.Ctx (full protocol with set method)
+        # Use TypeGuard to narrow to "p.Ctx" (full protocol with set method)
         runtime_context_typed: p.Ctx
         if context is not None and u.is_context(context):
-            # TypeGuard narrowed to p.Ctx - use directly
+            # TypeGuard narrowed to "p.Ctx" - use directly
             runtime_context_typed = context
         else:
             # Minimal ContextLike or None - create full context
             runtime_context_typed = FlextContext.create()
 
         # 3. Container creation with registrations
-        # runtime_config is FlextSettings which implements p.Config structurally
-        # No cast needed - FlextSettings implements p.Config protocol
+        # runtime_config is FlextSettings which implements "p.Config" structurally
+        # No cast needed - FlextSettings implements "p.Config" protocol
         runtime_config_typed: p.Config = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
@@ -280,7 +277,7 @@ class FlextService[TDomainResult](
         # config_overrides: TypedDict typed as Mapping[str, FlexibleValue]
         config_overrides_val = options.get("config_overrides")
 
-        # context: TypedDict typed as ContextLike - narrow to p.Ctx using isinstance
+        # context: TypedDict typed as ContextLike - narrow to "p.Ctx" using isinstance
         context_val_raw = options.get("context")
         context_val: p.Ctx | None = (
             context_val_raw if isinstance(context_val_raw, p.Ctx) else None

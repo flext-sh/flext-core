@@ -13,25 +13,22 @@ from __future__ import annotations
 
 import contextvars
 import json
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Final, Self, overload
+from datetime import datetime
+from typing import Final, Self, overload
+
+from pydantic import BaseModel
 
 from flext_core._models.context import FlextModelsContext
 from flext_core.constants import c
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
-    from datetime import datetime
-
-    from pydantic import BaseModel
-
-    from flext_core.protocols import p
 
 
 class FlextContext(FlextRuntime):

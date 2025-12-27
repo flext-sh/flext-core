@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Literal, Self, TypeGuard, overload
+from typing import Literal, Self, TypeGuard, overload
 
 from pydantic import BaseModel
 
@@ -26,9 +26,6 @@ from flext_tests.factories import FlextTestsFactories as tt
 from flext_tests.models import FlextTestsModels as m
 from flext_tests.typings import t
 from flext_tests.utilities import FlextTestsUtilities as tu
-
-if TYPE_CHECKING:
-    from flext_core.typings import T
 
 
 class FlextTestsBuilders:
@@ -1647,7 +1644,8 @@ class FlextTestsBuilders:
 
             @staticmethod
             def add() -> Callable[
-                [t.GeneralValueType, t.GeneralValueType], t.GeneralValueType,
+                [t.GeneralValueType, t.GeneralValueType],
+                t.GeneralValueType,
             ]:
                 """Add operation - DELEGATES to tu.Tests.Factory."""
                 return tu.Tests.Factory.add_operation

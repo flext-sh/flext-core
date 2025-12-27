@@ -19,8 +19,7 @@ from flext_core.result import r
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
-
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextUtilitiesEnum:

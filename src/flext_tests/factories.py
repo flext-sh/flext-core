@@ -27,7 +27,6 @@ from typing import Never, TypeVar
 from pydantic import BaseModel as _BaseModel
 
 from flext_core import FlextResult, r
-from flext_core.typings import t as t_core
 from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -38,7 +37,7 @@ TModel = TypeVar("TModel")
 TValue = TypeVar("TValue")
 
 
-class FlextTestsFactories(su[t_core.GeneralValueType]):
+class FlextTestsFactories(su[t.GeneralValueType]):
     """Comprehensive test data factories extending FlextService.
 
     Provides factory methods for creating test objects, services, and domain
@@ -475,7 +474,8 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 else:
                     result_list.append(
                         r[t.GeneralValueType].fail(
-                            params.error, error_code=params.error_code,
+                            params.error,
+                            error_code=params.error_code,
                         ),
                     )
             return result_list
@@ -530,7 +530,8 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
 
         if params.kind == "fail":
             return r[t.GeneralValueType].fail(
-                params.error, error_code=params.error_code,
+                params.error,
+                error_code=params.error_code,
             )
 
         # params.kind == "from_value"
@@ -1434,7 +1435,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         # Capture overrides in local variable for use in nested class
         captured_overrides: dict[str, t.Tests.TestResultValue] = dict(overrides)
 
-        class TestService(su[t_core.GeneralValueType]):
+        class TestService(su[t.GeneralValueType]):
             """Generic test service."""
 
             name: str | None = None
@@ -1455,17 +1456,17 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 # Separate service fields from overrides
                 # Service fields: name, amount, enabled (for complex service)
                 # Overrides: default, etc. (for execute methods)
-                override_fields: dict[str, t_core.GeneralValueType] = {}
+                override_fields: dict[str, t.GeneralValueType] = {}
                 # Extract service fields directly to avoid mypy dict unpacking issues
                 # Build kwargs inline to match **kwargs signature
-                name_value: t_core.GeneralValueType | None = None
-                amount_value: t_core.GeneralValueType | None = None
-                enabled_value: t_core.GeneralValueType | None = None
+                name_value: t.GeneralValueType | None = None
+                amount_value: t.GeneralValueType | None = None
+                enabled_value: t.GeneralValueType | None = None
 
                 # Use captured_overrides from outer scope (closure)
                 for key, value in {**captured_overrides, **data}.items():
                     # value is already t.GeneralValueType from dict iteration
-                    gv: t_core.GeneralValueType = value
+                    gv: t.GeneralValueType = value
                     if key == "name":
                         name_value = gv
                     elif key == "amount":
@@ -1477,9 +1478,9 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
 
                 # Call parent with **data dict (FlextService.__init__ accepts **data: t.GeneralValueType)
                 # Build service data dict with only non-None values
-                # Type compatibility: t_core.GeneralValueType is compatible with t.GeneralValueType
-                # (both are from flext_core.typings, t_core is just an alias)
-                service_data: dict[str, t_core.GeneralValueType] = {}
+                # Type compatibility: t.GeneralValueType is compatible with t.GeneralValueType
+                # (both are from flext_core.typings, t is just an alias)
+                service_data: dict[str, t.GeneralValueType] = {}
                 if name_value is not None:
                     service_data["name"] = name_value
                 if amount_value is not None:
@@ -1494,7 +1495,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                 super().__init__(**service_data)
                 # Set attribute directly (no PrivateAttr needed, compatible with FlextService)
                 # Initialize mutable attribute in __init__ to avoid ClassVar requirement
-                # Type narrowing: override_fields is dict[str, t_core.GeneralValueType]
+                # Type narrowing: override_fields is dict[str, t.GeneralValueType]
                 # but _overrides expects dict[str, t.Tests.TestResultValue]
                 # Convert to TestResultValue type
                 self._overrides = override_fields
@@ -1539,7 +1540,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
                         return result
                 return r[bool].ok(True)
 
-            def execute(self) -> r[t_core.GeneralValueType]:
+            def execute(self) -> r[t.GeneralValueType]:
                 """Execute test operation."""
                 if service_type == "user":
                     # Merge instance overrides with class overrides

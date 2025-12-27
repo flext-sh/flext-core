@@ -17,13 +17,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
+from flext_core.result import r
 from flext_core.service import FlextService
 from flext_core.typings import T
-
-if TYPE_CHECKING:
-    from flext_core.result import r
 
 
 class FlextTestsServiceBase[T]:

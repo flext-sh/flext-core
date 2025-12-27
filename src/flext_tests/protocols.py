@@ -9,7 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+import builtins
+from collections.abc import Callable, Mapping, Sequence
+from typing import Protocol, Self, runtime_checkable
+
+from pydantic import BaseModel
 
 from flext_core import FlextProtocols, r
 
@@ -18,12 +22,6 @@ from flext_core import FlextProtocols, r
 # Test-specific types (t.Tests.*) are defined in flext_tests.typings
 # To avoid circular import, we import typings at end of module
 from flext_tests.typings import FlextTestsTypes
-
-if TYPE_CHECKING:
-    import builtins
-    from collections.abc import Callable, Mapping, Sequence
-
-    from pydantic import BaseModel
 
 t = FlextTestsTypes
 

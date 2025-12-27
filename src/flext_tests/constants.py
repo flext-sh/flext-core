@@ -18,8 +18,7 @@ from flext_core.constants import FlextConstants
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from flext_tests.typings import t
+from flext_tests.typings import t
 
 
 class FlextTestsConstants(FlextConstants):

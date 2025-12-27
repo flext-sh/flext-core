@@ -17,19 +17,17 @@ import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeGuard
+from typing import TypeGuard
 
 from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextUtilitiesReliability:

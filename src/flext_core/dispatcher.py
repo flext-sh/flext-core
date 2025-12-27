@@ -17,7 +17,8 @@ import sys
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Self, override
+from types import ModuleType
+from typing import Self, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -34,16 +35,12 @@ from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
 from flext_core.mixins import FlextMixins as x
 from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
 from flext_core.typings import t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from types import ModuleType
-
-    from flext_core.protocols import p
 
 
 class FlextDispatcher(FlextService[bool]):
@@ -118,10 +115,12 @@ class FlextDispatcher(FlextService[bool]):
         # ==================== LAYER 2.5: TIMEOUT CONTEXT PROPAGATION ====================
 
         self._timeout_contexts: dict[
-            str, t.GeneralValueType,
+            str,
+            t.GeneralValueType,
         ] = {}  # operation_id → context
         self._timeout_deadlines: dict[
-            str, float,
+            str,
+            float,
         ] = {}  # operation_id → deadline timestamp
 
         # ==================== LAYER 1: CQRS ROUTING INITIALIZATION ====================
@@ -171,12 +170,14 @@ class FlextDispatcher(FlextService[bool]):
             ],
         ] = {}  # composed functions
         self._pipeline_memo: dict[
-            str, t.GeneralValueType,
+            str,
+            t.GeneralValueType,
         ] = {}  # Memoization cache for pipeline
 
         self._audit_log: list[t.ConfigurationMapping] = []  # Operation audit trail
         self._performance_metrics: dict[
-            str, t.GeneralValueType,
+            str,
+            t.GeneralValueType,
         ] = {}  # Timing and throughput
 
     def _resolve_or_create_circuit_breaker(
@@ -853,7 +854,9 @@ class FlextDispatcher(FlextService[bool]):
         )
         middleware_type_value = u.Mapper.get(middleware_config, "middleware_type")
         enabled_raw: t.GeneralValueType = u.Mapper.get(
-            middleware_config, "enabled", default=True,
+            middleware_config,
+            "enabled",
+            default=True,
         )
         # enabled_raw default is True (bool), so it's never None
         enabled_value = bool(enabled_raw)
@@ -1351,7 +1354,8 @@ class FlextDispatcher(FlextService[bool]):
                     return str(instance)
 
                 _ = self._container.register_factory(
-                    factory_name, _create_handler_for_type,
+                    factory_name,
+                    _create_handler_for_type,
                 )
                 self.logger.debug(
                     "Handler registered as factory in container",
@@ -1423,7 +1427,9 @@ class FlextDispatcher(FlextService[bool]):
         enabled_value: bool = True
         if middleware_config:
             enabled_raw: t.GeneralValueType = u.Mapper.get(
-                middleware_config, "enabled", default=True,
+                middleware_config,
+                "enabled",
+                default=True,
             )
             # enabled_raw default is True (bool), so it's never None
             enabled_value = bool(enabled_raw)
@@ -3071,7 +3077,8 @@ class FlextDispatcher(FlextService[bool]):
         # Extract attributes section if present - fast fail: must be dict or None
         attributes_section_raw: t.GeneralValueType | None = dumped.get("attributes")
         if attributes_section_raw is not None and isinstance(
-            attributes_section_raw, Mapping,
+            attributes_section_raw,
+            Mapping,
         ):
             # Type narrowing: isinstance check ensures it's a Mapping
             # Return the attributes mapping (ConfigurationMapping)

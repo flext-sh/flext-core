@@ -14,14 +14,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -55,7 +54,7 @@ class FlextModelsContainer:
         # ARCHITECTURAL NOTE: DI containers accept any registerable service.
         # SkipValidation needed because Protocol types can't be validated by Pydantic.
         # Type safety is enforced at container API level via get_typed().
-        service: Annotated[p.RegisterableService, SkipValidation] = Field(
+        service: Annotated[Any, SkipValidation] = Field(
             ...,
             description="Service instance (protocols, models, callables)",
         )
@@ -106,7 +105,7 @@ class FlextModelsContainer:
         )
         # Factory returns RegisterableService for type-safe factory resolution
         # Supports all registerable types: GeneralValueType, protocols, callables
-        factory: Annotated[p.ServiceFactory, SkipValidation] = Field(
+        factory: Annotated[Any, SkipValidation] = Field(
             ...,
             description="Factory function that creates service instances",
         )
@@ -269,22 +268,5 @@ class FlextModelsContainer:
             description="Whether to defer factory invocation until first use",
         )
 
-
-# Rebuild models with forward references to protocols
-# Required for Pydantic to resolve FlextProtocols.* references
-# Import FlextProtocols for namespace resolution
-from flext_core.protocols import FlextProtocols  # noqa: E402
-
-_rebuild_ns = {
-    "FlextProtocols": FlextProtocols,
-    "t": t,
-    "c": c,
-    "p": p,
-}
-FlextModelsContainer.ServiceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.FactoryRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.ResourceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.ContainerConfig.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.FactoryDecoratorConfig.model_rebuild(_types_namespace=_rebuild_ns)
 
 __all__ = ["FlextModelsContainer"]

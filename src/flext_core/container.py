@@ -14,7 +14,9 @@ from __future__ import annotations
 import inspect
 import sys
 import threading
-from typing import TYPE_CHECKING, Self, TypeGuard
+from collections.abc import Callable, Mapping, Sequence
+from types import ModuleType
+from typing import Self, TypeGuard
 
 from pydantic import BaseModel
 
@@ -27,13 +29,8 @@ from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
+from flext_core.typings import t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
-    from types import ModuleType
-
-    from flext_core.typings import t
 
 
 class FlextContainer(FlextRuntime, p.DI):

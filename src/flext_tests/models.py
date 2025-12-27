@@ -9,8 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import datetime
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from pydantic import (
     AliasChoices,
@@ -27,12 +28,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import FlextModels as FlextModelsBase
 from flext_tests.constants import ContainerStatus, c
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
-    from datetime import datetime
-
-    from flext_tests.typings import t
+from flext_tests.typings import t
 
 # =====================================================================
 # Module-level test models for Pydantic forward reference resolution
@@ -450,8 +446,12 @@ class FlextTestsModels(FlextModelsBase):
                 status: str = "active"
 
             # Use module-level Entity and ValueObject to avoid Pydantic forward reference issues
-            type Entity = _TestEntity
-            type ValueObject = _TestValueObject
+            # Factory classes for test model creation
+            class Entity(_TestEntity):
+                """Factory entity class for tests."""
+
+            class ValueObject(_TestValueObject):
+                """Factory value object class for tests."""
 
         class Files:
             """File-related models for test infrastructure."""
@@ -469,8 +469,8 @@ class FlextTestsModels(FlextModelsBase):
                 first_line: str = ""
                 fmt: str = "unknown"
                 is_valid: bool = True
-                created: datetime | None = None
-                modified: datetime | None = None
+                created: datetime.datetime | None = None
+                modified: datetime.datetime | None = None
                 permissions: int = 0
                 is_readonly: bool = False
                 sha256: str | None = None

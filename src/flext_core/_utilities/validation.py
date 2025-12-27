@@ -38,6 +38,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import concurrent.futures
+import inspect
 import json
 import operator
 import re
@@ -45,7 +46,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields, is_dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, TypeGuard
+from typing import ClassVar, TypeGuard
 
 import orjson
 from pydantic import (
@@ -62,9 +63,6 @@ from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-if TYPE_CHECKING:
-    import inspect
 
 # Use centralized version from cast.py
 _to_general_value_type = FlextUtilitiesCast.to_general_value_type
@@ -332,7 +330,8 @@ class FlextUtilitiesValidation:
             # Type narrowing: is_dict_like ensures component is Mapping
             mapping_component: Mapping[str, t.GeneralValueType] = component
             return FlextUtilitiesValidation._normalize_dict_like(
-                mapping_component, visited,
+                mapping_component,
+                visited,
             )
         if isinstance(component, (list, tuple)):
             # Explicit type annotation for sequence
@@ -363,7 +362,7 @@ class FlextUtilitiesValidation:
             result_dict: dict[str, t.GeneralValueType] = {}
             item: tuple[str, t.GeneralValueType] | object
             for item in items_result:
-                if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
+                if isinstance(item, tuple) and len(item) == 2:
                     key: str | object
                     value: t.GeneralValueType | object
                     key, value = item
@@ -456,7 +455,7 @@ class FlextUtilitiesValidation:
             result_dict: dict[str, t.GeneralValueType] = {}
             item: tuple[str, t.GeneralValueType] | object
             for item in items_result:
-                if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
+                if isinstance(item, tuple) and len(item) == 2:
                     key: str | object
                     value: t.GeneralValueType | object
                     key, value = item

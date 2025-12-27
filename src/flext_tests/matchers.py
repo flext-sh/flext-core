@@ -58,17 +58,15 @@ import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeGuard, cast
+from typing import TypeGuard, cast
 
 from pydantic import BaseModel
 
 from flext_core import r
 from flext_tests.constants import c
 from flext_tests.models import m
+from flext_tests.typings import t
 from flext_tests.utilities import u
-
-if TYPE_CHECKING:
-    from flext_tests.typings import t
 
 
 def _is_key_value_pair[TK, TV](

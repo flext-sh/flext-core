@@ -25,7 +25,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import fnmatch
-from typing import TYPE_CHECKING, ClassVar
+from pathlib import Path
+from typing import ClassVar
 
 from flext_core import r
 from flext_tests._validator import (
@@ -39,9 +40,6 @@ from flext_tests._validator import (
 from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.models import m
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class FlextTestsValidator(su[m.Tests.Validator.ScanResult]):

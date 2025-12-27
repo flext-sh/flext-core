@@ -10,7 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Annotated, Self
+from collections.abc import Callable
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
@@ -24,11 +25,9 @@ from pydantic import (
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from flext_core.protocols import p
-    from flext_core.typings import t
+# Import p and t for runtime use in models
+from flext_core.protocols import p
+from flext_core.typings import t
 
 # NOTE: models.py cannot import utilities - use direct imports from _utilities/* instead
 
@@ -71,7 +70,7 @@ class FlextModelsHandler:
             if not callable(v):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
-            # v is already typed as Callable via Pydantic field validation
+            # Return the validated callable
             return v
 
     class RegistrationDetails(BaseModel):

@@ -11,16 +11,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Self
+from typing import Self
 
 from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 # Use centralized version from _utilities/cast.py
 _to_general_value_type = FlextUtilitiesCast.to_general_value_type
@@ -246,7 +244,8 @@ class FlextModelsCollections:
                             item
                             for item in v
                             if isinstance(
-                                item, (str, int, float, bool, datetime, type(None)),
+                                item,
+                                (str, int, float, bool, datetime, type(None)),
                             )
                         )
                 return combined
@@ -326,7 +325,8 @@ class FlextModelsCollections:
                         item
                         for item in value
                         if isinstance(
-                            item, (str, int, float, bool, datetime, type(None)),
+                            item,
+                            (str, int, float, bool, datetime, type(None)),
                         )
                     ]
                     normalized_result[key] = filtered
@@ -400,7 +400,8 @@ class FlextModelsCollections:
                         item
                         for item in v
                         if isinstance(
-                            item, (str, int, float, bool, datetime, type(None)),
+                            item,
+                            (str, int, float, bool, datetime, type(None)),
                         )
                     )
             return combined
@@ -444,7 +445,8 @@ class FlextModelsCollections:
                     for key, val in v.items():
                         # Only add values that match the dict value types
                         if isinstance(
-                            val, (str, int, float, bool, datetime, type(None)),
+                            val,
+                            (str, int, float, bool, datetime, type(None)),
                         ):
                             merged[str(key)] = val
                         elif isinstance(val, list):
@@ -455,7 +457,8 @@ class FlextModelsCollections:
                                 item
                                 for item in val
                                 if isinstance(
-                                    item, (str, int, float, bool, datetime, type(None)),
+                                    item,
+                                    (str, int, float, bool, datetime, type(None)),
                                 )
                             ]
                             merged[str(key)] = filtered

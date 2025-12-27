@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Iterable, Mapping
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self
 
 from pydantic import Field, PrivateAttr, computed_field
 
@@ -20,14 +20,12 @@ from flext_core.constants import c
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
 from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
 from flext_core.typings import t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
 
 # Use centralized version from utilities
 _to_general_value_type = u.Cast.to_general_value_type

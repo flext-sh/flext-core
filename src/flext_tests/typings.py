@@ -41,13 +41,6 @@ class FlextTestsTypes(FlextTypes):
     workspace projects, without being directed to any specific project.
     """
 
-    class Core:
-        """Base namespace for project-specific test types.
-
-        Subprojects extend this to add project-specific test types.
-        Example: TestsFlextTypes.Core extends FlextTestsTypes.Core in flext-core tests.
-        """
-
     class Tests:
         """Test-specific type definitions namespace.
 
@@ -598,7 +591,8 @@ class FlextTestsTypes(FlextTypes):
         ) -> TypeGuard[Sequence[t.GeneralValueType]]:
             """Check if value is a Sequence of GeneralValueType."""
             return isinstance(value, (list, tuple)) and not isinstance(
-                value, (str, bytes),
+                value,
+                (str, bytes),
             )
 
         @staticmethod
