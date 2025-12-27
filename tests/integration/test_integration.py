@@ -30,8 +30,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 from flext_core.typings import t
 
-from typing import cast
-
 import pytest
 
 from flext_core import (
@@ -159,10 +157,11 @@ class TestLibraryIntegration:
         assert factory_result.is_success is True
 
         # Act - Verify factory produced string value (t.GeneralValueType)
-        result_value: str = cast("str", factory_result.value)
-
-        # Assert - Result type and content validation
+        # Type narrowing: factory returns str, which is t.GeneralValueType
+        result_value = factory_result.value
         assert isinstance(result_value, str)
+
+        # Assert - Result content validation
         assert result_value == expected_result_data
 
         # Assert - Functional service was called (real validation)

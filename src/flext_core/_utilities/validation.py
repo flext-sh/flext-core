@@ -362,12 +362,19 @@ class FlextUtilitiesValidation:
             result_dict: dict[str, t.GeneralValueType] = {}
             item: tuple[str, t.GeneralValueType] | object
             for item in items_result:
-                if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
+                if (
+                    isinstance(item, tuple)
+                    and len(item) == c.Performance.EXPECTED_TUPLE_LENGTH
+                ):
                     key: str | object
-                    value: t.GeneralValueType | object
-                    key, value = item
+                    value_raw: object
+                    key, value_raw = item
                     if isinstance(key, str):
-                        result_dict[key] = value
+                        # Convert value to GeneralValueType
+                        typed_value: t.GeneralValueType = _to_general_value_type(
+                            value_raw
+                        )
+                        result_dict[key] = typed_value
             return result_dict
 
         if isinstance(items_result, Mapping):
@@ -455,12 +462,19 @@ class FlextUtilitiesValidation:
             result_dict: dict[str, t.GeneralValueType] = {}
             item: tuple[str, t.GeneralValueType] | object
             for item in items_result:
-                if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
+                if (
+                    isinstance(item, tuple)
+                    and len(item) == c.Performance.EXPECTED_TUPLE_LENGTH
+                ):
                     key: str | object
-                    value: t.GeneralValueType | object
-                    key, value = item
+                    value_raw: object
+                    key, value_raw = item
                     if isinstance(key, str):
-                        result_dict[key] = value
+                        # Convert value to GeneralValueType
+                        typed_value: t.GeneralValueType = _to_general_value_type(
+                            value_raw
+                        )
+                        result_dict[key] = typed_value
             return result_dict
 
         if isinstance(items_result, Mapping):
@@ -1591,7 +1605,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_http_status_codes(
-        codes: list[object],
+        codes: list[t.GeneralValueType],
         min_code: int = c.Network.HTTP_STATUS_MIN,
         max_code: int = c.Network.HTTP_STATUS_MAX,
     ) -> r[list[int]]:
@@ -3087,7 +3101,7 @@ class FlextUtilitiesValidation:
         @staticmethod
         def in_(
             value: object,
-            items: list[object]
+            items: list[t.GeneralValueType]
             | tuple[object, ...]
             | set[object]
             | t.ConfigurationMapping,

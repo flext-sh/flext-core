@@ -272,7 +272,7 @@ class FlextTestsMatchers:
             else:
                 # Single item - wrap in list for uniform processing
                 has_item: object = has_value
-                # list[object] is already Sequence[object], no cast needed
+                # list[t.GeneralValueType] is already Sequence[object], no cast needed
                 has_items = [has_item]
             for item in has_items:
                 # Type narrowing: item is object from Sequence[object]
@@ -293,7 +293,7 @@ class FlextTestsMatchers:
             else:
                 # Single item - wrap in list for uniform processing
                 lacks_item: object = params.lacks
-                # list[object] is already Sequence[object], no cast needed
+                # list[t.GeneralValueType] is already Sequence[object], no cast needed
                 lacks_items = [lacks_item]
             for item in lacks_items:
                 if u.chk(result_value, contains=item):
@@ -807,7 +807,7 @@ class FlextTestsMatchers:
             else:
                 # Single item - wrap in list for uniform processing
                 has_item: object = has_value
-                # list[object] is already Sequence[object], no cast needed
+                # list[t.GeneralValueType] is already Sequence[object], no cast needed
                 has_items = [has_item]
             for has_item_obj in has_items:
                 # Type narrowing: has_item_obj is object from Sequence[object]
@@ -830,7 +830,7 @@ class FlextTestsMatchers:
             else:
                 # Single item - wrap in list for uniform processing
                 lacks_item: object = params.lacks
-                # list[object] is already Sequence[object], no cast needed
+                # list[t.GeneralValueType] is already Sequence[object], no cast needed
                 lacks_items = [lacks_item]
             for lacks_item_obj in lacks_items:
                 lacks_item_val: object = lacks_item_obj
@@ -883,7 +883,7 @@ class FlextTestsMatchers:
         if isinstance(value, (list, tuple)):
             # Type narrowing: value is already narrowed to list | tuple by isinstance
             # No cast needed - isinstance already provides type narrowing
-            seq_value: list[object] | tuple[object, ...] = value
+            seq_value: list[t.GeneralValueType] | tuple[object, ...] = value
             if params.first is not None:
                 if not seq_value:
                     raise AssertionError(

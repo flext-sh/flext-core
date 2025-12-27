@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from typing import TypedDict
 
 from flext_core import FlextModels, FlextProtocols, FlextTypes
+from flext_core.typings import t
 from flext_tests.models import FlextTestsModels
 
 

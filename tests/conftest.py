@@ -21,9 +21,9 @@ from flext_core import (
     FlextContext,
     FlextResult,
     FlextSettings,
+    FlextTypes as t,
     m,
     r,
-    t,
 )
 from flext_core._models import entity as flext_models_entity
 from tests.helpers import factories  # Import for User model rebuild

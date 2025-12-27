@@ -1389,7 +1389,7 @@ class FlextUtilitiesMapper:
             case "list":
                 if isinstance(current, list):
                     # Type narrowing: current is list, convert items to t.GeneralValueType
-                    list_current: list[object] = current
+                    list_current: list[t.GeneralValueType] = current
                     return [
                         FlextUtilitiesMapper.narrow_to_general_value_type(item)
                         for item in list_current
@@ -1401,8 +1401,8 @@ class FlextUtilitiesMapper:
                 )
             case "str_list":
                 if isinstance(current, list):
-                    # Type narrowing: current is list[object], convert each to str
-                    list_current_str: list[object] = current
+                    # Type narrowing: current is list[t.GeneralValueType], convert each to str
+                    list_current_str: list[t.GeneralValueType] = current
                     return [
                         str(FlextUtilitiesMapper.narrow_to_general_value_type(x))
                         for x in list_current_str

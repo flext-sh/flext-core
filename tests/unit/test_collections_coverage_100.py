@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import Field
@@ -160,9 +160,7 @@ class TestFlextModelsCollectionsCategories:
     def test_categories_from_dict(self) -> None:
         """Test from_dict class method."""
         data = {"users": ["user1"], "groups": ["group1"]}
-        # Cast to m.Categories for type compatibility
-        categories_raw = m.Categories[str].from_dict(data)
-        categories = cast("m.Categories[str]", categories_raw)
+        categories: m.Categories[str] = m.Categories[str].from_dict(data)
         assert categories.get_entries("users") == ["user1"]
         assert categories.get_entries("groups") == ["group1"]
 
@@ -198,8 +196,8 @@ class TestFlextModelsCollectionsStatistics:
             result,
             dict,
         )
-        # Cast to dict for type compatibility
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        # Annotate result_dict with proper type
+        result_dict: dict[str, t.GeneralValueType] = result
         assert result_dict.get("count") == 30
 
     def test_statistics_aggregate_lists(self) -> None:
@@ -216,8 +214,8 @@ class TestFlextModelsCollectionsStatistics:
             result,
             dict,
         )
-        # Cast to dict for type compatibility
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        # Annotate result_dict with proper type
+        result_dict: dict[str, t.GeneralValueType] = result
         assert result_dict.get("items") == ["a", "b", "c"]
 
     def test_statistics_aggregate_mixed(self) -> None:
@@ -236,8 +234,8 @@ class TestFlextModelsCollectionsStatistics:
             result,
             dict,
         )
-        # Cast to dict for type compatibility
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        # Annotate result_dict with proper type
+        result_dict: dict[str, t.GeneralValueType] = result
         assert result_dict.get("count") == 30
         assert result_dict.get("items") == ["a", "b"]
         assert result_dict.get("name") == "second"
@@ -257,8 +255,8 @@ class TestFlextModelsCollectionsStatistics:
             result,
             dict,
         )
-        # Cast to dict for type compatibility
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        # Annotate result_dict with proper type
+        result_dict: dict[str, t.GeneralValueType] = result
         assert result_dict.get("count") == 10
         assert result_dict.get("name") == "first"
 
@@ -384,7 +382,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.ConfigurationDict", aggregated_raw)
+        aggregated: t.ConfigurationDict = aggregated_raw
         assert aggregated["processed"] == 30
 
     def test_results_aggregate_lists(self) -> None:
@@ -398,7 +396,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.ConfigurationDict", aggregated_raw)
+        aggregated: t.ConfigurationDict = aggregated_raw
         assert aggregated["errors"] == ["error1", "error2"]
 
     def test_results_aggregate_dicts(self) -> None:
@@ -412,7 +410,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.ConfigurationDict", aggregated_raw)
+        aggregated: t.ConfigurationDict = aggregated_raw
         assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
 
     def test_results_aggregate_mixed(self) -> None:
@@ -428,7 +426,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.ConfigurationDict", aggregated_raw)
+        aggregated: t.ConfigurationDict = aggregated_raw
         assert aggregated["processed"] == 30
         assert aggregated["errors"] == ["a", "b"]
         assert aggregated["status"] == "done"
@@ -445,7 +443,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated = cast("t.ConfigurationDict", aggregated_raw)
+        aggregated: t.ConfigurationDict = aggregated_raw
         assert aggregated["processed"] == 10
         assert aggregated["status"] == "ok"
 

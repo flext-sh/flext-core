@@ -15,7 +15,7 @@ from typing import cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import (
+from flext_core import FlextTypes as t, (
     FlextConstants,
     FlextContext,
     FlextResult,

@@ -133,10 +133,10 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[..., object],
+        operation_func: Callable[..., FlextResult[t.GeneralValueType]],
         test_case: StandardTestCase,
         context: str = "",
-    ) -> object:
+    ) -> t.GeneralValueType:
         """Execute operation and assert result matches test case."""
         try:
             result = operation_func()

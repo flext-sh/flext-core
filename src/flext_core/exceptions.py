@@ -806,7 +806,7 @@ class FlextExceptions:
                     return type_map.get(type_raw)
                 # Support type objects directly
                 if isinstance(type_raw, type):
-                    return type_raw  # type: ignore[unreachable]
+                    return type_raw
                 # type_raw is not a recognized type, continue to next checks
             # Handle case where type is passed as string in named arg
             if isinstance(type_value, str):

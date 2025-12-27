@@ -845,7 +845,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
 
         items: builtins.list[t.GeneralValueType] = []
 
-        # Handle different source types - use list[object] for intermediate storage
+        # Handle different source types - use list[t.GeneralValueType] for intermediate storage
         # then convert to list[T] at the end for proper type inference
         raw_items: builtins.list[t.GeneralValueType] = []
 

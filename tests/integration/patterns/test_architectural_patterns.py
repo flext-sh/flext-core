@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import cast
 
 import pytest
 
@@ -115,13 +114,18 @@ class TestEnterprisePatterns:
         assert config_result.is_success
         config = config_result.value
         assert isinstance(config, dict)
-        config_dict = config  # Already dict[str, t.GeneralValueType] from assertion
-        database_dict = cast("dict[str, t.GeneralValueType]", config_dict["database"])
-        assert database_dict["host"] == "localhost"
-        logging_dict = cast("dict[str, t.GeneralValueType]", config_dict["logging"])
-        assert logging_dict["level"] == "INFO"
-        cache_dict = cast("dict[str, t.GeneralValueType]", config_dict["cache"])
-        assert cache_dict["enabled"]
+        # Verify database config
+        database = config.get("database")
+        assert isinstance(database, dict)
+        assert database.get("host") == "localhost"
+        # Verify logging config
+        logging = config.get("logging")
+        assert isinstance(logging, dict)
+        assert logging.get("level") == "INFO"
+        # Verify cache config
+        cache = config.get("cache")
+        assert isinstance(cache, dict)
+        assert cache.get("enabled")
 
     @pytest.mark.architecture
     @pytest.mark.performance
@@ -183,8 +187,9 @@ class TestEnterprisePatterns:
         for i in range(100):
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success, f"Query {i} should succeed"
-            entity_data = cast("dict[str, t.GeneralValueType]", query_result.value)
-            assert entity_data["id"] == i, f"Entity {i} should have id={i}"
+            entity_data = query_result.value
+            assert isinstance(entity_data, dict), f"Expected dict, got {type(entity_data)}"
+            assert entity_data.get("id") == i, f"Entity {i} should have id={i}"
 
         query_duration = time.perf_counter() - start_time
 

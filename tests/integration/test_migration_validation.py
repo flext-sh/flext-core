@@ -18,7 +18,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
 
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -109,15 +108,8 @@ class TestMigrationScenario2:
 
         # Use correct API: with_service() for registration (fluent interface)
         test_service = TestService()
-        # Cast TestService to BaseModel for type compatibility (FlextService extends BaseModel)
-        service_typed: (
-            FlextTypes.GeneralValueType
-            | PydanticBaseModel
-            | Callable[..., FlextTypes.GeneralValueType]
-        ) = cast(
-            "FlextTypes.GeneralValueType | PydanticBaseModel | Callable[..., FlextTypes.GeneralValueType]",
-            test_service,
-        )
+        # Explicit type annotation for container registration
+        service_typed: FlextTypes.GeneralValueType | PydanticBaseModel | Callable[..., FlextTypes.GeneralValueType] = test_service
         registration_result = container.with_service(
             "test_migration_service", service_typed
         )

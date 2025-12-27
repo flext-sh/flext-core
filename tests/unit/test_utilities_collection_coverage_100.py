@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
@@ -25,7 +25,6 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import FlextRuntime, r, t
-from flext_core.result import FlextResult
 from flext_tests import u
 from tests.test_utils import assertion_helpers
 

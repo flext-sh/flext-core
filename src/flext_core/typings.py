@@ -14,8 +14,8 @@ from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from re import Pattern
+from types import ModuleType
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     ParamSpec,
     Protocol,
@@ -27,9 +27,6 @@ from typing import (
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-if TYPE_CHECKING:
-    from types import ModuleType
 
 # LaxStr compatibility for external integrations (LDAP, etc.)
 
@@ -768,7 +765,7 @@ class FlextTypes:
         Complete result structure ensures audit trail completeness for batch operations.
         """
 
-        results: list[object]
+        results: list[t.GeneralValueType]
         """List of successful processing results.
 
         Business Rule: TypedDict fields must specify dict structure.

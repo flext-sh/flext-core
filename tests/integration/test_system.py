@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import uuid
 
@@ -19,9 +18,9 @@ from flext_core import (
     FlextContainer,
     FlextExceptions,
     FlextResult,
-    t,
     u,
 )
+from flext_core.typings import t
 
 
 class TestCompleteFlextSystemIntegration:

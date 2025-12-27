@@ -390,7 +390,7 @@ class FlextRuntime:
     ) -> t.GeneralValueType:
         """Normalize any value to t.GeneralValueType recursively.
 
-        Converts arbitrary objects, dict[str, t.GeneralValueType], list[object], and other types
+        Converts arbitrary objects, dict[str, t.GeneralValueType], list[t.GeneralValueType], and other types
         to t.ConfigurationMapping, Sequence[t.GeneralValueType], etc.
         This is the central conversion function for type safety.
 
@@ -1189,7 +1189,7 @@ class FlextRuntime:
 
         # structlog processors have specific signatures - use object to accept any processor type
         # structlog processors are callables with varying signatures, so we use object for flexibility
-        processors: list[object] = [
+        processors: list[t.GeneralValueType] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -1199,7 +1199,12 @@ class FlextRuntime:
         ]
         if additional_processors:  # pragma: no cover
             # Tested but not covered: structlog configures once per process
-            processors.extend(additional_processors)
+            # additional_processors is Sequence[object] - structlog processors are callables
+            for proc in additional_processors:
+                if callable(proc):
+                    # Callables are GeneralValueType-compatible
+                    typed_proc: t.GeneralValueType = proc
+                    processors.append(typed_proc)
 
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))
@@ -1261,7 +1266,7 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: list[object] | None = None,
+        additional_processors: list[t.GeneralValueType] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 

@@ -1131,7 +1131,7 @@ class FlextProtocols:
     # RegisterableService: Type alias for all services that can be registered
     # in FlextContainer. Includes protocols, models, and callables.
     # This replaces object/dict usage in DI container methods.
-    RegisterableService = Union[  # type: ignore[explicit-any]
+    RegisterableService = Union[
         # Value types (from typings)
         "t.GeneralValueType",
         # Configuration protocol

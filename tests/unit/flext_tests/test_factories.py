@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 from pydantic import BaseModel as _BaseModel
 
@@ -149,15 +147,12 @@ class TestFlextTestsFactoriesModernAPI:
     def test_model_user_default(self) -> None:
         """Test tt.model('user') with default parameters."""
         user_result = tt.model("user")
-        # Type narrowing: extract BaseModel from union type
         user = _extract_model(user_result)
-        # Type narrowing: user is BaseModel, cast to User for attribute access
-        user_typed = cast("User", user)
-        assert isinstance(user_typed, User)
-        assert user_typed.id is not None
-        assert user_typed.name == "Test User"
-        assert "@example.com" in user_typed.email
-        assert user_typed.active is True
+        assert isinstance(user, User)
+        assert user.id is not None
+        assert user.name == "Test User"
+        assert "@example.com" in user.email
+        assert user.active is True
 
     def test_model_user_custom(self) -> None:
         """Test tt.model('user') with custom parameters."""
@@ -190,24 +185,19 @@ class TestFlextTestsFactoriesModernAPI:
             name="Base User",
             active=False,
         )
-        # Type narrowing: extract BaseModel from union type
         user = _extract_model(user_result)
-        # Type narrowing: user is BaseModel, cast to User for attribute access
-        user_typed = cast("User", user)
-        assert user_typed.name == "Base User"
-        assert user_typed.active is False
+        assert isinstance(user, User)
+        assert user.name == "Base User"
+        assert user.active is False
 
     def test_model_config_default(self) -> None:
         """Test tt.model('config') with default parameters."""
         config_result = tt.model("config")
-        # Type narrowing: extract BaseModel from union type
         config = _extract_model(config_result)
-        # Type narrowing: config is BaseModel, cast to Config for attribute access
-        config_typed = cast("Config", config)
-        assert isinstance(config_typed, Config)
-        assert config_typed.service_type == "api"
-        assert config_typed.environment == "test"
-        assert config_typed.debug is True
+        assert isinstance(config, Config)
+        assert config.service_type == "api"
+        assert config.environment == "test"
+        assert config.debug is True
 
     def test_model_config_custom(self) -> None:
         """Test tt.model('config') with custom parameters."""
@@ -218,14 +208,12 @@ class TestFlextTestsFactoriesModernAPI:
             debug=False,
             timeout=60,
         )
-        # Type narrowing: extract BaseModel from union type
         config = _extract_model(config_result)
-        # Type narrowing: config is BaseModel, cast to Config for attribute access
-        config_typed = cast("Config", config)
-        assert config_typed.service_type == "database"
-        assert config_typed.environment == "production"
-        assert config_typed.debug is False
-        assert config_typed.timeout == 60
+        assert isinstance(config, Config)
+        assert config.service_type == "database"
+        assert config.environment == "production"
+        assert config.debug is False
+        assert config.timeout == 60
 
     def test_model_config_with_overrides(self) -> None:
         """Test tt.model('config') with overrides."""
@@ -234,25 +222,20 @@ class TestFlextTestsFactoriesModernAPI:
             log_level="INFO",
             max_retries=5,
         )
-        # Type narrowing: extract BaseModel from union type
         config = _extract_model(config_result)
-        # Type narrowing: config is BaseModel, cast to Config for attribute access
-        config_typed = cast("Config", config)
-        assert config_typed.log_level == "INFO"
-        assert config_typed.max_retries == 5
+        assert isinstance(config, Config)
+        assert config.log_level == "INFO"
+        assert config.max_retries == 5
 
     def test_model_service_default(self) -> None:
         """Test tt.model('service') with default parameters."""
         service_result = tt.model("service")
-        # Type narrowing: extract BaseModel from union type
         service = _extract_model(service_result)
-        # Type narrowing: service is BaseModel, cast to Service for attribute access
-        service_typed = cast("Service", service)
-        assert isinstance(service_typed, Service)
-        assert service_typed.id is not None
-        assert service_typed.type == "api"
-        assert "Test api Service" in service_typed.name
-        assert service_typed.status == "active"
+        assert isinstance(service, Service)
+        assert service.id is not None
+        assert service.type == "api"
+        assert "Test api Service" in service.name
+        assert service.status == "active"
 
     def test_model_service_custom(self) -> None:
         """Test tt.model('service') with custom parameters."""
@@ -262,13 +245,11 @@ class TestFlextTestsFactoriesModernAPI:
             model_id="custom-123",
             name="Custom Service",
         )
-        # Type narrowing: extract BaseModel from union type
         service = _extract_model(service_result)
-        # Type narrowing: service is BaseModel, cast to Service for attribute access
-        service_typed = cast("Service", service)
-        assert service_typed.id == "custom-123"
-        assert service_typed.type == "database"
-        assert service_typed.name == "Custom Service"
+        assert isinstance(service, Service)
+        assert service.id == "custom-123"
+        assert service.type == "database"
+        assert service.name == "Custom Service"
 
     def test_model_service_with_overrides(self) -> None:
         """Test tt.model('service') with overrides."""
@@ -276,17 +257,13 @@ class TestFlextTestsFactoriesModernAPI:
             "service",
             status="inactive",
         )
-        # Type narrowing: extract BaseModel from union type
         service = _extract_model(service_result)
-        # Type narrowing: service is BaseModel, cast to Service for attribute access
-        service_typed = cast("Service", service)
-        assert service_typed.status == "inactive"
+        assert isinstance(service, Service)
+        assert service.status == "inactive"
 
     def test_batch_users_default(self) -> None:
         """Test tt.batch('user') with default count."""
         users_result = tt.batch("user")
-        # Type narrowing: tt.batch() returns list[BaseModel] for single kind
-        # Extract list from union if needed
         if isinstance(users_result, list):
             users = users_result
         elif isinstance(users_result, FlextResult):
@@ -295,10 +272,7 @@ class TestFlextTestsFactoriesModernAPI:
         else:
             msg = f"Expected list, got {type(users_result)}"
             raise AssertionError(msg)
-        # Type narrowing: all items are User instances
-        users_typed: list[User] = [
-            cast("User", u) for u in users if isinstance(u, User)
-        ]
+        users_typed: list[User] = [u for u in users if isinstance(u, User)]
         assert len(users_typed) == 5
         assert all(isinstance(user, User) for user in users_typed)
         assert users_typed[0].name == "User 0"
@@ -307,10 +281,8 @@ class TestFlextTestsFactoriesModernAPI:
     def test_batch_users_custom_count(self) -> None:
         """Test tt.batch('user') with custom count."""
         users_result = tt.batch("user", count=3)
-        # Type narrowing: tt.batch() returns list[User] | list[Config] | list[Service]
-        # For "user" kind, it's list[User]
-        users: list[User] = cast("list[User]", users_result)
-
+        assert isinstance(users_result, list)
+        users: list[User] = [u for u in users_result if isinstance(u, User)]
         assert len(users) == 3
         assert all(isinstance(user, User) for user in users)
 
@@ -503,26 +475,20 @@ class TestsFlextTestsFactoriesModel:
     def test_model_user_default(self) -> None:
         """Test user model creation with defaults."""
         user_result = tt.model("user")
-        # Type narrowing: extract BaseModel from union type
         user = _extract_model(user_result)
-        # Type narrowing: user is BaseModel, cast to User for attribute access
-        user_typed = cast("User", user)
-        assert isinstance(user_typed, User)
-        assert user_typed.id is not None
-        assert user_typed.name == "Test User"
-        assert "@example.com" in user_typed.email
-        assert user_typed.active is True
+        assert isinstance(user, User)
+        assert user.id is not None
+        assert user.name == "Test User"
+        assert "@example.com" in user.email
+        assert user.active is True
 
     def test_model_user_custom(self) -> None:
         """Test user model creation with custom parameters."""
         user_result = tt.model("user", name="Custom User", email="custom@test.com")
-        # Type narrowing: extract BaseModel from union type
         user = _extract_model(user_result)
-        # Type narrowing: user is BaseModel, cast to User for attribute access
-        user_typed = cast("User", user)
-        assert isinstance(user_typed, User)
-        assert user_typed.name == "Custom User"
-        assert user_typed.email == "custom@test.com"
+        assert isinstance(user, User)
+        assert user.name == "Custom User"
+        assert user.email == "custom@test.com"
 
     def test_model_batch(self) -> None:
         """Test batch model creation."""
@@ -554,12 +520,9 @@ class TestsFlextTestsFactoriesModel:
     def test_model_service(self) -> None:
         """Test service model creation."""
         service_result = tt.model("service", service_type="database")
-        # Type narrowing: extract BaseModel from union type
         service = _extract_model(service_result)
-        # Type narrowing: service is BaseModel, cast to Service for attribute access
-        service_typed = cast("Service", service)
-        assert isinstance(service_typed, Service)
-        assert service_typed.type == "database"
+        assert isinstance(service, Service)
+        assert service.type == "database"
 
     def test_model_entity(self) -> None:
         """Test entity model creation."""
@@ -575,8 +538,6 @@ class TestsFlextTestsFactoriesModel:
 
     def test_model_with_transform(self) -> None:
         """Test model creation with transform function."""
-        # transform is a special kwarg processed by ModelFactoryParams
-        # Type ignore needed because transform is Callable, not TestResultValue
         user_result = tt.model(
             "user",
             name="Original",
@@ -587,48 +548,33 @@ class TestsFlextTestsFactoriesModel:
                 active=u.active,
             ),
         )
-        # Type narrowing: extract BaseModel from union type
         user = _extract_model(user_result)
-        # Type narrowing: user is BaseModel, cast to User for attribute access
-        user_typed = cast("User", user)
-        assert user_typed.name == "Transformed"
+        assert isinstance(user, User)
+        assert user.name == "Transformed"
 
     def test_model_with_validate(self) -> None:
         """Test model creation with validation."""
-        # validate is a special kwarg processed by ModelFactoryParams
-        # Type ignore needed because validate is Callable, not TestResultValue
         user_result = tt.model("user", active=True, validate=lambda u: u.active)
-        # Type narrowing: extract BaseModel from union type
         user = _extract_model(user_result)
-        # Type narrowing: user is BaseModel, cast to User for attribute access
-        user_typed = cast("User", user)
-        assert user_typed.active is True
+        assert isinstance(user, User)
+        assert user.active is True
 
-        # Invalid user (active=False) - should return failure result
-        # validate is a special kwarg processed by ModelFactoryParams
-        # Type ignore needed because validate is Callable, not TestResultValue
         result_raw = tt.model(
             "user",
             active=False,
             validate=lambda u: u.active,
             as_result=True,
         )
-        # Type narrowing: as_result=True returns r[BaseModel] | BaseModel | list | dict
-        # Extract r[BaseModel] from union
         if isinstance(result_raw, r):
             result = result_raw
         elif isinstance(result_raw, _BaseModel):
-            # Single model wrapped - should not happen with as_result=True
             msg = f"Expected r[BaseModel], got BaseModel: {type(result_raw)}"
             raise AssertionError(msg)
         else:
-            # list or dict - should not happen with as_result=True
             msg = f"Expected r[BaseModel], got {type(result_raw)}"
             raise AssertionError(msg)
-        # Type narrowing: result is r[_BaseModel]
-        result_typed: r[_BaseModel] = cast("r[_BaseModel]", result)
-        assert isinstance(result_typed, FlextResult)
-        assert result_typed.is_failure
+        assert isinstance(result, FlextResult)
+        assert result.is_failure
 
 
 class TestsFlextTestsFactoriesRes:
@@ -818,12 +764,8 @@ class TestsFlextTestsFactoriesList:
             count=3,
             as_result=True,
         )
-        # Type narrowing: as_result=True returns r[list[User]]
-        result: r[list[User]] = (
-            cast("r[list[User]]", result_raw)
-            if isinstance(result_raw, r)
-            else result_raw
-        )
+        assert isinstance(result_raw, r)
+        result: r[list[User]] = result_raw
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
@@ -904,12 +846,8 @@ class TestsFlextTestsFactoriesDict:
             count=3,
             as_result=True,
         )
-        # Type narrowing: as_result=True returns r[dict[str, User]]
-        result: r[dict[str, User]] = (
-            cast("r[dict[str, User]]", result_raw)
-            if isinstance(result_raw, r)
-            else result_raw
-        )
+        assert isinstance(result_raw, r)
+        result: r[dict[str, User]] = result_raw
         assert isinstance(result, FlextResult)
         assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
@@ -939,19 +877,16 @@ class TestsFlextTestsFactoriesGeneric:
                 self.c = c
 
         obj_result = tt.generic(ArgsClass, args=[1, 2], kwargs={"c": "custom"})
-        # Type narrowing: tt.generic() returns T | list[T] | r[T] | r[list[T]]
-        # For single instance, it's T
         if isinstance(obj_result, r):
             obj = obj_result.value
         elif isinstance(obj_result, list):
             obj = obj_result[0]
         else:
             obj = obj_result
-        # Type narrowing: obj is ArgsClass
-        obj_typed = cast("ArgsClass", obj)
-        assert obj_typed.a == 1
-        assert obj_typed.b == 2
-        assert obj_typed.c == "custom"
+        assert isinstance(obj, ArgsClass)
+        assert obj.a == 1
+        assert obj.b == 2
+        assert obj.c == "custom"
 
     def test_generic_batch(self) -> None:
         """Test batch generic type instantiation."""
@@ -973,29 +908,20 @@ class TestsFlextTestsFactoriesGeneric:
             def __init__(self, age: int) -> None:
                 self.age = age
 
-        # Valid age
-        # validate is a special kwarg processed by GenericFactoryParams
-        # Type ignore needed because validate is Callable, not TestResultValue
         obj_result = tt.generic(
             ValidatedClass,
             kwargs={"age": 25},
             validate=lambda o: o.age >= 18,
         )
-        # Type narrowing: tt.generic() returns T | list[T] | r[T] | r[list[T]]
-        # For single instance, it's T
         if isinstance(obj_result, r):
             obj = obj_result.value
         elif isinstance(obj_result, list):
             obj = obj_result[0]
         else:
             obj = obj_result
-        # Type narrowing: obj is ValidatedClass
-        obj_typed = cast("ValidatedClass", obj)
-        assert obj_typed.age == 25
+        assert isinstance(obj, ValidatedClass)
+        assert obj.age == 25
 
-        # Invalid age - should raise ValueError
-        # validate is a special kwarg processed by GenericFactoryParams
-        # Type ignore needed because validate is Callable, not TestResultValue
         with pytest.raises(ValueError, match="Validation failed"):
             tt.generic(
                 ValidatedClass,
