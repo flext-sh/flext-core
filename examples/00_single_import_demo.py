@@ -140,7 +140,8 @@ class UserService:
 
             # Railway pattern with advanced functional composition (DRY)
             return (
-                self._validate_data(user_data)
+                self
+                ._validate_data(user_data)
                 .flat_map(lambda _: validate_transform_user(user_data))
                 .map(self._log_success)
             )
@@ -214,7 +215,8 @@ def demonstrate_utilities() -> None:
     ]
 
     result = (
-        r.traverse(validation_results, lambda r: r)
+        r
+        .traverse(validation_results, lambda r: r)
         .flat_map(lambda _: cache_result)
         .map(
             lambda cache_cleared: "\n".join([
@@ -243,7 +245,8 @@ def demonstrate_exceptions() -> None:
         list(
             starmap(
                 lambda msg, field, value: (
-                    r.fail(
+                    r
+                    .fail(
                         e.ValidationError(
                             msg,
                             field=field,
@@ -264,7 +267,8 @@ def demonstrate_exceptions() -> None:
         )
         + [
             # Standard exception conversion
-            r.fail("Standard exception")
+            r
+            .fail("Standard exception")
             .map(lambda error: f"Converted exception to result: {error}")
             .map(print),
         ],

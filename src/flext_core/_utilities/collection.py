@@ -355,7 +355,7 @@ class FlextUtilitiesCollection:
         _ = progress_interval
         do_flatten = flatten or _flatten
         error_mode = on_error or "fail"
-        results: list[object] = []
+        results: list[t.GeneralValueType] = []
         errors: list[tuple[int, str]] = []
         total = len(items)
 
@@ -377,10 +377,18 @@ class FlextUtilitiesCollection:
                     # It's a FlextResult - use getattr for safe access
                     is_success = getattr(result, "is_success", False)
                     if is_success:
-                        value: object = getattr(result, "value", None)
+                        value_raw: object = getattr(result, "value", None)
+                        # Convert to GeneralValueType using conversion utility
+                        value: t.GeneralValueType = (
+                            FlextUtilitiesConversion.to_general_value_type(value_raw)
+                        )
                         if do_flatten and isinstance(value, list):
                             # Extend results with all items from the list
-                            results.extend(value)
+                            # Convert each item to GeneralValueType
+                            results.extend(
+                                FlextUtilitiesConversion.to_general_value_type(v)
+                                for v in value
+                            )
                         else:
                             results.append(value)
                     else:
@@ -393,12 +401,20 @@ class FlextUtilitiesCollection:
                             # Store as (index, error_message) tuple
                             errors.append((processed - 1, str(error_msg)))
                         # skip mode - don't add to errors
-                # It's a direct return
+                # It's a direct return - convert to GeneralValueType
                 elif do_flatten and isinstance(result, list):
                     # Extend results with all items from the list
-                    results.extend(result)
+                    # Convert each item to GeneralValueType
+                    results.extend(
+                        FlextUtilitiesConversion.to_general_value_type(item)
+                        for item in result
+                    )
                 else:
-                    results.append(result)
+                    # Convert result to GeneralValueType
+                    typed_result: t.GeneralValueType = (
+                        FlextUtilitiesConversion.to_general_value_type(result)
+                    )
+                    results.append(typed_result)
             except Exception as e:
                 if error_mode == "fail":
                     return r[t.BatchResultDict].fail(

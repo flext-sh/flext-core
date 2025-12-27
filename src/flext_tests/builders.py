@@ -735,8 +735,7 @@ class FlextTestsBuilders:
         builder_data: t.Tests.Builders.BuilderDict = dict(self._data)
 
         # Convert batch results with _is_result or _is_failure flags to FlextResult
-        # Returns dict[str, GeneralValueType] since FlextResult is not in GeneralValueType
-        data: dict[str, t.GeneralValueType] = self._process_batch_results(builder_data)
+        data = self._process_batch_results(builder_data)
 
         if params.filter_none:
             data = {k: v for k, v in data.items() if v is not None}
@@ -1297,7 +1296,7 @@ class FlextTestsBuilders:
     def _process_batch_results(
         self,
         data: t.Tests.Builders.BuilderDict,
-    ) -> dict[str, t.GeneralValueType]:
+    ) -> t.Tests.Builders.BuilderOutputDict:
         """Convert batch result markers to actual FlextResult objects.
 
         Processes lists containing dicts with _is_result or _is_failure flags
@@ -1307,15 +1306,14 @@ class FlextTestsBuilders:
             data: Builder data dict to process.
 
         Returns:
-            Processed data with FlextResult objects (returns dict[str, GeneralValueType]
-            since FlextResult is not in GeneralValueType).
+            Processed data with FlextResult objects.
 
         """
-        processed: dict[str, t.GeneralValueType] = {}
+        processed: t.Tests.Builders.BuilderOutputDict = {}
         for key, value in data.items():
             if isinstance(value, list):
                 # Check if this is a batch result list
-                converted_items: list[object] = []
+                converted_items: list[t.GeneralValueType | r[t.GeneralValueType]] = []
                 for item in value:
                     if isinstance(item, dict) and item.get("_is_result_marker"):
                         if "_result_ok" in item:

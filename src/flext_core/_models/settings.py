@@ -123,7 +123,9 @@ class FlextModelsConfig:
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
-        def validate_backoff_strategy(cls, v: list[int] | list[object]) -> list[int]:
+        def validate_backoff_strategy(
+            cls, v: list[int] | list[t.GeneralValueType]
+        ) -> list[int]:
             """Validate status codes are valid HTTP codes."""
             # Use default HTTP status code range (100-599) - domain-specific validation
             # removed from flext-core per domain violation rules
@@ -173,7 +175,7 @@ class FlextModelsConfig:
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
-            list[object],
+            list[t.GeneralValueType],
             Field(
                 default_factory=list,
                 max_length=c.Validation.MAX_CUSTOM_VALIDATORS,
@@ -183,7 +185,9 @@ class FlextModelsConfig:
 
         @field_validator("custom_validators", mode="after")
         @classmethod
-        def validate_additional_validators(cls, v: list[object]) -> list[object]:
+        def validate_additional_validators(
+            cls, v: list[t.GeneralValueType]
+        ) -> list[t.GeneralValueType]:
             """Validate custom validators are callable."""
             for validator in v:
                 # Direct callable check - object can be any callable,
@@ -212,7 +216,7 @@ class FlextModelsConfig:
         )
         continue_on_error: bool = True
         data_items: Annotated[
-            list[object],
+            list[t.GeneralValueType],
             Field(
                 default_factory=list,
                 max_length=c.Performance.BatchProcessing.MAX_ITEMS,
@@ -384,7 +388,7 @@ class FlextModelsConfig:
             default=True,
             description="Use console renderer (True) or JSON renderer (False)",
         )
-        additional_processors: list[Callable[..., object]] = Field(
+        additional_processors: list[p.VariadicCallable[object]] = Field(
             default_factory=list,
             description="Optional extra processors after standard FLEXT processors",
         )

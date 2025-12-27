@@ -1133,22 +1133,22 @@ class FlextTestsModels(FlextModelsBase):
                     description="Key to use as test_id in parametrized output",
                 )
                 validate_with: (
-                    Callable[[dict[str, t.GeneralValueType]], bool] | None
+                    Callable[[t.Tests.Builders.BuilderOutputDict], bool] | None
                 ) = Field(
                     default=None,
                     description="Validation function that returns True if data is valid",
                 )
-                assert_with: Callable[[dict[str, t.GeneralValueType]], None] | None = (
-                    Field(
-                        default=None,
-                        description="Assertion function that raises on invalid data",
-                    )
+                assert_with: (
+                    Callable[[t.Tests.Builders.BuilderOutputDict], None] | None
+                ) = Field(
+                    default=None,
+                    description="Assertion function that raises on invalid data",
                 )
-                map_result: Callable[[dict[str, t.GeneralValueType]], object] | None = (
-                    Field(
-                        default=None,
-                        description="Transform function applied to final result",
-                    )
+                map_result: (
+                    Callable[[t.Tests.Builders.BuilderOutputDict], object] | None
+                ) = Field(
+                    default=None,
+                    description="Transform function applied to final result",
                 )
 
                 @model_validator(mode="after")

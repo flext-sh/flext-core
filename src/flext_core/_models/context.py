@@ -116,7 +116,7 @@ class FlextModelsContext:
 
         Type Safety Note:
             structlog.contextvars.get_contextvars() has incomplete type hints:
-            it returns dict[str, Any] but we control the values (always
+            it returns dict[str, t.GeneralValueType] but we control the values (always
             t.GeneralValueType). We cast to dict[str, t.GeneralValueType]
             to recover proper type information. This is NECESSARY to enable
             type inference of T through the proxy.
@@ -153,7 +153,7 @@ class FlextModelsContext:
                 Current value with type T (from Generic[T] contract), or None.
 
             Architecture:
-                structlog.contextvars.get_contextvars() returns dict[str, Any]
+                structlog.contextvars.get_contextvars() returns dict[str, t.GeneralValueType]
                 (incomplete type hint). We cast to dict[str, t.GeneralValueType]
                 because we control what goes in (always t.GeneralValueType via set()).
                 Then we get the value and cast to T | None.
@@ -170,7 +170,7 @@ class FlextModelsContext:
             structlog_context = structlog.contextvars.get_contextvars()
             if not structlog_context:
                 return self._default
-            # structlog.contextvars.get_contextvars() returns dict[str, Any] (library limitation)
+            # structlog.contextvars.get_contextvars() returns dict[str, t.GeneralValueType] (library limitation)
             # We know values are t.GeneralValueType because we only store those via set()
             # Type narrowing: check key presence, then return stored value
             typed_context: dict[str, T] = structlog_context
@@ -425,13 +425,13 @@ class FlextModelsContext:
                 # Call model_dump on Pydantic model (safely via callable check)
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict[str, Any] - normalize to ConfigurationDict
+                    # model_dump() returns dict[str, t.GeneralValueType] - normalize to ConfigurationDict
                     dump_result = model_dump_method()
                     if not isinstance(dump_result, dict):
                         type_name = type(v).__name__
                         msg = f"Value must be a dictionary or Metadata, got {type_name}"
                         raise TypeError(msg)
-                    # Normalize dict[str, Any] to ConfigurationDict
+                    # Normalize dict[str, t.GeneralValueType] to ConfigurationDict
                     working_value = {
                         str(k): FlextRuntime.normalize_to_general_value(dump_result[k])
                         for k in dump_result
@@ -602,13 +602,13 @@ class FlextModelsContext:
                 # Accept other Pydantic models - convert to dict
                 model_dump_method = getattr(v, "model_dump", None)
                 if callable(model_dump_method):
-                    # model_dump() returns dict[str, Any] - normalize to ConfigurationDict
+                    # model_dump() returns dict[str, t.GeneralValueType] - normalize to ConfigurationDict
                     dump_result = model_dump_method()
                     if not isinstance(dump_result, dict):
                         type_name = type(v).__name__
                         msg = f"Value must be a dict or Pydantic model, got {type_name}"
                         raise TypeError(msg)
-                    # Normalize dict[str, Any] to ConfigurationDict
+                    # Normalize dict[str, t.GeneralValueType] to ConfigurationDict
                     working_value = {
                         str(k): FlextRuntime.normalize_to_general_value(dump_result[k])
                         for k in dump_result

@@ -1,6 +1,6 @@
 """Type system foundation for FLEXT tests.
 
-Provides FlextTestsTypes, extending FlextTypes with test-specific type definitions
+Provides FlextTestsTypes, extending FlextTypes as t with test-specific type definitions
 for Docker operations, container management, and test infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -295,6 +295,18 @@ class FlextTestsTypes(FlextTypes):
             # Builder dict - stores GeneralValueType values
             type BuilderDict = dict[str, t.GeneralValueType]
             """Type for builder internal data structure."""
+
+            # Builder output value - includes FlextResult for batch result conversion
+            type BuilderOutputValue = (
+                t.GeneralValueType
+                | r[t.GeneralValueType]
+                | list[t.GeneralValueType | r[t.GeneralValueType]]
+            )
+            """Type for values in builder output after batch result processing."""
+
+            # Builder output dict - result of _process_batch_results
+            type BuilderOutputDict = dict[str, BuilderOutputValue]
+            """Type for builder output dict after batch result conversion."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
             type BuilderMapping = t.ConfigurationMapping

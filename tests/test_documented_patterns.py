@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import operator
 from dataclasses import dataclass, field
-from typing import cast
 
 import pytest
 from pydantic import BaseModel
@@ -90,13 +89,9 @@ class RailwayTestCase:
         if not self.user_ids:
             return FlextResult.fail("No user IDs provided")
 
-        # Start with first user
-        user_result = GetUserService(user_id=self.user_ids[0]).execute()
-        # Type narrowing: GetUserService returns User, but pipeline may transform to str or EmailResponse
-        result: FlextResult[User | str | EmailResponse] = cast(
-            "FlextResult[User | str | EmailResponse]",
-            user_result,
-        )
+        # Start with first user - explicit type annotation for union type
+        user_result: FlextResult[User] = GetUserService(user_id=self.user_ids[0]).execute()
+        result: FlextResult[User | str | EmailResponse] = user_result
 
         # Apply operations if specified
         for op in self.operations:
@@ -105,14 +100,14 @@ class RailwayTestCase:
                     lambda user: user.email if isinstance(user, User) else str(user),
                 )
             elif op == "send_email":
-                # flat_map returns EmailResponse, cast to maintain union type for return signature
-                email_result = result.flat_map(
+                # flat_map returns EmailResponse - type annotation handles union
+                email_result: FlextResult[EmailResponse] = result.flat_map(
                     lambda email: SendEmailService(
                         to=str(email),
                         subject="Test",
                     ).execute(),
                 )
-                result = cast("FlextResult[User | str | EmailResponse]", email_result)
+                result = email_result
             elif op == "get_status":
                 result = result.map(
                     lambda response: response.status

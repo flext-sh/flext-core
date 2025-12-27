@@ -21,7 +21,7 @@ from __future__ import annotations
 from types import ModuleType
 from typing import cast
 
-from flext_core import (
+from flext_core import FlextTypes as t, (
     FlextContainer,
     FlextContext,
     FlextLogger,

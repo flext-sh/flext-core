@@ -31,7 +31,7 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import Field, ValidationError, field_validator
 
-from flext_core import (
+from flext_core import FlextTypes as t, (
     c,
     m,
     t,
