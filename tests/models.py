@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from typing import TypedDict
 
 from flext_core import FlextModels, FlextProtocols, FlextTypes
 from flext_tests.models import FlextTestsModels
@@ -52,7 +53,7 @@ class TestsFlextModels:
     type DomainInputValue = (
         FlextTypes.GeneralValueType | FlextProtocols.HasModelDump | object
     )
-    type DomainInputMapping = Mapping[str, TestsFlextCoreModels.DomainInputValue]
+    type DomainInputMapping = Mapping[str, TestsFlextModels.DomainInputValue]
     type DomainExpectedResult = (
         FlextTypes.GeneralValueType | type[FlextTypes.GeneralValueType]
     )
@@ -229,6 +230,15 @@ class TestsFlextModels:
         description: str = field(default="", compare=False)
 
 
+class AutomatedTestScenario(TypedDict):
+    """TypedDict for automated test scenarios."""
+
+    description: str
+    input: dict[str, t.GeneralValueType]
+    expected_success: bool
+
+
 __all__ = [
+    "AutomatedTestScenario",
     "TestsFlextModels",
 ]

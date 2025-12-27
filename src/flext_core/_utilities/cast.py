@@ -174,7 +174,7 @@ class FlextUtilitiesCast:
         if isinstance(value, Path):
             return value
         if callable(value):
-            callable_typed: Callable[..., t.GeneralValueType] = value
+            callable_typed: Callable[..., t.GeneralValueType] = value  # type: ignore[explicit-any]
             return callable_typed
         if isinstance(value, (list, tuple)):
             seq_result: Sequence[t.GeneralValueType] = value

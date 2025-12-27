@@ -280,11 +280,11 @@ class SuiteBuilder:
         """Initialize test suite builder with suite name."""
         super().__init__()
         self.name = name
-        self._scenarios: list[object] = []
+        self._scenarios: list[t.GeneralValueType] = []
         self._setup_data: dict[str, FlextTypes.GeneralValueType] = {}
         self._tags: list[str] = []
 
-    def add_scenarios(self, scenarios: list[object]) -> SuiteBuilder:
+    def add_scenarios(self, scenarios: list[t.GeneralValueType]) -> SuiteBuilder:
         """Add multiple test scenarios to the suite."""
         self._scenarios.extend(scenarios)
         return self
@@ -319,8 +319,8 @@ class FixtureBuilder:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
         self._fixtures: dict[str, FlextTypes.GeneralValueType] = {}
-        self._setups: list[object] = []
-        self._teardowns: list[object] = []
+        self._setups: list[t.GeneralValueType] = []
+        self._teardowns: list[t.GeneralValueType] = []
 
     def with_user(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add user fixture data."""
@@ -633,7 +633,7 @@ class TestAdvancedPatterns:
             if not isinstance(x, list):
                 return False
             # Type-safe check for each item in the list
-            list_x = cast("list[object]", x)  # Type is now verified as list
+            list_x = cast("list[t.GeneralValueType]", x)  # Type is now verified as list
             return all(isinstance(item, str) for item in list_x)
 
         # Build complex assertions
@@ -712,7 +712,7 @@ class TestComprehensiveIntegration:
         # Build complete test suite
         suite = (
             SuiteBuilder("comprehensive_operation_tests")
-            .add_scenarios(cast("list[object]", scenarios))
+            .add_scenarios(cast("list[t.GeneralValueType]", scenarios))
             .with_setup_data(environment="test", timeout=30)
             .with_tag("integration")
             .build()

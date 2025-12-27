@@ -20,6 +20,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core.typings import t
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -36,6 +37,7 @@ from flext_core import (
     t,
 )
 from flext_tests import FlextTestsUtilities, u
+from flext_core.models import m
 
 
 class RegistryOperationType(StrEnum):
@@ -403,7 +405,7 @@ class TestFlextRegistry:
         if test_case.handler_count > 0:
             for i in range(test_case.handler_count):
                 summary.registered.append(
-                    m.HandlerRegistrationDetails(
+                    m.Handler.RegistrationDetails(
                         registration_id=f"test_{i}",
                         handler_mode=c.Cqrs.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
@@ -453,7 +455,7 @@ class TestFlextRegistry:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
             u.Tests.Result.assert_result_success(result)
-            assert isinstance(result.value, m.HandlerRegistrationDetails)
+            assert isinstance(result.value, m.Handler.RegistrationDetails)
 
     def test_registry_initialization(self) -> None:
         """Test registry initialization."""
@@ -467,7 +469,7 @@ class TestFlextRegistry:
         handler = ConcreteTestHandler()
         result = registry.register_handler(handler)
         u.Tests.Result.assert_result_success(result)
-        assert isinstance(result.value, m.HandlerRegistrationDetails)
+        assert isinstance(result.value, m.Handler.RegistrationDetails)
 
     @pytest.mark.parametrize(
         ("mode", "expected"),

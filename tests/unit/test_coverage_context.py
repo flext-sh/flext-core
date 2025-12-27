@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core.typings import t
 
 import time
 from dataclasses import dataclass

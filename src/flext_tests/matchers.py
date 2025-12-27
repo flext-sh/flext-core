@@ -58,7 +58,7 @@ import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 from pydantic import BaseModel
 
@@ -118,7 +118,7 @@ class FlextTestsMatchers:
     def ok[TResult](
         result: r[TResult],
         **kwargs: t.GeneralValueType,
-    ) -> TResult:
+    ) -> TResult | t.GeneralValueType:
         """Enhanced assertion for FlextResult success with optional value validation.
 
         Uses Pydantic 2 models for parameter validation and computation.
@@ -371,10 +371,8 @@ class FlextTestsMatchers:
             # No path extraction - return original result.value (TResult)
             return result.value
         # Path extraction case - result_value is GeneralValueType
-        # Caller expects TResult but path extraction changes the type
-        # Return extracted value - type system sees TResult but runtime value is extracted
-        # Cast is intentional: caller requested path extraction and should expect extracted type
-        return cast("TResult", result_value)
+        # Return type is TResult | GeneralValueType to accurately reflect this
+        return result_value
 
     @staticmethod
     def fail[TResult](
@@ -1298,11 +1296,19 @@ class FlextTestsMatchers:
                 )
                 os.chdir(cwd_path)
 
-            # Create scope - use dict[str, object] to match TestScope field types
-            cfg: dict[str, object] = dict(params.config) if params.config else {}
+            # Create scope - use dict[str, t.GeneralValueType] to match TestScope field types
+            cfg: dict[str, t.GeneralValueType] = (
+                dict(params.config) if params.config else {}
+            )
+            # Filter container to GeneralValueType - services may be arbitrary objects
+            container_dict: dict[str, t.GeneralValueType] = {
+                k: v
+                for k, v in (params.container or {}).items()
+                if t.Guards.is_general_value(v)
+            }
             scope = m.Tests.Matcher.TestScope(
                 config=cfg,
-                container=dict(params.container or {}),
+                container=container_dict,
                 context=dict(params.context or {}),
             )
             yield scope
@@ -1775,7 +1781,11 @@ class FlextTestsMatchers:
             AssertionError: If result is failure
 
         """
-        return FlextTestsMatchers.ok(result, msg=msg)
+        # Direct implementation to preserve exact TResult type
+        if not result.is_success:
+            error_msg = msg or f"Expected success but got failure: {result.error}"
+            raise AssertionError(error_msg)
+        return result.value
 
 
 tm = FlextTestsMatchers

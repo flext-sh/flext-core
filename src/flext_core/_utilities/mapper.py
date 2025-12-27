@@ -134,14 +134,14 @@ class FlextUtilitiesMapper:
             narrowed_items: list[t.GeneralValueType] = []
             item: object
             for item in value:
-                narrowed_item = FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                narrowed_item = FlextUtilitiesMapper.narrow_to_general_value_type(item)
                 narrowed_items.append(narrowed_item)
             return narrowed_items
         error_msg = f"Cannot narrow {type(value)} to Sequence"
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_general_value_type(value: object) -> t.GeneralValueType:
+    def narrow_to_general_value_type(value: object) -> t.GeneralValueType:
         """Safely narrow object to t.GeneralValueType.
 
         Uses TypeGuard-based validation to ensure type safety.
@@ -721,7 +721,7 @@ class FlextUtilitiesMapper:
             if isinstance(data, BaseModel):
                 current = data
             elif isinstance(data, Mapping):
-                current = FlextUtilitiesMapper._narrow_to_general_value_type(data)
+                current = FlextUtilitiesMapper.narrow_to_general_value_type(data)
             else:
                 # Plain object (dataclass, etc.) - keep reference for hasattr/getattr
                 current = data
@@ -904,10 +904,10 @@ class FlextUtilitiesMapper:
                 raw_value = data.get(key)
                 if raw_value is None:
                     return default if default is not None else ""
-                return FlextUtilitiesMapper._narrow_to_general_value_type(raw_value)
+                return FlextUtilitiesMapper.narrow_to_general_value_type(raw_value)
             case _:
                 attr_val = getattr(data, key, default)
-                return FlextUtilitiesMapper._narrow_to_general_value_type(attr_val)
+                return FlextUtilitiesMapper.narrow_to_general_value_type(attr_val)
 
     @staticmethod
     def prop(
@@ -1101,7 +1101,7 @@ class FlextUtilitiesMapper:
         if isinstance(data_or_items, (list, tuple)):
             # Type narrowing: data_or_items is Sequence after isinstance check
             items_list: list[t.GeneralValueType] = [
-                FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                FlextUtilitiesMapper.narrow_to_general_value_type(item)
                 for item in data_or_items
             ]
             return items_list[:n] if from_start else items_list[-n:]
@@ -1391,20 +1391,20 @@ class FlextUtilitiesMapper:
                     # Type narrowing: current is list, convert items to t.GeneralValueType
                     list_current: list[object] = current
                     return [
-                        FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                        FlextUtilitiesMapper.narrow_to_general_value_type(item)
                         for item in list_current
                     ]
                 return (
                     default_val
                     if current is None
-                    else [FlextUtilitiesMapper._narrow_to_general_value_type(current)]
+                    else [FlextUtilitiesMapper.narrow_to_general_value_type(current)]
                 )
             case "str_list":
                 if isinstance(current, list):
                     # Type narrowing: current is list[object], convert each to str
                     list_current_str: list[object] = current
                     return [
-                        str(FlextUtilitiesMapper._narrow_to_general_value_type(x))
+                        str(FlextUtilitiesMapper.narrow_to_general_value_type(x))
                         for x in list_current_str
                     ]
                 return (
@@ -1412,7 +1412,7 @@ class FlextUtilitiesMapper:
                     if current is None
                     else [
                         str(
-                            FlextUtilitiesMapper._narrow_to_general_value_type(current),
+                            FlextUtilitiesMapper.narrow_to_general_value_type(current),
                         ),
                     ]
                 )
@@ -1442,7 +1442,7 @@ class FlextUtilitiesMapper:
             # Type narrowing: current is Sequence[object], x is t.GeneralValueType
             seq_current: Sequence[object] = current
             return [
-                FlextUtilitiesMapper._narrow_to_general_value_type(x)
+                FlextUtilitiesMapper.narrow_to_general_value_type(x)
                 for x in seq_current
                 if filter_pred(x)
             ]
@@ -1476,7 +1476,7 @@ class FlextUtilitiesMapper:
             # Type narrowing: current is Sequence, items are t.GeneralValueType
             seq_current: Sequence[object] = current
             return [
-                map_func(FlextUtilitiesMapper._narrow_to_general_value_type(x))
+                map_func(FlextUtilitiesMapper.narrow_to_general_value_type(x))
                 for x in seq_current
             ]
         if isinstance(current, dict):
@@ -1487,7 +1487,7 @@ class FlextUtilitiesMapper:
             # ConfigurationDict values are t.GeneralValueType, so map_func works directly
             return {k: map_func(v) for k, v in current_dict.items()}
         # Single value case - narrow to t.GeneralValueType before mapping
-        current_general = FlextUtilitiesMapper._narrow_to_general_value_type(current)
+        current_general = FlextUtilitiesMapper.narrow_to_general_value_type(current)
         return map_func(current_general)
 
     @staticmethod
@@ -1506,7 +1506,7 @@ class FlextUtilitiesMapper:
             seq_current: Sequence[object] = current
             result: list[t.GeneralValueType] = []
             for x in seq_current:
-                x_general = FlextUtilitiesMapper._narrow_to_general_value_type(x)
+                x_general = FlextUtilitiesMapper.narrow_to_general_value_type(x)
                 if isinstance(x_general, str):
                     result.append(
                         x_general.lower()
@@ -1529,9 +1529,13 @@ class FlextUtilitiesMapper:
         convert_type = ops["convert"]
         if not isinstance(convert_type, type):
             return current
-        convert_default = ops.get("convert_default", convert_type())
+        convert_default_raw = ops.get("convert_default", convert_type())
+        convert_default = FlextUtilitiesMapper.narrow_to_general_value_type(
+            convert_default_raw,
+        )
         try:
-            return convert_type(current)
+            converted = convert_type(current)
+            return FlextUtilitiesMapper.narrow_to_general_value_type(converted)
         except (ValueError, TypeError):
             return convert_default
 
@@ -1784,7 +1788,7 @@ class FlextUtilitiesMapper:
                 # Type narrowing: current is Sequence, items are t.GeneralValueType
                 seq_current: Sequence[object] = current
                 return [
-                    process_func(FlextUtilitiesMapper._narrow_to_general_value_type(x))
+                    process_func(FlextUtilitiesMapper.narrow_to_general_value_type(x))
                     for x in seq_current
                 ]
             if isinstance(current, dict):
@@ -1795,7 +1799,7 @@ class FlextUtilitiesMapper:
                 # ConfigurationDict values are t.GeneralValueType, so process_func works directly
                 return {k: process_func(v) for k, v in current_dict.items()}
             # Single value case - narrow to t.GeneralValueType before processing
-            current_general = FlextUtilitiesMapper._narrow_to_general_value_type(
+            current_general = FlextUtilitiesMapper.narrow_to_general_value_type(
                 current,
             )
             return process_func(current_general)
@@ -1816,7 +1820,7 @@ class FlextUtilitiesMapper:
         group_spec = ops["group"]
         # Type narrowing: convert to list with proper type
         current_list: list[t.GeneralValueType] = [
-            FlextUtilitiesMapper._narrow_to_general_value_type(item) for item in current
+            FlextUtilitiesMapper.narrow_to_general_value_type(item) for item in current
         ]
         # Group by field name (str) or key function (callable)
         # Returns dict[str, list[GeneralValueType]] which is ConfigurationDict-compatible
@@ -1858,7 +1862,7 @@ class FlextUtilitiesMapper:
         sort_spec = ops["sort"]
         # Type narrowing: convert to list with proper type
         current_list: list[t.GeneralValueType] = [
-            FlextUtilitiesMapper._narrow_to_general_value_type(item) for item in current
+            FlextUtilitiesMapper.narrow_to_general_value_type(item) for item in current
         ]
         if isinstance(sort_spec, str):
             field_name: str = sort_spec
@@ -1900,7 +1904,7 @@ class FlextUtilitiesMapper:
             )
         if sort_spec is True:
             comparable_items: list[t.GeneralValueType] = [
-                FlextUtilitiesMapper._narrow_to_general_value_type(
+                FlextUtilitiesMapper.narrow_to_general_value_type(
                     item
                     if isinstance(item, (str, int, float, bool, type(None)))
                     else str(item),
@@ -1928,7 +1932,7 @@ class FlextUtilitiesMapper:
             return current
         # Type narrowing: convert to list with proper type
         current_list_unique: list[t.GeneralValueType] = [
-            FlextUtilitiesMapper._narrow_to_general_value_type(item) for item in current
+            FlextUtilitiesMapper.narrow_to_general_value_type(item) for item in current
         ]
         seen: set[t.GeneralValueType | str] = set()
         unique_list: list[t.GeneralValueType] = []
@@ -1967,12 +1971,12 @@ class FlextUtilitiesMapper:
             end: int | None = end_raw if isinstance(end_raw, int) else None
             if isinstance(current, list):
                 sliced_list: list[t.GeneralValueType] = [
-                    FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                    FlextUtilitiesMapper.narrow_to_general_value_type(item)
                     for item in current[start:end]
                 ]
                 return sliced_list
             sliced_tuple: tuple[t.GeneralValueType, ...] = tuple(
-                FlextUtilitiesMapper._narrow_to_general_value_type(item)
+                FlextUtilitiesMapper.narrow_to_general_value_type(item)
                 for item in current[start:end]
             )
             return sliced_tuple
@@ -1992,7 +1996,7 @@ class FlextUtilitiesMapper:
         if not isinstance(chunk_size, int) or chunk_size <= 0:
             return current
         current_list: list[t.GeneralValueType] = [
-            FlextUtilitiesMapper._narrow_to_general_value_type(item) for item in current
+            FlextUtilitiesMapper.narrow_to_general_value_type(item) for item in current
         ]
         chunked: list[list[t.GeneralValueType]] = []
         for i in range(0, len(current_list), chunk_size):
@@ -2121,9 +2125,9 @@ class FlextUtilitiesMapper:
         if ops is not None:
             # Apply DSL operations to value
             value_for_build: t.GeneralValueType = (
-                FlextUtilitiesMapper._narrow_to_general_value_type(value)
+                FlextUtilitiesMapper.narrow_to_general_value_type(value)
                 if value is not None
-                else FlextUtilitiesMapper._narrow_to_general_value_type("")
+                else FlextUtilitiesMapper.narrow_to_general_value_type("")
             )
             result = FlextUtilitiesMapper.build(
                 value_for_build,
@@ -2219,7 +2223,7 @@ class FlextUtilitiesMapper:
                 )
             else:
                 field_default = (
-                    FlextUtilitiesMapper._narrow_to_general_value_type(field_spec)
+                    FlextUtilitiesMapper.narrow_to_general_value_type(field_spec)
                     if field_spec is not None
                     else None
                 )
@@ -2245,7 +2249,7 @@ class FlextUtilitiesMapper:
                     )
                     # Type narrowing: value is GeneralValueType | None
                     value_for_build: t.GeneralValueType = (
-                        FlextUtilitiesMapper._narrow_to_general_value_type(value)
+                        FlextUtilitiesMapper.narrow_to_general_value_type(value)
                         if value is not None
                         else ""
                     )
@@ -2385,7 +2389,7 @@ class FlextUtilitiesMapper:
 
                 # Narrow extracted to t.GeneralValueType for type safety
                 final_value: t.GeneralValueType = (
-                    FlextUtilitiesMapper._narrow_to_general_value_type(
+                    FlextUtilitiesMapper.narrow_to_general_value_type(
                         extracted if extracted is not None else field_default,
                     )
                 )
@@ -2622,7 +2626,7 @@ class FlextUtilitiesMapper:
         # Process primary data
         if primary_data is not None:
             # Narrow to GeneralValueType first, then check if dict-like
-            primary_general = FlextUtilitiesMapper._narrow_to_general_value_type(
+            primary_general = FlextUtilitiesMapper.narrow_to_general_value_type(
                 primary_data,
             )
             if FlextRuntime.is_dict_like(primary_general):
@@ -2641,7 +2645,7 @@ class FlextUtilitiesMapper:
         # Process secondary data based on merge strategy
         if secondary_data is not None and merge_strategy != "primary_only":
             # Narrow to GeneralValueType first, then check if dict-like
-            secondary_general = FlextUtilitiesMapper._narrow_to_general_value_type(
+            secondary_general = FlextUtilitiesMapper.narrow_to_general_value_type(
                 secondary_data,
             )
             if FlextRuntime.is_dict_like(secondary_general):

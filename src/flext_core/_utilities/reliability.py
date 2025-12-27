@@ -664,5 +664,74 @@ class FlextUtilitiesReliability:
             current_result = func(current_result.value)
         return current_result
 
+    # ========================================================================
+    # Pattern Matching Methods (Functional Programming)
+    # ========================================================================
+
+    @staticmethod
+    def match(
+        value: object,
+        *cases: tuple[type[object] | object | Callable[[object], bool], object],
+        default: object | None = None,
+    ) -> object:
+        """Pattern match on a value with type, value, or predicate matching.
+
+        Supports three matching modes:
+        1. Type matching: `(str, lambda s: s.upper())` - match if isinstance(value, str)
+        2. Value matching: `("REDACTED_LDAP_BIND_PASSWORD", "is_REDACTED_LDAP_BIND_PASSWORD")` - match if value == "REDACTED_LDAP_BIND_PASSWORD"
+        3. Predicate matching: `(lambda x: x > 10, "big")` - match if predicate returns True
+
+        Args:
+            value: Value to match against
+            *cases: (pattern, result) tuples where pattern can be:
+                - A type (matches via isinstance)
+                - A value (matches via equality)
+                - A callable predicate (matches if returns True)
+            default: Default value/callable if no match (optional)
+
+        Returns:
+            The result from the first matching case, or default, or None
+
+        Example:
+            >>> u.Reliability.match(
+            ...     "REDACTED_LDAP_BIND_PASSWORD",
+            ...     (str, lambda s: s.upper()),  # type match
+            ...     ("REDACTED_LDAP_BIND_PASSWORD", "is_REDACTED_LDAP_BIND_PASSWORD"),  # value match
+            ...     default="unknown",
+            ... )
+            'ADMIN'
+
+            >>> u.Reliability.match(
+            ...     15,
+            ...     (lambda x: x > 10, "big"),  # predicate match
+            ...     (lambda x: x > 5, "medium"),
+            ...     default="small",
+            ... )
+            'big'
+
+        """
+        for pattern, result in cases:
+            # Type match - isinstance check
+            if isinstance(pattern, type) and isinstance(value, pattern):
+                return result(value) if callable(result) else result
+            # Value match - equality check
+            if pattern == value:
+                return result(value) if callable(result) else result
+            # Predicate match - callable that returns bool (exclude types)
+            if callable(pattern) and not isinstance(pattern, type):
+                try:
+                    pred_result = pattern(value)
+                    if isinstance(pred_result, bool) and pred_result:
+                        return result(value) if callable(result) else result
+                except (ValueError, TypeError, AttributeError):
+                    pass
+        # Default handling
+        if default is not None:
+            return default(value) if callable(default) else default
+        return None
+
+    # Mnemonic alias
+    mt = match
+
 
 __all__ = ["FlextUtilitiesReliability"]

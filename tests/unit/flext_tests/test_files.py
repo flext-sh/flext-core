@@ -182,7 +182,7 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.Types.ConfigurationMapping
+            | t_core.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = {
@@ -209,11 +209,11 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.Types.ConfigurationMapping
+            | t_core.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = cast(
-            "dict[str, str | bytes | t_core.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
+            "dict[str, str | bytes | t_core.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
             files_dict,
         )
         extension = ".md"
@@ -368,11 +368,11 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.Types.ConfigurationMapping
+            | t_core.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = cast(
-            "dict[str, str | bytes | t_core.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
+            "dict[str, str | bytes | t_core.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
             files_dict,
         )
 
@@ -396,11 +396,11 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.Types.ConfigurationMapping
+            | t_core.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = cast(
-            "dict[str, str | bytes | t_core.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
+            "dict[str, str | bytes | t_core.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
             files_dict,
         )
 
@@ -417,11 +417,11 @@ class TestFlextTestsFiles:
             str,
             str
             | bytes
-            | t_core.Types.ConfigurationMapping
+            | t_core.ConfigurationMapping
             | Sequence[Sequence[str]]
             | BaseModel,
         ] = cast(
-            "dict[str, str | bytes | t_core.Types.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
+            "dict[str, str | bytes | t_core.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel]",
             files_dict,
         )
 
@@ -483,8 +483,8 @@ class TestFlextTestsFilesNewApi:
         content_dict = {"key": "value", "number": 42}
 
         # create() accepts ConfigurationMapping which is compatible
-        content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping",
+        content: t_core.ConfigurationMapping = cast(
+            "t_core.ConfigurationMapping",
             content_dict,
         )
 
@@ -500,8 +500,8 @@ class TestFlextTestsFilesNewApi:
         content_dict = {"name": "test", "enabled": True}
 
         # create() accepts ConfigurationMapping which is compatible
-        content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping",
+        content: t_core.ConfigurationMapping = cast(
+            "t_core.ConfigurationMapping",
             content_dict,
         )
 
@@ -604,8 +604,8 @@ class TestFlextTestsFilesNewApi:
         content_dict = {"key": "value", "number": 42}
 
         # create() accepts ConfigurationMapping which is compatible
-        content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping",
+        content: t_core.ConfigurationMapping = cast(
+            "t_core.ConfigurationMapping",
             content_dict,
         )
         path = manager.create(content, "config.json")
@@ -621,8 +621,8 @@ class TestFlextTestsFilesNewApi:
         content_dict = {"name": "test", "enabled": True}
 
         # create() accepts ConfigurationMapping which is compatible
-        content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping",
+        content: t_core.ConfigurationMapping = cast(
+            "t_core.ConfigurationMapping",
             content_dict,
         )
         path = manager.create(content, "config.yaml")
@@ -1440,8 +1440,8 @@ class TestCreateInStatic:
         content_dict = {"key": "value", "nested": {"a": 1}}
 
         # create_in() accepts ConfigurationMapping which is compatible
-        content: t_core.Types.ConfigurationMapping = cast(
-            "t_core.Types.ConfigurationMapping",
+        content: t_core.ConfigurationMapping = cast(
+            "t_core.ConfigurationMapping",
             content_dict,
         )
         path = tf.create_in(content, "config.json", tmp_path, indent=4)

@@ -92,7 +92,7 @@ class TestFlextTestsBuilders:
         data = builder.build()
 
         assert "validation_fields" in data
-        fields = cast("dict[str, object]", data["validation_fields"])
+        fields = cast("dict[str, t.GeneralValueType]", data["validation_fields"])
 
         valid_emails = cast("list[str]", fields["valid_emails"])
         assert len(valid_emails) == 5
@@ -109,7 +109,7 @@ class TestFlextTestsBuilders:
         builder.with_validation_fields(count=3)
         data = builder.build()
 
-        validation_fields = cast("dict[str, object]", data["validation_fields"])
+        validation_fields = cast("dict[str, t.GeneralValueType]", data["validation_fields"])
         valid_emails = cast("list[str]", validation_fields["valid_emails"])
         assert len(valid_emails) == 3
 
@@ -239,7 +239,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("users", factory="users", count=3)
         data = builder.build()
-        users = cast("list[dict[str, object]]", data["users"])
+        users = cast("list[dict[str, t.GeneralValueType]]", data["users"])
         assert len(users) == 3
 
     def test_add_with_mapping(self) -> None:
@@ -247,7 +247,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("config", mapping={"env": "test", "debug": True})
         data = builder.build()
-        config = cast("dict[str, object]", data["config"])
+        config = cast("dict[str, t.GeneralValueType]", data["config"])
         assert config["env"] == "test"
         assert config["debug"] is True
 
@@ -311,7 +311,7 @@ class TestFlextTestsBuilders:
         # Type ignore needed because mypy can't match overload for bool parameter
         flattened_raw = builder.build(flatten=True)
         # Type narrowing: flatten=True returns BuilderDict
-        flattened: dict[str, object] = cast("dict[str, object]", flattened_raw)
+        flattened: dict[str, t.GeneralValueType] = cast("dict[str, t.GeneralValueType]", flattened_raw)
         assert isinstance(flattened, dict)
         assert "a.b.c" in flattened
         assert flattened["a.b.c"] == 42
@@ -324,7 +324,7 @@ class TestFlextTestsBuilders:
         # Type ignore needed because mypy can't match overload for bool parameter
         filtered_raw = builder.build(filter_none=True)
         # Type narrowing: filter_none=True returns BuilderDict
-        filtered: dict[str, object] = cast("dict[str, object]", filtered_raw)
+        filtered: dict[str, t.GeneralValueType] = cast("dict[str, t.GeneralValueType]", filtered_raw)
         assert "a" in filtered
         assert "b" not in filtered
         assert "c" in filtered
@@ -335,8 +335,8 @@ class TestFlextTestsBuilders:
         builder.add("test_id", "case_1").add("value", 42)
         cases_raw = builder.build(as_parametrized=True)
         # Type narrowing: as_parametrized=True returns list[ParametrizedCase]
-        cases: list[tuple[str, dict[str, object]]] = cast(
-            "list[tuple[str, dict[str, object]]]",
+        cases: list[tuple[str, dict[str, t.GeneralValueType]]] = cast(
+            "list[tuple[str, dict[str, t.GeneralValueType]]]",
             cases_raw,
         )
         assert isinstance(cases, list)
@@ -492,7 +492,7 @@ class TestFlextTestsBuilders:
             [("valid", "test@example.com"), ("invalid", "not-email")],
         )
         data = builder.build()
-        cases = cast("list[object]", data["cases"])
+        cases = cast("list[t.GeneralValueType]", data["cases"])
         assert len(cases) == 2
 
     def test_batch_with_results(self) -> None:

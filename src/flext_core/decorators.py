@@ -16,7 +16,7 @@ import warnings
 from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
-from typing import Literal, overload
+from typing import Any, Literal, overload
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
@@ -1617,7 +1617,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             """Apply factory configuration metadata to function."""
             config = m.HandlerFactoryDecoratorConfig(
                 name=name,

@@ -164,9 +164,9 @@ class GroupScenario:
     """Group method test scenario."""
 
     name: str
-    items: list[object] | tuple[object, ...]
+    items: list[t.GeneralValueType] | tuple[object, ...]
     key: str | Callable[[object], object]
-    expected_result: dict[object, list[object]]
+    expected_result: dict[object, list[t.GeneralValueType]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,9 +174,9 @@ class ChunkScenario:
     """Chunk method test scenario."""
 
     name: str
-    items: list[object] | tuple[object, ...]
+    items: list[t.GeneralValueType] | tuple[object, ...]
     size: int
-    expected_result: list[list[object]]
+    expected_result: list[list[t.GeneralValueType]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -184,7 +184,7 @@ class BatchScenario:
     """Batch method test scenario."""
 
     name: str
-    items: list[object]
+    items: list[t.GeneralValueType]
     operation: Callable[[object], object]
     expected_result: object
     size: int = 100
@@ -1050,16 +1050,16 @@ class TestuCollectionMerge:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base: t.Types.ConfigurationMapping = {"a": 1, "b": {"x": 1}}
-        other: t.Types.ConfigurationMapping = {"b": {"y": 2}, "c": 3}
+        base: t.ConfigurationMapping = {"a": 1, "b": {"x": 1}}
+        other: t.ConfigurationMapping = {"b": {"y": 2}, "c": 3}
         result = u.Collection.merge(base, other)
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"x": 1, "y": 2}, "c": 3}
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base: t.Types.ConfigurationMapping = {"a": 1, "b": {"x": 1}}
-        other: t.Types.ConfigurationMapping = {"b": {"y": 2}, "c": 3}
+        base: t.ConfigurationMapping = {"a": 1, "b": {"x": 1}}
+        other: t.ConfigurationMapping = {"b": {"y": 2}, "c": 3}
         result = u.Collection.merge(base, other, strategy="override")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"y": 2}, "c": 3}

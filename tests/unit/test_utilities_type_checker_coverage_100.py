@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core.typings import t
 
 from collections import UserDict as BaseUserDict
 from typing import TypeVar, cast, get_origin

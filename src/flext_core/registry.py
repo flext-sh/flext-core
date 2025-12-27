@@ -44,7 +44,7 @@ class FlextRegistry(FlextService[bool]):
     for actual handler registration and execution.
     """
 
-    class Summary(m.ValueObject):
+    class Summary(m.Value):
         """Aggregated outcome for batch handler registration tracking.
 
         Tracks successful, skipped, and failed registrations with computed

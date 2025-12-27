@@ -16,6 +16,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextResult, m
+from flext_core.typings import t
 from tests.test_utils import assertion_helpers
 
 
@@ -76,7 +77,7 @@ class TestEnterprisePatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: dict[str, object] = {}
+                self._config: dict[str, t.GeneralValueType] = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -93,14 +94,14 @@ class TestEnterprisePatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> FlextResult[dict[str, object]]:
+            def build(self) -> FlextResult[dict[str, t.GeneralValueType]]:
                 """Build the configuration."""
                 if not self._config:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[dict[str, t.GeneralValueType]].fail(
                         "Configuration cannot be empty",
                     )
 
-                return FlextResult[dict[str, object]].ok(self._config.copy())
+                return FlextResult[dict[str, t.GeneralValueType]].ok(self._config.copy())
 
         # Test builder usage
         config_result = (
@@ -114,12 +115,12 @@ class TestEnterprisePatterns:
         assert config_result.is_success
         config = config_result.value
         assert isinstance(config, dict)
-        config_dict = config  # Already dict[str, object] from assertion
-        database_dict = cast("dict[str, object]", config_dict["database"])
+        config_dict = config  # Already dict[str, t.GeneralValueType] from assertion
+        database_dict = cast("dict[str, t.GeneralValueType]", config_dict["database"])
         assert database_dict["host"] == "localhost"
-        logging_dict = cast("dict[str, object]", config_dict["logging"])
+        logging_dict = cast("dict[str, t.GeneralValueType]", config_dict["logging"])
         assert logging_dict["level"] == "INFO"
-        cache_dict = cast("dict[str, object]", config_dict["cache"])
+        cache_dict = cast("dict[str, t.GeneralValueType]", config_dict["cache"])
         assert cache_dict["enabled"]
 
     @pytest.mark.architecture
@@ -133,7 +134,7 @@ class TestEnterprisePatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: dict[str, object] = {}
+                self._data: dict[str, t.GeneralValueType] = {}
                 self._query_count = 0
 
             def save(self, entity_id: str, data: object) -> FlextResult[bool]:
@@ -182,7 +183,7 @@ class TestEnterprisePatterns:
         for i in range(100):
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success, f"Query {i} should succeed"
-            entity_data = cast("dict[str, object]", query_result.value)
+            entity_data = cast("dict[str, t.GeneralValueType]", query_result.value)
             assert entity_data["id"] == i, f"Entity {i} should have id={i}"
 
         query_duration = time.perf_counter() - start_time
@@ -293,15 +294,15 @@ class TestEventDrivenPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: list[dict[str, object]] = []
+        observers: list[dict[str, t.GeneralValueType]] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
         # Create observers
-        obs1: dict[str, object] = {"name": "Observer1", "state": None}
-        obs2: dict[str, object] = {"name": "Observer2", "state": None}
+        obs1: dict[str, t.GeneralValueType] = {"name": "Observer1", "state": None}
+        obs2: dict[str, t.GeneralValueType] = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
 
         # Test notifications

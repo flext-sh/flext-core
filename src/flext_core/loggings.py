@@ -774,31 +774,12 @@ class FlextLogger(FlextRuntime):
     # LOGGING METHODS - DELEGATE TO FlextRuntime.structlog()
     # =============================================================================
 
-    @overload
     def trace(
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultTrueLiteral,
         **kwargs: t.GeneralValueType,
-    ) -> r[bool]: ...
-
-    @overload
-    def trace(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultFalseLiteral = False,
-        **kwargs: t.GeneralValueType,
-    ) -> None: ...
-
-    def trace(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: bool = False,
-        **kwargs: t.GeneralValueType,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log trace message - Logger.Log implementation."""
         try:
             try:
@@ -810,10 +791,9 @@ class FlextLogger(FlextRuntime):
                 formatted_message,
                 **kwargs,
             )  # FlextRuntime.structlog() doesn't have trace
-            result = r[bool].ok(True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            result = r[bool].fail(f"Logging failed: {e}")
-        return result if return_result else None
+            return r[bool].fail(f"Logging failed: {e}")
 
     @staticmethod
     def _format_log_message(
@@ -993,37 +973,17 @@ class FlextLogger(FlextRuntime):
         # Use _log to handle the actual logging
         _ = self._log(level_enum, message, **context_dict)
 
-    @overload
     def debug(
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultTrueLiteral,
         **context: t.GeneralValueType,
-    ) -> r[bool]: ...
-
-    @overload
-    def debug(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultFalseLiteral = False,
-        **context: t.GeneralValueType,
-    ) -> None: ...
-
-    def debug(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: bool = False,
-        **context: t.GeneralValueType,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log debug message - Logger.Log implementation.
 
         Business Rule: Logs a debug-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns r[bool]
-        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
-        centralized logging management.
+        method for actual logging. Returns r[bool] indicating success or failure.
+        Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Debug logging ensures audit trail completeness by recording
         detailed diagnostic information. Debug messages are typically filtered in
@@ -1031,45 +991,24 @@ class FlextLogger(FlextRuntime):
         All debug messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        result = self._log(
+        return self._log(
             c.Settings.LogLevel.DEBUG,
             message,
             *args,
             **context,
         )
-        return result if return_result else None
-
-    @overload
-    def info(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultTrueLiteral,
-        **context: t.GeneralValueType,
-    ) -> r[bool]: ...
-
-    @overload
-    def info(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultFalseLiteral = False,
-        **context: t.GeneralValueType,
-    ) -> None: ...
 
     def info(
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: bool = False,
         **context: t.GeneralValueType,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log info message - Logger.Log implementation.
 
         Business Rule: Logs an info-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns r[bool]
-        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
-        centralized logging management.
+        method for actual logging. Returns r[bool] indicating success or failure.
+        Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Info logging ensures audit trail completeness by recording
         informational messages about application flow. Info messages are typically
@@ -1077,45 +1016,24 @@ class FlextLogger(FlextRuntime):
         All info messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        result = self._log(
+        return self._log(
             c.Settings.LogLevel.INFO,
             message,
             *args,
             **context,
         )
-        return result if return_result else None
-
-    @overload
-    def warning(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultTrueLiteral,
-        **context: t.GeneralValueType | Exception,
-    ) -> r[bool]: ...
-
-    @overload
-    def warning(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultFalseLiteral = False,
-        **context: t.GeneralValueType | Exception,
-    ) -> None: ...
 
     def warning(
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: bool = False,
         **context: t.GeneralValueType | Exception,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log warning message - Logger.Log implementation.
 
         Business Rule: Logs a warning-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns r[bool]
-        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
-        centralized logging management.
+        method for actual logging. Returns r[bool] indicating success or failure.
+        Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Warning logging ensures audit trail completeness by recording
         warning messages about potential issues. Warning messages are typically included
@@ -1123,13 +1041,12 @@ class FlextLogger(FlextRuntime):
         identification. All warning messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        result = self._log(
+        return self._log(
             c.Settings.LogLevel.WARNING,
             message,
             *args,
             **context,
         )
-        return result if return_result else None
 
     def warn(
         self,
@@ -1138,39 +1055,19 @@ class FlextLogger(FlextRuntime):
         **context: t.GeneralValueType,
     ) -> None:
         """Alias for warning() - implements p.Log.StructlogLogger protocol."""
-        self.warning(message, *args, return_result=False, **context)
-
-    @overload
-    def error(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultTrueLiteral,
-        **context: t.GeneralValueType,
-    ) -> r[bool]: ...
-
-    @overload
-    def error(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultFalseLiteral = False,
-        **context: t.GeneralValueType,
-    ) -> None: ...
+        _ = self.warning(message, *args, **context)
 
     def error(
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: bool = False,
         **context: t.GeneralValueType,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log error message - Logger.Log implementation.
 
         Business Rule: Logs an error-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns r[bool]
-        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
-        centralized logging management.
+        method for actual logging. Returns r[bool] indicating success or failure.
+        Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Error logging ensures audit trail completeness by recording
         error messages about failures. Error messages are always included in production
@@ -1178,45 +1075,24 @@ class FlextLogger(FlextRuntime):
         error messages go through this method, ensuring consistent log formatting and
         context inclusion across FLEXT.
         """
-        result = self._log(
+        return self._log(
             c.Settings.LogLevel.ERROR,
             message,
             *args,
             **context,
         )
-        return result if return_result else None
-
-    @overload
-    def critical(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultTrueLiteral,
-        **context: t.GeneralValueType,
-    ) -> r[bool]: ...
-
-    @overload
-    def critical(
-        self,
-        message: str,
-        *args: t.GeneralValueType,
-        return_result: c.Literals.ReturnResultFalseLiteral = False,
-        **context: t.GeneralValueType,
-    ) -> None: ...
 
     def critical(
         self,
         message: str,
         *args: t.GeneralValueType,
-        return_result: bool = False,
         **context: t.GeneralValueType,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log critical message - Logger.Log implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
-        method for actual logging. If return_result=True, returns r[bool]
-        indicating success or failure. Otherwise returns None. Uses FlextRuntime for
-        centralized logging management.
+        method for actual logging. Returns r[bool] indicating success or failure.
+        Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Critical logging ensures audit trail completeness by recording
         critical messages about severe failures. Critical messages are always included
@@ -1224,35 +1100,12 @@ class FlextLogger(FlextRuntime):
         response. All critical messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        result = self._log(
+        return self._log(
             c.Settings.LogLevel.CRITICAL,
             message,
             *args,
             **context,
         )
-        return result if return_result else None
-
-    @overload
-    def exception(
-        self,
-        message: str,
-        *,
-        exception: BaseException | None = None,
-        exc_info: bool = True,
-        return_result: c.Literals.ReturnResultTrueLiteral,
-        **kwargs: t.GeneralValueType,
-    ) -> r[bool]: ...
-
-    @overload
-    def exception(
-        self,
-        message: str,
-        *,
-        exception: BaseException | None = None,
-        exc_info: bool = True,
-        return_result: c.Literals.ReturnResultFalseLiteral = False,
-        **kwargs: t.GeneralValueType,
-    ) -> None: ...
 
     def exception(
         self,
@@ -1260,15 +1113,15 @@ class FlextLogger(FlextRuntime):
         *,
         exception: BaseException | None = None,
         exc_info: bool = True,
-        return_result: bool = False,
         **kwargs: t.GeneralValueType,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log exception with conditional stack trace (DEBUG only).
 
         Business Rule: Logs an exception with conditional stack trace inclusion based
         on effective log level. Stack trace is included only if effective log level is
         DEBUG. Exception details (type, message, stack trace) are added to context.
-        Uses FlextRuntime for centralized logging management.
+        Returns r[bool] indicating success or failure. Uses FlextRuntime for
+        centralized logging management.
 
         Audit Implication: Exception logging ensures audit trail completeness by recording
         exception details and stack traces. Stack traces are critical for troubleshooting
@@ -1311,10 +1164,9 @@ class FlextLogger(FlextRuntime):
                 kwargs["stack_trace"] = traceback.format_exc()
 
             self.logger.error(message, **kwargs)
-            result = r[bool].ok(True)
+            return r[bool].ok(True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            result = r[bool].fail(f"Logging failed: {e}")
-        return result if return_result else None
+            return r[bool].fail(f"Logging failed: {e}")
 
     # =========================================================================
     # ADVANCED FEATURES - Performance tracking and result integration
@@ -1361,9 +1213,8 @@ class FlextLogger(FlextRuntime):
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
                 context["exception_message"] = str(exc_val) if exc_val else ""
 
-            log_method(
+            _ = log_method(
                 f"{self._operation_name} {status}",
-                return_result=False,
                 **context,
             )
 
@@ -1465,26 +1316,6 @@ class FlextLogger(FlextRuntime):
             """Bind context preserving adapter wrapper."""
             return FlextLogger.ResultAdapter(self._base_logger.bind(**context))
 
-        def _log_with_result(
-            self,
-            method: c.Settings.LogLevel | str,
-            message: str,
-            *args: t.GeneralValueType,
-            **kwargs: t.GeneralValueType,
-        ) -> r[bool]:
-            """Call logging method with return_result=True."""
-            # Convert StrEnum to string value if needed
-            method_str = (
-                method.value if isinstance(method, c.Settings.LogLevel) else method
-            ).lower()
-            result = getattr(self._base_logger, method_str)(
-                message,
-                *args,
-                return_result=True,
-                **kwargs,
-            )
-            return result if hasattr(result, "is_success") else r[bool].ok(True)
-
         def trace(
             self,
             message: str,
@@ -1492,7 +1323,7 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log trace message returning FlextResult."""
-            return self._log_with_result("trace", message, *args, **kwargs)
+            return self._base_logger.trace(message, *args, **kwargs)
 
         def debug(
             self,
@@ -1501,12 +1332,7 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log debug message returning FlextResult."""
-            return self._log_with_result(
-                c.Settings.LogLevel.DEBUG,
-                message,
-                *args,
-                **kwargs,
-            )
+            return self._base_logger.debug(message, *args, **kwargs)
 
         def info(
             self,
@@ -1515,12 +1341,7 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log info message returning FlextResult."""
-            return self._log_with_result(
-                c.Settings.LogLevel.INFO,
-                message,
-                *args,
-                **kwargs,
-            )
+            return self._base_logger.info(message, *args, **kwargs)
 
         def warning(
             self,
@@ -1529,12 +1350,7 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log warning message returning FlextResult."""
-            return self._log_with_result(
-                c.Settings.LogLevel.WARNING,
-                message,
-                *args,
-                **kwargs,
-            )
+            return self._base_logger.warning(message, *args, **kwargs)
 
         def error(
             self,
@@ -1543,12 +1359,7 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log error message returning FlextResult."""
-            return self._log_with_result(
-                c.Settings.LogLevel.ERROR,
-                message,
-                *args,
-                **kwargs,
-            )
+            return self._base_logger.error(message, *args, **kwargs)
 
         def critical(
             self,
@@ -1557,12 +1368,7 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log critical message returning FlextResult."""
-            return self._log_with_result(
-                c.Settings.LogLevel.CRITICAL,
-                message,
-                *args,
-                **kwargs,
-            )
+            return self._base_logger.critical(message, *args, **kwargs)
 
         def exception(
             self,
@@ -1572,24 +1378,19 @@ class FlextLogger(FlextRuntime):
             exc_info: bool = True,
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
-            """Log exception with traceback returning FlextResult."""
-            # Convert exception to string for context if provided
-            context: dict[str, t.GeneralValueType] = kwargs
+            """Log exception with traceback returning FlextResult.
+
+            Note: Uses error() with exception context as FlextLogger.exception()
+            is typically used in adapter context where direct exception handling
+            is done by the base logger.
+            """
+            context: dict[str, t.GeneralValueType] = dict(kwargs)
             if exception is not None:
                 context["exception"] = str(exception)
                 context["exception_type"] = type(exception).__name__
             if exc_info:
                 context["exc_info"] = True
-
-            # Filter out return_result if present and call error with return_result=True
-            context_for_error = {
-                k: v for k, v in context.items() if k != "return_result"
-            }
-            return self._base_logger.error(
-                message,
-                return_result=True,
-                **context_for_error,
-            )
+            return self._base_logger.error(message, **context)
 
 
 __all__: list[str] = [

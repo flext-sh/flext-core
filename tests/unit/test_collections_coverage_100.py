@@ -286,7 +286,7 @@ class TestFlextModelsCollectionsSettings:
             timeout: int = 30
 
         data = {"timeout": 60}
-        # Convert dict[str, object] to dict[str, t.GeneralValueType] for type compatibility
+        # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType] for type compatibility
         converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))

@@ -196,9 +196,10 @@ class FlextContainer(FlextRuntime, p.DI):
                             ) -> t.GeneralValueType:
                                 # fn is callable (verified at registration time)
                                 if callable(fn):
-                                    result = fn()
-                                    if u.is_general_value_type(result):
-                                        return result
+                                    raw_result = fn()
+                                    return u.narrow_to_general_value_type(
+                                        raw_result,
+                                    )
                                 return ""
 
                             # Register using the name from decorator config

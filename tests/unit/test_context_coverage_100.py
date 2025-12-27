@@ -75,8 +75,8 @@ class TestContext100Coverage:
         context1 = FlextContext()
         context1.set("key1", "value1").value
 
-        merge_data: dict[str, object] = {"key2": "value2", "key3": "value3"}
-        # Convert dict[str, object] to dict[str, t.GeneralValueType]
+        merge_data: dict[str, t.GeneralValueType] = {"key2": "value2", "key3": "value3"}
+        # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
         converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -197,8 +197,8 @@ class TestContext100Coverage:
         """Test import_data loads dictionary."""
         context = FlextContext()
 
-        import_data: dict[str, object] = {"key1": "value1", "key2": "value2"}
-        # Convert dict[str, object] to dict[str, t.GeneralValueType]
+        import_data: dict[str, t.GeneralValueType] = {"key1": "value1", "key2": "value2"}
+        # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
         converted_data: dict[str, t.GeneralValueType] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -494,7 +494,7 @@ class TestContext100Coverage:
         if isinstance(exported, dict):
             global_data = exported.get("global")
             if isinstance(global_data, dict):
-                # Convert dict[str, object] to dict[str, t.GeneralValueType]
+                # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
                 converted_global: dict[str, t.GeneralValueType] = {
                     k: v
                     if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -581,7 +581,7 @@ class TestContext100Coverage:
         if isinstance(exported, dict):
             global_data = exported.get("global")
             if isinstance(global_data, dict):
-                # Convert dict[str, object] to dict[str, t.GeneralValueType]
+                # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
                 converted_global: dict[str, t.GeneralValueType] = {
                     k: v
                     if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -637,7 +637,7 @@ class TestContext100Coverage:
         """
         # Test with dict containing non-serializable value (e.g., set)
         # Sets are converted to string representation (e.g., "{1, 2, 3}")
-        bad_dict: dict[str, object] = {"key": {1, 2, 3}}  # set becomes string
+        bad_dict: dict[str, t.GeneralValueType] = {"key": {1, 2, 3}}  # set becomes string
         result = m.ContextData(data=bad_dict)
         # Set was normalized to string representation
         assert isinstance(result.data["key"], str)
@@ -686,7 +686,7 @@ class TestContext100Coverage:
         """
         # Test with dict containing non-serializable value (e.g., set)
         # Sets are converted to string representation
-        data: dict[str, object] = {"key": {1, 2, 3}}  # set becomes string
+        data: dict[str, t.GeneralValueType] = {"key": {1, 2, 3}}  # set becomes string
         result = m.ContextExport(data=data)
         # Set was normalized to string representation
         assert isinstance(result.data["key"], str)

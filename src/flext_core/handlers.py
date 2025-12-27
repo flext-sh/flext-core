@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from pydantic import BaseModel
 
@@ -763,7 +763,23 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
 
-        def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            """Apply handler configuration metadata to function.
+
+            Only sets the attribute if not already set - innermost decorator wins.
+            When multiple @h.handler() decorators are stacked, the first (innermost)
+            one to run takes precedence.
+            """
+            # Only set if not already set (innermost decorator wins)
+            if not hasattr(func, c.Discovery.HANDLER_ATTR):
+                config = m.Handler.DecoratorConfig(
+                    command=command,
+                    priority=priority,
+                    timeout=timeout,
+                    middleware=middleware or [],
+                )
+                setattr(func, c.Discovery.HANDLER_ATTR, config)
+            return func
             """Apply handler configuration metadata to function.
 
             Only sets the attribute if not already set - innermost decorator wins.

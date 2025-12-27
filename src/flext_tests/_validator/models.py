@@ -12,6 +12,7 @@ from pathlib import Path
 
 from pydantic import Field
 
+from flext_core._models.entity import FlextModelsEntity
 from flext_tests.constants import c
 from flext_tests.models import m
 
@@ -25,7 +26,7 @@ class FlextValidatorModels(m):
     # Re-export Severity from constants for convenience
     Severity = c.Tests.Validator.Severity
 
-    class Violation(m.ValueObject):
+    class Violation(FlextModelsEntity.Value):
         """A detected architecture violation."""
 
         file_path: Path
@@ -51,7 +52,7 @@ class FlextValidatorModels(m):
                 line=self.line_number,
             )
 
-    class ScanResult(m.ValueObject):
+    class ScanResult(FlextModelsEntity.Value):
         """Result of a validation scan."""
 
         validator_name: str
@@ -85,7 +86,7 @@ class FlextValidatorModels(m):
                 count=self.files_scanned,
             )
 
-    class ScanConfig(m.ValueObject):
+    class ScanConfig(FlextModelsEntity.Value):
         """Configuration for validation scan."""
 
         target_path: Path

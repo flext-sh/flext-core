@@ -20,6 +20,7 @@ from typing import Final, Self, overload
 
 from pydantic import BaseModel
 
+# Direct imports for internal usage (mypy compatibility with nested class aliases)
 from flext_core._models.context import FlextModelsContext
 from flext_core.constants import c
 from flext_core.loggings import FlextLogger
@@ -106,9 +107,7 @@ class FlextContext(FlextRuntime):
 
     def __init__(
         self,
-        initial_data: (
-            FlextModelsContext.ContextData | dict[str, t.GeneralValueType] | None
-        ) = None,
+        initial_data: (m.ContextData | dict[str, t.GeneralValueType] | None) = None,
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -122,7 +121,7 @@ class FlextContext(FlextRuntime):
         """
         super().__init__()
         # Use Pydantic directly - NO redundant helpers (Pydantic validates dict/None/model)
-        # Type narrowing: always create FlextModelsContext.ContextData instance
+        # Type narrowing: always create m.ContextData instance
         if isinstance(initial_data, dict):
             # Type narrowing: initial_data is dict[str, t.GeneralValueType]
             initial_dict: dict[str, t.GeneralValueType] = initial_data
@@ -131,15 +130,13 @@ class FlextContext(FlextRuntime):
                 str(k): FlextRuntime.normalize_to_general_value(v)
                 for k, v in initial_dict.items()
             }
-            context_data: FlextModelsContext.ContextData = (
-                FlextModelsContext.ContextData(data=normalized_data)
-            )
-        elif isinstance(initial_data, FlextModelsContext.ContextData):
+            context_data: m.ContextData = m.ContextData(data=normalized_data)
+        elif isinstance(initial_data, m.ContextData):
             # Already a ContextData instance (not dict, not None)
             context_data = initial_data
         else:
             # None or uninitialized - create empty ContextData
-            context_data = FlextModelsContext.ContextData()
+            context_data = m.ContextData()
         # Initialize context-specific metadata (separate from ContextData.metadata)
         # ContextData.metadata = generic creation/modification metadata (m.Metadata)
         # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
@@ -147,9 +144,7 @@ class FlextContext(FlextRuntime):
 
         self._hooks: t.StringHandlerCallableListDict = {}
         # Use nested class from FlextModelsContext
-        self._statistics: FlextModelsContext.ContextStatistics = (
-            FlextModelsContext.ContextStatistics()
-        )
+        self._statistics: m.ContextStatistics = m.ContextStatistics()
         self._active = True
         self._suspended = False
 
@@ -188,9 +183,7 @@ class FlextContext(FlextRuntime):
     @classmethod
     def create(
         cls,
-        initial_data: (
-            FlextModelsContext.ContextData | dict[str, t.GeneralValueType] | None
-        ) = None,
+        initial_data: (m.ContextData | dict[str, t.GeneralValueType] | None) = None,
     ) -> Self: ...
 
     @overload
@@ -206,9 +199,7 @@ class FlextContext(FlextRuntime):
     @classmethod
     def create(
         cls,
-        initial_data: (
-            FlextModelsContext.ContextData | dict[str, t.GeneralValueType] | None
-        ) = None,
+        initial_data: (m.ContextData | dict[str, t.GeneralValueType] | None) = None,
         *,
         operation_id: str | None = None,
         user_id: str | None = None,
@@ -817,9 +808,7 @@ class FlextContext(FlextRuntime):
                     pass
         # Clone metadata and statistics using public methods
         cloned.set_all_metadata_for_clone(self._metadata.model_copy())
-        statistics_copy: FlextModelsContext.ContextStatistics = (
-            self._statistics.model_copy()
-        )
+        statistics_copy: m.ContextStatistics = self._statistics.model_copy()
         cloned.set_statistics_for_clone(statistics_copy)
 
         # Type narrowing: cloned is FlextContext which implements p.Ctx protocol
@@ -938,8 +927,8 @@ class FlextContext(FlextRuntime):
                     transformer=normalize_value,
                 )
             )
-            context_data_for_json: FlextModelsContext.ContextData = (
-                FlextModelsContext.ContextData(data=normalized_data_for_json)
+            context_data_for_json: m.ContextData = m.ContextData(
+                data=normalized_data_for_json
             )
             # Type narrowing: cls(initial_data=context_data_for_json) returns FlextContext which implements p.Ctx protocol
             # FlextContext structurally implements p.Ctx, so no cast needed
@@ -1048,7 +1037,7 @@ class FlextContext(FlextRuntime):
                 result_dict["metadata"] = metadata_dict_export
             return result_dict
 
-        return FlextModelsContext.ContextExport(
+        return m.ContextExport(
             data=all_data,
             metadata=m.Metadata(attributes=metadata_for_model)
             if metadata_for_model
@@ -1206,7 +1195,7 @@ class FlextContext(FlextRuntime):
             all_data.update(scope_dict)
         return all_data
 
-    def _get_statistics(self) -> FlextModelsContext.ContextStatistics:
+    def _get_statistics(self) -> m.ContextStatistics:
         """Get context statistics.
 
         Returns:
@@ -1217,7 +1206,7 @@ class FlextContext(FlextRuntime):
 
     def set_statistics_for_clone(
         self,
-        statistics: FlextModelsContext.ContextStatistics,
+        statistics: m.ContextStatistics,
     ) -> None:
         """Set context statistics (used internally for cloning).
 
@@ -1290,7 +1279,7 @@ class FlextContext(FlextRuntime):
                 scopes[scope_name] = scope_dict
         return scopes
 
-    def _export_snapshot(self) -> FlextModelsContext.ContextExport:
+    def _export_snapshot(self) -> m.ContextExport:
         """Export context snapshot.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -1322,7 +1311,7 @@ class FlextContext(FlextRuntime):
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, t.GeneralValueType])
         statistics_mapping: t.ContextMetadataMapping = stats_dict_raw or {}
-        return FlextModelsContext.ContextExport(
+        return m.ContextExport(
             data=all_data,
             metadata=m.Metadata(attributes=metadata_for_model)
             if metadata_for_model
