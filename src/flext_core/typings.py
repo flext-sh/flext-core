@@ -142,7 +142,8 @@ class FlextTypes:
         | None
         | list[str | int | float | bool | None]
         | dict[
-            str, str | int | float | bool | list[str | int | float | bool | None] | None,
+            str,
+            str | int | float | bool | list[str | int | float | bool | None] | None,
         ]
     )
     type PydanticConfigDict = dict[str, FlextTypes.PydanticConfigValue]
@@ -227,7 +228,7 @@ class FlextTypes:
     # MetadataAttributeValue - ALIGNED with GeneralValueType primitive types
     # Includes datetime for proper subtyping (MetadataAttributeValue <: GeneralValueType)
     # Excludes: BaseModel, Path, Callable (those are GeneralValueType extensions)
-    MetadataAttributeValue = Union[  # noqa: UP007 - Union required for TypeAlias compatibility
+    MetadataAttributeValue = Union[
         str,
         int,
         float,
@@ -618,7 +619,9 @@ class FlextTypes:
     # Service instance type - union of all types accepted by container.register()
     # ARCHITECTURAL EXCEPTION: DI containers must accept any Python object
     # This uses GeneralValueType + Protocol for type-safe service storage
-    type ServiceInstanceType = "FlextTypes.GeneralValueType" | Callable[..., FlextTypes.GeneralValueType]
+    type ServiceInstanceType = (
+        "FlextTypes.GeneralValueType" | Callable[..., FlextTypes.GeneralValueType]
+    )
     """Type for service instances accepted by FlextContainer.register().
 
     Includes all GeneralValueType members plus Callables:

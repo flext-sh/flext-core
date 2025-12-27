@@ -9,20 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, Final, Self
+from collections.abc import Callable, Mapping
+from typing import Annotated, Final, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
-
-    from flext_core.protocols import p
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextModelsConfig:

@@ -564,55 +564,57 @@ class TestHandlerDiscoveryEdgeCases:
 # ============================================================================
 
 
+class _TestServiceForDiscovery(FlextService[str]):
+    """Test service class for handler discovery integration tests."""
+
+    @h.handler(command=UserCreateCommand, priority=10)
+    def handle_user_create(
+        self,
+        cmd: UserCreateCommand,
+    ) -> r[str]:
+        return r[str].ok(f"created_{cmd.name}")
+
+    def execute(self) -> r[str]:
+        return r[str].ok("executed")
+
+
+class _TestServiceWithMultipleHandlers(FlextService[str]):
+    """Test service class with multiple handlers for discovery tests."""
+
+    @h.handler(command=UserCreateCommand)
+    def create_user(self, cmd: UserCreateCommand) -> r[str]:
+        return r[str].ok(f"created_{cmd.name}")
+
+    @h.handler(command=UserDeleteCommand)
+    def delete_user(self, cmd: UserDeleteCommand) -> r[str]:
+        return r[str].ok(f"deleted_{cmd.user_id}")
+
+    def execute(self) -> r[str]:
+        return r[str].ok("done")
+
+
 class TestHandlerDiscoveryServiceIntegration:
     """Test handler discovery integration with FlextService."""
 
     def test_service_can_use_discovered_handlers(self) -> None:
-        """FlextService should be able to discover and use handlers."""
-
-        class TestService(FlextService[str]):
-            @h.handler(command=UserCreateCommand, priority=10)
-            def handle_user_create(
-                self,
-                cmd: UserCreateCommand,
-            ) -> r[str]:
-                return r[str].ok(f"created_{cmd.name}")
-
-            def execute(self) -> r[str]:
-                return r[str].ok("executed")
-
-        # Service should be instantiable
-        service = TestService()
-
-        # Check that handler was discovered
-        handlers = h.Discovery.scan_class(TestService)
+        """FlextService should be able to discover handlers from decorated classes."""
+        # Check that handler was discovered (without instantiating the service)
+        handlers = h.Discovery.scan_class(_TestServiceForDiscovery)
         assert len(handlers) >= 1
 
-        # Handler should be callable
-        for method_name, _ in handlers:
-            method = getattr(service, method_name)
-            assert callable(method)
+        # Verify handler metadata
+        method_name, config = handlers[0]
+        assert method_name == "handle_user_create"
+        assert config.command is UserCreateCommand
+        assert config.priority == 10
 
     def test_service_auto_discover_handlers_attribute(self) -> None:
         """Service should auto-discover handlers with @h.handler decorator."""
-
-        class TestService(FlextService[str]):
-            @h.handler(command=UserCreateCommand)
-            def create_user(self, cmd: UserCreateCommand) -> r[str]:
-                return r[str].ok(f"created_{cmd.name}")
-
-            @h.handler(command=UserDeleteCommand)
-            def delete_user(self, cmd: UserDeleteCommand) -> r[str]:
-                return r[str].ok(f"deleted_{cmd.user_id}")
-
-            def execute(self) -> r[str]:
-                return r[str].ok("done")
-
         # Check discovery works
-        has_handlers = h.Discovery.has_handlers(TestService)
+        has_handlers = h.Discovery.has_handlers(_TestServiceWithMultipleHandlers)
         assert has_handlers is True
 
-        handlers = h.Discovery.scan_class(TestService)
+        handlers = h.Discovery.scan_class(_TestServiceWithMultipleHandlers)
         assert len(handlers) == 2
 
 

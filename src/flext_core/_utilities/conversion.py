@@ -11,12 +11,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, overload
+from typing import Literal, overload
 
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextUtilitiesConversion:

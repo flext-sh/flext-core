@@ -384,10 +384,9 @@ class FlextMixins(FlextRuntime):
             str,
         ):
             # Filter to ModuleType items - use explicit loop for proper type narrowing
-            modules_list: list[ModuleType] = []
-            for item in wire_modules_raw:
-                if isinstance(item, ModuleType):
-                    modules_list.append(item)  # noqa: PERF401
+            modules_list: list[ModuleType] = [
+                item for item in wire_modules_raw if isinstance(item, ModuleType)
+            ]
             if len(modules_list) == len(wire_modules_raw):
                 wire_modules = modules_list
 
@@ -396,10 +395,9 @@ class FlextMixins(FlextRuntime):
             wire_packages_raw,
             str,
         ):
-            packages_list: list[str] = []
-            for item in wire_packages_raw:
-                if isinstance(item, str):
-                    packages_list.append(item)  # noqa: PERF401
+            packages_list: list[str] = [
+                item for item in wire_packages_raw if isinstance(item, str)
+            ]
             if len(packages_list) == len(wire_packages_raw):
                 wire_packages = packages_list
 
@@ -408,10 +406,9 @@ class FlextMixins(FlextRuntime):
             wire_classes_raw,
             str,
         ):
-            classes_list: list[type] = []
-            for item in wire_classes_raw:
-                if isinstance(item, type):
-                    classes_list.append(item)  # noqa: PERF401
+            classes_list: list[type] = [
+                item for item in wire_classes_raw if isinstance(item, type)
+            ]
             if len(classes_list) == len(wire_classes_raw):
                 wire_classes = classes_list
         if wire_modules or wire_packages or wire_classes:

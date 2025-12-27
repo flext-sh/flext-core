@@ -7,16 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, Self, Union, runtime_checkable
+from datetime import datetime
+from types import ModuleType, TracebackType
+from typing import Protocol, Self, Union, runtime_checkable
 
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
 from flext_core.typings import P, T_co, t
-
-if TYPE_CHECKING:
-    from datetime import datetime
-    from types import ModuleType, TracebackType
 
 
 class FlextProtocols:
@@ -1114,7 +1112,14 @@ class FlextProtocols:
     # Supports: ConfigurationDict (GeneralValueType), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
-        dict[str, t.GeneralValueType] | dict[str, t.JsonValue] | t.ConfigurationMapping | Mapping[str, t.JsonValue] | Mapping[str, t.GeneralValueType] | BaseModel | "FlextProtocols.HasModelDump" | "FlextProtocols.ValidatorSpec"
+        dict[str, t.GeneralValueType]
+        | dict[str, t.JsonValue]
+        | t.ConfigurationMapping
+        | Mapping[str, t.JsonValue]
+        | Mapping[str, t.GeneralValueType]
+        | BaseModel
+        | "FlextProtocols.HasModelDump"
+        | "FlextProtocols.ValidatorSpec"
     )
 
     # =========================================================================

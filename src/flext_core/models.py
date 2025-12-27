@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from pydantic import Discriminator
 
@@ -26,9 +26,7 @@ from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
+from flext_core.protocols import p
 
 
 class FlextModels:
@@ -54,10 +52,10 @@ class FlextModels:
     # CORE DOMAIN ENTITIES - Direct access for common usage
     # =========================================================================
 
-    type Entity = FlextModelsEntity.Entry
-    type ValueObject = FlextModelsEntity.Value
-    type AggregateRoot = FlextModelsEntity.AggregateRoot
-    type DomainEvent = FlextModelsEntity.DomainEvent
+    Entity = FlextModelsEntity.Entry
+    ValueObject = FlextModelsEntity.Value
+    AggregateRoot = FlextModelsEntity.AggregateRoot
+    DomainEvent = FlextModelsEntity.DomainEvent
 
     # =========================================================================
     # GENERIC MODELS BY BUSINESS FUNCTION (from flext_core._models.generic)
@@ -91,10 +89,10 @@ class FlextModels:
     # CQRS MESSAGING - Direct access for common usage
     # =========================================================================
 
-    type Command = FlextModelsCqrs.Command
-    type Query = FlextModelsCqrs.Query
-    type Bus = FlextModelsCqrs.Bus
-    type Pagination = FlextModelsCqrs.Pagination
+    Command = FlextModelsCqrs.Command
+    Query = FlextModelsCqrs.Query
+    Bus = FlextModelsCqrs.Bus
+    Pagination = FlextModelsCqrs.Pagination
 
     # =========================================================================
     # AUTH DOMAIN MODELS
@@ -126,13 +124,13 @@ class FlextModels:
     # CONFIGURATION MODELS - Direct access for common usage
     # =========================================================================
 
-    type Config = FlextModelsConfig
-    type ProcessingRequest = FlextModelsConfig.ProcessingRequest
-    type ProcessingConfig = ProcessingRequest
-    type BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
-    type ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
-    type HandlerRegistration = FlextModelsHandler.Registration
-    type HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
+    Config = FlextModelsConfig
+    ProcessingRequest = FlextModelsConfig.ProcessingRequest
+    ProcessingConfig = ProcessingRequest
+    BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
+    ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
+    HandlerRegistration = FlextModelsHandler.Registration
+    HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
 
     # =========================================================================
     # SERVICE MODELS
@@ -154,26 +152,26 @@ class FlextModels:
     # CONTEXT MODELS - Direct access for common usage
     # =========================================================================
 
-    type ContextData = FlextModelsContext.ContextData
-    type ContextDomainData = FlextModelsContext.ContextDomainData
-    type ContextExport = FlextModelsContext.ContextExport
-    type ContextScopeData = FlextModelsContext.ContextScopeData
-    type ContextStatistics = FlextModelsContext.ContextStatistics
-    type ContextMetadata = FlextModelsContext.ContextMetadata
+    ContextData = FlextModelsContext.ContextData
+    ContextDomainData = FlextModelsContext.ContextDomainData
+    ContextExport = FlextModelsContext.ContextExport
+    ContextScopeData = FlextModelsContext.ContextScopeData
+    ContextStatistics = FlextModelsContext.ContextStatistics
+    ContextMetadata = FlextModelsContext.ContextMetadata
 
     # =========================================================================
     # COLLECTIONS MODELS - Direct access for common usage
     # =========================================================================
 
     Collections = FlextModelsCollections
-    type CollectionsCategories = FlextModelsCollections.Categories
-    type CollectionsConfig = FlextModelsCollections.Config
-    type CollectionsResults = FlextModelsCollections.Results
-    type CollectionsOptions = FlextModelsCollections.Options
-    type CollectionsStatistics = FlextModelsCollections.Statistics
-    type Options = FlextModelsCollections.Options
-    type CollectionsParseOptions = FlextModelsCollections.ParseOptions
-    type Categories = CollectionsCategories
+    CollectionsCategories = FlextModelsCollections.Categories
+    CollectionsConfig = FlextModelsCollections.Config
+    CollectionsResults = FlextModelsCollections.Results
+    CollectionsOptions = FlextModelsCollections.Options
+    CollectionsStatistics = FlextModelsCollections.Statistics
+    Options = FlextModelsCollections.Options
+    CollectionsParseOptions = FlextModelsCollections.ParseOptions
+    Categories = CollectionsCategories
 
     # =========================================================================
     # CONTAINER MODELS - DI registry and service registration
@@ -189,47 +187,47 @@ class FlextModels:
     # CONFIG CLASSES - Direct access for common usage
     # =========================================================================
 
-    type RetryConfiguration = FlextModelsConfig.RetryConfiguration
-    type DispatchConfig = FlextModelsConfig.DispatchConfig
+    RetryConfiguration = FlextModelsConfig.RetryConfiguration
+    DispatchConfig = FlextModelsConfig.DispatchConfig
 
     class ExecuteDispatchAttemptOptions(
         FlextModelsConfig.ExecuteDispatchAttemptOptions,
     ):
         """Execute dispatch attempt options - direct class for mypy compatibility."""
 
-    type RuntimeScopeOptions = FlextModelsConfig.RuntimeScopeOptions
-    type NestedExecutionOptions = FlextModelsConfig.NestedExecutionOptions
-    type ExceptionConfig = FlextModelsConfig.ExceptionConfig
-    type ValidationErrorConfig = FlextModelsConfig.ValidationErrorConfig
-    type ConfigurationErrorConfig = FlextModelsConfig.ConfigurationErrorConfig
-    type ConnectionErrorConfig = FlextModelsConfig.ConnectionErrorConfig
-    type TimeoutErrorConfig = FlextModelsConfig.TimeoutErrorConfig
-    type AuthenticationErrorConfig = FlextModelsConfig.AuthenticationErrorConfig
-    type AuthorizationErrorConfig = FlextModelsConfig.AuthorizationErrorConfig
-    type NotFoundErrorConfig = FlextModelsConfig.NotFoundErrorConfig
-    type ConflictErrorConfig = FlextModelsConfig.ConflictErrorConfig
-    type RateLimitErrorConfig = FlextModelsConfig.RateLimitErrorConfig
-    type InternalErrorConfig = FlextModelsConfig.InternalErrorConfig
-    type TypeErrorOptions = FlextModelsConfig.TypeErrorOptions
-    type TypeErrorConfig = FlextModelsConfig.TypeErrorConfig
-    type ValueErrorConfig = FlextModelsConfig.ValueErrorConfig
-    type CircuitBreakerErrorConfig = FlextModelsConfig.CircuitBreakerErrorConfig
-    type OperationErrorConfig = FlextModelsConfig.OperationErrorConfig
-    type AttributeAccessErrorConfig = FlextModelsConfig.AttributeAccessErrorConfig
-    type MiddlewareConfig = FlextModelsConfig.MiddlewareConfig
-    type RateLimiterState = FlextModelsConfig.RateLimiterState
+    RuntimeScopeOptions = FlextModelsConfig.RuntimeScopeOptions
+    NestedExecutionOptions = FlextModelsConfig.NestedExecutionOptions
+    ExceptionConfig = FlextModelsConfig.ExceptionConfig
+    ValidationErrorConfig = FlextModelsConfig.ValidationErrorConfig
+    ConfigurationErrorConfig = FlextModelsConfig.ConfigurationErrorConfig
+    ConnectionErrorConfig = FlextModelsConfig.ConnectionErrorConfig
+    TimeoutErrorConfig = FlextModelsConfig.TimeoutErrorConfig
+    AuthenticationErrorConfig = FlextModelsConfig.AuthenticationErrorConfig
+    AuthorizationErrorConfig = FlextModelsConfig.AuthorizationErrorConfig
+    NotFoundErrorConfig = FlextModelsConfig.NotFoundErrorConfig
+    ConflictErrorConfig = FlextModelsConfig.ConflictErrorConfig
+    RateLimitErrorConfig = FlextModelsConfig.RateLimitErrorConfig
+    InternalErrorConfig = FlextModelsConfig.InternalErrorConfig
+    TypeErrorOptions = FlextModelsConfig.TypeErrorOptions
+    TypeErrorConfig = FlextModelsConfig.TypeErrorConfig
+    ValueErrorConfig = FlextModelsConfig.ValueErrorConfig
+    CircuitBreakerErrorConfig = FlextModelsConfig.CircuitBreakerErrorConfig
+    OperationErrorConfig = FlextModelsConfig.OperationErrorConfig
+    AttributeAccessErrorConfig = FlextModelsConfig.AttributeAccessErrorConfig
+    MiddlewareConfig = FlextModelsConfig.MiddlewareConfig
+    RateLimiterState = FlextModelsConfig.RateLimiterState
 
     # =========================================================================
     # BASE CLASSES - Direct access for common usage
     # =========================================================================
 
-    type ArbitraryTypesModel = FlextModelsBase.ArbitraryTypesModel
-    type FrozenStrictModel = FlextModelsBase.FrozenStrictModel
-    type IdentifiableMixin = FlextModelsBase.IdentifiableMixin
-    type TimestampableMixin = FlextModelsBase.TimestampableMixin
-    type TimestampedModel = FlextModelsBase.TimestampedModel
-    type VersionableMixin = FlextModelsBase.VersionableMixin
-    type Metadata = FlextModelsBase.Metadata
+    ArbitraryTypesModel = FlextModelsBase.ArbitraryTypesModel
+    FrozenStrictModel = FlextModelsBase.FrozenStrictModel
+    IdentifiableMixin = FlextModelsBase.IdentifiableMixin
+    TimestampableMixin = FlextModelsBase.TimestampableMixin
+    TimestampedModel = FlextModelsBase.TimestampedModel
+    VersionableMixin = FlextModelsBase.VersionableMixin
+    Metadata = FlextModelsBase.Metadata
 
     # =========================================================================
     # HANDLER MODELS - Direct access for common usage
@@ -251,18 +249,18 @@ class FlextModels:
             """Handler factory decorator configuration - direct class for mypy compatibility."""
 
     # Direct aliases for top-level access
-    type HandlerDecoratorConfig = Handler.DecoratorConfig
-    type HandlerFactoryDecoratorConfig = Handler.FactoryDecoratorConfig
-    type HandlerRegistrationDetails = Handler.RegistrationDetails
-    type HandlerExecutionContext = Handler.ExecutionContext
-    type CqrsHandler = Handler
+    HandlerDecoratorConfig = Handler.DecoratorConfig
+    HandlerFactoryDecoratorConfig = Handler.FactoryDecoratorConfig
+    HandlerRegistrationDetails = Handler.RegistrationDetails
+    HandlerExecutionContext = Handler.ExecutionContext
+    CqrsHandler = Handler
 
     # =========================================================================
-    # TYPE UNIONS - Pydantic discriminated unions
+    # UNIONS - Pydantic discriminated unions
     # =========================================================================
 
-    type MessageUnion = Annotated[
-        FlextModels.Command | FlextModels.Query | FlextModels.DomainEvent,
+    MessageUnion = Annotated[
+        Command | Query | DomainEvent,
         Discriminator("message_type"),
     ]
 

@@ -56,6 +56,7 @@ import uuid
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from types import ModuleType, TracebackType
 from typing import ClassVar, Self, TypeGuard
 
 import structlog
@@ -63,16 +64,11 @@ from beartype import BeartypeConf, BeartypeStrategy
 from beartype.claw import beartype_package
 from dependency_injector import containers, providers, wiring
 from pydantic import BaseModel
+from structlog.typing import BindableLogger
 
 from flext_core.constants import c
-
-if typing.TYPE_CHECKING:
-    from types import ModuleType, TracebackType
-
-    from structlog.typing import BindableLogger
-
-    from flext_core.protocols import p
-    from flext_core.typings import T, t
+from flext_core.protocols import p
+from flext_core.typings import T, t
 
 
 class FlextRuntime:
@@ -1939,7 +1935,8 @@ class FlextRuntime:
             return False
         # Filter out sequences and mappings (use equality operator)
         if isinstance(obj_a, (Sequence, Mapping)) or isinstance(
-            obj_b, (Sequence, Mapping),
+            obj_b,
+            (Sequence, Mapping),
         ):
             # Use equality instead of repr for sequences/mappings
             return obj_a == obj_b
@@ -2076,7 +2073,8 @@ class FlextRuntime:
                     if v_obj is None:
                         val_typed = None
                     elif isinstance(
-                        v_obj, (str, int, float, bool, datetime, BaseModel, Path),
+                        v_obj,
+                        (str, int, float, bool, datetime, BaseModel, Path),
                     ):
                         val_typed = v_obj
                     elif isinstance(v_obj, (list, tuple)):

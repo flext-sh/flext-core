@@ -12,15 +12,13 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
-    from flext_core.typings import t
+from flext_core.typings import t
 
 _Metadata = FlextModelsBase.Metadata
 
@@ -540,10 +538,15 @@ class FlextExceptions:
                     "auto_log",
                     "auto_correlation",
                 }
-                notfound_kwargs.update({k: v for k, v in context.items() if k not in excluded_keys and isinstance(
+                notfound_kwargs.update({
+                    k: v
+                    for k, v in context.items()
+                    if k not in excluded_keys
+                    and isinstance(
                         v,
                         (str, int, float, bool, type(None), list, dict),
-                    )})
+                    )
+                })
 
             return notfound_kwargs
 

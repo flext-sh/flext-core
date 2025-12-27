@@ -15,24 +15,19 @@ from __future__ import annotations
 import inspect
 import time
 import traceback
+import types
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Literal, Self, overload
+from typing import ClassVar, Literal, Self, overload
 
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.settings import FlextSettings
+from flext_core.typings import t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    import types
-    from collections.abc import Iterator, Mapping
-
-    from flext_core.protocols import p
-    from flext_core.typings import t
-
-# Use t.GeneralValueType directly - no aliases
 
 
 class FlextLogger(FlextRuntime):

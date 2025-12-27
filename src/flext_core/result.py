@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from typing import (
-    TYPE_CHECKING,
     Protocol,
     Self,
     TypeIs,
@@ -25,13 +25,9 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
 
 from flext_core.exceptions import FlextExceptions as e
+from flext_core.protocols import FlextProtocols
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import U, t
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
-
-    from flext_core.protocols import FlextProtocols
 
 T = TypeVar("T")
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)

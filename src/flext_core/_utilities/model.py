@@ -8,18 +8,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from collections.abc import Mapping
+from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from flext_core.typings import t
+from flext_core.typings import t
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
 

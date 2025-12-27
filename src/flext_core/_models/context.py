@@ -9,7 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from collections.abc import Sequence
+from typing import Annotated
 
 import structlog.contextvars
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
@@ -20,9 +21,6 @@ from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class FlextModelsContext:
@@ -949,6 +947,3 @@ class FlextModelsContext:
 
 
 __all__ = ["FlextModelsContext"]
-
-# Rebuild models to resolve forward references in recursive types
-FlextModelsContext.ContextData.model_rebuild()

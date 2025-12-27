@@ -38,8 +38,7 @@ from flext_tests.models import m
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from flext_tests.typings import t
+from flext_tests.typings import t
 
 logger: FlextLogger = FlextLogger(__name__)
 

@@ -14,7 +14,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING, ClassVar, Self
+from collections.abc import Callable, Mapping, Sequence
+from typing import ClassVar, Self
 
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,12 +23,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core.__version__ import __version__
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
+from flext_core.typings import T_Namespace, T_Settings, t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
-
-    from flext_core.typings import T_Namespace, T_Settings, t
 
 
 class FlextSettings(BaseSettings, FlextRuntime):

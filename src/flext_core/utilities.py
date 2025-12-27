@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import overload
 
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
@@ -34,11 +34,9 @@ from flext_core._utilities.parser import FlextUtilitiesParser
 from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core._utilities.text import FlextUtilitiesText
 from flext_core._utilities.validation import FlextUtilitiesValidation
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextUtilities:

@@ -18,7 +18,7 @@ from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
     from flext_core.protocols import p
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextUtilitiesChecker:

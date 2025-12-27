@@ -90,7 +90,9 @@ class TestFlextModelsContainer:
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
         ContainerModelsScenarios.METADATA_VALUES,
-        ids=lambda x: f"metadata_{type(x[0]).__name__ if isinstance(x, tuple) else type(x).__name__}_{x[1] if isinstance(x, tuple) else 'unknown'}",
+        ids=lambda x: (
+            f"metadata_{type(x[0]).__name__ if isinstance(x, tuple) else type(x).__name__}_{x[1] if isinstance(x, tuple) else 'unknown'}"
+        ),
     )
     def test_service_registration_metadata_validation(
         self,
@@ -183,7 +185,9 @@ class TestFlextModelsContainer:
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
         ContainerModelsScenarios.METADATA_VALUES,
-        ids=lambda x: f"factory_metadata_{type(x[0]).__name__ if isinstance(x, tuple) else type(x).__name__}_{x[1] if isinstance(x, tuple) else 'unknown'}",
+        ids=lambda x: (
+            f"factory_metadata_{type(x[0]).__name__ if isinstance(x, tuple) else type(x).__name__}_{x[1] if isinstance(x, tuple) else 'unknown'}"
+        ),
     )
     def test_factory_registration_metadata_validation(
         self,

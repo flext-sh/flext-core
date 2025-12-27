@@ -16,18 +16,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import KeysView
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 from pydantic import Field
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from collections.abc import KeysView
-
-    from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 class FlextGenericModels:

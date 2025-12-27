@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import time
 import warnings
+from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
-from typing import TYPE_CHECKING, Literal, overload
+from typing import Literal, overload
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
@@ -24,15 +25,11 @@ from flext_core.context import FlextContext
 from flext_core.exceptions import e
 from flext_core.loggings import FlextLogger
 from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, T, t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from flext_core.protocols import p
 
 
 def deprecated(

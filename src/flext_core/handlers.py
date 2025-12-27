@@ -18,24 +18,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Callable
+from typing import ClassVar
 
 from pydantic import BaseModel
 
 from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.mixins import FlextMixins as x
-
-# from flext_core.mixins import FlextMixins as x  # Local import to avoid circular dependency
 from flext_core.models import m
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
 from flext_core.utilities import u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from flext_core.protocols import p
 
 
 def _handler_type_to_literal(

@@ -2208,7 +2208,9 @@ class FlextUtilitiesMapper:
                 # Use Mapping.get() to avoid confusion with static method
                 # field_spec_dict is already ConfigurationDict (dict subclass), use .get() directly
                 # Access via dict.get() for cleaner code
-                field_default_raw: t.GeneralValueType | None = field_spec_dict.get("default")
+                field_default_raw: t.GeneralValueType | None = field_spec_dict.get(
+                    "default"
+                )
                 field_ops_raw: t.GeneralValueType | None = field_spec_dict.get("ops")
                 field_default = field_default_raw
                 field_ops = field_ops_raw

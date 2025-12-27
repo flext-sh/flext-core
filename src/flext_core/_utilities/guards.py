@@ -18,15 +18,13 @@ import warnings
 from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeGuard
+from typing import TypeGuard
 
 from pydantic import BaseModel
 
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextUtilitiesGuards:

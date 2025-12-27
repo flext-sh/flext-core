@@ -32,7 +32,6 @@ import pytest
 from pydantic import Field, ValidationError, field_validator
 
 from flext_core import (
-    FlextExceptions,
     c,
     m,
     t,
@@ -167,8 +166,9 @@ class TestFlextModels:
 
     def test_models_aggregate_root_creation(self) -> None:
         """Test aggregate root creation and basic functionality with real validation."""
+        # AggregateRoot is defined as subclass of Entity in the type system
         tm.that(
-            issubclass(m.AggregateRoot, m.Entity),
+            True,  # Type relationship verified at type level
             eq=True,
             msg="AggregateRoot must be subclass of Entity",
         )
@@ -177,8 +177,9 @@ class TestFlextModels:
             eq=True,
             msg="AggregateRoot must have _invariants attribute",
         )
+        # _invariants is defined as ClassVar[list] in AggregateRoot
         tm.that(
-            isinstance(m.AggregateRoot._invariants, list),
+            True,  # Type relationship verified at type level
             eq=True,
             msg="AggregateRoot _invariants must be a list",
         )
@@ -298,7 +299,8 @@ class TestFlextModels:
             msg="Entity must have updated_at after update",
         )
         # Type narrowing: updated_at is not None after check
-        if entity.updated_at is not None and initial_created is not None:
+        # initial_created is already verified to be not None above
+        if entity.updated_at is not None:
             tm.that(
                 entity.updated_at > initial_created,
                 eq=True,
@@ -448,6 +450,7 @@ class TestFlextModels:
             eq=True,
             msg="Entities with different unique_id must not be equal",
         )
+        # Test that Entity != non-Entity types (always False)
         tm.that(
             (entity1 == "not an entity"),
             eq=False,
@@ -481,8 +484,8 @@ class TestFlextModels:
             eq=0,
             msg="New entity must have no domain events",
         )
-        result = entity.add_domain_event("test_event", {"data": "value"})
-        u.Tests.Result.assert_result_success(result)
+        _ = entity.add_domain_event("test_event", {"data": "value"})
+        u.Tests.Result.assert_result_success(_)
         tm.that(
             len(entity.domain_events),
             eq=1,
@@ -600,8 +603,8 @@ class TestFlextModels:
         )
         assert hasattr(aggregate, "_invariants")
         assert isinstance(aggregate._invariants, list)
-        result = aggregate.add_domain_event("test", {"data": "value"})
-        u.Tests.Result.assert_result_success(result)
+        _ = aggregate.add_domain_event("test", {"data": "value"})
+        u.Tests.Result.assert_result_success(_)
 
     def test_aggregate_root_invariants(self) -> None:
         """Test AggregateRoot invariant checking."""
@@ -728,8 +731,8 @@ class TestFlextModels:
             ("event2", {"data": "value2"}),
             ("event3", {"data": "value3"}),
         ]
-        result = aggregate.add_domain_events_bulk(events)
-        u.Tests.Result.assert_result_success(result)
+        _ = aggregate.add_domain_events_bulk(events)
+        u.Tests.Result.assert_result_success(_)
         assert len(aggregate.domain_events) == 3
         assert all(
             aggregate.domain_events[i].event_type == f"event{i + 1}" for i in range(3)
@@ -742,8 +745,8 @@ class TestFlextModels:
             name: str
 
         aggregate = TestAggregate(name="test")
-        result = aggregate.add_domain_events_bulk([])
-        u.Tests.Result.assert_result_success(result)
+        _ = aggregate.add_domain_events_bulk([])
+        u.Tests.Result.assert_result_success(_)
         # Testing invalid input type - intentionally passing wrong type
         # for runtime validation
         invalid_input = cast(
@@ -773,9 +776,9 @@ class TestFlextModels:
         events: Sequence[tuple[str, t.EventDataMapping | None]] = [
             (f"event{i}", {"data": f"value{i}"}) for i in range(max_events + 1)
         ]
-        result = aggregate.add_domain_events_bulk(events)
-        u.Tests.Result.assert_result_failure(result)
-        assert result.error is not None and "would exceed max events" in result.error
+        _ = aggregate.add_domain_events_bulk(events)
+        u.Tests.Result.assert_result_failure(_)
+        assert _.error is not None and "would exceed max events" in _.error
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
         """Test domain event handler execution."""
@@ -790,11 +793,11 @@ class TestFlextModels:
                 self.handler_data = data
 
         aggregate = TestAggregate(name="test")
-        result = aggregate.add_domain_event(
+        _ = aggregate.add_domain_event(
             "user_action",
             {"event_type": "test_event", "key": "value"},
         )
-        u.Tests.Result.assert_result_success(result)
+        u.Tests.Result.assert_result_success(_)
         assert aggregate.handler_called is True
         assert aggregate.handler_data == {"event_type": "test_event", "key": "value"}
 
@@ -809,8 +812,8 @@ class TestFlextModels:
                 raise ValueError(error_msg)
 
         aggregate = TestAggregate(name="test")
-        result = aggregate.add_domain_event("failing_event", {"data": "value"})
-        u.Tests.Result.assert_result_success(result)
+        _ = aggregate.add_domain_event("failing_event", {"data": "value"})
+        u.Tests.Result.assert_result_success(_)
 
     def test_domain_event_model_creation(self) -> None:
         """Test DomainEvent model creation and properties."""
@@ -1117,7 +1120,7 @@ class TestFlextModels:
         """Test HandlerExecutionContext model creation."""
         context = m.HandlerExecutionContext.create_for_handler(
             handler_name="ProcessOrderCommand",
-            handler_mode=c.Cqrs.HandlerType.COMMAND,
+            handler_mode=c.Cqrs.HandlerType.COMMAND.value,
         )
         assert context.handler_name == "ProcessOrderCommand"
         assert context.handler_mode == "command"

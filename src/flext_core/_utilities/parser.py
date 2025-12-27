@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import TYPE_CHECKING, overload
+from typing import overload
 
 import structlog
 from pydantic import BaseModel
@@ -23,9 +23,7 @@ from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.result import r
-
-if TYPE_CHECKING:
-    from flext_core.typings import t
+from flext_core.typings import t
 
 
 class FlextUtilitiesParser:

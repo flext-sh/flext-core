@@ -12,12 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
 
 from flext_tests.factories import tt
-
-if TYPE_CHECKING:
-    from flext_tests.typings import t
+from flext_tests.typings import t
 
 
 class FlextTestsDomains:

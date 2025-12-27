@@ -18,8 +18,7 @@ from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
-
-    from flext_core.typings import t
+from flext_core.typings import t
 
 T = TypeVar("T")
 
