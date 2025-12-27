@@ -71,7 +71,7 @@ class FlextModelsHandler:
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
             # Return the validated callable
-            return v
+            return v  # type: ignore[unreachable]
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.

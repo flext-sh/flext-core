@@ -62,7 +62,7 @@ from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core.typings import FlextTypes as t
 
 # Use centralized version from cast.py
 _to_general_value_type = FlextUtilitiesCast.to_general_value_type
@@ -362,7 +362,7 @@ class FlextUtilitiesValidation:
             result_dict: dict[str, t.GeneralValueType] = {}
             item: tuple[str, t.GeneralValueType] | object
             for item in items_result:
-                if isinstance(item, tuple) and len(item) == 2:
+                if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
                     key: str | object
                     value: t.GeneralValueType | object
                     key, value = item
@@ -455,7 +455,7 @@ class FlextUtilitiesValidation:
             result_dict: dict[str, t.GeneralValueType] = {}
             item: tuple[str, t.GeneralValueType] | object
             for item in items_result:
-                if isinstance(item, tuple) and len(item) == 2:
+                if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
                     key: str | object
                     value: t.GeneralValueType | object
                     key, value = item
@@ -3374,7 +3374,9 @@ class FlextUtilitiesValidation:
                 return r[T].fail(f"Validation failed: {error_msg}")
 
         @staticmethod
-        def serialize[T](value: T, type_: type[T]) -> r[Mapping[str, object]]:
+        def serialize[T](
+            value: T, type_: type[T]
+        ) -> r[Mapping[str, t.GeneralValueType]]:
             """Serialize value using TypeAdapter.
 
             Args:
@@ -3382,7 +3384,7 @@ class FlextUtilitiesValidation:
                 type_: Type of the value.
 
             Returns:
-                r[Mapping[str, object]]: Success with serialized data as dict,
+                r[Mapping[str, GeneralValueType]]: Success with serialized data as dict,
                     or failure with serialization errors.
 
             Example:
@@ -3395,14 +3397,16 @@ class FlextUtilitiesValidation:
             try:
                 serialized = adapter.dump_python(value, mode="json")
                 # Explicit type annotation for the result
-                result_dict: dict[str, object] = (
+                result_dict: dict[str, t.GeneralValueType] = (
                     serialized
                     if isinstance(serialized, dict)
                     else {"value": serialized}
                 )
-                return r[Mapping[str, object]].ok(result_dict)
+                return r[Mapping[str, t.GeneralValueType]].ok(result_dict)
             except Exception as e:
-                return r[Mapping[str, object]].fail(f"Serialization failed: {e}")
+                return r[Mapping[str, t.GeneralValueType]].fail(
+                    f"Serialization failed: {e}"
+                )
 
         @staticmethod
         def parse_json[T](

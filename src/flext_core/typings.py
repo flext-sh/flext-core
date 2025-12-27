@@ -22,7 +22,6 @@ from typing import (
     Self,
     TypedDict,
     TypeVar,
-    Union,
     runtime_checkable,
 )
 
@@ -228,15 +227,15 @@ class FlextTypes:
     # MetadataAttributeValue - ALIGNED with GeneralValueType primitive types
     # Includes datetime for proper subtyping (MetadataAttributeValue <: GeneralValueType)
     # Excludes: BaseModel, Path, Callable (those are GeneralValueType extensions)
-    MetadataAttributeValue = Union[
-        str,
-        int,
-        float,
-        bool,
-        datetime,  # CRITICAL: Must include datetime for subtype compatibility
-        None,
-        list[str | int | float | bool | datetime | None],
-        dict[
+    MetadataAttributeValue = (
+        str
+        | int
+        | float
+        | bool
+        | datetime  # CRITICAL: Must include datetime for subtype compatibility
+        | None
+        | list[str | int | float | bool | datetime | None]
+        | dict[
             str,
             str
             | int
@@ -245,8 +244,8 @@ class FlextTypes:
             | datetime
             | None
             | list[str | int | float | bool | datetime | None],
-        ],
-    ]
+        ]
+    )
 
     # Generic metadata dictionary type - read-only interface for metadata containers
     type Metadata = Mapping[str, FlextTypes.MetadataAttributeValue]

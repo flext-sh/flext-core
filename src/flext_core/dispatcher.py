@@ -30,6 +30,8 @@ from flext_core._dispatcher import (
     RetryPolicy,
     TimeoutEnforcer,
 )
+
+# Use public aliases from m.* instead of private _models.* imports
 from flext_core.constants import c
 from flext_core.context import FlextContext
 from flext_core.handlers import FlextHandlers
@@ -112,7 +114,7 @@ class FlextDispatcher(FlextService[bool]):
             config,
         )
 
-        # ==================== LAYER 2.5: TIMEOUT CONTEXT PROPAGATION ====================
+        # =============== LAYER 2.5: TIMEOUT CONTEXT PROPAGATION ===============
 
         self._timeout_contexts: dict[
             str,
@@ -123,15 +125,19 @@ class FlextDispatcher(FlextService[bool]):
             float,
         ] = {}  # operation_id → deadline timestamp
 
-        # ==================== LAYER 1: CQRS ROUTING INITIALIZATION ====================
+        # ================ LAYER 1: CQRS ROUTING INITIALIZATION ================
 
         # Handler registry (from FlextDispatcher dual-mode registration)
-        self._handlers: t.HandlerTypeDict = {}  # Handler mappings by message type
+        self._handlers: dict[
+            str, t.HandlerType
+        ] = {}  # Handler mappings by message type
         self._auto_handlers: list[t.HandlerType] = []  # Auto-discovery handlers
 
         # Middleware pipeline (from FlextDispatcher)
         self._middleware_configs: list[t.ConfigurationMapping] = []  # Config + ordering
-        self._middleware_instances: t.HandlerCallableDict = {}  # Keyed by middleware_id
+        self._middleware_instances: dict[
+            str, t.HandlerCallable
+        ] = {}  # Keyed by middleware_id
 
         # Query result caching (from FlextDispatcher - LRU cache)
         # Fast fail: use constant directly, no fallback
@@ -141,14 +147,16 @@ class FlextDispatcher(FlextService[bool]):
         )
 
         # Event subscribers (from FlextDispatcher event protocol)
-        self._event_subscribers: t.StringListDict = {}  # event_type → handlers
+        self._event_subscribers: dict[
+            str, list[t.GeneralValueType]
+        ] = {}  # event_type → handlers
 
         self._execution_count: int = 0
 
-        # ==================== LAYER 3: ADVANCED PROCESSING INITIALIZATION ====================
+        # ============= LAYER 3: ADVANCED PROCESSING INITIALIZATION =============
 
         # Group 1: Handler Registry (internal dispatcher handler registry)
-        self._handler_registry: t.HandlerTypeDict = {}  # name → handler function
+        self._handler_registry: dict[str, t.HandlerType] = {}  # name → handler function
         self._handler_configs: dict[
             str,
             t.ConfigurationMapping,
@@ -528,7 +536,7 @@ class FlextDispatcher(FlextService[bool]):
         ) = getattr(c.Cqrs.HandlerType, "__members__", {})
         # __members__ returns mappingproxy[str, HandlerType], cast to HandlerTypeDict
         # HandlerTypeDict is dict[str, HandlerType], which matches __members__ structure
-        handler_type_members: t.HandlerTypeDict = dict(handler_type_members_raw)
+        handler_type_members: dict[str, t.HandlerType] = dict(handler_type_members_raw)
 
         def extract_handler_mode(m: object) -> str:
             """Extract string value from handler mode enum."""

@@ -57,7 +57,7 @@ class PreparePaginationDataScenario:
     """Prepare pagination data test scenario."""
 
     name: str
-    data: list[object] | None
+    data: list[t.GeneralValueType] | None
     total: int | None
     page: int
     page_size: int

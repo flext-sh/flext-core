@@ -150,6 +150,37 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
 
+    class Metadata(BaseModel):
+        """Minimal metadata model - implements p.Log.Metadata protocol.
+
+        Used by exceptions.py and other low-level modules that cannot import
+        from _models.base to maintain proper architecture layering.
+        Tier 0.5 can be imported by Tier 1 modules like exceptions.py.
+        """
+
+        model_config = {"extra": "forbid", "frozen": True, "validate_assignment": True}
+
+        created_at: datetime
+        updated_at: datetime
+        version: str = "1.0.0"
+        attributes: dict[str, t.MetadataAttributeValue]
+
+        def __init__(
+            self,
+            *,
+            created_at: datetime | None = None,
+            updated_at: datetime | None = None,
+            version: str = "1.0.0",
+            attributes: dict[str, t.MetadataAttributeValue] | None = None,
+        ) -> None:
+            """Initialize metadata with optional values."""
+            super().__init__(
+                created_at=created_at or datetime.now(UTC),
+                updated_at=updated_at or datetime.now(UTC),
+                version=version,
+                attributes=attributes if attributes is not None else {},
+            )
+
     class _AsyncLogWriter:
         """Background log writer using a queue and a separate thread.
 

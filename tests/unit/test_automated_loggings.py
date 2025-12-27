@@ -10,6 +10,7 @@ import pytest
 
 from flext_core import r
 from tests.conftest import test_framework
+from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -55,7 +56,7 @@ class TestAutomatedFlextLoggings:
         ids=lambda case: case["description"],
     )
     def test_automated_loggings_comprehensive_scenarios(
-        self, test_scenario: dict[str, object]
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for loggings functionality."""
         try:
@@ -143,8 +144,8 @@ class TestAutomatedFlextLoggings:
                 )
 
     def _execute_loggings_operation(
-        self, instance: object, input_data: dict[str, object]
-    ) -> r.FlextResult[object]:
+        self, instance: object, input_data: dict[str, t.GeneralValueType]
+    ) -> r[object]:
         """Execute a test operation on loggings instance.
 
         This method should be customized based on the actual loggings API.
@@ -155,17 +156,17 @@ class TestAutomatedFlextLoggings:
             if hasattr(instance, "process"):
                 result = instance.process(input_data)
                 # Check if result is FlextResult or needs wrapping
-                if isinstance(result, r.FlextResult):
+                if isinstance(result, r):
                     return result
                 return r[object].ok(result)
             if hasattr(instance, "execute"):
                 result = instance.execute(input_data)
-                if isinstance(result, r.FlextResult):
+                if isinstance(result, r):
                     return result
                 return r[object].ok(result)
             if hasattr(instance, "handle"):
                 result = instance.handle(input_data)
-                if isinstance(result, r.FlextResult):
+                if isinstance(result, r):
                     return result
                 return r[object].ok(result)
             # Fallback: if no methods found, return the instance itself as success

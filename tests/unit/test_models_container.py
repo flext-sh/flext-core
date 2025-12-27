@@ -21,7 +21,6 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import ValidationError
 
-from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.models import m
 from flext_core.typings import t
@@ -44,7 +43,7 @@ class ContainerModelsScenarios:
         ([1, 2, 3], False),
     ]
 
-    CONTAINER_CONFIG_VALUES: ClassVar[list[dict[str, object]]] = [
+    CONTAINER_CONFIG_VALUES: ClassVar[list[dict[str, t.GeneralValueType]]] = [
         {},
         {"enable_singleton": False},
         {"enable_factory_caching": False},
@@ -110,7 +109,7 @@ class TestFlextModelsContainer:
                 ),
             )
             assert registration.metadata is not None
-            assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+            assert isinstance(registration.metadata, m.Metadata)
         else:
             with pytest.raises((ValidationError, TypeError)):
                 m.Container.ServiceRegistration(
@@ -137,7 +136,7 @@ class TestFlextModelsContainer:
         # Test that setting metadata=None converts it
         registration.metadata = None
         assert registration.metadata is not None
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
 
     def test_service_registration_with_all_fields(self) -> None:
         """Test ServiceRegistration with all fields populated."""
@@ -162,10 +161,10 @@ class TestFlextModelsContainer:
             service="value",
             metadata={"key1": "value1", "key2": 42, "key3": True},
         )
-        # registration.metadata is FlextModelsBase.Metadata (from _normalize_to_metadata)
+        # registration.metadata is m.Metadata (from _normalize_to_metadata)
         # Check that it's a Metadata instance (not necessarily m.Metadata subclass)
 
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes["key1"] == "value1"
         assert registration.metadata.attributes["key2"] == 42
         assert registration.metadata.attributes["key3"] is True
@@ -178,7 +177,7 @@ class TestFlextModelsContainer:
             service="value",
             metadata=nested_dict,
         )
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
         # Nested dicts are converted to t.GeneralValueType
         assert "level1" in registration.metadata.attributes
 
@@ -209,7 +208,7 @@ class TestFlextModelsContainer:
                 ),
             )
             assert registration.metadata is not None
-            assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+            assert isinstance(registration.metadata, m.Metadata)
         else:
             with pytest.raises((ValidationError, TypeError)):
                 m.Container.FactoryRegistration(
@@ -240,7 +239,7 @@ class TestFlextModelsContainer:
         # Test that setting metadata=None converts it
         registration.metadata = None
         assert registration.metadata is not None
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
 
     def test_factory_registration_with_all_fields(self) -> None:
         """Test FactoryRegistration with all fields populated."""
@@ -275,8 +274,8 @@ class TestFlextModelsContainer:
             factory=factory,
             metadata={"factory_type": "test", "priority": 1},
         )
-        # registration.metadata is FlextModelsBase.Metadata (from _normalize_to_metadata)
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        # registration.metadata is m.Metadata (from _normalize_to_metadata)
+        assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes["factory_type"] == "test"
         assert registration.metadata.attributes["priority"] == 1
 
@@ -287,7 +286,7 @@ class TestFlextModelsContainer:
     )
     def test_container_config_creation(
         self,
-        config_dict: dict[str, object],
+        config_dict: dict[str, t.GeneralValueType],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         # ContainerConfig accepts keyword arguments directly
@@ -375,7 +374,7 @@ class TestFlextModelsContainer:
             metadata=None,
         )
         assert registration.metadata is not None
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes == {}
 
     def test_factory_registration_metadata_none_handling(self) -> None:
@@ -390,7 +389,7 @@ class TestFlextModelsContainer:
             metadata=None,
         )
         assert registration.metadata is not None
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes == {}
 
     def test_service_registration_metadata_empty_dict(self) -> None:
@@ -400,7 +399,7 @@ class TestFlextModelsContainer:
             service="value",
             metadata={},
         )
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes == {}
 
     def test_factory_registration_metadata_empty_dict(self) -> None:
@@ -414,7 +413,7 @@ class TestFlextModelsContainer:
             factory=factory,
             metadata={},
         )
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
         assert registration.metadata.attributes == {}
 
 
@@ -424,14 +423,14 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
     def test_normalize_to_metadata_none(self) -> None:
         """Test normalize_to_metadata with None returns empty Metadata."""
         result = u.Model.normalize_to_metadata(None)
-        assert isinstance(result, FlextModelsBase.Metadata)
+        assert isinstance(result, m.Metadata)
         assert result.attributes == {}
 
     def test_normalize_to_metadata_empty_dict(self) -> None:
         """Test normalize_to_metadata with empty dict."""
         result = u.Model.normalize_to_metadata({})
-        # result is FlextModelsBase.Metadata (from normalize_to_metadata)
-        assert isinstance(result, FlextModelsBase.Metadata)
+        # result is m.Metadata (from normalize_to_metadata)
+        assert isinstance(result, m.Metadata)
         assert result.attributes == {}
 
     def test_normalize_to_metadata_with_values(self) -> None:
@@ -441,7 +440,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             "key2": 42,
             "key3": True,
         })
-        assert isinstance(result, FlextModelsBase.Metadata)
+        assert isinstance(result, m.Metadata)
         assert result.attributes["key1"] == "value1"
         assert result.attributes["key2"] == 42
         assert result.attributes["key3"] is True
@@ -458,7 +457,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         result = u.Model.normalize_to_metadata({
             "nested": {"level1": {"level2": "value"}},
         })
-        assert isinstance(result, FlextModelsBase.Metadata)
+        assert isinstance(result, m.Metadata)
         # Nested dicts are normalized to t.GeneralValueType
         assert "nested" in result.attributes
 
@@ -494,7 +493,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
                 return self._data.items()
 
         # This should trigger the fallback return Metadata(attributes={})
-        # Line 108: return FlextModelsBase.Metadata(attributes={})
+        # Line 108: return m.Metadata(attributes={})
         DictLike()
         # Since DictLike isn't actually a Mapping, _is_dict_like returns False
         # So we need to test the actual Mapping case that leads to line 108
@@ -505,7 +504,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             service="value",
             metadata={"key": "value"},
         )
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)
 
     def test_factory_registration_metadata_non_mapping_dict_like(self) -> None:
         """Test FactoryRegistration metadata with non-Mapping dict-like object."""
@@ -522,4 +521,4 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             factory=factory,
             metadata={"key": "value"},
         )
-        assert isinstance(registration.metadata, FlextModelsBase.Metadata)
+        assert isinstance(registration.metadata, m.Metadata)

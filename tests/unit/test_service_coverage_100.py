@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core.typings import t
 
 from flext_core import r, s, t
 from flext_tests.domains import FlextTestsDomains

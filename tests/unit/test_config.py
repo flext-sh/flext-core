@@ -43,7 +43,7 @@ from flext_tests.utilities import FlextTestsUtilities
 class ConfigScenarios:
     """Centralized config test scenarios using c."""
 
-    INIT_CASES: ClassVar[list[dict[str, object]]] = [
+    INIT_CASES: ClassVar[list[dict[str, t.GeneralValueType]]] = [
         {"app_name": "test_app", "version": "1.0.0", "debug": True},
         {"app_name": "dict_app", "version": "2.0.0", "debug": False},
         {"app_name": "valid_app", "version": "1.0.0"},
@@ -54,7 +54,7 @@ class ConfigScenarios:
         ("version", "1.0.0", "2.0.0"),
     ]
 
-    DEBUG_TRACE_CASES: ClassVar[list[dict[str, object]]] = [
+    DEBUG_TRACE_CASES: ClassVar[list[dict[str, t.GeneralValueType]]] = [
         {"debug": True, "trace": False},
         {"debug": True, "trace": True},
         {"debug": False, "trace": False},
@@ -72,7 +72,7 @@ class ConfigScenarios:
         ("FLEXT_DEBUG", "true", True, "INFO"),
     ]
 
-    VALIDATION_ERROR_CASES: ClassVar[list[tuple[dict[str, object], str]]] = [
+    VALIDATION_ERROR_CASES: ClassVar[list[tuple[dict[str, t.GeneralValueType], str]]] = [
         ({"trace": True, "debug": False}, "Trace mode requires debug mode"),
     ]
 
@@ -85,7 +85,7 @@ class TestFlextSettings:
         ConfigScenarios.INIT_CASES,
         ids=lambda d: str(u.mapper().get(d, "app_name", default="default")),
     )
-    def test_config_initialization(self, config_data: dict[str, object]) -> None:
+    def test_config_initialization(self, config_data: dict[str, t.GeneralValueType]) -> None:
         """Test config initialization with various values."""
         config_data_typed = cast("dict[str, t.GeneralValueType]", config_data)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(
@@ -100,7 +100,7 @@ class TestFlextSettings:
 
     def test_config_from_dict(self) -> None:
         """Test config creation from dictionary."""
-        config_data: dict[str, object] = {
+        config_data: dict[str, t.GeneralValueType] = {
             "app_name": "dict_app",
             "version": "2.0.0",
             "debug": False,
@@ -283,7 +283,7 @@ class TestFlextSettings:
     )
     def test_config_validation_errors(
         self,
-        config_data: dict[str, object],
+        config_data: dict[str, t.GeneralValueType],
         error_pattern: str,
     ) -> None:
         """Test config validation with invalid inputs."""
@@ -314,7 +314,7 @@ class TestFlextSettings:
         ConfigScenarios.DEBUG_TRACE_CASES,
         ids=lambda d: f"debug_{u.mapper().get(d, 'debug')}_trace_{u.mapper().get(d, 'trace', default=False)}",
     )
-    def test_config_debug_enabled(self, debug_trace: dict[str, object]) -> None:
+    def test_config_debug_enabled(self, debug_trace: dict[str, t.GeneralValueType]) -> None:
         """Test debug enabled checking using direct fields."""
         debug_trace_typed = cast("dict[str, t.GeneralValueType]", debug_trace)
         config = FlextTestsUtilities.Tests.ConfigHelpers.create_test_config(

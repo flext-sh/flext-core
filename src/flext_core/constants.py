@@ -25,9 +25,9 @@ class AutoStrEnum(StrEnum):
     @staticmethod
     def _generate_next_value_(
         name: str,
-        start: int,
-        count: int,
-        last_values: list[str],
+        start: int,  # noqa: ARG004
+        count: int,  # noqa: ARG004
+        last_values: list[str],  # noqa: ARG004
     ) -> str:
         """Generate enum value from member name.
 

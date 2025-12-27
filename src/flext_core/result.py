@@ -38,7 +38,7 @@ E = TypeVar("E", default=str)
 class _HasErrorsMethod(Protocol):
     """Protocol for exceptions with errors() method (like Pydantic ValidationError)."""
 
-    def errors(self) -> list[dict[str, object]]: ...
+    def errors(self) -> list[dict[str, t.GeneralValueType]]: ...
 
 
 def is_success_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:

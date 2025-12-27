@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 from pydantic import Discriminator
 
@@ -22,7 +22,6 @@ from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
@@ -49,26 +48,42 @@ class FlextModels:
     """
 
     # =========================================================================
-    # CORE DOMAIN ENTITIES - Direct access for common usage
+    # CORE DOMAIN ENTITIES - Inheritable base classes
     # =========================================================================
 
-    Entity = FlextModelsEntity.Entry
-    ValueObject = FlextModelsEntity.Value
-    AggregateRoot = FlextModelsEntity.AggregateRoot
-    DomainEvent = FlextModelsEntity.DomainEvent
+    class Entity(FlextModelsEntity.Entry):
+        """Entity base class - domain objects with identity."""
+
+    class ValueObject(FlextModelsEntity.Value):
+        """Value object base class - immutable, compared by value."""
+
+    class AggregateRoot(FlextModelsEntity.AggregateRoot):
+        """Aggregate root base class - consistency boundary."""
+
+    class DomainEvent(FlextModelsEntity.DomainEvent):
+        """Domain event base class - published through dispatcher."""
 
     # =========================================================================
-    # GENERIC MODELS BY BUSINESS FUNCTION (from flext_core._models.generic)
+    # GENERIC MODELS BY BUSINESS FUNCTION - Inheritable base classes
     # =========================================================================
 
-    Value = FlextGenericModels.Value
-    """Value objects - immutable data compared by value."""
+    class Value(FlextModelsEntity.Value):
+        """Value objects - immutable data compared by value.
 
-    Snapshot = FlextGenericModels.Snapshot
-    """Snapshots - state captured at a specific moment."""
+        Inherits frozen=True, extra="forbid" from FlextModelsBase.FrozenStrictModel.
+        """
 
-    Progress = FlextGenericModels.Progress
-    """Progress trackers - mutable accumulators during operations."""
+    class Snapshot(FlextModelsBase.FrozenStrictModel):
+        """Snapshots - state captured at a specific moment.
+
+        Inherits frozen=True, extra="forbid" from FlextModelsBase.FrozenStrictModel.
+        """
+
+    class Progress(FlextModelsBase.ArbitraryTypesModel):
+        """Progress trackers - mutable accumulators during operations.
+
+        Inherits validate_assignment=True from FlextModelsBase.ArbitraryTypesModel.
+        """
 
     # =========================================================================
     # NAMESPACE CLASSES - Direct access for internal model classes
@@ -89,10 +104,10 @@ class FlextModels:
     # CQRS MESSAGING - Direct access for common usage
     # =========================================================================
 
-    Command = FlextModelsCqrs.Command
-    Query = FlextModelsCqrs.Query
-    Bus = FlextModelsCqrs.Bus
-    Pagination = FlextModelsCqrs.Pagination
+    Command: TypeAlias = FlextModelsCqrs.Command
+    Query: TypeAlias = FlextModelsCqrs.Query
+    Bus: TypeAlias = FlextModelsCqrs.Bus
+    Pagination: TypeAlias = FlextModelsCqrs.Pagination
 
     # =========================================================================
     # AUTH DOMAIN MODELS
@@ -125,12 +140,12 @@ class FlextModels:
     # =========================================================================
 
     Config = FlextModelsConfig
-    ProcessingRequest = FlextModelsConfig.ProcessingRequest
-    ProcessingConfig = ProcessingRequest
-    BatchProcessingConfig = FlextModelsConfig.BatchProcessingConfig
-    ValidationConfiguration = FlextModelsConfig.ValidationConfiguration
-    HandlerRegistration = FlextModelsHandler.Registration
-    HandlerExecutionConfig = FlextModelsConfig.HandlerExecutionConfig
+    ProcessingRequest: TypeAlias = FlextModelsConfig.ProcessingRequest
+    ProcessingConfig: TypeAlias = FlextModelsConfig.ProcessingRequest
+    BatchProcessingConfig: TypeAlias = FlextModelsConfig.BatchProcessingConfig
+    ValidationConfiguration: TypeAlias = FlextModelsConfig.ValidationConfiguration
+    HandlerRegistration: TypeAlias = FlextModelsHandler.Registration
+    HandlerExecutionConfig: TypeAlias = FlextModelsConfig.HandlerExecutionConfig
 
     # =========================================================================
     # SERVICE MODELS
@@ -152,26 +167,26 @@ class FlextModels:
     # CONTEXT MODELS - Direct access for common usage
     # =========================================================================
 
-    ContextData = FlextModelsContext.ContextData
-    ContextDomainData = FlextModelsContext.ContextDomainData
-    ContextExport = FlextModelsContext.ContextExport
-    ContextScopeData = FlextModelsContext.ContextScopeData
-    ContextStatistics = FlextModelsContext.ContextStatistics
-    ContextMetadata = FlextModelsContext.ContextMetadata
+    ContextData: TypeAlias = FlextModelsContext.ContextData
+    ContextDomainData: TypeAlias = FlextModelsContext.ContextDomainData
+    ContextExport: TypeAlias = FlextModelsContext.ContextExport
+    ContextScopeData: TypeAlias = FlextModelsContext.ContextScopeData
+    ContextStatistics: TypeAlias = FlextModelsContext.ContextStatistics
+    ContextMetadata: TypeAlias = FlextModelsContext.ContextMetadata
 
     # =========================================================================
     # COLLECTIONS MODELS - Direct access for common usage
     # =========================================================================
 
     Collections = FlextModelsCollections
-    CollectionsCategories = FlextModelsCollections.Categories
-    CollectionsConfig = FlextModelsCollections.Config
-    CollectionsResults = FlextModelsCollections.Results
-    CollectionsOptions = FlextModelsCollections.Options
-    CollectionsStatistics = FlextModelsCollections.Statistics
-    Options = FlextModelsCollections.Options
-    CollectionsParseOptions = FlextModelsCollections.ParseOptions
-    Categories = CollectionsCategories
+    CollectionsCategories: TypeAlias = FlextModelsCollections.Categories
+    CollectionsConfig: TypeAlias = FlextModelsCollections.Config
+    CollectionsResults: TypeAlias = FlextModelsCollections.Results
+    CollectionsOptions: TypeAlias = FlextModelsCollections.Options
+    CollectionsStatistics: TypeAlias = FlextModelsCollections.Statistics
+    Options: TypeAlias = FlextModelsCollections.Options
+    CollectionsParseOptions: TypeAlias = FlextModelsCollections.ParseOptions
+    Categories: TypeAlias = FlextModelsCollections.Categories
 
     # =========================================================================
     # CONTAINER MODELS - DI registry and service registration
@@ -187,47 +202,47 @@ class FlextModels:
     # CONFIG CLASSES - Direct access for common usage
     # =========================================================================
 
-    RetryConfiguration = FlextModelsConfig.RetryConfiguration
-    DispatchConfig = FlextModelsConfig.DispatchConfig
+    RetryConfiguration: TypeAlias = FlextModelsConfig.RetryConfiguration
+    DispatchConfig: TypeAlias = FlextModelsConfig.DispatchConfig
 
     class ExecuteDispatchAttemptOptions(
         FlextModelsConfig.ExecuteDispatchAttemptOptions,
     ):
         """Execute dispatch attempt options - direct class for mypy compatibility."""
 
-    RuntimeScopeOptions = FlextModelsConfig.RuntimeScopeOptions
-    NestedExecutionOptions = FlextModelsConfig.NestedExecutionOptions
-    ExceptionConfig = FlextModelsConfig.ExceptionConfig
-    ValidationErrorConfig = FlextModelsConfig.ValidationErrorConfig
-    ConfigurationErrorConfig = FlextModelsConfig.ConfigurationErrorConfig
-    ConnectionErrorConfig = FlextModelsConfig.ConnectionErrorConfig
-    TimeoutErrorConfig = FlextModelsConfig.TimeoutErrorConfig
-    AuthenticationErrorConfig = FlextModelsConfig.AuthenticationErrorConfig
-    AuthorizationErrorConfig = FlextModelsConfig.AuthorizationErrorConfig
-    NotFoundErrorConfig = FlextModelsConfig.NotFoundErrorConfig
-    ConflictErrorConfig = FlextModelsConfig.ConflictErrorConfig
-    RateLimitErrorConfig = FlextModelsConfig.RateLimitErrorConfig
-    InternalErrorConfig = FlextModelsConfig.InternalErrorConfig
-    TypeErrorOptions = FlextModelsConfig.TypeErrorOptions
-    TypeErrorConfig = FlextModelsConfig.TypeErrorConfig
-    ValueErrorConfig = FlextModelsConfig.ValueErrorConfig
-    CircuitBreakerErrorConfig = FlextModelsConfig.CircuitBreakerErrorConfig
-    OperationErrorConfig = FlextModelsConfig.OperationErrorConfig
-    AttributeAccessErrorConfig = FlextModelsConfig.AttributeAccessErrorConfig
-    MiddlewareConfig = FlextModelsConfig.MiddlewareConfig
-    RateLimiterState = FlextModelsConfig.RateLimiterState
+    RuntimeScopeOptions: TypeAlias = FlextModelsConfig.RuntimeScopeOptions
+    NestedExecutionOptions: TypeAlias = FlextModelsConfig.NestedExecutionOptions
+    ExceptionConfig: TypeAlias = FlextModelsConfig.ExceptionConfig
+    ValidationErrorConfig: TypeAlias = FlextModelsConfig.ValidationErrorConfig
+    ConfigurationErrorConfig: TypeAlias = FlextModelsConfig.ConfigurationErrorConfig
+    ConnectionErrorConfig: TypeAlias = FlextModelsConfig.ConnectionErrorConfig
+    TimeoutErrorConfig: TypeAlias = FlextModelsConfig.TimeoutErrorConfig
+    AuthenticationErrorConfig: TypeAlias = FlextModelsConfig.AuthenticationErrorConfig
+    AuthorizationErrorConfig: TypeAlias = FlextModelsConfig.AuthorizationErrorConfig
+    NotFoundErrorConfig: TypeAlias = FlextModelsConfig.NotFoundErrorConfig
+    ConflictErrorConfig: TypeAlias = FlextModelsConfig.ConflictErrorConfig
+    RateLimitErrorConfig: TypeAlias = FlextModelsConfig.RateLimitErrorConfig
+    InternalErrorConfig: TypeAlias = FlextModelsConfig.InternalErrorConfig
+    TypeErrorOptions: TypeAlias = FlextModelsConfig.TypeErrorOptions
+    TypeErrorConfig: TypeAlias = FlextModelsConfig.TypeErrorConfig
+    ValueErrorConfig: TypeAlias = FlextModelsConfig.ValueErrorConfig
+    CircuitBreakerErrorConfig: TypeAlias = FlextModelsConfig.CircuitBreakerErrorConfig
+    OperationErrorConfig: TypeAlias = FlextModelsConfig.OperationErrorConfig
+    AttributeAccessErrorConfig: TypeAlias = FlextModelsConfig.AttributeAccessErrorConfig
+    MiddlewareConfig: TypeAlias = FlextModelsConfig.MiddlewareConfig
+    RateLimiterState: TypeAlias = FlextModelsConfig.RateLimiterState
 
     # =========================================================================
     # BASE CLASSES - Direct access for common usage
     # =========================================================================
 
-    ArbitraryTypesModel = FlextModelsBase.ArbitraryTypesModel
-    FrozenStrictModel = FlextModelsBase.FrozenStrictModel
-    IdentifiableMixin = FlextModelsBase.IdentifiableMixin
-    TimestampableMixin = FlextModelsBase.TimestampableMixin
-    TimestampedModel = FlextModelsBase.TimestampedModel
-    VersionableMixin = FlextModelsBase.VersionableMixin
-    Metadata = FlextModelsBase.Metadata
+    ArbitraryTypesModel: TypeAlias = FlextModelsBase.ArbitraryTypesModel
+    FrozenStrictModel: TypeAlias = FlextModelsBase.FrozenStrictModel
+    IdentifiableMixin: TypeAlias = FlextModelsBase.IdentifiableMixin
+    TimestampableMixin: TypeAlias = FlextModelsBase.TimestampableMixin
+    TimestampedModel: TypeAlias = FlextModelsBase.TimestampedModel
+    VersionableMixin: TypeAlias = FlextModelsBase.VersionableMixin
+    Metadata: TypeAlias = FlextModelsBase.Metadata
 
     # =========================================================================
     # HANDLER MODELS - Direct access for common usage
@@ -249,18 +264,18 @@ class FlextModels:
             """Handler factory decorator configuration - direct class for mypy compatibility."""
 
     # Direct aliases for top-level access
-    HandlerDecoratorConfig = Handler.DecoratorConfig
-    HandlerFactoryDecoratorConfig = Handler.FactoryDecoratorConfig
-    HandlerRegistrationDetails = Handler.RegistrationDetails
-    HandlerExecutionContext = Handler.ExecutionContext
-    CqrsHandler = Handler
+    HandlerDecoratorConfig: TypeAlias = Handler.DecoratorConfig
+    HandlerFactoryDecoratorConfig: TypeAlias = Handler.FactoryDecoratorConfig
+    HandlerRegistrationDetails: TypeAlias = Handler.RegistrationDetails
+    HandlerExecutionContext: TypeAlias = Handler.ExecutionContext
+    CqrsHandler: TypeAlias = Handler
 
     # =========================================================================
     # UNIONS - Pydantic discriminated unions
     # =========================================================================
 
     MessageUnion = Annotated[
-        Command | Query | DomainEvent,
+        FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsEntity.DomainEvent,
         Discriminator("message_type"),
     ]
 

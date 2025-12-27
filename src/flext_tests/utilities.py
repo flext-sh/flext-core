@@ -454,14 +454,14 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_success[TResult](
-                result: p.Result[TResult],
+                result: r[TResult] | p.Result[TResult],
             ) -> None:
                 """Assert result is success - compatibility method."""
                 _ = FlextTestsUtilities.Tests.Result.assert_success(result)
 
             @staticmethod
             def assert_result_failure[TResult](
-                result: p.Result[TResult],
+                result: r[TResult] | p.Result[TResult],
             ) -> None:
                 """Assert result is failure - compatibility method."""
                 _ = FlextTestsUtilities.Tests.Result.assert_failure(result)

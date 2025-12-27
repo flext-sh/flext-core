@@ -40,6 +40,7 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
 )
+from flext_core.typings import t
 from tests.test_utils import assertion_helpers
 
 
@@ -270,17 +271,17 @@ class TestMigrationComplexity:
 
             def process_data(
                 self, data: dict[str, str]
-            ) -> FlextResult[dict[str, object]]:
+            ) -> FlextResult[dict[str, t.GeneralValueType]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextResult[dict[str, object]].fail("Data required")
+                    return FlextResult[dict[str, t.GeneralValueType]].fail("Data required")
 
                 self.logger.info("Processing data", extra={"size": len(data)})
-                processed: dict[str, object] = {
+                processed: dict[str, t.GeneralValueType] = {
                     "original": str(data),
                     "processed": True,
                 }
-                return FlextResult[dict[str, object]].ok(processed)
+                return FlextResult[dict[str, t.GeneralValueType]].ok(processed)
 
         # Test application works correctly
         app = ApplicationExample()

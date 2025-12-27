@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core.typings import t
 
 from collections.abc import Callable
 
@@ -74,9 +75,9 @@ class GivenWhenThenBuilder:
         """Initialize givenwhenthenbuilder:."""
         super().__init__()
         self.name = name
-        self._given: dict[str, object] = {}
-        self._when: dict[str, object] = {}
-        self._then: dict[str, object] = {}
+        self._given: dict[str, t.GeneralValueType] = {}
+        self._when: dict[str, t.GeneralValueType] = {}
+        self._then: dict[str, t.GeneralValueType] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
@@ -196,8 +197,8 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         super().__init__()
-        self._data: dict[str, object] = {}
-        self._validation_rules: dict[str, object] = {}
+        self._data: dict[str, t.GeneralValueType] = {}
+        self._validation_rules: dict[str, t.GeneralValueType] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -263,7 +264,7 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> dict[str, t.GeneralValueType]:
         """Build method.
 
         Returns:
@@ -365,11 +366,11 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list[object] | dict[str, object] | str | tuple[object, ...],
+        data: list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
-        self.data: list[object] | dict[str, object] | str | tuple[object, ...] = data
+        self.data: list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...] = data
         self._assertions: list[Callable[[], None]] = []
 
     def assert_equals(self, expected: object) -> AssertionBuilder:
@@ -425,7 +426,7 @@ class AssertionBuilder:
     def satisfies(
         self,
         condition: Callable[
-            [list[object] | dict[str, object] | str | tuple[object, ...]],
+            [list[t.GeneralValueType] | dict[str, t.GeneralValueType] | str | tuple[object, ...]],
             bool,
         ],
         description: str = "",
@@ -539,7 +540,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, object] = {
+        test_data: dict[str, t.GeneralValueType] = {
             "name": "John",
             "age": 30,
             "active": True,

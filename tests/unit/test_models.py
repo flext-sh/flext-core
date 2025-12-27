@@ -58,7 +58,7 @@ class ModelCreationScenario:
     """Scenario for testing model creation."""
 
     model_type: ModelType
-    field_data: dict[str, object]
+    field_data: dict[str, t.GeneralValueType]
     expected_checks: list[str]
     description: str = ""
 
@@ -786,9 +786,9 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
             handler_called: bool = False
-            handler_data: dict[str, object] = Field(default_factory=dict)
+            handler_data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
 
-            def _apply_test_event(self, data: dict[str, object]) -> None:
+            def _apply_test_event(self, data: dict[str, t.GeneralValueType]) -> None:
                 self.handler_called = True
                 self.handler_data = data
 
@@ -807,7 +807,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-            def _apply_failing_event(self, data: dict[str, object]) -> None:
+            def _apply_failing_event(self, data: dict[str, t.GeneralValueType]) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
 

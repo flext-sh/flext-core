@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core.typings import t
 
 from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextSettings, p
 from flext_core.constants import c

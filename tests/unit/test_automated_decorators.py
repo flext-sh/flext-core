@@ -10,6 +10,7 @@ import pytest
 
 from flext_core import r
 from tests.conftest import test_framework
+from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -55,7 +56,7 @@ class TestAutomatedFlextDecorators:
         ids=lambda case: case["description"],
     )
     def test_automated_decorators_comprehensive_scenarios(
-        self, test_scenario: dict[str, object]
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for decorators functionality."""
         try:
@@ -145,8 +146,8 @@ class TestAutomatedFlextDecorators:
                 )
 
     def _execute_decorators_operation(
-        self, instance: object, input_data: dict[str, object]
-    ) -> r.FlextResult[object]:
+        self, instance: object, input_data: dict[str, t.GeneralValueType]
+    ) -> r[object]:
         """Execute a test operation on decorators instance.
 
         This method should be customized based on the actual decorators API.

@@ -312,8 +312,8 @@ class FlextMixins(FlextRuntime):
             else FlextContext.create()
         )
 
-        # FlextSettings already implements p.Config protocol
-        runtime_config_typed: p.Config = runtime_config
+        # Use FlextSettings directly - it's guaranteed to be FlextSettings
+        runtime_config_typed: FlextSettings = runtime_config
 
         # u.Mapper.get() returns GeneralValueType, narrow to service mapping type
         services_raw = (
@@ -328,8 +328,8 @@ class FlextMixins(FlextRuntime):
             if typed_services:
                 services_typed = typed_services
 
-        # FlextContext implements p.Ctx protocol - direct assignment (structural typing)
-        context_typed: p.Ctx | None = runtime_context
+        # Use FlextContext directly - it's guaranteed to be non-None
+        context_typed: FlextContext = runtime_context
         factories_raw = options.get("factories")
 
         # Get subproject and narrow to str
@@ -383,10 +383,11 @@ class FlextMixins(FlextRuntime):
             wire_modules_raw,
             str,
         ):
-            # Filter to ModuleType items - use explicit loop for proper type narrowing
-            modules_list: list[ModuleType] = [
-                item for item in wire_modules_raw if isinstance(item, ModuleType)
-            ]
+            # Filter to ModuleType items using explicit loop for mypy type narrowing
+            modules_list: list[ModuleType] = []
+            for item in wire_modules_raw:
+                if isinstance(item, ModuleType):
+                    modules_list.append(item)  # noqa: PERF401
             if len(modules_list) == len(wire_modules_raw):
                 wire_modules = modules_list
 

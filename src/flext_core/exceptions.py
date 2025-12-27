@@ -12,15 +12,26 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping
-from typing import ClassVar
+from typing import ClassVar, TypeGuard
 
-from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
-_Metadata = FlextModelsBase.Metadata
+# Use FlextRuntime.Metadata to avoid importing from _models.base
+# This maintains proper architecture layering (exceptions.py is Tier 1)
+_Metadata = FlextRuntime.Metadata
+
+
+def _is_metadata_protocol(obj: object) -> TypeGuard[p.Log.Metadata]:
+    """TypeGuard to check if object implements the Metadata protocol."""
+    return (
+        hasattr(obj, "created_at")
+        and hasattr(obj, "updated_at")
+        and hasattr(obj, "version")
+        and hasattr(obj, "attributes")
+    )
 
 
 class FlextExceptions:
@@ -472,7 +483,7 @@ class FlextExceptions:
         @staticmethod
         def _extract_context_values(
             context: Mapping[str, t.MetadataAttributeValue] | None,
-        ) -> tuple[str | None, _Metadata | None, bool, bool]:
+        ) -> tuple[str | None, p.Log.Metadata | None, bool, bool]:
             """Extract context values from mapping.
 
             Returns:
@@ -488,7 +499,10 @@ class FlextExceptions:
             )
 
             metadata_obj = context.get("metadata")
-            metadata_val = metadata_obj if isinstance(metadata_obj, _Metadata) else None
+            # Use module-level TypeGuard for protocol compliance
+            metadata_val: p.Log.Metadata | None = (
+                metadata_obj if _is_metadata_protocol(metadata_obj) else None
+            )
 
             auto_log_obj = context.get("auto_log")
             auto_log_val: bool = (
@@ -792,7 +806,7 @@ class FlextExceptions:
                     return type_map.get(type_raw)
                 # Support type objects directly
                 if isinstance(type_raw, type):
-                    return type_raw
+                    return type_raw  # type: ignore[unreachable]
                 # type_raw is not a recognized type, continue to next checks
             # Handle case where type is passed as string in named arg
             if isinstance(type_value, str):
@@ -1047,7 +1061,8 @@ class FlextExceptions:
         # Return metadata as-is if it's Metadata or dict-like, otherwise None
         metadata: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None = None
         if metadata_raw is not None:
-            if isinstance(metadata_raw, _Metadata):
+            # Use TypeGuard to check for any Metadata protocol implementation
+            if _is_metadata_protocol(metadata_raw):
                 metadata = metadata_raw
             elif isinstance(metadata_raw, dict):
                 # Convert dict values to MetadataAttributeValue

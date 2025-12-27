@@ -385,6 +385,9 @@ class FlextUtilities:
     is_json_primitive = staticmethod(FlextUtilitiesMapper.is_json_primitive)
     key_by = staticmethod(FlextUtilitiesMapper.key_by)
     map_dict_keys = staticmethod(FlextUtilitiesMapper.map_dict_keys)
+    narrow_to_general_value_type = staticmethod(
+        FlextUtilitiesMapper.narrow_to_general_value_type,
+    )
     normalize_context_values = staticmethod(
         FlextUtilitiesMapper.normalize_context_values,
     )
@@ -431,6 +434,7 @@ class FlextUtilities:
     flow_result = staticmethod(FlextUtilitiesReliability.flow_result)
     flow_through = staticmethod(FlextUtilitiesReliability.flow_through)
     fold_result = staticmethod(FlextUtilitiesReliability.fold_result)
+    match = staticmethod(FlextUtilitiesReliability.match)
     pipe = staticmethod(FlextUtilitiesReliability.pipe)
     retry = staticmethod(FlextUtilitiesReliability.retry)
     tap_result = staticmethod(FlextUtilitiesReliability.tap_result)

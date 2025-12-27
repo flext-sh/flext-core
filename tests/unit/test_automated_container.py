@@ -11,6 +11,7 @@ import pytest
 from flext_core import r
 from flext_core.typings import t
 from tests.conftest import test_framework
+from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -56,7 +57,7 @@ class TestAutomatedFlextContainer:
         ids=lambda case: case["description"],
     )
     def test_automated_container_comprehensive_scenarios(
-        self, test_scenario: dict[str, t.Types.GeneralValueType]
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for container functionality."""
         try:
@@ -144,8 +145,8 @@ class TestAutomatedFlextContainer:
                 )
 
     def _execute_container_operation(
-        self, instance: object, input_data: dict[str, t.Types.GeneralValueType]
-    ) -> r.FlextResult[object]:
+        self, instance: object, input_data: dict[str, t.GeneralValueType]
+    ) -> r[object]:
         """Execute a test operation on container instance.
 
         This method should be customized based on the actual container API.

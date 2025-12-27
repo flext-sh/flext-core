@@ -40,7 +40,7 @@ class StandardTestCase:
     """Standardized test case structure for parametrized tests."""
 
     description: str
-    input_data: dict[str, t.Types.GeneralValueType]
+    input_data: dict[str, t.GeneralValueType]
     expected_result: object
     expected_success: bool = True
     error_contains: str | None = None
@@ -52,12 +52,12 @@ class TestDataFactory:
     @staticmethod
     def create_entity_data(
         unique_id: str, name: str, **kwargs: object
-    ) -> dict[str, t.Types.GeneralValueType]:
+    ) -> dict[str, t.GeneralValueType]:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
-    def create_value_object_data(value: object, **kwargs: object) -> dict[str, t.Types.GeneralValueType]:
+    def create_value_object_data(value: object, **kwargs: object) -> dict[str, t.GeneralValueType]:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
@@ -65,16 +65,18 @@ class TestDataFactory:
     def create_operation_test_case(
         operation: str,
         description: str,
-        input_data: dict[str, t.Types.GeneralValueType],
+        input_data: dict[str, t.GeneralValueType],
         expected_result: object,
-        **kwargs: object,
+        expected_success: bool = True,
+        error_contains: str | None = None,
     ) -> StandardTestCase:
         """Create standardized operation test case."""
         return StandardTestCase(
             description=description,
             input_data={"operation": operation, **input_data},
             expected_result=expected_result,
-            **kwargs,
+            expected_success=expected_success,
+            error_contains=error_contains,
         )
 
 
@@ -119,7 +121,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_entity_properties(
-        entity: object, expected_props: dict[str, t.Types.GeneralValueType], context: str = ""
+        entity: object, expected_props: dict[str, t.GeneralValueType], context: str = ""
     ) -> None:
         """Assert entity has expected properties."""
         for prop, expected_value in expected_props.items():

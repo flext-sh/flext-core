@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from flext_core.typings import t
 
 from collections.abc import Callable
 from types import ModuleType
