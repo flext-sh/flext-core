@@ -19,14 +19,14 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from flext_core import FlextTypes as t, (
+from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextModels,
     FlextResult,
     FlextSettings,
+    FlextTypes as t,
     s,
-    t,
     u,
 )
 
