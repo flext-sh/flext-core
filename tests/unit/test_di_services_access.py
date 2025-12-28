@@ -21,7 +21,7 @@ from __future__ import annotations
 from types import ModuleType
 from typing import cast
 
-from flext_core import FlextTypes as t, (
+from flext_core import (
     FlextContainer,
     FlextContext,
     FlextLogger,
@@ -29,8 +29,8 @@ from flext_core import FlextTypes as t, (
     FlextSettings,
     r,
     s,
-    t,
 )
+from flext_core.typings import t
 from flext_tests.matchers import tm
 from flext_tests.utilities import u
 from tests.test_utils import assertion_helpers

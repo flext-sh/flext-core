@@ -173,11 +173,11 @@ Use `.Value` instead of `.ValueObject`:
 
 ```python
 # ❌ WRONG
-class Address(FlextModels.ValueObject):
+class Address(m.ValueObject):
     pass
 
 # ✅ CORRECT
-class Address(FlextModels.Value):
+class Address(m.Value):
     pass
 ```
 
@@ -742,7 +742,7 @@ logger.debug("Debug logging enabled")
 | ImportError: FlextResult not found    | Use `from flext_core import FlextResult`   |
 | Module not found in tests             | Set `PYTHONPATH=src` before running        |
 | Type error: missing type parameter    | Use `FlextResult[T]` with type `T`         |
-| AttributeError: ValueObject not found | Use `FlextModels.Value` instead            |
+| AttributeError: ValueObject not found | Use `m.Value` instead            |
 | Service not registered                | Call `container.register()` first          |
 | Config value None                     | Check file exists and value is in config   |
 | Tests fail together                   | Use fixtures to isolate state              |

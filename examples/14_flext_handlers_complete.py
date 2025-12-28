@@ -44,7 +44,7 @@ class GetUserQuery(FlextModels.Cqrs.Query):
     user_id: str
 
 
-class UserDTO(FlextModels.Value):
+class UserDTO(m.Value):
     """User data transfer object."""
 
     id: str

@@ -561,16 +561,16 @@ class GenericModelFactory:
     """Factories for generic reusable models (Value, Snapshot, Progress)."""
 
     @staticmethod
-    def ldap_attributes(**attrs: list[str]) -> FlextModels.Value.LdapEntryAttributes:
+    def ldap_attributes(**attrs: list[str]) -> m.Value.LdapEntryAttributes:
         """Create LdapEntryAttributes value object."""
-        return FlextModels.Value.LdapEntryAttributes(attributes=attrs)
+        return m.Value.LdapEntryAttributes(attributes=attrs)
 
     @staticmethod
     def operation_context(
         source: str | None = None,
-    ) -> FlextModels.Value.OperationContext:
+    ) -> m.Value.OperationContext:
         """Create OperationContext value object."""
-        return FlextModels.Value.OperationContext(source=source)
+        return m.Value.OperationContext(source=source)
 
     @staticmethod
     def service_snapshot(

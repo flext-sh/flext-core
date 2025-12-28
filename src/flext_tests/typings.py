@@ -296,16 +296,16 @@ class FlextTestsTypes(FlextTypes):
             type BuilderDict = dict[str, t.GeneralValueType]
             """Type for builder internal data structure."""
 
-            # Builder output value - includes FlextResult for batch result conversion
-            type BuilderOutputValue = (
-                t.GeneralValueType
-                | r[t.GeneralValueType]
-                | list[t.GeneralValueType | r[t.GeneralValueType]]
-            )
-            """Type for values in builder output after batch result processing."""
-
             # Builder output dict - result of _process_batch_results
-            type BuilderOutputDict = dict[str, BuilderOutputValue]
+            # Inline definition: includes FlextResult for batch result conversion
+            type BuilderOutputDict = dict[
+                str,
+                (
+                    t.GeneralValueType
+                    | r[t.GeneralValueType]
+                    | list[t.GeneralValueType | r[t.GeneralValueType]]
+                ),
+            ]
             """Type for builder output dict after batch result conversion."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication

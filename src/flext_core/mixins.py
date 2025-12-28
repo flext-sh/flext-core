@@ -384,22 +384,29 @@ class FlextMixins(FlextRuntime):
             str,
         ):
             # Filter to ModuleType items using explicit loop for type narrowing
-            modules_list: list[ModuleType] = []
+            all_modules = True
+            filtered_modules: list[ModuleType] = []
             for item in wire_modules_raw:
                 if isinstance(item, ModuleType):
-                    modules_list.append(item)
-            if len(modules_list) == len(wire_modules_raw):
-                wire_modules = modules_list
+                    filtered_modules.append(item)
+                else:
+                    all_modules = False
+            if all_modules and len(filtered_modules) > 0:
+                wire_modules = filtered_modules
 
         wire_packages: Sequence[str] | None = None
         if isinstance(wire_packages_raw, Sequence) and not isinstance(
             wire_packages_raw,
             str,
         ):
-            packages_list: list[str] = [
-                item for item in wire_packages_raw if isinstance(item, str)
-            ]
-            if len(packages_list) == len(wire_packages_raw):
+            all_strings = True
+            packages_list: list[str] = []
+            for item in wire_packages_raw:
+                if isinstance(item, str):
+                    packages_list.append(item)
+                else:
+                    all_strings = False
+            if all_strings and len(packages_list) > 0:
                 wire_packages = packages_list
 
         wire_classes: Sequence[type] | None = None
@@ -407,10 +414,14 @@ class FlextMixins(FlextRuntime):
             wire_classes_raw,
             str,
         ):
-            classes_list: list[type] = [
-                item for item in wire_classes_raw if isinstance(item, type)
-            ]
-            if len(classes_list) == len(wire_classes_raw):
+            all_types = True
+            classes_list: list[type] = []
+            for item in wire_classes_raw:
+                if isinstance(item, type):
+                    classes_list.append(item)
+                else:
+                    all_types = False
+            if all_types and len(classes_list) > 0:
                 wire_classes = classes_list
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire_modules(

@@ -26,7 +26,7 @@
 
 ### domain.md (Layer 2)
 
-- **Strengths**: Entity/Value/AggregateRoot patterns reference the correct `FlextModels.Value` base. `FlextService` examples compile with current signatures.
+- **Strengths**: Entity/Value/AggregateRoot patterns reference the correct `m.Value` base. `FlextService` examples compile with current signatures.
 - **Gaps**: Document `x` and `u` helpers that appear in `mixins.py` and `_utilities/validation.py`.
 
 ### application.md (Layer 3)

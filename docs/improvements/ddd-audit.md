@@ -8,7 +8,7 @@
 
 ## Findings
 
-- Entity, Value, and AggregateRoot samples use `FlextModels.Value` (no stale `ValueObject` references remain).
+- Entity, Value, and AggregateRoot samples use `m.Value` (no stale `ValueObject` references remain).
 - Service examples return `FlextResult` and align with `service.py` signatures.
 - Layer references still mention `FlextBus` integration in historical notes.
 

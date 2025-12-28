@@ -621,7 +621,15 @@ class FlextContainer(FlextRuntime, p.DI):
     def with_service(
         self,
         name: str,
-        service: t.GeneralValueType | p.Config | p.Ctx | p.DI | p.Service[t.GeneralValueType] | p.Log | p.Handler | p.Registry | Callable[..., t.GeneralValueType],
+        service: t.GeneralValueType
+        | p.Config
+        | p.Ctx
+        | p.DI
+        | p.Service[t.GeneralValueType]
+        | p.Log
+        | p.Handler
+        | p.Registry
+        | Callable[..., t.GeneralValueType],
     ) -> Self:
         """Register a service and return the container for fluent chaining.
 
@@ -1007,7 +1015,19 @@ class FlextContainer(FlextRuntime, p.DI):
         config: p.Config | None = None,
         context: p.Ctx | None = None,
         subproject: str | None = None,
-        services: Mapping[str, t.GeneralValueType | p.Config | p.Ctx | p.DI | p.Service[t.GeneralValueType] | p.Log | p.Handler | p.Registry | Callable[..., t.GeneralValueType]] | None = None,
+        services: Mapping[
+            str,
+            t.GeneralValueType
+            | p.Config
+            | p.Ctx
+            | p.DI
+            | p.Service[t.GeneralValueType]
+            | p.Log
+            | p.Handler
+            | p.Registry
+            | Callable[..., t.GeneralValueType],
+        ]
+        | None = None,
         factories: Mapping[str, t.FactoryCallable] | None = None,
         resources: Mapping[str, t.ResourceCallable] | None = None,
     ) -> FlextContainer:
