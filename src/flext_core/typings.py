@@ -140,7 +140,7 @@ class FlextTypes:
         | None
         | list[str | int | float | bool | None]
         | dict[
-            str, str | int | float | bool | list[str | int | float | bool | None] | None
+            str, str | int | float | bool | list[str | int | float | bool | None] | None,
         ]
     )
     type PydanticConfigDict = dict[str, FlextTypes.PydanticConfigValue]
@@ -161,11 +161,12 @@ class FlextTypes:
     ]
 
     # =========================================================================
-    # GeneralValueType - RECURSIVE type for JSON-like values (PEP 695)
+    # GeneralValueType - RECURSIVE type for JSON-like values (TypeAlias)
     # =========================================================================
-    # Python 3.13+ recursive type using forward reference
+    # Recursive type using string literals for forward references
     # Allows Mapping[str, GeneralValueType] to be a GeneralValueType
-    type GeneralValueType = (
+    # Uses TypeAlias instead of PEP 695 type keyword to avoid mypy strict mode issues
+    GeneralValueType: TypeAlias = (
         str
         | int
         | float
@@ -174,9 +175,31 @@ class FlextTypes:
         | None
         | BaseModel
         | Path
-        | Sequence[FlextTypes.GeneralValueType]  # Recursive: lists of values
-        | Mapping[str, FlextTypes.GeneralValueType]  # Recursive: dicts of values
-        | Callable[..., FlextTypes.GeneralValueType]  # Callables returning values
+        | Sequence["GeneralValueType"]  # Recursive: lists of values
+        | Mapping[str, "GeneralValueType"]  # Recursive: dicts of values
+        | Callable[..., "GeneralValueType"]  # Callables returning values
+    )
+
+    # RegisterableService - Type for services registerable in FlextContainer
+    # Defined as GeneralValueType to accept all value types
+    # Represents all types that can be registered in FlextContainer including:
+    # - Primitives (str, int, float, bool, None)
+    # - BaseModel instances
+    # - Sequences and Mappings
+    # - Callables (factories)
+    # Note: Protocols (Config, Ctx, Service, etc.) are also compatible via object protocol
+    RegisterableService: TypeAlias = (
+        str
+        | int
+        | float
+        | bool
+        | datetime
+        | None
+        | BaseModel
+        | Path
+        | Sequence[GeneralValueType]
+        | Mapping[str, GeneralValueType]
+        | Callable[..., GeneralValueType]
     )
 
     # Constant value type - all possible constant types in FlextConstants
@@ -415,11 +438,12 @@ class FlextTypes:
     # MAPPING TYPE ALIASES (Python 3.13+ PEP 695)
     # =====================================================================
     # Using PEP 695 type keyword for better type checking and IDE support
-    type ServiceMetadataMapping = Mapping[str, FlextTypes.GeneralValueType]
-    """Mapping for service metadata (attribute names to values)."""
+    # Simplified to Mapping[str, str] to avoid circular reference issues with GeneralValueType
+    type ServiceMetadataMapping = Mapping[str, str]
+    """Mapping for service metadata (attribute names to string values)."""
 
-    type FieldMetadataMapping = Mapping[str, FlextTypes.GeneralValueType]
-    """Mapping for field metadata (field names to metadata objects)."""
+    type FieldMetadataMapping = Mapping[str, str]
+    """Mapping for field metadata (field names to metadata strings)."""
 
     type SummaryDataMapping = Mapping[str, int | float | str]
     """Mapping for summary data (category names to summary values)."""
@@ -615,20 +639,12 @@ class FlextTypes:
     # Container-specific types (forward references to avoid circular imports)
     # Service instance type - union of all types accepted by container.register()
     # ARCHITECTURAL EXCEPTION: DI containers must accept any Python object
-    # This uses GeneralValueType + Protocol for type-safe service storage
-    ServiceInstanceType: TypeAlias = Union[
-        "FlextTypes.GeneralValueType",
-        Callable[..., "FlextTypes.GeneralValueType"],
-    ]
+    # Simplified to object type since ServiceRegistration uses arbitrary_types_allowed=True
+    # and Pydantic will accept any Python object at runtime
+    ServiceInstanceType: TypeAlias = object
     """Type for service instances accepted by FlextContainer.register().
 
-    Includes all GeneralValueType members plus Callables:
-    - Primitives: str, int, float, bool, datetime, None
-    - BaseModel: Pydantic models (covers FlextService, FlextConfig, etc.)
-    - Path: File system paths
-    - Sequences and Mappings: Recursive container types
-    - Callable: Service classes, factory functions, loggers
-
+    Accepts any Python object: primitives, BaseModel instances, Callables, sequences, mappings.
     ARCHITECTURAL NOTE: DI containers require broad type acceptance.
     The ServiceRegistration model uses arbitrary_types_allowed=True
     to accept any Python object at runtime while maintaining type hints.

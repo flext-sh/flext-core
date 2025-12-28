@@ -1645,7 +1645,7 @@ class FlextTestsBuilders:
 
             @staticmethod
             def add() -> Callable[
-                [t.GeneralValueType, t.GeneralValueType], t.GeneralValueType
+                [t.GeneralValueType, t.GeneralValueType], t.GeneralValueType,
             ]:
                 """Add operation - DELEGATES to tu.Tests.Factory."""
                 return tu.Tests.Factory.add_operation

@@ -324,11 +324,12 @@ class SearchProductsQuery(m.Query):
     max_price: float | None = None
 
 
-# Rebuild models to resolve forward references with proper namespace
-_cqrs_namespace = {"FlextModelsCqrs": m.Cqrs}
-GetUserQuery.model_rebuild(_types_namespace=_cqrs_namespace)
-ListAccountsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
-SearchProductsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
+# DISABLED: model_rebuild() causes circular import issues with GeneralValueType
+# Models use arbitrary_types_allowed=True and work without rebuild
+# _cqrs_namespace = {"FlextModelsCqrs": m.Cqrs}
+# GetUserQuery.model_rebuild(_types_namespace=_cqrs_namespace)
+# ListAccountsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
+# SearchProductsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
 
 
 class TestQueries:
@@ -545,7 +546,7 @@ class TestModelSerialization:
         class ShoppingCart(m.AggregateRoot):
             """Shopping cart aggregate."""
 
-            items: list[dict[str, t.GeneralValueType]]
+            items: list[dict[str, object]]
             total: float
 
         cart = ShoppingCart(

@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validat
 from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -51,11 +50,11 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Service identifier/name",
         )
-        # Service instance - uses RegisterableService Protocol union type
+        # Service instance - accepts any Python object for DI
         # ARCHITECTURAL NOTE: DI containers accept any registerable service.
-        # SkipValidation needed because Protocol types can't be validated by Pydantic.
+        # SkipValidation needed because protocol types can't be validated by Pydantic.
         # Type safety is enforced at container API level via get_typed().
-        service: Annotated[p.RegisterableService, SkipValidation] = Field(
+        service: Annotated[object, SkipValidation] = Field(
             ...,
             description="Service instance (protocols, models, callables)",
         )
@@ -106,7 +105,8 @@ class FlextModelsContainer:
         )
         # Factory returns RegisterableService for type-safe factory resolution
         # Supports all registerable types: GeneralValueType, protocols, callables
-        factory: Annotated[p.ServiceFactory, SkipValidation] = Field(
+        # Using Callable type since ServiceFactory is a type alias that may not resolve properly
+        factory: Annotated[Callable[[], object], SkipValidation] = Field(
             ...,
             description="Factory function that creates service instances",
         )
@@ -270,21 +270,21 @@ class FlextModelsContainer:
         )
 
 
-# Rebuild models with forward references to protocols
-# Required for Pydantic to resolve FlextProtocols.* references
-# Import FlextProtocols for namespace resolution
-from flext_core.protocols import FlextProtocols  # noqa: E402
-
-_rebuild_ns = {
-    "FlextProtocols": FlextProtocols,
-    "t": t,
-    "c": c,
-    "p": p,
-}
-FlextModelsContainer.ServiceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.FactoryRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.ResourceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.ContainerConfig.model_rebuild(_types_namespace=_rebuild_ns)
-FlextModelsContainer.FactoryDecoratorConfig.model_rebuild(_types_namespace=_rebuild_ns)
+# DISABLED: model_rebuild() causes circular import issues with GeneralValueType
+# These models use arbitrary_types_allowed=True and work without rebuild
+# When forward references are needed, they are resolved at runtime by Pydantic
+# from flext_core.protocols import FlextProtocols
+#
+# _rebuild_ns = {
+#     "FlextProtocols": FlextProtocols,
+#     "t": t,
+#     "c": c,
+#     "p": p,
+# }
+# FlextModelsContainer.ServiceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
+# FlextModelsContainer.FactoryRegistration.model_rebuild(_types_namespace=_rebuild_ns)
+# FlextModelsContainer.ResourceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
+# FlextModelsContainer.ContainerConfig.model_rebuild(_types_namespace=_rebuild_ns)
+# FlextModelsContainer.FactoryDecoratorConfig.model_rebuild(_types_namespace=_rebuild_ns)
 
 __all__ = ["FlextModelsContainer"]

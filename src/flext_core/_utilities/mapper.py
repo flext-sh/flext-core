@@ -407,7 +407,7 @@ class FlextUtilitiesMapper:
     @classmethod
     def convert_to_json_value(
         cls,
-        value: t.GeneralValueType,
+        value: t.GeneralValueType | object,
     ) -> t.GeneralValueType:
         """Convert any value to JSON-compatible type.
 
@@ -596,6 +596,30 @@ class FlextUtilitiesMapper:
 
         """
         return value if isinstance(value, str) else None
+
+    @staticmethod
+    def narrow_to_general_value_type(value: object) -> t.GeneralValueType:
+        """Safely narrow object to t.GeneralValueType.
+
+        Uses TypeGuard-based validation to ensure type safety.
+        If value is not a valid t.GeneralValueType, returns string representation.
+
+        Args:
+            value: Value to narrow to GeneralValueType
+
+        Returns:
+            GeneralValueType (or string representation if not valid type)
+
+        Example:
+            >>> FlextUtilitiesMapper.narrow_to_general_value_type("hello")
+            'hello'
+            >>> FlextUtilitiesMapper.narrow_to_general_value_type(123)
+            123
+            >>> FlextUtilitiesMapper.narrow_to_general_value_type(object())
+            '<object object at ...>'
+
+        """
+        return FlextUtilitiesMapper._narrow_to_general_value_type(value)
 
     # =========================================================================
     # EXTRACT METHODS - Safe nested data extraction

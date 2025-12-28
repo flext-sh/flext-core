@@ -80,7 +80,7 @@ class FlextContext(FlextRuntime):
                                 value_obj,
                                 (str, int, float, bool, list, dict, type(None)),
                             )
-                            else str(value_obj)
+                            else str(value_obj),
                         )
                     )
                     result[key_obj] = general_value
@@ -1180,7 +1180,7 @@ class FlextContext(FlextRuntime):
         value: t.MetadataAttributeValue = self._metadata.attributes[key]
         # Convert MetadataAttributeValue to GeneralValueType
         normalized_value: t.GeneralValueType = FlextRuntime.normalize_to_general_value(
-            value
+            value,
         )
         return r[t.GeneralValueType].ok(normalized_value)
 
