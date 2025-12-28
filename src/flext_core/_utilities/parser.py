@@ -917,22 +917,16 @@ class FlextUtilitiesParser:
                     pattern_tuple[1],
                 ))
             elif tuple_len == self.TUPLE_LENGTH_3:
-                # Explicitly create 3-element tuple for second overload
-                # Unpack components explicitly to satisfy type checker
-                first = pattern_tuple[0]
-                second = pattern_tuple[1]
-                # After len check, we know tuple has 3+ elements
-                if len(pattern_tuple) >= self.TUPLE_LENGTH_3:
-                    third = pattern_tuple[2]
+                # For 3-element tuples, use unpacking with explicit type narrowing
+                # After len check, pattern_tuple is definitely tuple[str, str, int]
+                if len(pattern_tuple) == self.TUPLE_LENGTH_3:
+                    # Unpack the 3-element tuple
+                    a, b, c = pattern_tuple[0], pattern_tuple[1], pattern_tuple[2]
+                    # Call method with unpacked values
+                    pattern_result = self._extract_pattern_components((a, b, c))
                 else:
-                    # Should not reach here, but satisfy type checker
-                    msg = "Pattern tuple missing required 3rd element"
+                    msg = "Pattern tuple length mismatch"
                     return r[tuple[str, int]].fail(msg)
-                pattern_result = self._extract_pattern_components((
-                    first,
-                    second,
-                    third,
-                ))
             else:
                 msg = f"Pattern tuple must have 2 or 3 elements, got {tuple_len}"
                 return r[tuple[str, int]].fail(msg)

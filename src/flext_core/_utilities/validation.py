@@ -2264,7 +2264,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_all[T](
         values: list[T],
-        predicate: _Predicate,
+        predicate: p.Validation.Predicate,
         error: str = "Validation failed",
         *,
         fail_fast: bool = True,
@@ -2908,8 +2908,9 @@ class FlextUtilitiesValidation:
             if isinstance(raw_value, check_type):
                 # raw_value matches the expected type T and is not Callable
                 # Type narrowing: raw_value is confirmed to match check_type
-                result_value: T = raw_value  # Safe due to isinstance check
-                return result_value
+                # Assert for type narrowing - Pyrefly recognizes assert isinstance
+                assert isinstance(raw_value, check_type), "isinstance check failed"
+                return raw_value
 
             # Try conversion for primitive types only using str intermediary
             # This is safe because str() works on any GeneralValueType
@@ -2930,8 +2931,9 @@ class FlextUtilitiesValidation:
                         converted_value = str_value
                     # Verify type and return - isinstance narrows to T
                     if isinstance(converted_value, check_type):
-                        final_value: T = converted_value  # Safe due to isinstance
-                        conversion_result = final_value
+                        # Assert for type narrowing - Pyrefly recognizes assert isinstance
+                        assert isinstance(converted_value, check_type), "conversion type check failed"
+                        conversion_result = converted_value
                 except (TypeError, ValueError) as exc:
                     # Type conversion failed, log and continue to return default
                     FlextRuntime.structlog().debug(
