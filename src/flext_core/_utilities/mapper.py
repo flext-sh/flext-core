@@ -10,22 +10,25 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeGuard, overload
+from typing import Protocol, TypeGuard, overload
 
 from pydantic import BaseModel
 
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
-if TYPE_CHECKING:
-    from flext_core.protocols import p
 
-# Use centralized version from cast.py
-_to_general_value_type = FlextUtilitiesCast.to_general_value_type
+class _Predicate[T](Protocol):
+    """Protocol for callable predicates in find_callable."""
+
+    def __call__(self, value: T) -> bool:  # INTERFACE
+        """Evaluate predicate against value."""
+        ...
 
 
 class FlextUtilitiesMapper:
@@ -467,7 +470,7 @@ class FlextUtilitiesMapper:
             result_dict: dict[str, t.GeneralValueType] = {}
             for key, val in narrowed_value.items():
                 # Convert object to GeneralValueType before recursive call
-                val_typed = _to_general_value_type(val)
+                val_typed = FlextUtilitiesCast.to_general_value_type(val)
                 result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_value(
                     val_typed,
                 )
@@ -2915,6 +2918,42 @@ class FlextUtilitiesMapper:
             if default is not None:
                 return default
             return value
+
+    @staticmethod
+    def find_callable[T](
+        callables: Mapping[str, _Predicate[T]],
+        value: T,
+    ) -> str | None:
+        """Find first matching callable key from dict of predicates.
+
+        Iterates through mapping of named predicates and returns the key of
+        the first predicate that returns True for the given value.
+
+        Args:
+            callables: Mapping of name → predicate function
+            value: Value to test against predicates
+
+        Returns:
+            Key of matching predicate, or None if no match found
+
+        Example:
+            >>> predicates = {
+            ...     "is_empty": lambda v: len(v) == 0,
+            ...     "is_single": lambda v: len(v) == 1,
+            ...     "is_multiple": lambda v: len(v) > 1,
+            ... }
+            >>> result = u.Mapper.find_callable(predicates, [1, 2])
+            >>> assert result == "is_multiple"
+
+        """
+        for name, predicate in callables.items():
+            try:
+                if predicate(value):
+                    return name
+            except (ValueError, TypeError, AttributeError):
+                # Skip predicates that fail for this value
+                continue
+        return None
 
 
 __all__ = [
