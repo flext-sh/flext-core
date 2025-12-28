@@ -49,7 +49,7 @@ class FlextContainer(FlextRuntime, p.DI):
     # Instance attributes (initialized in __init__)
     _context: p.Ctx | None = None
     _config: p.Config | None = None
-    _user_overrides: t.ConfigurationDict
+    _user_overrides: dict[str, t.GeneralValueType]
 
     def __new__(
         cls,
@@ -59,7 +59,7 @@ class FlextContainer(FlextRuntime, p.DI):
         _services: dict[str, m.Container.ServiceRegistration] | None = None,
         _factories: dict[str, m.Container.FactoryRegistration] | None = None,
         _resources: dict[str, m.Container.ResourceRegistration] | None = None,
-        _user_overrides: t.ConfigurationDict | None = None,
+        _user_overrides: dict[str, t.GeneralValueType] | None = None,
         _container_config: m.Container.ContainerConfig | None = None,
     ) -> Self:
         """Create or return the global singleton instance.
@@ -88,7 +88,7 @@ class FlextContainer(FlextRuntime, p.DI):
         _services: dict[str, m.Container.ServiceRegistration] | None = None,
         _factories: dict[str, m.Container.FactoryRegistration] | None = None,
         _resources: dict[str, m.Container.ResourceRegistration] | None = None,
-        _user_overrides: t.ConfigurationDict | None = None,
+        _user_overrides: dict[str, t.GeneralValueType] | None = None,
         _container_config: m.Container.ContainerConfig | None = None,
     ) -> None:
         """Wire the Dependency Injector container and supporting registries.
@@ -185,16 +185,22 @@ class FlextContainer(FlextRuntime, p.DI):
                         # are expected to return RegisterableService, but getattr returns object
                         if callable(factory_func_raw):
                             # Type narrow: @factory() decorated functions return GeneralValueType
-                            factory_fn: Callable[..., t.GeneralValueType] = factory_func_raw
+                            # Create wrapper with explicitly typed callable - bind reference
+                            factory_func_ref = factory_func_raw
 
                             # Create wrapper that satisfies ServiceFactory signature
                             # The @factory() decorator validates return type at runtime
-                            # Bind factory_fn via default arg to avoid closure issue (B023)
+                            # Bind func via default arg to avoid closure issue (B023)
                             def factory_wrapper(
-                                _fn: Callable[..., t.GeneralValueType] = factory_fn,
+                                fn: object = factory_func_ref,
                             ) -> t.GeneralValueType:
-                                # Runtime validation ensures RegisterableService contract
-                                return _fn()
+                                # fn is callable (verified at registration time)
+                                if callable(fn):
+                                    raw_result = fn()
+                                    return u.narrow_to_general_value_type(
+                                        raw_result,
+                                    )
+                                return ""
 
                             # Register using the name from decorator config
                             _ = instance.register_factory(
@@ -333,7 +339,7 @@ class FlextContainer(FlextRuntime, p.DI):
         factories: dict[str, m.Container.FactoryRegistration] | None = None,
         resources: dict[str, m.Container.ResourceRegistration] | None = None,
         global_config: m.Container.ContainerConfig | None = None,
-        user_overrides: t.ConfigurationDict | None = None,
+        user_overrides: dict[str, t.GeneralValueType] | None = None,
         config: p.Config | None = None,
         context: p.Ctx | None = None,
     ) -> None:
@@ -397,12 +403,9 @@ class FlextContainer(FlextRuntime, p.DI):
         )
 
         # Apply user overrides
-        # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
+        # _user_overrides is always ConfigurationDict after initialize_registrations
         # (initialized as user_overrides or {}), so it's never None after __init__
-        if self._user_overrides is None:
-            user_overrides_dict: t.ConfigurationDict = {}
-        else:
-            user_overrides_dict = self._user_overrides
+        user_overrides_dict = self._user_overrides
         # Convert to dict for from_dict() which expects dict not Mapping
         user_overrides_plain: dict[str, t.GeneralValueType] = dict(user_overrides_dict)
         self._user_config_provider.from_dict(user_overrides_plain)
@@ -558,7 +561,7 @@ class FlextContainer(FlextRuntime, p.DI):
 
         """
         # Convert config values to FlexibleValue compatible types
-        processed_dict: t.ConfigurationDict = {}
+        processed_dict: dict[str, t.GeneralValueType] = {}
         for k, v in config.items():
             if u.is_general_value_type(v):
                 processed_dict[k] = v
@@ -567,8 +570,8 @@ class FlextContainer(FlextRuntime, p.DI):
             # Simple merge: override strategy - new values override existing ones
             # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
             # (initialized as user_overrides or {}), so it's never None after __init__
-            user_overrides_dict: t.ConfigurationDict = self._user_overrides
-            merged: t.ConfigurationDict = dict(user_overrides_dict)
+            user_overrides_dict: dict[str, t.GeneralValueType] = self._user_overrides
+            merged: dict[str, t.GeneralValueType] = dict(user_overrides_dict)
             merged.update(processed_dict)
             self._user_overrides = merged
             # Sync validated overrides onto the container config model so
@@ -604,7 +607,7 @@ class FlextContainer(FlextRuntime, p.DI):
         self,
     ) -> t.ConfigurationMapping:
         """Return the merged configuration exposed by this container."""
-        # model_dump() returns t.ConfigurationDict which is compatible with ConfigurationMapping
+        # model_dump() returns dict[str, t.GeneralValueType] which is compatible with ConfigurationMapping
         return self._global_config.model_dump()
 
     def with_config(
@@ -710,8 +713,6 @@ class FlextContainer(FlextRuntime, p.DI):
 
         """
         try:
-            if not callable(factory):
-                return r[bool].fail("Factory must be callable")
             if hasattr(self._di_services, name):
                 return r[bool].fail(f"Factory '{name}' already registered")
             # Factory parameter is t.FactoryCallable (Callable[[], object])
@@ -740,8 +741,6 @@ class FlextContainer(FlextRuntime, p.DI):
     ) -> r[bool]:
         """Register a dependency-injector Resource provider."""
         try:
-            if not callable(factory):
-                return r[bool].fail("Resource factory must be callable")
             if hasattr(self._di_resources, name):
                 return r[bool].fail(f"Resource '{name}' already registered")
             # factory is already ResourceCallable (Callable[[], object])
@@ -968,7 +967,7 @@ class FlextContainer(FlextRuntime, p.DI):
         services: dict[str, m.Container.ServiceRegistration],
         factories: dict[str, m.Container.FactoryRegistration],
         resources: dict[str, m.Container.ResourceRegistration],
-        user_overrides: t.ConfigurationDict,
+        user_overrides: dict[str, t.GeneralValueType],
         container_config: m.Container.ContainerConfig,
     ) -> FlextContainer:
         """Create a scoped container instance bypassing singleton pattern.
@@ -1124,13 +1123,10 @@ class FlextContainer(FlextRuntime, p.DI):
         # Use factory method to create scoped container (avoids mypy __init__ error)
         # Structural typing - FlextContainer implements p.DI
         # cloned_services, cloned_factories, cloned_resources already have correct types
-        # Type narrowing: _user_overrides is always ConfigurationDict after initialize_registrations
+        # _user_overrides is always ConfigurationDict after initialize_registrations
         # (initialized as user_overrides or {}), so it's never None after __init__
-        if self._user_overrides is None:
-            user_overrides_dict: t.ConfigurationDict = {}
-        else:
-            user_overrides_dict = self._user_overrides
-        user_overrides_copy: t.ConfigurationDict = user_overrides_dict.copy()
+        user_overrides_dict = self._user_overrides
+        user_overrides_copy: dict[str, t.GeneralValueType] = user_overrides_dict.copy()
         return FlextContainer._create_scoped_instance(
             config=base_config,
             context=scoped_context,

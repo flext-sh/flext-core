@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from typing import Annotated, Self
 
 from pydantic import (
@@ -24,6 +23,8 @@ from pydantic import (
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
+
+# Import p and t for runtime use in models
 from flext_core.protocols import p
 from flext_core.typings import t
 
@@ -44,14 +45,7 @@ class FlextModelsHandler:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Handler name",
         )
-        handler: (
-            Callable[[], t.GeneralValueType]
-            | Callable[[t.GeneralValueType], t.GeneralValueType]
-            | Callable[
-                [t.GeneralValueType, t.GeneralValueType],
-                t.GeneralValueType,
-            ]
-        )
+        handler: p.VariadicCallable[t.GeneralValueType]
         event_types: list[str] = Field(
             default_factory=list,
             description="Event types this handler processes",
@@ -61,14 +55,14 @@ class FlextModelsHandler:
         @classmethod
         def validate_handler(
             cls,
-            v: Callable[..., t.GeneralValueType],
-        ) -> Callable[..., t.GeneralValueType]:
+            v: p.VariadicCallable[t.GeneralValueType],
+        ) -> p.VariadicCallable[t.GeneralValueType]:
             """Validate handler is properly callable (direct validation, no circular imports)."""
             # Direct callable check - avoid circular import via FlextUtilitiesValidation
             if not callable(v):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
-            # v is already typed as Callable via Pydantic field validation
+            # Return the validated callable
             return v
 
     class RegistrationDetails(BaseModel):
@@ -201,7 +195,7 @@ class FlextModelsHandler:
         # Use PrivateAttr for internal state (Pydantic v2 pattern)
         # PrivateAttr fields are not validated by Pydantic, so pyright needs explicit type hints
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: t.ConfigurationDict | None = PrivateAttr(default=None)
+        _metrics_state: dict[str, t.GeneralValueType] | None = PrivateAttr(default=None)
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -264,18 +258,18 @@ class FlextModelsHandler:
             """
             if self._metrics_state is None:
                 # Use PrivateAttr for proper Pydantic v2 pattern
-                empty_dict: t.ConfigurationDict = {}
+                empty_dict: dict[str, t.GeneralValueType] = {}
                 self._metrics_state = empty_dict
             # Type narrowing: _metrics_state is not None after initialization above
             # PrivateAttr type narrowing works after None check and initialization
-            metrics_state: t.ConfigurationDict = self._metrics_state
+            metrics_state: dict[str, t.GeneralValueType] = self._metrics_state
             # ConfigurationDict (dict) is compatible with ConfigurationMapping (Mapping)
             # dict implements Mapping, so direct return works without cast
             return metrics_state
 
         def set_metrics_state(
             self,
-            state: t.ConfigurationDict,
+            state: dict[str, t.GeneralValueType],
         ) -> None:
             """Set metrics state.
 

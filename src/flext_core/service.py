@@ -28,7 +28,7 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.mixins import FlextMixins as x, require_initialized
+from flext_core.mixins import FlextMixins as x
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
@@ -124,8 +124,8 @@ class FlextService[TDomainResult](
 
         # Set attributes directly - PrivateAttr allows assignment without validation
         self._context = runtime.context
-        # Type narrowing: runtime.config is p.Config, but we need FlextSettings
-        # All implementations of p.Config in FLEXT are FlextSettings or subclasses
+        # Type narrowing: runtime.config is "p.Config", but we need FlextSettings
+        # All implementations of "p.Config" in FLEXT are FlextSettings or subclasses
         # Use isinstance check for type narrowing since FlextSettings is concrete class
         if not isinstance(runtime.config, FlextSettings):
             msg = f"Expected FlextSettings, got {type(runtime.config).__name__}"
@@ -150,7 +150,7 @@ class FlextService[TDomainResult](
     _config: FlextSettings | None = PrivateAttr(default=None)
     _container: p.DI | None = PrivateAttr(default=None)
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _discovered_handlers: list[tuple[str, m.HandlerDecoratorConfig]] = PrivateAttr(
+    _discovered_handlers: list[tuple[str, m.Handler.DecoratorConfig]] = PrivateAttr(
         default_factory=list,
     )
 
@@ -220,18 +220,18 @@ class FlextService[TDomainResult](
 
         # 2. Context creation with initial data
         # context parameter is t.ContextLike (minimal protocol)
-        # Use TypeGuard to narrow to p.Ctx (full protocol with set method)
+        # Use TypeGuard to narrow to "p.Ctx" (full protocol with set method)
         runtime_context_typed: p.Ctx
         if context is not None and u.is_context(context):
-            # TypeGuard narrowed to p.Ctx - use directly
+            # TypeGuard narrowed to "p.Ctx" - use directly
             runtime_context_typed = context
         else:
             # Minimal ContextLike or None - create full context
             runtime_context_typed = FlextContext.create()
 
         # 3. Container creation with registrations
-        # runtime_config is FlextSettings which implements p.Config structurally
-        # No cast needed - FlextSettings implements p.Config protocol
+        # runtime_config is FlextSettings which implements "p.Config" structurally
+        # No cast needed - FlextSettings implements "p.Config" protocol
         runtime_config_typed: p.Config = runtime_config
         runtime_container = FlextContainer.create().scoped(
             config=runtime_config_typed,
@@ -269,10 +269,7 @@ class FlextService[TDomainResult](
         # config_type: TypedDict defines as type[BaseModel], narrow to FlextSettings
         config_type_raw = options.get("config_type")
         config_type_val: type[FlextSettings] | None
-        if (
-            config_type_raw is not None
-            and issubclass(config_type_raw, FlextSettings)
-        ):
+        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_type_val = config_type_raw
         else:
             config_type_val = config_type
@@ -280,7 +277,7 @@ class FlextService[TDomainResult](
         # config_overrides: TypedDict typed as Mapping[str, FlexibleValue]
         config_overrides_val = options.get("config_overrides")
 
-        # context: TypedDict typed as ContextLike - narrow to p.Ctx using isinstance
+        # context: TypedDict typed as ContextLike - narrow to "p.Ctx" using isinstance
         context_val_raw = options.get("context")
         context_val: p.Ctx | None = (
             context_val_raw if isinstance(context_val_raw, p.Ctx) else None
@@ -364,9 +361,9 @@ class FlextService[TDomainResult](
         container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
     ) -> m.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
-        config: FlextSettings = require_initialized(self._config, "Config")
-        ctx: p.Ctx = require_initialized(self._context, "Context")
-        container: p.DI = require_initialized(self._container, "Container")
+        config: FlextSettings = u.require_initialized(self._config, "Config")
+        ctx: p.Ctx = u.require_initialized(self._context, "Context")
+        container: p.DI = u.require_initialized(self._container, "Container")
         cloned_config = config.model_copy(
             update=config_overrides or {},
             deep=True,
@@ -393,22 +390,22 @@ class FlextService[TDomainResult](
         self,
     ) -> m.ServiceRuntime:  # pragma: no cover - trivial access
         """View of the runtime triple for this service instance."""
-        return require_initialized(self._runtime, "Runtime")
+        return u.require_initialized(self._runtime, "Runtime")
 
     @property
     def context(self) -> p.Ctx:
         """Service-scoped execution context."""
-        return require_initialized(self._context, "Context")
+        return u.require_initialized(self._context, "Context")
 
     @property
     def config(self) -> FlextSettings:
         """Service-scoped configuration clone."""
-        return require_initialized(self._config, "Config")
+        return u.require_initialized(self._config, "Config")
 
     @property
     def container(self) -> p.DI:
         """Container bound to the service context/config."""
-        return require_initialized(self._container, "Container")
+        return u.require_initialized(self._container, "Container")
 
     @abstractmethod
     def execute(self) -> r[TDomainResult]:

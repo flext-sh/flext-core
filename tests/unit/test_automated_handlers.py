@@ -9,7 +9,9 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextHandlers, r
+from flext_core.typings import t
 from tests.conftest import test_framework
+from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -55,7 +57,7 @@ class TestAutomatedFlextHandlers:
         ids=lambda case: case["description"],
     )
     def test_automated_handlers_comprehensive_scenarios(
-        self, test_scenario: dict[str, object]
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for handlers functionality."""
         try:
@@ -143,8 +145,8 @@ class TestAutomatedFlextHandlers:
                 )
 
     def _execute_handlers_operation(
-        self, instance: object, input_data: dict[str, object]
-    ) -> r.FlextResult[object]:
+        self, instance: object, input_data: dict[str, t.GeneralValueType]
+    ) -> r[object]:
         """Execute a test operation on handlers instance.
 
         Tests FlextHandlers class methods and utilities.

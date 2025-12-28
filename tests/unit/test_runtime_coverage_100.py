@@ -27,7 +27,7 @@ class TestRuntimeDictLike:
 
         # Create object that has keys/items/get but items() raises AttributeError
         class BadDictLike:
-            def keys(self) -> list[object]:
+            def keys(self) -> list[t.GeneralValueType]:
                 return []
 
             def items(self) -> Never:
@@ -48,7 +48,7 @@ class TestRuntimeDictLike:
 
         # Create object that has keys/items/get but items() raises TypeError
         class BadDictLike:
-            def keys(self) -> list[object]:
+            def keys(self) -> list[t.GeneralValueType]:
                 return []
 
             def items(self) -> Never:
@@ -86,7 +86,7 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing keys attribute."""
 
         class NotDictLike:
-            def items(self) -> list[object]:
+            def items(self) -> list[t.GeneralValueType]:
                 return []
 
             def get(self, key: object) -> object:
@@ -102,7 +102,7 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing items attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[object]:
+            def keys(self) -> list[t.GeneralValueType]:
                 return []
 
             def get(self, key: object) -> object:
@@ -118,7 +118,7 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing get attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[object]:
+            def keys(self) -> list[t.GeneralValueType]:
                 return []
 
             def items(self) -> list[tuple[object, object]]:
@@ -218,14 +218,14 @@ class TestRuntimeTypeChecking:
         class Config:
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = False
-            additional_processors: ClassVar[list[object]] = []
+            additional_processors: ClassVar[list[t.GeneralValueType]] = []
             wrapper_class_factory: ClassVar[object | None] = None
             logger_factory: ClassVar[object | None] = None
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
         # Convert Config object to Mapping for type compatibility
-        # Convert list[object] to Sequence[t.GeneralValueType] for type compatibility
+        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
         additional_processors_typed: Sequence[t.GeneralValueType] = (
             cast("Sequence[t.GeneralValueType]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)
@@ -370,22 +370,22 @@ class TestRuntimeTypeChecking:
         def custom_processor(
             logger: object,
             method_name: str,
-            event_dict: dict[str, object],
-        ) -> dict[str, object]:
+            event_dict: dict[str, t.GeneralValueType],
+        ) -> dict[str, t.GeneralValueType]:
             event_dict["custom"] = True
             return event_dict
 
         class Config:
             log_level: ClassVar[int] = logging.DEBUG
             console_renderer: ClassVar[bool] = True
-            additional_processors: ClassVar[list[object]] = [custom_processor]
+            additional_processors: ClassVar[list[t.GeneralValueType]] = [custom_processor]
             wrapper_class_factory: ClassVar[object | None] = None
             logger_factory: ClassVar[object | None] = None
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
         # Convert Config object to Mapping for type compatibility
-        # Convert list[object] to Sequence[t.GeneralValueType] for type compatibility
+        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
         additional_processors_typed: Sequence[t.GeneralValueType] = (
             cast("Sequence[t.GeneralValueType]", config.additional_processors)
             if isinstance(config.additional_processors, Sequence)

@@ -21,7 +21,7 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import (
+from flext_core import FlextTypes as t, (
     FlextExceptions,
     FlextResult,
     c,
@@ -61,7 +61,7 @@ class HandlerConfigScenario:
     handler_mode: str | None = None
     command_timeout: int | None = None
     max_command_retries: int | None = None
-    metadata: dict[str, object] | None = None
+    metadata: dict[str, t.GeneralValueType] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -260,13 +260,13 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        """Test _run_pipeline with dict[str, object] message having command_id."""
+        """Test _run_pipeline with dict[str, t.GeneralValueType] message having command_id."""
 
-        class DictHandler(h[dict[str, object], str]):
+        class DictHandler(h[dict[str, t.GeneralValueType], str]):
             def __init__(self, config: m.CqrsHandler) -> None:
                 super().__init__(config=config)
 
-            def handle(self, message: dict[str, object]) -> FlextResult[str]:
+            def handle(self, message: dict[str, t.GeneralValueType]) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed_{message}")
 
         config_raw = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
@@ -278,7 +278,7 @@ class TestFlextHandlers:
         # Cast to m.CqrsHandler for type compatibility
         config = cast("m.CqrsHandler", config_raw)
         handler = DictHandler(config=config)
-        dict_message: dict[str, object] = {"command_id": "cmd_123", "data": "test_data"}
+        dict_message: dict[str, t.GeneralValueType] = {"command_id": "cmd_123", "data": "test_data"}
         result = handler._run_pipeline(dict_message, operation="command")
         u.Tests.Result.assert_result_success(result)
 
@@ -588,7 +588,7 @@ class TestFlextHandlers:
         )
         handler = ConcreteTestHandler(config=config)
         context = {"user_id": "123", "operation": "test"}
-        # Convert dict[str, object] to dict[str, t.GeneralValueType]
+        # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
         context_typed: dict[str, t.GeneralValueType] = {
             k: cast("t.GeneralValueType", v) for k, v in context.items()
         }

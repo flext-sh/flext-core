@@ -47,7 +47,7 @@ from flext_tests import u
 
 
 # Test models using FlextModelsEntity base
-class PydanticModelForTest(m.Value):
+class PydanticModelForTest(m.ValueObject):
     """Test Pydantic model for normalization."""
 
     name: str
@@ -124,7 +124,7 @@ class TestuValidation:
         """Test validate_pipeline with non-callable validator."""
         # Type narrowing: validate_pipeline expects list[Callable] but we test with str
         # This tests runtime error handling - mypy will complain but runtime works
-        non_callable_validators: list[object] = ["not callable"]
+        non_callable_validators: list[t.GeneralValueType] = ["not callable"]
         result = u.Validation.validate_pipeline(
             "test",
             cast("list[Callable[[str], r[bool]]]", non_callable_validators),

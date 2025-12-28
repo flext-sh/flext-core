@@ -67,7 +67,7 @@ class TestPhase2FinalCoveragePush:
     def test_flext_result_chaining_operations(self) -> None:
         """Test FlextResult chaining with multiple operations."""
         result = FlextResult[str].ok("hello").map(str.upper).map(lambda x: f"{x}!")
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "HELLO!"
 
     def test_flext_result_flat_map_chaining(self) -> None:
@@ -84,7 +84,7 @@ class TestPhase2FinalCoveragePush:
         result = (
             FlextResult[str].ok("hi").flat_map(double_string).flat_map(double_string)
         )
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "hihihihi"
 
     def test_flext_result_error_propagation(self) -> None:
@@ -101,7 +101,7 @@ class TestPhase2FinalCoveragePush:
             return v
 
         result = FlextResult[str].ok("input").flat_map(failing_op).map(upper_func)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "operation failed"
 
     def test_config_with_all_field_types(self) -> None:

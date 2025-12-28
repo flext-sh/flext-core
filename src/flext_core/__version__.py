@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from importlib.metadata import PackageMetadata, PackageNotFoundError, metadata
 
-from flext_core.typings import t
-
 
 class FlextVersion:
     """Package version and metadata information.
@@ -95,7 +93,7 @@ class FlextVersion:
         return cls.__version_info__ >= (major, minor, patch)
 
     @classmethod
-    def get_package_info(cls) -> t.StringDict:
+    def get_package_info(cls) -> dict[str, str]:
         """Get comprehensive package information dictionary.
 
         Returns all available package metadata in a structured dictionary

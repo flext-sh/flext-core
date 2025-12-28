@@ -428,7 +428,7 @@ class TestFlextContext:
         global_data = exported.get("global")
         new_context = FlextContext()
         if global_data is not None and isinstance(global_data, dict):
-            # Convert dict[str, object] to dict[str, t.GeneralValueType]
+            # Convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
             converted_global: dict[str, t.GeneralValueType] = {
                 str(k): v
                 if isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -906,7 +906,7 @@ class TestFlextContext:
     def test_context_import_data(self, test_context: FlextContext) -> None:
         """Test importing data into context."""
         context = test_context
-        # Type narrowing: convert dict[str, object] to dict[str, t.GeneralValueType]
+        # Type narrowing: convert dict[str, t.GeneralValueType] to dict[str, t.GeneralValueType]
         data_to_import: dict[str, t.GeneralValueType] = {
             "key1": "value1",
             "key2": "value2",

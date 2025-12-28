@@ -32,8 +32,8 @@ class ExceptionCreationScenario:
     name: str
     exception_type: type[FlextExceptions.BaseError]
     message: str
-    kwargs: dict[str, object]
-    expected_attrs: dict[str, object]
+    kwargs: dict[str, t.GeneralValueType]
+    expected_attrs: dict[str, t.GeneralValueType]
 
 
 class ExceptionScenarios:
@@ -159,7 +159,7 @@ class ExceptionScenarios:
     ]
 
     FACTORY_CREATION: ClassVar[
-        list[tuple[str, dict[str, object], type[FlextExceptions.BaseError]]]
+        list[tuple[str, dict[str, t.GeneralValueType], type[FlextExceptions.BaseError]]]
     ] = [
         (
             "ValidationError",
@@ -196,7 +196,7 @@ class TestFlextExceptionsHierarchy:
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
-            # Convert dict[str, object] to dict[str, MetadataAttributeValue]
+            # Convert dict[str, t.GeneralValueType] to dict[str, MetadataAttributeValue]
             # Separate type values from metadata values for proper type handling
             type_kwargs: dict[str, type] = {}
             metadata_kwargs: dict[str, t.MetadataAttributeValue] = {}
@@ -265,11 +265,11 @@ class TestExceptionIntegration:
         """Test exception handling in railway pattern."""
 
         def validate_and_process(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: dict[str, t.GeneralValueType],
+        ) -> FlextResult[dict[str, t.GeneralValueType]]:
             if not data.get("id"):
-                return FlextResult[dict[str, object]].fail("Missing id")
-            return FlextResult[dict[str, object]].ok(data)
+                return FlextResult[dict[str, t.GeneralValueType]].fail("Missing id")
+            return FlextResult[dict[str, t.GeneralValueType]].ok(data)
 
         assert validate_and_process({}).is_failure
         assert validate_and_process({"id": "123"}).is_success
@@ -457,11 +457,11 @@ class TestExceptionFactory:
     def test_create_error_auto_detection(
         self,
         message: str,
-        kwargs: dict[str, object],
+        kwargs: dict[str, t.GeneralValueType],
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
         """Test smart error type detection in create()."""
-        # Convert dict[str, object] to dict[str, MetadataAttributeValue]
+        # Convert dict[str, t.GeneralValueType] to dict[str, MetadataAttributeValue]
         converted_kwargs: dict[str, t.MetadataAttributeValue] = {}
         for key, value in kwargs.items():
             # Type narrowing: ensure value is t.GeneralValueType before normalization

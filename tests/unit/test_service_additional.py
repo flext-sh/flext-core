@@ -1,6 +1,7 @@
 """Additional coverage for flext_core.service using real executions."""
 
 from __future__ import annotations
+from flext_core.typings import t
 
 from collections.abc import Mapping
 from typing import cast

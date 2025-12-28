@@ -76,7 +76,7 @@ class TimeoutEnforcer:
             )
         return self._executor
 
-    def get_executor_status(self) -> t.ConfigurationDict:
+    def get_executor_status(self) -> dict[str, t.GeneralValueType]:
         """Return executor status metadata for diagnostics and metrics.
 
         Returns:

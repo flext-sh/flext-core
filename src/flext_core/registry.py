@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Iterable, Mapping
-from typing import Annotated, ClassVar, Self, cast
+from typing import Annotated, ClassVar, Self
 
 from pydantic import Field, PrivateAttr, computed_field
 
@@ -27,6 +27,9 @@ from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
 from flext_core.typings import t
 from flext_core.utilities import u
+
+# Use centralized version from utilities
+_to_general_value_type = u.Cast.to_general_value_type
 
 
 class FlextRegistry(FlextService[bool]):
@@ -413,7 +416,7 @@ class FlextRegistry(FlextService[bool]):
             handler_name=handler_name,
             handler_key=key,
         )
-        # register_handler returns r[t.ConfigurationDict]
+        # register_handler returns r[dict[str, t.GeneralValueType]]
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
         registration = self._dispatcher.register_handler(
@@ -732,12 +735,10 @@ class FlextRegistry(FlextService[bool]):
                 f"Failed to retrieve {category} '{name}': {raw_result.error}",
             )
         # container.get() returns r[p.RegisterableService]
-        # Use TypeGuard to narrow to GeneralValueType
+        # Convert value to GeneralValueType using helper function
         plugin_value = raw_result.value
-        if u.is_general_value_type(plugin_value):
-            return r[t.GeneralValueType].ok(plugin_value)
-        # If not a GeneralValueType, convert to string representation
-        return r[t.GeneralValueType].ok(str(plugin_value))
+        general_value: t.GeneralValueType = _to_general_value_type(plugin_value)
+        return r[t.GeneralValueType].ok(general_value)
 
     def list_plugins(self, category: str) -> r[list[str]]:
         """List all plugins in a category.
@@ -947,7 +948,9 @@ class FlextRegistry(FlextService[bool]):
             # Type narrowing: validated_metadata is Mapping after isinstance check
             # Log metadata with service name for observability
             # Convert Mapping to dict for logging
-            metadata_dict: dict[str, t.GeneralValueType] = dict(validated_metadata.items())
+            metadata_dict: dict[str, t.GeneralValueType] = dict(
+                validated_metadata.items(),
+            )
             metadata_keys: list[str] = list(metadata_dict.keys())
             self.logger.debug(
                 "Registering service with metadata",

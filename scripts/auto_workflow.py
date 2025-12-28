@@ -211,6 +211,7 @@ def main() -> None:
     args = parser.parse_args()
 
     workflow = AutoWorkflow(args.project_root)
+    success = False  # Initialize to ensure it's always defined
 
     if args.action == "validate":
         success = workflow.validate_code()

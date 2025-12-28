@@ -21,9 +21,8 @@ import contextlib
 import json
 import socket
 import time
-from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import docker
 from docker import DockerClient
@@ -36,6 +35,9 @@ from flext_core.loggings import FlextLogger
 from flext_core.result import r
 from flext_tests.constants import ContainerStatus, c
 from flext_tests.models import m
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 from flext_tests.typings import t
 
 logger: FlextLogger = FlextLogger(__name__)
@@ -249,7 +251,7 @@ class FlextTestsDocker:
             client = self.get_client()
             container = client.containers.get(container_name)
             ports_raw = getattr(container, "ports", {}) or {}
-            ports: t.StringDict = {}
+            ports: dict[str, str] = {}
             for k, v in ports_raw.items():
                 if v:
                     ports[str(k)] = str(v[0].get("HostPort", "")) if v else ""

@@ -18,9 +18,9 @@ from flext_core import (
     FlextContainer,
     FlextExceptions,
     FlextResult,
-    t,
     u,
 )
+from flext_core.typings import t
 
 
 class TestCompleteFlextSystemIntegration:

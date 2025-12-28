@@ -67,7 +67,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def from_kwargs[M: BaseModel](
         model_cls: type[M],
-        **kwargs: t.GeneralValueType,
+        **kwargs: object,
     ) -> r[M]:
         """Create Pydantic model from kwargs with r.
 
@@ -230,7 +230,7 @@ class FlextUtilitiesModel:
         exclude_defaults: bool = False,
         include: set[str] | None = None,
         exclude: set[str] | None = None,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.

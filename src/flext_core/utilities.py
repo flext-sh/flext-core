@@ -177,6 +177,10 @@ class FlextUtilities:
     map = staticmethod(FlextUtilitiesCollection.map)
     merge = staticmethod(FlextUtilitiesCollection.merge)
     mul = staticmethod(FlextUtilitiesCollection.mul)
+    extract_mapping_items = staticmethod(FlextUtilitiesCollection.extract_mapping_items)
+    extract_callable_mapping = staticmethod(
+        FlextUtilitiesCollection.extract_callable_mapping,
+    )
     parse_mapping = staticmethod(FlextUtilitiesCollection.parse_mapping)
     parse_sequence = staticmethod(FlextUtilitiesCollection.parse_sequence)
     partition = staticmethod(FlextUtilitiesCollection.partition)
@@ -220,6 +224,8 @@ class FlextUtilities:
     normalize = staticmethod(FlextUtilitiesConversion.normalize)
     to_str = staticmethod(FlextUtilitiesConversion.to_str)
     to_str_list = staticmethod(FlextUtilitiesConversion.to_str_list)
+    to_general_value_type = staticmethod(FlextUtilitiesConversion.to_general_value_type)
+    to_flexible_value = staticmethod(FlextUtilitiesConversion.to_flexible_value)
 
     # Deprecation
     deprecated = staticmethod(FlextUtilitiesDeprecation.deprecated)
@@ -497,6 +503,7 @@ class FlextUtilities:
     val = staticmethod(FlextUtilitiesValidation.ResultHelpers.val)
     vals = staticmethod(FlextUtilitiesValidation.ResultHelpers.vals)
     vals_sequence = staticmethod(FlextUtilitiesValidation.ResultHelpers.vals_sequence)
+    require_initialized = staticmethod(FlextUtilitiesValidation.require_initialized)
 
     # Mapper reference
     mapper = FlextUtilitiesMapper

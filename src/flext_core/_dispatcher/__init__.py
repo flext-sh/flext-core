@@ -16,7 +16,7 @@ from flext_core._dispatcher.reliability import (
     RetryPolicy,
 )
 from flext_core._dispatcher.timeout import TimeoutEnforcer
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, t
 
 # Import DispatcherConfig from the correct location in typings
 DispatcherConfig = FlextTypes.Dispatcher.DispatcherConfig
@@ -27,4 +27,5 @@ __all__ = [
     "RateLimiterManager",
     "RetryPolicy",
     "TimeoutEnforcer",
+    "t",
 ]

@@ -18,8 +18,7 @@ from collections.abc import Callable, Generator, Mapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
-
-from pydantic import BaseModel
+from typing import TYPE_CHECKING
 
 from flext_core import (
     FlextContext,
@@ -32,10 +31,14 @@ from flext_core import (
     r,
     t,
 )
-from flext_core._models.base import FlextModelsBase
 from flext_core.utilities import u as u_core
 from flext_tests.constants import c
 from flext_tests.models import m
+
+if TYPE_CHECKING:
+    from pydantic import BaseModel
+
+    from flext_core._models.base import FlextModelsBase
 
 # Type alias for model factory methods
 ModelFactory = Callable[..., T]
@@ -254,7 +257,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_test_data(
                 **kwargs: t.GeneralValueType,
-            ) -> t.ConfigurationDict:
+            ) -> dict[str, t.GeneralValueType]:
                 """Create test data dictionary.
 
                 Args:
@@ -363,7 +366,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_user_service(
-                overrides: t.ConfigurationDict,
+                overrides: dict[str, t.GeneralValueType],
             ) -> r[t.GeneralValueType]:
                 """Execute user service operation.
 
@@ -451,14 +454,14 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_success[TResult](
-                result: p.Result[TResult],
+                result: r[TResult] | p.Result[TResult],
             ) -> None:
                 """Assert result is success - compatibility method."""
                 _ = FlextTestsUtilities.Tests.Result.assert_success(result)
 
             @staticmethod
             def assert_result_failure[TResult](
-                result: p.Result[TResult],
+                result: r[TResult] | p.Result[TResult],
             ) -> None:
                 """Assert result is failure - compatibility method."""
                 _ = FlextTestsUtilities.Tests.Result.assert_failure(result)
@@ -870,7 +873,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_config(
-                **kwargs: t.GeneralValueType,
+                **kwargs: t.FlexibleValue,
             ) -> FlextSettings:
                 """Create a test config instance.
 
@@ -906,7 +909,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def env_vars_context(
-                env_vars: t.ConfigurationDict,
+                env_vars: dict[str, t.GeneralValueType],
                 vars_to_clear: list[str] | None = None,
             ) -> Generator[None]:
                 """Context manager for temporary environment variable changes.
@@ -1182,10 +1185,10 @@ class FlextTestsUtilities(FlextUtilities):
             def create_operation_test_case(
                 operation: str,
                 description: str,
-                input_data: t.ConfigurationDict,
+                input_data: dict[str, t.GeneralValueType],
                 expected_result: t.GeneralValueType,
                 **kwargs: t.GeneralValueType,
-            ) -> t.ConfigurationDict:
+            ) -> dict[str, t.GeneralValueType]:
                 """Create a test case dict for operation testing.
 
                 Args:
@@ -1200,7 +1203,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Test case dictionary
 
                 """
-                result: t.ConfigurationDict = {
+                result: dict[str, t.GeneralValueType] = {
                     "operation": operation,
                     "description": description,
                     "input_data": input_data,
@@ -1213,10 +1216,10 @@ class FlextTestsUtilities(FlextUtilities):
             def create_batch_operation_test_cases(
                 operation: str,
                 descriptions: list[str],
-                input_data_list: list[t.ConfigurationDict],
+                input_data_list: list[dict[str, t.GeneralValueType]],
                 expected_results: list[t.GeneralValueType],
                 **common_kwargs: t.GeneralValueType,
-            ) -> list[t.ConfigurationDict]:
+            ) -> list[dict[str, t.GeneralValueType]]:
                 """Create batch test cases for operation testing.
 
                 Args:
@@ -1231,7 +1234,7 @@ class FlextTestsUtilities(FlextUtilities):
                     List of test case dictionaries
 
                 """
-                cases: list[t.ConfigurationDict] = []
+                cases: list[dict[str, t.GeneralValueType]] = []
                 for desc, data, expected in zip(
                     descriptions,
                     input_data_list,
@@ -1252,7 +1255,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_and_assert_operation_result(
                 operation: Callable[[], t.GeneralValueType],
-                test_case: t.ConfigurationDict,
+                test_case: dict[str, t.GeneralValueType],
             ) -> None:
                 """Execute operation and assert result.
 
@@ -1393,7 +1396,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_domain_operation(
                 operation: str,
-                input_data: t.ConfigurationDict,
+                input_data: dict[str, t.GeneralValueType],
                 **kwargs: t.GeneralValueType,
             ) -> object:
                 """Execute a domain utility operation.
@@ -1422,8 +1425,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_metadata_object(
-                attributes: t.ConfigurationDict,
-            ) -> t.ConfigurationDict:
+                attributes: dict[str, t.GeneralValueType],
+            ) -> dict[str, t.GeneralValueType]:
                 """Create a metadata object for exceptions.
 
                 Args:
@@ -1442,7 +1445,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_mapper_operation(
                 operation: str,
-                input_data: t.ConfigurationDict,
+                input_data: dict[str, t.GeneralValueType],
                 **kwargs: t.GeneralValueType,
             ) -> r[object]:
                 """Execute a mapper utility operation.
@@ -1476,7 +1479,7 @@ class FlextTestsUtilities(FlextUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                def model_dump(self) -> t.ConfigurationDict:
+                def model_dump(self) -> dict[str, t.GeneralValueType]:
                     """Raise error on model_dump."""
                     msg = "Bad model_dump"
                     raise RuntimeError(msg)

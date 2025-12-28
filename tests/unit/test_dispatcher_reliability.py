@@ -1,6 +1,7 @@
 """Real reliability tests for dispatcher helpers (no mocks)."""
 
 from __future__ import annotations
+from flext_core.typings import t
 
 import time
 

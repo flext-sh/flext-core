@@ -566,7 +566,9 @@ class GenericModelFactory:
         return FlextModels.Value.LdapEntryAttributes(attributes=attrs)
 
     @staticmethod
-    def operation_context(source: str | None = None) -> FlextModels.Value.OperationContext:
+    def operation_context(
+        source: str | None = None,
+    ) -> FlextModels.Value.OperationContext:
         """Create OperationContext value object."""
         return FlextModels.Value.OperationContext(source=source)
 

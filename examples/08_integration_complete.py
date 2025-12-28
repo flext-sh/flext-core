@@ -149,7 +149,7 @@ class IntegrationService(s[t.ServiceMetadataMapping]):
         ) = logger
         _ = container.register("logger", logger_typed)
 
-        logger_result: FlextResult[FlextLogger] = container.get("logger")
+        logger_result: FlextResult[t.GeneralValueType] = container.get("logger")
         if logger_result.is_success:
             print("✅ Container service resolution")
 

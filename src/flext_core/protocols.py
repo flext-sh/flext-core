@@ -1102,7 +1102,7 @@ class FlextProtocols:
         class CallableWithHints(Protocol):
             """Protocol for callables that support type hints introspection."""
 
-            __annotations__: t.ConfigurationDict
+            __annotations__: dict[str, t.GeneralValueType]
 
     # =========================================================================
     # TYPE ALIASES FOR UTILITIES
@@ -1112,9 +1112,8 @@ class FlextProtocols:
     # Supports: ConfigurationDict (GeneralValueType), JsonValue dicts, and object dicts
     # NOTE: Explicit dict types needed because pyright treats dict as invariant
     type AccessibleData = (
-        t.ConfigurationDict
+        dict[str, t.GeneralValueType]
         | dict[str, t.JsonValue]
-        | dict[str, t.GeneralValueType]
         | t.ConfigurationMapping
         | Mapping[str, t.JsonValue]
         | Mapping[str, t.GeneralValueType]

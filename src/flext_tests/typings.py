@@ -1,6 +1,6 @@
 """Type system foundation for FLEXT tests.
 
-Provides FlextTestsTypes, extending FlextTypes with test-specific type definitions
+Provides FlextTestsTypes, extending FlextTypes as t with test-specific type definitions
 for Docker operations, container management, and test infrastructure.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -40,13 +40,6 @@ class FlextTestsTypes(FlextTypes):
     This class serves as a library of support and base for all tests in the FLEXT
     workspace projects, without being directed to any specific project.
     """
-
-    class Core:
-        """Base namespace for project-specific test types.
-
-        Subprojects extend this to add project-specific test types.
-        Example: TestsFlextTypes.Core extends FlextTestsTypes.Core in flext-core tests.
-        """
 
     class Tests:
         """Test-specific type definitions namespace.
@@ -288,43 +281,47 @@ class FlextTestsTypes(FlextTypes):
 
             Provides centralized types for FlextTestsBuilders following FLEXT patterns.
             Use t.Tests.Builders.* for access.
+
+            Uses t.GeneralValueType as base since it already handles nested structures
+            through Sequence[GeneralValueType] and Mapping[str, GeneralValueType].
+            FlextResult types are added on top for builder-specific needs.
             """
 
-            type BuilderValue = (
-                t.GeneralValueType
-                | BaseModel
-                | r[t.GeneralValueType]
-                | list[t.GeneralValueType]
-                | dict[str, t.GeneralValueType]
-            )
-            """Type for values that can be added to builder."""
+            # Builder value - GeneralValueType only (builders build DATA, not results)
+            # FlextResult is returned by to_result(), not stored in builder
+            type BuilderValue = t.GeneralValueType
+            """Type for values stored in builder."""
 
-            type BuilderDict = dict[str, FlextTestsTypes.Tests.Builders.BuilderValue]
+            # Builder dict - stores GeneralValueType values
+            type BuilderDict = dict[str, t.GeneralValueType]
             """Type for builder internal data structure."""
+
+            # Builder output value - includes FlextResult for batch result conversion
+            type BuilderOutputValue = (
+                t.GeneralValueType
+                | r[t.GeneralValueType]
+                | list[t.GeneralValueType | r[t.GeneralValueType]]
+            )
+            """Type for values in builder output after batch result processing."""
+
+            # Builder output dict - result of _process_batch_results
+            type BuilderOutputDict = dict[str, BuilderOutputValue]
+            """Type for builder output dict after batch result conversion."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
             type BuilderMapping = t.ConfigurationMapping
             """Type for builder mappings."""
 
-            type BuilderSequence = Sequence[FlextTestsTypes.Tests.Builders.BuilderValue]
+            type BuilderSequence = Sequence[t.GeneralValueType]
             """Type for builder sequences."""
 
-            type ParametrizedCase = tuple[
-                str,
-                FlextTestsTypes.Tests.Builders.BuilderDict,
-            ]
+            type ParametrizedCase = tuple[str, dict[str, t.GeneralValueType]]
             """Type for parametrized test cases (test_id, data)."""
 
-            type TransformFunc = Callable[
-                [FlextTestsTypes.Tests.Builders.BuilderValue],
-                FlextTestsTypes.Tests.Builders.BuilderValue,
-            ]
+            type TransformFunc = Callable[[t.GeneralValueType], t.GeneralValueType]
             """Type for transformation functions."""
 
-            type ValidateFunc = Callable[
-                [FlextTestsTypes.Tests.Builders.BuilderValue],
-                bool,
-            ]
+            type ValidateFunc = Callable[[t.GeneralValueType], bool]
             """Type for validation functions."""
 
             type ResultBuilder[T] = Callable[[], r[T]]
@@ -579,18 +576,35 @@ class FlextTestsTypes(FlextTypes):
         @staticmethod
         def is_builder_value(
             value: object,
-        ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderValue]:
-            """Check if value is a valid BuilderValue."""
+        ) -> TypeGuard[t.GeneralValueType]:
+            """Check if value is a valid BuilderValue (GeneralValueType)."""
             if value is None:
                 return True
             if isinstance(value, (str, int, float, bool, bytes)):
                 return True
             if isinstance(value, BaseModel):
                 return True
-            if isinstance(value, (list, dict)):
+            return isinstance(value, (list, dict))
+
+        @staticmethod
+        def is_flext_result(
+            value: object,
+        ) -> TypeGuard[r[t.GeneralValueType]]:
+            """Check if value is a FlextResult."""
+            return isinstance(value, r)
+
+        @staticmethod
+        def is_general_value(
+            value: object,
+        ) -> TypeGuard[t.GeneralValueType]:
+            """Check if value is GeneralValueType."""
+            if value is None:
                 return True
-            # Check for FlextResult pattern (has is_success attribute)
-            return hasattr(value, "is_success") and hasattr(value, "value")
+            if isinstance(value, (str, int, float, bool, bytes)):
+                return True
+            if isinstance(value, BaseModel):
+                return True
+            return isinstance(value, (list, dict))
 
         @staticmethod
         def is_sequence(
@@ -598,7 +612,8 @@ class FlextTestsTypes(FlextTypes):
         ) -> TypeGuard[Sequence[t.GeneralValueType]]:
             """Check if value is a Sequence of GeneralValueType."""
             return isinstance(value, (list, tuple)) and not isinstance(
-                value, (str, bytes),
+                value,
+                (str, bytes),
             )
 
         @staticmethod
@@ -638,7 +653,7 @@ class FlextTestsTypes(FlextTypes):
         @staticmethod
         def is_configuration_dict(
             value: object,
-        ) -> TypeGuard[t.ConfigurationDict]:
+        ) -> TypeGuard[dict[str, t.GeneralValueType]]:
             """Check if value is a ConfigurationDict."""
             return isinstance(value, dict) and all(isinstance(k, str) for k in value)
 

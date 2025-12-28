@@ -1,6 +1,7 @@
 """Minimal dispatcher flow coverage with real handlers (no mocks)."""
 
 from __future__ import annotations
+from flext_core.typings import t
 
 from collections.abc import Callable
 from dataclasses import dataclass

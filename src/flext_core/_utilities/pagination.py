@@ -14,11 +14,15 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T, t
+
+# Use centralized version from cast.py
+_to_general_value_type = FlextUtilitiesCast.to_general_value_type
 
 
 class FlextUtilitiesPagination:
@@ -31,7 +35,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def extract_page_params(
-        query_params: t.StringDict,
+        query_params: dict[str, str],
         *,
         default_page: int = 1,
         default_page_size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE,
@@ -79,7 +83,7 @@ class FlextUtilitiesPagination:
         page: int,
         page_size: int | None,
         max_page_size: int,
-    ) -> r[t.StringIntDict]:
+    ) -> r[dict[str, int]]:
         """Validate pagination parameters.
 
         Args:
@@ -110,7 +114,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> r[t.ConfigurationDict]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Prepare pagination data structure.
 
         Args:
@@ -132,7 +136,7 @@ class FlextUtilitiesPagination:
 
         # Ensure page is within bounds
         if page > total_pages > 0:
-            return r[t.ConfigurationDict].fail(
+            return r[dict[str, t.GeneralValueType]].fail(
                 f"Page {page} exceeds total pages {total_pages}",
             )
 
@@ -140,10 +144,14 @@ class FlextUtilitiesPagination:
         has_prev = page > 1
 
         # Convert Sequence[T] to t.GeneralValueType-compatible list
-        # normalize_to_general_value accepts object, so no cast needed
-        data_list = [FlextRuntime.normalize_to_general_value(item) for item in data]
+        # First convert T to GeneralValueType, then normalize recursively
+        data_list: list[t.GeneralValueType] = []
+        for item in data:
+            general_value = _to_general_value_type(item)
+            normalized = FlextRuntime.normalize_to_general_value(general_value)
+            data_list.append(normalized)
 
-        return r[t.ConfigurationDict].ok({
+        return r[dict[str, t.GeneralValueType]].ok({
             "data": data_list,
             "pagination": {
                 "page": page,
@@ -157,9 +165,9 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: t.ConfigurationDict,
+        pagination_data: dict[str, t.GeneralValueType],
         message: str | None = None,
-    ) -> r[t.ConfigurationDict]:
+    ) -> r[dict[str, t.GeneralValueType]]:
         """Build paginated response dictionary.
 
         Args:
@@ -174,7 +182,7 @@ class FlextUtilitiesPagination:
         pagination = pagination_data.get("pagination")
 
         if data is None or pagination is None:
-            return r[t.ConfigurationDict].fail(
+            return r[dict[str, t.GeneralValueType]].fail(
                 "Invalid pagination data structure",
             )
 
@@ -198,7 +206,7 @@ class FlextUtilitiesPagination:
         else:
             pagination_typed = str(pagination)
 
-        response: t.ConfigurationDict = {
+        response: dict[str, t.GeneralValueType] = {
             "data": data_typed,
             "pagination": pagination_typed,
         }
@@ -206,12 +214,12 @@ class FlextUtilitiesPagination:
         if message is not None:
             response["message"] = message
 
-        return r[t.ConfigurationDict].ok(response)
+        return r[dict[str, t.GeneralValueType]].ok(response)
 
     @staticmethod
     def extract_pagination_config(
         config: t.GeneralValueType | None,
-    ) -> t.StringIntDict:
+    ) -> dict[str, int]:
         """Extract pagination configuration values - no fallbacks.
 
         Args:

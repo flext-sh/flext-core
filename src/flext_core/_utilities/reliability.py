@@ -217,7 +217,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def calculate_delay(
         attempt: int,
-        config: t.ConfigurationDict | None,
+        config: dict[str, t.GeneralValueType] | None,
     ) -> float:
         """Calculate delay for retry attempt using configuration.
 
@@ -230,7 +230,7 @@ class FlextUtilitiesReliability:
 
         """
         # Extract configuration values safely with proper type conversion
-        # config is t.ConfigurationDict | None, use dict.get() instead of getattr()
+        # config is dict[str, t.GeneralValueType] | None, use dict.get() instead of getattr()
         if config is None:
             config = {}
         # Type narrowing: ensure values are numeric before conversion
@@ -427,7 +427,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def flow(
         value: object,
-        *ops: t.ConfigurationDict | Callable[[object], object],
+        *ops: dict[str, t.GeneralValueType] | Callable[[object], object],
     ) -> object:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
@@ -455,7 +455,7 @@ class FlextUtilitiesReliability:
             if isinstance(op, dict):
                 # Type narrowing: op is dict, isinstance provides type narrowing to ConfigurationDict
                 # build() expects GeneralValueType - check if current matches
-                op_dict: t.ConfigurationDict = op
+                op_dict: dict[str, t.GeneralValueType] = op
                 # Check if current is GeneralValueType compatible
                 if FlextUtilitiesReliability._is_general_value_type(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
@@ -663,6 +663,75 @@ class FlextUtilitiesReliability:
                 break
             current_result = func(current_result.value)
         return current_result
+
+    # ========================================================================
+    # Pattern Matching Methods (Functional Programming)
+    # ========================================================================
+
+    @staticmethod
+    def match(
+        value: object,
+        *cases: tuple[type[object] | object | Callable[[object], bool], object],
+        default: object | None = None,
+    ) -> object:
+        """Pattern match on a value with type, value, or predicate matching.
+
+        Supports three matching modes:
+        1. Type matching: `(str, lambda s: s.upper())` - match if isinstance(value, str)
+        2. Value matching: `("REDACTED_LDAP_BIND_PASSWORD", "is_REDACTED_LDAP_BIND_PASSWORD")` - match if value == "REDACTED_LDAP_BIND_PASSWORD"
+        3. Predicate matching: `(lambda x: x > 10, "big")` - match if predicate returns True
+
+        Args:
+            value: Value to match against
+            *cases: (pattern, result) tuples where pattern can be:
+                - A type (matches via isinstance)
+                - A value (matches via equality)
+                - A callable predicate (matches if returns True)
+            default: Default value/callable if no match (optional)
+
+        Returns:
+            The result from the first matching case, or default, or None
+
+        Example:
+            >>> u.Reliability.match(
+            ...     "REDACTED_LDAP_BIND_PASSWORD",
+            ...     (str, lambda s: s.upper()),  # type match
+            ...     ("REDACTED_LDAP_BIND_PASSWORD", "is_REDACTED_LDAP_BIND_PASSWORD"),  # value match
+            ...     default="unknown",
+            ... )
+            'ADMIN'
+
+            >>> u.Reliability.match(
+            ...     15,
+            ...     (lambda x: x > 10, "big"),  # predicate match
+            ...     (lambda x: x > 5, "medium"),
+            ...     default="small",
+            ... )
+            'big'
+
+        """
+        for pattern, result in cases:
+            # Type match - isinstance check
+            if isinstance(pattern, type) and isinstance(value, pattern):
+                return result(value) if callable(result) else result
+            # Value match - equality check
+            if pattern == value:
+                return result(value) if callable(result) else result
+            # Predicate match - callable that returns bool (exclude types)
+            if callable(pattern) and not isinstance(pattern, type):
+                try:
+                    pred_result = pattern(value)
+                    if isinstance(pred_result, bool) and pred_result:
+                        return result(value) if callable(result) else result
+                except (ValueError, TypeError, AttributeError):
+                    pass
+        # Default handling
+        if default is not None:
+            return default(value) if callable(default) else default
+        return None
+
+    # Mnemonic alias
+    mt = match
 
 
 __all__ = ["FlextUtilitiesReliability"]

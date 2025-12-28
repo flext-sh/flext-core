@@ -11,12 +11,14 @@ from __future__ import annotations
 
 import inspect
 import warnings
-from collections.abc import Callable, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, TypeGuard, TypeIs, overload
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.result import r
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 from flext_core.typings import t
 
 

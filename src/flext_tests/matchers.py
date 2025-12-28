@@ -58,7 +58,7 @@ import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 from pydantic import BaseModel
 
@@ -73,11 +73,7 @@ def _is_key_value_pair[TK, TV](
     item: tuple[TK, TV] | Sequence[tuple[TK, TV]],
 ) -> TypeGuard[tuple[TK, TV]]:
     """TypeGuard to check if item is a single (key, value) tuple, not a sequence of tuples."""
-    return (
-        isinstance(item, tuple)
-        and len(item) == 2
-        and not isinstance(item[0], tuple)
-    )
+    return isinstance(item, tuple) and len(item) == 2 and not isinstance(item[0], tuple)
 
 
 class FlextTestsMatchers:
@@ -122,7 +118,7 @@ class FlextTestsMatchers:
     def ok[TResult](
         result: r[TResult],
         **kwargs: t.GeneralValueType,
-    ) -> TResult:
+    ) -> TResult | t.GeneralValueType:
         """Enhanced assertion for FlextResult success with optional value validation.
 
         Uses Pydantic 2 models for parameter validation and computation.
@@ -276,7 +272,7 @@ class FlextTestsMatchers:
             else:
                 # Single item - wrap in list for uniform processing
                 has_item: object = has_value
-                # list[object] is already Sequence[object], no cast needed
+                # list[t.GeneralValueType] is already Sequence[object], no cast needed
                 has_items = [has_item]
             for item in has_items:
                 # Type narrowing: item is object from Sequence[object]
@@ -297,7 +293,7 @@ class FlextTestsMatchers:
             else:
                 # Single item - wrap in list for uniform processing
                 lacks_item: object = params.lacks
-                # list[object] is already Sequence[object], no cast needed
+                # list[t.GeneralValueType] is already Sequence[object], no cast needed
                 lacks_items = [lacks_item]
             for item in lacks_items:
                 if u.chk(result_value, contains=item):
@@ -375,10 +371,8 @@ class FlextTestsMatchers:
             # No path extraction - return original result.value (TResult)
             return result.value
         # Path extraction case - result_value is GeneralValueType
-        # Caller expects TResult but path extraction changes the type
-        # Return extracted value - type system sees TResult but runtime value is extracted
-        # Cast is intentional: caller requested path extraction and should expect extracted type
-        return cast("TResult", result_value)
+        # Return type is TResult | GeneralValueType to accurately reflect this
+        return result_value
 
     @staticmethod
     def fail[TResult](
@@ -576,7 +570,7 @@ class FlextTestsMatchers:
     @staticmethod
     def that(
         value: object,
-        **kwargs: t.GeneralValueType,
+        **kwargs: object,
     ) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
 
@@ -813,7 +807,7 @@ class FlextTestsMatchers:
             else:
                 # Single item - wrap in list for uniform processing
                 has_item: object = has_value
-                # list[object] is already Sequence[object], no cast needed
+                # list[t.GeneralValueType] is already Sequence[object], no cast needed
                 has_items = [has_item]
             for has_item_obj in has_items:
                 # Type narrowing: has_item_obj is object from Sequence[object]
@@ -836,7 +830,7 @@ class FlextTestsMatchers:
             else:
                 # Single item - wrap in list for uniform processing
                 lacks_item: object = params.lacks
-                # list[object] is already Sequence[object], no cast needed
+                # list[t.GeneralValueType] is already Sequence[object], no cast needed
                 lacks_items = [lacks_item]
             for lacks_item_obj in lacks_items:
                 lacks_item_val: object = lacks_item_obj
@@ -889,7 +883,7 @@ class FlextTestsMatchers:
         if isinstance(value, (list, tuple)):
             # Type narrowing: value is already narrowed to list | tuple by isinstance
             # No cast needed - isinstance already provides type narrowing
-            seq_value: list[object] | tuple[object, ...] = value
+            seq_value: list[t.GeneralValueType] | tuple[object, ...] = value
             if params.first is not None:
                 if not seq_value:
                     raise AssertionError(
@@ -1140,12 +1134,9 @@ class FlextTestsMatchers:
             )
 
     @staticmethod
-    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain:
+    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain[TResult]:
         """Start chained assertions on result (railway pattern)."""
-        # Chain expects r[t.GeneralValueType], TResult is compatible at runtime
-        # FlextResult[TResult] is covariant with FlextResult[t.GeneralValueType]
-        # No cast needed - generic type parameters are compatible
-        return m.Tests.Matcher.Chain(result=result)
+        return m.Tests.Matcher.Chain[TResult](result=result)
 
     # =========================================================================
     # NEW GENERALIST METHODS
@@ -1305,11 +1296,19 @@ class FlextTestsMatchers:
                 )
                 os.chdir(cwd_path)
 
-            # Create scope
-            cfg: t.ConfigurationDict = dict(params.config) if params.config else {}
+            # Create scope - use dict[str, t.GeneralValueType] to match TestScope field types
+            cfg: dict[str, t.GeneralValueType] = (
+                dict(params.config) if params.config else {}
+            )
+            # Filter container to GeneralValueType - services may be arbitrary objects
+            container_dict: dict[str, t.GeneralValueType] = {
+                k: v
+                for k, v in (params.container or {}).items()
+                if t.Guards.is_general_value(v)
+            }
             scope = m.Tests.Matcher.TestScope(
                 config=cfg,
-                container=dict(params.container or {}),
+                container=container_dict,
                 context=dict(params.context or {}),
             )
             yield scope
@@ -1429,7 +1428,8 @@ class FlextTestsMatchers:
                     raise AssertionError(msg or f"Key {key_item!r} not found in dict")
                 if data[key_item] != expected_item:
                     raise AssertionError(
-                        msg or f"Key '{key_item}': expected {expected_item}, got {data[key_item]}",
+                        msg
+                        or f"Key '{key_item}': expected {expected_item}, got {data[key_item]}",
                     )
             else:
                 # Sequence of tuples - validate each pair
@@ -1437,10 +1437,13 @@ class FlextTestsMatchers:
                     if isinstance(pair, tuple) and len(pair) == 2:
                         pair_key, pair_val = pair
                         if pair_key not in data:
-                            raise AssertionError(msg or f"Key {pair_key!r} not found in dict")
+                            raise AssertionError(
+                                msg or f"Key {pair_key!r} not found in dict",
+                            )
                         if data[pair_key] != pair_val:
                             raise AssertionError(
-                                msg or f"Key '{pair_key}': expected {pair_val}, got {data[pair_key]}",
+                                msg
+                                or f"Key '{pair_key}': expected {pair_val}, got {data[pair_key]}",
                             )
 
         if contains is not None:
@@ -1778,7 +1781,11 @@ class FlextTestsMatchers:
             AssertionError: If result is failure
 
         """
-        return FlextTestsMatchers.ok(result, msg=msg)
+        # Direct implementation to preserve exact TResult type
+        if not result.is_success:
+            error_msg = msg or f"Expected success but got failure: {result.error}"
+            raise AssertionError(error_msg)
+        return result.value
 
 
 tm = FlextTestsMatchers
