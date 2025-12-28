@@ -1543,9 +1543,13 @@ class FlextUtilitiesMapper:
         if not isinstance(convert_type, type):
             return current
         try:
-            # convert_type() returns Any, but we trust it produces GeneralValueType
-            result = convert_type(current)
-            return result if isinstance(result, (str, int, float, bool, type(None))) or hasattr(result, '__dict__') else str(result)
+            # convert_type() returns Any - validate and narrow result type
+            converted: t.GeneralValueType = convert_type(current)
+            # Ensure result is valid GeneralValueType
+            if isinstance(converted, (str, int, float, bool, type(None), dict, list, BaseModel, Path)):
+                return converted
+            # Fallback to string representation for unknown types
+            return str(converted)
         except (ValueError, TypeError):
             convert_default = ops.get("convert_default")
             if convert_default is not None:
