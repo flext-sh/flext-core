@@ -327,10 +327,10 @@ class SearchProductsQuery(m.Query):
 
 # DISABLED: model_rebuild() causes circular import issues with GeneralValueType
 # Models use arbitrary_types_allowed=True and work without rebuild
-# _cqrs_namespace = {"FlextModelsCqrs": m.Cqrs}
-# GetUserQuery.model_rebuild(_types_namespace=_cqrs_namespace)
-# ListAccountsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
-# SearchProductsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
+_cqrs_namespace = {"FlextModelsCqrs": m.Cqrs}
+GetUserQuery.model_rebuild(_types_namespace=_cqrs_namespace)
+ListAccountsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
+SearchProductsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
 
 
 class TestQueries:

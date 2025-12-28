@@ -16,7 +16,7 @@ from itertools import count
 from typing import ClassVar
 
 from flext_core import FlextModels, FlextResult, FlextService
-from flext_core._models import entity as flext_models_entity
+from flext_core.models import m
 from tests.constants import TestsFlextConstants
 
 # =========================================================================
@@ -33,9 +33,8 @@ class User(FlextModels.Entity):
     is_active: bool = True
 
 
-# Rebuild User model to resolve forward references from FlextModels.Entity
+# Rebuild User model to resolve forward references from m.Entity.Entity
 _types_namespace_user = {
-    "FlextModelsEntity": flext_models_entity.FlextModelsEntity,
     "FlextModels": FlextModels,
 }
 User.model_rebuild(_types_namespace=_types_namespace_user)

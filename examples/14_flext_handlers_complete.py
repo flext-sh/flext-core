@@ -19,18 +19,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_core import (
-    FlextConstants,
-    FlextModels,
-    FlextResult,
-    FlextService,
-    h,
-    t,
-    u,
+from flext_core import s, c, h, m, r, t, u,
 )
 
 
-class CreateUserCommand(FlextModels.Cqrs.Command):
+class CreateUserCommand(m.Cqrs.Command):
     """Command to create a user."""
 
     user_id: str
@@ -38,7 +31,7 @@ class CreateUserCommand(FlextModels.Cqrs.Command):
     email: str
 
 
-class GetUserQuery(FlextModels.Cqrs.Query):
+class GetUserQuery(m.Cqrs.Query):
     """Query to get a user."""
 
     user_id: str
@@ -53,11 +46,11 @@ class UserDTO(m.Value):
 
 
 # Rebuild models to resolve forward references after all definitions
-# Include FlextModels.Cqrs in namespace for forward reference resolution
+# Include m.Cqrs in namespace for forward reference resolution
 _types_namespace = {
     **globals(),
-    "FlextModels": FlextModels,
-    "FlextModelsCqrs": FlextModels.Cqrs,
+    "m": m,
+    "FlextModelsCqrs": m.Cqrs,
 }
 _ = CreateUserCommand.model_rebuild(_types_namespace=_types_namespace)
 _ = GetUserQuery.model_rebuild(_types_namespace=_types_namespace)
@@ -68,46 +61,46 @@ _ = UserDTO.model_rebuild(_types_namespace=_types_namespace)
 class CommandHandler(h[CreateUserCommand, str]):
     """Example command handler."""
 
-    def handle(self, message: CreateUserCommand) -> FlextResult[str]:
+    def handle(self, message: CreateUserCommand) -> r[str]:
         """Handle user creation command using u validation."""
         _ = self.handler_name  # Use self to satisfy ruff
 
         # Railway pattern with u validation (DRY)
         name_validation = u.validate_length(
             message.name,
-            min_length=FlextConstants.Validation.MIN_NAME_LENGTH,
-            max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
+            min_length=c.Validation.MIN_NAME_LENGTH,
+            max_length=c.Validation.MAX_NAME_LENGTH,
         )
         if name_validation.is_failure:
-            return FlextResult[str].fail(
-                name_validation.error or FlextConstants.Errors.VALIDATION_ERROR,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            return r[str].fail(
+                name_validation.error or c.Errors.VALIDATION_ERROR,
+                error_code=c.Errors.VALIDATION_ERROR,
             )
 
         email_validation = u.validate_pattern(
             message.email,
-            FlextConstants.Platform.PATTERN_EMAIL,
+            c.Platform.PATTERN_EMAIL,
             "email",
         )
         if email_validation.is_failure:
-            return FlextResult[str].fail(
-                email_validation.error or FlextConstants.Errors.VALIDATION_ERROR,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            return r[str].fail(
+                email_validation.error or c.Errors.VALIDATION_ERROR,
+                error_code=c.Errors.VALIDATION_ERROR,
             )
 
-        return FlextResult[str].ok(f"User {message.name} created")
+        return r[str].ok(f"User {message.name} created")
 
 
 class QueryHandler(h[GetUserQuery, UserDTO]):
     """Example query handler."""
 
-    def handle(self, message: GetUserQuery) -> FlextResult[UserDTO]:
-        """Handle user retrieval query using FlextConstants error codes."""
+    def handle(self, message: GetUserQuery) -> r[UserDTO]:
+        """Handle user retrieval query using c error codes."""
         _ = self.handler_name  # Use self to satisfy ruff
         if message.user_id == "not-found":
-            return FlextResult[UserDTO].fail(
-                FlextConstants.Errors.NOT_FOUND_ERROR,
-                error_code=FlextConstants.Errors.NOT_FOUND_ERROR,
+            return r[UserDTO].fail(
+                c.Errors.NOT_FOUND_ERROR,
+                error_code=c.Errors.NOT_FOUND_ERROR,
             )
 
         user = UserDTO(
@@ -115,16 +108,16 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
             name="Example User",
             email="user@example.com",
         )
-        return FlextResult[UserDTO].ok(user)
+        return r[UserDTO].ok(user)
 
 
-# Service using FlextService directly
-class HandlersService(FlextService[t.ServiceMetadataMapping]):
+# Service using s directly
+class HandlersService(s[t.ServiceMetadataMapping]):
     """Service demonstrating CQRS handlers with flext-core."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> r[t.ServiceMetadataMapping]:
         """Execute comprehensive handler demonstrations."""
         print("Starting CQRS handlers demonstration")
 
@@ -133,10 +126,10 @@ class HandlersService(FlextService[t.ServiceMetadataMapping]):
         self._demonstrate_pipeline_execution()
         self._demonstrate_error_handling()
 
-        return FlextResult[t.ServiceMetadataMapping].ok({
+        return r[t.ServiceMetadataMapping].ok({
             "handlers_demonstrated": [
-                FlextConstants.Cqrs.HandlerType.COMMAND,
-                FlextConstants.Cqrs.HandlerType.QUERY,
+                c.Cqrs.HandlerType.COMMAND,
+                c.Cqrs.HandlerType.QUERY,
                 "pipeline",
                 "error_handling",
             ],
@@ -197,10 +190,10 @@ class HandlersService(FlextService[t.ServiceMetadataMapping]):
         print("\n=== Pipeline Execution ===")
 
         phases = [
-            FlextConstants.Cqrs.ProcessingPhase.PREPARE,
-            FlextConstants.Cqrs.ProcessingPhase.EXECUTE,
-            FlextConstants.Cqrs.ProcessingPhase.VALIDATE,
-            FlextConstants.Cqrs.ProcessingPhase.COMPLETE,
+            c.Cqrs.ProcessingPhase.PREPARE,
+            c.Cqrs.ProcessingPhase.EXECUTE,
+            c.Cqrs.ProcessingPhase.VALIDATE,
+            c.Cqrs.ProcessingPhase.COMPLETE,
         ]
 
         for phase in phases:
