@@ -182,9 +182,7 @@ class FlextTypes:
     # RegisterableService - Type for services registerable in FlextContainer
     # Extends GeneralValueType to include protocol types (Config, Ctx, Logger, etc.)
     # which are plain classes (not BaseModel) implementing protocol interfaces
-    RegisterableService: TypeAlias = (
-        GeneralValueType | object
-    )
+    RegisterableService: TypeAlias = GeneralValueType | object
 
     # Constant value type - all possible constant types in FlextConstants
     # Used for type-safe constant access via __getitem__ method

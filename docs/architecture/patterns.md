@@ -71,7 +71,7 @@ if logger_result.is_success:
 from flext_core import FlextModels, FlextService, FlextResult
 
 # Value Object - immutable, compared by value
-class Money(FlextModels.Value):
+class Money(m.Value):
     amount: float
     currency: str
 

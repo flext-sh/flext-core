@@ -25,22 +25,23 @@ class AutoStrEnum(StrEnum):
     @staticmethod
     def _generate_next_value_(
         name: str,
-        _start: int,
-        _count: int,
-        _last_values: list[str],
+        start: int,
+        count: int,
+        last_values: list[str],
     ) -> str:
         """Generate enum value from member name.
 
         Args:
             name: The member name to convert.
-            _start: Start value (unused).
-            _count: Count value (unused).
-            _last_values: Last values list (unused).
+            start: Start value (unused - required by parent interface).
+            count: Count value (unused - required by parent interface).
+            last_values: Last values list (unused - required by parent interface).
 
         Returns:
             The lowercased member name.
 
         """
+        del start, count, last_values  # Mark as intentionally unused
         return name.lower()
 
 

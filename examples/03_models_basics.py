@@ -35,7 +35,7 @@ from flext_core import (
 # ========== DOMAIN MODELS ==========
 
 
-class Email(FlextModels.Value):
+class Email(m.Value):
     """Email value object with advanced Pydantic 2 EmailStr validation."""
 
     model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
@@ -49,7 +49,7 @@ class Email(FlextModels.Value):
     ]
 
 
-class Money(FlextModels.Value):
+class Money(m.Value):
     """Money value object with StrEnum currency and railway operations."""
 
     model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
@@ -87,7 +87,7 @@ class User(FlextModels.Entity):
     ]
 
 
-class OrderItem(FlextModels.Value):
+class OrderItem(m.Value):
     """Order item with computed fields and railway validation."""
 
     model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG

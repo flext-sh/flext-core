@@ -529,10 +529,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def dict[K, V](
                     self,
-                    source: (
-                        Mapping[K, V]
-                        | t.GeneralValueType
-                    ) = "user",
+                    source: (Mapping[K, V] | t.GeneralValueType) = "user",
                     # All parameters via kwargs - validated by DictFactoryParams
                     **kwargs: t.GeneralValueType,
                 ) -> dict[K, V] | r[dict[K, V]]:
@@ -566,7 +563,7 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     type_: type[T],
                     # All parameters via kwargs - validated by GenericFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: t.GeneralValueType,
                 ) -> T | list[T] | r[T] | r[list[T]]:
                     """Create instance(s) of any type with full type safety.
 
@@ -853,7 +850,7 @@ class FlextTestsProtocols(FlextProtocols):
                 def add(
                     self,
                     key: str,
-                    value: t.Tests.Builders.BuilderValue | None = ...,
+                    value: t.GeneralValueType | None = ...,
                     **kwargs: t.GeneralValueType,
                 ) -> Self:
                     """Add data to builder.
@@ -872,10 +869,10 @@ class FlextTestsProtocols(FlextProtocols):
                 def set(
                     self,
                     path: str,
-                    value: t.Tests.Builders.BuilderValue | None = ...,
+                    value: t.GeneralValueType | None = ...,
                     *,
                     create_parents: bool = ...,
-                    **kwargs: str | float | bool,
+                    **kwargs: t.GeneralValueType,
                 ) -> Self:
                     """Set value at nested path.
 
@@ -915,12 +912,11 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     **kwargs: t.GeneralValueType,
                 ) -> (
-                    t.Tests.Builders.BuilderDict
+                    dict[str, t.GeneralValueType]
                     | BaseModel
-                    | list[tuple[str, t.Tests.Builders.BuilderValue]]
+                    | list[tuple[str, t.GeneralValueType]]
                     | list[str]
-                    | list[t.Tests.Builders.BuilderValue]
-                    | list[t.Tests.Builders.ParametrizedCase]
+                    | list[t.GeneralValueType]
                     | t.GeneralValueType
                 ):
                     """Build the dataset with output type control.
@@ -939,7 +935,7 @@ class FlextTestsProtocols(FlextProtocols):
                     **kwargs: t.GeneralValueType,
                 ) -> (
                     r[T]
-                    | r[t.Tests.Builders.BuilderDict]
+                    | r[dict[str, t.GeneralValueType]]
                     | r[BaseModel]
                     | r[list[T]]
                     | r[dict[str, T]]
@@ -965,7 +961,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def fork(self, **updates: t.Tests.Builders.BuilderValue) -> Self:
+                def fork(self, **updates: t.GeneralValueType) -> Self:
                     """Copy and immediately add updates.
 
                     Args:
@@ -1018,8 +1014,8 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def scenarios(
                     self,
-                    *cases: tuple[str, dict[str, t.Tests.Builders.BuilderValue]],
-                ) -> list[t.Tests.Builders.ParametrizedCase]:
+                    *cases: tuple[str, dict[str, t.GeneralValueType]],
+                ) -> list[tuple[str, dict[str, t.GeneralValueType]]]:
                     """Build pytest.mark.parametrize compatible scenarios.
 
                     Args:

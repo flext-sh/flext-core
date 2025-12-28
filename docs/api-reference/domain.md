@@ -15,7 +15,7 @@ from decimal import Decimal
 from typing import List
 from flext_core import FlextModels, FlextResult
 
-class Email(FlextModels.Value):
+class Email(m.Value):
     """Immutable value object compared by value."""
 
     address: str
@@ -34,7 +34,7 @@ class User(FlextModels.Entity):
             raise ValueError("Invalid email format")
 
 
-class OrderItem(FlextModels.Value):
+class OrderItem(m.Value):
     """Item belonging to an order."""
 
     product_id: str

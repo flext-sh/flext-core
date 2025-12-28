@@ -116,7 +116,7 @@ class User(FlextModels.Entity):
             raise ValueError("Invalid email format")
 
 # Value Object - compared by value
-class Address(FlextModels.Value):
+class Address(m.Value):
     """Address value object."""
     street: str
     city: str

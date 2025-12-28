@@ -31,10 +31,10 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import Field, ValidationError, field_validator
 
-from flext_core import FlextTypes as t, (
-    c,
-    m,
-    t,
+from flext_core import (
+    FlextTypes as t,
+    FlextConstants as c,
+    FlextModels as m,
 )
 from flext_tests.matchers import tm
 from flext_tests.utilities import u

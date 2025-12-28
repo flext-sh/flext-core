@@ -23,7 +23,7 @@ FlextModels.AggregateRoot
         ↓
 FlextModels.Entity
         ↓
-FlextModels.Value
+m.Value
         ↓
 Pydantic BaseModel
         ↓
@@ -40,7 +40,7 @@ Value objects have **no identity** - they're compared by their values:
 from flext_core import FlextModels
 from decimal import Decimal
 
-class Money(FlextModels.Value):
+class Money(m.Value):
     """Money is a value object - represented by amount and currency."""
     amount: Decimal
     currency: str  # "USD", "EUR", "GBP", etc.
@@ -75,16 +75,16 @@ assert money1 is not money2  # Different objects
 ```python
 from flext_core import FlextModels
 
-class Email(FlextModels.Value):
+class Email(m.Value):
     """Email address - value object."""
     address: str
 
-class PhoneNumber(FlextModels.Value):
+class PhoneNumber(m.Value):
     """Phone number - value object."""
     country_code: str
     number: str
 
-class Address(FlextModels.Value):
+class Address(m.Value):
     """Physical address - value object."""
     street: str
     city: str
@@ -189,7 +189,7 @@ class OrderItem(FlextModels.Entity):
     quantity: int
     unit_price: Decimal
 
-class ShippingInfo(FlextModels.Value):
+class ShippingInfo(m.Value):
     """Shipping address - value object."""
     address: str
     city: str
@@ -371,12 +371,12 @@ class OrderStatus(str, Enum):
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
 
-class Money(FlextModels.Value):
+class Money(m.Value):
     """Money value object."""
     amount: Decimal
     currency: str = "USD"
 
-class Address(FlextModels.Value):
+class Address(m.Value):
     """Address value object."""
     street: str
     city: str
@@ -580,7 +580,7 @@ from flext_core import FlextModels, FlextResult
 from datetime import datetime, timedelta
 import re
 
-class Email(FlextModels.Value):
+class Email(m.Value):
     """Email value object."""
     address: str
 
@@ -589,7 +589,7 @@ class Email(FlextModels.Value):
             raise ValueError(f"Invalid email: {address}")
         super().__init__(address=address)
 
-class Password(FlextModels.Value):
+class Password(m.Value):
     """Password value object (hashed representation)."""
     hash: str
 
@@ -927,11 +927,11 @@ class Order(FlextModels.AggregateRoot):
 
 ```python
 # ✅ CORRECT - Semantic value objects
-class Money(FlextModels.Value):
+class Money(m.Value):
     amount: Decimal
     currency: str
 
-class Email(FlextModels.Value):
+class Email(m.Value):
     address: str
 
 # ❌ WRONG - Using primitives

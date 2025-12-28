@@ -579,7 +579,7 @@ else:
 # ❌ ANTI-PATTERN - Mutable value object
 from flext_core import FlextModels
 
-class Money(FlextModels.Value):
+class Money(m.Value):
     amount: float  # Mutable!
     currency: str
 
@@ -607,7 +607,7 @@ from flext_core import FlextModels
 from pydantic import ConfigDict
 from decimal import Decimal
 
-class Money(FlextModels.Value):
+class Money(m.Value):
     model_config = ConfigDict(frozen=True)  # Immutable
     amount: Decimal
     currency: str

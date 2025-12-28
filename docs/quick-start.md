@@ -66,7 +66,7 @@ Model your business domain with explicit boundaries:
 ```python
 from flext_core import FlextModels
 
-class Email(FlextModels.Value):
+class Email(m.Value):
     """Immutable value object compared by value."""
     address: str
 
@@ -151,7 +151,7 @@ if service_result.is_success:
 from pydantic import Field
 from flext_core import FlextModels, FlextService, FlextResult
 
-class OrderItem(FlextModels.Value):
+class OrderItem(m.Value):
     """Immutable order item."""
     product_id: str
     quantity: int = Field(ge=1)  # >= 1

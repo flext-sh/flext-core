@@ -15,14 +15,14 @@ from typing import cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextTypes as t, (
+from flext_core import (
     FlextConstants,
     FlextContext,
     FlextResult,
     m,
     r,
-    t,
 )
+from flext_core.typings import t
 from flext_tests import u
 from tests.test_utils import assertion_helpers
 
