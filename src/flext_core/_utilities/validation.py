@@ -46,7 +46,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields, is_dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, Protocol, TypeGuard, runtime_checkable
+from typing import ClassVar, TypeGuard
 
 import orjson
 from pydantic import (
@@ -2264,12 +2264,15 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_all[T](
         values: list[T],
-        predicate: _Predicate[T],
+        predicate: _Predicate,
         error: str = "Validation failed",
         *,
         fail_fast: bool = True,
     ) -> r[list[T]]:
-        """Validate all values in list."""
+        """Validate all values in list.
+
+        Predicate accepts any value type for flexible validation logic.
+        """
         errors: list[str] = []
         for val in values:
             result: bool = predicate(val)
@@ -2904,7 +2907,9 @@ class FlextUtilitiesValidation:
                 return default
             if isinstance(raw_value, check_type):
                 # raw_value matches the expected type T and is not Callable
-                return raw_value  # type: T (narrowed by isinstance check)
+                # Type narrowing: raw_value is confirmed to match check_type
+                result_value: T = raw_value  # Safe due to isinstance check
+                return result_value
 
             # Try conversion for primitive types only using str intermediary
             # This is safe because str() works on any GeneralValueType
@@ -2925,7 +2930,8 @@ class FlextUtilitiesValidation:
                         converted_value = str_value
                     # Verify type and return - isinstance narrows to T
                     if isinstance(converted_value, check_type):
-                        conversion_result = converted_value  # type: T
+                        final_value: T = converted_value  # Safe due to isinstance
+                        conversion_result = final_value
                 except (TypeError, ValueError) as exc:
                     # Type conversion failed, log and continue to return default
                     FlextRuntime.structlog().debug(
