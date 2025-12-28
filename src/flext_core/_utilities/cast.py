@@ -10,8 +10,14 @@ from __future__ import annotations
 
 import inspect
 import warnings
-from typing import TypeVar
+from datetime import datetime
+from pathlib import Path
+from typing import TYPE_CHECKING, TypeVar
 
+from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping, Sequence
 from flext_core.typings import t
 
 T = TypeVar("T")
@@ -142,6 +148,41 @@ class FlextUtilitiesCast:
             return FlextUtilitiesCast.callable(value, target_type)
         error_msg = f"Unknown mode: {mode}"
         raise ValueError(error_msg)
+
+    @staticmethod
+    def to_general_value_type(value: object) -> t.GeneralValueType:
+        """Convert arbitrary object to GeneralValueType with explicit isinstance checks.
+
+        This is the canonical implementation - use u.Cast.to_general_value_type()
+        instead of defining local versions.
+
+        Args:
+            value: Any object to convert
+
+        Returns:
+            The value as a GeneralValueType-compatible type
+
+        """
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, BaseModel):
+            return value
+        if isinstance(value, Path):
+            return value
+        if callable(value):
+            callable_typed: Callable[..., t.GeneralValueType] = value
+            return callable_typed
+        if isinstance(value, (list, tuple)):
+            seq_result: Sequence[t.GeneralValueType] = value
+            return seq_result
+        if isinstance(value, dict):
+            map_result: Mapping[str, t.GeneralValueType] = value
+            return map_result
+        return str(value)
 
 
 __all__ = [

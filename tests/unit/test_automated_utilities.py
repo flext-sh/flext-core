@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import r
+from flext_core import FlextTypes as t, r
 from tests.conftest import test_framework
+from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -55,7 +56,7 @@ class TestAutomatedFlextUtilities:
         ids=lambda case: case["description"],
     )
     def test_automated_utilities_comprehensive_scenarios(
-        self, test_scenario: dict[str, object]
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for utilities functionality."""
         try:
@@ -143,8 +144,8 @@ class TestAutomatedFlextUtilities:
                 )
 
     def _execute_utilities_operation(
-        self, instance: object, input_data: dict[str, object]
-    ) -> r.FlextResult[object]:
+        self, instance: object, input_data: dict[str, t.GeneralValueType]
+    ) -> r[object]:
         """Execute a test operation on utilities instance.
 
         This method should be customized based on the actual utilities API.
@@ -155,7 +156,7 @@ class TestAutomatedFlextUtilities:
             # Use the process method with a simple processor function
             if hasattr(instance, "process") and callable(getattr(instance, "process")):
                 # Create a simple processor function that returns success
-                def simple_processor(data: object) -> r.FlextResult[object]:
+                def simple_processor(data: object) -> r[object]:
                     return r[object].ok(f"processed_{data}")
 
                 # Call process with input_data as items and simple_processor

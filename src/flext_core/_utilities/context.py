@@ -10,12 +10,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from flext_core._models.context import FlextModelsContext
-from flext_core.protocols import p
 from flext_core.typings import t
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from flext_core.protocols import p
 
 
 class FlextUtilitiesContext:
@@ -86,8 +90,8 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: t.ConfigurationDict | None = None,
-    ) -> FlextModelsContext.StructlogProxyContextVar[t.ConfigurationDict]:
+        default: dict[str, t.GeneralValueType] | None = None,
+    ) -> FlextModelsContext.StructlogProxyContextVar[dict[str, t.GeneralValueType]]:
         """Create StructlogProxyContextVar[dict] instance.
 
         Helper factory for creating dict-typed context variables with structlog
@@ -98,7 +102,7 @@ class FlextUtilitiesContext:
             default: Optional default value
 
         Returns:
-            StructlogProxyContextVar[t.ConfigurationDict] instance
+            StructlogProxyContextVar[dict[str, t.GeneralValueType]] instance
 
         Example:
             >>> var = uContext.create_dict_proxy("metadata")
@@ -107,11 +111,11 @@ class FlextUtilitiesContext:
 
         """
         # Explicit instantiation with full type
-        proxy: FlextModelsContext.StructlogProxyContextVar[t.ConfigurationDict] = (
-            FlextModelsContext.StructlogProxyContextVar[t.ConfigurationDict](
-                key,
-                default=default,
-            )
+        proxy: FlextModelsContext.StructlogProxyContextVar[
+            dict[str, t.GeneralValueType]
+        ] = FlextModelsContext.StructlogProxyContextVar[dict[str, t.GeneralValueType]](
+            key,
+            default=default,
         )
         return proxy
 

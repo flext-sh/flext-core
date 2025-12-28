@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
@@ -50,11 +50,11 @@ class FlextModelsContainer:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Service identifier/name",
         )
-        # Service instance - accepts any Python object for DI
+        # Service instance - uses RegisterableService Protocol union type
         # ARCHITECTURAL NOTE: DI containers accept any registerable service.
-        # SkipValidation needed because protocol types can't be validated by Pydantic.
+        # SkipValidation needed because Protocol types can't be validated by Pydantic.
         # Type safety is enforced at container API level via get_typed().
-        service: Annotated[object, SkipValidation] = Field(
+        service: Annotated[Any, SkipValidation] = Field(
             ...,
             description="Service instance (protocols, models, callables)",
         )
@@ -105,8 +105,7 @@ class FlextModelsContainer:
         )
         # Factory returns RegisterableService for type-safe factory resolution
         # Supports all registerable types: GeneralValueType, protocols, callables
-        # Using Callable type since ServiceFactory is a type alias that may not resolve properly
-        factory: Annotated[Callable[[], object], SkipValidation] = Field(
+        factory: Annotated[Any, SkipValidation] = Field(
             ...,
             description="Factory function that creates service instances",
         )
@@ -183,7 +182,7 @@ class FlextModelsContainer:
     class ContainerConfig(BaseModel):
         """Model for container configuration.
 
-        Replaces: t.ConfigurationDict for container configuration storage.
+        Replaces: dict[str, t.GeneralValueType] for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 
@@ -269,22 +268,5 @@ class FlextModelsContainer:
             description="Whether to defer factory invocation until first use",
         )
 
-
-# DISABLED: model_rebuild() causes circular import issues with GeneralValueType
-# These models use arbitrary_types_allowed=True and work without rebuild
-# When forward references are needed, they are resolved at runtime by Pydantic
-# from flext_core.protocols import FlextProtocols
-#
-# _rebuild_ns = {
-#     "FlextProtocols": FlextProtocols,
-#     "t": t,
-#     "c": c,
-#     "p": p,
-# }
-# FlextModelsContainer.ServiceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-# FlextModelsContainer.FactoryRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-# FlextModelsContainer.ResourceRegistration.model_rebuild(_types_namespace=_rebuild_ns)
-# FlextModelsContainer.ContainerConfig.model_rebuild(_types_namespace=_rebuild_ns)
-# FlextModelsContainer.FactoryDecoratorConfig.model_rebuild(_types_namespace=_rebuild_ns)
 
 __all__ = ["FlextModelsContainer"]

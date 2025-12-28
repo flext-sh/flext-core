@@ -39,7 +39,7 @@ class ConfigModelForTest(BaseModel):
     enabled: bool = True
 
 
-class OptionsModelForTest(m.Value):
+class OptionsModelForTest(m.ValueObject):
     """Test options model for build_options_from_kwargs."""
 
     format: str = "json"
@@ -47,7 +47,7 @@ class OptionsModelForTest(m.Value):
     sort_keys: bool = False
 
 
-class StrictOptionsForTest(m.Value):
+class StrictOptionsForTest(m.ValueObject):
     """Strict options with validation."""
 
     value: int = Field(ge=0, le=100)
@@ -63,7 +63,7 @@ class InvalidModelForTest(BaseModel):
         *,
         mode: str = "python",
         **kwargs: object,
-    ) -> dict[str, object]:
+    ) -> dict[str, t.GeneralValueType]:
         """Return invalid type - test error handling."""
         # Intentionally return wrong type to test error handling
         # In real code this would raise, but for testing we need valid signature
@@ -146,7 +146,7 @@ class BadConfigForTest(BaseModel):
         raise ValueError(msg)
 
 
-class FailingOptionsForTest(m.Value):
+class FailingOptionsForTest(m.ValueObject):
     """Options that fail on model_dump."""
 
     value: str = "test"
@@ -156,7 +156,7 @@ class FailingOptionsForTest(m.Value):
         *,
         mode: str = "python",
         **kwargs: object,
-    ) -> dict[str, object]:
+    ) -> dict[str, t.GeneralValueType]:
         """Raise error - test error handling."""
         msg = "Unexpected error"
         raise RuntimeError(msg)

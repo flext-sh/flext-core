@@ -140,8 +140,7 @@ class CacheService(FlextModels.ArbitraryTypesModel):
 
         # Railway pattern with u validation (DRY)
         return (
-            u
-            .validate_length(
+            u.validate_length(
                 key,
                 max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
             )
@@ -293,9 +292,7 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
 
         # Test each service with type narrowing
         for service_name in ["database", "cache", "email"]:
-            result: FlextResult[DatabaseService | CacheService | EmailService] = (
-                container.get(service_name)
-            )
+            result: FlextResult[t.GeneralValueType] = container.get(service_name)
             if result.is_success:
                 service = result.value
                 if service_name == "database" and isinstance(service, DatabaseService):
@@ -316,7 +313,7 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
         print("\n=== Advanced DI Patterns ===")
 
         service_names = ["database", "cache", "email"]
-        services: dict[str, DatabaseService | CacheService | EmailService] = {
+        services: dict[str, t.GeneralValueType] = {
             name: container.get(name).value
             for name in service_names
             if container.get(name).is_success
@@ -332,12 +329,8 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
         )
 
         # Error handling
-        missing_result: FlextResult[DatabaseService | CacheService | EmailService] = (
-            container.get("non_existent")
-        )
-        db_result: FlextResult[DatabaseService | CacheService | EmailService] = (
-            container.get("database")
-        )
+        missing_result: FlextResult[t.GeneralValueType] = container.get("non_existent")
+        db_result: FlextResult[t.GeneralValueType] = container.get("database")
         if db_result.is_success:
             db_service = db_result.value
             if isinstance(db_service, DatabaseService):

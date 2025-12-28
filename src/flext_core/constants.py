@@ -25,17 +25,17 @@ class AutoStrEnum(StrEnum):
     @staticmethod
     def _generate_next_value_(
         name: str,
-        start: int,  # noqa: ARG004 - required by parent signature
-        count: int,  # noqa: ARG004 - required by parent signature
-        last_values: list[str],  # noqa: ARG004 - required by parent signature
+        _start: int,
+        _count: int,
+        _last_values: list[str],
     ) -> str:
         """Generate enum value from member name.
 
         Args:
             name: The member name to convert.
-            start: Start value (unused).
-            count: Count value (unused).
-            last_values: Last values list (unused).
+            _start: Start value (unused).
+            _count: Count value (unused).
+            _last_values: Last values list (unused).
 
         Returns:
             The lowercased member name.

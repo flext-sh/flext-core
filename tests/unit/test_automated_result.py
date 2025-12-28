@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import r
+from flext_core import FlextTypes as t, r
 from tests.conftest import test_framework
+from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
@@ -55,7 +56,7 @@ class TestAutomatedFlextResult:
         ids=lambda case: case["description"],
     )
     def test_automated_result_comprehensive_scenarios(
-        self, test_scenario: dict[str, object]
+        self, test_scenario: AutomatedTestScenario
     ) -> None:
         """Comprehensive test scenarios for result functionality."""
         try:
@@ -141,8 +142,8 @@ class TestAutomatedFlextResult:
                 )
 
     def _execute_result_operation(
-        self, instance: object, input_data: dict[str, object]
-    ) -> r.FlextResult[object]:
+        self, instance: object, input_data: dict[str, t.GeneralValueType]
+    ) -> r[object]:
         """Execute a test operation on result instance.
 
         This method should be customized based on the actual result API.

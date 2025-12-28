@@ -122,7 +122,7 @@ class FlextModelsCqrs:
         )
 
         filters: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        pagination: FlextModelsCqrs.Pagination | t.StringIntDict = Field(
+        pagination: FlextModelsCqrs.Pagination | dict[str, int] = Field(
             default_factory=dict,
         )
         query_id: str = Field(
@@ -167,7 +167,7 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination | t.StringIntDict | t.StringDict | None,
+            v: FlextModelsCqrs.Pagination | dict[str, int] | dict[str, str] | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
@@ -183,16 +183,14 @@ class FlextModelsCqrs:
                 size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
                 if isinstance(page_raw, int):
                     page = page_raw
-                elif (isinstance(page_raw, str) and page_raw.isdigit()) or isinstance(
-                    page_raw,
-                    float,
+                elif isinstance(page_raw, float) or (
+                    isinstance(page_raw, str) and page_raw.isdigit()
                 ):
                     page = int(page_raw)
                 if isinstance(size_raw, int):
                     size = size_raw
-                elif (isinstance(size_raw, str) and size_raw.isdigit()) or isinstance(
-                    size_raw,
-                    float,
+                elif isinstance(size_raw, float) or (
+                    isinstance(size_raw, str) and size_raw.isdigit()
                 ):
                     size = int(size_raw)
                 return pagination_cls(page=page, size=size)
@@ -298,7 +296,7 @@ class FlextModelsCqrs:
                 """Initialize builder with required handler_type."""
                 super().__init__()
                 handler_short_id = FlextRuntime.generate_prefixed_id("", length=8)
-                self._data: t.ConfigurationDict = {
+                self._data: dict[str, t.GeneralValueType] = {
                     "handler_type": handler_type,
                     "handler_mode": (
                         c.Dispatcher.HANDLER_MODE_COMMAND
@@ -335,7 +333,7 @@ class FlextModelsCqrs:
             def with_metadata(self, metadata: FlextModelsBase.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
                 # Convert Metadata model to dict for t.GeneralValueType compatibility
-                metadata_dict: t.ConfigurationDict = dict(
+                metadata_dict: dict[str, t.GeneralValueType] = dict(
                     metadata.model_dump().items(),
                 )
                 self._data["metadata"] = metadata_dict

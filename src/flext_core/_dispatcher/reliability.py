@@ -42,16 +42,16 @@ class CircuitBreakerManager:
 
         """
         super().__init__()
-        self._failures: t.StringIntDict = {}
-        self._states: t.StringDict = {}
-        self._opened_at: t.StringFloatDict = {}
-        self._success_counts: t.StringIntDict = {}
+        self._failures: dict[str, int] = {}
+        self._states: dict[str, str] = {}
+        self._opened_at: dict[str, float] = {}
+        self._success_counts: dict[str, int] = {}
         self._threshold = threshold
         self._recovery_timeout = recovery_timeout
         self._success_threshold = success_threshold
-        self._recovery_successes: t.StringIntDict = {}
-        self._recovery_failures: t.StringIntDict = {}
-        self._total_successes: t.StringIntDict = {}
+        self._recovery_successes: dict[str, int] = {}
+        self._recovery_failures: dict[str, int] = {}
+        self._total_successes: dict[str, int] = {}
 
     def get_state(self, message_type: str) -> str:
         """Get current state for message type.
@@ -207,7 +207,7 @@ class CircuitBreakerManager:
         self._recovery_failures.clear()
         self._total_successes.clear()
 
-    def get_metrics(self) -> t.ConfigurationDict:
+    def get_metrics(self) -> dict[str, t.GeneralValueType]:
         """Collect circuit breaker metrics, including recovery statistics.
 
         Returns:
@@ -363,7 +363,7 @@ class RetryPolicy:
         super().__init__()
         self._max_attempts = max(max_attempts, c.Reliability.RETRY_COUNT_MIN)
         self._base_delay = max(retry_delay, c.INITIAL_TIME)
-        self._attempts: t.StringIntDict = {}
+        self._attempts: dict[str, int] = {}
         self._exponential_factor = 2.0
         self._max_delay = c.Reliability.DEFAULT_MAX_DELAY_SECONDS
 

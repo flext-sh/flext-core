@@ -21,9 +21,7 @@ from flext_core import FlextProtocols, r
 # FlextTestsTypes extends FlextTypes, so we can use base types directly
 # Test-specific types (t.Tests.*) are defined in flext_tests.typings
 # To avoid circular import, we import typings at end of module
-from flext_tests.typings import FlextTestsTypes
-
-t = FlextTestsTypes
+from flext_tests.typings import FlextTestsTypes as t
 
 
 class FlextTestsProtocols(FlextProtocols):

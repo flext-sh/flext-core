@@ -82,7 +82,7 @@ class ContainerScenarios:
         TypedRetrievalScenario("list_service", [1, 2, 3], list, True, "List service"),
     ]
 
-    CONFIG_SCENARIOS: ClassVar[list[dict[str, object]]] = [
+    CONFIG_SCENARIOS: ClassVar[list[dict[str, t.GeneralValueType]]] = [
         {"max_workers": 8, "timeout_seconds": 60.0},
         {"invalid_key": "value", "another_invalid": 42},
         {},
@@ -523,10 +523,10 @@ class TestFlextContainer:
         )
 
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
-    def test_configure_container(self, config: dict[str, object]) -> None:
+    def test_configure_container(self, config: dict[str, t.GeneralValueType]) -> None:
         """Test container configuration."""
         container = FlextContainer()
-        # Cast dict[str, object] to Mapping[str, t.GeneralValueType]
+        # Cast dict[str, t.GeneralValueType] to Mapping[str, t.GeneralValueType]
         # for type compatibility
         config_typed: t.ConfigurationMapping = cast(
             "t.ConfigurationMapping",
@@ -545,10 +545,10 @@ class TestFlextContainer:
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-        config: dict[str, object] = {
+        config: dict[str, t.GeneralValueType] = {
             "max_workers": c.Container.DEFAULT_WORKERS,
         }
-        # Cast dict[str, object] to ConfigurationMapping for type compatibility
+        # Cast dict[str, t.GeneralValueType] to ConfigurationMapping for type compatibility
         config_typed: t.ConfigurationMapping = cast(
             "t.ConfigurationMapping",
             config,

@@ -329,8 +329,8 @@ class TestuCacheNormalizeComponent:
 
     def test_normalize_sequence_with_nested_values(self) -> None:
         """Test normalize_component with Sequence containing nested values."""
-        component_raw: list[object] = [1, "test", {"nested": "dict"}, [1, 2, 3]]
-        # Convert list[object] to Sequence[t.GeneralValueType] for type compatibility
+        component_raw: list[t.GeneralValueType] = [1, "test", {"nested": "dict"}, [1, 2, 3]]
+        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
         # ObjectList is Sequence[t.GeneralValueType], use that type directly
         component: Sequence[t.GeneralValueType] = cast(
             "Sequence[t.GeneralValueType]",
@@ -680,7 +680,7 @@ class TestuCacheHasCacheAttributes:
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, object] = {}
+                self._cache: dict[str, t.GeneralValueType] = {}
 
         obj = TestObject()
         # Cast to t.GeneralValueType for type checker
@@ -702,8 +702,8 @@ class TestuCacheHasCacheAttributes:
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, object] = {}
-                self.cache: dict[str, object] = {}
+                self._cache: dict[str, t.GeneralValueType] = {}
+                self.cache: dict[str, t.GeneralValueType] = {}
 
         obj = TestObject()
         # Cast to t.GeneralValueType for type checker

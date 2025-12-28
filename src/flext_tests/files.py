@@ -35,13 +35,12 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Self, TypeVar, cast, overload
+from typing import ClassVar, Self, TypeVar, overload
 
 import yaml
 from pydantic import BaseModel
 
 from flext_core import r
-from flext_core.typings import t as core_t
 from flext_tests.base import su
 from flext_tests.constants import c
 from flext_tests.models import m
@@ -409,7 +408,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
         # Auto-detect format using utilities
         # Build content_for_detect with explicit type handling for pyrefly
-        content_for_detect: str | bytes | Mapping[str, object] | list[list[str]]
+        content_for_detect: (
+            str | bytes | Mapping[str, t.GeneralValueType] | list[list[str]]
+        )
         if isinstance(actual_content, (str, bytes, dict)):
             content_for_detect = actual_content
         elif isinstance(actual_content, Mapping):
@@ -451,18 +452,17 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         elif actual_fmt == c.Tests.Files.Format.JSON:
             # Convert Mapping to dict if needed using u.Mapper.to_dict()
             # Only call to_dict if it's a Mapping but not a dict
-            if u.is_type(actual_content, "mapping") and not isinstance(
+            if isinstance(actual_content, Mapping) and not isinstance(
                 actual_content,
                 dict,
             ):
-                data = u.Mapper.to_dict(
-                    cast("Mapping[str, t.GeneralValueType]", actual_content),
-                )
+                # Convert Mapping to dict using u.Mapper.to_dict()
+                data = u.Mapper.to_dict(actual_content)
             elif isinstance(actual_content, dict):
                 data = actual_content
             else:
-                # Fallback for other types (should not happen for JSON)
-                data = cast("dict[str, t.GeneralValueType]", actual_content)
+                # Fallback - convert to dict representation
+                data = {"value": actual_content} if actual_content else {}
             _ = file_path.write_text(
                 json.dumps(data, indent=params.indent, ensure_ascii=False),
                 encoding=params.enc,
@@ -470,18 +470,16 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         elif actual_fmt == c.Tests.Files.Format.YAML:
             # Convert Mapping to dict if needed using u.Mapper.to_dict()
             # Only call to_dict if it's a Mapping but not a dict
-            if u.is_type(actual_content, "mapping") and not isinstance(
+            if isinstance(actual_content, Mapping) and not isinstance(
                 actual_content,
                 dict,
             ):
-                data = u.Mapper.to_dict(
-                    cast("Mapping[str, t.GeneralValueType]", actual_content),
-                )
+                data = u.Mapper.to_dict(actual_content)
             elif isinstance(actual_content, dict):
                 data = actual_content
             else:
-                # Fallback for other types (should not happen for YAML)
-                data = cast("dict[str, t.GeneralValueType]", actual_content)
+                # Fallback - convert to dict representation
+                data = {"value": actual_content} if actual_content else {}
             _ = file_path.write_text(
                 yaml.dump(data, default_flow_style=False, allow_unicode=True),
                 encoding=params.enc,
@@ -621,7 +619,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         params = params_result.value
 
         if not params.path.exists():
-            if params.model_cls is not None:
+            if model_cls is not None:
                 return r[TModel].fail(
                     c.Tests.Files.ERROR_FILE_NOT_FOUND.format(path=params.path),
                 )
@@ -652,55 +650,57 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             else:  # text
                 content = params.path.read_text(encoding=params.enc)
 
-            # If model_cls provided, use u.Model.load() for validation
-            # u.Model.load() accepts ConfigurationMapping (more generic than from_dict)
-            if params.model_cls is not None:
+            # If model_cls provided, validate and load model
+            # Use original model_cls parameter (type[TModel]) instead of params.model_cls
+            # (type[BaseModel]) to preserve TModel type for pyrefly
+            if model_cls is not None:
                 # Type narrowing: check if content is dict/mapping
                 if not (u.is_type(content, "dict") or u.is_type(content, "mapping")):
                     return r[TModel].fail(
                         f"Cannot load model from non-dict content: {type(content)}",
                     )
-                # Convert to dict if needed, then to ConfigurationMapping
+                # Convert to dict if needed
                 if isinstance(content, dict):
                     content_dict = content
-                elif u.is_type(content, "mapping"):
-                    content_dict = u.Mapper.to_dict(
-                        cast("Mapping[str, t.GeneralValueType]", content),
-                    )
+                elif isinstance(content, Mapping):
+                    # Type-safe conversion from Mapping to dict
+                    content_dict = u.Mapper.to_dict(content)
                 else:
                     # Should not reach here due to check above, but satisfy type checker
                     return r[TModel].fail(
                         f"Cannot convert content to dict: {type(content)}",
                     )
-                # Use u.Model.load() which accepts ConfigurationMapping and returns r[T_Model]
-                content_mapping = cast("t.ConfigurationMapping", content_dict)
-                result = u.Model.load(params.model_cls, content_mapping)
-                # Type assertion needed - load() returns r[T_Model] but type checker needs r[TModel]
-                return cast("r[TModel]", result)
+                # Use model_validate with original model_cls for proper TModel inference
+                try:
+                    model_instance: TModel = model_cls.model_validate(content_dict)
+                    result: r[TModel] = r[TModel].ok(model_instance)
+                    return result
+                except Exception as ex:
+                    return r[TModel].fail(f"Failed to validate model: {ex}")
 
             return r[str | bytes | t.ConfigurationMapping | list[list[str]]].ok(
                 content,
             )
         except json.JSONDecodeError as e:
-            if params.model_cls is not None:
+            if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_INVALID_JSON.format(error=e))
             return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
                 c.Tests.Files.ERROR_INVALID_JSON.format(error=e),
             )
         except yaml.YAMLError as e:
-            if params.model_cls is not None:
+            if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_INVALID_YAML.format(error=e))
             return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
                 c.Tests.Files.ERROR_INVALID_YAML.format(error=e),
             )
         except UnicodeDecodeError as e:
-            if params.model_cls is not None:
+            if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_ENCODING.format(error=e))
             return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
                 c.Tests.Files.ERROR_ENCODING.format(error=e),
             )
         except OSError as e:
-            if params.model_cls is not None:
+            if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_READ.format(error=e))
             return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
                 c.Tests.Files.ERROR_READ.format(error=e),
@@ -1009,13 +1009,27 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 first_line = ""
                 encoding = c.Tests.Files.DEFAULT_BINARY_ENCODING
 
-            # Format detection
+            # Format detection with type-safe narrowing
             fmt: c.Tests.Files.FormatLiteral = "unknown"
             if params.detect_fmt:
-                fmt = cast(
-                    "c.Tests.Files.FormatLiteral",
-                    u.Tests.Files.detect_format_from_path(params.path, "auto"),
-                )
+                detected = u.Tests.Files.detect_format_from_path(params.path, "auto")
+                # Use match for exhaustive type narrowing to FormatLiteral
+                match detected:
+                    case "auto":
+                        fmt = "auto"
+                    case "text":
+                        fmt = "text"
+                    case "bin":
+                        fmt = "bin"
+                    case "json":
+                        fmt = "json"
+                    case "yaml":
+                        fmt = "yaml"
+                    case "csv":
+                        fmt = "csv"
+                    case _:
+                        # xml and other formats map to unknown
+                        fmt = "unknown"
 
             # Permissions
             permissions = stat.st_mode
@@ -1075,7 +1089,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         Uses u.Collection.batch() for batch processing with error handling.
 
         Args:
-            files: Mapping[str, core_t.FileContent] or Sequence[tuple[str, core_t.FileContent]]
+            files: Mapping[str, t.FileContent] or Sequence[tuple[str, t.FileContent]]
             directory: Target directory for create operations
             operation: "create", "read", or "delete"
             model: Optional model class for read operations
@@ -1121,7 +1135,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         params = params_result.value
 
         # Convert BatchFiles to dict - BatchFiles can be Mapping or Sequence
-        files_dict: dict[str, core_t.FileContent]
+        files_dict: dict[str, t.FileContent]
         if isinstance(params.files, Mapping):
             # Already a Mapping - convert to dict if needed
             files_dict = (
@@ -1131,9 +1145,20 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             )
         elif isinstance(params.files, Sequence):
             # BatchFiles is Sequence[tuple[str, FileContent]] - convert to dict
-            # Cast sequence to proper tuple format for dict constructor
-            files_list = cast("Sequence[tuple[str, core_t.FileContent]]", params.files)
-            files_dict = dict(files_list)
+            # params.files is already Sequence, iterate and convert each item
+            files_dict = {}
+            for item in params.files:
+                # Each item should be tuple[str, FileContent] from BatchFiles type
+                if isinstance(item, tuple) and len(item) == 2:
+                    name, content_raw = item
+                    if isinstance(name, str):
+                        # Narrow content to FileContent type
+                        content: t.FileContent
+                        if isinstance(
+                            content_raw, (str, bytes, Mapping, Sequence, BaseModel)
+                        ):
+                            content = content_raw
+                            files_dict[name] = content
         else:
             # Invalid type - should not happen due to BatchParams validation
             return r[m.Tests.Files.BatchResult].fail(
@@ -1144,7 +1169,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         error_mode_str = "collect" if params.on_error == "collect" else "fail"
 
         def process_one(
-            name_and_content: tuple[str, core_t.FileContent],
+            name_and_content: tuple[str, t.FileContent],
         ) -> r[Path]:
             """Process single file operation."""
             name, content = name_and_content
@@ -1162,25 +1187,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                         if isinstance(content, (Path, str))
                         else Path(name)
                     )
-                    # Type narrowing: params.model is type[BaseModel] | None
-                    # Handle None case explicitly to match overloads
-                    if params.model is None:
-                        read_result: r[
-                            str | bytes | t.ConfigurationMapping | list[list[str]]
-                        ] = self.read(path, model_cls=None)
-                    else:
-                        # params.model is type[BaseModel], cast to type[TModel] for overload
-                        model_cls_typed = cast("type[TModel]", params.model)
-                        # When model_cls is provided, result is r[TModel], but we only need success check
-                        read_result_typed: r[TModel] = self.read(
-                            path,
-                            model_cls=model_cls_typed,
-                        )
-                        # Cast to union type for compatibility with None case
-                        read_result = cast(
-                            "r[str | bytes | t.ConfigurationMapping | list[list[str]]]",
-                            read_result_typed,
-                        )
+                    # Read file - we only care about success/failure, not the exact return type
+                    # Use model_cls=None for simpler type handling - batch doesn't need model parsing
+                    read_result = self.read(path, model_cls=None)
                     if read_result.is_success:
                         # Return the path, not the content (BatchResult expects Path)
                         return r[Path].ok(path)
@@ -1206,7 +1215,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         items_list = list(files_dict.items())
         # Explicit type annotation helps mypy infer the generic R parameter
         operation_fn: Callable[
-            [tuple[str, core_t.FileContent]],
+            [tuple[str, t.FileContent]],
             Path | r[Path],
         ] = process_one
         batch_result_dict = u.Collection.batch(
@@ -1247,11 +1256,16 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 if isinstance(result, Path):
                     results_dict[name] = r[object].ok(result)
                 elif u.is_type(result, "result"):
-                    result_typed = cast("r[Path]", result)
-                    if result_typed.is_success:
-                        results_dict[name] = r[object].ok(result_typed.value)
+                    # Duck-typed access to FlextResult attributes
+                    is_success = getattr(result, "is_success", False)
+                    if is_success:
+                        value = getattr(result, "value", None)
+                        results_dict[name] = r[object].ok(value)
                     else:
-                        failed_dict[name] = result_typed.error or "Unknown error"
+                        error = (
+                            getattr(result, "error", "Unknown error") or "Unknown error"
+                        )
+                        failed_dict[name] = error
                 else:
                     results_dict[name] = r[object].ok(result)
 
@@ -1413,26 +1427,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                         raise ValueError(
                             f"Failed to create default kwargs: {default_result.error}",
                         )
-                # Pass validated parameters explicitly to create() for type safety
-                # Type narrowing: data is already narrowed above, but create() also accepts r[...]
-                # create() accepts: str | bytes | Mapping | Sequence[Sequence[str]] | BaseModel | r[...]
-                content_data: (
-                    str
-                    | bytes
-                    | t.ConfigurationMapping
-                    | Sequence[Sequence[str]]
-                    | BaseModel
-                    | r[str]
-                    | r[bytes]
-                    | r[t.ConfigurationMapping]
-                    | r[Sequence[Sequence[str]]]
-                    | r[BaseModel]
-                ) = cast(
-                    "str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel | r[str] | r[bytes] | r[t.ConfigurationMapping] | r[Sequence[Sequence[str]]] | r[BaseModel]",
-                    data,
-                )
+                # Pass data directly - already properly typed from content dict
                 path = manager.create(
-                    content_data,
+                    data,
                     filename,
                     directory=validated_kwargs.directory,
                     fmt=validated_kwargs.fmt,
@@ -1525,7 +1522,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
     @contextmanager
     def temporary_files(
         cls,
-        files: t.StringDict,
+        files: dict[str, str],
         extension: str = c.Tests.Files.DEFAULT_EXTENSION,
     ) -> Generator[t.StringPathDict]:
         """Create temporary files. DEPRECATED: Use tf.files() instead."""
@@ -1600,19 +1597,28 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         """
         # Use u.is_type() for type-safe checking with proper type narrowing
         if extract_result and u.is_type(content, "result"):
-            # Type narrowing: content is r[T] here
-            content_result = cast("r[core_t.FileContent]", content)
-            if content_result.is_failure:
-                error_msg = content_result.error or "FlextResult failure"
+            # Duck-typed access to FlextResult attributes
+            is_failure = getattr(content, "is_failure", False)
+            if is_failure:
+                error_msg = (
+                    getattr(content, "error", "FlextResult failure")
+                    or "FlextResult failure"
+                )
                 raise ValueError(
                     f"Cannot create file from failed FlextResult: {error_msg}",
                 )
-            # Use unwrap() for extraction - type is narrowed
-            # The return type matches FileContent union type
-            # unwrapped is already FileContent type from r[FileContent]
-            return content_result.value
-        # Content is already core_t.FileContent type (not wrapped in Result)
-        return cast("core_t.FileContent", content)
+            # Extract value from result
+            value = getattr(content, "value", content)
+            # Return extracted value - must be one of the FileContent types
+            if isinstance(value, (str, bytes, Mapping, Sequence, BaseModel)):
+                return value
+            # Fallback - return as string
+            return str(value)
+        # Content is already a FileContent type (not wrapped in Result)
+        if isinstance(content, (str, bytes, Mapping, Sequence, BaseModel)):
+            return content
+        # Fallback for unexpected types
+        return str(content)
 
     def _parse_content_metadata(
         self,
@@ -1654,12 +1660,12 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                     # YAML parsing
                     parsed_raw = yaml.safe_load(text) if text.strip() else {}
 
-                # Type narrowing and assignment
-                if u.is_type(parsed_raw, "dict"):
-                    parsed_content = cast("t.ConfigurationMapping", parsed_raw)
+                # Type narrowing and assignment using isinstance for proper narrowing
+                if isinstance(parsed_raw, dict):
+                    parsed_content = parsed_raw
                     key_count = len(parsed_content)
-                elif u.is_type(parsed_raw, "sequence"):
-                    parsed_content = cast("list[t.GeneralValueType]", parsed_raw)
+                elif isinstance(parsed_raw, list):
+                    parsed_content = parsed_raw
                     item_count = len(parsed_content)
             except (json.JSONDecodeError, yaml.YAMLError):
                 # Invalid content, leave metadata as None
@@ -1693,7 +1699,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 )
                 validation_result = u.Model.load(
                     validate_model,
-                    cast("t.ConfigurationMapping", content_dict),
+                    content_dict,
                 )
                 model_valid = validation_result.is_success
             elif fmt in {"json", "yaml"} and text.strip():

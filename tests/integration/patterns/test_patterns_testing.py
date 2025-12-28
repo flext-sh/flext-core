@@ -18,12 +18,12 @@ import gc
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
-from typing import cast
 
 import pytest
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, P, R
+from flext_core.typings import t
 from tests.typings import TestsFlextTypes
 
 FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
@@ -121,19 +121,14 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        return MockScenario(
-            self.name,
-            cast(
-                "MockScenarioData",
-                {
-                    "given": self._given,
-                    "when": self._when,
-                    "then": self._then,
-                    "tags": self._tags,
-                    "priority": self._priority,
-                },
-            ),
-        )
+        data: MockScenarioData = {
+            "given": self._given,
+            "when": self._when,
+            "then": self._then,
+            "tags": self._tags,
+            "priority": self._priority,
+        }
+        return MockScenario(self.name, data)
 
 
 class FlextTestBuilder:
@@ -142,7 +137,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
         super().__init__()
-        self._data: dict[str, FlextTypes.GeneralValueType] = {}
+        self._data: FixtureDataDict = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """Add ID to the test data."""
@@ -178,7 +173,7 @@ class FlextTestBuilder:
 
     def build(self) -> FixtureDataDict:
         """Build the final test data dictionary."""
-        return cast("FixtureDataDict", self._data)
+        return self._data
 
 
 class ParameterizedTestBuilder:
@@ -192,9 +187,18 @@ class ParameterizedTestBuilder:
         self._success_cases: list[FixtureCaseDict] = []
         self._failure_cases: list[FixtureCaseDict] = []
 
-    def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
+    def add_case(
+        self,
+        email: str | None = None,
+        input: str | None = None,  # noqa: A002
+    ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
-        self._cases.append(cast("FixtureCaseDict", kwargs))
+        case: FixtureCaseDict = {}
+        if email is not None:
+            case["email"] = email
+        if input is not None:
+            case["input"] = input
+        self._cases.append(case)
         return self
 
     def add_success_cases(
@@ -253,12 +257,18 @@ class AssertionBuilder:
 
     def has_length(self, length: int) -> AssertionBuilder:
         """Assert that the data has the specified length."""
-        assert len(cast("Sized", self._data)) == length
+        if not isinstance(self._data, Sized):
+            msg = f"Expected Sized object, got {type(self._data)}"
+            raise TypeError(msg)
+        assert len(self._data) == length
         return self
 
     def contains(self, item: object) -> AssertionBuilder:
         """Assert that the data contains the specified item."""
-        assert item in cast("Container[object]", self._data)
+        if not isinstance(self._data, Container):
+            msg = f"Expected Container object, got {type(self._data)}"
+            raise TypeError(msg)
+        assert item in self._data
         return self
 
     def satisfies(self, predicate: object, message: str = "") -> AssertionBuilder:
@@ -280,11 +290,11 @@ class SuiteBuilder:
         """Initialize test suite builder with suite name."""
         super().__init__()
         self.name = name
-        self._scenarios: list[object] = []
+        self._scenarios: list[t.GeneralValueType] = []
         self._setup_data: dict[str, FlextTypes.GeneralValueType] = {}
         self._tags: list[str] = []
 
-    def add_scenarios(self, scenarios: list[object]) -> SuiteBuilder:
+    def add_scenarios(self, scenarios: list[t.GeneralValueType]) -> SuiteBuilder:
         """Add multiple test scenarios to the suite."""
         self._scenarios.extend(scenarios)
         return self
@@ -301,15 +311,13 @@ class SuiteBuilder:
 
     def build(self) -> FixtureSuiteDict:
         """Build the test suite configuration."""
-        return cast(
-            "FixtureSuiteDict",
-            {
-                "suite_name": self.name,
-                "scenario_count": len(self._scenarios),
-                "tags": self._tags,
-                "setup_data": self._setup_data,
-            },
-        )
+        result: FixtureSuiteDict = {
+            "suite_name": self.name,
+            "scenario_count": len(self._scenarios),
+            "tags": self._tags,
+            "setup_data": self._setup_data,
+        }
+        return result
 
 
 class FixtureBuilder:
@@ -318,9 +326,9 @@ class FixtureBuilder:
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
-        self._fixtures: dict[str, FlextTypes.GeneralValueType] = {}
-        self._setups: list[object] = []
-        self._teardowns: list[object] = []
+        self._fixtures: FixtureFixturesDict = {}
+        self._setups: list[t.GeneralValueType] = []
+        self._teardowns: list[t.GeneralValueType] = []
 
     def with_user(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
         """Add user fixture data."""
@@ -334,7 +342,7 @@ class FixtureBuilder:
 
     def build(self) -> FixtureFixturesDict:
         """Build the test fixtures configuration."""
-        return cast("FixtureFixturesDict", self._fixtures.copy())
+        return self._fixtures.copy()
 
     def add_setup(self, func: object) -> FixtureBuilder:
         """Add a setup function to the fixtures."""
@@ -632,9 +640,8 @@ class TestAdvancedPatterns:
             """Check if all items in a list are strings."""
             if not isinstance(x, list):
                 return False
-            # Type-safe check for each item in the list
-            list_x = cast("list[object]", x)  # Type is now verified as list
-            return all(isinstance(item, str) for item in list_x)
+            # x is verified as list by isinstance check above
+            return all(isinstance(item, str) for item in x)
 
         # Build complex assertions
         AssertionBuilder(test_data).is_not_none().has_length(3).contains(
@@ -648,23 +655,27 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: object) -> dict[str, FlextTypes.GeneralValueType]:
+        def arrange_data(*_args: object) -> dict[str, list[int]]:
             return {"numbers": [1, 2, 3, 4, 5]}
 
-        def act_on_data(data: dict[str, FlextTypes.GeneralValueType]) -> int:
-            return sum(cast("list[int]", data["numbers"]))
+        def act_on_data(data: object) -> object:
+            if isinstance(data, dict) and "numbers" in data:
+                numbers = data["numbers"]
+                if isinstance(numbers, list) and all(isinstance(n, int) for n in numbers):
+                    return sum(numbers)
+            return 0
 
-        def assert_result(
-            result: int,
-            original_data: dict[str, FlextTypes.GeneralValueType],
-        ) -> None:
+        def assert_result(result: object, original_data: object) -> None:
             assert result == 15
-            assert len(cast("list[int]", original_data["numbers"])) == 5
+            if isinstance(original_data, dict) and "numbers" in original_data:
+                numbers = original_data["numbers"]
+                if isinstance(numbers, list):
+                    assert len(numbers) == 5
 
         @arrange_act_assert(
             arrange_data,
-            cast("Callable[[object], object]", act_on_data),
-            cast("Callable[[object, object], None]", assert_result),
+            act_on_data,
+            assert_result,
         )
         def test_sum_calculation() -> None:
             pass  # Logic is in the decorator
@@ -710,9 +721,11 @@ class TestComprehensiveIntegration:
         scenarios.append(scenario2)
 
         # Build complete test suite
+        # Convert scenarios to list[t.GeneralValueType] explicitly
+        scenario_list: list[t.GeneralValueType] = scenarios
         suite = (
             SuiteBuilder("comprehensive_operation_tests")
-            .add_scenarios(cast("list[object]", scenarios))
+            .add_scenarios(scenario_list)
             .with_setup_data(environment="test", timeout=30)
             .with_tag("integration")
             .build()
@@ -781,8 +794,8 @@ class TestRealWorldScenarios:
                 """Check if status is success."""
                 if not isinstance(x, dict):
                     return False
-                # Type-safe dictionary access
-                return cast("dict[str, str]", x).get("status") == "success"
+                # x is verified as dict by isinstance check above
+                return x.get("status") == "success"
 
             def check_correlation_id(x: object) -> bool:
                 """Check if correlation_id exists."""
@@ -795,8 +808,8 @@ class TestRealWorldScenarios:
                 """Check if method is valid HTTP method."""
                 if not isinstance(x, dict):
                     return False
-                # Type-safe dictionary access
-                method = cast("dict[str, str]", x).get("method")
+                # x is verified as dict by isinstance check above
+                method = x.get("method")
                 return isinstance(method, str) and method in {
                     "GET",
                     "POST",

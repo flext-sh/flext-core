@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_serializer
 
 from flext_core.constants import c
-from flext_core.typings import FlextTypes as t
+from flext_core.typings import t
 
 
 # Renamed to FlextModelFoundation for better clarity
@@ -193,8 +193,8 @@ class FlextModelFoundation:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        # Use t.MetadataAttributeDict for Pydantic-safe config with nested dict support
-        attributes: t.MetadataAttributeDict = Field(default_factory=dict)
+        # Use dict[str, t.MetadataAttributeValue] for Pydantic-safe config with nested dict support
+        attributes: dict[str, t.MetadataAttributeValue] = Field(default_factory=dict)
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

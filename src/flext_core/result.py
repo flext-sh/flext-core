@@ -10,7 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Protocol, Self, TypeIs, TypeVar, overload, runtime_checkable
+from typing import (
+    Protocol,
+    Self,
+    TypeIs,
+    TypeVar,
+    overload,
+    runtime_checkable,
+)
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -31,7 +38,7 @@ E = TypeVar("E", default=str)
 class _HasErrorsMethod(Protocol):
     """Protocol for exceptions with errors() method (like Pydantic ValidationError)."""
 
-    def errors(self) -> list[dict[str, object]]: ...
+    def errors(self) -> list[dict[str, t.GeneralValueType]]: ...
 
 
 def is_success_result[T](result: FlextResult[T]) -> TypeIs[FlextResult[T]]:

@@ -55,8 +55,8 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: t.ConfigurationDict = Field(default_factory=dict)
-        context: t.ConfigurationDict = Field(default_factory=dict)
+        data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        context: dict[str, t.GeneralValueType] = Field(default_factory=dict)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -73,10 +73,10 @@ class FlextModelsConfig:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: t.GeneralValueType) -> t.StringDict:
+        def validate_context(cls, v: t.GeneralValueType) -> dict[str, str]:
             """Ensure context has required fields (using FlextRuntime).
 
-            Returns t.StringDict because ensure_trace_context generates
+            Returns dict[str, str] because ensure_trace_context generates
             string trace IDs. This is compatible with the field type
             ConfigurationDict since str is a subtype.
             """
@@ -123,13 +123,24 @@ class FlextModelsConfig:
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
-        def validate_backoff_strategy(cls, v: list[int] | list[object]) -> list[int]:
+        def validate_backoff_strategy(
+            cls, v: list[int] | list[t.GeneralValueType]
+        ) -> list[int]:
             """Validate status codes are valid HTTP codes."""
             # Use default HTTP status code range (100-599) - domain-specific validation
             # removed from flext-core per domain violation rules
-            # Filter to integers and validate
-            int_codes: list[int] = [int(code) for code in v if isinstance(code, (int, str))]
-            result = FlextRuntime.validate_http_status_codes(int_codes)
+            # Convert to list[GeneralValueType] for validation function
+            # Handle both int and string values (pydantic may pass strings from YAML/JSON)
+            codes_for_validation: list[t.GeneralValueType] = []
+            for x in v:
+                if isinstance(x, int):
+                    codes_for_validation.append(x)
+                elif isinstance(x, str):
+                    codes_for_validation.append(int(x))
+                else:
+                    # Convert unknown types to string then int
+                    codes_for_validation.append(int(repr(x)))
+            result = FlextRuntime.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
                 error_msg = (
@@ -164,7 +175,7 @@ class FlextModelsConfig:
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
-            list[object],
+            list[t.GeneralValueType],
             Field(
                 default_factory=list,
                 max_length=c.Validation.MAX_CUSTOM_VALIDATORS,
@@ -174,7 +185,9 @@ class FlextModelsConfig:
 
         @field_validator("custom_validators", mode="after")
         @classmethod
-        def validate_additional_validators(cls, v: list[object]) -> list[object]:
+        def validate_additional_validators(
+            cls, v: list[t.GeneralValueType]
+        ) -> list[t.GeneralValueType]:
             """Validate custom validators are callable."""
             for validator in v:
                 # Direct callable check - object can be any callable,
@@ -203,7 +216,7 @@ class FlextModelsConfig:
         )
         continue_on_error: bool = True
         data_items: Annotated[
-            list[object],
+            list[t.GeneralValueType],
             Field(
                 default_factory=list,
                 max_length=c.Performance.BatchProcessing.MAX_ITEMS,
@@ -229,8 +242,8 @@ class FlextModelsConfig:
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
-        input_data: t.ConfigurationDict = Field(default_factory=dict)
-        execution_context: t.ConfigurationDict = Field(
+        input_data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        execution_context: dict[str, t.GeneralValueType] = Field(
             default_factory=dict,
         )
         timeout_seconds: float = Field(
@@ -267,7 +280,7 @@ class FlextModelsConfig:
             description="Execution order in middleware chain",
         )
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: t.ConfigurationDict = Field(
+        config: dict[str, t.GeneralValueType] = Field(
             default_factory=dict,
             description="Middleware-specific configuration",
         )
@@ -332,7 +345,7 @@ class FlextModelsConfig:
             default=True,
             description="Whether to raise exception on non-zero exit code",
         )
-        env: t.StringDict | None = Field(
+        env: dict[str, str] | None = Field(
             default=None,
             description="Environment variables for the command",
         )
@@ -375,7 +388,7 @@ class FlextModelsConfig:
             default=True,
             description="Use console renderer (True) or JSON renderer (False)",
         )
-        additional_processors: list[Callable[..., object]] = Field(
+        additional_processors: list[p.VariadicCallable[object]] = Field(
             default_factory=list,
             description="Optional extra processors after standard FLEXT processors",
         )
@@ -563,7 +576,7 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: t.ConfigurationDict = Field(
+        extra_kwargs: dict[str, t.GeneralValueType] = Field(
             default_factory=dict,
             description="Additional keyword arguments for metadata",
         )

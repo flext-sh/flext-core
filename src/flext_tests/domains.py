@@ -60,7 +60,7 @@ class FlextTestsDomains:
         service_type: str = "api",
         environment: str = "test",
         **overrides: t.GeneralValueType,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Create test configuration data using factories.
 
         Args:
@@ -78,8 +78,8 @@ class FlextTestsDomains:
             environment=environment,
         )
         # Extract attributes using getattr with defaults for type safety
-        # Use t.ConfigurationDict directly instead of dict[str, t.GeneralValueType]
-        base_config: t.ConfigurationDict = {
+        # Use dict[str, t.GeneralValueType] directly instead of dict[str, t.GeneralValueType]
+        base_config: dict[str, t.GeneralValueType] = {
             "service_type": getattr(config_result, "service_type", service_type),
             "environment": getattr(config_result, "environment", environment),
             "debug": getattr(config_result, "debug", False),
@@ -98,7 +98,7 @@ class FlextTestsDomains:
     def create_payload(
         data_type: str = "user",
         **custom_fields: t.GeneralValueType,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Create test payload data.
 
         Args:
@@ -141,7 +141,7 @@ class FlextTestsDomains:
         *,
         include_data: bool | None = None,
         **custom_fields: t.GeneralValueType,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Create API response test data.
 
         Args:
@@ -153,7 +153,7 @@ class FlextTestsDomains:
             API response dictionary
 
         """
-        response: t.ConfigurationDict = {
+        response: dict[str, t.GeneralValueType] = {
             "status": status,
             "timestamp": "2025-01-01T00:00:00Z",
             "request_id": str(uuid.uuid4()),
@@ -193,7 +193,7 @@ class FlextTestsDomains:
     def create_service(
         service_type: str = "api",
         **config: t.GeneralValueType,
-    ) -> t.ConfigurationDict:
+    ) -> dict[str, t.GeneralValueType]:
         """Create test service configuration.
 
         Args:
@@ -204,7 +204,7 @@ class FlextTestsDomains:
             Service configuration dictionary
 
         """
-        base_service: t.ConfigurationDict = {
+        base_service: dict[str, t.GeneralValueType] = {
             "type": service_type,
             "name": f"test_{service_type}_service",
             "enabled": True,

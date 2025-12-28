@@ -283,9 +283,10 @@ def _rebuild_pydantic_models() -> None:
     }
 
     # Rebuild base model classes to resolve forward references
+    # m.AggregateRoot, m.Entity, m.ValueObject are TypeAliases to the actual classes
     m.AggregateRoot.model_rebuild(_types_namespace=types_namespace)
     m.Entity.model_rebuild(_types_namespace=types_namespace)
-    m.Value.model_rebuild(_types_namespace=types_namespace)
+    m.ValueObject.model_rebuild(_types_namespace=types_namespace)
 
     # Also rebuild User and other test models if they exist
     try:

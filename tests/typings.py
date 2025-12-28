@@ -37,7 +37,7 @@ class TestsFlextTypes(FlextTestsTypes):
     - All generic types come from FlextTestsTypes
     """
 
-    class Core(FlextTestsTypes.Core):
+    class Core:
         """Flext-core-specific type definitions for testing.
 
         Uses composition of core_t for type safety and consistency.

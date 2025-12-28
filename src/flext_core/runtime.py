@@ -150,6 +150,37 @@ class FlextRuntime:
 
     _structlog_configured: ClassVar[bool] = False
 
+    class Metadata(BaseModel):
+        """Minimal metadata model - implements p.Log.Metadata protocol.
+
+        Used by exceptions.py and other low-level modules that cannot import
+        from _models.base to maintain proper architecture layering.
+        Tier 0.5 can be imported by Tier 1 modules like exceptions.py.
+        """
+
+        model_config = {"extra": "forbid", "frozen": True, "validate_assignment": True}
+
+        created_at: datetime
+        updated_at: datetime
+        version: str = "1.0.0"
+        attributes: dict[str, t.MetadataAttributeValue]
+
+        def __init__(
+            self,
+            *,
+            created_at: datetime | None = None,
+            updated_at: datetime | None = None,
+            version: str = "1.0.0",
+            attributes: dict[str, t.MetadataAttributeValue] | None = None,
+        ) -> None:
+            """Initialize metadata with optional values."""
+            super().__init__(
+                created_at=created_at or datetime.now(UTC),
+                updated_at=updated_at or datetime.now(UTC),
+                version=version,
+                attributes=attributes if attributes is not None else {},
+            )
+
     class _AsyncLogWriter:
         """Background log writer using a queue and a separate thread.
 
@@ -302,7 +333,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: T,
+        value: t.GeneralValueType,
     ) -> TypeGuard[t.ConfigurationMapping]:
         """Type guard to check if value is dict-like.
 
@@ -335,7 +366,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: T,
+        value: t.GeneralValueType,
     ) -> TypeGuard[Sequence[t.GeneralValueType]]:
         """Type guard to check if value is list-like.
 
@@ -359,12 +390,12 @@ class FlextRuntime:
     ) -> t.GeneralValueType:
         """Normalize any value to t.GeneralValueType recursively.
 
-        Converts arbitrary objects, t.ConfigurationDict, list[object], and other types
+        Converts arbitrary objects, dict[str, t.GeneralValueType], list[t.GeneralValueType], and other types
         to t.ConfigurationMapping, Sequence[t.GeneralValueType], etc.
         This is the central conversion function for type safety.
 
         Args:
-            val: Value to normalize (accepts GeneralValueType for type safety)
+            val: Value to normalize (accepts object for flexibility with generics)
 
         Returns:
             Normalized value compatible with t.GeneralValueType
@@ -386,7 +417,7 @@ class FlextRuntime:
         if isinstance(val, (str, int, float, bool, type(None))):
             return val
         if FlextRuntime.is_dict_like(val):
-            # Business Rule: Convert to t.ConfigurationDict recursively
+            # Business Rule: Convert to dict[str, t.GeneralValueType] recursively
             # dict is compatible with Mapping[str, t.GeneralValueType] in t.GeneralValueType union.
             # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
             #
@@ -397,7 +428,7 @@ class FlextRuntime:
             # Type narrowing: dict_v is dict[object, object] from dict() constructor
             # We need to filter only str keys to build ConfigurationDict
             # Use direct dict comprehension to avoid circular dependency with mapper
-            result: t.ConfigurationDict = {}
+            result: dict[str, t.GeneralValueType] = {}
             for k, v in dict_v.items():
                 # Type narrowing: k is object from dict.items()
                 # ConfigurationDict requires str keys - convert non-str keys to str
@@ -1053,7 +1084,7 @@ class FlextRuntime:
         # Audit Implication: This method filters log event data based on log level.
         # Used for conditional inclusion of verbose fields in structured logging.
         # Returns dict that is compatible with Mapping interface for read-only access.
-        filtered_dict: t.ConfigurationDict = {}
+        filtered_dict: dict[str, t.GeneralValueType] = {}
         for key, value in event_dict.items():
             # Check if this is a level-prefixed variable
             if key.startswith("_level_"):
@@ -1158,7 +1189,7 @@ class FlextRuntime:
 
         # structlog processors have specific signatures - use object to accept any processor type
         # structlog processors are callables with varying signatures, so we use object for flexibility
-        processors: list[object] = [
+        processors: list[t.GeneralValueType] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -1168,7 +1199,12 @@ class FlextRuntime:
         ]
         if additional_processors:  # pragma: no cover
             # Tested but not covered: structlog configures once per process
-            processors.extend(additional_processors)
+            # additional_processors is Sequence[object] - structlog processors are callables
+            for proc in additional_processors:
+                if callable(proc):
+                    # Callables are GeneralValueType-compatible
+                    typed_proc: t.GeneralValueType = proc
+                    processors.append(typed_proc)
 
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))
@@ -1230,7 +1266,7 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: list[object] | None = None,
+        additional_processors: list[t.GeneralValueType] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 
@@ -1935,7 +1971,8 @@ class FlextRuntime:
             return False
         # Filter out sequences and mappings (use equality operator)
         if isinstance(obj_a, (Sequence, Mapping)) or isinstance(
-            obj_b, (Sequence, Mapping),
+            obj_b,
+            (Sequence, Mapping),
         ):
             # Use equality instead of repr for sequences/mappings
             return obj_a == obj_b
@@ -2036,7 +2073,7 @@ class FlextRuntime:
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
-    ) -> t.StringDict:
+    ) -> dict[str, str]:
         """Ensure context dict has distributed tracing fields (bridge for _models).
 
         Args:
@@ -2045,7 +2082,7 @@ class FlextRuntime:
             include_timestamp: If True, ensure timestamp exists
 
         Returns:
-            t.StringDict: Enriched context with trace fields
+            dict[str, str]: Enriched context with trace fields
 
         """
         # Normalize context to dict with explicit type narrowing
@@ -2054,35 +2091,37 @@ class FlextRuntime:
             context_dict: dict[str, t.GeneralValueType] = {}
         elif isinstance(context, BaseModel):
             # BaseModel has model_dump() - use that first
-            context_dict = {
-                k: v for k, v in context.model_dump().items()
-                if not callable(v)
-            }
+            context_dict = context.model_dump()
         elif isinstance(context, dict):
-            # dict might have Unknown types - normalize via dict comprehension
-            # This naturally type-narrows dict values to GeneralValueType
+            # dict might have Unknown types - avoid iteration
+            # Convert to str representation and parse back if needed
+            # For trace context, we just need string keys - use __str__ fallback
+            context_dict = {}
+            # Try to iterate, but handle potential Unknown types
             try:
-                context_dict = {
-                    str(k): v
-                    for k, v in context.items()
-                    if isinstance(
-                        v,
-                        (
-                            str,
-                            int,
-                            float,
-                            bool,
-                            type(None),
-                            BaseModel,
-                            Path,
-                            list,
-                            dict,
-                        ),
-                    )
-                }
-                # If dict comprehension filtered items, ensure we have a valid dict
-                if not context_dict:
-                    context_dict = {}
+                # Iterate over items directly to preserve key types
+                # Type assertion: cast items to object to handle Unknown types
+                for k_obj, v_obj in context.items():
+                    # Safe: str() works on any object, including Unknown
+                    key_str: str = str(k_obj)
+                    # Convert value to GeneralValueType using isinstance checks
+                    val_typed: t.GeneralValueType
+                    if v_obj is None:
+                        val_typed = None
+                    elif isinstance(
+                        v_obj,
+                        (str, int, float, bool, datetime, BaseModel, Path),
+                    ):
+                        val_typed = v_obj
+                    elif isinstance(v_obj, (list, tuple)):
+                        val_typed = v_obj  # Sequence[GeneralValueType]
+                    elif isinstance(v_obj, dict):
+                        val_typed = v_obj  # Mapping[str, GeneralValueType]
+                    elif callable(v_obj):
+                        val_typed = v_obj  # Callable
+                    else:
+                        val_typed = str(v_obj)  # Fallback to string
+                    context_dict[key_str] = val_typed
             except Exception:
                 # If iteration fails, use empty dict
                 context_dict = {}
@@ -2094,7 +2133,7 @@ class FlextRuntime:
             context_dict = {}
 
         # Convert all values to strings for trace context
-        result: t.StringDict = {
+        result: dict[str, str] = {
             k: v if isinstance(v, str) else str(v) for k, v in context_dict.items()
         }
 

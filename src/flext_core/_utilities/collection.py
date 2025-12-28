@@ -12,6 +12,7 @@ from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from typing import TypeGuard, overload
 
+from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core.result import r
 from flext_core.typings import R, T, U, t
 
@@ -354,7 +355,7 @@ class FlextUtilitiesCollection:
         _ = progress_interval
         do_flatten = flatten or _flatten
         error_mode = on_error or "fail"
-        results: list[object] = []
+        results: list[t.GeneralValueType] = []
         errors: list[tuple[int, str]] = []
         total = len(items)
 
@@ -376,10 +377,18 @@ class FlextUtilitiesCollection:
                     # It's a FlextResult - use getattr for safe access
                     is_success = getattr(result, "is_success", False)
                     if is_success:
-                        value: object = getattr(result, "value", None)
+                        value_raw: object = getattr(result, "value", None)
+                        # Convert to GeneralValueType using conversion utility
+                        value: t.GeneralValueType = (
+                            FlextUtilitiesConversion.to_general_value_type(value_raw)
+                        )
                         if do_flatten and isinstance(value, list):
                             # Extend results with all items from the list
-                            results.extend(value)
+                            # Convert each item to GeneralValueType
+                            results.extend(
+                                FlextUtilitiesConversion.to_general_value_type(v)
+                                for v in value
+                            )
                         else:
                             results.append(value)
                     else:
@@ -392,12 +401,20 @@ class FlextUtilitiesCollection:
                             # Store as (index, error_message) tuple
                             errors.append((processed - 1, str(error_msg)))
                         # skip mode - don't add to errors
-                # It's a direct return
+                # It's a direct return - convert to GeneralValueType
                 elif do_flatten and isinstance(result, list):
                     # Extend results with all items from the list
-                    results.extend(result)
+                    # Convert each item to GeneralValueType
+                    results.extend(
+                        FlextUtilitiesConversion.to_general_value_type(item)
+                        for item in result
+                    )
                 else:
-                    results.append(result)
+                    # Convert result to GeneralValueType
+                    typed_result: t.GeneralValueType = (
+                        FlextUtilitiesConversion.to_general_value_type(result)
+                    )
+                    results.append(typed_result)
             except Exception as e:
                 if error_mode == "fail":
                     return r[t.BatchResultDict].fail(
@@ -856,7 +873,9 @@ class FlextUtilitiesCollection:
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
                 else:
-                    msg = f"Expected str for enum conversion, got {type(v_raw).__name__}"
+                    msg = (
+                        f"Expected str for enum conversion, got {type(v_raw).__name__}"
+                    )
                     raise TypeError(msg)
             return result
 
@@ -894,7 +913,9 @@ class FlextUtilitiesCollection:
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
                 else:
-                    msg = f"Expected str for enum conversion, got {type(v_raw).__name__}"
+                    msg = (
+                        f"Expected str for enum conversion, got {type(v_raw).__name__}"
+                    )
                     raise TypeError(msg)
             return result
 
@@ -1013,6 +1034,76 @@ class FlextUtilitiesCollection:
         result: int | float = 1
         for v in values:
             result *= v
+        return result
+
+    @staticmethod
+    def extract_mapping_items[K, V](
+        mapping: Mapping[K, V],
+    ) -> list[tuple[str, t.GeneralValueType]]:
+        """Extract mapping items as typed list for iteration.
+
+        Helper function to properly type narrow Mapping.items() for pyright.
+        Converts keys to strings and values to GeneralValueType.
+
+        Args:
+            mapping: Mapping to extract items from
+
+        Returns:
+            List of (key, value) tuples with proper typing
+
+        """
+        result: list[tuple[str, t.GeneralValueType]] = []
+        items_iter = mapping.items()
+        for item_tuple in items_iter:
+            key_obj: object = item_tuple[0]
+            value_raw: object = item_tuple[1]
+            key_str: str = str(key_obj)
+            # Convert to GeneralValueType using conversion utility
+            value_typed: t.GeneralValueType = (
+                FlextUtilitiesConversion.to_general_value_type(value_raw)
+            )
+            result.append((key_str, value_typed))
+        return result
+
+    @staticmethod
+    def extract_callable_mapping[K, V](
+        mapping: Mapping[K, V],
+    ) -> dict[str, Callable[[], t.GeneralValueType]]:
+        """Extract mapping of callables for resources/factories.
+
+        Helper function to properly type narrow callable mappings for pyright.
+        Filters to only callable values and converts to proper signature.
+
+        Args:
+            mapping: Mapping containing callable values
+
+        Returns:
+            Dict mapping string keys to callable functions
+
+        """
+        result: dict[str, Callable[[], t.GeneralValueType]] = {}
+        items_iter = mapping.items()
+        for item_tuple in items_iter:
+            key_obj: object = item_tuple[0]
+            value_raw: object = item_tuple[1]
+            if callable(value_raw):
+                key_str: str = str(key_obj)
+                # Create wrapper function with explicit return type
+                # This ensures type safety - container validates at runtime
+                # Type narrow: callable() narrows value_raw to Callable
+                callable_fn: Callable[..., t.GeneralValueType] = value_raw
+
+                def _wrap_callable(
+                    fn: Callable[..., t.GeneralValueType] = callable_fn,
+                ) -> Callable[[], t.GeneralValueType]:
+                    """Wrap callable with proper return type signature."""
+
+                    def _wrapped() -> t.GeneralValueType:
+                        return fn()
+
+                    return _wrapped
+
+                result[key_str] = _wrap_callable()
         return result
 
 

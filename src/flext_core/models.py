@@ -22,16 +22,6 @@ from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.generic import (
-    ConfigurationSnapshot,
-    ConversionProgress,
-    HealthStatus,
-    LdapEntryAttributes,
-    ObjectClassGroups,
-    OperationContext,
-    OperationProgress,
-    ServiceSnapshot,
-)
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
@@ -58,13 +48,42 @@ class FlextModels:
     """
 
     # =========================================================================
-    # CORE DOMAIN ENTITIES - Direct access for common usage
+    # CORE DOMAIN ENTITIES - Inheritable base classes
     # =========================================================================
 
-    type Entity = FlextModelsEntity.Entry
-    type Value = FlextModelsEntity.Value
-    type AggregateRoot = FlextModelsEntity.AggregateRoot
-    type DomainEvent = FlextModelsEntity.DomainEvent
+    class Entity(FlextModelsEntity.Entry):
+        """Entity base class - domain objects with identity."""
+
+    class ValueObject(FlextModelsEntity.Value):
+        """Value object base class - immutable, compared by value."""
+
+    class AggregateRoot(FlextModelsEntity.AggregateRoot):
+        """Aggregate root base class - consistency boundary."""
+
+    class DomainEvent(FlextModelsEntity.DomainEvent):
+        """Domain event base class - published through dispatcher."""
+
+    # =========================================================================
+    # GENERIC MODELS BY BUSINESS FUNCTION - Inheritable base classes
+    # =========================================================================
+
+    class Value(FlextModelsEntity.Value):
+        """Value objects - immutable data compared by value.
+
+        Inherits frozen=True, extra="forbid" from FlextModelsBase.FrozenStrictModel.
+        """
+
+    class Snapshot(FlextModelsBase.FrozenStrictModel):
+        """Snapshots - state captured at a specific moment.
+
+        Inherits frozen=True, extra="forbid" from FlextModelsBase.FrozenStrictModel.
+        """
+
+    class Progress(FlextModelsBase.ArbitraryTypesModel):
+        """Progress trackers - mutable accumulators during operations.
+
+        Inherits validate_assignment=True from FlextModelsBase.ArbitraryTypesModel.
+        """
 
     # =========================================================================
     # NAMESPACE CLASSES - Direct access for internal model classes
@@ -117,42 +136,12 @@ class FlextModels:
         metadata: dict[str, str] | None = None
 
     # =========================================================================
-    # GENERIC REUSABLE MODELS (Value, Snapshot, Progress)
-    # Shared across all FLEXT consumer projects for common patterns
-    # =========================================================================
-
-    class ValueModels(LdapEntryAttributes):
-        """Base class for test value objects - Immutable, compared by value.
-
-        Provides base class that tests can inherit from for creating
-        value object models. Inherits from LdapEntryAttributes to provide
-        Pydantic frozen model functionality.
-        """
-
-        LdapEntryAttributes = LdapEntryAttributes
-        OperationContext = OperationContext
-
-    class SnapshotModels:
-        """Namespace for snapshot models - Immutable state capture at a moment."""
-
-        Service = ServiceSnapshot
-        Configuration = ConfigurationSnapshot
-        Health = HealthStatus
-        ObjectClassGroups = ObjectClassGroups
-
-    class ProgressModels:
-        """Namespace for progress models - Mutable, accumulate during operation."""
-
-        Operation = OperationProgress
-        Conversion = ConversionProgress
-
-    # =========================================================================
     # CONFIGURATION MODELS - Direct access for common usage
     # =========================================================================
 
-    Config: TypeAlias = FlextModelsConfig
+    Config = FlextModelsConfig
     ProcessingRequest: TypeAlias = FlextModelsConfig.ProcessingRequest
-    ProcessingConfig: TypeAlias = ProcessingRequest
+    ProcessingConfig: TypeAlias = FlextModelsConfig.ProcessingRequest
     BatchProcessingConfig: TypeAlias = FlextModelsConfig.BatchProcessingConfig
     ValidationConfiguration: TypeAlias = FlextModelsConfig.ValidationConfiguration
     HandlerRegistration: TypeAlias = FlextModelsHandler.Registration
@@ -197,7 +186,7 @@ class FlextModels:
     CollectionsStatistics: TypeAlias = FlextModelsCollections.Statistics
     Options: TypeAlias = FlextModelsCollections.Options
     CollectionsParseOptions: TypeAlias = FlextModelsCollections.ParseOptions
-    Categories: TypeAlias = CollectionsCategories
+    Categories: TypeAlias = FlextModelsCollections.Categories
 
     # =========================================================================
     # CONTAINER MODELS - DI registry and service registration
@@ -282,11 +271,11 @@ class FlextModels:
     CqrsHandler: TypeAlias = Handler
 
     # =========================================================================
-    # TYPE UNIONS - Pydantic discriminated unions
+    # UNIONS - Pydantic discriminated unions
     # =========================================================================
 
-    type MessageUnion = Annotated[
-        FlextModels.Command | FlextModels.Query | FlextModels.DomainEvent,
+    MessageUnion = Annotated[
+        FlextModelsCqrs.Command | FlextModelsCqrs.Query | FlextModelsEntity.DomainEvent,
         Discriminator("message_type"),
     ]
 
