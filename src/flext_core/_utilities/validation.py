@@ -68,11 +68,8 @@ from flext_core.typings import FlextTypes as t
 _to_general_value_type = FlextUtilitiesCast.to_general_value_type
 
 
-@runtime_checkable
-class _Predicate(Protocol[t.Types.T]):
-    """Protocol for callable predicates that accept a value and return bool."""
-
-    def __call__(self, value: t.Types.T) -> bool: ...
+# Use protocol from protocols module to avoid duplication and satisfy architecture rules
+_Predicate = p.Validation.Predicate
 
 
 class FlextUtilitiesValidation:
@@ -2907,11 +2904,12 @@ class FlextUtilitiesValidation:
                 return default
             if isinstance(raw_value, check_type):
                 # raw_value matches the expected type T and is not Callable
-                return raw_value  # narrowed by isinstance
+                return raw_value  # type: T (narrowed by isinstance check)
 
             # Try conversion for primitive types only using str intermediary
             # This is safe because str() works on any GeneralValueType
             if check_type in {int, float, str, bool}:
+                conversion_result: T | None = None
                 try:
                     str_value = str(raw_value)
                     # Convert to the expected type
@@ -2927,9 +2925,18 @@ class FlextUtilitiesValidation:
                         converted_value = str_value
                     # Verify type and return - isinstance narrows to T
                     if isinstance(converted_value, check_type):
-                        return converted_value
-                except (TypeError, ValueError):
-                    pass
+                        conversion_result = converted_value  # type: T
+                except (TypeError, ValueError) as exc:
+                    # Type conversion failed, log and continue to return default
+                    FlextRuntime.structlog().debug(
+                        "Type conversion failed",
+                        key=key,
+                        target_type=getattr(check_type, "__name__", str(check_type)),
+                        error=str(exc),
+                    )
+
+                if conversion_result is not None:
+                    return conversion_result
 
             return default
 
