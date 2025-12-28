@@ -337,10 +337,7 @@ class FlextUtilitiesConversion:
         """
         result = FlextUtilitiesConversion.to_str_list(value)
         if filter_list_like:
-            result = [
-                item for item in result
-                if not FlextRuntime.is_list_like(item)
-            ]
+            result = [item for item in result if not FlextRuntime.is_list_like(item)]
         return result
 
     @staticmethod

@@ -19,8 +19,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_core import s, c, h, m, r, t, u,
-)
+from flext_core import c, h, m, r, s, t, u
 
 
 class CreateUserCommand(m.Cqrs.Command):
