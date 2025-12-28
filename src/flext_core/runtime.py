@@ -2154,7 +2154,7 @@ class FlextRuntime:
 
     @staticmethod
     def validate_http_status_codes(
-        codes: list[t.GeneralValueType],
+        codes: list[int] | list[str] | list[t.GeneralValueType],
         min_code: int | None = None,
         max_code: int | None = None,
     ) -> RuntimeResult[list[int]]:
