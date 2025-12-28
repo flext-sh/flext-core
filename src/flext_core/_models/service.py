@@ -95,13 +95,17 @@ class FlextModelsService:
 
         @field_validator("parameters", mode="before")
         @classmethod
-        def validate_parameters(cls, v: FlextModelsService.ServiceParameters | None) -> FlextModelsService.ServiceParameters:
+        def validate_parameters(
+            cls, v: FlextModelsService.ServiceParameters | None
+        ) -> FlextModelsService.ServiceParameters:
             """Ensure parameters has a default value."""
             return v if v is not None else FlextModelsService.ServiceParameters()
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: FlextModelsService.TraceContext | None) -> FlextModelsService.TraceContext:
+        def validate_context(
+            cls, v: FlextModelsService.TraceContext | None
+        ) -> FlextModelsService.TraceContext:
             """Ensure context has a default value."""
             return v if v is not None else FlextModelsService.TraceContext()
 
@@ -126,7 +130,9 @@ class FlextModelsService:
 
         @field_validator("parameters", mode="before")
         @classmethod
-        def validate_parameters(cls, v: FlextModelsService.ServiceParameters | None) -> FlextModelsService.ServiceParameters:
+        def validate_parameters(
+            cls, v: FlextModelsService.ServiceParameters | None
+        ) -> FlextModelsService.ServiceParameters:
             """Ensure parameters has a default value."""
             return v if v is not None else FlextModelsService.ServiceParameters()
 
@@ -170,7 +176,9 @@ class FlextModelsService:
 
         @field_validator("filters", mode="before")
         @classmethod
-        def validate_filters(cls, v: FlextModelsService.ServiceFilters | None) -> FlextModelsService.ServiceFilters:
+        def validate_filters(
+            cls, v: FlextModelsService.ServiceFilters | None
+        ) -> FlextModelsService.ServiceFilters:
             """Ensure filters has a default value."""
             return v if v is not None else FlextModelsService.ServiceFilters()
 
@@ -190,13 +198,17 @@ class FlextModelsService:
 
         @field_validator("data", mode="before")
         @classmethod
-        def validate_data(cls, v: FlextModelsService.ServiceData | None) -> FlextModelsService.ServiceData:
+        def validate_data(
+            cls, v: FlextModelsService.ServiceData | None
+        ) -> FlextModelsService.ServiceData:
             """Ensure data has a default value."""
             return v if v is not None else FlextModelsService.ServiceData()
 
         @field_validator("filters", mode="before")
         @classmethod
-        def validate_filters(cls, v: FlextModelsService.ServiceFilters | None) -> FlextModelsService.ServiceFilters:
+        def validate_filters(
+            cls, v: FlextModelsService.ServiceFilters | None
+        ) -> FlextModelsService.ServiceFilters:
             """Ensure filters has a default value."""
             return v if v is not None else FlextModelsService.ServiceFilters()
 
@@ -222,7 +234,9 @@ class FlextModelsService:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: FlextModelsService.ServiceContext | None) -> FlextModelsService.ServiceContext:
+        def validate_context(
+            cls, v: FlextModelsService.ServiceContext | None
+        ) -> FlextModelsService.ServiceContext:
             """Ensure context has a default value."""
             return v if v is not None else FlextModelsService.ServiceContext()
 
@@ -247,19 +261,25 @@ class FlextModelsService:
 
         @field_validator("arguments", mode="before")
         @classmethod
-        def validate_arguments(cls, v: FlextModelsService.ServiceParameters | None) -> FlextModelsService.ServiceParameters:
+        def validate_arguments(
+            cls, v: FlextModelsService.ServiceParameters | None
+        ) -> FlextModelsService.ServiceParameters:
             """Ensure arguments has a default value."""
             return v if v is not None else FlextModelsService.ServiceParameters()
 
         @field_validator("keyword_arguments", mode="before")
         @classmethod
-        def validate_keyword_arguments(cls, v: FlextModelsService.ServiceParameters | None) -> FlextModelsService.ServiceParameters:
+        def validate_keyword_arguments(
+            cls, v: FlextModelsService.ServiceParameters | None
+        ) -> FlextModelsService.ServiceParameters:
             """Ensure keyword_arguments has a default value."""
             return v if v is not None else FlextModelsService.ServiceParameters()
 
         @field_validator("retry_config", mode="before")
         @classmethod
-        def validate_retry_config(cls, v: FlextModelsService.RetryConfiguration | None) -> FlextModelsService.RetryConfiguration:
+        def validate_retry_config(
+            cls, v: FlextModelsService.RetryConfiguration | None
+        ) -> FlextModelsService.RetryConfiguration:
             """Ensure retry_config has a default value."""
             return v if v is not None else FlextModelsService.RetryConfiguration()
 
