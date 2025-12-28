@@ -204,14 +204,19 @@ class FlextUtilitiesCollection:
 
         Returns first item where predicate returns True, or None.
         """
+        # Handle sequence types
         if isinstance(items, (list, tuple)):
-            for item in items:
-                if predicate(item):
+            sequence_items: list[T] | tuple[T, ...] = items
+            for item in sequence_items:
+                result: bool = predicate(item)  # Explicit type for result
+                if result:
                     return item
             return None
-        # isinstance check removed - type is already narrowed to Mapping[str, T]
-        for v in items.values():
-            if predicate(v):
+        # Handle mapping types
+        mapping_items: Mapping[str, T] = items
+        for v in mapping_items.values():
+            result: bool = predicate(v)  # Explicit type for result
+            if result:
                 return v
         return None
 
@@ -711,7 +716,10 @@ class FlextUtilitiesCollection:
 
         """
         for item in items:
-            if predicate is None or predicate(item):
+            if predicate is None:
+                return item
+            result: bool = predicate(item)
+            if result:
                 return item
         return default
 
@@ -736,7 +744,10 @@ class FlextUtilitiesCollection:
 
         """
         for item in reversed(items):
-            if predicate is None or predicate(item):
+            if predicate is None:
+                return item
+            result: bool = predicate(item)
+            if result:
                 return item
         return default
 
@@ -797,7 +808,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def partition(
         items: Sequence[T],
-        predicate: Callable[[T], bool],
+        predicate: _Predicate[T],
     ) -> tuple[list[T], list[T]]:
         """Split items by predicate: (matches, non-matches).
 
@@ -815,7 +826,8 @@ class FlextUtilitiesCollection:
         matches: list[T] = []
         non_matches: list[T] = []
         for item in items:
-            if predicate(item):
+            result: bool = predicate(item)
+            if result:
                 matches.append(item)
             else:
                 non_matches.append(item)
