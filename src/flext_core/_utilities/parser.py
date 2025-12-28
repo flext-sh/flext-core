@@ -917,15 +917,16 @@ class FlextUtilitiesParser:
                     pattern_tuple[1],
                 ))
             elif tuple_len == self.TUPLE_LENGTH_3:
-                # For 3-element tuples, use unpacking with explicit type narrowing
-                # After len check, pattern_tuple is definitely tuple[str, str, int]
-                if len(pattern_tuple) == self.TUPLE_LENGTH_3:
-                    # Unpack the 3-element tuple
-                    a, b, c = pattern_tuple[0], pattern_tuple[1], pattern_tuple[2]
-                    # Call method with unpacked values
+                # For 3-element tuples, extract elements with bounds checking
+                if len(pattern_tuple) >= 3:
+                    # Extract each element individually to avoid unpacking union type
+                    a: str = str(pattern_tuple[0])
+                    b: str = str(pattern_tuple[1])
+                    c: int = int(pattern_tuple[2])
+                    # Call method with typed values
                     pattern_result = self._extract_pattern_components((a, b, c))
                 else:
-                    msg = "Pattern tuple length mismatch"
+                    msg = "Pattern tuple too short (need 3 elements)"
                     return r[tuple[str, int]].fail(msg)
             else:
                 msg = f"Pattern tuple must have 2 or 3 elements, got {tuple_len}"
