@@ -46,7 +46,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields, is_dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, TypeGuard
+from typing import ClassVar, Protocol, TypeGuard, runtime_checkable
 
 import orjson
 from pydantic import (
@@ -66,6 +66,13 @@ from flext_core.typings import FlextTypes as t
 
 # Use centralized version from cast.py
 _to_general_value_type = FlextUtilitiesCast.to_general_value_type
+
+
+@runtime_checkable
+class _Predicate(Protocol[t.Types.T]):
+    """Protocol for callable predicates that accept a value and return bool."""
+
+    def __call__(self, value: t.Types.T) -> bool: ...
 
 
 class FlextUtilitiesValidation:
@@ -2260,7 +2267,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_all[T](
         values: list[T],
-        predicate: Callable[[T], bool],
+        predicate: _Predicate[T],
         error: str = "Validation failed",
         *,
         fail_fast: bool = True,
@@ -2268,7 +2275,8 @@ class FlextUtilitiesValidation:
         """Validate all values in list."""
         errors: list[str] = []
         for val in values:
-            if not predicate(val):
+            result: bool = predicate(val)
+            if not result:
                 if fail_fast:
                     return r[list[T]].fail(error)
                 errors.append(error)

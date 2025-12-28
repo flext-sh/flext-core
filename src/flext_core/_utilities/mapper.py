@@ -2948,7 +2948,8 @@ class FlextUtilitiesMapper:
         """
         for name, predicate in callables.items():
             try:
-                if predicate(value):
+                result: bool = predicate(value)
+                if result:
                     return name
             except (ValueError, TypeError, AttributeError):
                 # Skip predicates that fail for this value
