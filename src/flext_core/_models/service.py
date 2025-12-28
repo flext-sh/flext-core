@@ -46,9 +46,13 @@ class FlextModelsService:
         """Retry configuration for operations."""
 
         max_retries: int = Field(default=c.Reliability.DEFAULT_MAX_RETRIES, ge=0)
-        initial_delay_seconds: float = Field(default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS, gt=0)
+        initial_delay_seconds: float = Field(
+            default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS, gt=0
+        )
         max_delay_seconds: float = Field(default=c.Reliability.RETRY_BACKOFF_MAX, gt=0)
-        exponential_base: float = Field(default=c.Reliability.RETRY_BACKOFF_BASE, ge=1.0)
+        exponential_base: float = Field(
+            default=c.Reliability.RETRY_BACKOFF_BASE, ge=1.0
+        )
         retry_on_timeout: bool = True
 
     class ServiceParameters(FlextModelsBase.DynamicConfigModel):
@@ -78,12 +82,8 @@ class FlextModelsService:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Method to execute",
         )
-        parameters: FlextModelsService.ServiceParameters = Field(
-            default_factory=lambda: FlextModelsService.ServiceParameters(),
-        )
-        context: FlextModelsService.TraceContext = Field(
-            default_factory=lambda: FlextModelsService.TraceContext(),
-        )
+        parameters: FlextModelsService.ServiceParameters | None = None
+        context: FlextModelsService.TraceContext | None = None
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -92,6 +92,18 @@ class FlextModelsService:
         )
         execution: bool = False
         enable_validation: bool = True
+
+        @field_validator("parameters", mode="before")
+        @classmethod
+        def validate_parameters(cls, v: FlextModelsService.ServiceParameters | None) -> FlextModelsService.ServiceParameters:
+            """Ensure parameters has a default value."""
+            return v if v is not None else FlextModelsService.ServiceParameters()
+
+        @field_validator("context", mode="before")
+        @classmethod
+        def validate_context(cls, v: FlextModelsService.TraceContext | None) -> FlextModelsService.TraceContext:
+            """Ensure context has a default value."""
+            return v if v is not None else FlextModelsService.TraceContext()
 
         @field_validator("timeout_seconds", mode="after")
         @classmethod
@@ -110,9 +122,13 @@ class FlextModelsService:
         """Single operation in a batch."""
 
         operation_name: str = Field(min_length=1)
-        parameters: FlextModelsService.ServiceParameters = Field(
-            default_factory=lambda: FlextModelsService.ServiceParameters(),
-        )
+        parameters: FlextModelsService.ServiceParameters | None = None
+
+        @field_validator("parameters", mode="before")
+        @classmethod
+        def validate_parameters(cls, v: FlextModelsService.ServiceParameters | None) -> FlextModelsService.ServiceParameters:
+            """Ensure parameters has a default value."""
+            return v if v is not None else FlextModelsService.ServiceParameters()
 
     class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service batch request."""
@@ -150,9 +166,13 @@ class FlextModelsService:
             default_factory=lambda: c.Cqrs.Aggregation.AVG,
         )
         group_by: list[str] = Field(default_factory=list)
-        filters: FlextModelsService.ServiceFilters = Field(
-            default_factory=lambda: FlextModelsService.ServiceFilters(),
-        )
+        filters: FlextModelsService.ServiceFilters | None = None
+
+        @field_validator("filters", mode="before")
+        @classmethod
+        def validate_filters(cls, v: FlextModelsService.ServiceFilters | None) -> FlextModelsService.ServiceFilters:
+            """Ensure filters has a default value."""
+            return v if v is not None else FlextModelsService.ServiceFilters()
 
     class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service resource request."""
@@ -165,12 +185,20 @@ class FlextModelsService:
         resource_id: str | None = None
         resource_limit: int = Field(c.Performance.MAX_BATCH_SIZE, gt=c.ZERO)
         action: str = Field(default_factory=lambda: c.Cqrs.Action.GET)
-        data: FlextModelsService.ServiceData = Field(
-            default_factory=lambda: FlextModelsService.ServiceData(),
-        )
-        filters: FlextModelsService.ServiceFilters = Field(
-            default_factory=lambda: FlextModelsService.ServiceFilters(),
-        )
+        data: FlextModelsService.ServiceData | None = None
+        filters: FlextModelsService.ServiceFilters | None = None
+
+        @field_validator("data", mode="before")
+        @classmethod
+        def validate_data(cls, v: FlextModelsService.ServiceData | None) -> FlextModelsService.ServiceData:
+            """Ensure data has a default value."""
+            return v if v is not None else FlextModelsService.ServiceData()
+
+        @field_validator("filters", mode="before")
+        @classmethod
+        def validate_filters(cls, v: FlextModelsService.ServiceFilters | None) -> FlextModelsService.ServiceFilters:
+            """Ensure filters has a default value."""
+            return v if v is not None else FlextModelsService.ServiceFilters()
 
     class AclResponse(FlextModelsBase.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
@@ -187,10 +215,16 @@ class FlextModelsService:
             default_factory=list,
             description="Denied permissions",
         )
-        context: FlextModelsService.ServiceContext = Field(
-            default_factory=lambda: FlextModelsService.ServiceContext(),
+        context: FlextModelsService.ServiceContext | None = Field(
+            default=None,
             description="Additional context",
         )
+
+        @field_validator("context", mode="before")
+        @classmethod
+        def validate_context(cls, v: FlextModelsService.ServiceContext | None) -> FlextModelsService.ServiceContext:
+            """Ensure context has a default value."""
+            return v if v is not None else FlextModelsService.ServiceContext()
 
     class OperationExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
         """Operation execution request."""
@@ -201,21 +235,33 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: p.VariadicCallable[p.ResultLike[t.GeneralValueType]]
-        arguments: FlextModelsService.ServiceParameters = Field(
-            default_factory=lambda: FlextModelsService.ServiceParameters(),
-        )
-        keyword_arguments: FlextModelsService.ServiceParameters = Field(
-            default_factory=lambda: FlextModelsService.ServiceParameters(),
-        )
+        arguments: FlextModelsService.ServiceParameters | None = None
+        keyword_arguments: FlextModelsService.ServiceParameters | None = None
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
             le=c.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextSettings (Config has priority over Constants)",
         )
-        retry_config: FlextModelsService.RetryConfiguration = Field(
-            default_factory=lambda: FlextModelsService.RetryConfiguration(),
-        )
+        retry_config: FlextModelsService.RetryConfiguration | None = None
+
+        @field_validator("arguments", mode="before")
+        @classmethod
+        def validate_arguments(cls, v: FlextModelsService.ServiceParameters | None) -> FlextModelsService.ServiceParameters:
+            """Ensure arguments has a default value."""
+            return v if v is not None else FlextModelsService.ServiceParameters()
+
+        @field_validator("keyword_arguments", mode="before")
+        @classmethod
+        def validate_keyword_arguments(cls, v: FlextModelsService.ServiceParameters | None) -> FlextModelsService.ServiceParameters:
+            """Ensure keyword_arguments has a default value."""
+            return v if v is not None else FlextModelsService.ServiceParameters()
+
+        @field_validator("retry_config", mode="before")
+        @classmethod
+        def validate_retry_config(cls, v: FlextModelsService.RetryConfiguration | None) -> FlextModelsService.RetryConfiguration:
+            """Ensure retry_config has a default value."""
+            return v if v is not None else FlextModelsService.RetryConfiguration()
 
         @field_validator("operation_callable", mode="after")
         @classmethod

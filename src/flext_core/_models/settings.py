@@ -124,7 +124,8 @@ class FlextModelsConfig:
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
         def validate_backoff_strategy(
-            cls, v: list[int] | list[t.GeneralValueType]
+            cls,
+            v: list[int] | list[t.GeneralValueType],
         ) -> list[int]:
             """Validate status codes are valid HTTP codes."""
             # Use default HTTP status code range (100-599) - domain-specific validation
@@ -186,7 +187,8 @@ class FlextModelsConfig:
         @field_validator("custom_validators", mode="after")
         @classmethod
         def validate_additional_validators(
-            cls, v: list[t.GeneralValueType]
+            cls,
+            v: list[t.GeneralValueType],
         ) -> list[t.GeneralValueType]:
             """Validate custom validators are callable."""
             for validator in v:
