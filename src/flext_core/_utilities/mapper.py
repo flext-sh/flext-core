@@ -432,6 +432,11 @@ class FlextUtilitiesMapper:
             [1, 2, 'three']
 
         """
+        # Type narrowing: convert non-GeneralValueType objects to string
+        if not isinstance(value, (str, int, float, bool, type(None), dict, list, BaseModel, Path)):
+            # Object is not a recognized GeneralValueType, convert to string
+            return str(value)
+
         if cls.is_json_primitive(value):
             return value
         # Use isinstance for type narrowing (is_type() doesn't return TypeGuard)
@@ -1537,11 +1542,15 @@ class FlextUtilitiesMapper:
         convert_type = ops["convert"]
         if not isinstance(convert_type, type):
             return current
-        convert_default = ops.get("convert_default", convert_type())
         try:
-            return convert_type(current)
+            # convert_type() returns Any, but we trust it produces GeneralValueType
+            result = convert_type(current)
+            return result if isinstance(result, (str, int, float, bool, type(None))) or hasattr(result, '__dict__') else str(result)
         except (ValueError, TypeError):
-            return convert_default
+            convert_default = ops.get("convert_default")
+            if convert_default is not None:
+                return convert_default
+            return current
 
     @staticmethod
     def _extract_transform_options(

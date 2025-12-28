@@ -2312,7 +2312,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _guard_check_string_shortcut(
-        value: object,
+        value: t.GeneralValueType,
         condition: str,
         context_name: str,
         error_msg: str | None,
@@ -2402,8 +2402,23 @@ class FlextUtilitiesValidation:
 
         # String shortcuts
         if isinstance(condition, str):
+            # Type narrowing for string shortcuts: convert T to GeneralValueType
+            # Create a GeneralValueType from any value by converting non-standard types to string
+            narrowed_value: t.GeneralValueType
+            # Check for all valid GeneralValueType variants
+            if isinstance(value, (str, int, float, bool)):
+                narrowed_value = value
+            elif value is None:
+                narrowed_value = None
+            elif isinstance(value, (dict, list, BaseModel, Path)):
+                narrowed_value = value
+            elif callable(value):
+                narrowed_value = value
+            else:
+                # Fallback: convert to string for unknown types
+                narrowed_value = str(value)
             return FlextUtilitiesValidation._guard_check_string_shortcut(
-                value,
+                narrowed_value,
                 condition,
                 context_name,
                 error_msg,

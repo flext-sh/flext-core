@@ -121,30 +121,30 @@ class FlextModels:
     # Shared across all FLEXT consumer projects for common patterns
     # =========================================================================
 
-    class _ValueModels:
-        """Value Objects - Immutable, compared by value."""
+    class ValueModels(LdapEntryAttributes):
+        """Base class for test value objects - Immutable, compared by value.
+
+        Provides base class that tests can inherit from for creating
+        value object models. Inherits from LdapEntryAttributes to provide
+        Pydantic frozen model functionality.
+        """
 
         LdapEntryAttributes = LdapEntryAttributes
         OperationContext = OperationContext
 
-    class _SnapshotModels:
-        """Snapshots - Immutable state capture at a moment."""
+    class SnapshotModels:
+        """Namespace for snapshot models - Immutable state capture at a moment."""
 
         Service = ServiceSnapshot
         Configuration = ConfigurationSnapshot
         Health = HealthStatus
         ObjectClassGroups = ObjectClassGroups
 
-    class _ProgressModels:
-        """Progress Trackers - Mutable, accumulate during operation."""
+    class ProgressModels:
+        """Namespace for progress models - Mutable, accumulate during operation."""
 
         Operation = OperationProgress
         Conversion = ConversionProgress
-
-    # Namespace classes for value objects, snapshots, and progress tracking
-    ValueModels = _ValueModels
-    SnapshotModels = _SnapshotModels
-    ProgressModels = _ProgressModels
 
     # =========================================================================
     # CONFIGURATION MODELS - Direct access for common usage

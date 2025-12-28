@@ -735,8 +735,7 @@ class FlextRegistry(FlextService[bool]):
         # Use TypeGuard to narrow to GeneralValueType
         plugin_value = raw_result.value
         if u.is_general_value_type(plugin_value):
-            typed_value: t.GeneralValueType = cast("t.GeneralValueType", plugin_value)  # INTENTIONAL CAST
-            return r[t.GeneralValueType].ok(typed_value)
+            return r[t.GeneralValueType].ok(plugin_value)
         # If not a GeneralValueType, convert to string representation
         return r[t.GeneralValueType].ok(str(plugin_value))
 

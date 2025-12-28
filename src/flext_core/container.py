@@ -764,7 +764,7 @@ class FlextContainer(FlextRuntime, p.DI):
     def get(
         self,
         name: str,
-    ) -> r[t.RegisterableService]:
+    ) -> p.ResultLike[t.RegisterableService]:
         """Resolve a registered service or factory by name.
 
         Returns the resolved service as RegisterableService. For type-safe resolution

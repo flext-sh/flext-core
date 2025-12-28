@@ -302,7 +302,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: t.GeneralValueType,
+        value: T,
     ) -> TypeGuard[t.ConfigurationMapping]:
         """Type guard to check if value is dict-like.
 
@@ -335,7 +335,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: t.GeneralValueType,
+        value: T,
     ) -> TypeGuard[Sequence[t.GeneralValueType]]:
         """Type guard to check if value is list-like.
 
@@ -355,7 +355,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: T,
+        val: t.GeneralValueType,
     ) -> t.GeneralValueType:
         """Normalize any value to t.GeneralValueType recursively.
 
@@ -364,7 +364,7 @@ class FlextRuntime:
         This is the central conversion function for type safety.
 
         Args:
-            val: Value to normalize (accepts object for flexibility with generics)
+            val: Value to normalize (accepts GeneralValueType for type safety)
 
         Returns:
             Normalized value compatible with t.GeneralValueType

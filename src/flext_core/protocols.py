@@ -446,9 +446,9 @@ class FlextProtocols:
             self,
             name: str,
             factory: Callable[[], t.GeneralValueType],
-        ) -> ResultLike[bool]:
+        ) -> FlextProtocols.ResultLike[bool]:
             """Register a service factory returning GeneralValueType."""
-            ...
+            ...  # INTERFACE
 
         def with_service(
             self,
