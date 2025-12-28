@@ -1428,9 +1428,10 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                         raise ValueError(
                             f"Failed to create default kwargs: {default_result.error}",
                         )
-                # Pass data directly - already properly typed from content dict
+                # Type narrowing: data is guaranteed to match create() signature
+                # (excludes r[] types which are handled separately above)
                 path = manager.create(
-                    data,
+                    data,  # Type is already narrowed to accepted types
                     filename,
                     directory=validated_kwargs.directory,
                     fmt=validated_kwargs.fmt,
