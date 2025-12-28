@@ -24,7 +24,7 @@ from typing import cast
 
 from pydantic import BaseModel, Field
 
-from flext_core import FlextTypes as t, (
+from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextContext,
@@ -35,8 +35,8 @@ from flext_core import FlextTypes as t, (
     FlextRegistry,
     FlextResult,
     FlextSettings,
+    FlextTypes as t,
     s,
-    t,
     u,
 )
 from flext_core.protocols import p

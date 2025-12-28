@@ -25,12 +25,12 @@ from enum import StrEnum
 
 from pydantic import Field
 
-from flext_core import FlextTypes as t, (
+from flext_core import (
     FlextConstants,
     FlextModels,
     FlextResult,
+    FlextTypes as t,
     s,
-    t,
     u,
 )
 

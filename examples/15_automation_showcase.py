@@ -21,11 +21,11 @@ from __future__ import annotations
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextTypes as t, (
+from flext_core import (
     FlextConstants,
     FlextResult,
     FlextService,
-    t,
+    FlextTypes as t,
 )
 from flext_core.context import FlextContext
 from flext_core.utilities import u

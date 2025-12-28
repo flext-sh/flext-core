@@ -23,14 +23,14 @@ from collections.abc import Callable, Sequence
 
 from pydantic import BaseModel
 
-from flext_core import FlextTypes as t, (
+from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextDecorators,
     FlextLogger,
     FlextResult,
     FlextService,
-    t,
+    FlextTypes as t,
 )
 
 # ═══════════════════════════════════════════════════════════════════
