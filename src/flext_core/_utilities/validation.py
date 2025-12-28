@@ -372,7 +372,7 @@ class FlextUtilitiesValidation:
                     if isinstance(key, str):
                         # Convert value to GeneralValueType
                         typed_value: t.GeneralValueType = _to_general_value_type(
-                            value_raw
+                            value_raw,
                         )
                         result_dict[key] = typed_value
             return result_dict
@@ -472,7 +472,7 @@ class FlextUtilitiesValidation:
                     if isinstance(key, str):
                         # Convert value to GeneralValueType
                         typed_value: t.GeneralValueType = _to_general_value_type(
-                            value_raw
+                            value_raw,
                         )
                         result_dict[key] = typed_value
             return result_dict
@@ -3389,7 +3389,8 @@ class FlextUtilitiesValidation:
 
         @staticmethod
         def serialize[T](
-            value: T, type_: type[T]
+            value: T,
+            type_: type[T],
         ) -> r[Mapping[str, t.GeneralValueType]]:
             """Serialize value using TypeAdapter.
 
@@ -3419,7 +3420,7 @@ class FlextUtilitiesValidation:
                 return r[Mapping[str, t.GeneralValueType]].ok(result_dict)
             except Exception as e:
                 return r[Mapping[str, t.GeneralValueType]].fail(
-                    f"Serialization failed: {e}"
+                    f"Serialization failed: {e}",
                 )
 
         @staticmethod

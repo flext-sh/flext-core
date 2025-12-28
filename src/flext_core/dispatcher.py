@@ -129,14 +129,16 @@ class FlextDispatcher(FlextService[bool]):
 
         # Handler registry (from FlextDispatcher dual-mode registration)
         self._handlers: dict[
-            str, t.HandlerType
+            str,
+            t.HandlerType,
         ] = {}  # Handler mappings by message type
         self._auto_handlers: list[t.HandlerType] = []  # Auto-discovery handlers
 
         # Middleware pipeline (from FlextDispatcher)
         self._middleware_configs: list[t.ConfigurationMapping] = []  # Config + ordering
         self._middleware_instances: dict[
-            str, t.HandlerCallable
+            str,
+            t.HandlerCallable,
         ] = {}  # Keyed by middleware_id
 
         # Query result caching (from FlextDispatcher - LRU cache)
@@ -148,7 +150,8 @@ class FlextDispatcher(FlextService[bool]):
 
         # Event subscribers (from FlextDispatcher event protocol)
         self._event_subscribers: dict[
-            str, list[t.GeneralValueType]
+            str,
+            list[t.GeneralValueType],
         ] = {}  # event_type → handlers
 
         self._execution_count: int = 0

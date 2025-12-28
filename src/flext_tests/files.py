@@ -1155,7 +1155,8 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                         # Narrow content to FileContent type
                         content: t.FileContent
                         if isinstance(
-                            content_raw, (str, bytes, Mapping, Sequence, BaseModel)
+                            content_raw,
+                            (str, bytes, Mapping, Sequence, BaseModel),
                         ):
                             content = content_raw
                             files_dict[name] = content

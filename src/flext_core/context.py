@@ -928,7 +928,7 @@ class FlextContext(FlextRuntime):
                 )
             )
             context_data_for_json: m.ContextData = m.ContextData(
-                data=normalized_data_for_json
+                data=normalized_data_for_json,
             )
             # Type narrowing: cls(initial_data=context_data_for_json) returns FlextContext which implements p.Ctx protocol
             # FlextContext structurally implements p.Ctx, so no cast needed
