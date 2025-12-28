@@ -127,9 +127,9 @@ class FlextModelsConfig:
             """Validate status codes are valid HTTP codes."""
             # Use default HTTP status code range (100-599) - domain-specific validation
             # removed from flext-core per domain violation rules
-            # Convert to list[object] for validation function (accepts object)
-            codes_for_validation: list[object] = list(v)
-            result = FlextRuntime.validate_http_status_codes(codes_for_validation)
+            # Filter to integers and validate
+            int_codes: list[int] = [int(code) for code in v if isinstance(code, (int, str))]
+            result = FlextRuntime.validate_http_status_codes(int_codes)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
                 error_msg = (

@@ -181,13 +181,14 @@ class FlextTypes:
     )
 
     # RegisterableService - Type for services registerable in FlextContainer
-    # Defined as GeneralValueType to accept all value types
+    # Extends GeneralValueType to accept protocol types (Config, Ctx, Service, Logger, etc.)
     # Represents all types that can be registered in FlextContainer including:
     # - Primitives (str, int, float, bool, None)
     # - BaseModel instances
     # - Sequences and Mappings
     # - Callables (factories)
-    # Note: Protocols (Config, Ctx, Service, etc.) are also compatible via object protocol
+    # - Protocol types (Config, Ctx, Service, Handler, Logger, etc.)
+    #   represented as object for structural typing without circular imports
     RegisterableService: TypeAlias = (
         str
         | int
@@ -200,6 +201,7 @@ class FlextTypes:
         | Sequence[GeneralValueType]
         | Mapping[str, GeneralValueType]
         | Callable[..., GeneralValueType]
+        | object  # Protocols (Config, Ctx, Service, Logger, Handler, etc.)
     )
 
     # Constant value type - all possible constant types in FlextConstants
