@@ -578,6 +578,18 @@ class FlextProtocols:
         """Validation protocols for domain rules."""
 
         @runtime_checkable
+        class Predicate(Protocol):
+            """Protocol for callable predicates that accept a value and return bool.
+
+            Used in validation utilities for filtering and conditional logic.
+            Supports any callable that accepts a value and returns bool.
+            """
+
+            def __call__(self, value: t.GeneralValueType) -> bool:  # INTERFACE
+                """Evaluate predicate on value."""
+                ...
+
+        @runtime_checkable
         class HasInvariants(Protocol):
             """Protocol for DDD aggregate invariant checking.
 
@@ -586,7 +598,7 @@ class FlextProtocols:
             than returning FlextProtocols.Result[bool].
             """
 
-            def check_invariants(self) -> None:
+            def check_invariants(self) -> None:  # INTERFACE
                 """Check invariants, raising exception on violation.
 
                 Reflects real implementations like FlextModelsEntity.AggregateRoot
