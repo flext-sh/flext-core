@@ -621,11 +621,11 @@ class FlextContainer(FlextRuntime, p.DI):
     def with_service(
         self,
         name: str,
-        service: t.RegisterableService,
+        service: t.GeneralValueType | p.Config | p.Ctx | p.DI | p.Service[t.GeneralValueType] | p.Log | p.Handler | p.Registry | Callable[..., t.GeneralValueType],
     ) -> Self:
         """Register a service and return the container for fluent chaining.
 
-        Accepts RegisterableService (GeneralValueType, protocols, callables);
+        Accepts service value (GeneralValueType, protocols, callables);
         values are wrapped in a ``ServiceRegistration`` with configuration from
         ``FlextSettings`` and user overrides.
         """
@@ -657,7 +657,7 @@ class FlextContainer(FlextRuntime, p.DI):
     ) -> r[bool]:
         """Register a service instance for dependency resolution.
 
-        Business Rule: The container accepts RegisterableService for registration,
+        Business Rule: The container accepts service values for registration,
         including GeneralValueType, protocols (Config, Ctx, DI, Service, Log,
         Handler, Registry), and callables. This enables dependency injection of
         typed service instances and protocol implementations.
@@ -1007,7 +1007,7 @@ class FlextContainer(FlextRuntime, p.DI):
         config: p.Config | None = None,
         context: p.Ctx | None = None,
         subproject: str | None = None,
-        services: Mapping[str, t.RegisterableService] | None = None,
+        services: Mapping[str, t.GeneralValueType | p.Config | p.Ctx | p.DI | p.Service[t.GeneralValueType] | p.Log | p.Handler | p.Registry | Callable[..., t.GeneralValueType]] | None = None,
         factories: Mapping[str, t.FactoryCallable] | None = None,
         resources: Mapping[str, t.ResourceCallable] | None = None,
     ) -> FlextContainer:

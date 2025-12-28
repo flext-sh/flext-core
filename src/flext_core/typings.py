@@ -20,6 +20,7 @@ from typing import (
     ParamSpec,
     Protocol,
     Self,
+    TypeAlias,
     TypedDict,
     TypeVar,
     runtime_checkable,
@@ -176,6 +177,13 @@ class FlextTypes:
         | Sequence[FlextTypes.GeneralValueType]  # Recursive: lists of values
         | Mapping[str, FlextTypes.GeneralValueType]  # Recursive: dicts of values
         | Callable[..., FlextTypes.GeneralValueType]  # Callables returning values
+    )
+
+    # RegisterableService - Type for services registerable in FlextContainer
+    # Extends GeneralValueType to include protocol types (Config, Ctx, Logger, etc.)
+    # which are plain classes (not BaseModel) implementing protocol interfaces
+    RegisterableService: TypeAlias = (
+        GeneralValueType | object
     )
 
     # Constant value type - all possible constant types in FlextConstants

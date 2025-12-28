@@ -1131,40 +1131,16 @@ class FlextProtocols:
     # RegisterableService: Type alias for all services that can be registered
     # in FlextContainer. Includes protocols, models, and callables.
     # This replaces object/dict usage in DI container methods.
+    # Type for services registerable in FlextContainer.
+    # Union of all protocol types that can be registered as DI services:
+    # - GeneralValueType: Primitives, BaseModel, sequences, mappings
+    # - BindableLogger: Logger protocol
+    # - Callable: Factories that return GeneralValueType
     RegisterableService = (
-        # Value types (from typings)
-        "t.GeneralValueType"
-        # Configuration protocol
-        | "FlextProtocols.Config"
-        # Context protocol
-        | "FlextProtocols.Ctx"
-        # DI container protocol (for nested containers)
-        | "FlextProtocols.DI"
-        # Domain service protocol
-        | "FlextProtocols.Service[t.GeneralValueType]"
-        # Logger protocols (StructlogLogger covers FlextLogger structural typing)
-        | "FlextProtocols.Log.StructlogLogger"
+        t.GeneralValueType
         | BindableLogger
-        # Handler protocol
-        | "FlextProtocols.Handler"
-        # Registry protocol
-        | "FlextProtocols.Registry"
-        # Any callable (factories, services, loggers)
-        | Callable[..., "t.GeneralValueType"]
+        | Callable[..., t.GeneralValueType]
     )
-    """Type for services registerable in FlextContainer.
-
-    Union of all protocol types that can be registered as DI services:
-    - GeneralValueType: Primitives, BaseModel, sequences, mappings
-    - Config/Ctx/DI: Core infrastructure protocols
-    - Service/Handler/Registry: Domain protocols
-    - Log: Logger protocol
-    - Callable: Factories and service classes
-
-    Usage:
-        container.register("logger", logger)  # logger: p.Log
-        container.register("context", ctx)    # ctx: p.Ctx
-    """
 
     # ServiceFactory: Factory callable that returns RegisterableService
     type ServiceFactory = Callable[[], t.GeneralValueType]

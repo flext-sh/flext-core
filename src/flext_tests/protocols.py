@@ -424,16 +424,16 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def __call__(
                     self,
-                    kind: t.Tests.Factory.ModelKind = ...,
+                    kind: str = ...,
                     # All parameters via kwargs - validated by ModelFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: t.GeneralValueType,
                 ) -> (
-                    t.Tests.Factory.FactoryModel
-                    | t.Tests.Factory.FactoryModelList
-                    | t.Tests.Factory.FactoryModelDict
-                    | r[t.Tests.Factory.FactoryModel]
-                    | r[t.Tests.Factory.FactoryModelList]
-                    | r[t.Tests.Factory.FactoryModelDict]
+                    t.GeneralValueType
+                    | list[t.GeneralValueType]
+                    | dict[str, t.GeneralValueType]
+                    | r[t.GeneralValueType]
+                    | r[list[t.GeneralValueType]]
+                    | r[dict[str, t.GeneralValueType]]
                 ):
                     """Create model instance(s) with optional transformations.
 
@@ -467,10 +467,10 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def __call__[TValue](
                     self,
-                    kind: t.Tests.Factory.ResultKind = "ok",
+                    kind: str = "ok",
                     value: TValue | None = None,
                     # All parameters via kwargs - validated by ResultFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: t.GeneralValueType,
                 ) -> (
                     FlextProtocols.Result[TValue] | list[FlextProtocols.Result[TValue]]
                 ):
@@ -506,11 +506,9 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def list[T](
                     self,
-                    source: (
-                        Sequence[T] | Callable[[], T] | t.Tests.Factory.ModelKind
-                    ) = "user",
+                    source: t.GeneralValueType = "user",
                     # All parameters via kwargs - validated by ListFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: t.GeneralValueType,
                 ) -> list[T] | r[list[T]]:
                     """Create typed list from source.
 
@@ -533,11 +531,10 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     source: (
                         Mapping[K, V]
-                        | Callable[[], tuple[K, V]]
-                        | t.Tests.Factory.ModelKind
+                        | t.GeneralValueType
                     ) = "user",
                     # All parameters via kwargs - validated by DictFactoryParams
-                    **kwargs: t.Tests.TestResultValue,
+                    **kwargs: t.GeneralValueType,
                 ) -> dict[K, V] | r[dict[K, V]]:
                     """Create typed dict from source.
 

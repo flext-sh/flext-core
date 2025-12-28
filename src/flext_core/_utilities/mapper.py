@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING, TypeGuard, overload
 
 from pydantic import BaseModel
@@ -412,7 +413,7 @@ class FlextUtilitiesMapper:
         return {v: k for k, v in source.items()}
 
     @staticmethod
-    def is_json_primitive(value: t.GeneralValueType) -> bool:
+    def is_json_primitive(value: t.GeneralValueType | object) -> bool:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return FlextUtilitiesGuards.is_type(value, (str, int, float, bool, type(None)))
 
@@ -444,17 +445,27 @@ class FlextUtilitiesMapper:
             [1, 2, 'three']
 
         """
-        if cls.is_json_primitive(value):
-            return value
+        # Type narrowing: ensure value is GeneralValueType (not plain object)
+        narrowed_value: t.GeneralValueType
+        if isinstance(value, (str, int, float, bool)):
+            narrowed_value = value
+        elif value is None:
+            narrowed_value = None
+        elif isinstance(value, (dict, list, BaseModel, Path)) or callable(value):
+            narrowed_value = value
+        else:
+            # Non-GeneralValueType object -> convert to string
+            narrowed_value = str(value)
+
+        if cls.is_json_primitive(narrowed_value):
+            return narrowed_value
         # Use isinstance for type narrowing (is_type() doesn't return TypeGuard)
-        if isinstance(value, dict):
+        if isinstance(narrowed_value, dict):
             # Convert any dict to JSON-compatible format
             # Purpose: CONVERT arbitrary dicts (even with non-GeneralValueType values)
             # to JSON-safe format by recursively calling convert_to_json_value
             result_dict: dict[str, t.GeneralValueType] = {}
-            key: object
-            val: object
-            for key, val in value.items():
+            for key, val in narrowed_value.items():
                 # Convert object to GeneralValueType before recursive call
                 val_typed = _to_general_value_type(val)
                 result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_value(
@@ -462,15 +473,17 @@ class FlextUtilitiesMapper:
                 )
             return result_dict
         # Use isinstance for sequence type narrowing
-        if isinstance(value, Sequence) and not isinstance(value, str):
+        if isinstance(narrowed_value, Sequence) and not isinstance(narrowed_value, str):
             # NOTE: Cannot use u.map() here due to circular import
             # (utilities.py -> mapper.py)
-            # Type narrowing: value is Sequence[object] after _is_sequence check
-            # Cast to Sequence[t.GeneralValueType] for iteration
-            value_seq: Sequence[t.GeneralValueType] = value
-            return [cls.convert_to_json_value(item) for item in value_seq]
-        # Fallback: convert to string
-        return str(value)
+            # Type narrowing: narrowed_value is Sequence after isinstance check
+            result_list: list[t.GeneralValueType] = []
+            for item in narrowed_value:
+                converted_item = cls.convert_to_json_value(item)
+                result_list.append(converted_item)
+            return result_list
+        # Fallback: already narrowed to GeneralValueType
+        return narrowed_value
 
     @classmethod
     def convert_dict_to_json(
