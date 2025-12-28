@@ -10,11 +10,18 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import TypeGuard, overload
+from typing import Protocol, TypeGuard, overload, runtime_checkable
 
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core.result import r
 from flext_core.typings import R, T, U, t
+
+
+@runtime_checkable
+class _Predicate(Protocol[T]):
+    """Protocol for callable predicates that accept a value and return bool."""
+
+    def __call__(self, value: T) -> bool: ...
 
 
 class FlextUtilitiesCollection:
@@ -191,7 +198,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def find(
         items: list[T] | tuple[T, ...] | Mapping[str, T],
-        predicate: Callable[[T], bool],
+        predicate: _Predicate[T],
     ) -> T | None:
         """Find first item matching predicate with generic type support.
 
@@ -686,7 +693,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def first(
         items: Sequence[T],
-        predicate: Callable[[T], bool] | None = None,
+        predicate: _Predicate[T] | None = None,
         default: T | None = None,
     ) -> T | None:
         """Get first item (optionally matching predicate).
@@ -711,7 +718,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def last(
         items: Sequence[T],
-        predicate: Callable[[T], bool] | None = None,
+        predicate: _Predicate[T] | None = None,
         default: T | None = None,
     ) -> T | None:
         """Get last item (optionally matching predicate).
