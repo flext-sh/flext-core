@@ -763,7 +763,7 @@ class FlextContainer(FlextRuntime, p.DI):
     def get(
         self,
         name: str,
-    ) -> p.ResultLike[t.RegisterableService]:
+    ) -> r[t.GeneralValueType]:
         """Resolve a registered service or factory by name.
 
         Returns the resolved service as RegisterableService. For type-safe resolution
@@ -788,27 +788,27 @@ class FlextContainer(FlextRuntime, p.DI):
         # Try service first
         if name in self._services:
             service_registration = self._services[name]
-            return r[t.RegisterableService].ok(service_registration.service)
+            return r[t.GeneralValueType].ok(service_registration.service)
 
         # Try factory
         if name in self._factories:
             try:
                 factory_registration = self._factories[name]
                 resolved = factory_registration.factory()
-                return r[t.RegisterableService].ok(resolved)
+                return r[t.GeneralValueType].ok(resolved)
             except Exception as e:
-                return r[t.RegisterableService].fail(str(e))
+                return r[t.GeneralValueType].fail(str(e))
 
         # Try resource
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
                 resolved = resource_registration.factory()
-                return r[t.RegisterableService].ok(resolved)
+                return r[t.GeneralValueType].ok(resolved)
             except Exception as e:
-                return r[t.RegisterableService].fail(str(e))
+                return r[t.GeneralValueType].fail(str(e))
 
-        return r[t.RegisterableService].fail(f"Service '{name}' not found")
+        return r[t.GeneralValueType].fail(f"Service '{name}' not found")
 
     @staticmethod
     def _is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
