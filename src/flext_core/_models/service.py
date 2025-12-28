@@ -243,7 +243,7 @@ class FlextModelsService:
         retry_config: FlextModelsService.RetryConfiguration | None = None
 
         @model_validator(mode="after")
-        def apply_defaults(self) -> "OperationExecutionRequest":
+        def apply_defaults(self) -> FlextModelsService.OperationExecutionRequest:
             """Apply default values for optional nested classes."""
             if self.arguments is None:
                 self.arguments = FlextModelsService.ServiceParameters()
