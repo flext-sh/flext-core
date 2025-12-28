@@ -749,6 +749,10 @@ class FlextUtilitiesParser:
             flags = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
             # Three-element tuple with explicit narrowing
+            if not isinstance(pattern_tuple, tuple) or len(pattern_tuple) != 3:
+                return r[tuple[str, str, int]].fail(
+                    f"Invalid pattern tuple length {tuple_len}, expected 3",
+                )
             pattern_str, replacement_str, flags_val = (
                 pattern_tuple[0],  # str
                 pattern_tuple[1],  # str
