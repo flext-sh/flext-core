@@ -1004,7 +1004,7 @@ class FlextUtilitiesParser:
         """Parse StrEnum with optional case-insensitivity. Returns None if not enum."""
         # T is already bound to StrEnum, so target is guaranteed to be StrEnum subclass
         # Get __members__ - returns MappingProxyType[str, T]
-        members_proxy = target.__members__
+        members_proxy = getattr(target, "__members__", {})
         # Convert to dict for easier iteration
         members: dict[str, T] = dict(members_proxy)
 
@@ -1038,7 +1038,7 @@ class FlextUtilitiesParser:
                 return r[T].ok(member_instance)
 
         return r[T].fail(
-            f"Cannot parse '{value}' as {target.__name__}",
+            f"Cannot parse '{value}' as {getattr(target, '__name__', 'Unknown')}",
         )
 
     @staticmethod
@@ -1138,7 +1138,7 @@ class FlextUtilitiesParser:
         if not issubclass(target, StrEnum):
             return None
         # Get members - returns MappingProxyType[str, T]
-        members_proxy = target.__members__
+        members_proxy = getattr(target, "__members__", {})
         # Convert to dict for easier iteration
         members: dict[str, T] = dict(members_proxy)
         value_str = str(value)
@@ -1164,7 +1164,9 @@ class FlextUtilitiesParser:
                     return r[T].ok(member_value)
 
         # No match found - return default or error
-        error_msg = f"Cannot parse '{value_str}' as {target.__name__}"
+        error_msg = (
+            f"Cannot parse '{value_str}' as {getattr(target, '__name__', 'Unknown')}"
+        )
         return FlextUtilitiesParser._parse_with_default(
             default,
             default_factory,
