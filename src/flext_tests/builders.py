@@ -989,7 +989,10 @@ class FlextTestsBuilders:
         merge_result = u.merge(self_dict, other_dict, strategy=params.strategy)
         if merge_result.is_success:
             self._ensure_data_initialized()
-            assert self._data is not None, "_data must be initialized"
+            if self._data is None:
+                msg = "_data must be initialized after ensure call"
+                raise RuntimeError(msg)
+            # Type narrowed: self._data is guaranteed not None
             # Update self._data with merged values
             for k, v in merge_result.value.items():
                 self._data[k] = v
