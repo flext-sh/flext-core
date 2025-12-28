@@ -15,13 +15,12 @@ from typing import Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import FlextProtocols, r
+from flext_core import FlextProtocols, FlextTypes as t, r
 
 # Import base types from flext_core
 # FlextTestsTypes extends FlextTypes, so we can use base types directly
 # Test-specific types (t.Tests.*) are defined in flext_tests.typings
 # To avoid circular import, we import typings at end of module
-from flext_tests.typings import FlextTestsTypes as t
 
 
 class FlextTestsProtocols(FlextProtocols):

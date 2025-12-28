@@ -25,11 +25,11 @@ from flext_core import (
     FlextDispatcher,
     FlextRegistry,
     FlextSettings,
+    FlextTypes as t,
     FlextUtilities,
     T,
     p,
     r,
-    t,
 )
 from flext_core.utilities import u as u_core
 from flext_tests.constants import c
