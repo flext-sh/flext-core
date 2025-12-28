@@ -12,7 +12,7 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
@@ -93,21 +93,14 @@ class FlextModelsService:
         execution: bool = False
         enable_validation: bool = True
 
-        @field_validator("parameters", mode="before")
-        @classmethod
-        def validate_parameters(
-            cls, v: FlextModelsService.ServiceParameters | None
-        ) -> FlextModelsService.ServiceParameters:
-            """Ensure parameters has a default value."""
-            return v if v is not None else FlextModelsService.ServiceParameters()
-
-        @field_validator("context", mode="before")
-        @classmethod
-        def validate_context(
-            cls, v: FlextModelsService.TraceContext | None
-        ) -> FlextModelsService.TraceContext:
-            """Ensure context has a default value."""
-            return v if v is not None else FlextModelsService.TraceContext()
+        @model_validator(mode="after")
+        def apply_defaults(self) -> DomainServiceExecutionRequest:
+            """Apply default values for optional nested classes."""
+            if self.parameters is None:
+                self.parameters = FlextModelsService.ServiceParameters()
+            if self.context is None:
+                self.context = FlextModelsService.TraceContext()
+            return self
 
         @field_validator("timeout_seconds", mode="after")
         @classmethod
@@ -128,13 +121,12 @@ class FlextModelsService:
         operation_name: str = Field(min_length=1)
         parameters: FlextModelsService.ServiceParameters | None = None
 
-        @field_validator("parameters", mode="before")
-        @classmethod
-        def validate_parameters(
-            cls, v: FlextModelsService.ServiceParameters | None
-        ) -> FlextModelsService.ServiceParameters:
-            """Ensure parameters has a default value."""
-            return v if v is not None else FlextModelsService.ServiceParameters()
+        @model_validator(mode="after")
+        def apply_defaults(self) -> BatchOperation:
+            """Apply default values for optional nested classes."""
+            if self.parameters is None:
+                self.parameters = FlextModelsService.ServiceParameters()
+            return self
 
     class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service batch request."""
@@ -174,13 +166,12 @@ class FlextModelsService:
         group_by: list[str] = Field(default_factory=list)
         filters: FlextModelsService.ServiceFilters | None = None
 
-        @field_validator("filters", mode="before")
-        @classmethod
-        def validate_filters(
-            cls, v: FlextModelsService.ServiceFilters | None
-        ) -> FlextModelsService.ServiceFilters:
-            """Ensure filters has a default value."""
-            return v if v is not None else FlextModelsService.ServiceFilters()
+        @model_validator(mode="after")
+        def apply_defaults(self) -> DomainServiceMetricsRequest:
+            """Apply default values for optional nested classes."""
+            if self.filters is None:
+                self.filters = FlextModelsService.ServiceFilters()
+            return self
 
     class DomainServiceResourceRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service resource request."""
@@ -196,21 +187,14 @@ class FlextModelsService:
         data: FlextModelsService.ServiceData | None = None
         filters: FlextModelsService.ServiceFilters | None = None
 
-        @field_validator("data", mode="before")
-        @classmethod
-        def validate_data(
-            cls, v: FlextModelsService.ServiceData | None
-        ) -> FlextModelsService.ServiceData:
-            """Ensure data has a default value."""
-            return v if v is not None else FlextModelsService.ServiceData()
-
-        @field_validator("filters", mode="before")
-        @classmethod
-        def validate_filters(
-            cls, v: FlextModelsService.ServiceFilters | None
-        ) -> FlextModelsService.ServiceFilters:
-            """Ensure filters has a default value."""
-            return v if v is not None else FlextModelsService.ServiceFilters()
+        @model_validator(mode="after")
+        def apply_defaults(self) -> DomainServiceResourceRequest:
+            """Apply default values for optional nested classes."""
+            if self.data is None:
+                self.data = FlextModelsService.ServiceData()
+            if self.filters is None:
+                self.filters = FlextModelsService.ServiceFilters()
+            return self
 
     class AclResponse(FlextModelsBase.ArbitraryTypesModel):
         """ACL (Access Control List) response model."""
@@ -232,13 +216,12 @@ class FlextModelsService:
             description="Additional context",
         )
 
-        @field_validator("context", mode="before")
-        @classmethod
-        def validate_context(
-            cls, v: FlextModelsService.ServiceContext | None
-        ) -> FlextModelsService.ServiceContext:
-            """Ensure context has a default value."""
-            return v if v is not None else FlextModelsService.ServiceContext()
+        @model_validator(mode="after")
+        def apply_defaults(self) -> AclResponse:
+            """Apply default values for optional nested classes."""
+            if self.context is None:
+                self.context = FlextModelsService.ServiceContext()
+            return self
 
     class OperationExecutionRequest(FlextModelsBase.ArbitraryTypesModel):
         """Operation execution request."""
@@ -259,29 +242,16 @@ class FlextModelsService:
         )
         retry_config: FlextModelsService.RetryConfiguration | None = None
 
-        @field_validator("arguments", mode="before")
-        @classmethod
-        def validate_arguments(
-            cls, v: FlextModelsService.ServiceParameters | None
-        ) -> FlextModelsService.ServiceParameters:
-            """Ensure arguments has a default value."""
-            return v if v is not None else FlextModelsService.ServiceParameters()
-
-        @field_validator("keyword_arguments", mode="before")
-        @classmethod
-        def validate_keyword_arguments(
-            cls, v: FlextModelsService.ServiceParameters | None
-        ) -> FlextModelsService.ServiceParameters:
-            """Ensure keyword_arguments has a default value."""
-            return v if v is not None else FlextModelsService.ServiceParameters()
-
-        @field_validator("retry_config", mode="before")
-        @classmethod
-        def validate_retry_config(
-            cls, v: FlextModelsService.RetryConfiguration | None
-        ) -> FlextModelsService.RetryConfiguration:
-            """Ensure retry_config has a default value."""
-            return v if v is not None else FlextModelsService.RetryConfiguration()
+        @model_validator(mode="after")
+        def apply_defaults(self) -> OperationExecutionRequest:
+            """Apply default values for optional nested classes."""
+            if self.arguments is None:
+                self.arguments = FlextModelsService.ServiceParameters()
+            if self.keyword_arguments is None:
+                self.keyword_arguments = FlextModelsService.ServiceParameters()
+            if self.retry_config is None:
+                self.retry_config = FlextModelsService.RetryConfiguration()
+            return self
 
         @field_validator("operation_callable", mode="after")
         @classmethod

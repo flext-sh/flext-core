@@ -851,7 +851,9 @@ class FlextContainer(FlextRuntime, p.DI):
         if name in self._services:
             service = self._services[name].service
             if not self._is_instance_of(service, type_cls):
-                return r[T].fail(f"Service '{name}' is not of type {type_cls.__name__}")
+                return r[T].fail(
+                    f"Service '{name}' is not of type {getattr(type_cls, '__name__', 'Unknown')}"
+                )
             # TypeGuard narrows service to type T
             return r[T].ok(service)
 
