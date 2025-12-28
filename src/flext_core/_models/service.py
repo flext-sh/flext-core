@@ -28,6 +28,10 @@ class FlextModelsService:
     """
 
     # =========================================================================
+    # FACTORY FUNCTIONS - Forward references for self-referencing models
+    # =========================================================================
+
+    # =========================================================================
     # SUPPORTING MODELS - Base classes for dynamic configuration
     # =========================================================================
 
@@ -42,9 +46,9 @@ class FlextModelsService:
         """Retry configuration for operations."""
 
         max_retries: int = Field(default=c.Reliability.DEFAULT_MAX_RETRIES, ge=0)
-        initial_delay_seconds: float = Field(default=1.0, gt=0)
-        max_delay_seconds: float = Field(default=60.0, gt=0)
-        exponential_base: float = Field(default=2.0, ge=1.0)
+        initial_delay_seconds: float = Field(default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS, gt=0)
+        max_delay_seconds: float = Field(default=c.Reliability.RETRY_BACKOFF_MAX, gt=0)
+        exponential_base: float = Field(default=c.Reliability.RETRY_BACKOFF_BASE, ge=1.0)
         retry_on_timeout: bool = True
 
     class ServiceParameters(FlextModelsBase.DynamicConfigModel):
