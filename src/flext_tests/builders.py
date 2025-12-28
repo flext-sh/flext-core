@@ -73,7 +73,8 @@ class FlextTestsBuilders:
 
     # Use class attribute (not PrivateAttr) to match FlextService pattern
     # Initialize as None to avoid ClassVar requirement (mutable default)
-    _data: t.Tests.Builders.BuilderDict | None = None
+    # CRITICAL: Every instance __init__ MUST set _data to a dict
+    _data: t.Tests.Builders.BuilderDict
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize builder with optional initial data."""
@@ -84,10 +85,8 @@ class FlextTestsBuilders:
 
     def _ensure_data_initialized(self) -> None:
         """Ensure _data is initialized (helper for type safety)."""
-        if self._data is None:
+        if not self._data:
             self._data = {}
-        # Type assertion for mypy - after this method, _data is guaranteed to be dict
-        assert self._data is not None, "_data must be initialized"
 
     def execute(self) -> r[t.Tests.Builders.BuilderDict]:
         """Execute service - builds and returns as FlextResult.
@@ -989,11 +988,7 @@ class FlextTestsBuilders:
         merge_result = u.merge(self_dict, other_dict, strategy=params.strategy)
         if merge_result.is_success:
             self._ensure_data_initialized()
-            if self._data is None:
-                msg = "_data must be initialized after ensure call"
-                raise RuntimeError(msg)
-            # Type narrowed: self._data is guaranteed not None
-            # Update self._data with merged values
+            # _data is always a dict after __init__ and _ensure_data_initialized
             for k, v in merge_result.value.items():
                 self._data[k] = v
         return self
