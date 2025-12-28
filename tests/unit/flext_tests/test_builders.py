@@ -91,7 +91,7 @@ class TestFlextTestsBuilders:
         data = builder.build()
 
         assert "validation_fields" in data
-        fields: dict[str, t_test.Types.GeneralValueType] = data["validation_fields"]
+        fields: dict[str, t.Types.GeneralValueType] = data["validation_fields"]
 
         valid_emails: list[str] = fields["valid_emails"]
         assert len(valid_emails) == 5

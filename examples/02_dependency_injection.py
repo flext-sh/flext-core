@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from flext_core import (
+from flext_core import FlextTypes as t, (
     FlextConstants,
     FlextContainer,
     FlextModels,
@@ -140,7 +140,8 @@ class CacheService(FlextModels.ArbitraryTypesModel):
 
         # Railway pattern with u validation (DRY)
         return (
-            u.validate_length(
+            u
+            .validate_length(
                 key,
                 max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
             )

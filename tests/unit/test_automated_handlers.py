@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextHandlers, r
-from flext_core.typings import t
+from flext_core import FlextHandlers, FlextTypes as t, r
 from tests.conftest import test_framework
 from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory

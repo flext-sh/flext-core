@@ -383,11 +383,10 @@ class FlextMixins(FlextRuntime):
             wire_modules_raw,
             str,
         ):
-            # Filter to ModuleType items using explicit loop for mypy type narrowing
-            modules_list: list[ModuleType] = []
-            for item in wire_modules_raw:
-                if isinstance(item, ModuleType):
-                    modules_list.append(item)  # noqa: PERF401
+            # Filter to ModuleType items using list comprehension
+            modules_list: list[ModuleType] = [
+                item for item in wire_modules_raw if isinstance(item, ModuleType)
+            ]
             if len(modules_list) == len(wire_modules_raw):
                 wire_modules = modules_list
 

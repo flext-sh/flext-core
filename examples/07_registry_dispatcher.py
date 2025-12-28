@@ -26,9 +26,9 @@ from flext_core import (
     FlextModels,
     FlextRegistry,
     FlextResult,
+    FlextTypes as t,
     h,
     s,
-    t,
     u,
 )
 from flext_core.protocols import p

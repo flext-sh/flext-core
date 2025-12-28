@@ -367,7 +367,7 @@ class FlextUtilitiesValidation:
                     and len(item) == c.Performance.EXPECTED_TUPLE_LENGTH
                 ):
                     key: str | object
-                    value_raw: object
+                    value_raw: t.GeneralValueType
                     key, value_raw = item
                     if isinstance(key, str):
                         # Convert value to GeneralValueType
@@ -467,7 +467,7 @@ class FlextUtilitiesValidation:
                     and len(item) == c.Performance.EXPECTED_TUPLE_LENGTH
                 ):
                     key: str | object
-                    value_raw: object
+                    value_raw: t.GeneralValueType
                     key, value_raw = item
                     if isinstance(key, str):
                         # Convert value to GeneralValueType

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from pydantic import PrivateAttr
 
-from flext_core import (
+from flext_core import FlextTypes as t, (
     FlextConstants,
     FlextResult,
     FlextService,
