@@ -517,16 +517,18 @@ class FlextMixins(FlextRuntime):
         # Use r.create_from_callable() for unified error handling (DSL pattern)
         def register() -> bool:
             """Register service in container."""
+            # Get container with explicit type for registration
+            container = self.container
             # Type narrowing: if self is BaseModel, it fits GeneralValueType
             if isinstance(self, BaseModel):
-                result = self.container.register(
+                result = container.register(
                     service_name,
                     self,
                 )
             else:
                 # Fallback: wrap non-BaseModel service in dict
                 service_data: dict[str, str] = {"_service": str(type(self).__name__)}
-                result = self.container.register(service_name, service_data)
+                result = container.register(service_name, service_data)
             # Use u.when() for conditional error handling (DSL pattern)
             if result.is_failure:
                 error_msg = result.error or ""
