@@ -310,7 +310,61 @@ class FlextUtilitiesConversion:
             return None  # Skip complex mappings for safety
         return None
 
+    @staticmethod
+    def to_str_list_safe(
+        value: t.GeneralValueType,
+        *,
+        filter_list_like: bool = True,
+    ) -> list[str]:
+        """Convert value to list[str] with safe nested list handling.
 
-conversion = FlextUtilitiesConversion.conversion
+        Safely handles nested list-like structures by filtering them out
+        to prevent nested lists in the returned result.
 
-__all__ = ["FlextUtilitiesConversion", "conversion"]
+        Args:
+            value: Value to convert
+            filter_list_like: If True, filter out list-like items from result
+
+        Returns:
+            list[str]: List of string values
+
+        Example:
+            >>> u.Conversion.to_str_list_safe("foo")
+            ["foo"]
+            >>> u.Conversion.to_str_list_safe(["a", "b", ["nested"]])
+            ["a", "b"]  # nested list filtered
+
+        """
+        result = FlextUtilitiesConversion.to_str_list(value)
+        if filter_list_like:
+            result = [
+                item for item in result
+                if not FlextRuntime.is_list_like(item)
+            ]
+        return result
+
+    @staticmethod
+    def to_str_list_truthy(
+        value: t.GeneralValueType,
+    ) -> list[str]:
+        """Convert value to list[str] filtering out falsy values.
+
+        Converts value to list of strings while filtering out falsy
+        (empty strings, None, etc.) values for cleaner results.
+
+        Args:
+            value: Value to convert
+
+        Returns:
+            list[str]: List of truthy string values
+
+        Example:
+            >>> u.Conversion.to_str_list_truthy(["a", "", "b", None])
+            ["a", "b"]
+
+        """
+        result = FlextUtilitiesConversion.to_str_list(value)
+        return [item for item in result if item]
+
+
+__all__ = ["FlextUtilitiesConversion"]
