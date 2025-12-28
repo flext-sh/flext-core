@@ -955,5 +955,6 @@ class FlextModelsContext:
 
 __all__ = ["FlextModelsContext"]
 
-# Rebuild models to resolve forward references in recursive types
-FlextModelsContext.ContextData.model_rebuild()
+# DISABLED: model_rebuild() causes circular import issues with GeneralValueType
+# Models use arbitrary_types_allowed=True and work without rebuild
+# FlextModelsContext.ContextData.model_rebuild()

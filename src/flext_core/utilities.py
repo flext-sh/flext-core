@@ -31,6 +31,7 @@ from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core._utilities.pagination import FlextUtilitiesPagination
 from flext_core._utilities.parser import FlextUtilitiesParser
+from flext_core._utilities.pattern import FlextUtilitiesPattern
 from flext_core._utilities.reliability import FlextUtilitiesReliability
 from flext_core._utilities.text import FlextUtilitiesText
 from flext_core._utilities.validation import FlextUtilitiesValidation
@@ -113,6 +114,9 @@ class FlextUtilities:
 
     class Parser(FlextUtilitiesParser):
         """Parser utility class - real inheritance."""
+
+    class Pattern(FlextUtilitiesPattern):
+        """Pattern utility class - real inheritance."""
 
     class Reliability(FlextUtilitiesReliability):
         """Reliability utility class - real inheritance."""
@@ -307,6 +311,9 @@ class FlextUtilities:
     ensure = staticmethod(FlextUtilitiesMapper.ensure)
     ensure_str = staticmethod(FlextUtilitiesMapper.ensure_str)
     ensure_str_or_none = staticmethod(FlextUtilitiesMapper.ensure_str_or_none)
+    narrow_to_general_value_type = staticmethod(
+        FlextUtilitiesMapper.narrow_to_general_value_type,
+    )
     extract = staticmethod(FlextUtilitiesMapper.extract)
     fields = staticmethod(FlextUtilitiesMapper.fields)
     fields_multi = staticmethod(FlextUtilitiesMapper.fields_multi)
@@ -416,6 +423,9 @@ class FlextUtilities:
     validate_pagination_params = staticmethod(
         FlextUtilitiesPagination.validate_pagination_params,
     )
+
+    # Pattern
+    match = staticmethod(FlextUtilitiesPattern.match)
 
     # Reliability
     calculate_delay = staticmethod(FlextUtilitiesReliability.calculate_delay)

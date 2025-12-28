@@ -238,7 +238,7 @@ class FlextModelsCollections:
                             item
                             for item in v
                             if isinstance(
-                                item, (str, int, float, bool, datetime, type(None))
+                                item, (str, int, float, bool, datetime, type(None)),
                             )
                         )
                 return combined
@@ -318,7 +318,7 @@ class FlextModelsCollections:
                         item
                         for item in value
                         if isinstance(
-                            item, (str, int, float, bool, datetime, type(None))
+                            item, (str, int, float, bool, datetime, type(None)),
                         )
                     ]
                     normalized_result[key] = filtered
@@ -392,7 +392,7 @@ class FlextModelsCollections:
                         item
                         for item in v
                         if isinstance(
-                            item, (str, int, float, bool, datetime, type(None))
+                            item, (str, int, float, bool, datetime, type(None)),
                         )
                     )
             return combined
@@ -436,7 +436,7 @@ class FlextModelsCollections:
                     for key, val in v.items():
                         # Only add values that match the dict value types
                         if isinstance(
-                            val, (str, int, float, bool, datetime, type(None))
+                            val, (str, int, float, bool, datetime, type(None)),
                         ):
                             merged[str(key)] = val
                         elif isinstance(val, list):
@@ -447,7 +447,7 @@ class FlextModelsCollections:
                                 item
                                 for item in val
                                 if isinstance(
-                                    item, (str, int, float, bool, datetime, type(None))
+                                    item, (str, int, float, bool, datetime, type(None)),
                                 )
                             ]
                             merged[str(key)] = filtered

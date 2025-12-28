@@ -16,7 +16,6 @@ import warnings
 from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
-from typing import overload
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
@@ -1268,28 +1267,6 @@ class FlextDecorators(FlextRuntime):
             return wrapper
 
         return decorator
-
-    @overload
-    @staticmethod
-    def combined(
-        *,
-        inject_deps: t.StringMapping | None = None,
-        operation_name: str | None = None,
-        track_perf: bool = True,
-        use_railway: bool = False,
-        error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
-
-    @overload
-    @staticmethod
-    def combined(
-        *,
-        inject_deps: t.StringMapping | None = None,
-        operation_name: str | None = None,
-        track_perf: bool = True,
-        use_railway: bool = True,
-        error_code: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
 
     @staticmethod
     def combined(

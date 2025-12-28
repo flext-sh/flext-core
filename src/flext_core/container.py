@@ -618,7 +618,7 @@ class FlextContainer(FlextRuntime, p.DI):
     def with_service(
         self,
         name: str,
-        service: p.RegisterableService,
+        service: t.RegisterableService,
     ) -> Self:
         """Register a service and return the container for fluent chaining.
 
@@ -650,7 +650,7 @@ class FlextContainer(FlextRuntime, p.DI):
     def register(
         self,
         name: str,
-        service: p.RegisterableService,
+        service: t.RegisterableService,
     ) -> r[bool]:
         """Register a service instance for dependency resolution.
 
@@ -764,7 +764,7 @@ class FlextContainer(FlextRuntime, p.DI):
     def get(
         self,
         name: str,
-    ) -> r[p.RegisterableService]:
+    ) -> r[t.RegisterableService]:
         """Resolve a registered service or factory by name.
 
         Returns the resolved service as RegisterableService. For type-safe resolution
@@ -775,7 +775,7 @@ class FlextContainer(FlextRuntime, p.DI):
             name: Service identifier to resolve.
 
         Returns:
-            r[p.RegisterableService]: Success with resolved service, or failure if not found.
+            r[t.RegisterableService]: Success with resolved service, or failure if not found.
                 Caller should use isinstance() or get_typed() for type narrowing.
 
         Example:
@@ -789,27 +789,27 @@ class FlextContainer(FlextRuntime, p.DI):
         # Try service first
         if name in self._services:
             service_registration = self._services[name]
-            return r[p.RegisterableService].ok(service_registration.service)
+            return r[t.RegisterableService].ok(service_registration.service)
 
         # Try factory
         if name in self._factories:
             try:
                 factory_registration = self._factories[name]
                 resolved = factory_registration.factory()
-                return r[p.RegisterableService].ok(resolved)
+                return r[t.RegisterableService].ok(resolved)
             except Exception as e:
-                return r[p.RegisterableService].fail(str(e))
+                return r[t.RegisterableService].fail(str(e))
 
         # Try resource
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
                 resolved = resource_registration.factory()
-                return r[p.RegisterableService].ok(resolved)
+                return r[t.RegisterableService].ok(resolved)
             except Exception as e:
-                return r[p.RegisterableService].fail(str(e))
+                return r[t.RegisterableService].fail(str(e))
 
-        return r[p.RegisterableService].fail(f"Service '{name}' not found")
+        return r[t.RegisterableService].fail(f"Service '{name}' not found")
 
     @staticmethod
     def _is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
@@ -1008,7 +1008,7 @@ class FlextContainer(FlextRuntime, p.DI):
         config: p.Config | None = None,
         context: p.Ctx | None = None,
         subproject: str | None = None,
-        services: Mapping[str, p.RegisterableService] | None = None,
+        services: Mapping[str, t.RegisterableService] | None = None,
         factories: Mapping[str, t.FactoryCallable] | None = None,
         resources: Mapping[str, t.ResourceCallable] | None = None,
     ) -> FlextContainer:

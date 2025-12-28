@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType, TracebackType
-from typing import Protocol, Self, Union, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
@@ -409,12 +409,12 @@ class FlextProtocols:
             config: FlextProtocols.Config | None = None,
             context: FlextProtocols.Ctx | None = None,
             subproject: str | None = None,
-            services: Mapping[str, FlextProtocols.RegisterableService] | None = None,
+            services: Mapping[str, t.GeneralValueType] | None = None,
             factories: Mapping[str, t.FactoryCallable] | None = None,
             resources: Mapping[str, t.ResourceCallable] | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
-            ...
+            ...  # INTERFACE
 
         def wire_modules(
             self,
@@ -437,23 +437,23 @@ class FlextProtocols:
         def register(
             self,
             name: str,
-            service: FlextProtocols.RegisterableService,
+            service: t.GeneralValueType,
         ) -> FlextProtocols.ResultLike[bool]:
             """Register a service instance."""
-            ...
+            ...  # INTERFACE
 
         def register_factory(
             self,
             name: str,
             factory: Callable[[], t.GeneralValueType],
-        ) -> FlextProtocols.ResultLike[bool]:
+        ) -> ResultLike[bool]:
             """Register a service factory returning GeneralValueType."""
             ...
 
         def with_service(
             self,
             name: str,
-            service: FlextProtocols.RegisterableService,
+            service: t.GeneralValueType,
         ) -> Self:
             """Fluent interface for service registration."""
             ...
@@ -469,13 +469,13 @@ class FlextProtocols:
         def get(
             self,
             name: str,
-        ) -> FlextProtocols.ResultLike[FlextProtocols.RegisterableService]:
+        ) -> FlextProtocols.ResultLike[t.GeneralValueType]:
             """Get service by name.
 
             Returns the resolved service as RegisterableService. For type-safe
             resolution with runtime validation, use get_typed[T](name, type_cls).
             """
-            ...
+            ...  # INTERFACE
 
         def get_typed[T](
             self,
@@ -1132,43 +1132,11 @@ class FlextProtocols:
     # RegisterableService: Type alias for all services that can be registered
     # in FlextContainer. Includes protocols, models, and callables.
     # This replaces object/dict usage in DI container methods.
-    RegisterableService = Union[
-        # Value types (from typings)
-        "t.GeneralValueType",
-        # Configuration protocol
-        "FlextProtocols.Config",
-        # Context protocol
-        "FlextProtocols.Ctx",
-        # DI container protocol (for nested containers)
-        "FlextProtocols.DI",
-        # Domain service protocol
-        "FlextProtocols.Service[t.GeneralValueType]",
-        # Logger protocols (StructlogLogger covers FlextLogger structural typing)
-        "FlextProtocols.Log.StructlogLogger",
-        BindableLogger,
-        # Handler protocol
-        "FlextProtocols.Handler",
-        # Registry protocol
-        "FlextProtocols.Registry",
-        # Any callable (factories, services, loggers)
-        Callable[..., "t.GeneralValueType"],
-    ]
-    """Type for services registerable in FlextContainer.
-
-    Union of all protocol types that can be registered as DI services:
-    - GeneralValueType: Primitives, BaseModel, sequences, mappings
-    - Config/Ctx/DI: Core infrastructure protocols
-    - Service/Handler/Registry: Domain protocols
-    - Log: Logger protocol
-    - Callable: Factories and service classes
-
-    Usage:
-        container.register("logger", logger)  # logger: p.Log
-        container.register("context", ctx)    # ctx: p.Ctx
-    """
+    # RegisterableService: Type alias defined in FlextTypes (typings.py)
+    # Imported via t.Types.RegisterableService for use in protocols
 
     # ServiceFactory: Factory callable that returns RegisterableService
-    type ServiceFactory = Callable[[], FlextProtocols.RegisterableService]
+    type ServiceFactory = Callable[[], t.GeneralValueType]
     """Factory callable returning any registerable service type.
 
     Broader than t.FactoryCallable (which returns GeneralValueType).

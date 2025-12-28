@@ -553,6 +553,90 @@ class ServiceTestCases:
 
 
 # =========================================================================
+# Generic Model Factories (Pydantic v2 Models for All FLEXT Projects)
+# =========================================================================
+
+
+class GenericModelFactory:
+    """Factories for generic reusable models (Value, Snapshot, Progress)."""
+
+    @staticmethod
+    def ldap_attributes(**attrs: list[str]) -> FlextModels.Value.LdapEntryAttributes:
+        """Create LdapEntryAttributes value object."""
+        return FlextModels.Value.LdapEntryAttributes(attributes=attrs)
+
+    @staticmethod
+    def operation_context(source: str | None = None) -> FlextModels.Value.OperationContext:
+        """Create OperationContext value object."""
+        return FlextModels.Value.OperationContext(source=source)
+
+    @staticmethod
+    def service_snapshot(
+        name: str,
+        version: str | None = None,
+        status: str = "active",
+    ) -> FlextModels.Snapshot.Service:
+        """Create ServiceSnapshot."""
+        return FlextModels.Snapshot.Service(
+            name=name,
+            version=version,
+            status=status,
+        )
+
+    @staticmethod
+    def configuration_snapshot(
+        config: dict | None = None,
+        source: str | None = None,
+        environment: str | None = None,
+    ) -> FlextModels.Snapshot.Configuration:
+        """Create ConfigurationSnapshot."""
+        return FlextModels.Snapshot.Configuration(
+            config=config or {},
+            source=source,
+            environment=environment,
+        )
+
+    @staticmethod
+    def health_status(
+        *,
+        healthy: bool = True,
+        checks: dict[str, bool] | None = None,
+    ) -> FlextModels.Snapshot.Health:
+        """Create HealthStatus."""
+        return FlextModels.Snapshot.Health(
+            healthy=healthy,
+            checks=checks or {},
+        )
+
+    @staticmethod
+    def object_class_groups(
+        groups: dict[str, list[str]] | None = None,
+    ) -> FlextModels.Snapshot.ObjectClassGroups:
+        """Create ObjectClassGroups."""
+        return FlextModels.Snapshot.ObjectClassGroups(
+            groups=groups or {},
+        )
+
+    @staticmethod
+    def operation_progress(
+        success: int = 0,
+        failure: int = 0,
+        skipped: int = 0,
+    ) -> FlextModels.Progress.Operation:
+        """Create OperationProgress."""
+        return FlextModels.Progress.Operation(
+            success_count=success,
+            failure_count=failure,
+            skipped_count=skipped,
+        )
+
+    @staticmethod
+    def conversion_progress() -> FlextModels.Progress.Conversion:
+        """Create ConversionProgress."""
+        return FlextModels.Progress.Conversion()
+
+
+# =========================================================================
 # Factory Reset Utility
 # =========================================================================
 

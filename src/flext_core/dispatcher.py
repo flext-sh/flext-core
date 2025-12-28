@@ -18,7 +18,7 @@ import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import Self, override
+from typing import Self, cast, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -427,6 +427,27 @@ class FlextDispatcher(FlextService[bool]):
             processor_context,
             allow_callable=True,
         )
+
+    def _narrow_to_handler_type(self, value: object) -> t.HandlerType | None:
+        """Narrow value to t.HandlerType using TypeGuard.
+
+        This helper exists because mypy's TypeGuard doesn't properly narrow
+        types when used with `if not guard()` pattern. Using cast here is
+        INTENTIONAL and documented - this is the centralized type narrowing helper.
+
+        Args:
+            value: Object to narrow to HandlerType
+
+        Returns:
+            HandlerType if value is valid handler, None otherwise
+
+        """
+        if u.is_handler_type(value):
+            # INTENTIONAL CAST: TypeGuard validated value as HandlerType
+            # but mypy doesn't narrow the return type properly.
+            result: t.HandlerType = cast("t.HandlerType", value)
+            return result
+        return None
 
     def _validate_handler_registry_interface(
         self,
@@ -842,7 +863,7 @@ class FlextDispatcher(FlextService[bool]):
         )
         middleware_type_value = u.Mapper.get(middleware_config, "middleware_type")
         enabled_raw: t.GeneralValueType = u.Mapper.get(
-            middleware_config, "enabled", default=True
+            middleware_config, "enabled", default=True,
         )
         # enabled_raw default is True (bool), so it's never None
         enabled_value = bool(enabled_raw)
@@ -1410,7 +1431,7 @@ class FlextDispatcher(FlextService[bool]):
         enabled_value: bool = True
         if middleware_config:
             enabled_raw: t.GeneralValueType = u.Mapper.get(
-                middleware_config, "enabled", default=True
+                middleware_config, "enabled", default=True,
             )
             # enabled_raw default is True (bool), so it's never None
             enabled_value = bool(enabled_raw)
@@ -1687,8 +1708,12 @@ class FlextDispatcher(FlextService[bool]):
         if isinstance(request, BaseModel):
             dumped = request.model_dump()
             normalized = FlextRuntime.normalize_to_general_value(dumped)
-            # normalized is always Mapping[str, GeneralValueType] from normalize_to_general_value
-            # Explicit type conversion to ConfigurationDict
+            # Type narrowing: ensure normalized is Mapping before .items() call
+            if not isinstance(normalized, Mapping):
+                return r[t.ConfigurationDict].fail(
+                    "Normalized request must be mapping",
+                )
+            # Now normalized is typed as Mapping[str, GeneralValueType]
             request_dict = {str(k): v for k, v in normalized.items()}
         elif isinstance(request, Mapping):
             # Preserve handler objects directly (don't normalize them to strings)
@@ -1746,16 +1771,16 @@ class FlextDispatcher(FlextService[bool]):
                 "Handler is required",
             )
 
-        # Type narrowing using TypeGuard for handler validation
-        if not u.is_handler_type(handler_raw):
+        # Type narrowing using helper method (avoids mypy TypeGuard limitation)
+        handler_typed = self._narrow_to_handler_type(handler_raw)
+        if handler_typed is None:
             return r[tuple[t.HandlerType, str]].fail(
                 "Handler must be callable, mapping, or BaseModel",
             )
 
         # Validate handler has required interface
-        # u.is_handler_type already validated it, now just check interface
         validation_result = self._validate_handler_registry_interface(
-            handler_raw,
+            handler_typed,
             handler_context="registered handler",
         )
         if validation_result.is_failure:
@@ -1764,19 +1789,14 @@ class FlextDispatcher(FlextService[bool]):
             )
 
         # Extract handler name
-        handler_name = self._extract_handler_name(handler_raw, request_dict)
+        handler_name = self._extract_handler_name(handler_typed, request_dict)
         if not handler_name:
             return r[tuple[t.HandlerType, str]].fail(
                 "handler_name is required",
             )
 
-        # Return handler - explicit type narrowing for pyright
-        if callable(handler_raw) or isinstance(handler_raw, Mapping):
-            return r[tuple[t.HandlerType, str]].ok((handler_raw, handler_name))
-        # Fallback (should not reach here if TypeGuard works correctly)
-        return r[tuple[t.HandlerType, str]].fail(
-            "Handler must be callable or mapping",
-        )
+        # Return handler with properly typed value
+        return r[tuple[t.HandlerType, str]].ok((handler_typed, handler_name))
 
     def _register_handler_by_mode(
         self,
@@ -1976,8 +1996,9 @@ class FlextDispatcher(FlextService[bool]):
         if handler is not None:
             # Two-arg mode: register_handler(command_type, handler)
             # request is command type (string or class), handler is the handler
-            # Validate handler is HandlerType
-            if not u.is_handler_type(handler):
+            # Type narrow handler using helper method
+            handler_typed = self._narrow_to_handler_type(handler)
+            if handler_typed is None:
                 return r[t.ConfigurationMapping].fail(
                     f"Invalid handler type: {type(handler).__name__}",
                 )
@@ -1995,8 +2016,7 @@ class FlextDispatcher(FlextService[bool]):
             else:
                 command_name = str(request)
             # Register the handler with command name
-            # handler is HandlerType | GeneralValueType - layer1 accepts both
-            result = self._layer1_register_handler(command_name, handler)
+            result = self._layer1_register_handler(command_name, handler_typed)
             if result.is_failure:
                 return r[t.ConfigurationMapping].fail(
                     result.error or "Registration failed",
@@ -2008,18 +2028,20 @@ class FlextDispatcher(FlextService[bool]):
             })
 
         # Single-arg mode: register_handler(dict_or_model_or_handler)
-        if isinstance(request, BaseModel) or FlextRuntime.is_dict_like(request):
-            # Delegate to register_handler_with_request (eliminates ~100 lines of duplication)
-            # request is already t.GeneralValueType, no cast needed
+        # Check for BaseModel or dict-like (Mapping) types for request handling
+        if isinstance(request, BaseModel):
+            return self._register_handler_with_request(request)
+        if isinstance(request, Mapping):
             return self._register_handler_with_request(request)
 
         # Single handler object - delegate to layer1_register_handler
-        # Validate request is HandlerType before passing to layer1_register_handler
-        if not u.is_handler_type(request):
+        # Type narrow request using helper method
+        request_typed = self._narrow_to_handler_type(request)
+        if request_typed is None:
             return r[t.ConfigurationMapping].fail(
                 f"Invalid handler type: {type(request).__name__}",
             )
-        result = self._layer1_register_handler(request)
+        result = self._layer1_register_handler(request_typed)
         if result.is_failure:
             return r[t.ConfigurationMapping].fail(
                 result.error or "Registration failed",
@@ -2608,13 +2630,15 @@ class FlextDispatcher(FlextService[bool]):
                 timeout_override = getattr(config, "timeout_override", timeout_override)
 
             # Validate metadata - NO fallback, explicit validation
+            validated_metadata: dict[str, t.GeneralValueType]
             if metadata is None:
                 validated_metadata = {}
             elif isinstance(metadata, Mapping):
                 validated_metadata = dict(metadata)
             elif isinstance(metadata, m.Metadata):
-                # m.Metadata - extract attributes dict
-                validated_metadata = metadata.attributes
+                # m.Metadata - extract attributes dict and convert to GeneralValueType dict
+                # MetadataAttributeValue is subset of GeneralValueType, but dict is invariant
+                validated_metadata = dict(metadata.attributes.items())
             else:
                 # Fast fail: metadata must be dict, m.Metadata, or None
                 # Type checker may think this is unreachable, but it's reachable at runtime
@@ -2888,9 +2912,11 @@ class FlextDispatcher(FlextService[bool]):
             # Create structured request
             # Use TypeGuard for proper type narrowing of metadata mapping
             if options.metadata and u.is_configuration_mapping(options.metadata):
-                # options.metadata is now narrowed to t.ConfigurationMapping via TypeGuard
-                # Explicit check for Mapping type before accessing .items()
-                metadata_map: t.ConfigurationMapping = options.metadata
+                # INTENTIONAL CAST: TypeGuard validated options.metadata as ConfigurationMapping
+                # but mypy doesn't narrow the type properly for assignment
+                metadata_map: t.ConfigurationMapping = cast(
+                    "t.ConfigurationMapping", options.metadata,
+                )
                 if isinstance(metadata_map, Mapping):
                     transform_result = u.process(
                         list(metadata_map.items()),
@@ -2899,7 +2925,7 @@ class FlextDispatcher(FlextService[bool]):
                     )
                 else:
                     transform_result = r[list[tuple[str, str]]].fail(
-                        "Metadata is not a mapping"
+                        "Metadata is not a mapping",
                     )
                 # Convert keys to strings and values to MetadataAttributeValue
                 metadata_attrs: t.MetadataAttributeDict
@@ -3041,7 +3067,7 @@ class FlextDispatcher(FlextService[bool]):
         # Extract attributes section if present - fast fail: must be dict or None
         attributes_section_raw: t.GeneralValueType | None = dumped.get("attributes")
         if attributes_section_raw is not None and isinstance(
-            attributes_section_raw, Mapping
+            attributes_section_raw, Mapping,
         ):
             # Type narrowing: isinstance check ensures it's a Mapping
             # Return the attributes mapping (ConfigurationMapping)
@@ -3128,8 +3154,8 @@ class FlextDispatcher(FlextService[bool]):
         # Set metadata if provided
         if metadata and FlextRuntime.is_dict_like(metadata):
             # Type narrowing: metadata is dict-like after isinstance check
-            # Convert ConfigurationMapping to ConfigurationDict for context variable
-            if u.is_configuration_dict(metadata):
+            if isinstance(metadata, dict):
+                # metadata is now typed as dict (compatible with set())
                 _ = metadata_var.set(metadata)
             elif isinstance(metadata, Mapping):
                 # Convert Mapping to dict for context variable

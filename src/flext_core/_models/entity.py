@@ -259,10 +259,11 @@ class FlextModelsEntity:
             self.check_invariants()
 
 
-# Resolve forward references for Entity-based classes
-FlextModelsEntity.DomainEvent.model_rebuild()
-FlextModelsEntity.Entry.model_rebuild()
-FlextModelsEntity.Value.model_rebuild()
-FlextModelsEntity.AggregateRoot.model_rebuild()
+# DISABLED: model_rebuild() causes circular import issues with GeneralValueType
+# Models use arbitrary_types_allowed=True and work without rebuild
+# FlextModelsEntity.DomainEvent.model_rebuild()
+# FlextModelsEntity.Entry.model_rebuild()
+# FlextModelsEntity.Value.model_rebuild()
+# FlextModelsEntity.AggregateRoot.model_rebuild()
 
 __all__ = ["FlextModelsEntity"]

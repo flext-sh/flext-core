@@ -12,10 +12,11 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Iterable, Mapping
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, cast
 
 from pydantic import Field, PrivateAttr, computed_field
 
+from flext_core._models.entity import FlextModelsEntity
 from flext_core.constants import c
 from flext_core.dispatcher import FlextDispatcher
 from flext_core.handlers import FlextHandlers
@@ -41,7 +42,7 @@ class FlextRegistry(FlextService[bool]):
     for actual handler registration and execution.
     """
 
-    class Summary(m.Value):
+    class Summary(FlextModelsEntity.Value):
         """Aggregated outcome for batch handler registration tracking.
 
         Tracks successful, skipped, and failed registrations with computed
@@ -734,7 +735,8 @@ class FlextRegistry(FlextService[bool]):
         # Use TypeGuard to narrow to GeneralValueType
         plugin_value = raw_result.value
         if u.is_general_value_type(plugin_value):
-            return r[t.GeneralValueType].ok(plugin_value)
+            typed_value: t.GeneralValueType = cast("t.GeneralValueType", plugin_value)  # INTENTIONAL CAST
+            return r[t.GeneralValueType].ok(typed_value)
         # If not a GeneralValueType, convert to string representation
         return r[t.GeneralValueType].ok(str(plugin_value))
 

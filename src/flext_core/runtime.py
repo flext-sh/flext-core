@@ -55,6 +55,7 @@ import typing
 import uuid
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
+from pathlib import Path
 from types import ModuleType, TracebackType
 from typing import ClassVar, Self, TypeGuard
 
@@ -354,7 +355,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: t.GeneralValueType,
+        val: T,
     ) -> t.GeneralValueType:
         """Normalize any value to t.GeneralValueType recursively.
 
@@ -769,8 +770,8 @@ class FlextRuntime:
             services_provider = bridge.services
             resources_provider = bridge.resources
             # Call override via getattr to work around incomplete type stubs
-            getattr(services_provider, "override")(service_module)
-            getattr(resources_provider, "override")(resource_module)
+            services_provider.override(service_module)
+            resources_provider.override(resource_module)
             cls.bind_configuration_provider(bridge.config, config)
             return bridge, service_module, resource_module
 
@@ -1934,7 +1935,7 @@ class FlextRuntime:
             return False
         # Filter out sequences and mappings (use equality operator)
         if isinstance(obj_a, (Sequence, Mapping)) or isinstance(
-            obj_b, (Sequence, Mapping)
+            obj_b, (Sequence, Mapping),
         ):
             # Use equality instead of repr for sequences/mappings
             return obj_a == obj_b
@@ -2053,23 +2054,35 @@ class FlextRuntime:
             context_dict: dict[str, t.GeneralValueType] = {}
         elif isinstance(context, BaseModel):
             # BaseModel has model_dump() - use that first
-            context_dict = context.model_dump()
+            context_dict = {
+                k: v for k, v in context.model_dump().items()
+                if not callable(v)
+            }
         elif isinstance(context, dict):
-            # dict might have Unknown types - avoid iteration
-            # Convert to str representation and parse back if needed
-            # For trace context, we just need string keys - use __str__ fallback
-            context_dict = {}
-            # Try to iterate, but handle potential Unknown types
+            # dict might have Unknown types - normalize via dict comprehension
+            # This naturally type-narrows dict values to GeneralValueType
             try:
-                # Iterate over items directly to preserve key types
-                # Type assertion: cast items to object to handle Unknown types
-                for k_obj, v_obj in context.items():
-                    # Safe: str() works on any object, including Unknown
-                    # Type narrow to object to avoid Unknown type warnings
-                    key_as_obj: object = k_obj
-                    val_as_obj: object = v_obj
-                    key_str: str = str(key_as_obj)
-                    context_dict[key_str] = val_as_obj
+                context_dict = {
+                    str(k): v
+                    for k, v in context.items()
+                    if isinstance(
+                        v,
+                        (
+                            str,
+                            int,
+                            float,
+                            bool,
+                            type(None),
+                            BaseModel,
+                            Path,
+                            list,
+                            dict,
+                        ),
+                    )
+                }
+                # If dict comprehension filtered items, ensure we have a valid dict
+                if not context_dict:
+                    context_dict = {}
             except Exception:
                 # If iteration fails, use empty dict
                 context_dict = {}

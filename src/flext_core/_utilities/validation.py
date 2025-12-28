@@ -230,6 +230,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_component(
         component: t.GeneralValueType,
+        *,
         visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize component for consistent representation (internal recursive)."""
@@ -387,8 +388,8 @@ class FlextUtilitiesValidation:
                 k, v = iter_item
             except ValueError:
                 continue
-            if isinstance(k, str):
-                # Normalize v to GeneralValueType
+            if isinstance(k, str) and isinstance(v, (str, int, float, bool, type(None), BaseModel, Path, Sequence, Mapping)):
+                # Normalize v to GeneralValueType (type-narrowed by isinstance)
                 normalized_v: t.GeneralValueType = FlextUtilitiesValidation._normalize_component(
                     v,
                     visited=None,
@@ -476,8 +477,8 @@ class FlextUtilitiesValidation:
                 k, v = item2
             except ValueError:
                 continue
-            if isinstance(k, str):
-                # Normalize value - v is compatible with t.GeneralValueType
+            if isinstance(k, str) and isinstance(v, (str, int, float, bool, type(None), BaseModel, Path, Sequence, Mapping)):
+                # Normalize value - v is type-narrowed to GeneralValueType
                 normalized_v: t.GeneralValueType = FlextUtilitiesValidation._normalize_component(
                     v,
                     visited=None,
@@ -558,7 +559,7 @@ class FlextUtilitiesValidation:
             ) or FlextUtilitiesGuards.is_type(v, "sequence_not_str"):
                 normalized_dict[str(k)] = FlextUtilitiesValidation._normalize_component(
                     v,
-                    visited,
+                    visited=visited,
                 )
             else:
                 # Use _normalize_value for primitives
@@ -603,7 +604,7 @@ class FlextUtilitiesValidation:
         if visited is None:
             visited = set()
         return [
-            FlextUtilitiesValidation._normalize_component(item, visited)
+            FlextUtilitiesValidation._normalize_component(item, visited=visited)
             for item in component
         ]
 
@@ -847,7 +848,7 @@ class FlextUtilitiesValidation:
             key=lambda x: FlextUtilitiesValidation._sort_key(x[0]),
         )
         return {
-            str(k): FlextUtilitiesValidation._normalize_component(v, visited)
+            str(k): FlextUtilitiesValidation._normalize_component(v, visited=visited)
             for k, v in sorted_items
         }
 
@@ -860,7 +861,7 @@ class FlextUtilitiesValidation:
         if visited is None:
             visited = set()
         sequence_items = [
-            FlextUtilitiesValidation._normalize_component(item, visited)
+            FlextUtilitiesValidation._normalize_component(item, visited=visited)
             for item in value
         ]
         # Return as dict with type marker for cache structure
@@ -875,7 +876,7 @@ class FlextUtilitiesValidation:
         if visited is None:
             visited = set()
         set_items = [
-            FlextUtilitiesValidation._normalize_component(item, visited)
+            FlextUtilitiesValidation._normalize_component(item, visited=visited)
             for item in value
         ]
         set_items.sort(key=str)
@@ -2506,10 +2507,10 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _guard_shortcut(
-        value: object,
+        value: t.GeneralValueType,
         shortcut: str,
         context: str,
-    ) -> r[object]:
+    ) -> r[t.GeneralValueType]:
         """Handle string shortcuts for common guard patterns via table lookup."""
         # Use lower() instead of u.normalize to avoid dependency
         shortcut_lower = shortcut.lower()
@@ -2529,7 +2530,7 @@ class FlextUtilitiesValidation:
                 return r[t.GeneralValueType].ok(value)
             return r[t.GeneralValueType].fail(f"{error_template} {type_desc}")
 
-        result_unknown: r[object] = r[t.GeneralValueType].fail(
+        result_unknown: r[t.GeneralValueType] = r[t.GeneralValueType].fail(
             f"{context} unknown guard shortcut: {shortcut}",
         )
         return result_unknown

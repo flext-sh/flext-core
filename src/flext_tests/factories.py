@@ -968,7 +968,7 @@ class FlextTestsFactories(su[t_core.GeneralValueType]):
         if params_result.is_failure:
             # Return validation error as FlextResult
             return r[dict[str, t.GeneralValueType]].fail(
-                f"Invalid parameters: {params_result.error}"
+                f"Invalid parameters: {params_result.error}",
             )
         params = params_result.value
 

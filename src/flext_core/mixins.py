@@ -13,7 +13,9 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
+from datetime import datetime as dt
 from functools import partial
+from pathlib import Path
 from types import ModuleType
 from typing import ClassVar
 
@@ -67,7 +69,7 @@ def _to_general_value_type(value: object) -> t.GeneralValueType:
         return None
     if isinstance(value, (str, int, float, bool)):
         return value
-    if isinstance(value, datetime):
+    if isinstance(value, dt):
         return value
     if isinstance(value, BaseModel):
         return value
@@ -75,14 +77,13 @@ def _to_general_value_type(value: object) -> t.GeneralValueType:
         return value
     if callable(value):
         # Callable[..., GeneralValueType] - return as-is
-        callable_typed: Callable[..., t.GeneralValueType] = value
-        return callable_typed
+        return value
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-        # Sequence[GeneralValueType]
-        return value  # type: ignore[return-value]
+        # Sequence[GeneralValueType] - already validated by isinstance check
+        return value
     if isinstance(value, Mapping):
-        # Mapping[str, GeneralValueType]
-        return value  # type: ignore[return-value]
+        # Mapping[str, GeneralValueType] - already validated by isinstance check
+        return value
     # Fallback: convert to string
     return str(value)
 
@@ -102,7 +103,7 @@ def _to_flexible_value(value: t.GeneralValueType) -> t.FlexibleValue | None:
         return None
     if isinstance(value, (str, int, float, bool)):
         return value
-    if isinstance(value, datetime):
+    if isinstance(value, dt):
         return value
     # Exclude BaseModel, Path, Callable - these are not FlexibleValue
     if isinstance(value, BaseModel):
@@ -526,32 +527,29 @@ class FlextMixins(FlextRuntime):
         wire_classes_raw = options.get("wire_classes")
         # Type narrow to sequences - explicit type annotations for list comprehensions
         wire_modules: Sequence[ModuleType] | None = None
-        if isinstance(wire_modules_raw, Sequence) and not isinstance(wire_modules_raw, str):
+        if isinstance(wire_modules_raw, (list, tuple)):
             # Build list with explicit type to ensure proper narrowing
-            modules_list: list[ModuleType] = []
-            for item in wire_modules_raw:
-                if isinstance(item, ModuleType):
-                    modules_list.append(item)
+            modules_list: list[ModuleType] = [
+                item for item in wire_modules_raw if isinstance(item, ModuleType)
+            ]
             if len(modules_list) == len(wire_modules_raw):
                 wire_modules = modules_list
 
         wire_packages: Sequence[str] | None = None
-        if isinstance(wire_packages_raw, Sequence) and not isinstance(wire_packages_raw, str):
+        if isinstance(wire_packages_raw, (list, tuple)):
             # Build list with explicit type to ensure proper narrowing
-            packages_list: list[str] = []
-            for item in wire_packages_raw:
-                if isinstance(item, str):
-                    packages_list.append(item)
+            packages_list: list[str] = [
+                item for item in wire_packages_raw if isinstance(item, str)
+            ]
             if len(packages_list) == len(wire_packages_raw):
                 wire_packages = packages_list
 
         wire_classes: Sequence[type] | None = None
-        if isinstance(wire_classes_raw, Sequence) and not isinstance(wire_classes_raw, str):
+        if isinstance(wire_classes_raw, (list, tuple)):
             # Build list with explicit type to ensure proper narrowing
-            classes_list: list[type] = []
-            for item in wire_classes_raw:
-                if isinstance(item, type):
-                    classes_list.append(item)
+            classes_list: list[type] = [
+                item for item in wire_classes_raw if isinstance(item, type)
+            ]
             if len(classes_list) == len(wire_classes_raw):
                 wire_classes = classes_list
         if wire_modules or wire_packages or wire_classes:

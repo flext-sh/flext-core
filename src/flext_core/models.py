@@ -22,6 +22,16 @@ from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.generic import (
+    ConfigurationSnapshot,
+    ConversionProgress,
+    HealthStatus,
+    LdapEntryAttributes,
+    ObjectClassGroups,
+    OperationContext,
+    OperationProgress,
+    ServiceSnapshot,
+)
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
@@ -51,10 +61,10 @@ class FlextModels:
     # CORE DOMAIN ENTITIES - Direct access for common usage
     # =========================================================================
 
-    Entity: TypeAlias = FlextModelsEntity.Entry
-    Value: TypeAlias = FlextModelsEntity.Value
-    AggregateRoot: TypeAlias = FlextModelsEntity.AggregateRoot
-    DomainEvent: TypeAlias = FlextModelsEntity.DomainEvent
+    type Entity = FlextModelsEntity.Entry
+    type Value = FlextModelsEntity.Value
+    type AggregateRoot = FlextModelsEntity.AggregateRoot
+    type DomainEvent = FlextModelsEntity.DomainEvent
 
     # =========================================================================
     # NAMESPACE CLASSES - Direct access for internal model classes
@@ -105,6 +115,36 @@ class FlextModels:
         credential: str
         roles: list[str] | None = None
         metadata: dict[str, str] | None = None
+
+    # =========================================================================
+    # GENERIC REUSABLE MODELS (Value, Snapshot, Progress)
+    # Shared across all FLEXT consumer projects for common patterns
+    # =========================================================================
+
+    class _ValueModels:
+        """Value Objects - Immutable, compared by value."""
+
+        LdapEntryAttributes = LdapEntryAttributes
+        OperationContext = OperationContext
+
+    class _SnapshotModels:
+        """Snapshots - Immutable state capture at a moment."""
+
+        Service = ServiceSnapshot
+        Configuration = ConfigurationSnapshot
+        Health = HealthStatus
+        ObjectClassGroups = ObjectClassGroups
+
+    class _ProgressModels:
+        """Progress Trackers - Mutable, accumulate during operation."""
+
+        Operation = OperationProgress
+        Conversion = ConversionProgress
+
+    # Namespace classes for value objects, snapshots, and progress tracking
+    ValueModels = _ValueModels
+    SnapshotModels = _SnapshotModels
+    ProgressModels = _ProgressModels
 
     # =========================================================================
     # CONFIGURATION MODELS - Direct access for common usage
