@@ -724,6 +724,18 @@ class FlextUtilitiesParser:
 
         return key
 
+    @overload
+    def _extract_pattern_components(
+        self,
+        pattern_tuple: tuple[str, str],
+    ) -> r[tuple[str, str, int]]: ...
+
+    @overload
+    def _extract_pattern_components(
+        self,
+        pattern_tuple: tuple[str, str, int],
+    ) -> r[tuple[str, str, int]]: ...
+
     def _extract_pattern_components(
         self,
         pattern_tuple: tuple[str, str] | tuple[str, str, int],
@@ -736,16 +748,15 @@ class FlextUtilitiesParser:
             pattern, replacement = pattern_tuple[0], pattern_tuple[1]
             flags = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
-            # Convert to list for dynamic indexing that pyrefly understands
-            elements = list(pattern_tuple)
-            pattern = str(elements[0])
-            replacement = str(elements[1])
-            # Third element guaranteed by length check - convert to int
-            # elements[2] is object type, convert to str first then to int
-            third_element = (
-                elements[2] if len(elements) >= self.PATTERN_TUPLE_MAX_LENGTH else 0
+            # Three-element tuple with explicit narrowing
+            pattern_str, replacement_str, flags_val = (
+                pattern_tuple[0],  # str
+                pattern_tuple[1],  # str
+                pattern_tuple[2],  # int
             )
-            flags = int(str(third_element)) if third_element != 0 else 0
+            pattern = str(pattern_str)
+            replacement = str(replacement_str)
+            flags = int(flags_val) if flags_val != 0 else 0
         else:
             return r[tuple[str, str, int]].fail(
                 f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
