@@ -908,7 +908,26 @@ class FlextUtilitiesParser:
 
         for i, pattern_tuple in enumerate(patterns):
             # Extract pattern components from tuple
-            pattern_result = self._extract_pattern_components(pattern_tuple)
+            # Type narrowing: convert union to explicit tuple for overload matching
+            tuple_len = len(pattern_tuple)
+            if tuple_len == self.TUPLE_LENGTH_2:
+                # Explicitly create 2-element tuple for first overload
+                pattern_result = self._extract_pattern_components((
+                    pattern_tuple[0],
+                    pattern_tuple[1],
+                ))
+            elif tuple_len == self.TUPLE_LENGTH_3:
+                # Explicitly create 3-element tuple for second overload
+                # Type assertion: tuple is guaranteed to have 3 elements at this point
+                assert len(pattern_tuple) == self.TUPLE_LENGTH_3  # Satisfy type checker
+                pattern_result = self._extract_pattern_components((
+                    pattern_tuple[0],
+                    pattern_tuple[1],
+                    pattern_tuple[2],
+                ))
+            else:
+                msg = f"Pattern tuple must have 2 or 3 elements, got {tuple_len}"
+                return r[tuple[str, int]].fail(msg)
             if pattern_result.is_failure:
                 return r[tuple[str, int]].fail(
                     pattern_result.error

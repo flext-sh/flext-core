@@ -8,11 +8,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TypeVar
+from typing import Protocol, runtime_checkable
 
-T = TypeVar("T")
-R = TypeVar("R")
+from flext_core.typings import T, U
+
+
+@runtime_checkable
+class _Predicate(Protocol[T]):
+    """Protocol for callable predicates that accept a value and return bool."""
+
+    def __call__(self, value: T) -> bool: ...
+
+
+@runtime_checkable
+class _Handler(Protocol[T, U]):
+    """Protocol for callable handlers that transform a value."""
+
+    def __call__(self, value: T) -> U: ...
 
 
 class FlextUtilitiesPattern:
@@ -32,11 +44,11 @@ class FlextUtilitiesPattern:
     """
 
     @staticmethod
-    def match[T, R](
+    def match[T, U](
         value: T,
-        *patterns: tuple[Callable[[T], bool], Callable[[T], R]],
-        default: Callable[[T], R] | None = None,
-    ) -> R:
+        *patterns: tuple[_Predicate[T], _Handler[T, U]],
+        default: _Handler[T, U] | None = None,
+    ) -> U:
         """Match value against patterns and execute corresponding handler.
 
         Tests each predicate in sequence. When a predicate returns True,
@@ -58,7 +70,8 @@ class FlextUtilitiesPattern:
 
         """
         for predicate, handler in patterns:
-            if predicate(value):
+            result: bool = predicate(value)
+            if result:
                 return handler(value)
 
         if default is not None:

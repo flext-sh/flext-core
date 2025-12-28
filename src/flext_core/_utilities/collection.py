@@ -14,14 +14,14 @@ from typing import Protocol, TypeGuard, overload, runtime_checkable
 
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core.result import r
-from flext_core.typings import R, T, U, t
+from flext_core.typings import R, T, T_contra, U, t
 
 
 @runtime_checkable
-class _Predicate(Protocol[T]):
+class _Predicate(Protocol[T_contra]):
     """Protocol for callable predicates that accept a value and return bool."""
 
-    def __call__(self, value: T) -> bool: ...
+    def __call__(self, value: T_contra) -> bool: ...
 
 
 class FlextUtilitiesCollection:
