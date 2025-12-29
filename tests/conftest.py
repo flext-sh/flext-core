@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 import signal
+import tempfile
 import types
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
@@ -354,3 +355,28 @@ def sample_data() -> dict[str, t.GeneralValueType]:
 def temp_directory(tmp_path: Path) -> Path:
     """Provide temporary directory path for integration tests."""
     return tmp_path
+
+
+@pytest.fixture
+def temp_dir() -> Generator[Path]:
+    """Temporary directory fixture available to all FLEXT projects."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        yield Path(tmp_dir)
+
+
+@pytest.fixture
+def temp_file(temp_dir: Path) -> Path:
+    """Temporary file fixture available to all FLEXT projects."""
+    return temp_dir / "test_file.txt"
+
+
+@pytest.fixture
+def flext_result_success() -> r[dict[str, object]]:
+    """Successful FlextResult fixture available to all FLEXT projects."""
+    return r[dict[str, object]].ok({"success": True})
+
+
+@pytest.fixture
+def flext_result_failure() -> r[object]:
+    """Failed FlextResult fixture available to all FLEXT projects."""
+    return r[object].fail("Test error")

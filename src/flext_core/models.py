@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, TypeAlias
+from typing import Annotated, TypeAlias
 
 from pydantic import Discriminator
 
@@ -65,63 +65,46 @@ class FlextModels:
         """Domain event base class - published through dispatcher."""
 
     # =========================================================================
-    # GENERIC MODELS BY BUSINESS FUNCTION - Inheritable base classes
+    # GENERIC MODELS BY BUSINESS FUNCTION - FLAT namespace (no intermediate levels)
     # =========================================================================
+    # CRITICAL: All generic models exposed directly on FlextModels for cleaner access:
+    # - m.Configuration (not m.Snapshot.Configuration)
+    # - m.Service (not m.Snapshot.Service)
+    # - m.Operation (not m.Progress.Operation)
+    # - m.OperationContext (not m.Value.OperationContext)
+    #
+    # This enables hierarchical inheritance in subprojects:
+    # - flext-cli: m.Cli.Configuration, m.Cli.Service (inherit from m.Configuration, m.Service)
+    # - client-a-oud-mig: m.client-aOudMig.Configuration (inherit from parent project's namespace)
 
-    class Value(FlextModelsEntity.Value):
-        """Value objects - immutable data compared by value.
+    # VALUE OBJECTS - Immutable data compared by value
+    class OperationContext(FlextGenericModels.Value.OperationContext):
+        """Immutable context of an operation (from Value namespace)."""
 
-        Inherits frozen=True, extra="forbid" from FlextModelsBase.FrozenStrictModel.
+    # SNAPSHOTS - State captured at a specific moment
+    class Service(FlextGenericModels.Snapshot.Service):
+        """Snapshot of service state (from Snapshot namespace)."""
 
-        Concrete models:
-        - OperationContext: Immutable context of an operation
+    class Configuration(FlextGenericModels.Snapshot.Configuration):
+        """Snapshot of configuration at a moment (from Snapshot namespace)."""
 
-        NOTE: LdapEntryAttributes moved to flext-ldap (domain-specific)
+    class Health(FlextGenericModels.Snapshot.Health):
+        """Result of health check (from Snapshot namespace)."""
+
+    # PROGRESS TRACKERS - Mutable accumulators during operations
+    class Operation(FlextGenericModels.Progress.Operation):
+        """Progress of ongoing operation (from Progress namespace)."""
+
+    class Conversion(FlextGenericModels.Progress.Conversion):
+        """Progress of conversion with errors/warnings (from Progress namespace)."""
+
+    # Value class - inherits from ValueObject for type system compatibility
+    class Value(ValueObject):
+        """Value object base class - alias for ValueObject.
+
+        This is a class (not alias) so mypy accepts it as base class.
+        Functionally identical to ValueObject.
         """
-
-        OperationContext: ClassVar[type[FlextGenericModels.Value.OperationContext]] = (
-            FlextGenericModels.Value.OperationContext
-        )
-
-    class Snapshot(FlextModelsBase.FrozenStrictModel):
-        """Snapshots - state captured at a specific moment.
-
-        Inherits frozen=True, extra="forbid" from FlextModelsBase.FrozenStrictModel.
-
-        Concrete models:
-        - Service: Snapshot of service state
-        - Configuration: Snapshot of configuration at a moment
-        - Health: Result of health check
-
-        NOTE: ObjectClassGroups moved to flext-ldap (domain-specific)
-        """
-
-        Service: ClassVar[type[FlextGenericModels.Snapshot.Service]] = (
-            FlextGenericModels.Snapshot.Service
-        )
-        Configuration: ClassVar[type[FlextGenericModels.Snapshot.Configuration]] = (
-            FlextGenericModels.Snapshot.Configuration
-        )
-        Health: ClassVar[type[FlextGenericModels.Snapshot.Health]] = (
-            FlextGenericModels.Snapshot.Health
-        )
-
-    class Progress(FlextModelsBase.ArbitraryTypesModel):
-        """Progress trackers - mutable accumulators during operations.
-
-        Inherits validate_assignment=True from FlextModelsBase.ArbitraryTypesModel.
-
-        Concrete models:
-        - Operation: Progress of ongoing operation
-        - Conversion: Progress of conversion with errors/warnings
-        """
-
-        Operation: ClassVar[type[FlextGenericModels.Progress.Operation]] = (
-            FlextGenericModels.Progress.Operation
-        )
-        Conversion: ClassVar[type[FlextGenericModels.Progress.Conversion]] = (
-            FlextGenericModels.Progress.Conversion
-        )
 
     # =========================================================================
     # NAMESPACE CLASSES - Direct access for internal model classes

@@ -10,6 +10,16 @@ Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first founda
 
 ## Navigation
 
+## 🔧 Quality Assurance
+
+This project integrates with FLEXT's comprehensive quality assurance system:
+
+- **Pattern Enforcement**: Automatic validation of architectural patterns
+- **Consolidation Guidance**: SOLID-based refactoring recommendations
+- **Quality Validation**: Continuous checks for enterprise standards
+
+
+
 - **Quick start:** [`quick-start.md`](./quick-start.md)
 - **Architecture:** [`architecture/overview.md`](./architecture/overview.md) and [`architecture/clean-architecture.md`](./architecture/clean-architecture.md)
 - **API reference:** [`api-reference/`](./api-reference/) grouped by layer (foundation, domain, application, infrastructure)
