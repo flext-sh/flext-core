@@ -28,10 +28,6 @@ class FlextModelsService:
     """
 
     # =========================================================================
-    # FACTORY FUNCTIONS - Forward references for self-referencing models
-    # =========================================================================
-
-    # =========================================================================
     # SUPPORTING MODELS - Base classes for dynamic configuration
     # =========================================================================
 
@@ -155,13 +151,15 @@ class FlextModelsService:
         metric_types: Annotated[
             list[c.Cqrs.ServiceMetricTypeLiteral],
             Field(
-                default_factory=lambda: list(c.Cqrs.DEFAULT_METRIC_CATEGORIES),
+                default_factory=lambda: list(
+                    c.Cqrs.DEFAULT_METRIC_CATEGORIES
+                ),  # Constant reference, not class instance
                 description="Types of metrics to collect",
             ),
         ]
         time_range_seconds: int = c.Performance.DEFAULT_TIME_RANGE_SECONDS
         aggregation: str = Field(
-            default_factory=lambda: c.Cqrs.Aggregation.AVG,
+            default=c.Cqrs.Aggregation.AVG,
         )
         group_by: list[str] = Field(default_factory=list)
         filters: FlextModelsService.ServiceFilters | None = None
@@ -183,7 +181,7 @@ class FlextModelsService:
         )
         resource_id: str | None = None
         resource_limit: int = Field(c.Performance.MAX_BATCH_SIZE, gt=c.ZERO)
-        action: str = Field(default_factory=lambda: c.Cqrs.Action.GET)
+        action: str = Field(default=c.Cqrs.Action.GET)
         data: FlextModelsService.ServiceData | None = None
         filters: FlextModelsService.ServiceFilters | None = None
 
@@ -211,10 +209,7 @@ class FlextModelsService:
             default_factory=list,
             description="Denied permissions",
         )
-        context: FlextModelsService.ServiceContext | None = Field(
-            default=None,
-            description="Additional context",
-        )
+        context: FlextModelsService.ServiceContext | None = None
 
         @model_validator(mode="after")
         def apply_defaults(self) -> FlextModelsService.AclResponse:
