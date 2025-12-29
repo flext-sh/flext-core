@@ -2908,32 +2908,26 @@ class FlextUtilitiesValidation:
             if isinstance(raw_value, check_type):
                 # raw_value matches the expected type T and is not Callable
                 # Type narrowing: raw_value is confirmed to match check_type
-                # Assert for type narrowing - Pyrefly recognizes assert isinstance
-                assert isinstance(raw_value, check_type), "isinstance check failed"
-                return raw_value
+                # Immediate return forces type narrowing - no intermediate variable
+                return raw_value  # INTENTIONAL: isinstance guards this return
 
             # Try conversion for primitive types only using str intermediary
             # This is safe because str() works on any GeneralValueType
             if check_type in {int, float, str, bool}:
-                conversion_result: T | None = None
                 try:
                     str_value = str(raw_value)
                     # Convert to the expected type
-                    converted_value: int | float | str | bool
+                    # INTENTIONAL CAST: default: T parameter proves return type matches T
+                    # isinstance() cannot narrow generic TypeVar T, so cast is necessary
                     if check_type is int:
-                        converted_value = int(str_value)
-                    elif check_type is float:
-                        converted_value = float(str_value)
-                    elif check_type is bool:
+                        return cast("T", int(str_value))  # INTENTIONAL CAST
+                    if check_type is float:
+                        return cast("T", float(str_value))  # INTENTIONAL CAST
+                    if check_type is bool:
                         # Handle bool conversion from string
-                        converted_value = str_value.lower() in {"true", "1", "yes"}
-                    else:  # check_type is str
-                        converted_value = str_value
-                    # Verify type and return - isinstance narrows to T
-                    if isinstance(converted_value, check_type):
-                        # Assert for type narrowing - Pyrefly recognizes assert isinstance
-                        assert isinstance(converted_value, check_type), "conversion type check failed"
-                        conversion_result = converted_value
+                        return cast("T", str_value.lower() in {"true", "1", "yes"})  # INTENTIONAL CAST
+                    # check_type is str
+                    return cast("T", str_value)  # INTENTIONAL CAST
                 except (TypeError, ValueError) as exc:
                     # Type conversion failed, log and continue to return default
                     FlextRuntime.structlog().debug(
@@ -2942,9 +2936,6 @@ class FlextUtilitiesValidation:
                         target_type=getattr(check_type, "__name__", str(check_type)),
                         error=str(exc),
                     )
-
-                if conversion_result is not None:
-                    return conversion_result
 
             return default
 
