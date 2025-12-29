@@ -21,7 +21,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any, ClassVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from flext_core.constants import c
 from flext_core.exceptions import e
@@ -136,7 +136,7 @@ class FlextHandlers[MessageT_contra, ResultT](
     def __init__(
         self,
         *,
-        config: m.Handler | None = None,
+        config: m.Handler = Field(default_factory=m.Handler),
     ) -> None:
         """Initialize handler with configuration and context.
 
@@ -208,10 +208,10 @@ class FlextHandlers[MessageT_contra, ResultT](
             [t.GeneralValueType],
             t.GeneralValueType,
         ],
-        handler_name: str | None = None,
-        handler_type: c.Cqrs.HandlerType | None = None,
+        handler_name: str = Field(default_factory=str),
+        handler_type: c.Cqrs.HandlerType = Field(default_factory=c.Cqrs.HandlerType),
         mode: c.Cqrs.HandlerType | str | None = None,
-        handler_config: m.Handler | None = None,
+        handler_config: m.Handler = Field(default_factory=m.Handler),
     ) -> FlextHandlers[t.GeneralValueType, t.GeneralValueType]:
         """Create a handler instance from a callable function.
 
@@ -256,7 +256,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     [t.GeneralValueType],
                     t.GeneralValueType,
                 ],
-                config: m.Handler | None = None,
+                config: m.Handler = Field(default_factory=m.Handler),
             ) -> None:
                 # Call parent __init__ with config as keyword argument
                 super().__init__(config=config)
@@ -695,7 +695,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         self,
         *,
         success: bool,
-        error: str | None = None,
+        error: str = Field(default_factory=str),
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time_value = self._execution_context.execution_time_ms
@@ -740,7 +740,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         *,
         priority: int = c.Discovery.DEFAULT_PRIORITY,
         timeout: float | None = c.Discovery.DEFAULT_TIMEOUT,
-        middleware: list[type[p.Middleware]] | None = None,
+        middleware: list[type[p.Middleware]] = Field(default_factory=list[type[p.Middleware]]),
     ) -> t.DecoratorType:
         """Decorator to mark methods as handlers for commands.
 

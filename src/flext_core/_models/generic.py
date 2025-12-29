@@ -61,7 +61,7 @@ class FlextGenericModels:
             timestamp: datetime = Field(
                 default_factory=lambda: datetime.now(UTC),
             )
-            source: str | None = None
+            source: str = Field(default_factory=str)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # SNAPSHOTS (Immutable - captured state)
@@ -79,9 +79,9 @@ class FlextGenericModels:
             """
 
             name: str
-            version: str | None = None
+            version: str = Field(default_factory=str)
             status: str = "active"
-            uptime_seconds: float | None = None
+            uptime_seconds: float = Field(default_factory=float)
             metadata: dict[str, t.GeneralValueType] = Field(default_factory=dict)
 
         class Configuration(FlextModelFoundation.FrozenStrictModel):
@@ -95,8 +95,8 @@ class FlextGenericModels:
             captured_at: datetime = Field(
                 default_factory=lambda: datetime.now(UTC),
             )
-            source: str | None = None
-            environment: str | None = None
+            source: str = Field(default_factory=str)
+            environment: str = Field(default_factory=str)
 
         class Health(FlextModelFoundation.FrozenStrictModel):
             """Result of health check - immutable after verification.

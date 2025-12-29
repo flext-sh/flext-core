@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from urllib.parse import urlparse
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -127,7 +127,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_performance(
         model: t.GeneralValueType,
-        max_validation_time_ms: int | None = None,
+        max_validation_time_ms: int = Field(default_factory=int),
     ) -> r[t.GeneralValueType]:
         """Validate model with performance constraints.
 
@@ -695,7 +695,7 @@ class FlextModelsValidation:
     @staticmethod
     def _validate_uri_format(
         uri: str | None,
-        allowed_schemes: list[str] | None = None,
+        allowed_schemes: list[str] = Field(default_factory=list[str]),
         context: str = "URI",
     ) -> r[str]:
         if uri is None:
@@ -726,7 +726,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_uri(
         uri: str | None,
-        allowed_schemes: list[str] | None = None,
+        allowed_schemes: list[str] = Field(default_factory=list[str]),
         context: str = "URI",
     ) -> r[str]:
         return FlextModelsValidation._validate_uri_format(uri, allowed_schemes, context)
@@ -823,8 +823,8 @@ class FlextModelsValidation:
     @staticmethod
     def _validate_length_range(
         value: str,
-        min_length: int | None = None,
-        max_length: int | None = None,
+        min_length: int = Field(default_factory=int),
+        max_length: int = Field(default_factory=int),
         context: str = "Value",
     ) -> r[str]:
         # Type narrowing: value is already typed as str (no runtime check needed)
@@ -844,8 +844,8 @@ class FlextModelsValidation:
     @staticmethod
     def validate_length(
         value: str,
-        min_length: int | None = None,
-        max_length: int | None = None,
+        min_length: int = Field(default_factory=int),
+        max_length: int = Field(default_factory=int),
         context: str = "Value",
     ) -> r[str]:
         return FlextModelsValidation._validate_length_range(

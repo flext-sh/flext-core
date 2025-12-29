@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import override
 
-from pydantic import (
+from pydantic import (, Field
     ConfigDict,
     PrivateAttr,
     computed_field,
@@ -171,11 +171,11 @@ class FlextService[TDomainResult](
     def _create_runtime(
         cls,
         *,
-        config_type: type[FlextSettings] | None = None,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Ctx | None = None,
-        subproject: str | None = None,
-        services: Mapping[str, t.GeneralValueType] | None = None,
+        config_type: type[FlextSettings] = Field(default_factory=type[FlextSettings]),
+        config_overrides: Mapping[str, t.FlexibleValue] = Field(default_factory=Mapping[str, t.FlexibleValue]),
+        context: p.Ctx = Field(default_factory=p.Ctx),
+        subproject: str = Field(default_factory=str),
+        services: Mapping[str, t.GeneralValueType] = Field(default_factory=Mapping[str, t.GeneralValueType]),
         factories: Mapping[
             str,
             Callable[
@@ -184,11 +184,11 @@ class FlextService[TDomainResult](
             ],
         ]
         | None = None,
-        resources: Mapping[str, Callable[[], t.GeneralValueType]] | None = None,
-        container_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        wire_modules: Sequence[ModuleType] | None = None,
-        wire_packages: Sequence[str] | None = None,
-        wire_classes: Sequence[type] | None = None,
+        resources: Mapping[str, Callable[[], t.GeneralValueType]] = Field(default_factory=Mapping[str, Callable[[], t.GeneralValueType]]),
+        container_overrides: Mapping[str, t.FlexibleValue] = Field(default_factory=Mapping[str, t.FlexibleValue]),
+        wire_modules: Sequence[ModuleType] = Field(default_factory=Sequence[ModuleType]),
+        wire_packages: Sequence[str] = Field(default_factory=Sequence[str]),
+        wire_classes: Sequence[type] = Field(default_factory=Sequence[type]),
     ) -> m.ServiceRuntime:
         """Materialize config, context, and container with DI wiring in one call.
 
@@ -354,11 +354,11 @@ class FlextService[TDomainResult](
     def _clone_runtime(
         self,
         *,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
-        context: p.Ctx | None = None,
-        subproject: str | None = None,
-        container_services: Mapping[str, t.FlexibleValue] | None = None,
-        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] | None = None,
+        config_overrides: Mapping[str, t.FlexibleValue] = Field(default_factory=Mapping[str, t.FlexibleValue]),
+        context: p.Ctx = Field(default_factory=p.Ctx),
+        subproject: str = Field(default_factory=str),
+        container_services: Mapping[str, t.FlexibleValue] = Field(default_factory=Mapping[str, t.FlexibleValue]),
+        container_factories: Mapping[str, Callable[[], t.FlexibleValue]] = Field(default_factory=Mapping[str, Callable[[], t.FlexibleValue]]),
     ) -> m.ServiceRuntime:
         """Clone config/context and container in a single unified path."""
         config: FlextSettings = u.require_initialized(self._config, "Config")

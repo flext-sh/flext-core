@@ -31,7 +31,7 @@ class FlextValidatorTypes:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] | None = None,
+        approved_exceptions: dict[str, list[str]] = Field(default_factory=dict[str, list[str]]),
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for type violations.
 

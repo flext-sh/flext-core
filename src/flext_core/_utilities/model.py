@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TypeVar
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.result import r
@@ -228,8 +228,8 @@ class FlextUtilitiesModel:
         exclude_none: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
-        include: set[str] | None = None,
-        exclude: set[str] | None = None,
+        include: set[str] = Field(default_factory=set[str]),
+        exclude: set[str] = Field(default_factory=set[str]),
     ) -> dict[str, t.GeneralValueType]:
         """Unified Pydantic serialization with options.
 
