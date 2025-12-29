@@ -493,7 +493,6 @@ class FlextUtilities:
     any_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.any_)
     err = staticmethod(FlextUtilitiesValidation.ResultHelpers.err)
     fail = staticmethod(FlextUtilitiesValidation.ResultHelpers.fail)
-    from_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.from_)
     not_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.not_)
     ok = staticmethod(FlextUtilitiesValidation.ResultHelpers.ok)
     or_ = staticmethod(FlextUtilitiesValidation.ResultHelpers.or_)

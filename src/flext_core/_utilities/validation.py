@@ -50,7 +50,6 @@ from typing import ClassVar, TypeGuard
 
 import orjson
 from pydantic import (
-    BaseModel,
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,
 )
@@ -2262,7 +2261,7 @@ class FlextUtilitiesValidation:
         return r[int | float].ok(value)
 
     @staticmethod
-    def validate_all[T](
+    def validate_all[T: t.GeneralValueType](
         values: list[T],
         predicate: p.Validation.Predicate,
         error: str = "Validation failed",
@@ -2860,84 +2859,6 @@ class FlextUtilitiesValidation:
                 if isinstance(exc, catch):
                     return default
                 raise
-
-        @staticmethod
-        def from_[T](
-            source: t.ConfigurationMapping | BaseModel | None,
-            key: str,
-            *,
-            as_type: type[T] | None = None,
-            default: T,
-        ) -> T:
-            """Extract from source with type guard (mnemonic: from_ = extract).
-
-            Args:
-                source: Source data (ConfigurationMapping/BaseModel/None)
-                key: Key/attribute name
-                as_type: Optional type to guard against
-                default: Default value if source is None or field missing
-
-            Returns:
-                Extracted value with type guard or default
-
-            Example:
-                port = ResultHelpers.from_(config_obj, "port", as_type=int, default=c.Platform.FLEXT_API_PORT)
-
-            """
-            if source is None:
-                return default
-
-            # Get raw value from source
-            raw_value: t.GeneralValueType | None = None
-            if isinstance(source, Mapping):
-                # Mapping[str, GeneralValueType] - use .get()
-                raw_value = source.get(key)
-            else:
-                # BaseModel - get attribute
-                raw_value = getattr(source, key, None)
-
-            if raw_value is None:
-                return default
-
-            # Type check with as_type if provided, or use type of default
-            check_type = as_type if as_type is not None else type(default)
-            # Filter out Callable from GeneralValueType for return
-            if callable(raw_value):
-                # Callables cannot be returned as T
-                return default
-            if isinstance(raw_value, check_type):
-                # raw_value matches the expected type T and is not Callable
-                # Type narrowing: raw_value is confirmed to match check_type
-                # Immediate return forces type narrowing - no intermediate variable
-                return raw_value  # INTENTIONAL: isinstance guards this return
-
-            # Try conversion for primitive types only using str intermediary
-            # This is safe because str() works on any GeneralValueType
-            if check_type in {int, float, str, bool}:
-                try:
-                    str_value = str(raw_value)
-                    # Convert to the expected type
-                    # INTENTIONAL CAST: default: T parameter proves return type matches T
-                    # isinstance() cannot narrow generic TypeVar T, so cast is necessary
-                    if check_type is int:
-                        return cast("T", int(str_value))  # INTENTIONAL CAST
-                    if check_type is float:
-                        return cast("T", float(str_value))  # INTENTIONAL CAST
-                    if check_type is bool:
-                        # Handle bool conversion from string
-                        return cast("T", str_value.lower() in {"true", "1", "yes"})  # INTENTIONAL CAST
-                    # check_type is str
-                    return cast("T", str_value)  # INTENTIONAL CAST
-                except (TypeError, ValueError) as exc:
-                    # Type conversion failed, log and continue to return default
-                    FlextRuntime.structlog().debug(
-                        "Type conversion failed",
-                        key=key,
-                        target_type=getattr(check_type, "__name__", str(check_type)),
-                        error=str(exc),
-                    )
-
-            return default
 
         @staticmethod
         def req[T](

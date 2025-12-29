@@ -227,18 +227,9 @@ class TestFlextExceptionsHierarchy:
                 for key, type_value in type_kwargs.items():
                     metadata_kwargs[key] = type_value.__name__
             # Type narrowing: all values in metadata_kwargs are MetadataAttributeValue
-            # BaseError accepts **extra_kwargs: MetadataAttributeValue, but type checker
-            # can't infer compatibility with specific exception constructors
-
-            # BaseError accepts **extra_kwargs: MetadataAttributeValue
-            # Mypy limitation: dict unpacking to **kwargs not fully supported
-            # The dict[str, MetadataAttributeValue] is compatible with **extra_kwargs: MetadataAttributeValue
-            # Use type ignore for dict unpacking (runtime behavior is correct)
-            metadata_typed: dict[str, t.MetadataAttributeValue] = cast(
-                "dict[str, t.MetadataAttributeValue]",
-                metadata_kwargs,
-            )
-            error = scenario.exception_type(scenario.message, **metadata_typed)
+            # BaseError accepts metadata dict as second argument
+            # Pass dict directly without unpacking
+            error = scenario.exception_type(scenario.message, metadata_kwargs)
         else:
             error = scenario.exception_type(scenario.message)
         assert scenario.message in str(error)

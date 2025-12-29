@@ -29,13 +29,12 @@ from collections.abc import (
     Mapping,
     Mapping as ABCMapping,
     Sequence,
-    Sized,
 )
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Self, TypeVar, cast, overload
+from typing import ClassVar, Self, TypeVar, overload
 
 import yaml
 from pydantic import BaseModel
@@ -480,10 +479,10 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             else:
                 # Fallback - convert to dict representation
                 data = {"value": actual_content} if actual_content else {}
-            _ = file_path.write_text(
-                yaml.dump(data, default_flow_style=False, allow_unicode=True),
-                encoding=params.enc,
-            )
+            yaml_result = yaml.dump(data, default_flow_style=False, allow_unicode=True)
+            # yaml.dump returns str | bytes | None - write_text needs str
+            yaml_content: str = yaml_result if isinstance(yaml_result, str) else ""
+            _ = file_path.write_text(yaml_content, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.CSV:
             # Convert Sequence[Sequence[str]] to list[list[str]] for write_csv
             csv_content: list[list[str]]
@@ -1394,15 +1393,16 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                     filename = f"{name}.json"
                 else:
                     # Check if data is a nested sequence (CSV format)
+                    # Use isinstance with Sequence for type-safe length check
                     is_nested_sequence = (
                         "." not in name
-                        and u.is_type(data, "sequence")
+                        and isinstance(data, Sequence)
                         and not isinstance(data, (str, bytes))
-                        # Runtime check needed to distinguish nested sequences from flat sequences
-                        and all(u.is_type(row, "sequence") for row in data)
-                        # Check length safely - only if data has __len__ (Sized protocol)
-                        and isinstance(data, Sized)
                         and len(data) > 0
+                        and all(
+                            isinstance(row, Sequence) and not isinstance(row, (str, bytes))
+                            for row in data
+                        )
                     )
                     if is_nested_sequence:
                         filename = f"{name}.csv"
@@ -1428,19 +1428,11 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                         raise ValueError(
                             f"Failed to create default kwargs: {default_result.error}",
                         )
-                # Type narrowing: data is guaranteed to match create() signature
-                # (excludes r[] types which are handled separately above)
-                # INTENTIONAL CAST: isinstance(data, Sized) at line 1404 causes PyRefly to infer Sized type
-                # but data is explicitly typed at line 1382-1388. Cast back to remove Sized inference.
+                # Create file with the validated data and filename
+                # Note: data type is guaranteed by the assignment on lines 1382-1388
+                # (Sized check above was only for filename determination, not for data validation)
                 path = manager.create(
-                    cast(  # INTENTIONAL CAST
-                        str
-                        | bytes
-                        | t.ConfigurationMapping
-                        | Sequence[Sequence[str]]
-                        | BaseModel,
-                        data,
-                    ),
+                    data,
                     filename,
                     directory=validated_kwargs.directory,
                     fmt=validated_kwargs.fmt,
