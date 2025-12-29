@@ -562,7 +562,7 @@ class GenericModelFactory:
     @staticmethod
     def operation_context(
         source: str | None = None,
-    ):
+    ) -> m.Value.OperationContext:
         """Create OperationContext value object."""
         return m.Value.OperationContext(source=source)
 
@@ -571,7 +571,7 @@ class GenericModelFactory:
         name: str,
         version: str | None = None,
         status: str = "active",
-    ):
+    ) -> m.Snapshot.Service:
         """Create ServiceSnapshot."""
         return m.Snapshot.Service(
             name=name,
@@ -584,7 +584,7 @@ class GenericModelFactory:
         config: dict[str, object] | None = None,
         source: str | None = None,
         environment: str | None = None,
-    ):
+    ) -> m.Snapshot.Configuration:
         """Create ConfigurationSnapshot."""
         return m.Snapshot.Configuration(
             config=config or {},
@@ -597,7 +597,7 @@ class GenericModelFactory:
         *,
         healthy: bool = True,
         checks: dict[str, bool] | None = None,
-    ):
+    ) -> m.Snapshot.Health:
         """Create HealthStatus."""
         return m.Snapshot.Health(
             healthy=healthy,
@@ -609,7 +609,7 @@ class GenericModelFactory:
         success: int = 0,
         failure: int = 0,
         skipped: int = 0,
-    ):
+    ) -> m.Progress.Operation:
         """Create OperationProgress."""
         return m.Progress.Operation(
             success_count=success,
@@ -618,7 +618,7 @@ class GenericModelFactory:
         )
 
     @staticmethod
-    def conversion_progress():
+    def conversion_progress() -> m.Progress.Conversion:
         """Create ConversionProgress."""
         return m.Progress.Conversion()
 

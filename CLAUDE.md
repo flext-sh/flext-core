@@ -29,6 +29,20 @@
 
 ---
 
+## 🔧 Quality Assurance System
+
+### Automated Pattern Enforcement
+
+The FLEXT ecosystem provides comprehensive automated quality assurance that integrates seamlessly with development workflows:
+
+**Pattern Analysis**: When code changes introduce duplication or violate architectural boundaries, the system automatically analyzes the codebase and provides consolidation strategies following SOLID principles.
+
+**Consolidation Guidance**: For source code duplication, identifies optimal consolidation targets (shared utilities, base classes, protocols). For test duplication, recommends extraction to shared fixtures or local consolidation.
+
+**Quality Validation**: Automated checks prevent architectural violations, ensure type safety, and maintain code quality standards.
+
+---
+
 ## ⚠️ Architecture Layering
 
 **See [../CLAUDE.md - Architecture Layering](../CLAUDE.md#-critical-architecture-layering-zero-tolerance)** for the complete architecture specification.
@@ -68,10 +82,10 @@ grep -rEn "(from flext_.*\.(services|api) import)" \
 
 ### Reference Documentation
 
-- **Plans**: See `~/.cursor/plans/` for detailed pattern correction plans
-- **Standards**: See `docs/standards/` for coding standards and templates
-- **Guides**: See `docs/guides/` for pattern guides and best practices
-- **Anti-patterns**: See `docs/guides/anti-patterns-best-practices.md` for common mistakes and solutions
+- **Quality Assurance**: Comprehensive automated validation and consolidation guidance
+- **Standards**: Complete coding standards and architectural templates
+- **Guides**: Pattern guides and enterprise development best practices
+- **Optimization**: Code consolidation strategies and refactoring patterns
 
 ---
 

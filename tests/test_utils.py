@@ -57,7 +57,7 @@ class TestDataFactory:
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
-    def create_value_object_data(value: object, **kwargs: object) -> dict[str, t.GeneralValueType]:
+    def create_value_object_data(value: object, **kwargs: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
