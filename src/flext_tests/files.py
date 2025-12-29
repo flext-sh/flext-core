@@ -1400,7 +1400,8 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                         and not isinstance(data, (str, bytes))
                         and len(data) > 0
                         and all(
-                            isinstance(row, Sequence) and not isinstance(row, (str, bytes))
+                            isinstance(row, Sequence)
+                            and not isinstance(row, (str, bytes))
                             for row in data
                         )
                     )

@@ -3241,7 +3241,9 @@ class FlextDispatcher(FlextService[bool]):
                 caller_module = sys.modules.get(module_name)
                 if caller_module:
                     # Scan module for handler-decorated functions
-                    handlers: list[tuple[str, t.HandlerCallable, m.Handler.DecoratorConfig]] = FlextHandlers.Discovery.scan_module(caller_module)
+                    handlers: list[
+                        tuple[str, t.HandlerCallable, m.Handler.DecoratorConfig]
+                    ] = FlextHandlers.Discovery.scan_module(caller_module)
                     for handler_item in handlers:
                         # Unpack tuple with explicit type hints to help type inference
                         _handler_name: str = handler_item[0]
