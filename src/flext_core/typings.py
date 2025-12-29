@@ -636,9 +636,7 @@ class FlextTypes:
     # Service instance type - union of all types accepted by container.register()
     # ARCHITECTURAL EXCEPTION: DI containers must accept any Python object
     # This uses GeneralValueType + Protocol for type-safe service storage
-    type ServiceInstanceType = (
-        FlextTypes.GeneralValueType
-    )
+    type ServiceInstanceType = FlextTypes.GeneralValueType
     """Type for service instances accepted by FlextContainer.register().
 
     Includes all GeneralValueType members plus Callables:

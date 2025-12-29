@@ -22,12 +22,12 @@ import json
 import socket
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import docker
 from docker import DockerClient
 from docker.errors import DockerException, NotFound
-from docker.models.containers import Container, ContainerCollection
+from docker.models.containers import Container
 from python_on_whales import DockerClient as PowDockerClient, docker as pow_docker
 from python_on_whales.exceptions import DockerException as PowDockerException
 
@@ -64,65 +64,39 @@ class FlextTestsDocker:
         c.Tests.Docker.SHARED_CONTAINERS
     )
 
-    class _OfflineContainers(ContainerCollection):
+    class _OfflineContainers:
         """Minimal container manager that always reports not found.
 
-        Inherits from docker.models.containers.ContainerCollection which extends
-        docker.models.resource.Collection. The __init__ accepts client=None.
+        Does NOT inherit from ContainerCollection (which is untyped in docker SDK).
+        Instead, implements the same interface via composition and protocol.
         """
 
         def __init__(self) -> None:
             """Initialize offline container collection stub."""
-            # ContainerCollection.__init__(client=None) per docker SDK source
-            super().__init__(client=None)
+            # No initialization needed for offline mode
 
         def get(self, container_id: str) -> Container:
             """Raise NotFound for any container lookup.
 
-            Business Rule: Overrides ContainerCollection.get() to always raise NotFound.
+            Business Rule: Always raises NotFound.
             This is intentional for offline mode - containers are not available.
-
-            Implications for Audit:
-            - Always raises NotFound exception
-            - Return type matches supertype for type compatibility
             """
-            # Always raise - return type is Never in practice but must match supertype
             msg = f"Container {container_id} not found (offline client)"
             raise NotFound(msg)
 
-    class _OfflineDockerClient(DockerClient):
+    class _OfflineDockerClient:
         """Offline Docker client used when the daemon is unavailable.
 
-        Per docker SDK source: DockerClient.__init__() creates APIClient which
-        attempts to connect to the daemon. For offline mode, we skip super().__init__()
-        and initialize only the containers attribute manually.
+        Does NOT inherit from DockerClient (which is untyped in docker SDK).
+        Instead, wraps the containers interface via composition.
         """
 
-        _offline_containers: ContainerCollection
-
         def __init__(self) -> None:
-            """Avoid contacting Docker daemon; provide minimal containers API.
-
-            Intentionally does NOT call super().__init__() because DockerClient.__init__()
-            attempts to connect to the Docker daemon, which is undesirable for an offline stub.
-
-            Note: We intentionally do NOT call super().__init__() because:
-            - DockerClient.__init__() creates APIClient(*args, **kwargs)
-            - APIClient.__init__() attempts to connect to Docker daemon
-            - For offline mode, we want to avoid any connection attempts
-            """
-            # Initialize without calling super() to avoid APIClient connection attempt
-            # Per docker SDK: DockerClient only sets self.api = APIClient(...)
-            # Direct assignment works when super().__init__() is not called
-            # Offline mode intentionally sets api to None to avoid connection attempts
-            # Type narrowing: DockerClient.api is APIClient, but we override for offline mode
-            # Use setattr with variable for intentional override of typed attribute
-            api_attr = "api"
-            setattr(self, api_attr, None)
+            """Initialize offline Docker client without contacting daemon."""
             self._offline_containers = FlextTestsDocker._OfflineContainers()
 
         @property
-        def containers(self) -> ContainerCollection:
+        def containers(self) -> FlextTestsDocker._OfflineContainers:
             """Return offline container manager."""
             return self._offline_containers
 
@@ -151,8 +125,12 @@ class FlextTestsDocker:
         """Get shared container configurations."""
         return c.Tests.Docker.SHARED_CONTAINERS
 
-    def get_client(self) -> DockerClient:
-        """Get Docker client with lazy initialization."""
+    def get_client(self) -> DockerClient | FlextTestsDocker._OfflineDockerClient:
+        """Get Docker client with lazy initialization.
+
+        Returns either a real DockerClient connected to daemon, or an offline stub
+        if the daemon is unavailable.
+        """
         if self._client is None:
             try:
                 self._client = docker.from_env()
@@ -256,17 +234,18 @@ class FlextTestsDocker:
                 if v:
                     ports[str(k)] = str(v[0].get("HostPort", "")) if v else ""
 
+            docker_container = cast("Any", container)
             return r[m.Tests.Docker.ContainerInfo].ok(
                 m.Tests.Docker.ContainerInfo(
                     name=container_name,
-                    status=self.ContainerStatus(container.status),
+                    status=self.ContainerStatus(docker_container.status),
                     ports=ports,
                     image=(
-                        str(container.image.tags[0])
-                        if container.image and container.image.tags
+                        str(docker_container.image.tags[0])
+                        if docker_container.image and docker_container.image.tags
                         else ""
                     ),
-                    container_id=container.id or "",
+                    container_id=docker_container.id or "",
                 ),
             )
         except NotFound:
@@ -288,15 +267,16 @@ class FlextTestsDocker:
         try:
             client = self.get_client()
             container = client.containers.get(name)
+            docker_container = cast("Any", container)
 
-            if container.status == "running":
+            if docker_container.status == "running":
                 return r[str].ok(f"Container {name} already running")
 
-            if container.status in {"exited", "created", "paused"}:
-                container.start()
+            if docker_container.status in {"exited", "created", "paused"}:
+                docker_container.start()
                 return r[str].ok(f"Container {name} started")
 
-            return r[str].ok(f"Container {name} in state: {container.status}")
+            return r[str].ok(f"Container {name} in state: {docker_container.status}")
 
         except NotFound:
             return r[str].fail(f"Container {name} not found")
