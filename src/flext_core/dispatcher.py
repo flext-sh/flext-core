@@ -3241,7 +3241,7 @@ class FlextDispatcher(FlextService[bool]):
                 caller_module = sys.modules.get(module_name)
                 if caller_module:
                     # Scan module for handler-decorated functions
-                    handlers = FlextHandlers.Discovery.scan_module(caller_module)
+                    handlers: list[tuple[str, t.HandlerCallable, m.Handler.DecoratorConfig]] = FlextHandlers.Discovery.scan_module(caller_module)
                     for _handler_name, handler_func, handler_config in handlers:
                         # Get actual handler function from module
                         # Check if handler_func is not None before checking callable

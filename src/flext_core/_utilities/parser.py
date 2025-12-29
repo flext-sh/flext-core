@@ -918,7 +918,7 @@ class FlextUtilitiesParser:
                 ))
             elif tuple_len == self.TUPLE_LENGTH_3:
                 # For 3-element tuples, extract elements with bounds checking
-                if len(pattern_tuple) >= 3:
+                if tuple_len >= self.TUPLE_LENGTH_3:
                     # Extract each element individually to avoid unpacking union type
                     a: str = str(pattern_tuple[0])
                     b: str = str(pattern_tuple[1])
