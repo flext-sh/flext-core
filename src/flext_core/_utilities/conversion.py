@@ -13,7 +13,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal, overload
 
-from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -253,9 +252,8 @@ class FlextUtilitiesConversion:
         if isinstance(value, Path):
             return value
         if callable(value):
-            # VariadicCallable[GeneralValueType] - return as-is
-            callable_typed: p.VariadicCallable[t.GeneralValueType] = value
-            return callable_typed
+            # Callables are not part of GeneralValueType - convert to string
+            return str(value)
         if isinstance(value, list):
             # list is Sequence[GeneralValueType] compatible
             seq_result: Sequence[t.GeneralValueType] = value

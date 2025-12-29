@@ -1187,9 +1187,9 @@ class FlextRuntime:
 
         module = structlog
 
-        # structlog processors have specific signatures - use object to accept any processor type
-        # structlog processors are callables with varying signatures, so we use object for flexibility
-        processors: list[t.GeneralValueType] = [
+        # structlog processors have specific signatures - use Callable for processor types
+        # structlog processors are callables with varying signatures
+        processors: list[Callable[..., t.GeneralValueType]] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -1197,14 +1197,10 @@ class FlextRuntime:
             module.processors.TimeStamper(fmt="iso"),
             module.processors.StackInfoRenderer(),
         ]
-        if additional_processors:  # pragma: no cover
-            # Tested but not covered: structlog configures once per process
+        if additional_processors:
             # additional_processors is Sequence[object] - structlog processors are callables
-            for proc in additional_processors:
-                if callable(proc):
-                    # Callables are GeneralValueType-compatible
-                    typed_proc: t.GeneralValueType = proc
-                    processors.append(typed_proc)
+            # Add callable processors to the list
+            processors.extend(proc for proc in additional_processors if callable(proc))
 
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))

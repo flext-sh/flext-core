@@ -177,7 +177,6 @@ class FlextTypes:
         | Path
         | Sequence[FlextTypes.GeneralValueType]  # Recursive: lists of values
         | Mapping[str, FlextTypes.GeneralValueType]  # Recursive: dicts of values
-        | Callable[..., FlextTypes.GeneralValueType]  # Callables returning values
     )
 
     # RegisterableService - Type for services registerable in FlextContainer
@@ -638,7 +637,7 @@ class FlextTypes:
     # ARCHITECTURAL EXCEPTION: DI containers must accept any Python object
     # This uses GeneralValueType + Protocol for type-safe service storage
     type ServiceInstanceType = (
-        "FlextTypes.GeneralValueType" | Callable[..., FlextTypes.GeneralValueType]
+        FlextTypes.GeneralValueType
     )
     """Type for service instances accepted by FlextContainer.register().
 

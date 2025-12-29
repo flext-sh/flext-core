@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, TypeVar
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
+    from collections.abc import Mapping, Sequence
 from flext_core.typings import t
 
 T = TypeVar("T")
@@ -174,8 +174,7 @@ class FlextUtilitiesCast:
         if isinstance(value, Path):
             return value
         if callable(value):
-            callable_typed: Callable[..., t.GeneralValueType] = value
-            return callable_typed
+            return str(value)
         if isinstance(value, (list, tuple)):
             seq_result: Sequence[t.GeneralValueType] = value
             return seq_result
