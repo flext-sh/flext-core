@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import cast, overload
+from typing import overload
 
 import structlog
 from pydantic import BaseModel
@@ -915,19 +915,15 @@ class FlextUtilitiesParser:
                     pattern_tuple[1],
                 ))
             elif tuple_len == self.TUPLE_LENGTH_3:
-                # For 3-element tuples, extract elements with bounds checking
-                if tuple_len >= self.TUPLE_LENGTH_3:
-                    # Extract each element individually to avoid unpacking union type
-                    # tuple_len check guarantees 3-element tuple for type narrowing
-                    three_elem = cast("tuple[str, str, int]", pattern_tuple)  # INTENTIONAL CAST: length check proves 3-element
-                    a: str = str(three_elem[0])
-                    b: str = str(three_elem[1])
-                    c: int = int(three_elem[2])
-                    # Call method with typed values
-                    pattern_result = self._extract_pattern_components((a, b, c))
-                else:
-                    msg = "Pattern tuple too short (need 3 elements)"
-                    return r[tuple[str, int]].fail(msg)
+                # Convert to list for dynamic indexing - mypy can't narrow tuple union types
+                items: list[str | int] = list(pattern_tuple)
+                a: str = str(items[0])
+                b: str = str(items[1])
+                # Third element is int for 3-element tuple variant
+                c_raw = items[2] if len(items) > self.TUPLE_LENGTH_2 else 0
+                c: int = c_raw if isinstance(c_raw, int) else int(str(c_raw))
+                # Call method with typed values
+                pattern_result = self._extract_pattern_components((a, b, c))
             else:
                 msg = f"Pattern tuple must have 2 or 3 elements, got {tuple_len}"
                 return r[tuple[str, int]].fail(msg)

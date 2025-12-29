@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, TypeAlias
+from typing import Annotated, ClassVar, TypeAlias
 
 from pydantic import Discriminator
 
@@ -22,6 +22,7 @@ from flext_core._models.container import FlextModelsContainer
 from flext_core._models.context import FlextModelsContext
 from flext_core._models.cqrs import FlextModelsCqrs
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
@@ -71,19 +72,56 @@ class FlextModels:
         """Value objects - immutable data compared by value.
 
         Inherits frozen=True, extra="forbid" from FlextModelsBase.FrozenStrictModel.
+
+        Concrete models:
+        - OperationContext: Immutable context of an operation
+
+        NOTE: LdapEntryAttributes moved to flext-ldap (domain-specific)
         """
+
+        OperationContext: ClassVar[type[FlextGenericModels.Value.OperationContext]] = (
+            FlextGenericModels.Value.OperationContext
+        )
 
     class Snapshot(FlextModelsBase.FrozenStrictModel):
         """Snapshots - state captured at a specific moment.
 
         Inherits frozen=True, extra="forbid" from FlextModelsBase.FrozenStrictModel.
+
+        Concrete models:
+        - Service: Snapshot of service state
+        - Configuration: Snapshot of configuration at a moment
+        - Health: Result of health check
+
+        NOTE: ObjectClassGroups moved to flext-ldap (domain-specific)
         """
+
+        Service: ClassVar[type[FlextGenericModels.Snapshot.Service]] = (
+            FlextGenericModels.Snapshot.Service
+        )
+        Configuration: ClassVar[type[FlextGenericModels.Snapshot.Configuration]] = (
+            FlextGenericModels.Snapshot.Configuration
+        )
+        Health: ClassVar[type[FlextGenericModels.Snapshot.Health]] = (
+            FlextGenericModels.Snapshot.Health
+        )
 
     class Progress(FlextModelsBase.ArbitraryTypesModel):
         """Progress trackers - mutable accumulators during operations.
 
         Inherits validate_assignment=True from FlextModelsBase.ArbitraryTypesModel.
+
+        Concrete models:
+        - Operation: Progress of ongoing operation
+        - Conversion: Progress of conversion with errors/warnings
         """
+
+        Operation: ClassVar[type[FlextGenericModels.Progress.Operation]] = (
+            FlextGenericModels.Progress.Operation
+        )
+        Conversion: ClassVar[type[FlextGenericModels.Progress.Conversion]] = (
+            FlextGenericModels.Progress.Conversion
+        )
 
     # =========================================================================
     # NAMESPACE CLASSES - Direct access for internal model classes

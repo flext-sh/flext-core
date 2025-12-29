@@ -174,7 +174,7 @@ class FlextUtilitiesCache:
         - (1, str_num) → numbers (int, float)
         - (2, str_repr) → other types (fallback)
 
-        Why Tuple[int, str]?
+        Why tuple[int, str]?
         - First element groups by type (Python compares tuples element-wise)
         - Second element provides within-group ordering
         - Deterministic across Python runs
