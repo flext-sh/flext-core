@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import overload
+from typing import cast, overload
 
 import structlog
 from pydantic import BaseModel
@@ -920,9 +920,11 @@ class FlextUtilitiesParser:
                 # For 3-element tuples, extract elements with bounds checking
                 if tuple_len >= self.TUPLE_LENGTH_3:
                     # Extract each element individually to avoid unpacking union type
-                    a: str = str(pattern_tuple[0])
-                    b: str = str(pattern_tuple[1])
-                    c: int = int(pattern_tuple[2])
+                    # tuple_len check guarantees 3-element tuple for type narrowing
+                    three_elem = cast(tuple[str, str, int], pattern_tuple)  # INTENTIONAL CAST: length check proves 3-element
+                    a: str = str(three_elem[0])
+                    b: str = str(three_elem[1])
+                    c: int = int(three_elem[2])
                     # Call method with typed values
                     pattern_result = self._extract_pattern_components((a, b, c))
                 else:
