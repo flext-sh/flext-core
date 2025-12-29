@@ -1031,17 +1031,12 @@ class Teste:
             "resource_type": "User",
             "resource_id": "123",
         }
-        # Convert to t.MetadataAttributeValue for **kwargs
+        # Pass extra kwargs directly to ConflictError
         # ConflictError accepts **extra_kwargs: t.MetadataAttributeValue
-        # resource_type and resource_id come from extra_kwargs, not as direct parameters
-        # Mypy limitation: **kwargs unpacking with dict[str, MetadataAttributeValue] not fully supported
-        extra_kwargs: dict[str, t.MetadataAttributeValue] = {
-            k: cast("t.MetadataAttributeValue", v)  # str is already ScalarValue
-            for k, v in extra_kwargs_raw.items()
-        }
+        # Values are already ScalarValue types (str, int, float, bool)
         error = e.ConflictError(
             "Conflict",
-            **extra_kwargs,
+            **extra_kwargs_raw,
         )
         assert error.metadata is not None
         assert "custom" in error.metadata.attributes

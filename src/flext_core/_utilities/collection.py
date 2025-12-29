@@ -215,8 +215,8 @@ class FlextUtilitiesCollection:
         # Handle mapping types
         mapping_items: Mapping[str, T] = items
         for v in mapping_items.values():
-            result: bool = predicate(v)  # Explicit type for result
-            if result:
+            matched: bool = predicate(v)  # Explicit type for matched
+            if matched:
                 return v
         return None
 

@@ -741,35 +741,33 @@ class FlextUtilitiesParser:
         pattern_tuple: tuple[str, str] | tuple[str, str, int],
     ) -> r[tuple[str, str, int]]:
         """Extract pattern, replacement, and flags from tuple."""
-        tuple_len = len(pattern_tuple)
+        # Convert to list for safe indexing (mypy can't narrow union tuple types)
+        elements: list[str | int] = list(pattern_tuple)
+        tuple_len = len(elements)
+
+        # Initialize variables for type checking before branches
+        pattern_val: str = ""
+        replacement_val: str = ""
+        flags_val: int = 0
 
         if tuple_len == self.PATTERN_TUPLE_MIN_LENGTH:
             # Two-element tuple: (pattern, replacement)
-            pattern, replacement = pattern_tuple[0], pattern_tuple[1]
-            flags = 0
+            pattern_val = str(elements[0])
+            replacement_val = str(elements[1])
+            flags_val = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
-            # Three-element tuple with explicit narrowing
-            if (
-                not isinstance(pattern_tuple, tuple)
-                or len(pattern_tuple) != self.PATTERN_TUPLE_MAX_LENGTH
-            ):
-                return r[tuple[str, str, int]].fail(
-                    f"Invalid pattern tuple length {tuple_len}, expected 3",
-                )
-            pattern_str, replacement_str, flags_val = (
-                pattern_tuple[0],  # str
-                pattern_tuple[1],  # str
-                pattern_tuple[2],  # int
-            )
-            pattern = str(pattern_str)
-            replacement = str(replacement_str)
-            flags = int(flags_val) if flags_val != 0 else 0
+            # Three-element tuple - list conversion allows safe indexing
+            pattern_val = str(elements[0])
+            replacement_val = str(elements[1])
+            # Safe int conversion: element can be str | int
+            third_elem = elements[2]
+            flags_val = int(third_elem) if isinstance(third_elem, int) else 0
         else:
             return r[tuple[str, str, int]].fail(
                 f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
             )
 
-        return r[tuple[str, str, int]].ok((pattern, replacement, flags))
+        return r[tuple[str, str, int]].ok((pattern_val, replacement_val, flags_val))
 
     def _apply_single_pattern(
         self,
