@@ -3242,7 +3242,11 @@ class FlextDispatcher(FlextService[bool]):
                 if caller_module:
                     # Scan module for handler-decorated functions
                     handlers: list[tuple[str, t.HandlerCallable, m.Handler.DecoratorConfig]] = FlextHandlers.Discovery.scan_module(caller_module)
-                    for _handler_name, handler_func, handler_config in handlers:
+                    for handler_item in handlers:
+                        # Unpack tuple with explicit type hints to help type inference
+                        _handler_name: str = handler_item[0]
+                        handler_func: t.HandlerCallable = handler_item[1]
+                        handler_config: m.Handler.DecoratorConfig = handler_item[2]
                         # Get actual handler function from module
                         # Check if handler_func is not None before checking callable
                         # Use TypeGuard for proper handler type validation

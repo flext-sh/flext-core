@@ -10,21 +10,27 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from flext_core.typings import T, U
+from flext_core.typings import T_co, T_contra
 
 
 @runtime_checkable
-class _Predicate(Protocol[T]):
-    """Protocol for callable predicates that accept a value and return bool."""
+class _Predicate(Protocol[T_contra]):
+    """Protocol for callable predicates that accept a value and return bool.
 
-    def __call__(self, value: T) -> bool: ...
+    Contravariant in T_contra: predicates can accept more general types.
+    """
+
+    def __call__(self, value: T_contra) -> bool: ...
 
 
 @runtime_checkable
-class _Handler(Protocol[T, U]):
-    """Protocol for callable handlers that transform a value."""
+class _Handler(Protocol[T_contra, T_co]):
+    """Protocol for callable handlers that transform a value.
 
-    def __call__(self, value: T) -> U: ...
+    Contravariant in T_contra (input), covariant in T_co (output).
+    """
+
+    def __call__(self, value: T_contra) -> T_co: ...
 
 
 class FlextUtilitiesPattern:
@@ -48,7 +54,7 @@ class FlextUtilitiesPattern:
         value: T,
         *patterns: tuple[_Predicate[T], _Handler[T, U]],
         default: _Handler[T, U] | None = None,
-    ) -> U:
+    ) -> U:  # U matches _Handler[T, U]'s return type (T_co)
         """Match value against patterns and execute corresponding handler.
 
         Tests each predicate in sequence. When a predicate returns True,
