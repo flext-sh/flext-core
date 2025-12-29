@@ -14,8 +14,6 @@ from __future__ import annotations
 
 from typing import overload
 
-from pydantic import Field
-
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.cast import FlextUtilitiesCast
@@ -386,7 +384,7 @@ class FlextUtilities:
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
+        default: t.GeneralValueType | None = None,
     ) -> t.GeneralValueType | None:
         """Unified get function for dict/object access with default."""
         return FlextUtilitiesMapper.get(data, key, default=default)

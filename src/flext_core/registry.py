@@ -659,7 +659,7 @@ class FlextRegistry(FlextService[bool]):
         name: str,
         plugin: t.GeneralValueType,
         *,
-        validate: Callable[[t.GeneralValueType], r[bool]] = Field(default_factory=Callable[[t.GeneralValueType], r[bool]]),
+        validate: Callable[[t.GeneralValueType], r[bool]] | None = None,
     ) -> r[bool]:
         """Register a plugin with optional validation.
 
@@ -925,7 +925,7 @@ class FlextRegistry(FlextService[bool]):
 
         """
         # Normalize metadata to dict for internal use
-        validated_metadata: t.GeneralValueType = Field(default_factory=t.GeneralValueType)
+        validated_metadata: t.GeneralValueType | None = None
         if metadata is not None:
             # Handle Metadata model first
             if isinstance(metadata, m.Metadata):

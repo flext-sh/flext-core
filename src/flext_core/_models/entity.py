@@ -118,7 +118,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self: Self,
             event_type: str,
-            data: t.EventDataMapping = Field(default_factory=t.EventDataMapping),
+            data: t.EventDataMapping | None = None,
         ) -> r[FlextModelsEntity.DomainEvent]:
             """Add a domain event to this entity.
 

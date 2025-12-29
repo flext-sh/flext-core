@@ -128,8 +128,8 @@ class FlextTestsDocker:
 
     def __init__(
         self,
-        workspace_root: Path = Field(default_factory=Path),
-        worker_id: str = Field(default_factory=str),
+        workspace_root: Path | None = None,
+        worker_id: str | None = None,
     ) -> None:
         """Initialize Docker client with dirty state tracking."""
         super().__init__()
@@ -306,7 +306,7 @@ class FlextTestsDocker:
     def compose_up(
         self,
         compose_file: str,
-        service: str = Field(default_factory=str),
+        service: str | None = None,
         *,
         force_recreate: bool = False,
     ) -> r[str]:
@@ -366,7 +366,7 @@ class FlextTestsDocker:
     def start_compose_stack(
         self,
         compose_file: str,
-        network_name: str = Field(default_factory=str),
+        network_name: str | None = None,
     ) -> r[str]:
         """Start a Docker Compose stack."""
         result = self.compose_up(compose_file)

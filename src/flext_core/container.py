@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Self, TypeGuard
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
@@ -44,23 +44,23 @@ class FlextContainer(FlextRuntime, p.DI):
     ``p.DI`` through structural typing only.
     """
 
-    _global_instance: Self = Field(default_factory=Self)
+    _global_instance: Self | None = None
     _global_lock: threading.RLock = threading.RLock()
     # Instance attributes (initialized in __init__)
-    _context: p.Ctx = Field(default_factory=p.Ctx)
-    _config: p.Config = Field(default_factory=p.Config)
+    _context: p.Ctx | None = None
+    _config: p.Config | None = None
     _user_overrides: dict[str, t.GeneralValueType]
 
     def __new__(
         cls,
         *,
-        _config: p.Config = Field(default_factory=p.Config),
-        _context: p.Ctx = Field(default_factory=p.Ctx),
-        _services: dict[str, m.Container.ServiceRegistration] = Field(default_factory=dict[str, m.Container.ServiceRegistration]),
-        _factories: dict[str, m.Container.FactoryRegistration] = Field(default_factory=dict[str, m.Container.FactoryRegistration]),
-        _resources: dict[str, m.Container.ResourceRegistration] = Field(default_factory=dict[str, m.Container.ResourceRegistration]),
-        _user_overrides: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
-        _container_config: m.Container.ContainerConfig = Field(default_factory=m.Container.ContainerConfig),
+        _config: p.Config | None = None,
+        _context: p.Ctx | None = None,
+        _services: dict[str, m.Container.ServiceRegistration] | None = None,
+        _factories: dict[str, m.Container.FactoryRegistration] | None = None,
+        _resources: dict[str, m.Container.ResourceRegistration] | None = None,
+        _user_overrides: dict[str, t.GeneralValueType] | None = None,
+        _container_config: m.Container.ContainerConfig | None = None,
     ) -> Self:
         """Create or return the global singleton instance.
 
@@ -83,13 +83,13 @@ class FlextContainer(FlextRuntime, p.DI):
     def __init__(
         self,
         *,
-        _config: p.Config = Field(default_factory=p.Config),
-        _context: p.Ctx = Field(default_factory=p.Ctx),
-        _services: dict[str, m.Container.ServiceRegistration] = Field(default_factory=dict[str, m.Container.ServiceRegistration]),
-        _factories: dict[str, m.Container.FactoryRegistration] = Field(default_factory=dict[str, m.Container.FactoryRegistration]),
-        _resources: dict[str, m.Container.ResourceRegistration] = Field(default_factory=dict[str, m.Container.ResourceRegistration]),
-        _user_overrides: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
-        _container_config: m.Container.ContainerConfig = Field(default_factory=m.Container.ContainerConfig),
+        _config: p.Config | None = None,
+        _context: p.Ctx | None = None,
+        _services: dict[str, m.Container.ServiceRegistration] | None = None,
+        _factories: dict[str, m.Container.FactoryRegistration] | None = None,
+        _resources: dict[str, m.Container.ResourceRegistration] | None = None,
+        _user_overrides: dict[str, t.GeneralValueType] | None = None,
+        _container_config: m.Container.ContainerConfig | None = None,
     ) -> None:
         """Wire the Dependency Injector container and supporting registries.
 
@@ -250,8 +250,8 @@ class FlextContainer(FlextRuntime, p.DI):
     def get_global(
         cls,
         *,
-        config: p.Config = Field(default_factory=p.Config),
-        context: p.Ctx = Field(default_factory=p.Ctx),
+        config: p.Config | None = None,
+        context: p.Ctx | None = None,
     ) -> Self:
         """Return the thread-safe global container instance.
 
@@ -335,13 +335,13 @@ class FlextContainer(FlextRuntime, p.DI):
     def initialize_registrations(
         self,
         *,
-        services: dict[str, m.Container.ServiceRegistration] = Field(default_factory=dict[str, m.Container.ServiceRegistration]),
-        factories: dict[str, m.Container.FactoryRegistration] = Field(default_factory=dict[str, m.Container.FactoryRegistration]),
-        resources: dict[str, m.Container.ResourceRegistration] = Field(default_factory=dict[str, m.Container.ResourceRegistration]),
-        global_config: m.Container.ContainerConfig = Field(default_factory=m.Container.ContainerConfig),
-        user_overrides: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
-        config: p.Config = Field(default_factory=p.Config),
-        context: p.Ctx = Field(default_factory=p.Ctx),
+        services: dict[str, m.Container.ServiceRegistration] | None = None,
+        factories: dict[str, m.Container.FactoryRegistration] | None = None,
+        resources: dict[str, m.Container.ResourceRegistration] | None = None,
+        global_config: m.Container.ContainerConfig | None = None,
+        user_overrides: dict[str, t.GeneralValueType] | None = None,
+        config: p.Config | None = None,
+        context: p.Ctx | None = None,
     ) -> None:
         """Initialize service registrations and configuration.
 
@@ -591,9 +591,9 @@ class FlextContainer(FlextRuntime, p.DI):
     def wire_modules(
         self,
         *,
-        modules: Sequence[ModuleType] = Field(default_factory=Sequence[ModuleType]),
-        packages: Sequence[str] = Field(default_factory=Sequence[str]),
-        classes: Sequence[type] = Field(default_factory=Sequence[type]),
+        modules: Sequence[ModuleType] | None = None,
+        packages: Sequence[str] | None = None,
+        classes: Sequence[type] | None = None,
     ) -> None:
         """Wire modules/packages to the DI bridge for @inject/Provide usage."""
         FlextRuntime.DependencyIntegration.wire(
@@ -881,7 +881,7 @@ class FlextContainer(FlextRuntime, p.DI):
 
         return r[T].fail(f"Service '{name}' not found")
 
-    def create_module_logger(self, module_name: str = Field(default_factory=str)) -> FlextLogger:
+    def create_module_logger(self, module_name: str | None = None) -> FlextLogger:
         """Create a FlextLogger instance for the specified module.
 
         This method provides direct access to FlextLogger without going through
@@ -1014,9 +1014,9 @@ class FlextContainer(FlextRuntime, p.DI):
     def scoped(
         self,
         *,
-        config: p.Config = Field(default_factory=p.Config),
-        context: p.Ctx = Field(default_factory=p.Ctx),
-        subproject: str = Field(default_factory=str),
+        config: p.Config | None = None,
+        context: p.Ctx | None = None,
+        subproject: str | None = None,
         services: Mapping[
             str,
             t.GeneralValueType
@@ -1030,8 +1030,8 @@ class FlextContainer(FlextRuntime, p.DI):
             | Callable[..., t.GeneralValueType],
         ]
         | None = None,
-        factories: Mapping[str, t.FactoryCallable] = Field(default_factory=Mapping[str, t.FactoryCallable]),
-        resources: Mapping[str, t.ResourceCallable] = Field(default_factory=Mapping[str, t.ResourceCallable]),
+        factories: Mapping[str, t.FactoryCallable] | None = None,
+        resources: Mapping[str, t.ResourceCallable] | None = None,
     ) -> FlextContainer:
         """Create an isolated container scope with optional overrides.
 

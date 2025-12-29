@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from pydantic import Field
-
 from flext_core.typings import T_co, T_contra
 
 
@@ -53,7 +51,7 @@ class FlextUtilitiesPattern:
     def match[T, U](
         value: T,
         *patterns: tuple[_Predicate[T], _Handler[T, U]],
-        default: _Handler[T, U] = Field(default_factory=_Handler[T, U]),
+        default: _Handler[T, U] | None = None,
     ) -> U:
         """Match value against patterns and execute corresponding handler.
 

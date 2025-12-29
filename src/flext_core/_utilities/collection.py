@@ -12,8 +12,6 @@ from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from typing import Protocol, TypeGuard, overload, runtime_checkable
 
-from pydantic import Field
-
 from flext_core._utilities.conversion import FlextUtilitiesConversion
 from flext_core.result import r
 from flext_core.typings import R, T, T_contra, U, t
@@ -170,7 +168,7 @@ class FlextUtilitiesCollection:
         items: list[T] | tuple[T, ...] | Mapping[str, T],
         predicate: Callable[[T], bool],
         *,
-        mapper: Callable[[T], U] = Field(default_factory=Callable[[T], U]),
+        mapper: Callable[[T], U] | None = None,
     ) -> (
         list[T] | list[U] | tuple[T, ...] | tuple[U, ...] | dict[str, T] | dict[str, U]
     ):
@@ -340,13 +338,13 @@ class FlextUtilitiesCollection:
         items: Sequence[T],
         operation: Callable[[T], R | r[R]],
         *,
-        size: int = Field(default_factory=int),
-        _size: int = Field(default_factory=int),  # Alias for size
-        on_error: str = Field(default_factory=str),
+        size: int | None = None,
+        _size: int | None = None,  # Alias for size
+        on_error: str | None = None,
         parallel: bool = False,
-        progress: Callable[[int, int], None] = Field(default_factory=Callable[[int, int], None]),
+        progress: Callable[[int, int], None] | None = None,
         progress_interval: int = 1,
-        pre_validate: Callable[[T], bool] = Field(default_factory=Callable[[T], bool]),
+        pre_validate: Callable[[T], bool] | None = None,
         flatten: bool = False,
         _flatten: bool = False,  # Legacy alias
     ) -> r[t.BatchResultDict]:
@@ -457,10 +455,10 @@ class FlextUtilitiesCollection:
         items: Sequence[T],
         processor: Callable[[T], U],
         *,
-        predicate: Callable[[T], bool] = Field(default_factory=Callable[[T], bool]),
+        predicate: Callable[[T], bool] | None = None,
         on_error: str = "fail",
-        filter_keys: set[str] = Field(default_factory=set[str]),
-        exclude_keys: set[str] = Field(default_factory=set[str]),
+        filter_keys: set[str] | None = None,
+        exclude_keys: set[str] | None = None,
     ) -> r[list[U]]:
         """Process items with optional filtering and error handling.
 
@@ -700,8 +698,8 @@ class FlextUtilitiesCollection:
     @staticmethod
     def first(
         items: Sequence[T],
-        predicate: _Predicate[T] = Field(default_factory=_Predicate[T]),
-        default: T = Field(default_factory=T),
+        predicate: _Predicate[T] | None = None,
+        default: T | None = None,
     ) -> T | None:
         """Get first item (optionally matching predicate).
 
@@ -728,8 +726,8 @@ class FlextUtilitiesCollection:
     @staticmethod
     def last(
         items: Sequence[T],
-        predicate: _Predicate[T] = Field(default_factory=_Predicate[T]),
-        default: T = Field(default_factory=T),
+        predicate: _Predicate[T] | None = None,
+        default: T | None = None,
     ) -> T | None:
         """Get last item (optionally matching predicate).
 
@@ -783,7 +781,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def unique(
         items: Sequence[T],
-        key_func: Callable[[T], object] = Field(default_factory=Callable[[T], object]),
+        key_func: Callable[[T], object] | None = None,
     ) -> list[T]:
         """Get unique items preserving order.
 
@@ -988,7 +986,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def count(
         items: Sequence[T],
-        predicate: Callable[[T], bool] = Field(default_factory=Callable[[T], bool]),
+        predicate: Callable[[T], bool] | None = None,
     ) -> int:
         """Count items, optionally matching predicate.
 

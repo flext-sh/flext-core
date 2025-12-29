@@ -139,7 +139,7 @@ class FlextTestsDomains:
     def api_response_data(
         status: str = "success",
         *,
-        include_data: bool = Field(default_factory=bool),
+        include_data: bool | None = None,
         **custom_fields: t.GeneralValueType,
     ) -> dict[str, t.GeneralValueType]:
         """Create API response test data.

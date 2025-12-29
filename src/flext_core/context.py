@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Final, Self, overload
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 # Direct imports for internal usage (mypy compatibility with nested class aliases)
 from flext_core._models.context import FlextModelsContext
@@ -191,9 +191,9 @@ class FlextContext(FlextRuntime):
     def create(
         cls,
         *,
-        operation_id: str = Field(default_factory=str),
-        user_id: str = Field(default_factory=str),
-        metadata: t.ConfigurationMapping = Field(default_factory=t.ConfigurationMapping),
+        operation_id: str | None = None,
+        user_id: str | None = None,
+        metadata: t.ConfigurationMapping | None = None,
     ) -> p.Ctx: ...
 
     @classmethod
@@ -201,9 +201,9 @@ class FlextContext(FlextRuntime):
         cls,
         initial_data: (m.ContextData | dict[str, t.GeneralValueType] | None) = None,
         *,
-        operation_id: str = Field(default_factory=str),
-        user_id: str = Field(default_factory=str),
-        metadata: t.ConfigurationMapping = Field(default_factory=t.ConfigurationMapping),
+        operation_id: str | None = None,
+        user_id: str | None = None,
+        metadata: t.ConfigurationMapping | None = None,
         auto_correlation_id: bool = True,
     ) -> Self | p.Ctx:
         """Factory method to create a new FlextContext instance.
@@ -865,9 +865,9 @@ class FlextContext(FlextRuntime):
     @classmethod
     def create_with_metadata(
         cls,
-        operation_id: str = Field(default_factory=str),
-        user_id: str = Field(default_factory=str),
-        metadata: t.ConfigurationMapping = Field(default_factory=t.ConfigurationMapping),
+        operation_id: str | None = None,
+        user_id: str | None = None,
+        metadata: t.ConfigurationMapping | None = None,
     ) -> Self:
         """Create context with operation and user metadata.
 
@@ -1006,17 +1006,17 @@ class FlextContext(FlextRuntime):
         all_data = dict(all_scopes)
 
         # Collect statistics if requested
-        stats_dict_export: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType])
+        stats_dict_export: dict[str, t.GeneralValueType] | None = None
         if include_statistics and self._statistics:
             stats_dict_export = self._statistics.model_dump()
 
         # Collect metadata if requested
-        metadata_dict_export: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType])
+        metadata_dict_export: dict[str, t.GeneralValueType] | None = None
         if include_metadata:
             metadata_dict_export = self._get_all_metadata()
 
         # Normalize metadata_dict values to MetadataAttributeDict
-        metadata_for_model: dict[str, t.MetadataAttributeValue] = Field(default_factory=dict[str, t.MetadataAttributeValue])
+        metadata_for_model: dict[str, t.MetadataAttributeValue] | None = None
         if metadata_dict_export:
             # Convert ConfigurationDict to MetadataAttributeDict
             metadata_for_model = {
@@ -1295,7 +1295,7 @@ class FlextContext(FlextRuntime):
         metadata_dict: dict[str, t.GeneralValueType] = self._get_all_metadata()
 
         # Normalize metadata values to MetadataAttributeDict
-        metadata_for_model: dict[str, t.MetadataAttributeValue] = Field(default_factory=dict[str, t.MetadataAttributeValue])
+        metadata_for_model: dict[str, t.MetadataAttributeValue] | None = None
         if metadata_dict:
             # Convert ConfigurationDict to MetadataAttributeDict
             metadata_for_model = {
@@ -1323,7 +1323,7 @@ class FlextContext(FlextRuntime):
     # Container integration for dependency injection
     # =========================================================================
 
-    _container: p.DI = Field(default_factory=p.DI)
+    _container: p.DI | None = None
 
     @classmethod
     def get_container(cls) -> p.DI:
@@ -1523,8 +1523,8 @@ class FlextContext(FlextRuntime):
         @staticmethod
         @contextmanager
         def new_correlation(
-            correlation_id: str = Field(default_factory=str),
-            parent_id: str = Field(default_factory=str),
+            correlation_id: str | None = None,
+            parent_id: str | None = None,
         ) -> Generator[str]:
             """Create correlation context scope.
 
@@ -1703,7 +1703,7 @@ class FlextContext(FlextRuntime):
         @contextmanager
         def service_context(
             service_name: str,
-            version: str = Field(default_factory=str),
+            version: str | None = None,
         ) -> Generator[None]:
             """Create service context scope."""
             # Save current context (for potential future use in logging/debugging)
@@ -1782,10 +1782,10 @@ class FlextContext(FlextRuntime):
         @contextmanager
         def request_context(
             *,
-            user_id: str = Field(default_factory=str),
-            operation_name: str = Field(default_factory=str),
-            request_id: str = Field(default_factory=str),
-            metadata: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
+            user_id: str | None = None,
+            operation_name: str | None = None,
+            request_id: str | None = None,
+            metadata: dict[str, t.GeneralValueType] | None = None,
         ) -> Generator[None]:
             """Create request metadata context scope with automatic cleanup."""
             # Save current context (for potential future use in logging/debugging)
@@ -1842,7 +1842,7 @@ class FlextContext(FlextRuntime):
 
         @staticmethod
         def set_operation_start_time(
-            start_time: datetime = Field(default_factory=datetime),
+            start_time: datetime | None = None,
         ) -> None:
             """Set operation start time in context."""
             if start_time is None:
@@ -1884,7 +1884,7 @@ class FlextContext(FlextRuntime):
         @staticmethod
         @contextmanager
         def timed_operation(
-            operation_name: str = Field(default_factory=str),
+            operation_name: str | None = None,
         ) -> Generator[dict[str, t.GeneralValueType]]:
             """Create timed operation context with performance tracking."""
             start_time = u.generate_datetime_utc()

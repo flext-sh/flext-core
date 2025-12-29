@@ -1542,19 +1542,6 @@ class FlextConstants:
         NONEXISTENT_USERNAME: Final[str] = "nonexistent"
         """Username that should not exist in test scenarios."""
 
-    class DeprecationHelpers:
-        """Deprecation handling constants.
-
-        Provides configuration for deprecation warnings and module access control.
-        """
-
-        APPROVED_MODULES: Final[frozenset[str]] = frozenset({
-            "flext_core.utilities",
-            "flext_core._utilities",
-            "tests.",
-        })
-        """Modules approved for direct internal access without deprecation warnings."""
-
     # Root-level aliases for commonly used constants
     TIMEOUT: Final[int] = Network.DEFAULT_TIMEOUT
     """Default timeout in seconds."""

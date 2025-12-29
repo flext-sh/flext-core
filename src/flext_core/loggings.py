@@ -21,8 +21,6 @@ from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Literal, Self, overload
 
-from pydantic import Field
-
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.result import r
@@ -543,7 +541,7 @@ class FlextLogger(FlextRuntime):
     def for_container(
         cls,
         container: p.DI,
-        level: str = Field(default_factory=str),
+        level: str | None = None,
         **context: t.GeneralValueType,
     ) -> FlextLogger:
         """Create logger configured for a specific container.
@@ -656,7 +654,7 @@ class FlextLogger(FlextRuntime):
 
     @staticmethod
     def get_logger(
-        name: str = Field(default_factory=str),
+        name: str | None = None,
     ) -> p.Log.StructlogLogger:
         """Get structlog logger instance (alias for FlextRuntime.get_logger).
 
@@ -692,11 +690,11 @@ class FlextLogger(FlextRuntime):
         self,
         name: str,
         *,
-        config: p.Config = Field(default_factory=p.Config),
+        config: p.Config | None = None,
         _level: c.Settings.LogLevel | str | None = None,
-        _service_name: str = Field(default_factory=str),
-        _service_version: str = Field(default_factory=str),
-        _correlation_id: str = Field(default_factory=str),
+        _service_name: str | None = None,
+        _service_version: str | None = None,
+        _correlation_id: str | None = None,
         _force_new: bool = False,
     ) -> None:
         """Initialize FlextLogger with name and optional context."""
@@ -945,7 +943,7 @@ class FlextLogger(FlextRuntime):
         self,
         level: str,
         message: str,
-        _context: Mapping[str, t.FlexibleValue] = Field(default_factory=Mapping[str, t.FlexibleValue]),
+        _context: Mapping[str, t.FlexibleValue] | None = None,
     ) -> None:
         """Log message with specified level - Logger.Log implementation.
 
@@ -1113,7 +1111,7 @@ class FlextLogger(FlextRuntime):
         self,
         message: str,
         *,
-        exception: BaseException = Field(default_factory=BaseException),
+        exception: BaseException | None = None,
         exc_info: bool = True,
         **kwargs: t.GeneralValueType,
     ) -> r[bool]:
@@ -1376,7 +1374,7 @@ class FlextLogger(FlextRuntime):
             self,
             message: str,
             *,
-            exception: BaseException = Field(default_factory=BaseException),
+            exception: BaseException | None = None,
             exc_info: bool = True,
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:

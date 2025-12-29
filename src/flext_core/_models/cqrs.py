@@ -47,7 +47,7 @@ class FlextModelsCqrs:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Command type identifier",
         )
-        issuer_id: str = Field(default_factory=str)
+        issuer_id: str | None = None
 
         @field_validator("command_type", mode="before")
         @classmethod
@@ -128,7 +128,7 @@ class FlextModelsCqrs:
         query_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
         )
-        query_type: str = Field(default_factory=str)
+        query_type: str | None = None
 
         @classmethod
         def _resolve_pagination_class(
@@ -275,9 +275,9 @@ class FlextModelsCqrs:
                     "description": "Parameter object for handler configuration",
                 },
             )
-            default_name: str = Field(default_factory=str)
-            default_id: str = Field(default_factory=str)
-            handler_config: t.ConfigurationMapping = Field(default_factory=t.ConfigurationMapping)
+            default_name: str | None = None
+            default_id: str | None = None
+            handler_config: t.ConfigurationMapping | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 

@@ -107,7 +107,7 @@ class FlextTestsBuilders:
     def add(
         self,
         key: str,
-        value: t.Tests.Builders.BuilderValue = Field(default_factory=t.Tests.Builders.BuilderValue),
+        value: t.Tests.Builders.BuilderValue | None = None,
         **kwargs: t.GeneralValueType,  # Accept GeneralValueType - validated by AddParams
     ) -> Self:
         """Add data to builder with smart type inference.
@@ -426,7 +426,7 @@ class FlextTestsBuilders:
     def set(
         self,
         path: str,
-        value: t.Tests.Builders.BuilderValue = Field(default_factory=t.Tests.Builders.BuilderValue),
+        value: t.Tests.Builders.BuilderValue | None = None,
         *,
         create_parents: bool = True,
         **kwargs: t.GeneralValueType,
@@ -519,7 +519,7 @@ class FlextTestsBuilders:
     def get[T](
         self,
         path: str,
-        default: T = Field(default_factory=T),
+        default: T | None = None,
         *,
         as_type: type[T],
     ) -> T | None: ...
@@ -527,9 +527,9 @@ class FlextTestsBuilders:
     def get[T](
         self,
         path: str,
-        default: T = Field(default_factory=T),
+        default: T | None = None,
         *,
-        as_type: type[T] = Field(default_factory=type[T]),
+        as_type: type[T] | None = None,
     ) -> t.Tests.Builders.BuilderValue | T | None:
         """Get value from path.
 
@@ -928,7 +928,7 @@ class FlextTestsBuilders:
         other: FlextTestsBuilders,
         *,
         strategy: str = "deep",
-        exclude_keys: frozenset[str] = Field(default_factory=frozenset[str]),
+        exclude_keys: frozenset[str] | None = None,
     ) -> Self:
         """Merge data from another builder.
 
@@ -1397,8 +1397,8 @@ class FlextTestsBuilders:
             @staticmethod
             def fail[T](
                 error: str,
-                code: str = Field(default_factory=str),
-                data: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
+                code: str | None = None,
+                data: dict[str, t.GeneralValueType] | None = None,
             ) -> r[T]:
                 """Create failure result using r[T] directly."""
                 error_code = code or c.Errors.VALIDATION_ERROR
@@ -1714,7 +1714,7 @@ class FlextTestsBuilders:
 
             @staticmethod
             def execute_service(
-                overrides: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
+                overrides: dict[str, t.GeneralValueType] | None = None,
             ) -> r[t.GeneralValueType]:
                 """Execute service - DELEGATES to tu.Tests.Factory."""
                 return tu.Tests.Factory.execute_user_service(overrides or {})
