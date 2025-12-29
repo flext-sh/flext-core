@@ -159,7 +159,7 @@ class TestsFlextModels:
             """Object without __setattr__."""
 
         # ParseOptions reference for string parser tests
-        class ParseOptions(FlextModels.Collections.ParseOptions):
+        class ParseOptions(m.CollectionsParseOptions):
             """Parse options - real inheritance."""
 
     # Backward compatibility: expose Core classes at root level
@@ -183,7 +183,7 @@ class TestsFlextModels:
         delimiter: str
         expected: list[str] | None = None
         expected_error: str | None = None
-        options: FlextModels.Collections.ParseOptions | None = None
+        options: m.CollectionsParseOptions | None = None
         strip: bool = True
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None
