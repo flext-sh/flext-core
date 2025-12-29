@@ -269,7 +269,7 @@ class FlextModelsCollections:
             return cls(**data)
 
         @classmethod
-        def aggregate(cls, stats_list: list[Self]) -> t.GeneralValueType:
+        def aggregate(cls, stats_list: list[Self]) -> dict[str, t.GeneralValueType]:
             """Aggregate multiple statistics instances (ConfigurationMapping pattern).
 
             Combines statistics by:
@@ -306,16 +306,7 @@ class FlextModelsCollections:
                         )
 
             # Normalize result dict to GeneralValueType's dict type
-            normalized_result: dict[
-                str,
-                str
-                | int
-                | float
-                | bool
-                | datetime
-                | list[str | int | float | bool | datetime | None]
-                | None,
-            ] = {}
+            normalized_result: dict[str, t.GeneralValueType] = {}
             for key, value in result.items():
                 # Filter to types matching GeneralValueType
                 if isinstance(value, (str, int, float, bool, datetime, type(None))):
@@ -528,7 +519,7 @@ class FlextModelsCollections:
             return cls(**combined_data)
 
         @classmethod
-        def aggregate(cls, results_list: list[Self]) -> t.GeneralValueType:
+        def aggregate(cls, results_list: list[Self]) -> dict[str, t.GeneralValueType]:
             """Aggregate multiple results instances (ConfigurationMapping pattern).
 
             Combines results by:

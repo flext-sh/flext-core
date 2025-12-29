@@ -218,7 +218,8 @@ class FlextUtilities:
     create_dict_proxy = staticmethod(FlextUtilitiesContext.create_dict_proxy)
     create_str_proxy = staticmethod(FlextUtilitiesContext.create_str_proxy)
 
-    # Conversion
+    # Conversion - use direct static method alias
+    # Tests should use u.Conversion.conversion() directly for proper overload resolution
     conversion = staticmethod(FlextUtilitiesConversion.conversion)
     join = staticmethod(FlextUtilitiesConversion.join)
     normalize = staticmethod(FlextUtilitiesConversion.normalize)

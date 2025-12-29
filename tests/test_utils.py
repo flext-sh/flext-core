@@ -51,13 +51,15 @@ class TestDataFactory:
 
     @staticmethod
     def create_entity_data(
-        unique_id: str, name: str, **kwargs: object
+        unique_id: str, name: str, **kwargs: t.GeneralValueType
     ) -> dict[str, t.GeneralValueType]:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
-    def create_value_object_data(value: object, **kwargs: t.GeneralValueType) -> dict[str, t.GeneralValueType]:
+    def create_value_object_data(
+        value: t.GeneralValueType, **kwargs: t.GeneralValueType
+    ) -> dict[str, t.GeneralValueType]:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
@@ -66,7 +68,8 @@ class TestDataFactory:
         operation: str,
         description: str,
         input_data: dict[str, t.GeneralValueType],
-        expected_result: object,
+        expected_result: t.GeneralValueType,
+        *,
         expected_success: bool = True,
         error_contains: str | None = None,
     ) -> StandardTestCase:

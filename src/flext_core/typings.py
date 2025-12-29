@@ -17,6 +17,7 @@ from re import Pattern
 from types import ModuleType
 from typing import (
     Annotated,
+    Literal,
     ParamSpec,
     Protocol,
     Self,
@@ -225,6 +226,21 @@ class FlextTypes:
     # Use string forward reference for recursive types to avoid pyrefly errors
     type SortableObjectType = (
         str | int | float | Mapping[str, FlextTypes.SortableObjectType]
+    )
+
+    # =========================================================================
+    # Conversion Mode Types - Used in FlextUtilitiesConversion.conversion()
+    # =========================================================================
+    # Literal types for conversion function mode parameter overloads
+    type ConversionModeToStr = Literal["to_str"]
+    type ConversionModeToStrList = Literal["to_str_list"]
+    type ConversionModeNormalize = Literal["normalize"]
+    type ConversionModeJoin = Literal["join"]
+    type ConversionMode = (
+        ConversionModeToStr
+        | ConversionModeToStrList
+        | ConversionModeNormalize
+        | ConversionModeJoin
     )
 
     # MetadataAttributeValue - ALIGNED with GeneralValueType primitive types
