@@ -172,7 +172,7 @@ class FlextProtocols:
         def create_from_callable(
             cls,
             func: Callable[[], T],
-            error_code: str = "",
+            error_code: str | None = None,
         ) -> FlextProtocols.Result[T]:
             """Create result from callable, catching exceptions."""
             ...
@@ -337,7 +337,7 @@ class FlextProtocols:
         def model_copy(
             self,
             *,
-            update: Mapping[str, t.FlexibleValue] = None,
+            update: Mapping[str, t.FlexibleValue] | None = None,
             deep: bool = False,
         ) -> Self:
             """Clone configuration with optional updates (Pydantic standard method)."""
@@ -406,12 +406,12 @@ class FlextProtocols:
         def scoped(
             self,
             *,
-            config: FlextProtocols.Config = None,
-            context: FlextProtocols.Ctx = None,
-            subproject: str = "",
-            services: Mapping[str, t.GeneralValueType] = None,
-            factories: Mapping[str, t.FactoryCallable] = None,
-            resources: Mapping[str, t.ResourceCallable] = None,
+            config: FlextProtocols.Config | None = None,
+            context: FlextProtocols.Ctx | None = None,
+            subproject: str | None = None,
+            services: Mapping[str, t.GeneralValueType] | None = None,
+            factories: Mapping[str, t.FactoryCallable] | None = None,
+            resources: Mapping[str, t.ResourceCallable] | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...  # INTERFACE
@@ -419,7 +419,7 @@ class FlextProtocols:
         def wire_modules(
             self,
             *,
-            modules: Sequence[ModuleType] = None,
+            modules: Sequence[ModuleType] | None = None,
             packages: Sequence[str] | None = None,
             classes: Sequence[type] | None = None,
         ) -> None:
@@ -682,7 +682,7 @@ class FlextProtocols:
         def register_handler(
             self,
             request: t.HandlerType | t.GeneralValueType | BaseModel | object,
-            handler: t.GeneralValueType = None,
+            handler: t.GeneralValueType | None = None,
         ) -> FlextProtocols.Result[t.ConfigurationMapping]:
             """Register handler dynamically.
 
@@ -699,7 +699,7 @@ class FlextProtocols:
             command_type: type[TCommand],
             handler: t.GeneralValueType,
             *,
-            handler_config: Mapping[str, t.FlexibleValue] = None,
+            handler_config: Mapping[str, t.FlexibleValue] | None = None,
         ) -> FlextProtocols.Result[t.GeneralValueType]:
             """Register command handler."""
             ...
@@ -707,7 +707,7 @@ class FlextProtocols:
         @staticmethod
         def create_handler_from_function(
             handler_func: Callable[P, t.GeneralValueType],
-            handler_config: Mapping[str, t.FlexibleValue] = None,
+            handler_config: Mapping[str, t.FlexibleValue] | None = None,
             mode: str = ...,
         ) -> FlextProtocols.Result[FlextProtocols.Handler]:
             """Create handler from function (static method)."""
@@ -725,12 +725,12 @@ class FlextProtocols:
         def dispatch(
             self,
             message_or_type: t.GeneralValueType,
-            data: t.GeneralValueType = None,
+            data: t.GeneralValueType | None = None,
             *,
-            config: t.GeneralValueType = None,
-            metadata: t.GeneralValueType = None,
-            correlation_id: str = "",
-            timeout_override: int = 0,
+            config: t.GeneralValueType | None = None,
+            metadata: t.GeneralValueType | None = None,
+            correlation_id: str | None = None,
+            timeout_override: int | None = None,
         ) -> FlextProtocols.Result[t.GeneralValueType]:
             """Dispatch message (primary method for real implementations).
 
@@ -784,7 +784,7 @@ class FlextProtocols:
         @classmethod
         def create(
             cls,
-            dispatcher: FlextProtocols.CommandBus = None,
+            dispatcher: FlextProtocols.CommandBus | None = None,
             *,
             auto_discover_handlers: bool = False,
         ) -> Self:

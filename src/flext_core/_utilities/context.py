@@ -13,8 +13,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from pydantic import Field
-
 from flext_core._models.context import FlextModelsContext
 from flext_core.typings import t
 
@@ -30,7 +28,7 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_str_proxy(
         key: str,
-        default: str = Field(default_factory=str),
+        default: str | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[str]:
         """Create StructlogProxyContextVar[str] instance.
 
@@ -59,7 +57,7 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_datetime_proxy(
         key: str,
-        default: datetime = Field(default_factory=datetime),
+        default: datetime | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[datetime]:
         """Create StructlogProxyContextVar[datetime] instance.
 
@@ -92,7 +90,7 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str,
-        default: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
+        default: dict[str, t.GeneralValueType] | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[dict[str, t.GeneralValueType]]:
         """Create StructlogProxyContextVar[dict] instance.
 
@@ -125,8 +123,8 @@ class FlextUtilitiesContext:
     def clone_runtime[T](
         runtime: T,
         *,
-        context: p.Ctx = Field(default_factory=p.Ctx),
-        config_overrides: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
+        context: p.Ctx | None = None,
+        config_overrides: dict[str, t.GeneralValueType] | None = None,
     ) -> T:
         """Clone runtime with optional overrides.
 
@@ -167,8 +165,8 @@ class FlextUtilitiesContext:
     def clone_container(
         container: p.DI,
         *,
-        scope_id: str = Field(default_factory=str),
-        overrides: Mapping[str, t.GeneralValueType] = Field(default_factory=Mapping[str, t.GeneralValueType]),
+        scope_id: str | None = None,
+        overrides: Mapping[str, t.GeneralValueType] | None = None,
     ) -> p.DI:
         """Clone container with scoping.
 

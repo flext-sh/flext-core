@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Annotated, TypeAlias
 
-from pydantic import Discriminator, Field
+from pydantic import Discriminator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.collections import FlextModelsCollections
@@ -144,8 +144,8 @@ class FlextModels:
         name: str
         contact: str
         credential: str
-        roles: list[str] = Field(default_factory=list[str])
-        metadata: dict[str, str] = Field(default_factory=dict[str, str])
+        roles: list[str] | None = None
+        metadata: dict[str, str] | None = None
 
     class IdentityRequest(FlextModelsCqrs.Command):
         """Command for identity operations in auth domain."""
@@ -153,8 +153,8 @@ class FlextModels:
         name: str
         contact: str
         credential: str
-        roles: list[str] = Field(default_factory=list[str])
-        metadata: dict[str, str] = Field(default_factory=dict[str, str])
+        roles: list[str] | None = None
+        metadata: dict[str, str] | None = None
 
     # =========================================================================
     # CONFIGURATION MODELS - Direct access for common usage

@@ -62,13 +62,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     def __init__(
         self,
-        _result: Result[T_co, str] = Field(default_factory=Result[T_co, str]),
-        error_code: str = Field(default_factory=str),
-        error_data: t.ConfigurationMapping = Field(default_factory=t.ConfigurationMapping),
+        _result: Result[T_co, str] | None = None,
+        error_code: str | None = None,
+        error_data: t.ConfigurationMapping | None = None,
         *,
         # RuntimeResult initialization parameters
-        value: T_co = Field(default_factory=T_co),
-        error: str = Field(default_factory=str),
+        value: T_co | None = None,
+        error: str | None = None,
         is_success: bool = True,
     ) -> None:
         """Initialize FlextResult with internal Result or RuntimeResult parameters.
@@ -163,8 +163,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     def fail(
         cls,
         error: str | None,
-        error_code: str = Field(default_factory=str),
-        error_data: t.ConfigurationMapping = Field(default_factory=t.ConfigurationMapping),
+        error_code: str | None = None,
+        error_data: t.ConfigurationMapping | None = None,
     ) -> FlextResult[T_co]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
@@ -326,7 +326,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     def create_from_callable(
         cls,
         func: Callable[[], T_co],
-        error_code: str = Field(default_factory=str),
+        error_code: str | None = None,
     ) -> FlextResult[T_co]:
         """Create result from callable, catching exceptions."""
         try:
@@ -531,7 +531,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     def map_or[U](
         self,
         default: U,
-        func: Callable[[T_co], U] = Field(default_factory=Callable[[T_co], U]),
+        func: Callable[[T_co], U] | None = None,
     ) -> U | T_co:
         """Map success value with function or return default.
 
@@ -686,7 +686,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls,
         factory: Callable[[], R],
         op: Callable[[R], FlextResult[T_co]],
-        cleanup: Callable[[R], None] = Field(default_factory=Callable[[R], None]),
+        cleanup: Callable[[R], None] | None = None,
     ) -> FlextResult[T_co]:
         """Resource management with automatic cleanup."""
         resource = factory()

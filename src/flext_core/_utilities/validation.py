@@ -49,7 +49,7 @@ from pathlib import Path
 from typing import ClassVar, TypeGuard
 
 import orjson
-from pydantic import (, Field
+from pydantic import (
     TypeAdapter as PydanticTypeAdapter,
     ValidationError as PydanticValidationError,
 )
@@ -97,7 +97,7 @@ class FlextUtilitiesValidation:
         @staticmethod
         def validate_uri(
             uri: str | None,
-            allowed_schemes: list[str] = Field(default_factory=list[str]),
+            allowed_schemes: list[str] | None = None,
             context: str = "URI",
         ) -> r[str]:
             """Validate URI format."""
@@ -174,8 +174,8 @@ class FlextUtilitiesValidation:
         @staticmethod
         def validate_length(
             value: str,
-            min_length: int = Field(default_factory=int),
-            max_length: int = Field(default_factory=int),
+            min_length: int | None = None,
+            max_length: int | None = None,
             context: str = "Value",
         ) -> r[str]:
             """Validate string/sequence length."""
@@ -217,8 +217,8 @@ class FlextUtilitiesValidation:
         @staticmethod
         def validate_range(
             value: int,
-            min_value: int = Field(default_factory=int),
-            max_value: int = Field(default_factory=int),
+            min_value: int | None = None,
+            max_value: int | None = None,
             context: str = "Value",
         ) -> r[int]:
             """Validate numeric range."""
@@ -237,7 +237,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_component(
         component: t.GeneralValueType,
-        visited: set[int] = Field(default_factory=set[int]),
+        visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize component for consistent representation (internal recursive)."""
         # Initialize visited set if not provided (first call)
@@ -318,7 +318,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_by_type(
         component: t.GeneralValueType,
-        visited: set[int] = Field(default_factory=set[int]),
+        visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize component based on its type."""
         if visited is None:
@@ -419,7 +419,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _extract_dict_from_component(
         component: t.ConfigurationMapping | p.HasModelDump,
-        _visited: set[int] = Field(default_factory=set[int]),
+        _visited: set[int] | None = None,
     ) -> t.ConfigurationMapping:
         """Extract dict-like structure from component."""
         if isinstance(component, (Mapping, dict)):
@@ -559,7 +559,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_dict_like(
         component: t.ConfigurationMapping | p.HasModelDump,
-        visited: set[int] = Field(default_factory=set[int]),
+        visited: set[int] | None = None,
     ) -> dict[str, t.GeneralValueType]:
         """Normalize dict-like objects.
 
@@ -629,7 +629,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_sequence_helper(
         component: Sequence[t.GeneralValueType],
-        visited: set[int] = Field(default_factory=set[int]),
+        visited: set[int] | None = None,
     ) -> list[t.GeneralValueType]:
         """Normalize sequence types (helper for internal recursion)."""
         if visited is None:
@@ -869,7 +869,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_mapping(
         value: t.ConfigurationMapping,
-        visited: set[int] = Field(default_factory=set[int]),
+        visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize mapping to cache-friendly structure."""
         if visited is None:
@@ -886,7 +886,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_sequence(
         value: Sequence[t.GeneralValueType],
-        visited: set[int] = Field(default_factory=set[int]),
+        visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize sequence to cache-friendly structure."""
         if visited is None:
@@ -901,7 +901,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _normalize_set(
         value: set[t.GeneralValueType],
-        visited: set[int] = Field(default_factory=set[int]),
+        visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize set to cache-friendly structure."""
         if visited is None:
@@ -1207,8 +1207,8 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_length(
         value: str,
-        min_length: int = Field(default_factory=int),
-        max_length: int = Field(default_factory=int),
+        min_length: int | None = None,
+        max_length: int | None = None,
         context: str = "Value",
     ) -> r[str]:
         """Validate string length within bounds.
@@ -1285,7 +1285,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_uri(
         uri: str | None,
-        allowed_schemes: list[str] = Field(default_factory=list[str]),
+        allowed_schemes: list[str] | None = None,
         context: str = "URI",
     ) -> r[str]:
         """Validate URI format and optionally check scheme.
@@ -1488,8 +1488,8 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_range(
         value: int,
-        min_value: int = Field(default_factory=int),
-        max_value: int = Field(default_factory=int),
+        min_value: int | None = None,
+        max_value: int | None = None,
         context: str = "Value",
     ) -> r[int]:
         """Validate integer is within specified range.
@@ -1559,7 +1559,7 @@ class FlextUtilitiesValidation:
     def validate_timeout(
         timeout: float,
         max_timeout: float,
-        error_message: str = Field(default_factory=str),
+        error_message: str | None = None,
         error_code: str = c.Errors.VALIDATION_ERROR,
     ) -> r[float | int]:
         """Validate that timeout does not exceed maximum (generic helper).
@@ -1726,7 +1726,7 @@ class FlextUtilitiesValidation:
         pattern: str = r"^[a-zA-Z_][a-zA-Z0-9_: ]*$",
         allow_empty: bool = False,
         strip: bool = True,
-        error_message: str = Field(default_factory=str),
+        error_message: str | None = None,
     ) -> r[str]:
         """Validate and normalize identifier/name with customizable pattern.
 
@@ -1816,7 +1816,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def format_error_message(
         exception: Exception,
-        timeout_seconds: float = Field(default_factory=float),
+        timeout_seconds: float | None = None,
     ) -> str:
         """Format error message with timeout context if applicable.
 
@@ -2124,7 +2124,7 @@ class FlextUtilitiesValidation:
         mode: str = "all",
         fail_fast: bool = True,
         collect_errors: bool = False,
-        field_name: str = Field(default_factory=str),
+        field_name: str | None = None,
     ) -> r[T]:
         """Validate value against one or more validators.
 
@@ -2576,9 +2576,9 @@ class FlextUtilitiesValidation:
         *conditions: (
             type[T] | tuple[type[T], ...] | Callable[[T], bool] | p.ValidatorSpec | str
         ),
-        error_message: str = Field(default_factory=str),
-        context: str = Field(default_factory=str),
-        default: T = Field(default_factory=T),
+        error_message: str | None = None,
+        context: str | None = None,
+        default: T | None = None,
         return_value: bool = False,
     ) -> r[T] | T | None:
         """Advanced guard method unifying type guards and validations.
@@ -2734,7 +2734,7 @@ class FlextUtilitiesValidation:
         def val[T](
             result: p.Result[T],
             *,
-            default: T = Field(default_factory=T),
+            default: T | None = None,
         ) -> T | None:
             """Extract value from r (mnemonic: val = value).
 
@@ -2757,7 +2757,7 @@ class FlextUtilitiesValidation:
         def vals[T](
             items: dict[str, T] | r[dict[str, T]],
             *,
-            default: list[T] = Field(default_factory=list[T]),
+            default: list[T] | None = None,
         ) -> list[T]:
             """Extract values from dict or result (mnemonic: vals = values).
 
@@ -2809,7 +2809,7 @@ class FlextUtilitiesValidation:
         @staticmethod
         def or_[T](
             *values: T | None,
-            default: T = Field(default_factory=T),
+            default: T | None = None,
         ) -> T | None:
             """Return first non-None value (mnemonic: or_ = fallback chain).
 
@@ -2836,7 +2836,7 @@ class FlextUtilitiesValidation:
         def try_[T](
             func: Callable[[], T],
             *,
-            default: T = Field(default_factory=T),
+            default: T | None = None,
             catch: type[Exception] | tuple[type[Exception], ...] = Exception,
         ) -> T | None:
             """Try operation with fallback (mnemonic: try_ = safe execution).
@@ -2915,8 +2915,8 @@ class FlextUtilitiesValidation:
         def if_[T](
             *,
             condition: bool = False,
-            then_value: T = Field(default_factory=T),
-            else_value: T = Field(default_factory=T),
+            then_value: T | None = None,
+            else_value: T | None = None,
         ) -> T | None:
             """Conditional value (mnemonic: if_ = if-then-else).
 
@@ -3116,7 +3116,7 @@ class FlextUtilitiesValidation:
         @staticmethod
         def count[T](
             items: list[T] | tuple[T, ...] | dict[str, T],
-            predicate: Callable[[T], bool] = Field(default_factory=Callable[[T], bool]),
+            predicate: Callable[[T], bool] | None = None,
         ) -> int:
             """Count items (mnemonic: count = len or filtered count).
 
@@ -3257,7 +3257,7 @@ class FlextUtilitiesValidation:
 
         if target_type == "str_list":
             # FlextUtilitiesMapper.ensure returns list[str] - coerce to GeneralValueType
-            str_list_default: list[str] = Field(default_factory=list[str])
+            str_list_default: list[str] | None = None
             if isinstance(default, list):
                 str_list_default = [str(x) for x in default]
             result: list[t.GeneralValueType] = list(

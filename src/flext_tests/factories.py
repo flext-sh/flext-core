@@ -647,9 +647,9 @@ class FlextTestsFactories(su[t.GeneralValueType]):
         count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
         *,
         # Batch-specific options
-        names: Sequence[str] = Field(default_factory=Sequence[str]),
-        environments: Sequence[str] = Field(default_factory=Sequence[str]),
-        service_types: Sequence[str] = Field(default_factory=Sequence[str]),
+        names: Sequence[str] | None = None,
+        environments: Sequence[str] | None = None,
+        service_types: Sequence[str] | None = None,
         # Common customization
         **common_overrides: t.Tests.TestResultValue,
     ) -> (
@@ -730,8 +730,8 @@ class FlextTestsFactories(su[t.GeneralValueType]):
         cls,
         values: Sequence[TValue],
         *,
-        errors: Sequence[str] = Field(default_factory=Sequence[str]),
-        mix_pattern: Sequence[bool] = Field(default_factory=Sequence[bool]),
+        errors: Sequence[str] | None = None,
+        mix_pattern: Sequence[bool] | None = None,
     ) -> builtins.list[r[TValue]]:
         """Create batch of FlextResult instances from values and errors.
 
@@ -1227,9 +1227,9 @@ class FlextTestsFactories(su[t.GeneralValueType]):
 
     @staticmethod
     def create_user(
-        user_id: str = Field(default_factory=str),
-        name: str = Field(default_factory=str),
-        email: str = Field(default_factory=str),
+        user_id: str | None = None,
+        name: str | None = None,
+        email: str | None = None,
         **overrides: t.Tests.TestResultValue,
     ) -> m.Tests.Factory.User:
         """Create a test user.
@@ -1294,7 +1294,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
     @staticmethod
     def create_service(
         service_type: str = c.Tests.Factory.DEFAULT_SERVICE_TYPE,
-        service_id: str = Field(default_factory=str),
+        service_id: str | None = None,
         **overrides: t.Tests.TestResultValue,
     ) -> m.Tests.Factory.Service:
         """Create a test service.
@@ -1438,12 +1438,12 @@ class FlextTestsFactories(su[t.GeneralValueType]):
         class TestService(su[t.GeneralValueType]):
             """Generic test service."""
 
-            name: str = Field(default_factory=str)
-            amount: int = Field(default_factory=int)
-            enabled: bool = Field(default_factory=bool)
+            name: str | None = None
+            amount: int | None = None
+            enabled: bool | None = None
             # Use class attribute (not PrivateAttr) to match FlextService pattern
             # Initialize as None to avoid ClassVar requirement (mutable default)
-            _overrides: dict[str, t.Tests.TestResultValue] = Field(default_factory=dict[str, t.Tests.TestResultValue])
+            _overrides: dict[str, t.Tests.TestResultValue] | None = None
 
             def __init__(
                 self,
@@ -1459,9 +1459,9 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                 override_fields: dict[str, t.GeneralValueType] = {}
                 # Extract service fields directly to avoid mypy dict unpacking issues
                 # Build kwargs inline to match **kwargs signature
-                name_value: t.GeneralValueType = Field(default_factory=t.GeneralValueType)
-                amount_value: t.GeneralValueType = Field(default_factory=t.GeneralValueType)
-                enabled_value: t.GeneralValueType = Field(default_factory=t.GeneralValueType)
+                name_value: t.GeneralValueType | None = None
+                amount_value: t.GeneralValueType | None = None
+                enabled_value: t.GeneralValueType | None = None
 
                 # Use captured_overrides from outer scope (closure)
                 for key, value in {**captured_overrides, **data}.items():

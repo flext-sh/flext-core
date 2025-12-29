@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import concurrent.futures
 
-from pydantic import Field
-
 from flext_core.constants import c
 from flext_core.typings import t
 
@@ -40,7 +38,7 @@ class TimeoutEnforcer:
         super().__init__()
         self._use_timeout_executor = use_timeout_executor
         self._executor_workers = max(executor_workers, c.Reliability.RETRY_COUNT_MIN)
-        self._executor: concurrent.futures.ThreadPoolExecutor = Field(default_factory=concurrent.futures.ThreadPoolExecutor)
+        self._executor: concurrent.futures.ThreadPoolExecutor | None = None
 
     def should_use_executor(self) -> bool:
         """Return ``True`` when a dedicated timeout executor is enabled.

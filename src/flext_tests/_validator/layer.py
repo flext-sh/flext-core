@@ -27,8 +27,8 @@ class FlextValidatorLayer:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] = Field(default_factory=dict[str, list[str]]),
-        layer_hierarchy: dict[str, int] = Field(default_factory=dict[str, int]),
+        approved_exceptions: dict[str, list[str]] | None = None,
+        layer_hierarchy: dict[str, int] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for layer violations.
 

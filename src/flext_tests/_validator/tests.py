@@ -26,7 +26,7 @@ class FlextValidatorTests:
     def scan(
         cls,
         files: list[Path],
-        approved_exceptions: dict[str, list[str]] = Field(default_factory=dict[str, list[str]]),
+        approved_exceptions: dict[str, list[str]] | None = None,
     ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for test violations.
 

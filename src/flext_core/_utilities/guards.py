@@ -20,7 +20,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypeGuard
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
@@ -1102,7 +1102,7 @@ class FlextUtilitiesGuards:
         value: object,
         validator: Callable[[object], bool] | type | object = None,
         *,
-        default: object = Field(default_factory=object),
+        default: object | None = None,
         return_value: bool = False,
     ) -> object | None:
         """Simple guard method for validation. Returns value if valid, default if not.
@@ -1186,22 +1186,22 @@ class FlextUtilitiesGuards:
     def chk(
         value: object,
         *,
-        eq: object = Field(default_factory=object),
-        ne: object = Field(default_factory=object),
-        gt: float = Field(default_factory=float),
-        gte: float = Field(default_factory=float),
-        lt: float = Field(default_factory=float),
-        lte: float = Field(default_factory=float),
-        is_: type[object] = Field(default_factory=type[object]),
-        not_: type[object] = Field(default_factory=type[object]),
-        in_: Sequence[object] = Field(default_factory=Sequence[object]),
-        not_in: Sequence[object] = Field(default_factory=Sequence[object]),
-        none: bool = Field(default_factory=bool),
-        empty: bool = Field(default_factory=bool),
-        match: str = Field(default_factory=str),
-        contains: object = Field(default_factory=object),
-        starts: str = Field(default_factory=str),
-        ends: str = Field(default_factory=str),
+        eq: object | None = None,
+        ne: object | None = None,
+        gt: float | None = None,
+        gte: float | None = None,
+        lt: float | None = None,
+        lte: float | None = None,
+        is_: type[object] | None = None,
+        not_: type[object] | None = None,
+        in_: Sequence[object] | None = None,
+        not_in: Sequence[object] | None = None,
+        none: bool | None = None,
+        empty: bool | None = None,
+        match: str | None = None,
+        contains: object | None = None,
+        starts: str | None = None,
+        ends: str | None = None,
     ) -> bool:
         """Universal check - single method for ALL validation scenarios.
 

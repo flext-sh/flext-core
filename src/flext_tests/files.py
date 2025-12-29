@@ -80,13 +80,13 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
     # Use class attributes (not PrivateAttr) to match FlextService pattern
     # Initialize mutable attributes as None to avoid ClassVar requirement
-    _base_dir: Path = Field(default_factory=Path)
-    _created_files: list[Path] = Field(default_factory=list[Path])
-    _created_dirs: list[Path] = Field(default_factory=list[Path])
+    _base_dir: Path | None = None
+    _created_files: list[Path] | None = None
+    _created_dirs: list[Path] | None = None
 
     def __init__(
         self,
-        base_dir: Path = Field(default_factory=Path),
+        base_dir: Path | None = None,
         **data: t.GeneralValueType,
     ) -> None:
         """Initialize file manager with optional base directory.
@@ -153,7 +153,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         indent: int = c.Tests.Files.DEFAULT_JSON_INDENT,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
-        headers: list[str] = Field(default_factory=list[str]),
+        headers: list[str] | None = None,
         readonly: bool = False,
         extract_result: bool = True,
     ) -> Path:
@@ -205,13 +205,13 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
     @staticmethod
     def assert_exists(
         path: Path,
-        msg: str = Field(default_factory=str),
+        msg: str | None = None,
         *,
-        is_file: bool = Field(default_factory=bool),
-        is_dir: bool = Field(default_factory=bool),
-        not_empty: bool = Field(default_factory=bool),
-        readable: bool = Field(default_factory=bool),
-        writable: bool = Field(default_factory=bool),
+        is_file: bool | None = None,
+        is_dir: bool | None = None,
+        not_empty: bool | None = None,
+        readable: bool | None = None,
+        writable: bool | None = None,
     ) -> Path:
         """Generalized file existence assertion - ALL file validations in ONE method.
 
@@ -300,13 +300,13 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             | r[BaseModel]
         ),
         name: str = c.Tests.Files.DEFAULT_FILENAME,
-        directory: Path = Field(default_factory=Path),
+        directory: Path | None = None,
         *,
         fmt: c.Tests.Files.FormatLiteral = "auto",
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         indent: int = c.Tests.Files.DEFAULT_JSON_INDENT,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
-        headers: list[str] = Field(default_factory=list[str]),
+        headers: list[str] | None = None,
         readonly: bool = False,
         extract_result: bool = True,
     ) -> Path:
@@ -551,7 +551,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         self,
         path: Path,
         *,
-        model_cls: type[TModel] = Field(default_factory=type[TModel]),
+        model_cls: type[TModel] | None = None,
         fmt: c.Tests.Files.FormatLiteral = "auto",
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
@@ -713,10 +713,10 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         mode: c.Tests.Files.CompareModeLiteral = "content",
         ignore_ws: bool = False,
         ignore_case: bool = False,
-        pattern: str = Field(default_factory=str),
+        pattern: str | None = None,
         deep: bool = True,
-        keys: list[str] = Field(default_factory=list[str]),
-        exclude_keys: list[str] = Field(default_factory=list[str]),
+        keys: list[str] | None = None,
+        exclude_keys: list[str] | None = None,
     ) -> r[bool]:
         """Compare two files.
 
@@ -930,7 +930,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         compute_hash: bool = False,
         detect_fmt: bool = True,
         parse_content: bool = False,
-        validate_model: type[BaseModel] = Field(default_factory=type[BaseModel]),
+        validate_model: type[BaseModel] | None = None,
     ) -> r[m.Tests.Files.FileInfo]:
         """Get comprehensive file information.
 
@@ -1040,7 +1040,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             )
 
             # Content metadata parsing
-            content_meta: m.Tests.Files.ContentMeta = Field(default_factory=m.Tests.Files.ContentMeta)
+            content_meta: m.Tests.Files.ContentMeta | None = None
             if params.parse_content or params.validate_model:
                 content_meta = self._parse_content_metadata(
                     path=params.path,
@@ -1077,9 +1077,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         self,
         files: t.Tests.Files.BatchFiles,
         *,
-        directory: Path = Field(default_factory=Path),
+        directory: Path | None = None,
         operation: c.Tests.Files.OperationLiteral = "create",
-        model: type[TModel] = Field(default_factory=type[TModel]),
+        model: type[TModel] | None = None,
         on_error: c.Tests.Files.ErrorModeLiteral = "collect",
         parallel: bool = False,
     ) -> r[m.Tests.Files.BatchResult]:
@@ -1336,8 +1336,8 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
         ],
         *,
-        directory: Path = Field(default_factory=Path),
-        ext: str = Field(default_factory=str),
+        directory: Path | None = None,
+        ext: str | None = None,
         extract_result: bool = True,
         **kwargs: t.GeneralValueType,
     ) -> Generator[dict[str, Path]]:
@@ -1482,7 +1482,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
     def create_readonly_directory(
         self,
         name: str = c.Tests.Files.DEFAULT_READONLY_DIR_NAME,
-        directory: Path = Field(default_factory=Path),
+        directory: Path | None = None,
     ) -> Path:
         """Create a read-only directory for testing permission scenarios.
 
@@ -1629,7 +1629,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         path: Path,
         text: str,
         fmt: c.Tests.Files.FormatLiteral,
-        validate_model: type[BaseModel] = Field(default_factory=type[BaseModel]),
+        validate_model: type[BaseModel] | None = None,
     ) -> m.Tests.Files.ContentMeta:
         """Parse file content and extract metadata.
 
@@ -1646,12 +1646,12 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             ContentMeta with extracted statistics
 
         """
-        key_count: int = Field(default_factory=int)
-        item_count: int = Field(default_factory=int)
-        row_count: int = Field(default_factory=int)
-        column_count: int = Field(default_factory=int)
-        model_valid: bool = Field(default_factory=bool)
-        model_name: str = Field(default_factory=str)
+        key_count: int | None = None
+        item_count: int | None = None
+        row_count: int | None = None
+        column_count: int | None = None
+        model_valid: bool | None = None
+        model_name: str | None = None
 
         # Parse based on format
         parsed_content: t.ConfigurationMapping | list[t.GeneralValueType] | None = None

@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypeGuard
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -120,11 +120,11 @@ class FlextUtilitiesReliability:
     @staticmethod
     def retry[TResult](
         operation: Callable[[], r[TResult] | TResult],
-        max_attempts: int = Field(default_factory=int),
-        delay: float = Field(default_factory=float),
-        delay_seconds: float = Field(default_factory=float),
-        backoff_multiplier: float = Field(default_factory=float),
-        retry_on: tuple[type[Exception], ...] = Field(default_factory=tuple[type[Exception], ...]),
+        max_attempts: int | None = None,
+        delay: float | None = None,
+        delay_seconds: float | None = None,
+        backoff_multiplier: float | None = None,
+        retry_on: tuple[type[Exception], ...] | None = None,
     ) -> r[TResult]:
         """Execute an operation with retry logic using railway patterns.
 
@@ -167,7 +167,7 @@ class FlextUtilitiesReliability:
                 f"Max attempts must be at least {c.Reliability.RETRY_COUNT_MIN}",
             )
 
-        last_error: str = Field(default_factory=str)
+        last_error: str | None = None
 
         for attempt in range(max_attempts_value):
             try:
@@ -253,7 +253,7 @@ class FlextUtilitiesReliability:
             if FlextUtilitiesGuards.is_type(exponential_backoff_raw, bool)
             else False
         )
-        backoff_multiplier: float = Field(default_factory=float)
+        backoff_multiplier: float | None = None
         if backoff_multiplier_raw is not None and isinstance(
             backoff_multiplier_raw,
             (int, float),
@@ -278,7 +278,7 @@ class FlextUtilitiesReliability:
         operation: Callable[[], r[TResult]],
         max_attempts: int = c.Reliability.MAX_RETRY_ATTEMPTS,
         should_retry_func: Callable[[int, str | None], bool] | None = None,
-        cleanup_func: Callable[[], None] = Field(default_factory=Callable[[], None]),
+        cleanup_func: Callable[[], None] | None = None,
     ) -> FlextRuntime.RuntimeResult[TResult]:
         """Execute operation with retry logic using railway patterns.
 
@@ -672,7 +672,7 @@ class FlextUtilitiesReliability:
     def match(
         value: object,
         *cases: tuple[type[object] | object | Callable[[object], bool], object],
-        default: object = Field(default_factory=object),
+        default: object | None = None,
     ) -> object:
         """Pattern match on a value with type, value, or predicate matching.
 

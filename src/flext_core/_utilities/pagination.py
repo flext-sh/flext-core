@@ -14,8 +14,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from pydantic import Field
-
 from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
@@ -168,7 +166,7 @@ class FlextUtilitiesPagination:
     @staticmethod
     def build_pagination_response(
         pagination_data: dict[str, t.GeneralValueType],
-        message: str = Field(default_factory=str),
+        message: str | None = None,
     ) -> r[dict[str, t.GeneralValueType]]:
         """Build paginated response dictionary.
 
