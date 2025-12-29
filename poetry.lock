@@ -238,10 +238,10 @@ markers = {main = "extra == \"dev\" or extra == \"security\""}
 name = "cffi"
 version = "2.0.0"
 description = "Foreign Function Interface for Python calling C code."
-optional = true
+optional = false
 python-versions = ">=3.9"
-groups = ["main"]
-markers = "platform_python_implementation != \"PyPy\" and extra == \"typings\""
+groups = ["main", "typings"]
+markers = "platform_python_implementation != \"PyPy\""
 files = [
     {file = "cffi-2.0.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:0cf2d91ecc3fcc0625c2c530fe004f82c110405f101548512cce44322fa8ac44"},
     {file = "cffi-2.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f73b96c41e3b2adedc34a7356e64c8eb96e03a3782b535e043a986276ce12a49"},
@@ -625,10 +625,9 @@ toml = ["tomli ; python_full_version <= \"3.11.0a6\""]
 name = "cryptography"
 version = "46.0.3"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
-optional = true
+optional = false
 python-versions = "!=3.9.0,!=3.9.1,>=3.8"
-groups = ["main"]
-markers = "extra == \"typings\""
+groups = ["main", "typings"]
 files = [
     {file = "cryptography-46.0.3-cp311-abi3-macosx_10_9_universal2.whl", hash = "sha256:109d4ddfadf17e8e7779c39f9b18111a09efb969a301a31e987416a0191ed93a"},
     {file = "cryptography-46.0.3-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:09859af8466b69bc3c27bdf4f5d84a665e0f7ab5088412e9e2ec49758eca5cbc"},
@@ -1870,10 +1869,10 @@ test = ["fakeredis", "mock", "pytest", "redis", "tornado", "types-mock", "types-
 name = "pycparser"
 version = "2.23"
 description = "C parser in Python"
-optional = true
+optional = false
 python-versions = ">=3.8"
-groups = ["main"]
-markers = "platform_python_implementation != \"PyPy\" and extra == \"typings\" and implementation_name != \"PyPy\""
+groups = ["main", "typings"]
+markers = "platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\""
 files = [
     {file = "pycparser-2.23-py3-none-any.whl", hash = "sha256:e5c6e8d3fbad53479cab09ac03729e0a9faf2bee3db8208a550daf5af81a5934"},
     {file = "pycparser-2.23.tar.gz", hash = "sha256:78816d4f24add8f10a06d6f05b4d424ad9e96cfebf68a4ddc99c65c0720d00c2"},
@@ -2856,10 +2855,9 @@ files = [
 name = "types-cachetools"
 version = "6.2.0.20251022"
 description = "Typing stubs for cachetools"
-optional = true
+optional = false
 python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"typings\""
+groups = ["main", "typings"]
 files = [
     {file = "types_cachetools-6.2.0.20251022-py3-none-any.whl", hash = "sha256:698eb17b8f16b661b90624708b6915f33dbac2d185db499ed57e4997e7962cad"},
     {file = "types_cachetools-6.2.0.20251022.tar.gz", hash = "sha256:f1d3c736f0f741e89ec10f0e1b0138625023e21eb33603a930c149e0318c0cef"},
@@ -2897,10 +2895,9 @@ files = [
 name = "types-docker"
 version = "7.1.0.20251202"
 description = "Typing stubs for docker"
-optional = true
+optional = false
 python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"typings\""
+groups = ["main", "typings"]
 files = [
     {file = "types_docker-7.1.0.20251202-py3-none-any.whl", hash = "sha256:f8295e284b31319afe0457b768b5c26508c61ddedab4adcb754dfbb1d23433a1"},
     {file = "types_docker-7.1.0.20251202.tar.gz", hash = "sha256:eeaead73e4b1de072f812a1fa70bfbe0cce23004e660b764d1a57cf22f6e1d00"},
@@ -2943,10 +2940,9 @@ types-pyasn1 = "*"
 name = "types-paramiko"
 version = "4.0.0.20250822"
 description = "Typing stubs for paramiko"
-optional = true
+optional = false
 python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"typings\""
+groups = ["main", "typings"]
 files = [
     {file = "types_paramiko-4.0.0.20250822-py3-none-any.whl", hash = "sha256:55bdb14db75ca89039725ec64ae3fa26b8d57b6991cfb476212fa8f83a59753c"},
     {file = "types_paramiko-4.0.0.20250822.tar.gz", hash = "sha256:1b56b0cbd3eec3d2fd123c9eb2704e612b777e15a17705a804279ea6525e0c53"},
@@ -3109,10 +3105,9 @@ types-pyOpenSSL = "*"
 name = "types-requests"
 version = "2.32.4.20250913"
 description = "Typing stubs for requests"
-optional = true
+optional = false
 python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"typings\""
+groups = ["main", "typings"]
 files = [
     {file = "types_requests-2.32.4.20250913-py3-none-any.whl", hash = "sha256:78c9c1fffebbe0fa487a418e0fa5252017e9c60d1a2da394077f1780f655d7e1"},
     {file = "types_requests-2.32.4.20250913.tar.gz", hash = "sha256:abd6d4f9ce3a9383f269775a9835a4c24e5cd6b9f647d64f88aa4613c33def5d"},
@@ -3193,7 +3188,7 @@ version = "2.6.2"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "dev"]
+groups = ["main", "dev", "typings"]
 files = [
     {file = "urllib3-2.6.2-py3-none-any.whl", hash = "sha256:ec21cddfe7724fc7cb4ba4bea7aa8e2ef36f607a4bab81aa6ce42a13dc3f03dd"},
     {file = "urllib3-2.6.2.tar.gz", hash = "sha256:016f9c98bb7e98085cb2b4b17b87d2c702975664e4f060c6532e64d1c1a5e797"},
@@ -3399,4 +3394,4 @@ typings = ["django-stubs", "types-cachetools", "types-docker", "types-ldap3", "t
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "c69aa6fb7d854c91bd4cadfd1e5fc41c5f82ae9706194dfc5c1706475667668c"
+content-hash = "1d1d30333cf97d030a0cc136caff5c5361f981c64705e0195fbfd392337bb548"

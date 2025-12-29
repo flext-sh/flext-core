@@ -1148,9 +1148,7 @@ class FlextProtocols:
     # - GeneralValueType: Primitives, BaseModel, sequences, mappings
     # - BindableLogger: Logger protocol
     # - Callable: Factories that return GeneralValueType
-    RegisterableService = (
-        t.GeneralValueType | BindableLogger
-    )
+    RegisterableService = t.GeneralValueType | BindableLogger
 
     # ServiceFactory: Factory callable that returns RegisterableService
     type ServiceFactory = Callable[[], t.GeneralValueType]
