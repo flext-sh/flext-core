@@ -328,9 +328,9 @@ class FlextService[TDomainResult](
 
         Override to customize:
         - config_overrides: Dict of config values to override
-        - services: Dict[str, object] to register as singletons
-        - factories: Dict[str, Callable] to register as factories
-        - resources: Dict[str, Callable] to register as resources
+        - services: dict[str, object] to register as singletons
+        - factories: dict[str, Callable] to register as factories
+        - resources: dict[str, Callable] to register as resources
         - wire_modules: List of modules to wire for @inject
         - wire_packages: List of packages to wire
         - wire_classes: List of classes to wire

@@ -560,14 +560,9 @@ class GenericModelFactory:
     """Factories for generic reusable models (Value, Snapshot, Progress)."""
 
     @staticmethod
-    def ldap_attributes(**attrs: list[str]) -> m.Value.LdapEntryAttributes:
-        """Create LdapEntryAttributes value object."""
-        return m.Value.LdapEntryAttributes(attributes=attrs)
-
-    @staticmethod
     def operation_context(
         source: str | None = None,
-    ) -> m.Value.OperationContext:
+    ):
         """Create OperationContext value object."""
         return m.Value.OperationContext(source=source)
 
@@ -576,9 +571,9 @@ class GenericModelFactory:
         name: str,
         version: str | None = None,
         status: str = "active",
-    ) -> FlextModels.Snapshot.Service:
+    ):
         """Create ServiceSnapshot."""
-        return FlextModels.Snapshot.Service(
+        return m.Snapshot.Service(
             name=name,
             version=version,
             status=status,
@@ -586,12 +581,12 @@ class GenericModelFactory:
 
     @staticmethod
     def configuration_snapshot(
-        config: dict | None = None,
+        config: dict[str, object] | None = None,
         source: str | None = None,
         environment: str | None = None,
-    ) -> FlextModels.Snapshot.Configuration:
+    ):
         """Create ConfigurationSnapshot."""
-        return FlextModels.Snapshot.Configuration(
+        return m.Snapshot.Configuration(
             config=config or {},
             source=source,
             environment=environment,
@@ -602,20 +597,11 @@ class GenericModelFactory:
         *,
         healthy: bool = True,
         checks: dict[str, bool] | None = None,
-    ) -> FlextModels.Snapshot.Health:
+    ):
         """Create HealthStatus."""
-        return FlextModels.Snapshot.Health(
+        return m.Snapshot.Health(
             healthy=healthy,
             checks=checks or {},
-        )
-
-    @staticmethod
-    def object_class_groups(
-        groups: dict[str, list[str]] | None = None,
-    ) -> FlextModels.Snapshot.ObjectClassGroups:
-        """Create ObjectClassGroups."""
-        return FlextModels.Snapshot.ObjectClassGroups(
-            groups=groups or {},
         )
 
     @staticmethod
@@ -623,18 +609,18 @@ class GenericModelFactory:
         success: int = 0,
         failure: int = 0,
         skipped: int = 0,
-    ) -> FlextModels.Progress.Operation:
+    ):
         """Create OperationProgress."""
-        return FlextModels.Progress.Operation(
+        return m.Progress.Operation(
             success_count=success,
             failure_count=failure,
             skipped_count=skipped,
         )
 
     @staticmethod
-    def conversion_progress() -> FlextModels.Progress.Conversion:
+    def conversion_progress():
         """Create ConversionProgress."""
-        return FlextModels.Progress.Conversion()
+        return m.Progress.Conversion()
 
 
 # =========================================================================
