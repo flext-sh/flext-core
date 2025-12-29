@@ -46,7 +46,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import fields, is_dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar, TypeGuard, cast
+from typing import ClassVar, TypeGuard
 
 import orjson
 from pydantic import (

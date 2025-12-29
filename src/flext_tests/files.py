@@ -35,7 +35,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Self, TypeVar, overload
+from typing import ClassVar, Self, TypeVar, cast, overload
 
 import yaml
 from pydantic import BaseModel
@@ -1430,8 +1430,17 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                         )
                 # Type narrowing: data is guaranteed to match create() signature
                 # (excludes r[] types which are handled separately above)
+                # INTENTIONAL CAST: isinstance(data, Sized) at line 1404 causes PyRefly to infer Sized type
+                # but data is explicitly typed at line 1382-1388. Cast back to remove Sized inference.
                 path = manager.create(
-                    data,  # Type is already narrowed to accepted types
+                    cast(  # INTENTIONAL CAST
+                        str
+                        | bytes
+                        | t.ConfigurationMapping
+                        | Sequence[Sequence[str]]
+                        | BaseModel,
+                        data,
+                    ),
                     filename,
                     directory=validated_kwargs.directory,
                     fmt=validated_kwargs.fmt,
