@@ -201,7 +201,7 @@ class FlextProtocols:
             cls,
             factory: Callable[[], TResource],
             op: Callable[[TResource], FlextProtocols.Result[T]],
-            cleanup: Callable[[TResource], None] | None = None,
+            cleanup: Callable[[TResource], None] = None,
         ) -> FlextProtocols.Result[T]:
             """Resource management with automatic cleanup."""
             ...
@@ -420,8 +420,8 @@ class FlextProtocols:
             self,
             *,
             modules: Sequence[ModuleType] = None,
-            packages: Sequence[str] | None = None,
-            classes: Sequence[type] | None = None,
+            packages: Sequence[str] = None,
+            classes: Sequence[type] = None,
         ) -> None:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...

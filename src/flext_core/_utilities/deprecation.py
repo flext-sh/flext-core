@@ -11,12 +11,30 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import functools
+import inspect
 import pathlib
 import warnings
 from collections.abc import Callable
-from typing import ClassVar
+from typing import ClassVar, Protocol
 
+from flext_core.constants import c
 from flext_core.typings import P, R, t
+
+
+class FunctionDecorator[T: Callable](Protocol):  # Type-safe decorator protocol
+    """Protocol for function decorators that preserve function signature."""
+
+    def __call__(self, func: T) -> T:  # INTERFACE
+        """Apply decorator to function."""
+        ...
+
+
+class ClassDecorator[T: type](Protocol):  # Type-safe class decorator protocol
+    """Protocol for class decorators that preserve class signature."""
+
+    def __call__(self, cls: T) -> T:  # INTERFACE
+        """Apply decorator to class."""
+        ...
 
 
 class FlextUtilitiesDeprecation:
@@ -27,10 +45,10 @@ class FlextUtilitiesDeprecation:
 
     @staticmethod
     def deprecated(
-        replacement: str | None = None,
-        version: str | None = None,
-        reason: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        replacement: str = "",
+        version: str = "",
+        reason: str = "",
+    ) -> FunctionDecorator:
         """Mark function as deprecated.
 
         Args:
@@ -75,9 +93,9 @@ class FlextUtilitiesDeprecation:
     @staticmethod
     def deprecated_parameter(
         param_name: str,
-        replacement: str | None = None,
-        version: str | None = None,
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        replacement: str = "",
+        version: str = "",
+    ) -> FunctionDecorator:
         """Mark function parameter as deprecated.
 
         Args:
@@ -94,7 +112,7 @@ class FlextUtilitiesDeprecation:
             ...     replacement="new_param",
             ...     version="2.0.0"
             ... )
-            >>> def my_function(new_param: str, old_param: str | None = None): ...
+            >>> def my_function(new_param: str, old_param: str = ""): ...
 
         """
 
@@ -120,9 +138,9 @@ class FlextUtilitiesDeprecation:
 
     @staticmethod
     def deprecated_class[T: type](
-        replacement: str | None = None,
-        version: str | None = None,
-    ) -> Callable[[T], T]:
+        replacement: str = "",
+        version: str = "",
+    ) -> ClassDecorator[T]:
         """Mark class as deprecated.
 
         Args:
@@ -151,7 +169,7 @@ class FlextUtilitiesDeprecation:
                     self: t.GeneralValueType,
                     *args: t.GeneralValueType,
                     **kwargs: t.GeneralValueType,
-                ) -> None:
+                ) -> None:  # STUB
                     pass
 
                 original_init = noop_init
@@ -190,7 +208,7 @@ class FlextUtilitiesDeprecation:
     @staticmethod
     def generate_migration_report(
         module_name: str,
-        output_file: str | None = None,
+        output_file: str = "",
     ) -> str:
         """Generate migration report for deprecated code.
 
@@ -232,6 +250,41 @@ class FlextUtilitiesDeprecation:
         if identifier not in cls._warned_once:
             cls._warned_once.add(identifier)
             warnings.warn(message, DeprecationWarning, stacklevel=2)
+
+    @staticmethod
+    def warn_direct_module_access(
+        module_name: str,
+        facade_method: str = "",
+    ) -> None:
+        """Warn if internal module is accessed from non-approved caller.
+
+        Args:
+            module_name: Name of the internal module being accessed (e.g., "conversion")
+            facade_method: Optional facade method suggestion (e.g., "u.conversion(...)")
+                          If not provided, defaults to "u.{ModuleName}"
+
+        Example:
+            >>> FlextUtilitiesDeprecation.warn_direct_module_access("conversion", "u.conversion(...)")
+            # Emits: "Direct import from _utilities.conversion is deprecated.
+            #         Use 'from flext_core import u; u.conversion(...)' instead."
+
+        """
+        frame = inspect.currentframe()
+        if frame and frame.f_back and frame.f_back.f_back:
+            caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
+            approved = c.DeprecationHelpers.APPROVED_MODULES
+            if not any(caller_module.startswith(app) for app in approved):
+                # Build the suggestion message
+                if not facade_method:
+                    # Convert module_name to title case for class name
+                    facade_method = f"u.{module_name.title()}"
+
+                warnings.warn(
+                    f"Direct import from _utilities.{module_name} is deprecated. "
+                    f"Use 'from flext_core import u; {facade_method}' instead.",
+                    DeprecationWarning,
+                    stacklevel=4,
+                )
 
 
 __all__ = [

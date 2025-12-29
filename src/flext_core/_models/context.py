@@ -133,7 +133,7 @@ class FlextModelsContext:
         def __init__(
             self,
             key: str,
-            default: T | None = None,
+            default: T = Field(default_factory=T),
         ) -> None:
             """Initialize proxy context variable.
 

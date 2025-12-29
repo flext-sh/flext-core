@@ -12,7 +12,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, TypeGuard, overload
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.cast import FlextUtilitiesCast
@@ -570,7 +570,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def ensure(
         value: t.GeneralValueType,
-        default: list[str] | None = None,
+        default: list[str] = Field(default_factory=list[str]),
     ) -> list[str]:
         """Ensure value is a list of strings, converting if needed.
 
@@ -702,7 +702,7 @@ class FlextUtilitiesMapper:
         data: t.ConfigurationMapping | BaseModel | object,
         path: str,
         *,
-        default: t.GeneralValueType | None = None,
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
         required: bool = False,
         separator: str = ".",
     ) -> r[t.GeneralValueType | None]:
@@ -874,7 +874,7 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.GeneralValueType | None = None,
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
     ) -> t.GeneralValueType | None:
         """Unified get function for dict/object access with default.
 
@@ -912,7 +912,7 @@ class FlextUtilitiesMapper:
         data: p.AccessibleData,
         key: str,
         *,
-        default: t.GeneralValueType | None = None,
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
     ) -> t.GeneralValueType:
         """Internal helper for raw get without DSL conversion."""
         match data:
@@ -967,7 +967,7 @@ class FlextUtilitiesMapper:
         items: list[T] | tuple[T, ...] | dict[str, T],
         index: int | str,
         *,
-        default: T | None = None,
+        default: T = Field(default_factory=T),
     ) -> T | None:
         """Get item at index/key (mnemonic: at = get at position).
 
@@ -1012,8 +1012,8 @@ class FlextUtilitiesMapper:
         data_or_items: Mapping[str, t.GeneralValueType] | t.GeneralValueType,
         key_or_n: str,
         *,
-        as_type: type[t.GeneralValueType] | None = None,
-        default: t.GeneralValueType | None = None,
+        as_type: type[t.GeneralValueType] = Field(default_factory=type[t.GeneralValueType]),
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
         from_start: bool = True,
     ) -> t.GeneralValueType | None: ...
 
@@ -1023,8 +1023,8 @@ class FlextUtilitiesMapper:
         data_or_items: dict[str, t.GeneralValueType],
         key_or_n: int,
         *,
-        as_type: type[t.GeneralValueType] | None = None,
-        default: t.GeneralValueType | None = None,
+        as_type: type[t.GeneralValueType] = Field(default_factory=type[t.GeneralValueType]),
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
         from_start: bool = True,
     ) -> dict[str, t.GeneralValueType]: ...
 
@@ -1034,8 +1034,8 @@ class FlextUtilitiesMapper:
         data_or_items: list[t.GeneralValueType] | tuple[t.GeneralValueType, ...],
         key_or_n: int,
         *,
-        as_type: type[t.GeneralValueType] | None = None,
-        default: t.GeneralValueType | None = None,
+        as_type: type[t.GeneralValueType] = Field(default_factory=type[t.GeneralValueType]),
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
         from_start: bool = True,
     ) -> list[t.GeneralValueType]: ...
 
@@ -1048,8 +1048,8 @@ class FlextUtilitiesMapper:
         | tuple[t.GeneralValueType, ...],
         key_or_n: str | int,
         *,
-        as_type: type[t.GeneralValueType] | None = None,
-        default: t.GeneralValueType | None = None,
+        as_type: type[t.GeneralValueType] = Field(default_factory=type[t.GeneralValueType]),
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
         from_start: bool = True,
     ) -> dict[str, t.GeneralValueType] | list[t.GeneralValueType] | t.GeneralValueType:
         """Unified take function (generalized from take_n).
@@ -1158,7 +1158,7 @@ class FlextUtilitiesMapper:
         value: object,
         target: type[int],
         *,
-        default: int | None = None,
+        default: int = Field(default_factory=int),
         strict: bool = False,
     ) -> int | None: ...
 
@@ -1168,7 +1168,7 @@ class FlextUtilitiesMapper:
         value: object,
         target: type[float],
         *,
-        default: float | None = None,
+        default: float = Field(default_factory=float),
         strict: bool = False,
     ) -> float | None: ...
 
@@ -1178,7 +1178,7 @@ class FlextUtilitiesMapper:
         value: object,
         target: type[str],
         *,
-        default: str | None = None,
+        default: str = Field(default_factory=str),
         strict: bool = False,
     ) -> str | None: ...
 
@@ -1187,7 +1187,7 @@ class FlextUtilitiesMapper:
         value: object,
         target: type,
         *,
-        default: object | None = None,
+        default: object = Field(default_factory=object),
         strict: bool = False,
     ) -> object | None:
         """Type conversion with guard (mnemonic: as_ = convert to type).
@@ -1239,7 +1239,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def or_[T](
         *values: T | None,
-        default: T | None = None,
+        default: T = Field(default_factory=T),
     ) -> T | None:
         """Return first non-None value (mnemonic: or_ = fallback chain).
 
@@ -1578,7 +1578,7 @@ class FlextUtilitiesMapper:
         )
         map_keys_val = transform_opts.get("map_keys")
         # Type narrowing: ensure dict values are strings for StringMapping
-        map_keys_dict: t.StringMapping | None = None
+        map_keys_dict: t.StringMapping = Field(default_factory=t.StringMapping)
         if isinstance(map_keys_val, dict) and all(
             isinstance(v, str) for v in map_keys_val.values()
         ):
@@ -2024,8 +2024,8 @@ class FlextUtilitiesMapper:
     def build(
         value: t.GeneralValueType,
         *,
-        ops: dict[str, t.GeneralValueType] | None = None,
-        default: t.GeneralValueType | None = None,
+        ops: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
         on_error: str = "stop",
     ) -> t.GeneralValueType:
         """Builder pattern for fluent operation composition using DSL.
@@ -2107,9 +2107,9 @@ class FlextUtilitiesMapper:
         source: p.AccessibleData,
         name: str,
         *,
-        default: t.GeneralValueType | None = None,
+        default: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
         required: bool = False,
-        ops: dict[str, t.GeneralValueType] | None = None,
+        ops: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
     ) -> t.GeneralValueType | None:
         """Extract single field from source with optional DSL processing.
 
@@ -2255,7 +2255,7 @@ class FlextUtilitiesMapper:
                 default=field_default,
             )
             if value is None and field_required:
-                extracted: t.GeneralValueType | None = None
+                extracted: t.GeneralValueType = Field(default_factory=t.GeneralValueType)
             elif field_ops is not None:
                 if not isinstance(field_ops, dict):
                     extracted = None
@@ -2427,9 +2427,9 @@ class FlextUtilitiesMapper:
         normalize: bool = False,
         strip_none: bool = False,
         strip_empty: bool = False,
-        map_keys: t.StringMapping | None = None,
-        filter_keys: set[str] | None = None,
-        exclude_keys: set[str] | None = None,
+        map_keys: t.StringMapping = Field(default_factory=t.StringMapping),
+        filter_keys: set[str] = Field(default_factory=set[str]),
+        exclude_keys: set[str] = Field(default_factory=set[str]),
         to_json: bool = False,
     ) -> r[dict[str, t.GeneralValueType]]:
         """Transform dictionary with multiple options.
@@ -2579,11 +2579,11 @@ class FlextUtilitiesMapper:
         primary_data: t.ConfigurationMapping | object | None = None,
         secondary_data: t.ConfigurationMapping | object | None = None,
         *,
-        transformer: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
-        field_overrides: dict[str, t.GeneralValueType] | None = None,
+        transformer: Callable[[t.GeneralValueType], t.GeneralValueType] = Field(default_factory=Callable[[t.GeneralValueType], t.GeneralValueType]),
+        field_overrides: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
         merge_strategy: str = "merge",
-        filter_keys: set[str] | None = None,
-        exclude_keys: set[str] | None = None,
+        filter_keys: set[str] = Field(default_factory=set[str]),
+        exclude_keys: set[str] = Field(default_factory=set[str]),
     ) -> dict[str, t.GeneralValueType]:
         """Process and merge contextual data with flexible transformation options.
 
@@ -2771,7 +2771,7 @@ class FlextUtilitiesMapper:
     def pluck(
         items: Sequence[Mapping[str, object]],
         key: str,
-        default: object | None = None,
+        default: object = Field(default_factory=object),
     ) -> list[object | None]:
         """Extract single key from sequence of mappings.
 
@@ -2891,9 +2891,9 @@ class FlextUtilitiesMapper:
     @staticmethod
     def cast_generic[T](
         value: object,
-        target_type: Callable[[object], T] | None = None,
+        target_type: Callable[[object], T] = Field(default_factory=Callable[[object], T]),
         *,
-        default: T | None = None,
+        default: T = Field(default_factory=T),
     ) -> T | object:
         """Safe cast with fallback.
 

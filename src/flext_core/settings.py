@@ -270,7 +270,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as t.GeneralValueType to avoid direct dependency-injector import in this module
-        self._di_provider: t.GeneralValueType | None = None
+        self._di_provider: t.GeneralValueType = Field(default_factory=t.GeneralValueType)
 
     @model_validator(mode="after")
     def validate_configuration(self) -> Self:
@@ -330,7 +330,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     def materialize(
         cls,
         *,
-        config_overrides: Mapping[str, t.FlexibleValue] | None = None,
+        config_overrides: Mapping[str, t.FlexibleValue] = Field(default_factory=Mapping[str, t.FlexibleValue]),
     ) -> Self:
         """Factory method to create a config instance with optional overrides.
 
@@ -410,7 +410,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
 
         config_class: type[BaseSettings]
         env_prefix: str = Field(default=c.Platform.ENV_PREFIX)
-        env_file: str | None = None
+        env_file: str = Field(default_factory=str)
 
         def create_config(self) -> BaseSettings:
             """Create configuration instance."""

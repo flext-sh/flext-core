@@ -18,6 +18,8 @@ from contextlib import suppress
 from functools import wraps
 from typing import Any, Literal, overload
 
+from pydantic import Field
+
 from flext_core._decorators import FactoryDecoratorsDiscovery
 from flext_core.constants import c
 from flext_core.container import FlextContainer
@@ -437,7 +439,7 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def log_operation(
-        operation_name: str | None = None,
+        operation_name: str = Field(default_factory=str),
         *,
         track_perf: bool = False,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
@@ -627,7 +629,7 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def track_performance(
-        operation_name: str | None = None,
+        operation_name: str = Field(default_factory=str),
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically track operation performance metrics.
 
@@ -735,7 +737,7 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def railway(
-        error_code: str | None = None,
+        error_code: str = Field(default_factory=str),
     ) -> Callable[[Callable[P, T]], Callable[P, r[T]]]:
         """Decorator to automatically wrap function in railway pattern.
 
@@ -813,10 +815,10 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def retry(
-        max_attempts: int | None = None,
-        delay_seconds: float | None = None,
-        backoff_strategy: str | None = None,
-        error_code: str | None = None,
+        max_attempts: int = Field(default_factory=int),
+        delay_seconds: float = Field(default_factory=float),
+        backoff_strategy: str = Field(default_factory=str),
+        error_code: str = Field(default_factory=str),
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to automatically retry failed operations with exponential backoff.
 
@@ -950,7 +952,7 @@ class FlextDecorators(FlextRuntime):
         ],  # Function kwargs can contain any type (ParamSpec compatibility)
         logger: FlextLogger,
         *,
-        retry_config: m.RetryConfiguration | None = None,
+        retry_config: m.RetryConfiguration = Field(default_factory=m.RetryConfiguration),
     ) -> R | Exception:
         """Execute retry loop and return last exception.
 
@@ -980,7 +982,7 @@ class FlextDecorators(FlextRuntime):
             else c.Reliability.BACKOFF_STRATEGY_LINEAR
         )
 
-        last_exception: Exception | None = None
+        last_exception: Exception = Field(default_factory=Exception)
         current_delay = delay
 
         for attempt in range(1, attempts + 1):
@@ -1089,7 +1091,7 @@ class FlextDecorators(FlextRuntime):
         ensure_correlation: bool,
     ) -> str | None:
         """Ensure correlation, bind operation context, and report failures."""
-        correlation_id: str | None = None
+        correlation_id: str = Field(default_factory=str)
         if ensure_correlation:
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
         else:
@@ -1173,8 +1175,8 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def timeout(
-        timeout_seconds: float | None = None,
-        error_code: str | None = None,
+        timeout_seconds: float = Field(default_factory=float),
+        error_code: str = Field(default_factory=str),
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """Decorator to enforce operation timeout.
 
@@ -1275,32 +1277,32 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StringMapping | None = None,
-        operation_name: str | None = None,
+        inject_deps: t.StringMapping = Field(default_factory=t.StringMapping),
+        operation_name: str = Field(default_factory=str),
         track_perf: bool = True,
         use_railway: Literal[False] = False,
-        error_code: str | None = None,
+        error_code: str = Field(default_factory=str),
     ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
     @overload
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StringMapping | None = None,
-        operation_name: str | None = None,
+        inject_deps: t.StringMapping = Field(default_factory=t.StringMapping),
+        operation_name: str = Field(default_factory=str),
         track_perf: bool = True,
         use_railway: Literal[True] = ...,
-        error_code: str | None = None,
+        error_code: str = Field(default_factory=str),
     ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
 
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StringMapping | None = None,
-        operation_name: str | None = None,
+        inject_deps: t.StringMapping = Field(default_factory=t.StringMapping),
+        operation_name: str = Field(default_factory=str),
         track_perf: bool = True,
         use_railway: bool = False,
-        error_code: str | None = None,
+        error_code: str = Field(default_factory=str),
     ) -> Callable[[Callable[P, R]], Callable[P, R] | Callable[P, r[R]]]:
         """Combined decorator applying multiple automation patterns at once.
 
@@ -1505,7 +1507,7 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def track_operation(
-        operation_name: str | None = None,
+        operation_name: str = Field(default_factory=str),
         *,
         track_correlation: bool = True,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:

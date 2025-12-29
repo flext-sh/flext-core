@@ -36,7 +36,7 @@ class FlextModelsService:
 
         trace_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
         span_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-        parent_span_id: str | None = None
+        parent_span_id: str = Field(default_factory=str)
 
     class RetryConfiguration(FlextModelsBase.FrozenStrictModel):
         """Retry configuration for operations."""
@@ -78,8 +78,12 @@ class FlextModelsService:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Method to execute",
         )
-        parameters: FlextModelsService.ServiceParameters | None = None
-        context: FlextModelsService.TraceContext | None = None
+        parameters: FlextModelsService.ServiceParameters = Field(
+            default_factory=FlextModelsService.ServiceParameters
+        )
+        context: FlextModelsService.TraceContext = Field(
+            default_factory=FlextModelsService.TraceContext
+        )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -88,15 +92,6 @@ class FlextModelsService:
         )
         execution: bool = False
         enable_validation: bool = True
-
-        @model_validator(mode="after")
-        def apply_defaults(self) -> FlextModelsService.DomainServiceExecutionRequest:
-            """Apply default values for optional nested classes."""
-            if self.parameters is None:
-                self.parameters = FlextModelsService.ServiceParameters()
-            if self.context is None:
-                self.context = FlextModelsService.TraceContext()
-            return self
 
         @field_validator("timeout_seconds", mode="after")
         @classmethod
@@ -115,14 +110,9 @@ class FlextModelsService:
         """Single operation in a batch."""
 
         operation_name: str = Field(min_length=1)
-        parameters: FlextModelsService.ServiceParameters | None = None
-
-        @model_validator(mode="after")
-        def apply_defaults(self) -> FlextModelsService.BatchOperation:
-            """Apply default values for optional nested classes."""
-            if self.parameters is None:
-                self.parameters = FlextModelsService.ServiceParameters()
-            return self
+        parameters: FlextModelsService.ServiceParameters = Field(
+            default_factory=FlextModelsService.ServiceParameters
+        )
 
     class DomainServiceBatchRequest(FlextModelsBase.ArbitraryTypesModel):
         """Domain service batch request."""
@@ -162,7 +152,7 @@ class FlextModelsService:
             default=c.Cqrs.Aggregation.AVG,
         )
         group_by: list[str] = Field(default_factory=list)
-        filters: FlextModelsService.ServiceFilters | None = None
+        filters: FlextModelsService.ServiceFilters = Field(default_factory=FlextModelsService.ServiceFilters)
 
         @model_validator(mode="after")
         def apply_defaults(self) -> FlextModelsService.DomainServiceMetricsRequest:
@@ -179,11 +169,11 @@ class FlextModelsService:
             c.Dispatcher.DEFAULT_RESOURCE_TYPE,
             pattern=c.Platform.PATTERN_IDENTIFIER,
         )
-        resource_id: str | None = None
+        resource_id: str = Field(default_factory=str)
         resource_limit: int = Field(c.Performance.MAX_BATCH_SIZE, gt=c.ZERO)
         action: str = Field(default=c.Cqrs.Action.GET)
-        data: FlextModelsService.ServiceData | None = None
-        filters: FlextModelsService.ServiceFilters | None = None
+        data: FlextModelsService.ServiceData = Field(default_factory=FlextModelsService.ServiceData)
+        filters: FlextModelsService.ServiceFilters = Field(default_factory=FlextModelsService.ServiceFilters)
 
         @model_validator(mode="after")
         def apply_defaults(self) -> FlextModelsService.DomainServiceResourceRequest:
@@ -209,7 +199,7 @@ class FlextModelsService:
             default_factory=list,
             description="Denied permissions",
         )
-        context: FlextModelsService.ServiceContext | None = None
+        context: FlextModelsService.ServiceContext = Field(default_factory=FlextModelsService.ServiceContext)
 
         @model_validator(mode="after")
         def apply_defaults(self) -> FlextModelsService.AclResponse:
@@ -227,15 +217,15 @@ class FlextModelsService:
             description="Operation name",
         )
         operation_callable: p.VariadicCallable[p.ResultLike[t.GeneralValueType]]
-        arguments: FlextModelsService.ServiceParameters | None = None
-        keyword_arguments: FlextModelsService.ServiceParameters | None = None
+        arguments: FlextModelsService.ServiceParameters = Field(default_factory=FlextModelsService.ServiceParameters)
+        keyword_arguments: FlextModelsService.ServiceParameters = Field(default_factory=FlextModelsService.ServiceParameters)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
             le=c.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextSettings (Config has priority over Constants)",
         )
-        retry_config: FlextModelsService.RetryConfiguration | None = None
+        retry_config: FlextModelsService.RetryConfiguration = Field(default_factory=FlextModelsService.RetryConfiguration)
 
         @model_validator(mode="after")
         def apply_defaults(self) -> FlextModelsService.OperationExecutionRequest:

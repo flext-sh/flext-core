@@ -21,7 +21,7 @@ from types import ModuleType
 from typing import Self, override
 
 from cachetools import LRUCache
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from flext_core._dispatcher import (
     CircuitBreakerManager,
@@ -59,10 +59,10 @@ class FlextDispatcher(FlextService[bool]):
     def __init__(
         self,
         *,
-        circuit_breaker: CircuitBreakerManager | None = None,
-        rate_limiter: RateLimiterManager | None = None,
-        timeout_enforcer: TimeoutEnforcer | None = None,
-        retry_policy: RetryPolicy | None = None,
+        circuit_breaker: CircuitBreakerManager = Field(default_factory=CircuitBreakerManager),
+        rate_limiter: RateLimiterManager = Field(default_factory=RateLimiterManager),
+        timeout_enforcer: TimeoutEnforcer = Field(default_factory=TimeoutEnforcer),
+        retry_policy: RetryPolicy = Field(default_factory=RetryPolicy),
         **data: t.GeneralValueType,
     ) -> None:
         """Initialize dispatcher with reliability managers.
@@ -1097,7 +1097,7 @@ class FlextDispatcher(FlextService[bool]):
             )
 
             # Cache successful query results
-            cache_key: str | None = None
+            cache_key: str = Field(default_factory=str)
             if result.is_success and is_query:
                 cache_key = FlextDispatcher._generate_cache_key(command, command_type)
                 self._cache[cache_key] = result
@@ -1246,7 +1246,7 @@ class FlextDispatcher(FlextService[bool]):
         # Register handler class as factory in container
         # Factory will create new handler instances when resolved
         # Only instantiable classes (not functions) can be used as factories
-        handler_cls: type[object] | None = None
+        handler_cls: type[object] = Field(default_factory=type[object])
         if inspect.isclass(handler):
             handler_cls = handler
         elif hasattr(handler, "__class__") and inspect.isclass(handler.__class__):
@@ -1343,7 +1343,7 @@ class FlextDispatcher(FlextService[bool]):
         # Register handler class as factory in container
         # Factory will create new handler instances when resolved
         # Only instantiable classes (not functions) can be used as factories
-        handler_cls: type[object] | None = None
+        handler_cls: type[object] = Field(default_factory=type[object])
         if inspect.isclass(handler):
             handler_cls = handler
         elif hasattr(handler, "__class__") and inspect.isclass(handler.__class__):
@@ -1394,7 +1394,7 @@ class FlextDispatcher(FlextService[bool]):
     def layer1_add_middleware(
         self,
         middleware: t.HandlerCallable,
-        middleware_config: t.ConfigurationMapping | None = None,
+        middleware_config: t.ConfigurationMapping = Field(default_factory=t.ConfigurationMapping),
     ) -> r[bool]:
         """Add middleware to processing pipeline (from FlextDispatcher).
 
@@ -1536,7 +1536,7 @@ class FlextDispatcher(FlextService[bool]):
     def unsubscribe(
         self,
         event_type: str,
-        _handler: t.GeneralValueType | None = None,
+        _handler: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
     ) -> r[bool]:
         """Unsubscribe from an event type (from FlextDispatcher).
 
@@ -1569,7 +1569,7 @@ class FlextDispatcher(FlextService[bool]):
     def publish(
         self,
         event: t.GeneralValueType | list[t.GeneralValueType],
-        data: t.GeneralValueType | None = None,
+        data: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
     ) -> r[bool]:
         """Publish event(s) to subscribers.
 
@@ -2228,7 +2228,7 @@ class FlextDispatcher(FlextService[bool]):
         self,
         execute_func: Callable[[], r[t.GeneralValueType]],
         timeout_seconds: float,
-        timeout_override: int | None = None,
+        timeout_override: int = Field(default_factory=int),
     ) -> r[t.GeneralValueType]:
         """Execute a function with timeout enforcement using executor or direct execution.
 
@@ -2250,7 +2250,7 @@ class FlextDispatcher(FlextService[bool]):
 
         if use_executor:
             executor = self._timeout_enforcer.ensure_executor()
-            future: concurrent.futures.Future[r[t.GeneralValueType]] | None = None
+            future: concurrent.futures.Future[r[t.GeneralValueType]] = Field(default_factory=concurrent.futures.Future[r[t.GeneralValueType]])
             try:
                 future = executor.submit(execute_func)
                 return future.result(timeout=timeout_seconds)
@@ -2342,7 +2342,7 @@ class FlextDispatcher(FlextService[bool]):
     def _should_retry_on_error(
         self,
         attempt: int,
-        error_message: str | None = None,
+        error_message: str = Field(default_factory=str),
     ) -> bool:
         """Check if an error should trigger a retry attempt.
 
@@ -2373,12 +2373,12 @@ class FlextDispatcher(FlextService[bool]):
     def dispatch(
         self,
         message_or_type: t.GeneralValueType,
-        data: t.GeneralValueType | None = None,
+        data: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
         *,
         config: m.DispatchConfig | t.GeneralValueType | None = None,
-        metadata: t.GeneralValueType | None = None,
-        correlation_id: str | None = None,
-        timeout_override: int | None = None,
+        metadata: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
+        correlation_id: str = Field(default_factory=str),
+        timeout_override: int = Field(default_factory=int),
     ) -> r[t.GeneralValueType]:
         """Dispatch message.
 
@@ -3142,8 +3142,8 @@ class FlextDispatcher(FlextService[bool]):
     @contextmanager
     def _context_scope(
         self,
-        metadata: t.GeneralValueType | None = None,
-        correlation_id: str | None = None,
+        metadata: t.GeneralValueType = Field(default_factory=t.GeneralValueType),
+        correlation_id: str = Field(default_factory=str),
     ) -> Generator[None]:
         """Manage execution context with optional metadata and correlation ID.
 

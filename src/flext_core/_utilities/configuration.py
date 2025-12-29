@@ -47,6 +47,8 @@ import os
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
+from pydantic import Field
+
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
 from flext_core.exceptions import e
@@ -695,7 +697,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def create_settings_config(
         env_prefix: str,
-        env_file: str | None = None,
+        env_file: str = Field(default_factory=str),
         env_nested_delimiter: str = "__",
     ) -> dict[str, t.GeneralValueType]:
         """Create a SettingsConfigDict for environment binding.
@@ -788,7 +790,7 @@ class FlextUtilitiesConfiguration:
             def write(
                 self,
                 entries: list[Entry],
-                format_options: WriteFormatOptions | None = None,
+                format_options: WriteFormatOptions = Field(default_factory=WriteFormatOptions),
                 **format_kwargs: t.GeneralValueType,
             ) -> "FlextRuntime.RuntimeResult[str]":
                 # Get ldif config using get_namespace_config (no __getattr__)

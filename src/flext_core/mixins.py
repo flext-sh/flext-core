@@ -17,7 +17,7 @@ from functools import partial
 from types import ModuleType
 from typing import ClassVar
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr
 
 from flext_core.constants import c
 from flext_core.container import FlextContainer
@@ -94,8 +94,8 @@ class FlextMixins(FlextRuntime):
     @staticmethod
     def fail(
         error: str | None,
-        error_code: str | None = None,
-        error_data: t.ConfigurationMapping | None = None,
+        error_code: str = Field(default_factory=str),
+        error_data: t.ConfigurationMapping = Field(default_factory=t.ConfigurationMapping),
     ) -> r[t.GeneralValueType]:
         """Create failed result with error message.
 
@@ -279,7 +279,7 @@ class FlextMixins(FlextRuntime):
         config_cls = config_type or FlextSettings
         config_overrides_raw = u.Mapper.get(options, "config_overrides")
         # TypeGuard-based narrowing - filter to FlexibleValue types for materialize
-        config_overrides_typed: Mapping[str, t.FlexibleValue] | None = None
+        config_overrides_typed: Mapping[str, t.FlexibleValue] = Field(default_factory=Mapping[str, t.FlexibleValue])
         if isinstance(config_overrides_raw, Mapping):
             # Filter mapping to only include FlexibleValue-compatible types
             items = u.extract_mapping_items(config_overrides_raw)
@@ -320,7 +320,7 @@ class FlextMixins(FlextRuntime):
             u.Mapper.get(options, "services") if "services" in options else None
         )
         # TypeGuard-based narrowing for GeneralValueType services
-        services_typed: Mapping[str, t.GeneralValueType] | None = None
+        services_typed: Mapping[str, t.GeneralValueType] = Field(default_factory=Mapping[str, t.GeneralValueType])
         if isinstance(services_raw, Mapping):
             # Build typed dict with GeneralValueType values
             items = u.extract_mapping_items(services_raw)
@@ -340,7 +340,7 @@ class FlextMixins(FlextRuntime):
 
         # Get resources and narrow to Mapping using isinstance
         resources_raw = u.Mapper.get(options, "resources")
-        resources_typed: Mapping[str, Callable[[], t.GeneralValueType]] | None = None
+        resources_typed: Mapping[str, Callable[[], t.GeneralValueType]] = Field(default_factory=Mapping[str, Callable[[], t.GeneralValueType]])
         if isinstance(resources_raw, Mapping):
             # Build typed dict with callable resource factories
             resource_factories = u.extract_callable_mapping(resources_raw)
@@ -349,7 +349,7 @@ class FlextMixins(FlextRuntime):
 
         # isinstance narrowing for factories mapping
         # Validate values are callable for factory pattern
-        factories_typed: Mapping[str, Callable[[], t.GeneralValueType]] | None = None
+        factories_typed: Mapping[str, Callable[[], t.GeneralValueType]] = Field(default_factory=Mapping[str, Callable[[], t.GeneralValueType]])
         if isinstance(factories_raw, Mapping):
             # Build typed dict with only callable values
             callable_factories = u.extract_callable_mapping(factories_raw)
@@ -378,7 +378,7 @@ class FlextMixins(FlextRuntime):
         wire_classes_raw = options.get("wire_classes")
         # Type narrow to sequences using explicit loops (required for mypy)
 
-        wire_modules: Sequence[ModuleType] | None = None
+        wire_modules: Sequence[ModuleType] = Field(default_factory=Sequence[ModuleType])
         if isinstance(wire_modules_raw, Sequence) and not isinstance(
             wire_modules_raw,
             str,
@@ -394,7 +394,7 @@ class FlextMixins(FlextRuntime):
             if all_modules and len(filtered_modules) > 0:
                 wire_modules = filtered_modules
 
-        wire_packages: Sequence[str] | None = None
+        wire_packages: Sequence[str] = Field(default_factory=Sequence[str])
         if isinstance(wire_packages_raw, Sequence) and not isinstance(
             wire_packages_raw,
             str,
@@ -409,7 +409,7 @@ class FlextMixins(FlextRuntime):
             if all_strings and len(packages_list) > 0:
                 wire_packages = packages_list
 
-        wire_classes: Sequence[type] | None = None
+        wire_classes: Sequence[type] = Field(default_factory=Sequence[type])
         if isinstance(wire_classes_raw, Sequence) and not isinstance(
             wire_classes_raw,
             str,
@@ -628,7 +628,7 @@ class FlextMixins(FlextRuntime):
     # SERVICE METHODS - Complete Infrastructure (inherited by x)
     # =========================================================================
 
-    def _init_service(self, service_name: str | None = None) -> None:
+    def _init_service(self, service_name: str = Field(default_factory=str)) -> None:
         """Initialize service with automatic container registration."""
         # Fast fail: service_name must be str or None
         effective_service_name: str = (

@@ -114,7 +114,7 @@ class FlextTestsModels(FlextModelsBase):
                 container_name: str
                 is_dirty: bool
                 worker_id: str
-                last_updated: str | None = None
+                last_updated: str = Field(default_factory=str)
 
         class Factory:
             """Factory models for test data generation."""
@@ -460,7 +460,7 @@ class FlextTestsModels(FlextModelsBase):
                 """Comprehensive file information model."""
 
                 exists: bool
-                path: Path | None = None
+                path: Path = Field(default_factory=Path)
                 size: int = 0
                 size_human: str = ""
                 lines: int = 0
@@ -469,28 +469,28 @@ class FlextTestsModels(FlextModelsBase):
                 first_line: str = ""
                 fmt: str = "unknown"
                 is_valid: bool = True
-                created: datetime.datetime | None = None
-                modified: datetime.datetime | None = None
+                created: datetime.datetime = Field(default_factory=datetime.datetime)
+                modified: datetime.datetime = Field(default_factory=datetime.datetime)
                 permissions: int = 0
                 is_readonly: bool = False
-                sha256: str | None = None
-                content_meta: FlextTestsModels.Tests.Files.ContentMeta | None = None
+                sha256: str = Field(default_factory=str)
+                content_meta: FlextTestsModels.Tests.Files.ContentMeta = Field(default_factory=FlextTestsModels.Tests.Files.ContentMeta)
                 """Optional content metadata for parsed files."""
 
             class ContentMeta(FlextModelsBase.Value):
                 """Content-specific metadata for parsed files."""
 
-                key_count: int | None = None
+                key_count: int = Field(default_factory=int)
                 """Number of keys for JSON/YAML dicts."""
-                item_count: int | None = None
+                item_count: int = Field(default_factory=int)
                 """Number of items for JSON/YAML lists."""
-                row_count: int | None = None
+                row_count: int = Field(default_factory=int)
                 """Number of rows for CSV files."""
-                column_count: int | None = None
+                column_count: int = Field(default_factory=int)
                 """Number of columns for CSV files."""
-                model_valid: bool | None = None
+                model_valid: bool = Field(default_factory=bool)
                 """Whether content is valid for a specific model."""
-                model_name: str | None = None
+                model_name: str = Field(default_factory=str)
                 """Model class name if validated."""
 
             class CreateParams(FlextModelsBase.Value):

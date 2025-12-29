@@ -17,7 +17,7 @@ import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
@@ -252,7 +252,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def ensure_dict(
         value: t.GeneralValueType,
-        default: dict[str, t.GeneralValueType] | None = None,
+        default: dict[str, t.GeneralValueType] = Field(default_factory=dict[str, t.GeneralValueType]),
     ) -> dict[str, t.GeneralValueType]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
@@ -388,11 +388,11 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def generate(
-        kind: str | None = None,
+        kind: str = Field(default_factory=str),
         *,
-        prefix: str | None = None,
-        parts: tuple[t.GeneralValueType, ...] | None = None,
-        length: int | None = None,
+        prefix: str = Field(default_factory=str),
+        parts: tuple[t.GeneralValueType, ...] = Field(default_factory=tuple[t.GeneralValueType, ...]),
+        length: int = Field(default_factory=int),
         include_timestamp: bool = False,
         separator: str = "_",
     ) -> str:
