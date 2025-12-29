@@ -921,7 +921,7 @@ class FlextUtilitiesParser:
                 if tuple_len >= self.TUPLE_LENGTH_3:
                     # Extract each element individually to avoid unpacking union type
                     # tuple_len check guarantees 3-element tuple for type narrowing
-                    three_elem = cast(tuple[str, str, int], pattern_tuple)  # INTENTIONAL CAST: length check proves 3-element
+                    three_elem = cast("tuple[str, str, int]", pattern_tuple)  # INTENTIONAL CAST: length check proves 3-element
                     a: str = str(three_elem[0])
                     b: str = str(three_elem[1])
                     c: int = int(three_elem[2])
