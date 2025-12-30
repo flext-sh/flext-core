@@ -22,6 +22,7 @@ from flext_core import (
     u,
 )
 from flext_core._models.entity import FlextModelsEntity
+from flext_core.constants import c as core_c
 from flext_tests.constants import c
 from flext_tests.factories import FlextTestsFactories as tt
 from flext_tests.models import FlextTestsModels as m
@@ -447,7 +448,7 @@ class FlextTestsBuilders:
             tb().set("config.debug", True)
 
             # With kwargs
-            tb().set("settings", host="localhost", port=8080)
+            tb().set("settings", host=core_c.Platform.DEFAULT_HOST, port=core_c.Platform.DEFAULT_HTTP_PORT)
 
             # Nested creation
             tb().set("a.b.c.d", value=42)
@@ -862,7 +863,7 @@ class FlextTestsBuilders:
         validation_fields: dict[str, t.GeneralValueType] = {
             "valid_emails": [f"user{i}@example.com" for i in range(count)],
             "invalid_emails": ["invalid", "no-at-sign.com", "@missing-local.com"],
-            "valid_hostnames": ["example.com", "localhost"],
+            "valid_hostnames": ["example.com", core_c.Platform.DEFAULT_HOST],
         }
         # ConfigurationDict is compatible with BuilderValue
         return self.add("validation_fields", value=validation_fields)

@@ -29,7 +29,7 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextContainer, FlextResult, r, t
+from flext_core import FlextConstants, FlextContainer, FlextResult, r, t
 from flext_core.constants import c
 from flext_tests import tm, u
 from flext_tests.utilities import FlextTestsUtilities
@@ -649,7 +649,7 @@ class TestFlextContainer:
     ) -> None:
         """Test complete container workflow using fixtures."""
         container = clean_container
-        container.register("db_connection", {"host": "localhost"})
+        container.register("db_connection", {"host": FlextConstants.Network.LOCALHOST})
         container.register("cache", {"type": "redis"})
         factory = FlextTestsUtilities.Tests.ContainerHelpers.create_factory({
             "logger": "instance",

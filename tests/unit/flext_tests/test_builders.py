@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextResult as r
+from flext_core import FlextConstants, FlextResult as r
 from flext_core.typings import t
 from flext_tests.builders import FlextTestsBuilders, tb
 from flext_tests.typings import t as t_test
@@ -100,7 +100,7 @@ class TestFlextTestsBuilders:
         invalid_emails: list[str] = fields["invalid_emails"]
         assert len(invalid_emails) == 3
 
-        assert fields["valid_hostnames"] == ["example.com", "localhost"]
+        assert fields["valid_hostnames"] == ["example.com", FlextConstants.Network.LOCALHOST]
 
     def test_with_validation_fields_custom_count(self) -> None:
         """Test with_validation_fields with custom count."""

@@ -42,7 +42,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import m, r, t
+from flext_core import FlextConstants, m, r, t
 from flext_tests import u
 
 
@@ -279,7 +279,7 @@ class TestuValidation:
         res_port = u.Validation.Network.validate_port_number(8080)
         assert res_port.is_success
 
-        res_host = u.Validation.Network.validate_hostname("localhost")
+        res_host = u.Validation.Network.validate_hostname(FlextConstants.Network.LOCALHOST)
         assert res_host.is_success
 
         # String
@@ -516,7 +516,7 @@ class TestuValidation:
         ("uri", "should_succeed", "expected_value"),
         [
             ("https://example.com", True, "https://example.com"),
-            ("http://localhost:8000", True, "http://localhost:8000"),
+            ("http://FlextConstants.Network.LOCALHOST:8000", True, "http://FlextConstants.Network.LOCALHOST:8000"),
             ("not a uri", False, None),
         ],
     )

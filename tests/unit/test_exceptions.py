@@ -28,7 +28,7 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import FlextRuntime, c, e, m, p, t
+from flext_core import FlextConstants, FlextRuntime, c, e, m, p, t
 from flext_tests import u
 
 
@@ -439,12 +439,12 @@ class Teste:
         elif scenario.exception_type == e.ConnectionError:
             conn_error: e.ConnectionError = e.ConnectionError(
                 "Connection failed",
-                host="localhost",
+                host=FlextConstants.Network.LOCALHOST,
                 port=5432,
             )
             assert (
                 conn_error.message == "Connection failed"
-                and conn_error.host == "localhost"
+                and conn_error.host == FlextConstants.Network.LOCALHOST
             )
         elif scenario.exception_type == e.TimeoutError:
             timeout_error: e.TimeoutError = e.TimeoutError(
@@ -766,7 +766,7 @@ class Teste:
         context = {"key1": "value1"}
         error = e.ConnectionError(
             "Connection failed",
-            host="localhost",
+            host=FlextConstants.Network.LOCALHOST,
             context=context,
         )
         assert error.metadata is not None
@@ -1288,7 +1288,7 @@ class Teste:
         error = e.create("Config error", config_key="test_key")
         assert isinstance(error, e.ConfigurationError)
 
-        error = e.create("Conn error", host="localhost")
+        error = e.create("Conn error", host=FlextConstants.Network.LOCALHOST)
         assert isinstance(error, e.ConnectionError)
 
         error = e.create("Timeout error", timeout_seconds=30.0)
@@ -1803,7 +1803,7 @@ class Teste:
         error_type = e._determine_error_type({"config_key": "test"})
         assert error_type == "configuration"
 
-        error_type = e._determine_error_type({"host": "localhost"})
+        error_type = e._determine_error_type({"host": FlextConstants.Network.LOCALHOST})
         assert error_type == "connection"
 
         error_type = e._determine_error_type({"timeout_seconds": 30.0})

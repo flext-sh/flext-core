@@ -41,10 +41,16 @@ from pydantic import BaseModel
 
 from flext_core import r
 from flext_tests.base import su
-from flext_tests.constants import c
+from flext_tests.constants import FlextTestsConstants, c
 from flext_tests.models import m
 from flext_tests.typings import t
 from flext_tests.utilities import u
+
+# Type aliases for readability
+type _FormatLiteral = FlextTestsConstants.Tests.Files.FormatLiteral
+type _CompareModeLiteral = FlextTestsConstants.Tests.Files.CompareModeLiteral
+type _OperationLiteral = FlextTestsConstants.Tests.Files.OperationLiteral
+type _ErrorModeLiteral = FlextTestsConstants.Tests.Files.ErrorModeLiteral
 
 # TypeVar for Pydantic model loading (after imports for proper BaseModel reference)
 TModel = TypeVar("TModel", bound=BaseModel)
@@ -149,7 +155,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         name: str,
         directory: Path,
         *,
-        fmt: c.Tests.Files.FormatLiteral = "auto",
+        fmt: _FormatLiteral = "auto",
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         indent: int = c.Tests.Files.DEFAULT_JSON_INDENT,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
@@ -302,7 +308,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         name: str = c.Tests.Files.DEFAULT_FILENAME,
         directory: Path | None = None,
         *,
-        fmt: c.Tests.Files.FormatLiteral = "auto",
+        fmt: _FormatLiteral = "auto",
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         indent: int = c.Tests.Files.DEFAULT_JSON_INDENT,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
@@ -529,7 +535,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         path: Path,
         *,
         model_cls: None = None,
-        fmt: c.Tests.Files.FormatLiteral = "auto",
+        fmt: _FormatLiteral = "auto",
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
         has_headers: bool = True,
@@ -541,7 +547,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         path: Path,
         *,
         model_cls: type[TModel],
-        fmt: c.Tests.Files.FormatLiteral = "auto",
+        fmt: _FormatLiteral = "auto",
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
         has_headers: bool = True,
@@ -552,7 +558,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         path: Path,
         *,
         model_cls: type[TModel] | None = None,
-        fmt: c.Tests.Files.FormatLiteral = "auto",
+        fmt: _FormatLiteral = "auto",
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
         has_headers: bool = True,
@@ -710,7 +716,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         file1: Path,
         file2: Path,
         *,
-        mode: c.Tests.Files.CompareModeLiteral = "content",
+        mode: _CompareModeLiteral = "content",
         ignore_ws: bool = False,
         ignore_case: bool = False,
         pattern: str | None = None,
@@ -1009,7 +1015,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 encoding = c.Tests.Files.DEFAULT_BINARY_ENCODING
 
             # Format detection with type-safe narrowing
-            fmt: c.Tests.Files.FormatLiteral = "unknown"
+            fmt: _FormatLiteral = "unknown"
             if params.detect_fmt:
                 detected = u.Tests.Files.detect_format_from_path(params.path, "auto")
                 # Use match for exhaustive type narrowing to FormatLiteral
@@ -1078,9 +1084,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         files: t.Tests.Files.BatchFiles,
         *,
         directory: Path | None = None,
-        operation: c.Tests.Files.OperationLiteral = "create",
+        operation: _OperationLiteral = "create",
         model: type[TModel] | None = None,
-        on_error: c.Tests.Files.ErrorModeLiteral = "collect",
+        on_error: _ErrorModeLiteral = "collect",
         parallel: bool = False,
     ) -> r[m.Tests.Files.BatchResult]:
         """Batch file operations.
@@ -1628,7 +1634,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         self,
         path: Path,
         text: str,
-        fmt: c.Tests.Files.FormatLiteral,
+        fmt: _FormatLiteral,
         validate_model: type[BaseModel] | None = None,
     ) -> m.Tests.Files.ContentMeta:
         """Parse file content and extract metadata.
