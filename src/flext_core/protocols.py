@@ -199,9 +199,9 @@ class FlextProtocols:
         @classmethod
         def with_resource[TResource](
             cls,
-            factory: Callable[[], TResource],
-            op: Callable[[TResource], FlextProtocols.Result[T]],
-            cleanup: Callable[[TResource], None] | None = None,
+            factory: FlextProtocols.ResourceFactory[TResource],
+            op: FlextProtocols.ResourceOperation[TResource, T],
+            cleanup: FlextProtocols.ResourceCleanup[TResource] | None = None,
         ) -> FlextProtocols.Result[T]:
             """Resource management with automatic cleanup."""
             ...
@@ -987,6 +987,41 @@ class FlextProtocols:
             **kwargs: t.GeneralValueType,
         ) -> T_co:
             """Call the function with any arguments, returning T_co."""
+
+    @runtime_checkable
+    class ResourceFactory[TResource](Protocol):
+        """Protocol for resource factory callables.
+
+        Used in with_resource pattern to create resources.
+        Replaces Callable[[], TResource] for type safety.
+        """
+
+        def __call__(self) -> TResource:
+            """Create and return a resource instance."""  # INTERFACE
+            ...
+
+    @runtime_checkable
+    class ResourceOperation[TResource, T](Protocol):
+        """Protocol for resource operation callables.
+
+        Used in with_resource pattern to operate on resources.
+        Replaces Callable[[TResource], Result[T]] for type safety.
+        """
+
+        def __call__(self, resource: TResource) -> FlextProtocols.Result[T]:
+            """Execute operation on resource, returning Result."""  # INTERFACE
+            ...
+
+    @runtime_checkable
+    class ResourceCleanup[TResource](Protocol):
+        """Protocol for resource cleanup callables.
+
+        Used in with_resource pattern for optional cleanup.
+        Replaces Callable[[TResource], None] for type safety.
+        """
+
+        def __call__(self, resource: TResource) -> None:
+            """Clean up the resource."""  # INTERFACE
             ...
 
     @runtime_checkable
@@ -1171,5 +1206,17 @@ fc = FlextProtocols
 # Export nested protocols for direct import compatibility
 VariadicCallable = FlextProtocols.VariadicCallable
 ValidatorSpec = FlextProtocols.ValidatorSpec
+ResourceFactory = FlextProtocols.ResourceFactory
+ResourceOperation = FlextProtocols.ResourceOperation
+ResourceCleanup = FlextProtocols.ResourceCleanup
 
-__all__ = ["FlextProtocols", "ValidatorSpec", "VariadicCallable", "fc", "p"]
+__all__ = [
+    "FlextProtocols",
+    "ResourceCleanup",
+    "ResourceFactory",
+    "ResourceOperation",
+    "ValidatorSpec",
+    "VariadicCallable",
+    "fc",
+    "p",
+]
