@@ -276,7 +276,7 @@ class TestFlextHandlers:
             handler_mode=c.Cqrs.HandlerType.COMMAND,
         )
         # Cast to m.CqrsHandler for type compatibility
-        config = cast("m.CqrsHandler", config_raw)
+        config = config_raw
         handler = DictHandler(config=config)
         dict_message: dict[str, t.GeneralValueType] = {"command_id": "cmd_123", "data": "test_data"}
         result = handler._run_pipeline(dict_message, operation="command")

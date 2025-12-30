@@ -144,8 +144,8 @@ class TestAutomatedFlextHandlers:
                 )
 
     def _execute_handlers_operation(
-        self, instance: object, input_data: dict[str, t.GeneralValueType]
-    ) -> r[object]:
+        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
+    ) -> r[t.GeneralValueType]:
         """Execute a test operation on handlers instance.
 
         Tests FlextHandlers class methods and utilities.
@@ -154,36 +154,36 @@ class TestAutomatedFlextHandlers:
             # Test FlextHandlers class methods
             if instance is not FlextHandlers:
                 # Instance is not the FlextHandlers class
-                return r[object].fail("Invalid handlers instance type")
+                return r[t.GeneralValueType].fail("Invalid handlers instance type")
 
             # instance is the FlextHandlers class itself
-            def test_handler(msg: object) -> r[object]:
+            def test_handler(msg: object) -> r[t.GeneralValueType]:
                 """Test handler callable."""
-                return r[object].ok(msg)
+                return r[t.GeneralValueType].ok(msg)
 
             if input_data.get("type_safe"):
                 # Test handler creation from callable
                 handler = instance.create_from_callable(test_handler)
-                return r[object].ok(handler)
+                return r[t.GeneralValueType].ok(handler)
             if input_data.get("validation"):
                 # Test validation - just ensure nested classes exist
                 has_validation = hasattr(instance, "Validation")
-                return r[object].ok(has_validation)
+                return r[t.GeneralValueType].ok(has_validation)
             if input_data.get("performance_test"):
                 # Test handler creation performance
                 handler = instance.create_from_callable(test_handler)
-                return r[object].ok(handler)
+                return r[t.GeneralValueType].ok(handler)
             if input_data.get("resource_test"):
                 # Test resource handling with multiple handlers
                 handler1 = instance.create_from_callable(test_handler)
                 handler2 = instance.create_from_callable(test_handler)
-                return r[object].ok([handler1, handler2])
+                return r[t.GeneralValueType].ok([handler1, handler2])
             # Generic test - check class availability
-            return r[object].ok("FlextHandlers class available")
+            return r[t.GeneralValueType].ok("FlextHandlers class available")
         except Exception as e:
-            return r[object].fail(f"FlextHandlers operation failed: {e}")
+            return r[t.GeneralValueType].fail(f"FlextHandlers operation failed: {e}")
 
     @pytest.fixture
-    def test_handlers_instance(self) -> None:
+    def test_handlers_instance(self) -> t.GeneralValueType:
         """Fixture for handlers test instance."""
         return fixture_factory.create_test_handlers_instance()

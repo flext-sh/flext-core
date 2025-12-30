@@ -31,7 +31,7 @@ import pytest
 import structlog
 from dependency_injector import containers, providers
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, m, r, s, t
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, s, t
 from flext_core.mixins import FlextMixins
 
 
@@ -895,7 +895,7 @@ class TestFlextRuntime:
                 wire_modules=[module],
             )
             # Type narrowing: runtime is BaseModel, but is actually m.ServiceRuntime
-            runtime: m.ServiceRuntime = cast("m.ServiceRuntime", runtime_raw)
+            runtime = runtime_raw
 
             try:
                 # Type narrowing: module has consume attribute after setattr

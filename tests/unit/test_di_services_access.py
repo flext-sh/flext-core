@@ -267,10 +267,7 @@ class TestServicesIntegrationViaDI:
             "context": context_instance,
         }
         # Cast to t.GeneralValueType dict - services dict accepts any object
-        services: dict[str, t.GeneralValueType] = cast(
-            "dict[str, t.GeneralValueType]",
-            services_raw,
-        )
+        services = services_raw
         di_container = FlextRuntime.DependencyIntegration.create_container(
             config={"app_name": "injected"},
             services=services,

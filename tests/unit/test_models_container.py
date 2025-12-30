@@ -291,8 +291,7 @@ class TestFlextModelsContainer:
         """Test ContainerConfig creation with various configurations."""
         # ContainerConfig accepts keyword arguments directly
         # Use model_construct for dynamic dict unpacking in tests
-        config_dict_typed = cast("t.ConfigurationDict", config_dict)
-        config = m.Container.ContainerConfig.model_validate(config_dict_typed)
+        config = m.Container.ContainerConfig.model_validate(config_dict)
         assert config.enable_singleton is u.mapper().get(
             config_dict, "enable_singleton", default=True
         )

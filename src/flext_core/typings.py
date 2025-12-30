@@ -184,6 +184,14 @@ class FlextTypes:
     # which are plain classes (not BaseModel) implementing protocol interfaces
     RegisterableService: TypeAlias = GeneralValueType | object
 
+    # RegistrablePlugin - Type for plugins registerable in FlextRegistry
+    # Includes callables (factories, handlers) and service instances (servers, quirks)
+    # Used for class-level plugin storage where arbitrary objects are registered
+    # Callables return GeneralValueType or can be service instances themselves
+    RegistrablePlugin: TypeAlias = (
+        GeneralValueType | Callable[..., GeneralValueType]
+    )
+
     # Constant value type - all possible constant types in FlextConstants
     # Used for type-safe constant access via __getitem__ method
     # Includes all types that can be stored as constants: primitives, collections,

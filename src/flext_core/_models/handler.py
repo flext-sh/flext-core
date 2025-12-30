@@ -23,12 +23,8 @@ from pydantic import (
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
-
-# Import p and t for runtime use in models
 from flext_core.protocols import p
 from flext_core.typings import t
-
-# NOTE: models.py cannot import utilities - use direct imports from _utilities/* instead
 
 
 class FlextModelsHandler:
@@ -366,7 +362,7 @@ class FlextModelsHandler:
             >>> config = FlextModelsHandler.DecoratorConfig(
             ...     command=CreateUserCommand,
             ...     priority=10,
-            ...     timeout=30.0,
+            ...     timeout=c.Network.DEFAULT_TIMEOUT,
             ...     middleware=[LoggingMiddleware, ValidationMiddleware],
             ... )
             >>> config.command

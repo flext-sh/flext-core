@@ -16,7 +16,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections.abc import Callable
 from types import ModuleType
@@ -31,6 +30,7 @@ from flext_core import (
     s,
     t,
 )
+from flext_core.typings import t
 from flext_tests import u
 from tests.test_utils import assertion_helpers
 
@@ -290,7 +290,7 @@ class TestContainerDIRealExecution:
             assert result == {"logger": "test_logger", "level": "INFO"}
         finally:
             # Cleanup - access private attribute via cast for testing
-            di_container = cast("FlextContainer", container)._di_container
+            di_container = container._di_container
             di_container.unwire()
 
     def test_scoped_with_resources_real_execution(self) -> None:
@@ -483,7 +483,7 @@ class TestRealWiringScenarios:
             assert result == {"logger": "test_logger", "pool_size": 10}
         finally:
             # Access private attribute via cast for testing
-            di_container = cast("FlextContainer", container)._di_container
+            di_container = container._di_container
             di_container.unwire()
 
     def test_multiple_wired_functions(self) -> None:
@@ -517,7 +517,7 @@ class TestRealWiringScenarios:
             assert func2_wired() is True
         finally:
             # Access private attribute via cast for testing
-            di_container = cast("FlextContainer", container)._di_container
+            di_container = container._di_container
             di_container.unwire()
 
     def test_nested_dependency_injection(self) -> None:
@@ -568,7 +568,7 @@ class TestRealWiringScenarios:
             assert "base" in result
         finally:
             # Access private attribute via cast for testing
-            di_container = cast("FlextContainer", container)._di_container
+            di_container = container._di_container
             di_container.unwire()
 
     def test_wire_modules_with_packages(self) -> None:
@@ -597,7 +597,7 @@ class TestRealWiringScenarios:
             assert result == "wired_value"
         finally:
             # Cleanup
-            di_container = cast("FlextContainer", container)._di_container
+            di_container = container._di_container
             di_container.unwire()
 
     def test_scoped_container_with_wiring(self) -> None:

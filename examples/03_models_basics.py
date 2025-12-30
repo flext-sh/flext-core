@@ -24,7 +24,7 @@ from pydantic import EmailStr, Field, computed_field
 
 from flext_core import (
     FlextConstants,
-    FlextModels,
+    FlextModels as m,
     FlextResult,
     s,
     t,
