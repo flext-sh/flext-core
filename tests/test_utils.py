@@ -222,7 +222,7 @@ class TestFixtureFactory:
         return FlextExceptions
 
     @staticmethod
-    def create_test_handlers_instance() -> type[FlextHandlers]:
+    def create_test_handlers_instance() -> type[FlextHandlers[t.GeneralValueType, t.GeneralValueType]]:
         """Create test handlers fixture."""
         return FlextHandlers
 
@@ -242,9 +242,9 @@ class TestFixtureFactory:
         return FlextRegistry()
 
     @staticmethod
-    def create_test_result_instance() -> type[FlextResult]:
+    def create_test_result_instance() -> type[FlextResult[t.GeneralValueType]]:
         """Create test result fixture."""
-        return r
+        return FlextResult
 
     @staticmethod
     def create_test_runtime_instance() -> type[FlextRuntime]:
@@ -252,15 +252,15 @@ class TestFixtureFactory:
         return FlextRuntime
 
     @staticmethod
-    def create_test_service_instance() -> FlextService:
+    def create_test_service_instance() -> FlextService[dict[str, str]]:
         """Create test service fixture."""
 
-        class TestFlextService(FlextService[dict]):
+        class TestFlextService(FlextService[dict[str, str]]):
             """Concrete test service implementation."""
 
-            def execute(self) -> r[dict]:
+            def execute(self) -> r[dict[str, str]]:
                 """Execute test service operation."""
-                return r[dict].ok({"result": "test_service_executed"})
+                return r[dict[str, str]].ok({"result": "test_service_executed"})
 
         return TestFlextService()
 

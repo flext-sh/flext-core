@@ -144,8 +144,8 @@ class TestAutomatedFlextRegistry:
                 )
 
     def _execute_registry_operation(
-        self, instance: object, input_data: dict[str, t.GeneralValueType]
-    ) -> r[object]:
+        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
+    ) -> r[t.GeneralValueType]:
         """Execute a test operation on registry instance.
 
         This method should be customized based on the actual registry API.
@@ -161,11 +161,11 @@ class TestAutomatedFlextRegistry:
             if hasattr(instance, "handle"):
                 return instance.handle(input_data)
             # Fallback: if no methods found, return the instance itself as success
-            return r[object].ok(instance)
+            return r[t.GeneralValueType].ok(instance)
         except Exception as e:
-            return r[object].fail(f"FlextRegistry operation failed: {e}")
+            return r[t.GeneralValueType].fail(f"FlextRegistry operation failed: {e}")
 
     @pytest.fixture
-    def test_registry_instance(self) -> None:
+    def test_registry_instance(self) -> t.GeneralValueType:
         """Fixture for registry test instance."""
         return fixture_factory.create_test_registry_instance()

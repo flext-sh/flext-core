@@ -19,7 +19,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from typing import cast
 
@@ -27,6 +26,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import t
+from flext_core.typings import t
 from flext_tests import u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
@@ -512,13 +512,13 @@ class TestuDomain:
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.ConfigurationDict", test_case["input_data"]),
+                test_case["input_data"],
                 id_attr=cast("str", test_case.get("id_attr", "unique_id")),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.ConfigurationDict", test_case),
+            test_case,
         )
 
     @pytest.mark.parametrize(
@@ -537,13 +537,13 @@ class TestuDomain:
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.ConfigurationDict", test_case["input_data"]),
+                test_case["input_data"],
                 id_attr=cast("str", test_case.get("id_attr", "unique_id")),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.ConfigurationDict", test_case),
+            test_case,
         )
 
     @pytest.mark.parametrize(
@@ -562,12 +562,12 @@ class TestuDomain:
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.ConfigurationDict", test_case["input_data"]),
+                test_case["input_data"],
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.ConfigurationDict", test_case),
+            test_case,
         )
 
     @pytest.mark.parametrize(
@@ -586,12 +586,12 @@ class TestuDomain:
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.ConfigurationDict", test_case["input_data"]),
+                test_case["input_data"],
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.ConfigurationDict", test_case),
+            test_case,
         )
 
     @pytest.mark.parametrize(
@@ -610,13 +610,13 @@ class TestuDomain:
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.ConfigurationDict", test_case["input_data"]),
+                test_case["input_data"],
                 id_attr=cast("str", test_case.get("id_attr", "unique_id")),
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.ConfigurationDict", test_case),
+            test_case,
         )
 
     @pytest.mark.parametrize(
@@ -635,12 +635,12 @@ class TestuDomain:
             "t.GeneralValueType",
             u.Tests.DomainHelpers.execute_domain_operation(
                 cast("str", test_case["operation"]),
-                cast("t.ConfigurationDict", test_case["input_data"]),
+                test_case["input_data"],
             ),
         )
         u.Tests.TestCaseHelpers.execute_and_assert_operation_result(
             lambda: operation_result,
-            cast("t.ConfigurationDict", test_case),
+            test_case,
         )
 
     # ============================================================================

@@ -144,8 +144,8 @@ class TestAutomatedFlextLoggings:
                 )
 
     def _execute_loggings_operation(
-        self, instance: object, input_data: dict[str, t.GeneralValueType]
-    ) -> r[object]:
+        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
+    ) -> r[t.GeneralValueType]:
         """Execute a test operation on loggings instance.
 
         This method should be customized based on the actual loggings API.
@@ -158,23 +158,23 @@ class TestAutomatedFlextLoggings:
                 # Check if result is FlextResult or needs wrapping
                 if isinstance(result, r):
                     return result
-                return r[object].ok(result)
+                return r[t.GeneralValueType].ok(result)
             if hasattr(instance, "execute"):
                 result = instance.execute(input_data)
                 if isinstance(result, r):
                     return result
-                return r[object].ok(result)
+                return r[t.GeneralValueType].ok(result)
             if hasattr(instance, "handle"):
                 result = instance.handle(input_data)
                 if isinstance(result, r):
                     return result
-                return r[object].ok(result)
+                return r[t.GeneralValueType].ok(result)
             # Fallback: if no methods found, return the instance itself as success
-            return r[object].ok(instance)
+            return r[t.GeneralValueType].ok(instance)
         except Exception as e:
-            return r[object].fail(f"FlextLoggings operation failed: {e}")
+            return r[t.GeneralValueType].fail(f"FlextLoggings operation failed: {e}")
 
     @pytest.fixture
-    def test_loggings_instance(self) -> None:
+    def test_loggings_instance(self) -> t.GeneralValueType:
         """Fixture for loggings test instance."""
         return fixture_factory.create_test_loggings_instance()

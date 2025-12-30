@@ -91,7 +91,7 @@ class TestFlextTestsBuilders:
         data = builder.build()
 
         assert "validation_fields" in data
-        fields: dict[str, t.Types.GeneralValueType] = data["validation_fields"]
+        fields: dict[str, t.GeneralValueType] = data["validation_fields"]
 
         valid_emails: list[str] = fields["valid_emails"]
         assert len(valid_emails) == 5
@@ -108,7 +108,7 @@ class TestFlextTestsBuilders:
         builder.with_validation_fields(count=3)
         data = builder.build()
 
-        validation_fields: dict[str, t.Types.GeneralValueType] = data["validation_fields"]
+        validation_fields: dict[str, t.GeneralValueType] = data["validation_fields"]
         valid_emails: list[str] = validation_fields["valid_emails"]
         assert len(valid_emails) == 3
 
@@ -234,7 +234,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("users", factory="users", count=3)
         data = builder.build()
-        users: list[dict[str, t.Types.GeneralValueType]] = data["users"]
+        users: list[dict[str, t.GeneralValueType]] = data["users"]
         assert len(users) == 3
 
     def test_add_with_mapping(self) -> None:
@@ -242,7 +242,7 @@ class TestFlextTestsBuilders:
         builder = FlextTestsBuilders()
         builder.add("config", mapping={"env": "test", "debug": True})
         data = builder.build()
-        config: dict[str, t.Types.GeneralValueType] = data["config"]
+        config: dict[str, t.GeneralValueType] = data["config"]
         assert config["env"] == "test"
         assert config["debug"] is True
 

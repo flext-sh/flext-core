@@ -241,7 +241,7 @@ class TestFlextContext:
         context.set("key2", "value2").value
         cloned_raw = context.clone()
         # clone() returns p.Ctx, but assert_context_get_success expects FlextContext
-        cloned: FlextContext = cast("FlextContext", cloned_raw)
+        cloned = cloned_raw
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             cloned,
             "key1",
@@ -269,7 +269,7 @@ class TestFlextContext:
         assert isinstance(json_str, str) and "string_value" in json_str
         restored_raw = FlextContext.from_json(json_str)
         # from_json() returns p.Ctx, but assert_context_get_success expects FlextContext
-        restored: FlextContext = cast("FlextContext", restored_raw)
+        restored = restored_raw
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             restored,
             "string_key",
@@ -709,7 +709,7 @@ class TestFlextContext:
         context1.set("key1", "value1").value
         context2_raw = context1.clone()
         # clone() returns p.Ctx, but has() is on FlextContext
-        context2: FlextContext = cast("FlextContext", context2_raw)
+        context2 = context2_raw
         context1.clear()
         assert context1.has("key1") is False
         assert context2.has("key1") is True
@@ -778,7 +778,7 @@ class TestFlextContext:
         context1.set("key1", "value1").value
         context2_raw = context1.clone()
         # clone() returns p.Ctx, but assert_context_get_success and has() expect FlextContext
-        context2: FlextContext = cast("FlextContext", context2_raw)
+        context2 = context2_raw
         context2.set("key1", "value2").value
         context2.set("key3", "value3").value
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
@@ -823,7 +823,7 @@ class TestFlextContext:
         json_str = context1.to_json()
         context2_raw = FlextContext.from_json(json_str)
         # from_json() returns p.Ctx, but assert_context_get_success expects FlextContext
-        context2: FlextContext = cast("FlextContext", context2_raw)
+        context2 = context2_raw
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context2,
             "key1",

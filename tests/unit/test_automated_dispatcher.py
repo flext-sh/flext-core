@@ -146,8 +146,8 @@ class TestAutomatedFlextDispatcher:
                 )
 
     def _execute_dispatcher_operation(
-        self, instance: object, input_data: dict[str, t.GeneralValueType]
-    ) -> r[object]:
+        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
+    ) -> r[t.GeneralValueType]:
         """Execute a test operation on dispatcher instance.
 
         This method should be customized based on the actual dispatcher API.
@@ -157,13 +157,13 @@ class TestAutomatedFlextDispatcher:
             # For dispatcher, just test that it's properly instantiated
             # Real dispatcher tests are in test_dispatcher_layer3_docker.py
             if hasattr(instance, "__class__"):
-                return r[object].ok({"instance": instance.__class__.__name__})
+                return r[t.GeneralValueType].ok({"instance": instance.__class__.__name__})
             # Fallback: if no methods found, return the instance itself as success
-            return r[object].ok(instance)
+            return r[t.GeneralValueType].ok(instance)
         except Exception as e:
-            return r[object].fail(f"FlextDispatcher operation failed: {e}")
+            return r[t.GeneralValueType].fail(f"FlextDispatcher operation failed: {e}")
 
     @pytest.fixture
-    def test_dispatcher_instance(self) -> None:
+    def test_dispatcher_instance(self) -> t.GeneralValueType:
         """Fixture for dispatcher test instance."""
         return fixture_factory.create_test_dispatcher_instance()
