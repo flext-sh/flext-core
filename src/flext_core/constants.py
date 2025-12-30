@@ -247,6 +247,9 @@ class FlextConstants:
     class Network:
         """Network configuration constants and limits."""
 
+        LOOPBACK_IP: Final[str] = "127.0.0.1"
+        LOCALHOST: Final[str] = "localhost"
+
         MIN_PORT: Final[int] = _MIN_PORT_NUMBER
         MAX_PORT: Final[int] = _MAX_PORT_NUMBER
         DEFAULT_TIMEOUT: Final[int] = _DEFAULT_TIMEOUT_SECONDS

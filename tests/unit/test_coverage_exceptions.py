@@ -20,7 +20,7 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import FlextExceptions, FlextResult, FlextRuntime, t
+from flext_core import FlextConstants, FlextExceptions, FlextResult, FlextRuntime, t
 from flext_core.constants import c
 from tests.test_utils import assertion_helpers
 
@@ -173,7 +173,7 @@ class ExceptionScenarios:
         ),
         (
             "ConnectionError",
-            {"host": "localhost", "port": 5432},
+            {"host": FlextConstants.Network.LOCALHOST, "port": 5432},
             FlextExceptions.ConnectionError,
         ),
         (

@@ -445,7 +445,7 @@ class FlextProtocols:
         def register_factory(
             self,
             name: str,
-            factory: Callable[[], t.GeneralValueType],
+            factory: FlextProtocols.ResourceFactory[t.GeneralValueType],
         ) -> FlextProtocols.ResultLike[bool]:
             """Register a service factory returning GeneralValueType."""
             ...  # INTERFACE
@@ -461,7 +461,7 @@ class FlextProtocols:
         def with_factory(
             self,
             name: str,
-            factory: Callable[[], t.GeneralValueType],
+            factory: FlextProtocols.ResourceFactory[t.GeneralValueType],
         ) -> Self:
             """Fluent interface for factory registration."""
             ...
@@ -802,9 +802,9 @@ class FlextProtocols:
         def process[TResult](
             self,
             command: t.FlexibleValue,
-            next_handler: Callable[
-                [t.FlexibleValue],
-                FlextProtocols.Result[TResult],
+            next_handler: FlextProtocols.ResourceOperation[
+                t.FlexibleValue,
+                TResult,
             ],
         ) -> FlextProtocols.Result[TResult]:
             """Process command."""
@@ -1186,7 +1186,7 @@ class FlextProtocols:
     RegisterableService = t.GeneralValueType | BindableLogger
 
     # ServiceFactory: Factory callable that returns RegisterableService
-    type ServiceFactory = Callable[[], t.GeneralValueType]
+    type ServiceFactory = ResourceFactory[t.GeneralValueType]
     """Factory callable returning any registerable service type.
 
     Broader than t.FactoryCallable (which returns GeneralValueType).

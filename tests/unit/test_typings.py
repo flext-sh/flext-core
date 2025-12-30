@@ -22,7 +22,7 @@ from typing import ClassVar, ParamSpec, TypeVar
 
 import pytest
 
-from flext_core import (
+from flext_core import FlextConstants, (
     E,
     P,
     R,
@@ -277,9 +277,9 @@ class TestFlextTypings:
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
         # Test with a valid hostname - validate_hostname is in u.Validation.Network
-        result = u.Validation.Network.validate_hostname("localhost")
+        result = u.Validation.Network.validate_hostname(FlextConstants.Network.LOCALHOST)
         tm.that(result.is_success, eq=True, msg="Result must be successful")
-        tm.that(result.value, eq="localhost", msg="localhost must validate correctly")
+        tm.that(result.value, eq=FlextConstants.Network.LOCALHOST, msg="FlextConstants.Network.LOCALHOST must validate correctly")
         tm.that(
             result.value,
             is_=str,
@@ -289,9 +289,9 @@ class TestFlextTypings:
         )
 
         # Test with a valid IP address (should also work)
-        result = u.Validation.Network.validate_hostname("127.0.0.1")
+        result = u.Validation.Network.validate_hostname(FlextConstants.Network.LOOPBACK_IP)
         tm.that(result.is_success, eq=True, msg="Result must be successful")
-        tm.that(result.value, eq="127.0.0.1", msg="IP address must validate correctly")
+        tm.that(result.value, eq=FlextConstants.Network.LOOPBACK_IP, msg="IP address must validate correctly")
         tm.that(
             result.value,
             is_=str,

@@ -32,6 +32,7 @@ from flext_core import (
     FlextResult,
     FlextService,
     FlextSettings,
+    c,
     t,
 )
 
@@ -44,7 +45,7 @@ class AppConfig(FlextSettings):
     """
 
     database_url: str = Field(
-        default="postgresql://localhost:5432/testdb",
+        default=f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb",
         description="Database connection URL",
     )
     db_pool_size: int = Field(
@@ -57,7 +58,7 @@ class AppConfig(FlextSettings):
         default=30,
     )
     api_host: str = Field(
-        default="localhost",
+        default=c.Platform.DEFAULT_HOST,
         min_length=1,
         max_length=FlextConstants.Network.MAX_HOSTNAME_LENGTH,
         description="API server hostname",
@@ -106,7 +107,8 @@ class ConfigManagementService(FlextService[t.ServiceMetadataMapping]):
     def execute(self) -> FlextResult[t.ServiceMetadataMapping]:
         """Execute comprehensive configuration demonstrations using railway pattern."""
         return (
-            self._log_start()
+            self
+            ._log_start()
             .flat_map(lambda _: self._run_demonstrations())
             .flat_map(self._create_success_metadata)
             .lash(self._handle_execution_error)
@@ -178,8 +180,8 @@ class ConfigManagementService(FlextService[t.ServiceMetadataMapping]):
 
         result = FlextResult[AppConfig].ok(
             AppConfig(
-                database_url="postgresql://localhost:5432/testdb",
-                api_timeout=30,
+                database_url=f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb",
+                api_timeout=c.Network.DEFAULT_TIMEOUT,
                 debug=False,
                 max_workers=4,
                 log_level=FlextConstants.Settings.LogLevel.INFO,
@@ -196,7 +198,7 @@ class ConfigManagementService(FlextService[t.ServiceMetadataMapping]):
             """Set environment variables safely."""
             env_vars = {
                 "FLEXT_DEBUG": "true",
-                "FLEXT_DATABASE_URL": "postgresql://localhost:5432/testdb",
+                "FLEXT_DATABASE_URL": f"postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb",
                 "FLEXT_API_TIMEOUT": "30",
             }
             for key, value in env_vars.items():
@@ -226,7 +228,10 @@ class ConfigManagementService(FlextService[t.ServiceMetadataMapping]):
             """Test valid configuration."""
             print("\n=== Configuration Validation ===")
             try:
-                AppConfig(database_url="postgresql://localhost/db", api_timeout=30)
+                AppConfig(
+                    database_url=f"postgresql://{c.Platform.DEFAULT_HOST}/db",
+                    api_timeout=c.Network.DEFAULT_TIMEOUT,
+                )
                 print("✅ Valid configuration accepted")
                 return FlextResult[bool].ok(True)
             except ValidationError as e:
@@ -308,7 +313,7 @@ def demonstrate_file_config() -> FlextResult[bool]:
         config_file = Path("example_config.json")
         try:
             config_file.write_text(
-                '{"database_url": "postgresql://localhost:5432/testdb", "api_timeout": 30}',
+                f'{{"database_url": "postgresql://{c.Platform.DEFAULT_HOST}:5432/testdb", "api_timeout": {c.Network.DEFAULT_TIMEOUT}}}',
                 encoding=FlextConstants.Utilities.DEFAULT_ENCODING,
             )
             return FlextResult[Path].ok(config_file)

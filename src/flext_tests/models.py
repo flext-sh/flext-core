@@ -27,8 +27,15 @@ from flext_core import r, u as flext_u
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import FlextModels as FlextModelsBase
-from flext_tests.constants import ContainerStatus, c
+from flext_tests.constants import ContainerStatus, FlextTestsConstants, c
 from flext_tests.typings import t
+
+# Type aliases for readability
+type _FormatLiteral = FlextTestsConstants.Tests.Files.FormatLiteral
+type _CompareModeLiteral = FlextTestsConstants.Tests.Files.CompareModeLiteral
+type _OperationLiteral = FlextTestsConstants.Tests.Files.OperationLiteral
+type _ErrorModeLiteral = FlextTestsConstants.Tests.Files.ErrorModeLiteral
+type _SeverityLiteral = FlextTestsConstants.Tests.Validator.SeverityLiteral
 
 # =====================================================================
 # Module-level test models for Pydantic forward reference resolution
@@ -507,7 +514,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Target directory (uses base_dir or temp if None).",
                 )
-                fmt: c.Tests.Files.FormatLiteral = Field(
+                fmt: _FormatLiteral = Field(
                     default="auto",
                     description="File format override.",
                 )
@@ -558,7 +565,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Optional Pydantic model class to deserialize into.",
                 )
-                fmt: c.Tests.Files.FormatLiteral = Field(
+                fmt: _FormatLiteral = Field(
                     default="auto",
                     description="Format override.",
                 )
@@ -593,7 +600,7 @@ class FlextTestsModels(FlextModelsBase):
                 file2: Path = Field(
                     description="Second file to compare (str or Path converted automatically).",
                 )
-                mode: c.Tests.Files.CompareModeLiteral = Field(
+                mode: _CompareModeLiteral = Field(
                     default="content",
                     description="Comparison mode.",
                 )
@@ -667,7 +674,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Directory to create file in.",
                 )
-                fmt: c.Tests.Files.FormatLiteral = Field(
+                fmt: _FormatLiteral = Field(
                     default="auto",
                     description="File format override.",
                 )
@@ -706,7 +713,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Target directory for create operations",
                 )
-                operation: c.Tests.Files.OperationLiteral = Field(
+                operation: _OperationLiteral = Field(
                     default="create",
                     description="Operation type: create, read, or delete",
                 )
@@ -714,7 +721,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Optional model class for read operations",
                 )
-                on_error: c.Tests.Files.ErrorModeLiteral = Field(
+                on_error: _ErrorModeLiteral = Field(
                     default="collect",
                     description="Error handling mode: stop, skip, or collect",
                 )
@@ -769,7 +776,7 @@ class FlextTestsModels(FlextModelsBase):
                 file_path: Path
                 line_number: int
                 rule_id: str
-                severity: c.Tests.Validator.SeverityLiteral
+                severity: _SeverityLiteral
                 description: str
                 code_snippet: str = ""
 

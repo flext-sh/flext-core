@@ -13,8 +13,11 @@ from pathlib import Path
 from pydantic import Field
 
 from flext_core._models.entity import FlextModelsEntity
-from flext_tests.constants import c
+from flext_tests.constants import FlextTestsConstants, c
 from flext_tests.models import m
+
+# Type aliases for readability
+type _SeverityLiteral = FlextTestsConstants.Tests.Validator.SeverityLiteral
 
 
 class FlextValidatorModels(m):
@@ -32,7 +35,7 @@ class FlextValidatorModels(m):
         file_path: Path
         line_number: int
         rule_id: str
-        severity: c.Tests.Validator.SeverityLiteral
+        severity: _SeverityLiteral
         description: str
         code_snippet: str = ""
 

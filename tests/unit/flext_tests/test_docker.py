@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 from docker import DockerClient
 
-from flext_core import FlextResult
+from flext_core import FlextConstants, FlextResult
 from flext_tests.docker import FlextTestsDocker
 from tests.test_utils import assertion_helpers
 
@@ -288,7 +288,9 @@ class TestFlextTestsDocker:
         docker_manager: FlextTestsDocker,
     ) -> None:
         """Test wait_for_port_ready returns quickly for unavailable port."""
-        result = docker_manager.wait_for_port_ready("127.0.0.1", 59999, max_wait=1)
+        result = docker_manager.wait_for_port_ready(
+            FlextConstants.Network.LOOPBACK_IP, 59999, max_wait=1
+        )
 
         assertion_helpers.assert_flext_result_success(result)
         assert result.value is False

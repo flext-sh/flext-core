@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from flext_core import FlextResult, m
+from flext_core import FlextConstants, FlextResult, m
 from flext_core.typings import t
 from tests.test_utils import assertion_helpers
 
@@ -100,12 +100,14 @@ class TestEnterprisePatterns:
                         "Configuration cannot be empty",
                     )
 
-                return FlextResult[dict[str, t.GeneralValueType]].ok(self._config.copy())
+                return FlextResult[dict[str, t.GeneralValueType]].ok(
+                    self._config.copy()
+                )
 
         # Test builder usage
         config_result = (
             ConfigurationBuilder()
-            .with_database("localhost", 5432)
+            .with_database(FlextConstants.Network.LOCALHOST, 5432)
             .with_logging("INFO")
             .with_cache(enabled=True)
             .build()
@@ -117,7 +119,7 @@ class TestEnterprisePatterns:
         # Verify database config
         database = config.get("database")
         assert isinstance(database, dict)
-        assert database.get("host") == "localhost"
+        assert database.get("host") == FlextConstants.Network.LOCALHOST
         # Verify logging config
         logging = config.get("logging")
         assert isinstance(logging, dict)
@@ -188,7 +190,9 @@ class TestEnterprisePatterns:
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value
-            assert isinstance(entity_data, dict), f"Expected dict, got {type(entity_data)}"
+            assert isinstance(entity_data, dict), (
+                f"Expected dict, got {type(entity_data)}"
+            )
             assert entity_data.get("id") == i, f"Entity {i} should have id={i}"
 
         query_duration = time.perf_counter() - start_time

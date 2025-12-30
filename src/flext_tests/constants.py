@@ -12,9 +12,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING, Final, Literal
 
-from flext_core.constants import FlextConstants
-
-# Import t at runtime - no circular dependency since typings.py doesn't import constants
+from flext_core.constants import FlextConstants, c
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -647,7 +645,9 @@ class FlextTestsConstants(FlextConstants):
             KEY_MAX_CONNECTIONS: Final[str] = "max_connections"
 
             # Default values
-            DEFAULT_DATABASE_URL: Final[str] = "postgresql://localhost/testdb"
+            DEFAULT_DATABASE_URL: Final[str] = (
+                f"postgresql://{c.Platform.DEFAULT_HOST}/testdb"
+            )
             DEFAULT_MAX_CONNECTIONS: Final[int] = 10
             DEFAULT_ENVIRONMENT_PRODUCTION: Final[str] = "production"
             DEFAULT_ENVIRONMENT_DEVELOPMENT: Final[str] = "development"
@@ -660,7 +660,7 @@ class FlextTestsConstants(FlextConstants):
             )
             VALID_HOSTNAME_SAMPLES: Final[tuple[str, ...]] = (
                 "example.com",
-                "localhost",
+                c.Platform.DEFAULT_HOST,
             )
             INVALID_HOSTNAME_SAMPLES: Final[tuple[str, ...]] = ("invalid..hostname", "")
 
