@@ -1057,7 +1057,7 @@ class FlextTestsConstants(FlextConstants):
                     }
 
 
-c = FlextTestsConstants
+c: type[FlextTestsConstants] = FlextTestsConstants
 
 # Type aliases for mypy resolution of deeply nested classes
 # These help mypy resolve nested class types correctly
