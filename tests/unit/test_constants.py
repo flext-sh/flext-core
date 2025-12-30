@@ -63,7 +63,7 @@ class ConstantsScenarios:
         ConstantPathScenario("Utilities.MAX_TIMEOUT_SECONDS", 3600),
         ConstantPathScenario("Logging.DEFAULT_LEVEL", "INFO"),
         ConstantPathScenario("Platform.FLEXT_API_PORT", 8000),
-        ConstantPathScenario("Platform.DEFAULT_HOST", FlextConstants.Network.LOCALHOST),
+        ConstantPathScenario("Platform.DEFAULT_HOST", c.Network.LOCALHOST),
         ConstantPathScenario("Performance.MAX_TIMEOUT_SECONDS", 600),
         ConstantPathScenario("Performance.BatchProcessing.DEFAULT_SIZE", 1000),
         ConstantPathScenario("Reliability.MAX_RETRY_ATTEMPTS", 3),

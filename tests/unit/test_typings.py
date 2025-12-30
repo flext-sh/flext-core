@@ -22,7 +22,7 @@ from typing import ClassVar, ParamSpec, TypeVar
 
 import pytest
 
-from flext_core import FlextConstants, (
+from flext_core import (
     E,
     P,
     R,
@@ -34,6 +34,7 @@ from flext_core import FlextConstants, (
     t,
     u,
 )
+from flext_core.constants import FlextConstants
 from flext_tests.matchers import tm
 
 
