@@ -227,9 +227,8 @@ class TestFlextExceptionsHierarchy:
                 for key, type_value in type_kwargs.items():
                     metadata_kwargs[key] = type_value.__name__
             # Type narrowing: all values in metadata_kwargs are MetadataAttributeValue
-            # BaseError accepts metadata dict as second argument
-            # Pass dict directly without unpacking
-            error = scenario.exception_type(scenario.message, metadata_kwargs)
+            # Pass keyword arguments unpacked from metadata_kwargs
+            error = scenario.exception_type(scenario.message, **metadata_kwargs)
         else:
             error = scenario.exception_type(scenario.message)
         assert scenario.message in str(error)
