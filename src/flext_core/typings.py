@@ -188,9 +188,7 @@ class FlextTypes:
     # Includes callables (factories, handlers) and service instances (servers, quirks)
     # Used for class-level plugin storage where arbitrary objects are registered
     # Callables return GeneralValueType or can be service instances themselves
-    RegistrablePlugin: TypeAlias = (
-        GeneralValueType | Callable[..., GeneralValueType]
-    )
+    RegistrablePlugin: TypeAlias = GeneralValueType | Callable[..., GeneralValueType]
 
     # Constant value type - all possible constant types in FlextConstants
     # Used for type-safe constant access via __getitem__ method
