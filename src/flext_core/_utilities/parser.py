@@ -908,6 +908,12 @@ class FlextUtilitiesParser:
             # Extract pattern components from tuple
             # Type narrowing: convert union to explicit tuple for overload matching
             tuple_len = len(pattern_tuple)
+
+            # Validate that pattern (first element) is not None
+            if pattern_tuple[0] is None:
+                msg = f"validation error: Pattern at index {i} cannot be None"
+                return r[tuple[str, int]].fail(msg)
+
             if tuple_len == self.TUPLE_LENGTH_2:
                 # Explicitly create 2-element tuple for first overload
                 pattern_result = self._extract_pattern_components((

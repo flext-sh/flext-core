@@ -238,12 +238,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 description: Test case description for error messages
 
             """
-            (
-                assertion_helpers.assert_flext_result_failure(result),
-                (f"Expected failure for: {description}, got success"),
-            )
-            assert expected_error in str(result.error), (
-                f"Expected error '{expected_error}' in '{result.error}' for: {description}"
+            assertion_helpers.assert_flext_result_failure(
+                result, description, expected_error
             )
 
         @staticmethod
