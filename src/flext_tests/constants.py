@@ -12,7 +12,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING, Final, Literal
 
-from flext_core.constants import FlextConstants, c
+from flext_core.constants import FlextConstants, c as flext_c
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -646,7 +646,7 @@ class FlextTestsConstants(FlextConstants):
 
             # Default values
             DEFAULT_DATABASE_URL: Final[str] = (
-                f"postgresql://{c.Platform.DEFAULT_HOST}/testdb"
+                f"postgresql://{flext_c.Platform.DEFAULT_HOST}/testdb"
             )
             DEFAULT_MAX_CONNECTIONS: Final[int] = 10
             DEFAULT_ENVIRONMENT_PRODUCTION: Final[str] = "production"
@@ -660,7 +660,7 @@ class FlextTestsConstants(FlextConstants):
             )
             VALID_HOSTNAME_SAMPLES: Final[tuple[str, ...]] = (
                 "example.com",
-                c.Platform.DEFAULT_HOST,
+                flext_c.Platform.DEFAULT_HOST,
             )
             INVALID_HOSTNAME_SAMPLES: Final[tuple[str, ...]] = ("invalid..hostname", "")
 
@@ -1057,7 +1057,7 @@ class FlextTestsConstants(FlextConstants):
                     }
 
 
-c: type[FlextTestsConstants] = FlextTestsConstants
+c = FlextTestsConstants
 
 # Type aliases for mypy resolution of deeply nested classes
 # These help mypy resolve nested class types correctly
