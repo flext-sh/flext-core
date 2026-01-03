@@ -30,7 +30,7 @@ from flext_core.typings import t
 from flext_core.utilities import u
 
 
-class FlextLogger(FlextRuntime):
+class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     """Context-aware logger tuned for dispatcher-centric CQRS flows.
 
     FlextLogger layers structured logging on ``structlog`` with scoped contexts,
@@ -165,7 +165,7 @@ class FlextLogger(FlextRuntime):
             **context: Context variables to bind globally
 
         Returns:
-            r[bool]: Success with True if bound, failure with error details
+            r[bool]: Success with True if context bound, failure with error message otherwise.
 
         Example:
             >>> FlextLogger.bind_global_context(
@@ -189,9 +189,6 @@ class FlextLogger(FlextRuntime):
         log messages. Use with caution in production environments. Typically used
         during application shutdown or context reset scenarios. All context variables
         are cleared through this method, ensuring consistent context management.
-
-        Returns:
-            r[bool]: Success with True if cleared, failure with error details
 
         Example:
             >>> FlextLogger.clear_global_context()
@@ -217,9 +214,6 @@ class FlextLogger(FlextRuntime):
         Args:
             *keys: Context keys to unbind
 
-        Returns:
-            r[bool]: Success with True if unbound, failure with error details
-
         Example:
             >>> FlextLogger.unbind_global_context("user_id", "session_id")
             >>> # Only 'user_id' and 'session_id' removed from global context
@@ -228,8 +222,8 @@ class FlextLogger(FlextRuntime):
         try:
             FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
             return r[bool].ok(True)
-        except Exception as exc:
-            return r[bool].fail(f"Failed to unbind global context: {exc}")
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to unbind global context keys {keys}: {exc}")
 
     @classmethod
     def _get_global_context(cls) -> t.ContextMetadataMapping:
@@ -277,7 +271,7 @@ class FlextLogger(FlextRuntime):
             **context: Context variables to bind
 
         Returns:
-            r[bool]: Success with True if bound, failure with error details
+            r[bool]: Success with True if context bound, failure with error message otherwise.
 
         Examples:
             >>> # Application-level context (app name, version, environment)
@@ -317,8 +311,8 @@ class FlextLogger(FlextRuntime):
                 cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Failed to bind {scope} context: {e}")
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
 
     @classmethod
     def clear_scope(cls, scope: str) -> r[bool]:
@@ -338,7 +332,7 @@ class FlextLogger(FlextRuntime):
             scope: Scope to clear (use c.Context.SCOPE_* constants)
 
         Returns:
-            r[bool]: Success with True if cleared, failure with error details
+            r[bool]: Success with True if scope cleared, failure with error message otherwise.
 
         Example:
             >>> FlextLogger.clear_scope(c.Context.SCOPE_REQUEST)
@@ -356,10 +350,9 @@ class FlextLogger(FlextRuntime):
 
                 # Clear from tracking
                 cls._scoped_contexts[scope] = {}
-
             return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Failed to clear scope {scope}: {e}")
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
+            return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")
 
     @classmethod
     @contextmanager
@@ -397,12 +390,7 @@ class FlextLogger(FlextRuntime):
 
         """
         # Use bind_context for all scopes (handles known + generic scopes)
-        result = cls.bind_context(scope, **context)
-
-        if result.is_failure:
-            cls.create_module_logger("flext_core.loggings").warning(
-                f"Failed to bind scoped context: {result.error}",
-            )
+        cls.bind_context(scope, **context)
 
         try:
             yield
@@ -727,8 +715,7 @@ class FlextLogger(FlextRuntime):
         self.logger = FlextRuntime.get_logger(name).bind(**context)
 
         # Initialize optional state variables
-        self._context: dict[str, t.GeneralValueType] = {}
-        self._tracking: dict[str, t.GeneralValueType] = {}
+        # Note: _context and _tracking are initialized as needed by methods
 
     @classmethod
     def create_bound_logger(
@@ -779,7 +766,7 @@ class FlextLogger(FlextRuntime):
         message: str,
         *args: t.GeneralValueType,
         **kwargs: t.GeneralValueType,
-    ) -> r[bool]:
+    ) -> None:
         """Log trace message - Logger.Log implementation."""
         try:
             try:
@@ -791,9 +778,9 @@ class FlextLogger(FlextRuntime):
                 formatted_message,
                 **kwargs,
             )  # FlextRuntime.structlog() doesn't have trace
-            return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Logging failed: {e}")
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            # For trace logging, we don't propagate errors to avoid noise
+            pass
 
     @staticmethod
     def _format_log_message(
@@ -975,15 +962,14 @@ class FlextLogger(FlextRuntime):
 
     def debug(
         self,
-        message: str,
-        *args: t.GeneralValueType,
-        **context: t.GeneralValueType,
-    ) -> r[bool]:
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType | Exception,
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
         """Log debug message - Logger.Log implementation.
 
         Business Rule: Logs a debug-level message with optional context. Uses _log
-        method for actual logging. Returns r[bool] indicating success or failure.
-        Uses FlextRuntime for centralized logging management.
+        method for actual logging. Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Debug logging ensures audit trail completeness by recording
         detailed diagnostic information. Debug messages are typically filtered in
@@ -991,24 +977,27 @@ class FlextLogger(FlextRuntime):
         All debug messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        return self._log(
+        # Convert msg to string if needed for internal processing
+        message = str(msg) if not isinstance(msg, str) else msg
+        # Filter out Exception types from args for internal processing
+        filtered_args = tuple(arg for arg in args if not isinstance(arg, BaseException))
+        self._log(
             c.Settings.LogLevel.DEBUG,
             message,
-            *args,
-            **context,
+            *filtered_args,
+            **kw,
         )
 
     def info(
         self,
-        message: str,
+        msg: str | t.GeneralValueType,
         *args: t.GeneralValueType,
-        **context: t.GeneralValueType,
-    ) -> r[bool]:
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
         """Log info message - Logger.Log implementation.
 
         Business Rule: Logs an info-level message with optional context. Uses _log
-        method for actual logging. Returns r[bool] indicating success or failure.
-        Uses FlextRuntime for centralized logging management.
+        method for actual logging. Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Info logging ensures audit trail completeness by recording
         informational messages about application flow. Info messages are typically
@@ -1016,24 +1005,27 @@ class FlextLogger(FlextRuntime):
         All info messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        return self._log(
+        # Convert msg to string if needed for internal processing
+        message = str(msg) if not isinstance(msg, str) else msg
+        # Filter out Exception types from args for internal processing
+        filtered_args = tuple(arg for arg in args if not isinstance(arg, BaseException))
+        self._log(
             c.Settings.LogLevel.INFO,
             message,
-            *args,
-            **context,
+            *filtered_args,
+            **kw,
         )
 
     def warning(
         self,
-        message: str,
+        msg: str | t.GeneralValueType,
         *args: t.GeneralValueType,
-        **context: t.GeneralValueType | Exception,
-    ) -> r[bool]:
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
         """Log warning message - Logger.Log implementation.
 
         Business Rule: Logs a warning-level message with optional context. Uses _log
-        method for actual logging. Returns r[bool] indicating success or failure.
-        Uses FlextRuntime for centralized logging management.
+        method for actual logging. Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Warning logging ensures audit trail completeness by recording
         warning messages about potential issues. Warning messages are typically included
@@ -1041,33 +1033,44 @@ class FlextLogger(FlextRuntime):
         identification. All warning messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        return self._log(
+        # Convert msg to string if needed for internal processing
+        message = str(msg) if not isinstance(msg, str) else msg
+        # Filter out Exception types from args for internal processing
+        filtered_args = tuple(arg for arg in args if not isinstance(arg, BaseException))
+        self._log(
             c.Settings.LogLevel.WARNING,
             message,
-            *args,
-            **context,
+            *filtered_args,
+            **kw,
         )
 
     def warn(
         self,
-        message: str,
+        msg: str | t.GeneralValueType,
         *args: t.GeneralValueType,
-        **context: t.GeneralValueType,
+        **kw: t.GeneralValueType,
     ) -> None:
         """Alias for warning() - implements p.Log.StructlogLogger protocol."""
-        _ = self.warning(message, *args, **context)
+        message = str(msg) if not isinstance(msg, str) else msg
+        # Filter out Exception types from args for internal processing
+        filtered_args = tuple(arg for arg in args if not isinstance(arg, BaseException))
+        self._log(
+            c.Settings.LogLevel.WARNING,
+            message,
+            *filtered_args,
+            **kw,
+        )
 
     def error(
         self,
-        message: str,
+        msg: str | t.GeneralValueType,
         *args: t.GeneralValueType,
-        **context: t.GeneralValueType,
-    ) -> r[bool]:
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
         """Log error message - Logger.Log implementation.
 
         Business Rule: Logs an error-level message with optional context. Uses _log
-        method for actual logging. Returns r[bool] indicating success or failure.
-        Uses FlextRuntime for centralized logging management.
+        method for actual logging. Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Error logging ensures audit trail completeness by recording
         error messages about failures. Error messages are always included in production
@@ -1075,24 +1078,27 @@ class FlextLogger(FlextRuntime):
         error messages go through this method, ensuring consistent log formatting and
         context inclusion across FLEXT.
         """
-        return self._log(
+        # Convert msg to string if needed for internal processing
+        message = str(msg) if not isinstance(msg, str) else msg
+        # Filter out Exception types from args for internal processing
+        filtered_args = tuple(arg for arg in args if not isinstance(arg, BaseException))
+        self._log(
             c.Settings.LogLevel.ERROR,
             message,
-            *args,
-            **context,
+            *filtered_args,
+            **kw,
         )
 
     def critical(
         self,
-        message: str,
+        msg: str | t.GeneralValueType,
         *args: t.GeneralValueType,
-        **context: t.GeneralValueType,
-    ) -> r[bool]:
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
         """Log critical message - Logger.Log implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
-        method for actual logging. Returns r[bool] indicating success or failure.
-        Uses FlextRuntime for centralized logging management.
+        method for actual logging. Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Critical logging ensures audit trail completeness by recording
         critical messages about severe failures. Critical messages are always included
@@ -1100,28 +1106,29 @@ class FlextLogger(FlextRuntime):
         response. All critical messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        return self._log(
+        # Convert msg to string if needed for internal processing
+        message = str(msg) if not isinstance(msg, str) else msg
+        # Filter out Exception types from args for internal processing
+        filtered_args = tuple(arg for arg in args if not isinstance(arg, BaseException))
+        self._log(
             c.Settings.LogLevel.CRITICAL,
             message,
-            *args,
-            **context,
+            *filtered_args,
+            **kw,
         )
 
     def exception(
         self,
-        message: str,
-        *,
-        exception: BaseException | None = None,
-        exc_info: bool = True,
-        **kwargs: t.GeneralValueType,
-    ) -> r[bool]:
+        msg: str | t.GeneralValueType,
+        *args: t.GeneralValueType,
+        **kw: t.GeneralValueType | Exception,
+    ) -> None:
         """Log exception with conditional stack trace (DEBUG only).
 
         Business Rule: Logs an exception with conditional stack trace inclusion based
         on effective log level. Stack trace is included only if effective log level is
         DEBUG. Exception details (type, message, stack trace) are added to context.
-        Returns r[bool] indicating success or failure. Uses FlextRuntime for
-        centralized logging management.
+        Uses FlextRuntime for centralized logging management.
 
         Audit Implication: Exception logging ensures audit trail completeness by recording
         exception details and stack traces. Stack traces are critical for troubleshooting
@@ -1130,6 +1137,25 @@ class FlextLogger(FlextRuntime):
         and context inclusion across FLEXT. Exception details are critical for audit
         trail reconstruction and failure analysis.
         """
+        # Convert msg to string if needed for internal processing
+        message = str(msg) if not isinstance(msg, str) else msg
+        # Filter out Exception types from args for format string interpolation
+        filtered_args = tuple(arg for arg in args if not isinstance(arg, BaseException))
+
+        # Extract exception and exc_info from kw if provided
+        exception = None
+        exc_info = True
+
+        # Check if exception is passed in kw
+        if "exception" in kw:
+            exc_value = kw.pop("exception")
+            if isinstance(exc_value, BaseException):
+                exception = exc_value
+        if "exc_info" in kw:
+            exc_info_value = kw.pop("exc_info")
+            if isinstance(exc_info_value, bool):
+                exc_info = exc_info_value
+
         try:
             # Determine stack trace inclusion using effective_log_level
             try:
@@ -1141,19 +1167,20 @@ class FlextLogger(FlextRuntime):
             except Exception:
                 include_stack_trace = True
 
+            # Prepare context dict for logging
+            context_dict: dict[str, t.GeneralValueType] = {}
+
             # Add exception details using conditional mapping
             if exception is not None:
                 exception_data: dict[str, t.GeneralValueType] = {
                     "exception_type": type(exception).__name__,
                     "exception_message": str(exception),
                 }
-                merge_result = u.merge(kwargs, exception_data, strategy="deep")
+                merge_result = u.merge(context_dict, exception_data, strategy="deep")
                 if merge_result.is_success:
-                    # merge_result.value is dict[str, GeneralValueType] which matches kwargs type
-                    merged_kwargs: dict[str, t.GeneralValueType] = merge_result.value
-                    kwargs = merged_kwargs
+                    context_dict = merge_result.value
                 if include_stack_trace:
-                    kwargs["stack_trace"] = "".join(
+                    context_dict["stack_trace"] = "".join(
                         traceback.format_exception(
                             type(exception),
                             exception,
@@ -1161,12 +1188,17 @@ class FlextLogger(FlextRuntime):
                         ),
                     )
             elif exc_info and include_stack_trace:
-                kwargs["stack_trace"] = traceback.format_exc()
+                context_dict["stack_trace"] = traceback.format_exc()
 
-            self.logger.error(message, **kwargs)
-            return r[bool].ok(True)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            return r[bool].fail(f"Logging failed: {e}")
+            # Merge with remaining kw (filtering out Exception types)
+            for key, value in kw.items():
+                if not isinstance(value, BaseException):
+                    context_dict[key] = value
+
+            self.logger.error(message, *filtered_args, **context_dict)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
+            # For exception logging, we don't propagate errors to avoid recursive issues
+            pass
 
     # =========================================================================
     # ADVANCED FEATURES - Performance tracking and result integration
@@ -1323,7 +1355,8 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log trace message returning FlextResult."""
-            return self._base_logger.trace(message, *args, **kwargs)
+            self._base_logger.trace(message, *args, **kwargs)
+            return r[bool].ok(True)
 
         def debug(
             self,
@@ -1332,7 +1365,8 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log debug message returning FlextResult."""
-            return self._base_logger.debug(message, *args, **kwargs)
+            self._base_logger.debug(message, *args, **kwargs)
+            return r[bool].ok(True)
 
         def info(
             self,
@@ -1341,7 +1375,8 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log info message returning FlextResult."""
-            return self._base_logger.info(message, *args, **kwargs)
+            self._base_logger.info(message, *args, **kwargs)
+            return r[bool].ok(True)
 
         def warning(
             self,
@@ -1350,7 +1385,8 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log warning message returning FlextResult."""
-            return self._base_logger.warning(message, *args, **kwargs)
+            self._base_logger.warning(message, *args, **kwargs)
+            return r[bool].ok(True)
 
         def error(
             self,
@@ -1359,7 +1395,8 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log error message returning FlextResult."""
-            return self._base_logger.error(message, *args, **kwargs)
+            self._base_logger.error(message, *args, **kwargs)
+            return r[bool].ok(True)
 
         def critical(
             self,
@@ -1368,7 +1405,8 @@ class FlextLogger(FlextRuntime):
             **kwargs: t.GeneralValueType,
         ) -> r[bool]:
             """Log critical message returning FlextResult."""
-            return self._base_logger.critical(message, *args, **kwargs)
+            self._base_logger.critical(message, *args, **kwargs)
+            return r[bool].ok(True)
 
         def exception(
             self,
@@ -1390,7 +1428,8 @@ class FlextLogger(FlextRuntime):
                 context["exception_type"] = type(exception).__name__
             if exc_info:
                 context["exc_info"] = True
-            return self._base_logger.error(message, **context)
+            self._base_logger.error(message, **context)
+            return r[bool].ok(True)
 
 
 __all__: list[str] = [

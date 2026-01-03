@@ -181,7 +181,7 @@ class FlextModels:
         """
 
         config: p.Config
-        context: p.Ctx
+        context: p.Context
         container: p.DI
 
     # =========================================================================

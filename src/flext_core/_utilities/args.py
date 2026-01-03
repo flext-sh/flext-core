@@ -182,7 +182,7 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def get_enum_params(
-        func: p.Utilities.CallableWithHints,
+        func: p.CallableWithHints,
     ) -> t.StringStrEnumTypeDict:
         """Extract parameters that are StrEnum from function signature.
 

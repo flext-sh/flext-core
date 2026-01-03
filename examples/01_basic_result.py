@@ -84,7 +84,8 @@ class RailwayService(s[DemonstrationResult]):
         try:
             # Chain all demonstrations using railway pattern
             return (
-                self._run_demonstrations()
+                self
+                ._run_demonstrations()
                 .flat_map(self._build_result_data)
                 .map(self._log_success)
             )
@@ -313,7 +314,8 @@ class RailwayService(s[DemonstrationResult]):
         # Chain validations using railway pattern with u (DRY)
         test_email = "test@example.com"
         result = (
-            r.ok(test_email)
+            r
+            .ok(test_email)
             .flat_map(user_validator)
             .map(lambda user: user.email)
             .flat_map(

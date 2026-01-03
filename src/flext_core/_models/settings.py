@@ -494,7 +494,7 @@ class FlextModelsConfig:
             default=None,
             description="Optional configuration overrides",
         )
-        context: p.Ctx | None = Field(
+        context: p.Context | None = Field(
             default=None,
             description="Optional context protocol instance",
         )

@@ -54,10 +54,7 @@ def test_map_error_identity_and_transform() -> None:
 
     failure = r[int].fail("bad", error_code="E1", error_data={"k": "v"})
     transformed = failure.map_error(lambda msg: f"{msg}_mapped")
-    u.Tests.Result.assert_failure_with_error(
-        transformed,
-        "bad_mapped",
-    )
+    u.Tests.Result.assert_failure_with_error(transformed, "bad_mapped")
     assert transformed.error_code == "E1"
     assert transformed.error_data == {"k": "v"}
 
@@ -66,17 +63,9 @@ def test_flow_through_short_circuits_on_failure() -> None:
     """flow_through must stop when a step fails."""
     visited: list[int] = []
 
-    def step1(value: int) -> r[int]:
-        visited.append(value)
-        return r[int].ok(value + 1)
-
-    def fail_step(_: int) -> r[int]:
-        return r[int].fail("stop")
-
-    def unreachable(_: int) -> r[int]:
-        visited.append(999)
-        return r[int].ok(0)
-
+    def step1(v: int) -> r[int]: visited.append(v); return r[int].ok(v + 1)
+    def fail_step(_: int) -> r[int]: return r[int].fail("stop")
+    def unreachable(_: int) -> r[int]: visited.append(999); return r[int].ok(0)
     result = r[int].ok(1).flow_through(step1, fail_step, unreachable)
     u.Tests.Result.assert_failure_with_error(result, "stop")
     assert visited == [1]
@@ -84,16 +73,11 @@ def test_flow_through_short_circuits_on_failure() -> None:
 
 def test_create_from_callable_and_repr() -> None:
     """Exercise callable None/exception branches and repr formatting."""
-    # Type annotation: create_from_callable expects Callable[[], T_co]
-    # lambda: None returns None, but we're testing the None handling path
-    # Cast to Callable[[], int] for type compatibility (test validates None handling)
     none_callable: Callable[[], int] = cast("Callable[[], int]", lambda: None)
     none_result = r[int].create_from_callable(none_callable)
     u.Tests.Result.assert_result_failure(none_result)
     assert "Callable returned None" in (none_result.error or "")
 
-    # Type annotation: lambda: 1/0 returns float, but we're testing exception handling
-    # Cast to Callable[[], int] for type compatibility (test validates exception handling)
     error_callable: Callable[[], int] = cast("Callable[[], int]", lambda: 1 / 0)
     error_result = r[int].create_from_callable(error_callable)
     u.Tests.Result.assert_result_failure(error_result)
@@ -119,8 +103,7 @@ def test_with_resource_cleanup_runs() -> None:
     """with_resource should call cleanup even on success."""
     cleanup_calls: list[str] = []
 
-    def factory() -> list[int]:
-        return []
+    def factory() -> list[int]: return []
 
     def op(resource: list[int]) -> r[str]:
         resource.append(1)
@@ -129,7 +112,6 @@ def test_with_resource_cleanup_runs() -> None:
     def cleanup(resource: list[int]) -> None:
         resource.clear()
         cleanup_calls.append("ran")
-
     result = r[str].with_resource(factory, op, cleanup)
     u.Tests.Result.assert_success_with_value(result, "done")
     assert cleanup_calls == ["ran"]

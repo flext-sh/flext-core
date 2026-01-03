@@ -123,7 +123,7 @@ class FlextUtilitiesContext:
     def clone_runtime[T](
         runtime: T,
         *,
-        context: p.Ctx | None = None,
+        context: p.Context | None = None,
         config_overrides: dict[str, t.GeneralValueType] | None = None,
     ) -> T:
         """Clone runtime with optional overrides.

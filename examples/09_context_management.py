@@ -50,7 +50,8 @@ class ContextManagementService(
         self.logger.info("Starting context management demonstration")
 
         return (
-            self._demonstrate_context_concepts()
+            self
+            ._demonstrate_context_concepts()
             .flat_map(lambda _: self._demonstrate_request_handling())
             .flat_map(lambda _: self._demonstrate_threading_concepts())
             .flat_map(lambda _: self._demonstrate_performance_tracking())

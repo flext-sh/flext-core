@@ -26,8 +26,11 @@ from flext_core import (
     m,
     r,
 )
-from flext_core._models import entity as flext_models_entity
-from tests.helpers import factories  # Import for User model rebuild
+from tests.helpers.scenarios import (
+    ParserScenarios,
+    ReliabilityScenarios,
+    ValidationScenarios,
+)
 from tests.test_utils import assertion_helpers
 
 # Type variables for test automation
@@ -35,7 +38,7 @@ T = TypeVar("T")
 TestResult = FlextResult[T]
 
 
-class TestAutomationFramework:
+class FlextTestAutomationFramework:
     """Highly automated test framework with real functionality testing.
 
     Follows strict type-system-architecture.md rules:
@@ -162,7 +165,7 @@ class TestAutomationFramework:
         """
 
         @contextmanager
-        def timeout_context() -> Generator[None]:
+        def timeout_context_manager() -> Generator[None]:
             def timeout_handler(signum: int, frame: types.FrameType | None) -> None:
                 raise TimeoutError(f"Operation timed out after {timeout_seconds}s")
 
@@ -174,7 +177,7 @@ class TestAutomationFramework:
                 signal.alarm(0)
 
         try:
-            with timeout_context():
+            with timeout_context_manager():
                 result = func()
                 return r[object].ok(result)
         except TimeoutError as e:
@@ -203,12 +206,198 @@ class TestAutomationFramework:
 
 
 # Global test utilities instance
-test_framework = TestAutomationFramework()
+test_framework = FlextTestAutomationFramework()
+
+
+class FlextScenarioRunner:
+    """Helper for executing parametrized scenario tests.
+
+    Provides common pattern for validation scenario execution:
+    1. Get scenario from parametrize
+    2. Execute validator with scenario parameters
+    3. Assert result matches expected outcome
+    """
+
+    @staticmethod
+    def execute_validation_scenario(
+        validator_func: Callable[..., object], scenario: object
+    ) -> FlextResult[object]:
+        """Execute validation scenario and return result.
+
+        Args:
+            validator_func: The validation function to call
+            scenario: ValidationScenario dataclass instance
+
+        Returns:
+            FlextResult with validator output
+
+        """
+        try:
+            if hasattr(scenario, "input_params") and scenario.input_params:
+                result = validator_func(scenario.input_value, **scenario.input_params)
+            else:
+                result = validator_func(scenario.input_value)
+            return result
+        except Exception as e:
+            return FlextResult.fail(str(e))
+
+    @staticmethod
+    def execute_parser_scenario(
+        parser_func: Callable[..., object], scenario: object
+    ) -> FlextResult[object]:
+        """Execute parser scenario and return result.
+
+        Args:
+            parser_func: The parser function to call
+            scenario: ParserScenario dataclass instance
+
+        Returns:
+            FlextResult with parser output
+
+        """
+        try:
+            return parser_func(scenario.input_data)
+        except Exception as e:
+            return FlextResult.fail(str(e))
+
+    @staticmethod
+    def assert_scenario_result(
+        result: FlextResult[object], scenario: object, context: str = ""
+    ) -> None:
+        """Assert scenario result matches expected outcome.
+
+        Args:
+            result: FlextResult from scenario execution
+            scenario: Scenario dataclass with expected values
+            context: Optional context for error messages
+
+        """
+        if scenario.should_succeed:
+            assert result.is_success, (
+                f"{context}: Expected success, got failure: {result.error}"
+            )
+            if (
+                hasattr(scenario, "expected_value")
+                and scenario.expected_value is not None
+            ):
+                assert result.value == scenario.expected_value, (
+                    f"{context}: Expected {scenario.expected_value}, got {result.value}"
+                )
+        else:
+            assert result.is_failure, (
+                f"{context}: Expected failure, got success: {result.value}"
+            )
+            if (
+                hasattr(scenario, "expected_error_contains")
+                and scenario.expected_error_contains
+            ):
+                assert scenario.expected_error_contains in str(result.error), (
+                    f"{context}: Expected error containing "
+                    f"'{scenario.expected_error_contains}', "
+                    f"got '{result.error}'"
+                )
+
+
+class FlextResultAssertionHelper:
+    """Helper for common FlextResult assertions.
+
+    Provides pattern for asserting result success/failure with
+    optional error message matching.
+    """
+
+    @staticmethod
+    def assert_success(
+        result: FlextResult[object], expected_value: object = None, context: str = ""
+    ) -> object:
+        """Assert result is success.
+
+        Args:
+            result: FlextResult to check
+            expected_value: Optional expected value (checked if provided)
+            context: Optional context for error messages
+
+        """
+        assert result.is_success, (
+            f"{context}: Expected success, got failure: {result.error}"
+        )
+        if expected_value is not None:
+            assert result.value == expected_value, (
+                f"{context}: Expected {expected_value}, got {result.value}"
+            )
+        return result.value
+
+    @staticmethod
+    def assert_failure(
+        result: FlextResult[object],
+        expected_error: str | None = None,
+        context: str = "",
+    ) -> str:
+        """Assert result is failure.
+
+        Args:
+            result: FlextResult to check
+            expected_error: Optional expected error substring
+            context: Optional context for error messages
+
+        """
+        assert result.is_failure, (
+            f"{context}: Expected failure, got success: {result.value}"
+        )
+        if expected_error:
+            assert expected_error in str(result.error), (
+                f"{context}: Expected error containing "
+                f"'{expected_error}', got '{result.error}'"
+            )
+        return str(result.error)
+
+
+class FlextConsolidationContext:
+    """Context for test consolidation operations.
+
+    Provides state tracking and validation for consolidation workflows:
+    - Tracking parametrized scenario counts
+    - Validating test deduplication
+    - Monitoring coverage improvement
+    """
+
+    def __init__(self) -> None:
+        """Initialize consolidation context with empty state."""
+        self.scenarios_tested: dict[str, int] = {}
+        self.tests_executed = 0
+        self.unique_code_paths: set[str] = set()
+
+    def record_scenario(self, scenario_name: str, scenario_type: str) -> None:
+        """Record a scenario test execution."""
+        key = f"{scenario_type}:{scenario_name}"
+        if key not in self.scenarios_tested:
+            self.scenarios_tested[key] = 0
+        self.scenarios_tested[key] += 1
+
+    def record_test_execution(self) -> None:
+        """Record a test execution."""
+        self.tests_executed += 1
+
+    def record_code_path(self, code_path: str) -> None:
+        """Record a unique code path executed."""
+        self.unique_code_paths.add(code_path)
+
+    def get_deduplication_stats(self) -> dict[str, int]:
+        """Get statistics on test deduplication.
+
+        Returns:
+            dict with test count and unique scenario count
+
+        """
+        return {
+            "total_scenarios": len(self.scenarios_tested),
+            "total_tests_executed": self.tests_executed,
+            "unique_code_paths": len(self.unique_code_paths),
+        }
 
 
 # Pytest fixtures for automated testing
 @pytest.fixture
-def automation_framework() -> TestAutomationFramework:
+def automation_framework() -> FlextTestAutomationFramework:
     """Provide automated test framework instance."""
     return test_framework
 
@@ -239,7 +428,7 @@ class FunctionalExternalService:
     """
 
     def __init__(self) -> None:
-        """Initialize mock service with empty state."""
+        """Initialize external service with empty state."""
         self.processed_items: list[str] = []
         self.call_count = 0
 
@@ -269,31 +458,23 @@ class FunctionalExternalService:
         return self.call_count
 
 
-@pytest.fixture(autouse=True)
-def _rebuild_pydantic_models() -> None:
-    """Auto-rebuild Pydantic models before each test.
-
-    Pydantic v2 requires model_rebuild() when using forward references
-    (from __future__ import annotations). This fixture ensures all
-    FlextModels subclasses are rebuilt before tests run.
-    """
-    # Provide namespace for forward reference resolution
-    types_namespace = {
-        "FlextModelsEntity": flext_models_entity.FlextModelsEntity,
-        "FlextModels": m,
-    }
-
-    # Rebuild base model classes to resolve forward references
-    # m.AggregateRoot, m.Entity, m.ValueObject are TypeAliases to the actual classes
-    m.AggregateRoot.model_rebuild(_types_namespace=types_namespace)
-    m.Entity.model_rebuild(_types_namespace=types_namespace)
-    m.ValueObject.model_rebuild(_types_namespace=types_namespace)
-
-    # Also rebuild User and other test models if they exist
-    try:
-        factories.User.model_rebuild(_types_namespace=types_namespace)
-    except (ImportError, AttributeError):
-        pass  # User model may not be defined yet
+# NOTE: Forward references resolved through proper imports instead of model_rebuild
+# @pytest.fixture(autouse=True)
+# def _rebuild_pydantic_models() -> None:
+#     """Auto-rebuild Pydantic models before each test.
+#
+#     Pydantic v2 requires model_rebuild() when using forward references
+#     (from __future__ import annotations). This fixture ensures all
+#     FlextModels subclasses are rebuilt before tests run.
+#     """
+#     # Provide namespace for forward reference resolution
+#     types_namespace = {
+#         "FlextModelsEntity": flext_models_entity.FlextModelsEntity,
+#         "FlextModels": m,
+#     }
+#
+#     # NOTE: model_rebuild calls removed to comply with FLEXT standards
+#     # Forward references should be resolved through proper imports instead
 
 
 @pytest.fixture
@@ -380,3 +561,44 @@ def flext_result_success() -> r[dict[str, object]]:
 def flext_result_failure() -> r[object]:
     """Failed FlextResult fixture available to all FLEXT projects."""
     return r[object].fail("Test error")
+
+
+# =========================================================================
+# Advanced Fixtures for Test Consolidation and Scenario Testing
+# =========================================================================
+
+
+@pytest.fixture
+def validation_scenarios() -> ValidationScenarios:
+    """Access to all centralized validation scenarios."""
+    return ValidationScenarios
+
+
+@pytest.fixture
+def parser_scenarios() -> ParserScenarios:
+    """Access to all centralized parser scenarios."""
+    return ParserScenarios
+
+
+@pytest.fixture
+def reliability_scenarios() -> ReliabilityScenarios:
+    """Access to all centralized reliability scenarios."""
+    return ReliabilityScenarios
+
+
+@pytest.fixture
+def scenario_runner() -> FlextScenarioRunner:
+    """Helper for executing parametrized scenario tests."""
+    return FlextScenarioRunner()
+
+
+@pytest.fixture
+def result_assertion_helper() -> FlextResultAssertionHelper:
+    """Helper for common FlextResult assertions."""
+    return FlextResultAssertionHelper()
+
+
+@pytest.fixture
+def consolidation_context() -> FlextConsolidationContext:
+    """Context for test consolidation operations."""
+    return FlextConsolidationContext()

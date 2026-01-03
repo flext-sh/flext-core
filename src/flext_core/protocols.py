@@ -1,6 +1,6 @@
 """Runtime-checkable structural typing protocols for FLEXT framework.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (t) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType, TracebackType
-from typing import Protocol, Self, runtime_checkable
+from typing import Protocol, Self, TypedDict, runtime_checkable
 
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
@@ -18,14 +18,137 @@ from flext_core.typings import P, T_co, t
 
 
 class FlextProtocols:
-    """Hierarchical protocol namespace organized by Interface Segregation Principle."""
+    """Hierarchical protocol namespace organized by Interface Segregation Principle.
+
+    Hierarchy follows architectural layers:
+    - Base: Fundamental interfaces
+    - Core: Result handling and model protocols
+    - Configuration: Config and context management
+    - Infrastructure: DI and container protocols
+    - Domain: Business domain protocols
+    - Application: CQRS and application layer protocols
+    - Utility: Supporting utility protocols
+    """
 
     # =========================================================================
-    # CORE RESULT PROTOCOL (Root Level for Self-Reference)
+    # BASE PROTOCOLS (Fundamental Interfaces)
     # =========================================================================
 
     @runtime_checkable
-    class Result[T](Protocol):
+    class BaseProtocol(Protocol):
+        """Base protocol that all FLEXT protocols inherit from implicitly.
+
+        Ensures all protocols follow structural typing principles and
+        maintain consistency across the framework.
+        """
+
+        def _protocol_name(self) -> str:
+            """Return the protocol name for introspection."""
+            ...
+
+    # =========================================================================
+    # CONTEXT PROTOCOLS (Context Management)
+    # =========================================================================
+
+    @runtime_checkable
+    class ContextLike(Protocol):
+        """Context protocol for type safety without circular imports.
+
+        Defined in protocols.py to keep all protocol definitions together.
+        Full context protocol p.Context extends this minimal interface.
+
+        Methods use generic return types (object) for structural compatibility
+        with p.Context which uses ResultLike[T] (also covariant with object).
+        """
+
+        def clone(self) -> Self:
+            """Clone context for isolated execution."""
+            ...
+
+        def set(
+            self,
+            key: str,
+            value: t.GeneralValueType,
+            scope: str = ...,
+        ) -> object:
+            """Set a context value. Returns Result-like object."""
+            ...
+
+        def get(
+            self,
+            key: str,
+            scope: str = ...,
+        ) -> object:
+            """Get a context value. Returns Result-like object."""
+            ...
+
+    class RuntimeBootstrapOptions(TypedDict, total=False):
+        """Typed dictionary for runtime bootstrap options.
+
+        Business Rule: TypedDict uses dict[str, ...] for field types because
+        TypedDict defines the structure of a dictionary with known keys.
+        All fields are optional (total=False) as subclasses can override
+        only specific options. This TypedDict matches the signature of
+        FlextRuntime.create_service_runtime() to reduce casts and improve
+        type safety.
+
+        Audit Implication: Used for runtime bootstrap configuration in service
+        initialization. Complete configuration ensures proper runtime lifecycle
+        management and audit trail completeness for service operations.
+        """
+
+        config_type: type[BaseModel]
+        """Config type for service runtime (defaults to FlextSettings)."""
+
+        config_overrides: Mapping[str, t.FlexibleValue]
+        """Configuration overrides to apply to the config instance."""
+
+        context: FlextProtocols.ContextLike
+        """Context instance for service runtime.
+
+        Uses ContextLike protocol (defined above) for type safety without
+        circular imports. Full Context extends this protocol.
+        """
+
+        subproject: str
+        """Subproject identifier for scoped container creation."""
+
+        services: Mapping[str, t.GeneralValueType]
+        """Service registrations for container.
+
+        Note: BaseModel is already included in GeneralValueType.
+        """
+
+        factories: Mapping[
+            str,
+            Callable[
+                [],
+                (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
+            ],
+        ]
+        """Factory registrations for container."""
+
+        resources: Mapping[str, Callable[[], t.GeneralValueType]]
+        """Resource registrations for container."""
+
+        container_overrides: Mapping[str, t.FlexibleValue]
+        """Container configuration overrides."""
+
+        wire_modules: Sequence[ModuleType]
+        """Modules to wire for dependency injection."""
+
+        wire_packages: Sequence[str]
+        """Packages to wire for dependency injection."""
+
+        wire_classes: Sequence[type]
+        """Classes to wire for dependency injection."""
+
+    # =========================================================================
+    # CORE PROTOCOLS (Result Handling and Models)
+    # =========================================================================
+
+    @runtime_checkable
+    class Result[T](BaseProtocol, Protocol):
         """Result type interface for railway-oriented programming.
 
         Used extensively for all operations that can fail. Provides
@@ -67,9 +190,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(
-            self,
-        ) -> t.ConfigurationMapping | None:
+        def error_data(self) -> t.ConfigurationMapping | None:
             """Error metadata (optional)."""
             ...
 
@@ -232,7 +353,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class ResultLike(Protocol[T_co]):
+    class ResultLike[T_co](BaseProtocol, Protocol):
         """Result-like protocol for compatibility with FlextResult operations.
 
         Used for type compatibility when working with result-like objects.
@@ -263,7 +384,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class HasModelDump(Protocol):
+    class HasModelDump(BaseProtocol, Protocol):
         """Protocol for objects that can dump model data.
 
         Used for Pydantic model compatibility and serialization.
@@ -274,16 +395,12 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class HasModelFields(Protocol):
+    class HasModelFields(HasModelDump, Protocol):
         """Protocol for objects with model fields.
 
         Extends HasModelDump with model fields access.
         Used for Pydantic model introspection.
         """
-
-        def model_dump(self) -> Mapping[str, t.FlexibleValue]:
-            """Dump model data to dictionary."""
-            ...
 
         @property
         def model_fields(self) -> Mapping[str, t.FlexibleValue]:
@@ -291,26 +408,22 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Model(Protocol):
+    class Model(HasModelDump, Protocol):
         """Model type interface for validation.
 
         Used for model validation without circular imports.
         """
 
-        def model_dump(self) -> Mapping[str, t.FlexibleValue]:
-            """Dump model data to dictionary."""
-            ...
-
         def validate(self) -> FlextProtocols.Result[bool]:
             """Validate model."""
             ...
 
-        # =========================================================================
-        # CONFIGURATION: Configuration Protocols
-        # =========================================================================
+    # =========================================================================
+    # CONFIGURATION PROTOCOLS (Config and Context Management)
+    # =========================================================================
 
     @runtime_checkable
-    class Configurable(Protocol):
+    class Configurable(BaseProtocol, Protocol):
         """Protocol for component configuration."""
 
         def configure(self, config: Mapping[str, t.FlexibleValue]) -> None:
@@ -318,7 +431,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Config(Protocol):
+    class Config(BaseProtocol, Protocol):
         """Configuration object protocol based on Pydantic BaseSettings pattern.
 
         Reflects real implementations like FlextSettings which uses Pydantic BaseSettings.
@@ -348,10 +461,10 @@ class FlextProtocols:
     # =========================================================================
 
     @runtime_checkable
-    class Ctx(t.ContextLike, Protocol):
+    class Context(ContextLike, Protocol):
         """Execution context protocol with cloning semantics.
 
-        Extends t.ContextLike (minimal protocol in typings.py) for full
+        Extends FlextProtocols.ContextLike (minimal protocol) for full
         context operations. Uses ResultLike (covariant) for return types
         to allow implementations to return FlextResult.
         """
@@ -378,20 +491,16 @@ class FlextProtocols:
             ...
 
     # =========================================================================
-    # CONTAINER: Dependency Injection Protocols
+    # INFRASTRUCTURE PROTOCOLS (DI and Container Management)
     # =========================================================================
 
     @runtime_checkable
-    class DI(Protocol):
+    class DI(Configurable, Protocol):
         """Dependency injection container protocol.
 
         Extends Configurable to allow container configuration.
         Implements configure() method from Configurable protocol.
         """
-
-        def configure(self, config: Mapping[str, t.FlexibleValue]) -> None:
-            """Configure component with settings (from Configurable protocol)."""
-            ...
 
         @property
         def config(self) -> FlextProtocols.Config:
@@ -399,7 +508,7 @@ class FlextProtocols:
             ...
 
         @property
-        def context(self) -> FlextProtocols.Ctx:
+        def context(self) -> FlextProtocols.Context:
             """Execution context bound to the container."""
             ...
 
@@ -407,14 +516,14 @@ class FlextProtocols:
             self,
             *,
             config: FlextProtocols.Config | None = None,
-            context: FlextProtocols.Ctx | None = None,
+            context: FlextProtocols.Context | None = None,
             subproject: str | None = None,
             services: Mapping[str, t.GeneralValueType] | None = None,
             factories: Mapping[str, t.FactoryCallable] | None = None,
             resources: Mapping[str, t.ResourceCallable] | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
-            ...  # INTERFACE
+            ...
 
         def wire_modules(
             self,
@@ -440,7 +549,7 @@ class FlextProtocols:
             service: t.GeneralValueType,
         ) -> FlextProtocols.ResultLike[bool]:
             """Register a service instance."""
-            ...  # INTERFACE
+            ...
 
         def register_factory(
             self,
@@ -448,7 +557,7 @@ class FlextProtocols:
             factory: FlextProtocols.ResourceFactory[t.GeneralValueType],
         ) -> FlextProtocols.ResultLike[bool]:
             """Register a service factory returning GeneralValueType."""
-            ...  # INTERFACE
+            ...
 
         def with_service(
             self,
@@ -475,7 +584,7 @@ class FlextProtocols:
             Returns the resolved service as RegisterableService. For type-safe
             resolution with runtime validation, use get_typed[T](name, type_cls).
             """
-            ...  # INTERFACE
+            ...
 
         def get_typed[T](
             self,
@@ -498,11 +607,11 @@ class FlextProtocols:
             ...
 
     # =========================================================================
-    # DOMAIN: Domain-Specific Protocols
+    # DOMAIN PROTOCOLS (Business Logic Interfaces)
     # =========================================================================
 
     @runtime_checkable
-    class Service[T](Protocol):
+    class Service[T](BaseProtocol, Protocol):
         """Base domain service interface.
 
         Reflects real implementations like FlextService which executes
@@ -544,7 +653,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Repository[T](Protocol):
+    class Repository[T](BaseProtocol, Protocol):
         """Data access interface."""
 
         def get_by_id(
@@ -611,7 +720,7 @@ class FlextProtocols:
     # =========================================================================
 
     @runtime_checkable
-    class Handler(Protocol):
+    class Handler(BaseProtocol, Protocol):
         """Command/Query handler interface.
 
         Reflects real implementations like FlextHandlers which provide
@@ -671,7 +780,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class CommandBus(Protocol):
+    class CommandBus(BaseProtocol, Protocol):
         """Command routing and execution protocol.
 
         Reflects real implementations like FlextDispatcher which provides
@@ -740,7 +849,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Registry(Protocol):
+    class Registry(BaseProtocol, Protocol):
         """Handler registry protocol for CQRS handler registration.
 
         Reflects real implementations like FlextRegistry which provides
@@ -796,7 +905,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Middleware(Protocol):
+    class Middleware(BaseProtocol, Protocol):
         """Processing pipeline middleware."""
 
         def process[TResult](
@@ -811,7 +920,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Processor(Protocol):
+    class Processor(BaseProtocol, Protocol):
         """Processor interface for data transformation pipelines.
 
         Processors can be objects with a process() method that takes data
@@ -951,7 +1060,7 @@ class FlextProtocols:
                 ...
 
     @runtime_checkable
-    class Connection(Protocol):
+    class Connection(BaseProtocol, Protocol):
         """External system connection protocol."""
 
         def test_connection(
@@ -973,7 +1082,7 @@ class FlextProtocols:
     # =========================================================================
 
     @runtime_checkable
-    class VariadicCallable(Protocol[T_co]):
+    class VariadicCallable[T_co](BaseProtocol, Protocol):
         """Protocol for variadic callables returning T_co.
 
         Used for flexible function signatures that accept any arguments.
@@ -987,9 +1096,10 @@ class FlextProtocols:
             **kwargs: t.GeneralValueType,
         ) -> T_co:
             """Call the function with any arguments, returning T_co."""
+            ...
 
     @runtime_checkable
-    class ResourceFactory[TResource](Protocol):
+    class ResourceFactory[TResource](BaseProtocol, Protocol):
         """Protocol for resource factory callables.
 
         Used in with_resource pattern to create resources.
@@ -997,11 +1107,11 @@ class FlextProtocols:
         """
 
         def __call__(self) -> TResource:
-            """Create and return a resource instance."""  # INTERFACE
+            """Create and return a resource instance."""
             ...
 
     @runtime_checkable
-    class ResourceOperation[TResource, T](Protocol):
+    class ResourceOperation[TResource, T](BaseProtocol, Protocol):
         """Protocol for resource operation callables.
 
         Used in with_resource pattern to operate on resources.
@@ -1009,11 +1119,10 @@ class FlextProtocols:
         """
 
         def __call__(self, resource: TResource) -> FlextProtocols.Result[T]:
-            """Execute operation on resource, returning Result."""  # INTERFACE
+            """Execute operation on resource, returning Result."""
             ...
 
-    @runtime_checkable
-    class ResourceCleanup[TResource](Protocol):
+    class ResourceCleanup[TResource](BaseProtocol, Protocol):
         """Protocol for resource cleanup callables.
 
         Used in with_resource pattern for optional cleanup.
@@ -1021,11 +1130,10 @@ class FlextProtocols:
         """
 
         def __call__(self, resource: TResource) -> None:
-            """Clean up the resource."""  # INTERFACE
+            """Clean up the resource."""
             ...
 
-    @runtime_checkable
-    class ValidatorSpec(Protocol):
+    class ValidatorSpec(BaseProtocol, Protocol):
         """Protocol for validator specifications with operator composition.
 
         Validators implement __call__ to validate values and support composition
@@ -1063,75 +1171,64 @@ class FlextProtocols:
     # SPECIALIZED: Specialized Domain Protocols
     # =========================================================================
 
-    class Entry:
-        """Entry-related protocols for LDIF processing."""
+    class Entry(
+        BaseProtocol, Protocol
+    ):  # Cannot inherit BaseProtocol due to Python nested class limitations
+        """Entry object protocol (read-only)."""
 
-        @runtime_checkable
-        class Base(Protocol):
-            """Entry object protocol (read-only)."""
+        @property
+        def dn(self) -> str:
+            """Distinguished name."""
+            ...
 
-            @property
-            def dn(self) -> str:
-                """Distinguished name."""
-                ...
+        @property
+        def attributes(self) -> Mapping[str, Sequence[str]]:
+            """Entry attributes as immutable mapping."""
+            ...
 
-            @property
-            def attributes(self) -> Mapping[str, Sequence[str]]:
-                """Entry attributes as immutable mapping."""
-                ...
+        def to_dict(self) -> Mapping[str, t.FlexibleValue]:
+            """Convert to dictionary representation."""
+            ...
 
-            def to_dict(self) -> Mapping[str, t.FlexibleValue]:
-                """Convert to dictionary representation."""
-                ...
+        def to_ldif(self) -> str:
+            """Convert to LDIF format."""
+            ...
 
-            def to_ldif(self) -> str:
-                """Convert to LDIF format."""
-                ...
+        def set_attribute(
+            self,
+            name: str,
+            values: Sequence[str],
+        ) -> Self:
+            """Set attribute values, returning self for chaining."""
+            ...
 
-        @runtime_checkable
-        class Mutable(Base, Protocol):
-            """Mutable entry object protocol.
+        def add_attribute(
+            self,
+            name: str,
+            values: Sequence[str],
+        ) -> Self:
+            """Add attribute values, returning self for chaining."""
+            ...
 
-            Extends Base with mutation methods.
-            """
-
-            def set_attribute(
-                self,
-                name: str,
-                values: Sequence[str],
-            ) -> FlextProtocols.Entry.Mutable:
-                """Set attribute values, returning self for chaining."""
-                ...
-
-            def add_attribute(
-                self,
-                name: str,
-                values: Sequence[str],
-            ) -> FlextProtocols.Entry.Mutable:
-                """Add attribute values, returning self for chaining."""
-                ...
-
-            def remove_attribute(
-                self,
-                name: str,
-            ) -> FlextProtocols.Entry.Mutable:
-                """Remove attribute, returning self for chaining."""
-                ...
+        def remove_attribute(
+            self,
+            name: str,
+        ) -> Self:
+            """Remove attribute, returning self for chaining."""
+            ...
 
     # =========================================================================
     # MAPPER PROTOCOLS (For Collection Operations)
     # =========================================================================
 
-    @runtime_checkable
-    class SingleValueMapper[T, R](Protocol):
+    class SingleValueMapper[T, R](BaseProtocol, Protocol):
         """Protocol for mappers that transform single values."""
 
         def __call__(self, value: T) -> R:
             """Map a single value to a result."""
             ...
 
-    @runtime_checkable
-    class KeyValueMapper[T, R](Protocol):
+    class KeyValueMapper[T, R](BaseProtocol, Protocol):
         """Protocol for mappers that transform key-value pairs."""
 
         def __call__(self, key: str, value: T) -> R:
@@ -1141,15 +1238,12 @@ class FlextProtocols:
     # =========================================================================
     # UTILITIES PROTOCOLS
     # =========================================================================
+    class CallableWithHints(
+        BaseProtocol, Protocol
+    ):  # Cannot inherit BaseProtocol due to Python nested class limitations
+        """Protocol for callables that support type hints introspection."""
 
-    class Utilities:
-        """Protocols for utility operations."""
-
-        @runtime_checkable
-        class CallableWithHints(Protocol):
-            """Protocol for callables that support type hints introspection."""
-
-            __annotations__: dict[str, t.GeneralValueType]
+        __annotations__: dict[str, t.GeneralValueType]
 
     # =========================================================================
     # TYPE ALIASES FOR UTILITIES
@@ -1186,11 +1280,11 @@ class FlextProtocols:
     RegisterableService = t.GeneralValueType | BindableLogger
 
     # ServiceFactory: Factory callable that returns RegisterableService
-    type ServiceFactory = ResourceFactory[t.GeneralValueType]
+    type ServiceFactory = FlextProtocols.ResourceFactory[t.GeneralValueType]
     """Factory callable returning any registerable service type.
 
     Broader than t.FactoryCallable (which returns GeneralValueType).
-    Supports factories that create protocols like Log, Ctx, Config, etc.
+    Supports factories that create protocols like Log,             ..., Config, etc.
 
     Usage:
         def create_logger() -> FlextLogger:
@@ -1201,22 +1295,8 @@ class FlextProtocols:
 
 
 p = FlextProtocols
-fc = FlextProtocols
-
-# Export nested protocols for direct import compatibility
-VariadicCallable = FlextProtocols.VariadicCallable
-ValidatorSpec = FlextProtocols.ValidatorSpec
-ResourceFactory = FlextProtocols.ResourceFactory
-ResourceOperation = FlextProtocols.ResourceOperation
-ResourceCleanup = FlextProtocols.ResourceCleanup
 
 __all__ = [
     "FlextProtocols",
-    "ResourceCleanup",
-    "ResourceFactory",
-    "ResourceOperation",
-    "ValidatorSpec",
-    "VariadicCallable",
-    "fc",
     "p",
 ]

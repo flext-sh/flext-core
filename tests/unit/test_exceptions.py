@@ -686,27 +686,19 @@ class Teste:
         error = e.BaseError("Test message", error_code="TEST_ERROR")
         assert str(error) == "[TEST_ERROR] Test message"
 
-    def test_validation_error_extra_kwargs(self) -> None:
-        """Test ValidationError with extra_kwargs - tests line 252."""
-        error = e.ValidationError(
-            "Validation failed",
-            field="test_field",
-            value="test_value",
-            custom_key="custom_value",
-        )
+    @pytest.mark.parametrize(
+        ("error_class", "msg", "custom_attr"),
+        [
+            (e.ValidationError, "Validation failed", "custom_key"),
+            (e.ConfigurationError, "Config failed", "custom_key"),
+        ],
+        ids=["validation_kwargs", "configuration_kwargs"],
+    )
+    def test_exception_extra_kwargs(self, error_class: type[e.BaseError], msg: str, custom_attr: str) -> None:
+        """Test exception classes with extra_kwargs merging."""
+        error = error_class(msg, **{custom_attr: "custom_value"})
         assert error.metadata is not None
-        assert "custom_key" in error.metadata.attributes
-
-    def test_configuration_error_extra_kwargs(self) -> None:
-        """Test ConfigurationError with extra_kwargs - tests line 292."""
-        error = e.ConfigurationError(
-            "Config failed",
-            config_key="test_key",
-            config_source="env",
-            custom_key="custom_value",
-        )
-        assert error.metadata is not None
-        assert "custom_key" in error.metadata.attributes
+        assert custom_attr in error.metadata.attributes
 
     def test_normalize_metadata_fallback(self) -> None:
         """Test _normalize_metadata fallback path - tests line 219."""
@@ -750,66 +742,22 @@ class Teste:
         assert "key1" in error.metadata.attributes
         assert "key2" in error.metadata.attributes
 
-    def test_configuration_error_with_context(self) -> None:
-        """Test ConfigurationError with context - tests line 286."""
-        context = {"key1": "value1"}
-        error = e.ConfigurationError(
-            "Config failed",
-            config_key="test_key",
-            context=context,
-        )
+    @pytest.mark.parametrize(
+        ("error_class", "msg", "context_key"),
+        [
+            (e.ConfigurationError, "Config failed", "key1"),
+            (e.ConnectionError, "Connection failed", "key1"),
+            (e.AuthenticationError, "Auth failed", "key1"),
+            (e.AuthorizationError, "Authz failed", "key1"),
+        ],
+        ids=["config_context", "connection_context", "auth_context", "authz_context"],
+    )
+    def test_exception_with_context(self, error_class: type[e.BaseError], msg: str, context_key: str) -> None:
+        """Test exception classes with context metadata."""
+        context = {context_key: "value1"}
+        error = error_class(msg, context=context)
         assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
-
-    def test_connection_error_with_context(self) -> None:
-        """Test ConnectionError with context - tests lines 325-326."""
-        context = {"key1": "value1"}
-        error = e.ConnectionError(
-            "Connection failed",
-            host=FlextConstants.Network.LOCALHOST,
-            context=context,
-        )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
-
-    def test_timeout_error_with_extra_kwargs(self) -> None:
-        """Test TimeoutError with extra_kwargs - tests line 371."""
-        error = e.TimeoutError(
-            "Timeout",
-            timeout_seconds=30.0,
-            custom_key="custom_value",
-        )
-        assert error.metadata is not None
-        assert "custom_key" in error.metadata.attributes
-
-    def test_authentication_error_with_context(self) -> None:
-        """Test AuthenticationError with context - tests lines 406-407."""
-        context = {"key1": "value1"}
-        error = e.AuthenticationError("Auth failed", user_id="user1", context=context)
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
-
-    def test_authentication_error_with_extra_kwargs(self) -> None:
-        """Test AuthenticationError with extra_kwargs - tests line 413."""
-        error = e.AuthenticationError(
-            "Auth failed",
-            user_id="user1",
-            custom_key="custom_value",
-        )
-        assert error.metadata is not None
-        assert "custom_key" in error.metadata.attributes
-
-    def test_authorization_error_with_context(self) -> None:
-        """Test AuthorizationError with context - tests lines 446-447."""
-        context = {"key1": "value1"}
-        error = e.AuthorizationError(
-            "Authz failed",
-            user_id="user1",
-            resource="resource1",
-            context=context,
-        )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        assert context_key in error.metadata.attributes
 
     def test_extract_from_context_none(self) -> None:
         """Test _extract_context_values with None - tests line 477-478."""
@@ -1044,46 +992,28 @@ class Teste:
     def test_rate_limit_error_with_context(self) -> None:
         """Test RateLimitError with context - tests line 624."""
         context = {"key1": "value1"}
-        error = e.RateLimitError(
-            "Rate limit",
-            limit=100,
-            window_seconds=60,
-            context=context,
-        )
+        error = e.RateLimitError("Rate limit", limit=100, window_seconds=60, context=context)
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
 
     def test_circuit_breaker_error_with_context(self) -> None:
         """Test CircuitBreakerError with context - tests line 659."""
         context = {"key1": "value1"}
-        error = e.CircuitBreakerError(
-            "Circuit open",
-            service="test_service",
-            context=context,
-        )
+        error = e.CircuitBreakerError("Circuit open", service="test_service", context=context)
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
 
     def test_type_error_with_context(self) -> None:
         """Test TypeError with context - tests line 701."""
         context = {"key1": "value1"}
-        error = e.TypeError(
-            "Type error",
-            expected_type=str,
-            actual_type=int,
-            context=context,
-        )
+        error = e.TypeError("Type error", expected_type=str, actual_type=int, context=context)
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
 
     def test_operation_error_with_context(self) -> None:
         """Test OperationError with context - tests lines 757-761."""
         context = {"key1": "value1"}
-        error = e.OperationError(
-            "Operation failed",
-            operation="test_op",
-            context=context,
-        )
+        error = e.OperationError("Operation failed", operation="test_op", context=context)
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
 
