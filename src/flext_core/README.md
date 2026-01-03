@@ -79,7 +79,7 @@ registry = FlextRegistry()
 # Railway-oriented error handling
 result = FlextResult.success("operation completed")
 if result.is_success:
-    data = result.unwrap()
+    data = result.value
 ```
 
 ### Dependency Injection
@@ -91,7 +91,7 @@ from flext_core.loggings import FlextLogger
 container = FlextContainer()
 container.register("logger", FlextLogger.create_module_logger(__name__))
 logger_result = container.get("logger")
-assert logger_result.unwrap() is container.get("logger").unwrap()
+assert logger_result.value is container.get("logger").value
 ```
 
 ### Domain Modeling

@@ -233,7 +233,7 @@ class TestConfigConstants:
         DOES_NOT_HAVE_GET_GLOBAL: str = "does not have get_global_instance method"
         IS_NOT_CALLABLE: str = "is not callable"
         DOES_NOT_IMPLEMENT_HAS_MODEL_DUMP: str = (
-            "does not implement HasModelDump protocol"
+            "Instance does not implement model_dump() method"
         )
         FAILED_TO_SET_PARAMETER: str = "Failed to set parameter '{}'"
         MUST_DEFINE_MODEL_CONFIG: str = "must define model_config"

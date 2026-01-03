@@ -51,6 +51,41 @@ class FlextTestsUtilities(FlextUtilities):
     All FlextUtilities functionality is available via inheritance.
     """
 
+    class Validation(FlextUtilities.Validation):
+        """Validation helpers for tests - extends FlextUtilities.Validation."""
+
+        @staticmethod
+        def validate_pipeline(
+            value: t.GeneralValueType,
+            validators: list[Callable[[t.GeneralValueType], r[bool]]],
+        ) -> r[bool]:
+            """Execute validation pipeline with multiple validators.
+
+            Runs validators sequentially. If any validator fails, returns that failure.
+            If all validators succeed, returns success.
+
+            Args:
+                value: Value to validate
+                validators: List of validator functions, each returns r[bool]
+
+            Returns:
+                FlextResult[bool]: Success if all validators pass, failure from first failure
+
+            """
+            for validator in validators:
+                try:
+                    result = validator(value)
+                    if result.is_failure:
+                        return result
+                    # Validator returned ok(False) - this is still a failure
+                    if result.value is False:
+                        return r[bool].fail("Validator must return r[bool].ok(True)")
+                except TypeError as e:
+                    return r[bool].fail(f"Validator failed: {e}")
+                except Exception as e:
+                    return r[bool].fail(str(e))
+            return r[bool].ok(True)
+
     class Tests:
         """Test-specific utilities namespace.
 

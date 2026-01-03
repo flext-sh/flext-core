@@ -19,7 +19,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import math
 from datetime import datetime
@@ -27,7 +26,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError, field_validator
 
-from flext_core import m, t
+from flext_core import m
 
 
 class ModelScenarios:
@@ -575,9 +574,10 @@ class TestModelIntegration:
             email: str
 
         customer = Customer(name="John", email="john@example.com")
-        customer_dict = customer.model_dump(
-            exclude={"is_initial_version", "is_modified", "uncommitted_events"},
-        )
+        # Create dict with only actual model fields (exclude computed fields)
+        # In Pydantic v2, iterate model_fields and only include existing keys
+        dumped = customer.model_dump()
+        customer_dict = {k: dumped[k] for k in type(customer).model_fields if k in dumped}
         validated = Customer.model_validate(customer_dict)
         assert validated is not None
         assert validated.name == "John"

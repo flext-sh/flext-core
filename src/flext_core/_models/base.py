@@ -14,8 +14,9 @@ from __future__ import annotations
 
 import re
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal, Self, cast
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -1283,7 +1284,7 @@ class FlextModelFoundation:
             new_annotations[field_name] = field_type
 
             # Create new class dynamically using type() for type-checker compatibility
-            new_model = type(
+            new_model: type[FlextModelFoundation.DynamicRebuildModel] = type(
                 f"{cls.__name__}WithExtra",
                 (cls,),
                 {"__annotations__": new_annotations},
@@ -1305,17 +1306,33 @@ class FlextModelFoundation:
             return getattr(self, name, default)
 
         @classmethod
-        def rebuild_with_validator(cls, validator_func: callable) -> type[Self]:
+        def rebuild_with_validator(
+            cls, validator_func: Callable[[t.GeneralValueType], t.GeneralValueType]
+        ) -> type[FlextModelFoundation.DynamicRebuildModel]:
             """Rebuild model with additional validator."""
 
-            class ValidatedModel(cls):
-                @field_validator("value")
-                @classmethod
-                def custom_validator(cls, v: t.GeneralValueType) -> t.GeneralValueType:
-                    return validator_func(v)
+            # Create validator function (without decorators)
+            def custom_validator(
+                _cls: type,
+                v: t.GeneralValueType,
+            ) -> t.GeneralValueType:
+                """Apply custom validator to value field."""
+                return validator_func(v)
 
-            ValidatedModel.model_rebuild()
-            return ValidatedModel
+            # Create new class dynamically using type() for type-checker compatibility
+            new_model = type(
+                f"{cls.__name__}WithValidator",
+                (cls,),
+                {
+                    "custom_validator": field_validator("value")(
+                        classmethod(custom_validator)
+                    )
+                },
+            )
+
+            # Rebuild the model schema - cast for type checker compatibility
+            cast("type[BaseModel]", new_model).model_rebuild()
+            return cast("type[FlextModelFoundation.DynamicRebuildModel]", new_model)
 
     class DynamicModel(BaseModel):
         """Model demonstrating dynamic reconstruction capabilities."""

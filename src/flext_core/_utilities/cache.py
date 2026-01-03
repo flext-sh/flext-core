@@ -41,16 +41,13 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
 from flext_core.typings import t
 
 

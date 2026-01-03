@@ -32,9 +32,9 @@ import pytest
 from pydantic import Field, ValidationError, field_validator
 
 from flext_core import (
-    FlextTypes as t,
     FlextConstants as c,
     FlextModels as m,
+    FlextTypes as t,
 )
 from flext_tests.matchers import tm
 from flext_tests.utilities import u
@@ -130,9 +130,10 @@ class TestFlextModels:
             msg="Entity must have unique_id",
         )
         tm.that(entity.unique_id, is_=str, msg="Entity unique_id must be string")
-        entity_dict = entity.model_dump(
-            exclude={"is_initial_version", "is_modified", "uncommitted_events"},
-        )
+        # Create dict with only actual model fields (exclude computed fields)
+        # In Pydantic v2, iterate model_fields and only include existing keys
+        dumped = entity.model_dump()
+        entity_dict = {k: dumped[k] for k in type(entity).model_fields if k in dumped}
         tm.that(entity_dict, has="name", msg="Entity dict must contain name")
         tm.that(entity_dict, has="email", msg="Entity dict must contain email")
         validated_entity = entity.model_validate(entity_dict)

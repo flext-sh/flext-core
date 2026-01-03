@@ -549,7 +549,7 @@ def validate_user(data: dict) -> FlextResult[UserModel]:
 # Usage
 result = validate_user({"email": "user@example.com", "password": "secret123"})
 if result.is_success:
-    user = result.unwrap()
+    user = result.value
 else:
     print(f"Validation failed: {result.error}")
 ```

@@ -84,7 +84,7 @@ class TestFlextResult:
         result = FlextResult[int].ok(42)
         assert result.is_success
         assert not result.is_failure
-        assert result.unwrap() == 42
+        assert result.value == 42
 
     def test_fail_creates_failure_result(self):
         """Test creating failure result."""
@@ -101,7 +101,7 @@ class TestFlextResult:
             .map(lambda x: x + 1)
         )
         assert result.is_success
-        assert result.unwrap() == 11
+        assert result.value == 11
 
     def test_map_ignores_failure(self):
         """Test map on failure result."""
@@ -122,7 +122,7 @@ class TestFlextResult:
             .flat_map(double)
             .flat_map(double)
         )
-        assert result.unwrap() == 20
+        assert result.value == 20
 
     def test_flat_map_stops_on_failure(self):
         """Test flat_map stops at first failure."""
@@ -147,7 +147,7 @@ class TestFlextResult:
             .filter(lambda x: x > 10, "Value too small")
         )
         assert result.is_success
-        assert result.unwrap() == 15
+        assert result.value == 15
 
     def test_filter_fails_for_false_predicate(self):
         """Test filter with failing predicate."""
@@ -197,7 +197,7 @@ class TestUserValidation:
         user = User(id="1", name="Alice", email="alice@example.com", age=25)
         result = validate_user(user)
         assert result.is_success
-        assert result.unwrap().name == "Alice"
+        assert result.value.name == "Alice"
 
     def test_empty_name_fails(self):
         """Test empty name fails validation."""
@@ -266,7 +266,7 @@ class TestUserService:
         """Test creating user."""
         result = service.create_user("1", "Alice", "alice@example.com")
         assert result.is_success
-        assert result.unwrap()["name"] == "Alice"
+        assert result.value["name"] == "Alice"
 
     def test_create_duplicate_user_fails(self, service):
         """Test creating duplicate user fails."""
@@ -280,7 +280,7 @@ class TestUserService:
         service.create_user("1", "Alice", "alice@example.com")
         result = service.get_user("1")
         assert result.is_success
-        assert result.unwrap()["name"] == "Alice"
+        assert result.value["name"] == "Alice"
 
     def test_get_nonexistent_user_fails(self, service):
         """Test getting nonexistent user fails."""
@@ -348,7 +348,7 @@ class TestUserRegistration:
             "1", "Alice", "alice@example.com"
         )
         assert result.is_success
-        user = result.unwrap()
+        user = result.value
         assert user["name"] == "Alice"
         assert services["user"].get_user("1").is_success
 
@@ -555,7 +555,7 @@ class TestExternalServiceIntegration:
         service_result = container.get("api_service")
         assert service_result.is_success
 
-        service = service_result.unwrap()
+        service = service_result.value
         result = service.get_user(1)
 
         assert result.is_success
@@ -576,7 +576,7 @@ class TestExternalServiceIntegration:
             container.register("user_service", user_service)
             user_service_result = container.get("user_service")
 
-        user_service = user_service_result.unwrap()
+        user_service = user_service_result.value
         result = user_service.register_and_email_user("1", "Alice")
 
         assert result.is_success
@@ -727,7 +727,7 @@ def test_create():
 # ✅ CORRECT - Fixture for common setup
 @pytest.fixture
 def authenticated_user(service):
-    return service.create_user("1", "Alice", "alice@example.com").unwrap()
+    return service.create_user("1", "Alice", "alice@example.com").value
 
 def test_update_user_profile(authenticated_user):
     result = service.update_profile(authenticated_user["id"], "New Name")
@@ -735,7 +735,7 @@ def test_update_user_profile(authenticated_user):
 
 # ❌ WRONG - Repeated setup in each test
 def test_update_user_profile_1():
-    user = service.create_user("1", "Alice", "alice@example.com").unwrap()
+    user = service.create_user("1", "Alice", "alice@example.com").value
     result = service.update_profile(user["id"], "New Name")
     assert result.is_success
 ```

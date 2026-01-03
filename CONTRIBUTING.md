@@ -121,7 +121,7 @@ def process_data(data: str) -> FlextResult[str]:
     Example:
         >>> result = process_data("hello")
         >>> if result.success:
-        ...     print(result.unwrap())
+        ...     print(result.value)
     """
     if not data:
         return FlextResult[None].fail("Data cannot be empty")
@@ -177,7 +177,7 @@ class TestFlextResult:
     def test_map_operation(self, value, expected):
         """Test map transformation."""
         result = FlextResult[None].ok(value).map(str.upper)
-        assert result.unwrap() == expected
+        assert result.value == expected
 ```
 
 #### Test Categories
@@ -223,7 +223,7 @@ def complex_function(
     Example:
         >>> result = complex_function("test", 42)
         >>> if result.success:
-        ...     data = result.unwrap()
+        ...     data = result.value
         ...     print(data["key1"])
 
     Note:
@@ -272,7 +272,7 @@ git commit -m "docs(api): update FlextModels.Entity examples"
 # Breaking change
 git commit -m "feat(core): redesign FlextResult API
 
-BREAKING CHANGE: FlextResult.unwrap() now raises on failure"
+BREAKING CHANGE: FlextResult.value now raises on failure"
 ```
 
 ## Architecture Guidelines

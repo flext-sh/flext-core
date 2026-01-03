@@ -139,13 +139,13 @@ class RegistryDispatcherService(s[t.ServiceMetadataMapping]):
         registry = FlextRegistry()
 
         # Register single handler - Protocol-based handler registration
-        create_handler: p.Application.Handler = CreateUserHandler()
+        create_handler: p.Handler = CreateUserHandler()
         register_result = registry.register_handler(create_handler)
         if register_result.is_success:
             print("✅ Handler registered successfully")
 
         # Batch registration - Protocol-based handler registration
-        get_handler: p.Application.Handler = GetUserHandler()
+        get_handler: p.Handler = GetUserHandler()
         batch_result = registry.register_handlers([get_handler])
         if batch_result.is_success:
             summary = batch_result.value
@@ -156,11 +156,11 @@ class RegistryDispatcherService(s[t.ServiceMetadataMapping]):
         """Show dispatcher operations."""
         print("\n=== Dispatcher Operations ===")
 
-        dispatcher: p.Application.CommandBus = FlextDispatcher()
+        dispatcher: p.CommandBus = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler: p.Application.Handler = CreateUserHandler()
+        create_handler: p.Handler = CreateUserHandler()
         _ = registry.register_handler(create_handler)
 
         # Dispatch command - Pydantic models are compatible with t.GeneralValueType
@@ -180,12 +180,12 @@ class RegistryDispatcherService(s[t.ServiceMetadataMapping]):
         """Show registry and dispatcher integration."""
         print("\n=== Registry/Dispatcher Integration ===")
 
-        dispatcher: p.Application.CommandBus = FlextDispatcher()
+        dispatcher: p.CommandBus = FlextDispatcher()
         registry = FlextRegistry(dispatcher=dispatcher)
 
         # Register handlers - Protocol-based handler registration
-        create_handler: p.Application.Handler = CreateUserHandler()
-        get_handler: p.Application.Handler = GetUserHandler()
+        create_handler: p.Handler = CreateUserHandler()
+        get_handler: p.Handler = GetUserHandler()
         _ = registry.register_handler(create_handler)
         _ = registry.register_handler(get_handler)
 

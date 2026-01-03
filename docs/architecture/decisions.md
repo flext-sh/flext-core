@@ -218,7 +218,7 @@ Layer 1 contracts example:
 # GUARANTEED in 1.x
 FlextResult[T].ok(value)
 FlextResult[T].fail(error)
-FlextResult[T].unwrap()
+FlextResult[T].value
 FlextResult[T].is_success
 FlextResult[T].value  # AND .data
 ```

@@ -342,7 +342,7 @@ container.py:1032: # For new code, use FlextContainer() directly
 
 **Guide Claims**:
 
-- ❌ Don't assume service exists: `container.get("x").unwrap()`
+- ❌ Don't assume service exists: `container.get("x").value`
 - ✅ Check FlextResult before unwrapping
 
 **Source Code Evidence** (container.py:491):

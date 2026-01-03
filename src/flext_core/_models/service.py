@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Callable
 from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
@@ -226,7 +227,9 @@ class FlextModelsService:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Operation name",
         )
-        operation_callable: p.VariadicCallable[p.ResultLike[t.GeneralValueType]]
+        operation_callable: Callable[..., p.ResultLike[t.GeneralValueType]] = Field(
+            description="Callable operation returning result",
+        )
         arguments: FlextModelsService.ServiceParameters | None = None
         keyword_arguments: FlextModelsService.ServiceParameters | None = None
         timeout_seconds: float = Field(
@@ -248,11 +251,14 @@ class FlextModelsService:
                 self.retry_config = FlextModelsService.RetryConfiguration()
             return self
 
-        @field_validator("operation_callable", mode="after")
+        @field_validator("operation_callable", mode="before")
         @classmethod
         def validate_operation_callable(
             cls,
-            v: p.VariadicCallable[p.ResultLike[t.GeneralValueType]],
-        ) -> p.VariadicCallable[p.ResultLike[t.GeneralValueType]]:
+            v: object,
+        ) -> Callable[..., p.ResultLike[t.GeneralValueType]]:
             """Validate operation is callable."""
-            return v
+            if not callable(v):
+                msg = f"Operation callable must be callable, got {type(v).__name__}"
+                raise TypeError(msg)
+            return v  # type: ignore[return-value]

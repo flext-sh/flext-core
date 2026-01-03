@@ -99,7 +99,7 @@ registry.register_event(UserCreated, service.handle_user_created)
 
 result = FlextDispatcher(registry=registry).dispatch(CreateUser(email="user@example.com"))
 if result.is_success:
-    print(f"Created user: {result.unwrap()}")
+    print(f"Created user: {result.value}")
 ```
 
 Domain models and services remain independent of frameworks while integrating cleanly with the dispatcher and application orchestration.

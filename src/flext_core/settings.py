@@ -22,18 +22,22 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Namespace, T_Settings, t
 from flext_core.utilities import u
 
 
-class FlextSettings(BaseSettings, FlextRuntime):
+class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)
     Provides enterprise-grade configuration management for the FLEXT ecosystem
-    through Pydantic v2 BaseSettings, implementing structural typing via
-    p.Configurable (duck typing - no inheritance required).
+    through p.ProtocolSettings base class with natural protocol multi-inheritance.
+
+    Protocol Implementation: Inherits from p.ProtocolSettings which uses
+    ProtocolModelMeta metaclass to resolve the Pydantic/Protocol metaclass conflict.
+    Implements p.Config protocol via direct inheritance (not structural typing).
 
     Core Features:
     - Pydantic v2 BaseSettings with type-safe configuration
@@ -41,6 +45,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     - Thread-safe singleton pattern
     - Dependency injection integration
     - Runtime configuration updates
+    - Protocol compliance via inheritance (p.Config, p.ProtocolSettings)
     """
 
     # Singleton pattern
@@ -54,6 +59,23 @@ class FlextSettings(BaseSettings, FlextRuntime):
     # Used for configuration instance management across the FLEXT ecosystem.
     _instances: ClassVar[dict[type[BaseSettings], BaseSettings]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
+
+    # Note: implements_protocol() and _protocol_name() are inherited from
+    # p.ProtocolSettings. The metaclass ProtocolModelMeta handles protocol
+    # detection and compliance validation at class definition time.
+
+    # =========================================================================
+    # p.Config Protocol Implementation (validated at class definition)
+    # =========================================================================
+
+    def model_copy(
+        self,
+        *,
+        update: Mapping[str, t.FlexibleValue] | None = None,
+        deep: bool = False,
+    ) -> Self:
+        """Clone configuration with optional updates (p.Config protocol)."""
+        return super().model_copy(update=update, deep=deep)
 
     # Configuration fields
     # env_file resolved at module load time via FLEXT_ENV_FILE env var

@@ -50,7 +50,7 @@ container = FlextContainer.get_global()
 result = container.get_typed("logger", FlextLogger)
 
 if result.is_success:
-    logger: FlextLogger = result.unwrap()  # Type is known
+    logger: FlextLogger = result.value  # Type is known
     logger.info("Message")  # IDE autocomplete works
 ```
 
@@ -150,7 +150,7 @@ container = FlextContainer.get_global()
 result = container.get("logger")
 
 if result.is_success:
-    logger = result.unwrap()
+    logger = result.value
     logger.info("Logged message")
 else:
     print(f"❌ Service not found: {result.error}")
@@ -167,7 +167,7 @@ container = FlextContainer.get_global()
 result = container.get_typed("logger", FlextLogger)
 
 if result.is_success:
-    logger: FlextLogger = result.unwrap()  # Type checker knows exact type
+    logger: FlextLogger = result.value  # Type checker knows exact type
     logger.info("Message")
 ```
 
@@ -191,7 +191,7 @@ def initialize_application() -> FlextResult[None]:
     if config_result.is_failure:
         return config_result
 
-    config = config_result.unwrap()
+    config = config_result.value
 
     # Register configuration
     register_result = container.register("config", config)
@@ -260,9 +260,9 @@ def resolve_payment_service() -> FlextResult[PaymentService]:
 
     # Construct service with resolved dependencies
     service = PaymentService(
-        database=db_result.unwrap(),
-        logger=logger_result.unwrap(),
-        config=config_result.unwrap(),
+        database=db_result.value,
+        logger=logger_result.value,
+        config=config_result.value,
     )
 
     return FlextResult[PaymentService].ok(service)
@@ -270,7 +270,7 @@ def resolve_payment_service() -> FlextResult[PaymentService]:
 # Usage
 service_result = resolve_payment_service()
 if service_result.is_success:
-    service = service_result.unwrap()
+    service = service_result.value
     result = service.process_payment(1000.00)
 ```
 
@@ -303,15 +303,15 @@ print("Factory registered (service not created yet)")
 # First access - service is created
 print("Getting service...")
 result1 = container.get("expensive")
-print(f"First access: {result1.unwrap().do_work()}")
+print(f"First access: {result1.value.do_work()}")
 
 # Second access - same instance (singleton behavior)
 print("Getting service again...")
 result2 = container.get("expensive")
-print(f"Second access: {result2.unwrap().do_work()}")
+print(f"Second access: {result2.value.do_work()}")
 
 # Both are the same instance
-assert result1.unwrap() is result2.unwrap()
+assert result1.value is result2.value
 ```
 
 ### Pattern 4: Conditional Service Registration
@@ -328,7 +328,7 @@ def setup_services_based_on_config() -> FlextResult[None]:
     if config_result.is_failure:
         return config_result
 
-    config = config_result.unwrap()
+    config = config_result.value
 
     # Conditional registration
     if config.debug:
@@ -372,7 +372,7 @@ def setup_database_lifecycle() -> FlextResult[None]:
     if config_result.is_failure:
         return config_result
 
-    config = config_result.unwrap()
+    config = config_result.value
 
     # Create and register database
     db = DatabaseConnection(config.database_url)
@@ -466,7 +466,7 @@ def validate_all_services() -> FlextResult[None]:
             )
 
         # Could add service-specific validation here
-        service = service_result.unwrap()
+        service = service_result.value
         if not validate_service(service):
             return FlextResult[None].fail(
                 f"Service validation failed: {service_name}",
@@ -489,7 +489,7 @@ container = FlextContainer.get_global()
 result: FlextResult[FlextLogger] = container.get_typed("logger", FlextLogger)
 
 if result.is_success:
-    logger: FlextLogger = result.unwrap()
+    logger: FlextLogger = result.value
     logger.info("Message")  # IDE knows all methods
 ```
 
@@ -500,7 +500,7 @@ if result.is_success:
 result = container.get("logger")  # Returns FlextResult[object]
 
 if result.is_success:
-    logger = result.unwrap()  # Type is object
+    logger = result.value  # Type is object
     # IDE can't help with autocomplete
 ```
 
@@ -538,8 +538,8 @@ class UserHandler:
         if db_result.is_failure or logger_result.is_failure:
             return FlextResult[dict].fail("Dependencies unavailable")
 
-        db = db_result.unwrap()
-        logger = logger_result.unwrap()
+        db = db_result.value
+        logger = logger_result.value
 
         # Use dependencies
         logger.info(f"Creating user: {user_data}")
@@ -574,7 +574,7 @@ class TestUserService(unittest.TestCase):
         result = handler.create_user({"name": "Bob"})
 
         assert result.is_success
-        assert result.unwrap()["name"] == "Bob"
+        assert result.value["name"] == "Bob"
 ```
 
 ## Best Practices
@@ -597,12 +597,12 @@ container2 = FlextContainer()  # Different instance!
 # ✅ CORRECT - Always check FlextResult
 result = container.get("service")
 if result.is_success:
-    service = result.unwrap()
+    service = result.value
 else:
     print(f"Failed: {result.error}")
 
 # ❌ WRONG - Assuming success
-service = container.get("service").unwrap()  # May crash
+service = container.get("service").value  # May crash
 ```
 
 ### 3. Register Early
@@ -612,7 +612,7 @@ service = container.get("service").unwrap()  # May crash
 def initialize():
     container = FlextContainer.get_global()
     container.register("logger", FlextLogger())
-    container.register("config", FlextSettings.load().unwrap())
+    container.register("config", FlextSettings.load().value)
 
 initialize()
 

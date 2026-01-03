@@ -553,8 +553,8 @@ class FlextUtilitiesConfiguration:
             ):
                 # callable() check ensures this is callable - call directly
                 instance = get_global_instance_attr()
-                if isinstance(instance, p.HasModelDump):
-                    # Type narrowing: instance is HasModelDump
+                if FlextUtilitiesGuards.is_pydantic_model(instance):
+                    # Type narrowing: instance implements model_dump()
                     has_model_dump_instance: p.HasModelDump = instance
                     return FlextUtilitiesConfiguration.get_parameter(
                         has_model_dump_instance,
@@ -619,9 +619,9 @@ class FlextUtilitiesConfiguration:
 
         # callable() check above ensures this is callable - call directly
         instance = get_global_instance_attr()
-        if not isinstance(instance, p.HasModelDump):
+        if not FlextUtilitiesGuards.is_pydantic_model(instance):
             return r[bool].fail(
-                "Instance does not implement HasModelDump protocol",
+                "Instance does not implement model_dump() method",
             )
 
         # Type narrowing: instance is HasModelDump

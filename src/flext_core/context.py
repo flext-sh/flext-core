@@ -47,6 +47,10 @@ class FlextContext(FlextRuntime):
     - Serialization helpers for propagating context via headers or payloads
     """
 
+    def _protocol_name(self) -> str:
+        """Return the protocol name for introspection."""
+        return "FlextContext"
+
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
         ctx_value: object,

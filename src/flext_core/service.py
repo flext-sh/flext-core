@@ -397,8 +397,9 @@ class FlextService[TDomainResult](
         """Service-scoped execution context."""
         return u.require_initialized(self._context, "Context")
 
+    @override
     @property
-    def config(self) -> FlextSettings:
+    def config(self) -> p.Config:
         """Service-scoped configuration clone."""
         return u.require_initialized(self._config, "Config")
 

@@ -43,7 +43,7 @@ result = FlextResult[str].ok("value")
 
 # Check success state
 if result.is_success:
-    value = result.unwrap()
+    value = result.value
     print(f"Success: {value}")
 
 # Check failure state
@@ -64,7 +64,7 @@ from flext_core import FlextResult
 result = FlextResult[int].ok(42)
 
 # Get value (raises on failure)
-value = result.unwrap()  # 42
+value = result.value  # 42
 
 # Get value with default
 value = result.unwrap_or(0)  # 42
@@ -117,7 +117,7 @@ email_result = (
 )
 
 if email_result.is_success:
-    print(f"✅ {email_result.unwrap()}")
+    print(f"✅ {email_result.value}")
 else:
     print(f"❌ {email_result.error}")
 ```
@@ -246,7 +246,7 @@ def register_user(username: str, email: str, password: str) -> FlextResult[str]:
 # Test
 result = register_user("alice", "alice@example.com", "SecurePass123")
 if result.is_success:
-    print(f"✅ {result.unwrap()}")
+    print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
 ```
@@ -296,7 +296,7 @@ result = (
 )
 
 if result.is_success:
-    print(f"✅ {result.unwrap()}")
+    print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
 ```
@@ -339,7 +339,7 @@ service = ExternalService()
 
 result = service.get_user_data("123")
 if result.is_success:
-    print(f"User: {result.unwrap()}")
+    print(f"User: {result.value}")
 else:
     print(f"Error: {result.error}")
 ```
@@ -361,7 +361,7 @@ result = risky_operation()
 if result.is_failure:
     result = fallback_operation()
 
-print(f"Result: {result.unwrap()}")  # "Fallback operation succeeded"
+print(f"Result: {result.value}")  # "Fallback operation succeeded"
 
 # Or use lash pattern (error handling with FlextResult)
 def handle_failure(error: str) -> FlextResult[str]:
@@ -386,7 +386,7 @@ def process_items(items: List[str]) -> FlextResult[List[str]]:
     for item in items:
         result = process_item(item)
         if result.is_success:
-            results.append(result.unwrap())
+            results.append(result.value)
         else:
             errors.append(result.error)
 
@@ -407,7 +407,7 @@ def process_item(item: str) -> FlextResult[str]:
 # Usage
 result = process_items(["item1", "item2", "item3"])
 if result.is_success:
-    print(f"✅ Processed: {result.unwrap()}")
+    print(f"✅ Processed: {result.value}")
 else:
     print(f"❌ {result.error}")
 ```
@@ -486,7 +486,7 @@ result = (
 user_id = get_user_id()
 if user_id.is_failure:
     return user_id
-validation = validate_user(user_id.unwrap())
+validation = validate_user(user_id.value)
 if validation.is_failure:
     return validation
 # ... etc
@@ -516,7 +516,7 @@ def api_handler(request) -> dict:
     result = process_request(request)
 
     if result.is_success:
-        return {"status": "success", "data": result.unwrap()}
+        return {"status": "success", "data": result.value}
     else:
         logger.error(f"Request failed: {result.error}")
         return {"status": "error", "message": result.error}

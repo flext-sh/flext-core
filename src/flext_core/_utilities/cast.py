@@ -10,14 +10,13 @@ from __future__ import annotations
 
 import inspect
 import warnings
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
 from flext_core.typings import t
 
 T = TypeVar("T")
@@ -98,19 +97,37 @@ class FlextUtilitiesCast:
 
     @staticmethod
     def callable(value: t.GeneralValueType, target_type: type) -> t.GeneralValueType:
-        """Cast callable to target type."""
+        """Validate and return callable value.
+
+        This method validates that a value is callable and returns the original
+        callable. The target_type parameter indicates the expected return type
+        of the callable (for documentation purposes), not a type to convert to.
+
+        Args:
+            value: Value to validate as callable
+            target_type: Expected return type of the callable (informational)
+
+        Returns:
+            The original callable if value is callable
+
+        Raises:
+            TypeError: If value is not callable or target_type is a scalar type
+
+        """
         # Preserve original type before isinstance check (avoids mypy narrowing to object)
         original_value: t.GeneralValueType = value
         if isinstance(value, target_type):
             return original_value
         if callable(value):
-            try:
-                result: t.GeneralValueType = target_type(value)
-                return result
-            except (TypeError, ValueError) as err:
+            # Validate that target_type is not a numeric/constructor type
+            # int, float, bool, complex should not be used as targets for callable casts
+            disallowed_types = {int, float, bool, complex}
+            if target_type in disallowed_types:
                 target_name = getattr(target_type, "__name__", str(target_type))
-                error_msg = f"Cannot cast callable to {target_name}: {err}"
-                raise TypeError(error_msg) from err
+                error_msg = f"Cannot cast callable to {target_name}"
+                raise TypeError(error_msg)
+            # Return the original callable unchanged - don't try to convert it
+            return original_value
         source_name = getattr(type(value), "__name__", str(type(value)))
         target_name = getattr(target_type, "__name__", str(target_type))
         error_msg = f"Cannot cast {source_name} to {target_name}"

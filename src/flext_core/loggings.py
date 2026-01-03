@@ -54,6 +54,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     # Format: {log_level: {context_key: context_value}}
     _level_contexts: ClassVar[t.StringConfigurationDictDict] = {}
 
+    # Protocol compliance: BindableLogger._context property
+    @property
+    def _context(self) -> dict[str, object]:
+        """Context mapping for BindableLogger protocol compliance."""
+        return {}
+
     # NOTE: _configure_structlog_if_needed() wrapper method REMOVED
     # Applications must call FlextRuntime.configure_structlog() explicitly at startup
     # This eliminates wrapper indirection and makes configuration responsibility clear

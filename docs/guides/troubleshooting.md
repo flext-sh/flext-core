@@ -204,7 +204,7 @@ if container.get("logger").is_failure:
 # Use safely
 logger_result = container.get("logger")
 if logger_result.is_success:
-    logger = logger_result.unwrap()
+    logger = logger_result.value
     logger.info("Message")
 else:
     print(f"Error: {logger_result.error}")
@@ -404,7 +404,7 @@ def connect_to_database(url: str, timeout: int = 5) -> FlextResult[Connection]:
 # Usage
 result = connect_to_database("postgresql://localhost/myapp", timeout=10)
 if result.is_success:
-    connection = result.unwrap()
+    connection = result.value
 else:
     print(f"Error: {result.error}")
 ```

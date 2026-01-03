@@ -99,7 +99,7 @@ container.register("logger", FlextLogger(__name__), singleton=True)
 
 logger_result = container.get("logger")
 if logger_result.is_success:
-    logger = logger_result.unwrap()
+    logger = logger_result.value
     logger.info("Application started")
 ```
 
