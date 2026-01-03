@@ -14,21 +14,19 @@ from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from re import Pattern
-from types import ModuleType
 from typing import (
     Annotated,
     Literal,
     ParamSpec,
-    Protocol,
-    Self,
     TypeAlias,
     TypedDict,
     TypeVar,
-    runtime_checkable,
 )
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from flext_core.constants import FlextConstants
 
 # LaxStr compatibility for external integrations (LDAP, etc.)
 
@@ -237,15 +235,20 @@ class FlextTypes:
     # Conversion Mode Types - Used in FlextUtilitiesConversion.conversion()
     # =========================================================================
     # Literal types for conversion function mode parameter overloads
-    type ConversionModeToStr = Literal["to_str"]
-    type ConversionModeToStrList = Literal["to_str_list"]
-    type ConversionModeNormalize = Literal["normalize"]
-    type ConversionModeJoin = Literal["join"]
+    # Values from FlextConstants.Utilities.ConversionMode StrEnum
+    type ConversionModeToStr = Literal[FlextConstants.Utilities.ConversionMode.TO_STR]
+    type ConversionModeToStrList = Literal[
+        FlextConstants.Utilities.ConversionMode.TO_STR_LIST
+    ]
+    type ConversionModeNormalize = Literal[
+        FlextConstants.Utilities.ConversionMode.NORMALIZE
+    ]
+    type ConversionModeJoin = Literal[FlextConstants.Utilities.ConversionMode.JOIN]
     type ConversionMode = (
-        ConversionModeToStr
-        | ConversionModeToStrList
-        | ConversionModeNormalize
-        | ConversionModeJoin
+        FlextTypes.ConversionModeToStr
+        | FlextTypes.ConversionModeToStrList
+        | FlextTypes.ConversionModeNormalize
+        | FlextTypes.ConversionModeJoin
     )
 
     # MetadataAttributeValue - ALIGNED with GeneralValueType primitive types
@@ -833,104 +836,6 @@ class FlextTypes:
     # Note: TypedDict cannot be generic, so BatchResultDict is used directly
     # Type narrowing for results: list[T] is done at usage site based on operation return type
     # Users should use BatchResultDict directly
-
-    @runtime_checkable
-    class ContextLike(Protocol):
-        """Context protocol for type safety without circular imports.
-
-        Defined in typings.py (Tier t) to allow RuntimeBootstrapOptions
-        to use proper typing instead of `object`. Full context protocol
-        p.Context.Ctx in protocols.py (Tier p) extends this.
-
-        Methods use generic return types (object) for structural compatibility
-        with p.Ctx which uses ResultLike[T] (also covariant with object).
-        """
-
-        def clone(self) -> Self:
-            """Clone context for isolated execution."""
-            ...
-
-        def set(
-            self,
-            key: str,
-            value: FlextTypes.GeneralValueType,
-            scope: str = ...,
-        ) -> object:
-            """Set a context value. Returns Result-like object."""
-            ...
-
-        def get(
-            self,
-            key: str,
-            scope: str = ...,
-        ) -> object:
-            """Get a context value. Returns Result-like object."""
-            ...
-
-    class RuntimeBootstrapOptions(TypedDict, total=False):
-        """Typed dictionary for runtime bootstrap options.
-
-        Business Rule: TypedDict uses dict[str, ...] for field types because
-        TypedDict defines the structure of a dictionary with known keys.
-        All fields are optional (total=False) as subclasses can override
-        only specific options. This TypedDict matches the signature of
-        FlextRuntime.create_service_runtime() to reduce casts and improve
-        type safety.
-
-        Audit Implication: Used for runtime bootstrap configuration in service
-        initialization. Complete configuration ensures proper runtime lifecycle
-        management and audit trail completeness for service operations.
-        """
-
-        config_type: type[BaseModel]
-        """Config type for service runtime (defaults to FlextSettings)."""
-
-        config_overrides: Mapping[str, FlextTypes.FlexibleValue]
-        """Configuration overrides to apply to the config instance."""
-
-        context: FlextTypes.ContextLike
-        """Context instance for service runtime.
-
-        Uses ContextLike protocol (defined above) for type safety without
-        circular imports. Full p.Context.Ctx extends this protocol.
-        """
-
-        subproject: str
-        """Subproject identifier for scoped container creation."""
-
-        services: Mapping[str, FlextTypes.GeneralValueType]
-        """Service registrations for container.
-
-        Note: BaseModel is already included in GeneralValueType.
-        """
-
-        factories: Mapping[
-            str,
-            Callable[
-                [],
-                (
-                    FlextTypes.ScalarValue
-                    | Sequence[FlextTypes.ScalarValue]
-                    | Mapping[str, FlextTypes.ScalarValue]
-                ),
-            ],
-        ]
-        """Factory registrations for container."""
-
-        resources: Mapping[str, Callable[[], FlextTypes.GeneralValueType]]
-        """Resource registrations for container."""
-
-        container_overrides: Mapping[str, FlextTypes.FlexibleValue]
-        """Container configuration overrides."""
-
-        wire_modules: Sequence[ModuleType]
-        """Modules to wire for dependency injection."""
-
-        wire_packages: Sequence[str]
-        """Packages to wire for dependency injection."""
-
-        wire_classes: Sequence[type]
-        """Classes to wire for dependency injection."""
 
     # =====================================================================
     # VALIDATION TYPES (Python 3.13+ Annotated with Pydantic constraints)

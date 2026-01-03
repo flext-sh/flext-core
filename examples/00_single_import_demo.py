@@ -84,7 +84,7 @@ def validate_transform_user(
             ),
             u.validate_pattern(email, c.Platform.PATTERN_EMAIL, "email"),
         ],
-        lambda r: r,
+        identity,
     ).flat_map(
         lambda _: r.ok(
             UserProfile(
@@ -118,6 +118,7 @@ class UserService:
 
     def __init__(self) -> None:
         """Initialize with centralized logger and metrics."""
+        super().__init__()
         self.logger = FlextLogger.create_module_logger(__name__)
         self.operation_count = 0
 
@@ -140,8 +141,9 @@ class UserService:
 
             # Railway pattern with advanced functional composition (DRY)
             return (
-                self._validate_data(user_data)
-                .flat_map(lambda _: validate_transform_user(user_data))
+                self
+                ._validate_data(user_data)
+                .flat_map(lambda _: self._validate_and_transform(user_data, _))
                 .map(self._log_success)
             )
 
@@ -165,12 +167,23 @@ class UserService:
     @staticmethod
     def _activate_user(user: UserProfile) -> r[UserProfile]:
         """Activate user using domain business logic - railway pattern."""
-        return user.activate().map(lambda _: user)
+
+        def return_user(_: object) -> UserProfile:
+            """Return the user after activation."""
+            return user
+
+        return user.activate().map(return_user)
 
     def _log_success(self, user: UserProfile) -> UserProfile:
         """Log success and return user (railway pattern)."""
         self.logger.debug(f"User {user.name} activated successfully")
         return user
+
+    def _validate_and_transform(
+        self, user_data: t.ConfigurationDict, _: object
+    ) -> r[UserProfile]:
+        """Validate and transform user data for flat_map."""
+        return validate_transform_user(user_data)
 
     def _log_final_result(
         self,
@@ -214,7 +227,8 @@ def demonstrate_utilities() -> None:
     ]
 
     result = (
-        r.traverse(validation_results, lambda r: r)
+        r
+        .traverse(validation_results, lambda r: r)
         .flat_map(lambda _: cache_result)
         .map(
             lambda cache_cleared: "\n".join([
@@ -226,7 +240,7 @@ def demonstrate_utilities() -> None:
     )
 
     # Safe output with railway pattern
-    result.map(print)
+    _ = result.map(print)
 
 
 # Advanced exception handling with comprehensive error integration (DRY + SRP)
@@ -239,40 +253,68 @@ def demonstrate_exceptions() -> None:
         ("Invalid email", "email", "not-an-email"),
     )
 
-    r.traverse(
-        list(
-            starmap(
-                lambda msg, field, value: (
-                    r.fail(
-                        e.ValidationError(
-                            msg,
-                            field=field,
-                            value=value,
-                            error_code=c.Errors.VALIDATION_ERROR,
-                        ).message,
-                        error_code=c.Errors.VALIDATION_ERROR,
-                    )
-                    .map(
-                        lambda _: (
-                            f"Error: {field}={value}, code: {c.Errors.VALIDATION_ERROR}, railway: True"
-                        ),
-                    )
-                    .map(print)
-                ),
-                error_scenarios,
-            ),
+    def create_error_result(msg: str, field: str, value: str) -> r[str]:
+        return r.fail(
+            e.ValidationError(
+                msg,
+                field=field,
+                value=value,
+                error_code=c.Errors.VALIDATION_ERROR,
+            ).message,
+            error_code=c.Errors.VALIDATION_ERROR,
         )
+
+    def format_error_message(field: str, value: str) -> str:
+        return (
+            f"Error: {field}={value}, code: {c.Errors.VALIDATION_ERROR}, railway: True"
+        )
+
+    def format_exception_message(error: str) -> str:
+        return f"Converted exception to result: {error}"
+
+    def process_scenario(msg: object, field: object, value: object) -> r[str]:
+        msg_str = str(msg)
+        field_str = str(field)
+        value_str = str(value)
+
+        def format_error_after_validation(_: object) -> str:
+            """Format error message after validation."""
+            return format_error_message(field_str, value_str)
+
+        return create_error_result(msg_str, field_str, value_str).map(
+            format_error_after_validation
+        )
+
+    def process_exception(error: object) -> r[str]:
+        error_str = str(error)
+        return r.ok(format_exception_message(error_str))
+
+    _ = r.traverse(
+        list(starmap(process_scenario, error_scenarios))
         + [
             # Standard exception conversion
-            r.fail("Standard exception")
-            .map(lambda error: f"Converted exception to result: {error}")
-            .map(print),
+            process_exception("Standard exception")
         ],
-        lambda r: r,
-    )
+        identity,
+    ).map(print)
 
 
 # Railway pattern handlers (SRP - single responsibility for result handling)
+
+
+def identity_result(r_obj: r[str]) -> r[str]:
+    """Identity function for result objects."""
+    return r_obj
+
+
+def ignore_and_return_none(_: object) -> r[None]:
+    """Ignore input and return None."""
+    return r.ok(None)
+
+
+def identity(x: r[str]) -> r[str]:
+    """Identity function for traverse operation."""
+    return x
 
 
 def execute_validation_chain(
@@ -280,7 +322,7 @@ def execute_validation_chain(
 ) -> None:
     """Execute validation chain with railway pattern - SRP focused on chaining operations."""
     # Railway pattern with advanced functional composition (DRY + SRP)
-    (
+    _ = (
         validate_transform_user(user_data)
         .map(
             lambda user: (
@@ -318,7 +360,7 @@ def execute_demonstrations(
 ) -> None:
     """Execute utility demonstrations - SRP focused on side effect execution."""
     # Railway pattern with side effects (DRY - no manual loops)
-    service.create_user(user_data).map(lambda _: None)
+    _ = service.create_user(user_data).map(ignore_and_return_none)
     # Execute demonstrations as side effects
     demonstrate_utilities()
     demonstrate_exceptions()

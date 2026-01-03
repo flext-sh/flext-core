@@ -510,18 +510,10 @@ class FlextDecorators(FlextRuntime):
                     if correlation_id is not None:
                         start_extra["correlation_id"] = correlation_id
 
-                    log_start_result = result_logger.debug(
+                    result_logger.debug(
                         "%s_started",
                         op_name,
                         extra=start_extra,
-                    )
-                    FlextDecorators._handle_log_result(
-                        result=log_start_result,
-                        logger=logger,
-                        fallback_message="operation_log_emit_failed",
-                        kwargs={
-                            "extra": {**start_extra, "log_state": "start"},
-                        },
                     )
 
                     result = func(*args, **kwargs)
@@ -541,18 +533,10 @@ class FlextDecorators(FlextRuntime):
                         )
                         completion_extra["duration_seconds"] = duration
 
-                    log_completion_result = result_logger.debug(
+                    result_logger.debug(
                         "%s_completed",
                         op_name,
                         extra=completion_extra,
-                    )
-                    FlextDecorators._handle_log_result(
-                        result=log_completion_result,
-                        logger=logger,
-                        fallback_message="operation_log_emit_failed",
-                        kwargs={
-                            "extra": {**completion_extra, "log_state": "completed"},
-                        },
                     )
                     return result
                 except (
@@ -592,23 +576,11 @@ class FlextDecorators(FlextRuntime):
                     # This ensures exception=exc doesn't conflict with **kwargs
                     failure_extra_copy.pop("exception", None)
                     # Pass exception as keyword argument, not in **kwargs
-                    failure_result = result_logger.exception(
+                    result_logger.exception(
                         op_name,
                         exception=exc,
                         exc_info=exc_info_value,
                         **failure_extra_copy,
-                    )
-                    FlextDecorators._handle_log_result(
-                        result=failure_result,
-                        logger=logger,
-                        fallback_message="operation_log_emit_failed",
-                        kwargs={
-                            "extra": {
-                                **failure_extra,
-                                "log_state": "failed",
-                                "exception_repr": repr(e),
-                            },
-                        },
                     )
                     raise
                 finally:

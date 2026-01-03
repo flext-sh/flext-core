@@ -47,7 +47,7 @@ class FlextContainer(FlextRuntime, p.DI):
     _global_instance: Self | None = None
     _global_lock: threading.RLock = threading.RLock()
     # Instance attributes (initialized in __init__)
-    _context: p.Ctx | None = None
+    _context: p.Context | None = None
     _config: p.Config | None = None
     _user_overrides: dict[str, t.GeneralValueType]
 
@@ -55,7 +55,7 @@ class FlextContainer(FlextRuntime, p.DI):
         cls,
         *,
         _config: p.Config | None = None,
-        _context: p.Ctx | None = None,
+        _context: p.Context | None = None,
         _services: dict[str, m.Container.ServiceRegistration] | None = None,
         _factories: dict[str, m.Container.FactoryRegistration] | None = None,
         _resources: dict[str, m.Container.ResourceRegistration] | None = None,
@@ -84,7 +84,7 @@ class FlextContainer(FlextRuntime, p.DI):
         self,
         *,
         _config: p.Config | None = None,
-        _context: p.Ctx | None = None,
+        _context: p.Context | None = None,
         _services: dict[str, m.Container.ServiceRegistration] | None = None,
         _factories: dict[str, m.Container.FactoryRegistration] | None = None,
         _resources: dict[str, m.Container.ResourceRegistration] | None = None,
@@ -251,7 +251,7 @@ class FlextContainer(FlextRuntime, p.DI):
         cls,
         *,
         config: p.Config | None = None,
-        context: p.Ctx | None = None,
+        context: p.Context | None = None,
     ) -> Self:
         """Return the thread-safe global container instance.
 
@@ -271,7 +271,7 @@ class FlextContainer(FlextRuntime, p.DI):
         return self._config
 
     @property
-    def context(self) -> p.Ctx:
+    def context(self) -> p.Context:
         """Return the execution context bound to this container.
 
         The context must be provided during container initialization via the
@@ -341,7 +341,7 @@ class FlextContainer(FlextRuntime, p.DI):
         global_config: m.Container.ContainerConfig | None = None,
         user_overrides: dict[str, t.GeneralValueType] | None = None,
         config: p.Config | None = None,
-        context: p.Ctx | None = None,
+        context: p.Context | None = None,
     ) -> None:
         """Initialize service registrations and configuration.
 
@@ -361,7 +361,7 @@ class FlextContainer(FlextRuntime, p.DI):
         self._config = config_instance
         # Type narrowing: context can be None, but property will raise error if accessed
         # Direct assignment is safe - _context is an instance attribute
-        # _context is declared as p.Ctx | None = None (instance attribute)
+        # _context is declared as p.Context | None = None (instance attribute)
         # If context is None, property will raise RuntimeError on access (no lazy creation)
         self._context = context
 
@@ -623,7 +623,7 @@ class FlextContainer(FlextRuntime, p.DI):
         name: str,
         service: t.GeneralValueType
         | p.Config
-        | p.Ctx
+        | p.Context
         | p.DI
         | p.Service[t.GeneralValueType]
         | p.Log
@@ -973,7 +973,7 @@ class FlextContainer(FlextRuntime, p.DI):
         cls,
         *,
         config: p.Config,
-        context: p.Ctx,
+        context: p.Context,
         services: dict[str, m.Container.ServiceRegistration],
         factories: dict[str, m.Container.FactoryRegistration],
         resources: dict[str, m.Container.ResourceRegistration],
@@ -1015,13 +1015,13 @@ class FlextContainer(FlextRuntime, p.DI):
         self,
         *,
         config: p.Config | None = None,
-        context: p.Ctx | None = None,
+        context: p.Context | None = None,
         subproject: str | None = None,
         services: Mapping[
             str,
             t.GeneralValueType
             | p.Config
-            | p.Ctx
+            | p.Context
             | p.DI
             | p.Service[t.GeneralValueType]
             | p.Log
@@ -1086,7 +1086,7 @@ class FlextContainer(FlextRuntime, p.DI):
         # Clone context via isinstance check for type safety
         scoped_context: FlextContext
         if context is None:
-            # self.context returns p.Ctx, but we know it's FlextContext
+            # self.context returns p.Context, but we know it's FlextContext
             ctx_instance = self.context
             if isinstance(ctx_instance, FlextContext):
                 scoped_context = ctx_instance.clone()
@@ -1095,7 +1095,7 @@ class FlextContainer(FlextRuntime, p.DI):
         elif isinstance(context, FlextContext):
             scoped_context = context.clone()
         else:
-            # Protocol p.Ctx doesn't define clone(), create new FlextContext
+            # Protocol p.Context doesn't define clone(), create new FlextContext
             scoped_context = FlextContext()
 
         if subproject:

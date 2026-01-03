@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -498,11 +498,7 @@ class FlextModelsValidation:
             for attr in required_attrs
             if not (
                 hasattr(event, attr)
-                or (
-                    FlextRuntime.is_dict_like(event)
-                    and isinstance(event, Mapping)
-                    and attr in event
-                )
+                or (FlextRuntime.is_dict_like(event) and attr in event)
             )
         ]
         if missing_attrs:
@@ -786,6 +782,7 @@ class FlextModelsValidation:
         *,
         case_sensitive: bool = False,
     ) -> r[str]:
+        # valid_choices is already converted to set[str] by caller
         # Type narrowing: value is already typed as str (no runtime check needed)
         if not valid_choices:
             return r[str].fail(
@@ -808,14 +805,18 @@ class FlextModelsValidation:
     @staticmethod
     def validate_choice(
         value: str,
-        valid_choices: set[str],
+        valid_choices: set[str] | list[str],
         context: str = "Value",
         *,
         case_sensitive: bool = False,
     ) -> r[str]:
+        # Convert list to set if needed
+        choices_set = (
+            set(valid_choices) if isinstance(valid_choices, list) else valid_choices
+        )
         return FlextModelsValidation._validate_choice_value(
             value,
-            valid_choices,
+            choices_set,
             context,
             case_sensitive=case_sensitive,
         )

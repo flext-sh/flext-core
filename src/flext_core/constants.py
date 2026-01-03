@@ -408,6 +408,22 @@ class FlextConstants:
             "_cached_value",
         )
 
+        class ConversionMode(StrEnum):
+            """Conversion mode enumeration for type-safe conversion operations.
+
+            DRY Pattern: StrEnum provides single source of truth for conversion modes.
+            Use ConversionMode.TO_STR.value or ConversionMode.TO_STR directly.
+            """
+
+            TO_STR = "to_str"
+            """Convert to string."""
+            TO_STR_LIST = "to_str_list"
+            """Convert to list of strings."""
+            NORMALIZE = "normalize"
+            """Normalize value."""
+            JOIN = "join"
+            """Join values."""
+
     class Settings:
         """Configuration defaults."""
 
@@ -542,6 +558,19 @@ class FlextConstants:
             MAX_VALIDATION_SIZE: Final[int] = _DEFAULT_BATCH_SIZE
 
         CLI_PERFORMANCE_CRITICAL_MS: Final[float] = 10000.0
+
+        # Time thresholds for recency checks
+        RECENT_THRESHOLD_MINUTES: Final[float] = 60.0
+        VERY_RECENT_THRESHOLD_MINUTES: Final[float] = 5.0
+        RECENT_THRESHOLD_SECONDS: Final[float] = 120.0
+
+        # Version category thresholds
+        VERSION_LOW_THRESHOLD: Final[int] = 5
+        VERSION_MEDIUM_THRESHOLD: Final[int] = 20
+
+        # Health check thresholds
+        HEALTH_CHECK_STALE_MINUTES: Final[float] = 5.0
+        FAILURE_RATE_WARNING_THRESHOLD: Final[float] = 0.25
 
     class Reliability:
         """Reliability thresholds."""

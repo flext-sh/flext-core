@@ -127,6 +127,17 @@ class FlextUtilities:
     class Validation(FlextUtilitiesValidation):
         """Validation utility class - real inheritance."""
 
+    # Validation sub-classes exposed at top level for convenience
+    # Allows: u.String.validate_* instead of u.Validation.String.validate_*
+    class String(FlextUtilitiesValidation.String):
+        """String validation utility class - real inheritance."""
+
+    class Numeric(FlextUtilitiesValidation.Numeric):
+        """Numeric validation utility class - real inheritance."""
+
+    class Network(FlextUtilitiesValidation.Network):
+        """Network validation utility class - real inheritance."""
+
     # =========================================================================
     # STATIC METHOD ALIASES - All from _utilities/*.py
     # =========================================================================

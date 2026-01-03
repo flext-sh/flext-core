@@ -194,7 +194,7 @@ class FlextContext(FlextRuntime):
         operation_id: str | None = None,
         user_id: str | None = None,
         metadata: t.ConfigurationMapping | None = None,
-    ) -> p.Ctx: ...
+    ) -> p.Context: ...
 
     @classmethod
     def create(
@@ -205,7 +205,7 @@ class FlextContext(FlextRuntime):
         user_id: str | None = None,
         metadata: t.ConfigurationMapping | None = None,
         auto_correlation_id: bool = True,
-    ) -> Self | p.Ctx:
+    ) -> Self | p.Context:
         """Factory method to create a new FlextContext instance.
 
         This is the preferred way to instantiate FlextContext. It provides
@@ -726,7 +726,7 @@ class FlextContext(FlextRuntime):
 
     def merge(
         self,
-        other: p.Ctx | dict[str, t.GeneralValueType],
+        other: p.Context | dict[str, t.GeneralValueType],
     ) -> Self:
         """Merge another context or dictionary into this context.
 
@@ -811,8 +811,8 @@ class FlextContext(FlextRuntime):
         statistics_copy: m.ContextStatistics = self._statistics.model_copy()
         cloned.set_statistics_for_clone(statistics_copy)
 
-        # Type narrowing: cloned is FlextContext which implements p.Ctx protocol
-        # FlextContext structurally implements p.Ctx, so no cast needed
+        # Type narrowing: cloned is FlextContext which implements p.Context protocol
+        # FlextContext structurally implements p.Context, so no cast needed
         return cloned
 
     def validate(self) -> r[bool]:
@@ -930,8 +930,8 @@ class FlextContext(FlextRuntime):
             context_data_for_json: m.ContextData = m.ContextData(
                 data=normalized_data_for_json,
             )
-            # Type narrowing: cls(initial_data=context_data_for_json) returns FlextContext which implements p.Ctx protocol
-            # FlextContext structurally implements p.Ctx, so no cast needed
+            # Type narrowing: cls(initial_data=context_data_for_json) returns FlextContext which implements p.Context protocol
+            # FlextContext structurally implements p.Context, so no cast needed
             return cls(initial_data=context_data_for_json)
         except json.JSONDecodeError as e:
             msg = f"Invalid JSON string: {e}"

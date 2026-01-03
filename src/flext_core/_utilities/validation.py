@@ -158,15 +158,19 @@ class FlextUtilitiesValidation:
         @staticmethod
         def validate_choice(
             value: str,
-            valid_choices: set[str],
+            valid_choices: set[str] | list[str],
             context: str = "Value",
             *,
             case_sensitive: bool = False,
         ) -> r[str]:
             """Validate value is in allowed choices."""
+            # Convert list to set if needed
+            choices_set = (
+                set(valid_choices) if isinstance(valid_choices, list) else valid_choices
+            )
             return FlextUtilitiesValidation.validate_choice(
                 value,
-                valid_choices,
+                choices_set,
                 context,
                 case_sensitive=case_sensitive,
             )
@@ -1169,7 +1173,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def validate_choice(
         value: str,
-        valid_choices: set[str],
+        valid_choices: set[str] | list[str],
         context: str = "Value",
         *,
         case_sensitive: bool = False,
@@ -1189,15 +1193,20 @@ class FlextUtilitiesValidation:
             r[str]: Success with value (original case), or failure
 
         """
+        # Convert to set if list was provided
+        choices_set = (
+            set(valid_choices) if isinstance(valid_choices, list) else valid_choices
+        )
+
         # Prepare values for comparison
         check_value = value if case_sensitive else value.lower()
         check_choices = (
-            valid_choices if case_sensitive else {c.lower() for c in valid_choices}
+            choices_set if case_sensitive else {c.lower() for c in choices_set}
         )
 
         # Validate
         if check_value not in check_choices:
-            choices_str = ", ".join(sorted(valid_choices))
+            choices_str = ", ".join(sorted(choices_set))
             return r[str].fail(
                 f"Invalid {context}: {value}. Must be one of {choices_str}",
             )
@@ -3426,6 +3435,24 @@ class FlextUtilitiesValidation:
             )
         return r[str].ok(hostname)
 
+    @staticmethod
+    def validate_hostname(
+        hostname: str,
+    ) -> r[str]:
+        """Validate hostname format (top-level convenience method).
+
+        This is a convenience method that delegates to validate_hostname_format.
+        Provides simpler signature for common use cases where context is not needed.
+
+        Args:
+            hostname: The hostname string to validate
+
+        Returns:
+            r[str]: Success with hostname, or failure with error message
+
+        """
+        return FlextUtilitiesValidation.validate_hostname_format(hostname)
+
     # ========================================================================
     # Validation Convenience Methods
     # ========================================================================
@@ -3524,7 +3551,7 @@ class FlextUtilitiesValidation:
 
         Example:
             @property
-            def context(self) -> p.Ctx:
+            def context(self) -> p.Context:
                 return u.require_initialized(self._context, "Context")
 
         """

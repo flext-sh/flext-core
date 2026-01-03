@@ -444,7 +444,7 @@ class FlextUtilitiesGuards:
         return isinstance(obj, p.Config)
 
     @staticmethod
-    def is_context(obj: object) -> TypeGuard[p.Ctx]:
+    def is_context(obj: object) -> TypeGuard[p.Context]:
         """Check if object satisfies the Context protocol.
 
         Enables type narrowing for context objects without .
@@ -453,15 +453,15 @@ class FlextUtilitiesGuards:
             obj: Object to check
 
         Returns:
-            TypeGuard[p.Ctx]: True if obj satisfies Ctx protocol
+            TypeGuard[p.Context]: True if obj satisfies Ctx protocol
 
         """
-        return isinstance(obj, p.Ctx)
+        return isinstance(obj, p.Context)
 
     @staticmethod
-    def _is_context(obj: object) -> TypeGuard[p.Ctx]:
+    def _is_context(obj: object) -> TypeGuard[p.Context]:
         """Private version of is_context for internal protocol checks."""
-        return isinstance(obj, p.Ctx)
+        return isinstance(obj, p.Context)
 
     @staticmethod
     def _is_container(obj: object) -> TypeGuard[p.DI]:
@@ -926,7 +926,7 @@ class FlextUtilitiesGuards:
                   "mapping", "callable", "sized", "list_or_tuple", "sequence_not_str",
                   "string_non_empty", "dict_non_empty", "list_non_empty"
                 - Type/class: str, dict, list, tuple, Sequence, Mapping, etc.
-                - Protocol: p.Config, p.Ctx, etc.
+                - Protocol: p.Config, p.Context, etc.
 
         Returns:
             bool: True if value matches the type specification
@@ -950,7 +950,7 @@ class FlextUtilitiesGuards:
 
             >>> # Protocol checks
             >>> u.is_type(obj, p.Config)
-            >>> u.is_type(obj, p.Ctx)
+            >>> u.is_type(obj, p.Context)
 
         """
         # String-based type names (delegate to specific guard functions)
@@ -1029,7 +1029,7 @@ class FlextUtilitiesGuards:
                     # Protocol runtime check failed, try specific protocol checks
                     if type_spec == p.Config:
                         return FlextUtilitiesGuards._is_config(value)
-                    if type_spec == p.Ctx:
+                    if type_spec == p.Context:
                         return FlextUtilitiesGuards._is_context(value)
                     if type_spec == p.DI:
                         return FlextUtilitiesGuards._is_container(value)

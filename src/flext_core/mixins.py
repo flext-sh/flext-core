@@ -215,7 +215,7 @@ class FlextMixins(FlextRuntime):
         return self._get_runtime().container
 
     @property
-    def context(self) -> p.Ctx:
+    def context(self) -> p.Context:
         """Get FlextContext instance for context operations."""
         return self._get_runtime().context
 
@@ -235,11 +235,11 @@ class FlextMixins(FlextRuntime):
         return self._get_runtime().config
 
     @classmethod
-    def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Hook to customize runtime creation for mixin consumers.
 
         Returns:
-            RuntimeBootstrapOptions: TypedDict with optional runtime configuration options.
+            p.RuntimeBootstrapOptions: TypedDict with optional runtime configuration options.
 
         """
         return {}
@@ -255,14 +255,14 @@ class FlextMixins(FlextRuntime):
             return runtime
 
         runtime_options_callable = getattr(self, "_runtime_bootstrap_options", None)
-        # Call method and ensure result is t.RuntimeBootstrapOptions TypedDict
-        # _runtime_bootstrap_options returns t.RuntimeBootstrapOptions per class definition
+        # Call method and ensure result is p.RuntimeBootstrapOptions TypedDict
+        # _runtime_bootstrap_options returns p.RuntimeBootstrapOptions per class definition
         options_raw: object = (
             runtime_options_callable() if callable(runtime_options_callable) else {}
         )
         # Type narrowing: isinstance check ensures options_raw is dict
         # Use dict interface - TypedDict keys accessed via .get() at runtime
-        # RuntimeBootstrapOptions is TypedDict - use ConfigurationDict for type safety
+        # p.RuntimeBootstrapOptions is TypedDict - use ConfigurationDict for type safety
         # ConfigurationDict = dict[str, GeneralValueType] which is the proper FLEXT type
         if isinstance(options_raw, dict):
             # Narrow keys to str and values to GeneralValueType
@@ -305,7 +305,7 @@ class FlextMixins(FlextRuntime):
         context_option = (
             u.Mapper.get(options, "context") if "context" in options else None
         )
-        # isinstance narrows to FlextContext (which implements p.Ctx)
+        # isinstance narrows to FlextContext (which implements p.Context)
         runtime_context: FlextContext = (
             context_option
             if isinstance(context_option, FlextContext)

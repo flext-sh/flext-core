@@ -32,6 +32,9 @@
         "structlog>=25.4.0",
         "pydantic-core (>=2.41.4)",
         "attrs (>=25.4.0,<26.0.0)",
+        "wrapt (>=1.17.0,<2.0.0)",
+        "docker (>=7.1.0,<8.0.0)",
+        "python-on-whales (>=0.79.0,<0.80.0)",
     ]
     description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
     keywords = [
@@ -154,25 +157,25 @@
 
         [tool.poetry.group]
 
-		    [tool.poetry.group.dev.dependencies]
-		        click = "^8.3.0"
-		        docker = "^7.1.0"
-		        hypothesis = "^6.148.7"
-		        pyrefly = "^0.34.0"
-		        pytest = "^8.4.0"
-		        pytest-cov = "^7.0.0"
-		        python-on-whales = "^0.78.0"
-		        rich = "=14.2.0"
-		        types-pyyaml = "^6.0.12.20250822"
-		        urllib3 = "^2.6.0"
+            [tool.poetry.group.dev.dependencies]
+                click = "^8.3.0"
+                hypothesis = "^6.148.7"
+                pyrefly = "^0.46.3"
+                pytest = "^9.0.2"
+                rich = "^14.2.0"
+                types-pyyaml = "^6.0.12.20250822"
+                urllib3 = "^2.6.0"
 
-		    [tool.poetry.group.typings.dependencies]
-		        types-colorama = ">=0.4.15.20240311"
-		        types-pexpect = ">=4.9.0.20250516"
-		        types-pygments = ">=2.19.0.20250715"
+            [tool.poetry.group.typings.dependencies]
+                types-colorama = ">=0.4.15.20240311"
+                types-pexpect = ">=4.9.0.20250516"
+                types-pygments = ">=2.19.0.20250715"
                 types-pysocks = "^1.7.1.20251001"
-    types-docker = "^7.1.0.20251202"
-    types-cachetools = "^6.2.0.20251022"
+            types-cachetools = "^6.2.0.20251022"
+            types-docker = "^7.1.0.20251202"
+
+        [tool.poetry.group.test.dependencies]
+coverage = "^7.13.1"
 
     [tool.pytest.ini_options]
         addopts = [
