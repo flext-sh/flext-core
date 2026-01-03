@@ -164,7 +164,7 @@ def create_user(
     Example:
         >>> result = create_user("Alice", "alice@example.com", 25)
         >>> if result.is_success:
-        ...     user = result.unwrap()
+        ...     user = result.value
         ...     print(user.name)
     """
     # Implementation
@@ -276,13 +276,13 @@ def test_result_ok_creates_success():
 
 def test_result_ok_contains_value():
     result = FlextResult[int].ok(42)
-    assert result.unwrap() == 42
+    assert result.value == 42
 
 # ❌ WRONG - Multiple concepts
 def test_result():
     result = FlextResult[int].ok(42)
     assert result.is_success
-    assert result.unwrap() == 42
+    assert result.value == 42
     assert result.data == 42
     assert result.value == 42
 ```

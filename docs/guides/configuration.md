@@ -325,7 +325,7 @@ def get_database_url() -> str:
     if config_result.is_failure:
         raise RuntimeError("Configuration not available")
 
-    config = config_result.unwrap()
+    config = config_result.value
     return config.get('database.url', required=True)
 ```
 

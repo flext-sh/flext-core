@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from typing import Annotated, Self
 
 from pydantic import (
@@ -41,25 +42,27 @@ class FlextModelsHandler:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Handler name",
         )
-        handler: p.VariadicCallable[t.GeneralValueType]
+        handler: Callable[..., t.GeneralValueType] = Field(
+            description="Handler callable function or method",
+        )
         event_types: list[str] = Field(
             default_factory=list,
             description="Event types this handler processes",
         )
 
-        @field_validator("handler", mode="after")
+        @field_validator("handler", mode="before")
         @classmethod
         def validate_handler(
             cls,
-            v: p.VariadicCallable[t.GeneralValueType],
-        ) -> p.VariadicCallable[t.GeneralValueType]:
+            v: object,
+        ) -> Callable[..., t.GeneralValueType]:
             """Validate handler is properly callable (direct validation, no circular imports)."""
             # Direct callable check - avoid circular import via FlextUtilitiesValidation
             if not callable(v):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
-            # Return the validated callable
-            return v
+            # Return the validated callable (cast to expected type)
+            return v  # type: ignore[return-value]
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.

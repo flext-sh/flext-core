@@ -817,6 +817,13 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return FlextResult[T].ok(inner_value)
         return FlextResult[T].fail("Unexpected IOResult inner type")
 
+    def _protocol_name(self) -> str:
+        """Return the protocol name for introspection.
+
+        Satisfies BaseProtocol requirement for ResultLike protocol.
+        """
+        return "FlextResult"
+
     # __enter__, __exit__, __repr__ are inherited from RuntimeResult
 
 

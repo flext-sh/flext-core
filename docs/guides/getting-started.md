@@ -59,7 +59,7 @@ def divide(a: int, b: int) -> FlextResult[float]:
 # Usage
 result = divide(10, 2)
 if result.is_success:
-    value = result.unwrap()  # Safe: 5.0
+    value = result.value  # Safe: 5.0
     print(f"Result: {value}")
 else:
     print(f"Error: {result.error}")
@@ -90,7 +90,7 @@ container.register("logger", logger)
 # Retrieve services
 logger_result = container.get("logger")
 if logger_result.is_success:
-    retrieved_logger = logger_result.unwrap()
+    retrieved_logger = logger_result.value
     retrieved_logger.info("Container working!")
 ```
 
@@ -173,7 +173,7 @@ service = UserService()
 result = service.create_user("Bob", "bob@example.com", 25)
 
 if result.is_success:
-    user = result.unwrap()
+    user = result.value
     print(f"✅ Created: {user.name}")
 else:
     print(f"❌ Error: {result.error}")
@@ -300,21 +300,21 @@ container.register("product_service", product_service)
 # 4. Use the service
 service_result = container.get("product_service")
 if service_result.is_success:
-    service = service_result.unwrap()
+    service = service_result.value
 
     # Create products
     laptop = service.create_product("Laptop", 999.99, 10)
     if laptop.is_success:
-        print(f"✅ Created: {laptop.unwrap().name}")
+        print(f"✅ Created: {laptop.value.name}")
 
     mouse = service.create_product("Mouse", 29.99, 50)
     if mouse.is_success:
-        print(f"✅ Created: {mouse.unwrap().name}")
+        print(f"✅ Created: {mouse.value.name}")
 
     # Retrieve product
     product_result = service.get_product("product_laptop")
     if product_result.is_success:
-        product = product_result.unwrap()
+        product = product_result.value
         print(f"📦 Product: {product.name} - ${product.price}")
 ```
 
@@ -376,7 +376,7 @@ class MyService(FlextService):
 
     def process(self, data: dict) -> FlextResult[t.Dict]:
         if self._logger_result.is_success:
-            self._logger_result.unwrap().info("Processing", extra=data)
+            self._logger_result.value.info("Processing", extra=data)
         # Business logic here
         return FlextResult[t.Dict].ok(data)
 ```

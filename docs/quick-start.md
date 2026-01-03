@@ -34,7 +34,7 @@ def validate_email(email: str) -> FlextResult[str]:
 # Safe value extraction
 result = validate_email("user@example.com")
 if result.is_success:
-    email = result.unwrap()
+    email = result.value
     print(f"Valid: {email}")
 else:
     print(f"Error: {result.error}")
@@ -55,7 +55,7 @@ container.register("logger", logger, singleton=True)
 # Use services
 logger_result = container.get("logger")
 if logger_result.is_success:
-    logger = logger_result.unwrap()
+    logger = logger_result.value
     logger.info("Application started")
 ```
 
@@ -110,7 +110,7 @@ def register_user(username: str, password: str) -> FlextResult[dict]:
 # Test it
 result = register_user("alice", "SecurePass123")
 if result.is_success:
-    data = result.unwrap()
+    data = result.value
     print(f"Registered: {data['username']}")
 else:
     print(f"Registration failed: {result.error}")
@@ -139,10 +139,10 @@ container.register("email_service", email_service, singleton=True)
 # Retrieve and use
 service_result = container.get("email_service")
 if service_result.is_success:
-    service = service_result.unwrap()
+    service = service_result.value
     send_result = service.send_welcome_email("user@example.com")
     if send_result.is_success:
-        print(send_result.unwrap())
+        print(send_result.value)
 ```
 
 ### Use Case 3: Domain Models with Validation
@@ -191,7 +191,7 @@ result = service.create_order(
 )
 
 if result.is_success:
-    order = result.unwrap()
+    order = result.value
     print(f"Order created: {order.entity_id} with {len(order.items)} items")
 else:
     print(f"Order failed: {result.error}")
@@ -225,7 +225,7 @@ dispatcher = FlextDispatcher(registry=registry)
 result = dispatcher.dispatch(CreateUser(email="user@example.com"))
 
 if result.is_success:
-    print(f"Created: {result.unwrap()}")
+    print(f"Created: {result.value}")
 ```
 
 ## Key Patterns Cheat Sheet
@@ -241,7 +241,7 @@ def operation() -> FlextResult[str]:
 
 # Check result
 if result.is_success:
-    value = result.unwrap()
+    value = result.value
 else:
     error = result.error
 ```
@@ -299,7 +299,7 @@ def test_validation_success():
     """Test successful validation."""
     result = validate_email("user@example.com")
     assert result.is_success
-    assert result.unwrap() == "user@example.com"
+    assert result.value == "user@example.com"
 
 def test_validation_failure():
     """Test failed validation."""
@@ -315,7 +315,7 @@ def test_chained_operations():
         .map(lambda x: x + 5)
     )
     assert result.is_success
-    assert result.unwrap() == 25
+    assert result.value == 25
 ```
 
 ## Next Steps
@@ -355,7 +355,7 @@ async def get_user_async(user_id: str) -> FlextResult[User]:
 # Use it
 result = await get_user_async("123")
 if result.is_success:
-    user = result.unwrap()
+    user = result.value
 ```
 
 **Q: Can I create custom exception types?**
@@ -394,7 +394,7 @@ make validate
 | **Return Success**      | `FlextResult[T].ok(value)`             |
 | **Return Error**        | `FlextResult[T].fail("error message")` |
 | **Check Success**       | `result.is_success`                    |
-| **Extract Value**       | `result.unwrap()`                      |
+| **Extract Value**       | `result.value`                      |
 | **Get Error**           | `result.error`                         |
 | **Transform Value**     | `result.map(lambda x: x * 2)`          |
 | **Chain Operations**    | `result.flat_map(next_operation)`      |

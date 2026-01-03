@@ -52,7 +52,7 @@ container.register("logger", logger, singleton=True)
 # Resolve services
 logger_result = container.get("logger")
 if logger_result.is_success:
-    logger = logger_result.unwrap()
+    logger = logger_result.value
     logger.info("Message")
 ```
 
@@ -236,7 +236,7 @@ class UserService:
 
         # Cache on success
         if result.is_success:
-            user = result.unwrap()
+            user = result.value
             self.cache.set(f"user:{user_id}", user, ttl=3600)
 
         return result
@@ -289,7 +289,7 @@ def register_user(username: str, email: str, password: str) -> FlextResult[dict]
 # Test
 result = register_user("alice", "alice@example.com", "SecurePass123")
 if result.is_success:
-    print(f"✅ {result.unwrap()}")
+    print(f"✅ {result.value}")
 else:
     print(f"❌ {result.error}")
 ```
@@ -336,7 +336,7 @@ dispatcher.register_handler(MessageType, guarded_handler)
 # ❌ AVOID - Service Locator
 class UserService:
     def get_logger(self):
-        return FlextContainer.get_global().get("logger").unwrap()
+        return FlextContainer.get_global().get("logger").value
 
 # ✅ PREFER - Dependency Injection
 class UserService:
@@ -402,7 +402,7 @@ class UserFactory:
 # Usage
 result = UserFactory.create_user("admin", name="Alice")
 if result.is_success:
-    admin = result.unwrap()
+    admin = result.value
 ```
 
 **Benefits:**

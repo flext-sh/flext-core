@@ -101,7 +101,7 @@ version = "0.22.9"
 description = "Unbearably fast near-real-time pure-Python runtime-static type-checker."
 optional = false
 python-versions = ">=3.10"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "beartype-0.22.9-py3-none-any.whl", hash = "sha256:d16c9bbc61ea14637596c5f6fbff2ee99cbe3573e46a716401734ef50c3060c2"},
     {file = "beartype-0.22.9.tar.gz", hash = "sha256:8f82b54aa723a2848a56008d18875f91c1db02c32ef6a62319a002e3e25a975f"},
@@ -3362,4 +3362,4 @@ typings = ["django-stubs", "types-cachetools", "types-docker", "types-ldap3", "t
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "36a44ee01bd420fe2157e6de3aa9ab0383937ad968f25804c99952dad8f595dd"
+content-hash = "721c7d5c3799371e7c15720a8a50d5634a45effd9fb6fffe6a03cad38587f257"

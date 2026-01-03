@@ -9,12 +9,191 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType, TracebackType
-from typing import Protocol, Self, TypedDict, runtime_checkable
+from typing import (
+    Protocol,
+    Self,
+    TypedDict,
+    _ProtocolMeta,  # noqa: PLC2701 - Required for metaclass resolution
+    runtime_checkable,
+)
 
 from pydantic import BaseModel
+from pydantic._internal._model_construction import ModelMetaclass  # noqa: PLC2701
+from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
-from flext_core.typings import P, T_co, t
+from flext_core.typings import P, T, t
+
+# =============================================================================
+# PROTOCOL DETECTION AND VALIDATION HELPERS (Module-level)
+# =============================================================================
+
+
+def _is_protocol(cls: type) -> bool:
+    """Check if a class is a typing.Protocol.
+
+    This function detects Protocol classes by checking for the _is_protocol
+    attribute set by Python's typing module on Protocol classes.
+
+    Args:
+        cls: The class to check.
+
+    Returns:
+        True if cls is a Protocol, False otherwise.
+
+    """
+    # Check if cls has the Protocol marker attribute
+    if not hasattr(cls, "_is_protocol"):
+        return False
+    # Get the attribute value safely
+    is_proto = getattr(cls, "_is_protocol", False)
+    # Handle both bool and MethodType (some Python versions)
+    # Wrap callable result in bool() to ensure return type is always bool
+    return bool(is_proto) if not callable(is_proto) else bool(is_proto())
+
+
+def _validate_protocol_compliance(
+    cls: type,
+    protocol: type,
+    class_name: str,
+) -> None:
+    """Validate that a class implements all required protocol members.
+
+    This function checks structural typing compliance at class definition time,
+    providing clear error messages if the protocol contract is not satisfied.
+
+    For Pydantic models, fields are declared as annotations and may not be
+    accessible via hasattr during metaclass processing. This function checks
+    both hasattr AND class annotations (including inherited) for compliance.
+
+    Args:
+        cls: The class to validate.
+        protocol: The protocol the class should implement.
+        class_name: Name of the class (for error messages).
+
+    Raises:
+        TypeError: If the class doesn't implement required protocol members.
+
+    """
+    # Get protocol annotations (required members)
+    protocol_annotations = getattr(protocol, "__annotations__", {})
+    protocol_methods = getattr(protocol, "__protocol_attrs__", set())
+
+    # Build set of required members
+    required_members: set[str] = set(protocol_annotations.keys())
+    if protocol_methods:
+        required_members.update(protocol_methods)
+
+    # Filter out private attributes and Protocol internals
+    required_members = {
+        m for m in required_members if not m.startswith("_") or m.startswith("__")
+    }
+
+    # Collect all annotations from class and its bases (for Pydantic fields)
+    all_annotations: set[str] = set()
+    for base in cls.__mro__:
+        base_annotations = getattr(base, "__annotations__", {})
+        all_annotations.update(base_annotations.keys())
+
+    # Check each required member (check hasattr OR annotations)
+    def _has_member(member: str) -> bool:
+        """Check if class has member via attribute or annotation."""
+        return hasattr(cls, member) or member in all_annotations
+
+    missing = [member for member in required_members if not _has_member(member)]
+
+    if missing:
+        protocol_name = getattr(protocol, "__name__", str(protocol))
+        missing_str = ", ".join(sorted(missing))
+        msg = (
+            f"Class '{class_name}' does not implement required members "
+            f"of protocol '{protocol_name}': {missing_str}"
+        )
+        raise TypeError(msg)
+
+
+def _partition_protocol_bases(
+    bases: tuple[type, ...],
+) -> tuple[list[type], list[type]]:
+    """Separate Protocol bases from regular class bases.
+
+    This function partitions a tuple of base classes into two lists:
+    - protocols: Classes that are typing.Protocol subclasses
+    - model_bases: Regular classes (including Pydantic bases)
+
+    Args:
+        bases: Tuple of base classes from class definition.
+
+    Returns:
+        Tuple of (protocols, model_bases) lists.
+
+    """
+    protocols: list[type] = []
+    model_bases: list[type] = []
+
+    for base in bases:
+        if _is_protocol(base):
+            protocols.append(base)
+        else:
+            model_bases.append(base)
+
+    return protocols, model_bases
+
+
+def _get_class_protocols(cls: type) -> tuple[type, ...]:
+    """Get the protocols a class implements.
+
+    Args:
+        cls: The class to check.
+
+    Returns:
+        Tuple of protocol types the class implements.
+
+    """
+    return getattr(cls, "__protocols__", ())
+
+
+def _check_implements_protocol(instance: object, protocol: type) -> bool:
+    """Check if an instance's class implements a protocol.
+
+    This function checks both:
+    1. Explicit protocol registration via __protocols__
+    2. Structural typing compatibility via isinstance
+
+    Args:
+        instance: The object to check.
+        protocol: The protocol to check against.
+
+    Returns:
+        True if the instance implements the protocol.
+
+    """
+    # Check explicit registration
+    cls = type(instance)
+    registered_protocols = _get_class_protocols(cls)
+    if protocol in registered_protocols:
+        return True
+
+    # Check structural typing (for @runtime_checkable protocols)
+    if hasattr(protocol, "__protocol_attrs__"):
+        # Protocol has __protocol_attrs__ if @runtime_checkable
+        return isinstance(instance, protocol)
+
+    return False
+
+
+# Define combined metaclasses inheriting from both Pydantic's ModelMetaclass and
+# typing's _ProtocolMeta. This resolves the metaclass conflict when classes
+# inherit from both BaseModel/BaseSettings and Protocol subclasses.
+# Note: BaseSettings uses the same ModelMetaclass as BaseModel.
+
+
+class _CombinedModelMeta(ModelMetaclass, _ProtocolMeta):
+    """Combined metaclass for Pydantic BaseModel + Protocol inheritance."""
+
+
+class _CombinedSettingsMeta(ModelMetaclass, _ProtocolMeta):
+    """Combined metaclass for Pydantic BaseSettings + Protocol inheritance."""
 
 
 class FlextProtocols:
@@ -447,6 +626,18 @@ class FlextProtocols:
         version: str
         """Semantic version of the running application."""
 
+        enable_caching: bool
+        """Enable caching for query operations."""
+
+        timeout_seconds: float
+        """Default timeout in seconds for operations."""
+
+        dispatcher_auto_context: bool
+        """Enable automatic context management in dispatcher."""
+
+        dispatcher_enable_logging: bool
+        """Enable logging in dispatcher operations."""
+
         def model_copy(
             self,
             *,
@@ -454,6 +645,22 @@ class FlextProtocols:
             deep: bool = False,
         ) -> Self:
             """Clone configuration with optional updates (Pydantic standard method)."""
+            ...
+
+        def model_dump(
+            self,
+            *,
+            mode: str = "python",
+            include: t.FlexibleValue = None,
+            exclude: t.FlexibleValue = None,
+            by_alias: bool = False,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+            round_trip: bool = False,
+            warnings: bool = True,
+        ) -> dict[str, t.FlexibleValue]:
+            """Serialize configuration to dictionary (Pydantic standard method)."""
             ...
 
     # =========================================================================
@@ -546,7 +753,7 @@ class FlextProtocols:
         def register(
             self,
             name: str,
-            service: t.GeneralValueType,
+            service: t.RegisterableService,
         ) -> FlextProtocols.ResultLike[bool]:
             """Register a service instance."""
             ...
@@ -554,15 +761,15 @@ class FlextProtocols:
         def register_factory(
             self,
             name: str,
-            factory: FlextProtocols.ResourceFactory[t.GeneralValueType],
+            factory: FlextProtocols.ResourceFactory[t.RegisterableService],
         ) -> FlextProtocols.ResultLike[bool]:
-            """Register a service factory returning GeneralValueType."""
+            """Register a service factory returning RegisterableService."""
             ...
 
         def with_service(
             self,
             name: str,
-            service: t.GeneralValueType,
+            service: t.RegisterableService,
         ) -> Self:
             """Fluent interface for service registration."""
             ...
@@ -570,7 +777,7 @@ class FlextProtocols:
         def with_factory(
             self,
             name: str,
-            factory: FlextProtocols.ResourceFactory[t.GeneralValueType],
+            factory: FlextProtocols.ResourceFactory[t.RegisterableService],
         ) -> Self:
             """Fluent interface for factory registration."""
             ...
@@ -578,7 +785,7 @@ class FlextProtocols:
         def get(
             self,
             name: str,
-        ) -> FlextProtocols.ResultLike[t.GeneralValueType]:
+        ) -> FlextProtocols.ResultLike[t.RegisterableService]:
             """Get service by name.
 
             Returns the resolved service as RegisterableService. For type-safe
@@ -1082,7 +1289,7 @@ class FlextProtocols:
     # =========================================================================
 
     @runtime_checkable
-    class VariadicCallable[T_co](BaseProtocol, Protocol):
+    class VariadicCallable[T_co](Protocol):
         """Protocol for variadic callables returning T_co.
 
         Used for flexible function signatures that accept any arguments.
@@ -1099,7 +1306,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class ResourceFactory[TResource](BaseProtocol, Protocol):
+    class ResourceFactory[TResource](Protocol):
         """Protocol for resource factory callables.
 
         Used in with_resource pattern to create resources.
@@ -1111,7 +1318,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class ResourceOperation[TResource, T](BaseProtocol, Protocol):
+    class ResourceOperation[TResource, T](Protocol):
         """Protocol for resource operation callables.
 
         Used in with_resource pattern to operate on resources.
@@ -1122,7 +1329,7 @@ class FlextProtocols:
             """Execute operation on resource, returning Result."""
             ...
 
-    class ResourceCleanup[TResource](BaseProtocol, Protocol):
+    class ResourceCleanup[TResource](Protocol):
         """Protocol for resource cleanup callables.
 
         Used in with_resource pattern for optional cleanup.
@@ -1292,6 +1499,267 @@ class FlextProtocols:
 
         container.register_factory("logger", create_logger)  # OK
     """
+
+    # =========================================================================
+    # PROTOCOL + PYDANTIC INTEGRATION (Metaclass, Base Classes, Decorator)
+    # =========================================================================
+
+    class ProtocolModelMeta(_CombinedModelMeta):
+        """Metaclass combining Pydantic with Protocol structural typing.
+
+        This metaclass inherits from a dynamically-created combined metaclass
+        that includes both Pydantic's ModelMetaclass AND Protocol's _ProtocolMeta.
+        This allows classes using this metaclass to inherit from Protocol
+        subclasses without metaclass conflicts.
+
+        The key insight is to separate Protocol types from real bases,
+        create the class with only model bases (avoiding metaclass conflict),
+        then validate and store protocol information for runtime checking.
+
+        Usage:
+            class MyModel(p.ProtocolModel, p.Domain.Entity):
+                name: str
+                value: int
+
+                def _protocol_name(self) -> str:
+                    return "MyModel"
+        """
+
+        def __new__(
+            mcs,
+            name: str,
+            bases: tuple[type, ...],
+            namespace: dict[str, object],
+            **kwargs,  # noqa: ANN003 - Pass-through to parent metaclass
+        ) -> type:
+            """Create a new class with protocol validation.
+
+            Args:
+                name: The class name.
+                bases: Tuple of base classes (may include protocols).
+                namespace: The class namespace dictionary.
+                **kwargs: Additional keyword arguments for metaclass.
+
+            Returns:
+                The newly created class with protocols validated.
+
+            """
+            # Separate protocols from model bases
+            protocols, model_bases = _partition_protocol_bases(bases)
+
+            # Ensure we have at least one real base
+            if not model_bases:
+                model_bases = [BaseModel]
+
+            # Create class with only model bases (no metaclass conflict)
+            cls = super().__new__(
+                mcs,
+                name,
+                tuple(model_bases),
+                namespace,
+                **kwargs,
+            )
+
+            # Store protocols using setattr (avoids type: ignore)
+            setattr(cls, "__protocols__", tuple(protocols))
+
+            # Validate protocol compliance at class definition time
+            for protocol in protocols:
+                _validate_protocol_compliance(cls, protocol, name)
+
+            return cls
+
+    class ProtocolModel(BaseModel, metaclass=ProtocolModelMeta):
+        """Base class for Pydantic models that implement protocols.
+
+        Enables natural multi-inheritance with protocols without metaclass
+        conflicts. Protocol compliance is validated at class definition time.
+
+        Usage:
+            class MyEntity(p.ProtocolModel, p.Domain.Entity):
+                name: str
+                value: int
+
+                def _protocol_name(self) -> str:
+                    return "MyEntity"
+
+            # Check protocols at runtime
+            entity = MyEntity(name="test", value=42)
+            assert entity.implements_protocol(p.Domain.Entity)
+            assert entity.get_protocols() == (p.Domain.Entity,)
+        """
+
+        def implements_protocol(self, protocol: type) -> bool:
+            """Check if this instance implements a protocol.
+
+            Args:
+                protocol: The protocol type to check.
+
+            Returns:
+                True if this instance implements the protocol.
+
+            """
+            return _check_implements_protocol(self, protocol)
+
+        @classmethod
+        def get_protocols(cls) -> tuple[type, ...]:
+            """Return all protocols this class implements.
+
+            Returns:
+                Tuple of protocol types.
+
+            """
+            return _get_class_protocols(cls)
+
+        def _protocol_name(self) -> str:
+            """Return the protocol name for introspection.
+
+            Returns:
+                The class name as protocol name.
+
+            """
+            return type(self).__name__
+
+    class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
+        """Base class for Pydantic Settings that implement protocols.
+
+        Extends the ProtocolModel pattern to BaseSettings, enabling
+        environment variable loading alongside protocol compliance.
+
+        Usage:
+            class MySettings(p.ProtocolSettings, p.Configuration.Config):
+                app_name: str = Field(default="myapp")
+                debug: bool = Field(default=False)
+
+                model_config = SettingsConfigDict(env_prefix="MY_")
+
+                def _protocol_name(self) -> str:
+                    return "MySettings"
+        """
+
+        def implements_protocol(self, protocol: type) -> bool:
+            """Check if this instance implements a protocol.
+
+            Args:
+                protocol: The protocol type to check.
+
+            Returns:
+                True if this instance implements the protocol.
+
+            """
+            return _check_implements_protocol(self, protocol)
+
+        @classmethod
+        def get_protocols(cls) -> tuple[type, ...]:
+            """Return all protocols this class implements.
+
+            Returns:
+                Tuple of protocol types.
+
+            """
+            return _get_class_protocols(cls)
+
+        def _protocol_name(self) -> str:
+            """Return the protocol name for introspection.
+
+            Returns:
+                The class name as protocol name.
+
+            """
+            return type(self).__name__
+
+    @staticmethod
+    def implements(*protocols: type) -> Callable[[type[T]], type[T]]:
+        """Decorator to mark non-Pydantic classes as implementing protocols.
+
+        Validates protocol compliance at class definition time and adds
+        protocol introspection capabilities to the decorated class.
+
+        This decorator is for classes that don't inherit from Pydantic
+        BaseModel or BaseSettings. For Pydantic classes, use ProtocolModel
+        or ProtocolSettings base classes instead.
+
+        Usage:
+            @p.implements(p.Handler, p.Domain.Repository)
+            class MyHandler(FlextHandlers[Command, Result]):
+                def handle(self, message: Command) -> Result:
+                    ...
+
+                def _protocol_name(self) -> str:
+                    return "MyHandler"
+
+            # Check protocols at runtime
+            handler = MyHandler()
+            assert handler.implements_protocol(p.Handler)
+            assert MyHandler.get_protocols() == (p.Handler, p.Domain.Repository)
+
+        Args:
+            *protocols: Protocol types that the class implements.
+
+        Returns:
+            A decorator that validates and registers protocols on the class.
+
+        """
+
+        def decorator(cls: type[T]) -> type[T]:
+            # Validate each protocol at decoration time
+            # Use getattr for type-safe access to __name__
+            class_name = getattr(cls, "__name__", str(cls))
+            for protocol in protocols:
+                _validate_protocol_compliance(cls, protocol, class_name)
+
+            # Store protocols using setattr (avoids type: ignore)
+            setattr(cls, "__protocols__", tuple(protocols))
+
+            # Add helper method for instance protocol checking
+            def _instance_implements_protocol(
+                self: object,
+                protocol: type,
+            ) -> bool:
+                return _check_implements_protocol(self, protocol)
+
+            setattr(cls, "implements_protocol", _instance_implements_protocol)
+
+            # Add classmethod for getting protocols
+            def _class_get_protocols(kls: type) -> tuple[type, ...]:
+                return _get_class_protocols(kls)
+
+            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
+
+            return cls
+
+        return decorator
+
+    # Expose utility functions as static methods for external use
+    @staticmethod
+    def is_protocol(target_cls: type) -> bool:
+        """Check if a class is a typing.Protocol.
+
+        Args:
+            target_cls: The class to check.
+
+        Returns:
+            True if target_cls is a Protocol, False otherwise.
+
+        """
+        return _is_protocol(target_cls)
+
+    @staticmethod
+    def check_implements_protocol(instance: object, protocol: type) -> bool:
+        """Check if an instance's class implements a protocol.
+
+        Args:
+            instance: The object to check.
+            protocol: The protocol to check against.
+
+        Returns:
+            True if the instance implements the protocol.
+
+        """
+        return _check_implements_protocol(instance, protocol)
+
+    # Alias for convenience (matches instance method name)
+    implements_protocol = check_implements_protocol
 
 
 p = FlextProtocols

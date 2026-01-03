@@ -144,6 +144,75 @@
             "flext_core",
             "flext_tests",
         ]
+        pep621_dev_dependency_groups = [
+            "dev",
+            "security",
+            "test",
+            "typings",
+        ]
+
+    [tool.deptry.package_module_name_map]
+        pyyaml = "yaml"
+
+    [tool.deptry.per_rule_ignores]
+        DEP002 = [
+            "autoflake",
+            "bandit",
+            "black",
+            "codespell",
+            "deptry",
+            "detect-secrets",
+            "django-stubs",
+            "factory-boy",
+            "faker",
+            "hypothesis",
+            "interrogate",
+            "isort",
+            "mypy",
+            "pip-audit",
+            "pre-commit",
+            "pylint",
+            "pyrefly",
+            "pytest",
+            "pytest-benchmark",
+            "pytest-clarity",
+            "pytest-cov",
+            "pytest-deadfixtures",
+            "pytest-env",
+            "pytest-mock",
+            "pytest-randomly",
+            "pytest-sugar",
+            "pytest-timeout",
+            "pytest-xdist",
+            "pyupgrade",
+            "radon",
+            "ruff",
+            "types-cachetools",
+            "types-colorama",
+            "types-docker",
+            "types-ldap3",
+            "types-pexpect",
+            "types-protobuf",
+            "types-psutil",
+            "types-psycopg2",
+            "types-pygments",
+            "types-pysocks",
+            "types-python-dateutil",
+            "types-pyyaml",
+            "types-redis",
+            "types-requests",
+            "types-setuptools",
+            "types-toml",
+            "uv",
+            "vulture",
+            # Runtime deps used indirectly (pydantic-settings, etc.)
+            "attrs",
+            "limits",
+            "pybreaker",
+            "pydantic-core",
+            "python-dotenv",
+            "wrapt",
+        ]
 
     [tool.poetry]
         name = "flext-core"
@@ -165,6 +234,7 @@
                 rich = "^14.2.0"
                 types-pyyaml = "^6.0.12.20250822"
                 urllib3 = "^2.6.0"
+            beartype = "^0.22.9"
 
             [tool.poetry.group.typings.dependencies]
                 types-colorama = ">=0.4.15.20240311"

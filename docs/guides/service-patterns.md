@@ -45,7 +45,7 @@ service = CreateUserService(name="Alice", email="alice@example.com")
 # Execute and handle result
 result = service.execute()
 if result.is_success:
-    user = result.unwrap()
+    user = result.value
     print(f"Created user: {user.name}")
 else:
     print(f"Error: {result.error}")
@@ -56,7 +56,7 @@ else:
 - ✅ Railway pattern explicit – full control over errors
 - ✅ Type-safe with `FlextResult[T]`
 - ✅ 100% backward compatible
-- ⚠️ Verbose (`.execute().unwrap()` on every use)
+- ⚠️ Verbose (`.execute().value` on every use)
 
 **When to use:**
 
@@ -148,7 +148,7 @@ class ProcessOrderService(FlextService[Order]):
         if repo_result.is_failure:
             return FlextResult[Order].fail("Repository unavailable")
 
-        repo = repo_result.unwrap()
+        repo = repo_result.value
         return repo.find_by_id(self.order_id)
 ```
 
@@ -226,7 +226,7 @@ def test_create_user_service_success():
     result = service.execute()
 
     assert result.is_success
-    user = result.unwrap()
+    user = result.value
     assert user.name == "Alice"
     assert user.email == "alice@example.com"
 
@@ -260,7 +260,7 @@ def test_service_with_container(container: FlextContainer):
 # Before (V1)
 result = MyService(param="value").execute()
 if result.is_success:
-    value = result.unwrap()
+    value = result.value
 else:
     handle_error(result.error)
 

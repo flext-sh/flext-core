@@ -10,16 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from flext_core._models.context import FlextModelsContext
+from flext_core.protocols import p
 from flext_core.typings import t
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from flext_core.protocols import p
 
 
 class FlextUtilitiesContext:

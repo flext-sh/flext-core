@@ -243,7 +243,7 @@ class UserService(FlextService):
 
     def _get_logger(self) -> FlextLogger:
         result = self.container.get("logger")
-        return result.unwrap() if result.is_success else FlextLogger(__name__)
+        return result.value if result.is_success else FlextLogger(__name__)
 
 # ❌ WRONG - Manual DI or no DI
 class UserService:
@@ -339,7 +339,7 @@ def test_flext_result_ok():
 
     assert result.is_success
     assert not result.is_failure
-    assert result.unwrap() == "success"
+    assert result.value == "success"
     assert result.data == "success"  # Dual access
 ```
 

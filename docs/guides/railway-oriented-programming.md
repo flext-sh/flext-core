@@ -113,7 +113,7 @@ result = FlextResult[str].ok("value")
 value = result.value  # Returns str, raises on failure
 
 # 2. Monadic unwrap (alternative name)
-value = result.unwrap()  # Returns str, raises on failure
+value = result.value  # Returns str, raises on failure
 
 # 3. Via properties (safe)
 if result.is_success:

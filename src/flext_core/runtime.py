@@ -1701,6 +1701,14 @@ class FlextRuntime:
         ) -> None:
             """Context manager exit."""
 
+        def _protocol_name(self) -> str:
+            """Return the protocol name for BaseProtocol compliance.
+
+            Required by FlextProtocols.BaseProtocol to enable protocol introspection
+            and ensure FlextResult satisfies the ResultLike protocol.
+            """
+            return "RuntimeResult"
+
         @classmethod
         def ok(cls, value: T) -> FlextRuntime.RuntimeResult[T]:
             """Create successful result wrapping data.

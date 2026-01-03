@@ -63,7 +63,7 @@ def validate_user(data: dict) -> FlextResult[User]:
 # Caller handles results
 result = validate_user(data)
 if result.is_success:
-    user = result.unwrap()
+    user = result.value
 else:
     print(f"Validation failed: {result.error}")
 ```
@@ -214,7 +214,7 @@ result = container.process("hello")  # Type is str
 from flext_core import FlextContainer
 
 container = FlextContainer.get_global()
-logger = container.get("logger").unwrap()  # Type is object
+logger = container.get("logger").value  # Type is object
 logger.debug("Message")  # IDE doesn't know if debug() exists
 ```
 
@@ -229,7 +229,7 @@ container = FlextContainer.get_global()
 # Type-safe retrieval
 result = container.get_typed("logger", FlextLogger)
 if result.is_success:
-    logger: FlextLogger = result.unwrap()
+    logger: FlextLogger = result.value
     logger.debug("Message")  # IDE knows FlextLogger methods
 ```
 
@@ -476,8 +476,8 @@ assert service_a() is service_b()
 from flext_core import FlextContainer
 
 container = FlextContainer.get_global()
-logger = container.get("logger").unwrap()  # May crash
-service = container.get("non_existent").unwrap()  # CRASH!
+logger = container.get("logger").value  # May crash
+service = container.get("non_existent").value  # CRASH!
 ```
 
 **Why it's wrong**:
@@ -501,7 +501,7 @@ if logger_result.is_failure:
     print(f"Logger not available: {logger_result.error}")
     return FlextResult[None].fail("Logger unavailable")
 
-logger = logger_result.unwrap()
+logger = logger_result.value
 logger.info("Service started")
 ```
 
@@ -566,7 +566,7 @@ def create_user(data: dict) -> FlextResult[User]:
 # Usage
 result = create_user({"email": "invalid", "age": -5})
 if result.is_success:
-    user = result.unwrap()
+    user = result.value
 else:
     print(f"User creation failed: {result.error}")
 ```

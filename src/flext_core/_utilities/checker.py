@@ -11,13 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, get_origin, get_type_hints
+from typing import get_origin, get_type_hints
 
 from flext_core.constants import c
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-
-if TYPE_CHECKING:
-    from flext_core.protocols import p
 from flext_core.typings import t
 
 

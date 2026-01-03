@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
@@ -54,7 +54,7 @@ class FlextModelsContainer:
         # ARCHITECTURAL NOTE: DI containers accept any registerable service.
         # SkipValidation needed because Protocol types can't be validated by Pydantic.
         # Type safety is enforced at container API level via get_typed().
-        service: Annotated[Any, SkipValidation] = Field(
+        service: Annotated[object, SkipValidation] = Field(
             ...,
             description="Service instance (protocols, models, callables)",
         )
@@ -105,7 +105,8 @@ class FlextModelsContainer:
         )
         # Factory returns RegisterableService for type-safe factory resolution
         # Supports all registerable types: GeneralValueType, protocols, callables
-        factory: Annotated[Any, SkipValidation] = Field(
+        # SkipValidation needed because Pydantic can't validate callable types
+        factory: Annotated[t.FactoryCallable, SkipValidation] = Field(
             ...,
             description="Factory function that creates service instances",
         )
