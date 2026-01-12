@@ -159,7 +159,7 @@
 
             [tool.poetry.group.dev.dependencies]
                 click = "^8.3.0"
-                hypothesis = "^6.148.7"
+                hypothesis = "^6.150.0"
                 pyrefly = "^0.46.3"
                 pytest = "^9.0.2"
                 rich = "^14.2.0"
