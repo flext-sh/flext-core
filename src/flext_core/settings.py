@@ -277,18 +277,11 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
                         object.__setattr__(self, key, value)
             return
 
-        # First initialization - call BaseSettings.__init__() without kwargs.
-        # BaseSettings will load values from environment variables and .env files.
-        # Then we apply any explicit kwargs to override those loaded values.
-        # This avoids mypy errors about dict[str, t.GeneralValueType] not matching BaseSettings params.
-        super().__init__()
-
-        # Apply explicit kwargs to override environment-loaded values
-        # Uses object.__setattr__ to bypass per-field validation during bulk updates
-        model_fields = self.__class__.model_fields
-        for key, value in kwargs.items():
-            if key in model_fields:
-                object.__setattr__(self, key, value)
+        # First initialization - pass kwargs to BaseSettings.__init__() so that
+        # Pydantic field validators run during initialization. BaseSettings will load
+        # values from environment variables and .env files, then apply explicit kwargs.
+        # Field validators (e.g., validate_ldif_encoding) will run during initialization.
+        super().__init__(**kwargs)
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as t.GeneralValueType to avoid direct dependency-injector import in this module
