@@ -233,7 +233,7 @@
                 pytest = "^9.0.2"
                 rich = "^14.2.0"
                 types-pyyaml = "^6.0.12.20250822"
-                urllib3 = "^2.6.0"
+                urllib3 = "^2.6.3"
             beartype = "^0.22.9"
 
             [tool.poetry.group.typings.dependencies]
