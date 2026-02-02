@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import typing
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
@@ -76,7 +77,7 @@ class FlextUtilitiesConversion:
         if isinstance(value, (list, tuple, set, frozenset)):
             return [str(item) for item in value if item is not None]
         # For other sequences, check if list-like and iterable
-        if FlextRuntime.is_list_like(value):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             return [str(item) for item in value if item is not None]
         return [str(value)]
 
@@ -333,10 +334,36 @@ class FlextUtilitiesConversion:
             ["a", "b"]  # nested list filtered
 
         """
-        result = FlextUtilitiesConversion.to_str_list(value)
+        if value is None:
+            return []
+
+        items: list[t.GeneralValueType] = []
+        if isinstance(value, str):
+            items = [value]
+        elif isinstance(value, (list, tuple, set, frozenset)):
+            items = list(value)
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            items = list(typing.cast(Sequence[t.GeneralValueType], value))
+        else:
+            items = [value]
+
         if filter_list_like:
-            result = [item for item in result if not FlextRuntime.is_list_like(item)]
-        return result
+            filtered_items = [
+                item
+                for item in items
+                if item is not None
+                and not (
+                    isinstance(item, (list, tuple, set, frozenset))
+                    or (
+                        isinstance(item, Sequence)
+                        and not isinstance(item, (str, bytes))
+                    )
+                )
+            ]
+        else:
+            filtered_items = [item for item in items if item is not None]
+
+        return [str(item) for item in filtered_items]
 
     @staticmethod
     def to_str_list_truthy(
@@ -358,7 +385,7 @@ class FlextUtilitiesConversion:
             ["a", "b"]
 
         """
-        result = FlextUtilitiesConversion.to_str_list(value)
+        result = FlextUtilitiesConversion.to_str_list_safe(value, filter_list_like=True)
         return [item for item in result if item]
 
 

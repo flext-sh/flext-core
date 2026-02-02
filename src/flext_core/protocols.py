@@ -1340,6 +1340,7 @@ class FlextProtocols:
             """Clean up the resource."""
             ...
 
+    @runtime_checkable
     class ValidatorSpec(BaseProtocol, Protocol):
         """Protocol for validator specifications with operator composition.
 
