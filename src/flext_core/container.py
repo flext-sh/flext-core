@@ -46,10 +46,13 @@ class FlextContainer(FlextRuntime, p.DI):
 
     _global_instance: Self | None = None
     _global_lock: threading.RLock = threading.RLock()
-    # Instance attributes (initialized in __init__)
     _context: p.Context | None = None
     _config: p.Config | None = None
     _user_overrides: dict[str, t.GeneralValueType]
+
+    def _protocol_name(self) -> str:
+        """Return protocol name for BaseProtocol compliance."""
+        return "FlextContainer"
 
     def __new__(
         cls,
