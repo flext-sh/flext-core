@@ -293,7 +293,9 @@ class FlextUtilitiesValidation:
             # Use string representation instead of trying to normalize dataclass
             return str(component)
 
-        # Check if already valid t.GeneralValueType
+        # Check if already valid t.GeneralValueType or a type we handle (like set)
+        if isinstance(component, set):
+            return component
         return FlextUtilitiesValidation._ensure_general_value_type(component)
 
     @staticmethod
@@ -2065,9 +2067,15 @@ class FlextUtilitiesValidation:
     def _validate_get_desc(v: p.ValidatorSpec) -> str:
         """Extract validator description (helper for validate)."""
         # Try to extract description from predicate if it's a Validator (preferred)
-        predicate = FlextUtilitiesMapper.get(v, "predicate")
-        if predicate is not None and hasattr(predicate, "__getitem__"):
-            # predicate is accessible (has attribute access)
+        # Use raw dict/attr access to preserve object (avoid FlextUtilitiesMapper.get
+        # which converts non-GeneralValueType objects to strings)
+        predicate: object = None
+        if isinstance(v, dict):
+            predicate = v.get("predicate")
+        elif hasattr(v, "predicate"):
+            predicate = getattr(v, "predicate", None)
+        if predicate is not None and hasattr(predicate, "description"):
+            # predicate has description attribute
             predicate_desc = getattr(predicate, "description", None)
             if isinstance(predicate_desc, str) and predicate_desc:
                 return predicate_desc

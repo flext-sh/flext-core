@@ -914,11 +914,10 @@ class FlextModelFoundation:
                 "deleted_by": deleted_by,
             })
 
-            # Replace current instance with validated version
+            # Replace current instance data using __dict__.update to bypass
+            # intermediate validation states during assignment
             validated = self.__class__.model_validate(current_data)
-            # Copy all attributes to self
-            for key, value in validated.__dict__.items():
-                setattr(self, key, value)
+            self.__dict__.update(validated.__dict__)
 
         def restore(self) -> None:
             """Restore a soft deleted record."""
