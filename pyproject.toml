@@ -242,7 +242,7 @@
                 types-pygments = ">=2.19.0.20250715"
                 types-pysocks = "^1.7.1.20251001"
             types-cachetools = "^6.2.0.20251022"
-            types-docker = "^7.1.0.20251202"
+            types-docker = "^7.1.0.20260109"
 
         [tool.poetry.group.test.dependencies]
 coverage = "^7.13.1"
