@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import typing
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
@@ -340,10 +339,8 @@ class FlextUtilitiesConversion:
         items: list[t.GeneralValueType] = []
         if isinstance(value, str):
             items = [value]
-        elif isinstance(value, (list, tuple, set, frozenset)):
+        elif isinstance(value, (list, tuple, set, frozenset)) or (isinstance(value, Sequence) and not isinstance(value, (str, bytes))):
             items = list(value)
-        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            items = list(typing.cast(Sequence[t.GeneralValueType], value))
         else:
             items = [value]
 
