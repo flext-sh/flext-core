@@ -1329,9 +1329,10 @@ class FlextModelFoundation:
                 },
             )
 
-            # Rebuild the model schema - cast for type checker compatibility
-            cast("type[BaseModel]", new_model).model_rebuild()
-            return cast("type[FlextModelFoundation.DynamicRebuildModel]", new_model)
+            # Rebuild the model schema - ensure it exists and call it
+            if hasattr(new_model, "model_rebuild"):
+                new_model.model_rebuild()
+            return new_model
 
     class DynamicModel(BaseModel):
         """Model demonstrating dynamic reconstruction capabilities."""
