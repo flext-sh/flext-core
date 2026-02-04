@@ -1481,5 +1481,27 @@ class FlextGenericModels:
                 }
 
 
+class BatchResultDict(FlextModelsBase.ArbitraryTypesModel):
+    """Result dictionary for batch operations.
+
+    Replaces TypedDict BatchResultDictBase from typings.py.
+    Provides type-safe structure for batch operation results.
+    """
+
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+    )
+
+    results: list[t.GeneralValueType] = Field(
+        default_factory=list,
+        description="List of successful results from batch operation",
+    )
+    errors: list[tuple[int, str]] = Field(
+        default_factory=list,
+        description="List of (index, error_message) tuples for failed items",
+    )
+
+
 # Short alias for internal use
 gm = FlextGenericModels
