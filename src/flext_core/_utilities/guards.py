@@ -238,7 +238,7 @@ class FlextUtilitiesGuards:
 
         t.HandlerType = HandlerCallable | Mapping[str, GeneralValueType] | BaseModel
 
-        This TypeGuard enables type narrowing without cast() for t.HandlerType.
+        This TypeGuard enables type narrowing for t.HandlerType.
         Uses structural typing to validate at runtime.
 
         Args:
