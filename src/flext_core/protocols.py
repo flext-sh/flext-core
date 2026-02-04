@@ -12,7 +12,6 @@ from types import ModuleType, TracebackType
 from typing import (
     Protocol,
     Self,
-    TypedDict,
     _ProtocolMeta,  # noqa: PLC2701 - Required for metaclass resolution
     runtime_checkable,
 )

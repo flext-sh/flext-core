@@ -10,14 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import (
-    Protocol,
-    Self,
-    TypeIs,
-    TypeVar,
-    overload,
-    runtime_checkable,
-)
+from typing import Protocol, Self, TypeIs, overload, runtime_checkable
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -27,11 +20,7 @@ from returns.result import Failure, Result, Success
 from flext_core.exceptions import FlextExceptions as e
 from flext_core.protocols import FlextProtocols
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import U, t
-
-T = TypeVar("T")
-T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
-E = TypeVar("E", default=str)
+from flext_core.typings import T_Model, U, t
 
 
 @runtime_checkable
@@ -340,11 +329,11 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     # __or__, __bool__, __repr__, __enter__, __exit__ are inherited from RuntimeResult
 
     @classmethod
-    def from_validation[T_BaseModel: BaseModel](
-        cls,
+    def from_validation(
+        cls: type[FlextResult[T_Model]],
         data: t.GeneralValueType,
-        model: type[T_BaseModel],
-    ) -> FlextResult[T_BaseModel]:
+        model: type[T_Model],
+    ) -> FlextResult[T_Model]:
         """Create result from Pydantic validation.
 
         Validates data against a Pydantic model and returns a successful result
@@ -359,12 +348,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 validation errors.
 
         """
-        # Use model directly - validated result is guaranteed to be T_BaseModel
+        # Use model directly - validated result is guaranteed to be T_Model
         # since model_validate returns an instance of the model class
-        # Note: T_BaseModel is bound to BaseModel, so no runtime check needed
+        # Note: T_Model is bound to BaseModel, so no runtime check needed
         try:
             validated = model.model_validate(data)
-            # validated is instance of model which is T_BaseModel
+            # validated is instance of model which is T_Model
             return cls.ok(validated)
         except Exception as e:
             # Extract error message from Pydantic ValidationError if available
@@ -378,7 +367,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 )
             else:
                 error_msg = str(e)
-            return FlextResult[T_BaseModel].fail(f"Validation failed: {error_msg}")
+            return FlextResult[T_Model].fail(f"Validation failed: {error_msg}")
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
         """Convert successful value to Pydantic model.

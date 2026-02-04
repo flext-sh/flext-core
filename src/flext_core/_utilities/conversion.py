@@ -339,7 +339,9 @@ class FlextUtilitiesConversion:
         items: list[t.GeneralValueType] = []
         if isinstance(value, str):
             items = [value]
-        elif isinstance(value, (list, tuple, set, frozenset)) or (isinstance(value, Sequence) and not isinstance(value, (str, bytes))):
+        elif isinstance(value, (list, tuple, set, frozenset)) or (
+            isinstance(value, Sequence) and not isinstance(value, (str, bytes))
+        ):
             items = list(value)
         else:
             items = [value]

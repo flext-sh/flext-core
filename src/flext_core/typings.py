@@ -415,9 +415,7 @@ class FlextTypes:
     type CategoryGroupsMapping = Mapping[str, Sequence[FlextTypes.GeneralValueType]]
     """Mapping for category groups (category names to entry lists)."""
 
-    # ContainerConfigDict moved to Pydantic model in _models/container.py
-    # Use type alias for backward compatibility
-    # from flext_core._models.container import ContainerConfig as ContainerConfigDict
+    type ContainerConfigDict = dict[str, FlextTypes.GeneralValueType]
 
     type SharedContainersMapping = Mapping[str, FlextTypes.ContainerConfigDict]
     """Mapping for shared containers (container IDs to container objects)."""
@@ -758,24 +756,8 @@ class FlextTypes:
 t_core = FlextTypes
 t = FlextTypes
 
-# Type aliases for backward compatibility (TypedDicts moved to Pydantic models)
-# Using TYPE_CHECKING to avoid circular imports
-if False:  # TYPE_CHECKING
-    from flext_core._models.settings import FlextModelsConfig
-
-    DispatcherConfig = FlextModelsConfig.DispatcherConfig
-else:
-    # Lazy import at runtime to avoid circular imports
-    def __getattr__(name: str):
-        if name == "DispatcherConfig":
-            from flext_core._models.settings import FlextModelsConfig
-
-            return FlextModelsConfig.DispatcherConfig
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
 
 __all__ = [
-    "DispatcherConfig",
     "FlextTypes",
     "MessageT_contra",
     "P",

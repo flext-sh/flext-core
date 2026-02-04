@@ -16,7 +16,7 @@ import re
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Annotated, Literal, Self, cast
+from typing import Annotated, Literal, Self
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -129,9 +129,7 @@ UUIDStr = Annotated[str, PlainValidator(validate_uuid_string)]
 
 
 # Complex validators for nested structures
-def validate_config_dict(
-    v: dict[str, t.GeneralValueType],
-) -> dict[str, t.GeneralValueType]:
+def validate_config_dict(v: object) -> dict[str, t.GeneralValueType]:
     """Validate configuration dictionary structure."""
     if not isinstance(v, dict):
         msg = "Configuration must be a dictionary"
@@ -146,14 +144,14 @@ def validate_config_dict(
     return v
 
 
-def validate_tags_list(v: list[str]) -> list[str]:
+def validate_tags_list(v: object) -> list[str]:
     """Validate and normalize tags list."""
     if not isinstance(v, list):
         msg = "Tags must be a list"
         raise TypeError(msg)
 
-    normalized = []
-    seen = set()
+    normalized: list[str] = []
+    seen: set[str] = set()
     for tag in v:
         if not isinstance(tag, str):
             msg = f"Tag must be string, got {type(tag)}"
@@ -514,7 +512,6 @@ class FlextModelFoundation:
             return (now - self.updated_at).total_seconds()
 
         @computed_field
-        @property
         def time_since_creation_formatted(self) -> str:
             """Get human-readable time since creation.
 
@@ -1010,7 +1007,6 @@ class FlextModelFoundation:
             return len(self.categories)
 
         @computed_field
-        @property
         def has_tags(self) -> bool:
             """Check if record has any tags.
 
@@ -1029,10 +1025,9 @@ class FlextModelFoundation:
                 bool: True if has at least one category.
 
             """
-            return self.category_count > 0
+            return int(self.category_count) > 0
 
         @computed_field
-        @property
         def all_labels(self) -> list[str]:
             """Get all label keys.
 
