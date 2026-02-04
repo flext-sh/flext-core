@@ -27,6 +27,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
 
+# Import Pydantic models that replaced TypedDicts
+# These are imported here to maintain backward compatibility
+# with existing code that imports from flext_core.typings
+from flext_core._models.settings import FlextModelsConfig
+
 # LaxStr compatibility for external integrations (LDAP, etc.)
 
 # ============================================================================
@@ -759,10 +764,10 @@ t_core = FlextTypes
 t = FlextTypes
 
 # Type aliases for backward compatibility (TypedDicts moved to Pydantic models)
-# from flext_core._models.settings import FlextModelsConfig
-# DispatcherConfig = FlextModelsConfig.DispatcherConfig
+DispatcherConfig = FlextModelsConfig.DispatcherConfig
 
 __all__ = [
+    "DispatcherConfig",
     "FlextTypes",
     "MessageT_contra",
     "P",
