@@ -19,7 +19,6 @@ from typing import (
     Literal,
     ParamSpec,
     TypeAlias,
-    TypedDict,
     TypeVar,
 )
 
@@ -759,10 +758,11 @@ class FlextTypes:
 t_core = FlextTypes
 t = FlextTypes
 
-DispatcherConfig = FlextTypes.Dispatcher.DispatcherConfig
+# Type aliases for backward compatibility (TypedDicts moved to Pydantic models)
+# from flext_core._models.settings import FlextModelsConfig
+# DispatcherConfig = FlextModelsConfig.DispatcherConfig
 
 __all__ = [
-    "DispatcherConfig",
     "FlextTypes",
     "MessageT_contra",
     "P",
