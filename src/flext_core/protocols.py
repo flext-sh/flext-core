@@ -77,7 +77,12 @@ def _validate_protocol_compliance(
     """
     # Get protocol annotations (required members)
     protocol_annotations = getattr(protocol, "__annotations__", {})
-    protocol_methods = getattr(protocol, "__protocol_attrs__", set())
+    raw_attrs: object = getattr(protocol, "__protocol_attrs__", set())
+    protocol_methods: set[str] = {
+        x
+        for x in (raw_attrs if isinstance(raw_attrs, set) else set())
+        if isinstance(x, str)
+    }
 
     # Build set of required members
     required_members: set[str] = set(protocol_annotations.keys())
@@ -261,66 +266,9 @@ class FlextProtocols:
             """Get a context value. Returns Result-like object."""
             ...
 
-    class RuntimeBootstrapOptions(TypedDict, total=False):
-        """Typed dictionary for runtime bootstrap options.
-
-        Business Rule: TypedDict uses dict[str, ...] for field types because
-        TypedDict defines the structure of a dictionary with known keys.
-        All fields are optional (total=False) as subclasses can override
-        only specific options. This TypedDict matches the signature of
-        FlextRuntime.create_service_runtime() to reduce casts and improve
-        type safety.
-
-        Audit Implication: Used for runtime bootstrap configuration in service
-        initialization. Complete configuration ensures proper runtime lifecycle
-        management and audit trail completeness for service operations.
-        """
-
-        config_type: type[BaseModel]
-        """Config type for service runtime (defaults to FlextSettings)."""
-
-        config_overrides: Mapping[str, t.FlexibleValue]
-        """Configuration overrides to apply to the config instance."""
-
-        context: FlextProtocols.ContextLike
-        """Context instance for service runtime.
-
-        Uses ContextLike protocol (defined above) for type safety without
-        circular imports. Full Context extends this protocol.
-        """
-
-        subproject: str
-        """Subproject identifier for scoped container creation."""
-
-        services: Mapping[str, t.GeneralValueType]
-        """Service registrations for container.
-
-        Note: BaseModel is already included in GeneralValueType.
-        """
-
-        factories: Mapping[
-            str,
-            Callable[
-                [],
-                (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
-            ],
-        ]
-        """Factory registrations for container."""
-
-        resources: Mapping[str, Callable[[], t.GeneralValueType]]
-        """Resource registrations for container."""
-
-        container_overrides: Mapping[str, t.FlexibleValue]
-        """Container configuration overrides."""
-
-        wire_modules: Sequence[ModuleType]
-        """Modules to wire for dependency injection."""
-
-        wire_packages: Sequence[str]
-        """Packages to wire for dependency injection."""
-
-        wire_classes: Sequence[type]
-        """Classes to wire for dependency injection."""
+    # RuntimeBootstrapOptions moved to Pydantic model in _models/service.py
+    # Use type alias for backward compatibility
+    # from flext_core._models.service import RuntimeBootstrapOptions
 
     # =========================================================================
     # CORE PROTOCOLS (Result Handling and Models)
@@ -1527,11 +1475,11 @@ class FlextProtocols:
         """
 
         def __new__(
-            mcs,
+            mcs: type[Self],
             name: str,
             bases: tuple[type, ...],
             namespace: dict[str, object],
-            **kwargs,  # noqa: ANN003 - Pass-through to parent metaclass
+            **_kwargs: object,
         ) -> type:
             """Create a new class with protocol validation.
 
@@ -1539,7 +1487,7 @@ class FlextProtocols:
                 name: The class name.
                 bases: Tuple of base classes (may include protocols).
                 namespace: The class namespace dictionary.
-                **kwargs: Additional keyword arguments for metaclass.
+                **_kwargs: Additional keyword arguments for metaclass.
 
             Returns:
                 The newly created class with protocols validated.
@@ -1553,12 +1501,11 @@ class FlextProtocols:
                 model_bases = [BaseModel]
 
             # Create class with only model bases (no metaclass conflict)
-            cls = super().__new__(
+            cls: type = super().__new__(
                 mcs,
                 name,
                 tuple(model_bases),
                 namespace,
-                **kwargs,
             )
 
             # Store protocols using setattr (avoids type: ignore)

@@ -395,50 +395,10 @@ class FlextTypes:
     class Dispatcher:
         """Dispatcher configuration types namespace."""
 
-        class DispatcherConfig(TypedDict, total=True):
-            """Typed dictionary for dispatcher configuration values.
-
-            Business Rule: TypedDict uses dict[str, ...] for field types because
-            TypedDict defines the structure of a dictionary with known keys.
-            All fields required (total=True) for complete dispatcher configuration.
-
-            Audit Implication: Used for dispatcher configuration in message processing
-            systems. Complete configuration ensures proper dispatcher lifecycle management
-            and audit trail completeness for dispatcher operations.
-            """
-
-            dispatcher_timeout_seconds: float
-            """Timeout in seconds for dispatcher operations."""
-
-            executor_workers: int
-            """Number of worker threads for executor."""
-
-            circuit_breaker_threshold: int
-            """Threshold for circuit breaker activation."""
-
-            rate_limit_max_requests: int
-            """Maximum number of requests per rate limit window."""
-
-            rate_limit_window_seconds: float
-            """Time window in seconds for rate limiting."""
-
-            max_retry_attempts: int
-            """Maximum number of retry attempts for failed operations."""
-
-            retry_delay: float
-            """Delay in seconds between retry attempts."""
-
-            enable_timeout_executor: bool
-            """Enable timeout executor for operations."""
-
-            dispatcher_enable_logging: bool
-            """Enable logging for dispatcher operations."""
-
-            dispatcher_auto_context: bool
-            """Enable automatic context creation for dispatcher."""
-
-            dispatcher_enable_metrics: bool
-            """Enable metrics collection for dispatcher."""
+        # DispatcherConfig moved to Pydantic model in _models/settings.py
+        # Use type alias for backward compatibility
+        # from flext_core._models.settings import FlextModelsConfig
+        # DispatcherConfig = FlextModelsConfig.DispatcherConfig
 
     # =====================================================================
     # MAPPING TYPE ALIASES (Python 3.13+ PEP 695)
@@ -456,22 +416,9 @@ class FlextTypes:
     type CategoryGroupsMapping = Mapping[str, Sequence[FlextTypes.GeneralValueType]]
     """Mapping for category groups (category names to entry lists)."""
 
-    # ContainerConfigDict must be defined before SharedContainersMapping
-    class ContainerConfigDict(TypedDict, total=True):
-        """Container configuration for Docker services.
-
-        Business Rule: TypedDict uses dict[str, ...] for field types because
-        TypedDict defines the structure of a dictionary with known keys.
-        All fields required (total=True) for complete container configuration.
-
-        Audit Implication: Used for Docker container configuration in deployment
-        systems. Complete configuration ensures proper container lifecycle management
-        and audit trail completeness for container operations.
-        """
-
-        compose_file: str
-        service: str
-        port: int
+    # ContainerConfigDict moved to Pydantic model in _models/container.py
+    # Use type alias for backward compatibility
+    # from flext_core._models.container import ContainerConfig as ContainerConfigDict
 
     type SharedContainersMapping = Mapping[str, FlextTypes.ContainerConfigDict]
     """Mapping for shared containers (container IDs to container objects)."""
@@ -779,63 +726,9 @@ class FlextTypes:
     # =====================================================================
     # TYPEDDICT CLASSES (Python 3.13+ PEP 695)
     # =====================================================================
-    class BatchResultDictBase(TypedDict, total=True):
-        """Base TypedDict for batch processing operations.
-
-        Business Rule: TypedDict uses dict[str, ...] for field types because
-        TypedDict defines the structure of a dictionary with known keys.
-        All fields required (total=True) for complete batch result representation.
-        Note: TypedDict doesn't support generics directly, so results field uses
-        list[t.FlextTypes.GeneralValueType] for type flexibility. Type narrowing can be done
-        at usage site based on operation return type.
-
-        Audit Implication: Used for batch operation result tracking and auditing.
-        Complete result structure ensures audit trail completeness for batch operations.
-        """
-
-        results: list[t.GeneralValueType]
-        """List of successful processing results.
-
-        Business Rule: TypedDict fields must specify dict structure.
-        Contains successfully processed items in order.
-        Type is t.FlextTypes.GeneralValueType for flexibility; actual type depends on operation.
-        """
-
-        errors: list[tuple[int, str]]
-        """List of error tuples (index, error_message).
-
-        Business Rule: TypedDict fields must specify dict structure.
-        Contains (index, error_message) tuples for failed items.
-        """
-
-        total: int
-        """Total number of items processed.
-
-        Business Rule: TypedDict fields must specify dict structure.
-        Total count includes both successful and failed items.
-        """
-
-        success_count: int
-        """Number of successfully processed items.
-
-        Business Rule: TypedDict fields must specify dict structure.
-        Count of items in results list.
-        """
-
-        error_count: int
-        """Number of failed items.
-
-        Business Rule: TypedDict fields must specify dict structure.
-        Count of items in errors list.
-        """
-
-    # Public type alias for batch result (avoids SLF001 violation)
-    # Use PEP 695 type alias for proper type checking support
-    type BatchResultDict = FlextTypes.BatchResultDictBase
-
-    # Note: TypedDict cannot be generic, so BatchResultDict is used directly
-    # Type narrowing for results: list[T] is done at usage site based on operation return type
-    # Users should use BatchResultDict directly
+    # BatchResultDictBase moved to Pydantic model in _models/generic.py
+    # Use type alias for backward compatibility
+    # from flext_core._models.generic import BatchResultDict
 
     # =====================================================================
     # VALIDATION TYPES (Python 3.13+ Annotated with Pydantic constraints)
@@ -866,7 +759,10 @@ class FlextTypes:
 t_core = FlextTypes
 t = FlextTypes
 
+DispatcherConfig = FlextTypes.Dispatcher.DispatcherConfig
+
 __all__ = [
+    "DispatcherConfig",
     "FlextTypes",
     "MessageT_contra",
     "P",
