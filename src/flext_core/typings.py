@@ -27,11 +27,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.constants import FlextConstants
 
-# Import Pydantic models that replaced TypedDicts
-# These are imported here to maintain backward compatibility
-# with existing code that imports from flext_core.typings
-from flext_core._models.settings import FlextModelsConfig
-
 # LaxStr compatibility for external integrations (LDAP, etc.)
 
 # ============================================================================
@@ -764,7 +759,20 @@ t_core = FlextTypes
 t = FlextTypes
 
 # Type aliases for backward compatibility (TypedDicts moved to Pydantic models)
-DispatcherConfig = FlextModelsConfig.DispatcherConfig
+# Using TYPE_CHECKING to avoid circular imports
+if False:  # TYPE_CHECKING
+    from flext_core._models.settings import FlextModelsConfig
+
+    DispatcherConfig = FlextModelsConfig.DispatcherConfig
+else:
+    # Lazy import at runtime to avoid circular imports
+    def __getattr__(name: str):
+        if name == "DispatcherConfig":
+            from flext_core._models.settings import FlextModelsConfig
+
+            return FlextModelsConfig.DispatcherConfig
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "DispatcherConfig",
