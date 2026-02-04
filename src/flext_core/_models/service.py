@@ -13,7 +13,7 @@ import uuid
 from collections.abc import Callable
 from typing import Annotated
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
@@ -262,3 +262,22 @@ class FlextModelsService:
                 msg = f"Operation callable must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
             return v  # type: ignore[return-value]
+
+
+class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
+    """Options for runtime bootstrap.
+
+    Replaces TypedDict RuntimeBootstrapOptions from protocols.py.
+    Provides type-safe configuration for service runtime initialization.
+    """
+
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+        arbitrary_types_allowed=True,
+    )
+
+    config_type: type[BaseModel] | None = Field(
+        default=None,
+        description="Configuration model type for bootstrap",
+    )

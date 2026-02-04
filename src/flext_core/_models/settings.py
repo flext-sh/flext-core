@@ -930,6 +930,73 @@ class FlextModelsConfig:
             ),
         )
 
+    class DispatcherConfig(FlextModelsBase.ArbitraryTypesModel):
+        """Configuration for message dispatcher.
+
+        Replaces TypedDict DispatcherConfig from typings.py.
+        Provides type-safe configuration for message dispatcher behavior.
+        """
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            extra="forbid",
+        )
+
+        dispatcher_timeout_seconds: float = Field(
+            default=30.0,
+            gt=0,
+            description="Timeout in seconds for dispatcher operations",
+        )
+        executor_workers: int = Field(
+            default=4,
+            ge=1,
+            le=256,
+            description="Number of executor worker threads",
+        )
+        circuit_breaker_threshold: int = Field(
+            default=5,
+            ge=1,
+            description="Circuit breaker failure threshold",
+        )
+        rate_limit_max_requests: int = Field(
+            default=1000,
+            ge=1,
+            description="Maximum requests for rate limiting",
+        )
+        rate_limit_window_seconds: float = Field(
+            default=60.0,
+            gt=0,
+            description="Rate limit window in seconds",
+        )
+        max_retry_attempts: int = Field(
+            default=3,
+            ge=0,
+            le=10,
+            description="Maximum retry attempts",
+        )
+        retry_delay: float = Field(
+            default=1.0,
+            ge=0,
+            description="Delay between retries in seconds",
+        )
+        enable_timeout_executor: bool = Field(
+            default=True,
+            description="Enable timeout executor",
+        )
+        dispatcher_enable_logging: bool = Field(
+            default=True,
+            description="Enable dispatcher logging",
+        )
+        dispatcher_auto_context: bool = Field(
+            default=True,
+            description="Automatically add context to messages",
+        )
+        dispatcher_enable_metrics: bool = Field(
+            default=True,
+            description="Enable dispatcher metrics collection",
+        )
+
     # Domain model configuration - moved from constants.py
     # constants.py cannot import ConfigDict, so this belongs here
     DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
