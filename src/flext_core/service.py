@@ -264,49 +264,49 @@ class FlextService[TDomainResult](
         config_type = cls._get_service_config_type()
         options = cls._runtime_bootstrap_options()
         # Delegate to _create_runtime with options from _runtime_bootstrap_options
-        # Direct TypedDict access preserves types from p.RuntimeBootstrapOptions
+        # Direct attribute access for Pydantic model p.RuntimeBootstrapOptions
 
-        # config_type: TypedDict defines as type[BaseModel], narrow to FlextSettings
-        config_type_raw = options.get("config_type")
+        # config_type: Pydantic model defines as type[BaseModel], narrow to FlextSettings
+        config_type_raw = options.config_type
         config_type_val: type[FlextSettings] | None
         if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_type_val = config_type_raw
         else:
             config_type_val = config_type
 
-        # config_overrides: TypedDict typed as Mapping[str, FlexibleValue]
-        config_overrides_val = options.get("config_overrides")
+        # config_overrides: Pydantic model typed as Mapping[str, FlexibleValue]
+        config_overrides_val = options.config_overrides
 
-        # context: TypedDict typed as ContextLike - narrow to "p.Context" using isinstance
-        context_val_raw = options.get("context")
+        # context: Pydantic model typed as ContextLike - narrow to "p.Context" using isinstance
+        context_val_raw = options.context
         context_val: p.Context | None = (
             context_val_raw if isinstance(context_val_raw, p.Context) else None
         )
 
-        # subproject: TypedDict typed as str
-        subproject_val = options.get("subproject")
+        # subproject: Pydantic model typed as str
+        subproject_val = options.subproject
 
-        # services: TypedDict uses object placeholder for p.VariadicCallable (circular import)
-        # Access directly - TypedDict provides Mapping[str, GeneralValueType | BaseModel | object]
-        services_val = options.get("services")
+        # services: Pydantic model uses object placeholder for p.VariadicCallable (circular import)
+        # Access directly - Pydantic model provides Mapping[str, GeneralValueType | BaseModel | object]
+        services_val = options.services
 
-        # factories: TypedDict typed as Mapping with callable values
-        factories_val = options.get("factories")
+        # factories: Pydantic model typed as Mapping with callable values
+        factories_val = options.factories
 
-        # resources: TypedDict typed as Mapping[str, Callable[[], GeneralValueType]]
-        resources_val = options.get("resources")
+        # resources: Pydantic model typed as Mapping[str, Callable[[], GeneralValueType]]
+        resources_val = options.resources
 
-        # container_overrides: TypedDict typed as Mapping[str, FlexibleValue]
-        container_overrides_val = options.get("container_overrides")
+        # container_overrides: Pydantic model typed as Mapping[str, FlexibleValue]
+        container_overrides_val = options.container_overrides
 
-        # wire_modules: TypedDict typed as Sequence[ModuleType]
-        wire_modules_val = options.get("wire_modules")
+        # wire_modules: Pydantic model typed as Sequence[ModuleType]
+        wire_modules_val = options.wire_modules
 
-        # wire_packages: TypedDict typed as Sequence[str]
-        wire_packages_val = options.get("wire_packages")
+        # wire_packages: Pydantic model typed as Sequence[str]
+        wire_packages_val = options.wire_packages
 
-        # wire_classes: TypedDict typed as Sequence[type]
-        wire_classes_val = options.get("wire_classes")
+        # wire_classes: Pydantic model typed as Sequence[type]
+        wire_classes_val = options.wire_classes
 
         return cls._create_runtime(
             config_type=config_type_val,
@@ -343,13 +343,13 @@ class FlextService[TDomainResult](
         Example:
             @classmethod
             def _runtime_bootstrap_options(cls):
-                return {
-                    "config_overrides": {"app_name": "MyApp"},
-                    "services": {"db": my_db_service},
-                }
+                return p.RuntimeBootstrapOptions(
+                    config_overrides={"app_name": "MyApp"},
+                    services={"db": my_db_service},
+                )
 
         """
-        return {}
+        return p.RuntimeBootstrapOptions()
 
     def _clone_runtime(
         self,

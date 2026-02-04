@@ -239,10 +239,10 @@ class FlextMixins(FlextRuntime):
         """Hook to customize runtime creation for mixin consumers.
 
         Returns:
-            p.RuntimeBootstrapOptions: TypedDict with optional runtime configuration options.
+            p.RuntimeBootstrapOptions: Pydantic model with optional runtime configuration options.
 
         """
-        return {}
+        return p.RuntimeBootstrapOptions()
 
     def _get_runtime(self) -> m.ServiceRuntime:
         """Return or create a runtime triple shared across mixin consumers."""

@@ -265,9 +265,11 @@ class FlextProtocols:
             """Get a context value. Returns Result-like object."""
             ...
 
-    # RuntimeBootstrapOptions moved to Pydantic model in _models/service.py
-    # Use type alias for backward compatibility
-    # from flext_core._models.service import RuntimeBootstrapOptions
+    # RuntimeBootstrapOptions is now a Pydantic model in _models/service.py
+    # Re-exported here for backward compatibility with p.RuntimeBootstrapOptions usage
+    from flext_core._models.service import (
+        RuntimeBootstrapOptions as RuntimeBootstrapOptions,
+    )
 
     # =========================================================================
     # CORE PROTOCOLS (Result Handling and Models)

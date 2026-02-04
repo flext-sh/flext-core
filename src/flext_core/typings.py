@@ -723,9 +723,9 @@ class FlextTypes:
     # =====================================================================
     # TYPEDDICT CLASSES (Python 3.13+ PEP 695)
     # =====================================================================
-    # BatchResultDictBase moved to Pydantic model in _models/generic.py
-    # Use type alias for backward compatibility
-    # from flext_core._models.generic import BatchResultDict
+    # BatchResultDict is now a Pydantic model in _models/generic.py
+    # Re-exported here for backward compatibility with t.BatchResultDict usage
+    from flext_core._models.generic import BatchResultDict as BatchResultDict
 
     # =====================================================================
     # VALIDATION TYPES (Python 3.13+ Annotated with Pydantic constraints)

@@ -1501,6 +1501,18 @@ class BatchResultDict(FlextModelsBase.ArbitraryTypesModel):
         default_factory=list,
         description="List of (index, error_message) tuples for failed items",
     )
+    total: int = Field(
+        default=0,
+        description="Total number of items processed in the batch",
+    )
+    success_count: int = Field(
+        default=0,
+        description="Number of successfully processed items",
+    )
+    error_count: int = Field(
+        default=0,
+        description="Number of items that failed processing",
+    )
 
 
 # Short alias for internal use

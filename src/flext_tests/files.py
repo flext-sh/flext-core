@@ -1243,11 +1243,11 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # - errors: list[tuple[int, str]] (index, error_message)
         # - total, success_count, error_count
         batch_data = batch_result_dict.value
-        results = batch_data.get("results", [])
-        errors = batch_data.get("errors", [])
-        total = batch_data.get("total", len(files_dict))
-        batch_data.get("success_count", 0)
-        batch_data.get("error_count", 0)
+        results = batch_data.results
+        errors = batch_data.errors
+        total = batch_data.total if batch_data.total else len(files_dict)
+        _ = batch_data.success_count
+        _ = batch_data.error_count
 
         # Convert results to dict and errors to dict
         # u.Collection.batch() returns results as list of (index, result) tuples

@@ -441,13 +441,13 @@ class FlextUtilitiesCollection:
             if progress is not None and processed % progress_interval == 0:
                 progress(processed, total)
 
-        result_dict: t.BatchResultDict = {
-            "results": results,
-            "total": total,
-            "success_count": len(results),
-            "error_count": len(errors),
-            "errors": errors,
-        }
+        result_dict = t.BatchResultDict(
+            results=results,
+            total=total,
+            success_count=len(results),
+            error_count=len(errors),
+            errors=errors,
+        )
         return r[t.BatchResultDict].ok(result_dict)
 
     @staticmethod
