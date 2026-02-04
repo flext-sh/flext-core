@@ -17,7 +17,7 @@ import threading
 from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.__version__ import __version__
@@ -422,6 +422,12 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
 
     class AutoConfig(BaseModel):
         """Auto-configuration model for dynamic config creation."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            use_enum_values=True,
+            extra="forbid",
+        )
 
         config_class: type[BaseSettings]
         env_prefix: str = Field(default=c.Platform.ENV_PREFIX)
