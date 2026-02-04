@@ -18,9 +18,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
-from flext_core._models.base import FlextModelFoundation
+from flext_core._models.base import FlextModelFoundation, FlextModelsBase
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
