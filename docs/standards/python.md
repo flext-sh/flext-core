@@ -1,5 +1,7 @@
 # Python Coding Standards
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 FLEXT-Core enforces **zero-tolerance** quality standards. These are non-negotiable.
 
 ## Type Annotations

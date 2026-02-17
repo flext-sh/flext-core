@@ -1,5 +1,7 @@
 # Remaining Docs Audit
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **Scope**: Secondary docs not covered by main audits (standards, guides, improvers)
 **Date**: 2025-11-15
 **Status**: ⚠️ Cleanup required for legacy bus references

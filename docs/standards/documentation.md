@@ -1,5 +1,7 @@
 # Documentation Standards
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 FLEXT-Core documentation follows strict standards for clarity, accuracy, and maintainability.
 
 ## Documentation Structure

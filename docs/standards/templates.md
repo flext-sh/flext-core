@@ -1,5 +1,7 @@
 # Documentation Templates
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 Reusable templates for creating consistent FLEXT-Core documentation.
 
 ## Feature Guide Template

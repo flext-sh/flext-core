@@ -1,5 +1,7 @@
 # FLEXT-Core Documentation Index
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 Concise navigation for FLEXT-Core reference materials. All documents follow the repository documentation standards and PEP 8/257 guidance.
 
 ## Quick Navigation

@@ -1,5 +1,7 @@
 # FLEXT-Core Documentation
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first foundation library built around railway-oriented programming, dependency injection, and domain-driven design. Content follows PEP 8, PEP 257, and the project documentation standards in `docs/standards/`.
 
 ## Scope and Compatibility

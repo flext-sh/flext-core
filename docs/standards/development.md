@@ -1,5 +1,7 @@
 # Development Standards
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **FLEXT-Core Development Standards | Version: 0.9.9 | Status: Production Ready**
 
 This document outlines the development standards, patterns, and quality requirements for FLEXT-Core - the foundation library for the entire FLEXT ecosystem.

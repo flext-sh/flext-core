@@ -1,5 +1,7 @@
 # QUICK START
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 Get started with FLEXT-Core in 5 minutes. This guide covers the essentials; see the full guides for deeper coverage and rationale.
 
 ## Installation
