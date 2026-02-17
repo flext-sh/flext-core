@@ -1,6 +1,12 @@
 # Foundation Layers API Reference
 
-This reference covers **Layers 0, 0.5, and 1**, the primitives that support dispatcher-driven CQRS without leaking higher-layer dependencies.
+This reference covers Layers 0, 0.5, and 1: the primitives that support dispatcher-driven CQRS without leaking higher-layer dependencies.
+
+Canonical references:
+
+- `../architecture/overview.md`
+- `../architecture/clean-architecture.md`
+- `../../README.md`
 
 ## Architecture Overview
 
@@ -14,17 +20,17 @@ See the [Architecture Overview](../architecture/overview.md) for the full layeri
 
 ## Layer 0: Pure Constants
 
-### FlextConstants — Centralized Defaults
+### FlextConstants - Centralized Defaults
 
 Immutable defaults and identifiers with no runtime dependencies.
 
 ```python
-from flext_core import FlextConstants
+from flext_core import c
 
 # Error code and configuration defaults
-error_code = FlextConstants.Errors.VALIDATION_FAILED
-request_timeout = FlextConstants.Configuration.DEFAULT_TIMEOUT
-email_pattern = FlextConstants.Validation.EMAIL_PATTERN
+error_code = c.Errors.VALIDATION_FAILED
+request_timeout = c.Configuration.DEFAULT_TIMEOUT
+email_pattern = c.Validation.EMAIL_PATTERN
 ```
 
 ### t — Type System
@@ -78,10 +84,10 @@ data = FlextRuntime.to_json_serializable(payload)
 Monadic success/failure handling used across services, handlers, and decorators.
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
 result = (
-    FlextResult[int].ok(10)
+    r[int].ok(10)
     .map(lambda value: value * 2)
     .map(lambda value: f"Result: {value}")
 )
@@ -108,14 +114,14 @@ if logger_result.is_success:
 Structured exception types with contextual metadata for infrastructure concerns.
 
 ```python
-from flext_core import FlextException, ErrorCode
+from flext_core import c, e
 
-class ValidationException(FlextException):
+class ValidationException(e.BaseError):
     """Raised when domain validation fails."""
 
     def __init__(self, field: str, value: object):
         super().__init__(
-            error_code=ErrorCode.VALIDATION_ERROR,
+            error_code=c.Errors.VALIDATION_ERROR,
             message=f"Invalid value for {field}: {value}",
             context={"field": field, "value": value},
         )
@@ -196,7 +202,7 @@ The foundation layers provide stable, dependency-light building blocks for dispa
 - [Getting Started](../guides/getting-started.md) - Installation and basic usage
 - [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - FlextResult pattern
 - [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - FlextContainer usage
-- [Architecture Overview](../architecture/README.md) - System architecture and layering
+- [Architecture Overview](../architecture/overview.md) - System architecture and layering
 - [Domain API Reference](./domain.md) - Domain layer APIs
 - [Application API Reference](./application.md) - Application layer APIs
 
@@ -204,3 +210,13 @@ The foundation layers provide stable, dependency-light building blocks for dispa
 
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
+
+## Verification Commands
+
+Run from `flext-core/`:
+
+```bash
+make lint
+make type-check
+make test-fast
+```
