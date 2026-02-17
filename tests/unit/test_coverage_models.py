@@ -26,7 +26,9 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError, field_validator
 
-from flext_core import m
+from flext_core import m, t
+
+FlextModelsCqrs = m.Cqrs
 
 
 class ModelScenarios:
