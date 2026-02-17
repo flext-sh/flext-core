@@ -942,7 +942,8 @@ class FlextModelFoundation:
             # Replace current instance data using __dict__.update to bypass
             # intermediate validation states during assignment
             validated = self.__class__.model_validate(current_data)
-            self.__dict__.update(validated.__dict__)
+            for key, value in validated.__dict__.items():
+                object.__setattr__(self, key, value)
 
         def restore(self) -> None:
             """Restore a soft deleted record."""
@@ -1314,7 +1315,7 @@ class FlextModelFoundation:
 
         def add_runtime_field(self, name: str, value: t.GeneralValueType) -> None:
             """Add a field at runtime (stored in __dict__)."""
-            self.__dict__[name] = value
+            object.__setattr__(self, name, value)
 
         def get_runtime_field(
             self, name: str, default: t.GeneralValueType = None
