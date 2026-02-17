@@ -7,6 +7,12 @@ This document describes the Command Query Responsibility Segregation (CQRS)
 implementation in flext-core, including the handler pipeline, dispatcher
 orchestration, and reliability patterns.
 
+Canonical references:
+
+- `./overview.md`
+- `./clean-architecture.md`
+- `../../README.md`
+
 ---
 
 ## Overview
@@ -482,4 +488,14 @@ Target metrics for CQRS components:
 - [Service Patterns Guide](../guides/service-patterns.md) - Handler and service implementation
 - [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - Dispatcher reliability configuration
 - [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - Result composition patterns
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- `../../README.md`: architecture principles and development workflow entrypoint
+
+## Verification Commands
+
+Run from `flext-core/`:
+
+```bash
+make lint
+make type-check
+make test-fast
+```
