@@ -2,6 +2,12 @@
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
 
+Canonical references:
+
+- `./overview.md`
+- `./cqrs.md`
+- `../../README.md`
+
 FLEXT-Core keeps CQRS orchestration, domain modeling, and infrastructure
 aligned through unidirectional dependencies. Each layer maps directly to
 modules in `src/flext_core` and remains intentionally small so contracts stay
@@ -101,4 +107,14 @@ circular dependencies and keeps FLEXT-Core safe for reuse across services.
 - [Domain-Driven Design Guide](../guides/domain-driven-design.md) - DDD patterns with FlextModels
 - [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - DI container usage
 - [Service Patterns Guide](../guides/service-patterns.md) - Domain service implementation
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- `../../README.md`: architecture principles and development workflow entrypoint
+
+## Verification Commands
+
+Run from `flext-core/`:
+
+```bash
+make lint
+make type-check
+make test-fast
+```
