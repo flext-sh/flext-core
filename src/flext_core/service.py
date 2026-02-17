@@ -175,7 +175,19 @@ class FlextService[TDomainResult](
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
-        services: Mapping[str, t.GeneralValueType] | None = None,
+        services: Mapping[
+            str,
+            t.GeneralValueType
+            | p.Config
+            | p.Context
+            | p.DI
+            | p.Service[t.GeneralValueType]
+            | p.Log
+            | p.Handler
+            | p.Registry
+            | Callable[..., t.GeneralValueType],
+        ]
+        | None = None,
         factories: Mapping[
             str,
             Callable[
@@ -262,65 +274,105 @@ class FlextService[TDomainResult](
     def _create_initial_runtime(cls) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
         config_type = cls._get_service_config_type()
-        options = cls._runtime_bootstrap_options()
-        # Delegate to _create_runtime with options from _runtime_bootstrap_options
-        # Direct attribute access for Pydantic model p.RuntimeBootstrapOptions
+        options = cls._normalize_runtime_bootstrap_options(
+            cls._runtime_bootstrap_options(),
+        )
 
-        # config_type: Pydantic model defines as type[BaseModel], narrow to FlextSettings
         config_type_raw = options.config_type
         config_type_val: type[FlextSettings] | None
         if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_type_val = config_type_raw
         else:
             config_type_val = config_type
-
-        # config_overrides: Pydantic model typed as Mapping[str, FlexibleValue]
-        config_overrides_val = options.config_overrides
-
-        # context: Pydantic model typed as ContextLike - narrow to "p.Context" using isinstance
         context_val_raw = options.context
         context_val: p.Context | None = (
             context_val_raw if isinstance(context_val_raw, p.Context) else None
         )
 
-        # subproject: Pydantic model typed as str
-        subproject_val = options.subproject
-
-        # services: Pydantic model uses object placeholder for p.VariadicCallable (circular import)
-        # Access directly - Pydantic model provides Mapping[str, GeneralValueType | BaseModel | object]
-        services_val = options.services
-
-        # factories: Pydantic model typed as Mapping with callable values
-        factories_val = options.factories
-
-        # resources: Pydantic model typed as Mapping[str, Callable[[], GeneralValueType]]
-        resources_val = options.resources
-
-        # container_overrides: Pydantic model typed as Mapping[str, FlexibleValue]
-        container_overrides_val = options.container_overrides
-
-        # wire_modules: Pydantic model typed as Sequence[ModuleType]
-        wire_modules_val = options.wire_modules
-
-        # wire_packages: Pydantic model typed as Sequence[str]
-        wire_packages_val = options.wire_packages
-
-        # wire_classes: Pydantic model typed as Sequence[type]
-        wire_classes_val = options.wire_classes
-
         return cls._create_runtime(
             config_type=config_type_val,
-            config_overrides=config_overrides_val,
+            config_overrides=options.config_overrides,
             context=context_val,
-            subproject=subproject_val,
-            services=services_val,
-            factories=factories_val,
-            resources=resources_val,
-            container_overrides=container_overrides_val,
-            wire_modules=wire_modules_val,
-            wire_packages=wire_packages_val,
-            wire_classes=wire_classes_val,
+            subproject=options.subproject,
+            services=cls._normalize_scoped_services(options.services),
+            factories=options.factories,
+            resources=options.resources,
+            container_overrides=options.container_overrides,
+            wire_modules=options.wire_modules,
+            wire_packages=options.wire_packages,
+            wire_classes=options.wire_classes,
         )
+
+    @classmethod
+    def _normalize_runtime_bootstrap_options(
+        cls,
+        options_raw: p.RuntimeBootstrapOptions | Mapping[str, t.FlexibleValue],
+    ) -> p.RuntimeBootstrapOptions:
+        del cls
+        if isinstance(options_raw, p.RuntimeBootstrapOptions):
+            return options_raw
+        if isinstance(options_raw, Mapping):
+            return p.RuntimeBootstrapOptions.model_validate(
+                {k: v for k, v in options_raw.items() if isinstance(k, str)},
+            )
+        return p.RuntimeBootstrapOptions()
+
+    @classmethod
+    def _normalize_scoped_services(
+        cls,
+        services: Mapping[str, t.RegisterableService] | None,
+    ) -> (
+        Mapping[
+            str,
+            t.GeneralValueType
+            | p.Config
+            | p.Context
+            | p.DI
+            | p.Service[t.GeneralValueType]
+            | p.Log
+            | p.Handler
+            | p.Registry
+            | Callable[..., t.GeneralValueType],
+        ]
+        | None
+    ):
+        del cls
+        if services is None:
+            return None
+
+        normalized: dict[
+            str,
+            t.GeneralValueType
+            | p.Config
+            | p.Context
+            | p.DI
+            | p.Service[t.GeneralValueType]
+            | p.Log
+            | p.Handler
+            | p.Registry
+            | Callable[..., t.GeneralValueType],
+        ] = {
+            name: service
+            for name, service in services.items()
+            if FlextService._is_scoped_service_candidate(service)
+        }
+
+        return normalized or None
+
+    @staticmethod
+    def _is_scoped_service_candidate(service: t.RegisterableService) -> bool:
+        if u.is_general_value_type(service):
+            return True
+        protocol_types = (
+            p.Config,
+            p.Context,
+            p.DI,
+            p.Service,
+            p.Log,
+            p.Handler,
+            p.Registry,
+        )
+        return isinstance(service, protocol_types) or callable(service)
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
@@ -397,7 +449,6 @@ class FlextService[TDomainResult](
         """Service-scoped execution context."""
         return u.require_initialized(self._context, "Context")
 
-    @override
     @property
     def config(self) -> p.Config:
         """Service-scoped configuration clone."""

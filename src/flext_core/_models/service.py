@@ -10,11 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable, Mapping, Sequence
-from types import ModuleType
+from collections.abc import Callable
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
@@ -259,66 +258,10 @@ class FlextModelsService:
             v: object,
         ) -> Callable[..., p.ResultLike[t.GeneralValueType]]:
             """Validate operation is callable."""
-            if not callable(v):
+            if not isinstance(v, p.VariadicCallable):
                 msg = f"Operation callable must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
-            return v  # type: ignore[return-value]
+            return v
 
 
-class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
-    """Options for runtime bootstrap.
-
-    Replaces TypedDict RuntimeBootstrapOptions from protocols.py.
-    Provides type-safe configuration for service runtime initialization.
-    """
-
-    model_config = ConfigDict(
-        validate_assignment=True,
-        extra="allow",  # Allow extra fields for backward compatibility with dict usage
-        arbitrary_types_allowed=True,
-    )
-
-    config_type: type[BaseModel] | None = Field(
-        default=None,
-        description="Configuration model type for bootstrap",
-    )
-    config_overrides: Mapping[str, t.FlexibleValue] | None = Field(
-        default=None,
-        description="Configuration overrides to apply during bootstrap",
-    )
-    context: t.GeneralValueType | None = Field(
-        default=None,
-        description="Context instance or configuration for bootstrap",
-    )
-    subproject: str | None = Field(
-        default=None,
-        description="Subproject name for scoped configuration",
-    )
-    services: Mapping[str, t.GeneralValueType] | None = Field(
-        default=None,
-        description="Services to register as singletons in the container",
-    )
-    factories: t.FactoryMapping | None = Field(
-        default=None,
-        description="Factory functions to register in the container",
-    )
-    resources: t.ResourceMapping | None = Field(
-        default=None,
-        description="Resource factories (with lifecycle) to register",
-    )
-    container_overrides: Mapping[str, t.FlexibleValue] | None = Field(
-        default=None,
-        description="Container configuration overrides",
-    )
-    wire_modules: Sequence[ModuleType] | None = Field(
-        default=None,
-        description="Modules to wire for @inject decorator",
-    )
-    wire_packages: Sequence[str] | None = Field(
-        default=None,
-        description="Package names to wire for @inject decorator",
-    )
-    wire_classes: Sequence[type] | None = Field(
-        default=None,
-        description="Classes to wire for @inject decorator",
-    )
+RuntimeBootstrapOptions = p.RuntimeBootstrapOptions

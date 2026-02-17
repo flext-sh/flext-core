@@ -394,7 +394,7 @@ make validate
 | **Return Success**      | `FlextResult[T].ok(value)`             |
 | **Return Error**        | `FlextResult[T].fail("error message")` |
 | **Check Success**       | `result.is_success`                    |
-| **Extract Value**       | `result.value`                      |
+| **Extract Value**       | `result.value`                         |
 | **Get Error**           | `result.error`                         |
 | **Transform Value**     | `result.map(lambda x: x * 2)`          |
 | **Chain Operations**    | `result.flat_map(next_operation)`      |

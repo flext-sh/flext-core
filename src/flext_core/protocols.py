@@ -16,7 +16,7 @@ from typing import (
     runtime_checkable,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic._internal._model_construction import ModelMetaclass  # noqa: PLC2701
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
@@ -265,11 +265,26 @@ class FlextProtocols:
             """Get a context value. Returns Result-like object."""
             ...
 
-    # RuntimeBootstrapOptions is now a Pydantic model in _models/service.py
-    # Re-exported here for backward compatibility with p.RuntimeBootstrapOptions usage
-    from flext_core._models.service import (
-        RuntimeBootstrapOptions as RuntimeBootstrapOptions,
-    )
+    class RuntimeBootstrapOptions(BaseModel):
+        """Runtime bootstrap options for service initialization."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="allow",
+            arbitrary_types_allowed=True,
+        )
+
+        config_type: type[BaseModel] | None = Field(default=None)
+        config_overrides: Mapping[str, t.FlexibleValue] | None = Field(default=None)
+        context: t.GeneralValueType | None = Field(default=None)
+        subproject: str | None = Field(default=None)
+        services: Mapping[str, t.RegisterableService] | None = Field(default=None)
+        factories: t.FactoryMapping | None = Field(default=None)
+        resources: t.ResourceMapping | None = Field(default=None)
+        container_overrides: Mapping[str, t.FlexibleValue] | None = Field(default=None)
+        wire_modules: Sequence[ModuleType] | None = Field(default=None)
+        wire_packages: Sequence[str] | None = Field(default=None)
+        wire_classes: Sequence[type] | None = Field(default=None)
 
     # =========================================================================
     # CORE PROTOCOLS (Result Handling and Models)

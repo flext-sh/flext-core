@@ -18,9 +18,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from pydantic import ConfigDict, Field
+from pydantic import Field
 
-from flext_core._models.base import FlextModelFoundation, FlextModelsBase
+from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -867,6 +867,18 @@ class FlextGenericModels:
     class Progress:
         """Progress trackers - mutable, accumulate during operation."""
 
+        @staticmethod
+        def safe_rate(numerator: int, denominator: int) -> float:
+            if denominator == 0:
+                return 0.0
+            return numerator / denominator
+
+        @staticmethod
+        def safe_percentage(processed: int, total: int | None) -> float:
+            if not total or total == 0:
+                return 0.0
+            return min((processed / total) * 100.0, 100.0)
+
         class Operation(FlextModelFoundation.ArbitraryTypesModel):
             """Comprehensive progress tracking for ongoing operations.
 
@@ -942,9 +954,10 @@ class FlextGenericModels:
                     float: Success rate between 0.0 and 1.0.
 
                 """
-                if self.total_count == 0:
-                    return 0.0
-                return self.success_count / self.total_count
+                return FlextGenericModels.Progress.safe_rate(
+                    self.success_count,
+                    self.total_count,
+                )
 
             @property
             def failure_rate(self) -> float:
@@ -954,9 +967,10 @@ class FlextGenericModels:
                     float: Failure rate between 0.0 and 1.0.
 
                 """
-                if self.total_count == 0:
-                    return 0.0
-                return self.failure_count / self.total_count
+                return FlextGenericModels.Progress.safe_rate(
+                    self.failure_count,
+                    self.total_count,
+                )
 
             @property
             def completion_percentage(self) -> float:
@@ -966,9 +980,10 @@ class FlextGenericModels:
                     float: Completion percentage (0.0 to 100.0), or 0.0 if no estimate.
 
                 """
-                if not self.estimated_total or self.estimated_total == 0:
-                    return 0.0
-                return min((self.total_count / self.estimated_total) * 100.0, 100.0)
+                return FlextGenericModels.Progress.safe_percentage(
+                    self.total_count,
+                    self.estimated_total,
+                )
 
             @property
             def remaining_count(self) -> int | None:
@@ -1282,9 +1297,10 @@ class FlextGenericModels:
                     float: Success rate between 0.0 and 1.0.
 
                 """
-                if self.total_processed_count == 0:
-                    return 0.0
-                return self.converted_count / self.total_processed_count
+                return FlextGenericModels.Progress.safe_rate(
+                    self.converted_count,
+                    self.total_processed_count,
+                )
 
             @property
             def duration_seconds(self) -> float | None:
@@ -1329,10 +1345,9 @@ class FlextGenericModels:
                     float: Completion percentage (0.0 to 100.0), or 0.0 if no total known.
 
                 """
-                if not self.total_input_count or self.total_input_count == 0:
-                    return 0.0
-                return min(
-                    (self.total_processed_count / self.total_input_count) * 100.0, 100.0
+                return FlextGenericModels.Progress.safe_percentage(
+                    self.total_processed_count,
+                    self.total_input_count,
                 )
 
             @property
@@ -1390,6 +1405,26 @@ class FlextGenericModels:
                 """
                 self.converted.append(item)
 
+            def _append_metadata_item(
+                self,
+                key: str,
+                item: t.GeneralValueType,
+            ) -> None:
+                existing_items = self.metadata.get(key)
+                if isinstance(existing_items, list):
+                    existing_items.append(item)
+                    return
+                self.metadata[key] = [item]
+
+            def _upsert_skip_reason(
+                self, item: t.GeneralValueType, reason: str
+            ) -> None:
+                existing_reasons = self.metadata.get("skip_reasons")
+                if isinstance(existing_reasons, dict):
+                    existing_reasons[str(item)] = reason
+                    return
+                self.metadata["skip_reasons"] = {str(item): reason}
+
             def add_error(
                 self, error: str, item: t.GeneralValueType | None = None
             ) -> None:
@@ -1402,7 +1437,7 @@ class FlextGenericModels:
                 """
                 self.errors.append(error)
                 if item is not None:
-                    self.metadata.setdefault("failed_items", []).append(item)
+                    self._append_metadata_item("failed_items", item)
 
             def add_warning(
                 self, warning: str, item: t.GeneralValueType | None = None
@@ -1416,7 +1451,7 @@ class FlextGenericModels:
                 """
                 self.warnings.append(warning)
                 if item is not None:
-                    self.metadata.setdefault("warning_items", []).append(item)
+                    self._append_metadata_item("warning_items", item)
 
             def add_skipped(
                 self, item: t.GeneralValueType, reason: str | None = None
@@ -1430,7 +1465,7 @@ class FlextGenericModels:
                 """
                 self.skipped.append(item)
                 if reason:
-                    self.metadata.setdefault("skip_reasons", {})[str(item)] = reason
+                    self._upsert_skip_reason(item, reason)
 
             def start_conversion(
                 self,
@@ -1481,38 +1516,7 @@ class FlextGenericModels:
                 }
 
 
-class BatchResultDict(FlextModelsBase.ArbitraryTypesModel):
-    """Result dictionary for batch operations.
-
-    Replaces TypedDict BatchResultDictBase from typings.py.
-    Provides type-safe structure for batch operation results.
-    """
-
-    model_config = ConfigDict(
-        validate_assignment=True,
-        extra="forbid",
-    )
-
-    results: list[t.GeneralValueType] = Field(
-        default_factory=list,
-        description="List of successful results from batch operation",
-    )
-    errors: list[tuple[int, str]] = Field(
-        default_factory=list,
-        description="List of (index, error_message) tuples for failed items",
-    )
-    total: int = Field(
-        default=0,
-        description="Total number of items processed in the batch",
-    )
-    success_count: int = Field(
-        default=0,
-        description="Number of successfully processed items",
-    )
-    error_count: int = Field(
-        default=0,
-        description="Number of items that failed processing",
-    )
+BatchResultDict = t.BatchResultDict
 
 
 # Short alias for internal use

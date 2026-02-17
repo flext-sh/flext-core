@@ -723,9 +723,37 @@ class FlextTypes:
     # =====================================================================
     # TYPEDDICT CLASSES (Python 3.13+ PEP 695)
     # =====================================================================
-    # BatchResultDict is now a Pydantic model in _models/generic.py
-    # Re-exported here for backward compatibility with t.BatchResultDict usage
-    from flext_core._models.generic import BatchResultDict as BatchResultDict
+    class BatchResultDict(BaseModel):
+        """Result payload model for batch operation outputs."""
+
+        model_config = ConfigDict(
+            validate_assignment=True,
+            extra="forbid",
+        )
+
+        results: list[FlextTypes.GeneralValueType] = Field(default_factory=list)
+        errors: list[tuple[int, str]] = Field(default_factory=list)
+        total: int = Field(default=0)
+        success_count: int = Field(default=0)
+        error_count: int = Field(default=0)
+
+        def __getitem__(
+            self,
+            key: str,
+        ) -> list[FlextTypes.GeneralValueType] | list[tuple[int, str]] | int:
+            """Provide mapping-style compatibility for legacy batch result access."""
+            if key == "results":
+                return self.results
+            if key == "errors":
+                return self.errors
+            if key == "total":
+                return self.total
+            if key == "success_count":
+                return self.success_count
+            if key == "error_count":
+                return self.error_count
+            msg = f"Invalid key: {key}"
+            raise KeyError(msg)
 
     # =====================================================================
     # VALIDATION TYPES (Python 3.13+ Annotated with Pydantic constraints)

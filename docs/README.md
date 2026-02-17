@@ -18,8 +18,6 @@ This project integrates with FLEXT's comprehensive quality assurance system:
 - **Consolidation Guidance**: SOLID-based refactoring recommendations
 - **Quality Validation**: Continuous checks for enterprise standards
 
-
-
 - **Quick start:** [`quick-start.md`](./quick-start.md)
 - **Architecture:** [`architecture/overview.md`](./architecture/overview.md) and [`architecture/clean-architecture.md`](./architecture/clean-architecture.md)
 - **API reference:** [`api-reference/`](./api-reference/) grouped by layer (foundation, domain, application, infrastructure)

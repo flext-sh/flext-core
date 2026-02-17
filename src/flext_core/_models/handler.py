@@ -58,11 +58,10 @@ class FlextModelsHandler:
         ) -> Callable[..., t.GeneralValueType]:
             """Validate handler is properly callable (direct validation, no circular imports)."""
             # Direct callable check - avoid circular import via FlextUtilitiesValidation
-            if not callable(v):
+            if not isinstance(v, p.VariadicCallable):
                 msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
-            # Return the validated callable (cast to expected type)
-            return v  # type: ignore[return-value]
+            return v
 
     class RegistrationDetails(BaseModel):
         """Registration details for handler registration tracking.

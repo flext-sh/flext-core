@@ -1245,7 +1245,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         batch_data = batch_result_dict.value
         results = batch_data.results
         errors = batch_data.errors
-        total = batch_data.total if batch_data.total else len(files_dict)
+        total = batch_data.total or len(files_dict)
         _ = batch_data.success_count
         _ = batch_data.error_count
 

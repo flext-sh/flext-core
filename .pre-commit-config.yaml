@@ -8,8 +8,8 @@ default_stages: [pre-commit, pre-push]
 default_language_version:
   python: python3.13
 
-repos: []  # DISABLED BY SCRIPT - All hooks disabled
-# 
+repos: [] # DISABLED BY SCRIPT - All hooks disabled
+#
 #   # Poetry-managed tools via local repo
 #   - repo: local
 #     hooks:
@@ -20,7 +20,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #         types: [python]
 #         require_serial: true
 #         args: [--check, --diff, src/, tests/, scripts/, examples/]
-# 
+#
 #       - id: ruff-lint
 #         name: "🔥 Ruff Lint (PEP8 + ALL categories)"
 #         entry: poetry run ruff check
@@ -28,7 +28,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #         types: [python]
 #         require_serial: true
 #         args: [--fix, --exit-non-zero-on-fix, src/, tests/, scripts/, examples/]
-# 
+#
 #       # isort import sorting
 #       # - id: isort
 #       #   name: "📦 Import Sort"
@@ -37,7 +37,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #       #   types: [python]
 #       #   require_serial: true
 #       #   args: [--check-only, --diff]
-# 
+#
 #       # Bandit security
 #       - id: bandit
 #         name: "🔒 Bandit Security"
@@ -47,7 +47,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #         require_serial: true
 #         pass_filenames: false
 #         args: [-r, src/, --exclude, src/flext_tests, --severity-level=medium]
-# 
+#
 #       # Vulture dead code - TEMPORARILY DISABLED while configuring whitelist
 #       # - id: vulture
 #       #   name: "🦅 Dead Code Detection"
@@ -56,7 +56,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #       #   types: [python]
 #       #   pass_filenames: false
 #       #   args: [src/, .vulture_whitelist.py, --min-confidence=80]
-# 
+#
 #       # Radon complexity
 #       - id: radon-cc
 #         name: "📊 Cyclomatic Complexity"
@@ -65,7 +65,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #         types: [python]
 #         pass_filenames: false
 #         args: [src/, -a, -nb, --total-average]
-# 
+#
 #       - id: radon-mi
 #         name: "📊 Maintainability Index"
 #         entry: poetry run radon mi
@@ -73,7 +73,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #         types: [python]
 #         pass_filenames: false
 #         args: [src/, -nb]
-# 
+#
 #       # DEPRECATED - Use flext-quality instead
 #       # - id: check-pydantic-v2
 #       #   name: "🐍 Pydantic v2 Compliance Check"
@@ -82,7 +82,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #       #   types: [python]
 #       #   pass_filenames: true
 #       #   stages: [commit]
-# 
+#
 #   # YAML/TOML/JSON validation
 #   - repo: https://github.com/pre-commit/pre-commit-hooks
 #     rev: v5.0.0
@@ -109,7 +109,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #         args: [--fix=lf]
 #       - id: debug-statements
 #         name: "🐛 Debug Statement Check"
-# 
+#
 #   # Python-specific checks
 #   - repo: https://github.com/pre-commit/pygrep-hooks
 #     rev: v1.10.0
@@ -124,7 +124,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #         name: "⚠️ No log.warn Check"
 #       - id: python-use-type-annotations
 #         name: "📝 Type Annotations Check"
-# 
+#
 #   # Commit message validation via Poetry
 #   - repo: local
 #     hooks:
@@ -135,7 +135,7 @@ repos: []  # DISABLED BY SCRIPT - All hooks disabled
 #         stages: [commit-msg]
 #         pass_filenames: false
 #         args: [--commit-msg-file]
-# 
+#
 # CI configuration
 ci:
   autofix_prs: false # No automatic fixes - must be intentional
