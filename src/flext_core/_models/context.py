@@ -35,10 +35,9 @@ def _normalize_metadata(
             f"got {type(value).__name__}"
         )
         raise TypeError(msg)
-    attributes = {
-        str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
-        for key, raw_value in dict(value).items()
-    }
+    attributes: dict[str, t.GeneralValueType] = {}
+    for key, raw_value in dict(value).items():
+        attributes[str(key)] = FlextRuntime.normalize_to_general_value(raw_value)
     return FlextModelsBase.Metadata(attributes=t.Dict(root=attributes))
 
 
@@ -412,6 +411,8 @@ class FlextModelsContext:
             """
             return _normalize_metadata(v)
 
+        @field_validator("data", mode="before")
+        @classmethod
         def validate_dict_serializable(
             cls,
             v: t.GeneralValueType | t.Dict | None,
@@ -584,6 +585,8 @@ class FlextModelsContext:
                 msg = f"Non-JSON-serializable type {type(obj).__name__} at {path}"
                 raise TypeError(msg)
 
+        @field_validator("data", mode="before")
+        @classmethod
         def validate_dict_serializable(
             cls,
             v: t.GeneralValueType | t.Dict | None,
