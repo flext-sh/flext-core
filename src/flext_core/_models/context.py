@@ -525,16 +525,16 @@ class FlextModelsContext:
 
         """
 
-        data: t.Dict = Field(
-            default_factory=lambda: t.Dict(root={}),
+        data: dict[str, t.GeneralValueType] = Field(
+            default_factory=dict,
             description="All context data from all scopes",
         )
         metadata: FlextModelsBase.Metadata | t.Dict | None = Field(
             default=None,
             description="Context metadata (creation info, source, etc.)",
         )
-        statistics: t.Dict = Field(
-            default_factory=lambda: t.Dict(root={}),
+        statistics: dict[str, t.GeneralValueType] = Field(
+            default_factory=dict,
             description="Usage statistics (operation counts, timing info)",
         )
 
@@ -659,6 +659,21 @@ class FlextModelsContext:
             # working_value is always dict from comprehensions above;
             # explicit dict() satisfies return type dict[str, GeneralValueType]
             return dict(working_value)
+
+        @field_validator("statistics", mode="before")
+        @classmethod
+        def validate_statistics(
+            cls,
+            v: t.GeneralValueType | t.Dict | None,
+        ) -> dict[str, t.GeneralValueType]:
+            if v is None:
+                return {}
+            if FlextRuntime.is_dict_like(v):
+                return dict(v)
+            if isinstance(v, BaseModel):
+                return FlextModelsContext._to_general_value_dict(v.model_dump())
+            msg = f"statistics must be dict or BaseModel, got {type(v).__name__}"
+            raise TypeError(msg)
 
         @computed_field
         def total_data_items(self) -> int:
