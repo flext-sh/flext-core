@@ -1,8 +1,14 @@
 # Layer 2: Domain API Reference
 
-This section covers **Layer 2 (Domain)** classes that implement Domain-Driven Design patterns and participate in dispatcher-driven CQRS flows.
+Layer 2 covers Domain-Driven Design building blocks used by command/query handlers and service orchestration.
 
-> **Architecture**: Layer 2 depends only on Layers 0–1 and the runtime bridge. See the [Architecture Overview](../architecture/overview.md) for the complete hierarchy.
+Canonical references:
+
+- `../architecture/overview.md`
+- `../architecture/cqrs.md`
+- `../../README.md`
+
+Layer rule: domain code depends only on lower layers and shared runtime contracts.
 
 ## Domain Models
 
@@ -12,8 +18,7 @@ Base classes for entities, value objects, and aggregate roots implemented with P
 
 ```python
 from decimal import Decimal
-from typing import List
-from flext_core import FlextModels, FlextResult
+from flext_core import m, r
 
 class Email(m.Value):
     """Immutable value object compared by value."""
@@ -21,7 +26,7 @@ class Email(m.Value):
     address: str
 
 
-class User(FlextModels.Entity):
+class User(m.Entity):
     """Entity with identity and invariants."""
 
     id: str
@@ -42,19 +47,19 @@ class OrderItem(m.Value):
     price: Decimal
 
 
-class Order(FlextModels.AggregateRoot):
+class Order(m.AggregateRoot):
     """Aggregate root enforcing order consistency."""
 
     customer_id: str
-    items: List[OrderItem]
+    items: list[OrderItem]
     total: Decimal
 
-    def add_item(self, item: OrderItem) -> FlextResult[bool]:
+    def add_item(self, item: OrderItem) -> r[bool]:
         if item.quantity <= 0:
-            return FlextResult[bool].fail("Quantity must be positive")
+            return r[bool].fail("Quantity must be positive")
         self.items.append(item)
         self.total += item.price * item.quantity
-        return FlextResult[bool].| ok(value=True)
+        return r[bool].ok(True)
 ```
 
 ### FlextService — Service Base
@@ -62,7 +67,7 @@ class Order(FlextModels.AggregateRoot):
 Base class for domain services that encapsulate business logic, domain events, and CQRS handlers.
 
 ```python
-from flext_core import FlextDispatcher, FlextRegistry, FlextResult, FlextService
+from flext_core import FlextDispatcher, FlextRegistry, FlextService, r
 
 class CreateUser(FlextService.Command):
     """Command payload for creating a user."""
@@ -76,20 +81,20 @@ class UserCreated(FlextService.Event):
     user_id: str
 
 
-class UserService(FlextService):
+class UserService(FlextService[str]):
     """Domain service with command and event handlers."""
 
-    def handle_create_user(self, command: CreateUser) -> FlextResult[str]:
+    def handle_create_user(self, command: CreateUser) -> r[str]:
         if not command.email:
-            return FlextResult[str].fail("Email required")
+            return r[str].fail("Email required")
 
         user_id = f"user-{command.email}"  # Persist in a repository in real scenarios
         self.add_domain_event(UserCreated(user_id=user_id))
-        return FlextResult[str].ok(user_id)
+        return r[str].ok(user_id)
 
-    def handle_user_created(self, event: UserCreated) -> FlextResult[bool]:
+    def handle_user_created(self, event: UserCreated) -> r[bool]:
         # Perform read-side updates or notifications
-        return FlextResult[bool].| ok(value=True)
+        return r[bool].ok(True)
 
 
 registry = FlextRegistry()
@@ -103,3 +108,13 @@ if result.is_success:
 ```
 
 Domain models and services remain independent of frameworks while integrating cleanly with the dispatcher and application orchestration.
+
+## Verification Commands
+
+Run from `flext-core/`:
+
+```bash
+make lint
+make type-check
+make test-fast
+```
