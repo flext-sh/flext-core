@@ -222,7 +222,14 @@ class FlextModelFoundation:
             if value is None:
                 return {}
             if isinstance(value, BaseModel):
-                return dict(value.model_dump())
+                dumped = value.model_dump()
+                if isinstance(dumped, Mapping):
+                    return {str(k): v for k, v in dumped.items()}
+                msg = (
+                    "attributes BaseModel must dump to mapping, "
+                    f"got {type(dumped).__name__}"
+                )
+                raise TypeError(msg)
             if isinstance(value, t.Dict):
                 return dict(value.root)
             if isinstance(value, Mapping):
