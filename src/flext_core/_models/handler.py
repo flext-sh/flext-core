@@ -26,6 +26,7 @@ from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextModelsHandler:
@@ -55,11 +56,13 @@ class FlextModelsHandler:
         def validate_handler(
             cls,
             v: object,
-        ) -> Callable[..., t.GeneralValueType]:
-            """Validate handler is properly callable (direct validation, no circular imports)."""
-            # Direct callable check - avoid circular import via FlextUtilitiesValidation
-            if not isinstance(v, p.VariadicCallable):
-                msg = f"Handler must be callable, got {type(v).__name__}"
+        ) -> object:
+            validation = u.Validation.validate_callable(
+                v,
+                error_message=f"Handler must be callable, got {type(v).__name__}",
+            )
+            if validation.is_failure:
+                msg = validation.error or "Handler must be callable"
                 raise TypeError(msg)
             return v
 

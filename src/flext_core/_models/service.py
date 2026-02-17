@@ -19,6 +19,7 @@ from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import t
+from flext_core.utilities import u
 
 
 class FlextModelsService:
@@ -256,10 +257,14 @@ class FlextModelsService:
         def validate_operation_callable(
             cls,
             v: object,
-        ) -> Callable[..., p.ResultLike[t.GeneralValueType]]:
+        ) -> object:
             """Validate operation is callable."""
-            if not isinstance(v, p.VariadicCallable):
-                msg = f"Operation callable must be callable, got {type(v).__name__}"
+            validation = u.Validation.validate_callable(
+                v,
+                error_message=f"Operation callable must be callable, got {type(v).__name__}",
+            )
+            if validation.is_failure:
+                msg = validation.error or "Operation callable must be callable"
                 raise TypeError(msg)
             return v
 
