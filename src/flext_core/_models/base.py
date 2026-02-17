@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Annotated, Literal, Self
 from urllib.parse import urlparse
@@ -211,7 +211,26 @@ class FlextModelFoundation:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        attributes: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        attributes: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+
+        @field_validator("attributes", mode="before")
+        @classmethod
+        def _validate_attributes(
+            cls,
+            value: t.GeneralValueType | t.Dict | None,
+        ) -> dict[str, t.GeneralValueType]:
+            if value is None:
+                return {}
+            if isinstance(value, BaseModel):
+                return dict(value.model_dump())
+            if isinstance(value, t.Dict):
+                return dict(value.root)
+            if isinstance(value, Mapping):
+                return {str(k): v for k, v in value.items()}
+            msg = (
+                f"attributes must be dict-like or BaseModel, got {type(value).__name__}"
+            )
+            raise TypeError(msg)
 
     # Command message type
     class CommandMessage(BaseModel):

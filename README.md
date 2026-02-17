@@ -1,12 +1,8 @@
 # FLEXT-Core
 
-**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
-
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
 **FLEXT-Core** is the foundational library for the FLEXT ecosystem, providing a robust set of architectural primitives, patterns, and utilities for building enterprise-grade Python applications. It enforces Railway-Oriented Programming (ROP), Dependency Injection (DI), and Command Query Responsibility Segregation (CQRS) to ensure type safety, scalability, and maintainability.
+
+**Reviewed**: 2026-02-17 | **Version**: 0.10.0-dev
 
 Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
 
