@@ -1,10 +1,16 @@
 # Infrastructure Layer API Reference
 
-This section summarizes the infrastructure layer components that provide configuration, logging, and context for dispatcher and domain code.
+This section summarizes infrastructure components that provide configuration, logging, and context for dispatcher and domain code.
+
+Canonical references:
+
+- `../architecture/overview.md`
+- `../architecture/clean-architecture.md`
+- `../../README.md`
 
 ## Configuration Management
 
-### FlextSettings — Layered Configuration
+### FlextSettings - Layered Configuration
 
 Layered configuration system supporting environment variables, files, and programmatic overrides with type-safe access.
 
@@ -53,3 +59,13 @@ logger.info("Handling request", extra=context.to_log_context())
 ```
 
 Infrastructure components keep cross-cutting concerns consistent and testable without polluting domain or application code.
+
+## Verification Commands
+
+Run from `flext-core/`:
+
+```bash
+make lint
+make type-check
+make test-fast
+```
