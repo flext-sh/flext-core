@@ -1,5 +1,7 @@
 # Pydantic v2 Patterns Guide - Audit Report
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **Document**: `docs/guides/pydantic-v2-patterns.md`
 **Sources**: `config.py` (674 lines), `models.py` (3,617 lines), `typings.py` (419 lines)
 **Date**: 2025-10-21

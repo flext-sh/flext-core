@@ -1,5 +1,7 @@
 # Getting Started Guide - Audit Report
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **Document**: `docs/guides/getting-started.md`
 **Date**: 2025-11-15
 **Status**: ✅ Import cleanup complete; align narrative to dispatcher-first flow

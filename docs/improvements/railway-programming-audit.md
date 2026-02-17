@@ -1,5 +1,7 @@
 # Railway-Oriented Programming Guide - Audit Report
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **Document**: `docs/guides/railway-oriented-programming.md`
 **Source**: `src/flext_core/result.py`
 **Date**: 2025-10-21

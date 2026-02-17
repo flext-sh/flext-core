@@ -1,5 +1,7 @@
 # Dependency Injection Guide - Audit Report
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **Document**: `docs/guides/dependency-injection-advanced.md`
 **Source**: `src/flext_core/container.py`
 **Date**: 2025-10-21

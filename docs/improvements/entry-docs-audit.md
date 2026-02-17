@@ -1,5 +1,7 @@
 # Entry Docs Audit
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **Documents**: README.md, INDEX.md, and navigation landing pages
 **Date**: 2025-11-15
 **Status**: ⚠️ Minor alignment needed (layer listing + dispatcher wording)

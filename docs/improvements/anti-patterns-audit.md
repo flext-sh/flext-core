@@ -1,5 +1,7 @@
 # Anti-Patterns and Best Practices Guide - Audit Report
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **Document**: `docs/guides/anti-patterns-best-practices.md`
 **Sources**: All `src/flext_core/*.py` modules (24,796 total lines)
 **Date**: 2025-10-21
