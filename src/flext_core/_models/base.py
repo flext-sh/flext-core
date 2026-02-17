@@ -211,24 +211,7 @@ class FlextModelFoundation:
         created_by: str | None = Field(default=None)
         modified_by: str | None = Field(default=None)
         tags: list[str] = Field(default_factory=list)
-        attributes: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-
-        @field_validator("attributes", mode="before")
-        @classmethod
-        def _validate_attributes(
-            cls,
-            value: t.GeneralValueType | t.Dict | None,
-        ) -> dict[str, t.GeneralValueType]:
-            if value is None:
-                return {}
-            if isinstance(value, BaseModel):
-                return dict(value.model_dump())
-            if FlextRuntime.is_dict_like(value):
-                return dict(value)
-            msg = (
-                f"attributes must be dict-like or BaseModel, got {type(value).__name__}"
-            )
-            raise TypeError(msg)
+        attributes: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
 
     # Command message type
     class CommandMessage(BaseModel):
