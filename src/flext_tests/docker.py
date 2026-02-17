@@ -167,7 +167,7 @@ class FlextTestsDocker:
             self._dirty_containers.add(container_name)
             self._save_dirty_state()
             self.logger.info("Container marked dirty", container=container_name)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (OSError, TypeError) as exc:
             return r[bool].fail(f"Failed to mark dirty: {exc}")
 
@@ -177,7 +177,7 @@ class FlextTestsDocker:
             self._dirty_containers.discard(container_name)
             self._save_dirty_state()
             self.logger.info("Container marked clean", container=container_name)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (OSError, TypeError) as exc:
             return r[bool].fail(f"Failed to mark clean: {exc}")
 
@@ -374,7 +374,7 @@ class FlextTestsDocker:
 
                     if result == 0:
                         self.logger.info("Port ready", host=host, port=port)
-                        return r[bool].ok(True)
+                        return r[bool].ok(value=True)
                 except OSError:
                     pass
 

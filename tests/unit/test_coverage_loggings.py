@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 from flext_core.typings import t
 
-from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextSettings, p
+from flext_core import FlextLogger, FlextResult, FlextRuntime, FlextSettings, m, p
 from flext_core.constants import c
 from tests.test_utils import assertion_helpers
 
@@ -95,7 +95,7 @@ class TestGlobalContextManagement:
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(request_id="req-123", user_id="usr-456")
         context = FlextLogger._get_global_context()
-        assert isinstance(context, dict)
+        assert isinstance(context, m.ConfigMap)
 
     def test_unbind_global_context_with_non_sequence_keys(self) -> None:
         """Test unbind with non-sequence keys (covers line 121-124)."""
@@ -103,7 +103,7 @@ class TestGlobalContextManagement:
         FlextLogger.bind_global_context(request_id="req-123")
         # Pass non-sequence keys (int is not Sequence) - should handle gracefully
         result = FlextLogger._context_operation(
-            c.Logging.ContextOperation.UNBIND,
+            "unbind",
             keys=42,  # int is not Sequence, so isinstance check fails
         )
         assert (
@@ -128,23 +128,23 @@ class TestGlobalContextManagement:
         """Test GET operation with empty context (covers line 130)."""
         FlextLogger.clear_global_context()
         result = FlextLogger._context_operation(
-            c.Logging.ContextOperation.GET,
+            "get",
         )
         # Should return empty dict when context is empty
-        assert isinstance(result, dict)
-        assert result == {}
+        assert isinstance(result, m.ConfigMap)
+        assert result.root == {}
 
     def test_context_operation_get_with_context(self) -> None:
         """Test GET operation with existing context (covers line 129-130)."""
         FlextLogger.clear_global_context()
         FlextLogger.bind_global_context(test_key="test_value")
         result = FlextLogger._context_operation(
-            c.Logging.ContextOperation.GET,
+            "get",
         )
         # Should return dict with context
-        assert isinstance(result, dict)
-        assert "test_key" in result
-        assert result["test_key"] == "test_value"
+        assert isinstance(result, m.ConfigMap)
+        assert "test_key" in result.root
+        assert result.root["test_key"] == "test_value"
 
 
 class TestScopedContextManagement:
@@ -211,14 +211,14 @@ class TestScopedContextManagement:
         FlextLogger.clear_global_context()
         with FlextLogger.scoped_context("request", correlation_id="flext-123"):
             context = FlextLogger._get_global_context()
-            assert isinstance(context, dict)
+            assert isinstance(context, m.ConfigMap)
 
     def test_scoped_context_manager_operation(self) -> None:
         """Test scoped_context manager for operation scope."""
         FlextLogger.clear_global_context()
         with FlextLogger.scoped_context("operation", operation="test"):
             context = FlextLogger._get_global_context()
-            assert isinstance(context, dict)
+            assert isinstance(context, m.ConfigMap)
 
     def test_scoped_context_manager_cleanup(self) -> None:
         """Test scoped_context clears context after exit."""

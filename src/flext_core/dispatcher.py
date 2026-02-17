@@ -438,7 +438,7 @@ class FlextDispatcher(FlextService[bool]):
 
         """
         if allow_callable and callable(obj):
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         # method_names is list[str] | str, convert to list[str]
         methods: list[str]
@@ -451,7 +451,7 @@ class FlextDispatcher(FlextService[bool]):
             if hasattr(obj, method_name):
                 method = getattr(obj, method_name)
                 if callable(method):
-                    return r[bool].ok(True)
+                    return r[bool].ok(value=True)
 
         method_list = "' or '".join(methods)
         return r[bool].fail(f"Invalid {context}: must have '{method_list}' method")
@@ -549,7 +549,7 @@ class FlextDispatcher(FlextService[bool]):
     def _validate_handler_mode(self, handler_mode: str | None) -> r[bool]:
         """Validate handler mode against CQRS types (consolidates register_handler duplication)."""
         if handler_mode is None:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         # Type hint: HandlerType is StrEnum class, so __members__ exists
         # Use getattr for type attribute access (not mapper.get which is for dict/model access)
@@ -578,7 +578,7 @@ class FlextDispatcher(FlextService[bool]):
                 f"Invalid handler_mode: {handler_mode}. Must be one of {valid_modes}",
             )
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _route_to_handler(
         self,
@@ -813,7 +813,7 @@ class FlextDispatcher(FlextService[bool]):
         # Fast fail: middleware is always enabled if configs exist, no fallback
         # Middleware is enabled by default when configs are present
         if not self._middleware_configs:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         # Sort middleware by order
         sorted_middleware = sorted(
@@ -830,7 +830,7 @@ class FlextDispatcher(FlextService[bool]):
             if result.is_failure:
                 return result
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _get_middleware_order(
@@ -857,12 +857,12 @@ class FlextDispatcher(FlextService[bool]):
                 middleware_id=middleware_id_str,
                 middleware_type=middleware_type_str,
             )
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         # Get actual middleware instance
         middleware = self._middleware_instances.get(middleware_id_str)
         if middleware is None:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         self.logger.debug(
             "Applying middleware",
@@ -940,7 +940,7 @@ class FlextDispatcher(FlextService[bool]):
             )
             return r[bool].fail(error_msg)
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     # ==================== FLEXTSERVICE CONTRACT ====================
 
@@ -955,7 +955,7 @@ class FlextDispatcher(FlextService[bool]):
             r[bool]: Success indicating dispatcher is ready.
 
         """
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     # ==================== LAYER 1 PUBLIC API: CQRS ROUTING & MIDDLEWARE ====================
 
@@ -1259,7 +1259,7 @@ class FlextDispatcher(FlextService[bool]):
                 total_handlers=len(self._auto_handlers),
             )
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _register_two_arg_handler(
         self,
@@ -1352,7 +1352,7 @@ class FlextDispatcher(FlextService[bool]):
             total_handlers=len(self._handlers),
         )
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def layer1_add_middleware(
         self,
@@ -1442,7 +1442,7 @@ class FlextDispatcher(FlextService[bool]):
             source="flext-core/src/flext_core/dispatcher.py",
         )
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     # ==================== LAYER 1 EVENT PUBLISHING PROTOCOL ====================
 
@@ -1463,7 +1463,7 @@ class FlextDispatcher(FlextService[bool]):
             if result.is_failure:
                 return r[bool].fail(f"Event publishing failed: {result.error}")
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (TypeError, AttributeError, ValueError) as e:
             # TypeError: invalid event type
             # AttributeError: missing event attribute
@@ -1518,7 +1518,7 @@ class FlextDispatcher(FlextService[bool]):
                     "Handler unregistered",
                     command_type=event_type,
                 )
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             return r[bool].fail(f"Handler not found for event type: {event_type}")
         except (TypeError, KeyError, AttributeError) as e:
@@ -1568,7 +1568,7 @@ class FlextDispatcher(FlextService[bool]):
                     errors.append(result.error or "Unknown error")
             if errors:
                 return r[bool].fail(f"Some events failed: {'; '.join(errors)}")
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         # Handle single event
         return self._publish_event(event)
@@ -2134,7 +2134,7 @@ class FlextDispatcher(FlextService[bool]):
             error_msg = rate_limit_result.error or "Rate limit exceeded"
             return r[bool].fail(error_msg)
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _execute_with_timeout(
         self,

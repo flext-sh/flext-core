@@ -294,7 +294,7 @@ class FlextUtilitiesCache:
                             setattr(obj, attr_name, None)
                             cleared_count += 1
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Failed to clear caches: {e}")
 

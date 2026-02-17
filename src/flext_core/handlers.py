@@ -407,7 +407,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         # Base validation - accept any AcceptableMessageType
         # Subclasses should override for specific validation rules
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def validate_command(
         self,

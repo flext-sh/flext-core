@@ -433,10 +433,10 @@ class Order(FlextModels.AggregateRoot):
         if self.total.amount != calculated_total:
             raise ValueError("Order total calculation mismatch")
 
-    def add_line(self, line: OrderLine) -> FlextResult[None]:
+    def add_line(self, line: OrderLine) -> FlextResult[bool]:
         """Add line to order."""
         if self.status != OrderStatus.PENDING:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Can only modify pending orders",
                 error_code="ORDER_NOT_MODIFIABLE",
             )
@@ -446,17 +446,17 @@ class Order(FlextModels.AggregateRoot):
 
         try:
             self._validate_invariants()
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].| ok(value=True)
         except ValueError as e:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 str(e),
                 error_code="ORDER_INVARIANT_VIOLATION",
             )
 
-    def remove_line(self, line_id: str) -> FlextResult[None]:
+    def remove_line(self, line_id: str) -> FlextResult[bool]:
         """Remove line from order."""
         if self.status != OrderStatus.PENDING:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Can only modify pending orders",
                 error_code="ORDER_NOT_MODIFIABLE",
             )
@@ -466,36 +466,36 @@ class Order(FlextModels.AggregateRoot):
 
         try:
             self._validate_invariants()
-            return FlextResult[None].ok(None)
+            return FlextResult[bool].| ok(value=True)
         except ValueError as e:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 str(e),
                 error_code="ORDER_INVARIANT_VIOLATION",
             )
 
-    def confirm(self) -> FlextResult[None]:
+    def confirm(self) -> FlextResult[bool]:
         """Confirm order (transition to confirmed state)."""
         if self.status != OrderStatus.PENDING:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"Cannot confirm order in {self.status} state",
                 error_code="INVALID_STATE_TRANSITION",
             )
 
         self.status = OrderStatus.CONFIRMED
         self.updated_at = datetime.now()
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
-    def ship(self) -> FlextResult[None]:
+    def ship(self) -> FlextResult[bool]:
         """Ship order (transition to shipped state)."""
         if self.status != OrderStatus.CONFIRMED:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"Cannot ship order in {self.status} state",
                 error_code="INVALID_STATE_TRANSITION",
             )
 
         self.status = OrderStatus.SHIPPED
         self.updated_at = datetime.now()
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
     def _recalculate_totals(self):
         """Recalculate order totals."""
@@ -612,16 +612,16 @@ class User(FlextModels.AggregateRoot):
     created_at: datetime
     last_login_at: datetime | None = None
 
-    def login(self, plain_password: str) -> FlextResult[None]:
+    def login(self, plain_password: str) -> FlextResult[bool]:
         """Attempt to login."""
         if not self.is_active:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "User account is inactive",
                 error_code="USER_INACTIVE",
             )
 
         if not self.is_verified:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "User account is not verified",
                 error_code="USER_NOT_VERIFIED",
             )
@@ -629,35 +629,35 @@ class User(FlextModels.AggregateRoot):
         # Check password (simplified)
         password_check = Password.from_plain(plain_password)
         if password_check.hash != self.password_hash.hash:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Invalid password",
                 error_code="INVALID_PASSWORD",
             )
 
         self.last_login_at = datetime.now()
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
-    def deactivate(self) -> FlextResult[None]:
+    def deactivate(self) -> FlextResult[bool]:
         """Deactivate user account."""
         if not self.is_active:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "User is already deactivated",
                 error_code="ALREADY_DEACTIVATED",
             )
 
         self.is_active = False
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
-    def verify_email(self) -> FlextResult[None]:
+    def verify_email(self) -> FlextResult[bool]:
         """Mark email as verified."""
         if self.is_verified:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Email is already verified",
                 error_code="ALREADY_VERIFIED",
             )
 
         self.is_verified = True
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
 # Usage
 user = User(
@@ -694,16 +694,16 @@ class User(FlextModels.Entity):
     username: str
     email: str
 
-    def update_email(self, new_email: str) -> FlextResult[None]:
+    def update_email(self, new_email: str) -> FlextResult[bool]:
         """Update user email with validation."""
         if not new_email or "@" not in new_email:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 "Invalid email format",
                 error_code="INVALID_EMAIL",
             )
 
         self.email = new_email
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
 # Usage
 user = User(username="alice", email="alice@example.com")
@@ -762,12 +762,12 @@ class UserCommandService(FlextService):
         # Return result
         return FlextResult[dict].ok({"user_id": user.entity_id, "username": user.username})
 
-    def handle_update_email(self, cmd: UpdateUserEmailCommand) -> FlextResult[None]:
+    def handle_update_email(self, cmd: UpdateUserEmailCommand) -> FlextResult[bool]:
         """Execute update email command."""
         # Load aggregate
         user = self._load_user(cmd.user_id)
         if not user:
-            return FlextResult[None].fail("User not found")
+            return FlextResult[bool].fail("User not found")
 
         # Execute business logic
         result = user.update_email(cmd.new_email)
@@ -777,7 +777,7 @@ class UserCommandService(FlextService):
         # Publish event
         self.add_domain_event(UserEmailUpdatedEvent(cmd.user_id, cmd.new_email))
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 ```
 
 ### Queries: Read Operations
@@ -947,11 +947,11 @@ class Order:
 class ShoppingCart(FlextModels.Entity):
     items: list[CartItem]
 
-    def add_item(self, item: CartItem) -> FlextResult[None]:
+    def add_item(self, item: CartItem) -> FlextResult[bool]:
         if len(self.items) >= 100:
-            return FlextResult[None].fail("Cart is full")
+            return FlextResult[bool].fail("Cart is full")
         self.items.append(item)
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
 # ❌ WRONG - Business logic in caller
 def add_to_cart(cart, item):

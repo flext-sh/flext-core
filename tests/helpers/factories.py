@@ -33,13 +33,6 @@ class User(FlextModels.Entity):
     is_active: bool = True
 
 
-# Rebuild User model to resolve forward references from m.Entity.Entity
-_types_namespace_user = {
-    "FlextModels": FlextModels,
-}
-User.model_rebuild(_types_namespace=_types_namespace_user)
-
-
 class ServiceTestType(StrEnum):
     """Service test types."""
 

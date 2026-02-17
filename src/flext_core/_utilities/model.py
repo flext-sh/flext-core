@@ -271,7 +271,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def load[T_Model: BaseModel](
         model_cls: type[T_Model],
-        data: t.ConfigurationDict,
+        data: t.ConfigMap,
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with FlextResult.
 
@@ -298,8 +298,8 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_pydantic_dict(
-        data: t.ConfigurationDict | None,
-    ) -> t.PydanticConfigDict:
+        data: t.ConfigMap | None,
+    ) -> dict[str, t.GeneralValueType]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
         Normalizes GeneralValueType values to the restricted PydanticConfigValue type
@@ -309,7 +309,7 @@ class FlextUtilitiesModel:
             data: EventDataMapping (Mapping[str, GeneralValueType]) or None
 
         Returns:
-            t.PydanticConfigDict: Dict with Pydantic-safe values
+            dict[str, t.GeneralValueType]: Dict with Pydantic-safe values
 
         Example:
             >>> u.Model.normalize_to_pydantic_dict(None)
@@ -322,7 +322,7 @@ class FlextUtilitiesModel:
         """
         if not data:
             return {}
-        result: t.PydanticConfigDict = {}
+        result: dict[str, t.GeneralValueType] = {}
         for key, value in data.items():
             result[key] = FlextUtilitiesModel._normalize_to_pydantic_value(value)
         return result

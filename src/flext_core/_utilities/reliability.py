@@ -602,7 +602,7 @@ class FlextUtilitiesReliability:
             response = u.fold_result(
                 user_result,
                 on_failure=lambda e: {"error": e, "status": 400},
-                on_success=lambda u: {"user": u.dict(), "status": 200},
+                on_success=lambda u: {"user": u.model_dump(), "status": 200},
             )
 
         """

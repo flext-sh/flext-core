@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -208,27 +207,10 @@ class TestFlextTypings:
     def test_flexttypes_accessible(self) -> None:
         """Test t namespace is accessible with real validation."""
         tm.that(t, none=False, msg="FlextTypes (t) must be accessible")
-        # Verify flat namespace structure after migration
-        # Types are now directly on FlextTypes, not in nested namespaces
-        # Only Dispatcher remains as a nested namespace (contains TypedDict)
-        required_attrs = [
-            "Dispatcher",  # Only nested namespace remaining (contains TypedDict)
-        ]
-        for attr in required_attrs:
-            tm.that(
-                hasattr(t, attr),
-                eq=True,
-                msg=f"t must have {attr} attribute",
-            )
-            # Validate attribute is not None
-            attr_value = getattr(t, attr)
-            tm.that(attr_value, none=False, msg=f"t.{attr} must not be None")
         # Verify flat type aliases are accessible
         flat_types = [
             "GeneralValueType",
             "ScalarValue",
-            "ConfigurationDict",
-            "ConfigurationMapping",
             "HandlerCallable",
         ]
         for type_alias in flat_types:
@@ -278,9 +260,15 @@ class TestFlextTypings:
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
         # Test with a valid hostname - validate_hostname is in u.Validation.Network
-        result = u.Validation.Network.validate_hostname(FlextConstants.Network.LOCALHOST)
+        result = u.Validation.Network.validate_hostname(
+            FlextConstants.Network.LOCALHOST
+        )
         tm.that(result.is_success, eq=True, msg="Result must be successful")
-        tm.that(result.value, eq=FlextConstants.Network.LOCALHOST, msg="FlextConstants.Network.LOCALHOST must validate correctly")
+        tm.that(
+            result.value,
+            eq=FlextConstants.Network.LOCALHOST,
+            msg="FlextConstants.Network.LOCALHOST must validate correctly",
+        )
         tm.that(
             result.value,
             is_=str,
@@ -290,9 +278,15 @@ class TestFlextTypings:
         )
 
         # Test with a valid IP address (should also work)
-        result = u.Validation.Network.validate_hostname(FlextConstants.Network.LOOPBACK_IP)
+        result = u.Validation.Network.validate_hostname(
+            FlextConstants.Network.LOOPBACK_IP
+        )
         tm.that(result.is_success, eq=True, msg="Result must be successful")
-        tm.that(result.value, eq=FlextConstants.Network.LOOPBACK_IP, msg="IP address must validate correctly")
+        tm.that(
+            result.value,
+            eq=FlextConstants.Network.LOOPBACK_IP,
+            msg="IP address must validate correctly",
+        )
         tm.that(
             result.value,
             is_=str,

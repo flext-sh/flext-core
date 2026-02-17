@@ -57,7 +57,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard
+from typing import ClassVar, Self, TypeGuard, cast
 
 import structlog
 from beartype import BeartypeConf, BeartypeStrategy
@@ -1723,28 +1723,32 @@ class FlextRuntime:
         def ok(cls, value: T) -> FlextRuntime.RuntimeResult[T]:
             """Create successful result wrapping data.
 
-            Business Rule: Creates successful RuntimeResult wrapping value. For None values,
-            creates a result with value=None and is_success=True (special case for r[None]).
-            This matches the API of FlextResult.ok() for compatibility, but allows None
-            when T is None type.
+            Business Rule: Creates successful RuntimeResult wrapping value. Raises ValueError
+            if value is None (None values are not allowed in success results). This enforces
+            the same invariant as FlextResult.ok() at the base class level.
 
             Args:
-                value: Value to wrap in success result (None allowed for r[None] type)
+                value: Value to wrap in success result (must not be None)
 
             Returns:
                 Successful RuntimeResult instance
 
+            Raises:
+                ValueError: If value is None
+
             """
-            # Allow None values for r[None] type compatibility
+            if value is None:
+                msg = "Cannot create success result with None value"
+                raise ValueError(msg)
             return cls(value=value, is_success=True)
 
         @classmethod
-        def fail(
+        def fail[U](
             cls,
             error: str | None,
             error_code: str | None = None,
             error_data: ConfigMap | None = None,
-        ) -> FlextRuntime.RuntimeResult[T]:
+        ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
 
             Business Rule: Creates failed RuntimeResult with error message, optional error
@@ -1761,11 +1765,14 @@ class FlextRuntime:
 
             """
             error_msg = error if error is not None else ""
-            return cls(
-                error=error_msg,
-                error_code=error_code,
-                error_data=error_data,
-                is_success=False,
+            return cast(
+                "FlextRuntime.RuntimeResult[U]",
+                cls(
+                    error=error_msg,
+                    error_code=error_code,
+                    error_data=error_data,
+                    is_success=False,
+                ),
             )
 
     # =========================================================================

@@ -21,6 +21,8 @@ from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Literal, Self, overload
 
+from structlog.typing import BindableLogger
+
 from flext_core.constants import c
 from flext_core.models import m
 from flext_core.protocols import p
@@ -118,25 +120,33 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         cls,
         operation: str,
         kwargs: dict[str, t.GeneralValueType],
-    ) -> r[bool] | dict[str, t.GeneralValueType]:
+    ) -> r[bool] | m.ConfigMap:
         """Execute context operation by name."""
         # Compare with StrEnum values directly - StrEnum comparison works with strings
         if operation == c.Logging.ContextOperation.BIND:
             FlextRuntime.structlog().contextvars.bind_contextvars(**kwargs)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         if operation == c.Logging.ContextOperation.UNBIND:
             keys_raw = u.Mapper.get(kwargs, "keys", default=[])
             # Type narrowing: ensure keys is list[str] by converting each element
             if isinstance(keys_raw, list):
                 keys: list[str] = [str(k) for k in keys_raw]
                 FlextRuntime.structlog().contextvars.unbind_contextvars(*keys)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         if operation == c.Logging.ContextOperation.CLEAR:
             FlextRuntime.structlog().contextvars.clear_contextvars()
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         if operation == c.Logging.ContextOperation.GET:
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
-            return dict(context_vars) if context_vars else {}
+            context_map = (
+                {
+                    str(k): FlextRuntime.normalize_to_general_value(v)
+                    for k, v in dict(context_vars).items()
+                }
+                if context_vars
+                else {}
+            )
+            return m.ConfigMap(root=context_map)
         return r[bool].fail(f"Unknown operation: {operation}")
 
     @classmethod
@@ -147,7 +157,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     ) -> r[bool] | m.ConfigMap:
         """Handle context operation error."""
         if operation == c.Logging.ContextOperation.GET:
-            return {}
+            return m.ConfigMap(root={})
         return r[bool].fail(f"Failed to {operation} global context: {exc}")
 
     @classmethod
@@ -313,7 +323,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 merged_context = dict(merge_result.value)
                 cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
 
@@ -353,7 +363,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
                 # Clear from tracking
                 cls._scoped_contexts[scope] = {}
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             return r[bool].fail(f"Failed to clear scope '{scope}': {exc}")
 
@@ -464,7 +474,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             # Use FlextRuntime for centralized logging management
             FlextRuntime.structlog().contextvars.bind_contextvars(**prefixed_context)
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except Exception as e:
             return r[bool].fail(f"Failed to bind context for level {level}: {e}")
 
@@ -524,7 +534,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if prefixed_keys:
                 FlextRuntime.structlog().contextvars.unbind_contextvars(*prefixed_keys)
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except Exception as e:
             return r[bool].fail(f"Failed to unbind context for level {level}: {e}")
 
@@ -652,7 +662,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @staticmethod
     def get_logger(
         name: str | None = None,
-    ) -> p.Log.StructlogLogger:
+    ) -> BindableLogger:
         """Get structlog logger instance (alias for FlextRuntime.get_logger).
 
         Business Rule: Gets a structlog logger instance, delegating to FlextRuntime
@@ -730,7 +740,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def create_bound_logger(
         cls,
         name: str,
-        bound_logger: p.Log.StructlogLogger,
+        bound_logger: BindableLogger,
     ) -> Self:
         """Internal factory for creating logger with pre-bound structlog instance."""
         instance = cls.__new__(cls)
@@ -740,7 +750,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     def bind(self, **context: t.GeneralValueType) -> Self:
         """Bind additional context, returning new logger (original unchanged)."""
-        return type(self).create_bound_logger(self.name, self.logger.bind(**context))
+        bound_logger = self.logger.bind(**context)
+        return type(self).create_bound_logger(self.name, bound_logger)
 
     def new(self, **context: t.GeneralValueType) -> Self:
         """Create new logger with context - implements BindableLogger protocol."""
@@ -748,11 +759,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     def unbind(self, *keys: str) -> Self:
         """Unbind keys from logger - implements BindableLogger protocol."""
-        return type(self).create_bound_logger(self.name, self.logger.unbind(*keys))
+        bound_logger = self.logger.unbind(*keys)
+        return type(self).create_bound_logger(self.name, bound_logger)
 
     def try_unbind(self, *keys: str) -> Self:
         """Try to unbind keys from logger - implements BindableLogger protocol."""
-        return type(self).create_bound_logger(self.name, self.logger.try_unbind(*keys))
+        bound_logger = self.logger.try_unbind(*keys)
+        return type(self).create_bound_logger(self.name, bound_logger)
 
     def with_result(self) -> FlextLogger.ResultAdapter:
         """Get a result-returning logger adapter.
@@ -783,10 +796,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             except (TypeError, ValueError):
                 formatted_message = f"{message} | args={args!r}"
 
-            self.logger.debug(
-                formatted_message,
-                **kwargs,
-            )  # FlextRuntime.structlog() doesn't have trace
+            if isinstance(self.logger, p.Log.StructlogLogger):
+                self.logger.debug(
+                    formatted_message,
+                    **kwargs,
+                )
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # For trace logging, we don't propagate errors to avoid noise
             pass
@@ -930,7 +944,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             # Dynamic method call using getattr mapping
             getattr(self.logger, level_str)(formatted_message, **context)
             # Return success result directly
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             # Return failure result directly
             return r[bool].fail(f"Logging failed: {e}")
@@ -1178,7 +1192,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context=kw,
             )
 
-            self.logger.error(message, *filtered_args, **context_dict)
+            if isinstance(self.logger, p.Log.StructlogLogger):
+                self.logger.error(message, *filtered_args, **context_dict)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # For exception logging, we don't propagate errors to avoid recursive issues
             pass
@@ -1268,7 +1283,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         ) -> r[bool]:
             log_method = getattr(self._base_logger, method_name)
             log_method(message, *args, **kwargs)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         @property
         def name(self) -> str:
@@ -1421,7 +1436,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 context=context_kwargs,
             )
             self._base_logger.error(message, **context)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
 
 __all__: list[str] = [

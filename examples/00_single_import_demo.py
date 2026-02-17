@@ -162,7 +162,7 @@ class UserService:
             missing = required_fields - present_fields
             return r[bool].fail(f"Missing required fields: {missing}")
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _activate_user(user: UserProfile) -> r[UserProfile]:

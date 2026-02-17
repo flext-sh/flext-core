@@ -409,7 +409,7 @@ class MeltanoConfig:
 
 class MeltanoValidator:
     """Handles validation only."""
-    def validate_config(self, config: dict) -> FlextResult[None]:
+    def validate_config(self, config: dict) -> FlextResult[bool]:
         pass
 
 class MeltanoStreamManager:
@@ -419,7 +419,7 @@ class MeltanoStreamManager:
 
 class MeltanoExecutor:
     """Handles execution (tap, target, dbt)."""
-    def run_tap(self, config: dict) -> FlextResult[None]:
+    def run_tap(self, config: dict) -> FlextResult[bool]:
         pass
 ```
 
@@ -499,7 +499,7 @@ container = FlextContainer.get_global()
 logger_result = container.get("logger")
 if logger_result.is_failure:
     print(f"Logger not available: {logger_result.error}")
-    return FlextResult[None].fail("Logger unavailable")
+    return FlextResult[bool].fail("Logger unavailable")
 
 logger = logger_result.value
 logger.info("Service started")

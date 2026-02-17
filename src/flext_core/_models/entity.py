@@ -23,15 +23,15 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
-def _to_pydantic_config_dict(
-    data: t.ConfigurationDict | None,
-) -> t.PydanticConfigDict:
+def _to_config_map(data: t.ConfigMap | None) -> t.ConfigMap:
     if not data:
-        return {}
-    return {
-        str(key): FlextRuntime.normalize_to_metadata_value(value)
-        for key, value in data.items()
-    }
+        return t.ConfigMap(root={})
+    return t.ConfigMap(
+        root={
+            str(key): FlextRuntime.normalize_to_metadata_value(value)
+            for key, value in data.items()
+        }
+    )
 
 
 class FlextModelsEntity:
@@ -56,14 +56,13 @@ class FlextModelsEntity:
 
         event_type: str
         aggregate_id: str
-        # Use t.PydanticConfigDict - Pydantic-safe type that avoids schema recursion
-        data: t.PydanticConfigDict = Field(
-            default_factory=dict,
-            description="Event data - Pydantic-safe config dict",
+        data: t.ConfigMap = Field(
+            default_factory=lambda: t.ConfigMap(root={}),
+            description="Event data container",
         )
-        metadata: t.PydanticConfigDict = Field(
-            default_factory=dict,
-            description="Event metadata - Pydantic-safe config dict",
+        metadata: t.ConfigMap = Field(
+            default_factory=lambda: t.ConfigMap(root={}),
+            description="Event metadata container",
         )
 
     class Entry(
@@ -128,7 +127,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self: Self,
             event_type: str,
-            data: t.ConfigurationDict | None = None,
+            data: t.ConfigMap | None = None,
         ) -> r[FlextModelsEntity.DomainEvent]:
             """Add a domain event to this entity.
 
@@ -151,30 +150,30 @@ class FlextModelsEntity:
                     f"{c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
-            data_dict = _to_pydantic_config_dict(data)
+            data_map = _to_config_map(data)
             event = FlextModelsEntity.DomainEvent(
                 event_type=event_type,
                 aggregate_id=self.unique_id,
-                data=data_dict,
+                data=data_map,
             )
             self.domain_events.append(event)
 
             # Call event handler if defined
             # Use event_type from data if present, otherwise use argument
-            handler_event_type = data_dict.get("event_type", event_type)
+            handler_event_type = data_map.get("event_type", event_type)
             if isinstance(handler_event_type, str):
                 handler_name = f"_apply_{handler_event_type}"
                 handler = getattr(self, handler_name, None)
                 if handler is not None and callable(handler):
                     # Swallow handler exceptions - event is still added
                     with contextlib.suppress(Exception):
-                        handler(data_dict)
+                        handler(data_map.root)
 
             return r[FlextModelsEntity.DomainEvent].ok(event)
 
         def add_domain_events_bulk(
             self: Self,
-            events: Sequence[tuple[str, t.ConfigurationDict | None]],
+            events: Sequence[tuple[str, t.ConfigMap | None]],
         ) -> r[list[FlextModelsEntity.DomainEvent]]:
             """Add multiple domain events in bulk.
 
@@ -215,7 +214,7 @@ class FlextModelsEntity:
                 event = FlextModelsEntity.DomainEvent(
                     event_type=event_type,
                     aggregate_id=self.unique_id,
-                    data=_to_pydantic_config_dict(data),
+                    data=_to_config_map(data),
                 )
                 self.domain_events.append(event)
                 created_events.append(event)

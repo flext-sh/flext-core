@@ -1311,9 +1311,6 @@ class FlextModelFoundation:
                 {"__annotations__": new_annotations},
             )
 
-            # Rebuild the model schema
-            new_model.model_rebuild()
-
             return new_model
 
         def add_runtime_field(self, name: str, value: t.GeneralValueType) -> None:
@@ -1351,9 +1348,6 @@ class FlextModelFoundation:
                 },
             )
 
-            # Rebuild the model schema - ensure it exists and call it
-            if hasattr(new_model, "model_rebuild"):
-                new_model.model_rebuild()
             return new_model
 
     class DynamicModel(BaseModel):

@@ -260,13 +260,13 @@ class Order(FlextModels.AggregateRoot):
     items: list[OrderItem]
     total: Decimal
 
-    def add_item(self, item: OrderItem) -> FlextResult[None]:
+    def add_item(self, item: OrderItem) -> FlextResult[bool]:
         if self.status != OrderStatus.PENDING:
-            return FlextResult[None].fail("Can only modify pending orders")
+            return FlextResult[bool].fail("Can only modify pending orders")
 
         self.items.append(item)
         self.add_domain_event("ItemAdded", {"item_id": item.entity_id})
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
 # ❌ WRONG - Anemic model
 class Order:

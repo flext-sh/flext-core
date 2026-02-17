@@ -178,13 +178,13 @@ if result.is_success:
 ```python
 from flext_core import FlextContainer, FlextResult, FlextSettings, FlextLogger
 
-def initialize_application() -> FlextResult[None]:
+def initialize_application() -> FlextResult[bool]:
     """Initialize all application services."""
     container = FlextContainer.get_global()
 
     # Load configuration
     config_result = (
-        FlextResult.ok(None)
+        FlextResult.| ok(value=True)
         .flat_map(lambda _: FlextSettings.load())
     )
 
@@ -213,7 +213,7 @@ def initialize_application() -> FlextResult[None]:
         return db_result
 
     logger.info("✅ Application initialized successfully")
-    return FlextResult[None].ok(None)
+    return FlextResult[bool].| ok(value=True)
 
 # Usage
 app_init = initialize_application()
@@ -319,7 +319,7 @@ assert result1.value is result2.value
 ```python
 from flext_core import FlextContainer, FlextResult, FlextSettings
 
-def setup_services_based_on_config() -> FlextResult[None]:
+def setup_services_based_on_config() -> FlextResult[bool]:
     """Register services conditionally based on configuration."""
     container = FlextContainer.get_global()
 
@@ -340,7 +340,7 @@ def setup_services_based_on_config() -> FlextResult[None]:
         container.register("cache", RedisCache(config.redis_url))
         container.register("email_service", SendgridEmailService(config.api_key))
 
-    return FlextResult[None].ok(None)
+    return FlextResult[bool].| ok(value=True)
 ```
 
 ### Pattern 5: Service Lifecycle Management
@@ -353,18 +353,18 @@ class DatabaseConnection:
         self.url = url
         self.connected = False
 
-    def connect(self) -> FlextResult[None]:
+    def connect(self) -> FlextResult[bool]:
         """Establish connection."""
         print(f"Connecting to {self.url}")
         self.connected = True
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
     def disconnect(self):
         """Close connection."""
         print("Disconnecting database")
         self.connected = False
 
-def setup_database_lifecycle() -> FlextResult[None]:
+def setup_database_lifecycle() -> FlextResult[bool]:
     """Setup database with lifecycle management."""
     container = FlextContainer.get_global()
     config_result = FlextSettings.load()
@@ -437,7 +437,7 @@ def resolve_with_fallback():
 
 # Or using railway pattern
 result = (
-    FlextResult.ok(None)
+    FlextResult.| ok(value=True)
     .flat_map(lambda _: container.get("primary_service"))
     .lash(lambda _: container.get("fallback_service"))
 )
@@ -448,7 +448,7 @@ result = (
 ```python
 from flext_core import FlextContainer, FlextResult
 
-def validate_all_services() -> FlextResult[None]:
+def validate_all_services() -> FlextResult[bool]:
     """Validate that all registered services work correctly."""
     container = FlextContainer.get_global()
 
@@ -459,7 +459,7 @@ def validate_all_services() -> FlextResult[None]:
         service_result = container.get(service_name)
 
         if service_result.is_failure:
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"Service validation failed: {service_name}",
                 error_code="SERVICE_MISSING",
                 error_data={"service": service_name},
@@ -468,12 +468,12 @@ def validate_all_services() -> FlextResult[None]:
         # Could add service-specific validation here
         service = service_result.value
         if not validate_service(service):
-            return FlextResult[None].fail(
+            return FlextResult[bool].fail(
                 f"Service validation failed: {service_name}",
                 error_code="SERVICE_INVALID",
             )
 
-    return FlextResult[None].ok(None)
+    return FlextResult[bool].| ok(value=True)
 ```
 
 ## Type Safety Best Practices

@@ -240,12 +240,12 @@ class FlextUtilitiesCollection:
             )
             if merged.is_success:
                 result[key] = merged.value
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             return r[bool].fail(
                 f"Failed to merge nested dict for key {key}: {merged.error}",
             )
         result[key] = value
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _is_empty_value(value: t.GeneralValueType) -> bool:

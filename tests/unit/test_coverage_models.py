@@ -324,14 +324,6 @@ class SearchProductsQuery(m.Query):
     max_price: float | None = None
 
 
-# DISABLED: model_rebuild() causes circular import issues with GeneralValueType
-# Models use arbitrary_types_allowed=True and work without rebuild
-_cqrs_namespace = {"FlextModelsCqrs": m.Cqrs}
-GetUserQuery.model_rebuild(_types_namespace=_cqrs_namespace)
-ListAccountsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
-SearchProductsQuery.model_rebuild(_types_namespace=_cqrs_namespace)
-
-
 class TestQueries:
     """Test CQRS query pattern using FlextTestsUtilities."""
 
@@ -577,7 +569,9 @@ class TestModelIntegration:
         # Create dict with only actual model fields (exclude computed fields)
         # In Pydantic v2, iterate model_fields and only include existing keys
         dumped = customer.model_dump()
-        customer_dict = {k: dumped[k] for k in type(customer).model_fields if k in dumped}
+        customer_dict = {
+            k: dumped[k] for k in type(customer).model_fields if k in dumped
+        }
         validated = Customer.model_validate(customer_dict)
         assert validated is not None
         assert validated.name == "John"

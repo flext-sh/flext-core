@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Protocol, Self, TypeIs, overload, runtime_checkable
+from typing import Protocol, Self, TypeIs, cast, overload, runtime_checkable
 
 from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -21,7 +21,7 @@ from returns.unsafe import unsafe_perform_io
 from flext_core.exceptions import e
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import T_Model, U, t
+from flext_core.typings import T_co, T_Model, U, t
 
 
 @runtime_checkable
@@ -150,12 +150,12 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         return FlextResult[T](Success(value))
 
     @classmethod
-    def fail(
+    def fail[U](
         cls,
         error: str | None,
         error_code: str | None = None,
         error_data: t.ConfigMap | None = None,
-    ) -> FlextResult[T_co]:
+    ) -> FlextResult[U]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
         Business Rule: Creates failed FlextResult with error message, optional error
@@ -184,7 +184,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         # Use returns library Failure wrapper for railway-oriented programming
         result = Failure(error_msg)
-        return FlextResult[T_co](result, error_code=error_code, error_data=error_data)
+        return cast(
+            "FlextResult[U]",
+            FlextResult(result, error_code=error_code, error_data=error_data),
+        )
 
     @staticmethod
     def safe[T](
@@ -609,7 +612,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             # Convert result to HTTP response
             response = result.fold(
                 on_failure=lambda err: {"status": 400, "error": err},
-                on_success=lambda user: {"status": 200, "data": user.dict()},
+                on_success=lambda user: {"status": 200, "data": user.model_dump()},
             )
 
             # Convert to message

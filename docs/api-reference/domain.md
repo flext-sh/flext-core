@@ -49,12 +49,12 @@ class Order(FlextModels.AggregateRoot):
     items: List[OrderItem]
     total: Decimal
 
-    def add_item(self, item: OrderItem) -> FlextResult[None]:
+    def add_item(self, item: OrderItem) -> FlextResult[bool]:
         if item.quantity <= 0:
-            return FlextResult[None].fail("Quantity must be positive")
+            return FlextResult[bool].fail("Quantity must be positive")
         self.items.append(item)
         self.total += item.price * item.quantity
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 ```
 
 ### FlextService — Service Base
@@ -87,9 +87,9 @@ class UserService(FlextService):
         self.add_domain_event(UserCreated(user_id=user_id))
         return FlextResult[str].ok(user_id)
 
-    def handle_user_created(self, event: UserCreated) -> FlextResult[None]:
+    def handle_user_created(self, event: UserCreated) -> FlextResult[bool]:
         # Perform read-side updates or notifications
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 
 
 registry = FlextRegistry()

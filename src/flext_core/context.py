@@ -481,7 +481,7 @@ class FlextContext(FlextRuntime):
             is None
         ):
             return r[bool].fail("Value must be serializable")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def set(
         self,
@@ -521,7 +521,7 @@ class FlextContext(FlextRuntime):
             FlextContext._propagate_to_logger(key, value, scope)
             self._update_statistics(c.Context.OPERATION_SET)
             self._execute_hooks(c.Context.OPERATION_SET, {"key": key, "value": value})
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (TypeError, Exception) as e:
             error_msg = (
                 str(e)
@@ -549,7 +549,7 @@ class FlextContext(FlextRuntime):
             return r[bool].fail("Context is not active")
 
         if not data:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         try:
             ctx_var = self._get_or_create_scope_var(scope)
@@ -561,7 +561,7 @@ class FlextContext(FlextRuntime):
             ctx_var.set(updated_dict)
             self._update_statistics(c.Context.OPERATION_SET)
             self._execute_hooks(c.Context.OPERATION_SET, {"data": data})
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except (TypeError, Exception) as e:
             error_msg = (
                 str(e)
@@ -844,7 +844,7 @@ class FlextContext(FlextRuntime):
             for key in scope_dict:
                 if not key:
                     return r[bool].fail("Invalid key found in context")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def to_json(self) -> str:
         """Convert context to JSON string.
@@ -1717,7 +1717,7 @@ class FlextContext(FlextRuntime):
                 # Use container.with_service for fluent API
                 # with_service returns Self for fluent chaining, but we don't need the return value
                 _ = container.with_service(service_name, service)
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             except ValueError as e:
                 return r[bool].fail(str(e))
 

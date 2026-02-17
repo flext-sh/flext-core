@@ -61,7 +61,7 @@ class DatabaseService(m.ArbitraryTypesModel):
     def connect(self) -> r[bool]:
         """Connect to database with validation."""
         if self.status == c.Cqrs.CommonStatus.ACTIVE:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         url = self.config.get("url", "")
         if not isinstance(url, str) or not url:
@@ -77,7 +77,7 @@ class DatabaseService(m.ArbitraryTypesModel):
             return r[bool].fail(c.Errors.VALIDATION_ERROR)
 
         self.status = c.Cqrs.CommonStatus.ACTIVE
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def query(self, sql: str) -> r[m.ConfigMap]:
         """Execute query with comprehensive validation using u."""

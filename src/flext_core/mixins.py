@@ -759,7 +759,7 @@ class FlextMixins(FlextRuntime):
                 if not hasattr(self, "_metrics"):
                     vars(self)["_metrics"] = {}
                 self._metrics[name] = value
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             def get_metrics(self) -> r[dict[str, t.GeneralValueType]]:
                 """Get current metrics dictionary.
@@ -842,7 +842,7 @@ class FlextMixins(FlextRuntime):
                     self._stack.append(execution_ctx)
                 else:
                     self._stack.append(ctx)
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             def pop_context(self) -> r[dict[str, t.GeneralValueType]]:
                 """Pop execution context from the stack.
@@ -982,7 +982,7 @@ class FlextMixins(FlextRuntime):
                 )
 
             # Type already guarantees protocol compliance
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         @staticmethod
         def validate_processor_protocol(
@@ -1005,7 +1005,7 @@ class FlextMixins(FlextRuntime):
                         f"Processor {type(obj).__name__}.{method_name} is not callable",
                     )
 
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
 
 # Alias for runtime compatibility

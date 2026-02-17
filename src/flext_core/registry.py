@@ -177,7 +177,7 @@ class FlextRegistry(FlextService[bool]):
         """
         if not self._dispatcher:
             return r[bool].fail("Dispatcher not configured")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     # ------------------------------------------------------------------
     # Factory Method with Auto-Discovery
@@ -594,14 +594,14 @@ class FlextRegistry(FlextService[bool]):
                 category=category,
                 name=name,
             )
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         # Store plugin in container for retrieval
         # plugin is already t.GeneralValueType from method signature
         self.container.register(key, plugin)
         self._registered_keys.add(key)
         self.logger.info("Registered %s: %s", category, name)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def get_plugin(self, category: str, name: str) -> r[t.GeneralValueType]:
         """Get a registered plugin by category and name.
@@ -671,7 +671,7 @@ class FlextRegistry(FlextService[bool]):
 
         self._registered_keys.discard(key)
         self.logger.info("Unregistered %s: %s", category, name)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     # ------------------------------------------------------------------
     # Class-Level Plugin Registry API (for auto-discovery patterns)
@@ -707,12 +707,12 @@ class FlextRegistry(FlextService[bool]):
                 category=category,
                 name=name,
             )
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         cls._class_plugin_storage[key] = plugin
         cls._class_registered_keys.add(key)
         self.logger.info("Registered class plugin %s: %s", category, name)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def get_class_plugin(self, category: str, name: str) -> r[t.RegistrablePlugin]:
         """Get plugin from class-level storage.
@@ -774,7 +774,7 @@ class FlextRegistry(FlextService[bool]):
         del cls._class_plugin_storage[key]
         cls._class_registered_keys.discard(key)
         self.logger.info("Unregistered class plugin %s: %s", category, name)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @classmethod
     def reset_class_storage(cls) -> None:
@@ -863,7 +863,7 @@ class FlextRegistry(FlextService[bool]):
             # service is already t.GeneralValueType (from method signature)
             # with_service returns Self for fluent chaining, but we don't need the return value
             _ = self.container.with_service(name, service)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except ValueError as e:
             error_str = str(e)
             return r[bool].fail(error_str)

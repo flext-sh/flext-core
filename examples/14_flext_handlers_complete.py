@@ -44,18 +44,6 @@ class UserDTO(m.Value):
     email: str
 
 
-# Rebuild models to resolve forward references after all definitions
-# Include m.Cqrs in namespace for forward reference resolution
-_types_namespace = {
-    **globals(),
-    "m": m,
-    "FlextModelsCqrs": m.Cqrs,
-}
-_ = CreateUserCommand.model_rebuild(_types_namespace=_types_namespace)
-_ = GetUserQuery.model_rebuild(_types_namespace=_types_namespace)
-_ = UserDTO.model_rebuild(_types_namespace=_types_namespace)
-
-
 # Handlers using h directly
 class CommandHandler(h[CreateUserCommand, str]):
     """Example command handler."""

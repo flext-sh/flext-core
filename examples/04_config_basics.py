@@ -110,7 +110,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
     def _log_start(self) -> FlextResult[bool]:
         """Log the start of demonstration."""
         self.logger.info("Starting advanced configuration management demonstration")
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(value=True)
 
     def _run_demonstrations(self) -> FlextResult[tuple[str, ...]]:
         """Run all configuration demonstrations using railway pattern with traverse (DRY)."""
@@ -181,7 +181,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             ),
         )
         print_config(result.value)
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(value=True)
 
     @staticmethod
     def _demonstrate_environment_config() -> FlextResult[bool]:
@@ -209,7 +209,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
 
             for key in env_vars:
                 os.environ.pop(key, None)
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         return set_env_vars().flat_map(create_and_display_config)
 
@@ -226,7 +226,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                     api_timeout=c.Network.DEFAULT_TIMEOUT,
                 )
                 print("✅ Valid configuration accepted")
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(value=True)
             except ValidationError as e:
                 return FlextResult[bool].fail(f"Unexpected validation error: {e}")
 
@@ -247,10 +247,10 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                     print("✅ Config created (validation handled by type system)")
                 else:
                     print("✅ Validation correctly applied default value")
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(value=True)
             except ValidationError:
                 print("✅ Validation correctly rejected invalid timeout")
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(value=True)
             except Exception as e:
                 return FlextResult[bool].fail(f"Unexpected error type: {type(e)}")
 
@@ -262,10 +262,10 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                 AppConfig.model_validate(invalid_data)
                 print("⚠️  Note: Log level validation handled by field_validator")
                 print("✅ Config created (validation handled by type system)")
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(value=True)
             except ValidationError:
                 print("✅ Validation correctly rejected invalid log level")
-                return FlextResult[bool].ok(True)
+                return FlextResult[bool].ok(value=True)
             except Exception as e:
                 return FlextResult[bool].fail(f"Unexpected error type: {type(e)}")
 
@@ -293,7 +293,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             print("\n=== Singleton Pattern ===")
             print(f"✅ Config instances: {id(config1)} vs {id(config2)}")
             print("✅ Note: FlextSettings uses singleton pattern per settings class")
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
 
         return create_configs().flat_map(display_singleton)
 
@@ -326,7 +326,7 @@ def demonstrate_file_config() -> FlextResult[bool]:
             if config_file.exists():
                 config_file.unlink()
             print("✅ Configuration file cleaned up")
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(value=True)
         except Exception as e:
             return FlextResult[bool].fail(f"Failed to cleanup config file: {e}")
 
@@ -342,7 +342,7 @@ def main() -> FlextResult[bool]:
         print("FLEXT CONFIG - ADVANCED CONFIGURATION MANAGEMENT")
         print("Environment-aware, type-safe configuration with Python 3.13+ patterns")
         print("=" * 60)
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(value=True)
 
     def run_file_demo() -> FlextResult[bool]:
         """Run file configuration demonstration."""
@@ -378,7 +378,7 @@ def main() -> FlextResult[bool]:
         print("🎯 Python 3.13+: PEP 695 types, collections.abc, advanced patterns")
         print("🎯 FLEXT Features: Centralized constants, StrEnum, type aliases")
         print("=" * 60)
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(value=True)
 
     def handle_error(error: str) -> FlextResult[bool]:
         """Handle main execution errors."""

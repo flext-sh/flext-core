@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -172,7 +172,7 @@ class FlextTypes:
     GeneralValueType: TypeAlias = GeneralValueType
 
     # RegisterableService - Type for services registerable in FlextContainer
-    RegisterableService: TypeAlias = GeneralValueType | object
+    RegisterableService: TypeAlias = GeneralValueType
 
     # RegistrablePlugin - Type for plugins registerable in FlextRegistry
     RegistrablePlugin: TypeAlias = GeneralValueType | Callable[..., GeneralValueType]
@@ -286,9 +286,75 @@ class FlextTypes:
     # Replaces raw dict aliases with strict typed models
     # =========================================================================
 
-    class Dict(
-        RootModel[dict[str, GeneralValueType]], MutableMapping[str, GeneralValueType]
-    ):
+    class _DictMixin:
+        """Shared dict-like API for all RootModel containers.
+
+        Provides standard dict interface methods delegating to ``self.root``.
+        Subclasses must define ``root: dict[str, V]`` via ``RootModel``.
+        """
+
+        # NOTE: methods typed with GeneralValueType here; subclasses with
+        # narrower value types override get/pop/setdefault as needed.
+
+        def __getitem__(self, key: str) -> GeneralValueType:
+            """Get item by key."""
+            return self.root[key]  # type: ignore[attr-defined]
+
+        def __setitem__(self, key: str, value: GeneralValueType) -> None:
+            """Set item by key."""
+            self.root[key] = value  # type: ignore[attr-defined]
+
+        def __delitem__(self, key: str) -> None:
+            """Delete item by key."""
+            del self.root[key]  # type: ignore[attr-defined]
+
+        def __len__(self) -> int:
+            """Get length."""
+            return len(self.root)  # type: ignore[attr-defined]
+
+        def __contains__(self, key: object) -> bool:
+            """Check if key exists."""
+            return key in self.root  # type: ignore[attr-defined]
+
+        def get(self, key: str, default: GeneralValueType = None) -> GeneralValueType:
+            """Get item with default."""
+            return self.root.get(key, default)  # type: ignore[attr-defined]
+
+        def items(self) -> typing.ItemsView[str, GeneralValueType]:
+            """Get items view."""
+            return self.root.items()  # type: ignore[attr-defined]
+
+        def keys(self) -> typing.KeysView[str]:
+            """Get keys view."""
+            return self.root.keys()  # type: ignore[attr-defined]
+
+        def values(self) -> typing.ValuesView[GeneralValueType]:
+            """Get values view."""
+            return self.root.values()  # type: ignore[attr-defined]
+
+        def update(self, other: Mapping[str, GeneralValueType]) -> None:
+            """Update with other mapping."""
+            self.root.update(other)  # type: ignore[attr-defined]
+
+        def clear(self) -> None:
+            """Clear all items."""
+            self.root.clear()  # type: ignore[attr-defined]
+
+        def pop(self, key: str, default: GeneralValueType = None) -> GeneralValueType:
+            """Pop item by key."""
+            return self.root.pop(key, default)  # type: ignore[attr-defined]
+
+        def popitem(self) -> tuple[str, GeneralValueType]:
+            """Pop last item."""
+            return self.root.popitem()  # type: ignore[attr-defined]
+
+        def setdefault(
+            self, key: str, default: GeneralValueType = None
+        ) -> GeneralValueType:
+            """Set default value for key."""
+            return self.root.setdefault(key, default)  # type: ignore[attr-defined]
+
+    class Dict(_DictMixin, RootModel[dict[str, GeneralValueType]]):
         """Generic dictionary container.
 
         Replaces: dict[str, Any], dict[str, GeneralValueType]
@@ -296,41 +362,7 @@ class FlextTypes:
 
         root: dict[str, GeneralValueType]
 
-        def __getitem__(self, key: str) -> GeneralValueType:
-            """Get item by key."""
-            return self.root[key]
-
-        def __setitem__(self, key: str, value: GeneralValueType) -> None:
-            """Set item by key."""
-            self.root[key] = value
-
-        def __delitem__(self, key: str) -> None:
-            """Delete item by key."""
-            del self.root[key]
-
-        def __len__(self) -> int:
-            """Get dictionary length."""
-            return len(self.root)
-
-        def get(self, key: str, default: GeneralValueType = None) -> GeneralValueType:
-            """Get item with default."""
-            return self.root.get(key, default)
-
-        def items(self) -> typing.ItemsView[str, GeneralValueType]:
-            """Get dictionary items."""
-            return self.root.items()
-
-        def keys(self) -> typing.KeysView[str]:
-            """Get dictionary keys."""
-            return self.root.keys()
-
-        def values(self) -> typing.ValuesView[GeneralValueType]:
-            """Get dictionary values."""
-            return self.root.values()
-
-    class ConfigMap(
-        RootModel[dict[str, GeneralValueType]], MutableMapping[str, GeneralValueType]
-    ):
+    class ConfigMap(_DictMixin, RootModel[dict[str, GeneralValueType]]):
         """Configuration map container.
 
         Replaces: ConfigurationDict, ConfigurationMapping
@@ -338,69 +370,7 @@ class FlextTypes:
 
         root: dict[str, GeneralValueType]
 
-        def __getitem__(self, key: str) -> GeneralValueType:
-            """Get configuration item by key."""
-            return self.root[key]
-
-        def __len__(self) -> int:
-            """Get configuration length."""
-            return len(self.root)
-
-        def get(self, key: str, default: GeneralValueType = None) -> GeneralValueType:
-            """Get configuration item with default."""
-            return self.root.get(key, default)
-
-        def items(self) -> typing.ItemsView[str, GeneralValueType]:
-            """Get configuration items."""
-            return self.root.items()
-
-        def keys(self) -> typing.KeysView[str]:
-            """Get configuration keys."""
-            return self.root.keys()
-
-        def values(self) -> typing.ValuesView[GeneralValueType]:
-            """Get configuration values."""
-            return self.root.values()
-
-        def __setitem__(self, key: str, value: GeneralValueType) -> None:
-            """Set configuration item by key."""
-            self.root[key] = value
-
-        def __delitem__(self, key: str) -> None:
-            """Delete configuration item by key."""
-            del self.root[key]
-
-        def __contains__(self, key: object) -> bool:
-            """Check if key exists in configuration."""
-            return key in self.root
-
-        def update(self, other: Mapping[str, GeneralValueType]) -> None:
-            """Update configuration with other mapping."""
-            self.root.update(other)
-
-        def clear(self) -> None:
-            """Clear all configuration items."""
-            self.root.clear()
-
-        def pop(self, key: str, default: typing.Any = ...) -> typing.Any:
-            """Pop item from configuration."""
-            if default is ...:
-                return self.root.pop(key)
-            return self.root.pop(key, default)
-
-        def popitem(self) -> tuple[str, GeneralValueType]:
-            """Pop item from configuration."""
-            return self.root.popitem()
-
-        def setdefault(
-            self, key: str, default: GeneralValueType = None
-        ) -> GeneralValueType:
-            """Set default value for key."""
-            return self.root.setdefault(key, default)
-
-    class ServiceMap(
-        RootModel[dict[str, GeneralValueType]], MutableMapping[str, GeneralValueType]
-    ):
+    class ServiceMap(_DictMixin, RootModel[dict[str, GeneralValueType]]):
         """Service registry map container.
 
         Replaces: ServiceMapping
@@ -408,146 +378,13 @@ class FlextTypes:
 
         root: dict[str, GeneralValueType]
 
-        def __getitem__(self, key: str) -> GeneralValueType:
-            """Get service by key."""
-            return self.root[key]
-
-        def __len__(self) -> int:
-            """Get service map length."""
-            return len(self.root)
-
-        def get(self, key: str, default: GeneralValueType = None) -> GeneralValueType:
-            """Get service with default."""
-            return self.root.get(key, default)
-
-        def items(self) -> typing.ItemsView[str, GeneralValueType]:
-            """Get service items."""
-            return self.root.items()
-
-        def keys(self) -> typing.KeysView[str]:
-            """Get service keys."""
-            return self.root.keys()
-
-        def values(self) -> typing.ValuesView[GeneralValueType]:
-            """Get service values."""
-            return self.root.values()
-
-        def __setitem__(self, key: str, value: GeneralValueType) -> None:
-            """Set service by key."""
-            self.root[key] = value
-
-        def __delitem__(self, key: str) -> None:
-            """Delete service by key."""
-            del self.root[key]
-
-        def __contains__(self, key: object) -> bool:
-            """Check if key exists in service map."""
-            return key in self.root
-
-        def update(self, other: Mapping[str, GeneralValueType]) -> None:
-            """Update service map with other mapping."""
-            self.root.update(other)
-
-        def clear(self) -> None:
-            """Clear all service items."""
-            self.root.clear()
-
-        def pop(self, key: str, default: typing.Any = ...) -> typing.Any:
-            """Pop item from service map."""
-            if default is ...:
-                return self.root.pop(key)
-            return self.root.pop(key, default)
-
-        def popitem(self) -> tuple[str, GeneralValueType]:
-            """Pop item from service map."""
-            return self.root.popitem()
-
-        def setdefault(
-            self, key: str, default: GeneralValueType = None
-        ) -> GeneralValueType:
-            """Set default value for key."""
-            return self.root.setdefault(key, default)
-
-    class ErrorMap(
-        RootModel[dict[str, int | str | dict[str, int]]],
-        MutableMapping[str, int | str | dict[str, int]],
-    ):
+    class ErrorMap(_DictMixin, RootModel[dict[str, int | str | dict[str, int]]]):
         """Error type mapping container.
 
         Replaces: ErrorTypeMapping
         """
 
         root: dict[str, int | str | dict[str, int]]
-
-        def __getitem__(self, key: str) -> int | str | dict[str, int]:
-            """Get error item by key."""
-            return self.root[key]
-
-        def __len__(self) -> int:
-            """Get error map length."""
-            return len(self.root)
-
-        def get(
-            self, key: str, default: int | str | dict[str, int] | None = None
-        ) -> int | str | dict[str, int] | None:
-            """Get error item with default."""
-            return self.root.get(key, default)
-
-        def items(self) -> typing.ItemsView[str, int | str | dict[str, int]]:
-            """Get dictionary items."""
-            return self.root.items()
-
-        def keys(self) -> typing.KeysView[str]:
-            """Get dictionary keys."""
-            return self.root.keys()
-
-        def values(self) -> typing.ValuesView[int | str | dict[str, int]]:
-            """Get dictionary values."""
-            return self.root.values()
-
-        def __setitem__(self, key: str, value: int | str | dict[str, int]) -> None:
-            """Set item by key."""
-            self.root[key] = value
-
-        def __delitem__(self, key: str) -> None:
-            """Delete item by key."""
-            del self.root[key]
-
-        def __contains__(self, key: object) -> bool:
-            """Check if key exists."""
-            return key in self.root
-
-        def update(self, other: Mapping[str, int | str | dict[str, int]]) -> None:
-            """Update with other mapping."""
-            self.root.update(other)
-
-        def clear(self) -> None:
-            """Clear all items."""
-            self.root.clear()
-
-        def pop(self, key: str, default: typing.Any = ...) -> typing.Any:
-            """Pop item."""
-            if default is ...:
-                return self.root.pop(key)
-            return self.root.pop(key, default)
-
-        def popitem(self) -> tuple[str, int | str | dict[str, int]]:
-            """Pop item."""
-            return self.root.popitem()
-
-        def setdefault(
-            self, key: str, default: int | str | dict[str, int] | None = None
-        ) -> int | str | dict[str, int] | None:
-            """Set default."""
-            return self.root.setdefault(key, default)
-
-    # Aliases for backward compatibility in Models
-    ConfigurationMapping: TypeAlias = ConfigMap
-    ConfigurationDict: TypeAlias = ConfigMap
-    PydanticConfigDict: TypeAlias = ConfigMap
-
-    class Dispatcher:
-        """Dispatcher configuration types namespace."""
 
     IncEx: TypeAlias = set[str] | dict[str, set[str] | bool]
 
@@ -557,7 +394,7 @@ class FlextTypes:
     ResourceCallable: TypeAlias = ResourceCallable
     FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
 
-    class FactoryMap(RootModel[dict[str, FactoryRegistrationCallable]]):
+    class FactoryMap(_DictMixin, RootModel[dict[str, FactoryRegistrationCallable]]):
         """Map of factory registration callables.
 
         Replaces: Mapping[str, FactoryRegistrationCallable]
@@ -565,37 +402,7 @@ class FlextTypes:
 
         root: dict[str, FactoryRegistrationCallable]
 
-        def __getitem__(self, key: str) -> FactoryRegistrationCallable:
-            """Get factory item by key."""
-            return self.root[key]
-
-        def __iter__(self) -> typing.Iterator[str]:  # type: ignore[override]
-            """Iterate over factory keys."""
-            return iter(self.root)
-
-        def __len__(self) -> int:
-            """Get factory map length."""
-            return len(self.root)
-
-        def get(
-            self, key: str, default: FactoryRegistrationCallable | None = None
-        ) -> FactoryRegistrationCallable | None:
-            """Get factory item with default."""
-            return self.root.get(key, default)
-
-        def items(self) -> typing.ItemsView[str, FactoryRegistrationCallable]:
-            """Get factory items."""
-            return self.root.items()
-
-        def keys(self) -> typing.KeysView[str]:
-            """Get factory keys."""
-            return self.root.keys()
-
-        def values(self) -> typing.ValuesView[FactoryRegistrationCallable]:
-            """Get factory values."""
-            return self.root.values()
-
-    class ResourceMap(RootModel[dict[str, ResourceCallable]]):
+    class ResourceMap(_DictMixin, RootModel[dict[str, ResourceCallable]]):
         """Map of resource callables.
 
         Replaces: Mapping[str, ResourceCallable]
@@ -603,95 +410,56 @@ class FlextTypes:
 
         root: dict[str, ResourceCallable]
 
-        def __getitem__(self, key: str) -> ResourceCallable:
-            """Get resource item by key."""
-            return self.root[key]
-
-        def __iter__(self) -> typing.Iterator[str]:  # type: ignore[override]
-            """Iterate over resource keys."""
-            return iter(self.root)
-
-        def __len__(self) -> int:
-            """Get resource map length."""
-            return len(self.root)
-
-        def get(
-            self, key: str, default: ResourceCallable | None = None
-        ) -> ResourceCallable | None:
-            """Get resource item with default."""
-            return self.root.get(key, default)
-
-        def items(self) -> typing.ItemsView[str, ResourceCallable]:
-            """Get resource items."""
-            return self.root.items()
-
-        def keys(self) -> typing.KeysView[str]:
-            """Get resource keys."""
-            return self.root.keys()
-
-        def values(self) -> typing.ValuesView[ResourceCallable]:
-            """Get resource values."""
-            return self.root.values()
-
-    FactoryMapping: TypeAlias = FactoryMap
-    ResourceMapping: TypeAlias = ResourceMap
-
     # =========================================================================
     # Validation mapping types (used in _models/validation.py)
     # =========================================================================
-    class ValidatorCallable(RootModel[Callable[[GeneralValueType], typing.Any]]):
+    class ValidatorCallable(RootModel[Callable[[GeneralValueType], GeneralValueType]]):
         """Callable validator container."""
 
-        root: Callable[[GeneralValueType], typing.Any]
+        root: Callable[[GeneralValueType], GeneralValueType]
 
-        def __call__(self, value: GeneralValueType) -> typing.Any:
+        def __call__(self, value: GeneralValueType) -> GeneralValueType:
             """Execute validator."""
             return self.root(value)
 
+    class _ValidatorMapMixin:
+        """Shared API for validator map containers."""
+
+        def items(
+            self,
+        ) -> typing.ItemsView[str, Callable[[GeneralValueType], GeneralValueType]]:
+            """Get validator items."""
+            return self.root.items()  # type: ignore[attr-defined]
+
+        def values(
+            self,
+        ) -> typing.ValuesView[Callable[[GeneralValueType], GeneralValueType]]:
+            """Get validator values."""
+            return self.root.values()  # type: ignore[attr-defined]
+
     class FieldValidatorMap(
-        RootModel[dict[str, Callable[[GeneralValueType], typing.Any]]]
+        _ValidatorMapMixin,
+        RootModel[dict[str, Callable[[GeneralValueType], GeneralValueType]]],
     ):
         """Map of field validators."""
 
-        root: dict[str, Callable[[GeneralValueType], typing.Any]]
-
-        def items(
-            self,
-        ) -> typing.ItemsView[str, Callable[[GeneralValueType], typing.Any]]:
-            return self.root.items()
-
-        def values(self) -> typing.ValuesView[Callable[[GeneralValueType], typing.Any]]:
-            return self.root.values()
+        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
 
     class ConsistencyRuleMap(
-        RootModel[dict[str, Callable[[GeneralValueType], typing.Any]]]
+        _ValidatorMapMixin,
+        RootModel[dict[str, Callable[[GeneralValueType], GeneralValueType]]],
     ):
         """Map of consistency rules."""
 
-        root: dict[str, Callable[[GeneralValueType], typing.Any]]
-
-        def items(
-            self,
-        ) -> typing.ItemsView[str, Callable[[GeneralValueType], typing.Any]]:
-            return self.root.items()
-
-        def values(self) -> typing.ValuesView[Callable[[GeneralValueType], typing.Any]]:
-            return self.root.values()
+        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
 
     class EventValidatorMap(
-        RootModel[dict[str, Callable[[GeneralValueType], typing.Any]]]
+        _ValidatorMapMixin,
+        RootModel[dict[str, Callable[[GeneralValueType], GeneralValueType]]],
     ):
         """Map of event validators."""
 
-        root: dict[str, Callable[[GeneralValueType], typing.Any]]
-
-        def items(
-            self,
-        ) -> typing.ItemsView[str, Callable[[GeneralValueType], typing.Any]]:
-            return self.root.items()
-
-        def values(self) -> typing.ValuesView[Callable[[GeneralValueType], typing.Any]]:
-            return self.root.values()
+        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
 
     # Error/Exception types (used in exceptions.py)
     # ErrorTypeMapping removed - Use m.ErrorMap
@@ -719,24 +487,6 @@ class FlextTypes:
         total: int = Field(default=0)
         success_count: int = Field(default=0)
         error_count: int = Field(default=0)
-
-        def __getitem__(
-            self,
-            key: str,
-        ) -> list[GeneralValueType] | list[tuple[int, str]] | int:
-            """Provide mapping-style compatibility for legacy batch result access."""
-            if key == "results":
-                return self.results
-            if key == "errors":
-                return self.errors
-            if key == "total":
-                return self.total
-            if key == "success_count":
-                return self.success_count
-            if key == "error_count":
-                return self.error_count
-            msg = f"Invalid key: {key}"
-            raise KeyError(msg)
 
     # =====================================================================
     # VALIDATION TYPES (Annotated with Pydantic constraints)

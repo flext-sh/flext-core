@@ -363,7 +363,7 @@ class FlextModelsValidation:
                 f"Domain event missing required attributes: {missing_attrs}",
             )
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _validate_event_fields(
@@ -384,7 +384,7 @@ class FlextModelsValidation:
                 "Domain event data must be a dictionary or None",
             )
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def validate_domain_event(
@@ -409,7 +409,7 @@ class FlextModelsValidation:
             if validation_result.is_failure:
                 return validation_result
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _event_mapping(

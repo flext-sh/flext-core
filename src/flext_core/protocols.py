@@ -12,12 +12,12 @@ from types import ModuleType, TracebackType
 from typing import (
     Protocol,
     Self,
-    _ProtocolMeta,
+    _ProtocolMeta,  # noqa: PLC2701
     runtime_checkable,
 )
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic._internal._model_construction import ModelMetaclass
+from pydantic._internal._model_construction import ModelMetaclass  # noqa: PLC2701
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
@@ -335,7 +335,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> t.ConfigurationDict | None:
+        def error_data(self) -> t.ConfigMap | None:
             """Error metadata (optional)."""
             ...
 
@@ -692,7 +692,7 @@ class FlextProtocols:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
-        def get_config(self) -> t.ConfigurationDict:
+        def get_config(self) -> t.ConfigMap:
             """Return the merged configuration exposed by this container."""
             ...
 

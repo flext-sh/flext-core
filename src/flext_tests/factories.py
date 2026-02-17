@@ -1508,13 +1508,13 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                     and not self.name
                 ):
                     return r[bool].fail("Name is required")
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             def _validate_amount_non_negative(self) -> r[bool]:
                 """Validate amount is non-negative."""
                 if self.amount is not None and self.amount < 0:
                     return r[bool].fail("Amount must be non-negative")
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             def _validate_disabled_without_amount(self) -> r[bool]:
                 """Validate disabled service doesn't have amount."""
@@ -1522,7 +1522,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                 is_disabled = self.enabled is not None and not self.enabled
                 if is_disabled and has_amount:
                     return r[bool].fail("Cannot have amount when disabled")
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             def _validate_business_rules_complex(self) -> r[bool]:
                 """Validate business rules for complex service."""
@@ -1535,7 +1535,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                     result = validator()
                     if result.is_failure:
                         return result
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             def execute(self) -> r[t.GeneralValueType]:
                 """Execute test operation."""
@@ -1562,12 +1562,12 @@ class FlextTestsFactories(su[t.GeneralValueType]):
             def validate_config(self) -> r[bool]:
                 """Validate config for complex service."""
                 if service_type != "complex":
-                    return r[bool].ok(True)
+                    return r[bool].ok(value=True)
                 if self.name is not None and len(self.name) > 50:
                     return r[bool].fail("Name too long")
                 if self.amount is not None and self.amount > 1000:
                     return r[bool].fail("Value too large")
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
         return TestService
 

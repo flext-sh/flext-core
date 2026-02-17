@@ -741,7 +741,7 @@ class FlextUtilitiesValidation:
                     f"Validator failed: {e}",
                     error_code=c.Errors.VALIDATION_ERROR,
                 )
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def sort_key(value: t.GeneralValueType) -> tuple[str, str]:
@@ -1534,7 +1534,7 @@ class FlextUtilitiesValidation:
             )
         # Return True for valid callable (not the callable itself)
         # Type narrowing: value is t.GeneralValueType, but runtime check ensures callable
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def validate_timeout(
@@ -2001,7 +2001,7 @@ class FlextUtilitiesValidation:
                 error_code=c.Errors.VALIDATION_ERROR,
             )
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _validate_event_fields(
@@ -2032,7 +2032,7 @@ class FlextUtilitiesValidation:
                 error_code=c.Errors.VALIDATION_ERROR,
             )
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def validate_domain_event(
@@ -2065,7 +2065,7 @@ class FlextUtilitiesValidation:
         if fields_result.is_failure:
             return fields_result
 
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     # ═══════════════════════════════════════════════════════════════════
     # VALIDATION & GUARD HELPERS - Core validation logic
@@ -3497,7 +3497,7 @@ class FlextUtilitiesValidation:
                     return r[bool].fail(f"Validation failed: {desc}")
             except Exception as e:
                 return r[bool].fail(f"Validator error: {e}")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def check_all_validators(value: object, *validators: p.ValidatorSpec) -> bool:

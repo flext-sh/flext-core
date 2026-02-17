@@ -466,7 +466,7 @@ Use when comparing similar features.
 # [Feature A] vs [Feature B] vs [Feature C]
 
 | Aspect | [Feature A] | [Feature B] | [Feature C] |
-|--------|-------------|-------------|-------------|
+| -------- | ------------- | ------------- | ------------- | 
 | Use Case | [Description] | [Description] | [Description] |
 | Complexity | Low/Medium/High | Low/Medium/High | Low/Medium/High |
 | Performance | Fast/Moderate/Slow | ... | ... |

@@ -306,10 +306,10 @@ def main() -> None:
         print(f"\n✅ Demonstrated {categories} utility categories")
         print(f"✅ Covered {utilities_count} utility types")
 
-    def handle_error(error: str) -> FlextResult[None]:
+    def handle_error(error: str) -> FlextResult[bool]:
         """Handle error result."""
         print(f"\n❌ Failed: {error}")
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].ok(value=True)
 
     result.map(handle_success).lash(handle_error)
 

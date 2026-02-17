@@ -481,7 +481,7 @@ class FlextService[TDomainResult](
         """
         # Base implementation - accept all (no validation)
         # Subclasses should override for specific business rules
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def is_valid(self) -> bool:
         """Check if service is in valid state for execution.

@@ -389,15 +389,15 @@ class Order(FlextModels.AggregateRoot):
     items: t.StringList
     total: float
 
-    def place_order(self) -> FlextResult[None]:
+    def place_order(self) -> FlextResult[bool]:
         """Place order and emit event."""
         if self.total <= 0:
-            return FlextResult[None].fail("Order total must be positive")
+            return FlextResult[bool].fail("Order total must be positive")
 
         # Emit domain event
         self.add_domain_event("OrderPlaced", {"order_id": self.entity_id, "total": self.total})
 
-        return FlextResult[None].ok(None)
+        return FlextResult[bool].| ok(value=True)
 ```
 
 ## Troubleshooting

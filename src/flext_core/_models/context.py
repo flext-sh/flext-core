@@ -800,7 +800,7 @@ class FlextModelsContext:
         @classmethod
         def _validate_operations(
             cls,
-            v: t.GeneralValueType | t.ConfigurationDict | None,
+            v: t.GeneralValueType | t.ConfigMap | None,
         ) -> dict[str, t.GeneralValueType]:
             """Validate operations - direct validation without helper."""
             # Fast fail: direct validation instead of helper
@@ -908,7 +908,7 @@ class FlextModelsContext:
         @classmethod
         def _validate_custom_fields(
             cls,
-            v: t.GeneralValueType | t.ConfigurationDict | None,
+            v: t.GeneralValueType | t.ConfigMap | None,
         ) -> dict[str, t.GeneralValueType]:
             """Validate custom_fields - direct validation without helper."""
             # Fast fail: direct validation instead of helper

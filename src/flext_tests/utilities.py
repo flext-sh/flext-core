@@ -85,7 +85,7 @@ class FlextTestsUtilities(FlextUtilities):
                     return r[bool].fail(f"Validator failed: {e}")
                 except Exception as e:
                     return r[bool].fail(str(e))
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
     class Tests:
         """Test-specific utilities namespace.
@@ -702,7 +702,7 @@ class FlextTestsUtilities(FlextUtilities):
                 missing = [attr for attr in required_attrs if not hasattr(model, attr)]
                 if missing:
                     return r[bool].fail(f"Missing required attributes: {missing}")
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             @staticmethod
             def create_parametrized_cases(

@@ -726,7 +726,7 @@ class FlextContainer(FlextRuntime, p.DI):
             )
             setattr(self._di_bridge, name, provider)
             setattr(self._di_container, name, provider)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except Exception as e:
             return r[bool].fail(str(e))
 
@@ -774,7 +774,7 @@ class FlextContainer(FlextRuntime, p.DI):
             )
             setattr(self._di_bridge, name, provider)
             setattr(self._di_container, name, provider)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except Exception as e:
             return r[bool].fail(str(e))
 
@@ -800,7 +800,7 @@ class FlextContainer(FlextRuntime, p.DI):
             )
             setattr(self._di_bridge, name, provider)
             setattr(self._di_container, name, provider)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except Exception as e:
             return r[bool].fail(str(e))
 
@@ -970,7 +970,7 @@ class FlextContainer(FlextRuntime, p.DI):
             delattr(self._di_resources, name)
 
         if removed:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         return r[bool].fail(f"Service '{name}' not found")
 
     @override

@@ -266,7 +266,7 @@ class FlextUtilitiesParser:
             return r[bool].fail(
                 "Split character and escape character cannot be the same",
             )
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _get_safe_text_length(self, text: str) -> int:
         """Get text length safely, handling non-string objects in tests.
@@ -1163,7 +1163,7 @@ class FlextUtilitiesParser:
                 case="lower",
             )
             if normalized_val in {"true", "1", "yes", "on"}:
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             if normalized_val in {"false", "0", "no", "off"}:
                 return r[bool].ok(False)
             return None

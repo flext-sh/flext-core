@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextRuntime, p
+from flext_core import FlextLogger, FlextRuntime, m, p
 from flext_core.constants import c
 from tests.test_utils import assertion_helpers
 
@@ -53,8 +53,8 @@ class TestLoggingsErrorPaths:
             c.Logging.ContextOperation.GET,
             AttributeError("Test error"),
         )
-        assert isinstance(result, dict)
-        assert result == {}
+        assert isinstance(result, m.ConfigMap)
+        assert result.root == {}
 
     def test_handle_context_error_non_get_operation(self) -> None:
         """Test _handle_context_error for non-GET operation (covers line 142)."""
@@ -79,7 +79,7 @@ class TestLoggingsErrorPaths:
         # Test that normal operations work
         FlextLogger.clear_global_context()
         result = FlextLogger._context_operation(
-            c.Logging.ContextOperation.BIND,
+            "bind",
             test_key="test_value",
         )
         assertion_helpers.assert_flext_result_success(result) or isinstance(
@@ -95,9 +95,9 @@ class TestLoggingsErrorPaths:
             {},
         )
         # Should return empty dict when context is empty/None
-        assert isinstance(result, dict)
+        assert isinstance(result, m.ConfigMap)
         # May be empty or have some default values
-        assert isinstance(result, dict)
+        assert isinstance(result.root, dict)
 
 
 __all__ = ["TestLoggingsErrorPaths"]
