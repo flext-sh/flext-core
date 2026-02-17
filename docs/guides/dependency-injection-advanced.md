@@ -184,7 +184,7 @@ def initialize_application() -> FlextResult[bool]:
 
     # Load configuration
     config_result = (
-        FlextResult.| ok(value=True)
+        FlextResult[bool].ok(True)
         .flat_map(lambda _: FlextSettings.load())
     )
 
@@ -213,7 +213,7 @@ def initialize_application() -> FlextResult[bool]:
         return db_result
 
     logger.info("✅ Application initialized successfully")
-    return FlextResult[bool].| ok(value=True)
+    return FlextResult[bool].ok(True)
 
 # Usage
 app_init = initialize_application()
@@ -340,7 +340,7 @@ def setup_services_based_on_config() -> FlextResult[bool]:
         container.register("cache", RedisCache(config.redis_url))
         container.register("email_service", SendgridEmailService(config.api_key))
 
-    return FlextResult[bool].| ok(value=True)
+    return FlextResult[bool].ok(True)
 ```
 
 ### Pattern 5: Service Lifecycle Management
@@ -357,7 +357,7 @@ class DatabaseConnection:
         """Establish connection."""
         print(f"Connecting to {self.url}")
         self.connected = True
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 
     def disconnect(self):
         """Close connection."""
@@ -437,7 +437,7 @@ def resolve_with_fallback():
 
 # Or using railway pattern
 result = (
-    FlextResult.| ok(value=True)
+    FlextResult[bool].ok(True)
     .flat_map(lambda _: container.get("primary_service"))
     .lash(lambda _: container.get("fallback_service"))
 )
@@ -473,7 +473,7 @@ def validate_all_services() -> FlextResult[bool]:
                 error_code="SERVICE_INVALID",
             )
 
-    return FlextResult[bool].| ok(value=True)
+    return FlextResult[bool].ok(True)
 ```
 
 ## Type Safety Best Practices

@@ -579,7 +579,7 @@ else:
 # ❌ ANTI-PATTERN - Mutable value object
 from flext_core import FlextModels
 
-class Money(m.Value):
+class Money(FlextModels.Value):
     amount: float  # Mutable!
     currency: str
 
@@ -607,7 +607,7 @@ from flext_core import FlextModels
 from pydantic import ConfigDict
 from decimal import Decimal
 
-class Money(m.Value):
+class Money(FlextModels.Value):
     model_config = ConfigDict(frozen=True)  # Immutable
     amount: Decimal
     currency: str
@@ -680,7 +680,7 @@ Usage:
 
 ```bash
 # Development
-DB_HOSTING=localhost DB_PORT=5432 DB_DATABASE=flext_dev \
+DB_HOST=localhost DB_PORT=5432 DB_DATABASE=flext_dev \
 DB_USER=REDACTED_LDAP_BIND_PASSWORD DB_PASSWORD=dev_pass python app.py
 
 # Production
@@ -709,7 +709,8 @@ time.sleep(config["timeout"])  # TypeError: float argument required
 ```python
 # ✅ CORRECT - Validated configuration
 from flext_core import FlextSettings
-from pydantic import BaseSettings, Field, field_validator
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings
 
 class AppConfig(BaseSettings):
     timeout: int = Field(gt=0, description="Timeout in seconds")

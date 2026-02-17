@@ -522,7 +522,7 @@ Use FlextSettings to manage all application configuration with confidence and sa
 2. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for configuration error patterns
 3. **Testing**: Review [Testing Guide](./testing.md) for configuration testing strategies
 4. **Troubleshooting**: See [Troubleshooting Guide](./troubleshooting.md) for configuration debugging
-5. **API Reference**: Consult [API Reference: FlextSettings](../api-reference/infrastructure.md#flextconfig) for complete API
+5. **API Reference**: Consult [API Reference: FlextSettings](../api-reference/infrastructure.md#flextsettings) for complete API
 
 ## See Also
 
@@ -530,7 +530,7 @@ Use FlextSettings to manage all application configuration with confidence and sa
 - [Error Handling Guide](./error-handling.md) - Handling configuration errors
 - [Testing Guide](./testing.md) - Testing with configuration
 - [Troubleshooting Guide](./troubleshooting.md) - Configuration troubleshooting
-- [API Reference: FlextSettings](../api-reference/infrastructure.md#flextconfig) - Complete configuration API
+- [API Reference: FlextSettings](../api-reference/infrastructure.md#flextsettings) - Complete configuration API
 - **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ---

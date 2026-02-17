@@ -6,7 +6,7 @@ Record of major architectural decisions made in FLEXT-Core development.
 
 ## ADR-001: 5-Layer Architecture
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -48,7 +48,7 @@ Implement strict 5-layer architecture with unidirectional dependencies:
 
 ## ADR-002: Railway-Oriented Programming with FlextResult[T]
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -84,7 +84,7 @@ Implement `FlextResult[T]` monad supporting both success and failure states with
 
 ## ADR-003: Pydantic v2 (No v1 Legacy)
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -119,7 +119,7 @@ Use Pydantic v2 exclusively with zero v1 legacy code (.dict(), .parse_obj() forb
 
 ## ADR-004: Single Class Per Module Pattern
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -166,7 +166,7 @@ class FlextContainer:  # Second top-level class
 
 ## ADR-005: Global Container Singleton Pattern
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -200,7 +200,7 @@ Implement `FlextContainer.get_global()` singleton for service registration and r
 
 ## ADR-006: Ecosystem API Stability
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -220,7 +220,7 @@ FlextResult[T].ok(value)
 FlextResult[T].fail(error)
 FlextResult[T].value
 FlextResult[T].is_success
-FlextResult[T].value  # AND .data
+FlextResult[T].value  # `.data` remains available as a legacy alias
 ```
 
 ### Rationale
@@ -246,7 +246,7 @@ FlextResult[T].value  # AND .data
 
 ## ADR-007: Type Safety: No `Any` Type
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -280,7 +280,7 @@ Need complete type safety without escape hatches that reduce code reliability.
 
 ## ADR-008: Clean Layered Dependencies Only (No Shortcuts)
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -313,7 +313,7 @@ Developers want to take shortcuts across layers to "just make it work" causing t
 
 ## ADR-009: Python 3.13+ Exclusive
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 
@@ -353,7 +353,7 @@ Features enabled:
 
 ## ADR-010: Domain Events Over Direct Calls
 
-**Status:** ACCEPTED | **Date:** 2025-01-XX
+**Status:** ACCEPTED | **Date:** 2025-12-07
 
 ### Problem
 

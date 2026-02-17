@@ -23,7 +23,7 @@ FlextModels.AggregateRoot
         ↓
 FlextModels.Entity
         ↓
-m.Value
+FlextModels.Value
         ↓
 Pydantic BaseModel
         ↓
@@ -40,7 +40,7 @@ Value objects have **no identity** - they're compared by their values:
 from flext_core import FlextModels
 from decimal import Decimal
 
-class Money(m.Value):
+class Money(FlextModels.Value):
     """Money is a value object - represented by amount and currency."""
     amount: Decimal
     currency: str  # "USD", "EUR", "GBP", etc.
@@ -75,16 +75,16 @@ assert money1 is not money2  # Different objects
 ```python
 from flext_core import FlextModels
 
-class Email(m.Value):
+class Email(FlextModels.Value):
     """Email address - value object."""
     address: str
 
-class PhoneNumber(m.Value):
+class PhoneNumber(FlextModels.Value):
     """Phone number - value object."""
     country_code: str
     number: str
 
-class Address(m.Value):
+class Address(FlextModels.Value):
     """Physical address - value object."""
     street: str
     city: str
@@ -189,7 +189,7 @@ class OrderItem(FlextModels.Entity):
     quantity: int
     unit_price: Decimal
 
-class ShippingInfo(m.Value):
+class ShippingInfo(FlextModels.Value):
     """Shipping address - value object."""
     address: str
     city: str
@@ -371,12 +371,12 @@ class OrderStatus(str, Enum):
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
 
-class Money(m.Value):
+class Money(FlextModels.Value):
     """Money value object."""
     amount: Decimal
     currency: str = "USD"
 
-class Address(m.Value):
+class Address(FlextModels.Value):
     """Address value object."""
     street: str
     city: str
@@ -446,7 +446,7 @@ class Order(FlextModels.AggregateRoot):
 
         try:
             self._validate_invariants()
-            return FlextResult[bool].| ok(value=True)
+            return FlextResult[bool].ok(True)
         except ValueError as e:
             return FlextResult[bool].fail(
                 str(e),
@@ -466,7 +466,7 @@ class Order(FlextModels.AggregateRoot):
 
         try:
             self._validate_invariants()
-            return FlextResult[bool].| ok(value=True)
+            return FlextResult[bool].ok(True)
         except ValueError as e:
             return FlextResult[bool].fail(
                 str(e),
@@ -483,7 +483,7 @@ class Order(FlextModels.AggregateRoot):
 
         self.status = OrderStatus.CONFIRMED
         self.updated_at = datetime.now()
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 
     def ship(self) -> FlextResult[bool]:
         """Ship order (transition to shipped state)."""
@@ -495,7 +495,7 @@ class Order(FlextModels.AggregateRoot):
 
         self.status = OrderStatus.SHIPPED
         self.updated_at = datetime.now()
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 
     def _recalculate_totals(self):
         """Recalculate order totals."""
@@ -580,7 +580,7 @@ from flext_core import FlextModels, FlextResult
 from datetime import datetime, timedelta
 import re
 
-class Email(m.Value):
+class Email(FlextModels.Value):
     """Email value object."""
     address: str
 
@@ -589,7 +589,7 @@ class Email(m.Value):
             raise ValueError(f"Invalid email: {address}")
         super().__init__(address=address)
 
-class Password(m.Value):
+class Password(FlextModels.Value):
     """Password value object (hashed representation)."""
     hash: str
 
@@ -635,7 +635,7 @@ class User(FlextModels.AggregateRoot):
             )
 
         self.last_login_at = datetime.now()
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 
     def deactivate(self) -> FlextResult[bool]:
         """Deactivate user account."""
@@ -646,7 +646,7 @@ class User(FlextModels.AggregateRoot):
             )
 
         self.is_active = False
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 
     def verify_email(self) -> FlextResult[bool]:
         """Mark email as verified."""
@@ -657,7 +657,7 @@ class User(FlextModels.AggregateRoot):
             )
 
         self.is_verified = True
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 
 # Usage
 user = User(
@@ -703,7 +703,7 @@ class User(FlextModels.Entity):
             )
 
         self.email = new_email
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 
 # Usage
 user = User(username="alice", email="alice@example.com")
@@ -777,7 +777,7 @@ class UserCommandService(FlextService):
         # Publish event
         self.add_domain_event(UserEmailUpdatedEvent(cmd.user_id, cmd.new_email))
 
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 ```
 
 ### Queries: Read Operations
@@ -927,11 +927,11 @@ class Order(FlextModels.AggregateRoot):
 
 ```python
 # ✅ CORRECT - Semantic value objects
-class Money(m.Value):
+class Money(FlextModels.Value):
     amount: Decimal
     currency: str
 
-class Email(m.Value):
+class Email(FlextModels.Value):
     address: str
 
 # ❌ WRONG - Using primitives
@@ -951,7 +951,7 @@ class ShoppingCart(FlextModels.Entity):
         if len(self.items) >= 100:
             return FlextResult[bool].fail("Cart is full")
         self.items.append(item)
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 
 # ❌ WRONG - Business logic in caller
 def add_to_cart(cart, item):

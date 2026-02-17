@@ -71,7 +71,7 @@ if logger_result.is_success:
 from flext_core import FlextModels, FlextService, FlextResult
 
 # Value Object - immutable, compared by value
-class Money(m.Value):
+class Money(FlextModels.Value):
     amount: float
     currency: str
 
@@ -425,24 +425,6 @@ Key patterns in FLEXT-Core:
 - ✅ **Factory/Adapter**: Object creation and adaptation
 
 Use these patterns to build maintainable, scalable FLEXT-Core applications.
-
-## Next Steps
-
-1. **Architecture Overview**: See [Architecture Overview](./overview.md) for layer structure
-2. **Clean Architecture**: Review [Clean Architecture](./clean-architecture.md) for dependency rules
-3. **CQRS Patterns**: Explore [CQRS Architecture](./cqrs.md) for handler patterns
-4. **Railway Patterns**: Check [Railway-Oriented Programming Guide](../guides/railway-oriented-programming.md) for detailed examples
-5. **Service Patterns**: Review [Service Patterns Guide](../guides/service-patterns.md) for domain services
-
-## See Also
-
-- [Architecture Overview](./overview.md) - Visual layer topology and execution flows
-- [Clean Architecture](./clean-architecture.md) - Dependency rules and layer responsibilities
-- [CQRS Architecture](./cqrs.md) - Handler and dispatcher patterns
-- [Railway-Oriented Programming](../guides/railway-oriented-programming.md) - Result composition patterns
-- [Service Patterns Guide](../guides/service-patterns.md) - Domain service implementation
-- [Dependency Injection Advanced](../guides/dependency-injection-advanced.md) - DI container patterns
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
 
 ## Next Steps
 

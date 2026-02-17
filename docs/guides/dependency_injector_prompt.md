@@ -31,4 +31,6 @@ Final checklist
 - Ensure `tests/unit/test_container.py` and `tests/unit/test_runtime.py` continue to pass.
 - Do not break the public ABI (imports documented in `flext_core/__init__.py`).
 - Avoid regressions in automatic wiring within the dispatcher/handlers.
+- Update architecture or guide docs in the same change when DI behavior/public usage changes.
+- Keep examples aligned with root policy and avoid direct dependency-injector imports in upper layers.
 ```

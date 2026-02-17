@@ -6,6 +6,12 @@ Thank you for your interest in contributing to FLEXT-Core! This guide provides c
 
 We are committed to providing a welcoming and inclusive environment. Please be respectful and constructive in all interactions.
 
+## Canonical Rules
+
+- Root project governance lives in `CLAUDE.md` at the workspace root.
+- For `flext-core` changes, follow `rules-flext-core`, `flext-import-rules`, and `flext-strict-typing`.
+- Keep examples and snippets aligned with Python 3.13 typing style (`X | None`, `list[T]`, `dict[K, V]`).
+
 ## Quick Start
 
 ### Prerequisites
