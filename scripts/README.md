@@ -1,5 +1,7 @@
 # Scripts
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 Utility scripts that support the FLEXT Core 1.0.0 modernization programme.
 
 - Prefer short, single-purpose commands that are safe to re-run.

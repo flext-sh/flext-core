@@ -1,5 +1,7 @@
 # FLEXT Core Integration Tests
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 These tests verify that configuration, container, dispatcher, and context layers behave consistently – the core promise of the 1.0.0 modernization plan.
 
 ```bash

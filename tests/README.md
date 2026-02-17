@@ -1,5 +1,7 @@
 # FLEXT Core Test Suite
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 Test coverage aligns with the 1.0.0 modernization pillars: dispatcher unification, context-first observability, and shared configuration/runtime services.
 
 ---

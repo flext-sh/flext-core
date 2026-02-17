@@ -1,5 +1,7 @@
 # FLEXT-Core Examples
 
+**Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
+
 **Version**: 0.10.0 | **Status**: Production Ready
 
 Comprehensive examples demonstrating FLEXT-Core patterns and best practices. All examples are self-contained and can be run independently.
