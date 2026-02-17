@@ -224,16 +224,16 @@ class FlextModelFoundation:
             if isinstance(value, BaseModel):
                 dumped = value.model_dump()
                 if isinstance(dumped, Mapping):
-                    return {str(k): v for k, v in dumped.items()}
+                    return validate_config_dict({str(k): v for k, v in dumped.items()})
                 msg = (
                     "attributes BaseModel must dump to mapping, "
                     f"got {type(dumped).__name__}"
                 )
                 raise TypeError(msg)
             if isinstance(value, t.Dict):
-                return dict(value.root)
+                return validate_config_dict(value.root)
             if isinstance(value, Mapping):
-                return {str(k): v for k, v in value.items()}
+                return validate_config_dict({str(k): v for k, v in value.items()})
             msg = (
                 f"attributes must be dict-like or BaseModel, got {type(value).__name__}"
             )
