@@ -7,6 +7,12 @@ below mirrors the `src/flext_core` layout (Python 3.13+, Pydantic v2) and
 references [`clean-architecture.md`](./clean-architecture.md) for the
 dependency rules and rationale.
 
+Canonical references:
+
+- `./clean-architecture.md`
+- `./cqrs.md`
+- `../../README.md`
+
 ## Layered Topology
 
 ```
@@ -113,3 +119,13 @@ guide.
 
 - [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
+
+## Verification Commands
+
+Run from `flext-core/`:
+
+```bash
+make lint
+make type-check
+make test-fast
+```
