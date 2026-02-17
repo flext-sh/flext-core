@@ -4,6 +4,12 @@
 
 Comprehensive guide to error handling strategies in FLEXT-Core using the railway-oriented programming pattern with FlextResult[T].
 
+## Canonical Rules
+
+- Follow root governance in `CLAUDE.md`.
+- Keep examples aligned with strict typing and `FlextResult[T]` flows.
+- Keep guide links local to `docs/guides/` and architecture references in `docs/architecture/`.
+
 ## Overview
 
 FLEXT-Core provides **functional error handling** through `FlextResult[T]` instead of exceptions. This enables:

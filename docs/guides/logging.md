@@ -4,6 +4,12 @@
 
 FLEXT provides a comprehensive structured logging system built on `structlog` with automatic context propagation, scoped contexts, and level-based context management. This guide explains the 3-tier context system and how to use it effectively.
 
+## Canonical Rules
+
+- Follow root governance in `CLAUDE.md`.
+- Prefer structured examples that preserve context keys and correlation IDs.
+- Keep cross-links in sync with guide and API reference sections.
+
 ## 3-Tier Context System
 
 FLEXT logging implements a 3-tier context system that allows you to manage logging context at different levels of granularity:

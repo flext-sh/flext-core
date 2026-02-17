@@ -41,7 +41,7 @@ result: FlextResult[str] = FlextResult[str].ok("Hello, World!")
 result = FlextResult.ok("data")
 
 # None is valid success (for void operations)
-result = FlextResult[bool].| ok(value=True)  # Represents successful completion
+result = FlextResult[bool].ok(True)  # Represents successful completion
 ```
 
 **Source**: `src/flext_core/result.py:313-337`

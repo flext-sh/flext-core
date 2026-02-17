@@ -116,7 +116,7 @@ class User(FlextModels.Entity):
             raise ValueError("Invalid email format")
 
 # Value Object - compared by value
-class Address(m.Value):
+class Address(FlextModels.Value):
     """Address value object."""
     street: str
     city: str
@@ -397,7 +397,7 @@ class Order(FlextModels.AggregateRoot):
         # Emit domain event
         self.add_domain_event("OrderPlaced", {"order_id": self.entity_id, "total": self.total})
 
-        return FlextResult[bool].| ok(value=True)
+        return FlextResult[bool].ok(True)
 ```
 
 ## Troubleshooting

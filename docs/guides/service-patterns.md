@@ -10,6 +10,12 @@
 This guide describes FlextService usage patterns and the evolution from
 explicit execution (V1) to zero-ceremony patterns (V2).
 
+## Canonical Rules
+
+- Follow root governance in `CLAUDE.md`.
+- Keep service examples returning `FlextResult[T]` and matching layer boundaries.
+- Keep runtime/DI guidance aligned with `dependency-injection-advanced.md`.
+
 ---
 
 ## Overview

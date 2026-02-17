@@ -2,6 +2,12 @@
 
 Comprehensive guide to testing FLEXT-Core applications with pytest, fixtures, and domain-driven testing patterns.
 
+## Canonical Rules
+
+- Follow root governance in `CLAUDE.md`.
+- Keep tests deterministic and aligned with `FlextResult[T]` contracts.
+- Keep examples in sync with current `pytest` and project quality gates.
+
 ## Overview
 
 FLEXT-Core applications use **pytest** for testing with emphasis on:
