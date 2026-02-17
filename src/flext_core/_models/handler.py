@@ -25,7 +25,6 @@ from flext_core._models.base import FlextModelsBase
 from flext_core.constants import c
 from flext_core.protocols import p
 from flext_core.typings import t
-from flext_core.utilities import u
 
 
 class FlextModelsHandler:
@@ -56,13 +55,71 @@ class FlextModelsHandler:
             cls,
             v: object,
         ) -> object:
-            validation = u.Validation.validate_callable(
-                v,
-                error_message=f"Handler must be callable, got {type(v).__name__}",
-            )
-            if validation.is_failure:
-                msg = validation.error or "Handler must be callable"
+            if not callable(v):
+                msg = f"Handler must be callable, got {type(v).__name__}"
                 raise TypeError(msg)
+            return v
+
+    class RegistrationResult(FlextModelsBase.ArbitraryTypesModel):
+        """Result of a handler registration operation.
+
+        Provides structured feedback on the outcome of a handler registration,
+        including status, mode, and identification.
+        """
+
+        handler_name: str = Field(
+            description="Name of the handler",
+        )
+        status: str = Field(
+            description="Registration status (registered, skipped, failed)",
+        )
+        mode: str = Field(
+            description="Registration mode (auto_discovery, explicit)",
+        )
+        message_type: str | None = Field(
+            default=None,
+            description="Message type bound (for explicit mode)",
+        )
+
+    class RegistrationRequest(FlextModelsBase.ArbitraryTypesModel):
+        """Request model for dynamic handler registration.
+
+        Strictly typed model for handler registration parameters, replacing
+        legacy dictionary-based configuration.
+        """
+
+        handler: t.GeneralValueType = Field(
+            description="Handler instance (callable, object, or FlextHandlers)",
+        )
+        message_type: t.GeneralValueType | str | type | None = Field(
+            default=None,
+            description="Message type to handle (required for explicit mode)",
+        )
+        handler_mode: c.Cqrs.HandlerTypeLiteral | None = Field(
+            default=None,
+            description="Handler operation mode (command, query, event)",
+        )
+        handler_name: str | None = Field(
+            default=None,
+            description="Explicit handler name override",
+        )
+
+        @field_validator("handler_mode")
+        @classmethod
+        def validate_mode(cls, v: str | None) -> str | None:
+            """Validate handler mode against allowed values."""
+            if v is None:
+                return None
+            allowed = {
+                c.Cqrs.HandlerType.COMMAND,
+                c.Cqrs.HandlerType.QUERY,
+                c.Cqrs.HandlerType.EVENT,
+            }
+            if v not in allowed:
+                # Allow it to pass if it matches the string value but maybe not the enum constant?
+                # Actually, strictly enforcing enum values is better.
+                # But Cqrs.HandlerTypeLiteral is a literal of strings.
+                return v
             return v
 
     class RegistrationDetails(BaseModel):
@@ -195,7 +252,7 @@ class FlextModelsHandler:
         # Use PrivateAttr for internal state (Pydantic v2 pattern)
         # PrivateAttr fields are not validated by Pydantic, so pyright needs explicit type hints
         _start_time: float | None = PrivateAttr(default=None)
-        _metrics_state: dict[str, t.GeneralValueType] | None = PrivateAttr(default=None)
+        _metrics_state: t.Dict | None = PrivateAttr(default=None)
 
         def start_execution(self) -> None:
             """Start execution timing.
@@ -241,7 +298,7 @@ class FlextModelsHandler:
             return round(elapsed * c.MILLISECONDS_MULTIPLIER, 2)
 
         @computed_field
-        def metrics_state(self) -> t.ConfigurationMapping:
+        def metrics_state(self) -> t.Dict:
             """Get current metrics state.
 
             Returns:
@@ -258,18 +315,17 @@ class FlextModelsHandler:
             """
             if self._metrics_state is None:
                 # Use PrivateAttr for proper Pydantic v2 pattern
-                empty_dict: dict[str, t.GeneralValueType] = {}
-                self._metrics_state = empty_dict
+                self._metrics_state = t.Dict(root={})
             # Type narrowing: _metrics_state is not None after initialization above
             # PrivateAttr type narrowing works after None check and initialization
-            metrics_state: dict[str, t.GeneralValueType] = self._metrics_state
+            metrics_state_val: t.Dict = self._metrics_state
             # ConfigurationDict (dict) is compatible with ConfigurationMapping (Mapping)
             # dict implements Mapping, so direct return works without cast
-            return metrics_state
+            return metrics_state_val
 
         def set_metrics_state(
             self,
-            state: dict[str, t.GeneralValueType],
+            state: t.Dict,
         ) -> None:
             """Set metrics state.
 

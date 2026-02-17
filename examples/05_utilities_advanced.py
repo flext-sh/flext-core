@@ -30,6 +30,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
     FlextTypes as t,
+    m,
     s,
     u,
 )
@@ -75,12 +76,12 @@ TEST_DATA: Mapping[str, t.GeneralValueType] = {
 # ═══════════════════════════════════════════════════════════════════
 
 
-class AdvancedUtilitiesService(s[t.ConfigurationMapping]):
+class AdvancedUtilitiesService(s[m.ConfigMap]):
     """Service demonstrating advanced u features."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> FlextResult[m.ConfigMap]:
         """Execute advanced utilities demonstrations."""
         print("Starting advanced utilities demonstration")
 
@@ -95,7 +96,7 @@ class AdvancedUtilitiesService(s[t.ConfigurationMapping]):
             self._demonstrate_pagination()
             self._demonstrate_configuration()
 
-            return FlextResult[t.ConfigurationMapping].ok({
+            return FlextResult[m.ConfigMap].ok({
                 "utilities_demonstrated": [
                     "args_validation",
                     "enum_utilities",
@@ -123,7 +124,7 @@ class AdvancedUtilitiesService(s[t.ConfigurationMapping]):
 
         except Exception as e:
             error_msg = f"Advanced utilities demonstration failed: {e}"
-            return FlextResult[t.ConfigurationMapping].fail(error_msg)
+            return FlextResult[m.ConfigMap].fail(error_msg)
 
     @staticmethod
     def _demonstrate_args_validation() -> None:

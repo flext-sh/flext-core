@@ -19,10 +19,29 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+
+def _normalize_metadata(
+    value: t.GeneralValueType,
+) -> FlextModelsBase.Metadata:
+    if value is None:
+        return FlextModelsBase.Metadata(attributes={})
+    if isinstance(value, FlextModelsBase.Metadata):
+        return value
+    if not FlextRuntime.is_dict_like(value):
+        msg = (
+            f"metadata must be None, dict, or FlextModelsBase.Metadata, "
+            f"got {type(value).__name__}"
+        )
+        raise TypeError(msg)
+    attributes = {
+        str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
+        for key, raw_value in dict(value).items()
+    }
+    return FlextModelsBase.Metadata(attributes=attributes)
 
 
 class FlextModelsContainer:
@@ -62,7 +81,7 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: FlextModelsBase.Metadata | t.ConfigurationMapping | None = Field(
+        metadata: FlextModelsBase.Metadata | t.ConfigurationDict | None = Field(
             default=None,
             description="Additional service metadata (JSON-serializable)",
         )
@@ -83,7 +102,7 @@ class FlextModelsContainer:
             Accepts: None, dict, or Metadata. Always returns Metadata.
             Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
             """
-            return FlextUtilitiesModel.normalize_to_metadata(v)
+            return _normalize_metadata(v)
 
     class FactoryRegistration(BaseModel):
         """Model for factory registry entries.
@@ -122,7 +141,7 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: FlextModelsBase.Metadata | t.ConfigurationMapping | None = Field(
+        metadata: FlextModelsBase.Metadata | t.ConfigurationDict | None = Field(
             default=None,
             description="Additional factory metadata (JSON-serializable)",
         )
@@ -140,7 +159,7 @@ class FlextModelsContainer:
             Accepts: None, dict, or Metadata. Always returns Metadata.
             Uses FlextUtilitiesModel.normalize_to_metadata() for centralized normalization.
             """
-            return FlextUtilitiesModel.normalize_to_metadata(v)
+            return _normalize_metadata(v)
 
     class ResourceRegistration(BaseModel):
         """Model for lifecycle-managed resource registrations.
@@ -169,7 +188,7 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when resource was registered",
         )
-        metadata: FlextModelsBase.Metadata | t.ConfigurationMapping | None = Field(
+        metadata: FlextModelsBase.Metadata | t.ConfigurationDict | None = Field(
             default=None,
             description="Additional resource metadata (JSON-serializable)",
         )
@@ -178,7 +197,7 @@ class FlextModelsContainer:
         @classmethod
         def validate_metadata(cls, v: t.GeneralValueType) -> FlextModelsBase.Metadata:
             """Normalize resource metadata to Metadata model."""
-            return FlextUtilitiesModel.normalize_to_metadata(v)
+            return _normalize_metadata(v)
 
     class ContainerConfig(BaseModel):
         """Model for container configuration.

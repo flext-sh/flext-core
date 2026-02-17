@@ -14,6 +14,7 @@ from decimal import Decimal
 
 from flext_core import m, t
 from tests.test_utils import assertion_helpers
+from flext_core.models import m
 
 
 # Define Query and Command classes using dataclasses to avoid Pydantic circular dependencies
@@ -290,7 +291,7 @@ class TestFlextModelsEdgeCases:
 
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
-        large_data: t.ConfigurationMapping = {
+        large_data: m.ConfigMap = {
             f"field_{i}": f"value_{i}" for i in range(100)
         }
         event = m.DomainEvent(

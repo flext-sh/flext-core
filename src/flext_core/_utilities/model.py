@@ -203,7 +203,7 @@ class FlextUtilitiesModel:
             return value
 
         # Handle dict-like values using FlextRuntime guards
-        # TypeGuard ensures value is t.ConfigurationMapping after is_dict_like check
+        # TypeGuard ensures value is m.ConfigMap after is_dict_like check
         if FlextRuntime.is_dict_like(value) and isinstance(value, dict):
             # Normalize each value using FlextRuntime.normalize_to_metadata_value
             attributes: dict[str, t.MetadataAttributeValue] = {}
@@ -271,7 +271,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def load[T_Model: BaseModel](
         model_cls: type[T_Model],
-        data: t.ConfigurationMapping,
+        data: t.ConfigurationDict,
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with FlextResult.
 
@@ -298,7 +298,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_pydantic_dict(
-        data: t.ConfigurationMapping | None,
+        data: t.ConfigurationDict | None,
     ) -> t.PydanticConfigDict:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 

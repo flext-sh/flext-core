@@ -60,7 +60,9 @@ class ContainerScenarios:
 
     SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
         ServiceScenario("test_service", {"key": "value"}, "Simple dict service"),
-        ServiceScenario("service_instance", {"instance_id": 123}, "Dict service instance"),
+        ServiceScenario(
+            "service_instance", {"instance_id": 123}, "Dict service instance"
+        ),
         ServiceScenario("string_service", "test_value", "String service"),
     ]
 
@@ -82,7 +84,7 @@ class ContainerScenarios:
         TypedRetrievalScenario("list_service", [1, 2, 3], list, True, "List service"),
     ]
 
-    CONFIG_SCENARIOS: ClassVar[list[dict[str, t.GeneralValueType]]] = [
+    CONFIG_SCENARIOS: ClassVar[list[dict[str, t.FlexibleValue]]] = [
         {"max_workers": 8, "timeout_seconds": 60.0},
         {"invalid_key": "value", "another_invalid": 42},
         {},
@@ -284,7 +286,7 @@ class TestFlextContainer:
     ) -> None:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
-        result: r[t.GeneralValueType] = clean_container.get(scenario.name)
+        result: r[object] = clean_container.get(scenario.name)
         expected_value: t.GeneralValueType = cast(
             "t.GeneralValueType",
             scenario.service,
@@ -299,7 +301,7 @@ class TestFlextContainer:
         clean_container: FlextContainer,
     ) -> None:
         """Test getting non-existent service using fixtures."""
-        result: r[t.GeneralValueType] = clean_container.get("nonexistent")
+        result: r[object] = clean_container.get("nonexistent")
         u.Tests.Result.assert_result_failure_with_error(
             result,
             expected_error="not found",
@@ -315,7 +317,7 @@ class TestFlextContainer:
             factory_result,
         )
         clean_container.register_factory("factory_service", factory)
-        result: r[t.GeneralValueType] = clean_container.get("factory_service")
+        result: r[object] = clean_container.get("factory_service")
         u.Tests.Result.assert_success_with_value(
             result,
             factory_result,
@@ -332,10 +334,10 @@ class TestFlextContainer:
             )
         )
         clean_container.register_factory("factory_service", factory)
-        result1: r[t.GeneralValueType] = clean_container.get("factory_service")
+        result1: r[object] = clean_container.get("factory_service")
         u.Tests.Result.assert_result_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
-        result2: r[t.GeneralValueType] = clean_container.get("factory_service")
+        result2: r[object] = clean_container.get("factory_service")
         u.Tests.Result.assert_result_success(result2)
         tm.that(
             get_count(),
@@ -523,37 +525,26 @@ class TestFlextContainer:
         )
 
     @pytest.mark.parametrize("config", ContainerScenarios.CONFIG_SCENARIOS, ids=str)
-    def test_configure_container(self, config: dict[str, t.GeneralValueType]) -> None:
+    def test_configure_container(self, config: dict[str, t.FlexibleValue]) -> None:
         """Test container configuration."""
         container = FlextContainer()
-        # Cast dict[str, t.GeneralValueType] to Mapping[str, t.GeneralValueType]
-        # for type compatibility
-        config_typed: t.ConfigurationMapping = cast(
-            "t.ConfigurationMapping",
-            config,
-        )
-        container.configure(config_typed)
+        container.configure(config)
         tm.that(container, none=False, msg="Container must not be None after configure")
         config_result = container.get_config()
         tm.that(
             config_result,
-            is_=dict,
+            is_=t.ConfigMap,
             none=False,
-            msg="Container config must be a dict",
+            msg="Container config must be a ConfigMap",
         )
 
     def test_with_config_fluent(self) -> None:
         """Test fluent interface for configuration."""
         container = FlextContainer()
-        config: dict[str, t.GeneralValueType] = {
+        config: dict[str, t.FlexibleValue] = {
             "max_workers": c.Container.DEFAULT_WORKERS,
         }
-        # Cast dict[str, t.GeneralValueType] to ConfigurationMapping for type compatibility
-        config_typed: t.ConfigurationMapping = cast(
-            "t.ConfigurationMapping",
-            config,
-        )
-        result = container.with_config(config_typed)
+        result = container.with_config(config)
         tm.that(
             result is container,
             eq=True,
@@ -562,14 +553,14 @@ class TestFlextContainer:
         config_result = container.get_config()
         tm.that(
             config_result,
-            is_=dict,
+            is_=t.ConfigMap,
             none=False,
-            msg="get_config must return a dict",
+            msg="get_config must return a ConfigMap",
         )
         # max_workers might not be in config if it's not a valid container config key
         # Just verify config is accessible
         tm.that(
-            config_result,
+            config_result.root,
             none=False,
             msg="Config must be accessible after with_config",
         )
@@ -578,9 +569,11 @@ class TestFlextContainer:
         """Test retrieving current configuration."""
         container = FlextContainer()
         config = container.get_config()
-        tm.that(config, is_=dict, none=False, msg="get_config must return a dict")
         tm.that(
-            "enable_singleton" in config or "max_services" in config,
+            config, is_=t.ConfigMap, none=False, msg="get_config must return ConfigMap"
+        )
+        tm.that(
+            "enable_singleton" in config.root or "max_services" in config.root,
             eq=True,
             msg="Config must contain enable_singleton or max_services",
         )
@@ -663,7 +656,7 @@ class TestFlextContainer:
                 msg=f"Container must have {service_name} after registration",
             )
         for name in required_services:
-            result: r[t.GeneralValueType] = container.get(name)
+            result: r[object] = container.get(name)
             u.Tests.Result.assert_result_success(result)
         tm.that(
             len(container.list_services()),
@@ -696,7 +689,7 @@ class TestFlextContainer:
             raise RuntimeError(error_msg)
 
         container.register_factory("failing", failing_factory)
-        result: r[t.GeneralValueType] = container.get("failing")
+        result: r[object] = container.get("failing")
         u.Tests.Result.assert_result_failure(result)
 
 

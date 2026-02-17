@@ -121,9 +121,9 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        pagination: FlextModelsCqrs.Pagination | dict[str, int] = Field(
-            default_factory=dict,
+        filters: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        pagination: FlextModelsCqrs.Pagination | t.Dict = Field(
+            default_factory=lambda: t.Dict(root={}),
         )
         query_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
@@ -167,29 +167,35 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination | dict[str, int] | dict[str, str] | None,
+            v: FlextModelsCqrs.Pagination
+            | t.Dict
+            | dict[str, int]
+            | dict[str, str]
+            | None,
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
             if isinstance(v, FlextModelsCqrs.Pagination):
                 return v
 
-            # Convert dict to Pagination
-            if FlextRuntime.is_dict_like(v) and isinstance(v, Mapping):
-                page_raw = v.get("page", c.Pagination.DEFAULT_PAGE_NUMBER)
-                size_raw = v.get("size", c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE)
-                # Type-safe int conversion
-                page: int = c.Pagination.DEFAULT_PAGE_NUMBER
-                size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
-                if isinstance(page_raw, int):
-                    page = page_raw
-                elif isinstance(page_raw, str) and page_raw.isdigit():
-                    page = int(page_raw)
-                if isinstance(size_raw, int):
-                    size = size_raw
-                elif isinstance(size_raw, str) and size_raw.isdigit():
-                    size = int(size_raw)
-                return pagination_cls(page=page, size=size)
+            # Convert dict or t.Dict to Pagination
+            if v is not None:
+                data = v.root if isinstance(v, t.Dict) else v
+                if FlextRuntime.is_dict_like(data) and isinstance(data, Mapping):
+                    page_raw = data.get("page", c.Pagination.DEFAULT_PAGE_NUMBER)
+                    size_raw = data.get("size", c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE)
+                    # Type-safe int conversion
+                    page: int = c.Pagination.DEFAULT_PAGE_NUMBER
+                    size: int = c.Pagination.DEFAULT_PAGE_SIZE_EXAMPLE
+                    if isinstance(page_raw, int):
+                        page = page_raw
+                    elif isinstance(page_raw, str) and page_raw.isdigit():
+                        page = int(page_raw)
+                    if isinstance(size_raw, int):
+                        size = size_raw
+                    elif isinstance(size_raw, str) and size_raw.isdigit():
+                        size = int(size_raw)
+                    return pagination_cls(page=page, size=size)
 
             # Default empty Pagination
             return pagination_cls()
@@ -273,7 +279,7 @@ class FlextModelsCqrs:
             )
             default_name: str | None = None
             default_id: str | None = None
-            handler_config: t.ConfigurationMapping | None = None
+            handler_config: t.ConfigMap | None = None
             command_timeout: int = 0
             max_command_retries: int = 0
 
@@ -292,60 +298,58 @@ class FlextModelsCqrs:
                 """Initialize builder with required handler_type."""
                 super().__init__()
                 handler_short_id = FlextRuntime.generate_prefixed_id("", length=8)
-                self._data: dict[str, t.GeneralValueType] = {
-                    "handler_type": handler_type,
-                    "handler_mode": (
-                        c.Dispatcher.HANDLER_MODE_COMMAND
-                        if handler_type == c.Cqrs.HandlerType.COMMAND
-                        else c.Dispatcher.HANDLER_MODE_QUERY
-                    ),
-                    "handler_id": f"{handler_type}_handler_{handler_short_id}",
-                    "handler_name": f"{handler_type.title()} Handler",
-                    "command_timeout": c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
-                    "max_command_retries": c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
-                    "metadata": None,
-                }
+                self._data: t.Dict = t.Dict(
+                    root={
+                        "handler_type": handler_type,
+                        "handler_mode": (
+                            c.Dispatcher.HANDLER_MODE_COMMAND
+                            if handler_type == c.Cqrs.HandlerType.COMMAND
+                            else c.Dispatcher.HANDLER_MODE_QUERY
+                        ),
+                        "handler_id": f"{handler_type}_handler_{handler_short_id}",
+                        "handler_name": f"{handler_type.title()} Handler",
+                        "command_timeout": c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
+                        "max_command_retries": c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
+                        "metadata": None,
+                    }
+                )
 
             def with_id(self, handler_id: str) -> Self:
                 """Set handler ID (fluent API)."""
-                self._data["handler_id"] = handler_id
+                self._data.root["handler_id"] = handler_id
                 return self
 
             def with_name(self, handler_name: str) -> Self:
                 """Set handler name (fluent API)."""
-                self._data["handler_name"] = handler_name
+                self._data.root["handler_name"] = handler_name
                 return self
 
             def with_timeout(self, timeout: int) -> Self:
                 """Set command timeout (fluent API)."""
-                self._data["command_timeout"] = timeout
+                self._data.root["command_timeout"] = timeout
                 return self
 
             def with_retries(self, max_retries: int) -> Self:
                 """Set max retries (fluent API)."""
-                self._data["max_command_retries"] = max_retries
+                self._data.root["max_command_retries"] = max_retries
                 return self
 
             def with_metadata(self, metadata: FlextModelsBase.Metadata) -> Self:
                 """Set metadata (fluent API - Pydantic model)."""
-                # Convert Metadata model to dict for t.GeneralValueType compatibility
-                metadata_dict: dict[str, t.GeneralValueType] = dict(
-                    metadata.model_dump().items(),
-                )
-                self._data["metadata"] = metadata_dict
+                self._data.root["metadata"] = metadata
                 return self
 
             def merge_config(
                 self,
-                config: t.ConfigurationMapping,
+                config: t.ConfigMap,
             ) -> Self:
                 """Merge additional config (fluent API)."""
-                self._data.update(config)
+                self._data.root.update(config.root)
                 return self
 
             def build(self) -> FlextModelsCqrs.Handler:
                 """Build and validate Handler instance."""
-                return FlextModelsCqrs.Handler.model_validate(self._data)
+                return FlextModelsCqrs.Handler.model_validate(self._data.root)
 
 
 __all__ = ["FlextModelsCqrs"]

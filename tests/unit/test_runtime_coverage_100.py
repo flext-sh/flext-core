@@ -17,6 +17,7 @@ from typing import ClassVar, Never, cast, overload
 import structlog
 
 from flext_core import FlextRuntime, t
+from flext_core.models import m
 
 
 class TestRuntimeDictLike:
@@ -197,7 +198,7 @@ class TestRuntimeTypeChecking:
         # A malformed one would be just "_level_" or "_level_debug" (not enough parts)
         # Create a key that starts with _level_ but has fewer parts than required
         malformed_key = "_level_"  # This will split into fewer parts than required
-        event_dict: t.ConfigurationMapping = {
+        event_dict: m.ConfigMap = {
             malformed_key: "value1",  # Malformed - not enough parts after split
             "normal_key": "value2",  # Not prefixed
         }
@@ -242,7 +243,7 @@ class TestRuntimeTypeChecking:
             if config.logger_factory is not None
             else None
         )
-        config_dict: t.ConfigurationMapping = {
+        config_dict: m.ConfigMap = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,
@@ -343,7 +344,7 @@ class TestRuntimeTypeChecking:
         # Format: _level_<level>_<key> where parts_count = 4
         # So "_level_debug_config" splits into ['', 'level', 'debug', 'config']
         # Level hierarchy: DEBUG (10) < INFO (20) < WARNING (30) < ERROR (40) < CRITICAL (50)
-        event_dict: t.ConfigurationMapping = {
+        event_dict: m.ConfigMap = {
             "_level_debug_config": {"key": "value"},  # DEBUG level (10)
             "_level_info_status": "ok",  # INFO level (20)
             "_level_error_stack": "trace",  # ERROR level (40)
@@ -402,7 +403,7 @@ class TestRuntimeTypeChecking:
             if config.logger_factory is not None
             else None
         )
-        config_dict: t.ConfigurationMapping = {
+        config_dict: m.ConfigMap = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,

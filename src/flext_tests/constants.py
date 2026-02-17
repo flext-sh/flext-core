@@ -13,10 +13,10 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Final, Literal
 
 from flext_core.constants import FlextConstants, c as flext_c
+from flext_core.models import m
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-from flext_tests.typings import t
 
 
 class FlextTestsConstants(FlextConstants):
@@ -46,7 +46,7 @@ class FlextTestsConstants(FlextConstants):
                 "mongodb",
                 "elasticsearch",
             )
-            SHARED_CONTAINERS: Final[Mapping[str, t.ConfigurationDict]] = {}
+            SHARED_CONTAINERS: Final[Mapping[str, m.ConfigMap]] = {}
 
             # Test-specific Docker constants
             DEFAULT_TIMEOUT_SECONDS: Final[int] = 30

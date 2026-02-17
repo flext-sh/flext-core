@@ -54,6 +54,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
+# Removed FlextRuntime import to prevent circular dependency
 from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -324,10 +325,11 @@ class FlextUtilitiesValidation:
         if isinstance(component, (str, int, float, bool, type(None))):
             return component
 
-        # Check dict-like (Mapping is superset of ConfigurationMapping)
         if FlextRuntime.is_dict_like(component):
-            # Type narrowing: is_dict_like ensures component is Mapping
-            mapping_component: Mapping[str, t.GeneralValueType] = component
+            if isinstance(component, t.ConfigMap):
+                mapping_component: Mapping[str, t.GeneralValueType] = component.root
+            else:
+                mapping_component = dict(component)
             return FlextUtilitiesValidation._normalize_dict_like(
                 mapping_component,
                 visited,
@@ -352,7 +354,9 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _convert_items_to_dict(
         items_result: (
-            Sequence[tuple[str, t.GeneralValueType]] | t.ConfigurationMapping | object
+            Sequence[tuple[str, t.GeneralValueType]]
+            | Mapping[str, t.GeneralValueType]
+            | object
         ),
     ) -> dict[str, t.GeneralValueType]:
         """Convert items() result to dict with normalization."""
@@ -377,7 +381,7 @@ class FlextUtilitiesValidation:
             return result_dict
 
         if isinstance(items_result, Mapping):
-            # items_result is already t.ConfigurationMapping
+            # items_result is already t.ConfigMap
             return FlextUtilitiesMapper.to_dict(items_result)
 
         # Use isinstance for type narrowing (pyrefly requires this)
@@ -414,12 +418,12 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _extract_dict_from_component(
-        component: t.ConfigurationMapping | p.HasModelDump,
+        component: Mapping[str, t.GeneralValueType] | p.HasModelDump,
         _visited: set[int] | None = None,
-    ) -> t.ConfigurationMapping:
+    ) -> dict[str, t.GeneralValueType]:
         """Extract dict-like structure from component."""
-        if isinstance(component, (Mapping, dict)):
-            return component
+        if isinstance(component, Mapping):
+            return dict(component)
 
         items_attr = getattr(component, "items", None)
         if items_attr is None or not callable(items_attr):
@@ -439,7 +443,7 @@ class FlextUtilitiesValidation:
     def _convert_items_result_to_dict(
         items_result: (
             Sequence[tuple[str, t.GeneralValueType]]
-            | t.ConfigurationMapping
+            | Mapping[str, t.GeneralValueType]
             | Iterable[tuple[str, t.GeneralValueType]]
             | object
         ),
@@ -513,25 +517,22 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _convert_to_mapping(
-        component: t.ConfigurationMapping | p.HasModelDump,
-    ) -> t.ConfigurationMapping:
+        component: Mapping[str, t.GeneralValueType] | p.HasModelDump,
+    ) -> dict[str, t.GeneralValueType]:
         """Convert object to Mapping (helper for _normalize_dict_like).
 
         Args:
             component: Object to convert to Mapping
 
         Returns:
-            t.ConfigurationMapping: Converted mapping
+            dict[str, t.GeneralValueType]: Converted mapping
 
         Raises:
             TypeError: If component cannot be converted to dict
 
         """
         if isinstance(component, Mapping):
-            return component
-
-        if isinstance(component, dict):
-            return component
+            return dict(component)
 
         # Check if component has items() method (duck typing for dict-like objects)
         items_method = getattr(component, "items", None)
@@ -554,7 +555,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_dict_like(
-        component: t.ConfigurationMapping | p.HasModelDump,
+        component: Mapping[str, t.GeneralValueType] | p.HasModelDump,
         visited: set[int] | None = None,
     ) -> dict[str, t.GeneralValueType]:
         """Normalize dict-like objects.
@@ -767,10 +768,7 @@ class FlextUtilitiesValidation:
         try:
             json_bytes = orjson.dumps(value, option=orjson.OPT_SORT_KEYS)
             serialized = json_bytes.decode(c.Utilities.DEFAULT_ENCODING)
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-            # Use proper logger instead of root logger
-            logger = FlextRuntime.get_logger(__name__)
-            logger.debug("orjson dumps failed: %s", e)
+        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             # Use standard library json with sorted keys
             serialized = json.dumps(value, sort_keys=True, default=str)
 
@@ -864,14 +862,14 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _normalize_mapping(
-        value: t.ConfigurationMapping,
+        value: Mapping[str, t.GeneralValueType],
         visited: set[int] | None = None,
     ) -> t.GeneralValueType:
         """Normalize mapping to cache-friendly structure."""
         if visited is None:
             visited = set()
         sorted_items = sorted(
-            value.items(),
+            dict(value).items(),
             key=lambda x: FlextUtilitiesValidation._sort_key(x[0]),
         )
         return {
@@ -980,7 +978,7 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def _generate_key_dict(
-        command: t.ConfigurationMapping,
+        command: Mapping[str, t.GeneralValueType],
         command_type: type[t.GeneralValueType],
     ) -> str | None:
         """Generate cache key from dict."""
@@ -1010,7 +1008,7 @@ class FlextUtilitiesValidation:
         """
         # Try dict
         if isinstance(command, Mapping):
-            # command is already t.ConfigurationMapping
+            # command is already m.ConfigMap
             key = FlextUtilitiesValidation._generate_key_dict(command, command_type)
             if key is not None:
                 return key
@@ -1823,42 +1821,137 @@ class FlextUtilitiesValidation:
 
     @staticmethod
     def validate_batch_services(
-        services: t.ConfigurationMapping,
-    ) -> r[t.ConfigurationMapping]:
+        services: t.ConfigMap,
+    ) -> r[t.ConfigMap]:
         """Validate batch services dictionary for container registration.
 
         Args:
-            services: Dictionary of service names to service instances
+            services: Dictionary of services (name -> service instance).
 
         Returns:
-            r[t.ConfigurationMapping]: Validated services or validation error
+            r[t.ConfigMap]: Success with services, or failure.
 
         """
-        # Allow empty dictionaries for batch_register flexibility
+        # Pydantic validation for structure (handled by ConfigMap type)
+        # But we need logical validation (reserved names, etc.)
 
-        # Validate service names
-        for name in services:
+        # Check for empty batch
+        if not services.root:
+            return r[t.ConfigMap].fail(
+                "Batch services cannot be empty",
+                error_code=c.Errors.VALIDATION_ERROR,
+            )
+
+        # Validate names
+        for name in services.root:
             if not FlextUtilitiesGuards.is_type(name, str) or not name.strip():
-                return r[t.ConfigurationMapping].fail(
+                return r[t.ConfigMap].fail(
                     f"Invalid service name: '{name}'. Must be non-empty string",
                 )
 
             # Check for reserved names
             if name.startswith("_"):
-                return r[t.ConfigurationMapping].fail(
+                return r[t.ConfigMap].fail(
                     f"Service name cannot start with underscore: '{name}'",
                 )
 
-        # Validate service instances
-        for name, service in services.items():
+        # Validate values (cannot be None)
+        for name, service in services.root.items():
             if service is None:
-                return r[t.ConfigurationMapping].fail(
+                return r[t.ConfigMap].fail(
                     f"Service '{name}' cannot be None",
                 )
 
             # Check for callable services (should be registered as factories)
 
-        return r[t.ConfigurationMapping].ok(services)
+        return r[t.ConfigMap].ok(services)
+
+    @staticmethod
+    def validate_dispatch_config(
+        config: t.ConfigMap | None,
+    ) -> r[t.ConfigMap]:
+        """Validate dispatch configuration dictionary.
+
+        Args:
+            config: Dispatch configuration dictionary.
+
+        Returns:
+            r[t.ConfigMap]: Success with config, or failure.
+
+        """
+        if config is None:
+            return r[t.ConfigMap].fail(
+                "Configuration cannot be None",
+            )
+        # ConfigMap guarantees dict-like structure via RootModel
+        # No need for explicit is_dict_like check if type hint is respected
+        # But for runtime safety with untyped inputs:
+        if not hasattr(config, "get"):
+            return r[t.ConfigMap].fail(
+                "Configuration must be a dictionary",
+            )
+
+        # Validate metadata if present
+        metadata = config.get("metadata")
+        if metadata is not None and not FlextRuntime.is_dict_like(metadata):
+            return r[t.ConfigMap].fail(
+                "Metadata must be a dictionary",
+            )
+
+        # Validate types for known keys if present
+        # Use guards for type checking
+        if "correlation_id" in config:
+            val = config.get("correlation_id")
+            if not FlextUtilitiesGuards.is_type(val, str):
+                return r[t.ConfigMap].fail(
+                    "Correlation ID must be a string",
+                )
+
+        if "timeout" in config:
+            val = config.get("timeout")
+            if not FlextUtilitiesGuards.is_type(val, (int, float)):
+                return r[t.ConfigMap].fail(
+                    "Timeout override must be a number",
+                )
+
+        # Return validated config
+        return r[t.ConfigMap].ok(config)
+        if not FlextRuntime.is_dict_like(config):
+            return r[t.ConfigMap].fail(
+                "Configuration must be a dictionary",
+            )
+
+        # Validate metadata if present
+        metadata = config.root.get("metadata")
+        if metadata is not None and not FlextRuntime.is_dict_like(metadata):
+            return r[t.ConfigMap].fail(
+                "Metadata must be a dictionary",
+            )
+
+        # Validate types for known keys if present
+        # Use guards for type checking
+        if "correlation_id" in config.root and not FlextUtilitiesGuards.is_type(
+            config.root["correlation_id"],
+            str,
+        ):
+            return r[t.ConfigMap].fail(
+                "Correlation ID must be a string",
+            )
+
+        if "timeout" in config.root and not FlextUtilitiesGuards.is_type(
+            config.root["timeout"],
+            (int, float),
+        ):
+            return r[t.ConfigMap].fail(
+                "Timeout override must be a number",
+            )
+
+        # ConfigMap is already validated by Pydantic during creation if used correctly
+        # and we've validated it's not None and is dict-like
+        # Cast to correct type for type checker - config is validated as dict-like above
+        return r[t.ConfigMap].ok(
+            config,
+        )
 
     @staticmethod
     def analyze_constructor_parameter(
@@ -1885,63 +1978,6 @@ class FlextUtilitiesValidation:
             "kind": param.kind,
             "annotation": param.annotation,
         }
-
-    @staticmethod
-    def validate_dispatch_config(
-        config: t.ConfigurationMapping | None,
-    ) -> r[t.ConfigurationMapping]:
-        """Validate dispatch configuration dictionary.
-
-        Args:
-            config: Dispatch configuration dictionary
-
-        Returns:
-            r[t.ConfigurationMapping]: Validated configuration or validation error
-
-        """
-        if config is None:
-            return r[t.ConfigurationMapping].fail(
-                "Configuration cannot be None",
-            )
-        if not FlextRuntime.is_dict_like(config):
-            return r[t.ConfigurationMapping].fail(
-                "Configuration must be a dictionary",
-            )
-
-        # Validate metadata if present
-        metadata = config.get("metadata")
-        if metadata is not None and not FlextRuntime.is_dict_like(metadata):
-            return r[t.ConfigurationMapping].fail(
-                "Metadata must be a dictionary",
-            )
-
-        # Validate correlation_id if present
-        correlation_id = config.get("correlation_id")
-        if correlation_id is not None and not FlextUtilitiesGuards.is_type(
-            correlation_id,
-            str,
-        ):
-            return r[t.ConfigurationMapping].fail(
-                "Correlation ID must be a string",
-            )
-
-        # Validate timeout_override if present
-        timeout_override = config.get("timeout_override")
-        if timeout_override is not None and not isinstance(
-            timeout_override,
-            (int, float),
-        ):
-            return r[t.ConfigurationMapping].fail(
-                "Timeout override must be a number",
-            )
-
-        # Type narrowing: config is guaranteed to be Mapping after validation above
-        # Parameter type is already t.ConfigurationMapping | None
-        # and we've validated it's not None and is dict-like
-        # Cast to correct type for type checker - config is validated as dict-like above
-        return r[t.ConfigurationMapping].ok(
-            config,
-        )
 
     @staticmethod
     def _validate_event_structure(
@@ -2353,9 +2389,9 @@ class FlextUtilitiesValidation:
         return None
 
     @staticmethod
-    def _guard_check_predicate(
-        value: object,
-        condition: Callable[[object], object],
+    def _guard_check_predicate[T](
+        value: T,
+        condition: Callable[[T], bool],
         context_name: str,
         error_msg: str | None,
     ) -> str | None:
@@ -3016,7 +3052,7 @@ class FlextUtilitiesValidation:
             items: list[t.GeneralValueType]
             | tuple[object, ...]
             | set[object]
-            | t.ConfigurationMapping,
+            | t.ConfigMap,
         ) -> bool:
             """Check if value is in items (mnemonic: in_ = membership).
 
@@ -3032,6 +3068,8 @@ class FlextUtilitiesValidation:
                     process_user()
 
             """
+            if isinstance(items, t.ConfigMap):
+                return value in items.root
             return value in items
 
         @staticmethod

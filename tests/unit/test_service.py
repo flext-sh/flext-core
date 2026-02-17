@@ -29,6 +29,7 @@ import pytest
 
 from flext_core import r, s, t
 from flext_tests import FlextTestsUtilities, u
+from flext_core.models import m
 
 
 class ServiceScenarioType(StrEnum):
@@ -51,12 +52,12 @@ class ServiceScenario:
     service_kwargs: Mapping[str, t.ScalarValue] | None = None
 
 
-class UserService(s[t.ConfigurationMapping]):
+class UserService(s[m.ConfigMap]):
     """Basic user service for standard testing."""
 
-    def execute(self) -> r[t.ConfigurationMapping]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute service and return data."""
-        return r[t.ConfigurationMapping].ok({
+        return r[m.ConfigMap].ok({
             "user_id": 1,
             "name": "test_user",
         })
@@ -145,7 +146,7 @@ class ServiceScenarios:
     @staticmethod
     def create_service(
         scenario: ServiceScenario,
-    ) -> s[t.ConfigurationMapping] | s[str] | s[bool]:
+    ) -> s[m.ConfigMap] | s[str] | s[bool]:
         """Create service instance for scenario."""
         kwargs_raw: Mapping[str, t.ScalarValue] = scenario.service_kwargs or {}
 

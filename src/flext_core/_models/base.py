@@ -189,6 +189,31 @@ class FlextModelFoundation:
     # ADVANCED PYDANTIC v2 FEATURES - Discriminated Unions
     # ═══════════════════════════════════════════════════════════════════════════
 
+    class Metadata(BaseModel):
+        """Standard metadata model.
+
+        Business Rule: Provides standard metadata fields (timestamps, audit info,
+        tags, attributes) for all entities. Enforces strict validation with frozen
+        instances for immutability and thread safety.
+        """
+
+        model_config = ConfigDict(
+            extra=c.ModelConfig.EXTRA_FORBID,
+            frozen=True,
+            validate_assignment=True,
+            populate_by_name=True,
+            arbitrary_types_allowed=True,
+        )
+
+        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+        version: str = Field(default="1.0.0")
+        created_by: str | None = Field(default=None)
+        modified_by: str | None = Field(default=None)
+        tags: list[str] = Field(default_factory=list)
+        # Use t.Dict for attributes to ensure strict Pydantic model usage
+        attributes: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+
     # Command message type
     class CommandMessage(BaseModel):
         """Command message with discriminated union support."""
@@ -196,7 +221,7 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        data: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
 
     # Query message type
     class QueryMessage(BaseModel):
@@ -204,8 +229,8 @@ class FlextModelFoundation:
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        pagination: dict[str, t.GeneralValueType] | None = None
+        filters: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        pagination: t.Dict | None = None
 
     # Event message type
     class EventMessage(BaseModel):
@@ -214,8 +239,10 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        metadata: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        data: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        metadata: FlextModelFoundation.Metadata = Field(
+            default_factory=lambda: FlextModelFoundation.Metadata(),
+        )
 
     # Discriminated union of all message types (defined after all classes)
     MessageUnion = Annotated[
@@ -228,7 +255,9 @@ class FlextModelFoundation:
 
         result_type: Literal["success"] = "success"
         value: t.GeneralValueType
-        metadata: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        metadata: FlextModelFoundation.Metadata = Field(
+            default_factory=lambda: FlextModelFoundation.Metadata(),
+        )
 
     # Failure result type
     class FailureResult(BaseModel):
@@ -237,7 +266,7 @@ class FlextModelFoundation:
         result_type: Literal["failure"] = "failure"
         error: str
         error_code: str | None = None
-        error_data: dict[str, t.GeneralValueType] | None = None
+        error_data: FlextModelFoundation.Metadata | None = None
 
     # Partial result type
     class PartialResult(BaseModel):
@@ -1224,7 +1253,7 @@ class FlextModelFoundation:
 
         name: str
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        metadata: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        metadata: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
 
         @field_serializer("timestamp")
         def serialize_timestamp_iso(self, value: datetime) -> str:
@@ -1232,11 +1261,9 @@ class FlextModelFoundation:
             return value.isoformat()
 
         @field_serializer("metadata", when_used="json")
-        def serialize_metadata_clean(
-            self, value: dict[str, t.GeneralValueType]
-        ) -> dict[str, str]:
+        def serialize_metadata_clean(self, value: t.Dict) -> dict[str, str]:
             """Serialize metadata with string conversion."""
-            return {k: str(v) for k, v in value.items()}
+            return {k: str(v) for k, v in value.root.items()}
 
         def to_json_multiple_formats(self) -> dict[str, str]:
             """Export in multiple JSON formats."""
@@ -1338,16 +1365,16 @@ class FlextModelFoundation:
         )
 
         name: str
-        fields: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        fields: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
 
         @classmethod
         def create_dynamic(cls, name: str, **fields: t.GeneralValueType) -> Self:
             """Create a dynamic model instance using model_construct."""
-            return cls.model_construct(name=name, fields=fields)
+            return cls.model_construct(name=name, fields=t.Dict(root=fields))
 
         def add_field(self, key: str, value: t.GeneralValueType) -> None:
             """Add a field dynamically."""
-            self.fields[key] = value
+            self.fields.root[key] = value
 
         def rebuild_with_validation(self) -> Self:
             """Rebuild model with full validation using model_validate."""
@@ -1364,31 +1391,6 @@ class FlextModelFoundation:
         def has_dynamic_fields(self) -> bool:
             """Check if model has dynamic fields."""
             return self.dynamic_field_count > 0
-
-    class Metadata(BaseModel):
-        """Standard metadata model.
-
-        Business Rule: Provides standard metadata fields (timestamps, audit info,
-        tags, attributes) for all entities. Enforces strict validation with frozen
-        instances for immutability and thread safety.
-        """
-
-        model_config = ConfigDict(
-            extra=c.ModelConfig.EXTRA_FORBID,
-            frozen=True,
-            validate_assignment=True,
-            populate_by_name=True,
-            arbitrary_types_allowed=True,
-        )
-
-        created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        version: str = Field(default="1.0.0")
-        created_by: str | None = Field(default=None)
-        modified_by: str | None = Field(default=None)
-        tags: list[str] = Field(default_factory=list)
-        # Use dict[str, t.MetadataAttributeValue] for Pydantic-safe config with nested dict support
-        attributes: dict[str, t.MetadataAttributeValue] = Field(default_factory=dict)
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

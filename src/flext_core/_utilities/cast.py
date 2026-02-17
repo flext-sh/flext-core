@@ -111,16 +111,21 @@ class FlextUtilitiesCast:
             The original callable if value is callable
 
         Raises:
-            TypeError: If value is not callable or target_type is a scalar type
+            TypeError: If value is not callable
 
         """
-        # Preserve original type before isinstance check (avoids mypy narrowing to object)
-        original_value: t.GeneralValueType = value
+        # Check if value is callable first
+        if callable(value):
+            return value
+
+        # If not callable, maybe it's already the target value (e.g. static result)
+        # This handles cases where a static value is passed instead of a factory
         if isinstance(value, target_type):
-            return original_value
+            return value
+
         source_name = getattr(type(value), "__name__", str(type(value)))
         target_name = getattr(target_type, "__name__", str(target_type))
-        error_msg = f"Cannot cast {source_name} to {target_name}"
+        error_msg = f"Cannot cast {source_name} to callable returning {target_name}"
         raise TypeError(error_msg)
 
     @staticmethod

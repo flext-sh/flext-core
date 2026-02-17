@@ -54,8 +54,8 @@ class FlextMixins(FlextRuntime):
     Example:
         class MyService(x):
             def process(
-                self, data: t.ConfigurationMapping
-            ) -> r[t.ConfigurationMapping]:
+                self, data: m.ConfigMap
+            ) -> r[m.ConfigMap]:
                 with self.track("process"):
                     self.logger.info("Processing", size=len(data))
                     return self.ok({"status": "processed"})
@@ -95,7 +95,7 @@ class FlextMixins(FlextRuntime):
     def fail(
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping | None = None,
+        error_data: m.ConfigMap | None = None,
     ) -> r[t.GeneralValueType]:
         """Create failed result with error message.
 
@@ -120,15 +120,17 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def to_dict(
-            obj: (BaseModel | t.ConfigurationMapping | None),
-        ) -> t.ConfigurationMapping:
+            obj: (BaseModel | Mapping[str, t.GeneralValueType] | None),
+        ) -> m.ConfigMap:
             """Convert BaseModel/dict to dict (None → empty dict).
 
             Accepts BaseModel, dict with nested structures, or None.
             Nested Mapping/Sequence are preserved as-is in the output.
             """
             if obj is None:
-                return {}
+                return m.ConfigMap(root={})
+            if isinstance(obj, m.ConfigMap):
+                return obj
             if isinstance(obj, BaseModel):
                 # BaseModel.model_dump() returns dict[str, t.GeneralValueType], normalize to t.GeneralValueType
                 dumped = obj.model_dump()
@@ -144,9 +146,11 @@ class FlextMixins(FlextRuntime):
                             v if u.is_general_value_type(v) else str(v)
                         )
                         result[key_str] = val_typed
-                    return result
+                    return m.ConfigMap(root=result)
                 # Fallback: wrap scalar in dict (shouldn't happen for BaseModel.dump())
-                return {"value": normalized}
+                return m.ConfigMap(
+                    root={"value": FlextRuntime.normalize_to_general_value(normalized)}
+                )
             # For Mapping, normalize each value
             try:
                 normalized_dict: dict[str, t.GeneralValueType] = {}
@@ -166,8 +170,8 @@ class FlextMixins(FlextRuntime):
                 # ContextMetadataMapping is Mapping[str, t.GeneralValueType]
                 # Since dict is a subtype of Mapping, ConfigurationDict is compatible with ContextMetadataMapping
                 result_value: dict[str, t.GeneralValueType] = process_result.value
-                return result_value
-            return {}
+                return m.ConfigMap(root=result_value)
+            return m.ConfigMap(root={})
 
     # =========================================================================
     # RESULT HANDLING UTILITIES (New in Phase 0 - Consolidation)
@@ -367,9 +371,12 @@ class FlextMixins(FlextRuntime):
 
         container_overrides_raw = options.get("container_overrides")
         if isinstance(container_overrides_raw, Mapping):
-            # Build typed dict with GeneralValueType values
             items = u.extract_mapping_items(container_overrides_raw)
-            overrides: dict[str, t.GeneralValueType] = dict(items)
+            overrides: dict[str, t.FlexibleValue] = {}
+            for k_str, v_typed in items:
+                narrowed = u.to_flexible_value(v_typed)
+                if narrowed is not None:
+                    overrides[k_str] = narrowed
             if overrides:
                 runtime_container.configure(overrides)
 
@@ -639,7 +646,7 @@ class FlextMixins(FlextRuntime):
 
     def _log_config_once(
         self,
-        config: t.ConfigurationMapping,
+        config: m.ConfigMap,
         message: str = "Configuration loaded",
     ) -> None:
         """Log configuration ONCE without binding to context."""
@@ -720,7 +727,7 @@ class FlextMixins(FlextRuntime):
             """Tracks handler execution metrics."""
 
             # Type annotation for type checker
-            _metrics: dict[str, t.GeneralValueType]
+            _metrics: dict[str, t.GeneralValueType] = {}
 
             def __init__(
                 self,
@@ -770,7 +777,9 @@ class FlextMixins(FlextRuntime):
             """Manages execution context stack."""
 
             # Type annotation for type checker
-            _stack: list[m.Handler.ExecutionContext | dict[str, t.GeneralValueType]]
+            _stack: list[
+                m.Handler.ExecutionContext | dict[str, t.GeneralValueType]
+            ] = []
 
             def __init__(
                 self,

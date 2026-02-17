@@ -55,8 +55,8 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        context: dict[str, t.GeneralValueType] = Field(default_factory=dict)
+        data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
+        context: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -244,9 +244,11 @@ class FlextModelsConfig:
         """Enhanced handler execution configuration."""
 
         handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
-        input_data: dict[str, t.GeneralValueType] = Field(default_factory=dict)
-        execution_context: dict[str, t.GeneralValueType] = Field(
-            default_factory=dict,
+        input_data: t.ConfigMap = Field(
+            default_factory=lambda: t.ConfigMap(root={}),
+        )
+        execution_context: t.ConfigMap = Field(
+            default_factory=lambda: t.ConfigMap(root={}),
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
@@ -282,8 +284,8 @@ class FlextModelsConfig:
             description="Execution order in middleware chain",
         )
         name: str | None = Field(default=None, description="Optional middleware name")
-        config: dict[str, t.GeneralValueType] = Field(
-            default_factory=dict,
+        config: t.ConfigMap = Field(
+            default_factory=lambda: t.ConfigMap(root={}),
             description="Middleware-specific configuration",
         )
 
@@ -347,7 +349,7 @@ class FlextModelsConfig:
             default=True,
             description="Whether to raise exception on non-zero exit code",
         )
-        env: dict[str, str] | None = Field(
+        env: t.ConfigMap | None = Field(
             default=None,
             description="Environment variables for the command",
         )
@@ -578,8 +580,8 @@ class FlextModelsConfig:
             default=False,
             description="Whether to auto-generate correlation ID",
         )
-        extra_kwargs: dict[str, t.GeneralValueType] = Field(
-            default_factory=dict,
+        extra_kwargs: t.Dict = Field(
+            default_factory=lambda: t.Dict(root={}),
             description="Additional keyword arguments for metadata",
         )
 
@@ -904,7 +906,7 @@ class FlextModelsConfig:
             default_factory=tuple,
             description="Positional arguments for function",
         )
-        kwargs: t.ConfigurationMapping = Field(
+        kwargs: t.ConfigMap = Field(
             default_factory=dict,
             description="Keyword arguments for function",
         )

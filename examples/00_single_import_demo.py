@@ -31,8 +31,8 @@ from flext_core import (
     FlextLogger,
     c,
     e,
+    m,
     r,
-    t,
     u,
 )
 
@@ -59,7 +59,7 @@ class UserProfile:
 
 # Railway pattern with advanced validation using u (DRY + SRP)
 def validate_transform_user(
-    data: t.ConfigurationDict,
+    data: m.ConfigMap,
 ) -> r[UserProfile]:
     """Railway pattern using centralized utilities - no None types, strict validation."""
     # Extract with advanced collections.abc Mapping access and functional composition
@@ -99,7 +99,7 @@ def validate_transform_user(
 
 def process_user_data(
     *,
-    user_data: t.ConfigurationDict,
+    user_data: m.ConfigMap,
     operation: c.Cqrs.Action,
 ) -> r[str]:
     """Decorated railway with centralized StrEnum constraints - direct functional composition."""
@@ -122,7 +122,7 @@ class UserService:
         self.logger = FlextLogger.create_module_logger(__name__)
         self.operation_count = 0
 
-    def create_user(self, user_data: t.ConfigurationDict) -> r[UserProfile]:
+    def create_user(self, user_data: m.ConfigMap) -> r[UserProfile]:
         """Create user with advanced context tracing and railway pattern - direct functional composition."""
         with FlextContext.Request.request_context(operation_name="create_user"):
             correlation_id = (
@@ -149,7 +149,7 @@ class UserService:
 
     @staticmethod
     def _validate_data(
-        data: t.ConfigurationDict,
+        data: m.ConfigMap,
     ) -> r[bool]:
         """Validate input data using u (DRY) - no None types."""
         required_fields: AbstractSet[str] = frozenset({
@@ -180,7 +180,7 @@ class UserService:
         return user
 
     def _validate_and_transform(
-        self, user_data: t.ConfigurationDict, _: object
+        self, user_data: m.ConfigMap, _: object
     ) -> r[UserProfile]:
         """Validate and transform user data for flat_map."""
         return validate_transform_user(user_data)
@@ -210,7 +210,7 @@ def demonstrate_utilities() -> None:
     """Advanced utilities demonstration using comprehensive flext-core patterns - direct functional composition."""
     # Create test data and perform operations with railway pattern (DRY + SRP)
     correlation_id = u.generate("correlation")
-    test_obj: t.ConfigurationDict = {
+    test_obj: m.ConfigMap = {
         "unique_id": correlation_id,
         "test": True,
     }
@@ -318,7 +318,7 @@ def identity(x: r[str]) -> r[str]:
 
 
 def execute_validation_chain(
-    user_data: t.ConfigurationDict,
+    user_data: m.ConfigMap,
 ) -> None:
     """Execute validation chain with railway pattern - SRP focused on chaining operations."""
     # Railway pattern with advanced functional composition (DRY + SRP)
@@ -343,7 +343,7 @@ def execute_validation_chain(
 
 def execute_service_operations(
     service: UserService,
-    user_data: t.ConfigurationDict,
+    user_data: m.ConfigMap,
 ) -> None:
     """Execute service operations - SRP focused on service interaction."""
     result = service.create_user(user_data)
@@ -356,7 +356,7 @@ def execute_service_operations(
 
 def execute_demonstrations(
     service: UserService,
-    user_data: t.ConfigurationDict,
+    user_data: m.ConfigMap,
 ) -> None:
     """Execute utility demonstrations - SRP focused on side effect execution."""
     # Railway pattern with side effects (DRY - no manual loops)
@@ -376,7 +376,7 @@ def main() -> None:
         logger.info("Starting demonstration", extra={"correlation_id": correlation_id})
 
         # Advanced collections.abc Mapping for user data (DRY - single definition)
-        user_data: t.ConfigurationDict = {
+        user_data: m.ConfigMap = {
             "name": "Demo",
             "email": "demo@example.com",
         }

@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import ClassVar, Literal, Self, overload
 
 from flext_core.constants import c
+from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -98,14 +99,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         cls,
         operation: c.Literals.ContextOperationGetLiteral,
         **kwargs: t.GeneralValueType,
-    ) -> t.ConfigurationMapping: ...
+    ) -> m.ConfigMap: ...
 
     @classmethod
     def _context_operation(
         cls,
         operation: Literal["get", "bind", "unbind", "clear"],
         **kwargs: t.GeneralValueType,
-    ) -> r[bool] | t.ConfigurationMapping:
+    ) -> r[bool] | m.ConfigMap:
         """Generic context operation handler using mapping for DRY."""
         try:
             return cls._execute_context_op(operation, kwargs)
@@ -143,7 +144,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         cls,
         operation: str,
         exc: Exception,
-    ) -> r[bool] | t.ConfigurationMapping:
+    ) -> r[bool] | m.ConfigMap:
         """Handle context operation error."""
         if operation == c.Logging.ContextOperation.GET:
             return {}
@@ -228,7 +229,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return cls._context_operation("unbind", keys=list(keys))
 
     @classmethod
-    def _get_global_context(cls) -> t.ConfigurationMapping:
+    def _get_global_context(cls) -> m.ConfigMap:
         """Get current global context (internal use only)."""
         return cls._context_operation("get")
 

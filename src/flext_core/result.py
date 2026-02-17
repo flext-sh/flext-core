@@ -16,9 +16,10 @@ from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
+from returns.unsafe import unsafe_perform_io
 
-from flext_core.exceptions import FlextExceptions as e
-from flext_core.protocols import FlextProtocols
+from flext_core.exceptions import e
+from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import T_Model, U, t
 
@@ -53,7 +54,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         self,
         _result: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping | None = None,
+        error_data: t.ConfigMap | None = None,
         *,
         # RuntimeResult initialization parameters
         value: T_co | None = None,
@@ -153,7 +154,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls,
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping | None = None,
+        error_data: t.ConfigMap | None = None,
     ) -> FlextResult[T_co]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
@@ -187,8 +188,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     @staticmethod
     def safe[T](
-        func: FlextProtocols.VariadicCallable[T],
-    ) -> FlextProtocols.VariadicCallable[FlextResult[T]]:
+        func: p.VariadicCallable[T],
+    ) -> p.VariadicCallable[FlextResult[T]]:
         """Decorator to wrap function in FlextResult.
 
         Catches exceptions and returns FlextResult.fail() on error.
@@ -785,26 +786,14 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         if isinstance(io_result, IOFailure):
-            # IOFailure.failure() returns IO[E], we need to extract the actual error
-            io_wrapped = io_result.failure()
-            # Access _inner_value to get the actual error (returns lib has no public API)
-            error_val = getattr(io_wrapped, "_inner_value", None)
-            error_msg = str(error_val) if error_val is not None else "Unknown error"
-            return FlextResult[T].fail(error_msg)
-        # IOSuccess case - extract value from nested Success wrappers
-        # Structure: IOSuccess._inner_value = Success(Success(value))
-        # Note: _inner_value access is required - returns library has no public API
-        inner_result = getattr(io_result, "_inner_value", None)
-        if inner_result is None:
-            return FlextResult[T].fail("Invalid IOResult structure")
-        # Unwrap first Success layer
-        if isinstance(inner_result, Success):
-            inner_value = inner_result.unwrap()
-            # Unwrap second Success layer if present
-            if isinstance(inner_value, Success):
-                return FlextResult[T].ok(inner_value.unwrap())
-            return FlextResult[T].ok(inner_value)
-        return FlextResult[T].fail("Unexpected IOResult inner type")
+            error_io = io_result.failure()
+            return FlextResult[T].fail(str(unsafe_perform_io(error_io)))
+
+        if isinstance(io_result, IOSuccess):
+            value_io = io_result.unwrap()
+            return FlextResult[T].ok(unsafe_perform_io(value_io))
+
+        return FlextResult[T].fail("Invalid IOResult structure")
 
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection.

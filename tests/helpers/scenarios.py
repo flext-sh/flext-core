@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar
 
+from flext_core.models import m
 from flext_core.typings import t
 
 # =========================================================================
@@ -53,7 +54,7 @@ class ReliabilityScenario:
 
     name: str
     strategy: str  # "retry", "circuit_breaker", "timeout"
-    config: t.ConfigurationDict
+    config: m.ConfigMap
     simulate_failures: int
     expected_state: str
     should_succeed: bool = True

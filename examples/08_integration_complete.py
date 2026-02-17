@@ -25,41 +25,41 @@ from typing import cast
 from pydantic import BaseModel, Field
 
 from flext_core import (
-    FlextConstants,
     FlextContainer,
     FlextContext,
     FlextDecorators,
     FlextDispatcher,
     FlextLogger,
-    FlextModels,
     FlextRegistry,
-    FlextResult,
     FlextSettings,
-    FlextTypes as t,
+    c,
+    m,
+    p,
+    r,
     s,
+    t,
     u,
 )
-from flext_core.protocols import p
 
 # ═══════════════════════════════════════════════════════════════════
 # DOMAIN MODELS
 # ═══════════════════════════════════════════════════════════════════
 
 
-class User(FlextModels.Entity):
+class User(m.Entity):
     """User entity."""
 
     name: str
     email: str
 
 
-class Order(FlextModels.AggregateRoot):
+class Order(m.AggregateRoot):
     """Order aggregate root."""
 
     customer_id: str
     items: list[str] = Field(default_factory=list)
-    status: FlextConstants.Cqrs.CommonStatus = Field(
-        default=FlextConstants.Cqrs.CommonStatus.PENDING,
+    status: c.Cqrs.CommonStatus = Field(
+        default=c.Cqrs.CommonStatus.PENDING,
     )
 
 
@@ -68,12 +68,12 @@ class Order(FlextModels.AggregateRoot):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class IntegrationService(s[t.ConfigurationMapping]):
+class IntegrationService(s[m.ConfigMap]):
     """Service demonstrating complete flext-core integration."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Execute complete integration demonstration."""
         print("Starting complete integration demonstration")
 
@@ -88,14 +88,14 @@ class IntegrationService(s[t.ConfigurationMapping]):
             self._demonstrate_registry_dispatcher_integration()
             self._demonstrate_utilities_integration()
 
-            return FlextResult[t.ConfigurationMapping].ok({
+            return r[m.ConfigMap].ok({
                 "components_integrated": [
-                    "FlextResult",
+                    "r",
                     "FlextContainer",
                     "FlextContext",
                     "FlextLogger",
                     "FlextSettings",
-                    "FlextModels",
+                    "m",
                     "FlextDecorators",
                     "FlextRegistry",
                     "FlextDispatcher",
@@ -117,21 +117,21 @@ class IntegrationService(s[t.ConfigurationMapping]):
 
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"
-            return FlextResult[t.ConfigurationMapping].fail(error_msg)
+            return r[m.ConfigMap].fail(error_msg)
 
     @staticmethod
     def _demonstrate_result_patterns() -> None:
-        """Show FlextResult patterns."""
-        print("\n=== FlextResult Patterns ===")
+        """Show r patterns."""
+        print("\n=== r Patterns ===")
 
         def to_upper(x: str) -> str:
             return x.upper()
 
-        def add_processed(x: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"{x}_processed")
+        def add_processed(x: str) -> r[str]:
+            return r[str].ok(f"{x}_processed")
 
         # Railway pattern
-        result = FlextResult[str].ok("initial").map(to_upper).flat_map(add_processed)
+        result = r[str].ok("initial").map(to_upper).flat_map(add_processed)
         if result.is_success:
             print(f"✅ Railway pattern: {result.value}")
 
@@ -149,7 +149,7 @@ class IntegrationService(s[t.ConfigurationMapping]):
         ) = logger
         _ = container.register("logger", logger_typed)
 
-        logger_result: FlextResult[t.GeneralValueType] = container.get("logger")
+        logger_result: r[t.GeneralValueType] = container.get("logger")
         if logger_result.is_success:
             print("✅ Container service resolution")
 
@@ -184,8 +184,8 @@ class IntegrationService(s[t.ConfigurationMapping]):
 
     @staticmethod
     def _demonstrate_models_integration() -> None:
-        """Show FlextModels integration."""
-        print("\n=== FlextModels Integration ===")
+        """Show m integration."""
+        print("\n=== m Integration ===")
 
         user = User(
             unique_id=u.generate("entity"),
@@ -232,7 +232,7 @@ class IntegrationService(s[t.ConfigurationMapping]):
         # Validation
         email_result = u.validate_pattern(
             "test@example.com",
-            FlextConstants.Platform.PATTERN_EMAIL,
+            c.Platform.PATTERN_EMAIL,
             "email",
         )
         if email_result.is_success:

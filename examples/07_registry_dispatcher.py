@@ -21,31 +21,31 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from flext_core import (
-    FlextConstants,
     FlextDispatcher,
-    FlextModels,
     FlextRegistry,
-    FlextResult,
-    FlextTypes as t,
+    c,
     h,
+    m,
+    p,
+    r,
     s,
+    t,
     u,
 )
-from flext_core.protocols import p
 
 # ═══════════════════════════════════════════════════════════════════
 # HANDLER IMPLEMENTATIONS
 # ═══════════════════════════════════════════════════════════════════
 
 
-class CreateUserCommand(FlextModels.Cqrs.Command):
+class CreateUserCommand(m.Cqrs.Command):
     """Create user command."""
 
     name: str
     email: str
 
 
-class UserCreatedEvent(FlextModels.DomainEvent):
+class UserCreatedEvent(m.DomainEvent):
     """User created event."""
 
     event_type: str = "user_created"
@@ -56,10 +56,10 @@ class UserCreatedEvent(FlextModels.DomainEvent):
 class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
     """Handler for creating users."""
 
-    def handle(self, message: CreateUserCommand) -> FlextResult[UserCreatedEvent]:
+    def handle(self, message: CreateUserCommand) -> r[UserCreatedEvent]:
         """Handle create user command."""
         user_id = u.generate("entity")
-        return FlextResult[UserCreatedEvent].ok(
+        return r[UserCreatedEvent].ok(
             UserCreatedEvent(
                 aggregate_id=user_id,
                 name=message.name,
@@ -67,21 +67,21 @@ class CreateUserHandler(h[CreateUserCommand, UserCreatedEvent]):
         )
 
 
-class GetUserQuery(FlextModels.Cqrs.Query):
+class GetUserQuery(m.Cqrs.Query):
     """Get user query."""
 
     user_id: str
 
 
-class GetUserHandler(h[GetUserQuery, t.ConfigurationMapping]):
+class GetUserHandler(h[GetUserQuery, m.ConfigMap]):
     """Handler for getting users."""
 
     def handle(
         self,
         message: GetUserQuery,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Handle get user query."""
-        return FlextResult[t.ConfigurationMapping].ok({
+        return r[m.ConfigMap].ok({
             "user_id": message.user_id,
             "name": "Demo User",
             "email": "demo@example.com",
@@ -93,12 +93,12 @@ class GetUserHandler(h[GetUserQuery, t.ConfigurationMapping]):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class RegistryDispatcherService(s[t.ConfigurationMapping]):
+class RegistryDispatcherService(s[m.ConfigMap]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Execute registry and dispatcher demonstrations."""
         print("Starting registry and dispatcher demonstration")
 
@@ -107,7 +107,7 @@ class RegistryDispatcherService(s[t.ConfigurationMapping]):
             self._demonstrate_dispatcher()
             self._demonstrate_integration()
 
-            return FlextResult[t.ConfigurationMapping].ok({
+            return r[m.ConfigMap].ok({
                 "patterns_demonstrated": [
                     "handler_registration",
                     "batch_registration",
@@ -116,8 +116,8 @@ class RegistryDispatcherService(s[t.ConfigurationMapping]):
                     "registry_integration",
                 ],
                 "handler_types": [
-                    FlextConstants.Cqrs.HandlerType.COMMAND.value,
-                    FlextConstants.Cqrs.HandlerType.QUERY.value,
+                    c.Cqrs.HandlerType.COMMAND.value,
+                    c.Cqrs.HandlerType.QUERY.value,
                 ],
                 "features": [
                     "idempotent_registration",
@@ -129,7 +129,7 @@ class RegistryDispatcherService(s[t.ConfigurationMapping]):
 
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"
-            return FlextResult[t.ConfigurationMapping].fail(error_msg)
+            return r[m.ConfigMap].fail(error_msg)
 
     @staticmethod
     def _demonstrate_registry() -> None:

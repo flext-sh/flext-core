@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstants, r, s, t
+from flext_core import c, r, s, t
 
 
 class DatabaseService(s[dict[str, t.GeneralValueType]]):
@@ -119,7 +119,7 @@ def main() -> None:
     """Demonstrate config log-once pattern."""
     print("=== Example 1: Database Service ===")
     db_config: dict[str, t.GeneralValueType] = {
-        "host": FlextConstants.Network.LOCALHOST,
+        "host": c.Network.LOCALHOST,
         "port": 5432,
         "database": "mydb",
         "pool_size": 10,

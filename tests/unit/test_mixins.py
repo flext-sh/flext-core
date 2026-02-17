@@ -32,6 +32,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextContext, FlextResult, m, t, x
 from flext_tests import u
+from flext_core.models import m
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -80,7 +81,7 @@ class ModelConversionScenario:
     name: str
     scenario_type: ModelConversionScenarioType
     input_value: t.GeneralValueType
-    expected_output: t.ConfigurationMapping
+    expected_output: m.ConfigMap
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,19 +135,19 @@ class MixinScenarios:
             "to_dict_with_basemodel",
             ModelConversionScenarioType.WITH_BASEMODEL,
             None,
-            {"name": "test", "value": 42},
+            m.ConfigMap(root={"name": "test", "value": 42}),
         ),
         ModelConversionScenario(
             "to_dict_with_dict",
             ModelConversionScenarioType.WITH_DICT,
             {"key": "value", "number": 123},
-            {"key": "value", "number": 123},
+            m.ConfigMap(root={"key": "value", "number": 123}),
         ),
         ModelConversionScenario(
             "to_dict_with_none",
             ModelConversionScenarioType.WITH_NONE,
             None,
-            {},
+            m.ConfigMap(root={}),
         ),
     ]
 
@@ -256,12 +257,11 @@ class TestFlextMixinsNestedClasses:
             result = x.ModelConversion.to_dict(input_value)
         else:
             result = x.ModelConversion.to_dict(None)
-        assert isinstance(result, dict)
+        assert isinstance(result, m.ConfigMap)
         assert result == scenario.expected_output
         if scenario.scenario_type == ModelConversionScenarioType.WITH_DICT:
-            # When input is already a dict, to_dict returns the same object
             assert isinstance(input_value, dict)
-            assert result == input_value
+            assert result.root == input_value
 
     @pytest.mark.parametrize(
         "scenario",

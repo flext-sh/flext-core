@@ -15,6 +15,7 @@ from typing import Literal, TypeGuard, TypeVar
 from pydantic import BaseModel
 
 from flext_core import FlextTypes
+from flext_core.models import m
 from flext_core.result import r
 
 # Note: p.Tests.* protocols are defined in flext_tests.protocols
@@ -25,9 +26,7 @@ TTestModel = TypeVar("TTestModel")
 TTestService = TypeVar("TTestService")
 
 # File content type for test operations
-type FileContent = (
-    str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel
-)
+type FileContent = str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
 
 
 class FlextTestsTypes(FlextTypes):
@@ -53,23 +52,23 @@ class FlextTestsTypes(FlextTypes):
         """Mapping of container port names to host port bindings."""
 
         # Reuse ConfigurationMapping from flext_core.typings - no duplication
-        type ContainerConfigMapping = t.ConfigurationMapping
+        type ContainerConfigMapping = m.ConfigMap
         """Mapping for container configuration data with specific value types."""
 
         # Reuse ConfigurationMapping from flext_core.typings - no duplication
-        type DockerComposeServiceMapping = t.ConfigurationMapping
+        type DockerComposeServiceMapping = m.ConfigMap
         """Mapping for docker-compose service configuration with specific types."""
 
         # Reuse ConfigurationMapping from flext_core.typings - no duplication
-        type ContainerStateMapping = t.ConfigurationMapping
+        type ContainerStateMapping = m.ConfigMap
         """Mapping for container state information with specific value types."""
 
         # Reuse ConfigurationMapping from flext_core.typings - no duplication
-        type TestDataMapping = t.ConfigurationMapping
+        type TestDataMapping = m.ConfigMap
         """Mapping for test data with specific value types."""
 
         # Reuse ConfigurationMapping from flext_core.typings - no duplication
-        type TestConfigMapping = t.ConfigurationMapping
+        type TestConfigMapping = m.ConfigMap
         """Mapping for test configuration with specific value types."""
 
         # Reuse t.GeneralValueType from flext_core.typings - no duplication
@@ -93,7 +92,7 @@ class FlextTestsTypes(FlextTypes):
             """Container environment variables as sequence."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
-            type ComposeFileConfig = t.ConfigurationMapping
+            type ComposeFileConfig = m.ConfigMap
             """Docker compose file configuration structure with specific types."""
 
             # Uses Mapping[str, str] directly - no alias needed
@@ -101,7 +100,7 @@ class FlextTestsTypes(FlextTypes):
             """Volume mappings (host_path -> container_path)."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
-            type NetworkMapping = t.ConfigurationMapping
+            type NetworkMapping = m.ConfigMap
             """Network configuration mapping with specific types."""
 
             type ContainerHealthStatus = str
@@ -111,26 +110,26 @@ class FlextTestsTypes(FlextTypes):
             """Type-safe literal for container health status."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
-            type ContainerOperationResult = t.ConfigurationMapping
+            type ContainerOperationResult = m.ConfigMap
             """Result type for container operations with specific fields."""
 
         class Test:
             """Test-specific type definitions."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
-            type TestCaseData = t.ConfigurationMapping
+            type TestCaseData = m.ConfigMap
             """Test case data structure with specific value types."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
             # Note: Path is included in t.GeneralValueType via object compatibility
-            type TestFixtureData = t.ConfigurationMapping
+            type TestFixtureData = m.ConfigMap
             """Test fixture data structure with specific value types."""
 
             type TestAssertionResult = Mapping[str, str | bool | int | None]
             """Test assertion result structure."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
-            type TestExecutionContext = t.ConfigurationMapping
+            type TestExecutionContext = m.ConfigMap
             """Test execution context with specific metadata types."""
 
         class Factory:
@@ -230,7 +229,7 @@ class FlextTestsTypes(FlextTypes):
             type GenericArgs = Sequence[t.GeneralValueType]
             """Positional arguments for generic type instantiation."""
 
-            type GenericKwargs = t.ConfigurationMapping
+            type GenericKwargs = m.ConfigMap
             """Keyword arguments for generic type instantiation."""
 
         class Files:
@@ -309,7 +308,7 @@ class FlextTestsTypes(FlextTypes):
             """Type for builder output dict after batch result conversion."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
-            type BuilderMapping = t.ConfigurationMapping
+            type BuilderMapping = m.ConfigMap
             """Type for builder mappings."""
 
             type BuilderSequence = Sequence[t.GeneralValueType]
@@ -537,7 +536,7 @@ class FlextTestsTypes(FlextTypes):
             """
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
-            type ErrorDataSpec = t.ConfigurationMapping
+            type ErrorDataSpec = m.ConfigMap
             """Error data specification: key-value pairs.
 
             Used for data parameter in tm.fail() to validate error metadata.
@@ -664,7 +663,7 @@ class FlextTestsTypes(FlextTypes):
         @staticmethod
         def is_configuration_mapping(
             value: t.GeneralValueType,
-        ) -> TypeGuard[t.ConfigurationMapping]:
+        ) -> TypeGuard[m.ConfigMap]:
             """Check if value is a ConfigurationMapping."""
             return isinstance(value, Mapping) and all(isinstance(k, str) for k in value)
 

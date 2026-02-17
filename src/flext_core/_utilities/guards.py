@@ -22,6 +22,7 @@ from typing import TypeGuard
 
 from pydantic import BaseModel
 
+from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
@@ -156,8 +157,8 @@ class FlextUtilitiesGuards:
                 | float
                 | bool
                 | datetime
-                | None
-                | list[str | int | float | bool | datetime | None],
+                | list[str | int | float | bool | datetime | None]
+                | None,
             ] = {}
             # TypeGuard already narrows to Mapping - no extra check needed
             dict_v = dict(val_mapping.items())
@@ -310,24 +311,24 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_configuration_mapping(
         value: object,
-    ) -> TypeGuard[t.ConfigurationMapping]:
-        """Check if value is a valid t.ConfigurationMapping.
+    ) -> TypeGuard[m.ConfigMap]:
+        """Check if value is a valid m.ConfigMap.
 
-        t.ConfigurationMapping = Mapping[str, t.GeneralValueType]
+        m.ConfigMap = Mapping[str, t.GeneralValueType]
 
-        This TypeGuard enables type narrowing without cast() for t.ConfigurationMapping.
+        This TypeGuard enables type narrowing without cast() for m.ConfigMap.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[t.ConfigurationMapping]: True if value matches ConfigurationMapping structure
+            TypeGuard[m.ConfigMap]: True if value matches ConfigurationMapping structure
 
         Example:
             >>> from flext_core.utilities import u
             >>> if u.Guards.is_configuration_mapping(config):
-            ...     # config is now typed as t.ConfigurationMapping
+            ...     # config is now typed as m.ConfigMap
             ...     items = config.items()
 
         """
@@ -616,7 +617,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, Sequence) and not isinstance(value, str)
 
     @staticmethod
-    def is_mapping(value: t.GeneralValueType) -> TypeGuard[t.ConfigurationMapping]:
+    def is_mapping(value: t.GeneralValueType) -> TypeGuard[m.ConfigMap]:
         """Check if value is ConfigurationMapping (Mapping[str, GeneralValueType]).
 
         Type guard for mapping types used in FLEXT validation.
@@ -626,11 +627,11 @@ class FlextUtilitiesGuards:
             value: GeneralValueType to check
 
         Returns:
-            TypeGuard[t.ConfigurationMapping]: True if value is ConfigurationMapping
+            TypeGuard[m.ConfigMap]: True if value is ConfigurationMapping
 
         Example:
             >>> if FlextUtilitiesGuards.is_mapping(params.kv):
-            ...     # params.kv is now typed as t.ConfigurationMapping
+            ...     # params.kv is now typed as m.ConfigMap
             ...     for key, val in params.kv.items():
 
         """
@@ -1082,7 +1083,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def extract_mapping_or_none(
         value: object,
-    ) -> t.ConfigurationMapping | None:
+    ) -> m.ConfigMap | None:
         """Extract a mapping from a value or return None.
 
         Used for type narrowing when a generic parameter could be a Mapping

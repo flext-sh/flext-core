@@ -67,8 +67,9 @@ from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.typings import T, t
+
+ConfigMap = t.ConfigMap
 
 
 class FlextRuntime:
@@ -334,14 +335,14 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: t.GeneralValueType,
-    ) -> TypeGuard[t.ConfigurationMapping]:
+    ) -> TypeGuard[ConfigMap]:
         """Type guard to check if value is dict-like.
 
         Args:
             value: Value to check
 
         Returns:
-            True if value is a t.ConfigurationMapping or dict-like object, False otherwise
+            True if value is a ConfigMap or dict-like object, False otherwise
 
         """
         # #region agent log
@@ -391,7 +392,7 @@ class FlextRuntime:
         """Normalize any value to t.GeneralValueType recursively.
 
         Converts arbitrary objects, dict[str, t.GeneralValueType], list[t.GeneralValueType], and other types
-        to t.ConfigurationMapping, Sequence[t.GeneralValueType], etc.
+        to m.ConfigMap, Sequence[t.GeneralValueType], etc.
         This is the central conversion function for type safety.
 
         Args:
@@ -424,7 +425,12 @@ class FlextRuntime:
             # Audit Implication: Normalizes nested data structures for type safety.
             # Used throughout FLEXT for converting arbitrary data to t.GeneralValueType.
             # Returns dict that is compatible with Mapping interface for read-only access.
-            dict_v = dict(val.items()) if hasattr(val, "items") else dict(val)
+            if isinstance(val, t.ConfigMap):
+                dict_v = val.root
+            elif isinstance(val, Mapping):
+                dict_v = dict(val)
+            else:
+                dict_v = dict(val)
             # Type narrowing: dict_v is dict[object, object] from dict() constructor
             # We need to filter only str keys to build ConfigurationDict
             # Use direct dict comprehension to avoid circular dependency with mapper
@@ -478,9 +484,13 @@ class FlextRuntime:
             #
             # Audit Implication: Nested structures are serialized to JSON for metadata storage.
             # This ensures all metadata values are JSON-serializable and flat.
-            result_json: t.MetadataAttributeValue = json.dumps(
-                dict(val.items()) if hasattr(val, "items") else dict(val),
-            )
+            if isinstance(val, t.ConfigMap):
+                raw_mapping = val.root
+            elif isinstance(val, Mapping):
+                raw_mapping = dict(val)
+            else:
+                raw_mapping = dict(val)
+            result_json: t.MetadataAttributeValue = json.dumps(raw_mapping)
             return result_json
         if FlextRuntime.is_list_like(val):
             # Convert to list of MetadataAttributeValue scalars (including datetime)
@@ -710,7 +720,7 @@ class FlextRuntime:
     @staticmethod
     def get_logger(
         name: str | None = None,
-    ) -> p.Log.StructlogLogger:
+    ) -> BindableLogger:
         """Get structlog logger instance - same structure/config used by FlextLogger.
 
         Returns the exact same structlog logger instance that FlextLogger uses internally.
@@ -736,7 +746,7 @@ class FlextRuntime:
         # structlog.get_logger returns BoundLoggerLazyProxy which implements p.Log.StructlogLogger protocol
         # All methods (debug, info, warning, error, etc.) are available directly from structlog logger
         # p.Log.StructlogLogger protocol is compatible with structlog's return type via structural typing
-        logger: p.Log.StructlogLogger = structlog.get_logger(name)
+        logger: BindableLogger = structlog.get_logger(name)
         return logger
 
     @staticmethod
@@ -773,7 +783,7 @@ class FlextRuntime:
         @classmethod
         def create_layered_bridge(
             cls,
-            config: t.ConfigurationMapping | None = None,
+            config: ConfigMap | None = None,
         ) -> tuple[
             containers.DeclarativeContainer,
             containers.DynamicContainer,
@@ -810,10 +820,10 @@ class FlextRuntime:
         def create_container(
             cls,
             *,
-            config: t.ConfigurationMapping | None = None,
+            config: ConfigMap | None = None,
             services: Mapping[
                 str,
-                t.GeneralValueType | BaseModel | p.VariadicCallable[t.GeneralValueType],
+                t.GeneralValueType | BaseModel | Callable[..., t.GeneralValueType],
             ]
             | None = None,
             factories: Mapping[
@@ -900,7 +910,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration(
             di_container: containers.DynamicContainer,
-            config: t.ConfigurationMapping | None,
+            config: ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration mapping to the DI container.
 
@@ -917,7 +927,7 @@ class FlextRuntime:
         @staticmethod
         def bind_configuration_provider(
             configuration_provider: providers.Configuration,
-            config: t.ConfigurationMapping | None,
+            config: ConfigMap | None,
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
             if config:
@@ -1028,10 +1038,10 @@ class FlextRuntime:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: p.Log,
+        _logger: object,
         method_name: str,
-        event_dict: t.ConfigurationMapping,
-    ) -> t.ConfigurationMapping:
+        event_dict: dict[str, t.GeneralValueType],
+    ) -> dict[str, t.GeneralValueType]:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -1078,7 +1088,7 @@ class FlextRuntime:
 
         # Process all keys in event_dict
         # Business Rule: Build mutable dict for construction, then return as dict
-        # dict is compatible with t.ConfigurationMapping return type.
+        # dict is compatible with ConfigMap return type.
         # This pattern is correct: construct mutable dict, return it (dict is Mapping subtype).
         #
         # Audit Implication: This method filters log event data based on log level.
@@ -1439,7 +1449,7 @@ class FlextRuntime:
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: t.ConfigurationMapping | None = None,
+            error_data: ConfigMap | None = None,
             *,
             is_success: bool = True,
         ) -> None:
@@ -1507,7 +1517,7 @@ class FlextRuntime:
             return self._error_code
 
         @property
-        def error_data(self) -> t.ConfigurationMapping | None:
+        def error_data(self) -> ConfigMap | None:
             """Get the error data."""
             return self._error_data
 
@@ -1733,7 +1743,7 @@ class FlextRuntime:
             cls,
             error: str | None,
             error_code: str | None = None,
-            error_data: t.ConfigurationMapping | None = None,
+            error_data: ConfigMap | None = None,
         ) -> FlextRuntime.RuntimeResult[T]:
             """Create failed result with error message.
 
@@ -1837,7 +1847,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: t.ConfigurationMapping | None = None,
+            event_data: ConfigMap | None = None,
         ) -> None:
             """Track domain event with context correlation.
 

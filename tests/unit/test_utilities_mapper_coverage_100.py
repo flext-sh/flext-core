@@ -22,6 +22,7 @@ from pydantic import BaseModel
 
 from flext_core import t, u
 from tests.test_utils import assertion_helpers
+from flext_core.models import m
 
 
 @dataclass
@@ -277,7 +278,7 @@ class TestuMapperBuild:
         # Map (x*2): [6, 8]
         res = u.mapper().build(
             [1, 2, 3, 4],
-            ops=cast("t.ConfigurationDict | None", ops),
+            ops=cast("m.ConfigMap | None", ops),
         )
         assert res == [6, 8]
 
@@ -296,7 +297,7 @@ class TestuMapperBuild:
         }
         res = u.mapper().build(
             input_data,
-            ops=cast("t.ConfigurationDict | None", ops),
+            ops=cast("m.ConfigMap | None", ops),
         )
         assert res == [25, 35]
 
@@ -304,7 +305,7 @@ class TestuMapperBuild:
         """Test build normalize."""
         res = u.mapper().build(
             ["A", "b"],
-            ops=cast("t.ConfigurationDict | None", {"normalize": "lower"}),
+            ops=cast("m.ConfigMap | None", {"normalize": "lower"}),
         )
         assert res == ["a", "b"]
 
@@ -312,7 +313,7 @@ class TestuMapperBuild:
         """Test build group - keys are converted to strings for ConfigurationDict."""
         res = u.mapper().build(
             ["cat", "dog", "ant"],
-            ops=cast("t.ConfigurationDict | None", {"group": len}),
+            ops=cast("m.ConfigMap | None", {"group": len}),
         )
         # Keys are converted to strings because result is ConfigurationDict
         assert res == {"3": ["cat", "dog", "ant"]}
@@ -321,7 +322,7 @@ class TestuMapperBuild:
         """Test build chunk."""
         res = u.mapper().build(
             [1, 2, 3, 4],
-            ops=cast("t.ConfigurationDict | None", {"chunk": 2}),
+            ops=cast("m.ConfigMap | None", {"chunk": 2}),
         )
         assert res == [[1, 2], [3, 4]]
 
@@ -346,8 +347,8 @@ class TestuMapperBuild:
             "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
         }
         res = u.mapper().construct(
-            cast("t.ConfigurationDict", spec),
-            cast("t.ConfigurationDict", source),
+            cast("m.ConfigMap", spec),
+            cast("m.ConfigMap", source),
         )
         assert res == {"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"}
 
@@ -371,7 +372,7 @@ class TestuMapperAdvanced:
         # Convert fails -> returns default (which is convert_type() -> int() -> 0)
         res = u.mapper().build(
             "invalid",
-            ops=cast("t.ConfigurationDict | None", {"convert": int}),
+            ops=cast("m.ConfigMap | None", {"convert": int}),
         )
         assert res == 0
 
@@ -379,7 +380,7 @@ class TestuMapperAdvanced:
         res = u.mapper().build(
             "invalid",
             ops=cast(
-                "t.ConfigurationDict | None",
+                "m.ConfigMap | None",
                 {"convert": int, "convert_default": 10},
             ),
         )
@@ -396,7 +397,7 @@ class TestuMapperAdvanced:
                 "strip_empty": True,
             },
         }
-        res = u.mapper().build(data, ops=cast("t.ConfigurationDict | None", ops))
+        res = u.mapper().build(data, ops=cast("m.ConfigMap | None", ops))
         # c stripped (empty), b stripped (None). 'a' preserved (cache normalization doesn't lowercase values)
         assert res == {"a": "UPPER"}
 
@@ -405,14 +406,14 @@ class TestuMapperAdvanced:
         data = [{"a": 2}, {"a": 1}]
         res = u.mapper().build(
             data,
-            ops=cast("t.ConfigurationDict | None", {"sort": "a"}),
+            ops=cast("m.ConfigMap | None", {"sort": "a"}),
         )
         assert cast("list[dict[str, int]]", res)[0]["a"] == 1
 
         res = u.mapper().build(
             data,
             ops=cast(
-                "t.ConfigurationDict | None",
+                "m.ConfigMap | None",
                 {"sort": operator.itemgetter("a")},
             ),
         )

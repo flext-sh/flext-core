@@ -23,16 +23,15 @@ from typing import Annotated
 from pydantic import EmailStr, Field, computed_field, model_validator
 
 from flext_core import (
-    FlextConstants,
-    FlextModels as m,
-    FlextResult,
+    c,
+    m,
+    r,
     s,
-    t,
 )
 from flext_core._models.base import FlextModelFoundation as F
 from flext_core._models.generic import FlextGenericModels as gm
 
-# Using centralized literals from FlextConstants (DRY - no local aliases)
+# Using centralized literals from c (DRY - no local aliases)
 
 # ========== ENHANCED GENERIC MODELS DEMONSTRATION ==========
 
@@ -265,7 +264,7 @@ class Email(m.Value):
         EmailStr,
         Field(
             min_length=5,
-            max_length=FlextConstants.Validation.MAX_EMAIL_LENGTH,
+            max_length=c.Validation.MAX_EMAIL_LENGTH,
         ),
     ]
 
@@ -276,15 +275,15 @@ class Money(m.Value):
     model_config = m.Config.DOMAIN_MODEL_CONFIG
 
     amount: Annotated[Decimal, Field(gt=Decimal(0))]
-    currency: FlextConstants.Domain.Currency | str = Field(
-        default=FlextConstants.Domain.Currency.USD,
+    currency: c.Domain.Currency | str = Field(
+        default=c.Domain.Currency.USD,
     )
 
-    def add(self, other: Money) -> FlextResult[Money]:
+    def add(self, other: Money) -> r[Money]:
         """Railway pattern for currency-aware addition."""
         if self.currency != other.currency:
-            return FlextResult.fail("Currency mismatch")
-        return FlextResult.ok(
+            return r.fail("Currency mismatch")
+        return r.ok(
             Money(amount=self.amount + other.amount, currency=self.currency),
         )
 
@@ -295,15 +294,15 @@ class User(m.Entity):
     model_config = m.Config.DOMAIN_MODEL_CONFIG
 
     name: str = Field(
-        min_length=FlextConstants.Validation.MIN_NAME_LENGTH,
-        max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
+        min_length=c.Validation.MIN_NAME_LENGTH,
+        max_length=c.Validation.MAX_NAME_LENGTH,
     )
     email: Email
     age: Annotated[
         int,
         Field(
-            ge=FlextConstants.Validation.MIN_AGE,
-            le=FlextConstants.Validation.MAX_AGE,
+            ge=c.Validation.MIN_AGE,
+            le=c.Validation.MAX_AGE,
         ),
     ]
 
@@ -335,34 +334,34 @@ class Order(m.AggregateRoot):
 
     customer_id: str = Field(min_length=1)
     items: list[OrderItem] = Field(default_factory=list)
-    status: FlextConstants.Domain.OrderStatus = Field(
-        default=FlextConstants.Domain.OrderStatus.PENDING,
+    status: c.Domain.OrderStatus = Field(
+        default=c.Domain.OrderStatus.PENDING,
     )
 
-    def add_item(self, item: OrderItem) -> FlextResult[Order]:
+    def add_item(self, item: OrderItem) -> r[Order]:
         """Railway pattern for item addition with domain rules."""
-        if self.status != FlextConstants.Domain.OrderStatus.PENDING:
-            return FlextResult.fail("Cannot modify non-pending order")
+        if self.status != c.Domain.OrderStatus.PENDING:
+            return r.fail("Cannot modify non-pending order")
         if any(existing.product_id == item.product_id for existing in self.items):
-            return FlextResult.fail("Product already in order")
+            return r.fail("Product already in order")
         self.items.append(item)
-        return FlextResult.ok(self)
+        return r.ok(self)
 
-    def confirm(self) -> FlextResult[Order]:
+    def confirm(self) -> r[Order]:
         """Railway pattern for order confirmation."""
         if not self.items:
-            return FlextResult.fail("Cannot confirm empty order")
-        if self.status != FlextConstants.Domain.OrderStatus.PENDING:
-            return FlextResult.fail("Order already processed")
-        self.status = FlextConstants.Domain.OrderStatus.CONFIRMED
-        return FlextResult.ok(self)
+            return r.fail("Cannot confirm empty order")
+        if self.status != c.Domain.OrderStatus.PENDING:
+            return r.fail("Order already processed")
+        self.status = c.Domain.OrderStatus.CONFIRMED
+        return r.ok(self)
 
     @property
     @computed_field
     def total(self) -> Money:
         """Railway-aware order total calculation."""
         if not self.items:
-            return Money(amount=Decimal(0), currency=FlextConstants.Domain.Currency.USD)
+            return Money(amount=Decimal(0), currency=c.Domain.Currency.USD)
         currency = self.items[0].price.currency
         total_amount = Decimal(sum(item.total.amount for item in self.items))
         return Money(amount=total_amount, currency=currency)
@@ -372,41 +371,41 @@ class Order(m.AggregateRoot):
 # automatically resolves forward references at runtime
 
 
-class DomainModelService(s[t.ConfigurationMapping]):
+class DomainModelService(s[m.ConfigMap]):
     """Advanced DDD demonstration service with railway-oriented programming."""
 
-    def execute(self) -> FlextResult[t.ConfigurationMapping]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute comprehensive DDD demonstrations using railway patterns."""
         # Railway pattern with value objects using traverse (DRY)
-        email_result = FlextResult[Email].ok(Email(address="Test@Example.Com"))
+        email_result = r[Email].ok(Email(address="Test@Example.Com"))
 
-        def add_money(m: Money) -> FlextResult[Money]:
+        def add_money(m: Money) -> r[Money]:
             return m.add(Money(amount=Decimal("5.00"), currency=m.currency))
 
         money_result = (
-            FlextResult[Money]
+            r[Money]
             .ok(
                 Money(
                     amount=Decimal("10.00"),
-                    currency=FlextConstants.Domain.Currency.USD,
+                    currency=c.Domain.Currency.USD,
                 ),
             )
             .flat_map(add_money)
         )
 
         # Combine results using railway pattern (DRY - no manual error collection)
-        def combine_email_money(email: Email) -> FlextResult[tuple[Email, Money]]:
+        def combine_email_money(email: Email) -> r[tuple[Email, Money]]:
             def make_tuple(money: Money) -> tuple[Email, Money]:
                 return (email, money)
 
             return money_result.map(make_tuple)
 
-        value_objects_result: FlextResult[tuple[Email, Money]] = email_result.flat_map(
+        value_objects_result: r[tuple[Email, Money]] = email_result.flat_map(
             combine_email_money,
         )
 
         # Entity and aggregate with railway pattern
-        user_result = FlextResult[User].ok(
+        user_result = r[User].ok(
             User(
                 name="Alice",
                 email=Email(address="alice@example.com"),
@@ -414,7 +413,7 @@ class DomainModelService(s[t.ConfigurationMapping]):
             ),
         )
 
-        def add_order_item(o: Order) -> FlextResult[Order]:
+        def add_order_item(o: Order) -> r[Order]:
             return o.add_item(
                 OrderItem(
                     product_id="prod-001",
@@ -425,7 +424,7 @@ class DomainModelService(s[t.ConfigurationMapping]):
             )
 
         order_result = (
-            FlextResult[Order]
+            r[Order]
             .ok(Order(customer_id="cust-123"))
             .flat_map(add_order_item)
             .flat_map(Order.confirm)
@@ -436,7 +435,7 @@ class DomainModelService(s[t.ConfigurationMapping]):
             vo_tuple: tuple[Email, Money],
             user: User,
             order: Order,
-        ) -> t.ConfigurationMapping:
+        ) -> m.ConfigMap:
             return {
                 "email": vo_tuple[0].address,
                 "money_sum": f"{vo_tuple[1].amount} {vo_tuple[1].currency}",
@@ -447,11 +446,11 @@ class DomainModelService(s[t.ConfigurationMapping]):
 
         def combine_with_user(
             vo_tuple: tuple[Email, Money],
-        ) -> FlextResult[t.ConfigurationMapping]:
+        ) -> r[m.ConfigMap]:
             def combine_with_order(
                 user: User,
-            ) -> FlextResult[t.ConfigurationMapping]:
-                def finalize(order: Order) -> t.ConfigurationMapping:
+            ) -> r[m.ConfigMap]:
+                def finalize(order: Order) -> m.ConfigMap:
                     return build_result(vo_tuple, user, order)
 
                 return order_result.map(finalize)
@@ -470,14 +469,14 @@ def main() -> None:
 
     service = DomainModelService()
     match service.execute():
-        case FlextResult(is_success=True, value=data):
+        case r(is_success=True, value=data):
             print(f"✅ Email: {data['email']}")
             print(f"✅ Money sum: {data['money_sum']}")
             print(f"✅ User ID: {data['user_id']}")
             print(
                 f"✅ Order total: {data['order_total']}, status: {data['order_status']}",
             )
-        case FlextResult(is_success=False, error=error):
+        case r(is_success=False, error=error):
             print(f"❌ Failed: {error}")
         case _:
             pass

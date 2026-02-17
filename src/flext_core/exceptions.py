@@ -147,7 +147,7 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: t.ConfigurationMapping,
+            metadata_dict: Mapping[str, t.GeneralValueType],
             merged_kwargs: dict[str, t.MetadataAttributeValue],
         ) -> _Metadata:
             """Normalize metadata from dict-like object."""
@@ -215,7 +215,7 @@ class FlextExceptions:
             # Check if it's a Mapping (covers both dict-like objects and protocol instances)
             if isinstance(metadata, Mapping):
                 # Convert to dict for type safety
-                metadata_dict: t.ConfigurationMapping = dict(metadata.items())
+                metadata_dict = dict(metadata.items())
                 return e.BaseError._normalize_metadata_from_dict(
                     metadata_dict,
                     merged_kwargs,
@@ -1123,7 +1123,7 @@ class FlextExceptions:
     @staticmethod
     def _prepare_metadata_value(
         meta: p.Log.Metadata | None,
-    ) -> t.ConfigurationMapping | None:
+    ) -> t.ConfigMap | None:
         """Prepare metadata value for error creation."""
         return meta.attributes if meta is not None else None
 
@@ -1199,11 +1199,19 @@ class FlextExceptions:
 
         if isinstance(metadata_obj, _Metadata):
             # Extract attributes from _Metadata model
-            for k, v in metadata_obj.attributes.items():
-                normalized: t.MetadataAttributeValue = (
-                    FlextRuntime.normalize_to_metadata_value(v)
-                )
-                context[k] = normalized
+            attrs = metadata_obj.attributes
+            if isinstance(attrs, t.ConfigMap):
+                for k, v in attrs.root.items():
+                    normalized: t.MetadataAttributeValue = (
+                        FlextRuntime.normalize_to_metadata_value(v)
+                    )
+                    context[k] = normalized
+            elif isinstance(attrs, Mapping):
+                for k, v in attrs.items():
+                    normalized: t.MetadataAttributeValue = (
+                        FlextRuntime.normalize_to_metadata_value(v)
+                    )
+                    context[k] = normalized
         elif isinstance(metadata_obj, dict):
             # Direct dict - normalize values and update
             for k, v in metadata_obj.items():

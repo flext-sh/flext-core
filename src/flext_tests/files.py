@@ -143,12 +143,12 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         content: (
             str
             | bytes
-            | t.ConfigurationMapping
+            | m.ConfigMap
             | Sequence[Sequence[str]]
             | BaseModel
             | r[str]
             | r[bytes]
-            | r[t.ConfigurationMapping]
+            | r[m.ConfigMap]
             | r[Sequence[Sequence[str]]]
             | r[BaseModel]
         ),
@@ -296,12 +296,12 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         content: (
             str
             | bytes
-            | t.ConfigurationMapping
+            | m.ConfigMap
             | Sequence[Sequence[str]]
             | BaseModel
             | r[str]
             | r[bytes]
-            | r[t.ConfigurationMapping]
+            | r[m.ConfigMap]
             | r[Sequence[Sequence[str]]]
             | r[BaseModel]
         ),
@@ -408,8 +408,11 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         actual_content = params.content
 
         # Convert Pydantic model to dict using u.Model.to_dict()
+        # Ensure actual_content is a BaseModel instance before calling to_dict
         if isinstance(actual_content, BaseModel):
             actual_content = u.Model.to_dict(actual_content)
+        # If it's already a dict, leave it as is - u.Model.to_dict expects BaseModel
+        # If it's something else (str, bytes, list), it will be handled by auto-detection
 
         # Auto-detect format using utilities
         # Build content_for_detect with explicit type handling for pyrefly
@@ -539,7 +542,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
         has_headers: bool = True,
-    ) -> r[str | bytes | t.ConfigurationMapping | list[list[str]]]: ...
+    ) -> r[str | bytes | m.ConfigMap | list[list[str]]]: ...
 
     @overload
     def read(
@@ -562,7 +565,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         enc: str = c.Tests.Files.DEFAULT_ENCODING,
         delim: str = c.Tests.Files.DEFAULT_CSV_DELIMITER,
         has_headers: bool = True,
-    ) -> r[str | bytes | t.ConfigurationMapping | list[list[str]]] | r[TModel]:
+    ) -> r[str | bytes | m.ConfigMap | list[list[str]]] | r[TModel]:
         """Read file with auto-detection or explicit format.
 
         Supports loading directly into Pydantic models when model_cls is provided.
@@ -618,7 +621,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             error_msg = f"Invalid parameters for file read: {params_result.error}"
             if model_cls is not None:
                 return r[TModel].fail(error_msg)
-            return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
+            return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 error_msg,
             )
         params = params_result.value
@@ -628,7 +631,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 return r[TModel].fail(
                     c.Tests.Files.ERROR_FILE_NOT_FOUND.format(path=params.path),
                 )
-            return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
+            return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_FILE_NOT_FOUND.format(path=params.path),
             )
 
@@ -636,7 +639,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
         try:
             if actual_fmt == c.Tests.Files.Format.BIN:
-                content: str | bytes | t.ConfigurationMapping | list[list[str]] = (
+                content: str | bytes | m.ConfigMap | list[list[str]] = (
                     params.path.read_bytes()
                 )
             elif actual_fmt == c.Tests.Files.Format.JSON:
@@ -683,31 +686,31 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 except Exception as ex:
                     return r[TModel].fail(f"Failed to validate model: {ex}")
 
-            return r[str | bytes | t.ConfigurationMapping | list[list[str]]].ok(
+            return r[str | bytes | m.ConfigMap | list[list[str]]].ok(
                 content,
             )
         except json.JSONDecodeError as e:
             if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_INVALID_JSON.format(error=e))
-            return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
+            return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_INVALID_JSON.format(error=e),
             )
         except yaml.YAMLError as e:
             if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_INVALID_YAML.format(error=e))
-            return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
+            return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_INVALID_YAML.format(error=e),
             )
         except UnicodeDecodeError as e:
             if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_ENCODING.format(error=e))
-            return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
+            return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_ENCODING.format(error=e),
             )
         except OSError as e:
             if model_cls is not None:
                 return r[TModel].fail(c.Tests.Files.ERROR_READ.format(error=e))
-            return r[str | bytes | t.ConfigurationMapping | list[list[str]]].fail(
+            return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_READ.format(error=e),
             )
 
@@ -1339,7 +1342,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         cls,
         content: dict[
             str,
-            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ],
         *,
         directory: Path | None = None,
@@ -1385,11 +1388,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 # content type is: str | bytes | ConfigurationMapping | Sequence[Sequence[str]] | BaseModel
                 # data_raw already has the correct type, no cast needed
                 data: (
-                    str
-                    | bytes
-                    | t.ConfigurationMapping
-                    | Sequence[Sequence[str]]
-                    | BaseModel
+                    str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
                 ) = data_raw
                 filename = name if "." in name else f"{name}{default_ext}"
                 # Determine if we need to adjust extension based on content type
@@ -1545,12 +1544,12 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # Use Mapping to avoid dict invariant type error
         content_mapping: ABCMapping[
             str,
-            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = files
         # Convert to dict for files() method which expects dict
         content_dict: dict[
             str,
-            str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel,
+            str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel,
         ] = dict(content_mapping)
         with cls.files(content_dict, ext=extension) as created:
             yield created
@@ -1579,17 +1578,17 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         content: (
             str
             | bytes
-            | t.ConfigurationMapping
+            | m.ConfigMap
             | Sequence[Sequence[str]]
             | BaseModel
             | r[str]
             | r[bytes]
-            | r[t.ConfigurationMapping]
+            | r[m.ConfigMap]
             | r[Sequence[Sequence[str]]]
             | r[BaseModel]
         ),
         extract_result: bool,
-    ) -> str | bytes | t.ConfigurationMapping | Sequence[Sequence[str]] | BaseModel:
+    ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         """Extract actual content from FlextResult or return as-is.
 
         Uses u.is_type(content, "result") for type checking and u.val() for extraction.
@@ -1660,7 +1659,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         model_name: str | None = None
 
         # Parse based on format
-        parsed_content: t.ConfigurationMapping | list[t.GeneralValueType] | None = None
+        parsed_content: m.ConfigMap | list[t.GeneralValueType] | None = None
 
         if fmt in {"json", "yaml"}:
             try:

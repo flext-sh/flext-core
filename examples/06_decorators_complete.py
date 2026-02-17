@@ -24,13 +24,14 @@ from collections.abc import Callable, Sequence
 from pydantic import BaseModel
 
 from flext_core import (
-    FlextConstants,
     FlextContainer,
     FlextDecorators,
     FlextLogger,
-    FlextResult,
-    FlextService,
-    FlextTypes as t,
+    c,
+    m,
+    r,
+    s,
+    t,
 )
 
 # ═══════════════════════════════════════════════════════════════════
@@ -38,12 +39,12 @@ from flext_core import (
 # ═══════════════════════════════════════════════════════════════════
 
 
-class DecoratorsService(FlextService[t.ConfigurationMapping]):
+class DecoratorsService(s[m.ConfigMap]):
     """Service demonstrating FlextDecorators comprehensive features."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Execute decorators demonstrations."""
         print("Starting decorators demonstration")
 
@@ -55,7 +56,7 @@ class DecoratorsService(FlextService[t.ConfigurationMapping]):
             self._demonstrate_retry_timeout()
             self._demonstrate_combined()
 
-            return FlextResult[t.ConfigurationMapping].ok({
+            return r[m.ConfigMap].ok({
                 "decorators_demonstrated": [
                     "inject",
                     "log_operation",
@@ -79,7 +80,7 @@ class DecoratorsService(FlextService[t.ConfigurationMapping]):
 
         except Exception as e:
             error_msg = f"Decorators demonstration failed: {e}"
-            return FlextResult[t.ConfigurationMapping].fail(error_msg)
+            return r[m.ConfigMap].fail(error_msg)
 
     @staticmethod
     def _demonstrate_inject() -> None:
@@ -132,12 +133,12 @@ class DecoratorsService(FlextService[t.ConfigurationMapping]):
         """Show railway decorator."""
         print("\n=== Railway Decorator ===")
 
-        @FlextDecorators.railway(error_code=FlextConstants.Errors.VALIDATION_ERROR)
-        def railway_operation(value: int) -> FlextResult[int]:
+        @FlextDecorators.railway(error_code=c.Errors.VALIDATION_ERROR)
+        def railway_operation(value: int) -> r[int]:
             """Operation with railway pattern."""
             if value < 0:
-                return FlextResult[int].fail("Value must be positive")
-            return FlextResult[int].ok(value * 2)
+                return r[int].fail("Value must be positive")
+            return r[int].ok(value * 2)
 
         success_result = railway_operation(5)
         if success_result.is_success:
@@ -171,13 +172,13 @@ class DecoratorsService(FlextService[t.ConfigurationMapping]):
             delay_seconds=0.1,
             backoff_strategy="exponential",
         )
-        @FlextDecorators.railway(error_code=FlextConstants.Errors.CONNECTION_ERROR)
-        def unreliable_operation(attempt_count: list[int]) -> FlextResult[str]:
+        @FlextDecorators.railway(error_code=c.Errors.CONNECTION_ERROR)
+        def unreliable_operation(attempt_count: list[int]) -> r[str]:
             """Operation that may fail initially but succeeds on retry."""
             attempt_count[0] += 1
             if attempt_count[0] < 2:
-                return FlextResult[str].fail("Transient failure")
-            return FlextResult[str].ok(f"Success on attempt {attempt_count[0]}")
+                return r[str].fail("Transient failure")
+            return r[str].ok(f"Success on attempt {attempt_count[0]}")
 
         attempts = [0]
         result = unreliable_operation(attempts)
@@ -186,11 +187,11 @@ class DecoratorsService(FlextService[t.ConfigurationMapping]):
 
         # Timeout decorator
         @FlextDecorators.timeout(timeout_seconds=0.5)
-        @FlextDecorators.railway(error_code=FlextConstants.Errors.TIMEOUT_ERROR)
-        def fast_operation() -> FlextResult[str]:
+        @FlextDecorators.railway(error_code=c.Errors.TIMEOUT_ERROR)
+        def fast_operation() -> r[str]:
             """Fast operation that completes within timeout."""
             time.sleep(0.1)  # Quick operation
-            return FlextResult[str].ok("Operation completed")
+            return r[str].ok("Operation completed")
 
         result = fast_operation()
         if result.is_success:
@@ -199,12 +200,12 @@ class DecoratorsService(FlextService[t.ConfigurationMapping]):
         # Composition: Retry + Timeout + Railway
         @FlextDecorators.retry(max_attempts=2, delay_seconds=0.05)
         @FlextDecorators.timeout(timeout_seconds=1.0)
-        @FlextDecorators.railway(error_code=FlextConstants.Errors.CONNECTION_ERROR)
-        def robust_operation(value: int) -> FlextResult[int]:
+        @FlextDecorators.railway(error_code=c.Errors.CONNECTION_ERROR)
+        def robust_operation(value: int) -> r[int]:
             """Operation with retry and timeout protection."""
             if value < 0:
-                return FlextResult[int].fail("Value must be positive")
-            return FlextResult[int].ok(value * 2)
+                return r[int].fail("Value must be positive")
+            return r[int].ok(value * 2)
 
         result = robust_operation(5)
         if result.is_success:
@@ -232,12 +233,12 @@ class DecoratorsService(FlextService[t.ConfigurationMapping]):
             track_perf=True,
             use_railway=True,
         )
-        def combined_operation(value: int) -> FlextResult[int]:
+        def combined_operation(value: int) -> r[int]:
             """Operation with all decorators combined."""
             # Logger is injected automatically
             if value < 0:
-                return FlextResult[int].fail("Value must be positive")
-            return FlextResult[int].ok(value * 2)
+                return r[int].fail("Value must be positive")
+            return r[int].ok(value * 2)
 
         result = combined_operation(6)
         if result.is_success:

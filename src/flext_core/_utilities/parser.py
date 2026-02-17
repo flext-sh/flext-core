@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Mapping
+from datetime import datetime
 from enum import StrEnum
 from typing import overload
 
@@ -22,6 +23,7 @@ from flext_core._models.collections import FlextModelsCollections
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
+from flext_core.models import m
 from flext_core.result import r
 from flext_core.typings import t
 
@@ -752,16 +754,28 @@ class FlextUtilitiesParser:
 
         if tuple_len == self.PATTERN_TUPLE_MIN_LENGTH:
             # Two-element tuple: (pattern, replacement)
-            pattern_val = str(elements[0])
-            replacement_val = str(elements[1])
+            if not isinstance(elements[0], str) or not isinstance(elements[1], str):
+                return r[tuple[str, str, int]].fail(
+                    "validation error: pattern and replacement must be strings",
+                )
+            pattern_val = elements[0]
+            replacement_val = elements[1]
             flags_val = 0
         elif tuple_len == self.PATTERN_TUPLE_MAX_LENGTH:
             # Three-element tuple - list conversion allows safe indexing
-            pattern_val = str(elements[0])
-            replacement_val = str(elements[1])
+            if not isinstance(elements[0], str) or not isinstance(elements[1], str):
+                return r[tuple[str, str, int]].fail(
+                    "validation error: pattern and replacement must be strings",
+                )
+            pattern_val = elements[0]
+            replacement_val = elements[1]
             # Safe int conversion: element can be str | int
             third_elem = elements[2]
-            flags_val = int(third_elem) if isinstance(third_elem, int) else 0
+            if not isinstance(third_elem, int):
+                return r[tuple[str, str, int]].fail(
+                    "validation error: regex flags must be an integer",
+                )
+            flags_val = third_elem
         else:
             return r[tuple[str, str, int]].fail(
                 f"Invalid pattern tuple length {tuple_len}, expected 2 or 3",
@@ -1096,7 +1110,23 @@ class FlextUtilitiesParser:
             )
         # Convert Mapping to dict - FlextUtilitiesModel.from_dict expects Mapping[str, FlexibleValue]
         # After isinstance check, value is Mapping - convert keys to str for proper typing
-        value_dict: dict[str, t.FlexibleValue] = {str(k): v for k, v in value.items()}
+        value_dict_data: dict[str, t.FlexibleValue] = {}
+        for k, v in value.items():
+            key = str(k)
+            if isinstance(v, (str, int, float, bool, datetime, type(None))):
+                value_dict_data[key] = v
+                continue
+            if isinstance(v, (list, tuple)):
+                normalized_seq: list[str | int | float | bool | datetime | None] = []
+                for item in v:
+                    if isinstance(item, (str, int, float, bool, datetime, type(None))):
+                        normalized_seq.append(item)
+                    else:
+                        normalized_seq.append(str(item))
+                value_dict_data[key] = normalized_seq
+                continue
+            value_dict_data[key] = str(v)
+        value_dict: Mapping[str, t.FlexibleValue] = value_dict_data
         result = FlextUtilitiesModel.from_dict(target, value_dict, strict=strict)
         if result.is_success:
             return r[T].ok(result.value)
@@ -1328,12 +1358,11 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Cannot construct 'object' type directly",
             )
         try:
-            # Try calling target as a type constructor
-            # target is type[T] and we've already excluded object type above
-            # The type call is safe because the guard prevents object(value)
-            constructor: Callable[[object], T] = target
-            parsed_result: T = constructor(value)
-            return r[T].ok(parsed_result)
+            return FlextUtilitiesParser._parse_with_default(
+                default,
+                default_factory,
+                f"{field_prefix}Unsupported constructor target: {target}",
+            )
         except Exception as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
                 target,
@@ -1573,12 +1602,6 @@ class FlextUtilitiesParser:
         if target_type is object:
             return default
         try:
-            # Try to call target_type as constructor
-            # target_type is type[T] and we've already excluded object type above
-            constructor: Callable[[object], T] = target_type
-            result = constructor(value)
-            if isinstance(result, target_type):
-                return result
             return default
         except (ValueError, TypeError, Exception):
             return default
@@ -1792,7 +1815,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: list[str] | t.ConfigurationMapping,
+        items: list[str] | m.ConfigMap,
         *,
         case: str | None = None,
     ) -> bool:
@@ -1814,9 +1837,13 @@ class FlextUtilitiesParser:
         if isinstance(items, Mapping):
             # items is Mapping, convert keys to list
             items_to_check = [str(k) for k in items]
-        else:
+        elif isinstance(items, t.ConfigMap):
+            items_to_check = [str(k) for k in items.root]
+        elif isinstance(items, list):
             # items is list[str]
             items_to_check = items
+        else:
+            items_to_check = []
 
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = FlextUtilitiesParser.norm_list(

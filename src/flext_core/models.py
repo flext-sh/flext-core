@@ -27,6 +27,7 @@ from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
 from flext_core._models.validation import FlextModelsValidation
 from flext_core.protocols import p
+from flext_core.typings import t_core
 
 
 class FlextModels:
@@ -97,6 +98,19 @@ class FlextModels:
 
     class Conversion(FlextGenericModels.Progress.Conversion):
         """Progress of conversion with errors/warnings (from Progress namespace)."""
+
+    # GENERIC CONTAINERS - Replace dict aliases
+    class ConfigMap(t_core.ConfigMap):
+        """Configuration map container (replaces ConfigurationDict)."""
+
+    class ServiceMap(t_core.ServiceMap):
+        """Service registry map container."""
+
+    class ErrorMap(t_core.ErrorMap):
+        """Error type mapping container."""
+
+    class Dict(t_core.Dict):
+        """Generic dictionary container."""
 
     # Value class - inherits from ValueObject for type system compatibility
     class Value(ValueObject):
@@ -275,6 +289,12 @@ class FlextModels:
         class RegistrationDetails(FlextModelsHandler.RegistrationDetails):
             """Handler registration details - real inheritance."""
 
+        class RegistrationResult(FlextModelsHandler.RegistrationResult):
+            """Handler registration result - real inheritance."""
+
+        class RegistrationRequest(FlextModelsHandler.RegistrationRequest):
+            """Handler registration request - real inheritance."""
+
         class ExecutionContext(FlextModelsHandler.ExecutionContext):
             """Handler execution context - real inheritance."""
 
@@ -288,7 +308,9 @@ class FlextModels:
     HandlerDecoratorConfig: TypeAlias = Handler.DecoratorConfig
     HandlerFactoryDecoratorConfig: TypeAlias = Handler.FactoryDecoratorConfig
     HandlerRegistrationDetails: TypeAlias = Handler.RegistrationDetails
+    HandlerRegistrationResult: TypeAlias = Handler.RegistrationResult
     HandlerExecutionContext: TypeAlias = Handler.ExecutionContext
+    HandlerRegistrationRequest: TypeAlias = Handler.RegistrationRequest
     CqrsHandler: TypeAlias = Handler
 
     # =========================================================================

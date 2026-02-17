@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field
 from flext_core import FlextRuntime, r, t
 from flext_tests import u
 from tests.test_utils import assertion_helpers
+from flext_core.models import m
 
 
 class FixtureStatus(StrEnum):
@@ -1049,16 +1050,16 @@ class TestuCollectionMerge:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base: t.ConfigurationMapping = {"a": 1, "b": {"x": 1}}
-        other: t.ConfigurationMapping = {"b": {"y": 2}, "c": 3}
+        base: m.ConfigMap = {"a": 1, "b": {"x": 1}}
+        other: m.ConfigMap = {"b": {"y": 2}, "c": 3}
         result = u.Collection.merge(base, other)
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"x": 1, "y": 2}, "c": 3}
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base: t.ConfigurationMapping = {"a": 1, "b": {"x": 1}}
-        other: t.ConfigurationMapping = {"b": {"y": 2}, "c": 3}
+        base: m.ConfigMap = {"a": 1, "b": {"x": 1}}
+        other: m.ConfigMap = {"b": {"y": 2}, "c": 3}
         result = u.Collection.merge(base, other, strategy="override")
         assertion_helpers.assert_flext_result_success(result)
         assert result.value == {"a": 1, "b": {"y": 2}, "c": 3}

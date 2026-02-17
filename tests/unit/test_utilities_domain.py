@@ -30,6 +30,7 @@ from flext_core.typings import t
 from flext_tests import u
 from tests.constants import TestsFlextConstants
 from tests.models import TestsFlextModels
+from flext_core.models import m
 
 ComplexValue = TestsFlextModels.ComplexValue
 CustomEntity = TestsFlextModels.CustomEntity
@@ -128,23 +129,23 @@ def create_compare_entities_cases() -> list[dict[str, t.GeneralValueType]]:
     custom2 = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_same_id: t.ConfigurationDict = {
+    input_data_same_id: m.ConfigMap = {
         "entity_a": alice_entity,
         "entity_b": alice_entity,
     }
-    input_data_different_id: t.ConfigurationDict = {
+    input_data_different_id: m.ConfigMap = {
         "entity_a": alice_entity,
         "entity_b": bob_entity,
     }
-    input_data_different_type: t.ConfigurationDict = {
+    input_data_different_type: m.ConfigMap = {
         "entity_a": alice_entity,
         "entity_b": value_obj,
     }
-    input_data_no_id: t.ConfigurationDict = {
+    input_data_no_id: m.ConfigMap = {
         "entity_a": alice_no_id,
         "entity_b": bob_entity,
     }
-    input_data_custom: t.ConfigurationDict = {
+    input_data_custom: m.ConfigMap = {
         "entity_a": custom1,
         "entity_b": custom2,
     }
@@ -215,13 +216,13 @@ def create_hash_entity_cases() -> list[dict[str, t.GeneralValueType]]:
     custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_with_id: t.ConfigurationDict = {
+    input_data_with_id: m.ConfigMap = {
         "entity": alice_entity,
     }
-    input_data_no_id: t.ConfigurationDict = {
+    input_data_no_id: m.ConfigMap = {
         "entity": alice_no_id,
     }
-    input_data_custom: t.ConfigurationDict = {
+    input_data_custom: m.ConfigMap = {
         "entity": custom,
     }
 
@@ -282,7 +283,7 @@ def create_compare_value_objects_cases() -> list[dict[str, t.GeneralValueType]]:
     no_dict2 = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_list: list[t.ConfigurationDict] = [
+    input_data_list: list[m.ConfigMap] = [
         {
             "obj_a": value1,
             "obj_b": value1,
@@ -353,7 +354,7 @@ def create_hash_value_object_cases() -> list[dict[str, t.GeneralValueType]]:
     no_dict_obj = NoDict(TestsFlextConstants.TestDomain.VALUE_COUNT_5)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_list_hash: list[t.ConfigurationDict] = [
+    input_data_list_hash: list[m.ConfigMap] = [
         {"obj": value_obj},
         {"obj": simple_obj},
         {"obj": bad_obj},
@@ -405,13 +406,13 @@ def create_validate_entity_has_id_cases() -> list[dict[str, t.GeneralValueType]]
     custom = CustomEntity(TestsFlextConstants.TestDomain.CUSTOM_ID_1)
 
     # Pass objects directly (domain methods expect real objects, not dicts)
-    input_data_has_id: t.ConfigurationDict = {
+    input_data_has_id: m.ConfigMap = {
         "entity": alice_entity,
     }
-    input_data_no_id_validate: t.ConfigurationDict = {
+    input_data_no_id_validate: m.ConfigMap = {
         "entity": alice_no_id,
     }
-    input_data_custom_validate: t.ConfigurationDict = {
+    input_data_custom_validate: m.ConfigMap = {
         "entity": custom,
     }
 

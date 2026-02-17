@@ -20,25 +20,25 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from flext_core import (
-    FlextConstants,
     FlextContainer,
-    FlextModels,
-    FlextResult,
     FlextSettings,
-    FlextTypes as t,
+    c,
+    m,
+    r,
     s,
+    t,
     u,
 )
 
 # Use centralized t for all complex types (no loose types, no aliases)
 # All types come directly from t namespace - no local type aliases
-# All Literals come from FlextConstants.Literals - no local Literal aliases
+# All Literals come from c.Literals - no local Literal aliases
 
 # ═══════════════════════════════════════════════════════════════════
 # FLEXT MODELS WITH ADVANCED PYDANTIC 2 PATTERNS
 # ═══════════════════════════════════════════════════════════════════
 
-# Using FlextConstants.Domain StrEnums and t for centralized config
+# Using c.Domain StrEnums and t for centralized config
 # No separate config classes - using centralized types directly
 
 
@@ -46,151 +46,151 @@ from flext_core import (
 # SERVICE MODELS WITH ADVANCED PATTERNS
 # ═══════════════════════════════════════════════════════════════════
 
-# Using centralized config mappings and direct StrEnum usage from FlextConstants
-# No separate config classes - using t and FlextConstants directly (DRY)
+# Using centralized config mappings and direct StrEnum usage from c
+# No separate config classes - using t and c directly (DRY)
 
 
-class DatabaseService(FlextModels.ArbitraryTypesModel):
+class DatabaseService(m.ArbitraryTypesModel):
     """Database service using centralized types and railway pattern."""
 
-    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.Config.DOMAIN_MODEL_CONFIG
 
-    config: t.ConfigurationDict
-    status: FlextConstants.Cqrs.CommonStatus = FlextConstants.Cqrs.CommonStatus.INACTIVE
+    config: m.ConfigMap
+    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
 
-    def connect(self) -> FlextResult[bool]:
+    def connect(self) -> r[bool]:
         """Connect to database with validation."""
-        if self.status == FlextConstants.Cqrs.CommonStatus.ACTIVE:
-            return FlextResult[bool].ok(True)
+        if self.status == c.Cqrs.CommonStatus.ACTIVE:
+            return r[bool].ok(True)
 
         url = self.config.get("url", "")
         if not isinstance(url, str) or not url:
-            return FlextResult[bool].fail(FlextConstants.Errors.CONFIGURATION_ERROR)
+            return r[bool].fail(c.Errors.CONFIGURATION_ERROR)
 
         timeout = self.config.get("timeout", 0)
         if not isinstance(timeout, int):
-            return FlextResult[bool].fail(FlextConstants.Errors.VALIDATION_ERROR)
+            return r[bool].fail(c.Errors.VALIDATION_ERROR)
 
         # Railway pattern with u validation (DRY)
         timeout_validation = u.validate_positive(timeout)
         if timeout_validation.is_failure:
-            return FlextResult[bool].fail(FlextConstants.Errors.VALIDATION_ERROR)
+            return r[bool].fail(c.Errors.VALIDATION_ERROR)
 
-        self.status = FlextConstants.Cqrs.CommonStatus.ACTIVE
-        return FlextResult[bool].ok(True)
+        self.status = c.Cqrs.CommonStatus.ACTIVE
+        return r[bool].ok(True)
 
-    def query(self, sql: str) -> FlextResult[t.ConfigurationDict]:
+    def query(self, sql: str) -> r[m.ConfigMap]:
         """Execute query with comprehensive validation using u."""
-        if self.status != FlextConstants.Cqrs.CommonStatus.ACTIVE:
-            return FlextResult[t.ConfigurationDict].fail(
-                FlextConstants.Errors.CONNECTION_ERROR,
+        if self.status != c.Cqrs.CommonStatus.ACTIVE:
+            return r[m.ConfigMap].fail(
+                c.Errors.CONNECTION_ERROR,
             )
 
         # Use u for advanced SQL pattern validation with centralized keywords
-        # Using FlextConstants.Cqrs.Action StrEnum values (DRY - no local Literal aliases)
+        # Using c.Cqrs.Action StrEnum values (DRY - no local Literal aliases)
         sql_keywords: tuple[str, ...] = (
-            FlextConstants.Cqrs.Action.GET,
-            FlextConstants.Cqrs.Action.CREATE,
-            FlextConstants.Cqrs.Action.UPDATE,
-            FlextConstants.Cqrs.Action.DELETE,
+            c.Cqrs.Action.GET,
+            c.Cqrs.Action.CREATE,
+            c.Cqrs.Action.UPDATE,
+            c.Cqrs.Action.DELETE,
         )
         sql_pattern = rf"\b({'|'.join(sql_keywords)})\b"
         if not u.validate_pattern(sql, sql_pattern).is_success:
-            return FlextResult[t.ConfigurationDict].fail(
-                FlextConstants.Errors.VALIDATION_ERROR,
+            return r[m.ConfigMap].fail(
+                c.Errors.VALIDATION_ERROR,
             )
 
-        result: t.ConfigurationDict = {
+        result: m.ConfigMap = {
             "id": u.generate_short_id(),
             "name": "Alice",
             "email": "alice@example.com",
         }
-        return FlextResult[t.ConfigurationDict].ok(result)
+        return r[m.ConfigMap].ok(result)
 
 
-class CacheService(FlextModels.ArbitraryTypesModel):
+class CacheService(m.ArbitraryTypesModel):
     """Cache service using centralized types."""
 
-    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.Config.DOMAIN_MODEL_CONFIG
 
-    config: t.ConfigurationDict
-    status: FlextConstants.Cqrs.CommonStatus = FlextConstants.Cqrs.CommonStatus.INACTIVE
+    config: m.ConfigMap
+    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
 
-    def get(self, key: str) -> FlextResult[str | int]:
+    def get(self, key: str) -> r[str | int]:
         """Get value from cache using railway pattern."""
-        if self.status != FlextConstants.Cqrs.CommonStatus.ACTIVE:
-            return FlextResult[str | int].fail(FlextConstants.Errors.CONNECTION_ERROR)
+        if self.status != c.Cqrs.CommonStatus.ACTIVE:
+            return r[str | int].fail(c.Errors.CONNECTION_ERROR)
 
         # Railway pattern with u validation (DRY)
         return u.validate_length(
             key,
-            max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
+            max_length=c.Validation.MAX_NAME_LENGTH,
         ).flat_map(
             lambda _: (
-                FlextResult[str | int].fail(FlextConstants.Errors.NOT_FOUND_ERROR)
+                r[str | int].fail(c.Errors.NOT_FOUND_ERROR)
                 if key == "missing"
-                else FlextResult[str | int].ok("cached_value")
+                else r[str | int].ok("cached_value")
             ),
         )
 
-    def set(self, key: str, value: str | int) -> FlextResult[bool]:
+    def set(self, key: str, value: str | int) -> r[bool]:
         """Set value in cache using railway pattern."""
-        if self.status != FlextConstants.Cqrs.CommonStatus.ACTIVE:
-            return FlextResult[bool].fail(FlextConstants.Errors.CONNECTION_ERROR)
+        if self.status != c.Cqrs.CommonStatus.ACTIVE:
+            return r[bool].fail(c.Errors.CONNECTION_ERROR)
 
         # Railway pattern with u validation (DRY)
         return (
             u
             .validate_length(
                 key,
-                max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
+                max_length=c.Validation.MAX_NAME_LENGTH,
             )
             .flat_map(
                 lambda _: (
                     u.validate_length(
                         value,
-                        max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
+                        max_length=c.Validation.MAX_NAME_LENGTH,
                     )
                     if isinstance(value, str)
-                    else FlextResult[str].ok("")
+                    else r[str].ok("")
                 ),
             )
             .map(lambda _: True)
         )
 
 
-class EmailService(FlextModels.ArbitraryTypesModel):
+class EmailService(m.ArbitraryTypesModel):
     """Email service using centralized types."""
 
-    model_config = FlextModels.Config.DOMAIN_MODEL_CONFIG
+    model_config = m.Config.DOMAIN_MODEL_CONFIG
 
-    config: t.ConfigurationDict
-    status: FlextConstants.Cqrs.CommonStatus = FlextConstants.Cqrs.CommonStatus.INACTIVE
+    config: m.ConfigMap
+    status: c.Cqrs.CommonStatus = c.Cqrs.CommonStatus.INACTIVE
 
-    def send(self, to: str, subject: str, body: str) -> FlextResult[bool]:
+    def send(self, to: str, subject: str, body: str) -> r[bool]:
         """Send email with railway pattern validation."""
-        if self.status != FlextConstants.Cqrs.CommonStatus.ACTIVE:
-            return FlextResult[bool].fail(FlextConstants.Errors.CONNECTION_ERROR)
+        if self.status != c.Cqrs.CommonStatus.ACTIVE:
+            return r[bool].fail(c.Errors.CONNECTION_ERROR)
 
         # Railway pattern with multiple validations using traverse (DRY)
         validations = [
             u.validate_pattern(
                 to,
-                FlextConstants.Platform.PATTERN_EMAIL,
+                c.Platform.PATTERN_EMAIL,
                 "email",
             ),
             u.validate_length(
                 subject,
                 min_length=1,
-                max_length=FlextConstants.Validation.MAX_NAME_LENGTH,
+                max_length=c.Validation.MAX_NAME_LENGTH,
             ),
             u.validate_length(
                 body,
                 min_length=1,
-                max_length=FlextConstants.Defaults.MAX_MESSAGE_LENGTH,
+                max_length=c.Defaults.MAX_MESSAGE_LENGTH,
             ),
         ]
-        return FlextResult.traverse(validations, lambda r: r).map(lambda _: True)
+        return r.traverse(validations, lambda r: r).map(lambda _: True)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -198,10 +198,10 @@ class EmailService(FlextModels.ArbitraryTypesModel):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class DependencyInjectionService(s[t.ConfigurationDict]):
+class DependencyInjectionService(s[m.ConfigMap]):
     """Service demonstrating FlextContainer dependency injection patterns."""
 
-    def execute(self) -> FlextResult[t.ConfigurationDict]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute DI demonstrations."""
         self.logger.info("Starting dependency injection demonstration")
 
@@ -211,7 +211,7 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
         self._demonstrate_resolution(container)
         self._demonstrate_advanced_patterns(container)
 
-        result_data: t.ConfigurationDict = {
+        result_data: m.ConfigMap = {
             "patterns_demonstrated": 5,
             "services_registered": ["database", "cache", "email"],
             "di_patterns": [
@@ -225,7 +225,7 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
         }
 
         self.logger.info("Dependency injection demonstration completed")
-        return FlextResult[t.ConfigurationDict].ok(result_data)
+        return r[m.ConfigMap].ok(result_data)
 
     @staticmethod
     def _setup_container() -> FlextContainer:
@@ -233,27 +233,27 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
         container = FlextContainer()
 
         # Create services with centralized config mappings from t
-        db_config: t.ConfigurationDict = {
+        db_config: m.ConfigMap = {
             "driver": "sqlite",
             "url": "sqlite:///:memory:",
-            "timeout": FlextConstants.Network.DEFAULT_TIMEOUT,
+            "timeout": c.Network.DEFAULT_TIMEOUT,
         }
         db_service = DatabaseService(config=db_config)
-        db_service.status = FlextConstants.Cqrs.CommonStatus.ACTIVE
+        db_service.status = c.Cqrs.CommonStatus.ACTIVE
 
-        cache_config: t.ConfigurationDict = {
+        cache_config: m.ConfigMap = {
             "backend": "memory",
-            "ttl": FlextConstants.Defaults.DEFAULT_CACHE_TTL,
+            "ttl": c.Defaults.DEFAULT_CACHE_TTL,
         }
         cache_service = CacheService(config=cache_config)
-        cache_service.status = FlextConstants.Cqrs.CommonStatus.ACTIVE
+        cache_service.status = c.Cqrs.CommonStatus.ACTIVE
 
-        email_config: t.ConfigurationDict = {
+        email_config: m.ConfigMap = {
             "host": "smtp.example.com",
             "port": 587,
         }
         email_service = EmailService(config=email_config)
-        email_service.status = FlextConstants.Cqrs.CommonStatus.ACTIVE
+        email_service.status = c.Cqrs.CommonStatus.ACTIVE
 
         _ = container.register("database", db_service)
         _ = container.register("cache", cache_service)
@@ -282,18 +282,18 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
         """Show dependency resolution patterns."""
         print("\n=== Dependency Resolution ===")
 
-        def test_database(db: DatabaseService) -> FlextResult[bool]:
+        def test_database(db: DatabaseService) -> r[bool]:
             return db.connect()
 
-        def test_cache(cache: CacheService) -> FlextResult[bool]:
+        def test_cache(cache: CacheService) -> r[bool]:
             return cache.set("test_key", "test_value")
 
-        def test_email(email: EmailService) -> FlextResult[bool]:
+        def test_email(email: EmailService) -> r[bool]:
             return email.send("test@example.com", "Test", "Hello")
 
         # Test each service with type narrowing
         for service_name in ["database", "cache", "email"]:
-            result: FlextResult[t.GeneralValueType] = container.get(service_name)
+            result: r[t.GeneralValueType] = container.get(service_name)
             if result.is_success:
                 service = result.value
                 if service_name == "database" and isinstance(service, DatabaseService):
@@ -303,7 +303,7 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
                 elif service_name == "email" and isinstance(service, EmailService):
                     test_result = test_email(service)
                 else:
-                    test_result = FlextResult[bool].fail("Service type mismatch")
+                    test_result = r[bool].fail("Service type mismatch")
                 print(f"✅ {service_name}: {test_result.is_success}")
             else:
                 print(f"❌ {service_name}: Failed to resolve")
@@ -330,8 +330,8 @@ class DependencyInjectionService(s[t.ConfigurationDict]):
         )
 
         # Error handling
-        missing_result: FlextResult[t.GeneralValueType] = container.get("non_existent")
-        db_result: FlextResult[t.GeneralValueType] = container.get("database")
+        missing_result: r[t.GeneralValueType] = container.get("non_existent")
+        db_result: r[t.GeneralValueType] = container.get("database")
         if db_result.is_success:
             db_service = db_result.value
             if isinstance(db_service, DatabaseService):

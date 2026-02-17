@@ -27,14 +27,7 @@ from pathlib import Path
 
 from pydantic import Field, ValidationError
 
-from flext_core import (
-    FlextConstants,
-    FlextResult,
-    FlextService,
-    FlextSettings,
-    c,
-    t,
-)
+from flext_core import FlextConstants, FlextResult, FlextService, FlextSettings, c, m, t
 
 
 class AppConfig(FlextSettings):
@@ -97,14 +90,14 @@ class AppConfig(FlextSettings):
     )
 
 
-class ConfigManagementService(FlextService[t.ConfigurationMapping]):
+class ConfigManagementService(FlextService[m.ConfigMap]):
     """Service demonstrating advanced FlextSettings patterns using railway-oriented programming.
 
     Uses functional composition, error handling chains, and type-safe configuration
     management with Python 3.13+ advanced patterns.
     """
 
-    def execute(self) -> FlextResult[t.ConfigurationMapping]:
+    def execute(self) -> FlextResult[m.ConfigMap]:
         """Execute comprehensive configuration demonstrations using railway pattern."""
         return (
             self
@@ -136,9 +129,9 @@ class ConfigManagementService(FlextService[t.ConfigurationMapping]):
     @staticmethod
     def _create_success_metadata(
         patterns: tuple[str, ...],
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> FlextResult[m.ConfigMap]:
         """Create success metadata from demonstrated patterns."""
-        return FlextResult[t.ConfigurationMapping].ok({
+        return FlextResult[m.ConfigMap].ok({
             "patterns_demonstrated": list(patterns),
             "config_features": [
                 "pydantic_settings",
@@ -158,11 +151,11 @@ class ConfigManagementService(FlextService[t.ConfigurationMapping]):
     @staticmethod
     def _handle_execution_error(
         error: str,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> FlextResult[m.ConfigMap]:
         """Handle execution errors with proper logging."""
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
-        return FlextResult[t.ConfigurationMapping].fail(
+        return FlextResult[m.ConfigMap].fail(
             error_msg,
             error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
@@ -356,13 +349,13 @@ def main() -> FlextResult[bool]:
         result = demonstrate_file_config()
         return FlextResult[bool].ok(result.is_success)
 
-    def run_service_demo() -> FlextResult[t.ConfigurationMapping]:
+    def run_service_demo() -> FlextResult[m.ConfigMap]:
         """Run service-based configuration demonstration."""
         service = ConfigManagementService()
         return service.execute()
 
     def display_results(
-        metadata: t.ConfigurationMapping,
+        metadata: m.ConfigMap,
     ) -> FlextResult[bool]:
         """Display demonstration results."""
         patterns = metadata.get("patterns_demonstrated", [])

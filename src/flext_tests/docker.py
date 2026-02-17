@@ -38,7 +38,6 @@ from flext_tests.models import m
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-from flext_tests.typings import t
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -60,7 +59,7 @@ class FlextTestsDocker:
     class ContainerInfo(m.Tests.Docker.ContainerInfo):
         """Container information model for tests - real inheritance from m."""
 
-    SHARED_CONTAINERS: ClassVar[Mapping[str, t.ConfigurationDict]] = (
+    SHARED_CONTAINERS: ClassVar[Mapping[str, m.ConfigMap]] = (
         c.Tests.Docker.SHARED_CONTAINERS
     )
 
@@ -121,7 +120,7 @@ class FlextTestsDocker:
     @property
     def shared_containers(
         self,
-    ) -> Mapping[str, t.ConfigurationDict]:
+    ) -> Mapping[str, m.ConfigMap]:
         """Get shared container configurations."""
         return c.Tests.Docker.SHARED_CONTAINERS
 

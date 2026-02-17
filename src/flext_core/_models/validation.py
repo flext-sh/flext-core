@@ -58,7 +58,7 @@ class FlextModelsValidation:
     @staticmethod
     def _validate_with_validator_mapping(
         subject: t.GeneralValueType,
-        validators: t.FieldValidatorMapping | t.EventValidatorMapping,
+        validators: t.FieldValidatorMap | t.EventValidatorMap,
         failure_message_prefix: str,
         failure_code: str,
         error_data_key: str,
@@ -69,7 +69,7 @@ class FlextModelsValidation:
             return r[t.GeneralValueType].fail(
                 f"{failure_message_prefix}: {'; '.join(errors)}",
                 error_code=failure_code,
-                error_data={error_data_key: errors},
+                error_data=t.ConfigMap(root={error_data_key: errors}),
             )
         return r[t.GeneralValueType].ok(subject)
 
@@ -132,7 +132,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_cross_fields(
         model: t.GeneralValueType,
-        field_validators: t.FieldValidatorMapping,
+        field_validators: t.FieldValidatorMap,
     ) -> r[t.GeneralValueType]:
         """Validate cross-field dependencies with mapped validators."""
         return FlextModelsValidation._validate_with_validator_mapping(
@@ -171,7 +171,9 @@ class FlextModelsValidation:
                 return r[t.GeneralValueType].fail(
                     f"Validation too slow: {validation_time:.2f}ms > {timeout_ms}ms",
                     error_code="PERFORMANCE_VALIDATION_FAILED",
-                    error_data={"validation_time_ms": validation_time},
+                    error_data=t.ConfigMap(
+                        root={"validation_time_ms": validation_time}
+                    ),
                 )
 
             return r[t.GeneralValueType].ok(validated_model)
@@ -231,10 +233,12 @@ class FlextModelsValidation:
             return r[t.ObjectList].fail(
                 f"Batch validation failed: {'; '.join(all_errors)}",
                 error_code="BATCH_VALIDATION_FAILED",
-                error_data={"error_count": len(all_errors), "errors": all_errors},
+                error_data=t.ConfigMap(
+                    root={"error_count": len(all_errors), "errors": all_errors}
+                ),
             )
 
-        return r[t.ObjectList].ok(validated_models)
+        return r[t.ObjectList].ok(t.ObjectList(root=validated_models))
 
     @staticmethod
     def validate_domain_invariants(
@@ -256,14 +260,14 @@ class FlextModelsValidation:
             return r[t.GeneralValueType].fail(
                 f"Domain invariant violation: {invariant_error}",
                 error_code="DOMAIN_INVARIANT_VIOLATION",
-                error_data={"invariant_error": invariant_error},
+                error_data=t.ConfigMap(root={"invariant_error": invariant_error}),
             )
         return r[t.GeneralValueType].ok(model)
 
     @staticmethod
     def validate_aggregate_consistency_with_rules(
         aggregate: t.GeneralValueType,
-        consistency_rules: t.ConsistencyRuleMapping,
+        consistency_rules: t.ConsistencyRuleMap,
     ) -> r[t.GeneralValueType]:
         """Validate aggregate consistency with named rule validators."""
         violations: list[str] = []
@@ -278,7 +282,7 @@ class FlextModelsValidation:
             return r[t.GeneralValueType].fail(
                 f"Aggregate consistency violations: {'; '.join(violations)}",
                 error_code="AGGREGATE_CONSISTENCY_VIOLATION",
-                error_data={"violations": violations},
+                error_data=t.ConfigMap(root={"violations": violations}),
             )
 
         return r[t.GeneralValueType].ok(aggregate)
@@ -286,7 +290,7 @@ class FlextModelsValidation:
     @staticmethod
     def validate_event_sourcing(
         event: t.GeneralValueType,
-        event_validators: t.EventValidatorMapping,
+        event_validators: t.EventValidatorMap,
     ) -> r[t.GeneralValueType]:
         """Validate event-sourcing constraints for a domain event."""
         return FlextModelsValidation._validate_with_validator_mapping(
@@ -328,10 +332,12 @@ class FlextModelsValidation:
             return r[t.GeneralValueType].fail(
                 f"CQRS {pattern_type} validation failed: {failure_error}",
                 error_code=f"CQRS_{pattern_type.upper()}_VALIDATION_FAILED",
-                error_data={
-                    "pattern_type": pattern_type,
-                    "error": failure_error,
-                },
+                error_data=t.ConfigMap(
+                    root={
+                        "pattern_type": pattern_type,
+                        "error": failure_error,
+                    }
+                ),
             )
 
         return r[t.GeneralValueType].ok(command_or_query)

@@ -18,7 +18,7 @@ from enum import StrEnum
 from typing import Final, Literal
 
 from flext_core.constants import c as core_c
-from flext_core.typings import t as core_t
+from flext_core.models import m as core_m
 from flext_tests.constants import FlextTestsConstants
 
 
@@ -237,11 +237,11 @@ class TestsFlextConstants(FlextTestsConstants):
         MISSING_VALUE: Final[str] = "Missing value"
         INVALID_INDEX: Final[str] = "only supports indices 0 (data) and 1 (error)"
         CANNOT_ACCEPT_NONE: Final[str] = "cannot accept None"
-        TEST_DATA: Final[core_t.ConfigurationMapping] = {
+        TEST_DATA: Final[core_m.ConfigMap] = core_m.ConfigMap({
             "key": "value",
             "value": 5,
-        }
-        TEST_DICT: Final[core_t.ConfigurationMapping] = {"key": "value"}
+        })
+        TEST_DICT: Final[core_m.ConfigMap] = core_m.ConfigMap({"key": "value"})
         TEST_LIST: Final[tuple[int, ...]] = (1, 2, 3)
         MAX_EXECUTION_TIME: Final[float] = 1.0
         ITERATION_COUNT: Final[int] = 1000

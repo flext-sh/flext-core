@@ -12,12 +12,12 @@ from types import ModuleType, TracebackType
 from typing import (
     Protocol,
     Self,
-    _ProtocolMeta,  # noqa: PLC2701 - Required for metaclass resolution
+    _ProtocolMeta,
     runtime_checkable,
 )
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic._internal._model_construction import ModelMetaclass  # noqa: PLC2701
+from pydantic._internal._model_construction import ModelMetaclass
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
@@ -279,8 +279,10 @@ class FlextProtocols:
         context: t.GeneralValueType | None = Field(default=None)
         subproject: str | None = Field(default=None)
         services: Mapping[str, t.RegisterableService] | None = Field(default=None)
-        factories: t.FactoryMapping | None = Field(default=None)
-        resources: t.ResourceMapping | None = Field(default=None)
+        factories: Mapping[str, t.FactoryRegistrationCallable] | None = Field(
+            default=None
+        )
+        resources: Mapping[str, t.ResourceCallable] | None = Field(default=None)
         container_overrides: Mapping[str, t.FlexibleValue] | None = Field(default=None)
         wire_modules: Sequence[ModuleType] | None = Field(default=None)
         wire_packages: Sequence[str] | None = Field(default=None)
@@ -333,7 +335,7 @@ class FlextProtocols:
             ...
 
         @property
-        def error_data(self) -> t.ConfigurationMapping | None:
+        def error_data(self) -> t.ConfigurationDict | None:
             """Error metadata (optional)."""
             ...
 
@@ -690,7 +692,7 @@ class FlextProtocols:
             """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
-        def get_config(self) -> t.ConfigurationMapping:
+        def get_config(self) -> t.ConfigurationDict:
             """Return the merged configuration exposed by this container."""
             ...
 
@@ -947,7 +949,7 @@ class FlextProtocols:
             self,
             request: t.HandlerType | t.GeneralValueType | BaseModel | object,
             handler: t.GeneralValueType | None = None,
-        ) -> FlextProtocols.Result[t.ConfigurationMapping]:
+        ) -> FlextProtocols.Result[t.ConfigMap]:
             """Register handler dynamically.
 
             Reflects real implementations like FlextDispatcher that accept
@@ -1210,7 +1212,7 @@ class FlextProtocols:
                 ...
 
             @property
-            def attributes(self) -> t.ConfigurationMapping:
+            def attributes(self) -> t.ConfigMap:
                 """Metadata attributes."""
                 ...
 
@@ -1411,7 +1413,7 @@ class FlextProtocols:
     type AccessibleData = (
         dict[str, t.GeneralValueType]
         | dict[str, t.JsonValue]
-        | t.ConfigurationMapping
+        | t.ConfigMap
         | Mapping[str, t.JsonValue]
         | Mapping[str, t.GeneralValueType]
         | BaseModel

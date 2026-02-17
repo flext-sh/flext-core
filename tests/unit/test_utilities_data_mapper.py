@@ -20,6 +20,7 @@ from flext_core.utilities import FlextUtilities
 from flext_tests import tm
 from tests.constants import TestsFlextConstants
 from tests.test_utils import assertion_helpers
+from flext_core.models import m
 
 
 class TestMapperMapDictKeys:
@@ -30,8 +31,8 @@ class TestMapperMapDictKeys:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
         # Convert dict[str, str] to ConfigurationDict for type compatibility
-        source: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
+        source: m.ConfigMap = cast(
+            "m.ConfigMap",
             source_raw,
         )
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
@@ -45,8 +46,8 @@ class TestMapperMapDictKeys:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         # Convert dict[str, str] to ConfigurationDict for type compatibility
-        source: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
+        source: m.ConfigMap = cast(
+            "m.ConfigMap",
             source_raw,
         )
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
@@ -64,8 +65,8 @@ class TestMapperMapDictKeys:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         # Convert dict[str, str] to ConfigurationDict for type compatibility
-        source: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
+        source: m.ConfigMap = cast(
+            "m.ConfigMap",
             source_raw,
         )
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
@@ -91,8 +92,8 @@ class TestMapperMapDictKeys:
 
         # Convert BadDict to ConfigurationDict for type compatibility
         bad_dict_instance = BadDict()
-        bad_dict_typed: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
+        bad_dict_typed: m.ConfigMap = cast(
+            "m.ConfigMap",
             bad_dict_instance,
         )
         result = FlextUtilities.mapper().map_dict_keys(bad_dict_typed, {})
@@ -221,8 +222,8 @@ class TestMapperTransformValues:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.HELLO, mc.B: mc.WORLD}
         # Convert dict[str, str] to ConfigurationDict for type compatibility
-        source: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
+        source: m.ConfigMap = cast(
+            "m.ConfigMap",
             source_raw,
         )
 
@@ -238,8 +239,8 @@ class TestMapperTransformValues:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
         # Convert dict[str, int] to ConfigurationDict for type compatibility
-        source: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
+        source: m.ConfigMap = cast(
+            "m.ConfigMap",
             source_raw,
         )
 
@@ -259,8 +260,8 @@ class TestMapperFilterDict:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
         # Convert dict[str, int] to ConfigurationDict for type compatibility
-        source: t.ConfigurationDict = cast(
-            "t.ConfigurationDict",
+        source: m.ConfigMap = cast(
+            "m.ConfigMap",
             source_raw,
         )
 

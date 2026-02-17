@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.cast import FlextUtilitiesCast
 from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
@@ -78,7 +79,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _is_configuration_mapping(
         value: object,
-    ) -> TypeGuard[t.ConfigurationMapping]:
+    ) -> TypeGuard[m.ConfigMap]:
         """Type guard for ConfigurationMapping."""
         if not isinstance(value, Mapping):
             return False
@@ -122,12 +123,22 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_configuration_mapping(value: object) -> t.ConfigurationMapping:
+    def _narrow_to_configuration_mapping(value: object) -> m.ConfigMap:
         """Safely narrow object to ConfigurationMapping with runtime validation."""
-        # Use TypeGuard for proper type narrowing without cast
-        if FlextUtilitiesGuards.is_configuration_mapping(value):
+        if isinstance(value, m.ConfigMap):
             return value
-        error_msg = f"Cannot narrow {type(value)} to ConfigurationMapping"
+        if isinstance(value, Mapping):
+            # Coerce to ConfigMap (Pydantic will validate keys are strings)
+            try:
+                return m.ConfigMap(
+                    root=FlextUtilitiesMapper._narrow_to_configuration_dict(
+                        dict(value)
+                    ),
+                )
+            except Exception as e:
+                error_msg = f"Cannot coerce {type(value)} to m.ConfigMap: {e}"
+                raise TypeError(error_msg) from e
+        error_msg = f"Cannot narrow {type(value)} to m.ConfigMap"
         raise TypeError(error_msg)
 
     @staticmethod
@@ -184,7 +195,7 @@ class FlextUtilitiesMapper:
         return None
 
     @property
-    def logger(self) -> p.Log.StructlogLogger:
+    def logger(self) -> object:
         """Get logger instance using FlextRuntime (avoids circular imports).
 
         Returns structlog logger instance (Logger protocol).
@@ -648,11 +659,11 @@ class FlextUtilitiesMapper:
     ) -> tuple[t.GeneralValueType | object | None, bool]:
         """Helper: Get raw value from dict/object/model."""
         if isinstance(current, Mapping):
-            current_mapping: t.ConfigurationMapping = (
+            current_mapping: m.ConfigMap = (
                 FlextUtilitiesMapper._narrow_to_configuration_mapping(current)
             )
-            if key_part in current_mapping:
-                return current_mapping[key_part], True
+            if key_part in current_mapping.root:
+                return current_mapping.root[key_part], True
             return None, False
 
         # Handle object attributes (dataclasses, plain objects, etc.)
@@ -697,7 +708,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def extract(
-        data: t.ConfigurationMapping | BaseModel | object,
+        data: m.ConfigMap | BaseModel | object,
         path: str,
         *,
         default: t.GeneralValueType | None = None,
@@ -926,7 +937,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def prop(
         key: str,
-    ) -> Callable[[t.ConfigurationMapping | BaseModel], t.GeneralValueType]:
+    ) -> Callable[[m.ConfigMap | BaseModel], t.GeneralValueType]:
         """Create a property accessor function (functional pattern).
 
         Returns a function that extracts a property/attribute from an object.
@@ -948,7 +959,7 @@ class FlextUtilitiesMapper:
         """
 
         def accessor(
-            obj: t.ConfigurationMapping | BaseModel,
+            obj: m.ConfigMap | BaseModel,
         ) -> t.GeneralValueType:
             """Access property from object."""
             result = FlextUtilitiesMapper.get(obj, key)
@@ -1746,7 +1757,7 @@ class FlextUtilitiesMapper:
             to_json_bool,
         ) = FlextUtilitiesMapper._extract_transform_options(transform_opts)
         # Narrow current to ConfigurationMapping
-        current_dict: t.ConfigurationMapping = (
+        current_dict: m.ConfigMap = (
             FlextUtilitiesMapper._narrow_to_configuration_mapping(current)
         )
         # Implement transform logic directly using available utilities
@@ -2148,7 +2159,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _fields_multi(
-        source: t.ConfigurationMapping | BaseModel,
+        source: m.ConfigMap | BaseModel,
         spec: dict[str, dict[str, t.GeneralValueType]] | dict[str, t.GeneralValueType],
         *,
         on_error: str = "stop",
@@ -2260,7 +2271,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def construct(
         spec: dict[str, t.GeneralValueType],
-        source: t.ConfigurationMapping | BaseModel | None = None,
+        source: m.ConfigMap | BaseModel | None = None,
         *,
         on_error: str = "stop",
     ) -> dict[str, t.GeneralValueType]:
@@ -2374,7 +2385,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def transform(
-        source: dict[str, t.GeneralValueType] | t.ConfigurationMapping,
+        source: dict[str, t.GeneralValueType] | m.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -2528,8 +2539,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def process_context_data(
-        primary_data: t.ConfigurationMapping | object | None = None,
-        secondary_data: t.ConfigurationMapping | object | None = None,
+        primary_data: m.ConfigMap | object | None = None,
+        secondary_data: m.ConfigMap | object | None = None,
         *,
         transformer: Callable[[t.GeneralValueType], t.GeneralValueType] | None = None,
         field_overrides: dict[str, t.GeneralValueType] | None = None,
@@ -2598,12 +2609,17 @@ class FlextUtilitiesMapper:
                 primary_data,
             )
             if FlextRuntime.is_dict_like(primary_general):
-                # TypeGuard narrows primary_general to ConfigurationMapping
-                primary_dict: dict[str, t.GeneralValueType] = (
-                    FlextUtilitiesMapper.to_dict(
-                        primary_general,
-                    )
-                )
+                if isinstance(primary_general, m.ConfigMap):
+                    primary_dict = primary_general.root.copy()
+                elif isinstance(primary_general, Mapping):
+                    primary_dict = {
+                        str(key): FlextUtilitiesMapper.narrow_to_general_value_type(
+                            value
+                        )
+                        for key, value in dict(primary_general).items()
+                    }
+                else:
+                    primary_dict = {}
                 transformed_primary = FlextUtilitiesMapper.transform_values(
                     primary_dict,
                     transformer,
@@ -2617,12 +2633,17 @@ class FlextUtilitiesMapper:
                 secondary_data,
             )
             if FlextRuntime.is_dict_like(secondary_general):
-                # TypeGuard narrows secondary_general to ConfigurationMapping
-                secondary_dict: dict[str, t.GeneralValueType] = (
-                    FlextUtilitiesMapper.to_dict(
-                        secondary_general,
-                    )
-                )
+                if isinstance(secondary_general, m.ConfigMap):
+                    secondary_dict = secondary_general.root.copy()
+                elif isinstance(secondary_general, Mapping):
+                    secondary_dict = {
+                        str(key): FlextUtilitiesMapper.narrow_to_general_value_type(
+                            value
+                        )
+                        for key, value in dict(secondary_general).items()
+                    }
+                else:
+                    secondary_dict = {}
                 transformed_secondary = FlextUtilitiesMapper.transform_values(
                     secondary_dict,
                     transformer,
@@ -2658,8 +2679,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def normalize_context_values(
-        context: t.ConfigurationMapping | None,
-        extra_kwargs: t.ConfigurationMapping,
+        context: m.ConfigMap | None,
+        extra_kwargs: m.ConfigMap,
         **specific_fields: t.MetadataAttributeValue,
     ) -> dict[str, t.MetadataAttributeValue]:
         """Normalize and merge context values for exception handling.
@@ -2774,7 +2795,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def fields(
-        obj: t.ConfigurationMapping | Mapping[str, t.GeneralValueType] | object,
+        obj: m.ConfigMap | Mapping[str, t.GeneralValueType] | object,
         *field_names: str | Mapping[str, t.GeneralValueType],
     ) -> dict[str, t.GeneralValueType]:
         """Extract specified fields from object.

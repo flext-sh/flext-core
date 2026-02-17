@@ -14,14 +14,24 @@ from collections.abc import Callable, Sequence
 from typing import ClassVar, Self, override
 
 from pydantic import Field
+from structlog.typing import BindableLogger
 
 from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.model import FlextUtilitiesModel
 from flext_core.constants import c
-from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
+
+
+def _to_pydantic_config_dict(
+    data: t.ConfigurationDict | None,
+) -> t.PydanticConfigDict:
+    if not data:
+        return {}
+    return {
+        str(key): FlextRuntime.normalize_to_metadata_value(value)
+        for key, value in data.items()
+    }
 
 
 class FlextModelsEntity:
@@ -82,7 +92,7 @@ class FlextModelsEntity:
             return self.unique_id
 
         @property
-        def logger(self) -> p.Log.StructlogLogger:
+        def logger(self) -> BindableLogger:
             """Get logger instance."""
             return FlextRuntime.get_logger(__name__)
 
@@ -118,7 +128,7 @@ class FlextModelsEntity:
         def add_domain_event(
             self: Self,
             event_type: str,
-            data: t.ConfigurationMapping | None = None,
+            data: t.ConfigurationDict | None = None,
         ) -> r[FlextModelsEntity.DomainEvent]:
             """Add a domain event to this entity.
 
@@ -141,7 +151,7 @@ class FlextModelsEntity:
                     f"{c.Validation.MAX_UNCOMMITTED_EVENTS}",
                 )
 
-            data_dict = FlextUtilitiesModel.normalize_to_pydantic_dict(data)
+            data_dict = _to_pydantic_config_dict(data)
             event = FlextModelsEntity.DomainEvent(
                 event_type=event_type,
                 aggregate_id=self.unique_id,
@@ -164,7 +174,7 @@ class FlextModelsEntity:
 
         def add_domain_events_bulk(
             self: Self,
-            events: Sequence[tuple[str, t.ConfigurationMapping | None]],
+            events: Sequence[tuple[str, t.ConfigurationDict | None]],
         ) -> r[list[FlextModelsEntity.DomainEvent]]:
             """Add multiple domain events in bulk.
 
@@ -205,7 +215,7 @@ class FlextModelsEntity:
                 event = FlextModelsEntity.DomainEvent(
                     event_type=event_type,
                     aggregate_id=self.unique_id,
-                    data=FlextUtilitiesModel.normalize_to_pydantic_dict(data),
+                    data=_to_pydantic_config_dict(data),
                 )
                 self.domain_events.append(event)
                 created_events.append(event)

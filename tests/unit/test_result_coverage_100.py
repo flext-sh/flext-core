@@ -31,6 +31,7 @@ from returns.maybe import Nothing, Some
 
 from flext_core import e, p, r, t
 from flext_tests import u
+from flext_core.models import m
 
 # =========================================================================
 # Test Suite - r Core Functionality
@@ -87,7 +88,7 @@ class TestrCoverage:
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
-        error_data: t.ConfigurationMapping = {"status": "failed", "count": 5}
+        error_data: m.ConfigMap = {"status": "failed", "count": 5}
         result = r[str].fail("Error", error_data=error_data)
         u.Tests.Result.assert_result_failure(result)
         assert result.error_data == error_data
@@ -613,15 +614,15 @@ class TestrCoverage:
 
     def test_with_resource_success(self) -> None:
         """Test with_resource executes operation."""
-        resources_created: list[t.ConfigurationMapping] = []
+        resources_created: list[m.ConfigMap] = []
 
-        def factory() -> t.ConfigurationMapping:
-            resource: t.ConfigurationMapping = {"id": 1}
+        def factory() -> m.ConfigMap:
+            resource: m.ConfigMap = {"id": 1}
             resources_created.append(resource)
             return resource
 
         def operation(
-            resource: t.ConfigurationMapping,
+            resource: m.ConfigMap,
         ) -> r[str]:
             if isinstance(resource, dict):
                 return r[str].ok("success")
@@ -638,11 +639,11 @@ class TestrCoverage:
         """Test with_resource executes cleanup even on success."""
         cleanups_called = []
 
-        def factory() -> t.ConfigurationMapping:
+        def factory() -> m.ConfigMap:
             return {"id": 1}
 
         def operation(
-            resource: t.ConfigurationMapping,
+            resource: m.ConfigMap,
         ) -> r[str]:
             return r[str].ok("success")
 
@@ -721,7 +722,7 @@ class TestrCoverage:
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
-        error_data: t.ConfigurationMapping = {"details": "something"}
+        error_data: m.ConfigMap = {"details": "something"}
         result = r[str].fail(
             "Error",
             error_code="CODE_123",

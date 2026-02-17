@@ -1098,7 +1098,7 @@ class FlextDecorators(FlextRuntime):
         result: p.Result[bool] | FlextRuntime.RuntimeResult[bool],
         logger: FlextLogger,
         fallback_message: str,
-        kwargs: t.ConfigurationMapping,
+        kwargs: m.ConfigMap,
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:

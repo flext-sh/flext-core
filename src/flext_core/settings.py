@@ -288,7 +288,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         # We must cast to Any to allow passing dynamic configuration values to Pydantic.
         from typing import Any, cast
 
-        BaseSettings.__init__(self, **cast(dict[str, Any], kwargs))
+        BaseSettings.__init__(self, **cast("dict[str, Any]", kwargs))
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as t.GeneralValueType to avoid direct dependency-injector import in this module

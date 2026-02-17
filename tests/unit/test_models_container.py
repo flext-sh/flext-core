@@ -104,7 +104,7 @@ class TestFlextModelsContainer:
                 name="test_service",
                 service="test_value",
                 metadata=cast(
-                    "m.Metadata | t.ConfigurationMapping | None",
+                    "m.Metadata | m.ConfigMap | None",
                     metadata_value,
                 ),
             )
@@ -116,7 +116,7 @@ class TestFlextModelsContainer:
                     name="test_service",
                     service="test_value",
                     metadata=cast(
-                        "m.Metadata | t.ConfigurationMapping | None",
+                        "m.Metadata | m.ConfigMap | None",
                         metadata_value,
                     ),
                 )
@@ -203,7 +203,7 @@ class TestFlextModelsContainer:
                 name="test_factory",
                 factory=factory,
                 metadata=cast(
-                    "m.Metadata | t.ConfigurationMapping | None",
+                    "m.Metadata | m.ConfigMap | None",
                     metadata_value,
                 ),
             )
@@ -215,7 +215,7 @@ class TestFlextModelsContainer:
                     name="test_factory",
                     factory=factory,
                     metadata=cast(
-                        "m.Metadata | t.ConfigurationMapping | None",
+                        "m.Metadata | m.ConfigMap | None",
                         metadata_value,
                     ),
                 )

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Mapping
 from typing import Annotated, ClassVar, Self
 
 from pydantic import Field, PrivateAttr, computed_field
@@ -280,70 +280,34 @@ class FlextRegistry(FlextService[bool]):
 
     def _create_registration_details(
         self,
-        reg_data: t.ConfigurationMapping,
+        reg_result: m.HandlerRegistrationResult,
         key: str,
     ) -> m.HandlerRegistrationDetails:
-        """Create RegistrationDetails from registration data (DRY helper).
-
-        Eliminates duplication in _process_single_handler and register_handler_batch.
-        Both methods create RegistrationDetails from dict in identical way.
+        """Create RegistrationDetails from registration result (DRY helper).
 
         Args:
-            reg_data: Registration data dict from dispatcher
+            reg_result: Registration result model from dispatcher
             key: Handler key for registration_id
 
         Returns:
             RegistrationDetails: Validated registration details model
 
         """
-        # Extract values using u.extract() for cleaner code
-        registration_id_result = u.extract(
-            reg_data,
-            "registration_id",
-            default=key,
-            required=False,
-        )
-        handler_mode_result = u.extract(
-            reg_data,
-            "handler_mode",
-            default=c.Dispatcher.HANDLER_MODE_COMMAND,
-            required=False,
-        )
-        timestamp_result = u.extract(
-            reg_data,
-            "timestamp",
-            default="",
-            required=False,
-        )
-        status_result = u.extract(
-            reg_data,
-            "status",
-            default=c.Dispatcher.REGISTRATION_STATUS_ACTIVE,
-            required=False,
-        )
-        # Safe value extraction - handle failures gracefully
-        registration_id = (
-            str(registration_id_result.value)
-            if registration_id_result.is_success
-            else key
-        )
-        handler_mode = (
-            handler_mode_result.value
-            if handler_mode_result.is_success
-            else c.Dispatcher.HANDLER_MODE_COMMAND
-        )
-        timestamp = (
-            str(timestamp_result.value)
-            if timestamp_result.is_success and timestamp_result.value
-            else ""
-        )
-        status = (
-            status_result.value
-            if status_result.is_success
-            else c.Dispatcher.REGISTRATION_STATUS_ACTIVE
-        )
+        # Map fields from result to details
+        handler_mode_val = reg_result.mode
+        # Map internal mode strings to Cqrs.HandlerType if possible
+        handler_mode = c.Cqrs.HandlerType.COMMAND
+        # If mode matches known types, use it (simplified mapping)
+        if "query" in handler_mode_val.lower():
+            handler_mode = c.Cqrs.HandlerType.QUERY
+        elif "event" in handler_mode_val.lower():
+            handler_mode = c.Cqrs.HandlerType.EVENT
+
+        timestamp = getattr(reg_result, "timestamp", "")
+        status = reg_result.status
+
         return m.HandlerRegistrationDetails(
-            registration_id=registration_id,
+            registration_id=key,
             handler_mode=FlextRegistry._safe_get_handler_mode(handler_mode),
             timestamp=timestamp,
             status=self._safe_get_status(status),
@@ -416,163 +380,16 @@ class FlextRegistry(FlextService[bool]):
             handler_name=handler_name,
             handler_key=key,
         )
-        # register_handler returns r[dict[str, t.GeneralValueType]]
-        # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
-        # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
-        registration = self._dispatcher.register_handler(
-            handler,
-        )
-        if registration.is_success:
-            self._registered_keys.add(key)
-            # Use get() for concise dict extraction
-            reg_dict = registration.value
-            _ = (
-                u.Mapper.get(reg_dict, "handler_name", default=handler_name)
-                or handler_name
-            )
-            self.logger.info(
-                "Handler registered successfully",
-                operation="register_handler",
-                handler_name=handler_name,
-                handler_key=key,
-            )
-            # Convert t.GeneralValueType to RegistrationDetails using helper method
-            reg_data = registration.value
-            reg_details = self._create_registration_details(reg_data, key)
-            # Override timestamp with formatted default if not provided
-            if not reg_details.timestamp:
-                reg_details.timestamp = u.generate_iso_timestamp().replace(
-                    "+00:00",
-                    "Z",
-                )
-            return r[m.HandlerRegistrationDetails].ok(reg_details)
-
-        error_msg = registration.error or "Unknown error"
-        self.logger.error(
-            "FAILED to register handler with dispatcher - REGISTRATION ABORTED",
-            operation="register_handler",
-            handler_name=handler_name,
-            handler_key=key,
-            error=error_msg,
-            consequence="Handler will not be available for dispatch",
-            resolution_hint="Check dispatcher configuration and handler compatibility",
-        )
-        return r[m.HandlerRegistrationDetails].fail(error_msg)
-
-    def register_handlers(
-        self,
-        handlers: Iterable[FlextHandlers[t.GeneralValueType, t.GeneralValueType]],
-    ) -> r[FlextRegistry.Summary]:
-        """Register multiple handlers in one shot using railway pattern.
-
-        Returns:
-            r[FlextRegistry.Summary]: Success result with registration summary.
-
-        """
-        # Propagate context for distributed tracing
-        self._propagate_context("register_handlers_batch")
-
-        handlers_list = list(handlers)
-        self.logger.info(
-            "Starting batch handler registration",
-            operation="register_handlers",
-            handlers_count=len(handlers_list),
-        )
-
-        summary = FlextRegistry.Summary()
-        for idx, handler in enumerate(handlers_list):
-            handler_name = handler.__class__.__name__ if handler else "unknown"
-            self.logger.debug(
-                "Processing handler in batch",
-                operation="register_handlers",
-                handler_index=idx + 1,
-                total_handlers=len(handlers_list),
-                handler_name=handler_name,
-            )
-            result: r[bool] = self._process_single_handler(handler, summary)
-            if result.is_failure:
-                # When is_failure is True, error is never None (fail() converts None to "")
-                # Use error or fallback message
-                base_msg = "Handler processing failed"
-                error_msg = result.error or f"{base_msg} (operation failed)"
-                if error_msg == f"{base_msg} (operation failed)":
-                    # If error is empty string, use base message
-                    error_msg = base_msg
-                else:
-                    error_msg = f"{base_msg}: {error_msg}"
-                self.logger.error(
-                    "FAILED: Batch registration stopped due to handler error",
-                    operation="register_handlers",
-                    handler_index=idx + 1,
-                    total_handlers=len(handlers_list),
-                    handler_name=handler_name,
-                    error=error_msg,
-                    successful_registrations=len(summary.registered),
-                    skipped_registrations=len(summary.skipped),
-                    consequence="Remaining handlers in batch will not be registered",
-                )
-                return r[FlextRegistry.Summary].fail(error_msg)
-
-        final_summary = self._finalize_summary(summary)
-        if final_summary.is_success:
-            self.logger.info(
-                "Batch handler registration completed successfully",
-                operation="register_handlers",
-                total_handlers=len(handlers_list),
-                successful_registrations=len(summary.registered),
-                skipped_registrations=len(summary.skipped),
-            )
-        else:
-            self.logger.warning(
-                "Batch handler registration completed with errors",
-                operation="register_handlers",
-                total_handlers=len(handlers_list),
-                successful_registrations=len(summary.registered),
-                failed_registrations=len(summary.errors),
-                errors=summary.errors[:5],  # Show first 5 errors
-            )
-        return final_summary
-
-    def _process_single_handler(
-        self,
-        handler: FlextHandlers[t.GeneralValueType, t.GeneralValueType],
-        summary: FlextRegistry.Summary,
-    ) -> r[bool]:
-        """Process a single handler registration.
-
-        Returns:
-            r[bool]: Success with True if registration succeeds, failure with error details.
-
-        """
-        key = FlextRegistry._resolve_handler_key(handler)
-        handler_name = handler.__class__.__name__ if handler else "unknown"
-
-        if key in self._registered_keys:
-            self.logger.debug(
-                "Handler already registered, skipping",
-                operation="process_single_handler",
-                handler_name=handler_name,
-                handler_key=key,
-            )
-            summary.skipped.append(key)
-            return r[bool].ok(True)
-
-        # Handler is already the correct type
-        self.logger.debug(
-            "Registering handler with dispatcher",
-            operation="process_single_handler",
-            handler_name=handler_name,
-            handler_key=key,
-        )
+        # register_handler returns r[m.HandlerRegistrationResult]
         # register_handler accepts t.GeneralValueType | BaseModel, but h works via runtime check
         # Type narrowing: handler is FlextHandlers which is compatible with t.GeneralValueType
         registration_result = self._dispatcher.register_handler(
             handler,
         )
         if registration_result.is_success:
-            # Convert dict result to RegistrationDetails
-            reg_data = registration_result.value
-            reg_details = self._create_registration_details(reg_data, key)
+            # Convert model result to RegistrationDetails
+            reg_result = registration_result.value
+            reg_details = self._create_registration_details(reg_result, key)
             if not reg_details:
                 # Fallback: create minimal registration details
                 reg_details = m.HandlerRegistrationDetails(
@@ -581,18 +398,20 @@ class FlextRegistry(FlextService[bool]):
                     timestamp="",
                     status=c.Cqrs.CommonStatus.RUNNING,
                 )
-            self._add_successful_registration(key, reg_details, summary)
+
+            self._registered_keys.add(key)
             self.logger.debug(
-                "Handler registered successfully in batch",
-                operation="process_single_handler",
+                "Handler registered successfully",
+                operation="register_handler",
                 handler_name=handler_name,
                 handler_key=key,
             )
-            return r[bool].ok(True)
+            return r[m.HandlerRegistrationDetails].ok(reg_details)
+
         error_msg = registration_result.error
         self.logger.warning(
-            "Handler registration failed in batch",
-            operation="process_single_handler",
+            "Handler registration failed",
+            operation="register_handler",
             handler_name=handler_name,
             handler_key=key,
             error=error_msg,
@@ -600,10 +419,7 @@ class FlextRegistry(FlextService[bool]):
         )
         # Use error property for type-safe str
         error_str = registration_result.error or "Unknown error"
-        _ = FlextRegistry._add_registration_error(key, error_str, summary)
-        # Return type should be r[bool] but we're returning r[Summary]
-        # Fix: return r[bool] as expected by method signature
-        return r[bool].fail(error_str)
+        return r[m.HandlerRegistrationDetails].fail(error_str)
 
     def _add_successful_registration(
         self,
@@ -649,6 +465,87 @@ class FlextRegistry(FlextService[bool]):
                 "; ".join(summary.errors),
             )
         return r[FlextRegistry.Summary].ok(summary)
+
+    def register_handlers(
+        self,
+        handlers: Sequence[t.GeneralValueType],
+    ) -> r[FlextRegistry.Summary]:
+        """Register multiple handlers in batch.
+
+        Args:
+            handlers: Sequence of handler instances to register
+
+        Returns:
+            r[FlextRegistry.Summary]: Batch registration summary
+
+        """
+        summary = FlextRegistry.Summary()
+        for handler in handlers:
+            # We must determine a key BEFORE registration to track it properly
+            # The register_handler method recalculates this, but we need it here for consistent logging
+            # However, simpler to let register_handler do the work and check result
+            result = self.register_handler(handler)
+
+            # Extract key/ID from handler for tracking
+            key = FlextRegistry._resolve_handler_key(handler)
+
+            if result.is_success:
+                # Use value directly (it's HandlerRegistrationDetails)
+                self._add_successful_registration(key, result.value, summary)
+            else:
+                self._add_registration_error(
+                    key, result.error or "Unknown error", summary
+                )
+
+        return self._finalize_summary(summary)
+
+    def register_bindings(
+        self,
+        bindings: Mapping[type[t.GeneralValueType], t.GeneralValueType],
+    ) -> r[FlextRegistry.Summary]:
+        """Register message-to-handler bindings.
+
+        Args:
+            bindings: Map of MessageType -> HandlerInstance
+
+        Returns:
+            r[FlextRegistry.Summary]: Batch registration summary
+
+        """
+        summary = FlextRegistry.Summary()
+
+        # This implementation delegates to dispatcher's register_handler for each binding
+        # But wait - register_handler takes (request, handler) or just (handler) if it's decorated
+        # FlextRegistry.register_handler only takes (handler).
+        # It seems FlextRegistry assumes handlers are self-describing (decorated) or we need to use dispatcher directly.
+
+        # If we look at dispatcher.register_handler signature:
+        # def register_handler(self, request: ..., handler: ... = None)
+
+        for message_type, handler in bindings.items():
+            key = f"binding::{message_type.__name__}::{handler.__class__.__name__}"
+
+            # We use the dispatcher directly because registry's register_handler
+            # currently only supports single-argument (self-describing) handlers
+            # Use strict type checking for message_type (it's a type)
+            try:
+                # Dispatcher return type is r[m.HandlerRegistrationResult]
+                # We need to adapt it to Registry logic
+                reg_result = self._dispatcher.register_handler(message_type, handler)
+
+                if reg_result.is_success:
+                    # Convert dispatcher result to Registry details
+                    val = reg_result.value
+                    details = self._create_registration_details(val, key)
+                    self._add_successful_registration(key, details, summary)
+                else:
+                    self._add_registration_error(
+                        key, reg_result.error or "Unknown error", summary
+                    )
+            except Exception as e:
+                self._add_registration_error(key, str(e), summary)
+
+        return self._finalize_summary(summary)
 
     # ------------------------------------------------------------------
     # Generic Plugin Registry API
@@ -934,7 +831,7 @@ class FlextRegistry(FlextService[bool]):
                 # Cast to t.GeneralValueType for is_dict_like check
                 metadata_as_general = metadata
                 if FlextRuntime.is_dict_like(metadata_as_general):
-                    # Type guard ensures metadata_as_general is t.ConfigurationMapping
+                    # Type guard ensures metadata_as_general is m.ConfigMap
                     # Type narrowing: metadata_as_general is dict-like, assign as ConfigurationMapping
                     metadata_mapping = metadata_as_general
                     validated_metadata = dict(metadata_mapping)

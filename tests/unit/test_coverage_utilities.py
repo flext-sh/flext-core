@@ -31,6 +31,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextResult, p, t, u
 from tests.test_utils import assertion_helpers
+from flext_core.models import m
 
 # =========================================================================
 # Test Data and Scenarios
@@ -159,7 +160,7 @@ class UtilityScenarios:
         """Create mock config object."""
 
         class TestConfig:
-            def model_dump(self) -> t.ConfigurationMapping:
+            def model_dump(self) -> m.ConfigMap:
                 # Convert kwargs to proper ConfigurationMapping type
                 # HasModelDump expects Mapping[str, FlexibleValue]
                 # ConfigurationMapping = Mapping[str, t.GeneralValueType]
@@ -186,7 +187,7 @@ class UtilityScenarios:
 
         class TestCachedObject:
             def __init__(self) -> None:
-                self._cache: t.ConfigurationMapping = {"key": "value"}
+                self._cache: m.ConfigMap = {"key": "value"}
                 self._simple_cache: str = "cached_value"
 
         return TestCachedObject()

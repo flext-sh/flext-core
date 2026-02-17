@@ -21,6 +21,7 @@ from pydantic import BaseModel
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.constants import c
+from flext_core.models import m
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
@@ -485,7 +486,7 @@ class FlextUtilitiesGenerators:
     def create_dynamic_type_subclass(
         name: str,
         base_class: type,  # Base class for dynamic subclass
-        attributes: t.ConfigurationMapping | dict[str, t.GeneralValueType],
+        attributes: m.ConfigMap | dict[str, t.GeneralValueType],
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 

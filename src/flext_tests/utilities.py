@@ -865,7 +865,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def assert_model_creation_success[TResult](
                 factory_method: ModelFactory[TResult],
-                expected_attrs: t.ConfigurationMapping,
+                expected_attrs: m.ConfigMap,
                 **factory_kwargs: t.GeneralValueType,
             ) -> TResult:
                 """Assert successful model creation and validate attributes.
@@ -925,7 +925,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def assert_config_fields(
                 config: FlextSettings,
-                expected_fields: t.ConfigurationMapping,
+                expected_fields: m.ConfigMap,
             ) -> None:
                 """Assert config has expected field values.
 

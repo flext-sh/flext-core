@@ -1,15 +1,15 @@
 """Automation Decorators Showcase.
 
-Demonstrates context enrichment, FlextResult advanced methods, and automation
+Demonstrates context enrichment, r advanced methods, and automation
 patterns using Python 3.13+ PEP 695 type aliases, collections.abc patterns,
 Pydantic 2 with StrEnum, and strict type safety - no backward compatibility.
 
 **Expected Output:**
-- Automatic context enrichment in FlextService
+- Automatic context enrichment in s
 - Correlation ID generation for distributed tracing
 - User context enrichment for audit trails
 - Operation context tracking
-- FlextResult advanced methods: from_callable, flow_through, lash, alt
+- r advanced methods: from_callable, flow_through, lash, alt
 - Service execution with automatic context propagation
 - Error recovery and fallback patterns
 
@@ -22,53 +22,54 @@ from __future__ import annotations
 from pydantic import PrivateAttr
 
 from flext_core import (
-    FlextConstants,
-    FlextResult,
-    FlextService,
-    FlextTypes as t,
+    FlextContext,
+    c,
+    m,
+    r,
+    s,
+    t,
+    u,
 )
-from flext_core.context import FlextContext
-from flext_core.utilities import u
 
 # =============================================================================
 # EXAMPLE 1: Service with Context Enrichment
 # =============================================================================
 
 
-class UserService(FlextService[t.ConfigurationMapping]):
+class UserService(s[m.ConfigMap]):
     """Service demonstrating automatic context enrichment."""
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize with automatic context enrichment.
 
-        FlextService.__init__ automatically calls:
+        s.__init__ automatically calls:
         - _enrich_context() with service metadata
         """
         super().__init__(**data)
         # Context now includes: service_type, service_module
 
-    def execute(self) -> FlextResult[t.ConfigurationMapping]:
+    def execute(self) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
-        return FlextResult[t.ConfigurationMapping].ok({"status": "initialized"})
+        return r[m.ConfigMap].ok({"status": "initialized"})
 
     def create_user(
         self,
         username: str,
         email: str,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Create user with automatic context enrichment."""
         # Context includes service metadata from __init__
         if self.logger:
             self.logger.info("Creating user", username=username, email=email)
 
         # Business logic
-        user_data: t.ConfigurationMapping = {
+        user_data: m.ConfigMap = {
             "id": "usr_123",
             "username": username,
             "email": email,
         }
 
-        return FlextResult[t.ConfigurationMapping].ok(user_data)
+        return r[m.ConfigMap].ok(user_data)
 
 
 # =============================================================================
@@ -76,23 +77,23 @@ class UserService(FlextService[t.ConfigurationMapping]):
 # =============================================================================
 
 
-class PaymentService(FlextService[t.ConfigurationMapping]):
+class PaymentService(s[m.ConfigMap]):
     """Service demonstrating correlation ID tracking."""
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize with automatic context enrichment."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[t.ConfigurationMapping]:
+    def execute(self) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
-        return FlextResult[t.ConfigurationMapping].ok({"status": "initialized"})
+        return r[m.ConfigMap].ok({"status": "initialized"})
 
     def process_payment(
         self,
         payment_id: str,
         amount: float,
         user_id: str,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Process payment with correlation tracking.
 
         Demonstrates:
@@ -127,7 +128,7 @@ class PaymentService(FlextService[t.ConfigurationMapping]):
             )
 
         # Business logic
-        payment_data: t.ConfigurationMapping = {
+        payment_data: m.ConfigMap = {
             "payment_id": payment_id,
             "amount": amount,
             "status": "completed",
@@ -137,7 +138,7 @@ class PaymentService(FlextService[t.ConfigurationMapping]):
         # Clean up operation context
         self._clear_operation_context()
 
-        return FlextResult[t.ConfigurationMapping].ok(payment_data)
+        return r[m.ConfigMap].ok(payment_data)
 
 
 # =============================================================================
@@ -145,16 +146,16 @@ class PaymentService(FlextService[t.ConfigurationMapping]):
 # =============================================================================
 
 
-class OrderService(FlextService[t.ConfigurationMapping]):
+class OrderService(s[m.ConfigMap]):
     """Service demonstrating context enrichment helper method."""
 
-    _order_data: t.ConfigurationMapping = PrivateAttr(default_factory=dict)
+    _order_data: m.ConfigMap = PrivateAttr(default_factory=dict)
 
     def __init__(self, **data: t.GeneralValueType) -> None:
         """Initialize service."""
         super().__init__(**data)
 
-    def execute(self) -> FlextResult[t.ConfigurationMapping]:
+    def execute(self) -> r[m.ConfigMap]:
         """Process order with business logic."""
         order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data)
         # Simple merge: new values override existing ones
@@ -163,7 +164,7 @@ class OrderService(FlextService[t.ConfigurationMapping]):
             {
                 "order_id": u.get(order_data_dict, "order_id", default="ord_123")
                 or "ord_123",
-                "status": FlextConstants.Cqrs.CommonStatus.PENDING.value,
+                "status": c.Cqrs.CommonStatus.PENDING.value,
             },
         )
         order_data_dict = merged
@@ -177,19 +178,19 @@ class OrderService(FlextService[t.ConfigurationMapping]):
             order_data_dict,
             predicate=is_string_key,
         )
-        result_data: t.ConfigurationMapping = (
+        result_data: m.ConfigMap = (
             filtered_dict
             if u.guard(filtered_dict, dict, return_value=True) is not None
             else {}
         )
-        return FlextResult[t.ConfigurationMapping].ok(result_data)
+        return r[m.ConfigMap].ok(result_data)
 
     def process_order(
         self,
         order_id: str,
         customer_id: str,
         correlation_id: str | None = None,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Process order with automatic context enrichment."""
         order_data_dict: dict[str, t.GeneralValueType] = dict(self._order_data)
         order_data_dict["order_id"] = order_id
@@ -200,7 +201,7 @@ class OrderService(FlextService[t.ConfigurationMapping]):
         self._enrich_context(
             user_id=customer_id,
             order_id=order_id,
-            operation=FlextConstants.Cqrs.Action.CREATE.value,
+            operation=c.Cqrs.Action.CREATE.value,
         )
 
         with self.track("process_order"):
@@ -213,12 +214,12 @@ class OrderService(FlextService[t.ConfigurationMapping]):
 
 
 # =============================================================================
-# EXAMPLE 4: New FlextResult Methods (v0.9.9+)
+# EXAMPLE 4: New r Methods (v0.9.9+)
 # =============================================================================
 
 
-class AutomationService(FlextService[t.ConfigurationMapping]):
-    """Service demonstrating the 5 new FlextResult methods in automation context.
+class AutomationService(s[m.ConfigMap]):
+    """Service demonstrating the 5 new r methods in automation context.
 
     Shows how the new v0.9.9+ methods work with automated workflows:
     - from_callable: Safe automation task execution
@@ -235,17 +236,17 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
     def execute(
         self,
         **_kwargs: t.GeneralValueType,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
-        return FlextResult[t.ConfigurationMapping].ok({
+        return r[m.ConfigMap].ok({
             "status": "automation_ready",
         })
 
     @staticmethod
-    def demonstrate_new_flextresult_methods() -> None:
-        """Demonstrate the 5 new FlextResult methods in automation context."""
+    def demonstrate_new_r_methods() -> None:
+        """Demonstrate the 5 new r methods in automation context."""
         print("\n" + "=" * 60)
-        print("NEW FlextResult METHODS - AUTOMATION CONTEXT")
+        print("NEW r METHODS - AUTOMATION CONTEXT")
         print("Demonstrating v0.9.9+ methods with automated workflows")
         print("=" * 60)
 
@@ -257,7 +258,7 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         AutomationService._demo_advanced_scenarios()
 
         print("\n" + "=" * 60)
-        print("✅ NEW FlextResult METHODS AUTOMATION DEMO COMPLETE!")
+        print("✅ NEW r METHODS AUTOMATION DEMO COMPLETE!")
         print("All 5 methods + 3 advanced scenarios demonstrated")
         print("=" * 60)
 
@@ -266,8 +267,8 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         """Demo 1: from_callable - Safe Automation Task Execution."""
         print("\n=== 1. from_callable: Safe Automation Task Execution ===")
 
-        def risky_automation_task() -> t.ConfigurationMapping:
-            task_data: t.ConfigurationMapping = {
+        def risky_automation_task() -> m.ConfigMap:
+            task_data: m.ConfigMap = {
                 "task_id": "AUTO-001",
                 "task_type": "data_sync",
                 "records_processed": 1000,
@@ -279,7 +280,7 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
                 raise ValueError(msg)
             return task_data
 
-        result = FlextResult[t.ConfigurationMapping].create_from_callable(
+        result = r[m.ConfigMap].create_from_callable(
             risky_automation_task,
         )
         if result.is_success:
@@ -295,32 +296,30 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         print("\n=== 2. flow_through: Automation Pipeline Composition ===")
 
         def validate(
-            data: t.ConfigurationDict,
-        ) -> FlextResult[t.ConfigurationDict]:
+            data: m.ConfigMap,
+        ) -> r[m.ConfigMap]:
             task_type = data.get("task_type", "")
             if not isinstance(task_type, str) or not task_type:
-                return FlextResult[t.ConfigurationDict].fail("Task type required")
-            return FlextResult[t.ConfigurationDict].ok(data)
+                return r[m.ConfigMap].fail("Task type required")
+            return r[m.ConfigMap].ok(data)
 
         def enrich(
-            data: t.ConfigurationDict,
-        ) -> FlextResult[t.ConfigurationDict]:
-            enriched: t.ConfigurationDict = {
+            data: m.ConfigMap,
+        ) -> r[m.ConfigMap]:
+            enriched: m.ConfigMap = {
                 **data,
                 "automation_timestamp": "2025-01-01T12:00:00Z",
                 "duration_ms": 250,
                 "result_id": "RESULT-001",
             }
-            return FlextResult[t.ConfigurationDict].ok(enriched)
+            return r[m.ConfigMap].ok(enriched)
 
-        automation_input: t.ConfigurationDict = {
-            "task_type": FlextConstants.Cqrs.ProcessingMode.BATCH.value,
+        automation_input: m.ConfigMap = {
+            "task_type": c.Cqrs.ProcessingMode.BATCH.value,
             "source": "database",
         }
         pipeline_result = (
-            FlextResult[t.ConfigurationDict]
-            .ok(automation_input)
-            .flow_through(validate, enrich)
+            r[m.ConfigMap].ok(automation_input).flow_through(validate, enrich)
         )
 
         if pipeline_result.is_success:
@@ -337,12 +336,12 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         """Demo 3: lash - Fallback Automation Strategies."""
         print("\n=== 3. lash: Fallback Automation Strategies ===")
 
-        def primary() -> FlextResult[str]:
-            return FlextResult[str].fail("Primary automation engine unavailable")
+        def primary() -> r[str]:
+            return r[str].fail("Primary automation engine unavailable")
 
-        def fallback(error: str) -> FlextResult[str]:
+        def fallback(error: str) -> r[str]:
             print(f"   ⚠️  Primary failed: {error}, using fallback...")
-            return FlextResult[str].ok("FALLBACK-AUTOMATION-SUCCESS")
+            return r[str].ok("FALLBACK-AUTOMATION-SUCCESS")
 
         result = primary().lash(fallback)
         if result.is_success:
@@ -355,13 +354,13 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         """Demo 4: alt - Alternative Automation Paths."""
         print("\n=== 4. alt: Alternative Automation Paths ===")
 
-        def get_cached() -> FlextResult[t.ConfigurationMapping]:
-            return FlextResult[t.ConfigurationMapping].fail("Cache unavailable")
+        def get_cached() -> r[m.ConfigMap]:
+            return r[m.ConfigMap].fail("Cache unavailable")
 
-        def get_default() -> FlextResult[t.ConfigurationMapping]:
-            return FlextResult[t.ConfigurationMapping].ok({
-                "automation_mode": FlextConstants.Cqrs.ProcessingMode.SEQUENTIAL.value,
-                "batch_size": FlextConstants.Performance.BatchProcessing.DEFAULT_SIZE,
+        def get_default() -> r[m.ConfigMap]:
+            return r[m.ConfigMap].ok({
+                "automation_mode": c.Cqrs.ProcessingMode.SEQUENTIAL.value,
+                "batch_size": c.Performance.BatchProcessing.DEFAULT_SIZE,
             })
 
         cached = get_cached()
@@ -380,15 +379,15 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         """Demo 5: value_or_call - Lazy Resource Initialization."""
         print("\n=== 5. value_or_call: Lazy Resource Initialization ===")
 
-        def create_engine() -> t.ConfigurationMapping:
+        def create_engine() -> m.ConfigMap:
             print("   ⚙️  Initializing automation engine...")
             return {
                 "engine_id": "AUTO-ENGINE-001",
-                "engine_type": FlextConstants.Cqrs.ProcessingMode.PARALLEL.value,
-                "worker_count": FlextConstants.Performance.DEFAULT_DB_POOL_SIZE,
+                "engine_type": c.Cqrs.ProcessingMode.PARALLEL.value,
+                "worker_count": c.Performance.DEFAULT_DB_POOL_SIZE,
             }
 
-        fail_result = FlextResult[t.ConfigurationMapping].fail(
+        fail_result = r[m.ConfigMap].fail(
             "No existing engine",
         )
         engine = create_engine() if fail_result.is_failure else fail_result.value
@@ -400,11 +399,11 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         print(f"✅ Engine acquired: {engine_id}")
         print(f"   Workers: {worker_count}")
 
-        existing: t.ConfigurationMapping = {
+        existing: m.ConfigMap = {
             "engine_id": "CACHED-ENGINE-001",
-            "worker_count": FlextConstants.Container.DEFAULT_WORKERS,
+            "worker_count": c.Container.DEFAULT_WORKERS,
         }
-        success_result = FlextResult[t.ConfigurationMapping].ok(existing)
+        success_result = r[m.ConfigMap].ok(existing)
         cached = success_result.map_or(create_engine())
         cached_id = str(cached.get("engine_id", "unknown"))
         print(f"✅ Existing engine used: {cached_id}")
@@ -425,26 +424,26 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         """ETL Pipeline with Error Recovery."""
         print("\n--- Data Pipeline with Error Recovery ---")
 
-        def extract() -> FlextResult[list[t.ConfigurationDict]]:
-            return FlextResult[list[t.ConfigurationDict]].ok([
+        def extract() -> r[list[m.ConfigMap]]:
+            return r[list[m.ConfigMap]].ok([
                 {"id": 1, "name": "Item A", "value": 100},
                 {"id": 2, "name": "Item B", "value": 200},
             ])
 
         def transform(
-            data: list[t.ConfigurationDict],
-        ) -> FlextResult[list[t.ConfigurationDict]]:
-            transformed: list[t.ConfigurationDict] = [
+            data: list[m.ConfigMap],
+        ) -> r[list[m.ConfigMap]]:
+            transformed: list[m.ConfigMap] = [
                 {**item, "processed": True, "timestamp": "2025-01-01T12:00:00Z"}
                 for item in data
             ]
-            return FlextResult[list[t.ConfigurationDict]].ok(transformed)
+            return r[list[m.ConfigMap]].ok(transformed)
 
         def load(
-            data: list[t.ConfigurationDict],
-        ) -> FlextResult[list[t.ConfigurationDict]]:
+            data: list[m.ConfigMap],
+        ) -> r[list[m.ConfigMap]]:
             print(f"   💾 Loaded {len(data)} records successfully")
-            return FlextResult[list[t.ConfigurationDict]].ok(data)
+            return r[list[m.ConfigMap]].ok(data)
 
         result = extract().flow_through(transform, load)
         if result.is_success:
@@ -457,15 +456,15 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
         """Multi-Service Coordination."""
         print("\n--- Multi-Service Coordination ---")
 
-        def start_a() -> FlextResult[str]:
-            return FlextResult[str].ok("Service A started")
+        def start_a() -> r[str]:
+            return r[str].ok("Service A started")
 
-        def start_backup(error: str) -> FlextResult[str]:
+        def start_backup(error: str) -> r[str]:
             print(f"   🔄 Service failed: {error}, starting backup...")
-            return FlextResult[str].ok("Backup service started")
+            return r[str].ok("Backup service started")
 
-        def start_b() -> FlextResult[str]:
-            return FlextResult[str].ok("B started")
+        def start_b() -> r[str]:
+            return r[str].ok("B started")
 
         result = start_a().flow_through(lambda _: start_b()).lash(start_backup)
         if result.is_success:
@@ -480,16 +479,16 @@ class AutomationService(FlextService[t.ConfigurationMapping]):
 
         cache: dict[str, t.GeneralValueType] = {}
 
-        def load_config() -> t.ConfigurationMapping:
+        def load_config() -> m.ConfigMap:
             if not cache:
                 print("   📄 Loading configuration from file...")
                 cache.update({
                     "database_url": "postgresql://localhost:5432/testdb",
-                    "cache_ttl": FlextConstants.Defaults.DEFAULT_CACHE_TTL,
+                    "cache_ttl": c.Defaults.DEFAULT_CACHE_TTL,
                 })
             return cache
 
-        fail_attempt = FlextResult[t.ConfigurationMapping].fail(
+        fail_attempt = r[m.ConfigMap].fail(
             "No cached config",
         )
         config = load_config() if fail_attempt.is_failure else fail_attempt.value
@@ -540,23 +539,23 @@ def main() -> None:
     )
     print(f"Result: {result3.value if result3.is_success else result3.error}")
 
-    # Example 4: New FlextResult methods (v0.9.9+)
-    print("\n4. NEW FlextResult METHODS (v0.9.9+)")
+    # Example 4: New r methods (v0.9.9+)
+    print("\n4. NEW r METHODS (v0.9.9+)")
     print("-" * 80)
     automation_service = AutomationService()
-    automation_service.demonstrate_new_flextresult_methods()
+    automation_service.demonstrate_new_r_methods()
 
     print("\n" + "=" * 80)
     print("KEY BENEFITS DEMONSTRATED:")
     print("=" * 80)
-    print("✅ Automatic context enrichment in FlextService")
+    print("✅ Automatic context enrichment in s")
     print("✅ Correlation ID generation for distributed tracing")
     print("✅ User context enrichment for audit trails")
     print("✅ Operation context tracking")
     print("✅ Automatic context cleanup")
     print("✅ Structured logging with full context")
     print(
-        "✅ NEW FlextResult methods: from_callable, flow_through, lash, alt, unwrap_or",
+        "✅ NEW r methods: from_callable, flow_through, lash, alt, unwrap_or",
     )
     print(
         "✅ Advanced automation scenarios: ETL pipelines, service orchestration, lazy loading",

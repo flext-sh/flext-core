@@ -23,6 +23,7 @@ from pydantic import Field
 
 from flext_core import FlextRuntime, m, t
 from flext_tests import u
+from flext_core.models import m
 
 # Use actual classes, not type aliases, for inheritance
 Statistics = m.CollectionsStatistics
@@ -382,7 +383,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: t.ConfigurationDict = aggregated_raw
+        aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 30
 
     def test_results_aggregate_lists(self) -> None:
@@ -396,7 +397,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: t.ConfigurationDict = aggregated_raw
+        aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["errors"] == ["error1", "error2"]
 
     def test_results_aggregate_dicts(self) -> None:
@@ -410,7 +411,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: t.ConfigurationDict = aggregated_raw
+        aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
 
     def test_results_aggregate_mixed(self) -> None:
@@ -426,7 +427,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: t.ConfigurationDict = aggregated_raw
+        aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 30
         assert aggregated["errors"] == ["a", "b"]
         assert aggregated["status"] == "done"
@@ -443,7 +444,7 @@ class TestFlextModelsCollectionsResults:
         aggregated_raw = TestResult.aggregate([result1, result2])
         # Type narrowing: aggregate returns t.GeneralValueType, but we know it's a dict
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: t.ConfigurationDict = aggregated_raw
+        aggregated: m.ConfigMap = aggregated_raw
         assert aggregated["processed"] == 10
         assert aggregated["status"] == "ok"
 

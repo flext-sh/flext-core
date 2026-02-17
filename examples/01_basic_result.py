@@ -22,12 +22,12 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 
 from flext_core import (
-    FlextModels as m,
-    FlextTypes as t,
     c,
     e,
+    m,
     r,
     s,
+    t,
     u,
 )
 

@@ -41,6 +41,7 @@ from flext_core import (
     t,
 )
 from tests.test_utils import assertion_helpers
+from flext_core.models import m
 
 
 @dataclass
@@ -194,7 +195,7 @@ class TestFactories:
         ]
 
     @staticmethod
-    def multi_operation_cases() -> list[tuple[str, int, t.ConfigurationMapping]]:
+    def multi_operation_cases() -> list[tuple[str, int, m.ConfigMap]]:
         """Generate multiple operation test cases."""
         return [
             ("double", 5, {"operation": "double", "result": 10}),
@@ -243,12 +244,12 @@ class SendEmailService(FlextService[EmailResponse]):
         return FlextResult.ok(EmailResponse(status="sent", message_id=f"msg-{self.to}"))
 
 
-class ValidationService(FlextService[t.ConfigurationMapping]):
+class ValidationService(FlextService[m.ConfigMap]):
     """Service that validates input."""
 
     value: int
 
-    def execute(self) -> FlextResult[t.ConfigurationMapping]:
+    def execute(self) -> FlextResult[m.ConfigMap]:
         """Validate value."""
         if self.value < 0:
             return FlextResult.fail("Value must be positive")
@@ -259,13 +260,13 @@ class ValidationService(FlextService[t.ConfigurationMapping]):
         return FlextResult.ok({"valid": True, "value": self.value})
 
 
-class MultiOperationService(FlextService[t.ConfigurationMapping]):
+class MultiOperationService(FlextService[m.ConfigMap]):
     """Service with multiple operations."""
 
     operation: str
     value: int
 
-    def execute(self) -> FlextResult[t.ConfigurationMapping]:
+    def execute(self) -> FlextResult[m.ConfigMap]:
         """Execute based on operation."""
         match self.operation:
             case "double":
@@ -590,10 +591,10 @@ class TestPattern8MultipleOperations:
         self,
         operation: str,
         value: int,
-        expected: t.ConfigurationMapping,
+        expected: m.ConfigMap,
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
-        result: t.ConfigurationMapping = MultiOperationService(
+        result: m.ConfigMap = MultiOperationService(
             operation=operation,
             value=value,
         ).result
@@ -691,7 +692,7 @@ class TestAllPatternsIntegration:
         assert message_id.startswith("msg-")
 
         # Step 3: Multiple operations (V2 Property)
-        calc_result: t.ConfigurationMapping = MultiOperationService(
+        calc_result: m.ConfigMap = MultiOperationService(
             operation="double",
             value=10,
         ).result

@@ -31,6 +31,7 @@ from pydantic import BaseModel
 from flext_core import FlextSettings, p, r, t
 from flext_core.constants import c
 from flext_tests import FlextTestsUtilities, u
+from flext_core.models import m
 
 
 class UtilityScenarios:
@@ -330,7 +331,7 @@ class Testu:
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
-        data: t.ConfigurationMapping = {"z": 1, "a": 2, "m": 3}
+        data: m.ConfigMap = {"z": 1, "a": 2, "m": 3}
         result = u.Cache.sort_dict_keys(data)
         assert isinstance(result, dict)
         assert list(result.keys()) == ["a", "m", "z"]
@@ -348,7 +349,7 @@ class Testu:
 
     def test_cache_clear_object_cache(self) -> None:
         """Test clearing object cache."""
-        cache_data: t.ConfigurationMapping = {"test": "data"}
+        cache_data: m.ConfigMap = {"test": "data"}
         result = u.Cache.clear_object_cache(cache_data)
         u.Tests.Result.assert_result_success(result)
 
@@ -364,7 +365,7 @@ class Testu:
         if has_cache:
 
             class TestWithCache:
-                _cache: ClassVar[t.ConfigurationMapping] = {}
+                _cache: ClassVar[m.ConfigMap] = {}
 
             cache_obj = TestWithCache()
             # Cast to t.GeneralValueType for type checker - test class is valid object
@@ -520,7 +521,7 @@ class Testu:
 
     def test_validation_sort_key_with_dict(self) -> None:
         """Test sort_key with dictionary."""
-        dict_a: t.ConfigurationMapping = {"z": 1, "a": 2}
+        dict_a: m.ConfigMap = {"z": 1, "a": 2}
         key = u.Validation.sort_key(dict_a)
         assert isinstance(key, (str, tuple)) and len(key) > 0
 

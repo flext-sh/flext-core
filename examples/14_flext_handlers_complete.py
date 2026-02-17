@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_core import c, h, m, r, s, t, u
+from flext_core import c, h, m, r, s, u
 
 
 class CreateUserCommand(m.Cqrs.Command):
@@ -111,12 +111,12 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
 
 
 # Service using s directly
-class HandlersService(s[t.ConfigurationMapping]):
+class HandlersService(s[m.ConfigMap]):
     """Service demonstrating CQRS handlers with flext-core."""
 
     def execute(
         self,
-    ) -> r[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Execute comprehensive handler demonstrations."""
         print("Starting CQRS handlers demonstration")
 
@@ -125,7 +125,7 @@ class HandlersService(s[t.ConfigurationMapping]):
         self._demonstrate_pipeline_execution()
         self._demonstrate_error_handling()
 
-        return r[t.ConfigurationMapping].ok({
+        return r[m.ConfigMap].ok({
             "handlers_demonstrated": [
                 c.Cqrs.HandlerType.COMMAND,
                 c.Cqrs.HandlerType.QUERY,

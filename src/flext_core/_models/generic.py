@@ -16,13 +16,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime
 
 from pydantic import Field
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core.constants import c
-from flext_core.runtime import FlextRuntime
+
+# Removed FlextRuntime import to prevent circular dependency
 from flext_core.typings import t
 
 
@@ -55,11 +57,11 @@ class FlextGenericModels:
             """
 
             correlation_id: str = Field(
-                default_factory=FlextRuntime.generate_id,
+                default_factory=lambda: str(uuid.uuid4()),
                 description="Unique correlation ID for tracing operations across services",
             )
             operation_id: str = Field(
-                default_factory=FlextRuntime.generate_id,
+                default_factory=lambda: str(uuid.uuid4()),
                 description="Unique operation ID for this specific operation instance",
             )
             timestamp: datetime = Field(
@@ -86,8 +88,8 @@ class FlextGenericModels:
                 default="1.0.0",
                 description="Version of the operation context schema",
             )
-            metadata: dict[str, t.GeneralValueType] = Field(
-                default_factory=dict,
+            metadata: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Additional context-specific metadata",
             )
 
@@ -185,7 +187,7 @@ class FlextGenericModels:
                     OperationContext: New context with merged metadata.
 
                 """
-                new_metadata = {**self.metadata, **kwargs}
+                new_metadata = {**self.metadata.root, **kwargs}
                 return self.__class__(
                     correlation_id=self.correlation_id,
                     operation_id=self.operation_id,
@@ -195,7 +197,7 @@ class FlextGenericModels:
                     tenant_id=self.tenant_id,
                     environment=self.environment,
                     version=self.version,
-                    metadata=new_metadata,
+                    metadata=t.Dict(root=new_metadata),
                 )
 
             def for_child_operation(
@@ -212,7 +214,7 @@ class FlextGenericModels:
                 """
                 return self.__class__(
                     correlation_id=self.correlation_id,
-                    operation_id=child_operation_id or FlextRuntime.generate_id(),
+                    operation_id=child_operation_id or str(uuid.uuid4()),
                     timestamp=datetime.now(UTC),
                     source=self.source,
                     user_id=self.user_id,
@@ -282,8 +284,8 @@ class FlextGenericModels:
                 default=None,
                 description="Current CPU usage percentage",
             )
-            metadata: dict[str, t.GeneralValueType] = Field(
-                default_factory=dict,
+            metadata: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Additional service-specific metadata",
             )
 
@@ -420,7 +422,7 @@ class FlextGenericModels:
                     "timestamp": self.last_health_check.isoformat()
                     if self.last_health_check
                     else None,
-                    **self.metadata,
+                    **self.metadata.root,
                 }
 
         class Configuration(FlextModelFoundation.FrozenStrictModel):
@@ -430,8 +432,8 @@ class FlextGenericModels:
             Function: Capture current configuration for comparison/logging/validation
             """
 
-            config: dict[str, t.GeneralValueType] = Field(
-                default_factory=dict,
+            config: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Configuration key-value pairs",
             )
             captured_at: datetime = Field(
@@ -458,8 +460,8 @@ class FlextGenericModels:
                 default_factory=list,
                 description="Configuration validation errors if any",
             )
-            metadata: dict[str, t.GeneralValueType] = Field(
-                default_factory=dict,
+            metadata: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Configuration metadata",
             )
 
@@ -501,7 +503,7 @@ class FlextGenericModels:
                     list[str]: Sorted configuration keys.
 
                 """
-                return sorted(self.config.keys())
+                return sorted(self.config.root.keys())
 
             @property
             def config_size(self) -> int:
@@ -511,7 +513,7 @@ class FlextGenericModels:
                     int: Number of configuration key-value pairs.
 
                 """
-                return len(self.config)
+                return len(self.config.root)
 
             @property
             def age_minutes(self) -> float:
@@ -569,7 +571,7 @@ class FlextGenericModels:
                     bool: True if key exists in configuration.
 
                 """
-                return key in self.config
+                return key in self.config.root
 
             def to_environment_variables(self, prefix: str = "") -> dict[str, str]:
                 """Convert configuration to environment variable format.
@@ -582,7 +584,7 @@ class FlextGenericModels:
 
                 """
                 env_vars = {}
-                for key, value in self.config.items():
+                for key, value in self.config.root.items():
                     env_key = f"{prefix}{key.upper()}" if prefix else key.upper()
                     env_vars[env_key] = str(value)
                 return env_vars
@@ -597,7 +599,7 @@ class FlextGenericModels:
                     list[str]: List of missing required keys.
 
                 """
-                return [key for key in required_keys if key not in self.config]
+                return [key for key in required_keys if key not in self.config.root]
 
             def with_validation_errors(
                 self, errors: list[str]
@@ -633,12 +635,12 @@ class FlextGenericModels:
                 default=True,
                 description="Overall health status",
             )
-            checks: dict[str, bool] = Field(
-                default_factory=dict,
+            checks: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Individual health check results (component -> status)",
             )
-            details: dict[str, t.GeneralValueType] = Field(
-                default_factory=dict,
+            details: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Detailed information for each health check",
             )
             checked_at: datetime = Field(
@@ -661,8 +663,8 @@ class FlextGenericModels:
                 default=None,
                 description="Environment where health check was performed",
             )
-            metadata: dict[str, t.GeneralValueType] = Field(
-                default_factory=dict,
+            metadata: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Additional health check metadata",
             )
 
@@ -800,17 +802,17 @@ class FlextGenericModels:
                 """
                 return self.details.get(check_name)
 
-            def to_monitoring_format(self) -> dict[str, t.GeneralValueType]:
+            def to_monitoring_format(self) -> t.Dict:
                 """Convert to monitoring system compatible format.
 
                 Returns:
-                    dict: Monitoring compatible dictionary.
+                    t.Dict: Monitoring compatible dictionary.
 
                 """
-                return {
+                data = {
                     "healthy": self.healthy,
                     "status": "up" if self.healthy else "down",
-                    "checks": self.checks,
+                    "checks": self.checks.root,
                     "total_checks": self.total_checks,
                     "healthy_count": self.healthy_checks_count,
                     "unhealthy_count": self.unhealthy_checks_count,
@@ -820,8 +822,9 @@ class FlextGenericModels:
                     "service": self.service_name,
                     "version": self.service_version,
                     "duration_ms": self.duration_ms,
-                    **self.metadata,
+                    **self.metadata.root,
                 }
+                return t.Dict(root=data)
 
             def with_additional_check(
                 self, name: str, status: bool, detail: t.GeneralValueType = None
@@ -837,8 +840,8 @@ class FlextGenericModels:
                     Health: New health result with additional check.
 
                 """
-                new_checks = {**self.checks, name: status}
-                new_details = {**self.details}
+                new_checks = {**self.checks.root, name: status}
+                new_details = {**self.details.root}
                 if detail is not None:
                     new_details[name] = detail
 
@@ -846,8 +849,8 @@ class FlextGenericModels:
 
                 return self.__class__(
                     healthy=new_healthy,
-                    checks=new_checks,
-                    details=new_details,
+                    checks=t.Dict(root=new_checks),
+                    details=t.Dict(root=new_details),
                     checked_at=self.checked_at,
                     service_name=self.service_name,
                     service_version=self.service_version,
@@ -926,8 +929,8 @@ class FlextGenericModels:
                 default=None,
                 description="Name/description of the operation",
             )
-            metadata: dict[str, t.GeneralValueType] = Field(
-                default_factory=dict,
+            metadata: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Additional operation metadata",
             )
 
@@ -1143,33 +1146,36 @@ class FlextGenericModels:
                 """Update the last update timestamp."""
                 self.last_update = datetime.now(UTC)
 
-            def to_progress_report(self) -> dict[str, t.GeneralValueType]:
+            def to_progress_report(self) -> t.Dict:
                 """Convert to progress report format for monitoring.
 
                 Returns:
-                    dict: Progress report dictionary.
+                    t.Dict: Progress report dictionary.
 
                 """
-                return {
+                data = {
                     "operation": self.operation_name,
                     "total_processed": self.total_count,
                     "success": self.success_count,
                     "failed": self.failure_count,
                     "skipped": self.skipped_count,
                     "warnings": self.warning_count,
-                    "success_rate": ".3f",
-                    "completion_percentage": ".1f",
+                    "success_rate": f"{self.success_rate:.3f}",
+                    "completion_percentage": f"{self.completion_percentage:.1f}",
                     "estimated_remaining": self.remaining_count,
                     "current_item": self.current_item,
                     "duration_seconds": self.duration_seconds,
-                    "items_per_second": ".2f" if self.items_per_second else None,
-                    "estimated_time_remaining": ".0f"
+                    "items_per_second": f"{self.items_per_second:.2f}"
+                    if self.items_per_second
+                    else None,
+                    "estimated_time_remaining": f"{self.estimated_time_remaining_seconds:.0f}"
                     if self.estimated_time_remaining_seconds
                     else None,
                     "is_complete": self.is_complete,
                     "has_errors": self.has_errors,
                     "has_warnings": self.has_warnings,
                 }
+                return t.Dict(root=data)
 
         class Conversion(FlextModelFoundation.ArbitraryTypesModel):
             """Comprehensive conversion progress tracking with detailed error reporting.
@@ -1214,8 +1220,8 @@ class FlextGenericModels:
                 default=None,
                 description="Total number of input items",
             )
-            metadata: dict[str, t.GeneralValueType] = Field(
-                default_factory=dict,
+            metadata: t.Dict = Field(
+                default_factory=lambda: t.Dict(root={}),
                 description="Conversion metadata",
             )
 
@@ -1410,20 +1416,22 @@ class FlextGenericModels:
                 key: str,
                 item: t.GeneralValueType,
             ) -> None:
-                existing_items = self.metadata.get(key)
+                existing_items = self.metadata.root.get(key)
                 if isinstance(existing_items, list):
                     existing_items.append(item)
                     return
-                self.metadata[key] = [item]
+                self.metadata.root[key] = [item]
 
             def _upsert_skip_reason(
                 self, item: t.GeneralValueType, reason: str
             ) -> None:
-                existing_reasons = self.metadata.get("skip_reasons")
+                existing_reasons = self.metadata.root.get("skip_reasons")
                 if isinstance(existing_reasons, dict):
                     existing_reasons[str(item)] = reason
+                    # No need to update self.metadata as it's modified in place
                     return
-                self.metadata["skip_reasons"] = {str(item): reason}
+                # If it doesn't exist or is not a dict, we must create it
+                self.metadata.root["skip_reasons"] = {str(item): reason}
 
             def add_error(
                 self, error: str, item: t.GeneralValueType | None = None
@@ -1490,33 +1498,42 @@ class FlextGenericModels:
                 """Mark conversion as completed."""
                 self.end_time = datetime.now(UTC)
 
-            def to_conversion_report(self) -> dict[str, t.GeneralValueType]:
+            def to_conversion_report(self) -> t.Dict:
                 """Convert to conversion report format for monitoring.
 
                 Returns:
-                    dict: Conversion report dictionary.
+                    t.Dict: Conversion report dictionary.
 
                 """
-                return {
+                data = {
                     "source_format": self.source_format,
                     "target_format": self.target_format,
                     "converted_count": self.converted_count,
                     "error_count": self.error_count,
                     "warning_count": self.warning_count,
                     "skipped_count": self.skipped_count,
-                    "success_rate": ".3f",
-                    "completion_percentage": ".1f",
+                    "success_rate": f"{self.success_rate:.3f}",
+                    "completion_percentage": f"{self.completion_percentage:.1f}",
                     "duration_seconds": self.duration_seconds,
-                    "items_per_second": ".1f" if self.items_per_second else None,
+                    "items_per_second": f"{self.items_per_second:.1f}"
+                    if self.items_per_second
+                    else None,
                     "is_complete": self.is_complete,
                     "has_errors": self.has_errors,
                     "has_warnings": self.has_warnings,
                     "status_summary": self.status_summary,
                     "conversion_summary": self.conversion_summary,
                 }
+                return t.Dict(root=data)
 
+    # ═══════════════════════════════════════════════════════════════════════════
+    # GENERIC CONTAINERS (Moved to flext_core.typings.t)
+    # Function: Replace raw dict aliases with strict typed models
+    # ═══════════════════════════════════════════════════════════════════════════
 
-BatchResultDict = t.BatchResultDict
+    # Containers moved to typings.py to avoid circular imports with utilities
+
+    BatchResultDict = t.BatchResultDict
 
 
 # Short alias for internal use

@@ -1,7 +1,7 @@
 """FlextContext comprehensive demonstration with advanced patterns.
 
 Demonstrates request context, correlation tracking, thread safety, and performance
-monitoring using Python 3.13+ PEP 695 type aliases, FlextConstants centralized
+monitoring using Python 3.13+ PEP 695 type aliases, c centralized
 StrEnum/Literals, t composition, collections.abc advanced patterns,
 Pydantic 2 StrEnum, and strict Python 3.13+ only - no backward compatibility.
 
@@ -22,30 +22,21 @@ from __future__ import annotations
 import threading
 from collections.abc import Sequence
 
-from flext_core import (
-    FlextConstants,
-    FlextContext,
-    FlextLogger,
-    FlextResult,
-    FlextService,
-    c,
-    t,
-    u,
-)
+from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, u
 
 
 class ContextManagementService(
-    FlextService[t.ConfigurationMapping],
+    FlextService[m.ConfigMap],
 ):
     """Service demonstrating comprehensive FlextContext patterns with advanced features.
 
-    Uses FlextConstants centralized StrEnum/Literals, t composition,
+    Uses c centralized StrEnum/Literals, t composition,
     collections.abc advanced patterns, and Pydantic 2 StrEnum for type safety.
     """
 
     def execute(
         self,
-    ) -> FlextResult[t.ConfigurationMapping]:
+    ) -> r[m.ConfigMap]:
         """Execute comprehensive context demonstrations using railway pattern."""
         self.logger.info("Starting context management demonstration")
 
@@ -60,7 +51,7 @@ class ContextManagementService(
         )
 
     @staticmethod
-    def _demonstrate_context_concepts() -> FlextResult[t.ConfigurationMapping]:
+    def _demonstrate_context_concepts() -> r[m.ConfigMap]:
         """Demonstrate context management concepts using FlextContext."""
         print("\n=== Context Concepts ===")
 
@@ -72,29 +63,27 @@ class ContextManagementService(
         ):
             correlation_id = (
                 FlextContext.Variables.Correlation.CORRELATION_ID.get()
-                or FlextConstants.Context.CORRELATION_ID_PREFIX
-                + u.generate("correlation")[
-                    : FlextConstants.Context.CORRELATION_ID_LENGTH
-                ]
+                or c.Context.CORRELATION_ID_PREFIX
+                + u.generate("correlation")[: c.Context.CORRELATION_ID_LENGTH]
             )
 
-            context_data: t.ConfigurationMapping = {
-                FlextConstants.Mixins.FIELD_NAME: "context_demo",
+            context_data: m.ConfigMap = {
+                c.Mixins.FIELD_NAME: "context_demo",
                 "correlation_id": correlation_id,
-                "scope": FlextConstants.Context.SCOPE_REQUEST,
+                "scope": c.Context.SCOPE_REQUEST,
             }
 
             print(f"✅ Context data: {context_data}")
             print("✅ Thread-local storage for isolation")
             print("✅ Correlation IDs for request tracking")
-            print(f"✅ Scope: {FlextConstants.Context.SCOPE_REQUEST}")
+            print(f"✅ Scope: {c.Context.SCOPE_REQUEST}")
 
-            return FlextResult[t.ConfigurationMapping].ok(
+            return r[m.ConfigMap].ok(
                 context_data,
             )
 
     @staticmethod
-    def _demonstrate_request_handling() -> FlextResult[t.ConfigurationMapping]:
+    def _demonstrate_request_handling() -> r[m.ConfigMap]:
         """Demonstrate request context management with performance tracking."""
         print("\n=== Request Context ===")
 
@@ -119,7 +108,7 @@ class ContextManagementService(
             user_id = FlextContext.Request.get_user_id() or "anonymous"
             operation = FlextContext.Request.get_operation_name() or "unknown"
 
-            request_data: t.ConfigurationMapping = {
+            request_data: m.ConfigMap = {
                 "user_id": user_id,
                 "request_id": request_id,
                 "operation": operation,
@@ -131,12 +120,12 @@ class ContextManagementService(
             print("✅ Performance tracking and metrics")
             print("✅ Context inheritance in service calls")
 
-            return FlextResult[t.ConfigurationMapping].ok(
+            return r[m.ConfigMap].ok(
                 request_data,
             )
 
     @staticmethod
-    def _demonstrate_threading_concepts() -> FlextResult[t.ConfigurationMapping]:
+    def _demonstrate_threading_concepts() -> r[m.ConfigMap]:
         """Demonstrate threading and isolation concepts with context safety."""
         print("\n=== Threading Concepts ===")
 
@@ -148,7 +137,7 @@ class ContextManagementService(
         # Demonstrate thread-safe context isolation
         def thread_operation(
             thread_id: int,
-        ) -> FlextResult[t.ConfigurationMapping]:
+        ) -> r[m.ConfigMap]:
             """Thread operation with isolated context."""
             with FlextContext.Request.request_context(
                 operation_name=f"thread_{thread_id}",
@@ -157,7 +146,7 @@ class ContextManagementService(
                 correlation_id = (
                     FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
                 )
-                return FlextResult[t.ConfigurationMapping].ok(
+                return r[m.ConfigMap].ok(
                     {
                         "thread_id": thread_id,
                         "correlation_id": correlation_id,
@@ -169,9 +158,9 @@ class ContextManagementService(
         results = [thread_operation(i) for i in range(min(3, thread_count))]
 
         # Use traverse for multiple results (DRY - no manual loops)
-        thread_results = FlextResult.traverse(results, lambda r: r)
+        thread_results = r.traverse(results, lambda r: r)
 
-        threading_data: t.ConfigurationMapping = {
+        threading_data: m.ConfigMap = {
             "active_threads": thread_count,
             "thread_names": list(active_threads),
             "isolated_contexts": len(results),
@@ -187,7 +176,7 @@ class ContextManagementService(
         )
 
     @staticmethod
-    def _demonstrate_performance_tracking() -> FlextResult[t.ConfigurationMapping]:
+    def _demonstrate_performance_tracking() -> r[m.ConfigMap]:
         """Demonstrate performance tracking with FlextContext.Performance."""
         print("\n=== Performance Tracking ===")
 
@@ -200,7 +189,7 @@ class ContextManagementService(
             start_time = FlextContext.Performance.get_operation_start_time()
             operation_metadata = FlextContext.Performance.get_operation_metadata() or {}
 
-            performance_data: t.ConfigurationMapping = {
+            performance_data: m.ConfigMap = {
                 "operation": operation_name,
                 "start_time": (start_time.isoformat() if start_time else "unknown"),
                 "metadata": operation_metadata,
@@ -212,12 +201,12 @@ class ContextManagementService(
             print("✅ Performance monitoring enabled")
             print("✅ Timing metadata captured")
 
-            return FlextResult[t.ConfigurationMapping].ok(
+            return r[m.ConfigMap].ok(
                 performance_data,
             )
 
     @staticmethod
-    def _demonstrate_correlation_tracking() -> FlextResult[t.ConfigurationMapping]:
+    def _demonstrate_correlation_tracking() -> r[m.ConfigMap]:
         """Demonstrate correlation ID tracking across service boundaries."""
         print("\n=== Correlation Tracking ===")
 
@@ -233,10 +222,10 @@ class ContextManagementService(
                 or correlation_id
             )
 
-            correlation_data: t.ConfigurationMapping = {
+            correlation_data: m.ConfigMap = {
                 "correlation_id": context_correlation,
-                "prefix": FlextConstants.Context.CORRELATION_ID_PREFIX,
-                "length": FlextConstants.Context.CORRELATION_ID_LENGTH,
+                "prefix": c.Context.CORRELATION_ID_PREFIX,
+                "length": c.Context.CORRELATION_ID_LENGTH,
             }
 
             print(f"✅ Correlation ID: {context_correlation}")
@@ -244,15 +233,15 @@ class ContextManagementService(
             print("✅ Request-scoped variables")
             print("✅ Distributed tracing ready")
 
-            return FlextResult[t.ConfigurationMapping].ok(
+            return r[m.ConfigMap].ok(
                 correlation_data,
             )
 
     @staticmethod
     def _build_success_metadata(
-        _: t.ConfigurationMapping,
-    ) -> t.ConfigurationMapping:
-        """Build success metadata using centralized FlextConstants (DRY)."""
+        _: m.ConfigMap,
+    ) -> m.ConfigMap:
+        """Build success metadata using centralized c (DRY)."""
         # Iterate over enum members correctly
         all_patterns = tuple(
             member.value for member in c.Cqrs.HandlerType.__members__.values()
@@ -278,9 +267,9 @@ class ContextManagementService(
             ),
             "architecture": "context_per_thread",
             "scope_types": (
-                FlextConstants.Context.SCOPE_GLOBAL,
-                FlextConstants.Context.SCOPE_REQUEST,
-                FlextConstants.Context.SCOPE_SESSION,
+                c.Context.SCOPE_GLOBAL,
+                c.Context.SCOPE_REQUEST,
+                c.Context.SCOPE_SESSION,
             ),
         }
 
@@ -308,7 +297,7 @@ def main() -> None:
     """Main entry point using advanced FlextContext patterns."""
     logger = FlextLogger.create_module_logger(__name__)
 
-    width = FlextConstants.Validation.MAX_NAME_LENGTH * 2
+    width = c.Validation.MAX_NAME_LENGTH * 2
     separator = "=" * width
 
     print(separator)
@@ -324,7 +313,7 @@ def main() -> None:
     result = service.execute()
 
     # Railway pattern for result handling (DRY)
-    def handle_success(metadata: t.ConfigurationMapping) -> None:
+    def handle_success(metadata: m.ConfigMap) -> None:
         """Handle successful result with type narrowing."""
         patterns = metadata.get("patterns_demonstrated", ())
         features = metadata.get("context_features", ())
@@ -341,11 +330,11 @@ def main() -> None:
         print(f"\n✅ Demonstrated {patterns_count} context patterns")
         print(f"✅ Used {features_count} context features")
 
-    def handle_error(error: str) -> FlextResult[None]:
+    def handle_error(error: str) -> r[None]:
         """Handle error result."""
         logger.error("Context demonstration failed", extra={"error": error})
         print(f"\n❌ Failed: {error}")
-        return FlextResult[None].ok(None)
+        return r[None].ok(None)
 
     result.map(handle_success).lash(handle_error)
 
@@ -353,7 +342,7 @@ def main() -> None:
     print("🎯 Context Patterns: Variables, Correlation, Request Lifecycle")
     print("🎯 Thread Safety: Isolated context per thread")
     print("🎯 Performance: Request timing and metrics")
-    print("🎯 Type Safety: PEP 695, t, FlextConstants")
+    print("🎯 Type Safety: PEP 695, t, c")
     print("🎯 Advanced Patterns: collections.abc, Pydantic 2 StrEnum")
     print(separator)
 
