@@ -26,7 +26,7 @@ def _normalize_metadata(
     value: t.GeneralValueType | FlextModelsBase.Metadata | None,
 ) -> FlextModelsBase.Metadata:
     if value is None:
-        return FlextModelsBase.Metadata(attributes={})
+        return FlextModelsBase.Metadata(attributes=t.Dict(root={}))
     if isinstance(value, FlextModelsBase.Metadata):
         return value
     if not FlextRuntime.is_dict_like(value):
@@ -39,7 +39,7 @@ def _normalize_metadata(
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
         for key, raw_value in dict(value).items()
     }
-    return FlextModelsBase.Metadata(attributes=attributes)
+    return FlextModelsBase.Metadata(attributes=t.Dict(root=attributes))
 
 
 class FlextModelsContext:
@@ -703,13 +703,15 @@ class FlextModelsContext:
             str,
             Field(default="", description="Type/category of scope"),
         ] = ""
-        data: t.Dict = Field(
-            default_factory=lambda: t.Dict(root={}), description="Scope data"
+        data: dict[str, t.GeneralValueType] = Field(
+            default_factory=dict, description="Scope data"
         )
-        metadata: t.Dict = Field(
-            default_factory=lambda: t.Dict(root={}), description="Scope metadata"
+        metadata: dict[str, t.GeneralValueType] = Field(
+            default_factory=dict, description="Scope metadata"
         )
 
+        @field_validator("data", mode="before")
+        @classmethod
         def _validate_data(
             cls,
             v: t.GeneralValueType | t.Dict | None,
@@ -727,6 +729,8 @@ class FlextModelsContext:
             msg = f"data must be dict or BaseModel, got {type(v).__name__}"
             raise TypeError(msg)
 
+        @field_validator("metadata", mode="before")
+        @classmethod
         def _validate_metadata(
             cls,
             v: t.GeneralValueType | t.Dict | None,

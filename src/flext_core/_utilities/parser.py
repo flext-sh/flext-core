@@ -1358,11 +1358,7 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Cannot construct 'object' type directly",
             )
         try:
-            return FlextUtilitiesParser._parse_with_default(
-                default,
-                default_factory,
-                f"{field_prefix}Unsupported constructor target: {target}",
-            )
+            return r[T].ok(target(value))
         except Exception as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
                 target,
@@ -1443,6 +1439,16 @@ class FlextUtilitiesParser:
         )
         if model_result is not None:
             return model_result
+
+        primitive_result = FlextUtilitiesParser._parse_try_primitive(
+            value,
+            target,
+            default=default,
+            default_factory=default_factory,
+            field_prefix=field_prefix,
+        )
+        if primitive_result is not None:
+            return primitive_result
 
         # Let _parse_try_direct handle all cases including primitives
         return FlextUtilitiesParser._parse_try_direct(
