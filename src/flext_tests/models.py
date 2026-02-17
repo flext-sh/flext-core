@@ -28,7 +28,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.models import FlextModels as FlextModelsBase
 from flext_tests.constants import ContainerStatus, FlextTestsConstants, c
-from flext_tests.typings import t
+from flext_tests.typings import FileContent as TestsFileContent, t
 
 # Type aliases for readability
 type _FormatLiteral = FlextTestsConstants.Tests.Files.FormatLiteral
@@ -503,7 +503,7 @@ class FlextTestsModels(FlextModelsBase):
             class CreateParams(FlextModelsBase.Value):
                 """Parameters for file creation operations with Pydantic 2 advanced validation."""
 
-                content: t.FileContent
+                content: TestsFileContent
                 """File content to create."""
                 name: str = Field(
                     default=c.Tests.Files.DEFAULT_FILENAME,

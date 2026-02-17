@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Literal, TypeGuard, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, InstanceOf
 
 from flext_core import FlextTypes
 from flext_core.models import m
@@ -26,7 +26,9 @@ TTestModel = TypeVar("TTestModel")
 TTestService = TypeVar("TTestService")
 
 # File content type for test operations
-type FileContent = str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel
+type FileContent = (
+    str | bytes | Mapping[str, object] | Sequence[Sequence[str]] | InstanceOf[BaseModel]
+)
 
 
 class FlextTestsTypes(FlextTypes):

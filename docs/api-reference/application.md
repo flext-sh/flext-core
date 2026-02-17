@@ -1,6 +1,14 @@
 # Application Layer API Reference
 
-The application layer coordinates domain logic through CQRS-style handlers, reliability policies, and structured observability. It is built around four primary components: `FlextDispatcher`, `h`, `FlextRegistry`, and `FlextDecorators`.
+The application layer coordinates domain logic through CQRS-style handlers, reliability policies, and structured observability.
+
+Canonical architecture context:
+
+- `README.md`
+- `docs/architecture/overview.md`
+- `docs/architecture/cqrs.md`
+
+Primary components in this layer: `FlextDispatcher`, `h`, `FlextRegistry`, and `FlextDecorators`.
 
 ## FlextDispatcher - Unified CQRS Dispatcher
 
@@ -42,14 +50,14 @@ user_result = dispatcher.dispatch(GetUserQuery("user-123"))
 
 ```python
 from flext_core.handlers import h
-from flext_core.result import FlextResult
+from flext_core.result import r
 
 class CreateUserHandler(h[CreateUserCommand, bool]):
-    def handle(self, message: CreateUserCommand) -> FlextResult[bool]:
+    def handle(self, message: CreateUserCommand) -> r[bool]:
         if "@" not in message.email:
-            return FlextResult[bool].fail("Invalid email")
+            return r[bool].fail("Invalid email")
         # Business logic here
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 ```
 
 **Highlights**
@@ -87,14 +95,14 @@ summary = registry.register_handlers([
 
 ```python
 from flext_core.decorators import FlextDecorators
-from flext_core.result import FlextResult
+from flext_core.result import r
 
 @FlextDecorators.retry(attempts=3)
 @FlextDecorators.timeout(seconds=2)
 @FlextDecorators.inject
-def handle_create_user(cmd: CreateUserCommand, logger) -> FlextResult[bool]:
+def handle_create_user(cmd: CreateUserCommand, logger) -> r[bool]:
     logger.info("creating user", user=cmd.name)
-    return FlextResult[bool].ok(True)
+    return r[bool].ok(True)
 ```
 
 **Highlights**
@@ -109,3 +117,13 @@ def handle_create_user(cmd: CreateUserCommand, logger) -> FlextResult[bool]:
 2. Register handlers with `FlextDispatcher` or via `FlextRegistry` batch helpers.
 3. Apply `FlextDecorators` for retries, timeouts, context propagation, or DI.
 4. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `FlextResult` outputs.
+
+## Verification Commands
+
+Run from `flext-core/`:
+
+```bash
+make lint
+make type-check
+make test-fast
+```

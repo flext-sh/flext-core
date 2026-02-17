@@ -1365,7 +1365,7 @@ class TestCreateInStatic:
 
     def test_create_in_with_flextresult(self, tmp_path: Path) -> None:
         """Test create_in() with FlextResult content extraction."""
-        result = r[t_core.ConfigurationMapping].ok({"status": "success"})
+        result = r[t_core.ConfigMap].ok({"status": "success"})
         path = tf.create_in(result, "result.json", tmp_path)
 
         assert path.exists()

@@ -370,6 +370,9 @@ class FlextTypes:
 
         root: dict[str, GeneralValueType]
 
+    ConfigurationMapping: TypeAlias = ConfigMap
+    ConfigurationDict: TypeAlias = ConfigMap
+
     class ServiceMap(_DictMixin, RootModel[dict[str, GeneralValueType]]):
         """Service registry map container.
 
