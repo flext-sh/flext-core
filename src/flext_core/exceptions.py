@@ -776,7 +776,7 @@ class FlextExceptions:
         """Exception raised for type mismatch errors."""
 
         @staticmethod
-        def _get_type_map() -> t.StringTypeDict:
+        def _get_type_map() -> dict[str, type]:
             """Get mapping of type names to actual types."""
             return {
                 "str": str,
@@ -793,7 +793,7 @@ class FlextExceptions:
         @staticmethod
         def _normalize_type(
             type_value: type | str | None,
-            type_map: t.StringTypeDict,
+            type_map: dict[str, type],
             extra_kwargs: dict[str, t.MetadataAttributeValue],
             key: str,
         ) -> type | None:
@@ -804,10 +804,6 @@ class FlextExceptions:
                 if isinstance(type_raw, str):
                     # Use dict.get directly for type-safe lookup
                     return type_map.get(type_raw)
-                # Support type objects directly
-                if isinstance(type_raw, type):
-                    return type_raw
-                # type_raw is not a recognized type, continue to next checks
             # Handle case where type is passed as string in named arg
             if isinstance(type_value, str):
                 # Use dict.get directly for type-safe lookup
@@ -1058,28 +1054,12 @@ class FlextExceptions:
             correlation_id_raw if isinstance(correlation_id_raw, str) else None
         )
         metadata_raw = kwargs.get("metadata")
-        # Return metadata as-is if it's Metadata or dict-like, otherwise None
+        # Return metadata as-is if it's Metadata protocol implementation, otherwise None
+        # Note: kwargs values are MetadataAttributeValue (str|int|float|bool|datetime|list|None)
+        # so dict/Mapping branches are not needed - only Metadata protocol matches.
         metadata: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None = None
-        if metadata_raw is not None:
-            # Use TypeGuard to check for any Metadata protocol implementation
-            if _is_metadata_protocol(metadata_raw):
-                metadata = metadata_raw
-            elif isinstance(metadata_raw, dict):
-                # Convert dict values to MetadataAttributeValue
-                converted_dict: dict[str, t.MetadataAttributeValue] = {}
-                for k, v in metadata_raw.items():
-                    converted_dict[k] = FlextRuntime.normalize_to_metadata_value(v)
-                metadata = converted_dict
-            elif isinstance(metadata_raw, Mapping):
-                # Convert Mapping values to MetadataAttributeValue
-                converted_dict_mapping: dict[str, t.MetadataAttributeValue] = {}
-                for k, v in metadata_raw.items():
-                    converted_dict_mapping[k] = (
-                        FlextRuntime.normalize_to_metadata_value(
-                            v,
-                        )
-                    )
-                metadata = converted_dict_mapping
+        if metadata_raw is not None and _is_metadata_protocol(metadata_raw):
+            metadata = metadata_raw
         return (correlation_id, metadata)
 
     @staticmethod
@@ -1289,7 +1269,7 @@ class FlextExceptions:
         cls._exception_counts[exception_type] += 1
 
     @classmethod
-    def get_metrics(cls) -> t.ErrorTypeMapping:
+    def get_metrics(cls) -> dict[str, str | int | dict[str, int]]:
         """Get exception metrics and statistics."""
         total = sum(cls._exception_counts.values(), 0)
         # Serialize exception counts as a single string for compatibility with ErrorTypeMapping
@@ -1327,7 +1307,7 @@ class FlextExceptions:
         self,
         message: str,
         error_code: str | None = None,
-        **kwargs: t.ExceptionKwargsType,
+        **kwargs: t.MetadataAttributeValue,
     ) -> e.BaseError:
         """Create exception by calling the class instance."""
         # Normalize ExceptionKwargsType to t.MetadataAttributeValue

@@ -54,8 +54,8 @@ class FlextMixins(FlextRuntime):
     Example:
         class MyService(x):
             def process(
-                self, data: t.ContextMetadataMapping
-            ) -> r[t.ContextMetadataMapping]:
+                self, data: t.ConfigurationMapping
+            ) -> r[t.ConfigurationMapping]:
                 with self.track("process"):
                     self.logger.info("Processing", size=len(data))
                     return self.ok({"status": "processed"})
@@ -120,8 +120,8 @@ class FlextMixins(FlextRuntime):
 
         @staticmethod
         def to_dict(
-            obj: (BaseModel | t.ContextMetadataMapping | t.ConfigurationMapping | None),
-        ) -> t.ContextMetadataMapping:
+            obj: (BaseModel | t.ConfigurationMapping | None),
+        ) -> t.ConfigurationMapping:
             """Convert BaseModel/dict to dict (None → empty dict).
 
             Accepts BaseModel, dict with nested structures, or None.
@@ -373,26 +373,9 @@ class FlextMixins(FlextRuntime):
             if overrides:
                 runtime_container.configure(overrides)
 
-        wire_modules_raw = options.get("wire_modules")
         wire_packages_raw = options.get("wire_packages")
-        wire_classes_raw = options.get("wire_classes")
-        # Type narrow to sequences using explicit loops (required for mypy)
 
         wire_modules: Sequence[ModuleType] | None = None
-        if isinstance(wire_modules_raw, Sequence) and not isinstance(
-            wire_modules_raw,
-            str,
-        ):
-            # Filter to ModuleType items using explicit loop for type narrowing
-            all_modules = True
-            filtered_modules: list[ModuleType] = []
-            for item in wire_modules_raw:
-                if isinstance(item, ModuleType):
-                    filtered_modules.append(item)
-                else:
-                    all_modules = False
-            if all_modules and len(filtered_modules) > 0:
-                wire_modules = filtered_modules
 
         wire_packages: Sequence[str] | None = None
         if isinstance(wire_packages_raw, Sequence) and not isinstance(
@@ -410,19 +393,6 @@ class FlextMixins(FlextRuntime):
                 wire_packages = packages_list
 
         wire_classes: Sequence[type] | None = None
-        if isinstance(wire_classes_raw, Sequence) and not isinstance(
-            wire_classes_raw,
-            str,
-        ):
-            all_types = True
-            classes_list: list[type] = []
-            for item in wire_classes_raw:
-                if isinstance(item, type):
-                    classes_list.append(item)
-                else:
-                    all_types = False
-            if all_types and len(classes_list) > 0:
-                wire_classes = classes_list
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire_modules(
                 modules=wire_modules,

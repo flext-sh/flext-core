@@ -298,7 +298,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_pydantic_dict(
-        data: t.EventDataMapping | None,
+        data: t.ConfigurationMapping | None,
     ) -> t.PydanticConfigDict:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 

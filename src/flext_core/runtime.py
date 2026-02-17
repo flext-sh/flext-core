@@ -620,7 +620,7 @@ class FlextRuntime:
                 # GenericTypeArgument = str | type[t.GeneralValueType]
                 # Type objects (str, int, float, bool) are valid GenericTypeArgument
                 # since they represent type[T] where T is a scalar t.GeneralValueType
-                type_mapping: t.StringGenericTypeArgumentTupleDict = {
+                type_mapping: dict[str, tuple[t.GenericTypeArgument, ...]] = {
                     "StringList": (str,),
                     "IntList": (int,),
                     "FloatList": (float,),
@@ -1187,9 +1187,9 @@ class FlextRuntime:
 
         module = structlog
 
-        # structlog processors have specific signatures - use Callable for processor types
+        # structlog processors have specific signatures - use object for processor types
         # structlog processors are callables with varying signatures
-        processors: list[Callable[..., t.GeneralValueType]] = [
+        processors: list[object] = [
             module.contextvars.merge_contextvars,
             module.processors.add_log_level,
             # CRITICAL: Level-based context filter (must be after merge_contextvars and add_log_level)
@@ -1837,7 +1837,7 @@ class FlextRuntime:
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: t.EventDataMapping | None = None,
+            event_data: t.ConfigurationMapping | None = None,
         ) -> None:
             """Track domain event with context correlation.
 
@@ -2073,7 +2073,7 @@ class FlextRuntime:
 
     @staticmethod
     def ensure_trace_context(
-        context: t.StringMapping | t.GeneralValueType,
+        context: Mapping[str, str] | t.GeneralValueType,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,

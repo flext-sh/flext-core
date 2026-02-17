@@ -574,7 +574,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Config(BaseProtocol, Protocol):
+    class Config(HasModelDump, BaseProtocol, Protocol):
         """Configuration object protocol based on Pydantic BaseSettings pattern.
 
         Reflects real implementations like FlextSettings which uses Pydantic BaseSettings.
@@ -609,22 +609,6 @@ class FlextProtocols:
             deep: bool = False,
         ) -> Self:
             """Clone configuration with optional updates (Pydantic standard method)."""
-            ...
-
-        def model_dump(
-            self,
-            *,
-            mode: str = "python",
-            include: t.FlexibleValue = None,
-            exclude: t.FlexibleValue = None,
-            by_alias: bool = False,
-            exclude_unset: bool = False,
-            exclude_defaults: bool = False,
-            exclude_none: bool = False,
-            round_trip: bool = False,
-            warnings: bool = True,
-        ) -> dict[str, t.FlexibleValue]:
-            """Serialize configuration to dictionary (Pydantic standard method)."""
             ...
 
     # =========================================================================
@@ -1491,7 +1475,7 @@ class FlextProtocols:
         """
 
         def __new__(
-            mcs: type[Self],
+            mcs,
             name: str,
             bases: tuple[type, ...],
             namespace: dict[str, object],

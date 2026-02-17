@@ -277,7 +277,7 @@ class RateLimiterManager:
         self._max_requests = max_requests
         self._window_seconds = window_seconds
         self._jitter_factor = max(0.0, min(jitter_factor, 1.0))
-        self._windows: t.StringTupleFloatIntDict = {}
+        self._windows: dict[str, tuple[float, int]] = {}
 
     def _apply_jitter(self, base_delay: float) -> float:
         """Apply jitter variance to a delay value.

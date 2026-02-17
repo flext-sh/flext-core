@@ -97,14 +97,14 @@ class AppConfig(FlextSettings):
     )
 
 
-class ConfigManagementService(FlextService[t.ServiceMetadataMapping]):
+class ConfigManagementService(FlextService[t.ConfigurationMapping]):
     """Service demonstrating advanced FlextSettings patterns using railway-oriented programming.
 
     Uses functional composition, error handling chains, and type-safe configuration
     management with Python 3.13+ advanced patterns.
     """
 
-    def execute(self) -> FlextResult[t.ServiceMetadataMapping]:
+    def execute(self) -> FlextResult[t.ConfigurationMapping]:
         """Execute comprehensive configuration demonstrations using railway pattern."""
         return (
             self
@@ -136,9 +136,9 @@ class ConfigManagementService(FlextService[t.ServiceMetadataMapping]):
     @staticmethod
     def _create_success_metadata(
         patterns: tuple[str, ...],
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ConfigurationMapping]:
         """Create success metadata from demonstrated patterns."""
-        return FlextResult[t.ServiceMetadataMapping].ok({
+        return FlextResult[t.ConfigurationMapping].ok({
             "patterns_demonstrated": list(patterns),
             "config_features": [
                 "pydantic_settings",
@@ -158,11 +158,11 @@ class ConfigManagementService(FlextService[t.ServiceMetadataMapping]):
     @staticmethod
     def _handle_execution_error(
         error: str,
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ConfigurationMapping]:
         """Handle execution errors with proper logging."""
         error_msg = f"Configuration demonstration failed: {error}"
         print(error_msg)
-        return FlextResult[t.ServiceMetadataMapping].fail(
+        return FlextResult[t.ConfigurationMapping].fail(
             error_msg,
             error_code=FlextConstants.Errors.VALIDATION_ERROR,
         )
@@ -356,13 +356,13 @@ def main() -> FlextResult[bool]:
         result = demonstrate_file_config()
         return FlextResult[bool].ok(result.is_success)
 
-    def run_service_demo() -> FlextResult[t.ServiceMetadataMapping]:
+    def run_service_demo() -> FlextResult[t.ConfigurationMapping]:
         """Run service-based configuration demonstration."""
         service = ConfigManagementService()
         return service.execute()
 
     def display_results(
-        metadata: t.ServiceMetadataMapping,
+        metadata: t.ConfigurationMapping,
     ) -> FlextResult[bool]:
         """Display demonstration results."""
         patterns = metadata.get("patterns_demonstrated", [])

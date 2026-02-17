@@ -40,8 +40,9 @@ if TYPE_CHECKING:
 
     from flext_core._models.base import FlextModelsBase
 
-# Type alias for model factory methods
-ModelFactory = Callable[..., T]
+# Type alias for model factory methods - class constructors or factory functions
+# Using type[T] since factories are typically class constructors accepting **kwargs
+ModelFactory = type[T]
 
 
 class FlextTestsUtilities(FlextUtilities):
@@ -56,8 +57,8 @@ class FlextTestsUtilities(FlextUtilities):
 
         @staticmethod
         def validate_pipeline(
-            value: t.GeneralValueType,
-            validators: list[Callable[[t.GeneralValueType], r[bool]]],
+            value: str,
+            validators: list[Callable[[str], r[bool]]],
         ) -> r[bool]:
             """Execute validation pipeline with multiple validators.
 
@@ -1319,7 +1320,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_entity_instance[TEntity](
                 name: str,
                 value: t.GeneralValueType,
-                entity_class: Callable[..., TEntity],
+                entity_class: type[TEntity],
                 *,
                 remove_id: bool = False,
             ) -> TEntity:
@@ -1344,7 +1345,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_entities_batch[TEntity](
                 names: list[str],
                 values: list[t.GeneralValueType],
-                entity_class: Callable[..., TEntity],
+                entity_class: type[TEntity],
                 remove_ids: list[bool] | None = None,
             ) -> r[list[TEntity]]:
                 """Create batch of test entities.
@@ -1386,7 +1387,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_value_object_instance[TValue](
                 data: str,
                 count: int,
-                value_class: Callable[..., TValue],
+                value_class: type[TValue],
             ) -> TValue:
                 """Create a test value object instance.
 
@@ -1405,7 +1406,7 @@ class FlextTestsUtilities(FlextUtilities):
             def create_test_value_objects_batch[TValue](
                 data_list: list[str],
                 count_list: list[int],
-                value_class: Callable[..., TValue],
+                value_class: type[TValue],
             ) -> list[TValue]:
                 """Create batch of test value objects.
 

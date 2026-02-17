@@ -286,16 +286,6 @@ class FlextUtilitiesValidation:
             except Exception:
                 return str(component)
 
-        # Check for dataclass instance (before Sequence check to avoid treating as list)
-        # is_dataclass() returns True for both classes and instances
-        # We only want instances, so exclude type objects
-        if is_dataclass(component) and not isinstance(component, type):
-            # Use string representation instead of trying to normalize dataclass
-            return str(component)
-
-        # Check if already valid t.GeneralValueType or a type we handle (like set)
-        if isinstance(component, set):
-            return component
         return FlextUtilitiesValidation._ensure_general_value_type(component)
 
     @staticmethod
@@ -1018,24 +1008,6 @@ class FlextUtilitiesValidation:
             str: Deterministic cache key
 
         """
-        # Try Pydantic model
-        if isinstance(command, p.HasModelDump):
-            key = FlextUtilitiesValidation._generate_key_pydantic(command, command_type)
-            if key is not None:
-                return key
-
-        # Try dataclass instance (not class)
-        # is_dataclass() returns True for both classes and instances
-        # We only want instances, so exclude type objects first
-        if (
-            command is not None
-            and not isinstance(command, type)
-            and hasattr(command, "__dataclass_fields__")
-            and is_dataclass(command)
-        ):
-            # command is a dataclass instance - convert to string representation
-            return f"{command_type.__name__}_{hash(str(command))}"
-
         # Try dict
         if isinstance(command, Mapping):
             # command is already t.ConfigurationMapping
@@ -2070,9 +2042,7 @@ class FlextUtilitiesValidation:
         # Use raw dict/attr access to preserve object (avoid FlextUtilitiesMapper.get
         # which converts non-GeneralValueType objects to strings)
         predicate: object = None
-        if isinstance(v, dict):
-            predicate = v.get("predicate")
-        elif hasattr(v, "predicate"):
+        if hasattr(v, "predicate"):
             predicate = getattr(v, "predicate", None)
         if predicate is not None and hasattr(predicate, "description"):
             # predicate has description attribute
@@ -2385,7 +2355,7 @@ class FlextUtilitiesValidation:
     @staticmethod
     def _guard_check_predicate(
         value: object,
-        condition: Callable[..., object],
+        condition: Callable[[object], object],
         context_name: str,
         error_msg: str | None,
     ) -> str | None:
@@ -2426,22 +2396,12 @@ class FlextUtilitiesValidation:
             )
         # Type narrowing: condition is tuple of types
         if isinstance(condition, tuple):
-            # Check if all items are types (explicit loop for type narrowing)
-            all_types = True
-            c: type[T] | object
-            for c in condition:
-                if not isinstance(c, type):
-                    all_types = False
-                    break
-            if all_types:
-                # condition is tuple[type[T], ...] - safe to pass to _guard_check_type
-                type_tuple: tuple[type[T], ...] = condition
-                return FlextUtilitiesValidation._guard_check_type(
-                    value,
-                    type_tuple,
-                    context_name,
-                    error_msg,
-                )
+            return FlextUtilitiesValidation._guard_check_type(
+                value,
+                condition,
+                context_name,
+                error_msg,
+            )
 
         # p.ValidatorSpec: Validator DSL (has __and__ method for composition)
         if isinstance(condition, p.ValidatorSpec):
@@ -2463,7 +2423,7 @@ class FlextUtilitiesValidation:
 
         # Custom predicate: Callable[[T], bool]
         # At this point in the type union, only Callable[[T], bool] remains
-        # Pass condition directly - _guard_check_predicate accepts Callable[..., object]
+        # Pass condition directly - _guard_check_predicate accepts Callable[[object], object]
         if callable(condition):
             return FlextUtilitiesValidation._guard_check_predicate(
                 value,
@@ -2524,7 +2484,7 @@ class FlextUtilitiesValidation:
     # check_fn: (value: object) -> bool (True = valid)
     # Note: FlextRuntime.is_dict_like and is_list_like return TypeGuard
     # but we use them here as plain bool checkers (compatible usage)
-    _GUARD_SHORTCUTS: ClassVar[t.StringCallableBoolStrTupleDict] = {
+    _GUARD_SHORTCUTS: ClassVar[dict[str, tuple[Callable[[object], bool], str]]] = {
         # Numeric shortcuts
         "positive": (
             lambda v: isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0,

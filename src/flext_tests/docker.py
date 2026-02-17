@@ -22,7 +22,7 @@ import json
 import socket
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
 import docker
 from docker import DockerClient
@@ -60,7 +60,7 @@ class FlextTestsDocker:
     class ContainerInfo(m.Tests.Docker.ContainerInfo):
         """Container information model for tests - real inheritance from m."""
 
-    SHARED_CONTAINERS: ClassVar[Mapping[str, t.ContainerConfigDict]] = (
+    SHARED_CONTAINERS: ClassVar[Mapping[str, t.ConfigurationDict]] = (
         c.Tests.Docker.SHARED_CONTAINERS
     )
 
@@ -121,7 +121,7 @@ class FlextTestsDocker:
     @property
     def shared_containers(
         self,
-    ) -> Mapping[str, t.ContainerConfigDict]:
+    ) -> Mapping[str, t.ConfigurationDict]:
         """Get shared container configurations."""
         return c.Tests.Docker.SHARED_CONTAINERS
 
@@ -234,18 +234,18 @@ class FlextTestsDocker:
                 if v:
                     ports[str(k)] = str(v[0].get("HostPort", "")) if v else ""
 
-            docker_container = cast("Any", container)
+            # Access Container attributes via getattr for type safety
+            status_val = str(getattr(container, "status", "unknown"))
+            image_obj = getattr(container, "image", None)
+            image_tags = getattr(image_obj, "tags", []) if image_obj else []
+            container_id = str(getattr(container, "id", ""))
             return r[m.Tests.Docker.ContainerInfo].ok(
                 m.Tests.Docker.ContainerInfo(
                     name=container_name,
-                    status=self.ContainerStatus(docker_container.status),
+                    status=self.ContainerStatus(status_val),
                     ports=ports,
-                    image=(
-                        str(docker_container.image.tags[0])
-                        if docker_container.image and docker_container.image.tags
-                        else ""
-                    ),
-                    container_id=docker_container.id or "",
+                    image=(str(image_tags[0]) if image_tags else ""),
+                    container_id=container_id,
                 ),
             )
         except NotFound:
@@ -267,16 +267,19 @@ class FlextTestsDocker:
         try:
             client = self.get_client()
             container = client.containers.get(name)
-            docker_container = cast("Any", container)
+            # Access Container attributes via getattr for type safety
+            status_val = str(getattr(container, "status", "unknown"))
 
-            if docker_container.status == "running":
+            if status_val == "running":
                 return r[str].ok(f"Container {name} already running")
 
-            if docker_container.status in {"exited", "created", "paused"}:
-                docker_container.start()
+            if status_val in {"exited", "created", "paused"}:
+                start_fn = getattr(container, "start", None)
+                if callable(start_fn):
+                    start_fn()
                 return r[str].ok(f"Container {name} started")
 
-            return r[str].ok(f"Container {name} in state: {docker_container.status}")
+            return r[str].ok(f"Container {name} in state: {status_val}")
 
         except NotFound:
             return r[str].fail(f"Container {name} not found")

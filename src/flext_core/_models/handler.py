@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from typing import Annotated, Self
 
 from pydantic import (
@@ -43,7 +42,7 @@ class FlextModelsHandler:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Handler name",
         )
-        handler: Callable[..., t.GeneralValueType] = Field(
+        handler: t.HandlerCallable = Field(
             description="Handler callable function or method",
         )
         event_types: list[str] = Field(

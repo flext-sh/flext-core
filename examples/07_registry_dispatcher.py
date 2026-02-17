@@ -73,15 +73,15 @@ class GetUserQuery(FlextModels.Cqrs.Query):
     user_id: str
 
 
-class GetUserHandler(h[GetUserQuery, t.ServiceMetadataMapping]):
+class GetUserHandler(h[GetUserQuery, t.ConfigurationMapping]):
     """Handler for getting users."""
 
     def handle(
         self,
         message: GetUserQuery,
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ConfigurationMapping]:
         """Handle get user query."""
-        return FlextResult[t.ServiceMetadataMapping].ok({
+        return FlextResult[t.ConfigurationMapping].ok({
             "user_id": message.user_id,
             "name": "Demo User",
             "email": "demo@example.com",
@@ -93,12 +93,12 @@ class GetUserHandler(h[GetUserQuery, t.ServiceMetadataMapping]):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class RegistryDispatcherService(s[t.ServiceMetadataMapping]):
+class RegistryDispatcherService(s[t.ConfigurationMapping]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ConfigurationMapping]:
         """Execute registry and dispatcher demonstrations."""
         print("Starting registry and dispatcher demonstration")
 
@@ -107,7 +107,7 @@ class RegistryDispatcherService(s[t.ServiceMetadataMapping]):
             self._demonstrate_dispatcher()
             self._demonstrate_integration()
 
-            return FlextResult[t.ServiceMetadataMapping].ok({
+            return FlextResult[t.ConfigurationMapping].ok({
                 "patterns_demonstrated": [
                     "handler_registration",
                     "batch_registration",
@@ -129,7 +129,7 @@ class RegistryDispatcherService(s[t.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Registry/Dispatcher demonstration failed: {e}"
-            return FlextResult[t.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.ConfigurationMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_registry() -> None:

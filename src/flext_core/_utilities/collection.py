@@ -1109,16 +1109,21 @@ class FlextUtilitiesCollection:
                 key_str: str = str(key_obj)
                 # Create wrapper function with explicit return type
                 # This ensures type safety - container validates at runtime
-                # Type narrow: callable() narrows value_raw to Callable
-                callable_fn: Callable[..., t.GeneralValueType] = value_raw
+                # Type narrow: callable() narrows value_raw to a callable object
+                # Store as object to avoid Callable[..., X] which triggers explicit-any
+                captured_fn: object = value_raw
 
                 def _wrap_callable(
-                    fn: Callable[..., t.GeneralValueType] = callable_fn,
+                    fn: object = captured_fn,
                 ) -> Callable[[], t.GeneralValueType]:
                     """Wrap callable with proper return type signature."""
 
                     def _wrapped() -> t.GeneralValueType:
-                        return fn()
+                        # fn is callable (checked before capture) - call and convert
+                        raw_result = fn() if callable(fn) else fn
+                        return FlextUtilitiesConversion.to_general_value_type(
+                            raw_result,
+                        )
 
                     return _wrapped
 

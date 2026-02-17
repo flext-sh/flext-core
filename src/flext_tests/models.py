@@ -1334,15 +1334,15 @@ class FlextTestsModels(FlextModelsBase):
 
                 model_config = ConfigDict(populate_by_name=True)
 
-                eq: object | None = Field(
+                eq: t.GeneralValueType | None = Field(
                     default=None,
                     description="Expected value (equality check)",
                 )
-                ne: object | None = Field(
+                ne: t.GeneralValueType | None = Field(
                     default=None,
                     description="Value must not equal",
                 )
-                is_: type[object] | tuple[type[object], ...] | None = Field(
+                is_: type | tuple[type, ...] | None = Field(
                     default=None,
                     validation_alias=AliasChoices("is_", "is"),
                     description="Type check (isinstance) - single type or tuple",
@@ -1408,39 +1408,6 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Custom error message",
                 )
-                # Legacy parameters (deprecated)
-                contains: object | None = Field(
-                    default=None,
-                    description="Legacy: use has=",
-                )
-                excludes: object | None = Field(
-                    default=None,
-                    description="Legacy: use lacks=",
-                )
-
-                @model_validator(mode="before")
-                @classmethod
-                def convert_legacy_params(
-                    cls,
-                    data: dict[str, t.GeneralValueType]
-                    | FlextTestsModels.Tests.Matcher.OkParams,
-                ) -> dict[str, t.GeneralValueType]:
-                    """Convert legacy contains/excludes to has/lacks."""
-                    if isinstance(data, dict):
-                        # Convert legacy parameters before model creation
-                        if "contains" in data and "has" not in data:
-                            data["has"] = data.pop("contains")
-                        if "excludes" in data and "lacks" not in data:
-                            data["lacks"] = data.pop("excludes")
-                        return data
-                    # If data is OkParams, convert to dict
-                    if isinstance(data, FlextTestsModels.Tests.Matcher.OkParams):
-                        return data.model_dump()
-                    # data should be dict[str, t.GeneralValueType] at this point
-                    if isinstance(data, dict):
-                        return data
-                    # This should not happen given the type hint
-                    raise ValueError(f"Unexpected data type: {type(data)}")
 
             class FailParams(FlextModelsBase.Value):
                 """Parameters for matcher fail() operations with Pydantic 2 validation."""
@@ -1478,42 +1445,6 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Error data contains key-value pairs",
                 )
-                # Legacy parameters (deprecated)
-                error: str | None = Field(default=None, description="Legacy: use has=")
-                contains: str | Sequence[str] | None = Field(
-                    default=None,
-                    description="Legacy: use has=",
-                )
-                excludes: str | Sequence[str] | None = Field(
-                    default=None,
-                    description="Legacy: use lacks=",
-                )
-
-                @model_validator(mode="before")
-                @classmethod
-                def convert_legacy_params(
-                    cls,
-                    data: dict[str, t.GeneralValueType]
-                    | FlextTestsModels.Tests.Matcher.FailParams,
-                ) -> dict[str, t.GeneralValueType]:
-                    """Convert legacy error/contains/excludes to has/lacks."""
-                    if isinstance(data, dict):
-                        # Convert legacy parameters before model creation
-                        if "error" in data and "has" not in data:
-                            data["has"] = data.pop("error")
-                        if "contains" in data and "has" not in data:
-                            data["has"] = data.pop("contains")
-                        if "excludes" in data and "lacks" not in data:
-                            data["lacks"] = data.pop("excludes")
-                        return data
-                    # If data is FailParams, convert to dict
-                    if isinstance(data, FlextTestsModels.Tests.Matcher.FailParams):
-                        return data.model_dump()
-                    # data should be dict[str, t.GeneralValueType] at this point
-                    if isinstance(data, dict):
-                        return data
-                    # This should not happen given the type hint
-                    raise ValueError(f"Unexpected data type: {type(data)}")
 
             class ThatParams(FlextModelsBase.Value):
                 """Parameters for matcher that() operations with Pydantic 2 validation."""
@@ -1524,20 +1455,20 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Custom error message",
                 )
-                eq: object | None = Field(
+                eq: t.GeneralValueType | None = Field(
                     default=None,
                     description="Expected value (equality check)",
                 )
-                ne: object | None = Field(
+                ne: t.GeneralValueType | None = Field(
                     default=None,
                     description="Value must not equal",
                 )
-                is_: type[object] | tuple[type[object], ...] | None = Field(
+                is_: type | tuple[type, ...] | None = Field(
                     default=None,
                     validation_alias=AliasChoices("is_", "is"),
                     description="Type check (isinstance) - single type or tuple",
                 )
-                not_: type[object] | tuple[type[object], ...] | None = Field(
+                not_: type | tuple[type, ...] | None = Field(
                     default=None,
                     validation_alias=AliasChoices("not_", "not"),
                     description="Type check - value is NOT instance of type(s)",
@@ -1587,11 +1518,11 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Regex pattern (for strings)",
                 )
-                first: object | None = Field(
+                first: t.GeneralValueType | None = Field(
                     default=None,
                     description="Sequence first item equals",
                 )
-                last: object | None = Field(
+                last: t.GeneralValueType | None = Field(
                     default=None,
                     description="Sequence last item equals",
                 )
@@ -1621,7 +1552,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Mapping missing keys",
                 )
-                values: Sequence[object] | None = Field(
+                values: Sequence[t.GeneralValueType] | None = Field(
                     default=None,
                     description="Mapping has all values",
                 )
@@ -1657,94 +1588,6 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Custom predicate function",
                 )
-                # Legacy parameters (deprecated)
-                contains: object | None = Field(
-                    default=None,
-                    description="Legacy: use has=",
-                )
-                excludes: object | None = Field(
-                    default=None,
-                    description="Legacy: use lacks=",
-                )
-                length: int | None = Field(default=None, description="Legacy: use len=")
-                length_gt: int | None = Field(
-                    default=None,
-                    description="Legacy: use len=(min, max)",
-                )
-                length_gte: int | None = Field(
-                    default=None,
-                    description="Legacy: use len=(min, max)",
-                )
-                length_lt: int | None = Field(
-                    default=None,
-                    description="Legacy: use len=(min, max)",
-                )
-                length_lte: int | None = Field(
-                    default=None,
-                    description="Legacy: use len=(min, max)",
-                )
-
-                @model_validator(mode="before")
-                @classmethod
-                def convert_legacy_params(
-                    cls,
-                    data: dict[str, t.GeneralValueType]
-                    | FlextTestsModels.Tests.Matcher.ThatParams,
-                ) -> dict[str, t.GeneralValueType]:
-                    """Convert legacy parameters to unified ones."""
-                    if isinstance(data, dict):
-                        # Convert legacy parameters before model creation
-                        if "contains" in data and "has" not in data:
-                            data["has"] = data.pop("contains")
-                        if "excludes" in data and "lacks" not in data:
-                            data["lacks"] = data.pop("excludes")
-                        if "error" in data and "has" not in data:
-                            data["has"] = data.pop("error")
-                        if "length" in data and "len" not in data:
-                            data["len"] = data.pop("length")
-                        if (
-                            "length_gt" in data
-                            or "length_gte" in data
-                            or "length_lt" in data
-                            or "length_lte" in data
-                        ):
-                            min_len = data.pop(
-                                "length_gte",
-                                data.pop("length_gt", None),
-                            )
-                            max_len = data.pop(
-                                "length_lte",
-                                data.pop("length_lt", None),
-                            )
-                            if (
-                                min_len is not None or max_len is not None
-                            ) and "len" not in data:
-                                # Ensure tuple[int, int] not tuple[int, float]
-                                max_val_raw = (
-                                    max_len if max_len is not None else 2147483647
-                                )  # max int32
-                                max_val: int = (
-                                    int(max_val_raw)
-                                    if isinstance(max_val_raw, (int, float))
-                                    else 2147483647
-                                )
-                                min_val: int = (
-                                    int(min_len)
-                                    if min_len is not None
-                                    and isinstance(min_len, (int, float))
-                                    else 0
-                                )
-                                data["len"] = (min_val, max_val)
-                        return data
-                    # If data is ThatParams, convert to dict
-                    # Use string literal to avoid forward reference issue during class definition
-                    if isinstance(data, cls):
-                        return data.model_dump()
-                    # data should be dict[str, t.GeneralValueType] at this point
-                    if isinstance(data, dict):
-                        return data
-                    # This should not happen given the type hint
-                    raise ValueError(f"Unexpected data type: {type(data)}")
 
             class ScopeParams(FlextModelsBase.Value):
                 """Parameters for matcher scope() operations with Pydantic 2 validation."""
@@ -1753,7 +1596,7 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Initial configuration values",
                 )
-                container: Mapping[str, object] | None = Field(
+                container: Mapping[str, t.GeneralValueType] | None = Field(
                     default=None,
                     description="Initial container/service mappings",
                 )
@@ -1786,8 +1629,10 @@ class FlextTestsModels(FlextModelsBase):
                 """Result of deep matching operations."""
 
                 path: str = Field(description="Path where match occurred or failed")
-                expected: object = Field(description="Expected value or predicate")
-                actual: object | None = Field(
+                expected: t.Tests.Matcher.ValueSpec = Field(
+                    description="Expected value or predicate"
+                )
+                actual: t.GeneralValueType | None = Field(
                     default=None,
                     description="Actual value found",
                 )

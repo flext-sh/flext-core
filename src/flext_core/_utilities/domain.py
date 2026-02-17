@@ -117,18 +117,6 @@ class FlextUtilitiesDomain:
         if not isinstance(obj_b, obj_a.__class__):
             return False
 
-        # Try Pydantic model_dump first (using protocol for type safety)
-        if isinstance(obj_a, p.HasModelDump) and isinstance(
-            obj_b,
-            p.HasModelDump,
-        ):
-            try:
-                dump_a = obj_a.model_dump()
-                dump_b = obj_b.model_dump()
-                return bool(dump_a == dump_b)
-            except (AttributeError, TypeError, RuntimeError):
-                pass
-
         # Try __dict__ comparison
         try:
             return obj_a.__dict__ == obj_b.__dict__
@@ -153,15 +141,6 @@ class FlextUtilitiesDomain:
             >>> hash_val = FlextUtilitiesDomain.hash_value_object_by_value(addr)
 
         """
-        # Try Pydantic model_dump first (using protocol for type safety)
-        if isinstance(obj, p.HasModelDump):
-            try:
-                data = obj.model_dump()
-                # Convert to hashable tuple of items
-                return hash(tuple(sorted(data.items())))
-            except (AttributeError, TypeError, RuntimeError):
-                pass
-
         # Try __dict__
         try:
             obj_dict = obj.__dict__

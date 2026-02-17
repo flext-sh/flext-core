@@ -228,7 +228,10 @@ class FlextModelsService:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Operation name",
         )
-        operation_callable: Callable[..., p.ResultLike[t.GeneralValueType]] = Field(
+        operation_callable: Callable[
+            [t.GeneralValueType],
+            p.ResultLike[t.GeneralValueType],
+        ] = Field(
             description="Callable operation returning result",
         )
         arguments: FlextModelsService.ServiceParameters | None = None

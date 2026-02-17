@@ -195,7 +195,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context(
-        context: t.StringMapping | object,
+        context: Mapping[str, str] | object,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,

@@ -48,8 +48,8 @@ class FlextTestsTypes(FlextTypes):
         Use specific types instead of t.GeneralValueType where possible.
         """
 
-        # Reuse StringMapping from flext_core.typings - no duplication
-        type ContainerPortMapping = t.StringMapping
+        # Uses Mapping[str, str] directly - no alias needed
+        type ContainerPortMapping = Mapping[str, str]
         """Mapping of container port names to host port bindings."""
 
         # Reuse ConfigurationMapping from flext_core.typings - no duplication
@@ -82,11 +82,11 @@ class FlextTestsTypes(FlextTypes):
         class Docker:
             """Docker-specific type definitions with specific types."""
 
-            # Reuse StringMapping from flext_core.typings - no duplication
-            type ContainerPorts = t.StringMapping
+            # Uses Mapping[str, str] directly - no alias needed
+            type ContainerPorts = Mapping[str, str]
             """Container port mappings (container_port -> host:port)."""
 
-            type ContainerLabels = t.StringMapping
+            type ContainerLabels = Mapping[str, str]
             """Container labels mapping."""
 
             type ContainerEnvironment = Sequence[str]
@@ -96,8 +96,8 @@ class FlextTestsTypes(FlextTypes):
             type ComposeFileConfig = t.ConfigurationMapping
             """Docker compose file configuration structure with specific types."""
 
-            # Reuse StringMapping from flext_core.typings - no duplication
-            type VolumeMapping = t.StringMapping
+            # Uses Mapping[str, str] directly - no alias needed
+            type VolumeMapping = Mapping[str, str]
             """Volume mappings (host_path -> container_path)."""
 
             # Reuse ConfigurationMapping from flext_core.typings - no duplication
@@ -356,7 +356,9 @@ class FlextTestsTypes(FlextTypes):
             # Deep Structural Matching
             # =====================================================================
 
-            type DeepSpec = Mapping[str, Callable[[object], bool] | object]
+            type DeepSpec = Mapping[
+                str, Callable[[t.GeneralValueType], bool] | t.GeneralValueType
+            ]
             """Deep structural matching specification: path -> value or predicate.
 
             Supports unlimited nesting with dot notation paths.
@@ -382,7 +384,7 @@ class FlextTestsTypes(FlextTypes):
             # Predicates and Validators
             # =====================================================================
 
-            type PredicateSpec = Callable[[object], bool]
+            type PredicateSpec = Callable[[t.GeneralValueType], bool]
             """Custom predicate function for validation.
 
             Takes a value and returns True if validation passes.
@@ -392,7 +394,7 @@ class FlextTestsTypes(FlextTypes):
                 where=lambda u: u.age >= 18 and u.verified
             """
 
-            type ValueSpec = Callable[[object], bool] | object
+            type ValueSpec = Callable[[t.GeneralValueType], bool] | t.GeneralValueType
             """Value specification: direct value or predicate function.
 
             Used in deep matching and custom validation.
@@ -400,10 +402,10 @@ class FlextTestsTypes(FlextTypes):
             """
 
             type AssertionSpec = (
-                Mapping[str, object]
-                | Callable[[object], bool]
-                | type[object]
-                | tuple[type[object], ...]
+                Mapping[str, t.GeneralValueType]
+                | Callable[[t.GeneralValueType], bool]
+                | type
+                | tuple[type, ...]
             )
             """Assertion specification for flexible validation.
 
@@ -412,15 +414,13 @@ class FlextTestsTypes(FlextTypes):
             - Callable: Predicate function
             - type: Type check (single type)
             - tuple[type, ...]: Type check (multiple types)
-
-            Note: object appears in union but is handled by type checking.
             """
 
             # =====================================================================
             # Containment Specifications
             # =====================================================================
 
-            type ContainmentSpec = object | Sequence[object]
+            type ContainmentSpec = t.GeneralValueType | Sequence[t.GeneralValueType]
             """Containment specification: single item or sequence of items.
 
             Used for has/lacks parameters that check if container contains item(s).
@@ -444,7 +444,7 @@ class FlextTestsTypes(FlextTypes):
             # Sequence Assertions
             # =====================================================================
 
-            type SequencePredicate = type[object] | Callable[[object], bool]
+            type SequencePredicate = type | Callable[[t.GeneralValueType], bool]
             """Sequence predicate: type check or custom predicate.
 
             Used for all_/any_ parameters that validate sequence items.
@@ -454,8 +454,8 @@ class FlextTestsTypes(FlextTypes):
                 all_=lambda x: x > 0        # All items pass predicate
             """
 
-            # Use object for runtime compatibility - protocol is only for type checking
-            type SortKey = bool | Callable[[object], object]
+            # Use t.GeneralValueType for runtime compatibility
+            type SortKey = bool | Callable[[t.GeneralValueType], t.GeneralValueType]
             """Sort key specification: boolean or key function.
 
             Used for sorted parameter.
@@ -484,7 +484,9 @@ class FlextTestsTypes(FlextTypes):
                 keys={"id", "name"}         # Set
             """
 
-            type KeyValueSpec = tuple[str, object] | Mapping[str, object]
+            type KeyValueSpec = (
+                tuple[str, t.GeneralValueType] | Mapping[str, t.GeneralValueType]
+            )
             """Key-value specification: single pair or mapping.
 
             Used for kv parameter that validates key-value pairs.
@@ -508,7 +510,9 @@ class FlextTestsTypes(FlextTypes):
                 attrs=["name", "email"]          # Multiple attributes
             """
 
-            type AttributeValueSpec = tuple[str, object] | Mapping[str, object]
+            type AttributeValueSpec = (
+                tuple[str, t.GeneralValueType] | Mapping[str, t.GeneralValueType]
+            )
             """Attribute-value specification: single pair or mapping.
 
             Used for attr_eq parameter that validates attribute values.
@@ -555,8 +559,8 @@ class FlextTestsTypes(FlextTypes):
                 cleanup=[lambda: resource.cleanup(), lambda: db.close()]
             """
 
-            # Reuse StringMapping from flext_core.typings - no duplication
-            type EnvironmentSpec = t.StringMapping
+            # Uses Mapping[str, str] directly - no alias needed
+            type EnvironmentSpec = Mapping[str, str]
             """Environment specification: mapping of env var names to values.
 
             Used for env parameter in tm.scope().
@@ -588,14 +592,14 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_flext_result(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeGuard[r[t.GeneralValueType]]:
             """Check if value is a FlextResult."""
             return isinstance(value, r)
 
         @staticmethod
         def is_general_value(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeGuard[t.GeneralValueType]:
             """Check if value is GeneralValueType."""
             if value is None:
@@ -608,7 +612,7 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_sequence(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeGuard[Sequence[t.GeneralValueType]]:
             """Check if value is a Sequence of GeneralValueType."""
             return isinstance(value, (list, tuple)) and not isinstance(
@@ -618,21 +622,21 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_mapping(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeGuard[Mapping[str, t.GeneralValueType]]:
             """Check if value is a Mapping of str to GeneralValueType."""
             return isinstance(value, dict)
 
         @staticmethod
         def is_builder_dict(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderDict]:
             """Check if value is a BuilderDict."""
             return isinstance(value, dict) and all(isinstance(k, str) for k in value)
 
         @staticmethod
         def is_test_result_value(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeGuard[FlextTestsTypes.Tests.TestResultValue]:
             """Check if value is a valid TestResultValue."""
             if value is None:
@@ -652,14 +656,14 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_configuration_dict(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeGuard[dict[str, t.GeneralValueType]]:
             """Check if value is a ConfigurationDict."""
             return isinstance(value, dict) and all(isinstance(k, str) for k in value)
 
         @staticmethod
         def is_configuration_mapping(
-            value: object,
+            value: t.GeneralValueType,
         ) -> TypeGuard[t.ConfigurationMapping]:
             """Check if value is a ConfigurationMapping."""
             return isinstance(value, Mapping) and all(isinstance(k, str) for k in value)

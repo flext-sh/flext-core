@@ -297,8 +297,6 @@ class FlextUtilitiesConversion:
             return None
         if isinstance(value, Path):
             return None
-        if callable(value):
-            return None
         # Check for simple sequences (not nested GeneralValueType)
         if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             # Can't easily validate element types at runtime, assume compatible
@@ -346,6 +344,7 @@ class FlextUtilitiesConversion:
         else:
             items = [value]
 
+        filtered_items: list[t.GeneralValueType]
         if filter_list_like:
             filtered_items = [
                 item

@@ -118,16 +118,6 @@ class FlextUtilitiesCast:
         original_value: t.GeneralValueType = value
         if isinstance(value, target_type):
             return original_value
-        if callable(value):
-            # Validate that target_type is not a numeric/constructor type
-            # int, float, bool, complex should not be used as targets for callable casts
-            disallowed_types = {int, float, bool, complex}
-            if target_type in disallowed_types:
-                target_name = getattr(target_type, "__name__", str(target_type))
-                error_msg = f"Cannot cast callable to {target_name}"
-                raise TypeError(error_msg)
-            # Return the original callable unchanged - don't try to convert it
-            return original_value
         source_name = getattr(type(value), "__name__", str(type(value)))
         target_name = getattr(target_type, "__name__", str(target_type))
         error_msg = f"Cannot cast {source_name} to {target_name}"

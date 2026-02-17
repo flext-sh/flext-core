@@ -87,7 +87,7 @@ class TestrCoverage:
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
-        error_data: t.EventDataMapping = {"status": "failed", "count": 5}
+        error_data: t.ConfigurationMapping = {"status": "failed", "count": 5}
         result = r[str].fail("Error", error_data=error_data)
         u.Tests.Result.assert_result_failure(result)
         assert result.error_data == error_data
@@ -721,7 +721,7 @@ class TestrCoverage:
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
-        error_data: t.EventDataMapping = {"details": "something"}
+        error_data: t.ConfigurationMapping = {"details": "something"}
         result = r[str].fail(
             "Error",
             error_code="CODE_123",

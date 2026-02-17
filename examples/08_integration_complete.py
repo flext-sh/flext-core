@@ -68,12 +68,12 @@ class Order(FlextModels.AggregateRoot):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class IntegrationService(s[t.ServiceMetadataMapping]):
+class IntegrationService(s[t.ConfigurationMapping]):
     """Service demonstrating complete flext-core integration."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ConfigurationMapping]:
         """Execute complete integration demonstration."""
         print("Starting complete integration demonstration")
 
@@ -88,7 +88,7 @@ class IntegrationService(s[t.ServiceMetadataMapping]):
             self._demonstrate_registry_dispatcher_integration()
             self._demonstrate_utilities_integration()
 
-            return FlextResult[t.ServiceMetadataMapping].ok({
+            return FlextResult[t.ConfigurationMapping].ok({
                 "components_integrated": [
                     "FlextResult",
                     "FlextContainer",
@@ -117,7 +117,7 @@ class IntegrationService(s[t.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Integration demonstration failed: {e}"
-            return FlextResult[t.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.ConfigurationMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_result_patterns() -> None:

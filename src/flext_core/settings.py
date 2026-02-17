@@ -257,7 +257,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
             if cls in cls._instances:
                 del cls._instances[cls]
 
-    def __init__(self, **kwargs: t.GeneralValueType) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize config with data.
 
         Note: BaseSettings handles initialization from environment variables,
@@ -281,7 +281,14 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         # Pydantic field validators run during initialization. BaseSettings will load
         # values from environment variables and .env files, then apply explicit kwargs.
         # Field validators (e.g., validate_ldif_encoding) will run during initialization.
-        super().__init__(**kwargs)
+        # Call BaseSettings.__init__ directly to avoid mypy type mismatch with
+        # ProtocolSettings intermediate __init__ signature.
+        # CAST REQUIRED: **kwargs unpacking with typed values (object/GeneralValueType)
+        # triggers type errors against strict BaseSettings arguments (bool | None).
+        # We must cast to Any to allow passing dynamic configuration values to Pydantic.
+        from typing import Any, cast
+
+        BaseSettings.__init__(self, **cast(dict[str, Any], kwargs))
 
         # Use runtime bridge for dependency-injector providers (L0.5 pattern)
         # Store as t.GeneralValueType to avoid direct dependency-injector import in this module
@@ -446,7 +453,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
     # Audit Implication: This registry tracks namespace configuration classes for
     # auto-registration pattern. Used by @auto_register decorator to map namespace
     # strings to configuration classes.
-    _namespace_registry: ClassVar[t.StringBaseSettingsTypeDict] = {}
+    _namespace_registry: ClassVar[dict[str, type[BaseSettings]]] = {}
     _context_overrides: ClassVar[dict[str, dict[str, t.FlexibleValue]]] = {}
 
     @staticmethod

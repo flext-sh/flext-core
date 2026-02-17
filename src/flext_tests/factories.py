@@ -552,7 +552,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
         *,
         error_message: str = c.Tests.Factory.ERROR_DEFAULT,
         result_value: t.Tests.TestResultValue = c.Tests.Factory.SUCCESS_MESSAGE,
-    ) -> Callable[..., t.Tests.TestResultValue | r[t.Tests.TestResultValue]]:
+    ) -> object:
         """Unified operation factory - creates callable test operations.
 
         This is the preferred way to create test operations. Use tt.op() instead of
@@ -1028,8 +1028,6 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                     model_kind = "query"
                 case "event":
                     model_kind = "event"
-                case _:
-                    model_kind = "user"  # fallback
             for i in range(params.count):
                 key: str = params.key_factory(i) if params.key_factory else f"item_{i}"
 
@@ -1363,7 +1361,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
         cls,
         operation_type: str = "simple",
         **overrides: t.Tests.TestResultValue,
-    ) -> Callable[..., t.Tests.TestResultValue]:
+    ) -> object:
         """Create a test operation callable.
 
         Args:
@@ -1371,7 +1369,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
             **overrides: Additional configuration
 
         Returns:
-            Test operation callable
+            Test operation callable (object - varying signatures)
 
         """
         warnings.warn(
@@ -1389,7 +1387,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
             type_error_msg if isinstance(type_error_msg, str) else "Wrong type"
         )
 
-        ops: dict[str, Callable[..., t.GeneralValueType]] = {
+        ops: dict[str, object] = {
             "simple": u.Tests.Factory.simple_operation,
             "add": u.Tests.Factory.add_operation,
             "format": u.Tests.Factory.format_operation,
@@ -1398,7 +1396,6 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                 type_error_message,
             ),
         }
-        # Cast to expected return type (t.GeneralValueType is superset)
         operations = ops
 
         if operation_type in operations:

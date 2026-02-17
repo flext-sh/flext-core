@@ -65,10 +65,6 @@ def _handler_type_to_literal(
             return "operation"
         case c.Cqrs.HandlerType.SAGA:
             return "saga"
-        case _:
-            # All valid HandlerType values are covered above
-            # This case is for type safety - should never be reached
-            return "command"
 
 
 # Import moved to top of file to avoid circular dependency
@@ -280,10 +276,6 @@ class FlextHandlers[MessageT_contra, ResultT](
                         return r[t.GeneralValueType].fail(
                             f"Unexpected message type: {type(message).__name__}",
                         )
-                    # If result is already r, return it directly
-                    if isinstance(result, r):
-                        return result
-                    # Otherwise wrap it in r - this path may be taken depending on handler implementation
                     return r[t.GeneralValueType].ok(result)
                 except Exception as exc:
                     # Wrap exception in r
@@ -763,7 +755,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
 
-        def decorator(func: Callable[..., object]) -> Callable[..., object]:
+        def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
             """Apply handler configuration metadata to function.
 
             Only sets the attribute if not already set - innermost decorator wins.

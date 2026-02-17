@@ -336,14 +336,10 @@ class FlextTestsBuilders:
                     result_val = model_result.value
                     if isinstance(result_val, (BaseModel, list, dict)):
                         resolved_value = result_val
-                    else:
-                        resolved_value = None
                 else:
                     resolved_value = None
             elif isinstance(model_result, (list, dict)):
                 resolved_value = model_result
-            else:
-                resolved_value = None
 
         # Priority 12: Config shortcuts
         elif params.production is not None or params.debug is not None:
@@ -1253,17 +1249,10 @@ class FlextTestsBuilders:
             # Single model case shouldn't return dict, but handle gracefully
             if len(config_result) == 1:
                 config_value = next(iter(config_result.values()))
-                if isinstance(config_value, BaseModel):
-                    config = config_value
-                else:
-                    msg = f"Expected BaseModel in dict, got {type(config_value)}"
-                    raise TypeError(msg)
+                config = config_value
             else:
                 msg = f"Expected single BaseModel, got dict with {len(config_result)} items"
                 raise TypeError(msg)
-        else:
-            msg = f"Expected BaseModel, got {type(config_result)}"
-            raise TypeError(msg)
         # Type narrowing: use isinstance for proper type narrowing
         b = c.Tests.Builders
         config_data: dict[str, t.GeneralValueType]

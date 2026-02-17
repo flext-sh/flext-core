@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from contextlib import suppress
 from functools import wraps
 from typing import Literal, overload
@@ -34,10 +34,7 @@ from flext_core.utilities import u
 
 def deprecated(
     message: str,
-) -> Callable[
-    [Callable[..., t.GeneralValueType] | t.GeneralValueType],
-    Callable[..., t.GeneralValueType] | t.GeneralValueType,
-]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Decorator to mark functions/variables as deprecated.
 
     Emits DeprecationWarning when decorated function is called.
@@ -72,35 +69,24 @@ def deprecated(
     """
 
     def decorator(
-        func_or_value: Callable[..., t.GeneralValueType] | t.GeneralValueType,
-    ) -> Callable[..., t.GeneralValueType] | t.GeneralValueType:
+        func: Callable[P, R],
+    ) -> Callable[P, R]:
         """Apply deprecation warning to callable."""
-        if callable(func_or_value):
-            # Callable (function/method) - type narrowed by callable() check
-            # Assignment ensures type narrowing propagates through wraps() and closure
-            func_callable: Callable[..., t.GeneralValueType] = func_or_value
 
-            @wraps(func_callable)
-            def wrapper(
-                *args: t.GeneralValueType,
-                **kwargs: t.GeneralValueType,
-            ) -> t.GeneralValueType:
-                """Wrapper that emits warning before execution."""
-                warnings.warn(
-                    message,
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                return func_callable(*args, **kwargs)
+        @wraps(func)
+        def wrapper(
+            *args: P.args,
+            **kwargs: P.kwargs,
+        ) -> R:
+            """Wrapper that emits warning before execution."""
+            warnings.warn(
+                message,
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return func(*args, **kwargs)
 
-            return wrapper
-        # Value (constant, variable)
-        warnings.warn(
-            message,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return func_or_value
+        return wrapper
 
     return decorator
 
@@ -911,15 +897,9 @@ class FlextDecorators(FlextRuntime):
 
     @staticmethod
     def _execute_retry_loop[R](
-        func: Callable[
-            ...,
-            R,
-        ],  # ... is standard for variable args (variadic signature)
+        func: Callable[..., R],  # Variadic: called with pre-split args/kwargs
         args: tuple[object, ...],
-        kwargs: dict[
-            str,
-            object,
-        ],  # Function kwargs can contain any type (ParamSpec compatibility)
+        kwargs: dict[str, object],
         logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,
@@ -1247,7 +1227,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StringMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: Literal[False] = False,
@@ -1258,7 +1238,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StringMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: Literal[True] = ...,
@@ -1268,7 +1248,7 @@ class FlextDecorators(FlextRuntime):
     @staticmethod
     def combined(
         *,
-        inject_deps: t.StringMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         use_railway: bool = False,
@@ -1589,7 +1569,7 @@ class FlextDecorators(FlextRuntime):
 
         """
 
-        def decorator(func: Callable[..., object]) -> Callable[..., object]:
+        def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
             """Apply factory configuration metadata to function."""
             config = m.HandlerFactoryDecoratorConfig(
                 name=name,

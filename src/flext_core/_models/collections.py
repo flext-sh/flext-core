@@ -176,7 +176,7 @@ class FlextModelsCollections:
                 instance.add_entries(category, entries)
             return instance
 
-        def to_dict(self) -> t.StringSequenceGeneralValueDict:
+        def to_dict(self) -> dict[str, Sequence[t.GeneralValueType]]:
             """Convert categories to dictionary representation.
 
             Normalizes list[T] to Sequence[t.GeneralValueType] for type compatibility.
@@ -187,7 +187,7 @@ class FlextModelsCollections:
 
             """
             # Normalize list[T] to Sequence[t.GeneralValueType] for type compatibility
-            result: t.StringSequenceGeneralValueDict = {}
+            result: dict[str, Sequence[t.GeneralValueType]] = {}
             for key, value_list in self.categories.items():
                 # Normalize each item in the list to t.GeneralValueType
                 # First convert T to GeneralValueType, then normalize

@@ -109,7 +109,7 @@ class FlextTestsDomains:
             Payload dictionary
 
         """
-        payloads: t.StringConfigurationDictDict = {
+        payloads: dict[str, dict[str, t.GeneralValueType]] = {
             "user": {
                 "id": str(uuid.uuid4()),
                 "name": "Test User",

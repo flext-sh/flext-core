@@ -1534,7 +1534,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         cls,
         files: dict[str, str],
         extension: str = c.Tests.Files.DEFAULT_EXTENSION,
-    ) -> Generator[t.StringPathDict]:
+    ) -> Generator[dict[str, Path]]:
         """Create temporary files. DEPRECATED: Use tf.files() instead."""
         warnings.warn(
             c.Tests.Files.DEPRECATION_TEMPORARY_FILES,

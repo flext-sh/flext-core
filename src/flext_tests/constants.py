@@ -46,7 +46,7 @@ class FlextTestsConstants(FlextConstants):
                 "mongodb",
                 "elasticsearch",
             )
-            SHARED_CONTAINERS: Final[Mapping[str, t.ContainerConfigDict]] = {}
+            SHARED_CONTAINERS: Final[Mapping[str, t.ConfigurationDict]] = {}
 
             # Test-specific Docker constants
             DEFAULT_TIMEOUT_SECONDS: Final[int] = 30

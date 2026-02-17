@@ -53,12 +53,12 @@ TEST_DATA: t.ConfigurationMapping = {
 # ═══════════════════════════════════════════════════════════════════
 
 
-class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
+class UtilitiesService(FlextService[t.ConfigurationMapping]):
     """Service demonstrating u comprehensive toolkit."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ConfigurationMapping]:
         """Execute comprehensive utilities demonstrations."""
         print("Starting utilities demonstration")
 
@@ -72,7 +72,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
             self._demonstrate_collection_operations()
             self._demonstrate_type_checking()
 
-            return FlextResult[t.ServiceMetadataMapping].ok({
+            return FlextResult[t.ConfigurationMapping].ok({
                 "utilities_demonstrated": [
                     "validation",
                     "id_generation",
@@ -94,7 +94,7 @@ class UtilitiesService(FlextService[t.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Utilities demonstration failed: {e}"
-            return FlextResult[t.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.ConfigurationMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_validation() -> None:
@@ -298,7 +298,7 @@ def main() -> None:
     result = service.execute()
 
     # Railway pattern for result handling (DRY)
-    def handle_success(data: t.ServiceMetadataMapping) -> None:
+    def handle_success(data: t.ConfigurationMapping) -> None:
         """Handle successful result."""
         categories = data.get("utility_categories", 0)
         utilities = data.get("utilities_demonstrated", [])

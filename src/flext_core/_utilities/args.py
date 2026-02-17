@@ -183,7 +183,7 @@ class FlextUtilitiesArgs:
     @staticmethod
     def get_enum_params(
         func: p.CallableWithHints,
-    ) -> t.StringStrEnumTypeDict:
+    ) -> dict[str, type[StrEnum]]:
         """Extract parameters that are StrEnum from function signature.
 
         Example:
@@ -198,7 +198,7 @@ class FlextUtilitiesArgs:
         except Exception:
             return {}
 
-        enum_params: t.StringStrEnumTypeDict = {}
+        enum_params: dict[str, type[StrEnum]] = {}
 
         for name, hint in hints.items():
             if name == "return":

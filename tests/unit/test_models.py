@@ -727,7 +727,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         # Convert to proper type: Sequence[tuple[str, EventDataMapping | None]]
-        events: Sequence[tuple[str, t.EventDataMapping | None]] = [
+        events: Sequence[tuple[str, t.ConfigurationMapping | None]] = [
             ("event1", {"data": "value1"}),
             ("event2", {"data": "value2"}),
             ("event3", {"data": "value3"}),
@@ -751,13 +751,13 @@ class TestFlextModels:
         # Testing invalid input type - intentionally passing wrong type
         # for runtime validation
         invalid_input = cast(
-            "Sequence[tuple[str, t.EventDataMapping | None]]",
+            "Sequence[tuple[str, t.ConfigurationMapping | None]]",
             "not a list",
         )
         result = aggregate.add_domain_events_bulk(invalid_input)
         u.Tests.Result.assert_result_failure(result)
         assert result.error is not None and "Events must be a list" in result.error
-        invalid_empty_name: Sequence[tuple[str, t.EventDataMapping | None]] = [
+        invalid_empty_name: Sequence[tuple[str, t.ConfigurationMapping | None]] = [
             ("", {"data": "value"}),
         ]
         result = aggregate.add_domain_events_bulk(invalid_empty_name)
@@ -774,7 +774,7 @@ class TestFlextModels:
 
         aggregate = TestAggregate(name="test")
         max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
-        events: Sequence[tuple[str, t.EventDataMapping | None]] = [
+        events: Sequence[tuple[str, t.ConfigurationMapping | None]] = [
             (f"event{i}", {"data": f"value{i}"}) for i in range(max_events + 1)
         ]
         _ = aggregate.add_domain_events_bulk(events)

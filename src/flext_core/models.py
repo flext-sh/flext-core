@@ -160,7 +160,7 @@ class FlextModels:
     # CONFIGURATION MODELS - Direct access for common usage
     # =========================================================================
 
-    Config = FlextModelsConfig
+    Config: TypeAlias = FlextModelsConfig
     ProcessingRequest: TypeAlias = FlextModelsConfig.ProcessingRequest
     ProcessingConfig: TypeAlias = FlextModelsConfig.ProcessingRequest
     BatchProcessingConfig: TypeAlias = FlextModelsConfig.BatchProcessingConfig

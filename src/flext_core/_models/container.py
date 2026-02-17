@@ -36,7 +36,7 @@ class FlextModelsContainer:
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
-        Replaces: t.ServiceRegistrationDict for service tracking.
+        Replaces: dict[str, t.GeneralValueType] for service tracking.
         """
 
         model_config = ConfigDict(
@@ -62,7 +62,7 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when service was registered",
         )
-        metadata: FlextModelsBase.Metadata | t.ServiceMetadataMapping | None = Field(
+        metadata: FlextModelsBase.Metadata | t.ConfigurationMapping | None = Field(
             default=None,
             description="Additional service metadata (JSON-serializable)",
         )
@@ -89,7 +89,7 @@ class FlextModelsContainer:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: t.FactoryRegistrationDict for factory tracking.
+        Replaces: dict[str, t.GeneralValueType] for factory tracking.
         """
 
         model_config = ConfigDict(
@@ -122,7 +122,7 @@ class FlextModelsContainer:
             default=None,
             description="Cached singleton instance (if is_singleton=True)",
         )
-        metadata: FlextModelsBase.Metadata | t.ServiceMetadataMapping | None = Field(
+        metadata: FlextModelsBase.Metadata | t.ConfigurationMapping | None = Field(
             default=None,
             description="Additional factory metadata (JSON-serializable)",
         )
@@ -169,7 +169,7 @@ class FlextModelsContainer:
             default_factory=FlextRuntime.generate_datetime_utc,
             description="UTC timestamp when resource was registered",
         )
-        metadata: FlextModelsBase.Metadata | t.ServiceMetadataMapping | None = Field(
+        metadata: FlextModelsBase.Metadata | t.ConfigurationMapping | None = Field(
             default=None,
             description="Additional resource metadata (JSON-serializable)",
         )

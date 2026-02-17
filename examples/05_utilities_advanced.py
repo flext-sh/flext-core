@@ -75,12 +75,12 @@ TEST_DATA: Mapping[str, t.GeneralValueType] = {
 # ═══════════════════════════════════════════════════════════════════
 
 
-class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
+class AdvancedUtilitiesService(s[t.ConfigurationMapping]):
     """Service demonstrating advanced u features."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ConfigurationMapping]:
         """Execute advanced utilities demonstrations."""
         print("Starting advanced utilities demonstration")
 
@@ -95,7 +95,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
             self._demonstrate_pagination()
             self._demonstrate_configuration()
 
-            return FlextResult[t.ServiceMetadataMapping].ok({
+            return FlextResult[t.ConfigurationMapping].ok({
                 "utilities_demonstrated": [
                     "args_validation",
                     "enum_utilities",
@@ -123,7 +123,7 @@ class AdvancedUtilitiesService(s[t.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Advanced utilities demonstration failed: {e}"
-            return FlextResult[t.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.ConfigurationMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_args_validation() -> None:

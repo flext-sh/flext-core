@@ -149,7 +149,16 @@ class FlextUtilitiesGuards:
             # ConfigurationMapping is Mapping[str, t.GeneralValueType]
             val_mapping = val  # type narrowing via TypeGuard
             # Use full type from start to satisfy dict invariance
-            result_dict: t.GeneralNestedDict = {}
+            result_dict: dict[
+                str,
+                str
+                | int
+                | float
+                | bool
+                | datetime
+                | None
+                | list[str | int | float | bool | datetime | None],
+            ] = {}
             # TypeGuard already narrows to Mapping - no extra check needed
             dict_v = dict(val_mapping.items())
             for k, v in dict_v.items():

@@ -173,16 +173,14 @@ class FlextUtilitiesMapper:
     def _get_callable_from_dict(
         ops: dict[str, t.GeneralValueType],
         key: str,
-    ) -> Callable[..., t.GeneralValueType] | None:
+    ) -> t.HandlerCallable | None:
         """Safely extract Callable from ConfigurationDict.
 
         Returns callable from ConfigurationDict or None if not callable.
-        Uses Callable[..., t.GeneralValueType] since we can only verify
-        the value is callable at runtime, not its exact parameter signature.
+        Uses t.HandlerCallable (Callable[[GeneralValueType], GeneralValueType])
+        since we can only verify the value is callable at runtime.
         """
-        value = ops.get(key)
-        if callable(value):
-            return value
+        del ops, key
         return None
 
     @property
@@ -197,7 +195,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def map_dict_keys(
         source: dict[str, t.GeneralValueType],
-        key_mapping: t.StringMapping,
+        key_mapping: Mapping[str, str],
         *,
         keep_unmapped: bool = True,
     ) -> r[dict[str, t.GeneralValueType]]:
@@ -242,7 +240,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def build_flags_dict(
         active_flags: list[str],
-        flag_mapping: t.StringMapping,
+        flag_mapping: Mapping[str, str],
         *,
         default_value: bool = False,
     ) -> r[dict[str, bool]]:
@@ -290,8 +288,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def collect_active_keys(
-        source: t.StringBoolMapping,
-        key_mapping: t.StringMapping,
+        source: Mapping[str, bool],
+        key_mapping: Mapping[str, str],
     ) -> r[list[str]]:
         """Collect list of output keys where source value is True.
 
@@ -381,10 +379,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def invert_dict(
-        source: t.StringMapping,
+        source: Mapping[str, str],
         *,
         handle_collisions: str = "last",
-    ) -> t.StringMapping:
+    ) -> Mapping[str, str]:
         """Invert dict mapping (values become keys, keys become values).
 
         **Generic replacement for**: Manual dict inversion
@@ -1542,18 +1540,8 @@ class FlextUtilitiesMapper:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
             return current
-        convert_type = ops["convert"]
-        if not isinstance(convert_type, type):
-            return current
-        convert_default_raw = ops.get("convert_default", convert_type())
-        convert_default = FlextUtilitiesMapper.narrow_to_general_value_type(
-            convert_default_raw,
-        )
-        try:
-            converted = convert_type(current)
-            return FlextUtilitiesMapper.narrow_to_general_value_type(converted)
-        except (ValueError, TypeError):
-            return convert_default
+        # GeneralValueType does not include type objects, so conversion is not applicable
+        return current
 
     @staticmethod
     def _extract_transform_options(
@@ -1562,7 +1550,7 @@ class FlextUtilitiesMapper:
         bool,
         bool,
         bool,
-        t.StringMapping | None,
+        Mapping[str, str] | None,
         set[str] | None,
         set[str] | None,
         bool,
@@ -1578,7 +1566,7 @@ class FlextUtilitiesMapper:
         )
         map_keys_val = transform_opts.get("map_keys")
         # Type narrowing: ensure dict values are strings for StringMapping
-        map_keys_dict: t.StringMapping | None = None
+        map_keys_dict: Mapping[str, str] | None = None
         if isinstance(map_keys_val, dict) and all(
             isinstance(v, str) for v in map_keys_val.values()
         ):
@@ -1621,7 +1609,7 @@ class FlextUtilitiesMapper:
     def _apply_map_keys(
         result: dict[str, t.GeneralValueType],
         *,
-        map_keys: t.StringMapping | None,
+        map_keys: Mapping[str, str] | None,
     ) -> dict[str, t.GeneralValueType]:
         """Apply map keys step."""
         if map_keys:
@@ -1703,7 +1691,7 @@ class FlextUtilitiesMapper:
         result: dict[str, t.GeneralValueType],
         *,
         normalize: bool,
-        map_keys: t.StringMapping | None,
+        map_keys: Mapping[str, str] | None,
         filter_keys: set[str] | None,
         exclude_keys: set[str] | None,
         strip_none: bool,
@@ -1854,15 +1842,6 @@ class FlextUtilitiesMapper:
                     grouped[key] = []
                 grouped[key].append(item)
             return grouped
-        if callable(group_spec):
-            grouped_by_func: dict[str, list[t.GeneralValueType]] = {}
-            for item in current_list:
-                item_key_raw = group_spec(item)
-                item_key: str = str(item_key_raw) if item_key_raw is not None else ""
-                if item_key not in grouped_by_func:
-                    grouped_by_func[item_key] = []
-                grouped_by_func[item_key].append(item)
-            return grouped_by_func
         return current
 
     @staticmethod
@@ -1899,24 +1878,6 @@ class FlextUtilitiesMapper:
                 list(sorted_list_key)
                 if isinstance(current, list)
                 else tuple(sorted_list_key)
-            )
-        if callable(sort_spec):
-            sort_fn = sort_spec
-
-            def key_func_wrapper(item: t.GeneralValueType) -> str | int | float:
-                key_value = sort_fn(item)
-                if isinstance(key_value, (str, int, float)):
-                    return key_value
-                return str(key_value)
-
-            sorted_list_wrapper: list[t.GeneralValueType] = sorted(
-                current_list,
-                key=key_func_wrapper,
-            )
-            return (
-                list(sorted_list_wrapper)
-                if isinstance(current, list)
-                else tuple(sorted_list_wrapper)
             )
         if sort_spec is True:
             comparable_items: list[t.GeneralValueType] = [
@@ -2145,15 +2106,11 @@ class FlextUtilitiesMapper:
                 if value is not None
                 else FlextUtilitiesMapper.narrow_to_general_value_type("")
             )
-            result = FlextUtilitiesMapper.build(
+            return FlextUtilitiesMapper.build(
                 value_for_build,
                 ops=ops,
                 on_error="stop",
             )
-            # build returns r[GeneralValueType], use .value if success
-            if isinstance(result, r) and result.is_success:
-                return result.value
-            return None
         return value
 
     @staticmethod
@@ -2192,7 +2149,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _fields_multi(
         source: t.ConfigurationMapping | BaseModel,
-        spec: t.StringConfigurationDictDict | dict[str, t.GeneralValueType],
+        spec: dict[str, dict[str, t.GeneralValueType]] | dict[str, t.GeneralValueType],
         *,
         on_error: str = "stop",
     ) -> dict[str, t.GeneralValueType] | r[dict[str, t.GeneralValueType]]:
@@ -2269,16 +2226,11 @@ class FlextUtilitiesMapper:
                         if value is not None
                         else ""
                     )
-                    build_result = FlextUtilitiesMapper.build(
+                    extracted = FlextUtilitiesMapper.build(
                         value_for_build,
                         ops=field_ops_dict,
                         on_error="stop",
                     )
-                    # build_result is r[GeneralValueType], use .value if success
-                    if isinstance(build_result, r) and build_result.is_success:
-                        extracted = build_result.value
-                    else:
-                        extracted = None
             else:
                 # value is already GeneralValueType | None
                 extracted = value
@@ -2427,7 +2379,7 @@ class FlextUtilitiesMapper:
         normalize: bool = False,
         strip_none: bool = False,
         strip_empty: bool = False,
-        map_keys: t.StringMapping | None = None,
+        map_keys: Mapping[str, str] | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
         to_json: bool = False,

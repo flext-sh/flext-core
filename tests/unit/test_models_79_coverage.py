@@ -290,7 +290,7 @@ class TestFlextModelsEdgeCases:
 
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
-        large_data: t.EventDataMapping = {
+        large_data: t.ConfigurationMapping = {
             f"field_{i}": f"value_{i}" for i in range(100)
         }
         event = m.DomainEvent(

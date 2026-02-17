@@ -175,28 +175,9 @@ class FlextService[TDomainResult](
         config_overrides: Mapping[str, t.FlexibleValue] | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
-        services: Mapping[
-            str,
-            t.GeneralValueType
-            | p.Config
-            | p.Context
-            | p.DI
-            | p.Service[t.GeneralValueType]
-            | p.Log
-            | p.Handler
-            | p.Registry
-            | Callable[..., t.GeneralValueType],
-        ]
-        | None = None,
-        factories: Mapping[
-            str,
-            Callable[
-                [],
-                (t.ScalarValue | Sequence[t.ScalarValue] | Mapping[str, t.ScalarValue]),
-            ],
-        ]
-        | None = None,
-        resources: Mapping[str, Callable[[], t.GeneralValueType]] | None = None,
+        services: Mapping[str, t.RegisterableService] | None = None,
+        factories: Mapping[str, t.FactoryRegistrationCallable] | None = None,
+        resources: Mapping[str, t.ResourceCallable] | None = None,
         container_overrides: Mapping[str, t.FlexibleValue] | None = None,
         wire_modules: Sequence[ModuleType] | None = None,
         wire_packages: Sequence[str] | None = None,
@@ -311,47 +292,20 @@ class FlextService[TDomainResult](
         del cls
         if isinstance(options_raw, p.RuntimeBootstrapOptions):
             return options_raw
-        if isinstance(options_raw, Mapping):
-            return p.RuntimeBootstrapOptions.model_validate(
-                {k: v for k, v in options_raw.items() if isinstance(k, str)},
-            )
-        return p.RuntimeBootstrapOptions()
+        return p.RuntimeBootstrapOptions.model_validate(
+            {k: v for k, v in options_raw.items() if isinstance(k, str)},
+        )
 
     @classmethod
     def _normalize_scoped_services(
         cls,
         services: Mapping[str, t.RegisterableService] | None,
-    ) -> (
-        Mapping[
-            str,
-            t.GeneralValueType
-            | p.Config
-            | p.Context
-            | p.DI
-            | p.Service[t.GeneralValueType]
-            | p.Log
-            | p.Handler
-            | p.Registry
-            | Callable[..., t.GeneralValueType],
-        ]
-        | None
-    ):
+    ) -> Mapping[str, t.RegisterableService] | None:
         del cls
         if services is None:
             return None
 
-        normalized: dict[
-            str,
-            t.GeneralValueType
-            | p.Config
-            | p.Context
-            | p.DI
-            | p.Service[t.GeneralValueType]
-            | p.Log
-            | p.Handler
-            | p.Registry
-            | Callable[..., t.GeneralValueType],
-        ] = {
+        normalized: dict[str, t.RegisterableService] = {
             name: service
             for name, service in services.items()
             if FlextService._is_scoped_service_candidate(service)

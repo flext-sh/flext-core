@@ -111,12 +111,12 @@ class QueryHandler(h[GetUserQuery, UserDTO]):
 
 
 # Service using s directly
-class HandlersService(s[t.ServiceMetadataMapping]):
+class HandlersService(s[t.ConfigurationMapping]):
     """Service demonstrating CQRS handlers with flext-core."""
 
     def execute(
         self,
-    ) -> r[t.ServiceMetadataMapping]:
+    ) -> r[t.ConfigurationMapping]:
         """Execute comprehensive handler demonstrations."""
         print("Starting CQRS handlers demonstration")
 
@@ -125,7 +125,7 @@ class HandlersService(s[t.ServiceMetadataMapping]):
         self._demonstrate_pipeline_execution()
         self._demonstrate_error_handling()
 
-        return r[t.ServiceMetadataMapping].ok({
+        return r[t.ConfigurationMapping].ok({
             "handlers_demonstrated": [
                 c.Cqrs.HandlerType.COMMAND,
                 c.Cqrs.HandlerType.QUERY,

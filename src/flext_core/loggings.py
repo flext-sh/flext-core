@@ -48,11 +48,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     # Scoped context tracking
     # Format: {scope_name: {context_key: context_value}}
-    _scoped_contexts: ClassVar[t.StringConfigurationDictDict] = {}
+    _scoped_contexts: ClassVar[dict[str, dict[str, t.GeneralValueType]]] = {}
 
     # Level-based context tracking
     # Format: {log_level: {context_key: context_value}}
-    _level_contexts: ClassVar[t.StringConfigurationDictDict] = {}
+    _level_contexts: ClassVar[dict[str, dict[str, t.GeneralValueType]]] = {}
 
     # Protocol compliance: BindableLogger._context property
     @property
@@ -98,14 +98,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         cls,
         operation: c.Literals.ContextOperationGetLiteral,
         **kwargs: t.GeneralValueType,
-    ) -> t.ContextMetadataMapping: ...
+    ) -> t.ConfigurationMapping: ...
 
     @classmethod
     def _context_operation(
         cls,
         operation: Literal["get", "bind", "unbind", "clear"],
         **kwargs: t.GeneralValueType,
-    ) -> r[bool] | t.ContextMetadataMapping:
+    ) -> r[bool] | t.ConfigurationMapping:
         """Generic context operation handler using mapping for DRY."""
         try:
             return cls._execute_context_op(operation, kwargs)
@@ -143,7 +143,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         cls,
         operation: str,
         exc: Exception,
-    ) -> r[bool] | t.ContextMetadataMapping:
+    ) -> r[bool] | t.ConfigurationMapping:
         """Handle context operation error."""
         if operation == c.Logging.ContextOperation.GET:
             return {}
@@ -228,7 +228,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return cls._context_operation("unbind", keys=list(keys))
 
     @classmethod
-    def _get_global_context(cls) -> t.ContextMetadataMapping:
+    def _get_global_context(cls) -> t.ConfigurationMapping:
         """Get current global context (internal use only)."""
         return cls._context_operation("get")
 
@@ -1170,9 +1170,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             resolved_exception: Exception | None = (
                 exception if isinstance(exception, Exception) else None
             )
-            if exception is not None and not isinstance(exception, Exception):
-                kw["exception_type"] = type(exception).__name__
-                kw["exception_message"] = str(exception)
 
             context_dict = self.build_exception_context(
                 exception=resolved_exception,
@@ -1255,9 +1252,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             *args: object,
             **kwargs: object,
         ) -> object | None:
-            method = getattr(self._base_logger, method_name, None)
-            if method is not None:
-                return method(*args, **kwargs)
+            method: object | None = getattr(self._base_logger, method_name, None)
+            if method is not None and callable(method):
+                result: object = method(*args, **kwargs)
+                return result
             return None
 
         def _log_and_wrap(
@@ -1301,14 +1299,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def bind_context(
             self,
             **context: t.GeneralValueType,
-        ) -> t.GeneralValueType | None:
+        ) -> object | None:
             """Bind context - delegate to base logger."""
-            # bind_context expects scope: str as first argument, not **kwargs
-            # This is a compatibility wrapper that may need adjustment
-            method = getattr(self._base_logger, "bind_context", None)
-            if method is not None:
-                return method("default", **context)
-            return None
+            return self._call_optional("bind_context", "default", **context)
 
         def get_context(
             self,

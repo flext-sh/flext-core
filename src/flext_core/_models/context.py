@@ -518,11 +518,11 @@ class FlextModelsContext:
                 description="All context data from all scopes",
             ),
         ] = Field(default_factory=dict)
-        metadata: FlextModelsBase.Metadata | t.ContextMetadataMapping | None = Field(
+        metadata: FlextModelsBase.Metadata | t.ConfigurationMapping | None = Field(
             default=None,
             description="Context metadata (creation info, source, etc.)",
         )
-        statistics: t.ContextMetadataMapping = Field(
+        statistics: t.ConfigurationMapping = Field(
             default_factory=dict,
             description="Usage statistics (operation counts, timing info)",
         )
@@ -645,12 +645,8 @@ class FlextModelsContext:
             # Recursively check all values are JSON-serializable
             FlextModelsContext.ContextExport.check_json_serializable(working_value)
 
-            # Type assertion: runtime validation ensures correct type
-            # is_dict_like() confirms working_value is Mapping - dict() constructor accepts it
-            if isinstance(working_value, dict):
-                return working_value
-
-            # Fallback for Mapping types
+            # working_value is always dict from comprehensions above;
+            # explicit dict() satisfies return type dict[str, GeneralValueType]
             return dict(working_value)
 
         @computed_field

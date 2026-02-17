@@ -38,12 +38,12 @@ from flext_core import (
 # ═══════════════════════════════════════════════════════════════════
 
 
-class DecoratorsService(FlextService[t.ServiceMetadataMapping]):
+class DecoratorsService(FlextService[t.ConfigurationMapping]):
     """Service demonstrating FlextDecorators comprehensive features."""
 
     def execute(
         self,
-    ) -> FlextResult[t.ServiceMetadataMapping]:
+    ) -> FlextResult[t.ConfigurationMapping]:
         """Execute decorators demonstrations."""
         print("Starting decorators demonstration")
 
@@ -55,7 +55,7 @@ class DecoratorsService(FlextService[t.ServiceMetadataMapping]):
             self._demonstrate_retry_timeout()
             self._demonstrate_combined()
 
-            return FlextResult[t.ServiceMetadataMapping].ok({
+            return FlextResult[t.ConfigurationMapping].ok({
                 "decorators_demonstrated": [
                     "inject",
                     "log_operation",
@@ -79,7 +79,7 @@ class DecoratorsService(FlextService[t.ServiceMetadataMapping]):
 
         except Exception as e:
             error_msg = f"Decorators demonstration failed: {e}"
-            return FlextResult[t.ServiceMetadataMapping].fail(error_msg)
+            return FlextResult[t.ConfigurationMapping].fail(error_msg)
 
     @staticmethod
     def _demonstrate_inject() -> None:

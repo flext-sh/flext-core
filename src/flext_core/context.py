@@ -146,7 +146,7 @@ class FlextContext(FlextRuntime):
         # FlextContext._metadata = context-specific tracing metadata (ContextMetadata)
         self._metadata = m.Metadata()
 
-        self._hooks: t.StringHandlerCallableListDict = {}
+        self._hooks: dict[str, list[t.HandlerCallable]] = {}
         # Use nested class from FlextModelsContext
         self._statistics: m.ContextStatistics = m.ContextStatistics()
         self._active = True
@@ -1030,7 +1030,7 @@ class FlextContext(FlextRuntime):
 
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, t.GeneralValueType])
-        statistics_mapping: t.ContextMetadataMapping = stats_dict_export or {}
+        statistics_mapping: t.ConfigurationMapping = stats_dict_export or {}
 
         # Return as dict if requested
         if as_dict:
@@ -1264,7 +1264,7 @@ class FlextContext(FlextRuntime):
         result.update(custom_fields_dict)
         return result
 
-    def _get_all_scopes(self) -> t.StringConfigurationDictDict:
+    def _get_all_scopes(self) -> dict[str, dict[str, t.GeneralValueType]]:
         """Get all scope registrations.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -1275,7 +1275,7 @@ class FlextContext(FlextRuntime):
         """
         if not self._active:
             return {}
-        scopes: t.StringConfigurationDictDict = {}
+        scopes: dict[str, dict[str, t.GeneralValueType]] = {}
         for scope_name, ctx_var in self._scope_vars.items():
             # Use helper for type narrowing to ConfigurationDict
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
@@ -1314,7 +1314,7 @@ class FlextContext(FlextRuntime):
 
         # Create ContextExport model
         # statistics expects ContextMetadataMapping (Mapping[str, t.GeneralValueType])
-        statistics_mapping: t.ContextMetadataMapping = stats_dict_raw or {}
+        statistics_mapping: t.ConfigurationMapping = stats_dict_raw or {}
         return m.ContextExport(
             data=all_data,
             metadata=m.Metadata(attributes=metadata_for_model)

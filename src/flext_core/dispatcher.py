@@ -17,8 +17,9 @@ import sys
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager
+from datetime import datetime
 from types import ModuleType
-from typing import Self, override
+from typing import Self, cast, override
 
 from cachetools import LRUCache
 from pydantic import BaseModel
@@ -43,6 +44,30 @@ from flext_core.runtime import FlextRuntime
 from flext_core.service import FlextService
 from flext_core.typings import t
 from flext_core.utilities import u
+
+
+class DispatcherMiddlewareConfig(m.Config.MiddlewareConfig):
+    """Internal configuration for dispatcher middleware."""
+
+    middleware_id: str
+    middleware_type: str
+
+
+class HandlerRegistrationResult(BaseModel):
+    """Result of handler registration."""
+
+    handler_name: str
+    status: str
+    mode: str
+    message_type: str | None = None
+
+
+class HandlerBatchRegistrationResult(BaseModel):
+    """Result of batch handler registration."""
+
+    status: str
+    count: int
+    handlers: list[str]
 
 
 class FlextDispatcher(FlextService[bool]):
@@ -135,7 +160,9 @@ class FlextDispatcher(FlextService[bool]):
         self._auto_handlers: list[t.HandlerType] = []  # Auto-discovery handlers
 
         # Middleware pipeline (from FlextDispatcher)
-        self._middleware_configs: list[t.ConfigurationMapping] = []  # Config + ordering
+        self._middleware_configs: list[
+            DispatcherMiddlewareConfig
+        ] = []  # Config + ordering
         self._middleware_instances: dict[
             str,
             t.HandlerCallable,
@@ -162,7 +189,7 @@ class FlextDispatcher(FlextService[bool]):
         self._handler_registry: dict[str, t.HandlerType] = {}  # name → handler function
         self._handler_configs: dict[
             str,
-            t.ConfigurationMapping,
+            m.Config.HandlerExecutionConfig,
         ] = {}  # name → handler config
         self._handler_validators: dict[
             str,
@@ -171,7 +198,7 @@ class FlextDispatcher(FlextService[bool]):
 
         # Group 4: Pipeline (dispatcher-managed processing pipeline)
         self._pipeline_steps: list[
-            t.ConfigurationMapping
+            dict[str, t.GeneralValueType]
         ] = []  # Ordered pipeline steps
         self._pipeline_composition: dict[
             str,
@@ -185,7 +212,9 @@ class FlextDispatcher(FlextService[bool]):
             t.GeneralValueType,
         ] = {}  # Memoization cache for pipeline
 
-        self._audit_log: list[t.ConfigurationMapping] = []  # Operation audit trail
+        self._audit_log: list[
+            dict[str, t.GeneralValueType]
+        ] = []  # Operation audit trail
         self._performance_metrics: dict[
             str,
             t.GeneralValueType,
@@ -471,14 +500,14 @@ class FlextDispatcher(FlextService[bool]):
     # Note: Processor registry removed in dispatcher refactoring.
     # Processors should be registered as handlers using register_handler().
 
-    def get_audit_log(self) -> r[list[t.ConfigurationMapping]]:
+    def get_audit_log(self) -> r[list[dict[str, t.GeneralValueType]]]:
         """Retrieve operation audit trail.
 
         Returns:
             r[list[dict]]: Audit log entries with operation details
 
         """
-        return r[list[t.ConfigurationMapping]].ok(
+        return r[list[dict[str, t.GeneralValueType]]].ok(
             self._audit_log.copy(),
         )
 
@@ -579,23 +608,9 @@ class FlextDispatcher(FlextService[bool]):
         # First, try to find handler by command type name in _handlers
         # (two-arg registration)
         if command_name in self._handlers:
-            handler_entry = self._handlers[command_name]
-            # handler_entry is always HandlerType based on _handlers type definition
-            # Check if it's a dict-like structure with "handler" key (legacy support)
-            if isinstance(handler_entry, Mapping) and "handler" in handler_entry:
-                # Type narrowing: isinstance check above narrows handler_entry to Mapping
-                # handler_entry is dict-like with "handler" key containing HandlerType
-                extracted_handler: t.GeneralValueType | None = u.Mapper.get(
-                    handler_entry,
-                    "handler",
-                )
-                # Validate it's callable or BaseModel (valid HandlerType)
-                # HandlerType includes Callable and BaseModel instances
-                # Type narrowing: isinstance checks narrow to t.HandlerType
-                if u.is_handler_type(extracted_handler):
-                    return extracted_handler
-            # Return handler directly (it's already HandlerType from dict definition)
-            return handler_entry
+            # handler_entry is always HandlerType (HandlerCallable | BaseModel)
+            # based on _handlers type definition - return directly
+            return self._handlers[command_name]
 
         # Search auto-registered handlers (single-arg form)
         for handler in self._auto_handlers:
@@ -828,63 +843,28 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _get_middleware_order(
-        middleware_config: t.ConfigurationMapping,
+        middleware_config: DispatcherMiddlewareConfig,
     ) -> int:
         """Extract middleware execution order from config."""
-        order_value = (
-            u.Mapper.get(
-                middleware_config,
-                "order",
-                default=c.Defaults.DEFAULT_MIDDLEWARE_ORDER,
-            )
-            or c.Defaults.DEFAULT_MIDDLEWARE_ORDER
-        )
-        if u.is_type(order_value, str):
-            try:
-                return int(order_value)
-            except ValueError:
-                return c.Defaults.DEFAULT_MIDDLEWARE_ORDER
-        return (
-            int(order_value)
-            if u.is_type(order_value, int)
-            else c.Defaults.DEFAULT_MIDDLEWARE_ORDER
-        )
+        return middleware_config.order
 
     def _process_middleware_instance(
         self,
         command: t.GeneralValueType,
         handler: t.HandlerType | object,
-        middleware_config: t.ConfigurationMapping,
+        middleware_config: DispatcherMiddlewareConfig,
     ) -> r[bool]:
         """Process a single middleware instance."""
-        # Extract configuration values from dict using get()
-        # u.Mapper.get() without default returns t.GeneralValueType | None
-        middleware_id_value: t.GeneralValueType | None = u.Mapper.get(
-            middleware_config,
-            "middleware_id",
-        )
-        middleware_type_value = u.Mapper.get(middleware_config, "middleware_type")
-        enabled_raw: t.GeneralValueType = u.Mapper.get(
-            middleware_config,
-            "enabled",
-            default=True,
-        )
-        # enabled_raw default is True (bool), so it's never None
-        enabled_value = bool(enabled_raw)
-
-        # Convert middleware_id to string (handles None case)
-        # Type narrowing: middleware_id_value can be None or t.GeneralValueType
-
-        middleware_id_str: str = (
-            str(middleware_id_value) if middleware_id_value is not None else ""
-        )
+        middleware_id_str = middleware_config.middleware_id
+        middleware_type_str = middleware_config.middleware_type
+        enabled_value = middleware_config.enabled
 
         # Skip disabled middleware
         if not enabled_value:
             self.logger.debug(
                 "Skipping disabled middleware",
                 middleware_id=middleware_id_str,
-                middleware_type=str(middleware_type_value),
+                middleware_type=middleware_type_str,
             )
             return r[bool].ok(True)
 
@@ -896,20 +876,15 @@ class FlextDispatcher(FlextService[bool]):
         self.logger.debug(
             "Applying middleware",
             middleware_id=middleware_id_str,
-            middleware_type=str(middleware_type_value),
-            order=u.Mapper.get(
-                middleware_config,
-                "order",
-                default=c.Defaults.DEFAULT_MIDDLEWARE_ORDER,
-            )
-            or c.Defaults.DEFAULT_MIDDLEWARE_ORDER,
+            middleware_type=middleware_type_str,
+            order=middleware_config.order,
         )
 
         return self._invoke_middleware(
             middleware,
             command,
             handler,
-            middleware_type_value,
+            middleware_type_str,
         )
 
     def _invoke_middleware(
@@ -1132,12 +1107,10 @@ class FlextDispatcher(FlextService[bool]):
         if len(args) == c.Dispatcher.SINGLE_HANDLER_ARG_COUNT:
             # Single arg should be a handler (callable or mapping)
             handler_arg: object = args[0]
-            # Type narrowing: check if it's a valid handler type and callable/mapping
-            if u.is_handler_type(handler_arg) and (
-                callable(handler_arg) or isinstance(handler_arg, Mapping)
-            ):
+            # Type narrowing: isinstance/callable for mypy (HandlerType = HandlerCallable | BaseModel)
+            if callable(handler_arg) or isinstance(handler_arg, BaseModel):
                 return self._register_single_handler(handler_arg)
-            return r[bool].fail("Handler must be callable or mapping")
+            return r[bool].fail("Handler must be callable or BaseModel")
         if len(args) == c.Dispatcher.TWO_HANDLER_ARG_COUNT:
             # First arg is command type (string, class, or GeneralValueType)
             # Second arg is handler (callable or mapping)
@@ -1160,11 +1133,10 @@ class FlextDispatcher(FlextService[bool]):
             else:
                 # Other GeneralValueType - use as-is
                 command_type = str(command_type_arg)
-            if u.is_handler_type(second_handler_arg) and (
-                callable(second_handler_arg) or isinstance(second_handler_arg, Mapping)
-            ):
+            # Type narrowing: TypeGuard narrows to t.HandlerType (HandlerCallable | BaseModel)
+            if u.is_handler_type(second_handler_arg):
                 return self._register_two_arg_handler(command_type, second_handler_arg)
-            return r[bool].fail("Handler must be callable or mapping")
+            return r[bool].fail("Handler must be callable or BaseModel")
 
         return r[bool].fail(
             f"register_handler takes 1 or 2 arguments but {len(args)} were given",
@@ -1394,7 +1366,7 @@ class FlextDispatcher(FlextService[bool]):
     def layer1_add_middleware(
         self,
         middleware: t.HandlerCallable,
-        middleware_config: t.ConfigurationMapping | None = None,
+        middleware_config: m.Config.MiddlewareConfig | None = None,
     ) -> r[bool]:
         """Add middleware to processing pipeline (from FlextDispatcher).
 
@@ -1407,66 +1379,35 @@ class FlextDispatcher(FlextService[bool]):
 
         """
         # Resolve middleware_id
-        middleware_id_raw = (
-            u.Mapper.get(middleware_config, "middleware_id")
-            if middleware_config
-            else None
-        )
-        if middleware_config and middleware_id_raw:
-            middleware_id_str = str(middleware_id_raw)
-        else:
-            middleware_id_str = getattr(
+        middleware_id_str = (
+            middleware_config.name
+            if middleware_config and middleware_config.name
+            else getattr(
                 middleware,
                 "middleware_id",
                 f"mw_{len(self._middleware_configs)}",
             )
+        )
 
         # Resolve middleware type
-        middleware_type_raw = (
-            u.Mapper.get(middleware_config, "middleware_type")
+        middleware_type_str = type(middleware).__name__
+
+        # Create config
+        enabled_value = middleware_config.enabled if middleware_config else True
+        order_value = (
+            middleware_config.order
             if middleware_config
-            else None
-        )
-        middleware_type_str = (
-            str(middleware_type_raw)
-            if middleware_type_raw is not None
-            else type(middleware).__name__
+            else len(self._middleware_configs)
         )
 
-        # Create config - convert values to t.GeneralValueType compatible types
-        # Extract enabled value safely
-        enabled_value: bool = True
-        if middleware_config:
-            enabled_raw: t.GeneralValueType = u.Mapper.get(
-                middleware_config,
-                "enabled",
-                default=True,
-            )
-            # enabled_raw default is True (bool), so it's never None
-            enabled_value = bool(enabled_raw)
-
-        # Extract order value safely
-        order_value: int = len(self._middleware_configs)
-        if middleware_config:
-            order_raw: t.GeneralValueType = u.Mapper.get(
-                middleware_config,
-                "order",
-                default=len(self._middleware_configs),
-            )
-            # Convert to int (default ensures it's int or convertible)
-            if isinstance(order_raw, (int, str, float)):
-                order_value = int(order_raw)
-            else:
-                order_value = len(self._middleware_configs)
-
-        final_config_raw: t.ConfigurationMapping = {
-            "middleware_id": middleware_id_str,
-            "middleware_type": middleware_type_str,
-            "enabled": enabled_value,
-            "order": order_value,
-        }
-        # final_config_raw already matches ConfigurationMapping structure
-        final_config: t.ConfigurationMapping = final_config_raw
+        final_config = DispatcherMiddlewareConfig(
+            middleware_id=middleware_id_str,
+            middleware_type=middleware_type_str,
+            enabled=enabled_value,
+            order=order_value,
+            name=middleware_config.name if middleware_config else None,
+            config=middleware_config.config if middleware_config else {},
+        )
 
         self._middleware_configs.append(final_config)
         self._middleware_instances[middleware_id_str] = middleware
@@ -1474,7 +1415,7 @@ class FlextDispatcher(FlextService[bool]):
         self.logger.info(
             "Middleware added to pipeline",
             operation="add_middleware",
-            middleware_type=u.Mapper.get(final_config, "middleware_type"),
+            middleware_type=middleware_type_str,
             middleware_id=middleware_id_str,
             total_middleware=len(self._middleware_configs),
             source="flext-core/src/flext_core/dispatcher.py",
@@ -1590,7 +1531,7 @@ class FlextDispatcher(FlextService[bool]):
         """
         # Handle named event with data
         if isinstance(event, str) and data is not None:
-            event_dict: t.ConfigurationMapping = {
+            event_dict: dict[str, t.GeneralValueType] = {
                 "event_name": event,
                 "data": data,
                 "timestamp": time.time(),
@@ -1652,7 +1593,7 @@ class FlextDispatcher(FlextService[bool]):
     @staticmethod
     def _extract_handler_name(
         handler: t.GeneralValueType | t.HandlerType,
-        request_dict: t.ConfigurationMapping,
+        request_dict: dict[str, t.GeneralValueType],
     ) -> str:
         """Extract handler_name from request or handler config.
 
@@ -1695,7 +1636,7 @@ class FlextDispatcher(FlextService[bool]):
 
     @staticmethod
     def _normalize_request_to_dict(
-        request: t.GeneralValueType | t.ConfigurationMapping,
+        request: t.GeneralValueType | dict[str, t.GeneralValueType],
     ) -> r[dict[str, t.GeneralValueType]]:
         """Normalize request to t.GeneralValueType dict.
 
@@ -1760,7 +1701,7 @@ class FlextDispatcher(FlextService[bool]):
 
     def _validate_and_extract_handler(
         self,
-        request_dict: t.ConfigurationMapping,
+        request_dict: dict[str, t.GeneralValueType],
     ) -> r[tuple[t.HandlerType, str]]:
         """Validate handler and extract handler name.
 
@@ -1783,17 +1724,10 @@ class FlextDispatcher(FlextService[bool]):
                 "Handler must be callable, mapping, or BaseModel",
             )
 
-        # Convert to t.HandlerType using isinstance checks
-        handler_typed: t.HandlerType
-        if callable(handler_raw) or isinstance(handler_raw, Mapping):
-            handler_typed = handler_raw
-        else:
-            return r[tuple[t.HandlerType, str]].fail(
-                "Handler must be callable or mapping",
-            )
+        # After TypeGuard, handler_raw is narrowed to t.HandlerType (HandlerCallable | BaseModel)
+        handler_typed: t.HandlerType = handler_raw
 
         # Validate handler has required interface
-        # u.is_handler_type already validated it, now just check interface
         validation_result = self._validate_handler_registry_interface(
             handler_typed,
             handler_context="registered handler",
@@ -1817,8 +1751,8 @@ class FlextDispatcher(FlextService[bool]):
         self,
         handler: t.HandlerType,
         handler_name: str,
-        request_dict: t.ConfigurationMapping,
-    ) -> r[t.ConfigurationMapping]:
+        request_dict: dict[str, t.GeneralValueType],
+    ) -> r[HandlerRegistrationResult]:
         """Register handler based on auto-discovery or explicit mode.
 
         Args:
@@ -1846,7 +1780,7 @@ class FlextDispatcher(FlextService[bool]):
         self,
         handler: t.HandlerType,
         handler_name: str,
-    ) -> r[t.ConfigurationMapping]:
+    ) -> r[HandlerRegistrationResult]:
         """Register handler with auto-discovery mode.
 
         Args:
@@ -1862,18 +1796,20 @@ class FlextDispatcher(FlextService[bool]):
         if u.is_handler_type(handler) and handler not in self._auto_handlers:
             self._auto_handlers.append(handler)
 
-        return r[t.ConfigurationMapping].ok({
-            "handler_name": handler_name,
-            "status": "registered",
-            "mode": "auto_discovery",
-        })
+        return r[HandlerRegistrationResult].ok(
+            HandlerRegistrationResult(
+                handler_name=handler_name,
+                status="registered",
+                mode="auto_discovery",
+            )
+        )
 
     def _register_explicit_handler(
         self,
         handler: t.HandlerType,
         handler_name: str,
-        request_dict: t.ConfigurationMapping,
-    ) -> r[t.ConfigurationMapping]:
+        request_dict: dict[str, t.GeneralValueType],
+    ) -> r[HandlerRegistrationResult]:
         """Register handler with explicit mode.
 
         Args:
@@ -1887,7 +1823,7 @@ class FlextDispatcher(FlextService[bool]):
         """
         message_type = request_dict.get("message_type")
         if not message_type:
-            return r[t.ConfigurationMapping].fail(
+            return r[HandlerRegistrationResult].fail(
                 "Handler without can_handle() requires message_type",
             )
 
@@ -1902,17 +1838,19 @@ class FlextDispatcher(FlextService[bool]):
         # _handlers stores GeneralValueType values (handler was validated but stored as-is)
         self._handlers[message_type_name] = handler
 
-        return r[t.ConfigurationMapping].ok({
-            "handler_name": handler_name,
-            "message_type": message_type_name,
-            "status": "registered",
-            "mode": "explicit",
-        })
+        return r[HandlerRegistrationResult].ok(
+            HandlerRegistrationResult(
+                handler_name=handler_name,
+                message_type=message_type_name,
+                status="registered",
+                mode="explicit",
+            )
+        )
 
     def _register_handler_with_request(
         self,
-        request: t.GeneralValueType | t.ConfigurationMapping,
-    ) -> r[t.ConfigurationMapping]:
+        request: t.GeneralValueType | dict[str, t.GeneralValueType],
+    ) -> r[HandlerRegistrationResult]:
         """Internal: Register handler using structured request model.
 
         Business Rule: Handler registration supports two modes:
@@ -1933,7 +1871,7 @@ class FlextDispatcher(FlextService[bool]):
         # Normalize and validate request
         request_dict_result = FlextDispatcher._normalize_request_to_dict(request)
         if request_dict_result.is_failure:
-            return r[t.ConfigurationMapping].fail(
+            return r[HandlerRegistrationResult].fail(
                 request_dict_result.error or "Failed to normalize request",
             )
         # Use .value directly - FlextResult never returns None on success
@@ -1949,14 +1887,14 @@ class FlextDispatcher(FlextService[bool]):
         )
         mode_validation = self._validate_handler_mode(handler_mode)
         if mode_validation.is_failure:
-            return r[t.ConfigurationMapping].fail(
+            return r[HandlerRegistrationResult].fail(
                 mode_validation.error or "Invalid handler mode",
             )
 
         # Validate and extract handler
         handler_result = self._validate_and_extract_handler(request_dict)
         if handler_result.is_failure:
-            return r[t.ConfigurationMapping].fail(
+            return r[HandlerRegistrationResult].fail(
                 handler_result.error or "Handler validation failed",
             )
         # handler_result.value is tuple[t.HandlerType, str] (already validated by TypeGuard)
@@ -1969,16 +1907,18 @@ class FlextDispatcher(FlextService[bool]):
             # Auto-discovery mode
             if handler not in self._auto_handlers:
                 self._auto_handlers.append(handler)
-            return r[t.ConfigurationMapping].ok({
-                "handler_name": handler_name,
-                "status": "registered",
-                "mode": "auto_discovery",
-            })
+            return r[HandlerRegistrationResult].ok(
+                HandlerRegistrationResult(
+                    handler_name=handler_name,
+                    status="registered",
+                    mode="auto_discovery",
+                )
+            )
 
         # Explicit registration requires message_type
         message_type = request_dict.get("message_type")
         if not message_type:
-            return r[t.ConfigurationMapping].fail(
+            return r[HandlerRegistrationResult].fail(
                 "Handler without can_handle() requires message_type",
             )
 
@@ -1987,18 +1927,20 @@ class FlextDispatcher(FlextService[bool]):
         message_type_name = name_attr if name_attr is not None else str(message_type)
         self._handlers[message_type_name] = handler
 
-        return r[t.ConfigurationMapping].ok({
-            "handler_name": handler_name,
-            "message_type": message_type_name,
-            "status": "registered",
-            "mode": "explicit",
-        })
+        return r[HandlerRegistrationResult].ok(
+            HandlerRegistrationResult(
+                handler_name=handler_name,
+                message_type=message_type_name,
+                status="registered",
+                mode="explicit",
+            )
+        )
 
     def register_handler(
         self,
         request: t.GeneralValueType | BaseModel | object,
         handler: t.HandlerType | t.GeneralValueType | None = None,
-    ) -> r[t.ConfigurationMapping]:
+    ) -> r[HandlerRegistrationResult]:
         """Register a handler dynamically.
 
         Args:
@@ -2015,12 +1957,12 @@ class FlextDispatcher(FlextService[bool]):
             # request is command type (string or class), handler is the handler
             # Validate handler is HandlerType
             if not u.is_handler_type(handler):
-                return r[t.ConfigurationMapping].fail(
+                return r[HandlerRegistrationResult].fail(
                     f"Invalid handler type: {type(handler).__name__}",
                 )
             # Validate request is a valid command type (string, type, or callable)
             if not isinstance(request, (str, type)) and not callable(request):
-                return r[t.ConfigurationMapping].fail(
+                return r[HandlerRegistrationResult].fail(
                     f"Invalid command type: {type(request).__name__}. Expected string or type.",
                 )
             # Extract command name for registration
@@ -2033,14 +1975,16 @@ class FlextDispatcher(FlextService[bool]):
             # handler is HandlerType | GeneralValueType - layer1 accepts both
             result = self._layer1_register_handler(command_name, handler)
             if result.is_failure:
-                return r[t.ConfigurationMapping].fail(
+                return r[HandlerRegistrationResult].fail(
                     result.error or "Registration failed",
                 )
-            return r[t.ConfigurationMapping].ok({
-                "handler_name": command_name,
-                "status": "registered",
-                "mode": "explicit",
-            })
+            return r[HandlerRegistrationResult].ok(
+                HandlerRegistrationResult(
+                    handler_name=command_name,
+                    status="registered",
+                    mode="explicit",
+                )
+            )
 
         # Single-arg mode: register_handler(dict_or_model_or_handler)
         # First check if request is a BaseModel
@@ -2058,27 +2002,29 @@ class FlextDispatcher(FlextService[bool]):
         # At this point, dict/Mapping/BaseModel have been handled above
         # Only callable handlers remain
         if not callable(request):
-            return r[t.ConfigurationMapping].fail(
+            return r[HandlerRegistrationResult].fail(
                 f"Invalid handler type: {type(request).__name__}",
             )
         # After callable() check, request is a callable handler
-        result = self._layer1_register_handler(request)
+        result = self._layer1_register_handler(cast("t.HandlerType", request))
         if result.is_failure:
-            return r[t.ConfigurationMapping].fail(
+            return r[HandlerRegistrationResult].fail(
                 result.error or "Registration failed",
             )
         # Convert to dict format for consistency
         handler_name = getattr(request, "__class__", type(request)).__name__
-        return r[t.ConfigurationMapping].ok({
-            "handler_name": handler_name,
-            "status": "registered",
-            "mode": "auto_discovery",
-        })
+        return r[HandlerRegistrationResult].ok(
+            HandlerRegistrationResult(
+                handler_name=handler_name,
+                status="registered",
+                mode="auto_discovery",
+            )
+        )
 
     def register_handlers(
         self,
         handlers: Mapping[str | type, t.HandlerType],
-    ) -> r[t.ConfigurationMapping]:
+    ) -> r[HandlerBatchRegistrationResult]:
         """Register multiple handlers in batch.
 
         Args:
@@ -2121,15 +2067,17 @@ class FlextDispatcher(FlextService[bool]):
 
         # Return summary result
         if errors:
-            return r[t.ConfigurationMapping].fail(
+            return r[HandlerBatchRegistrationResult].fail(
                 f"Some handlers failed to register: {'; '.join(errors)}",
             )
 
-        return r[t.ConfigurationMapping].ok({
-            "status": "registered",
-            "count": len(registered),
-            "handlers": registered,
-        })
+        return r[HandlerBatchRegistrationResult].ok(
+            HandlerBatchRegistrationResult(
+                status="registered",
+                count=len(registered),
+                handlers=registered,
+            )
+        )
 
     @staticmethod
     def _ensure_handler(
@@ -2154,6 +2102,7 @@ class FlextDispatcher(FlextService[bool]):
             r with h instance or error
 
         """
+        del mode  # Was used for callable conversion, now handled upstream
         # If already FlextHandlers, return success
         if isinstance(handler, FlextHandlers):
             return r[
@@ -2162,15 +2111,6 @@ class FlextDispatcher(FlextService[bool]):
                     t.GeneralValueType,
                 ]
             ].ok(handler)
-
-        # If callable, convert to FlextHandlers
-        if callable(handler):
-            return r[
-                FlextHandlers[
-                    t.GeneralValueType,
-                    t.GeneralValueType,
-                ]
-            ].ok(FlextHandlers.create_from_callable(handler, mode=mode))
 
         # Invalid handler type
         return r[
@@ -2715,9 +2655,9 @@ class FlextDispatcher(FlextService[bool]):
                     f"dispatch_config must be dict-like, got {type(dispatch_config).__name__}",
                 )
             # isinstance check above narrows dispatch_config to Mapping for mypy
-            dispatch_config_dict: t.ConfigurationMapping = dict(dispatch_config)
+            dispatch_config_dict: dict[str, t.GeneralValueType] = dict(dispatch_config)
 
-            context: t.ConfigurationMapping = {
+            context: dict[str, t.GeneralValueType] = {
                 **dispatch_config_dict,
                 "message": message,
                 "message_type": message_type,
@@ -3002,140 +2942,97 @@ class FlextDispatcher(FlextService[bool]):
         if raw_metadata is None:
             return None
 
-        # Use process() for concise key normalization - convert keys to strings
-        # raw_metadata is ConfigurationMapping (Mapping[str, t.GeneralValueType])
-        # so this dict comprehension produces ConfigurationDict directly
-        normalized: dict[str, t.GeneralValueType] = {
-            str(k): v for k, v in raw_metadata.items()
-        }
-
-        return normalized
+        # raw_metadata is m.Metadata
+        # Return its attributes as the normalized dict
+        # Metadata attributes are already strictly typed as dict[str, MetadataAttributeValue]
+        return dict(raw_metadata.attributes)
 
     @staticmethod
     def _extract_metadata_mapping(
         metadata: t.GeneralValueType,
-    ) -> t.ConfigurationMapping | None:
-        """Extract metadata as Mapping from various types.
-
-        Fast fail: Direct validation without helpers.
-        """
+    ) -> m.Metadata | None:
+        """Extract metadata as m.Metadata from various types."""
         if isinstance(metadata, m.Metadata):
-            return FlextDispatcher._extract_from_flext_metadata(metadata)
-        # Fast fail: type narrowing with isinstance for mypy
-        if isinstance(metadata, Mapping):
             return metadata
 
-        # Handle Pydantic models directly - use model_dump() (Pydantic v2 pattern)
-        if isinstance(metadata, BaseModel):
-            # Fast fail: model_dump() must succeed for valid Pydantic models
+        extracted_map: Mapping[str, t.GeneralValueType] | None = None
+
+        if isinstance(metadata, Mapping):
+            extracted_map = metadata
+        elif isinstance(metadata, BaseModel):
             try:
                 dumped = metadata.model_dump()
+                if not FlextRuntime.is_dict_like(dumped):
+                    msg = (
+                        f"metadata.model_dump() returned {type(dumped).__name__}, "
+                        "expected dict"
+                    )
+                    raise TypeError(msg)
+                extracted_map = dumped
             except Exception as e:
-                # Fast fail: model_dump() failure indicates invalid model
                 msg = f"Failed to dump BaseModel metadata: {type(e).__name__}: {e}"
                 raise TypeError(msg) from e
+        else:
+            extracted_map = FlextDispatcher._extract_from_object_attributes(metadata)
 
-            # Fast fail: dumped must be dict (Pydantic guarantees this)
-            if not FlextRuntime.is_dict_like(dumped):
-                # Type checker may think this is unreachable, but it's reachable at runtime
-                msg = (
-                    f"metadata.model_dump() returned {type(dumped).__name__}, "
-                    "expected dict"
-                )
-                raise TypeError(msg)
-            # model_dump() returns dict, which implements Mapping[str, t.GeneralValueType]
-            return dumped
+        if extracted_map is None:
+            return None
 
-        return FlextDispatcher._extract_from_object_attributes(metadata)
+        # Convert Mapping to m.Metadata
+        # Filter keys that are valid for Metadata attributes (str keys)
+        # Any non-str key will fail Pydantic validation for attributes (dict[str, ...])
+        # We assume strict typing: create m.Metadata from the mapping
+        # If mapping contains "attributes", use that. Otherwise, use mapping as attributes.
+
+        attrs: dict[str, t.GeneralValueType]
+        if "attributes" in extracted_map and isinstance(
+            extracted_map["attributes"], dict
+        ):
+            attrs = extracted_map["attributes"]
+        else:
+            attrs = {str(k): v for k, v in extracted_map.items()}
+
+        # Strict filtering for MetadataAttributeValue compliance
+        # This satisfies strict definition of m.Metadata.attributes
+        valid_attrs: dict[str, t.MetadataAttributeValue] = {}
+        for k, v in attrs.items():
+            if isinstance(v, (str, int, float, bool, type(None), datetime)):
+                valid_attrs[k] = v
+            elif isinstance(v, list) and all(
+                isinstance(x, (str, int, float, bool, type(None), datetime)) for x in v
+            ):
+                valid_attrs[k] = v  # type: ignore # list content is safe
+
+        return m.Metadata(attributes=valid_attrs)
 
     @staticmethod
     def _extract_from_flext_metadata(
         metadata: m.Metadata,
-    ) -> t.ConfigurationMapping | None:
-        """Extract metadata mapping from m.Metadata."""
-        attributes = metadata.attributes
-        # metadata.attributes is dict[str, t.GeneralValueType]
-        # Use guard() with lambda for concise non-empty validation
-
-        def non_empty_check(v: dict[str, t.GeneralValueType]) -> bool:
-            return len(v) > 0
-
-        # attributes is already dict[str, t.GeneralValueType]
-        if attributes and not u.guard(
-            attributes,
-            non_empty_check,
-            return_value=True,
-        ):
-            return attributes
-
-        # Use model directly - Pydantic v2 supports direct attribute access
-        # Fast fail: model_dump() must succeed for valid Pydantic models
-        try:
-            dumped = metadata.model_dump()
-        except Exception as e:
-            # Fast fail: model_dump() failure indicates invalid model
-            msg = f"Failed to dump m.Metadata: {type(e).__name__}: {e}"
-            raise TypeError(msg) from e
-
-        # Fast fail: dumped must be dict (Pydantic guarantees this)
-        if not FlextRuntime.is_dict_like(dumped):
-            # Type checker may think this is unreachable, but it's reachable at runtime
-            msg = (
-                f"metadata.model_dump() returned {type(dumped).__name__}, expected dict"
-            )
-            raise TypeError(msg)
-
-        # Extract attributes section if present - fast fail: must be dict or None
-        attributes_section_raw: t.GeneralValueType | None = dumped.get("attributes")
-        if attributes_section_raw is not None and isinstance(
-            attributes_section_raw,
-            Mapping,
-        ):
-            # Type narrowing: isinstance check ensures it's a Mapping
-            # Return the attributes mapping (ConfigurationMapping)
-            attributes_mapping: t.ConfigurationMapping = attributes_section_raw
-            return attributes_mapping
-        # Return full dump if no attributes section
-        # dumped is dict from model_dump(), which is ConfigurationMapping compatible
-        return dumped
+    ) -> m.Metadata | None:
+        """Extract metadata (noop for m.Metadata)."""
+        return metadata
 
     @staticmethod
     def _extract_from_object_attributes(
         metadata: t.GeneralValueType,
-    ) -> t.ConfigurationMapping | None:
-        """Extract metadata mapping from object's attributes."""
+    ) -> Mapping[str, t.GeneralValueType] | None:
+        """Extract metadata mapping from object's attributes (internal helper)."""
         attributes_value = getattr(metadata, "attributes", None)
         if (
             u.is_type(attributes_value, "mapping")
             and u.is_dict_non_empty(attributes_value)
             and isinstance(attributes_value, Mapping)
         ):
-            # Type narrowing: attributes_value is dict-like and Mapping
-            # Convert to dict to ensure proper type
-            attributes_dict: t.ConfigurationMapping = dict(attributes_value)
-            return attributes_dict
+            return dict(attributes_value)
 
-        # Use model_dump() directly if available - Pydantic v2 pattern
         model_dump = getattr(metadata, "model_dump", None)
         if callable(model_dump):
-            # Fast fail: model_dump() must succeed for valid Pydantic models
             try:
                 dumped = model_dump()
-            except Exception as e:
-                # Fast fail: model_dump() failure indicates invalid model
-                msg = f"Failed to dump metadata object: {type(e).__name__}: {e}"
-                raise TypeError(msg) from e
-
-            # Fast fail: dumped must be dict (Pydantic guarantees this)
-            if not isinstance(dumped, Mapping):
-                # Type checker may think this is unreachable, but it's reachable at runtime
-                msg = (
-                    f"metadata.model_dump() returned {type(dumped).__name__}, "
-                    "expected dict"
-                )
-                raise TypeError(msg)
-            # model_dump() returns dict, which implements Mapping[str, t.GeneralValueType]
-            return dumped
+                if isinstance(dumped, Mapping):
+                    return dumped
+            except Exception:
+                pass
 
         return None
 
