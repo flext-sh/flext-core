@@ -18,7 +18,7 @@ from collections.abc import Callable, Generator, Mapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
 from re import Pattern
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core import (
     FlextContext,
@@ -1308,8 +1308,9 @@ class FlextTestsUtilities(FlextUtilities):
 
                 # Handle type expectations (e.g., int, bool, str)
                 if isinstance(expected, type):
-                    m = f"Want type {expected.__name__}, got {type(result).__name__}"
-                    assert isinstance(result, expected), m
+                    expected_type = cast("type", expected)
+                    m = f"Want type {expected_type.__name__}, got {type(result).__name__}"
+                    assert isinstance(result, expected_type), m
                 else:
                     assert result == expected, f"Expected {expected}, got {result}"
 

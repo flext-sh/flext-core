@@ -37,7 +37,7 @@ def _normalize_metadata(
             f"got {type(value).__name__}"
         )
         raise TypeError(msg)
-    attributes = {
+    attributes: dict[str, t.GeneralValueType] = {
         str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
         for key, raw_value in dict(value).items()
     }

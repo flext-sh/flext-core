@@ -206,10 +206,9 @@ class FlextUtilitiesModel:
         # TypeGuard ensures value is m.ConfigMap after is_dict_like check
         if FlextRuntime.is_dict_like(value) and isinstance(value, dict):
             # Normalize each value using FlextRuntime.normalize_to_metadata_value
-            attributes: dict[str, t.MetadataAttributeValue] = {}
+            attributes: dict[str, t.GeneralValueType] = {}
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
-            # attributes contains t.MetadataAttributeValue (subset of t.GeneralValueType)
 
             return FlextModelsBase.Metadata(attributes=attributes)
 

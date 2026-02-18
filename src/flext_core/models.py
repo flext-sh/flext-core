@@ -214,16 +214,14 @@ class FlextModels:
     # =========================================================================
 
     Collections = FlextModelsCollections
-    CollectionsCategories: TypeAlias = FlextModelsCollections.Categories[
-        t_core.GeneralValueType
-    ]
+    CollectionsCategories: TypeAlias = FlextModelsCollections.Categories
     CollectionsConfig: TypeAlias = FlextModelsCollections.Config
     CollectionsResults: TypeAlias = FlextModelsCollections.Results
     CollectionsOptions: TypeAlias = FlextModelsCollections.Options
     CollectionsStatistics: TypeAlias = FlextModelsCollections.Statistics
     Options: TypeAlias = FlextModelsCollections.Options
     CollectionsParseOptions: TypeAlias = FlextModelsCollections.ParseOptions
-    Categories: TypeAlias = FlextModelsCollections.Categories[t_core.GeneralValueType]
+    Categories: TypeAlias = FlextModelsCollections.Categories
 
     # =========================================================================
     # CONTAINER MODELS - DI registry and service registration

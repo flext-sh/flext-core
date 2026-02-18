@@ -34,16 +34,17 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Self, TypeVar, overload
+from typing import ClassVar, Self, TypeVar, cast, overload
 
 import yaml
 from pydantic import BaseModel
 
 from flext_core import r
+from flext_core.runtime import FlextRuntime
 from flext_tests.base import su
 from flext_tests.constants import FlextTestsConstants, c
 from flext_tests.models import m
-from flext_tests.typings import t
+from flext_tests.typings import FileContent as TestsFileContent, t
 from flext_tests.utilities import u
 
 # Type aliases for readability
@@ -419,11 +420,36 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         content_for_detect: (
             str | bytes | Mapping[str, t.GeneralValueType] | list[list[str]]
         )
-        if isinstance(actual_content, (str, bytes, dict)):
+        if isinstance(actual_content, (str, bytes)):
             content_for_detect = actual_content
+        elif isinstance(actual_content, dict):
+            content_for_detect = {
+                str(k): FlextRuntime.normalize_to_general_value(v)
+                if isinstance(
+                    v,
+                    (
+                        str,
+                        int,
+                        float,
+                        bool,
+                        datetime,
+                        Path,
+                        BaseModel,
+                        Sequence,
+                        Mapping,
+                    ),
+                )
+                or v is None
+                else str(v)
+                for k, v in actual_content.items()
+            }
         elif isinstance(actual_content, Mapping):
-            # Convert Mapping to dict for type safety
-            content_for_detect = dict(actual_content)
+            content_for_detect = {
+                str(k): FlextRuntime.normalize_to_general_value(
+                    cast("t.GeneralValueType", v)
+                )
+                for k, v in actual_content.items()
+            }
         elif isinstance(actual_content, BaseModel):
             # BaseModel - convert to dict first for detection
             content_for_detect = u.Model.dump(actual_content)
@@ -1143,14 +1169,9 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         params = params_result.value
 
         # Convert BatchFiles to dict - BatchFiles can be Mapping or Sequence
-        files_dict: dict[str, t.FileContent]
+        files_dict: dict[str, TestsFileContent]
         if isinstance(params.files, Mapping):
-            # Already a Mapping - convert to dict if needed
-            files_dict = (
-                u.Mapper.to_dict(params.files)
-                if not isinstance(params.files, dict)
-                else params.files
-            )
+            files_dict = {str(k): v for k, v in params.files.items()}
         elif isinstance(params.files, Sequence):
             # BatchFiles is Sequence[tuple[str, FileContent]] - convert to dict
             # params.files is already Sequence, iterate and convert each item
@@ -1161,7 +1182,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                     name, content_raw = item
                     if isinstance(name, str):
                         # Narrow content to FileContent type
-                        content: t.FileContent
+                        content: TestsFileContent
                         if isinstance(
                             content_raw,
                             (str, bytes, Mapping, Sequence, BaseModel),
@@ -1178,14 +1199,40 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         error_mode_str = "collect" if params.on_error == "collect" else "fail"
 
         def process_one(
-            name_and_content: tuple[str, t.FileContent],
+            name_and_content: tuple[str, TestsFileContent],
         ) -> r[Path]:
             """Process single file operation."""
             name, content = name_and_content
             match params.operation:
                 case "create":
                     try:
-                        path = self.create(content, name, params.directory)
+                        content_for_create = (
+                            m.ConfigMap(
+                                root={
+                                    str(k): FlextRuntime.normalize_to_general_value(v)
+                                    if isinstance(
+                                        v,
+                                        (
+                                            str,
+                                            int,
+                                            float,
+                                            bool,
+                                            datetime,
+                                            Path,
+                                            BaseModel,
+                                            Sequence,
+                                            Mapping,
+                                        ),
+                                    )
+                                    or v is None
+                                    else str(v)
+                                    for k, v in content.items()
+                                }
+                            )
+                            if isinstance(content, Mapping)
+                            else content
+                        )
+                        path = self.create(content_for_create, name, params.directory)
                         return r[Path].ok(path)
                     except Exception as e:
                         return r[Path].fail(f"Failed to create {name}: {e}")
@@ -1224,7 +1271,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         items_list = list(files_dict.items())
         # Explicit type annotation helps mypy infer the generic R parameter
         operation_fn: Callable[
-            [tuple[str, t.FileContent]],
+            [tuple[str, TestsFileContent]],
             Path | r[Path],
         ] = process_one
         batch_result_dict = u.Collection.batch(
@@ -1619,13 +1666,77 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
             # Extract value from result
             value = getattr(content, "value", content)
             # Return extracted value - must be one of the FileContent types
-            if isinstance(value, (str, bytes, Mapping, Sequence, BaseModel)):
+            if isinstance(value, (str, bytes, BaseModel, m.ConfigMap)):
                 return value
+            if isinstance(value, Mapping):
+                return m.ConfigMap(
+                    root={
+                        str(k): FlextRuntime.normalize_to_general_value(v)
+                        if isinstance(
+                            v,
+                            (
+                                str,
+                                int,
+                                float,
+                                bool,
+                                datetime,
+                                Path,
+                                BaseModel,
+                                Sequence,
+                                Mapping,
+                            ),
+                        )
+                        or v is None
+                        else str(v)
+                        for k, v in value.items()
+                    }
+                )
+            if isinstance(value, Sequence):
+                rows: list[list[str]] = []
+                for row in value:
+                    if not isinstance(row, Sequence) or isinstance(row, (str, bytes)):
+                        rows = []
+                        break
+                    rows.append([str(cell) for cell in row])
+                if rows:
+                    return rows
             # Fallback - return as string
             return str(value)
         # Content is already a FileContent type (not wrapped in Result)
-        if isinstance(content, (str, bytes, Mapping, Sequence, BaseModel)):
+        if isinstance(content, (str, bytes, BaseModel, m.ConfigMap)):
             return content
+        if isinstance(content, Mapping):
+            return m.ConfigMap(
+                root={
+                    str(k): FlextRuntime.normalize_to_general_value(v)
+                    if isinstance(
+                        v,
+                        (
+                            str,
+                            int,
+                            float,
+                            bool,
+                            datetime,
+                            Path,
+                            BaseModel,
+                            Sequence,
+                            Mapping,
+                        ),
+                    )
+                    or v is None
+                    else str(v)
+                    for k, v in content.items()
+                }
+            )
+        if isinstance(content, Sequence):
+            rows: list[list[str]] = []
+            for row in content:
+                if not isinstance(row, Sequence) or isinstance(row, (str, bytes)):
+                    rows = []
+                    break
+                rows.append([str(cell) for cell in row])
+            if rows:
+                return rows
         # Fallback for unexpected types
         return str(content)
 
@@ -1671,8 +1782,29 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
 
                 # Type narrowing and assignment using isinstance for proper narrowing
                 if isinstance(parsed_raw, dict):
-                    parsed_content = parsed_raw
-                    key_count = len(parsed_content)
+                    parsed_content = m.ConfigMap(
+                        root={
+                            str(k): FlextRuntime.normalize_to_general_value(v)
+                            if isinstance(
+                                v,
+                                (
+                                    str,
+                                    int,
+                                    float,
+                                    bool,
+                                    datetime,
+                                    Path,
+                                    BaseModel,
+                                    Sequence,
+                                    Mapping,
+                                ),
+                            )
+                            or v is None
+                            else str(v)
+                            for k, v in parsed_raw.items()
+                        }
+                    )
+                    key_count = len(parsed_raw)
                 elif isinstance(parsed_raw, list):
                     parsed_content = parsed_raw
                     item_count = len(parsed_content)
@@ -1694,11 +1826,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
         # Model validation if requested
         if validate_model is not None:
             model_name = validate_model.__name__
-            if (
-                parsed_content is not None
-                and u.is_type(parsed_content, "dict")
-                and isinstance(parsed_content, Mapping)
-            ):
+            if parsed_content is not None and not isinstance(parsed_content, list):
                 # Use u.Model.load() for Pydantic validation
                 # Convert to dict if needed
                 content_dict = (
@@ -1708,7 +1836,7 @@ class FlextTestsFiles(su[t.Tests.TestResultValue]):
                 )
                 validation_result = u.Model.load(
                     validate_model,
-                    content_dict,
+                    cast("t.ConfigMap", content_dict),
                 )
                 model_valid = validation_result.is_success
             elif fmt in {"json", "yaml"} and text.strip():

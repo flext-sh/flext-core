@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Hashable
+from typing import cast
 
 from flext_core.constants import c
 from flext_core.protocols import p
@@ -28,7 +29,7 @@ class FlextUtilitiesDomain:
         Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
         Uses same structure/config as FlextLogger but without circular import.
         """
-        return FlextRuntime.get_logger(__name__)
+        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
 
     @staticmethod
     def compare_entities_by_id(

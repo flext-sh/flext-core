@@ -804,6 +804,8 @@ class FlextExceptions:
                 if isinstance(type_raw, str):
                     # Use dict.get directly for type-safe lookup
                     return type_map.get(type_raw)
+                if isinstance(type_raw, type):
+                    return type_raw
             # Handle case where type is passed as string in named arg
             if isinstance(type_value, str):
                 # Use dict.get directly for type-safe lookup
@@ -1054,12 +1056,11 @@ class FlextExceptions:
             correlation_id_raw if isinstance(correlation_id_raw, str) else None
         )
         metadata_raw = kwargs.get("metadata")
-        # Return metadata as-is if it's Metadata protocol implementation, otherwise None
-        # Note: kwargs values are MetadataAttributeValue (str|int|float|bool|datetime|list|None)
-        # so dict/Mapping branches are not needed - only Metadata protocol matches.
         metadata: p.Log.Metadata | Mapping[str, t.MetadataAttributeValue] | None = None
         if metadata_raw is not None and _is_metadata_protocol(metadata_raw):
             metadata = metadata_raw
+        elif isinstance(metadata_raw, Mapping):
+            metadata = dict(metadata_raw.items())
         return (correlation_id, metadata)
 
     @staticmethod

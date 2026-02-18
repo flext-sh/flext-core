@@ -1055,9 +1055,9 @@ class FlextContext(FlextRuntime):
         )
 
         return m.ContextExport(
-            data=t.Dict(root=all_data),
+            data=all_data,
             metadata=t.Dict(root=metadata_root) if metadata_root else None,
-            statistics=statistics_mapping,
+            statistics=dict(statistics_mapping.items()),
         )
 
     def values(self) -> list[t.GeneralValueType]:
@@ -1336,9 +1336,9 @@ class FlextContext(FlextRuntime):
         )
 
         return m.ContextExport(
-            data=t.Dict(root=all_data),
+            data=all_data,
             metadata=t.Dict(root=metadata_root) if metadata_root else None,
-            statistics=statistics_mapping,
+            statistics=dict(statistics_mapping.items()),
         )
 
     # =========================================================================

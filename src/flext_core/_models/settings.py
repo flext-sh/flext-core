@@ -907,7 +907,7 @@ class FlextModelsConfig:
             description="Positional arguments for function",
         )
         kwargs: t.ConfigMap = Field(
-            default_factory=dict,
+            default_factory=lambda: t.ConfigMap(root={}),
             description="Keyword arguments for function",
         )
         retry_config: FlextModelsConfig.RetryConfiguration | None = Field(

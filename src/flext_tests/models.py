@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import datetime
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
@@ -1187,7 +1188,7 @@ class FlextTestsModels(FlextModelsBase):
                     min_length=1,
                     description="Error code for failure result",
                 )
-                error_data: dict[str, t.GeneralValueType] | None = Field(
+                error_data: t.ConfigMap | None = Field(
                     default=None,
                     description="Error metadata dictionary for failure result",
                 )
@@ -1412,16 +1413,20 @@ class FlextTestsModels(FlextModelsBase):
             class FailParams(FlextModelsBase.Value):
                 """Parameters for matcher fail() operations with Pydantic 2 validation."""
 
+                model_config = ConfigDict(populate_by_name=True)
+
                 msg: str | None = Field(
                     default=None,
                     description="Custom error message",
                 )
                 has: t.Tests.Matcher.ExclusionSpec | None = Field(
                     default=None,
+                    validation_alias=AliasChoices("has", "contains"),
                     description="Unified containment - error contains substring(s) (replaces contains)",
                 )
                 lacks: t.Tests.Matcher.ExclusionSpec | None = Field(
                     default=None,
+                    validation_alias=AliasChoices("lacks", "excludes"),
                     description="Unified non-containment - error does NOT contain substring(s) (replaces excludes)",
                 )
                 starts: str | None = Field(
@@ -1455,11 +1460,11 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Custom error message",
                 )
-                eq: t.GeneralValueType | None = Field(
+                eq: object | None = Field(
                     default=None,
                     description="Expected value (equality check)",
                 )
-                ne: t.GeneralValueType | None = Field(
+                ne: object | None = Field(
                     default=None,
                     description="Value must not equal",
                 )
@@ -1496,14 +1501,33 @@ class FlextTestsModels(FlextModelsBase):
                 )
                 len: t.Tests.Matcher.LengthSpec | None = Field(
                     default=None,
+                    validation_alias=AliasChoices("len", "length"),
                     description="Length spec - exact int or (min, max) tuple",
+                )
+                length_gt: int | None = Field(
+                    default=None,
+                    description="Legacy: length greater than (converted to len tuple)",
+                )
+                length_gte: int | None = Field(
+                    default=None,
+                    description="Legacy: length greater than or equal (converted to len tuple)",
+                )
+                length_lt: int | None = Field(
+                    default=None,
+                    description="Legacy: length less than (converted to len tuple)",
+                )
+                length_lte: int | None = Field(
+                    default=None,
+                    description="Legacy: length less than or equal (converted to len tuple)",
                 )
                 has: t.Tests.Matcher.ContainmentSpec | None = Field(
                     default=None,
+                    validation_alias=AliasChoices("has", "contains"),
                     description="Unified containment - value contains item(s) (replaces contains)",
                 )
                 lacks: t.Tests.Matcher.ExclusionSpec | None = Field(
                     default=None,
+                    validation_alias=AliasChoices("lacks", "excludes"),
                     description="Unified non-containment - value does NOT contain item(s) (replaces excludes)",
                 )
                 starts: str | None = Field(
@@ -1588,6 +1612,38 @@ class FlextTestsModels(FlextModelsBase):
                     default=None,
                     description="Custom predicate function",
                 )
+
+                @model_validator(mode="after")
+                def normalize_legacy_parameters(
+                    self,
+                ) -> FlextTestsModels.Tests.Matcher.ThatParams:
+                    updates: dict[str, object] = {}
+                    if self.error is not None and self.has is None:
+                        updates["has"] = self.error
+                    # Convert legacy length_* params to unified len tuple
+                    if self.len is None and any(
+                        v is not None
+                        for v in (
+                            self.length_gt,
+                            self.length_gte,
+                            self.length_lt,
+                            self.length_lte,
+                        )
+                    ):
+                        min_len = 0
+                        max_len = sys.maxsize
+                        if self.length_gt is not None:
+                            min_len = self.length_gt + 1
+                        if self.length_gte is not None:
+                            min_len = max(min_len, self.length_gte)
+                        if self.length_lt is not None:
+                            max_len = self.length_lt - 1
+                        if self.length_lte is not None:
+                            max_len = min(max_len, self.length_lte)
+                        updates["len"] = (min_len, max_len)
+                    if updates:
+                        return self.model_copy(update=updates)
+                    return self
 
             class ScopeParams(FlextModelsBase.Value):
                 """Parameters for matcher scope() operations with Pydantic 2 validation."""

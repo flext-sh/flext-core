@@ -276,6 +276,8 @@ class FlextHandlers[MessageT_contra, ResultT](
                         return r[t.GeneralValueType].fail(
                             f"Unexpected message type: {type(message).__name__}",
                         )
+                    if isinstance(result, r):
+                        return result
                     return r[t.GeneralValueType].ok(result)
                 except Exception as exc:
                     # Wrap exception in r
@@ -885,7 +887,22 @@ class FlextHandlers[MessageT_contra, ResultT](
                     )
                     # Type narrowing after guard check
                     if callable(func):
-                        narrowed_func: t.HandlerCallable = func
+                        captured_fn = func
+
+                        def narrowed_func(
+                            message: t.GeneralValueType,
+                            fn: object = captured_fn,
+                        ) -> t.GeneralValueType:
+                            if callable(fn):
+                                return u.narrow_to_general_value_type(fn(message))
+                            return ""
+
+                        setattr(
+                            narrowed_func,
+                            c.Discovery.HANDLER_ATTR,
+                            config,
+                        )
+
                         handlers.append((name, narrowed_func, config))
 
             # Sort by priority (descending), then by name for stability

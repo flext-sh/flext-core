@@ -76,10 +76,17 @@ class FlextModelsHandler:
         mode: str = Field(
             description="Registration mode (auto_discovery, explicit)",
         )
+        handler_mode: c.Cqrs.HandlerTypeLiteral | c.Cqrs.HandlerType | None = Field(
+            default=None,
+            description="Handler mode (command/query/event)",
+        )
         message_type: str | None = Field(
             default=None,
             description="Message type bound (for explicit mode)",
         )
+
+        def __getitem__(self, key: str) -> object:
+            return self.model_dump()[key]
 
     class RegistrationRequest(FlextModelsBase.ArbitraryTypesModel):
         """Request model for dynamic handler registration.
@@ -88,7 +95,7 @@ class FlextModelsHandler:
         legacy dictionary-based configuration.
         """
 
-        handler: t.GeneralValueType = Field(
+        handler: object = Field(
             description="Handler instance (callable, object, or FlextHandlers)",
         )
         message_type: t.GeneralValueType | str | type | None = Field(
@@ -120,6 +127,14 @@ class FlextModelsHandler:
                 # Actually, strictly enforcing enum values is better.
                 # But Cqrs.HandlerTypeLiteral is a literal of strings.
                 return v
+            return v
+
+        @field_validator("handler", mode="before")
+        @classmethod
+        def validate_handler_value(cls, v: object) -> object:
+            if not callable(v) and not isinstance(v, BaseModel):
+                msg = f"Handler must be callable or handler instance, got {type(v).__name__}"
+                raise TypeError(msg)
             return v
 
     class RegistrationDetails(BaseModel):

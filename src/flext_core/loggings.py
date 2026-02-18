@@ -63,6 +63,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """Context mapping for BindableLogger protocol compliance."""
         return {}
 
+    def __call__(self) -> FlextLogger:
+        """Return self to support factory-style DI registration."""
+        return self
+
     # NOTE: _configure_structlog_if_needed() wrapper method REMOVED
     # Applications must call FlextRuntime.configure_structlog() explicitly at startup
     # This eliminates wrapper indirection and makes configuration responsibility clear

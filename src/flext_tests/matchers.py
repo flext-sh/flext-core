@@ -58,7 +58,7 @@ import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeGuard
+from typing import TypeGuard, cast
 
 from pydantic import BaseModel
 
@@ -883,7 +883,7 @@ class FlextTestsMatchers:
         if isinstance(value, (list, tuple)):
             # Type narrowing: value is already narrowed to list | tuple by isinstance
             # No cast needed - isinstance already provides type narrowing
-            seq_value: list[t.GeneralValueType] | tuple[object, ...] = value
+            seq_value: Sequence[object] = value
             if params.first is not None:
                 if not seq_value:
                     raise AssertionError(
@@ -912,7 +912,7 @@ class FlextTestsMatchers:
                         failed_idx = next(
                             (
                                 i
-                                for i, item in enumerate(seq_value)
+                                for i, item in enumerate(list(seq_value))
                                 if not isinstance(item, params.all_)
                             ),
                             None,
@@ -924,13 +924,13 @@ class FlextTestsMatchers:
                             ),
                         )
                 elif callable(params.all_) and not all(
-                    params.all_(item) for item in seq_value
+                    params.all_(cast("t.GeneralValueType", item)) for item in seq_value
                 ):
                     failed_idx = next(
                         (
                             i
-                            for i, item in enumerate(seq_value)
-                            if not params.all_(item)
+                            for i, item in enumerate(list(seq_value))
+                            if not params.all_(cast("t.GeneralValueType", item))
                         ),
                         None,
                     )
@@ -948,7 +948,7 @@ class FlextTestsMatchers:
                             params.msg or c.Tests.Matcher.ERR_ANY_ITEMS_FAILED,
                         )
                 elif callable(params.any_) and not any(
-                    params.any_(item) for item in seq_value
+                    params.any_(cast("t.GeneralValueType", item)) for item in seq_value
                 ):
                     raise AssertionError(
                         params.msg or c.Tests.Matcher.ERR_ANY_ITEMS_FAILED,
@@ -969,11 +969,11 @@ class FlextTestsMatchers:
                     # callable() builtin narrows type for pyrefly/mypy
                     # Wrap user key function to return comparable string representation
                     # sorted_param is Callable[[object], object] but sorted needs comparable return
-                    user_key_fn: Callable[[object], object] = sorted_param
+                    user_key_fn = sorted_param
 
                     def comparable_key(x: object) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
-                        result = user_key_fn(x)
+                        result = user_key_fn(cast("t.GeneralValueType", x))
                         return (type(result).__name__, str(result))
 
                     sorted_list = sorted(value_list, key=comparable_key)
@@ -995,7 +995,9 @@ class FlextTestsMatchers:
         if isinstance(value, Mapping):
             # Type narrowing: value is already narrowed to Mapping by isinstance
             # No cast needed - isinstance already provides type narrowing
-            mapping_value: Mapping[object, object] = value
+            mapping_value: Mapping[object, object] = cast(
+                "Mapping[object, object]", value
+            )
             if params.keys is not None:
                 key_set: set[object] = set(params.keys)
                 missing = key_set - set(mapping_value.keys())

@@ -58,8 +58,10 @@ class FlextModelsCollections:
 
         @classmethod
         def __class_getitem__(
-            cls, _item: t.GeneralValueType
+            cls,
+            typevar_values: type[object] | tuple[type[object], ...],
         ) -> type[FlextModelsCollections.Categories]:
+            _ = typevar_values
             return cls
 
         def __len__(self) -> int:
@@ -284,7 +286,7 @@ class FlextModelsCollections:
                 Statistics instance
 
             """
-            return cls(**data)
+            return cls.model_validate(dict(data.items()))
 
         @classmethod
         def aggregate(cls, stats_list: list[Self]) -> dict[str, t.GeneralValueType]:

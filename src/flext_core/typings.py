@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -172,7 +172,7 @@ class FlextTypes:
     GeneralValueType: TypeAlias = GeneralValueType
 
     # RegisterableService - Type for services registerable in FlextContainer
-    RegisterableService: TypeAlias = GeneralValueType
+    RegisterableService: TypeAlias = object
 
     # RegistrablePlugin - Type for plugins registerable in FlextRegistry
     RegistrablePlugin: TypeAlias = GeneralValueType | Callable[..., GeneralValueType]
@@ -226,6 +226,16 @@ class FlextTypes:
         | bool
         | datetime
         | None
+        | dict[
+            str,
+            str
+            | int
+            | float
+            | bool
+            | datetime
+            | list[str | int | float | bool | datetime | None]
+            | None,
+        ]
         | list[str | int | float | bool | datetime | None]
     )
 
@@ -295,7 +305,6 @@ class FlextTypes:
 
         # NOTE: methods typed with GeneralValueType here; subclasses with
         # narrower value types override get/pop/setdefault as needed.
-
         def __getitem__(self, key: str) -> GeneralValueType:
             """Get item by key."""
             return self.root[key]  # type: ignore[attr-defined]
@@ -311,6 +320,9 @@ class FlextTypes:
         def __len__(self) -> int:
             """Get length."""
             return len(self.root)  # type: ignore[attr-defined]
+
+        def __iter__(self) -> Iterator[str]:
+            return iter(self.root)  # type: ignore[attr-defined]
 
         def __contains__(self, key: object) -> bool:
             """Check if key exists."""

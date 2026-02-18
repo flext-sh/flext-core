@@ -276,7 +276,9 @@ class FlextService[TDomainResult](
             config_overrides=options.config_overrides,
             context=context_val,
             subproject=options.subproject,
-            services=cls._normalize_scoped_services(options.services),
+            services=cls._normalize_scoped_services(
+                options.services,
+            ),
             factories=options.factories,
             resources=options.resources,
             container_overrides=options.container_overrides,

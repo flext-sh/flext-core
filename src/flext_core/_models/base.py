@@ -16,7 +16,7 @@ import re
 import uuid
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal, Self, cast
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -55,7 +55,7 @@ def normalize_to_list(v: t.GeneralValueType) -> list[t.GeneralValueType]:
     if isinstance(v, list):
         return v
     if isinstance(v, (tuple, set)):
-        return list(v)
+        return cast("list[t.GeneralValueType]", list(v))
     return [v]
 
 
@@ -969,7 +969,7 @@ class FlextModelFoundation:
             # intermediate validation states during assignment
             validated = self.__class__.model_validate(current_data)
             for key, value in validated.__dict__.items():
-                object.__setattr__(self, key, value)
+                setattr(self, key, value)
 
         def restore(self) -> None:
             """Restore a soft deleted record."""
@@ -1341,7 +1341,7 @@ class FlextModelFoundation:
 
         def add_runtime_field(self, name: str, value: t.GeneralValueType) -> None:
             """Add a field at runtime (stored in __dict__)."""
-            object.__setattr__(self, name, value)
+            setattr(self, name, value)
 
         def get_runtime_field(
             self, name: str, default: t.GeneralValueType = None

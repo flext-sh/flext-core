@@ -171,11 +171,13 @@ class CircuitBreakerManager:
             return r[bool].fail(
                 f"Circuit breaker is open for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data={
-                    "message_type": message_type,
-                    "state": self.get_state(message_type),
-                    "failure_count": self.get_failure_count(message_type),
-                },
+                error_data=t.ConfigMap(
+                    root={
+                        "message_type": message_type,
+                        "state": self.get_state(message_type),
+                        "failure_count": self.get_failure_count(message_type),
+                    }
+                ),
             )
         return r[bool].ok(value=True)
 
@@ -314,13 +316,15 @@ class RateLimiterManager:
             return r[bool].fail(
                 f"Rate limit exceeded for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data={
-                    "message_type": message_type,
-                    "limit": self._max_requests,
-                    "window_seconds": self._window_seconds,
-                    "current_count": count,
-                    "retry_after": retry_after,
-                },
+                error_data=t.ConfigMap(
+                    root={
+                        "message_type": message_type,
+                        "limit": self._max_requests,
+                        "window_seconds": self._window_seconds,
+                        "current_count": count,
+                        "retry_after": retry_after,
+                    }
+                ),
             )
 
         self._windows[message_type] = (window_start, count + 1)

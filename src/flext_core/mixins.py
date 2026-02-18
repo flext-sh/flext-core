@@ -727,7 +727,7 @@ class FlextMixins(FlextRuntime):
             """Tracks handler execution metrics."""
 
             # Type annotation for type checker
-            _metrics: dict[str, t.GeneralValueType] = {}
+            _metrics: ClassVar[dict[str, t.GeneralValueType]] = {}
 
             def __init__(
                 self,
@@ -777,8 +777,8 @@ class FlextMixins(FlextRuntime):
             """Manages execution context stack."""
 
             # Type annotation for type checker
-            _stack: list[
-                m.Handler.ExecutionContext | dict[str, t.GeneralValueType]
+            _stack: ClassVar[
+                list[m.Handler.ExecutionContext | dict[str, t.GeneralValueType]]
             ] = []
 
             def __init__(

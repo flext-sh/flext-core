@@ -2139,7 +2139,7 @@ class FlextRuntime:
                     elif isinstance(v_obj, dict):
                         val_typed = v_obj  # Mapping[str, GeneralValueType]
                     elif callable(v_obj):
-                        val_typed = v_obj  # Callable
+                        val_typed = str(v_obj)
                     else:
                         val_typed = str(v_obj)  # Fallback to string
                     context_dict[key_str] = val_typed

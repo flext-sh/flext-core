@@ -286,7 +286,7 @@ class FlextSettings(p.ProtocolSettings, p.Config, FlextRuntime):
         # CAST REQUIRED: **kwargs unpacking with typed values (object/GeneralValueType)
         # triggers type errors against strict BaseSettings arguments (bool | None).
         # We must cast to Any to allow passing dynamic configuration values to Pydantic.
-        from typing import Any, cast
+        from typing import Any, cast  # noqa: PLC0415
 
         BaseSettings.__init__(self, **cast("dict[str, Any]", kwargs))
 

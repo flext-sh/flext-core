@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import Literal, Self, TypeGuard, overload
+from typing import Literal, Self, TypeGuard, cast, overload
 
 from pydantic import BaseModel
 
@@ -373,10 +373,11 @@ class FlextTestsBuilders:
         # Apply transformation if provided
         if params.transform is not None and resolved_value is not None:
             if isinstance(resolved_value, (list, tuple)):
-                # Sequence type - transform each item
-                resolved_value = [params.transform(item) for item in resolved_value]
+                resolved_value = [
+                    params.transform(cast("t.GeneralValueType", item))
+                    for item in resolved_value
+                ]
             else:
-                # Transform single value
                 resolved_value = params.transform(resolved_value)
 
         # Apply validation if provided
@@ -679,7 +680,9 @@ class FlextTestsBuilders:
         # Standard result
         # Widen dict to GeneralValueType for type compatibility
         data_as_value: t.GeneralValueType = data
-        result = r[t.GeneralValueType].ok(data_as_value)
+        result: r[t.Tests.Builders.BuilderValue] = r[t.Tests.Builders.BuilderValue].ok(
+            data_as_value,
+        )
         if params.unwrap:
             if result.is_failure:
                 msg = params.unwrap_msg or f"Failed to unwrap result: {result.error}"
@@ -745,17 +748,20 @@ class FlextTestsBuilders:
             data = dict(self._flatten_dict(flat_input))
 
         # Apply validation
-        if params.validate_with is not None and not params.validate_with(data):
+        data_for_hooks = cast("t.Tests.Builders.BuilderOutputDict", data)
+        if params.validate_with is not None and not params.validate_with(
+            data_for_hooks
+        ):
             error_msg = "Validation failed during build"
             raise ValueError(error_msg)
 
         # Apply assertion
         if params.assert_with is not None:
-            params.assert_with(data)
+            params.assert_with(data_for_hooks)
 
         # Apply transformation
         if params.map_result is not None:
-            return params.map_result(data)
+            return params.map_result(data_for_hooks)
 
         if params.keys_only:
             return list(data.keys())
@@ -1229,6 +1235,7 @@ class FlextTestsBuilders:
         )
         # Type narrowing: tt.model() returns union type, extract BaseModel
         # Extract BaseModel from union type (single model case)
+        config: BaseModel
         if isinstance(config_result, r):
             config_unwrapped = config_result.value
             if isinstance(config_unwrapped, BaseModel):
@@ -1246,13 +1253,19 @@ class FlextTestsBuilders:
                 msg = f"Expected single BaseModel, got list with {len(config_result)} items"
                 raise TypeError(msg)
         elif isinstance(config_result, dict):
-            # Single model case shouldn't return dict, but handle gracefully
             if len(config_result) == 1:
                 config_value = next(iter(config_result.values()))
-                config = config_value
+                if isinstance(config_value, BaseModel):
+                    config = config_value
+                else:
+                    msg = f"Expected BaseModel in dict result, got {type(config_value)}"
+                    raise TypeError(msg)
             else:
                 msg = f"Expected single BaseModel, got dict with {len(config_result)} items"
                 raise TypeError(msg)
+        else:
+            msg = f"Expected BaseModel from config_result, got {type(config_result)}"
+            raise TypeError(msg)
         # Type narrowing: use isinstance for proper type narrowing
         b = c.Tests.Builders
         config_data: dict[str, t.GeneralValueType]
@@ -1388,7 +1401,7 @@ class FlextTestsBuilders:
             def fail[T](
                 error: str,
                 code: str | None = None,
-                data: dict[str, t.GeneralValueType] | None = None,
+                data: t.ConfigMap | None = None,
             ) -> r[T]:
                 """Create failure result using r[T] directly."""
                 error_code = code or c.Errors.VALIDATION_ERROR

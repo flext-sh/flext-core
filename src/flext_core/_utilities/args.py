@@ -27,12 +27,7 @@ from flext_core.result import r
 from flext_core.runtime import FlextRuntime
 from flext_core.typings import P, R, t
 
-# TypeVar for validated_with_result: constrained to r or RuntimeResult
-_ValidatedResultT = TypeVar(
-    "_ValidatedResultT",
-    r[t.GeneralValueType],
-    FlextRuntime.RuntimeResult[t.GeneralValueType],
-)
+_ValidatedValueT = TypeVar("_ValidatedValueT")
 
 
 class FlextUtilitiesArgs:
@@ -95,8 +90,8 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def validated_with_result(
-        func: Callable[P, _ValidatedResultT],
-    ) -> Callable[P, _ValidatedResultT]:
+        func: Callable[P, FlextRuntime.RuntimeResult[_ValidatedValueT]],
+    ) -> Callable[P, FlextRuntime.RuntimeResult[_ValidatedValueT]]:
         """Decorator that converts ValidationError to r.fail().
 
         USE WHEN:
@@ -121,15 +116,15 @@ class FlextUtilitiesArgs:
         )(func)
 
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> _ValidatedResultT:
+        def wrapper(
+            *args: P.args,
+            **kwargs: P.kwargs,
+        ) -> FlextRuntime.RuntimeResult[_ValidatedValueT]:
             try:
-                # Type narrowing: validated_func returns _ValidatedResultT
-                result: _ValidatedResultT = validated_func(*args, **kwargs)
+                result = validated_func(*args, **kwargs)
                 return result
             except Exception as e:
-                # Return fail result - type annotation ensures correct type
-                fail_result: r[t.GeneralValueType] = r[t.GeneralValueType].fail(str(e))
-                return fail_result
+                return r.fail(str(e))
 
         # wrapper has correct type via @wraps preserving signature
         return wrapper

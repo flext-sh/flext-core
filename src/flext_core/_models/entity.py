@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import ClassVar, Self, override
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from structlog.typing import BindableLogger
 
 from flext_core._models.base import FlextModelsBase
@@ -23,15 +23,24 @@ from flext_core.runtime import FlextRuntime
 from flext_core.typings import t
 
 
-def _to_config_map(data: t.ConfigMap | None) -> t.ConfigMap:
+def _to_config_map(data: t.ConfigMap | None) -> _ComparableConfigMap:
     if not data:
-        return t.ConfigMap(root={})
-    return t.ConfigMap(
+        return _ComparableConfigMap(root={})
+    return _ComparableConfigMap(
         root={
             str(key): FlextRuntime.normalize_to_metadata_value(value)
             for key, value in data.items()
         }
     )
+
+
+class _ComparableConfigMap(t.ConfigMap):
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Mapping):
+            return self.root == dict(other.items())
+        return super().__eq__(other)
+
+    __hash__ = t.ConfigMap.__hash__
 
 
 class FlextModelsEntity:
@@ -56,14 +65,32 @@ class FlextModelsEntity:
 
         event_type: str
         aggregate_id: str
-        data: t.ConfigMap = Field(
-            default_factory=lambda: t.ConfigMap(root={}),
+        data: _ComparableConfigMap = Field(
+            default_factory=lambda: _ComparableConfigMap(root={}),
             description="Event data container",
         )
         metadata: t.ConfigMap = Field(
             default_factory=lambda: t.ConfigMap(root={}),
             description="Event metadata container",
         )
+
+        @field_validator("data", mode="before")
+        @classmethod
+        def normalize_event_data(
+            cls,
+            value: t.GeneralValueType,
+        ) -> _ComparableConfigMap:
+            if isinstance(value, _ComparableConfigMap):
+                return value
+            if isinstance(value, t.ConfigMap):
+                return _ComparableConfigMap(root=dict(value.items()))
+            if isinstance(value, Mapping):
+                normalized: dict[str, t.GeneralValueType] = {
+                    str(k): FlextRuntime.normalize_to_metadata_value(v)
+                    for k, v in value.items()
+                }
+                return _ComparableConfigMap(root=normalized)
+            return _ComparableConfigMap(root={})
 
     class Entry(
         FlextModelsBase.TimestampedModel,
@@ -267,5 +294,12 @@ class FlextModelsEntity:
             super().model_post_init(__context)
             self.check_invariants()
 
+
+# Resolve forward references created by `from __future__ import annotations`.
+# `Entry.domain_events` references `FlextModelsEntity.DomainEvent` which is
+# unavailable during class body execution. Now that the outer class is fully
+# defined, Pydantic can resolve the ForwardRef from module globals.
+FlextModelsEntity.Entry.model_rebuild()
+FlextModelsEntity.AggregateRoot.model_rebuild()
 
 __all__ = ["FlextModelsEntity"]

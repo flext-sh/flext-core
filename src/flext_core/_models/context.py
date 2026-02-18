@@ -26,7 +26,7 @@ def _normalize_metadata(
     value: t.GeneralValueType | FlextModelsBase.Metadata | None,
 ) -> FlextModelsBase.Metadata:
     if value is None:
-        return FlextModelsBase.Metadata(attributes=t.Dict(root={}))
+        return FlextModelsBase.Metadata(attributes={})
     if isinstance(value, FlextModelsBase.Metadata):
         return value
     if not FlextRuntime.is_dict_like(value):
@@ -38,7 +38,7 @@ def _normalize_metadata(
     attributes: dict[str, t.GeneralValueType] = {}
     for key, raw_value in dict(value).items():
         attributes[str(key)] = FlextRuntime.normalize_to_general_value(raw_value)
-    return FlextModelsBase.Metadata(attributes=t.Dict(root=attributes))
+    return FlextModelsBase.Metadata(attributes=attributes)
 
 
 class FlextModelsContext:

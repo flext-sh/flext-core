@@ -24,6 +24,18 @@ class _Predicate(Protocol[T_contra]):
     def __call__(self, value: T_contra) -> bool: ...
 
 
+class _BatchResultCompat(t.BatchResultDict):
+    def __getitem__(self, key: str) -> t.GeneralValueType:
+        values = {
+            "results": self.results,
+            "errors": self.errors,
+            "total": self.total,
+            "success_count": self.success_count,
+            "error_count": self.error_count,
+        }
+        return values[key]
+
+
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
@@ -441,7 +453,7 @@ class FlextUtilitiesCollection:
             if progress is not None and processed % progress_interval == 0:
                 progress(processed, total)
 
-        result_dict = t.BatchResultDict(
+        result_dict = _BatchResultCompat(
             results=results,
             total=total,
             success_count=len(results),

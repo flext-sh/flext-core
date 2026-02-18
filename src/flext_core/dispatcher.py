@@ -16,7 +16,7 @@ import json
 import sys
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime
 from types import ModuleType
 from typing import Self, cast, override
@@ -1100,7 +1100,7 @@ class FlextDispatcher(FlextService[bool]):
             handler_arg: object = args[0]
             # Type narrowing: isinstance/callable for mypy (HandlerType = HandlerCallable | BaseModel)
             if callable(handler_arg) or isinstance(handler_arg, BaseModel):
-                return self._register_single_handler(handler_arg)
+                return self._register_single_handler(cast("t.HandlerType", handler_arg))
             return r[bool].fail("Handler must be callable or BaseModel")
         if len(args) == c.Dispatcher.TWO_HANDLER_ARG_COUNT:
             # First arg is command type (string, class, or GeneralValueType)
@@ -1124,10 +1124,15 @@ class FlextDispatcher(FlextService[bool]):
             else:
                 # Other GeneralValueType - use as-is
                 command_type = str(command_type_arg)
-            # Type narrowing: TypeGuard narrows to t.HandlerType (HandlerCallable | BaseModel)
-            if u.is_handler_type(second_handler_arg):
-                return self._register_two_arg_handler(command_type, second_handler_arg)
-            return r[bool].fail("Handler must be callable or BaseModel")
+            two_arg_handler: t.HandlerType
+            if isinstance(second_handler_arg, BaseModel):
+                two_arg_handler = second_handler_arg
+            elif callable(second_handler_arg):
+                two_arg_handler = cast("t.HandlerCallable", second_handler_arg)
+            else:
+                return r[bool].fail("Handler must be callable or BaseModel")
+
+            return self._register_two_arg_handler(command_type, two_arg_handler)
 
         return r[bool].fail(
             f"register_handler takes 1 or 2 arguments but {len(args)} were given",
@@ -1672,7 +1677,7 @@ class FlextDispatcher(FlextService[bool]):
                 # Validate raw dictionary against model schema
                 # Pydantic v2 handles validation and type coercion
                 return r[m.HandlerRegistrationRequest].ok(
-                    m.HandlerRegistrationRequest(**request)
+                    m.HandlerRegistrationRequest.model_validate(dict(request.items()))
                 )
 
         except Exception as e:
@@ -1696,20 +1701,20 @@ class FlextDispatcher(FlextService[bool]):
             r with (handler, handler_name) tuple or error
 
         """
-        handler_raw: t.GeneralValueType = request_model.handler
+        handler_raw: object = request_model.handler
         if not handler_raw:
             return r[tuple[t.HandlerType, str]].fail(
                 "Handler is required",
             )
 
-        # Type narrowing using TypeGuard for handler validation
-        if not u.is_handler_type(handler_raw):
+        if isinstance(handler_raw, BaseModel):
+            handler_typed: t.HandlerType = handler_raw
+        elif callable(handler_raw):
+            handler_typed = cast("t.HandlerCallable", handler_raw)
+        else:
             return r[tuple[t.HandlerType, str]].fail(
                 "Handler must be callable, mapping, or BaseModel",
             )
-
-        # After TypeGuard, handler_raw is narrowed to t.HandlerType (HandlerCallable | BaseModel)
-        handler_typed: t.HandlerType = handler_raw
 
         # Validate handler has required interface
         validation_result = self._validate_handler_registry_interface(
@@ -2119,13 +2124,15 @@ class FlextDispatcher(FlextService[bool]):
             return r[bool].fail(
                 f"Circuit breaker is open for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data={
-                    "message_type": message_type,
-                    "failure_count": failures,
-                    "threshold": self._circuit_breaker.get_threshold(),
-                    "state": self._circuit_breaker.get_state(message_type),
-                    "reason": "circuit_breaker_open",
-                },
+                error_data=t.ConfigMap(
+                    root={
+                        "message_type": message_type,
+                        "failure_count": failures,
+                        "threshold": self._circuit_breaker.get_threshold(),
+                        "state": self._circuit_breaker.get_state(message_type),
+                        "reason": "circuit_breaker_open",
+                    }
+                ),
             )
 
         # Check rate limiting
@@ -2308,13 +2315,16 @@ class FlextDispatcher(FlextService[bool]):
         """
         # Detect API pattern - (type, data) vs (object)
         message: t.GeneralValueType
+        message_type_name_override: str | None = None
         if data is not None or u.is_type(message_or_type, str):
             # dispatch("type", data) pattern
             message_type_str = str(message_or_type)
-            message_class = type(message_type_str, (), {"payload": data})
-            message_raw = message_class()
-            # Safe cast: dynamically created class instance is compatible with t.GeneralValueType
-            message = message_raw
+            message_type_name_override = message_type_str
+
+            class DispatchPayload(BaseModel):
+                payload: t.GeneralValueType | None = None
+
+            message = DispatchPayload(payload=data)
         else:
             # dispatch(message_object) pattern
             message = message_or_type
@@ -2328,7 +2338,7 @@ class FlextDispatcher(FlextService[bool]):
 
         # Simple dispatch for registered handlers
         message_type = type(message)
-        message_type_name = message_type.__name__
+        message_type_name = message_type_name_override or message_type.__name__
         if message_type_name in self._handlers:
             try:
                 handler_raw = self._handlers[message_type_name]
@@ -2420,7 +2430,9 @@ class FlextDispatcher(FlextService[bool]):
                     processed_items: list[tuple[str, t.MetadataAttributeValue]] = (
                         process_result.value
                     )
-                    attributes_dict = dict(processed_items)
+                    attributes_dict: dict[str, t.GeneralValueType] = dict(
+                        processed_items
+                    )
                 else:
                     attributes_dict = {}
             else:
@@ -2531,7 +2543,7 @@ class FlextDispatcher(FlextService[bool]):
 
         # Cast value to expected type since we checked is_failure/None
         # Remove quotes for direct type reference
-        dispatch_config = cast("m.DispatchConfig", config_result.value)
+        dispatch_config = config_result.value
 
         context_result = self._prepare_dispatch_context(
             message,
@@ -2594,10 +2606,8 @@ class FlextDispatcher(FlextService[bool]):
                     # Fallback: treat as attributes if strict validation fails
                     # Creates metadata with provided dict as 'attributes' field
                     # This handles legacy cases where raw dict was passed as metadata
-                    try:
+                    with suppress(Exception):
                         validated_metadata = m.Metadata(attributes=meta_dict)
-                    except Exception:
-                        pass  # Validated metadata remains None, will cause validation error in DispatchConfig if required
             else:
                 # Fast fail: invalid type
                 msg = (
@@ -2878,7 +2888,7 @@ class FlextDispatcher(FlextService[bool]):
                     on_error="collect",
                 )
                 # Convert keys to strings and values to MetadataAttributeValue
-                metadata_attrs: dict[str, t.MetadataAttributeValue]
+                metadata_attrs: dict[str, t.GeneralValueType]
                 if transform_result.is_success:
                     # transform_result.value is list[tuple[str, str]]
                     # str is assignable to MetadataAttributeValue
@@ -2959,7 +2969,7 @@ class FlextDispatcher(FlextService[bool]):
                         "expected dict"
                     )
                     raise TypeError(msg)
-                extracted_map = dumped
+                extracted_map = dict(dumped.items())
             except Exception as e:
                 msg = f"Failed to dump BaseModel metadata: {type(e).__name__}: {e}"
                 raise TypeError(msg) from e
@@ -2985,17 +2995,8 @@ class FlextDispatcher(FlextService[bool]):
 
         # Strict filtering for MetadataAttributeValue compliance
         # This satisfies strict definition of m.Metadata.attributes
-        valid_attrs: dict[str, t.MetadataAttributeValue] = {
-            k: v
-            for k, v in attrs.items()
-            if isinstance(v, (str, int, float, bool, type(None), datetime))
-            or (
-                isinstance(v, list)
-                and all(
-                    isinstance(x, (str, int, float, bool, type(None), datetime))
-                    for x in v
-                )
-            )
+        valid_attrs: dict[str, t.GeneralValueType] = {
+            k: FlextRuntime.normalize_to_metadata_value(v) for k, v in attrs.items()
         }
 
         return m.Metadata(attributes=valid_attrs)
@@ -3022,13 +3023,10 @@ class FlextDispatcher(FlextService[bool]):
 
         model_dump = getattr(metadata, "model_dump", None)
         if callable(model_dump):
-            try:
+            with suppress(Exception):
                 dumped = model_dump()
                 if isinstance(dumped, Mapping):
                     return dumped
-            except Exception:
-                # Suppress errors from model_dump() as metadata extraction is best-effort
-                pass
 
         return None
 

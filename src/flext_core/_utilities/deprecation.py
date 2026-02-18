@@ -14,7 +14,7 @@ import functools
 import pathlib
 import warnings
 from collections.abc import Callable
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from flext_core.typings import P, R, t
 
@@ -119,10 +119,10 @@ class FlextUtilitiesDeprecation:
         return decorator
 
     @staticmethod
-    def deprecated_class[T: type](
+    def deprecated_class[TClass: type[object]](
         replacement: str | None = None,
         version: str | None = None,
-    ) -> Callable[[T], T]:
+    ) -> Callable[[TClass], TClass]:
         """Mark class as deprecated.
 
         Args:
@@ -141,7 +141,7 @@ class FlextUtilitiesDeprecation:
 
         """
 
-        def decorator(cls: T) -> T:
+        def decorator(cls: TClass) -> TClass:
             # Access __init__ from the class type using getattr to avoid mypy error
             # This avoids accessing __init__ on an instance which is unsound
             original_init = getattr(cls, "__init__", None)
@@ -162,7 +162,8 @@ class FlextUtilitiesDeprecation:
                 *args: t.GeneralValueType,
                 **kwargs: t.GeneralValueType,
             ) -> None:
-                message_parts = [f"{cls.__name__} is deprecated"]
+                cls_name = cast("type[object]", cls).__name__
+                message_parts = [f"{cls_name} is deprecated"]
                 if version:
                     message_parts.append(f"since version {version}")
                 if replacement:

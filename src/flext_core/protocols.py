@@ -278,7 +278,7 @@ class FlextProtocols:
         config_overrides: Mapping[str, t.FlexibleValue] | None = Field(default=None)
         context: t.GeneralValueType | None = Field(default=None)
         subproject: str | None = Field(default=None)
-        services: Mapping[str, t.RegisterableService] | None = Field(default=None)
+        services: Mapping[str, object] | None = Field(default=None)
         factories: Mapping[str, t.FactoryRegistrationCallable] | None = Field(
             default=None
         )

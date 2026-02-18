@@ -191,7 +191,9 @@ class FlextUtilitiesMapper:
         Uses t.HandlerCallable (Callable[[GeneralValueType], GeneralValueType])
         since we can only verify the value is callable at runtime.
         """
-        del ops, key
+        value = ops.get(key)
+        if callable(value):
+            return value
         return None
 
     @property
@@ -1469,7 +1471,7 @@ class FlextUtilitiesMapper:
             return [
                 FlextUtilitiesMapper.narrow_to_general_value_type(x)
                 for x in seq_current
-                if filter_pred(x)
+                if filter_pred(FlextUtilitiesMapper.narrow_to_general_value_type(x))
             ]
         if isinstance(current, dict):
             # Type narrowing: current is dict, use ConfigurationDict
@@ -1551,8 +1553,50 @@ class FlextUtilitiesMapper:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
             return current
-        # GeneralValueType does not include type objects, so conversion is not applicable
-        return current
+        convert_spec = ops.get("convert")
+        convert_func = FlextUtilitiesMapper._get_callable_from_dict(ops, "convert")
+        if convert_func is None:
+            return current
+
+        convert_default = ops.get("convert_default")
+        fallback = convert_default
+        convert_callable = convert_func
+        if fallback is None:
+            if convert_spec is int:
+                fallback = 0
+            elif convert_spec is float:
+                fallback = 0.0
+            elif convert_spec is str:
+                fallback = ""
+            elif convert_spec is bool:
+                fallback = False
+            elif convert_spec is list:
+                fallback = []
+            elif convert_spec is dict:
+                fallback = {}
+            elif convert_spec is tuple:
+                fallback = ()
+            elif convert_spec is set:
+                fallback = []
+            else:
+                fallback = current
+
+        def _convert(value: t.GeneralValueType) -> t.GeneralValueType:
+            try:
+                return FlextUtilitiesMapper.narrow_to_general_value_type(
+                    convert_callable(value),
+                )
+            except Exception:
+                return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
+
+        if isinstance(current, (list, tuple)):
+            converted = [
+                _convert(FlextUtilitiesMapper.narrow_to_general_value_type(item))
+                for item in current
+            ]
+            return converted if isinstance(current, list) else tuple(converted)
+
+        return _convert(current)
 
     @staticmethod
     def _extract_transform_options(
@@ -1853,6 +1897,14 @@ class FlextUtilitiesMapper:
                     grouped[key] = []
                 grouped[key].append(item)
             return grouped
+        if callable(group_spec):
+            grouped: dict[str, list[t.GeneralValueType]] = {}
+            for item in current_list:
+                key = str(group_spec(item))
+                if key not in grouped:
+                    grouped[key] = []
+                grouped[key].append(item)
+            return grouped
         return current
 
     @staticmethod
@@ -1890,6 +1942,19 @@ class FlextUtilitiesMapper:
                 if isinstance(current, list)
                 else tuple(sorted_list_key)
             )
+        if callable(sort_spec):
+            try:
+                sorted_callable: list[t.GeneralValueType] = sorted(
+                    current_list,
+                    key=sort_spec,
+                )
+                return (
+                    list(sorted_callable)
+                    if isinstance(current, list)
+                    else tuple(sorted_callable)
+                )
+            except Exception:
+                return current
         if sort_spec is True:
             comparable_items: list[t.GeneralValueType] = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(

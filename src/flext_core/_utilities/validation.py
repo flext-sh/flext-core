@@ -1914,44 +1914,7 @@ class FlextUtilitiesValidation:
                     "Timeout override must be a number",
                 )
 
-        # Return validated config
         return r[t.ConfigMap].ok(config)
-        if not FlextRuntime.is_dict_like(config):
-            return r[t.ConfigMap].fail(
-                "Configuration must be a dictionary",
-            )
-
-        # Validate metadata if present
-        metadata = config.root.get("metadata")
-        if metadata is not None and not FlextRuntime.is_dict_like(metadata):
-            return r[t.ConfigMap].fail(
-                "Metadata must be a dictionary",
-            )
-
-        # Validate types for known keys if present
-        # Use guards for type checking
-        if "correlation_id" in config.root and not FlextUtilitiesGuards.is_type(
-            config.root["correlation_id"],
-            str,
-        ):
-            return r[t.ConfigMap].fail(
-                "Correlation ID must be a string",
-            )
-
-        if "timeout" in config.root and not FlextUtilitiesGuards.is_type(
-            config.root["timeout"],
-            (int, float),
-        ):
-            return r[t.ConfigMap].fail(
-                "Timeout override must be a number",
-            )
-
-        # ConfigMap is already validated by Pydantic during creation if used correctly
-        # and we've validated it's not None and is dict-like
-        # Cast to correct type for type checker - config is validated as dict-like above
-        return r[t.ConfigMap].ok(
-            config,
-        )
 
     @staticmethod
     def analyze_constructor_parameter(

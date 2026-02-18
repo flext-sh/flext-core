@@ -305,6 +305,7 @@ class FlextTestsTypes(FlextTypes):
                     t.GeneralValueType
                     | r[t.GeneralValueType]
                     | list[t.GeneralValueType | r[t.GeneralValueType]]
+                    | dict[str, t.GeneralValueType]
                 ),
             ]
             """Type for builder output dict after batch result conversion."""
@@ -385,7 +386,7 @@ class FlextTestsTypes(FlextTypes):
             # Predicates and Validators
             # =====================================================================
 
-            type PredicateSpec = Callable[[t.GeneralValueType], bool]
+            type PredicateSpec = Callable[[object], bool]
             """Custom predicate function for validation.
 
             Takes a value and returns True if validation passes.
@@ -395,7 +396,7 @@ class FlextTestsTypes(FlextTypes):
                 where=lambda u: u.age >= 18 and u.verified
             """
 
-            type ValueSpec = Callable[[t.GeneralValueType], bool] | t.GeneralValueType
+            type ValueSpec = Callable[[object], bool] | t.GeneralValueType | object
             """Value specification: direct value or predicate function.
 
             Used in deep matching and custom validation.

@@ -14,7 +14,7 @@ import re
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import StrEnum
-from typing import overload
+from typing import cast, overload
 
 import structlog
 from pydantic import BaseModel
@@ -1358,7 +1358,8 @@ class FlextUtilitiesParser:
                 f"{field_prefix}Cannot construct 'object' type directly",
             )
         try:
-            return r[T].ok(target(value))
+            constructor = cast("Callable[[object], T]", target)
+            return r[T].ok(constructor(value))
         except Exception as e:
             target_name = FlextUtilitiesParser._parse_get_attr(
                 target,
@@ -1440,15 +1441,28 @@ class FlextUtilitiesParser:
         if model_result is not None:
             return model_result
 
+        primitive_default: int | float | str | bool | None
+        if isinstance(default, (int, float, str, bool)) or default is None:
+            primitive_default = default
+        else:
+            primitive_default = None
+
+        primitive_default_factory: Callable[[], int | float | str | bool] | None = None
+        if default_factory is not None:
+            primitive_default_factory = cast(
+                "Callable[[], int | float | str | bool]",
+                default_factory,
+            )
+
         primitive_result = FlextUtilitiesParser._parse_try_primitive(
             value,
             target,
-            default=default,
-            default_factory=default_factory,
+            default=primitive_default,
+            default_factory=primitive_default_factory,
             field_prefix=field_prefix,
         )
         if primitive_result is not None:
-            return primitive_result
+            return cast("r[T]", primitive_result)
 
         # Let _parse_try_direct handle all cases including primitives
         return FlextUtilitiesParser._parse_try_direct(

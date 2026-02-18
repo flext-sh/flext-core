@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable, Mapping
-from typing import Annotated, ClassVar, Self
+from collections.abc import Callable, Mapping, Sequence
+from typing import Annotated, ClassVar, Self, cast
 
 from pydantic import Field, PrivateAttr, computed_field
 
@@ -388,7 +388,7 @@ class FlextRegistry(FlextService[bool]):
         )
         if registration_result.is_success:
             # Convert model result to RegistrationDetails
-            reg_result = registration_result.value
+            reg_result = cast("m.HandlerRegistrationResult", registration_result.value)
             reg_details = self._create_registration_details(reg_result, key)
             if not reg_details:
                 # Fallback: create minimal registration details
@@ -468,7 +468,9 @@ class FlextRegistry(FlextService[bool]):
 
     def register_handlers(
         self,
-        handlers: Sequence[t.GeneralValueType],
+        handlers: Sequence[
+            FlextHandlers[t.GeneralValueType, t.GeneralValueType] | t.HandlerType
+        ],
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -501,7 +503,10 @@ class FlextRegistry(FlextService[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[type[t.GeneralValueType], t.GeneralValueType],
+        bindings: Mapping[
+            type[t.GeneralValueType],
+            FlextHandlers[t.GeneralValueType, t.GeneralValueType] | t.HandlerType,
+        ],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
 
@@ -531,11 +536,14 @@ class FlextRegistry(FlextService[bool]):
             try:
                 # Dispatcher return type is r[m.HandlerRegistrationResult]
                 # We need to adapt it to Registry logic
-                reg_result = self._dispatcher.register_handler(message_type, handler)
+                reg_result = self._dispatcher.register_handler(
+                    message_type,
+                    cast("t.GeneralValueType", handler),
+                )
 
                 if reg_result.is_success:
                     # Convert dispatcher result to Registry details
-                    val = reg_result.value
+                    val = cast("m.HandlerRegistrationResult", reg_result.value)
                     details = self._create_registration_details(val, key)
                     self._add_successful_registration(key, details, summary)
                 else:

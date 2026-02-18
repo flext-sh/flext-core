@@ -340,8 +340,11 @@ class FlextContainer(FlextRuntime, p.DI):
         config_provider_obj = getattr(bridge, config_attr, None)
         if not isinstance(config_provider_obj, providers.Configuration):
             error_msg = "Bridge must have config provider"
-            raise RuntimeError(error_msg)
+            raise TypeError(error_msg)
         config_provider = config_provider_obj
+        if config_provider is None:
+            error_msg = "Bridge config provider cannot be None"
+            raise TypeError(error_msg)
         base_config_provider = providers.Configuration()
         user_config_provider = providers.Configuration()
         self._base_config_provider = base_config_provider
@@ -808,7 +811,7 @@ class FlextContainer(FlextRuntime, p.DI):
     def get(
         self,
         name: str,
-    ) -> r[object]:
+    ) -> r[t.RegisterableService]:
         """Resolve a registered service or factory by name.
 
         Returns the resolved service as RegisterableService. For type-safe resolution
@@ -833,27 +836,27 @@ class FlextContainer(FlextRuntime, p.DI):
         # Try service first
         if name in self._services:
             service_registration = self._services[name]
-            return r[object].ok(service_registration.service)
+            return r[t.RegisterableService].ok(service_registration.service)
 
         # Try factory
         if name in self._factories:
             try:
                 factory_registration = self._factories[name]
                 resolved = factory_registration.factory()
-                return r[object].ok(resolved)
+                return r[t.RegisterableService].ok(resolved)
             except Exception as e:
-                return r[object].fail(str(e))
+                return r[t.RegisterableService].fail(str(e))
 
         # Try resource
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
                 resolved = resource_registration.factory()
-                return r[object].ok(resolved)
+                return r[t.RegisterableService].ok(resolved)
             except Exception as e:
-                return r[object].fail(str(e))
+                return r[t.RegisterableService].fail(str(e))
 
-        return r[object].fail(f"Service '{name}' not found")
+        return r[t.RegisterableService].fail(f"Service '{name}' not found")
 
     @staticmethod
     def _is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:

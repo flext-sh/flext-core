@@ -1084,12 +1084,14 @@ class FlextDecorators(FlextRuntime):
                 result=clear_result,
                 logger=logger,
                 fallback_message="operation_context_clear_failed",
-                kwargs={
-                    "extra": {
-                        "function": function_name,
-                        "operation": operation,
-                    },
-                },
+                kwargs=m.ConfigMap(
+                    root={
+                        "extra": {
+                            "function": function_name,
+                            "operation": operation,
+                        },
+                    }
+                ),
             )
 
     @staticmethod
@@ -1241,7 +1243,7 @@ class FlextDecorators(FlextRuntime):
         inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
-        use_railway: Literal[True] = ...,
+        use_railway: Literal[True],
         error_code: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, r[R]]]: ...
 
