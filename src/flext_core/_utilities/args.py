@@ -121,8 +121,7 @@ class FlextUtilitiesArgs:
             **kwargs: P.kwargs,
         ) -> FlextRuntime.RuntimeResult[_ValidatedValueT]:
             try:
-                result = validated_func(*args, **kwargs)
-                return result
+                return validated_func(*args, **kwargs)
             except Exception as e:
                 return r.fail(str(e))
 

@@ -1124,7 +1124,9 @@ class FlextDispatcher(FlextService[bool]):
                 # Other GeneralValueType - use as-is
                 command_type = str(command_type_arg)
             two_arg_handler: t.HandlerType
-            if isinstance(second_handler_arg, BaseModel) or callable(second_handler_arg):
+            if isinstance(second_handler_arg, BaseModel) or callable(
+                second_handler_arg
+            ):
                 two_arg_handler = second_handler_arg
             else:
                 return r[bool].fail("Handler must be callable or BaseModel")
