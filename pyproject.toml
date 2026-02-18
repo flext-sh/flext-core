@@ -319,6 +319,8 @@ coverage = "^7.13.1"
 
     [tool.pyrefly]
         search-path = [
+            "../typings",
+            "../typings/generated",
             ".",
             "src",
             "tests",
