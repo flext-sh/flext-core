@@ -314,3 +314,4 @@ staging/
 # Auto-added by workspace-maintenance
 __pycache__/
 *.egg-info
+.github/*.rej
