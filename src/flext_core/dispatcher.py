@@ -17,7 +17,6 @@ import sys
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager, suppress
-from datetime import datetime
 from types import ModuleType
 from typing import Self, cast, override
 
@@ -1125,10 +1124,8 @@ class FlextDispatcher(FlextService[bool]):
                 # Other GeneralValueType - use as-is
                 command_type = str(command_type_arg)
             two_arg_handler: t.HandlerType
-            if isinstance(second_handler_arg, BaseModel):
+            if isinstance(second_handler_arg, BaseModel) or callable(second_handler_arg):
                 two_arg_handler = second_handler_arg
-            elif callable(second_handler_arg):
-                two_arg_handler = cast("t.HandlerCallable", second_handler_arg)
             else:
                 return r[bool].fail("Handler must be callable or BaseModel")
 
