@@ -583,7 +583,7 @@ class FlextContainer(FlextRuntime, p.DI):
     @override
     def configure(
         self,
-        config: Mapping[str, t.FlexibleValue],
+        config: dict[str, t.FlexibleValue],
     ) -> None:
         """Apply user-provided overrides to container configuration.
 
@@ -646,7 +646,7 @@ class FlextContainer(FlextRuntime, p.DI):
 
     def with_config(
         self,
-        config: Mapping[str, t.FlexibleValue],
+        config: dict[str, t.FlexibleValue],
     ) -> Self:
         """Fluently apply configuration values and return this instance."""
         self.configure(config)

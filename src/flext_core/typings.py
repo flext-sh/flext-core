@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -107,13 +107,13 @@ type GeneralValueType = (
     | BaseModel
     | Path
     | Sequence[GeneralValueType]
-    | Mapping[str, GeneralValueType]
+    | dict[str, GeneralValueType]
 )
 
 type JsonPrimitive = str | int | float | bool | None
 
 type JsonValue = (
-    JsonPrimitive | Sequence[GeneralValueType] | Mapping[str, GeneralValueType]
+    JsonPrimitive | Sequence[GeneralValueType] | dict[str, GeneralValueType]
 )
 
 # ============================================================================
@@ -187,7 +187,7 @@ class FlextTypes:
         | SettingsConfigDict
         | frozenset[str]
         | tuple[str, ...]
-        | Mapping[str, str | int]
+        | dict[str, str | int]
         | StrEnum
         | type[StrEnum]
         | Pattern[str]
@@ -344,7 +344,7 @@ class FlextTypes:
             """Get values view."""
             return self.root.values()  # type: ignore[attr-defined]
 
-        def update(self, other: Mapping[str, GeneralValueType]) -> None:
+        def update(self, other: dict[str, GeneralValueType]) -> None:
             """Update with other mapping."""
             self.root.update(other)  # type: ignore[attr-defined]
 
