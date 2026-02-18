@@ -27,7 +27,7 @@ _to_general_value_type = FlextUtilitiesCast.to_general_value_type
 class FlextModelsCollections:
     """Collection models container class."""
 
-    class Categories[T](FlextModelsBase.ArbitraryTypesModel):
+    class Categories(FlextModelsBase.ArbitraryTypesModel):
         """Generic categorized collection with dynamic categories.
 
         Provides type-safe storage for items organized by category names.
@@ -51,10 +51,16 @@ class FlextModelsCollections:
             validate_assignment=True,
         )
 
-        categories: dict[str, list[T]] = Field(
+        categories: dict[str, list[t.GeneralValueType]] = Field(
             default_factory=dict,
             description="Map of category name to list of items",
         )
+
+        @classmethod
+        def __class_getitem__(
+            cls, _item: t.GeneralValueType
+        ) -> type[FlextModelsCollections.Categories]:
+            return cls
 
         def __len__(self) -> int:
             """Return total number of entries across all categories.
@@ -65,7 +71,7 @@ class FlextModelsCollections:
             """
             return sum(len(entries) for entries in self.categories.values())
 
-        def get_entries(self, category: str) -> list[T]:
+        def get_entries(self, category: str) -> list[t.GeneralValueType]:
             """Get entries for a category, returns empty list if not found.
 
             Returns:
@@ -86,7 +92,11 @@ class FlextModelsCollections:
             """
             return category in self.categories
 
-        def get(self, category: str, default: list[T] | None = None) -> list[T]:
+        def get(
+            self,
+            category: str,
+            default: list[t.GeneralValueType] | None = None,
+        ) -> list[t.GeneralValueType]:
             """Get entries for a category with optional default (dict-like interface).
 
             Args:
@@ -102,7 +112,11 @@ class FlextModelsCollections:
                 return self.categories.get(category, [])
             return self.categories.get(category, default)
 
-        def add_entries(self, category: str, entries: Sequence[T]) -> None:
+        def add_entries(
+            self,
+            category: str,
+            entries: Sequence[t.GeneralValueType],
+        ) -> None:
             """Add entries to a category.
 
             Args:
@@ -114,7 +128,11 @@ class FlextModelsCollections:
                 self.categories[category] = []
             self.categories[category].extend(entries)
 
-        def set_entries(self, category: str, entries: Sequence[T]) -> None:
+        def set_entries(
+            self,
+            category: str,
+            entries: Sequence[t.GeneralValueType],
+        ) -> None:
             """Set entries for a category (replaces existing).
 
             Args:
@@ -160,7 +178,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: Mapping[str, Sequence[T]],
+            data: Mapping[str, Sequence[t.GeneralValueType]],
         ) -> Self:
             """Create Categories instance from dictionary.
 
@@ -255,7 +273,7 @@ class FlextModelsCollections:
         @classmethod
         def from_dict(
             cls,
-            data: m.ConfigMap,
+            data: t.ConfigMap,
         ) -> Self:
             """Create Statistics instance from dictionary.
 
@@ -712,12 +730,12 @@ class FlextModelsCollections:
                 ConfigurationMapping: Mapping representation
 
             """
-            return self.model_dump()
+            return t.ConfigMap.model_validate(self.model_dump())
 
         @classmethod
         def from_dict(
             cls,
-            data: m.ConfigMap,
+            data: t.ConfigMap,
         ) -> Self:
             """Create Config instance from dictionary.
 

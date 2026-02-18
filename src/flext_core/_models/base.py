@@ -231,7 +231,7 @@ class FlextModelFoundation:
                 )
                 raise TypeError(msg)
             if isinstance(value, t.Dict):
-                return validate_config_dict(value.root)
+                return validate_config_dict({str(k): v for k, v in value.items()})
             if isinstance(value, Mapping):
                 return validate_config_dict({str(k): v for k, v in value.items()})
             msg = (
@@ -1364,7 +1364,7 @@ class FlextModelFoundation:
                 return validator_func(v)
 
             # Create new class dynamically using type() for type-checker compatibility
-            new_model = type(
+            return type(
                 f"{cls.__name__}WithValidator",
                 (cls,),
                 {
@@ -1373,8 +1373,6 @@ class FlextModelFoundation:
                     )
                 },
             )
-
-            return new_model
 
     class DynamicModel(BaseModel):
         """Model demonstrating dynamic reconstruction capabilities."""

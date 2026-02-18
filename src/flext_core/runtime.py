@@ -746,7 +746,7 @@ class FlextRuntime:
         # structlog.get_logger returns BoundLoggerLazyProxy which implements p.Log.StructlogLogger protocol
         # All methods (debug, info, warning, error, etc.) are available directly from structlog logger
         # p.Log.StructlogLogger protocol is compatible with structlog's return type via structural typing
-        logger: BindableLogger = structlog.get_logger(name)
+        logger: BindableLogger = FlextLogger.create_module_logger(name)
         return logger
 
     @staticmethod
@@ -1406,7 +1406,7 @@ class FlextRuntime:
         beartype_package("flext_core", conf=conf)
 
         # Log activation using structlog directly
-        logger = structlog.get_logger(__name__)
+        logger = FlextLogger.create_module_logger(__name__)
         logger.info(
             "Runtime type checking enabled",
             package="flext_core",
@@ -1834,7 +1834,7 @@ class FlextRuntime:
             correlation_id = context_vars.get("correlation_id")
 
             # Use structlog directly (no FlextLogger wrapper needed)
-            logger = structlog.get_logger(__name__)
+            logger = FlextLogger.create_module_logger(__name__)
 
             if resolved:
                 logger.info(
@@ -1871,7 +1871,7 @@ class FlextRuntime:
             correlation_id = context_vars.get("correlation_id")
 
             # Use structlog directly
-            logger = structlog.get_logger(__name__)
+            logger = FlextLogger.create_module_logger(__name__)
 
             logger.info(
                 "Domain event emitted",
@@ -1913,7 +1913,7 @@ class FlextRuntime:
                 structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
 
             # Use structlog directly
-            logger = structlog.get_logger(__name__)
+            logger = FlextLogger.create_module_logger(__name__)
             logger.info(
                 "Service infrastructure initialized",
                 service_name=service_name,
