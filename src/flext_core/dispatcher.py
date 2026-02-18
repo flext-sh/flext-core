@@ -17,6 +17,7 @@ import sys
 import time
 from collections.abc import Callable, Generator, Mapping, Sequence
 from contextlib import contextmanager, suppress
+from datetime import datetime as dt
 from types import ModuleType
 from typing import Self, cast, override
 
@@ -1124,9 +1125,7 @@ class FlextDispatcher(FlextService[bool]):
                 # Other GeneralValueType - use as-is
                 command_type = str(command_type_arg)
             two_arg_handler: t.HandlerType
-            if isinstance(second_handler_arg, BaseModel) or callable(
-                second_handler_arg
-            ):
+            if u.is_handler_type(second_handler_arg):
                 two_arg_handler = second_handler_arg
             else:
                 return r[bool].fail("Handler must be callable or BaseModel")
@@ -2397,6 +2396,7 @@ class FlextDispatcher(FlextService[bool]):
             return metadata
         # Use guard and process_dict for concise metadata conversion
         if u.is_type(metadata, "mapping"):
+            attributes_dict: dict[str, t.MetadataAttributeValue] = {}
 
             def convert_metadata_value(
                 v: t.GeneralValueType,
@@ -2429,16 +2429,12 @@ class FlextDispatcher(FlextService[bool]):
                     processed_items: list[tuple[str, t.MetadataAttributeValue]] = (
                         process_result.value
                     )
-                    attributes_dict: dict[str, t.GeneralValueType] = dict(
-                        processed_items
-                    )
-                else:
-                    attributes_dict = {}
-            else:
-                attributes_dict = {}
+                    attributes_dict = dict(processed_items)
 
             # attributes_dict is dict[str, str] which is assignable to dict[str, t.GeneralValueType]
-            return m.Metadata(attributes=attributes_dict)
+            return m.Metadata(
+                attributes=cast("dict[str, t.GeneralValueType]", dict(attributes_dict))
+            )
         # Convert other types to Metadata via dict with string value
         return m.Metadata(attributes={"value": str(metadata)})
 
@@ -2994,11 +2990,49 @@ class FlextDispatcher(FlextService[bool]):
 
         # Strict filtering for MetadataAttributeValue compliance
         # This satisfies strict definition of m.Metadata.attributes
-        valid_attrs: dict[str, t.GeneralValueType] = {
-            k: FlextRuntime.normalize_to_metadata_value(v) for k, v in attrs.items()
+        valid_attrs: dict[str, t.MetadataAttributeValue] = {
+            k: FlextRuntime.normalize_to_metadata_value(v)
+            for k, v in attrs.items()
+            if FlextDispatcher._is_metadata_attribute_compatible(v)
         }
 
-        return m.Metadata(attributes=valid_attrs)
+        return m.Metadata(
+            attributes=cast("dict[str, t.GeneralValueType]", dict(valid_attrs))
+        )
+
+    @staticmethod
+    def _is_metadata_attribute_compatible(value: t.GeneralValueType) -> bool:
+        if isinstance(value, (str, int, float, bool, dt, type(None))):
+            return True
+
+        if isinstance(value, list):
+            return all(
+                isinstance(item, (str, int, float, bool, dt, type(None)))
+                for item in value
+            )
+
+        if FlextRuntime.is_dict_like(value):
+            mapping_value: Mapping[str, t.GeneralValueType] = dict(value)
+            for key, nested in mapping_value.items():
+                if not isinstance(key, str):
+                    return False
+                if isinstance(nested, list):
+                    if not all(
+                        isinstance(
+                            item,
+                            (str, int, float, bool, dt, type(None)),
+                        )
+                        for item in nested
+                    ):
+                        return False
+                elif not isinstance(
+                    nested,
+                    (str, int, float, bool, dt, type(None)),
+                ):
+                    return False
+            return True
+
+        return False
 
     @staticmethod
     def _extract_from_flext_metadata(

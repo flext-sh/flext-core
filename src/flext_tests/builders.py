@@ -777,7 +777,8 @@ class FlextTestsBuilders:
             return [(test_id, data)]
 
         if params.as_model is not None:
-            return params.as_model(**data)
+            model_kwargs: dict[str, object] = dict(data)
+            return params.as_model(**model_kwargs)
 
         return data
 

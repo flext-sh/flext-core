@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
@@ -59,6 +59,8 @@ Used in: result (for map/flat_map operations)."""
 R = TypeVar("R")
 """Return type - for function return values and decorators.
 Used in: decorators, args utilities."""
+DictValueT = TypeVar("DictValueT")
+"""Dictionary value type for RootModel dict-like mixins."""
 
 # ============================================================================
 # ParamSpec
@@ -108,6 +110,7 @@ type GeneralValueType = (
     | Path
     | Sequence[GeneralValueType]
     | dict[str, GeneralValueType]
+    | Mapping[str, GeneralValueType]
 )
 
 type JsonPrimitive = str | int | float | bool | None
@@ -115,6 +118,8 @@ type JsonPrimitive = str | int | float | bool | None
 type JsonValue = (
     JsonPrimitive | Sequence[GeneralValueType] | dict[str, GeneralValueType]
 )
+
+type JsonDict = dict[str, JsonValue]
 
 # ============================================================================
 # Core Callables & Instance Types (Module Level for scoping)
@@ -269,6 +274,7 @@ class FlextTypes:
     # JSON types - re-exported from module level
     JsonPrimitive: TypeAlias = JsonPrimitive
     JsonValue: TypeAlias = JsonValue
+    JsonDict: TypeAlias = JsonDict
 
     # Single consolidated callable type for handlers and validators
     HandlerCallable: TypeAlias = Callable[[GeneralValueType], GeneralValueType]
@@ -296,77 +302,82 @@ class FlextTypes:
     # Replaces raw dict aliases with strict typed models
     # =========================================================================
 
-    class _DictMixin:
+    class _DictMixin(typing.Generic[DictValueT]):
         """Shared dict-like API for all RootModel containers.
 
         Provides standard dict interface methods delegating to ``self.root``.
         Subclasses must define ``root: dict[str, V]`` via ``RootModel``.
         """
 
-        # NOTE: methods typed with GeneralValueType here; subclasses with
-        # narrower value types override get/pop/setdefault as needed.
-        def __getitem__(self, key: str) -> GeneralValueType:
-            """Get item by key."""
-            return self.root[key]  # type: ignore[attr-defined]
+        root: dict[str, DictValueT]
 
-        def __setitem__(self, key: str, value: GeneralValueType) -> None:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize root explicitly for static analyzers and RootModel."""
+            if not args and "root" not in kwargs:
+                kwargs["root"] = {}
+            super().__init__(*args, **kwargs)
+            self.root = typing.cast("dict[str, DictValueT]", getattr(self, "root", {}))
+
+        def __getitem__(self, key: str) -> DictValueT:
+            """Get item by key."""
+            return self.root[key]
+
+        def __setitem__(self, key: str, value: DictValueT) -> None:
             """Set item by key."""
-            self.root[key] = value  # type: ignore[attr-defined]
+            self.root[key] = value
 
         def __delitem__(self, key: str) -> None:
             """Delete item by key."""
-            del self.root[key]  # type: ignore[attr-defined]
+            del self.root[key]
 
         def __len__(self) -> int:
             """Get length."""
-            return len(self.root)  # type: ignore[attr-defined]
+            return len(self.root)
 
         def __iter__(self) -> Iterator[str]:
-            return iter(self.root)  # type: ignore[attr-defined]
+            return iter(self.root)
 
         def __contains__(self, key: object) -> bool:
             """Check if key exists."""
-            return key in self.root  # type: ignore[attr-defined]
+            return key in self.root
 
-        def get(self, key: str, default: GeneralValueType = None) -> GeneralValueType:
+        def get(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
             """Get item with default."""
-            return self.root.get(key, default)  # type: ignore[attr-defined]
+            return self.root.get(key, default)
 
-        def items(self) -> typing.ItemsView[str, GeneralValueType]:
+        def items(self) -> typing.ItemsView[str, DictValueT]:
             """Get items view."""
-            return self.root.items()  # type: ignore[attr-defined]
+            return self.root.items()
 
         def keys(self) -> typing.KeysView[str]:
             """Get keys view."""
-            return self.root.keys()  # type: ignore[attr-defined]
+            return self.root.keys()
 
-        def values(self) -> typing.ValuesView[GeneralValueType]:
+        def values(self) -> typing.ValuesView[DictValueT]:
             """Get values view."""
-            return self.root.values()  # type: ignore[attr-defined]
+            return self.root.values()
 
-        def update(self, other: dict[str, GeneralValueType]) -> None:
+        def update(self, other: Mapping[str, DictValueT]) -> None:
             """Update with other mapping."""
-            self.root.update(other)  # type: ignore[attr-defined]
+            self.root.update(other)
 
         def clear(self) -> None:
             """Clear all items."""
-            self.root.clear()  # type: ignore[attr-defined]
+            self.root.clear()
 
-        def pop(self, key: str, default: GeneralValueType = None) -> GeneralValueType:
+        def pop(self, key: str, default: DictValueT | None = None) -> DictValueT | None:
             """Pop item by key."""
-            return self.root.pop(key, default)  # type: ignore[attr-defined]
+            return self.root.pop(key, default)
 
-        def popitem(self) -> tuple[str, GeneralValueType]:
+        def popitem(self) -> tuple[str, DictValueT]:
             """Pop last item."""
-            return self.root.popitem()  # type: ignore[attr-defined]
+            return self.root.popitem()
 
-        def setdefault(
-            self, key: str, default: GeneralValueType = None
-        ) -> GeneralValueType:
+        def setdefault(self, key: str, default: DictValueT) -> DictValueT:
             """Set default value for key."""
-            return self.root.setdefault(key, default)  # type: ignore[attr-defined]
+            return self.root.setdefault(key, default)
 
-    class Dict(_DictMixin, RootModel[dict[str, GeneralValueType]]):
+    class Dict(_DictMixin[GeneralValueType], RootModel[dict[str, GeneralValueType]]):
         """Generic dictionary container.
 
         Replaces: dict[str, Any], dict[str, GeneralValueType]
@@ -374,7 +385,10 @@ class FlextTypes:
 
         root: dict[str, GeneralValueType]
 
-    class ConfigMap(_DictMixin, RootModel[dict[str, GeneralValueType]]):
+    class ConfigMap(
+        _DictMixin[GeneralValueType],
+        RootModel[dict[str, GeneralValueType]],
+    ):
         """Configuration map container.
 
         Replaces: ConfigurationDict, ConfigurationMapping
@@ -385,7 +399,10 @@ class FlextTypes:
     ConfigurationMapping: TypeAlias = ConfigMap
     ConfigurationDict: TypeAlias = ConfigMap
 
-    class ServiceMap(_DictMixin, RootModel[dict[str, GeneralValueType]]):
+    class ServiceMap(
+        _DictMixin[GeneralValueType],
+        RootModel[dict[str, GeneralValueType]],
+    ):
         """Service registry map container.
 
         Replaces: ServiceMapping
@@ -393,7 +410,10 @@ class FlextTypes:
 
         root: dict[str, GeneralValueType]
 
-    class ErrorMap(_DictMixin, RootModel[dict[str, int | str | dict[str, int]]]):
+    class ErrorMap(
+        _DictMixin[int | str | dict[str, int]],
+        RootModel[dict[str, int | str | dict[str, int]]],
+    ):
         """Error type mapping container.
 
         Replaces: ErrorTypeMapping
@@ -409,7 +429,10 @@ class FlextTypes:
     ResourceCallable: TypeAlias = ResourceCallable
     FactoryRegistrationCallable: TypeAlias = FactoryRegistrationCallable
 
-    class FactoryMap(_DictMixin, RootModel[dict[str, FactoryRegistrationCallable]]):
+    class FactoryMap(
+        _DictMixin[FactoryRegistrationCallable],
+        RootModel[dict[str, FactoryRegistrationCallable]],
+    ):
         """Map of factory registration callables.
 
         Replaces: Mapping[str, FactoryRegistrationCallable]
@@ -417,7 +440,10 @@ class FlextTypes:
 
         root: dict[str, FactoryRegistrationCallable]
 
-    class ResourceMap(_DictMixin, RootModel[dict[str, ResourceCallable]]):
+    class ResourceMap(
+        _DictMixin[ResourceCallable],
+        RootModel[dict[str, ResourceCallable]],
+    ):
         """Map of resource callables.
 
         Replaces: Mapping[str, ResourceCallable]
@@ -440,17 +466,24 @@ class FlextTypes:
     class _ValidatorMapMixin:
         """Shared API for validator map containers."""
 
+        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize validator map root before RootModel initialization."""
+            self.root = {}
+            super().__init__(*args, **kwargs)
+
         def items(
             self,
         ) -> typing.ItemsView[str, Callable[[GeneralValueType], GeneralValueType]]:
             """Get validator items."""
-            return self.root.items()  # type: ignore[attr-defined]
+            return self.root.items()
 
         def values(
             self,
         ) -> typing.ValuesView[Callable[[GeneralValueType], GeneralValueType]]:
             """Get validator values."""
-            return self.root.values()  # type: ignore[attr-defined]
+            return self.root.values()
 
     class FieldValidatorMap(
         _ValidatorMapMixin,
@@ -530,6 +563,7 @@ t = FlextTypes
 __all__ = [
     "FlextTypes",
     "GeneralValueType",
+    "JsonDict",
     "JsonPrimitive",
     "JsonValue",
     "MessageT_contra",

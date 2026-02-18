@@ -65,6 +65,8 @@ def _handler_type_to_literal(
             return "operation"
         case c.Cqrs.HandlerType.SAGA:
             return "saga"
+    msg = f"Unsupported handler type: {handler_type}"
+    raise ValueError(msg)
 
 
 # Import moved to top of file to avoid circular dependency

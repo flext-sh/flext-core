@@ -880,7 +880,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                     else:
                         continue
                 else:
-                    raw_item = model_result
+                    raw_item = u.Cast.to_general_value_type(model_result)
                 # Apply transform and filter
                 if params.transform:
                     raw_item = params.transform(raw_item)
@@ -1028,6 +1028,8 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                     model_kind = "query"
                 case "event":
                     model_kind = "event"
+                case _:
+                    model_kind = "user"
             for i in range(params.count):
                 key: str = params.key_factory(i) if params.key_factory else f"item_{i}"
 
@@ -1044,7 +1046,7 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                     else:
                         continue  # Skip failed results
                 else:
-                    value = model_result
+                    value = u.Cast.to_general_value_type(model_result)
 
                 if params.value_factory:
                     value = params.value_factory(key)
@@ -1070,9 +1072,8 @@ class FlextTestsFactories(su[t.GeneralValueType]):
         ):
             # Mapping - use directly (exclude strings)
             source_mapping = params.source
-            if isinstance(source_mapping, Mapping):
-                for k, v in source_mapping.items():
-                    result_dict[str(k)] = v
+            for k, v in source_mapping.items():
+                result_dict[str(k)] = v
 
         # Merge with additional mapping
         if params.merge_with:
@@ -1504,7 +1505,6 @@ class FlextTestsFactories(su[t.GeneralValueType]):
                 # If name is provided but empty, fail validation
                 if (
                     self.name is not None
-                    and isinstance(self.name, str)
                     and not self.name
                 ):
                     return r[bool].fail("Name is required")

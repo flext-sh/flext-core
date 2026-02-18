@@ -16,7 +16,6 @@ from pydantic import BaseModel
 from returns.io import IO, IOFailure, IOResult, IOSuccess
 from returns.maybe import Maybe, Nothing, Some
 from returns.result import Failure, Result, Success
-from returns.unsafe import unsafe_perform_io
 
 from flext_core.exceptions import e
 from flext_core.protocols import p
@@ -789,12 +788,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         if isinstance(io_result, IOFailure):
-            error_io = io_result.failure()
-            return FlextResult[T].fail(str(unsafe_perform_io(error_io)))
+            return FlextResult[T].fail(str(io_result.failure()))
 
         if isinstance(io_result, IOSuccess):
-            value_io = io_result.unwrap()
-            return FlextResult[T].ok(unsafe_perform_io(value_io))
+            return FlextResult[T].ok(io_result.unwrap())
 
         return FlextResult[T].fail("Invalid IOResult structure")
 
