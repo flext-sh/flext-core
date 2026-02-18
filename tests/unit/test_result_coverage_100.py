@@ -364,7 +364,7 @@ class TestrCoverage:
         result = r[str].ok("test")
         maybe = result.to_maybe()
         assert isinstance(maybe, Some)
-        assert maybe.value == "test"
+        assert maybe.unwrap() == "test"
 
     def test_to_maybe_failure(self) -> None:
         """Test conversion to Maybe on failure."""

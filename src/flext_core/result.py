@@ -82,7 +82,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             # Initialize RuntimeResult with values from _result
             if isinstance(_result, Success):
                 super().__init__(
-                    value=_result.value,
+                    value=_result.unwrap(),
                     error_code=error_code,
                     error_data=error_data,
                     is_success=True,
@@ -765,7 +765,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
         """
         if isinstance(maybe, Some):
-            return FlextResult[T].ok(maybe.value)
+            return FlextResult[T].ok(maybe.unwrap())
         return FlextResult[T].fail(error)
 
     @classmethod
@@ -793,7 +793,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             return FlextResult[T].fail(str(unsafe_perform_io(error_io)))
 
         if isinstance(io_result, IOSuccess):
-            value_io = io_result.value
+            value_io = io_result.unwrap()
             return FlextResult[T].ok(unsafe_perform_io(value_io))
 
         return FlextResult[T].fail("Invalid IOResult structure")

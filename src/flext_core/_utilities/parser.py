@@ -16,6 +16,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import overload
 
+import structlog
 from pydantic import BaseModel
 
 from flext_core._models.collections import FlextModelsCollections
@@ -54,7 +55,7 @@ class FlextUtilitiesParser:
     def __init__(self) -> None:
         """Initialize string parser with logging."""
         super().__init__()
-        self.logger = FlextLogger.create_module_logger(__name__)
+        self.logger = structlog.get_logger(__name__)
 
     @staticmethod
     def _safe_text_length(text: object) -> str | int:

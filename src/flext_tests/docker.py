@@ -22,7 +22,7 @@ import json
 import socket
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import docker
 from docker import DockerClient
@@ -35,9 +35,6 @@ from flext_core.loggings import FlextLogger
 from flext_core.result import r
 from flext_tests.constants import ContainerStatus, c
 from flext_tests.models import m
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 logger: FlextLogger = FlextLogger(__name__)
 
@@ -59,7 +56,7 @@ class FlextTestsDocker:
     class ContainerInfo(m.Tests.Docker.ContainerInfo):
         """Container information model for tests - real inheritance from m."""
 
-    SHARED_CONTAINERS: ClassVar[Mapping[str, m.ConfigMap]] = (
+    SHARED_CONTAINERS: ClassVar[dict[str, m.ConfigMap]] = (
         c.Tests.Docker.SHARED_CONTAINERS
     )
 
@@ -120,7 +117,7 @@ class FlextTestsDocker:
     @property
     def shared_containers(
         self,
-    ) -> Mapping[str, m.ConfigMap]:
+    ) -> dict[str, m.ConfigMap]:
         """Get shared container configurations."""
         return c.Tests.Docker.SHARED_CONTAINERS
 

@@ -10,13 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import TYPE_CHECKING, Final, Literal
+from typing import Final, Literal
 
 from flext_core.constants import FlextConstants, c as flext_c
 from flext_core.models import m
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 
 class FlextTestsConstants(FlextConstants):
@@ -46,7 +43,7 @@ class FlextTestsConstants(FlextConstants):
                 "mongodb",
                 "elasticsearch",
             )
-            SHARED_CONTAINERS: Final[Mapping[str, m.ConfigMap]] = {}
+            SHARED_CONTAINERS: Final[dict[str, m.ConfigMap]] = {}
 
             # Test-specific Docker constants
             DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
@@ -492,7 +489,7 @@ class FlextTestsConstants(FlextConstants):
             """Type-safe literal for error handling modes."""
 
             # Extension to format mapping
-            EXT_TO_FMT: Final[Mapping[str, str]] = {
+            EXT_TO_FMT: Final[dict[str, str]] = {
                 ".txt": "text",
                 ".log": "text",
                 ".md": "text",
