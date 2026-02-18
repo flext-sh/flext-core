@@ -531,7 +531,13 @@ class FlextUtilitiesGuards:
             TypeGuard[p.Log.StructlogLogger]: True if satisfies protocol
 
         """
-        return isinstance(obj, p.Log.StructlogLogger)
+        return (
+            hasattr(obj, "debug")
+            and hasattr(obj, "info")
+            and hasattr(obj, "warning")
+            and hasattr(obj, "error")
+            and hasattr(obj, "exception")
+        )
 
     @staticmethod
     def _is_result(obj: object) -> TypeGuard[p.Result[t.GeneralValueType]]:

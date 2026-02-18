@@ -55,8 +55,8 @@ class FlextModelsConfig:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Unique operation identifier",
         )
-        data: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
-        context: t.ConfigMap = Field(default_factory=lambda: t.ConfigMap(root={}))
+        data: t.ConfigMap = Field(default_factory=t.ConfigMap)
+        context: t.ConfigMap = Field(default_factory=t.ConfigMap)
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
             gt=c.ZERO,
@@ -245,10 +245,10 @@ class FlextModelsConfig:
 
         handler_name: str = Field(pattern=c.Platform.PATTERN_IDENTIFIER)
         input_data: t.ConfigMap = Field(
-            default_factory=lambda: t.ConfigMap(root={}),
+            default_factory=t.ConfigMap,
         )
         execution_context: t.ConfigMap = Field(
-            default_factory=lambda: t.ConfigMap(root={}),
+            default_factory=t.ConfigMap,
         )
         timeout_seconds: float = Field(
             default=c.Defaults.TIMEOUT,
@@ -285,7 +285,7 @@ class FlextModelsConfig:
         )
         name: str | None = Field(default=None, description="Optional middleware name")
         config: t.ConfigMap = Field(
-            default_factory=lambda: t.ConfigMap(root={}),
+            default_factory=t.ConfigMap,
             description="Middleware-specific configuration",
         )
 
@@ -581,7 +581,7 @@ class FlextModelsConfig:
             description="Whether to auto-generate correlation ID",
         )
         extra_kwargs: t.Dict = Field(
-            default_factory=lambda: t.Dict(root={}),
+            default_factory=t.Dict,
             description="Additional keyword arguments for metadata",
         )
 
@@ -907,7 +907,7 @@ class FlextModelsConfig:
             description="Positional arguments for function",
         )
         kwargs: t.ConfigMap = Field(
-            default_factory=lambda: t.ConfigMap(root={}),
+            default_factory=t.ConfigMap,
             description="Keyword arguments for function",
         )
         retry_config: FlextModelsConfig.RetryConfiguration | None = Field(

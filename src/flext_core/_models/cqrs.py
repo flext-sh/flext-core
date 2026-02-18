@@ -121,9 +121,9 @@ class FlextModelsCqrs:
             description="Message type discriminator",
         )
 
-        filters: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        filters: t.Dict = Field(default_factory=t.Dict)
         pagination: FlextModelsCqrs.Pagination | t.Dict = Field(
-            default_factory=lambda: t.Dict(root={}),
+            default_factory=t.Dict,
         )
         query_id: str = Field(
             default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),

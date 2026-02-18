@@ -246,7 +246,7 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        data: t.Dict = Field(default_factory=t.Dict)
 
     # Query message type
     class QueryMessage(BaseModel):
@@ -254,7 +254,7 @@ class FlextModelFoundation:
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        filters: t.Dict = Field(default_factory=t.Dict)
         pagination: t.Dict | None = None
 
     # Event message type
@@ -264,7 +264,7 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        data: t.Dict = Field(default_factory=t.Dict)
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
         )
@@ -527,7 +527,9 @@ class FlextModelFoundation:
                 float: Age in minutes.
 
             """
-            return self.age_seconds / 60.0
+            now = datetime.now(UTC)
+            age_seconds = (now - self.created_at).total_seconds()
+            return age_seconds / 60.0
 
         @computed_field
         @property
@@ -538,7 +540,9 @@ class FlextModelFoundation:
                 float: Age in hours.
 
             """
-            return self.age_minutes / 60.0
+            now = datetime.now(UTC)
+            age_seconds = (now - self.created_at).total_seconds()
+            return age_seconds / 3600.0
 
         @computed_field
         @property
@@ -549,7 +553,9 @@ class FlextModelFoundation:
                 float: Age in days.
 
             """
-            return self.age_hours / 24.0
+            now = datetime.now(UTC)
+            age_seconds = (now - self.created_at).total_seconds()
+            return age_seconds / 86400.0
 
         @computed_field
         @property
@@ -573,7 +579,8 @@ class FlextModelFoundation:
                 str: Formatted string like "2d 3h 45m".
 
             """
-            age = self.age_seconds
+            now = datetime.now(UTC)
+            age = (now - self.created_at).total_seconds()
             days = int(age // 86400)
             hours = int((age % 86400) // 3600)
             minutes = int((age % 3600) // 60)
@@ -596,7 +603,9 @@ class FlextModelFoundation:
                 bool: True if created within last hour.
 
             """
-            return self.age_minutes <= c.Performance.RECENT_THRESHOLD_MINUTES
+            now = datetime.now(UTC)
+            age_minutes = (now - self.created_at).total_seconds() / 60.0
+            return age_minutes <= c.Performance.RECENT_THRESHOLD_MINUTES
 
         @computed_field
         @property
@@ -607,7 +616,9 @@ class FlextModelFoundation:
                 bool: True if created within last 5 minutes.
 
             """
-            return self.age_minutes <= c.Performance.VERY_RECENT_THRESHOLD_MINUTES
+            now = datetime.now(UTC)
+            age_minutes = (now - self.created_at).total_seconds() / 60.0
+            return age_minutes <= c.Performance.VERY_RECENT_THRESHOLD_MINUTES
 
         def update_timestamp(self) -> None:
             """Update the updated_at timestamp to current UTC time."""
@@ -1069,7 +1080,7 @@ class FlextModelFoundation:
                 bool: True if has at least one tag.
 
             """
-            return self.tag_count > 0
+            return len(self.tags) > 0
 
         @computed_field
         @property
@@ -1080,7 +1091,7 @@ class FlextModelFoundation:
                 bool: True if has at least one category.
 
             """
-            return int(self.category_count) > 0
+            return len(self.categories) > 0
 
         @computed_field
         def all_labels(self) -> list[str]:
@@ -1279,7 +1290,7 @@ class FlextModelFoundation:
 
         name: str
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
-        metadata: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        metadata: t.Dict = Field(default_factory=t.Dict)
 
         @field_serializer("timestamp")
         def serialize_timestamp_iso(self, value: datetime) -> str:
@@ -1383,7 +1394,7 @@ class FlextModelFoundation:
         )
 
         name: str
-        fields: t.Dict = Field(default_factory=lambda: t.Dict(root={}))
+        fields: t.Dict = Field(default_factory=t.Dict)
 
         @classmethod
         def create_dynamic(cls, name: str, **fields: t.GeneralValueType) -> Self:
@@ -1408,7 +1419,7 @@ class FlextModelFoundation:
         @property
         def has_dynamic_fields(self) -> bool:
             """Check if model has dynamic fields."""
-            return self.dynamic_field_count > 0
+            return len(self.fields) > 0
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

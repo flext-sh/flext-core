@@ -89,7 +89,7 @@ class FlextGenericModels:
                 description="Version of the operation context schema",
             )
             metadata: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Additional context-specific metadata",
             )
 
@@ -285,7 +285,7 @@ class FlextGenericModels:
                 description="Current CPU usage percentage",
             )
             metadata: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Additional service-specific metadata",
             )
 
@@ -433,7 +433,7 @@ class FlextGenericModels:
             """
 
             config: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Configuration key-value pairs",
             )
             captured_at: datetime = Field(
@@ -461,7 +461,7 @@ class FlextGenericModels:
                 description="Configuration validation errors if any",
             )
             metadata: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Configuration metadata",
             )
 
@@ -636,11 +636,11 @@ class FlextGenericModels:
                 description="Overall health status",
             )
             checks: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Individual health check results (component -> status)",
             )
             details: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Detailed information for each health check",
             )
             checked_at: datetime = Field(
@@ -664,7 +664,7 @@ class FlextGenericModels:
                 description="Environment where health check was performed",
             )
             metadata: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Additional health check metadata",
             )
 
@@ -930,7 +930,7 @@ class FlextGenericModels:
                 description="Name/description of the operation",
             )
             metadata: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Additional operation metadata",
             )
 
@@ -1221,7 +1221,7 @@ class FlextGenericModels:
                 description="Total number of input items",
             )
             metadata: t.Dict = Field(
-                default_factory=lambda: t.Dict(root={}),
+                default_factory=t.Dict,
                 description="Conversion metadata",
             )
 

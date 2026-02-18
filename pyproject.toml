@@ -1,338 +1,313 @@
 [build-system]
-    build-backend = "poetry.core.masonry.api"
-    requires = [
-        "poetry-core>=1.9.0",
-    ]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.9.0"]
 
 [project]
-    classifiers = [
-        "Development Status :: 5 - Production/Stable",
-        "Framework :: Pydantic :: 2",
-        "Framework :: Pydantic",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.13",
-        "Topic :: Software Development :: Libraries :: Application Frameworks",
-        "Typing :: Typed",
-    ]
-    dependencies = [
-        "beartype>=0.19.0",
-        "cachetools>=5.3.0",
-        "dependency-injector>=4.41.0",
-        "limits>=3.6.0",
-        "orjson (>=3.11.3)",
-        "pybreaker>=0.8.0",
-        "pydantic-settings>=2.10.1",
-        "pydantic (>=2.12.3)",
-        "python-dotenv>=1.0.0",
-        "pyyaml>=6.0.2",
-        "returns>=0.26.0",
-        "structlog>=25.4.0",
-        "pydantic-core (>=2.41.4)",
-        "attrs (>=25.4.0,<26.0.0)",
-        "wrapt (>=1.17.0,<2.0.0)",
-        "docker (>=7.1.0,<8.0.0)",
-        "python-on-whales (>=0.79.0,<0.80.0)",
-    ]
-    description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-    keywords = [
-        "clean-architecture",
-        "ddd",
-        "enterprise",
-        "flext",
-        "modern",
-        "solid",
-    ]
-    name = "flext-core"
-    readme = "README.md"
-    requires-python = ">=3.13,<3.14"
-    version = "0.10.0-dev"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Pydantic :: 2",
+    "Framework :: Pydantic",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
+dependencies = [
+    "attrs (>=25.4.0,<26.0.0)",
+    "beartype>=0.19.0",
+    "cachetools>=5.3.0",
+    "dependency-injector>=4.41.0",
+    "docker (>=7.1.0,<8.0.0)",
+    "limits>=3.6.0",
+    "orjson (>=3.11.3)",
+    "pybreaker>=0.8.0",
+    "pydantic (>=2.12.3)",
+    "pydantic-core (>=2.41.4)",
+    "pydantic-settings>=2.10.1",
+    "python-dotenv>=1.0.0",
+    "python-on-whales (>=0.79.0,<0.80.0)",
+    "pyyaml>=6.0.2",
+    "returns>=0.26.0",
+    "structlog>=25.4.0",
+    "wrapt (>=1.17.0,<2.0.0)",
+]
+description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+keywords = [
+    "clean-architecture",
+    "ddd",
+    "enterprise",
+    "flext",
+    "modern",
+    "solid",
+]
+name = "flext-core"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+version = "0.10.0-dev"
 
-    [[project.authors]]
-        email = "team@flext.sh"
-        name = "FLEXT Team"
+[[project.authors]]
+email = "team@flext.sh"
+name = "FLEXT Team"
 
-    [[project.maintainers]]
-        email = "team@flext.sh"
-        name = "FLEXT Team"
+[[project.maintainers]]
+email = "team@flext.sh"
+name = "FLEXT Team"
 
-    [project.license]
-        text = "MIT"
+[project.license]
+text = "MIT"
 
-    [project.urls]
-        Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
-        Homepage = "https://github.com/flext-sh/flext-core"
-        Repository = "https://github.com/flext-sh/flext-core"
+[project.urls]
+Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
+Homepage = "https://github.com/flext-sh/flext-core"
+Repository = "https://github.com/flext-sh/flext-core"
 
-    [project.optional-dependencies]
-        dev = [
-            "autoflake>=2.3.1",
-            "black>=25.1.0",
-            "codespell>=2.3.0",
-            "deptry>=0.23.0",
-            "detect-secrets>=1.5.0",
-            "interrogate>=1.7.0",
-            "isort>=6.0.1",
-            "mypy>=1.18.2",
-            "pre-commit>=4.0.1",
-            "pylint>=3.3.0",
-            "pyupgrade>=3.19.0",
-            "radon>=6.0.1",
-            "ruff>=0.12.3",
-            "vulture>=2.13",
-        ]
-        security = [
-            "bandit>=1.8.0",
-            "pip-audit>=2.7.3",
-            "uv>=0.9.6",
-        ]
-        test = [
-            "beartype>=0.19.0",
-            "factory-boy>=3.3.1",
-            "faker>=37.4.0",
-            "hypothesis>=6.125.0",
-            "pytest-benchmark>=5.1.0",
-            "pytest-clarity>=1.0.1",
-            "pytest-cov>=6.2.0",
-            "pytest-deadfixtures>=2.2.1",
-            "pytest-env>=1.1.5",
-            "pytest-mock>=3.14.0",
-            "pytest-randomly>=3.16.0",
-            "pytest-sugar>=1.0.0",
-            "pytest-timeout>=2.4.0",
-            "pytest-xdist>=3.8.0",
-            "pytest>=8.4.0",
-        ]
-        typings = [
-            "django-stubs>=5.2.2",
-            "types-cachetools>=5.3.0",
-            "types-docker>=7.1.0",
-            "types-ldap3>=2.9.13.20250622",
-            "types-protobuf>=6.30.2.20250703",
-            "types-psutil>=7.0.0",
-            "types-psycopg2>=2.9.21.20250718",
-            "types-python-dateutil>=2.9.0",
-            "types-pyyaml>=6.0.12",
-            "types-redis>=4.6.0",
-            "types-requests>=2.32.4",
-            "types-setuptools>=80.9.0",
-            "types-toml>=0.10.8.20240310",
-        ]
+[project.optional-dependencies]
+dev = [
+    "autoflake>=2.3.1",
+    "black>=25.1.0",
+    "codespell>=2.3.0",
+    "deptry>=0.23.0",
+    "detect-secrets>=1.5.0",
+    "interrogate>=1.7.0",
+    "isort>=6.0.1",
+    "mypy>=1.18.2",
+    "pre-commit>=4.0.1",
+    "pylint>=3.3.0",
+    "pyupgrade>=3.19.0",
+    "radon>=6.0.1",
+    "ruff>=0.12.3",
+    "vulture>=2.13",
+]
+security = ["bandit>=1.8.0", "pip-audit>=2.7.3", "uv>=0.9.6"]
+test = [
+    "beartype>=0.19.0",
+    "factory-boy>=3.3.1",
+    "faker>=37.4.0",
+    "hypothesis>=6.125.0",
+    "pytest-benchmark>=5.1.0",
+    "pytest-clarity>=1.0.1",
+    "pytest-cov>=6.2.0",
+    "pytest-deadfixtures>=2.2.1",
+    "pytest-env>=1.1.5",
+    "pytest-mock>=3.14.0",
+    "pytest-randomly>=3.16.0",
+    "pytest-sugar>=1.0.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
+    "pytest>=8.4.0",
+]
+typings = [
+    "django-stubs>=5.2.2",
+    "types-cachetools>=5.3.0",
+    "types-docker>=7.1.0",
+    "types-ldap3>=2.9.13.20250622",
+    "types-protobuf>=6.30.2.20250703",
+    "types-psutil>=7.0.0",
+    "types-psycopg2>=2.9.21.20250718",
+    "types-python-dateutil>=2.9.0",
+    "types-pyyaml>=6.0.12",
+    "types-redis>=4.6.0",
+    "types-requests>=2.32.4",
+    "types-setuptools>=80.9.0",
+    "types-toml>=0.10.8.20240310",
+]
 
 [tool]
-    [tool.coverage.report]
-        precision = 2
-        fail_under = 80
-        omit = [
-            "*/flext_tests/*",
-            "*/dependency_injector/*.pxd",
-            "*/dependency_injector/*.pyx",
-        ]
+[tool.coverage.report]
+precision = 2
+fail_under = 80
+omit = [
+    "*/flext_tests/*",
+    "*/dependency_injector/*.pxd",
+    "*/dependency_injector/*.pyx",
+]
 
-    [tool.coverage.run]
-        source = ["src/flext_core"]
-        omit = [
-            "*/flext_tests/*",
-            "*/dependency_injector/*.pxd",
-            "*/dependency_injector/*.pyx",
-        ]
+[tool.coverage.run]
+source = ["src/flext_core"]
+omit = [
+    "*/flext_tests/*",
+    "*/dependency_injector/*.pxd",
+    "*/dependency_injector/*.pyx",
+]
 
-    [tool.deptry]
-        known_first_party = [
-            "flext_core",
-            "flext_tests",
-        ]
-        pep621_dev_dependency_groups = [
-            "dev",
-            "security",
-            "test",
-            "typings",
-        ]
+[tool.deptry]
+known_first_party = ["flext_core", "flext_tests"]
+pep621_dev_dependency_groups = ["dev", "security", "test", "typings"]
 
-    [tool.deptry.package_module_name_map]
-        pyyaml = "yaml"
+[tool.deptry.package_module_name_map]
+pyyaml = "yaml"
 
-    [tool.deptry.per_rule_ignores]
-        DEP002 = [
-            "autoflake",
-            "bandit",
-            "black",
-            "codespell",
-            "deptry",
-            "detect-secrets",
-            "django-stubs",
-            "factory-boy",
-            "faker",
-            "hypothesis",
-            "interrogate",
-            "isort",
-            "mypy",
-            "pip-audit",
-            "pre-commit",
-            "pylint",
-            "pyrefly",
-            "pytest",
-            "pytest-benchmark",
-            "pytest-clarity",
-            "pytest-cov",
-            "pytest-deadfixtures",
-            "pytest-env",
-            "pytest-mock",
-            "pytest-randomly",
-            "pytest-sugar",
-            "pytest-timeout",
-            "pytest-xdist",
-            "pyupgrade",
-            "radon",
-            "ruff",
-            "types-cachetools",
-            "types-colorama",
-            "types-docker",
-            "types-ldap3",
-            "types-pexpect",
-            "types-protobuf",
-            "types-psutil",
-            "types-psycopg2",
-            "types-pygments",
-            "types-pysocks",
-            "types-python-dateutil",
-            "types-pyyaml",
-            "types-redis",
-            "types-requests",
-            "types-setuptools",
-            "types-toml",
-            "uv",
-            "vulture",
-            # Runtime deps used indirectly (pydantic-settings, etc.)
-            "attrs",
-            "limits",
-            "pybreaker",
-            "pydantic-core",
-            "python-dotenv",
-            "wrapt",
-        ]
+[tool.deptry.per_rule_ignores]
+DEP002 = [
+    "autoflake",
+    "bandit",
+    "black",
+    "codespell",
+    "deptry",
+    "detect-secrets",
+    "django-stubs",
+    "factory-boy",
+    "faker",
+    "hypothesis",
+    "interrogate",
+    "isort",
+    "mypy",
+    "pip-audit",
+    "pre-commit",
+    "pylint",
+    "pyrefly",
+    "pytest",
+    "pytest-benchmark",
+    "pytest-clarity",
+    "pytest-cov",
+    "pytest-deadfixtures",
+    "pytest-env",
+    "pytest-mock",
+    "pytest-randomly",
+    "pytest-sugar",
+    "pytest-timeout",
+    "pytest-xdist",
+    "pyupgrade",
+    "radon",
+    "ruff",
+    "types-cachetools",
+    "types-colorama",
+    "types-docker",
+    "types-ldap3",
+    "types-pexpect",
+    "types-protobuf",
+    "types-psutil",
+    "types-psycopg2",
+    "types-pygments",
+    "types-pysocks",
+    "types-python-dateutil",
+    "types-pyyaml",
+    "types-redis",
+    "types-requests",
+    "types-setuptools",
+    "types-toml",
+    "uv",
+    "vulture",
+    # Runtime deps used indirectly (pydantic-settings, etc.)
+    "attrs",
+    "limits",
+    "pybreaker",
+    "pydantic-core",
+    "python-dotenv",
+    "wrapt",
+]
 
-    [tool.poetry]
-        name = "flext-core"
-        version = "0.10.0-dev"
-        description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-        authors = ["FLEXT Team <team@flext.sh>"]
-        packages = [
-            { include = "flext_core", from = "src" },
-            { include = "flext_tests", from = "src" },
-        ]
+[tool.poetry]
+name = "flext-core"
+version = "0.10.0-dev"
+description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+authors = ["FLEXT Team <team@flext.sh>"]
+packages = [
+    { include = "flext_core", from = "src" },
+    { include = "flext_tests", from = "src" },
+]
 
-        [tool.poetry.group]
+[tool.poetry.group]
 
-            [tool.poetry.group.dev.dependencies]
-                click = "^8.3.0"
-                hypothesis = "^6.148.7"
-                pyrefly = "^0.46.3"
-                pytest = "^9.0.2"
-                rich = "^14.2.0"
-                types-pyyaml = "^6.0.12.20250822"
-                urllib3 = "^2.6.0"
-            beartype = "^0.22.9"
+[tool.poetry.group.dev.dependencies]
+click = "^8.3.0"
+hypothesis = "^6.148.7"
+pyrefly = "^0.46.3"
+pytest = "^9.0.2"
+rich = "^14.2.0"
+types-pyyaml = "^6.0.12.20250822"
+urllib3 = "^2.6.0"
+beartype = "^0.22.9"
 
-            [tool.poetry.group.typings.dependencies]
-                types-colorama = ">=0.4.15.20240311"
-                types-pexpect = ">=4.9.0.20250516"
-                types-pygments = ">=2.19.0.20250715"
-                types-pysocks = "^1.7.1.20251001"
-            types-cachetools = "^6.2.0.20251022"
-            types-docker = "^7.1.0.20251202"
+[tool.poetry.group.typings.dependencies]
+types-colorama = ">=0.4.15.20240311"
+types-pexpect = ">=4.9.0.20250516"
+types-pygments = ">=2.19.0.20250715"
+types-pysocks = "^1.7.1.20251001"
+types-cachetools = "^6.2.0.20251022"
+types-docker = "^7.1.0.20251202"
+types-pyyaml = "^6.0.12.20250915"
 
-        [tool.poetry.group.test.dependencies]
+[tool.poetry.group.test.dependencies]
 coverage = "^7.13.1"
 
-    [tool.pytest.ini_options]
-        addopts = [
-            "--strict-config",
-            "--strict-markers",
-            "--tb=short",
-            "-p no:sugar",
-            "-q",
-            "-ra",
-        ]
-        # NOTE: Coverage options moved to Makefile test target to avoid conflicts
-        # See: make test (--cov=flext_core --cov-report=term-missing --cov-fail-under=80)
-        filterwarnings = [
-            "ignore::DeprecationWarning:pyasn1(.*|$)",
-            "ignore:pkg_resources is deprecated:UserWarning",
-        ]
-        markers = [
-            "advanced: Advanced functionality tests",
-            "architecture: Architectural pattern tests",
-            "benchmark: Performance benchmark tests",
-            "boundary: Boundary condition tests",
-            "cleanup: Cleanup tests",
-            "concurrency: Concurrency and threading tests",
-            "core: Core framework functionality tests",
-            "coverage: Coverage improvement tests",
-            "dbt: dbt transformation tests",
-            "ddd: Domain-driven design tests",
-            "destructive: Tests that may modify external systems",
-            "e2e: End-to-end tests",
-            "error_path: Error path scenario tests",
-            "happy_path: Happy path scenario tests",
-            "integration: Integration tests",
-            "memory: Memory usage tests",
-            "oracle: Oracle database tests",
-            "parametrize_advanced: Advanced parametrized tests",
-            "pep8: PEP8 compliance validation tests",
-            "performance: Performance tests",
-            "race_condition: Race condition tests",
-            "regression: Regression testing and detection",
-            "slow: Slow tests",
-            "smoke: Smoke tests",
-            "snapshot: Snapshot regression tests",
-            "tap: Singer tap tests",
-            "target: Singer target tests",
-            "timeout: Tests that may timeout",
-            "unit: Unit tests",
-        ]
-        minversion = "8.0"
-        python_classes = [
-            "Test*",
-        ]
-        python_files = [
-            "*_test.py",
-            "test_*.py",
-        ]
-        python_functions = [
-            "test_*",
-        ]
-        testpaths = [
-            "tests",
-        ]
-        norecursedirs = [
-            ".hypothesis",
-            "*.bak",
-            "*.removed",
-            "fixtures.bak",
-            "fixtures.removed",
-            "helpers.bak",
-            "helpers.removed",
-        ]
+[tool.pytest.ini_options]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+    "--tb=short",
+    "-p no:sugar",
+    "-q",
+    "-ra",
+]
+# NOTE: Coverage options moved to Makefile test target to avoid conflicts
+# See: make test (--cov=flext_core --cov-report=term-missing --cov-fail-under=80)
+filterwarnings = [
+    "ignore::DeprecationWarning:pyasn1(.*|$)",
+    "ignore:pkg_resources is deprecated:UserWarning",
+]
+markers = [
+    "advanced: Advanced functionality tests",
+    "architecture: Architectural pattern tests",
+    "benchmark: Performance benchmark tests",
+    "boundary: Boundary condition tests",
+    "cleanup: Cleanup tests",
+    "concurrency: Concurrency and threading tests",
+    "core: Core framework functionality tests",
+    "coverage: Coverage improvement tests",
+    "dbt: dbt transformation tests",
+    "ddd: Domain-driven design tests",
+    "destructive: Tests that may modify external systems",
+    "e2e: End-to-end tests",
+    "error_path: Error path scenario tests",
+    "happy_path: Happy path scenario tests",
+    "integration: Integration tests",
+    "memory: Memory usage tests",
+    "oracle: Oracle database tests",
+    "parametrize_advanced: Advanced parametrized tests",
+    "pep8: PEP8 compliance validation tests",
+    "performance: Performance tests",
+    "race_condition: Race condition tests",
+    "regression: Regression testing and detection",
+    "slow: Slow tests",
+    "smoke: Smoke tests",
+    "snapshot: Snapshot regression tests",
+    "tap: Singer tap tests",
+    "target: Singer target tests",
+    "timeout: Tests that may timeout",
+    "unit: Unit tests",
+]
+minversion = "8.0"
+python_classes = ["Test*"]
+python_files = ["*_test.py", "test_*.py"]
+python_functions = ["test_*"]
+testpaths = ["tests"]
+norecursedirs = [
+    ".hypothesis",
+    "*.bak",
+    "*.removed",
+    "fixtures.bak",
+    "fixtures.removed",
+    "helpers.bak",
+    "helpers.removed",
+]
 
-    [tool.pyrefly]
-        search-path = [
-            "../typings",
-            "../typings/generated",
-            ".",
-            "src",
-            "tests",
-            "examples",
-            "scripts",
-        ]
+[tool.pyrefly]
+search-path = [
+    "../typings",
+    "../typings/generated",
+    ".",
+    "src",
+    "tests",
+    "examples",
+    "scripts",
+]
 
-    [tool.ruff]
-        extend = "../ruff-shared.toml"
+[tool.ruff]
+extend = "../ruff-shared.toml"
 
-        [tool.ruff.lint.isort]
-            known-first-party = [
-                "flext_core",
-                "flext_tests",
-            ]
+[tool.ruff.lint.isort]
+known-first-party = ["flext_core", "flext_tests"]

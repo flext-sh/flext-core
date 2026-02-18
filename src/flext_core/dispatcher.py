@@ -162,7 +162,7 @@ class FlextDispatcher(FlextService[bool]):
         # Query result caching (from FlextDispatcher - LRU cache)
         # Fast fail: use constant directly, no fallback
         max_cache_size = c.Container.MAX_CACHE_SIZE
-        self._cache: LRUCache[str, r[t.GeneralValueType]] = LRUCache(
+        self._cache: LRUCache = LRUCache(
             maxsize=max_cache_size,
         )
 

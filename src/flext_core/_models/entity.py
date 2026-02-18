@@ -66,11 +66,11 @@ class FlextModelsEntity:
         event_type: str
         aggregate_id: str
         data: _ComparableConfigMap = Field(
-            default_factory=lambda: _ComparableConfigMap(root={}),
+            default_factory=_ComparableConfigMap,
             description="Event data container",
         )
         metadata: t.ConfigMap = Field(
-            default_factory=lambda: t.ConfigMap(root={}),
+            default_factory=t.ConfigMap,
             description="Event metadata container",
         )
 

@@ -322,7 +322,7 @@ class FlextModelsContext:
         """
 
         data: t.Dict = Field(
-            default_factory=lambda: t.Dict(root={}),
+            default_factory=t.Dict,
             description="Initial context data as key-value pairs",
         )
         metadata: FlextModelsBase.Metadata | t.Dict | None = Field(

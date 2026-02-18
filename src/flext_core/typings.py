@@ -309,14 +309,7 @@ class FlextTypes:
         Subclasses must define ``root: dict[str, V]`` via ``RootModel``.
         """
 
-        root: dict[str, DictValueT]
-
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            """Initialize root explicitly for static analyzers and RootModel."""
-            if not args and "root" not in kwargs:
-                kwargs["root"] = {}
-            super().__init__(*args, **kwargs)
-            self.root = typing.cast("dict[str, DictValueT]", getattr(self, "root", {}))
+        root: dict[str, DictValueT] = Field(default_factory=dict)
 
         def __getitem__(self, key: str) -> DictValueT:
             """Get item by key."""
@@ -383,7 +376,7 @@ class FlextTypes:
         Replaces: dict[str, Any], dict[str, GeneralValueType]
         """
 
-        root: dict[str, GeneralValueType]
+        root: dict[str, GeneralValueType] = Field(default_factory=dict)
 
     class ConfigMap(
         _DictMixin[GeneralValueType],
@@ -394,7 +387,7 @@ class FlextTypes:
         Replaces: ConfigurationDict, ConfigurationMapping
         """
 
-        root: dict[str, GeneralValueType]
+        root: dict[str, GeneralValueType] = Field(default_factory=dict)
 
     ConfigurationMapping: TypeAlias = ConfigMap
     ConfigurationDict: TypeAlias = ConfigMap
@@ -466,12 +459,9 @@ class FlextTypes:
     class _ValidatorMapMixin:
         """Shared API for validator map containers."""
 
-        root: dict[str, Callable[[GeneralValueType], GeneralValueType]]
-
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            """Initialize validator map root before RootModel initialization."""
-            self.root = {}
-            super().__init__(*args, **kwargs)
+        root: dict[str, Callable[[GeneralValueType], GeneralValueType]] = Field(
+            default_factory=dict,
+        )
 
         def items(
             self,

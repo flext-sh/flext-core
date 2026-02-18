@@ -196,10 +196,6 @@ class _CombinedModelMeta(ModelMetaclass, _ProtocolMeta):
     """Combined metaclass for Pydantic BaseModel + Protocol inheritance."""
 
 
-class _CombinedSettingsMeta(ModelMetaclass, _ProtocolMeta):
-    """Combined metaclass for Pydantic BaseSettings + Protocol inheritance."""
-
-
 class FlextProtocols:
     """Hierarchical protocol namespace organized by Interface Segregation Principle.
 
