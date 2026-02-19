@@ -6,10 +6,28 @@
 > Project profile: `flext-core`
 
 
-
-
-
-
+<!-- TOC START -->
+- What is FLEXT
+- Prerequisites
+- Installation
+  - Basic Installation
+  - Development Installation
+  - Docker Installation
+- Your First FLEXT Application
+  - 1. Basic Setup
+  - 2. Using flext-ldif for LDIF Processing
+  - 3. Railway-Oriented Error Handling
+  - 4. CQRS Pattern with Commands and Queries
+- Configuration
+  - Basic Configuration
+  - Programmatic Configuration
+- Next Steps
+  - Explore the Ecosystem
+  - Learn Key Patterns
+  - Build Real Applications
+- Getting Help
+- What's Next
+<!-- TOC END -->
 
 ## What is FLEXT
 

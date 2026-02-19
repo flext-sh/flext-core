@@ -2,13 +2,13 @@
 
 
 <!-- TOC START -->
-- Executive Summary
-- Current State by File
-  - foundation.md (Layers 0, 0.5, 1)
-  - domain.md (Layer 2)
-  - application.md (Layer 3)
-  - infrastructure.md (Layer 4)
-- Recommended Fixes
+- [Executive Summary](#executive-summary)
+- [Current State by File](#current-state-by-file)
+  - [foundation.md (Layers 0, 0.5, 1)](#foundationmd-layers-0-05-1)
+  - [domain.md (Layer 2)](#domainmd-layer-2)
+  - [application.md (Layer 3)](#applicationmd-layer-3)
+  - [infrastructure.md (Layer 4)](#infrastructuremd-layer-4)
+- [Recommended Fixes](#recommended-fixes)
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

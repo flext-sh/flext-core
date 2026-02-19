@@ -6,10 +6,32 @@
 > Project profile: `flext-core`
 
 
-
-
-
-
+<!-- TOC START -->
+- Getting Started
+  - [Installation Guide ✅](#installation-guidegetting-startedmd-)
+  - Quick Start Tutorial (Coming Soon)
+  - [Configuration Guide ✅](#configuration-guideconfigurationmd-)
+- Development
+  - [Development Setup ✅](#development-setupdevelopmentmd-)
+  - [Automation Skill Pattern ✅](#automation-skill-patternskill-automation-patternmd-)
+  - Contributing Guide (Coming Soon)
+  - [Testing Guide ✅](#testing-guidetestingmd-)
+- Operations
+  - Deployment Guide (Coming Soon)
+  - Monitoring Guide (Coming Soon)
+  - [Troubleshooting Guide ✅](#troubleshooting-guidetroubleshootingmd-)
+- Integration
+  - LDAP Integration (Coming Soon)
+  - Database Integration (Coming Soon)
+  - API Integration (Coming Soon)
+- Migration
+  - LDIF Migration Guide (Coming Soon)
+  - Data Migration (Coming Soon)
+- Best Practices
+  - Performance Optimization (Coming Soon)
+  - Security Best Practices (Coming Soon)
+  - Error Handling (Coming Soon)
+<!-- TOC END -->
 
 ## Getting Started
 

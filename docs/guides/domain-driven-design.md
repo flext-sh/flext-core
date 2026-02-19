@@ -2,31 +2,31 @@
 
 
 <!-- TOC START -->
-- Core Concepts
-  - Domain-Driven Design (DDD)
-  - FlextModels Architecture
-- Building Blocks
-  - Value Objects: Immutable by Semantics
-  - Entities: Identity and Mutability
-  - Aggregate Roots: Consistency Boundaries
-- Domain Events and CQRS Integration
-- Real-World Examples
-  - Example 1: E-Commerce Order System
-  - Example 2: User Authentication System
-- Integration with FlextResult
-- CQRS: Command Query Responsibility Segregation
-  - Commands: Write Operations
-  - Queries: Read Operations
-  - Dispatcher: Unified Command/Query Bus
-  - Benefits of CQRS in FLEXT
-  - When to Use CQRS
-- Best Practices
-  - 1. Protect Invariants in **init**
-  - 2. Use Semantic Types for Values
-  - 3. Enforce Business Rules
-- Key Takeaways
-- Next Steps
-- See Also
+- [Core Concepts](#core-concepts)
+  - [Domain-Driven Design (DDD)](#domain-driven-design-ddd)
+  - [FlextModels Architecture](#flextmodels-architecture)
+- [Building Blocks](#building-blocks)
+  - [Value Objects: Immutable by Semantics](#value-objects-immutable-by-semantics)
+  - [Entities: Identity and Mutability](#entities-identity-and-mutability)
+  - [Aggregate Roots: Consistency Boundaries](#aggregate-roots-consistency-boundaries)
+- [Domain Events and CQRS Integration](#domain-events-and-cqrs-integration)
+- [Real-World Examples](#real-world-examples)
+  - [Example 1: E-Commerce Order System](#example-1-e-commerce-order-system)
+  - [Example 2: User Authentication System](#example-2-user-authentication-system)
+- [Integration with FlextResult](#integration-with-flextresult)
+- [CQRS: Command Query Responsibility Segregation](#cqrs-command-query-responsibility-segregation)
+  - [Commands: Write Operations](#commands-write-operations)
+  - [Queries: Read Operations](#queries-read-operations)
+  - [Dispatcher: Unified Command/Query Bus](#dispatcher-unified-commandquery-bus)
+  - [Benefits of CQRS in FLEXT](#benefits-of-cqrs-in-flext)
+  - [When to Use CQRS](#when-to-use-cqrs)
+- [Best Practices](#best-practices)
+  - [1. Protect Invariants in **init**](#1-protect-invariants-in-init)
+  - [2. Use Semantic Types for Values](#2-use-semantic-types-for-values)
+  - [3. Enforce Business Rules](#3-enforce-business-rules)
+- [Key Takeaways](#key-takeaways)
+- [Next Steps](#next-steps)
+- [See Also](#see-also)
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Clean Architecture Foundation

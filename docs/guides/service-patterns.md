@@ -2,30 +2,30 @@
 
 
 <!-- TOC START -->
-- Canonical Rules
-- Overview
-- Execution Patterns
-  - V1: Explicit Execution (✅ Production Ready)
-  - V2 Property: `.result` (🟡 Under Validation)
-  - V2 Auto: `auto_execute` (🟡 Under Validation)
-- Infrastructure Properties
-  - Example with Infrastructure
-- Composition Patterns
-  - Railway Composition
-  - Service Factories
-- Integration with Handlers
-- Testing Services
-  - Unit Testing
-  - Integration Testing
-- Migration Guide
-  - From V1 to V2 Property
-  - Gradual Adoption
-- Best Practices
-  - DO ✅
-  - DON'T ❌
-- Next Steps
-- See Also
-- References
+- [Canonical Rules](#canonical-rules)
+- [Overview](#overview)
+- [Execution Patterns](#execution-patterns)
+  - [V1: Explicit Execution (✅ Production Ready)](#v1-explicit-execution-production-ready)
+  - [V2 Property: `.result` (🟡 Under Validation)](#v2-property-result-under-validation)
+  - [V2 Auto: `auto_execute` (🟡 Under Validation)](#v2-auto-autoexecute-under-validation)
+- [Infrastructure Properties](#infrastructure-properties)
+  - [Example with Infrastructure](#example-with-infrastructure)
+- [Composition Patterns](#composition-patterns)
+  - [Railway Composition](#railway-composition)
+  - [Service Factories](#service-factories)
+- [Integration with Handlers](#integration-with-handlers)
+- [Testing Services](#testing-services)
+  - [Unit Testing](#unit-testing)
+  - [Integration Testing](#integration-testing)
+- [Migration Guide](#migration-guide)
+  - [From V1 to V2 Property](#from-v1-to-v2-property)
+  - [Gradual Adoption](#gradual-adoption)
+- [Best Practices](#best-practices)
+  - [DO ✅](#do-)
+  - [DON'T ❌](#dont-)
+- [Next Steps](#next-steps)
+- [See Also](#see-also)
+- [References](#references)
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Services

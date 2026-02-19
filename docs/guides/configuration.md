@@ -6,10 +6,34 @@
 > Project profile: `flext-core`
 
 
-
-
-
-
+<!-- TOC START -->
+- Overview
+- Configuration Sources
+- Basic Configuration
+  - Environment Variables
+  - Configuration Files
+  - Programmatic Configuration
+- Project-Specific Configuration
+  - flext-ldif Configuration
+  - flext-api Configuration
+  - flext-auth Configuration
+- Environment-Specific Configuration
+  - Development Environment
+  - Production Environment
+- Configuration Validation
+- Configuration Inheritance
+- Best Practices
+  - 1. Use Environment Variables for Secrets
+  - 2. Validate Configuration Early
+  - 3. Use Configuration Classes
+  - 4. Document Configuration Options
+- Troubleshooting
+  - Common Configuration Issues
+  - Debug Configuration
+- Examples
+  - Complete Configuration Example
+- Reference
+<!-- TOC END -->
 
 This guide covers how to configure FLEXT for your specific environment and requirements.
 

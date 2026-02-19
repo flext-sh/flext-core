@@ -6,10 +6,47 @@
 > Project profile: `flext-core`
 
 
-
-
-
-
+<!-- TOC START -->
+- Prerequisites
+- Development Environment Setup
+  - 1. Clone the Repository
+  - 2. Install Dependencies
+  - 3. Verify Installation
+- Project Structure
+- Development Workflow
+  - 1. Create a Feature Branch
+  - 2. Make Changes
+  - 3. Run Quality Gates
+  - 4. Commit Changes
+- Code Standards
+  - Type Safety (ZERO TOLERANCE)
+  - Railway-Oriented Programming
+  - Unified Models Pattern
+- Testing
+  - Running Tests
+  - Writing Tests
+- Quality Gates
+  - Pre-commit Hooks
+  - Quality Checks
+- Adding New Projects
+  - 1. Create Project Structure
+  - 2. Implement Core Patterns
+  - 3. Add to Workspace
+- Debugging
+  - Type Errors
+  - Test Failures
+  - Import Issues
+- Documentation
+  - Code Documentation
+  - README Updates
+- Contributing
+  - Pull Request Process
+  - Code Review Guidelines
+- Troubleshooting
+  - Common Issues
+- Resources
+- Support
+<!-- TOC END -->
 
 This guide covers setting up a development environment for FLEXT contributions and understanding the development workflow.
 

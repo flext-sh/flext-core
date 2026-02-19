@@ -2,85 +2,85 @@
 
 
 <!-- TOC START -->
-- Documentation Structure
-  - Every Feature Needs
-- Overview
-- Basic Usage
-- API Reference
-  - Method Name
-- Best Practices
-  - ✅ DO
-  - ❌ DON'T
-- Common Issues
-  - Issue: Something breaks
-- Code Examples
-  - Correct Style
-  - Import Cleanup
-  - Syntax Highlighting
-- Markdown Style
-  - Headings
-- Section
-  - Subsection
-  - Lists
-  - Emphasis
-  - Tables
-- Content Accuracy
-  - Verify Everything
-  - Content Must Be True
-  - Update Frequency
-- Breaking Down Complex Topics
-  - Short Format (< 1000 words)
-- Usage (1-2 examples)
-- Best Practices (3-5 dos/don'ts)
-  - Medium Format (1000-3000 words)
-- Overview (100-200 words)
-- Basic Usage (300-500 words)
-- Advanced Usage (400-600 words)
-- Best Practices (300-400 words)
-- Troubleshooting (300-500 words)
-  - Long Format (3000+ words)
-- Introduction (200 words)
-- Fundamentals (800 words)
-- Patterns (1000 words)
-- Best Practices (800 words)
-- Common Issues (500 words)
-- Summary (200 words)
-- Status Badges
-- Cross-References
-- Link Reference Standards
-  - Cross-Project References (Between FLEXT Projects)
-  - Internal References (Within Same Project)
-  - Link Pattern Matrix
-  - Link Validation Checklist
-- API Reference Format
-  - For Functions/Methods
-  - method_name(param1: Type1, param2: Type2) -> ReturnType
-  - For Classes
-- ClassName
-  - Methods
-  - Properties
-  - property_name
-- Writing Guidelines
-  - Be Precise
-  - Be Concise
-  - Be Actionable
-  - Avoid Passive Voice
-- Formatting Consistency
-  - Consistency Checklist
-  - Example Consistency
-- Maintenance
-  - Monthly Review
-  - Annual Audit
-- Accessibility
-  - For Code Examples
-  - For Complex Topics
-- Quality Gate Checklist
-- Tools and Commands
-  - Markdown Linting
-  - Link Checking
-  - Spelling
-- Examples of Excellent Documentation
-- Summary
+- [Documentation Structure](#documentation-structure)
+  - [Every Feature Needs](#every-feature-needs)
+- [Overview](#overview)
+- [Basic Usage](#basic-usage)
+- [API Reference](#api-reference)
+  - [Method Name](#method-name)
+- [Best Practices](#best-practices)
+  - [✅ DO](#-do)
+  - [❌ DON'T](#-dont)
+- [Common Issues](#common-issues)
+  - [Issue: Something breaks](#issue-something-breaks)
+- [Code Examples](#code-examples)
+  - [Correct Style](#correct-style)
+  - [Import Cleanup](#import-cleanup)
+  - [Syntax Highlighting](#syntax-highlighting)
+- [Markdown Style](#markdown-style)
+  - [Headings](#headings)
+- [Section](#section)
+  - [Subsection](#subsection)
+  - [Lists](#lists)
+  - [Emphasis](#emphasis)
+  - [Tables](#tables)
+- [Content Accuracy](#content-accuracy)
+  - [Verify Everything](#verify-everything)
+  - [Content Must Be True](#content-must-be-true)
+  - [Update Frequency](#update-frequency)
+- [Breaking Down Complex Topics](#breaking-down-complex-topics)
+  - [Short Format (< 1000 words)](#short-format-1000-words)
+- [Usage (1-2 examples)](#usage-1-2-examples)
+- [Best Practices (3-5 dos/don'ts)](#best-practices-3-5-dosdonts)
+  - [Medium Format (1000-3000 words)](#medium-format-1000-3000-words)
+- [Overview (100-200 words)](#overview-100-200-words)
+- [Basic Usage (300-500 words)](#basic-usage-300-500-words)
+- [Advanced Usage (400-600 words)](#advanced-usage-400-600-words)
+- [Best Practices (300-400 words)](#best-practices-300-400-words)
+- [Troubleshooting (300-500 words)](#troubleshooting-300-500-words)
+  - [Long Format (3000+ words)](#long-format-3000-words)
+- [Introduction (200 words)](#introduction-200-words)
+- [Fundamentals (800 words)](#fundamentals-800-words)
+- [Patterns (1000 words)](#patterns-1000-words)
+- [Best Practices (800 words)](#best-practices-800-words)
+- [Common Issues (500 words)](#common-issues-500-words)
+- [Summary (200 words)](#summary-200-words)
+- [Status Badges](#status-badges)
+- [Cross-References](#cross-references)
+- [Link Reference Standards](#link-reference-standards)
+  - [Cross-Project References (Between FLEXT Projects)](#cross-project-references-between-flext-projects)
+  - [Internal References (Within Same Project)](#internal-references-within-same-project)
+  - [Link Pattern Matrix](#link-pattern-matrix)
+  - [Link Validation Checklist](#link-validation-checklist)
+- [API Reference Format](#api-reference-format)
+  - [For Functions/Methods](#for-functionsmethods)
+  - [method_name(param1: Type1, param2: Type2) -> ReturnType](#methodnameparam1-type1-param2-type2-returntype)
+  - [For Classes](#for-classes)
+- [ClassName](#classname)
+  - [Methods](#methods)
+  - [Properties](#properties)
+  - [property_name](#propertyname)
+- [Writing Guidelines](#writing-guidelines)
+  - [Be Precise](#be-precise)
+  - [Be Concise](#be-concise)
+  - [Be Actionable](#be-actionable)
+  - [Avoid Passive Voice](#avoid-passive-voice)
+- [Formatting Consistency](#formatting-consistency)
+  - [Consistency Checklist](#consistency-checklist)
+  - [Example Consistency](#example-consistency)
+- [Maintenance](#maintenance)
+  - [Monthly Review](#monthly-review)
+  - [Annual Audit](#annual-audit)
+- [Accessibility](#accessibility)
+  - [For Code Examples](#for-code-examples)
+  - [For Complex Topics](#for-complex-topics)
+- [Quality Gate Checklist](#quality-gate-checklist)
+- [Tools and Commands](#tools-and-commands)
+  - [Markdown Linting](#markdown-linting)
+  - [Link Checking](#link-checking)
+  - [Spelling](#spelling)
+- [Examples of Excellent Documentation](#examples-of-excellent-documentation)
+- [Summary](#summary)
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

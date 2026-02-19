@@ -2,28 +2,28 @@
 
 
 <!-- TOC START -->
-- Installation
-- Core Concepts (2 minutes)
+- [Installation](#installation)
+- [Core Concepts (2 minutes)](#core-concepts-2-minutes)
   - [1. Railway-Oriented Programming (FlextResult[T])](#1-railway-oriented-programming-flextresultt)
-  - 2. Dependency Injection (FlextContainer)
-  - 3. Domain-Driven Design (FlextModels)
-- Common Use Cases (3 minutes)
-  - Use Case 1: Validation Pipeline
-  - Use Case 2: Service with Dependency Injection
-  - Use Case 3: Domain Models with Validation
-  - Use Case 4: Dispatcher-Driven CQRS
-- Key Patterns Cheat Sheet
-  - Pattern 1: Success/Failure Handling
-  - Pattern 2: Transform Values
-  - Pattern 3: Chain Operations
-  - Pattern 4: Error Recovery
-  - Pattern 5: Access Both APIs
-- Testing Example
-- Next Steps
-- Common Questions
-- Command Reference
-- Quick Reference
-- Getting Help
+  - [2. Dependency Injection (FlextContainer)](#2-dependency-injection-flextcontainer)
+  - [3. Domain-Driven Design (FlextModels)](#3-domain-driven-design-flextmodels)
+- [Common Use Cases (3 minutes)](#common-use-cases-3-minutes)
+  - [Use Case 1: Validation Pipeline](#use-case-1-validation-pipeline)
+  - [Use Case 2: Service with Dependency Injection](#use-case-2-service-with-dependency-injection)
+  - [Use Case 3: Domain Models with Validation](#use-case-3-domain-models-with-validation)
+  - [Use Case 4: Dispatcher-Driven CQRS](#use-case-4-dispatcher-driven-cqrs)
+- [Key Patterns Cheat Sheet](#key-patterns-cheat-sheet)
+  - [Pattern 1: Success/Failure Handling](#pattern-1-successfailure-handling)
+  - [Pattern 2: Transform Values](#pattern-2-transform-values)
+  - [Pattern 3: Chain Operations](#pattern-3-chain-operations)
+  - [Pattern 4: Error Recovery](#pattern-4-error-recovery)
+  - [Pattern 5: Access Both APIs](#pattern-5-access-both-apis)
+- [Testing Example](#testing-example)
+- [Next Steps](#next-steps)
+- [Common Questions](#common-questions)
+- [Command Reference](#command-reference)
+- [Quick Reference](#quick-reference)
+- [Getting Help](#getting-help)
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

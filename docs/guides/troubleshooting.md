@@ -6,10 +6,39 @@
 > Project profile: `flext-core`
 
 
-
-
-
-
+<!-- TOC START -->
+- Quick Diagnosis
+  - Health Check Commands
+  - System Status
+- Common Issues
+  - 1. Import Errors
+  - r
+  - 2. Type Checking Errors
+  - 3. Test Failures
+  - 4. Configuration Issues
+  - 5. LDIF Processing Issues
+  - 6. Migration Issues
+  - 7. Performance Issues
+- Debugging Techniques
+  - 1. Logging Configuration
+  - 2. Exception Handling
+  - 3. Debug Mode
+  - 4. Step-by-Step Debugging
+- Error Codes Reference
+  - FLEXT Core Errors
+  - LDIF Processing Errors
+  - API Errors
+- Performance Troubleshooting
+  - Memory Issues
+  - CPU Issues
+- Getting Help
+  - Self-Service Resources
+  - Community Support
+  - Reporting Issues
+- Prevention
+  - Best Practices
+- Resources
+<!-- TOC END -->
 
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.
 
@@ -720,7 +749,7 @@ from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
-# Your minimal example here
+### Your minimal example here
 
 4. **Expected vs Actual Behavior**
 - What you expected to happen

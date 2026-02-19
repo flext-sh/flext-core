@@ -2,9 +2,9 @@
 
 
 <!-- TOC START -->
-- Quick Navigation
-- Repository Structure (docs)
-- Notes on Accuracy and Duplication
+- [Quick Navigation](#quick-navigation)
+- [Repository Structure (docs)](#repository-structure-docs)
+- [Notes on Accuracy and Duplication](#notes-on-accuracy-and-duplication)
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

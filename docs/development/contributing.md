@@ -2,37 +2,37 @@
 
 
 <!-- TOC START -->
-- Code of Conduct
-- Canonical Rules
-- Quick Start
-  - Prerequisites
-  - Development Setup
-- How to Contribute
-  - 1. Reporting Issues
-  - 2. Suggesting Features
-- Problem Statement
-- Proposed Solution
-- Use Cases
-- Alternatives Considered
-  - 3. Submitting Pull Requests
-- Development Workflow
-  - Quality Assurance Pipeline
-  - Testing
-  - Code Quality Standards
-  - Debugging and Troubleshooting
-  - Documentation Updates
-- Architecture Guidelines
-  - Adding New Features
-  - Code Organization
-- Review Process
-  - PR Review Checklist
-  - Approval Process
-- Community Guidelines
-  - Communication
-  - Recognition
-- Getting Help
-  - Resources
-  - Support Levels
+- [Code of Conduct](#code-of-conduct)
+- [Canonical Rules](#canonical-rules)
+- [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Development Setup](#development-setup)
+- [How to Contribute](#how-to-contribute)
+  - [1. Reporting Issues](#1-reporting-issues)
+  - [2. Suggesting Features](#2-suggesting-features)
+- [Problem Statement](#problem-statement)
+- [Proposed Solution](#proposed-solution)
+- [Use Cases](#use-cases)
+- [Alternatives Considered](#alternatives-considered)
+  - [3. Submitting Pull Requests](#3-submitting-pull-requests)
+- [Development Workflow](#development-workflow)
+  - [Quality Assurance Pipeline](#quality-assurance-pipeline)
+  - [Testing](#testing)
+  - [Code Quality Standards](#code-quality-standards)
+  - [Debugging and Troubleshooting](#debugging-and-troubleshooting)
+  - [Documentation Updates](#documentation-updates)
+- [Architecture Guidelines](#architecture-guidelines)
+  - [Adding New Features](#adding-new-features)
+  - [Code Organization](#code-organization)
+- [Review Process](#review-process)
+  - [PR Review Checklist](#pr-review-checklist)
+  - [Approval Process](#approval-process)
+- [Community Guidelines](#community-guidelines)
+  - [Communication](#communication)
+  - [Recognition](#recognition)
+- [Getting Help](#getting-help)
+  - [Resources](#resources)
+  - [Support Levels](#support-levels)
 <!-- TOC END -->
 
 Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for contributing to the project.

@@ -2,88 +2,88 @@
 
 
 <!-- TOC START -->
-- Feature Guide Template
-- Overview
-- Basic Usage
-  - Simple Example
-  - Common Patterns
-- API Reference
-  - Method/Class 1
-  - Method/Class 2
-- Best Practices
-  - ✅ DO
-  - ❌ DON'T
-- Common Issues
+- [Feature Guide Template](#feature-guide-template)
+- [Overview](#overview)
+- [Basic Usage](#basic-usage)
+  - [Simple Example](#simple-example)
+  - [Common Patterns](#common-patterns)
+- [API Reference](#api-reference)
+  - [Method/Class 1](#methodclass-1)
+  - [Method/Class 2](#methodclass-2)
+- [Best Practices](#best-practices)
+  - [✅ DO](#-do)
+  - [❌ DON'T](#-dont)
+- [Common Issues](#common-issues)
   - [Issue: [Problem Description]](#issue-problem-description)
   - [Issue: [Problem Description]](#issue-problem-description)
-- Advanced Topics
-- Summary
-- See Also
-- API Reference Template
+- [Advanced Topics](#advanced-topics)
+- [Summary](#summary)
+- [See Also](#see-also)
+- [API Reference Template](#api-reference-template)
 - [[Class/Module Name]](#classmodule-name)
-  - Class Methods
-  - Properties
-- Quality Metrics
-- Usage Examples
-  - Complete Example
-- See Also
-- Troubleshooting Template
+  - [Class Methods](#class-methods)
+  - [Properties](#properties)
+- [Quality Metrics](#quality-metrics)
+- [Usage Examples](#usage-examples)
+  - [Complete Example](#complete-example)
+- [See Also](#see-also)
+- [Troubleshooting Template](#troubleshooting-template)
 - [[Category of Issues]](#category-of-issues)
   - [Issue: [Problem Description]](#issue-problem-description)
 - [[Another Category]](#another-category)
   - [Issue: [Problem Description]](#issue-problem-description)
-- Architecture Decision Record (ADR) Template
+- [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)
 - [ADR-[Number]: [Title]](#adr-number-title)
-  - Problem
-  - Decision
-  - Rationale
-  - Alternatives Considered
-  - Consequences
-  - Related Decisions
-- Best Practices Guide Template
+  - [Problem](#problem)
+  - [Decision](#decision)
+  - [Rationale](#rationale)
+  - [Alternatives Considered](#alternatives-considered)
+  - [Consequences](#consequences)
+  - [Related Decisions](#related-decisions)
+- [Best Practices Guide Template](#best-practices-guide-template)
 - [Principle 1: [Name]](#principle-1-name)
 - [Principle 2: [Name]](#principle-2-name)
-- Common Patterns
+- [Common Patterns](#common-patterns)
   - [Pattern 1: [Name]](#pattern-1-name)
   - [Pattern 2: [Name]](#pattern-2-name)
-- Common Mistakes
+- [Common Mistakes](#common-mistakes)
   - [Mistake 1: [What people get wrong]](#mistake-1-what-people-get-wrong)
-- Summary
-- Quick Reference Card Template
-- Installation
-- Basic Setup
-- Common Tasks
-  - Task 1
-  - Task 2
-- Common Issues
-- Resources
-- Configuration Documentation Template
-- Overview
-- Configuration Methods
-  - Method 1: Configuration File
-  - Method 2: Environment Variables
-  - Method 3: Programmatic
-- Configuration Options
-  - option_name
-- Environment-Specific
-  - Development
-  - Production
-- Complete Example
-- Comparison/Alternatives Template
+- [Summary](#summary)
+- [Quick Reference Card Template](#quick-reference-card-template)
+- [Installation](#installation)
+- [Basic Setup](#basic-setup)
+- [Common Tasks](#common-tasks)
+  - [Task 1](#task-1)
+  - [Task 2](#task-2)
+- [Common Issues](#common-issues)
+- [Resources](#resources)
+- [Configuration Documentation Template](#configuration-documentation-template)
+- [Overview](#overview)
+- [Configuration Methods](#configuration-methods)
+  - [Method 1: Configuration File](#method-1-configuration-file)
+  - [Method 2: Environment Variables](#method-2-environment-variables)
+  - [Method 3: Programmatic](#method-3-programmatic)
+- [Configuration Options](#configuration-options)
+  - [option_name](#optionname)
+- [Environment-Specific](#environment-specific)
+  - [Development](#development)
+  - [Production](#production)
+- [Complete Example](#complete-example)
+- [Comparison/Alternatives Template](#comparisonalternatives-template)
 - [[Feature A] Details](#feature-a-details)
 - [[Feature B] Details](#feature-b-details)
 - [[Feature C] Details](#feature-c-details)
-- Decision Matrix
-- Implementation Guide Template
+- [Decision Matrix](#decision-matrix)
+- [Implementation Guide Template](#implementation-guide-template)
 - [Step 1: [Name]](#step-1-name)
 - [Step 2: [Name]](#step-2-name)
 - [Step 3: [Name]](#step-3-name)
-- Verification
-- Troubleshooting
-- What's Next
-- Tips for Using Templates
-- Example: Using the Feature Guide Template
-- Maintenance
+- [Verification](#verification)
+- [Troubleshooting](#troubleshooting)
+- [What's Next](#whats-next)
+- [Tips for Using Templates](#tips-for-using-templates)
+- [Example: Using the Feature Guide Template](#example-using-the-feature-guide-template)
+- [Maintenance](#maintenance)
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

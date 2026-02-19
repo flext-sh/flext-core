@@ -2,13 +2,13 @@
 
 
 <!-- TOC START -->
-- Scope and Compatibility
-- Navigation
-- 🔧 Quality Assurance
-- Quick Start
-- Core Concepts
-- Style Expectations
-- Support
+- [Scope and Compatibility](#scope-and-compatibility)
+- [Navigation](#navigation)
+- [🔧 Quality Assurance](#-quality-assurance)
+- [Quick Start](#quick-start)
+- [Core Concepts](#core-concepts)
+- [Style Expectations](#style-expectations)
+- [Support](#support)
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

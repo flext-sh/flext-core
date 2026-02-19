@@ -2,21 +2,21 @@
 
 
 <!-- TOC START -->
-- Railway-Oriented Programming
-- Dependency Injection
-- Domain-Driven Design
-- Command Query Responsibility Segregation (CQRS)
-- Event-Driven Architecture
-- Hexagonal Architecture (Ports & Adapters)
-- Layer Caching Pattern
-- Validation Pipeline Pattern
-- Middleware Pipeline Pattern
-- Service Locator Pattern (Anti-Pattern Warning)
-- Adapter Pattern
-- Factory Pattern
-- Summary
-- Next Steps
-- See Also
+- [Railway-Oriented Programming](#railway-oriented-programming)
+- [Dependency Injection](#dependency-injection)
+- [Domain-Driven Design](#domain-driven-design)
+- [Command Query Responsibility Segregation (CQRS)](#command-query-responsibility-segregation-cqrs)
+- [Event-Driven Architecture](#event-driven-architecture)
+- [Hexagonal Architecture (Ports & Adapters)](#hexagonal-architecture-ports-adapters)
+- [Layer Caching Pattern](#layer-caching-pattern)
+- [Validation Pipeline Pattern](#validation-pipeline-pattern)
+- [Middleware Pipeline Pattern](#middleware-pipeline-pattern)
+- [Service Locator Pattern (Anti-Pattern Warning)](#service-locator-pattern-anti-pattern-warning)
+- [Adapter Pattern](#adapter-pattern)
+- [Factory Pattern](#factory-pattern)
+- [Summary](#summary)
+- [Next Steps](#next-steps)
+- [See Also](#see-also)
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
