@@ -1,5 +1,19 @@
 # FLEXT-Core Examples
 
+
+<!-- TOC START -->
+- [Quick Start](#quick-start)
+- [Example Categories](#example-categories)
+  - [🚀 Foundation & Core Patterns](#-foundation-core-patterns)
+  - [🔧 Advanced Patterns & Utilities](#-advanced-patterns-utilities)
+  - [🏗️ Application Layer & Integration](#-application-layer-integration)
+- [Example Guide Mapping](#example-guide-mapping)
+- [Expected Output](#expected-output)
+- [Requirements](#requirements)
+- [Next Steps](#next-steps)
+- [See Also](#see-also)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 **Version**: 0.10.0 | **Status**: Production Ready

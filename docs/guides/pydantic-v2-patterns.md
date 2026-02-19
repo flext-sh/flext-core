@@ -1,5 +1,31 @@
 # Pydantic v2 Patterns for FLEXT Ecosystem
 
+
+<!-- TOC START -->
+- [Canonical Rules](#canonical-rules)
+- [Core Principles](#core-principles)
+- [Pattern 1: Basic Model with Constraints](#pattern-1-basic-model-with-constraints)
+- [Pattern 2: ConfigDict for Model Settings](#pattern-2-configdict-for-model-settings)
+- [Pattern 3: Field Validators](#pattern-3-field-validators)
+  - [Single Field Validator](#single-field-validator)
+  - [Validator Modes: before, after, wrap](#validator-modes-before-after-wrap)
+  - [Validate Multiple Fields](#validate-multiple-fields)
+- [Pattern 4: Model Validators (Cross-Field)](#pattern-4-model-validators-cross-field)
+- [Pattern 5: Computed Fields](#pattern-5-computed-fields)
+- [Pattern 6: Annotated Types for Semantic Meaning](#pattern-6-annotated-types-for-semantic-meaning)
+- [Pattern 7: Settings with Environment Variables](#pattern-7-settings-with-environment-variables)
+- [Pattern 8: Custom Types](#pattern-8-custom-types)
+- [Pattern 9: Discriminated Unions for Polymorphism](#pattern-9-discriminated-unions-for-polymorphism)
+- [Pattern 10: JSON Schema Generation](#pattern-10-json-schema-generation)
+- [Integration with FlextResult](#integration-with-flextresult)
+- [Best Practices](#best-practices)
+- [Checklists](#checklists)
+  - [Model Configuration](#model-configuration)
+  - [Field Validation](#field-validation)
+  - [Serialization](#serialization)
+- [See Also](#see-also)
+<!-- TOC END -->
+
 **Status**: Production Ready | **Version**: 0.10.0 | **Target**: flext-core and dependent projects
 
 This guide documents essential Pydantic v2 patterns used throughout the FLEXT ecosystem, with examples from the codebase.

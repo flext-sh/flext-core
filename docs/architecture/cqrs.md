@@ -1,5 +1,47 @@
 # CQRS Architecture
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [FlextHandlers](#flexthandlers)
+  - [Current Implementation (V1)](#current-implementation-v1)
+  - [Execution Pipeline](#execution-pipeline)
+  - [Handler Configuration](#handler-configuration)
+  - [Metrics and Context (V1 – Manual)](#metrics-and-context-v1-manual)
+- [FlextDispatcher](#flextdispatcher)
+  - [Current Implementation (V1)](#current-implementation-v1)
+  - [Reliability Patterns](#reliability-patterns)
+  - [Dispatch Flow](#dispatch-flow)
+  - [Handler Registration](#handler-registration)
+- [Integration with FlextService](#integration-with-flextservice)
+- [Modernization Roadmap](#modernization-roadmap)
+  - [Current State (V1)](#current-state-v1)
+  - [Planned Phases](#planned-phases)
+  - [Phase 1: FlextMixins.CQRS](#phase-1-flextmixinscqrs)
+  - [Phase 2: Dispatcher DI](#phase-2-dispatcher-di)
+- [Handler Patterns](#handler-patterns)
+  - [V1 Handler (Current Production)](#v1-handler-current-production)
+  - [V2 Handler (Target - Phase 3+)](#v2-handler-target-phase-3)
+  - [Migration Path](#migration-path)
+- [Modernization Roadmap](#modernization-roadmap)
+  - [Current State (V1) vs Target (V2)](#current-state-v1-vs-target-v2)
+  - [Timeline](#timeline)
+  - [Problems Addressed](#problems-addressed)
+  - [Solution Strategy](#solution-strategy)
+- [TODO Backlog](#todo-backlog)
+- [Testing Guidance](#testing-guidance)
+  - [Test Structure](#test-structure)
+  - [Running Tests](#running-tests)
+  - [Performance Benchmarks](#performance-benchmarks)
+  - [Success Metrics by Version](#success-metrics-by-version)
+- [References](#references)
+  - [Internal](#internal)
+  - [External Resources](#external-resources)
+- [Next Steps](#next-steps)
+- [See Also](#see-also)
+- [Verification Commands](#verification-commands)
+<!-- TOC END -->
+
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
 **Python:** 3.13+ | **Pydantic:** 2.x
 

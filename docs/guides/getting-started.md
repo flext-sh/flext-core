@@ -1,463 +1,378 @@
-# Getting Started with FLEXT-Core
+<!-- Generated from docs/guides/getting-started.md for flext-core. -->
+<!-- Source of truth: workspace docs/guides/. -->
 
-Quick start guide for using FLEXT-Core v0.10.0 - the foundation library providing railway-oriented programming, dependency injection, and domain-driven design patterns with Python 3.13+.
+# flext-core - Getting Started with FLEXT
+
+> Project profile: `flext-core`
+
+
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [What is FLEXT](#what-is-flext)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+  - [Basic Installation](#basic-installation)
+  - [Development Installation](#development-installation)
+  - [Docker Installation](#docker-installation)
+- [Your First FLEXT Application](#your-first-flext-application)
+  - [1. Basic Setup](#1-basic-setup)
+  - [2. Using flext-ldif for LDIF Processing](#2-using-flext-ldif-for-ldif-processing)
+  - [3. Railway-Oriented Error Handling](#3-railway-oriented-error-handling)
+  - [4. CQRS Pattern with Commands and Queries](#4-cqrs-pattern-with-commands-and-queries)
+- [Configuration](#configuration)
+  - [Basic Configuration](#basic-configuration)
+  - [Programmatic Configuration](#programmatic-configuration)
+- [Next Steps](#next-steps)
+  - [Explore the Ecosystem](#explore-the-ecosystem)
+  - [Learn Key Patterns](#learn-key-patterns)
+  - [Build Real Applications](#build-real-applications)
+- [Getting Help](#getting-help)
+- [What's Next](#whats-next)
+<!-- TOC END -->
+
+## Table of Contents
+
+- [Getting Started with FLEXT](#getting-started-with-flext)
+  - [What is FLEXT](#what-is-flext)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [Basic Installation](#basic-installation)
+- [Install core framework](#install-core-framework)
+- [Install LDIF processing (most common use case)](#install-ldif-processing-most-common-use-case)
+- [Install additional libraries as needed](#install-additional-libraries-as-needed)
+  - [Development Installation](#development-installation)
+- [Clone the repository](#clone-the-repository)
+- [Create virtual environment](#create-virtual-environment)
+- [Install in development mode](#install-in-development-mode)
+- [Install development dependencies](#install-development-dependencies)
+  - [Docker Installation](#docker-installation)
+- [Build FLEXT image](#build-flext-image)
+- [Run FLEXT container](#run-flext-container)
+  - [Your First FLEXT Application](#your-first-flext-application)
+    - [1. Basic Setup](#1-basic-setup)
+- [Create dependency injection container](#create-dependency-injection-container)
+- [Register services (example)](#register-services-example)
+- [container.register(IService, ServiceImplementation())](#containerregisteriservice-serviceimplementation)
+  - [2. Using flext-ldif for LDIF Processing](#2-using-flext-ldif-for-ldif-processing)
+- [Initialize LDIF API](#initialize-ldif-api)
+- [Parse LDIF content](#parse-ldif-content)
+  - [3. Railway-Oriented Error Handling](#3-railway-oriented-error-handling)
+- [Usage](#usage)
+  - [4. CQRS Pattern with Commands and Queries](#4-cqrs-pattern-with-commands-and-queries)
+- [Setup dispatcher](#setup-dispatcher)
+- [Use the dispatcher](#use-the-dispatcher)
+  - [Configuration](#configuration)
+    - [Basic Configuration](#basic-configuration)
+- [Set configuration](#set-configuration)
+  - [Programmatic Configuration](#programmatic-configuration)
+- [Create custom configuration](#create-custom-configuration)
+- [Use configuration](#use-configuration)
+  - [Next Steps](#next-steps)
+    - [Explore the Ecosystem](#explore-the-ecosystem)
+    - [Learn Key Patterns](#learn-key-patterns)
+    - [Build Real Applications](#build-real-applications)
+  - [Getting Help](#getting-help)
+  - [What's Next](#whats-next)
+
+Welcome to FLEXT! This guide will help you get started with the FLEXT ecosystem quickly and efficiently.
+
+## What is FLEXT
+
+FLEXT is an enterprise-grade data integration platform built with Python 3.13+ and modern architectural patterns. It provides:
+
+- **Unified API**: Single facade pattern across all libraries
+- **Type Safety**: Full Pydantic v2 integration
+- **Enterprise Patterns**: CQRS, Railway-oriented programming, Dependency Injection
+- **Extensible**: Plugin architecture with flext-core patterns
+- **Production Ready**: Comprehensive testing, monitoring, and error handling
 
 ## Prerequisites
 
-- **Python**: 3.13+ (required)
-- **Poetry**: Latest version (recommended) or pip
-- **Git**: For source checkout
-
-Verify your environment:
-
-```bash
-python --version  # Should be 3.13+
-poetry --version  # Latest Poetry
-```
+- **Python 3.13+**: FLEXT requires Python 3.13 or higher
+- **pip**: For package installation
+- **virtualenv** (recommended): For isolated environments
 
 ## Installation
 
-### From Source
+### Basic Installation
+
+Install FLEXT core and commonly used libraries:
 
 ```bash
-# Clone repository
-git clone https://github.com/flext-sh/flext-core.git
-cd flext-core
+# Install core framework
+pip install flext-core
 
-# Setup development environment (includes pre-commit hooks)
-make setup
+# Install LDIF processing (most common use case)
+pip install flext-ldif
 
-# Or install dependencies only
-make install
+# Install additional libraries as needed
+pip install flext-api flext-auth flext-ldap
 ```
 
-### Verification
+### Development Installation
+
+For development and testing:
 
 ```bash
-# Quick verification
-python -c "import flext_core; print('✅ FLEXT-Core ready')"
+# Clone the repository
+git clone https://github.com/flext-sh/flext.git
+cd flext
 
-# Check version
-python -c "from flext_core import __version__; print(f'FLEXT-Core {__version__}')"
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\\Scripts\\activate
+
+# Install in development mode
+pip install -e .
+
+# Install development dependencies
+pip install -e ".[dev]"
 ```
 
-## Core Concepts
+### Docker Installation
 
-### 1. Railway Pattern (FlextResult)
+For containerized deployments:
 
-Handle errors without exceptions using the Result monad:
+```bash
+# Build FLEXT image
+docker build -t flext:latest -f docker/Dockerfile .
 
-```python
-from flext_core import FlextResult
-
-def divide(a: int, b: int) -> FlextResult[float]:
-    """Division with explicit error handling."""
-    if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
-
-# Usage
-result = divide(10, 2)
-if result.is_success:
-    value = result.value  # Safe: 5.0
-    print(f"Result: {value}")
-else:
-    print(f"Error: {result.error}")
-
-# Chaining operations (railway-oriented composition)
-result = (
-    divide(10, 2)
-    .map(lambda x: x * 2)           # Transform success value
-    .flat_map(lambda x: divide(x, 5))  # Chain another operation
-    .map_error(lambda e: f"Calculation failed: {e}")
-)
+# Run FLEXT container
+docker run -v $(pwd)/data:/app/data flext:latest
 ```
 
-### 2. Dependency Injection (FlextContainer)
+## Your First FLEXT Application
 
-Manage dependencies with the global singleton container:
-
-```python
-from flext_core import FlextContainer, FlextLogger
-
-# Get global container instance
-container = FlextContainer.get_global()
-
-# Register services
-logger = FlextLogger(__name__)
-container.register("logger", logger)
-
-# Retrieve services
-logger_result = container.get("logger")
-if logger_result.is_success:
-    retrieved_logger = logger_result.value
-    retrieved_logger.info("Container working!")
-```
-
-### 3. Domain Modeling (FlextModels)
-
-Create domain entities with Pydantic v2 validation:
+### 1. Basic Setup
 
 ```python
-from flext_core import FlextModels
-
-# Entity - has identity
-class User(FlextModels.Entity):
-    """User entity with validation."""
-    name: str
-    email: str
-    age: int
-
-    def model_post_init(self, __context: object) -> None:
-        """Post-initialization validation."""
-        if self.age < 0:
-            raise ValueError("Age cannot be negative")
-        if "@" not in self.email:
-            raise ValueError("Invalid email format")
-
-# Value Object - compared by value
-class Address(FlextModels.Value):
-    """Address value object."""
-    street: str
-    city: str
-    zip_code: str
-
-# Create instances
-user = User(id="user_123", name="Alice", email="alice@example.com", age=30)
-address = Address(street="123 Main St", city="Springfield", zip_code="12345")
-
-print(f"User: {user.name} ({user.email})")
-```
-
-### 4. Services (FlextService)
-
-Encapsulate business logic in domain services:
-
-```python
-from flext_core import FlextService, FlextLogger, FlextResult, FlextModels
-
-# Reuse User class from previous example
-class User(FlextModels.Entity):
-    name: str
-    email: str
-    age: int
-
-class UserService(FlextService):
-    """User domain service."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.logger = FlextLogger(__name__)
-
-    def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
-        """Create user with validation."""
-        self.logger.info("Creating user", extra={"name": name})
-
-        # Validate
-        if age < 18:
-            return FlextResult[User].fail("User must be 18 or older")
-
-        if "@" not in email:
-            return FlextResult[User].fail("Invalid email format")
-
-        # Create entity
-        try:
-            user = User(id=f"user_{name.lower()}", name=name, email=email, age=age)
-            self.logger.info("User created", extra={"user_id": user.entity_id})
-            return FlextResult[User].ok(user)
-        except ValueError as e:
-            return FlextResult[User].fail(str(e))
-
-# Usage
-service = UserService()
-result = service.create_user("Bob", "bob@example.com", 25)
-
-if result.is_success:
-    user = result.value
-    print(f"✅ Created: {user.name}")
-else:
-    print(f"❌ Error: {result.error}")
-```
-
-### 5. Configuration (FlextSettings)
-
-Manage application configuration with multiple sources:
-
-```python
+from flext_core import FlextBus
 from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
 
-# Define configuration schema
-class AppConfig(FlextSettings):
-    """Application configuration."""
-    app_name: str = "myapp"
-    debug: bool = False
-    max_connections: int = 100
+# Create dependency injection container
+container = FlextContainer()
 
-# Create configuration instance
-config = AppConfig()
-print(f"App: {config.app_name}")
-print(f"Debug: {config.debug}")
+# Register services (example)
+# container.register(IService, ServiceImplementation())
 
-# Create for specific environment
-config = AppConfig()
+print("FLEXT application initialized!")
 ```
 
-### 6. Structured Logging (FlextLogger)
-
-Use structured logging with context propagation:
+### 2. Using flext-ldif for LDIF Processing
 
 ```python
-from flext_core import FlextLogger, FlextResult
+from flext_ldif import FlextLdif
 
-# Create logger
-logger = FlextLogger(__name__)
+# Initialize LDIF API
+ldif = FlextLdif()
 
-# Log with structured data
-logger.info("Application started")
-logger.info("User login", extra={"user_id": "user_123", "ip": "192.168.1.1"})
+# Parse LDIF content
+ldif_content = """dn: cn=test,dc=example,dc=com
+cn: test
+sn: user
+objectClass: inetOrgPerson"""
 
-# Log errors with Result pattern (using divide function from Example 1)
-def divide(a: float, b: float) -> FlextResult[float]:
-    if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
-
-result = divide(10, 0)
-if not result.is_success:
-    logger.error("Calculation failed", extra={"error": result.error})
+result = ldif.parse(ldif_content)
+if result.is_success:
+    entries = result.unwrap()
+    print(f"Successfully parsed {len(entries)} LDIF entries")
+else:
+    print(f"Failed to parse LDIF: {result.failure()}")
 ```
 
-## Complete Example
-
-Here's a complete example combining all concepts:
+### 3. Railway-Oriented Error Handling
 
 ```python
-from flext_core import (
-    FlextModels,
-    FlextService,
-    FlextLogger,
-    FlextResult,
-    FlextContainer,
+from flext_core import FlextBus
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
+
+def process_ldif_data(content: str) -> FlextResult[str, Exception]:
+    # Parse LDIF
+    parse_result = ldif.parse(content)
+    if parse_result.is_failure:
+        return FlextResult.failure(parse_result.failure())
+
+    entries = parse_result.unwrap()
+
+    # Process entries
+    try:
+        processed_data = process_entries(entries)
+        return FlextResult.success(processed_data)
+    except Exception as e:
+        return FlextResult.failure(e)
+
+def process_entries(entries: list) -> str:
+    # Your processing logic here
+    return f"Processed {len(entries)} entries"
+
+# Usage
+result = process_ldif_data(ldif_content)
+if result.is_success:
+    print(f"Success: {result.unwrap()}")
+else:
+    print(f"Error: {result.failure()}")
+```
+
+### 4. CQRS Pattern with Commands and Queries
+
+```python
+from flext_core import FlextBus
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
+from dataclasses import dataclass
+
+@dataclass
+class CreateUserCommand:
+    username: str
+    email: str
+
+@dataclass
+class GetUserQuery:
+    user_id: str
+
+class UserService:
+    def create_user(self, cmd: CreateUserCommand) -> FlextResult[str, Exception]:
+        # Create user logic
+        return FlextResult.success(f"User {cmd.username} created")
+
+    def get_user(self, query: GetUserQuery) -> FlextResult[str, Exception]:
+        # Get user logic
+        return FlextResult.success(f"User {query.user_id} data")
+
+# Setup dispatcher
+dispatcher = FlextDispatcher()
+user_service = UserService()
+
+dispatcher.register_handler(CreateUserCommand, user_service.create_user)
+dispatcher.register_handler(GetUserQuery, user_service.get_user)
+
+# Use the dispatcher
+create_result = dispatcher.dispatch(CreateUserCommand("john", "john@example.com"))
+get_result = dispatcher.dispatch(GetUserQuery("user123"))
+```
+
+## Configuration
+
+### Basic Configuration
+
+FLEXT uses environment variables for configuration:
+
+```bash
+# Set configuration
+export FLEXT_LOG_LEVEL=INFO
+export FLEXT_LDIF_DEFAULT_ENCODING=utf-8
+export FLEXT_LDIF_STRICT_VALIDATION=true
+```
+
+### Programmatic Configuration
+
+```python
+from flext_ldif import FlextLdifSettings
+
+# Create custom configuration
+config = FlextLdifSettings(
+    default_encoding="utf-8",
+    strict_validation=True,
+    servers_enabled=True,
+    batch_size=1000
 )
 
-# 1. Define domain model
-class Product(FlextModels.Entity):
-    """Product entity."""
-    name: str
-    price: float
-    quantity: int
-
-    def model_post_init(self, __context: object) -> None:
-        """Validate product."""
-        if self.price < 0:
-            raise ValueError("Price cannot be negative")
-        if self.quantity < 0:
-            raise ValueError("Quantity cannot be negative")
-
-# 2. Create domain service
-class ProductService(FlextService):
-    """Product management service."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.logger = FlextLogger(__name__)
-        self._products: dict[str, Product] = {}
-
-    def create_product(self, name: str, price: float, quantity: int) -> FlextResult[Product]:
-        """Create a new product."""
-        self.logger.info("Creating product", extra={"name": name})
-
-        # Validation
-        if price <= 0:
-            return FlextResult[Product].fail("Price must be positive")
-
-        # Create entity
-        try:
-            product = Product(
-                id=f"product_{name.lower().replace(' ', '_')}",
-                name=name,
-                price=price,
-                quantity=quantity
-            )
-            self._products[product.entity_id] = product
-            self.logger.info("Product created", extra={"product_id": product.entity_id})
-            return FlextResult[Product].ok(product)
-        except ValueError as e:
-            return FlextResult[Product].fail(str(e))
-
-    def get_product(self, product_id: str) -> FlextResult[Product]:
-        """Get product by ID."""
-        product = self._products.get(product_id)
-        if product is None:
-            return FlextResult[Product].fail(f"Product not found: {product_id}")
-        return FlextResult[Product].ok(product)
-
-# 3. Setup dependency injection
-container = FlextContainer.get_global()
-product_service = ProductService()
-container.register("product_service", product_service)
-
-# 4. Use the service
-service_result = container.get("product_service")
-if service_result.is_success:
-    service = service_result.value
-
-    # Create products
-    laptop = service.create_product("Laptop", 999.99, 10)
-    if laptop.is_success:
-        print(f"✅ Created: {laptop.value.name}")
-
-    mouse = service.create_product("Mouse", 29.99, 50)
-    if mouse.is_success:
-        print(f"✅ Created: {mouse.value.name}")
-
-    # Retrieve product
-    product_result = service.get_product("product_laptop")
-    if product_result.is_success:
-        product = product_result.value
-        print(f"📦 Product: {product.name} - ${product.price}")
-```
-
-## Running Tests
-
-### Quick Test
-
-```bash
-# Run all tests
-make test
-
-# Run with coverage
-make test-coverage
-```
-
-### Specific Tests
-
-```bash
-# Unit tests only
-pytest tests/unit/ -v
-
-# Integration tests
-pytest tests/integration/ -v
-
-# Specific module
-pytest tests/unit/test_result.py -v
+# Use configuration
+ldif = FlextLdif(config=config)
 ```
 
 ## Next Steps
 
-1. **Explore Examples**: Check `examples/` directory for more examples
-2. **Read Architecture**: See [Architecture Overview](../architecture/overview.md) for architecture details
-3. **API Reference**: Check [API Reference](../api-reference/) for complete API documentation
-4. **Development Guide**: See [Development Guide](../development/contributing.md) for contributing guidelines
+### Explore the Ecosystem
 
-## Common Patterns
+1. **flext-core**: Master the core patterns and abstractions
+2. **flext-ldif**: Learn LDIF processing and migration
+3. **flext-api**: Build REST APIs with FLEXT
+4. **flext-auth**: Implement authentication and authorization
+5. **flext-ldap**: Integrate with LDAP servers
 
-### Pattern 1: Validation with Railway
+### Learn Key Patterns
 
-```python
-def validate_and_process(data: dict) -> FlextResult[t.Dict]:
-    """Validate and process data."""
-    return (
-        validate_schema(data)
-        .flat_map(lambda d: validate_business_rules(d))
-        .map(lambda d: transform_data(d))
-        .map_error(lambda e: f"Processing failed: {e}")
-    )
-```
+- **Railway-Oriented Programming**: Functional error handling
+- **CQRS**: Command Query Responsibility Segregation
+- **Dependency Injection**: Managing component dependencies
+- **Domain Events**: Event-driven architecture
 
-### Pattern 2: Service with DI
+### Build Real Applications
 
-```python
-class MyService(FlextService):
-    def __init__(self) -> None:
-        super().__init__()
-        self._container = FlextContainer.get_global()
-        self._logger_result = self._container.get("logger")
-
-    def process(self, data: dict) -> FlextResult[t.Dict]:
-        if self._logger_result.is_success:
-            self._logger_result.value.info("Processing", extra=data)
-        # Business logic here
-        return FlextResult[t.Dict].ok(data)
-```
-
-### Pattern 3: Domain Event
-
-```python
-class Order(FlextModels.AggregateRoot):
-    """Order aggregate root."""
-    items: t.StringList
-    total: float
-
-    def place_order(self) -> FlextResult[bool]:
-        """Place order and emit event."""
-        if self.total <= 0:
-            return FlextResult[bool].fail("Order total must be positive")
-
-        # Emit domain event
-        self.add_domain_event("OrderPlaced", {"order_id": self.entity_id, "total": self.total})
-
-        return FlextResult[bool].ok(True)
-```
-
-## Troubleshooting
-
-### Import Errors
-
-If you get import errors, ensure you're using Python 3.13+:
-
-```bash
-python --version
-# Should be 3.13 or higher
-```
-
-### Type Errors
-
-If you get type errors during development:
-
-```bash
-# Run type checker
-make type-check
-
-# Or directly
-mypy src/
-pyright src/
-```
-
-### Test Failures
-
-If tests fail:
-
-```bash
-# Run tests with verbose output
-pytest tests/ -v --tb=short
-
-# Run specific failing test
-pytest tests/unit/test_result.py::TestFlextResult::test_ok -v
-```
+- **Data Migration**: Migrate LDIF data between LDAP servers
+- **API Development**: Create REST APIs with automatic documentation
+- **Data Processing**: Build data pipelines with FLEXT patterns
+- **Enterprise Integration**: Connect with existing enterprise systems
 
 ## Getting Help
 
-- **Documentation**: Browse `docs/` directory
-- **Issues**: Report issues on GitHub
-- **Examples**: Check `examples/` for working examples
-- **Tests**: Look at `tests/` for usage patterns
+- 📖 **Documentation**: Browse the complete documentation
+- 🐛 **Issues**: Report bugs and request features
+- 💬 **Discussions**: Ask questions and share knowledge
+- 📧 **Support**: Contact the development team
 
-## Related Documentation
+## What's Next
 
-**Within Project**:
+Now that you have FLEXT installed and running, explore these areas:
 
-- [Railway-Oriented Programming](./railway-oriented-programming.md) - FlextResult pattern and error handling
-- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Service composition and DI patterns
-- [Service Patterns](./service-patterns.md) - Domain service implementation patterns
-- [API Reference](../api-reference/foundation.md) - Complete API documentation
-- [Architecture Overview](../architecture/README.md) - System architecture and design patterns
+1. **[Architecture Guide](../architecture/README.md)**: Understand FLEXT's design principles
+2. **[API Reference](../api-reference/README.md)**: Complete API documentation
+3. **[Project Guides](../projects/README.md)**: Deep dive into specific libraries
+4. **[Examples](../../../examples/)**: Real-world usage examples
 
-**External Resources**:
-
-- [PEP 257 - Docstring Conventions](https://peps.python.org/pep-0257/)
-- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
-
----
-
-**Ready to build with FLEXT-Core!** 🚀
+Happy coding with FLEXT! 🚀

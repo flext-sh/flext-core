@@ -19,7 +19,7 @@ from flext_core.dispatcher import FlextDispatcher
 from flext_core.exceptions import FlextExceptions, e
 from flext_core.handlers import FlextHandlers, h
 from flext_core.loggings import FlextLogger
-from flext_core.mixins import FlextMixins, FlextMixins as x
+from flext_core.mixins import FlextMixins, x
 from flext_core.models import FlextModels, m
 from flext_core.protocols import FlextProtocols, p
 from flext_core.registry import FlextRegistry

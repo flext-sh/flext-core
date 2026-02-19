@@ -1,9 +1,10 @@
 # flext-core - Foundation Library
 PROJECT_NAME := flext-core
-COV_DIR := flext_core
-MIN_COVERAGE := 100
-
+ifneq ("$(wildcard ../base.mk)", "")
 include ../base.mk
+else
+include base.mk
+endif
 
 # === PROJECT-SPECIFIC TARGETS ===
 .PHONY: docs docs-serve diagnose doctor deps-update deps-show

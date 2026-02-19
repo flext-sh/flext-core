@@ -1,5 +1,40 @@
 # Pydantic v2 Patterns Guide - Audit Report
 
+
+<!-- TOC START -->
+- [Audit Summary](#audit-summary)
+  - [✅ Guide Accuracy: 10/10](#-guide-accuracy-1010)
+  - [✅ Verified Against Source Code](#-verified-against-source-code)
+- [Detailed Findings](#detailed-findings)
+  - [Pattern 1: Basic Model with Constraints ✅](#pattern-1-basic-model-with-constraints-)
+  - [Pattern 2: ConfigDict for Model Settings ✅](#pattern-2-configdict-for-model-settings-)
+  - [Pattern 3: Field Validators ✅](#pattern-3-field-validators-)
+  - [Pattern 4: Model Validators (Cross-Field) ✅](#pattern-4-model-validators-cross-field-)
+  - [Pattern 5: Computed Fields ✅](#pattern-5-computed-fields-)
+  - [Pattern 6: Annotated Types for Semantic Meaning ✅](#pattern-6-annotated-types-for-semantic-meaning-)
+  - [Pattern 7: Settings with Environment Variables ✅](#pattern-7-settings-with-environment-variables-)
+  - [Pattern 8: Custom Types ✅](#pattern-8-custom-types-)
+  - [Pattern 9: Discriminated Unions for Polymorphism ✅](#pattern-9-discriminated-unions-for-polymorphism-)
+  - [Pattern 10: JSON Schema Generation ✅](#pattern-10-json-schema-generation-)
+- [Critical Discovery: Pure Pydantic v2 Implementation](#critical-discovery-pure-pydantic-v2-implementation)
+- [Quantitative Metrics](#quantitative-metrics)
+  - [Pydantic v2 Pattern Adoption](#pydantic-v2-pattern-adoption)
+  - [Pydantic v1 Legacy Code](#pydantic-v1-legacy-code)
+- [Integration with FlextResult Pattern ✅](#integration-with-flextresult-pattern-)
+- [Cross-Reference Verification](#cross-reference-verification)
+  - [Internal Links ✅](#internal-links-)
+  - [External References ✅](#external-references-)
+  - [Source Line References ⚠️](#source-line-references-)
+- [File Size Accuracy](#file-size-accuracy)
+- [Recommendations](#recommendations)
+  - [High Priority](#high-priority)
+  - [Medium Priority](#medium-priority)
+  - [Low Priority](#low-priority)
+- [Accuracy Assessment](#accuracy-assessment)
+- [Completeness Assessment](#completeness-assessment)
+- [Conclusion](#conclusion)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 **Document**: `docs/guides/pydantic-v2-patterns.md`

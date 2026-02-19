@@ -1,5 +1,11 @@
 # Remaining Docs Audit
 
+
+<!-- TOC START -->
+- [Key Findings](#key-findings)
+- [Recommended Remediations](#recommended-remediations)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 **Scope**: Secondary docs not covered by main audits (standards, guides, improvers)

@@ -1,5 +1,18 @@
 # FLEXT-Core
 
+
+<!-- TOC START -->
+- [🚀 Key Features](#-key-features)
+- [📦 Installation](#-installation)
+- [🛠️ Usage](#-usage)
+  - [Railway-Oriented Results](#railway-oriented-results)
+  - [Dependency Injection](#dependency-injection)
+  - [CQRS Dispatching](#cqrs-dispatching)
+- [🏗️ Architecture](#-architecture)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+<!-- TOC END -->
+
 **FLEXT-Core** is the foundational library for the FLEXT ecosystem, providing a robust set of architectural primitives, patterns, and utilities for building enterprise-grade Python applications. It enforces Railway-Oriented Programming (ROP), Dependency Injection (DI), and Command Query Responsibility Segregation (CQRS) to ensure type safety, scalability, and maintainability.
 
 **Reviewed**: 2026-02-17 | **Version**: 0.10.0-dev

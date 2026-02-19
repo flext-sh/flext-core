@@ -42,7 +42,7 @@ class TestCoverageMapper:
     def __init__(self) -> None:
         """Initialize the test coverage mapper with project paths."""
         super().__init__()
-        self.project_root = Path("/home/marlonsc/flext/flext-core")
+        self.project_root = Path(__file__).resolve().parent.parent
         self.tests_dir = self.project_root / "tests"
         self.src_dir = self.project_root / "src"
 
@@ -329,7 +329,7 @@ def main() -> None:
     report = mapper.generate_consolidation_report()
 
     # Salvar relatório
-    output_path = Path("/home/marlonsc/flext/flext-core") / "TEST_COVERAGE_MAPPING.md"
+    output_path = Path(__file__).resolve().parent.parent / "TEST_COVERAGE_MAPPING.md"
     _ = output_path.write_text(report)
 
     print(f"✅ Mapa de consolidação gerado: {output_path}")

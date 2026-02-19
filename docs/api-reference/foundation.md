@@ -1,5 +1,23 @@
 # Foundation Layers API Reference
 
+
+<!-- TOC START -->
+- [Architecture Overview](#architecture-overview)
+- [Layer 0: Pure Constants](#layer-0-pure-constants)
+  - [FlextConstants - Centralized Defaults](#flextconstants-centralized-defaults)
+  - [t — Type System](#t-type-system)
+  - [p — Runtime Interfaces](#p-runtime-interfaces)
+- [Layer 0.5: Runtime Bridge](#layer-05-runtime-bridge)
+  - [FlextRuntime — External Library Integration](#flextruntime-external-library-integration)
+- [Layer 1: Foundation (Core Primitives)](#layer-1-foundation-core-primitives)
+  - [FlextResult[T] — Railway-Oriented Programming {#flextresult}](#flextresultt-railway-oriented-programming-flextresult)
+  - [FlextContainer — Dependency Injection {#flextcontainer}](#flextcontainer-dependency-injection-flextcontainer)
+  - [FlextExceptions — Exception Hierarchy](#flextexceptions-exception-hierarchy)
+- [Short Alias Reference](#short-alias-reference)
+- [Related Documentation](#related-documentation)
+- [Verification Commands](#verification-commands)
+<!-- TOC END -->
+
 This reference covers Layers 0, 0.5, and 1: the primitives that support dispatcher-driven CQRS without leaking higher-layer dependencies.
 
 Canonical references:

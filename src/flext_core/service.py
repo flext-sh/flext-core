@@ -29,8 +29,8 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.exceptions import FlextExceptions
 from flext_core.handlers import FlextHandlers
-from flext_core.mixins import FlextMixins as x
-from flext_core.models import FlextModels as m
+from flext_core.mixins import x
+from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.settings import FlextSettings

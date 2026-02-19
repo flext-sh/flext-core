@@ -1,5 +1,13 @@
 # Layer 2: Domain API Reference
 
+
+<!-- TOC START -->
+- [Domain Models](#domain-models)
+  - [FlextModels — DDD Base Classes {#flextmodels}](#flextmodels-ddd-base-classes-flextmodels)
+  - [FlextService — Service Base](#flextservice-service-base)
+- [Verification Commands](#verification-commands)
+<!-- TOC END -->
+
 Layer 2 covers Domain-Driven Design building blocks used by command/query handlers and service orchestration.
 
 Canonical references:

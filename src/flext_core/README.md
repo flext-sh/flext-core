@@ -1,5 +1,24 @@
 # FLEXT Core
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Architecture](#architecture)
+  - [Foundation Layer](#foundation-layer)
+  - [Domain Layer](#domain-layer)
+  - [Application Layer](#application-layer)
+  - [Infrastructure Layer](#infrastructure-layer)
+- [Key Components](#key-components)
+- [Usage Examples](#usage-examples)
+  - [Basic Setup](#basic-setup)
+  - [Dependency Injection](#dependency-injection)
+  - [Domain Modeling](#domain-modeling)
+  - [Domain Events and Dispatcher Integration](#domain-events-and-dispatcher-integration)
+  - [CQRS Pattern](#cqrs-pattern)
+- [Dependencies](#dependencies)
+- [Extension Points](#extension-points)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 FLEXT Core is a foundational framework providing core abstractions for building robust, maintainable applications following domain-driven design (DDD) and clean architecture principles.

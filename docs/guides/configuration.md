@@ -1,538 +1,576 @@
-# Configuration Management Guide
+<!-- Generated from docs/guides/configuration.md for flext-core. -->
+<!-- Source of truth: workspace docs/guides/. -->
 
-**Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Layered Configuration
+# flext-core - FLEXT Configuration Guide
 
-Comprehensive guide to managing application configuration with FlextSettings in FLEXT-Core.
+> Project profile: `flext-core`
+
+
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Configuration Sources](#configuration-sources)
+- [Basic Configuration](#basic-configuration)
+  - [Environment Variables](#environment-variables)
+  - [Configuration Files](#configuration-files)
+  - [Programmatic Configuration](#programmatic-configuration)
+- [Project-Specific Configuration](#project-specific-configuration)
+  - [flext-ldif Configuration](#flext-ldif-configuration)
+  - [flext-api Configuration](#flext-api-configuration)
+  - [flext-auth Configuration](#flext-auth-configuration)
+- [Environment-Specific Configuration](#environment-specific-configuration)
+  - [Development Environment](#development-environment)
+  - [Production Environment](#production-environment)
+- [Configuration Validation](#configuration-validation)
+- [Configuration Inheritance](#configuration-inheritance)
+- [Best Practices](#best-practices)
+  - [1. Use Environment Variables for Secrets](#1-use-environment-variables-for-secrets)
+  - [2. Validate Configuration Early](#2-validate-configuration-early)
+  - [3. Use Configuration Classes](#3-use-configuration-classes)
+  - [4. Document Configuration Options](#4-document-configuration-options)
+- [Troubleshooting](#troubleshooting)
+  - [Common Configuration Issues](#common-configuration-issues)
+  - [Debug Configuration](#debug-configuration)
+- [Examples](#examples)
+  - [Complete Configuration Example](#complete-configuration-example)
+- [Reference](#reference)
+<!-- TOC END -->
+
+## Table of Contents
+
+- [FLEXT Configuration Guide](#flext-configuration-guide)
+  - [Overview](#overview)
+  - [Configuration Sources](#configuration-sources)
+  - [Basic Configuration](#basic-configuration)
+    - [Environment Variables](#environment-variables)
+- [Core configuration](#core-configuration)
+- [LDIF processing](#ldif-processing)
+- [API configuration](#api-configuration)
+  - [Configuration Files](#configuration-files)
+- [FLEXT Configuration](#flext-configuration)
+- [LDIF Processing](#ldif-processing)
+- [API Configuration](#api-configuration)
+  - [Programmatic Configuration](#programmatic-configuration)
+- [Core configuration](#core-configuration)
+- [LDIF configuration](#ldif-configuration)
+  - [Project-Specific Configuration](#project-specific-configuration)
+    - [flext-ldif Configuration](#flext-ldif-configuration)
+    - [flext-api Configuration](#flext-api-configuration)
+    - [flext-auth Configuration](#flext-auth-configuration)
+  - [Environment-Specific Configuration](#environment-specific-configuration)
+    - [Development Environment](#development-environment)
+- [config.dev.YAML](#configdevyaml)
+  - [Production Environment](#production-environment)
+- [config.prod.YAML](#configprodyaml)
+  - [Configuration Validation](#configuration-validation)
+  - [Configuration Inheritance](#configuration-inheritance)
+- [Base configuration](#base-configuration)
+- [Extended configuration](#extended-configuration)
+  - [Best Practices](#best-practices)
+    - [1. Use Environment Variables for Secrets](#1-use-environment-variables-for-secrets)
+- [Never put secrets in configuration files](#never-put-secrets-in-configuration-files)
+  - [2. Validate Configuration Early](#2-validate-configuration-early)
+  - [3. Use Configuration Classes](#3-use-configuration-classes)
+  - [4. Document Configuration Options](#4-document-configuration-options)
+  - [Troubleshooting](#troubleshooting)
+    - [Common Configuration Issues](#common-configuration-issues)
+    - [Debug Configuration](#debug-configuration)
+- [Enable debug logging](#enable-debug-logging)
+- [Print configuration](#print-configuration)
+- [Validate configuration](#validate-configuration)
+  - [Examples](#examples)
+    - [Complete Configuration Example](#complete-configuration-example)
+  - [Reference](#reference)
+
+This guide covers how to configure FLEXT for your specific environment and requirements.
 
 ## Overview
 
-**FlextSettings** provides a layered configuration system that supports multiple sources (environment variables, files, programmatic overrides) with type-safe access and validation.
+FLEXT uses a hierarchical configuration system that supports environment variables, configuration files,
+and programmatic configuration. All configuration is validated using Pydantic v2 models for type safety and validation.
 
-**Key Features:**
+## Configuration Sources
 
-- Multiple configuration sources (files, environment variables, programmatic)
-- Type-safe configuration with Pydantic v2 validation
-- Environment-specific configurations
-- Secrets management with sanitization
-- Zero dependencies for Layer 0 configuration constants
+FLEXT loads configuration in the following order (later sources override earlier ones):
 
-## Configuration Sources Hierarchy
+1. **Default values** in Pydantic models
+2. **Environment variables** (prefixed with `FLEXT_`)
+3. **Configuration files** (YAML, JSON, or TOML)
+4. **Programmatic configuration** in code
 
-Configuration is loaded with the following priority (highest to lowest):
+## Basic Configuration
 
-1. **Programmatic overrides** - Passed directly in code
-2. **Environment variables** - System environment
-3. **Configuration files** - `.toml`, `.yaml`, `.env`
-4. **Defaults** - Built-in defaults
+### Environment Variables
 
-Higher priority sources override lower priority ones.
+Set configuration using environment variables with the `FLEXT_` prefix:
 
-## Basic Usage
+```bash
+# Core configuration
+export FLEXT_LOG_LEVEL=INFO
+export FLEXT_DEBUG=false
+export FLEXT_ENVIRONMENT=production
 
-### Creating a Configuration Instance
+# LDIF processing
+export FLEXT_LDIF_DEFAULT_ENCODING=utf-8
+export FLEXT_LDIF_STRICT_VALIDATION=true
+export FLEXT_LDIF_SERVERS_ENABLED=true
+
+# API configuration
+export FLEXT_API_BASE_URL=https://api.example.com
+export FLEXT_API_TIMEOUT=30
+```
+
+### Configuration Files
+
+Create configuration files in YAML, JSON, or TOML format:
+
+**config.YAML:**
+
+```yaml
+# FLEXT Configuration
+log_level: INFO
+debug: false
+environment: production
+
+# LDIF Processing
+ldif:
+  default_encoding: utf-8
+  strict_validation: true
+  servers_enabled: true
+  batch_size: 1000
+
+# API Configuration
+api:
+  base_url: https://api.example.com
+  timeout: 30
+  retry_attempts: 3
+```
+
+### Programmatic Configuration
+
+Configure FLEXT programmatically in your code:
 
 ```python
+from flext_core import FlextBus
 from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
+from flext_ldif import FlextLdifSettings
 
-# Create with default settings
-config = FlextSettings()
-
-# Create with specific environment
-config = FlextSettings(environment='production')
-
-# Create with config files
+# Core configuration
 config = FlextSettings(
-    config_files=['config.toml', 'secrets.env'],
-    environment='production'
+    log_level="INFO",
+    debug=False,
+    environment="production"
 )
 
-# Create with programmatic overrides
-config = FlextSettings(
-    config_files=['config.toml'],
-    overrides={'debug': False, 'log_level': 'WARNING'}
+# LDIF configuration
+ldif_config = FlextLdifSettings(
+    default_encoding="utf-8",
+    strict_validation=True,
+    servers_enabled=True,
+    batch_size=1000
 )
 ```
 
-### Accessing Configuration Values
+## Project-Specific Configuration
+
+### flext-ldif Configuration
 
 ```python
-from flext_core import FlextSettings
+from flext_ldif import FlextLdifSettings
 
-config = FlextSettings()
+config = FlextLdifSettings(
+    # Server-specific settings
+    source_server="oid",
+    target_server="oud",
 
-# Get configuration value with default
-database_url = config.get('database.url', default='sqlite:///:memory:')
+    # Migration options
+    preserve_oid_modifiers=True,
+    handle_schema_extensions=True,
+    validate_entries=True,
 
-# Get required configuration (raises error if missing)
-api_key = config.get('api.key', required=True)
-
-# Get with type casting
-max_connections = config.get('database.max_connections', cast=int, default=10)
-debug_mode = config.get('debug', cast=bool, default=False)
-
-# Get configuration section
-database_config = config.get_section('database')
-if database_config:
-    host = database_config.get('host')
-    port = database_config.get('port', cast=int, default=5432)
-```
-
-## Configuration File Formats
-
-### TOML Configuration
-
-**config.toml:**
-
-```toml
-[application]
-name = "myapp"
-version = "1.0.0"
-debug = false
-
-[database]
-host = "localhost"
-port = 5432
-name = "myapp_db"
-pool_size = 10
-pool_recycle = 3600
-
-[api]
-host = "0.0.0.0"
-port = 8000
-timeout = 30
-max_request_size = 1048576  # 1MB
-
-[logging]
-level = "INFO"
-format = "json"
-output = "stdout"
-
-[email]
-smtp_host = "smtp.example.com"
-smtp_port = 587
-smtp_user = "${EMAIL_SMTP_USER}"
-```
-
-### Environment File (.env)
-
-**.env:**
-
-```env
-# Database secrets
-DATABASE_PASSWORD=secure_password_here
-DATABASE_CONNECTION_STRING=postgresql://user:${DATABASE_PASSWORD}@localhost/myapp
-
-# API keys
-API_KEY=your_api_key_here
-API_SECRET=your_secret_here
-
-# Email configuration
-EMAIL_SMTP_USER=noreply@example.com
-EMAIL_SMTP_PASSWORD=email_password_here
-
-# Logging
-LOG_LEVEL=DEBUG
-```
-
-## Environment-Specific Configurations
-
-### Load Configuration by Environment
-
-```python
-from flext_core import FlextSettings
-import os
-
-# Detect environment
-env = os.getenv('APP_ENV', 'development')
-
-# Load environment-specific config
-config_files = [
-    'config.toml',              # Base configuration
-    f'config.{env}.toml'        # Environment-specific overrides
-]
-
-config = FlextSettings(
-    config_files=config_files,
-    environment=env
+    # Performance settings
+    batch_size=1000,
+    parallel_processing=True,
+    max_workers=4
 )
-
-# Access environment-aware values
-debug = config.get('debug')
-log_level = config.get('logging.level', default='INFO')
-database_url = config.get('database.url')
 ```
 
-### Development vs Production
-
-**config.development.toml:**
-
-```toml
-[application]
-debug = true
-
-[logging]
-level = "DEBUG"
-
-[database]
-url = "sqlite:///./dev.db"
-```
-
-**config.production.toml:**
-
-```toml
-[application]
-debug = false
-
-[logging]
-level = "WARNING"
-
-[database]
-url = "${DATABASE_URL}"
-```
-
-## Type-Safe Configuration
-
-### Using Pydantic Models for Type Safety
+### flext-api Configuration
 
 ```python
-from pydantic import BaseModel, Field
+from flext_api import FlextApiSettings
+
+config = FlextApiSettings(
+    base_url="https://api.example.com",
+    timeout=30,
+    retry_attempts=3,
+    verify_ssl=True,
+    headers={
+        "User-Agent": "FLEXT-API/1.0"
+    }
+)
+```
+
+### flext-auth Configuration
+
+```python
+from flext_auth import FlextAuthSettings
+
+config = FlextAuthSettings(
+    secret_key="your-secret-key",
+    algorithm="HS256",
+    access_token_expire_minutes=30,
+    refresh_token_expire_days=7
+)
+```
+
+## Environment-Specific Configuration
+
+### Development Environment
+
+```yaml
+# config.dev.yaml
+log_level: DEBUG
+debug: true
+environment: development
+
+ldif:
+  strict_validation: false
+  servers_enabled: false
+
+api:
+  base_url: http://localhost:8000
+  timeout: 60
+```
+
+### Production Environment
+
+```yaml
+# config.prod.yaml
+log_level: WARNING
+debug: false
+environment: production
+
+ldif:
+  strict_validation: true
+  servers_enabled: true
+  batch_size: 5000
+
+api:
+  base_url: https://api.production.com
+  timeout: 30
+  retry_attempts: 5
+```
+
+## Configuration Validation
+
+All configuration is validated using Pydantic v2 models:
+
+```python
+from flext_core import FlextBus
 from flext_core import FlextSettings
-from typing import Optional
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
 
-class DatabaseConfig(BaseModel):
-    """Database configuration with validation."""
-    host: str = "localhost"
-    port: int = Field(ge=1, le=65535, default=5432)
-    database: str
-    username: str
-    password: str
-    pool_size: int = Field(ge=1, le=100, default=10)
-    pool_recycle: int = Field(ge=60, default=3600)
-
-class AppConfig(BaseModel):
-    """Application configuration with validation."""
-    name: str
-    version: str
-    debug: bool = False
-    database: DatabaseConfig
-
-# Load and validate configuration
-config = FlextSettings(config_files=['config.toml'])
-
-# Parse into typed model
 try:
-    app_config = AppConfig(
-        name=config.get('application.name'),
-        version=config.get('application.version'),
-        debug=config.get('application.debug', cast=bool),
-        database=DatabaseConfig(
-            host=config.get('database.host'),
-            port=config.get('database.port', cast=int),
-            database=config.get('database.name'),
-            username=config.get('database.username'),
-            password=config.get('database.password'),
-            pool_size=config.get('database.pool_size', cast=int),
-        )
+    config = FlextSettings(
+        log_level="INVALID_LEVEL"  # This will raise ValidationError
     )
-    print(f"✅ Configuration valid: {app_config}")
-except ValueError as e:
-    print(f"❌ Configuration error: {e}")
+except ValidationError as e:
+    print(f"Configuration error: {e}")
 ```
 
-## Secrets Management
+## Configuration Inheritance
 
-### Handling Sensitive Data
+FLEXT supports configuration inheritance for complex setups:
 
 ```python
+from flext_core import FlextBus
 from flext_core import FlextSettings
-import os
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
 
-config = FlextSettings(
-    config_files=['config.toml', '.env'],
-    environment=os.getenv('APP_ENV', 'development')
+# Base configuration
+base_config = FlextSettings(
+    log_level="INFO",
+    environment="production"
 )
 
-# Access secrets (never log these!)
-database_password = config.get('database.password', required=True)
-api_secret = config.get('api.secret', required=True)
-smtp_password = config.get('email.smtp_password', required=True)
-
-# ✅ CORRECT - Use secrets, don't log them
-db_url = f"postgresql://user:{database_password}@localhost/myapp"
-
-# ❌ WRONG - Never log secrets
-logger.info(f"Database password: {database_password}")
-
-# ✅ CORRECT - Log only non-sensitive info
-logger.info("Connecting to database", extra={
-    "database": "myapp",
-    "host": config.get('database.host')
-})
-```
-
-### Environment Variable Substitution
-
-**config.toml:**
-
-```toml
-[database]
-# Environment variables in config automatically expand
-connection_string = "${DATABASE_CONNECTION_STRING}"
-password = "${DATABASE_PASSWORD}"
-
-[api]
-api_key = "${API_KEY}"
-api_secret = "${API_SECRET}"
-```
-
-**Python code:**
-
-```python
-from flext_core import FlextSettings
-
-# Set environment variables
-import os
-os.environ['DATABASE_PASSWORD'] = 'secure_password'
-os.environ['API_KEY'] = 'your_api_key'
-
-config = FlextSettings(config_files=['config.toml'])
-
-# Values automatically expand
-db_password = config.get('database.password')  # "secure_password"
-api_key = config.get('api.api_key')  # "your_api_key"
-```
-
-## Integration with Dependency Injection
-
-### Register Configuration in Container
-
-```python
-from flext_core import FlextSettings, FlextContainer
-
-# Create and validate configuration
-config = FlextSettings(
-    config_files=['config.toml'],
-    environment='production'
+# Extended configuration
+extended_config = FlextSettings(
+    **base_config.dict(),
+    debug=True,  # Override for development
+    custom_setting="value"
 )
-
-# Register in global container
-container = FlextContainer.get_global()
-container.register("config", config, singleton=True)
-
-# Access from anywhere in application
-def get_database_url() -> str:
-    config_result = container.get("config")
-    if config_result.is_failure:
-        raise RuntimeError("Configuration not available")
-
-    config = config_result.value
-    return config.get('database.url', required=True)
 ```
 
 ## Best Practices
 
-### 1. Never Hardcode Configuration
+### 1. Use Environment Variables for Secrets
 
-```python
-# ❌ WRONG - Hardcoded configuration
-database_url = "postgresql://user:password@localhost/myapp"
-
-# ✅ CORRECT - Load from configuration
-config = FlextSettings(config_files=['config.toml'])
-database_url = config.get('database.url', required=True)
+```bash
+# Never put secrets in configuration files
+export FLEXT_DATABASE_PASSWORD=secret_password
+export FLEXT_API_KEY=your_api_key
 ```
 
-### 2. Use Environment-Specific Files
+### 2. Validate Configuration Early
 
 ```python
-# ✅ CORRECT - Different configs per environment
-config_files = [
-    'config.toml',                    # Shared config
-    f'config.{os.getenv("ENV")}.toml' # Environment-specific
-]
-config = FlextSettings(config_files=config_files)
-```
-
-### 3. Validate Configuration Early
-
-```python
-# ✅ CORRECT - Validate during startup
-from pydantic import BaseModel
-
-class AppConfig(BaseModel):
-    database_url: str
-    api_key: str
-    debug: bool = False
-
-try:
-    config = FlextSettings(config_files=['config.toml'])
-    app_config = AppConfig(
-        database_url=config.get('database.url', required=True),
-        api_key=config.get('api.key', required=True),
-        debug=config.get('debug', cast=bool, default=False)
-    )
-except ValueError as e:
-    raise RuntimeError(f"Invalid configuration: {e}")
-```
-
-### 4. Use Type Casting for Safety
-
-```python
-# ✅ CORRECT - Type casting with defaults
-port = config.get('api.port', cast=int, default=8000)
-debug = config.get('debug', cast=bool, default=False)
-timeout = config.get('timeout', cast=float, default=30.0)
-
-# ❌ WRONG - Assuming types
-port = config.get('api.port')  # Could be string!
-```
-
-### 5. Separate Secrets from Configuration
-
-```python
-# ✅ CORRECT - Secrets in .env, config in .toml
-# config.toml
-[database]
-host = "localhost"
-port = 5432
-
-# .env (git-ignored)
-DATABASE_PASSWORD=secret_password
-
-# Python
-config = FlextSettings(config_files=['config.toml', '.env'])
-db_host = config.get('database.host')
-db_password = config.get('database.password')
-```
-
-## Common Patterns
-
-### Application Configuration Class
-
-```python
+from flext_core import FlextBus
 from flext_core import FlextSettings
-from dataclasses import dataclass
-from typing import Optional
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
 
-@dataclass
-class AppConfiguration:
-    """Immutable application configuration."""
-    app_name: str
-    app_version: str
-    debug: bool
-    database_url: str
-    api_port: int
-    log_level: str
+def main():
+    # Validate configuration at startup
+    config = FlextSettings()
 
+    if not config.is_valid():
+        print("Invalid configuration")
+        return 1
+
+    # Continue with application logic
+    return 0
+```
+
+### 3. Use Configuration Classes
+
+```python
+from flext_core import FlextBus
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
+
+class MyAppConfig(FlextSettings):
+    custom_setting: str = "default_value"
+    another_setting: int = 42
+
+    @field_validator('another_setting')
     @classmethod
-    def from_config(cls, config: FlextSettings) -> 'AppConfiguration':
-        """Create configuration from FlextSettings."""
-        return cls(
-            app_name=config.get('app.name', required=True),
-            app_version=config.get('app.version', required=True),
-            debug=config.get('app.debug', cast=bool, default=False),
-            database_url=config.get('database.url', required=True),
-            api_port=config.get('api.port', cast=int, default=8000),
-            log_level=config.get('logging.level', default='INFO')
-        )
-
-# Usage
-config = FlextSettings(config_files=['config.toml'])
-app_config = AppConfiguration.from_config(config)
+    def validate_another_setting(cls, v):
+        if v < 0:
+            raise ValueError('another_setting must be positive')
+        return v
 ```
 
-### Configuration with Sections
+### 4. Document Configuration Options
 
 ```python
-from flext_core import FlextSettings
+class FlextLdifSettings(BaseModel):
+    """Configuration for LDIF processing."""
 
-config = FlextSettings(config_files=['config.toml'])
+    default_encoding: str = Field(
+        default="utf-8",
+        description="Default encoding for LDIF files"
+    )
 
-# Get database section
-db_section = config.get_section('database')
-if db_section:
-    db_host = db_section.get('host')
-    db_port = db_section.get('port', cast=int)
-    db_name = db_section.get('database')
-
-# Get API section
-api_section = config.get_section('api')
-if api_section:
-    api_host = api_section.get('host')
-    api_port = api_section.get('port', cast=int)
-    api_timeout = api_section.get('timeout', cast=int)
+    strict_validation: bool = Field(
+        default=True,
+        description="Enable strict RFC validation"
+    )
 ```
 
 ## Troubleshooting
 
-### Missing Configuration File
+### Common Configuration Issues
+
+1. **Environment Variables Not Loading**
+   - Ensure variables are prefixed with `FLEXT_`
+   - Check for typos in variable names
+   - Verify environment is set before running application
+
+2. **Configuration File Not Found**
+   - Check file path is correct
+   - Ensure file has proper permissions
+   - Verify file format (YAML, JSON, or TOML)
+
+3. **Validation Errors**
+   - Check Pydantic model field types
+   - Verify required fields are provided
+   - Review field validators for constraints
+
+### Debug Configuration
 
 ```python
+from flext_core import FlextBus
 from flext_core import FlextSettings
-import os
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
 
-# ✅ CORRECT - Handle missing files gracefully
-if os.path.exists('config.toml'):
-    config = FlextSettings(config_files=['config.toml'])
+# Enable debug logging
+config = FlextSettings(debug=True)
+
+# Print configuration
+print(config.dict())
+
+# Validate configuration
+if config.is_valid():
+    print("Configuration is valid")
 else:
-    # Use defaults or raise error
+    print("Configuration has errors")
+```
+
+## Examples
+
+### Complete Configuration Example
+
+```python
+#!/usr/bin/env python3
+"""Complete FLEXT configuration example."""
+
+import os
+from flext_core import FlextBus
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
+from flext_ldif import FlextLdifSettings
+from flext_api import FlextApiSettings
+
+def main():
+    # Load configuration from environment
     config = FlextSettings()
-    logger.warning("config.toml not found, using defaults")
+
+    # Configure LDIF processing
+    ldif_config = FlextLdifSettings(
+        source_server=os.getenv("FLEXT_SOURCE_SERVER", "oid"),
+        target_server=os.getenv("FLEXT_TARGET_SERVER", "oud"),
+        batch_size=int(os.getenv("FLEXT_BATCH_SIZE", "1000"))
+    )
+
+    # Configure API client
+    api_config = FlextApiSettings(
+        base_url=os.getenv("FLEXT_API_URL", "http://localhost:8000"),
+        timeout=int(os.getenv("FLEXT_API_TIMEOUT", "30"))
+    )
+
+    print("Configuration loaded successfully")
+    print(f"Log level: {config.log_level}")
+    print(f"LDIF batch size: {ldif_config.batch_size}")
+    print(f"API base URL: {api_config.base_url}")
+
+if __name__ == "__main__":
+    main()
 ```
 
-### Unresolved Configuration Value
+## Reference
 
-```python
-# ✅ CORRECT - Check for required values
-config = FlextSettings(config_files=['config.toml'])
-
-try:
-    database_url = config.get('database.url', required=True)
-except KeyError as e:
-    raise RuntimeError(f"Required configuration missing: {e}")
-```
-
-### Type Casting Errors
-
-```python
-# ✅ CORRECT - Handle type casting errors
-try:
-    port = config.get('api.port', cast=int)
-except ValueError as e:
-    logger.error(f"Invalid port configuration: {e}")
-    port = 8000  # Use default
-```
-
-## Summary
-
-FlextSettings provides:
-
-- ✅ Multiple configuration sources with priority hierarchy
-- ✅ Type-safe access with Pydantic validation
-- ✅ Environment-specific configurations
-- ✅ Secrets management with environment variables
-- ✅ Integration with FLEXT-Core dependency injection
-- ✅ Production-ready error handling
-
-Use FlextSettings to manage all application configuration with confidence and safety.
-
-## Next Steps
-
-1. **Dependency Injection**: See [Advanced Dependency Injection](./dependency-injection-advanced.md) for registering config in container
-2. **Error Handling**: Check [Error Handling Guide](./error-handling.md) for configuration error patterns
-3. **Testing**: Review [Testing Guide](./testing.md) for configuration testing strategies
-4. **Troubleshooting**: See [Troubleshooting Guide](./troubleshooting.md) for configuration debugging
-5. **API Reference**: Consult [API Reference: FlextSettings](../api-reference/infrastructure.md#flextsettings) for complete API
-
-## See Also
-
-- [Dependency Injection Advanced](./dependency-injection-advanced.md) - Registering configuration in container
-- [Error Handling Guide](./error-handling.md) - Handling configuration errors
-- [Testing Guide](./testing.md) - Testing with configuration
-- [Troubleshooting Guide](./troubleshooting.md) - Configuration troubleshooting
-- [API Reference: FlextSettings](../api-reference/infrastructure.md#flextsettings) - Complete configuration API
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
-
----
-
-**Example from FLEXT Ecosystem**: See `src/flext_tests/test_config.py` for comprehensive configuration testing examples.
+- [FLEXT Core Configuration](../api-reference/foundation.md#configuration)
+- [Environment Variables](../api-reference/foundation.md#environment-variables)
+- [Pydantic v2 Documentation](https://docs.pydantic.dev/2.0/)
+- [Configuration Best Practices](../standards/configuration.md)

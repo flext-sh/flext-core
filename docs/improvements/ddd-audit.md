@@ -1,5 +1,11 @@
 # Domain-Driven Design Guide - Audit Report
 
+
+<!-- TOC START -->
+- [Findings](#findings)
+- [Recommended Actions](#recommended-actions)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 **Document**: `docs/guides/domain-driven-design.md`

@@ -1,780 +1,766 @@
-# Testing Guide
+<!-- Generated from docs/guides/testing.md for flext-core. -->
+<!-- Source of truth: workspace docs/guides/. -->
 
-Comprehensive guide to testing FLEXT-Core applications with pytest, fixtures, and domain-driven testing patterns.
+# flext-core - FLEXT Testing Guide
 
-## Canonical Rules
+> Project profile: `flext-core`
 
-- Follow root governance in `CLAUDE.md`.
-- Keep tests deterministic and aligned with `FlextResult[T]` contracts.
-- Keep examples in sync with current `pytest` and project quality gates.
+
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Test Structure](#test-structure)
+- [Test Categories](#test-categories)
+  - [Unit Tests](#unit-tests)
+  - [Integration Tests](#integration-tests)
+  - [End-to-End Tests](#end-to-end-tests)
+- [Test Markers](#test-markers)
+- [Running Tests](#running-tests)
+  - [Basic Test Execution](#basic-test-execution)
+  - [Coverage Analysis](#coverage-analysis)
+  - [Parallel Test Execution](#parallel-test-execution)
+- [Test Fixtures](#test-fixtures)
+  - [Pytest Fixtures](#pytest-fixtures)
+  - [Using Fixtures](#using-fixtures)
+- [Mocking and Stubbing](#mocking-and-stubbing)
+  - [Unit Test Mocking](#unit-test-mocking)
+  - [Integration Test Stubbing](#integration-test-stubbing)
+- [Performance Testing](#performance-testing)
+  - [Load Testing](#load-testing)
+  - [Memory Testing](#memory-testing)
+- [Test Data Management](#test-data-management)
+  - [Test Fixtures Directory](#test-fixtures-directory)
+  - [Loading Test Data](#loading-test-data)
+- [Continuous Integration](#continuous-integration)
+  - [GitHub Actions Workflow](#github-actions-workflow)
+- [Best Practices](#best-practices)
+  - [1. Test Naming](#1-test-naming)
+  - [2. Test Organization](#2-test-organization)
+  - [3. Assertion Quality](#3-assertion-quality)
+  - [4. Test Independence](#4-test-independence)
+- [Troubleshooting](#troubleshooting)
+  - [Common Test Issues](#common-test-issues)
+- [Resources](#resources)
+<!-- TOC END -->
+
+## Table of Contents
+
+- [FLEXT Testing Guide](#flext-testing-guide)
+  - [Overview](#overview)
+  - [Test Structure](#test-structure)
+  - [Test Categories](#test-categories)
+    - [Unit Tests](#unit-tests)
+    - [Integration Tests](#integration-tests)
+    - [End-to-End Tests](#end-to-end-tests)
+  - [Test Markers](#test-markers)
+  - [Running Tests](#running-tests)
+    - [Basic Test Execution](#basic-test-execution)
+- [Run all tests](#run-all-tests)
+- [Run specific test categories](#run-specific-test-categories)
+- [Run with markers](#run-with-markers)
+  - [Coverage Analysis](#coverage-analysis)
+- [Run with coverage](#run-with-coverage)
+- [Coverage with specific threshold](#coverage-with-specific-threshold)
+- [Coverage for specific module](#coverage-for-specific-module)
+  - [Parallel Test Execution](#parallel-test-execution)
+- [Run tests in parallel](#run-tests-in-parallel)
+- [Specific number of workers](#specific-number-of-workers)
+  - [Test Fixtures](#test-fixtures)
+    - [Pytest Fixtures](#pytest-fixtures)
+    - [Using Fixtures](#using-fixtures)
+  - [Mocking and Stubbing](#mocking-and-stubbing)
+    - [Unit Test Mocking](#unit-test-mocking)
+    - [Integration Test Stubbing](#integration-test-stubbing)
+  - [Performance Testing](#performance-testing)
+    - [Load Testing](#load-testing)
+    - [Memory Testing](#memory-testing)
+  - [Test Data Management](#test-data-management)
+    - [Test Fixtures Directory](#test-fixtures-directory)
+    - [Loading Test Data](#loading-test-data)
+- [Usage](#usage)
+  - [Continuous Integration](#continuous-integration)
+    - [GitHub Actions Workflow](#github-actions-workflow)
+  - [Best Practices](#best-practices)
+    - [1. Test Naming](#1-test-naming)
+- [✅ GOOD - Descriptive test names](#-good---descriptive-test-names)
+- [❌ BAD - Vague test names](#-bad---vague-test-names)
+  - [2. Test Organization](#2-test-organization)
+  - [3. Assertion Quality](#3-assertion-quality)
+- [✅ GOOD - Specific assertions](#-good---specific-assertions)
+- [❌ BAD - Vague assertions](#-bad---vague-assertions)
+  - [4. Test Independence](#4-test-independence)
+- [✅ GOOD - Independent tests](#-good---independent-tests)
+- [❌ BAD - Dependent tests](#-bad---dependent-tests)
+  - [Troubleshooting](#troubleshooting)
+    - [Common Test Issues](#common-test-issues)
+  - [Resources](#resources)
+
+This guide covers testing strategies, best practices, and procedures for FLEXT applications and libraries.
 
 ## Overview
 
-FLEXT-Core applications use **pytest** for testing with emphasis on:
+FLEXT maintains comprehensive test coverage across all **33 projects** with the following standards:
 
-- **Domain logic testing**: Business rules and patterns
-- **Integration testing**: Service interactions
-- **Unit testing**: Individual components with clear separation
+- **85%+ coverage** for foundation libraries (flext-core)
+- **75%+ coverage** for applications and domain libraries
+- **100% test pass rate** across all projects
+- **Zero Pyrefly errors** in strict mode (successor to MyPy)
+- **Zero Ruff violations** in production code
 
-**Key principles:**
+## Test Structure
 
-- Railway-oriented patterns make testing straightforward
-- FlextResult enables deterministic testing
-- No mocking for happy path - use real implementations
-- Mock external services only (APIs, databases)
-
-## Setup
-
-### Project Configuration
-
-**pyproject.toml:**
-
-```toml
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-markers = [
-    "unit: Unit tests for isolated components",
-    "integration: Integration tests for service interactions",
-    "slow: Slow tests requiring external services",
-]
-
-[tool.coverage.run]
-source = ["src"]
-omit = ["*/tests/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-]
-```
-
-### Test Structure
+FLEXT uses a hierarchical test structure:
 
 ```
 tests/
-├── unit/
-│   ├── test_result.py
-│   ├── test_container.py
-│   ├── test_models.py
-│   └── test_services.py
-├── integration/
-│   ├── test_user_service.py
-│   ├── test_order_service.py
-│   └── test_api_integration.py
-├── fixtures/
-│   ├── conftest.py
-│   └── factories.py
-└── __init__.py
+├── unit/           # Unit tests (fast, isolated)
+├── integration/    # Integration tests (component interaction)
+├── e2e/           # End-to-end tests (full workflow)
+├── fixtures/      # Test data and fixtures
+└── conftest.py    # Pytest configuration
 ```
 
-## Unit Testing
+## Test Categories
 
-### Testing FlextResult
+### Unit Tests
+
+Test individual functions and classes in isolation:
 
 ```python
 import pytest
-from flext_core import FlextResult
-
-class TestFlextResult:
-    """Test FlextResult[T] monad."""
-
-    def test_ok_creates_success_result(self):
-        """Test creating success result."""
-        result = FlextResult[int].ok(42)
-        assert result.is_success
-        assert not result.is_failure
-        assert result.value == 42
-
-    def test_fail_creates_failure_result(self):
-        """Test creating failure result."""
-        result = FlextResult[int].fail("Error message")
-        assert result.is_failure
-        assert not result.is_success
-        assert result.error == "Error message"
-
-    def test_map_transforms_success_value(self):
-        """Test map on success result."""
-        result = (
-            FlextResult[int].ok(5)
-            .map(lambda x: x * 2)
-            .map(lambda x: x + 1)
-        )
-        assert result.is_success
-        assert result.value == 11
-
-    def test_map_ignores_failure(self):
-        """Test map on failure result."""
-        result = (
-            FlextResult[int].fail("Error")
-            .map(lambda x: x * 2)
-        )
-        assert result.is_failure
-        assert result.error == "Error"
-
-    def test_flat_map_chains_operations(self):
-        """Test flat_map for chaining."""
-        def double(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x * 2)
-
-        result = (
-            FlextResult[int].ok(5)
-            .flat_map(double)
-            .flat_map(double)
-        )
-        assert result.value == 20
-
-    def test_flat_map_stops_on_failure(self):
-        """Test flat_map stops at first failure."""
-        def double_if_positive(x: int) -> FlextResult[int]:
-            if x < 0:
-                return FlextResult[int].fail("Negative number")
-            return FlextResult[int].ok(x * 2)
-
-        result = (
-            FlextResult[int].ok(5)
-            .flat_map(double_if_positive)
-            .flat_map(lambda x: FlextResult[int].fail("Next error"))
-            .flat_map(lambda x: double_if_positive(x))
-        )
-        assert result.is_failure
-        assert result.error == "Next error"
-
-    def test_filter_succeeds_for_true_predicate(self):
-        """Test filter with passing predicate."""
-        result = (
-            FlextResult[int].ok(15)
-            .filter(lambda x: x > 10, "Value too small")
-        )
-        assert result.is_success
-        assert result.value == 15
-
-    def test_filter_fails_for_false_predicate(self):
-        """Test filter with failing predicate."""
-        result = (
-            FlextResult[int].ok(5)
-            .filter(lambda x: x > 10, "Value too small")
-        )
-        assert result.is_failure
-        assert result.error == "Value too small"
-
-    def test_unwrap_or_returns_value_on_success(self):
-        """Test unwrap_or on success."""
-        result = FlextResult[int].ok(42)
-        assert result.unwrap_or(0) == 42
-
-    def test_unwrap_or_returns_default_on_failure(self):
-        """Test unwrap_or on failure."""
-        result = FlextResult[int].fail("Error")
-        assert result.unwrap_or(0) == 0
-```
-
-### Testing Domain Logic
-
-```python
-import pytest
-from flext_core import FlextResult, FlextModels
-
-class User(FlextModels.Entity):
-    """User entity for testing."""
-    name: str
-    email: str
-    age: int
-
-def validate_user(user: User) -> FlextResult[User]:
-    """Validate user data."""
-    if not user.name:
-        return FlextResult[User].fail("Name is required")
-    if user.age < 18:
-        return FlextResult[User].fail("User must be 18+")
-    return FlextResult[User].ok(user)
-
-class TestUserValidation:
-    """Test user validation logic."""
-
-    def test_valid_user_passes(self):
-        """Test valid user passes validation."""
-        user = User(id="1", name="Alice", email="alice@example.com", age=25)
-        result = validate_user(user)
-        assert result.is_success
-        assert result.value.name == "Alice"
-
-    def test_empty_name_fails(self):
-        """Test empty name fails validation."""
-        user = User(id="2", name="", email="bob@example.com", age=30)
-        result = validate_user(user)
-        assert result.is_failure
-        assert "Name is required" in result.error
-
-    def test_underage_user_fails(self):
-        """Test underage user fails validation."""
-        user = User(id="3", name="Charlie", email="charlie@example.com", age=16)
-        result = validate_user(user)
-        assert result.is_failure
-        assert "18+" in result.error
-
-    @pytest.mark.parametrize("age", [17, 18, 19, 65, 100])
-    def test_age_boundary_cases(self, age):
-        """Test age validation boundary cases."""
-        user = User(id="test", name="Test", email="test@example.com", age=age)
-        result = validate_user(user)
-        if age >= 18:
-            assert result.is_success
-        else:
-            assert result.is_failure
-```
-
-### Testing Services
-
-```python
-import pytest
-from flext_core import FlextService, FlextResult, FlextContainer
-
-class UserService(FlextService):
-    """User management service."""
-
-    def __init__(self):
-        super().__init__()
-        self.users = {}
-
-    def create_user(self, user_id: str, name: str, email: str) -> FlextResult[dict]:
-        """Create new user."""
-        if user_id in self.users:
-            return FlextResult[dict].fail("User already exists")
-        if not name:
-            return FlextResult[dict].fail("Name is required")
-
-        user = {"id": user_id, "name": name, "email": email}
-        self.users[user_id] = user
-        return FlextResult[dict].ok(user)
-
-    def get_user(self, user_id: str) -> FlextResult[dict]:
-        """Get user by ID."""
-        if user_id not in self.users:
-            return FlextResult[dict].fail(f"User {user_id} not found")
-        return FlextResult[dict].ok(self.users[user_id])
-
-class TestUserService:
-    """Test UserService."""
-
-    @pytest.fixture
-    def service(self):
-        """Create service instance."""
-        return UserService()
-
-    def test_create_user_succeeds(self, service):
-        """Test creating user."""
-        result = service.create_user("1", "Alice", "alice@example.com")
-        assert result.is_success
-        assert result.value["name"] == "Alice"
-
-    def test_create_duplicate_user_fails(self, service):
-        """Test creating duplicate user fails."""
-        service.create_user("1", "Alice", "alice@example.com")
-        result = service.create_user("1", "Bob", "bob@example.com")
-        assert result.is_failure
-        assert "already exists" in result.error
-
-    def test_get_user_succeeds(self, service):
-        """Test getting existing user."""
-        service.create_user("1", "Alice", "alice@example.com")
-        result = service.get_user("1")
-        assert result.is_success
-        assert result.value["name"] == "Alice"
-
-    def test_get_nonexistent_user_fails(self, service):
-        """Test getting nonexistent user fails."""
-        result = service.get_user("999")
-        assert result.is_failure
-        assert "not found" in result.error
-```
-
-## Integration Testing
-
-### Testing Service Interactions
-
-```python
-import pytest
-from flext_core import FlextContainer, FlextResult
-
-class EmailService:
-    """Email sending service."""
-
-    def send_welcome_email(self, email: str) -> FlextResult[str]:
-        """Send welcome email."""
-        if not email or "@" not in email:
-            return FlextResult[str].fail("Invalid email")
-        return FlextResult[str].ok(f"Email sent to {email}")
-
-class UserRegistrationService:
-    """User registration with email notification."""
-
-    def __init__(self, user_service, email_service):
-        self.user_service = user_service
-        self.email_service = email_service
-
-    def register_user(
-        self, user_id: str, name: str, email: str
-    ) -> FlextResult[dict]:
-        """Register user and send welcome email."""
-        return (
-            self.user_service.create_user(user_id, name, email)
-            .flat_map(
-                lambda user: self.email_service.send_welcome_email(email)
-                .map(lambda _: user)
-            )
-        )
-
-class TestUserRegistration:
-    """Test user registration flow."""
-
-    @pytest.fixture
-    def services(self):
-        """Setup services."""
-        user_service = UserService()
-        email_service = EmailService()
-        registration_service = UserRegistrationService(
-            user_service, email_service
-        )
-        return {
-            "registration": registration_service,
-            "user": user_service,
-            "email": email_service,
-        }
-
-    def test_successful_registration(self, services):
-        """Test complete registration flow."""
-        result = services["registration"].register_user(
-            "1", "Alice", "alice@example.com"
-        )
-        assert result.is_success
-        user = result.value
-        assert user["name"] == "Alice"
-        assert services["user"].get_user("1").is_success
-
-    def test_registration_fails_with_invalid_email(self, services):
-        """Test registration fails with invalid email."""
-        result = services["registration"].register_user(
-            "1", "Alice", "invalid-email"
-        )
-        assert result.is_failure
-        assert "Invalid email" in result.error
-```
-
-## Fixtures and Factories
-
-### Shared Fixtures
-
-**tests/fixtures/conftest.py:**
-
-```python
-import pytest
-from flext_core import FlextContainer, FlextLogger
-
-@pytest.fixture
-def container():
-    """Provide clean container for each test."""
-    container = FlextContainer.get_global()
-    container.clear()  # Clean state
-    return container
-
-@pytest.fixture
-def logger():
-    """Provide logger for tests."""
-    return FlextLogger("test")
-
-@pytest.fixture(autouse=True)
-def reset_container():
-    """Reset container after each test."""
-    yield
-    container = FlextContainer.get_global()
-    container.clear()
-```
-
-### Factory Pattern for Test Data
-
-**tests/fixtures/factories.py:**
-
-```python
+from flext_core import FlextBus
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
 from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
+from flext_ldif import FlextLdif
 
-class UserFactory:
-    """Factory for creating test users."""
+class TestLdifParsing:
+    def test_parse_valid_ldif(self):
+        """Test parsing valid LDIF content."""
+        ldif = FlextLdif()
+        content = """dn: cn=test,dc=example,dc=com
+cn: test
+objectClass: inetOrgPerson"""
 
-    @staticmethod
-    def create(
-        user_id: str = "test_user_1",
-        name: str = "Test User",
-        email: str = "test@example.com",
-        age: int = 25
-    ) -> 'User':
-        """Create user instance."""
-        return User(
-            id=user_id,
-            name=name,
-            email=email,
-            age=age
+        result = ldif.parse(content)
+
+        assert result.is_success
+        entries = result.unwrap()
+        assert len(entries) == 1
+        assert entries[0].dn == "cn=test,dc=example,dc=com"
+
+    def test_parse_invalid_ldif(self):
+        """Test parsing invalid LDIF content."""
+        ldif = FlextLdif()
+        content = "invalid ldif content"
+
+        result = ldif.parse(content)
+
+        assert result.is_failure
+        assert "parsing" in str(result.failure()).lower()
+```
+
+### Integration Tests
+
+Test component interactions and workflows:
+
+```python
+import pytest
+from flext_core import FlextBus
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
+from flext_ldif import FlextLdif, FlextLdifSettings
+
+class TestLdifIntegration:
+    def test_ldif_with_container(self):
+        """Test LDIF processing with dependency injection."""
+        container = FlextContainer.get_global()
+
+        # Register LDIF service
+        config = FlextLdifSettings(batch_size=100)
+        ldif = FlextLdif(config=config)
+        container.register("ldif", ldif)
+
+        # Retrieve and use service
+        ldif_result = container.get("ldif")
+        assert ldif_result.is_success
+
+        ldif_service = ldif_result.unwrap()
+        # Test LDIF operations
+        result = ldif_service.parse("dn: test")
+        assert result.is_success
+```
+
+### End-to-End Tests
+
+Test complete workflows and user scenarios:
+
+```python
+import pytest
+from pathlib import Path
+from flext_ldif import FlextLdif, FlextLdifSettings
+
+class TestLdifMigration:
+    def test_oid_to_oud_migration(self):
+        """Test complete OID to OUD migration workflow."""
+        # Setup test data
+        input_dir = Path("test_data/oid")
+        output_dir = Path("test_data/oud")
+
+        input_dir.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create sample LDIF file
+        sample_ldif = """dn: cn=test,dc=example,dc=com
+cn: test
+objectClass: inetOrgPerson"""
+
+        with open(input_dir / "test.ldif", 'w') as f:
+            f.write(sample_ldif)
+
+        # Configure and run migration
+        config = FlextLdifSettings(
+            source_server="oid",
+            target_server="oud",
+            preserve_oid_modifiers=True
         )
 
-    @staticmethod
-    def create_batch(count: int) -> list:
-        """Create multiple users."""
-        return [
-            UserFactory.create(
-                user_id=f"user_{i}",
-                name=f"User {i}",
-                email=f"user{i}@example.com"
-            )
-            for i in range(count)
-        ]
+        ldif = FlextLdif(config=config)
+        result = ldif.migrate(input_dir, output_dir, "oid", "oud")
 
-# Usage in tests
-def test_with_factory():
-    user = UserFactory.create(name="Alice")
-    assert user.name == "Alice"
-
-    users = UserFactory.create_batch(5)
-    assert len(users) == 5
+        # Verify migration
+        assert result.is_success
+        report = result.unwrap()
+        assert report.successful_entries > 0
+        assert (output_dir / "test.ldif").exists()
 ```
 
 ## Test Markers
 
-### Running Specific Test Categories
+FLEXT uses pytest markers to categorize tests:
+
+```python
+import pytest
+
+@pytest.mark.unit
+def test_unit_function():
+    """Unit test - fast and isolated."""
+    pass
+
+@pytest.mark.integration
+def test_integration_workflow():
+    """Integration test - component interaction."""
+    pass
+
+@pytest.mark.e2e
+def test_end_to_end_scenario():
+    """End-to-end test - complete workflow."""
+    pass
+
+@pytest.mark.slow
+def test_performance_benchmark():
+    """Slow test - performance or load testing."""
+    pass
+```
+
+## Running Tests
+
+### Basic Test Execution
 
 ```bash
-# Run only unit tests
-pytest -m unit
+# Run all tests
+make test
 
-# Run only integration tests
-pytest -m integration
+# Run specific test categories
+pytest tests/unit/        # Unit tests only
+pytest tests/integration/ # Integration tests only
+pytest tests/e2e/         # End-to-end tests only
 
-# Run everything except slow tests
-pytest -m "not slow"
-
-# Run with verbose output
-pytest -v
-
-# Run specific test file
-pytest tests/unit/test_result.py
-
-# Run specific test class
-pytest tests/unit/test_result.py::TestFlextResult
-
-# Run specific test
-pytest tests/unit/test_result.py::TestFlextResult::test_ok_creates_success_result
-
-# Run with coverage
-pytest --cov=src --cov-report=html
+# Run with markers
+pytest -m unit           # Unit tests
+pytest -m integration    # Integration tests
+pytest -m "not slow"     # Skip slow tests
 ```
 
-## Parametrized Testing
+### Coverage Analysis
+
+Coverage thresholds and source directories are configured in each project's `pyproject.toml` under `[tool.coverage]`. Use `make test` which reads these automatically.
+
+```bash
+# Run with coverage (reads [tool.coverage] from pyproject.toml)
+make test
+
+# HTML coverage report
+pytest --cov --cov-report=html
+```
+
+### Parallel Test Execution
+
+```bash
+# Run tests in parallel
+pytest -n auto
+
+# Specific number of workers
+pytest -n 4
+```
+
+## Test Fixtures
+
+### Pytest Fixtures
 
 ```python
 import pytest
+from pathlib import Path
+from flext_ldif import FlextLdif, FlextLdifSettings
 
-class TestUserAgeValidation:
-    """Test user age validation with parameters."""
-
-    @pytest.mark.parametrize("age,should_pass", [
-        (15, False),    # Too young
-        (17, False),    # Too young
-        (18, True),     # Minimum age
-        (25, True),     # Adult
-        (65, True),     # Senior
-        (100, True),    # Very old
-    ])
-    def test_age_validation(self, age, should_pass):
-        """Test age validation for various ages."""
-        result = validate_user_age(age)
-        if should_pass:
-            assert result.is_success
-        else:
-            assert result.is_failure
-
-    @pytest.mark.parametrize("email", [
-        "valid@example.com",
-        "user.name@example.co.uk",
-        "test+tag@domain.com",
-    ])
-    def test_valid_emails(self, email):
-        """Test valid email formats."""
-        result = validate_email(email)
-        assert result.is_success
-
-    @pytest.mark.parametrize("email", [
-        "invalid",
-        "missing@domain",
-        "@nodomain.com",
-    ])
-    def test_invalid_emails(self, email):
-        """Test invalid email formats."""
-        result = validate_email(email)
-        assert result.is_failure
-```
-
-## FLEXT Testing Policy: NO MOCKS
-
-**CRITICAL POLICY**: FLEXT ecosystem follows a **zero-tolerance policy for mocks** in tests. All tests must use real implementations.
-
-### Why No Mocks
-
-1. **Real Behavior**: Mocks hide real implementation issues and false positives
-2. **Integration Testing**: Tests verify actual system behavior, not mocked behavior
-3. **Type Safety**: Real implementations ensure type checking works correctly
-4. **Pattern Validation**: Tests validate FLEXT patterns (FlextResult, DI, etc.) with real code
-
-### Using Real Implementations
-
-Instead of mocking, use real implementations with test-friendly configurations:
-
-```python
-import pytest
-from flext_core import r, FlextContainer, FlextLogger, FlextResult
-
-class TestExternalServiceIntegration:
-    """Test with real service implementations."""
-
-    @pytest.fixture
-    def container(self):
-        """Provide container with real services."""
-        container = FlextContainer.get_global()
-        container.clear()
-
-        # Register real logger
-        logger = FlextLogger("test")
-        container.register("logger", logger)
-
-        # Register real service (not a mock)
-        service = ExternalApiService()
-        container.register("api_service", service)
-
-        return container
-
-    def test_api_call_success(self, container):
-        """Test successful API call with real service."""
-        service_result = container.get("api_service")
-        assert service_result.is_success
-
-        service = service_result.value
-        result = service.get_user(1)
-
-        assert result.is_success
-        assert "id" in result.value
-
-    def test_with_real_dependencies(self, container):
-        """Test with real dependency injection."""
-        # Register real email service
-        email_service = EmailService()
-        container.register("email_service", email_service)
-
-        # Create service with real dependencies
-        user_service_result = container.get("user_service")
-        if user_service_result.is_failure:
-            # Create service if not registered
-            user_service = UserService()
-            user_service.email_service = email_service
-            container.register("user_service", user_service)
-            user_service_result = container.get("user_service")
-
-        user_service = user_service_result.value
-        result = user_service.register_and_email_user("1", "Alice")
-
-        assert result.is_success
-        # Verify real behavior, not mocked calls
-```
-
-### Test-Friendly Services
-
-Design services to be testable with real implementations:
-
-```python
-from flext_core import r, FlextService
-
-class UserService(FlextService):
-    """User service designed for real testing."""
-
-    def __init__(self, email_service: EmailService | None = None):
-        super().__init__()
-        # Accept real service instance for testing
-        self.email_service = email_service or EmailService()
-
-    def register_user(self, user_id: str, email: str) -> FlextResult[dict]:
-        """Register user with real email service."""
-        # Real implementation - no mocks needed
-        user_result = self._create_user(user_id, email)
-        if user_result.is_failure:
-            return user_result
-
-        # Use real email service
-        email_result = self.email_service.send_welcome(email)
-        return email_result.flat_map(lambda _: user_result)
-```
-
-### When Real Services Are Expensive
-
-For expensive operations (database, network), use test doubles with real interfaces:
-
-```python
-from flext_core import r
-
-class InMemoryDatabase:
-    """Test double with real interface (not a mock)."""
-
-    def __init__(self):
-        self.data: dict[str, dict] = {}
-
-    def save_user(self, user: dict) -> FlextResult[dict]:
-        """Real implementation of database interface."""
-        self.data[user["id"]] = user
-        return r.ok(user)
-
-    def get_user(self, user_id: str) -> FlextResult[dict]:
-        """Real implementation of database interface."""
-        if user_id in self.data:
-            return r.ok(self.data[user_id])
-        return r.fail(f"User {user_id} not found")
-
-# In tests
 @pytest.fixture
-def test_database():
-    """Real test double, not a mock."""
-    return InMemoryDatabase()
+def ldif_config():
+    """Provide LDIF configuration for tests."""
+    return FlextLdifSettings(
+        batch_size=10,
+        strict_validation=False
+    )
 
-def test_user_service_with_test_database(test_database):
-    """Test with real test double."""
-    service = UserService(database=test_database)
-    result = service.create_user("1", "Alice")
+@pytest.fixture
+def ldif_service(ldif_config):
+    """Provide LDIF service instance."""
+    return FlextLdif(config=ldif_config)
+
+@pytest.fixture
+def sample_ldif_content():
+    """Provide sample LDIF content for tests."""
+    return """dn: cn=test,dc=example,dc=com
+cn: test
+sn: user
+objectClass: inetOrgPerson"""
+
+@pytest.fixture
+def temp_directories(tmp_path):
+    """Provide temporary directories for file tests."""
+    input_dir = tmp_path / "input"
+    output_dir = tmp_path / "output"
+
+    input_dir.mkdir()
+    output_dir.mkdir()
+
+    return input_dir, output_dir
+```
+
+### Using Fixtures
+
+```python
+def test_ldif_parsing(ldif_service, sample_ldif_content):
+    """Test LDIF parsing with fixtures."""
+    result = ldif_service.parse(sample_ldif_content)
     assert result.is_success
 
-    # Verify real behavior
-    get_result = test_database.get_user("1")
-    assert get_result.is_success
-    assert get_result.value["name"] == "Alice"
+def test_file_migration(ldif_service, temp_directories):
+    """Test file migration with temporary directories."""
+    input_dir, output_dir = temp_directories
+
+    # Create test file
+    test_file = input_dir / "test.ldif"
+    test_file.write_text("dn: test")
+
+    # Run migration
+    result = ldif_service.migrate(input_dir, output_dir, "oid", "oud")
+    assert result.is_success
 ```
 
-### Summary: NO MOCKS Policy
+## Mocking and Stubbing
 
-- ✅ **DO**: Use real implementations
-- ✅ **DO**: Use test-friendly service design
-- ✅ **DO**: Use test doubles (real classes with simple implementations)
-- ❌ **DON'T**: Use unittest.mock.Mock
-- ❌ **DON'T**: Use unittest.mock.patch
-- ❌ **DON'T**: Use pytest monkeypatch for mocking
-- ❌ **DON'T**: Mock FlextResult, FlextContainer, or core FLEXT components
+### Unit Test Mocking
 
-## Coverage and Quality
+```python
+from unittest.mock import Mock, patch
+from flext_core import FlextBus
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
 
-### Running with Coverage Report
+def test_with_mocked_dependency():
+    """Test with mocked external dependency."""
+    with patch('flext_ldif.external_service') as mock_service:
+        # Configure mock
+        mock_service.process.return_value = FlextResult.ok("processed")
 
-```bash
-# Generate coverage report
-pytest --cov=src --cov-report=html --cov-report=term
+        # Test function that uses mock
+        result = my_function()
 
-# Set minimum coverage threshold
-pytest --cov=src --cov-fail-under=80
+        # Verify mock was called
+        mock_service.process.assert_called_once()
+        assert result.is_success
+```
 
-# Show coverage for specific module
-pytest --cov=src.flext_core.result --cov-report=term-missing
+### Integration Test Stubbing
+
+```python
+from unittest.mock import Mock
+from flext_core import FlextBus
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import FlextProcessors
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import FlextResult
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
+
+def test_with_stubbed_service():
+    """Test with stubbed service in container."""
+    container = FlextContainer.get_global()
+
+    # Create stub service
+    stub_service = Mock()
+    stub_service.process.return_value = FlextResult.ok("stubbed")
+
+    # Register stub
+    container.register("external_service", stub_service)
+
+    # Test integration
+    result = integration_function()
+    assert result.is_success
+```
+
+## Performance Testing
+
+### Load Testing
+
+```python
+import pytest
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+@pytest.mark.slow
+def test_concurrent_processing():
+    """Test concurrent processing performance."""
+    ldif = FlextLdif()
+    content = "dn: test\ncn: test"
+
+    def process_entry():
+        return ldif.parse(content)
+
+    # Run concurrent processing
+    start_time = time.time()
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(process_entry) for _ in range(100)]
+        results = [future.result() for future in futures]
+
+    end_time = time.time()
+
+    # Verify all succeeded
+    assert all(result.is_success for result in results)
+
+    # Verify performance (should complete in < 1 second)
+    assert (end_time - start_time) < 1.0
+```
+
+### Memory Testing
+
+```python
+import pytest
+import psutil
+import os
+
+@pytest.mark.slow
+def test_memory_usage():
+    """Test memory usage during large file processing."""
+    process = psutil.Process(os.getpid())
+    initial_memory = process.memory_info().rss
+
+    # Process large dataset
+    ldif = FlextLdif()
+    large_content = "dn: test\ncn: test\n" * 10000
+
+    result = ldif.parse(large_content)
+    assert result.is_success
+
+    # Check memory usage (should not exceed 100MB)
+    current_memory = process.memory_info().rss
+    memory_used = current_memory - initial_memory
+
+    assert memory_used < 100 * 1024 * 1024  # 100MB
+```
+
+## Test Data Management
+
+### Test Fixtures Directory
+
+```
+tests/
+├── fixtures/
+│   ├── ldif/
+│   │   ├── valid.ldif
+│   │   ├── invalid.ldif
+│   │   └── large.ldif
+│   ├── config/
+│   │   ├── dev.yaml
+│   │   └── prod.yaml
+│   └── data/
+│       ├── users.json
+│       └── schema.json
+```
+
+### Loading Test Data
+
+```python
+import json
+from pathlib import Path
+
+def load_test_fixture(fixture_name: str) -> str:
+    """Load test fixture from fixtures directory."""
+    fixture_path = Path(__file__).parent / "fixtures" / fixture_name
+    return fixture_path.read_text()
+
+def load_json_fixture(fixture_name: str) -> dict[str, object]:
+    """Load JSON test fixture."""
+    fixture_path = Path(__file__).parent / "fixtures" / fixture_name
+    return json.loads(fixture_path.read_text())
+
+# Usage
+def test_with_fixture():
+    """Test using loaded fixture data."""
+    ldif_content = load_test_fixture("ldif/valid.ldif")
+    config_data = load_json_fixture("config/dev.yaml")
+
+    # Use fixture data in test
+    result = process_ldif(ldif_content, config_data)
+    assert result.is_success
+```
+
+## Continuous Integration
+
+### GitHub Actions Workflow
+
+```yaml
+name: Test Suite
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.13]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          poetry install
+
+      - name: Run tests
+        run: |
+          poetry run pytest --cov=src --cov-report=xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
 ```
 
 ## Best Practices
 
-### 1. Test One Thing Per Test
+### 1. Test Naming
 
 ```python
-# ✅ CORRECT - One assertion per test
-def test_create_user_with_valid_data():
-    """Test creating user with valid data."""
-    result = service.create_user("1", "Alice", "alice@example.com")
+# ✅ GOOD - Descriptive test names
+def test_parse_valid_ldif_returns_success():
+    """Test that parsing valid LDIF returns success result."""
+    pass
+
+def test_parse_invalid_ldif_returns_failure():
+    """Test that parsing invalid LDIF returns failure result."""
+    pass
+
+# ❌ BAD - Vague test names
+def test_parse():
+    pass
+
+def test_ldif():
+    pass
+```
+
+### 2. Test Organization
+
+```python
+class TestLdifParsing:
+    """Test LDIF parsing functionality."""
+
+    def test_parse_valid_single_entry(self):
+        """Test parsing single valid LDIF entry."""
+        pass
+
+    def test_parse_valid_multiple_entries(self):
+        """Test parsing multiple valid LDIF entries."""
+        pass
+
+    def test_parse_invalid_format(self):
+        """Test parsing invalid LDIF format."""
+        pass
+
+class TestLdifMigration:
+    """Test LDIF migration functionality."""
+
+    def test_migrate_oid_to_oud(self):
+        """Test OID to OUD migration."""
+        pass
+```
+
+### 3. Assertion Quality
+
+```python
+# ✅ GOOD - Specific assertions
+def test_parse_result():
+    result = ldif.parse(content)
+
+    assert result.is_success
+    entries = result.unwrap()
+    assert len(entries) == 1
+    assert entries[0].dn == "cn=test,dc=example,dc=com"
+    assert "cn" in entries[0].attributes
+
+# ❌ BAD - Vague assertions
+def test_parse_result():
+    result = ldif.parse(content)
+    assert result  # Too vague
+```
+
+### 4. Test Independence
+
+```python
+# ✅ GOOD - Independent tests
+def test_parse_valid_ldif():
+    ldif = FlextLdif()  # Fresh instance
+    result = ldif.parse("dn: test")
     assert result.is_success
 
-def test_create_user_with_missing_name():
-    """Test creating user with missing name."""
-    result = service.create_user("1", "", "alice@example.com")
+def test_parse_invalid_ldif():
+    ldif = FlextLdif()  # Fresh instance
+    result = ldif.parse("invalid")
     assert result.is_failure
 
-# ❌ WRONG - Multiple things in one test
-def test_user_service():
-    result1 = service.create_user("1", "Alice", "alice@example.com")
-    assert result1.is_success
-    result2 = service.get_user("1")
-    assert result2.is_success
-    result3 = service.delete_user("1")
-    assert result3.is_success
-```
+# ❌ BAD - Dependent tests
+ldif = FlextLdif()  # Shared instance
 
-### 2. Use Descriptive Test Names
-
-```python
-# ✅ CORRECT - Clear what's being tested
-def test_create_user_succeeds_with_valid_data():
-    pass
-
-def test_create_user_fails_with_missing_name():
-    pass
-
-# ❌ WRONG - Vague names
-def test_user():
-    pass
-
-def test_create():
-    pass
-```
-
-### 3. Use Fixtures for Setup
-
-```python
-# ✅ CORRECT - Fixture for common setup
-@pytest.fixture
-def authenticated_user(service):
-    return service.create_user("1", "Alice", "alice@example.com").value
-
-def test_update_user_profile(authenticated_user):
-    result = service.update_profile(authenticated_user["id"], "New Name")
+def test_parse_valid_ldif():
+    result = ldif.parse("dn: test")
     assert result.is_success
 
-# ❌ WRONG - Repeated setup in each test
-def test_update_user_profile_1():
-    user = service.create_user("1", "Alice", "alice@example.com").value
-    result = service.update_profile(user["id"], "New Name")
-    assert result.is_success
-```
-
-### 4. Test Happy and Sad Paths
-
-```python
-# ✅ CORRECT - Test both success and failure
-def test_withdraw_succeeds_with_sufficient_funds():
-    result = account.withdraw(100)
-    assert result.is_success
-
-def test_withdraw_fails_with_insufficient_funds():
-    result = account.withdraw(1000)
+def test_parse_invalid_ldif():
+    result = ldif.parse("invalid")
     assert result.is_failure
-    assert "Insufficient funds" in result.error
-
-# ❌ WRONG - Only testing happy path
-def test_withdraw():
-    result = account.withdraw(100)
-    assert result.is_success
 ```
 
-## Summary
+## Troubleshooting
 
-FLEXT-Core testing:
+### Common Test Issues
 
-- ✅ Use pytest for all testing
-- ✅ Test domain logic thoroughly
-- ✅ Use FlextResult to test both success and failure paths
-- ✅ Use fixtures for shared setup
-- ✅ Mock only external services
-- ✅ Parametrize tests for multiple scenarios
-- ✅ Aim for 75%+ test coverage minimum
+1. **Import Errors**
 
-This approach makes tests maintainable, deterministic, and focused on behavior.
+   ```bash
+   # Set PYTHONPATH
+   export PYTHONPATH=src
+   pytest
+   ```
+
+2. **Fixture Not Found**
+
+   ```python
+   # Check fixture scope and dependencies
+   @pytest.fixture(scope="function")
+   def my_fixture():
+       return "value"
+   ```
+
+3. **Test Timeout**
+
+   ```bash
+   # Increase timeout
+   pytest --timeout=300
+   ```
+
+4. **Coverage Issues**
+
+   ```bash
+   # Check coverage configuration
+   pytest --cov=src --cov-report=term-missing
+   ```
+
+## Resources
+
+- [Pytest Documentation](https://docs.pytest.org/)
+- [Coverage.py Documentation](https://coverage.readthedocs.io/)
+- [FLEXT Quality Standards](../standards/testing.md)
+- [Test Examples](../examples/testing/)
+- [CI/CD Configuration](../../.github/workflows/)

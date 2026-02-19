@@ -1,5 +1,48 @@
 # Railway-Oriented Programming with FlextResult[T]
 
+
+<!-- TOC START -->
+- [Core Concept: The Railway Metaphor](#core-concept-the-railway-metaphor)
+- [FlextResult[T]: The Railway Implementation](#flextresultt-the-railway-implementation)
+  - [Creating Results](#creating-results)
+  - [Checking Result State](#checking-result-state)
+  - [Accessing Success Values](#accessing-success-values)
+- [Monadic Operations: Composing Railways](#monadic-operations-composing-railways)
+  - [flat_map: Operating on Success](#flatmap-operating-on-success)
+  - [map: Transforming Success Values](#map-transforming-success-values)
+  - [filter: Conditional Success](#filter-conditional-success)
+  - [recover: Error Recovery with Fallback](#recover-error-recovery-with-fallback)
+  - [map_error: Transform Errors](#maperror-transform-errors)
+  - [safe_call: Exception-Safe Function Wrapping](#safecall-exception-safe-function-wrapping)
+  - [from_exception: Exception Conversion](#fromexception-exception-conversion)
+  - [or_else: Alternative Results](#orelse-alternative-results)
+- [Real-World Patterns](#real-world-patterns)
+  - [Pattern 1: Form Validation](#pattern-1-form-validation)
+  - [Pattern 2: API Call with Fallbacks](#pattern-2-api-call-with-fallbacks)
+  - [Pattern 3: Database Transaction](#pattern-3-database-transaction)
+  - [Pattern 4: Configuration Loading](#pattern-4-configuration-loading)
+- [Advanced Techniques](#advanced-techniques)
+  - [Combining Multiple Results](#combining-multiple-results)
+  - [Error Recovery](#error-recovery)
+  - [Resource Management](#resource-management)
+- [Decorator Composition with Railway Pattern](#decorator-composition-with-railway-pattern)
+  - [Combining @retry + @railway](#combining-retry-railway)
+  - [Combining @timeout + @railway](#combining-timeout-railway)
+  - [Complete Decorator Composition: @retry + @timeout + @railway](#complete-decorator-composition-retry-timeout-railway)
+  - [Decorator Composition with @combined](#decorator-composition-with-combined)
+  - [Railway Pattern with Decorator Error Handling](#railway-pattern-with-decorator-error-handling)
+  - [See Also](#see-also)
+- [Best Practices](#best-practices)
+  - [1. Always Return FlextResult from Operations](#1-always-return-flextresult-from-operations)
+  - [2. Include Error Context](#2-include-error-context)
+  - [3. Use Monadic Composition](#3-use-monadic-composition)
+  - [4. Preserve Success Values](#4-preserve-success-values)
+- [Backward Compatibility APIs](#backward-compatibility-apis)
+- [Key Takeaways](#key-takeaways)
+- [Next Steps](#next-steps)
+- [See Also](#see-also)
+<!-- TOC END -->
+
 **Status**: Production Ready | **Version**: 0.10.0 | **Coverage**: 100% type-safe
 
 Railway-Oriented Programming (ROP) is a functional programming pattern that treats error handling as a first-class citizen. Instead of raising exceptions, operations return results that encapsulate either success or failure, enabling predictable error propagation through monadic composition.

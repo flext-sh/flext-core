@@ -1,5 +1,40 @@
 # Anti-Patterns and Best Practices
 
+
+<!-- TOC START -->
+- [Table of Contents](#table-of-contents)
+- [Error Handling Anti-Patterns](#error-handling-anti-patterns)
+  - [Anti-Pattern 1: Using Exceptions for Business Logic](#anti-pattern-1-using-exceptions-for-business-logic)
+  - [Anti-Pattern 2: Swallowing Errors](#anti-pattern-2-swallowing-errors)
+  - [Anti-Pattern 3: Ignoring Error Information](#anti-pattern-3-ignoring-error-information)
+- [Type Safety Anti-Patterns](#type-safety-anti-patterns)
+  - [Anti-Pattern 4: Using `Any` Type](#anti-pattern-4-using-any-type)
+  - [Anti-Pattern 5: Untyped Container Retrieval](#anti-pattern-5-untyped-container-retrieval)
+  - [Anti-Pattern 6: Type Ignores Without Justification](#anti-pattern-6-type-ignores-without-justification)
+- [Architecture Anti-Patterns](#architecture-anti-patterns)
+  - [Anti-Pattern 7: Circular Dependencies](#anti-pattern-7-circular-dependencies)
+  - [Anti-Pattern 8: Multiple Exports per Module](#anti-pattern-8-multiple-exports-per-module)
+  - [Anti-Pattern 9: God Objects](#anti-pattern-9-god-objects)
+- [Dependency Injection Anti-Patterns](#dependency-injection-anti-patterns)
+  - [Anti-Pattern 10: Creating New Containers](#anti-pattern-10-creating-new-containers)
+  - [Anti-Pattern 11: Not Checking Container Results](#anti-pattern-11-not-checking-container-results)
+- [Model Anti-Patterns](#model-anti-patterns)
+  - [Anti-Pattern 12: Validation in Models Without FlextResult](#anti-pattern-12-validation-in-models-without-flextresult)
+  - [Anti-Pattern 13: Mutable Value Objects](#anti-pattern-13-mutable-value-objects)
+- [Configuration Anti-Patterns](#configuration-anti-patterns)
+  - [Anti-Pattern 14: Hardcoded Configuration](#anti-pattern-14-hardcoded-configuration)
+  - [Anti-Pattern 15: No Configuration Validation](#anti-pattern-15-no-configuration-validation)
+- [Summary: Anti-Pattern Checklist](#summary-anti-pattern-checklist)
+  - [Error Handling](#error-handling)
+  - [Type Safety](#type-safety)
+  - [Architecture](#architecture)
+  - [Dependency Injection](#dependency-injection)
+  - [Models](#models)
+  - [Configuration](#configuration)
+- [Next Steps](#next-steps)
+- [See Also](#see-also)
+<!-- TOC END -->
+
 **Status**: Production Ready | **Version**: 0.10.0 | **Focus**: Common FLEXT-Core mistakes and solutions
 
 This guide documents common anti-patterns found in FLEXT ecosystem projects and their correct solutions. Every pattern includes code examples from the actual codebase.

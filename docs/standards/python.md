@@ -1,5 +1,38 @@
 # Python Coding Standards
 
+
+<!-- TOC START -->
+- [Type Annotations](#type-annotations)
+  - [ZERO TOLERANCE: Complete Type Annotations](#zero-tolerance-complete-type-annotations)
+  - [Type Hints for Collections](#type-hints-for-collections)
+  - [Type Variables for Generics](#type-variables-for-generics)
+- [Code Style](#code-style)
+  - [Line Length: 79 Characters (Strict)](#line-length-79-characters-strict)
+  - [Imports: Organize by Category](#imports-organize-by-category)
+  - [Naming Conventions](#naming-conventions)
+- [Documentation](#documentation)
+  - [Docstrings: Google Style](#docstrings-google-style)
+  - [Module-Level Docstrings](#module-level-docstrings)
+- [Error Handling](#error-handling)
+  - [Railway-Oriented Always](#railway-oriented-always)
+  - [No Bare Except](#no-bare-except)
+- [Testing](#testing)
+  - [Test Naming](#test-naming)
+  - [One Assertion Per Test (Mostly)](#one-assertion-per-test-mostly)
+- [Linting Rules](#linting-rules)
+  - [Ruff: Zero Violations](#ruff-zero-violations)
+  - [Type Checking: Pyrefly Strict](#type-checking-pyrefly-strict)
+  - [Format with Ruff](#format-with-ruff)
+- [Specific Rules](#specific-rules)
+  - [No Mutable Default Arguments](#no-mutable-default-arguments)
+  - [No Global State](#no-global-state)
+  - [Comprehensions Over Loops](#comprehensions-over-loops)
+  - [Context Managers for Resources](#context-managers-for-resources)
+- [Quality Gate Checklist](#quality-gate-checklist)
+- [Common Violations and Fixes](#common-violations-and-fixes)
+- [Philosophy](#philosophy)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 FLEXT-Core enforces **zero-tolerance** quality standards. These are non-negotiable.

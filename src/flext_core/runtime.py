@@ -347,7 +347,7 @@ class FlextRuntime:
         """
         # #region agent log
         # import json
-        # with open('/home/marlonsc/flext/.cursor/debug.log', 'a') as f:
+        # with open('.cursor/debug.log', 'a') as f:
         #     f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "runtime.py:317", "message": "Entering is_dict_like", "data": {"value": str(value)}, "timestamp": Date.now()}) + '\n')
         # #endregion
         if isinstance(value, dict):
@@ -380,7 +380,7 @@ class FlextRuntime:
         """
         # #region agent log
         # import json
-        # with open('/home/marlonsc/flext/.cursor/debug.log', 'a') as f:
+        # with open('.cursor/debug.log', 'a') as f:
         #     f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "runtime.py:343", "message": "Entering is_list_like", "data": {"value": str(value)}, "timestamp": Date.now()}) + '\n')
         # #endregion
         return isinstance(value, list)
@@ -412,7 +412,7 @@ class FlextRuntime:
         """
         # #region agent log
         # import json
-        # with open('/home/marlonsc/flext/.cursor/debug.log', 'a') as f:
+        # with open('.cursor/debug.log', 'a') as f:
         #     f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "runtime.py:366", "message": "Entering normalize_to_general_value", "data": {"val": str(val)}, "timestamp": Date.now()}) + '\n')
         # #endregion
         if isinstance(val, (str, int, float, bool, type(None))):

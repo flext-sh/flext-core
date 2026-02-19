@@ -1,5 +1,10 @@
 # Scripts
 
+
+<!-- TOC START -->
+- No sections found
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 Utility scripts that support the FLEXT Core 1.0.0 modernization programme.

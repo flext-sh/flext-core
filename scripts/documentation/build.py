@@ -1,0 +1,94 @@
+from __future__ import annotations
+
+import argparse
+import subprocess
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+from _shared import (
+    Scope,
+    build_scopes,
+    write_json,
+    write_markdown,
+)
+
+
+@dataclass(frozen=True)
+class BuildResult:
+    scope: str
+    result: str
+    reason: str
+    site_dir: str
+
+
+def run_mkdocs(scope: Scope) -> BuildResult:
+    config = scope.path / "mkdocs.yml"
+    if not config.exists():
+        return BuildResult(
+            scope=scope.name, result="SKIP", reason="mkdocs.yml not found", site_dir=""
+        )
+
+    site_dir = (scope.path / ".reports/docs/site").resolve()
+    site_dir.parent.mkdir(parents=True, exist_ok=True)
+    cmd = ["mkdocs", "build", "--strict", "-f", str(config), "-d", str(site_dir)]
+    completed = subprocess.run(
+        cmd, cwd=scope.path, check=False, capture_output=True, text=True
+    )
+    if completed.returncode == 0:
+        return BuildResult(
+            scope=scope.name,
+            result="OK",
+            reason="build succeeded",
+            site_dir=site_dir.as_posix(),
+        )
+    reason = (completed.stderr or completed.stdout).strip().splitlines()
+    tail = reason[-1] if reason else f"mkdocs exited {completed.returncode}"
+    return BuildResult(
+        scope=scope.name, result="FAIL", reason=tail, site_dir=site_dir.as_posix()
+    )
+
+
+def write_reports(scope: Scope, result: BuildResult) -> None:
+    write_json(scope.report_dir / "build-summary.json", {"summary": asdict(result)})
+    write_markdown(
+        scope.report_dir / "build-report.md",
+        [
+            "# Docs Build Report",
+            "",
+            f"Scope: {result.scope}",
+            f"Result: {result.result}",
+            f"Reason: {result.reason}",
+            f"Site dir: {result.site_dir}",
+        ],
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default=".")
+    parser.add_argument("--project")
+    parser.add_argument("--projects")
+    parser.add_argument("--output-dir", default=".reports/docs")
+    args = parser.parse_args()
+
+    root = Path(args.root).resolve()
+    scopes = build_scopes(
+        root=root,
+        project=args.project,
+        projects=args.projects,
+        output_dir=args.output_dir,
+    )
+    failures = 0
+    for scope in scopes:
+        result = run_mkdocs(scope)
+        write_reports(scope, result)
+        print(
+            f"PROJECT={scope.name} PHASE=build RESULT={result.result} REASON={result.reason}"
+        )
+        if result.result == "FAIL":
+            failures += 1
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,5 +1,15 @@
 # Contributing to FLEXT-Core
 
+
+<!-- TOC START -->
+- [Quick Workflow](#quick-workflow)
+- [Required Local Checks](#required-local-checks)
+- [Architecture and Typing Rules](#architecture-and-typing-rules)
+- [Pull Request Expectations](#pull-request-expectations)
+- [Issue and Feature Requests](#issue-and-feature-requests)
+- [Need More Detail?](#need-more-detail)
+<!-- TOC END -->
+
 Thanks for contributing.
 
 This file is the fast entrypoint. Canonical contributor guidance lives in:

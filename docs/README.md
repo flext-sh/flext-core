@@ -1,5 +1,16 @@
 # FLEXT-Core Documentation
 
+
+<!-- TOC START -->
+- [Scope and Compatibility](#scope-and-compatibility)
+- [Navigation](#navigation)
+- [🔧 Quality Assurance](#-quality-assurance)
+- [Quick Start](#quick-start)
+- [Core Concepts](#core-concepts)
+- [Style Expectations](#style-expectations)
+- [Support](#support)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first foundation library built around railway-oriented programming, dependency injection, and domain-driven design. Content follows PEP 8, PEP 257, and the project documentation standards in `docs/standards/`.

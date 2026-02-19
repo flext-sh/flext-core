@@ -1,5 +1,32 @@
 # Railway-Oriented Programming Guide - Audit Report
 
+
+<!-- TOC START -->
+- [Audit Summary](#audit-summary)
+  - [✅ Accurate Documentation (7 methods)](#-accurate-documentation-7-methods)
+  - [❌ Missing Critical Methods (13 methods)](#-missing-critical-methods-13-methods)
+  - [⚠️ Documented But Need Verification](#-documented-but-need-verification)
+  - [🔍 Instance Methods & Properties Not Documented](#-instance-methods-properties-not-documented)
+- [Incorrect Facts Found](#incorrect-facts-found)
+  - [None Found ✅](#none-found-)
+- [Improvements Needed](#improvements-needed)
+  - [High Priority](#high-priority)
+  - [Medium Priority](#medium-priority)
+  - [Low Priority](#low-priority)
+- [Recommended Structure Changes](#recommended-structure-changes)
+  - [Current Structure](#current-structure)
+  - [Recommended Structure](#recommended-structure)
+- [Action Items](#action-items)
+  - [Immediate (This Session)](#immediate-this-session)
+  - [Short Term (Next Session)](#short-term-next-session)
+  - [Long Term](#long-term)
+- [Source Code Verification](#source-code-verification)
+  - [Verified Line Numbers ✅](#verified-line-numbers-)
+  - [Verified Instance Methods ✅](#verified-instance-methods-)
+  - [Still Need to Find](#still-need-to-find)
+- [Conclusion](#conclusion)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 **Document**: `docs/guides/railway-oriented-programming.md`

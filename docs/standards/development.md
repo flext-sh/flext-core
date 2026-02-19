@@ -1,5 +1,40 @@
 # Development Standards
 
+
+<!-- TOC START -->
+- [🎯 Mission & Authority](#-mission-authority)
+- [📋 Quality Imperatives](#-quality-imperatives)
+  - [Zero Tolerance Standards](#zero-tolerance-standards)
+  - [Quality Gates](#quality-gates)
+- [🏗️ Architecture Standards](#-architecture-standards)
+  - [Clean Architecture Compliance](#clean-architecture-compliance)
+  - [Module Organization](#module-organization)
+- [🔧 Development Workflow](#-development-workflow)
+  - [Environment Setup](#environment-setup)
+  - [Development Commands](#development-commands)
+- [📝 Code Standards](#-code-standards)
+  - [Python Standards](#python-standards)
+  - [Pattern Standards](#pattern-standards)
+- [🔒 API Stability Standards](#-api-stability-standards)
+  - [Versioning Strategy](#versioning-strategy)
+- [🧪 Testing Standards](#-testing-standards)
+  - [Test Organization](#test-organization)
+  - [Test Patterns](#test-patterns)
+- [📚 Documentation Standards](#-documentation-standards)
+  - [Documentation Requirements](#documentation-requirements)
+  - [Documentation Structure](#documentation-structure)
+- [🔄 Refactoring Standards](#-refactoring-standards)
+  - [Refactoring Guidelines](#refactoring-guidelines)
+  - [Refactoring Process](#refactoring-process)
+- [🚨 Emergency Procedures](#-emergency-procedures)
+  - [Breaking Issues](#breaking-issues)
+  - [Ecosystem Impact](#ecosystem-impact)
+- [📊 Quality Metrics](#-quality-metrics)
+  - [Target Metrics (1.0.0 Release)](#target-metrics-100-release)
+  - [Coverage by Layer](#coverage-by-layer)
+- [🔗 Related Documentation](#-related-documentation)
+<!-- TOC END -->
+
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
 **FLEXT-Core Development Standards | Version: 0.9.9 | Status: Production Ready**

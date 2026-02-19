@@ -1,5 +1,21 @@
 # Logging Guide
 
+
+<!-- TOC START -->
+- [Overview](#overview)
+- [Canonical Rules](#canonical-rules)
+- [3-Tier Context System](#3-tier-context-system)
+  - [1. Global Context](#1-global-context)
+  - [2. Scoped Context](#2-scoped-context)
+  - [3. Level Context](#3-level-context)
+- [Context Precedence](#context-precedence)
+- [Automatic Context Propagation](#automatic-context-propagation)
+- [Best Practices](#best-practices)
+- [Example: Request Handler Pattern](#example-request-handler-pattern)
+- [Auto-Configuration](#auto-configuration)
+- [See Also](#see-also)
+<!-- TOC END -->
+
 ## Overview
 
 FLEXT provides a comprehensive structured logging system built on `structlog` with automatic context propagation, scoped contexts, and level-based context management. This guide explains the 3-tier context system and how to use it effectively.

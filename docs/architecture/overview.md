@@ -1,5 +1,15 @@
 # Architecture Overview
 
+
+<!-- TOC START -->
+- [Layered Topology](#layered-topology)
+- [Layer Catalog (source-aligned)](#layer-catalog-source-aligned)
+- [Key Execution Flows](#key-execution-flows)
+- [Next Steps](#next-steps)
+- [Related Documentation](#related-documentation)
+- [Verification Commands](#verification-commands)
+<!-- TOC END -->
+
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
 
 FLEXT-Core implements CQRS on top of a clean-architecture skeleton. The outline
